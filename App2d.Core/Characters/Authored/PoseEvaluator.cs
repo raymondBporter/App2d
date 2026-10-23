@@ -182,16 +182,19 @@ public static class PoseEvaluator
             }
             var origin = node.Origin(parent?.Length ?? 0) + translate.XY;
             var rotation = node.Rotation + rotate;
+            // The uniform pose scale channel (ChannelSemantics.UniformPoseScale): one multiplier on the node's similarity,
+            // carried by its children and their link positions; the bone's length stays a dimension.
+            var scale = node.ScaleVector * (1 + Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit).X);
             if (node.CharacterOriented)
             {
                 // The origin follows the parent; the axes stay the character's, so the parent's turn and scale are not inherited.
                 var at = carrier.At(new Vector3(origin, localLayer));
-                pose.Place(control.Id, LayeredFrame2D.Local(node.ScaleVector, rotation, at.XY, at.Z), rotation);
+                pose.Place(control.Id, LayeredFrame2D.Local(scale, rotation, at.XY, at.Z), rotation);
                 continue;
             }
             // The angle accumulates rather than being read back from the matrix, so full turns stay unwrapped; a reflected
             // parent reverses the sense of its children's turns.
-            pose.Place(control.Id, LayeredFrame2D.Local(node.ScaleVector, rotation, origin, localLayer).Then(carrier), parentAngle + (parent?.Handedness ?? 1) * rotation);
+            pose.Place(control.Id, LayeredFrame2D.Local(scale, rotation, origin, localLayer).Then(carrier), parentAngle + (parent?.Handedness ?? 1) * rotation);
         }
         var constraints = new RigConstraintEvaluator(model, pose);
         foreach (var chain in model.IkConstraints)

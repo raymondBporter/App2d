@@ -105,9 +105,49 @@ public static class RigConversion
                 throw new InvalidOperationException($"'{control.Id}' did not reproduce its rest after conversion; the model is left unsaved.");
             }
         }
+        // A parameter that scaled a child's offset from its parent now scales the parent's length (P4a).
+        for (var i = 1; i < run.Count; i++)
+        {
+            var child = run[i];
+            var parent = run[i - 1];
+            var x = Binding(model, child.Id, RigProperties.LocalX);
+            var y = Binding(model, child.Id, RigProperties.LocalY);
+            if (x is null && y is null)
+            {
+                continue;
+            }
+
+            if (x is null || y is null || x.Value.Parameter != y.Value.Parameter || !PlainScale(x.Value.Binding) || !PlainScale(y.Value.Binding))
+            {
+                throw new InvalidOperationException($"'{child.Id}': its local translation bindings cannot become a length of '{parent.Id}'; bind local.x and local.y to one parameter with a plain scale, or remove them first.");
+            }
+
+            x.Value.Binding.Target = PropertyRef.OfControl(parent.Id, RigProperties.Length);
+            x.Value.Parameter.Bindings.Remove(y.Value.Binding);
+            report.Add($"{parent.Id}: length bound to parameter '{x.Value.Parameter.Id}' (was {child.Id}'s local x and y)");
+        }
         model.Validate();
         return report;
     }
+
+    private static (ModelParameter Parameter, ParameterBinding Binding)? Binding(CharacterModel model, string control, string property)
+    {
+        foreach (var parameter in model.Parameters)
+        {
+            foreach (var binding in parameter.Bindings)
+            {
+                if (binding.Target.Control == control && binding.Target.Property == property)
+                {
+                    return (parameter, binding);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>A multiplier of the authored value about zero: the one binding form a length and a local offset share.</summary>
+    private static bool PlainScale(ParameterBinding binding) => binding.Kind == BindingKinds.Scale && binding.Reference is null && binding.About == 0;
 
     /// <summary>
     /// The inverse of <see cref="ToBoneChain"/>: the given bone nodes become point controls whose character-frame rest is
@@ -129,6 +169,28 @@ public static class RigConversion
             if (model.Controls.Any(c => c.Parent == id && c.Node == RigNodeKinds.Bone && c.Link is not null && !controls.Contains(c.Id)))
             {
                 throw new InvalidOperationException($"'{id}' still carries a linked child; convert the children with it.");
+            }
+
+            // A parameter that scaled this bone's length now scales its tip-bound child's offset (P4a); a link binding has no point form.
+            foreach (var property in new[] { RigProperties.LinkT, RigProperties.LinkOffsetX, RigProperties.LinkOffsetY })
+            {
+                if (Binding(model, id, property) is { } link)
+                {
+                    throw new InvalidOperationException($"'{id}': parameter '{link.Parameter.Id}' binds its {property}; a point control has no link, so remove the binding first.");
+                }
+            }
+            if (Binding(model, id, RigProperties.Length) is { } length)
+            {
+                var tip = model.Controls.FirstOrDefault(c => c.Parent == id && c.Node == RigNodeKinds.Bone && c.Link is { IsTip: true } && controls.Contains(c.Id));
+                if (tip is null || !PlainScale(length.Binding))
+                {
+                    throw new InvalidOperationException($"'{id}': parameter '{length.Parameter.Id}' binds its length, which only a plain scale with a converted tip-bound child can carry as a point offset; remove the binding first.");
+                }
+
+                var index = length.Parameter.Bindings.IndexOf(length.Binding);
+                length.Binding.Target = PropertyRef.OfControl(tip.Id, RigProperties.LocalX);
+                length.Parameter.Bindings.Insert(index + 1, length.Binding with { Target = PropertyRef.OfControl(tip.Id, RigProperties.LocalY) });
+                report.Add($"{tip.Id}: local x and y bound to parameter '{length.Parameter.Id}' (was {id}'s length)");
             }
 
             control.Node = RigNodeKinds.Point;

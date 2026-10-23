@@ -96,7 +96,8 @@ public sealed class AnimationEditingTests
         var (model, _) = Scene();
         Assert.Equal([new Channel(MotionClip.TargetKind, "arm")], ClipAuthoring.ChannelsForControl(model, "hand"));
         Assert.Empty(ClipAuthoring.ChannelsForControl(model, "elbow"));
-        Assert.Equal([MotionClip.TranslateKind, MotionClip.RotateKind, MotionClip.ScaleKind, MotionClip.ShearKind],
+        // A canonical node has a uniform pose scale; shear is the legacy affine adapter's channel.
+        Assert.Equal([MotionClip.TranslateKind, MotionClip.RotateKind, MotionClip.ScaleKind],
             ClipAuthoring.ChannelsForControl(model, "body").Select(c => c.Kind));
     }
 

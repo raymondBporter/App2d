@@ -23,7 +23,10 @@ public static partial class ClipAuthoring
             return [channel, new(MotionClip.ScaleKind, control)];
         }
 
-        return [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.ShearKind, control)];
+        // A canonical node has a uniform pose scale; shear is the legacy affine adapter's artwork-fit channel.
+        return model.Controls[control].Node == RigNodeKinds.Affine
+            ? [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.ShearKind, control)]
+            : [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control)];
     }
 
     /// <summary>Keys one vector component while preserving the other sampled components and existing easing.</summary>

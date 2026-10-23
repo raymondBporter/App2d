@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
@@ -34,7 +35,9 @@ public sealed class RigConversionTests
 
         var points = CharacterModel.FromJson(person.ToJson());
         var report = RigConversion.ToPointControls(points, ["left-shoulder", "left-elbow", "left-hand"]);
-        Assert.Equal(3, report.Count);
+        // Three controls, and the arms parameter's two length bindings re-expressed as the elbow's and hand's local offsets.
+        Assert.Equal(5, report.Count);
+        Assert.Equal("arms", ResolvedModel.From(points).Parameters.BindingOfControl("left-elbow", RigProperties.LocalX)!.Value.Parameter.Id);
         var back = CharacterModel.FromJson(points.ToJson());
         RigConversion.ToBoneChain(back, ["left-shoulder", "left-elbow", "left-hand"]);
         Assert.Equal(person.ToJson(), back.ToJson());
@@ -70,7 +73,7 @@ public sealed class RigConversionTests
     }
 
     [Fact]
-    public void ThePersonBuildRuleFitsTheBoneChainsDimensionsFromItsPositions()
+    public void ThePersonArmsParameterScalesTheBoneChainsLengths()
     {
         var person = Catalog.Models["person"];
         var tall = ResolvedModel.From(person, Catalog.Variants["tall-thin"]);

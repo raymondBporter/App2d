@@ -66,8 +66,8 @@ internal sealed class EditorSmoke(string output)
                 var s = shell.Session;
                 var variant = s.SubjectVariant!;
                 s.Change(variant, () => {
-                variant.Asset.Build["legs"] = 1.4f;
-                variant.Asset.Build["width"] = .7f;
+                variant.Asset.Parameters["legs"] = 1.4f;
+                variant.Asset.Parameters["width"] = .7f;
             });
                 s.CommitAll();
                 Record(s.Transport.Playing, "still walking after the build change");
@@ -100,7 +100,7 @@ internal sealed class EditorSmoke(string output)
             ("08-reopened", shell =>
             {
                 var reopened = AuthoringWorkspace.Open(shell.Session.Assets.Root);
-                Record(reopened.Variant("tall-guard")?.Asset.Build["legs"] == 1.4f, "tall-guard reopens with its build");
+                Record(reopened.Variant("tall-guard")?.Asset.Parameters["legs"] == 1.4f, "tall-guard reopens with its build");
                 Record(reopened.Resolve("tripod") is { } tripod && reopened.CanPlay("tripod-walk", "tripod", out _) && PoseEvaluator.Sample(tripod, reopened.Clip("tripod-walk")!.Asset, .25).Chains.All(c => c.Reached),
                     "tripod and its walk reopen and play");
                 Record(reopened.Documents.All(d => reopened.Problems(d).Count == 0), "no asset needs repair");
@@ -497,6 +497,76 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Record(before == doc.Serialize() && Control("right-shoulder").Node == RigNodeKinds.Point, "the conversion undoes");
                 s.Selection.Select(control: "left-shoulder");
             }),
+            ("40-parameter-bindings", shell =>
+            {
+                // P4a: the Person's proportions are declared parameters with bindings; a variant's values and a base's
+                // declarations both re-resolve the preview, undo exactly and survive save/reopen; t = .5 follows a bound length.
+                var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = true;
+                var doc = s.SubjectModel!;
+                var person = s.Assets.Resolve("person")!;
+                Record(doc.Asset.Version == CharacterModel.CurrentVersion && doc.Asset.Parameters.Select(p => p.Id).SequenceEqual(["legs", "torso", "arms", "width", "head"]) && doc.Asset.Parameters.Sum(p => p.Bindings.Count) == 44 && doc.Asset.Presets.Count == 3,
+                    $"the Person declares its five proportion parameters with 44 bindings and 3 presets at version {CharacterModel.CurrentVersion}");
+                Record(person.Parameters.BindingOfControl("left-shoulder", RigProperties.Length)?.Parameter.Id == "arms" && person.Parameters.BindingOfPart("body", RigProperties.ScaleX)?.Parameter.Id == "width" && person.Parameters.BindingOfControl("hips", RigProperties.LocalY)?.Binding.About == .025f,
+                    "the upper-arm length, body width and ground-anchored hip height read their bindings");
+                s.Open("tall-thin");
+                var variant = s.SubjectVariant!;
+                var variantBefore = variant.Serialize();
+                var tall = s.Assets.Resolve("tall-thin")!;
+                s.Change(variant, () => variant.Asset.Parameters["legs"] = 1.4f);
+                s.CommitAll();
+                var taller = s.Assets.Resolve("tall-thin")!;
+                Record(taller.Rest["hips"].Y > tall.Rest["hips"].Y + .1f && MathF.Abs(taller.Rest["left-foot"].Y - tall.Rest["left-foot"].Y) < 1e-5f && MathF.Abs(taller.Measure("torso") - tall.Measure("torso")) < 1e-5f,
+                    "raising the variant's legs re-resolves the preview: the hips rise, the feet stay on the ground and the torso keeps its length");
+                s.Undo();
+                Record(variantBefore == variant.Serialize(), "the parameter value edit undoes exactly");
+                s.Open("person");
+                doc = s.SubjectModel!;
+                var baseBefore = doc.Serialize();
+                Record(!s.Edit(doc, () => ModelAuthoring.AddBinding(doc.Asset, "arms", new() { Target = PropertyRef.OfControl("left-shoulder", RigProperties.Length) })) && s.Message.Contains("one binding"),
+                    "a second binding on a bound property is refused: " + s.Message);
+                Check(s.Edit(doc, () => ModelAuthoring.AddParameter(doc.Asset, "hand-span", "Hand span", ParameterUnits.Length, 0, 0, 1)), s);
+                Check(s.Edit(doc, () => ModelAuthoring.AddBinding(doc.Asset, "hand-span", new() { Kind = BindingKinds.Set, Target = PropertyRef.OfControl("left-hand", RigProperties.Length) })), s);
+                s.Change(doc, () => { doc.Asset.Parameters.Last().Default = .12f; doc.Asset.Validate(); });
+                s.CommitAll();
+                Record(MathF.Abs(s.Assets.Resolve("person")!.Nodes["left-hand"].Length - .12f) < 1e-6f && s.Assets.Resolve("tall-thin")!.Nodes["left-hand"].Length == s.Assets.Resolve("person")!.Nodes["left-hand"].Length,
+                    "a new parameter's set binding re-resolves the hand bone's length on the base and its variants");
+                Check(s.Save(doc), s);
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+                Record(reopened.Model("person")!.Asset.Parameters.Any(p => p.Id == "hand-span" && p.Default == .12f) && reopened.Resolve("person")!.Nodes["left-hand"].Length == .12f && reopened.Problems(reopened.Model("person")!).Count == 0,
+                    "the declared parameter and its binding save and reopen");
+                while (doc.CanUndo)
+                {
+                    s.Undo();
+                }
+
+                Record(baseBefore == doc.Serialize(), "every declaration edit undoes exactly");
+                Check(s.Save(doc), s);
+                Check(s.NewModel("lever", "Lever", "empty"), s);
+                var lever = s.SubjectModel!;
+                Check(s.Edit(lever, () =>
+                {
+                    ModelAuthoring.AddControl(lever.Asset, null, new(0, 1, 0), "post");
+                    var beam = ModelAuthoring.AddBone(lever.Asset, "post", "beam");
+                    beam.Length = .6f;
+                    var weight = ModelAuthoring.AddBone(lever.Asset, "beam", "weight");
+                    weight.Link!.T = .5f;
+                    weight.Length = .1f;
+                    ModelAuthoring.AddPartToBone(lever.Asset, RoundedRectangle2D.Builder.FromSize(.6f, .08f, .02f), "beam");
+                    ModelAuthoring.AddPartToBone(lever.Asset, RoundedRectangle2D.Builder.FromSize(.12f, .12f, .03f), "weight");
+                    ModelAuthoring.AddParameter(lever.Asset, "beam-length", "Beam length", ParameterUnits.Length, .6f, .1f, 2);
+                    ModelAuthoring.AddBinding(lever.Asset, "beam-length", new() { Kind = BindingKinds.Set, Target = PropertyRef.OfControl("beam", RigProperties.Length) });
+                }), s);
+                s.Selection.Select(control: "weight");
+                shell.Viewport.Fit(s.Evaluate("lever"));
+                Vector3 Weight() => s.Assets.Resolve("lever")!.Rest["weight"];
+                var half = Weight();
+                s.Change(lever, () => { lever.Asset.Parameters[0].Default = 1.2f; lever.Asset.Validate(); });
+                s.CommitAll();
+                Record(MathF.Abs(Vector3.Distance(Weight(), s.Assets.Resolve("lever")!.Rest["beam"]) - .6f) < 1e-5f && MathF.Abs(Vector3.Distance(half, s.Assets.Resolve("lever")!.Rest["beam"]) - .3f) < 1e-5f,
+                    "t = .5 follows the changing midpoint when the bound beam length doubles");
+                Check(s.Save(lever), s);
+                Record(AuthoringWorkspace.Open(s.Assets.Root).Resolve("lever")!.Nodes["beam"].Length == 1.2f, "the lever's parameter default saves and reopens");
+            }),
         ];
         return workspace;
     }
@@ -628,8 +698,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         var sage = s.SubjectVariant!;
         Check(s.Edit(sage, () =>
         {
-            sage.Asset.Build["head"] = 1.25f;
-            sage.Asset.Build["torso"] = 1.08f;
+            sage.Asset.Parameters["head"] = 1.25f;
+            sage.Asset.Parameters["torso"] = 1.08f;
         }), s);
         s.Open("bruiser");
         s.SetClip("person-walk");

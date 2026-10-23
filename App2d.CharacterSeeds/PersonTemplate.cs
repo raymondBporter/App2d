@@ -23,8 +23,12 @@ public static class PersonTemplate
             model.Parts[i] = built.Parts[i] with { Material = model.Parts[i].Material };
         model.Id = id;
         model.Name = name;
-        // P3b: the left arm is the Person's canonical bone chain (the shipped model file carries the same conversion).
+        // P3b: the left arm is the Person's canonical bone chain (the shipped model file carries the same conversion). The
+        // proportion parameters are declared again afterwards, since the arm's bindings move from local offsets to lengths.
+        model.Parameters = [];
+        model.Presets = [];
         RigConversion.ToBoneChain(model, BoneChain);
+        PersonBuild.Declare(model);
         model.Validate();
         return model;
     }
@@ -50,7 +54,6 @@ public static class PersonTemplate
             Name = "Person",
             Ink = study.Ink,
             LineWidth = study.LineWidth,
-            Build = PersonBuild.RuleId,
             Controls = [.. study.Controls.Select(c => new ModelControl { Id = c.Id, Parent = parents.GetValueOrDefault(c.Id), Rest = c.Rest, Scale = ScaleOf(c.Id) })],
             Constraints = [.. study.Chains.Select(RigConstraint (c) =>
             {
@@ -93,6 +96,8 @@ public static class PersonTemplate
             }
         }
         PersonWardrobe.AddBodyParts(model);
+        // P4a: the proportions are declared parameters with bindings, not a Core rule.
+        PersonBuild.Declare(model);
         model.Validate();
         return model;
     }

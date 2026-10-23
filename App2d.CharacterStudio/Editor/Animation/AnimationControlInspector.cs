@@ -23,7 +23,8 @@ internal sealed class AnimationControlInspector(EditorSession session)
             return;
         }
         var track = ClipAuthoring.Track(clip, channel.Value);
-        ImGui.TextDisabled($"{channel.Value.Kind} channel on '{channel.Value.Target}'{(track is null ? ", not keyed yet" : $", {track.Keys.Count} keys")}");
+        var semantics = ChannelSemantics.Of(ChannelSemantics.OfTrack(channel.Value.Kind, model.Controls.GetValueOrDefault(channel.Value.Target)?.Node));
+        ImGui.TextDisabled($"{channel.Value.Kind} channel on '{channel.Value.Target}' ({semantics.Semantics}, {semantics.Units}){(track is null ? ", not keyed yet" : $", {track.Keys.Count} keys")}");
         var (value, _) = ClipAuthoring.Value(clip, channel.Value, time);
         var layered = LayeredPoint2D.From(value);
         if (CharacterUi.LayeredPoint("Delta from rest (reference units)", ref layered, layerIsOffset: true))
@@ -49,11 +50,12 @@ internal sealed class AnimationControlInspector(EditorSession session)
             }
 
             var affine = model.Controls[control].Node == RigNodeKinds.Affine;
-            if (affine && boneIk)
+            if (!affine || boneIk)
             {
+                // The uniform pose scale channel: one multiplier on the node's similarity (ChannelSemantics.UniformPoseScale).
                 var scaleChannel = new Channel(MotionClip.ScaleKind, control);
                 var scale = ClipAuthoring.Value(clip, scaleChannel, time).Value.X + 1;
-                if (Ui.Drag("Uniform scale multiplier", ref scale, .01f, .01f, 100))
+                if (Ui.Drag("Uniform pose scale multiplier", ref scale, .01f, .01f, 100))
                 {
                     session.Change(document, () => ClipAuthoring.SetKey(document.Asset, scaleChannel, time, new(scale - 1, scale - 1, 0)));
                 }

@@ -213,7 +213,7 @@ public sealed class RigGraphTests
         creature.Remove("constraints");
         creature["chains"] = chains;
         Assert.Equal(["arm", "leg"], CharacterModel.FromJson(creature.ToJsonString()).IkChains.Select(c => c.Id));
-        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(TestModels.Creature().ToJson().Replace("\"version\": 7", "\"version\": 4"))).Message);
+        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(TestModels.Creature().ToJson().Replace($"\"version\": {CharacterModel.CurrentVersion}", "\"version\": 4"))).Message);
     }
 
     [Theory]

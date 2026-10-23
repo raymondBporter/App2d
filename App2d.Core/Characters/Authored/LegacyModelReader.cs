@@ -15,13 +15,17 @@ namespace App2d.Core.Characters.Authored;
 /// from whether <c>transform</c> was present. The chains join the front of <c>constraints</c> as <c>two-bone-ik</c> entries
 /// with their point solver, which keeps the former evaluation order (chains first, then typed constraints), and a control
 /// with a <c>transform</c> is declared <c>node: affine</c>; every other control is a point control, the default.</item>
+/// <item>Versions 5 to 7 (P4a) could name a code build rule under <c>build</c>; the rule's geometry is now declared as
+/// parameter bindings in the model itself (<see cref="ModelParameter"/>). A file without <c>build</c> reads unchanged at
+/// version 8; one naming a rule is refused, since nothing in Core knows a humanoid's proportions any more. The only shipped
+/// user, <c>models/person.json</c>, was converted explicitly.</item>
 /// </list>
-/// Deletion condition: no model file below version 7 remains in the authored tree, the seeds or the tests (the P11
+/// Deletion condition: no model file below version 8 remains in the authored tree, the seeds or the tests (the P11
 /// conversion reports list the converted bundles; six of the seven shipped models are still at version 5).
 /// </summary>
 internal static class LegacyModelReader
 {
-    public const int WaveFieldsVersion = 5, ChainsVersion = 6;
+    public const int WaveFieldsVersion = 5, ChainsVersion = 6, BuildRuleVersion = 7;
     private const string Amplitude = "waveAmplitude", Cycles = "waveCycles", PhaseControl = "wavePhaseControl", Wave = "wave";
 
     /// <summary>Returns the model JSON at the current version, or the input unchanged when it is not an older model.</summary>
@@ -37,12 +41,22 @@ internal static class LegacyModelReader
             return json;
         }
 
-        if (root is null || Find(root, "version") is not (var versionName, JsonValue version) || !version.TryGetValue(out int number) || number is < WaveFieldsVersion or > ChainsVersion)
+        if (root is null || Find(root, "version") is not (var versionName, JsonValue version) || !version.TryGetValue(out int number) || number is < WaveFieldsVersion or > BuildRuleVersion)
         {
             return json;
         }
 
         root[versionName] = CharacterModel.CurrentVersion;
+        if (Find(root, "build") is (_, var rule))
+        {
+            throw new InvalidDataException($"Model file at version {number} names the code build rule '{rule}', retired in P4a: declare the proportions as parameters with bindings (the Person seeds write them; models/person.json carries the converted declarations).");
+        }
+
+        if (number == BuildRuleVersion)
+        {
+            return root.ToJsonString();
+        }
+
         if (number == WaveFieldsVersion && Find(root, "parts") is (_, JsonArray parts))
         {
             foreach (var part in parts.OfType<JsonObject>())

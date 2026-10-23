@@ -22,22 +22,28 @@ public static class ModelAuthoring
         return model;
     }
 
-    /// <summary>Flattens a resolved variant into a new independent base. Its clips must be checked or converted explicitly.</summary>
+    /// <summary>
+    /// Flattens a resolved variant into a new independent base: every resolved setup, length, link and part becomes authored,
+    /// and the parameters that produced them are dropped (the new base exposes none; declare its own). Its clips must be
+    /// checked or converted explicitly.
+    /// </summary>
     public static CharacterModel Flatten(ResolvedModel resolved, string id, string name)
     {
         var model = CharacterModel.FromJson(resolved.Base.ToJson());
         model.Id = id;
         model.Name = name;
         model.StructureRevision = 1;
-        model.Build = null;
+        model.Parameters = [];
+        model.Presets = [];
         foreach (var control in model.Controls)
         {
             var node = resolved.Nodes[control.Id];
             if (node.Kind == RigNodeKinds.Bone)
             {
-                // A bone node's resolved setup (including a build rule's fitted dimensions) is its new authored setup.
+                // A bone node's resolved setup, length and link (after parameter bindings) are its new authored setup.
                 control.Local = node.Setup with { };
                 control.Length = node.Length;
+                control.Link = node.Link is { } link ? link with { } : null;
                 continue;
             }
 
@@ -60,6 +66,74 @@ public static class ModelAuthoring
             .Concat(model.IkChains.Select(c => $"k:{c.Id}={c.Root}>{c.Joint}>{c.End}@{c.Frame}~{c.Scale}~{c.Solver}").Order(StringComparer.Ordinal))
             .Concat(model.Measures.Select(m => $"m:{m.Id}").Order(StringComparer.Ordinal))
             .Concat(model.Slots.Select(s => $"s:{s.Id}={s.Bone}").Order(StringComparer.Ordinal)));
+
+    // ---- Parameters (P4a) --------------------------------------------------------------------------------------------
+
+    /// <summary>Declares a parameter on the model; the model validates the declaration and the catalog as a whole.</summary>
+    public static ModelParameter AddParameter(CharacterModel model, string id, string name, string units, float @default, float min, float max)
+    {
+        if (model.Parameters.Any(p => p.Id == id))
+        {
+            throw new InvalidDataException($"Model '{model.Id}' already declares parameter '{id}'.");
+        }
+
+        var parameter = new ModelParameter { Id = id, Name = name, Units = units, Default = @default, Min = min, Max = max };
+        model.Parameters.Add(parameter);
+        model.Validate();
+        return parameter;
+    }
+
+    /// <summary>Removes a parameter with its bindings, and its values from every preset.</summary>
+    public static void RemoveParameter(CharacterModel model, string id)
+    {
+        if (model.Parameters.RemoveAll(p => p.Id == id) == 0)
+        {
+            throw new InvalidDataException($"Model '{model.Id}' declares no parameter '{id}'.");
+        }
+
+        foreach (var preset in model.Presets)
+        {
+            preset.Values.Remove(id);
+        }
+
+        model.Validate();
+    }
+
+    /// <summary>Binds an exposed property to a parameter; the catalog refuses a property that is bound already, not exposed or part of a cycle.</summary>
+    public static ParameterBinding AddBinding(CharacterModel model, string parameter, ParameterBinding binding)
+    {
+        var declared = model.Parameters.FirstOrDefault(p => p.Id == parameter) ?? throw new InvalidDataException($"Model '{model.Id}' declares no parameter '{parameter}'.");
+        declared.Bindings.Add(binding);
+        model.Validate();
+        return binding;
+    }
+
+    /// <summary>Removes the binding on a property from whichever parameter holds it; the property keeps its authored value.</summary>
+    public static void RemoveBinding(CharacterModel model, PropertyRef target)
+    {
+        var removed = model.Parameters.Sum(p => p.Bindings.RemoveAll(b => b.Target.Key == target.Key));
+        if (removed == 0)
+        {
+            throw new InvalidDataException($"Model '{model.Id}': {target} is not bound.");
+        }
+
+        model.Validate();
+    }
+
+    /// <summary>Writes a preset's values onto a variant, replacing its parameter values; values equal to the declared default are not stored.</summary>
+    public static void ApplyPreset(CharacterModel model, ModelVariant variant, string preset)
+    {
+        var values = (model.Presets.FirstOrDefault(p => p.Id == preset) ?? throw new InvalidDataException($"Model '{model.Id}' has no preset '{preset}'.")).Values;
+        variant.Parameters.Clear();
+        foreach (var (id, value) in values)
+        {
+            var parameter = model.Parameters.FirstOrDefault(p => p.Id == id) ?? throw new InvalidDataException($"Model '{model.Id}' preset '{preset}': no parameter '{id}'.");
+            if (value != parameter.Default)
+            {
+                variant.Parameters[id] = value;
+            }
+        }
+    }
 
     public static string UniqueId(string basis, IEnumerable<string> taken)
     {

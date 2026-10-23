@@ -516,10 +516,10 @@ internal sealed partial class AssetBrowser(EditorSession session)
                     _source = basis;
                     _preset = "";
                 }
-                if (session.Assets.Model(_source) is { } model && BuildRules.For(model.Asset) is { } rule)
+                if (session.Assets.Model(_source) is { } model && model.Asset.Presets.Count > 0)
                 {
-                    var presets = rule.Presets.Select(p => p.Id).Prepend("").ToArray();
-                    if (Ui.Combo("Starting build", _preset, presets, id => id.Length == 0 ? "Base proportions" : rule.Presets.First(p => p.Id == id).Name) is { } preset)
+                    var presets = model.Asset.Presets.Select(p => p.Id).Prepend("").ToArray();
+                    if (Ui.Combo("Starting proportions", _preset, presets, id => id.Length == 0 ? "Base proportions" : model.Asset.Presets.First(p => p.Id == id).Name) is { } preset)
                     {
                         _preset = preset;
                     }

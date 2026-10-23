@@ -35,14 +35,14 @@ public sealed class AppearanceAndBuildTests
     [Fact]
     public void UnknownOrOutOfRangeBuildValuesFailToResolve()
     {
-        var variant = new ModelVariant { Id = "odd", Name = "Odd", Base = "person", Build = { ["tail"] = 1.2f } };
+        var variant = new ModelVariant { Id = "odd", Name = "Odd", Base = "person", Parameters = { ["tail"] = 1.2f } };
         Assert.Contains("build.tail", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Person, variant)).Message);
-        variant.Build = new()
+        variant.Parameters = new()
         {
             ["legs"] = 5
         };
         Assert.Contains("build.legs", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Person, variant)).Message);
-        Assert.Throws<InvalidDataException>(() => ResolvedModel.From(TestModels.Creature(), new ModelVariant { Id = "x", Name = "X", Base = "creature", Build = { ["legs"] = 1.1f } }));
+        Assert.Throws<InvalidDataException>(() => ResolvedModel.From(TestModels.Creature(), new ModelVariant { Id = "x", Name = "X", Base = "creature", Parameters = { ["legs"] = 1.1f } }));
     }
 
     [Fact]

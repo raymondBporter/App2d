@@ -85,8 +85,13 @@ public sealed class ModelVariant
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Base { get; set; } = "";
-    /// <summary>Values for the base's build rule, applied before the explicit overrides below. Missing values keep their defaults.</summary>
-    public Dictionary<string, float> Build { get; set; } = [];
+    /// <summary>
+    /// Values for the base's declared parameters by ID, applied before the explicit overrides below; a missing value keeps
+    /// the declared default. The file member is still <c>build</c>: its meaning (values of the base's exposed proportion
+    /// parameters) has not changed since the code build rule became declared bindings in P4a.
+    /// </summary>
+    [JsonPropertyName("build")]
+    public Dictionary<string, float> Parameters { get; set; } = [];
     /// <summary>Model-space rest positions replacing the built base's, by control ID.</summary>
     public Dictionary<string, PuppetPoint> Rest { get; set; } = [];
     public Dictionary<string, PartOverride> Parts { get; set; } = [];
@@ -119,12 +124,12 @@ public sealed class ModelVariant
             throw new InvalidDataException($"{owner}: a name is required.");
         }
 
-        if (Build is null || Rest is null || Parts is null)
+        if (Parameters is null || Rest is null || Parts is null)
         {
             throw new InvalidDataException($"{owner}: collections cannot be null.");
         }
 
-        foreach (var (id, value) in Build)
+        foreach (var (id, value) in Parameters)
         {
             new Limit(.01f, 100).Check(value, $"{owner} build.{id}");
         }

@@ -71,10 +71,15 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         {
             ShapeInspector.Draw(shape, geometry => change(p => p.Geometry = geometry));
         }
+        var resolved = session.Assets.Resolve(session.SubjectId);
         Float("Scale X", part.ScaleX, -4, 4, overrides?.ScaleX is not null, (p, v) => p.ScaleX = v, o => o.ScaleX = null);
+        ParameterInspector.BoundNote(resolved, PropertyRef.OfPart(part.Id, RigProperties.ScaleX));
         Float("Scale Y", part.ScaleY, -4, 4, overrides?.ScaleY is not null, (p, v) => p.ScaleY = v, o => o.ScaleY = null);
+        ParameterInspector.BoundNote(resolved, PropertyRef.OfPart(part.Id, RigProperties.ScaleY));
         Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
+        ParameterInspector.BoundNote(resolved, PropertyRef.OfPart(part.Id, RigProperties.OffsetX));
         Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
+        ParameterInspector.BoundNote(resolved, PropertyRef.OfPart(part.Id, RigProperties.OffsetY));
         if (part.Geometry is ICurve2D)
         {
             Float("Stroke width", part.RenderMaterial.StrokeWidth ?? Structure?.LineWidth ?? .045f, .005f, 2, overrides?.Material?.StrokeWidth is not null,

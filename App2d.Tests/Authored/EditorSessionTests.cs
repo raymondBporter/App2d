@@ -102,7 +102,7 @@ public sealed class EditorSessionTests : IDisposable
         var reopened = Session();
         var variant = reopened.Assets.Variant("tall-guard")!;
         Assert.Equal("Tall guard", variant.Asset.Name);
-        Assert.Equal(PersonBuild.TallThin.Legs, variant.Asset.Build["legs"]);
+        Assert.Equal(PersonBuild.TallThin.Legs, variant.Asset.Parameters["legs"]);
         Assert.Empty(reopened.Assets.Problems(variant));
     }
 
@@ -119,7 +119,7 @@ public sealed class EditorSessionTests : IDisposable
         var variant = session.SubjectVariant!;
         for (var frame = 0; frame < 5; frame++)
         {
-            session.Change(variant, () => variant.Asset.Build["legs"] = 1.2f + .04f * (frame + 1));
+            session.Change(variant, () => variant.Asset.Parameters["legs"] = 1.2f + .04f * (frame + 1));
             session.Tick(1 / 60f);
         }
         session.CommitAll();
@@ -128,7 +128,7 @@ public sealed class EditorSessionTests : IDisposable
         Assert.True(after.Model.Rest["hips"].Y > before.Model.Rest["hips"].Y + .05f);
         Assert.All(after.Pose.Chains, c => Assert.True(c.Reached, c.Chain));
         variant.Undo();
-        Assert.Equal(1.2f, variant.Asset.Build["legs"], 4);
+        Assert.Equal(1.2f, variant.Asset.Parameters["legs"], 4);
     }
 
     [Fact]

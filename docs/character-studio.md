@@ -204,7 +204,9 @@ To add bone IK, create a root, child and endpoint, select the endpoint and press
 Choose the **locomotion** target frame to use the existing **Plant** contact controls. Contacts pin any endpoint; they are not restricted to feet. A free control frame makes a bone target follow that frame's translation, rotation, scale and reflection. A constrained frame cannot drive another constraint. Bone length edits carry the connected IK joint to the new tip. Since P3c a control's inspector shows its declared node kind: a point control's character-frame rest, a bone node's derived origin, direction, length, local setup (rotation, uniform scale, reflect, layer offset) and link (position t along the parent, offset, orientation, bind/unbind), or the legacy affine setup; a bound origin refuses a drag with its reason, and **Convert to bone chain** turns a run of point controls into bone nodes without moving any rest position. Uniform scale and reflection are supported; collapsed, sheared or nonuniform segment frames produce a named diagnostic, including when encountered during animation. Floor/wall queries, self-collision and stateful physics remain later extensions. See [constraint resources and compatibility](character-resources.md#second-migration-typed-ik-and-contact-evaluation).
 
 - **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
-  model. On a variant: build values, part overrides with **Reset to base**, and looks. **Edit rig** shows control handles.
+  model, and its declared **Parameters** (P4a: units, default, ranges, bindings; add a parameter, bind a property of the
+  selected control or part to it, remove either; a bound field says which parameter produces it). On a variant: parameter
+  values with the base's presets, part overrides with **Reset to base**, and looks. **Edit rig** shows control handles.
 - **Appearance**: reusable hair, beards and clothes, editable cutout silhouettes, colors, ink, depth and thickness,
   with wearer preview and equipment binding.
 - **Animate**: clips compatible with the subject's base. Dragging keys the channel it drives (autokey), contacts,

@@ -13,6 +13,7 @@ namespace App2d.CharacterStudio.Editor.Model;
 internal sealed class BaseModelInspector(EditorSession session, ModelStructuralEdits structural, ModelPartInspector parts)
 {
     private string _newSet = "";
+    private readonly ParameterInspector _parameters = new(session);
     private ResolvedModel? Resolved => session.Assets.Resolve(session.SubjectId);
 
     public void Draw(AssetDocument<CharacterModel> document)
@@ -37,11 +38,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
             session.Change(document, () => document.Asset.LineWidth = line);
         }
 
-        if (model.Build is not null)
-        {
-            Ui.Help($"Exposes '{model.Build}' build values to its variants.");
-        }
-
+        _parameters.Draw(document, Resolved);
         Dependents(document);
         MotionSets(document);
         GroupsAndLooks(model);
@@ -302,6 +299,8 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                     });
                 }
 
+                ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.Length));
+
                 Ui.Help(control.Length > 0 ? "Children bound along this bone follow its length; their frames keep their own scale." : "Zero length: an ordinary control, still a handle, socket or target.");
                 Ui.Header("Local setup");
                 var local = control.Local ?? new RigSetup();
@@ -319,6 +318,9 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                     {
                         Local(l => { l.X = xy.X; l.Y = xy.Y; });
                     }
+
+                    ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LocalX));
+                    ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LocalY));
                 }
                 var rotation = float.RadiansToDegrees(local.Rotation);
                 if (Ui.Drag("Local rotation (degrees)", ref rotation, 1f, -720, 720))
@@ -344,6 +346,8 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                     Local(l => l.Layer = layer);
                 }
 
+                ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LocalLayer));
+
                 if (control.Parent is { } parentId)
                 {
                     Ui.Header("Link");
@@ -356,11 +360,16 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                             session.Change(document, () => { Live().Link!.T = t; document.Asset.Validate(); });
                         }
 
+                        ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LinkT));
+
                         var offset = new Vector2(bound.OffsetX, bound.OffsetY);
                         if (Ui.Drag2("Offset in parent axes", ref offset, .005f, -100, 100))
                         {
                             session.Change(document, () => { Live().Link!.OffsetX = offset.X; Live().Link!.OffsetY = offset.Y; document.Asset.Validate(); });
                         }
+
+                        ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LinkOffsetX));
+                        ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LinkOffsetY));
 
                         if (Ui.Combo("Orientation", bound.Orientation, RigLinkOrientations.All) is { } orientation)
                         {

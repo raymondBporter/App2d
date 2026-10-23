@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering.Characters;
@@ -41,7 +42,7 @@ public sealed class WardrobeDepthTests
         var hand = pose.World("left-hand");
         var y0 = Vector3.Dot(elbow - frame.Origin, frame.YAxis);
         var y1 = Vector3.Dot(hand - frame.Origin, frame.YAxis);
-        var torso = PersonBuild.From(entity.Model.Variant!.Build).Torso;
+        var torso = PersonBuild.From(entity.Model.Variant!.Parameters).Torso;
         foreach (var height in new[] { .032f, .052f, .075f })
         {
             var t = (height * torso - y0) / (y1 - y0);

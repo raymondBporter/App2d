@@ -126,11 +126,12 @@ public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
     /// <summary>
-    /// Version 7 declares each control's node kind, authors bone nodes as parent-local setups and keeps one constraint list
-    /// (P3a); version 6 moved a curve's wave into the typed <c>wave</c> modifier (P2a). Older files read through
-    /// <see cref="LegacyModelReader"/>.
+    /// Version 8 declares exposed <see cref="Parameters"/> with their bindings and <see cref="Presets"/> in place of the
+    /// retired code build rule (P4a); version 7 declared each control's node kind, authored bone nodes as parent-local setups
+    /// and kept one constraint list (P3a); version 6 moved a curve's wave into the typed <c>wave</c> modifier (P2a). Older
+    /// files read through <see cref="LegacyModelReader"/>.
     /// </summary>
-    public const int CurrentVersion = 7;
+    public const int CurrentVersion = 8;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -139,8 +140,13 @@ public sealed class CharacterModel
     public int StructureRevision { get; set; } = 1;
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .045f;
-    /// <summary>The explicit build rule behind this model's exposed build values, such as "person". Null exposes none.</summary>
-    public string? Build { get; set; }
+    /// <summary>
+    /// The exposed parameters (plan section 3.5): stable IDs with units, defaults, ranges and simple bindings onto bone
+    /// lengths, layout dimensions, part fitting and link positions. A variant stores values by ID; anatomy needs no code rule.
+    /// </summary>
+    public List<ModelParameter> Parameters { get; set; } = [];
+    /// <summary>Named parameter value sets an author starts a variant from.</summary>
+    public List<ParameterPreset> Presets { get; set; } = [];
     public List<ModelControl> Controls { get; set; } = [];
     /// <summary>The one ordered constraint list, evaluated in document order. A chain's solver declares its semantics.</summary>
     public List<RigConstraint> Constraints { get; set; } = [];
@@ -393,10 +399,7 @@ public sealed class CharacterModel
         }
         CheckGeometry(this, nodes.ToDictionary(n => n.Key, n => n.Value.Rest, StringComparer.Ordinal), owner);
         SkeletonAppearance2D.Validate(this);
-        if (Build is not null)
-        {
-            BuildRules.Get(Build).Check(this);
-        }
+        ParameterCatalog.Compile(this);
     }
 
     /// <summary>A point-solved segment: the bone has no declared length, or its child is a bone node bound to its tip.</summary>

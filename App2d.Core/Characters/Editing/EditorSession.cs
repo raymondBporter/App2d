@@ -793,22 +793,19 @@ public sealed class EditorSession
         }
     }, $"Created model '{id}'.");
 
-    /// <summary>A new variant of a base, optionally starting from one of its build presets.</summary>
+    /// <summary>A new variant of a base, optionally starting from one of its parameter presets.</summary>
     public bool NewVariant(string id, string name, string baseId, string? preset = null) => Attempt(() =>
     {
         var basis = Assets.Model(baseId) ?? throw new InvalidDataException($"No base model '{baseId}'.");
         var variant = new ModelVariant { Id = id, Name = name, Base = baseId };
         if (preset is not null)
         {
-            var rule = BuildRules.For(basis.Asset) ?? throw new InvalidDataException($"'{baseId}' exposes no build presets.");
-            var values = (rule.Presets.FirstOrDefault(p => p.Id == preset) ?? throw new InvalidDataException($"No preset '{preset}'.")).Values;
-            foreach (var (value, amount) in values)
+            if (basis.Asset.Presets.Count == 0)
             {
-                if (amount != rule.Values.First(v => v.Id == value).Default)
-                {
-                    variant.Build[value] = amount;
-                }
+                throw new InvalidDataException($"'{baseId}' exposes no parameter presets.");
             }
+
+            ModelAuthoring.ApplyPreset(basis.Asset, variant, preset);
         }
         Assets.Create(variant);
         Open(id);

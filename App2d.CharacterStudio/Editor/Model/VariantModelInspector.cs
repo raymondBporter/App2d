@@ -34,45 +34,41 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
             return;
         }
 
-        if (BuildRules.For(basis.Asset) is { } rule)
+        if (basis.Asset.Parameters.Count > 0)
         {
-            Ui.Header("Build");
-            foreach (var preset in rule.Presets)
+            Ui.Header("Parameters");
+            foreach (var preset in basis.Asset.Presets)
             {
                 if (ImGui.SmallButton(preset.Name))
                 {
-                    session.Edit(document, () =>
-                    {
-                        document.Asset.Build.Clear();
-                        foreach (var (id, value) in preset.Values)
-                        {
-                            if (value != rule.Values.First(v => v.Id == id).Default)
-                            {
-                                document.Asset.Build[id] = value;
-                            }
-                        }
-                    });
+                    session.Edit(document, () => ModelAuthoring.ApplyPreset(basis.Asset, document.Asset, preset.Id));
                 }
 
                 ImGui.SameLine();
             }
             ImGui.NewLine();
-            foreach (var value in rule.Values)
+            foreach (var parameter in basis.Asset.Parameters)
             {
-                var overridden = variant.Build.TryGetValue(value.Id, out var amount);
-                if (Ui.OverrideLabel(value.Name, overridden))
+                var overridden = variant.Parameters.TryGetValue(parameter.Id, out var amount);
+                if (Ui.OverrideLabel(parameter.Label, overridden))
                 {
-                    session.Edit(document, () => document.Asset.Build.Remove(value.Id));
+                    session.Edit(document, () => document.Asset.Parameters.Remove(parameter.Id));
                     continue;
                 }
-                amount = overridden ? amount : value.Default;
+                amount = overridden ? amount : parameter.Default;
                 ImGui.SetNextItemWidth(-1);
-                if (ImGui.SliderFloat("##build-" + value.Id, ref amount, value.Range.SoftMin, value.Range.SoftMax, "%.2fx", ImGuiSliderFlags.AlwaysClamp))
+                var format = parameter.Units == ParameterUnits.Factor ? "%.2fx" : $"%.3f {parameter.Units}";
+                if (ImGui.SliderFloat("##parameter-" + parameter.Id, ref amount, parameter.Range.SoftMin, parameter.Range.SoftMax, format, ImGuiSliderFlags.AlwaysClamp))
                 {
-                    session.Change(document, () => document.Asset.Build[value.Id] = amount);
+                    session.Change(document, () => document.Asset.Parameters[parameter.Id] = amount);
+                }
+
+                if (parameter.Bindings.Count > 0)
+                {
+                    ImGui.TextDisabled("  drives " + string.Join(", ", parameter.Bindings.Select(b => b.Target.ToString())));
                 }
             }
-            Ui.Help("Build values reshape the base's rest pose; animations keep playing and rescale with the measures they use.");
+            Ui.Help("Parameter values drive the base's bound lengths, layout, fitting and link positions; animations keep playing and rescale with the measures they use.");
         }
 
         var resolved = Resolved;
@@ -144,7 +140,7 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
         Ui.Help("Applying a look writes colors and faces as this variant's overrides. Saving one edits the base, which then needs saving.");
 
         Ui.Header("Overrides");
-        ImGui.TextDisabled($"{variant.Build.Count} build value(s), {variant.Rest.Count} rest position(s), {variant.Parts.Count} part(s).");
+        ImGui.TextDisabled($"{variant.Parameters.Count} parameter value(s), {variant.Rest.Count} rest position(s), {variant.Parts.Count} part(s).");
         if (Ui.Button("Reset all rest positions", variant.Rest.Count > 0))
         {
             session.Edit(document, () => document.Asset.Rest.Clear());
