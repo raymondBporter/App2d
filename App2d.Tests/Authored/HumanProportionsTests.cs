@@ -30,9 +30,10 @@ public sealed class HumanProportionsTests
             Assert.Equal(before.ScaleX, after.ScaleX);
             Assert.Equal(before.ScaleY, after.ScaleY);
         }
-        foreach (var control in PersonTemplate.Model().Controls)
+        var seed = ResolvedModel.From(PersonTemplate.Model());
+        foreach (var control in seed.Order)
         {
-            TestModels.Near(control.Rest.XYZ, Catalog.Resolve("person").Rest[control.Id]);
+            TestModels.Near(seed.Rest[control.Id], Catalog.Resolve("person").Rest[control.Id]);
         }
     }
 

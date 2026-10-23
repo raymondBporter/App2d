@@ -162,7 +162,8 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
                 var chain = model.Chains[chainId];
                 var pose = PoseEvaluator.Sample(model, clip, time);
                 var shoulder = pose.Points[chain.Frame];
-                var frameAngle = pose.Angles[chain.Frame];
+                // A target is keyed in the frame's rotation since rest, as the evaluator reads it (a bone frame has a rest direction).
+                var frameAngle = pose.Angles[chain.Frame] - model.Nodes[chain.Frame].RestAngle;
                 var goal = absolute ? new Vector3(offset, shoulder.Z) : shoulder + new Vector3(offset, 0);
                 var local = Rotation2D.ApplyXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
                 Set(MotionClip.TargetKind, chainId, time, new()

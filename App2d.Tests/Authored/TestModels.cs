@@ -39,11 +39,32 @@ internal static class TestModels
 
     /// <summary>
     /// The nonhumanoid mechanical linkage the migration plan keeps in shared tests (P0): a crank on a hub drives a two-bar
-    /// rod through the point IK chain "rod", whose root is a fixed piston. Rotating the hub a full turn carries the pin
+    /// rod through the IK chain "rod", whose root is a fixed piston. Rotating the hub a full turn carries the pin
     /// round, and the rod can only follow for part of the circle, so one clip exercises reached and unreachable (full-reach)
     /// targets, and <see cref="LinkageReach"/> adds a zero-length one, without any humanoid assumption.
+    /// Since P3b the hub/pin and piston/rod-elbow/rod-end runs are canonical bone nodes (the pin and rod joints are bound to
+    /// their parents' tips); the rod stays on the declared point solver so the P0 reach and zero-length cases hold until P4b.
+    /// <see cref="LinkageRigid"/> is the same machine with the rod on the canonical bone solver.
     /// </summary>
-    public static CharacterModel Linkage() => new()
+    public static CharacterModel Linkage(bool rigidRod = false)
+    {
+        var model = LinkagePoints();
+        RigConversion.ToBoneChain(model, ["hub", "crank-pin"]);
+        RigConversion.ToBoneChain(model, ["piston", "rod-elbow", "rod-end"]);
+        if (rigidRod)
+        {
+            model.IkChains.Single().Solver = ModelChain.BoneSolver;
+            model.Validate();
+        }
+
+        return model;
+    }
+
+    /// <summary>The linkage with the rod declared as a canonical rigid-bone constraint: its frames turn with the solve.</summary>
+    public static CharacterModel LinkageRigid() => Linkage(rigidRod: true);
+
+    /// <summary>The linkage as it was authored in P0, every control a point control.</summary>
+    public static CharacterModel LinkagePoints() => new()
     {
         Id = "linkage",
         Name = "Crank linkage",

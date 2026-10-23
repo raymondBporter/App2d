@@ -25,6 +25,7 @@ internal static partial class PlayerMoves
         var person = CharacterModel.FromJson(File.ReadAllText(Path.Combine(root, "models", "person.json")));
         var reference = CharacterModel.FromJson(person.ToJson());
         var study = PersonTemplate.StudyReference();
+        RigConversion.ToPointControls(reference, [.. reference.Controls.Where(c => c.Node == RigNodeKinds.Bone).Select(c => c.Id)]);
         foreach (var control in reference.Controls)
         {
             control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;

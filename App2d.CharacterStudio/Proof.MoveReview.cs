@@ -271,9 +271,9 @@ internal sealed partial class ProofRenders
         var samples = Math.Max(2, (int)(clip.Duration * 240));
         float contact = 0, turnSum = 0, swing = 0;
         var overreach = 0;
-        static float Yaw(EvaluatedPose p, string left, string right, string frame)
+        float Yaw(EvaluatedPose p, string left, string right, string frame)
         {
-            var d = Rotation2D.ApplyXY(p.Points[right] - p.Points[left], -p.Angles[frame]);
+            var d = Rotation2D.ApplyXY(p.Points[right] - p.Points[left], model.Nodes[frame].RestAngle - p.Angles[frame]);
             return MathF.Atan2(d.Z, d.X);
         }
         var rest = PoseEvaluator.Rest(model);

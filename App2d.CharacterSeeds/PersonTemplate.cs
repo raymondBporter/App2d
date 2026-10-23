@@ -23,9 +23,14 @@ public static class PersonTemplate
             model.Parts[i] = built.Parts[i] with { Material = model.Parts[i].Material };
         model.Id = id;
         model.Name = name;
+        // P3b: the left arm is the Person's canonical bone chain (the shipped model file carries the same conversion).
+        RigConversion.ToBoneChain(model, BoneChain);
         model.Validate();
         return model;
     }
+
+    /// <summary>The run of Person controls authored as canonical bone nodes since P3b; the other limbs stay point controls until their bundles convert.</summary>
+    public static readonly string[] BoneChain = [Humanoid.LeftShoulder, Humanoid.LeftElbow, Humanoid.LeftHand];
 
     /// <summary>The original prototype proportions used to convert its absolute animation keys. Playback retargets these clips to the current model through their reference measures.</summary>
     public static CharacterModel StudyReference()

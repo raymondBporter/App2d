@@ -209,7 +209,8 @@ public sealed class AnimationEditingTests
         var model = ResolvedModel.From(source);
         var preview = new SourceMotionPreview(sources);
         var first = preview.Sample(new(model.Base.Id, model, PoseEvaluator.Rest(model), clip), clip, 0).ToDictionary(p => p.Control, p => p.Point);
-        foreach (var control in source.Controls)
+        // Bone nodes (the left arm) derive their rest, so they follow their moved parents.
+        foreach (var control in source.Controls.Where(c => c.Node == RigNodeKinds.Point))
         {
             control.Rest = PuppetPoint.From(control.Rest.XYZ + new Vector3(3, 0, 0));
         }

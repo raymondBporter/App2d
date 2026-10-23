@@ -117,6 +117,7 @@ internal static partial class PlayerMoves
         // reference measures so playback retargets the legs, including after regeneration.
         var reference = CharacterModel.FromJson(person.ToJson());
         var study = PersonTemplate.StudyReference();
+        RigConversion.ToPointControls(reference, [.. reference.Controls.Where(c => c.Node == RigNodeKinds.Bone).Select(c => c.Id)]);
         foreach (var control in reference.Controls)
         {
             control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
