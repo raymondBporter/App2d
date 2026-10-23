@@ -50,7 +50,7 @@ public sealed class MonoGameImGuiPlatform : IImGuiPlatform
 
     public void Dispose()
     {
-        _game.Window.TextInput -= OnTextInput;
+        if (_game.Window is { } window) window.TextInput -= OnTextInput;
         _characters.Clear();
     }
 }

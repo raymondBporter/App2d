@@ -3,6 +3,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Shapes;
+using App2d.Core.Curves;
 using ImGuiNET;
 using System.Numerics;
 
@@ -285,11 +286,18 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 session.Edit(document, () => ModelAuthoring.SetPartKind(document.Asset, partId, kind));
                 return;
             }
-            if (Ui.Combo("Attach to", part.A, controls) is { } a) session.Edit(document, () => { Part(document, partId).A = a; document.Asset.Validate(); });
-            if (!PuppetPartKinds.IsStroke(part.Kind) && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
-                session.Edit(document, () => { var edited = Part(document, partId); edited.Frame = bone == "(none)" ? null : bone; if (edited.Frame is not null) edited.B = null; document.Asset.Validate(); });
-            if (Ui.Combo(PuppetPartKinds.IsStroke(part.Kind) ? "End" : "Point toward", part.B ?? "(none)", PuppetPartKinds.IsStroke(part.Kind) ? controls : controls.Prepend("(none)")) is { } b)
-                session.Edit(document, () => { var edited = Part(document, partId); edited.B = b == "(none)" ? null : b; if (edited.B is not null) edited.Frame = null; document.Asset.Validate(); });
+            if (part.Geometry is RoundedPolylineCurveDefinition2D rounded && part.Bindings?.Count == rounded.Points.Count)
+                RoundedPathFields(document, part);
+            else
+            {
+                if (Ui.Combo("Attach to", part.A, controls) is { } a) session.Edit(document, () => { Part(document, partId).A = a; document.Asset.Validate(); });
+                if (!PuppetPartKinds.IsStroke(part.Kind) && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
+                    session.Edit(document, () => { var edited = Part(document, partId); edited.Frame = bone == "(none)" ? null : bone; if (edited.Frame is not null) edited.B = null; document.Asset.Validate(); });
+                if (Ui.Combo(PuppetPartKinds.IsStroke(part.Kind) ? "End" : "Point toward", part.B ?? "(none)", PuppetPartKinds.IsStroke(part.Kind) ? controls : controls.Prepend("(none)")) is { } b)
+                    session.Edit(document, () => { var edited = Part(document, partId); edited.B = b == "(none)" ? null : b; if (edited.B is not null) edited.Frame = null; document.Asset.Validate(); });
+                if (part.Geometry is CurveDefinition2D && part.Bindings is not { Count: > 0 } && ImGui.Button("Make rounded control path"))
+                    session.Edit(document, () => { ModelAuthoring.SetRoundedPath(Part(document, partId), [part.A, part.B!]); document.Asset.Validate(); });
+            }
             if (part.Frame is not null)
             {
                 var degrees = part.Angle * 180f / MathF.PI;
@@ -308,6 +316,34 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
     }
 
     private static PuppetPart Part(AssetDocument<CharacterModel> document, string id) => document.Asset.Parts.First(p => p.Id == id);
+
+    private void RoundedPathFields(AssetDocument<CharacterModel> document, PuppetPart part)
+    {
+        var rounded = (RoundedPolylineCurveDefinition2D)part.Geometry!;
+        var path = part.Bindings!.OrderBy(b => b.Point).Select(b => b.Control).ToList();
+        var controls = document.Asset.Controls.Select(c => c.Id).ToArray();
+        void Edit(Action<List<string>> edit) => session.Edit(document, () =>
+        {
+            var next = new List<string>(path); edit(next);
+            ModelAuthoring.SetRoundedPath(Part(document, part.Id), next, rounded.Softness); document.Asset.Validate();
+        });
+        Ui.Help("Ordered drawing controls. Rounding follows the pose without changing IK or adding motion.");
+        for (var i = 0; i < path.Count; i++)
+        {
+            var index = i; ImGui.PushID("path-point-" + i);
+            if (Ui.Combo("Control " + (i + 1), path[i], controls.Where(c => c == path[index] || !path.Contains(c))) is { } control)
+                Edit(next => next[index] = control);
+            if (path.Count < 64 && Ui.Combo("Insert after", "(choose control)", controls.Where(c => !path.Contains(c))) is { } added)
+                Edit(next => next.Insert(index + 1, added));
+            if (Ui.Button("Remove", path.Count > 2)) Edit(next => next.RemoveAt(index));
+            ImGui.PopID();
+        }
+        if (ImGui.Button("Convert to straight stroke")) session.Edit(document, () =>
+        {
+            var edited = Part(document, part.Id); edited.Bindings = null;
+            edited.Geometry = new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }; document.Asset.Validate();
+        });
+    }
 
     private string _newSet = "";
 
@@ -393,6 +429,13 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             if (ImGui.SliderFloat("##" + label, ref value, min, max, "%.3f")) change(p => set(p, value));
         }
         Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => { if (overrides is null) PartGeometry.ResizeRoundedRectangle(p, v, p.Height); p.Width = v; }, o => o.Width = null);
+        if (overrides is null && part.Geometry is RoundedPolylineCurveDefinition2D roundedCurve)
+        {
+            Float("Bend softness", roundedCurve.Softness, 0, 1, false,
+                (p, v) => p.Geometry = ((RoundedPolylineCurveDefinition2D)p.Geometry!) with { Softness = v }, _ => { });
+            var sections = part.CurveSections;
+            if (ImGui.SliderInt("Curve sections", ref sections, 2, 128)) change(p => p.CurveSections = sections);
+        }
         if (!PuppetPartKinds.IsStroke(part.Kind))
         {
             Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => { if (overrides is null) PartGeometry.ResizeRoundedRectangle(p, p.Width, v); p.Height = v; }, o => o.Height = null);
@@ -727,7 +770,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
     private static void Outline(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
         var outline = PartGeometry.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]).Select(p => frame.Screen(p)).ToArray();
-        for (var i = 0; i < outline.Length; i++) frame.Draw.AddLine(outline[i], outline[(i + 1) % outline.Length], Ui.Color(232, 169, 55), 2);
+        var segments = part.Geometry is CurveDefinition2D ? outline.Length - 1 : outline.Length;
+        for (var i = 0; i < segments; i++) frame.Draw.AddLine(outline[i], outline[(i + 1) % outline.Length], Ui.Color(232, 169, 55), 2);
     }
 
     private static Vector3 BoneTip(ModelControl control, EvaluatedPose pose)

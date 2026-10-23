@@ -156,6 +156,28 @@ public sealed class SideScrollerSession2DTests
         Assert.True(landings[0].ImpactSpeed > 0f);
     }
 
+    [Fact]
+    public void AirJumpReportsTakeoffPositionOnlyForTheExtraJump()
+    {
+        using var game = new Fixture();
+        game.Step();
+        game.Step();
+        var groundJump = game.Step(Command(held: true));
+        Assert.Single(groundJump.Events.OfType<JumpStarted2D>());
+        Assert.Empty(groundJump.Events.OfType<AirJumpStarted2D>());
+        for (var i = 0; i < 12; i++) game.Step(Command(held: true));
+        game.Step();
+        var takeoff = game.Person.Position;
+        var airJump = game.Step(Command(held: true));
+        var cloud = Assert.Single(airJump.Events.OfType<AirJumpStarted2D>());
+        Assert.Equal(takeoff, cloud.Position);
+        Assert.Equal(game.Person.Id, cloud.Stamp.EntityId);
+        Assert.Single(airJump.Events.OfType<JumpStarted2D>());
+        Assert.Empty(game.Step(Command(held: true)).Events.OfType<AirJumpStarted2D>());
+        game.Step();
+        Assert.Empty(game.Step(Command(held: true)).Events.OfType<AirJumpStarted2D>());
+    }
+
     private static PersonCommand2D Command(float move = 0f, bool jump = false, bool held = false, bool attack = false) =>
         new() { MoveX = move, JumpHeld = jump || held, PrimaryHeld = attack };
 

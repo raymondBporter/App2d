@@ -13,6 +13,7 @@ namespace App2d.Core.Curves;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(LineCurveDefinition2D), CurveKinds2D.Line)]
 [JsonDerivedType(typeof(PolylineCurveDefinition2D), CurveKinds2D.Polyline)]
+[JsonDerivedType(typeof(RoundedPolylineCurveDefinition2D), CurveKinds2D.RoundedPolyline)]
 [JsonDerivedType(typeof(ArcCurveDefinition2D), CurveKinds2D.Arc)]
 [JsonDerivedType(typeof(QuadraticBezierCurveDefinition2D), CurveKinds2D.QuadraticBezier)]
 [JsonDerivedType(typeof(CubicBezierCurveDefinition2D), CurveKinds2D.CubicBezier)]
@@ -45,6 +46,10 @@ public abstract record CurveDefinition2D : GeometryDefinition2D
         PolylineCurve2D polyline => new PolylineCurveDefinition2D
         {
             Points = [.. polyline.Points]
+        },
+        RoundedPolylineCurve2D rounded => new RoundedPolylineCurveDefinition2D
+        {
+            Points = [.. rounded.Points], Softness = rounded.Softness
         },
         Arc2D arc => new ArcCurveDefinition2D
         {
@@ -87,6 +92,13 @@ public sealed record PolylineCurveDefinition2D : CurveDefinition2D
 {
     public required List<Vector2> Points { get; init; }
     public override ICurve2D Build() => new PolylineCurve2D(Points);
+}
+
+public sealed record RoundedPolylineCurveDefinition2D : CurveDefinition2D
+{
+    public required List<Vector2> Points { get; init; }
+    public float Softness { get; init; } = 1;
+    public override ICurve2D Build() => new RoundedPolylineCurve2D(Points, Softness);
 }
 
 public sealed record ArcCurveDefinition2D : CurveDefinition2D

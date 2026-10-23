@@ -27,6 +27,29 @@ public sealed class EditorSessionTests : IDisposable
     private static void Ok(EditorSession session, bool result) => Assert.True(result, session.Message);
 
     [Fact]
+    public void RoundedPathEditsUndoAndReopenWithoutChangingClipCompatibility()
+    {
+        var session = Session(); session.Open("person");
+        var document = session.Assets.Model("person")!;
+        var signature = ModelAuthoring.StructureSignature(document.Asset);
+        session.Edit(document, () =>
+        {
+            var part = document.Asset.Parts.Single(p => p.Id == "left-arm");
+            ModelAuthoring.SetRoundedPath(part, ["left-shoulder", "left-elbow", "left-hand"], .7f);
+            part.CurveSections = 18;
+        });
+        session.Undo();
+        Assert.Equal(20, document.Asset.Parts.Single(p => p.Id == "left-arm").CurveSections);
+        session.Redo(); Ok(session, session.Save(document));
+        var reopened = AuthoringWorkspace.Open(_root);
+        var restored = reopened.Model("person")!.Asset;
+        Assert.Equal(signature, ModelAuthoring.StructureSignature(restored));
+        Assert.Equal(18, restored.Parts.Single(p => p.Id == "left-arm").CurveSections);
+        Assert.True(reopened.CanPlay("person-walk", "person", out _));
+        Assert.Empty(reopened.LoadErrors);
+    }
+
+    [Fact]
     public void PingPongPreviewShowsTheLoopingClipsFarEndBeforeReversing()
     {
         var session = Session(); session.Open("person-walk");

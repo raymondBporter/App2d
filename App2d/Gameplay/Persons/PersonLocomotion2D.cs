@@ -53,6 +53,7 @@ public sealed partial class PersonLocomotion2D
 
     public TraversalMetrics2D Metrics { get; }
     public event Action? JumpStarted;
+    public event Action? AirJumpStarted;
     public event Action<float>? Landed;
     public bool IsGrounded { get; private set; }
     /// <summary>The velocity of the ground under the person (a moving platform's), or zero when airborne.</summary>
@@ -348,6 +349,8 @@ public sealed partial class PersonLocomotion2D
         _coyoteTime = 0f;
         IsGrounded = false;
         JumpStarted?.Invoke();
+        if (!isGroundJump)
+            AirJumpStarted?.Invoke();
     }
 
     private void TryConsumeBufferedWallJump()

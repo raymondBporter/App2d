@@ -227,148 +227,164 @@
       "material": {}
     },
     {
-      "id": "left-shoulder-left-elbow",
+      "id": "left-arm",
       "a": "left-shoulder",
-      "b": "left-elbow",
-      "width": 0.045,
-      "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
-      },
-      "material": {}
-    },
-    {
-      "id": "left-elbow-left-hand",
-      "a": "left-elbow",
       "b": "left-hand",
       "width": 0.045,
       "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
+        "kind": "rounded-polyline",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 0,
+            "y": 0.5
+          },
+          {
+            "x": 0,
+            "y": 1
+          }
+        ],
+        "softness": 1
       },
-      "material": {}
+      "material": {},
+      "bindings": [
+        {
+          "point": 0,
+          "control": "left-shoulder"
+        },
+        {
+          "point": 1,
+          "control": "left-elbow"
+        },
+        {
+          "point": 2,
+          "control": "left-hand"
+        }
+      ],
+      "curveSections": 20
     },
     {
-      "id": "left-hip-left-knee",
+      "id": "left-leg",
       "a": "left-hip",
-      "b": "left-knee",
-      "width": 0.045,
-      "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
-      },
-      "material": {}
-    },
-    {
-      "id": "left-knee-left-foot",
-      "a": "left-knee",
       "b": "left-foot",
       "width": 0.045,
       "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
+        "kind": "rounded-polyline",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 0,
+            "y": 0.5
+          },
+          {
+            "x": 0,
+            "y": 1
+          }
+        ],
+        "softness": 1
       },
-      "material": {}
+      "material": {},
+      "bindings": [
+        {
+          "point": 0,
+          "control": "left-hip"
+        },
+        {
+          "point": 1,
+          "control": "left-knee"
+        },
+        {
+          "point": 2,
+          "control": "left-foot"
+        }
+      ],
+      "curveSections": 20
     },
     {
-      "id": "right-shoulder-right-elbow",
+      "id": "right-arm",
       "a": "right-shoulder",
-      "b": "right-elbow",
-      "width": 0.045,
-      "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
-      },
-      "material": {}
-    },
-    {
-      "id": "right-elbow-right-hand",
-      "a": "right-elbow",
       "b": "right-hand",
       "width": 0.045,
       "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
+        "kind": "rounded-polyline",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 0,
+            "y": 0.5
+          },
+          {
+            "x": 0,
+            "y": 1
+          }
+        ],
+        "softness": 1
       },
-      "material": {}
+      "material": {},
+      "bindings": [
+        {
+          "point": 0,
+          "control": "right-shoulder"
+        },
+        {
+          "point": 1,
+          "control": "right-elbow"
+        },
+        {
+          "point": 2,
+          "control": "right-hand"
+        }
+      ],
+      "curveSections": 20
     },
     {
-      "id": "right-hip-right-knee",
+      "id": "right-leg",
       "a": "right-hip",
-      "b": "right-knee",
-      "width": 0.045,
-      "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
-      },
-      "material": {}
-    },
-    {
-      "id": "right-knee-right-foot",
-      "a": "right-knee",
       "b": "right-foot",
       "width": 0.045,
       "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
+        "kind": "rounded-polyline",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 0,
+            "y": 0.5
+          },
+          {
+            "x": 0,
+            "y": 1
+          }
+        ],
+        "softness": 1
       },
-      "material": {}
+      "material": {},
+      "bindings": [
+        {
+          "point": 0,
+          "control": "right-hip"
+        },
+        {
+          "point": 1,
+          "control": "right-knee"
+        },
+        {
+          "point": 2,
+          "control": "right-foot"
+        }
+      ],
+      "curveSections": 20
     },
     {
       "id": "body",

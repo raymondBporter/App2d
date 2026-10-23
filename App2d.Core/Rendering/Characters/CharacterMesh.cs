@@ -44,6 +44,8 @@ public sealed class CharacterMesh(int initialCapacity = 32768)
     public void Path(IReadOnlyList<Vector3> points, Color color, float startWidth, float? endWidth = null) =>
         _geometry.Path(points, color, startWidth, endWidth);
 
+    public void Ribbon(IReadOnlyList<Vector3> points, Color color, float width) => _geometry.Ribbon(points, color, width);
+
     public void Shell(Vector3 center, IReadOnlyList<Vector3> contour, float depth, Color color) =>
         _geometry.Shell(center, contour, depth, color);
 

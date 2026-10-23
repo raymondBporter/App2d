@@ -6,6 +6,19 @@ namespace App2d.Tests.Geometry;
 public sealed class TriangleMeshBuilder3DTests
 {
     [Fact]
+    public void RibbonSharesCrossSectionsKeepsDepthAndCapsOnlyTheEnds()
+    {
+        var builder = new TriangleMeshBuilder3D<Vector3, byte>((point, _, _) => point);
+        builder.Ribbon([new(0, 0, 0), new(1, 0, 1), new(2, 0, 2)], 0, .2f);
+        Assert.Equal(28, builder.TriangleCount);
+        Assert.Equal(-.1f, builder.Min.Y, 5); Assert.Equal(.1f, builder.Max.Y, 5);
+        Assert.Equal(0, builder.Min.Z); Assert.Equal(2, builder.Max.Z);
+        Assert.All(builder.Vertices.ToArray(), p => Assert.True(float.IsFinite(p.X + p.Y + p.Z)));
+        builder.Clear(); builder.Ribbon([Vector3.Zero, Vector3.Zero, Vector3.Zero], 0, .2f);
+        Assert.All(builder.Vertices.ToArray(), p => Assert.True(float.IsFinite(p.X + p.Y + p.Z)));
+    }
+
+    [Fact]
     public void IndexedTwoDimensionalMeshCanBePlacedAndColoredInThreeDimensions()
     {
         var source = TriangleMesh2D.TriangulateSimplePolygon(

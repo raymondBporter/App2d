@@ -147,6 +147,32 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         }
     }
 
+    /// <summary>A constant-width ribbon in XY with shared cross-sections and round end caps. Intended for sampled smooth paths.</summary>
+    public void Ribbon(IReadOnlyList<Vector3> points, TMaterial material, float width)
+    {
+        ArgGuard.ThrowIfNull(points); ArgGuard.ThrowIfNotFiniteOrNegative(width);
+        if (points.Count == 0 || width == 0) return;
+        var radius = width / 2;
+        Vector3 Offset(int i)
+        {
+            var delta = points[Math.Min(i + 1, points.Count - 1)] - points[Math.Max(0, i - 1)];
+            var tangent = new Vector2(delta.X, delta.Y);
+            if (tangent.LengthSquared() < 1e-12f && i + 1 < points.Count)
+            { delta = points[i + 1] - points[i]; tangent = new(delta.X, delta.Y); }
+            tangent = tangent.LengthSquared() > 1e-12f ? Vector2.Normalize(tangent) : Vector2.UnitY;
+            return new(-tangent.Y * radius, tangent.X * radius, 0);
+        }
+        var previous = Offset(0);
+        for (var i = 1; i < points.Count; i++)
+        {
+            var next = Offset(i);
+            Triangle(points[i - 1] + previous, points[i - 1] - previous, points[i] + next, material);
+            Triangle(points[i - 1] - previous, points[i] - next, points[i] + next, material);
+            previous = next;
+        }
+        Disk(points[0], radius, material); Disk(points[^1], radius, material);
+    }
+
     /// <summary>Rounds a center-to-contour sheet into negative Z; the contour is an open sequence.</summary>
     public void Shell(Vector3 center, IReadOnlyList<Vector3> contour, float depth, TMaterial material)
     {

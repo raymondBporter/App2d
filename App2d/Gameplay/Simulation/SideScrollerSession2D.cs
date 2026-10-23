@@ -307,6 +307,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
         public void Subscribe(SideScrollerSession2D session)
         {
             void onJump() => session._events.Add(new JumpStarted2D(session.Stamp(this)));
+            void onAirJump() => session._events.Add(new AirJumpStarted2D(session.Stamp(this), Person.Position));
             void onLanded(float speed) => session._events.Add(new Landed2D(session.Stamp(this), speed));
             void onFootstep() => session._events.Add(new Footstep2D(session.Stamp(this)));
             void onDamaged() => session._events.Add(new Damaged2D(session.Stamp(this)));
@@ -319,6 +320,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
                 Attack(kind == UnarmedAttackKind2D.Punch ? PlayerAttackKind2D.Punch : PlayerAttackKind2D.Kick, duration);
 
             Person.JumpStarted += onJump; _unsubscribe.Add(() => Person.JumpStarted -= onJump);
+            Person.AirJumpStarted += onAirJump; _unsubscribe.Add(() => Person.AirJumpStarted -= onAirJump);
             Person.Landed += onLanded; _unsubscribe.Add(() => Person.Landed -= onLanded);
             Person.Footstep += onFootstep; _unsubscribe.Add(() => Person.Footstep -= onFootstep);
             Person.Damaged += onDamaged; _unsubscribe.Add(() => Person.Damaged -= onDamaged);

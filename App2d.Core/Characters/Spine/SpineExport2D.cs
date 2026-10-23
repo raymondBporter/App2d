@@ -256,6 +256,8 @@ public static class SpineExport2D
             "The .app2d.json companion is a native backup, not a merge format. Spine does not preserve its contents. Keep it for procedural geometry, contacts, sockets, model metadata and 3D orientation. Entity equipment and game bindings remain in the native asset library.",
             "Export back from Spine with Nonessential data checked, then import the JSON into Character Studio as a new model." };
         if (!nativeImages) notes.Add($"Procedural artwork is rasterized at {pixelsPerUnit} pixels per model unit. Two-point artwork is carried by editable helper bones sampled at {samplesPerSecond} Hz; edit those helper bones in Spine. Z becomes per-attachment slot order, so intersecting surfaces may differ.");
+        if (model.Parts.Any(p => p.Geometry is App2d.Core.Curves.RoundedPolylineCurveDefinition2D && p.Bindings is { Count: > 0 }))
+            notes.Add("Rounded control paths are rasterized in the setup pose. Interior curve deformation is not represented by Spine region attachments; the editable paths and bindings are preserved in the native backup.");
         if (!exact) notes.Add($"Point IK, contacts and proportion retargeting are baked to bone timelines at {samplesPerSecond} Hz, including key and contact boundaries. They remain editable animation, but their original solver relationships are in the native backup.");
         if (clips.Any(c => c.Tracks.Any(t => t.Kind == MotionClip.OrientKind))) notes.Add("3D socket orientation has no Spine equivalent and is retained only in the native backup.");
         if (animationNames.Any(p => p.Key.Name != p.Value)) notes.Add("Duplicate animation display names are disambiguated with their native clip IDs in the Spine JSON.");

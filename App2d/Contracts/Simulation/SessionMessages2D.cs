@@ -81,6 +81,7 @@ public sealed record EnemyOccurred2D(SessionEventStamp2D Stamp, EnemyEvent2D Occ
 public sealed record CombatDamageOccurred2D(SessionEventStamp2D Stamp, CombatDamage2D Damage) : SessionEvent2D(Stamp);
 public sealed record WeaponOccurred2D(SessionEventStamp2D Stamp, WeaponEvent2D Occurrence) : SessionEvent2D(Stamp);
 public sealed record JumpStarted2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
+public sealed record AirJumpStarted2D(SessionEventStamp2D Stamp, Vector2 Position) : SessionEvent2D(Stamp);
 public sealed record Landed2D(SessionEventStamp2D Stamp, float ImpactSpeed) : SessionEvent2D(Stamp);
 public sealed record Footstep2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
 public sealed record Damaged2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);

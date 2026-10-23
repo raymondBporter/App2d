@@ -40,6 +40,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private readonly SpellPresentation2D _spells;
     private readonly EnemyPresentation2D _enemies;
     private readonly CombatContactPresentation2D _contacts;
+    private readonly AirJumpCloud2D _jumpCloud;
     private readonly WorldPresentation2D _world;
     private SoundEffectVoice2D _jumpSound;
     private float _saveFeedbackSeconds;
@@ -70,6 +71,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _spells.Apply(initialState.Person, []);
         _enemies = new EnemyPresentation2D(scene, textures, traversal, WorldSounds);
         _contacts = new CombatContactPresentation2D(scene);
+        _jumpCloud = new AirJumpCloud2D(scene);
         _enemies.ApplyState(initial.Enemies, [], initial.Tick);
         ApplyPlayerState();
     }
@@ -128,6 +130,9 @@ internal sealed class SideScrollerClient2D : IDisposable
                     EndJumpSound();
                     _jumpSound = _sounds.Begin(SoundEffect2D.PlayerJump, 0.3f);
                     break;
+                case AirJumpStarted2D jump when isMine:
+                    _jumpCloud.Present(jump.Position - new Vector2(0, _traversal.PlayerColliderSize.Y * .5f));
+                    break;
                 case Landed2D landed when isMine:
                     EndJumpSound();
                     _sounds.Play(landed.ImpactSpeed >= _traversal.HardLandingSpeed
@@ -157,6 +162,7 @@ internal sealed class SideScrollerClient2D : IDisposable
                     _weapons.Reset();
                     _spells.Reset();
                     _contacts.Reset();
+                    _jumpCloud.Reset();
                     _enemies.ResetContact();
                     break;
                 case GoalReached2D when isMine: _sounds.Play(SoundEffect2D.GoalReached); _presentation.PlayCelebrate(); break;
@@ -191,6 +197,8 @@ internal sealed class SideScrollerClient2D : IDisposable
         Ballistics.Advance(deltaSeconds);
         _enemies.Advance(deltaSeconds);
         _contacts.Advance(deltaSeconds);
+        _jumpCloud.Advance(deltaSeconds,
+            State.Person.Position - new Vector2(0, _traversal.PlayerColliderSize.Y * .5f));
         _weapons.Advance(deltaSeconds);
         _spells.Advance(deltaSeconds);
         _presentation.Advance(deltaSeconds);
@@ -220,6 +228,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _weapons.Suspend();
         _spells.Reset();
         _contacts.Reset();
+        _jumpCloud.Reset();
         _enemies.ResetContact(); _presentation.ResetContact();
         _input.Reset();
     }
@@ -274,6 +283,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _world.Dispose();
         _enemies.Dispose();
         _contacts.Dispose();
+        _jumpCloud.Dispose();
         _weapons.Dispose();
         _spells.Dispose();
         _presentation.Dispose();

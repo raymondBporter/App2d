@@ -10,6 +10,7 @@ public sealed class CurveDefinition2DTests
     public static TheoryData<string> BuiltInCurves =>
     [
         CurveKinds2D.Line,
+        CurveKinds2D.RoundedPolyline,
         CurveKinds2D.Arc,
         CurveKinds2D.QuadraticBezier,
         CurveKinds2D.CubicBezier,
@@ -19,6 +20,7 @@ public sealed class CurveDefinition2DTests
     private static ICurve2D CreateCurve(string kind) => kind switch
     {
         CurveKinds2D.Line => new LineSegmentCurve2D(new(-2, 1), new(3, 4)),
+        CurveKinds2D.RoundedPolyline => new RoundedPolylineCurve2D([new(0, 0), new(1, 0), new(1, 2)], .7f),
         CurveKinds2D.Arc => new Arc2D(new(1, -2), 3, .25f, -2.5f),
         CurveKinds2D.QuadraticBezier => new QuadraticBezier2D(new(0, 0), new(2, 3), new(4, 0)),
         CurveKinds2D.CubicBezier => new CubicBezier2D(new(0, 0), new(1, 3), new(3, -2), new(5, 1)),

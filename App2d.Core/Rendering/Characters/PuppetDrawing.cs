@@ -105,6 +105,13 @@ public sealed class PuppetDrawing
             {
                 var path = PartGeometry.Contour(part, world);
                 var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink;
+                if (part.Geometry is RoundedPolylineCurveDefinition2D)
+                {
+                    if (outline is not null && outlineWidth > 0) Mesh.Ribbon(path, outlineColor, part.Width + outlineWidth * 2);
+                    Mesh.Ribbon(path, strokeColor, part.Width);
+                    if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
+                    continue;
+                }
                 for (var i = 1; i < path.Count; i++)
                 {
                     if (outline is not null && outlineWidth > 0)

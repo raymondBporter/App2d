@@ -1,4 +1,5 @@
 using App2d.Core.Mathematics;
+using App2d.Core.Curves;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -91,7 +92,7 @@ public static class ModelAuthoring
         if (model.IkChains.FirstOrDefault(c => c.Root == id || c.Joint == id || c.End == id || c.Frame == id) is { } chain) throw new InvalidOperationException($"{owner}: chain '{chain.Id}' uses '{id}'.");
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
         if (model.Parts.FirstOrDefault(p => p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true) is { } bound)
-            throw new InvalidOperationException($"{owner}: cutout '{bound.Id}' uses '{id}'; detach its points first.");
+            throw new InvalidOperationException($"{owner}: part '{bound.Id}' uses '{id}'; detach its points first.");
         if (model.Slots.FirstOrDefault(s => s.Bone == id) is { } slot) throw new InvalidOperationException($"{owner}: slot '{slot.Id}' uses '{id}'. Move or remove the slot first.");
         var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);
@@ -181,6 +182,7 @@ public static class ModelAuthoring
     {
         EntityVocabulary.Require(kind, PuppetPartKinds.All, "part.kind");
         var part = model.Parts.First(p => p.Id == id);
+        if (part.Geometry is RoundedPolylineCurveDefinition2D) part.Bindings = null;
         if (kind != PuppetPartKinds.Polygon && part.Bindings is { Count: > 0 })
             throw new InvalidOperationException("Detach cutout points before changing to a rigid primitive.");
         if (PuppetPartKinds.IsStroke(kind) && (part.B is null || part.B == part.A))
@@ -196,6 +198,22 @@ public static class ModelAuthoring
         if (part.Geometry is ShapeDefinition2D && part.Material is { Fill: null, Outline: null })
             part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Validate();
+    }
+
+    /// <summary>Author a drawing path over existing controls. It consumes the pose; it does not create or solve IK.</summary>
+    public static void SetRoundedPath(PuppetPart part, IReadOnlyList<string> controls, float softness = 1)
+    {
+        if (controls.Count is < 2 or > 64 || controls.Any(string.IsNullOrWhiteSpace) || controls.Distinct().Count() != controls.Count)
+            throw new InvalidDataException("A drawing path needs 2 to 64 distinct controls.");
+        var geometry = new RoundedPolylineCurveDefinition2D
+        {
+            Points = [.. Enumerable.Range(0, controls.Count).Select(i => new Vector2(0, i / (float)(controls.Count - 1)))],
+            Softness = softness
+        };
+        _ = geometry.Build();
+        part.A = controls[0]; part.B = controls[^1]; part.Frame = null; part.Kind = PuppetPartKinds.Stroke;
+        part.Geometry = geometry;
+        part.Bindings = [.. controls.Select((id, i) => new PartPointBinding { Point = i, Control = id })];
     }
 
     /// <summary>Edits the perimeter and remaps attachments in the same transaction. New points inherit their preceding attachment.</summary>

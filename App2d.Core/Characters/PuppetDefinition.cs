@@ -75,7 +75,7 @@ public sealed record PartPaint
     }
 }
 
-/// <summary>One cutout perimeter point follows a control frame; its rest offset is derived from the drawing.</summary>
+/// <summary>A cutout point follows a control frame with its rest offset; a rounded-curve point pins to the control position.</summary>
 public sealed record PartPointBinding
 {
     public int Point { get; set; }
@@ -108,8 +108,10 @@ public sealed record PuppetPart
     public float OffsetY { get; set; }
     public float Depth { get; set; }
     public List<PartPaint>? Paint { get; set; }
-    /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
+    /// <summary>Cutout points follow attachment frames; rounded-curve points pin directly to named controls.</summary>
     public List<PartPointBinding>? Bindings { get; set; }
+    /// <summary>Base sampling density for rounded curves; exact fillet boundaries are added by the curve library.</summary>
+    public int CurveSections { get; set; } = 20;
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
@@ -135,6 +137,8 @@ public sealed record PuppetPart
                 throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
         }
         if (Geometry is CurveDefinition2D curve) _ = curve.Build();
+        if (CurveSections is < 2 or > 128) throw new InvalidDataException("Curve sections must be between 2 and 128.");
+        if (Geometry is RoundedPolylineCurveDefinition2D { Points.Count: > 64 }) throw new InvalidDataException("A character curve supports at most 64 points.");
         var linkedStroke = Geometry is CurveDefinition2D;
         if (linkedStroke && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
         if (linkedStroke && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
@@ -148,12 +152,16 @@ public sealed record PuppetPart
         PartPaint.Check(Paint);
         if (Bindings is { Count: > 0 })
         {
-            if (Geometry is not SimplePolygonShapeDefinition2D) throw new InvalidDataException("Point attachments require a cutout.");
+            if (Geometry is not SimplePolygonShapeDefinition2D and not RoundedPolylineCurveDefinition2D)
+                throw new InvalidDataException("Point attachments require a cutout or rounded curve.");
+            var pointCount = Geometry is RoundedPolylineCurveDefinition2D rounded ? rounded.Points.Count : PartGeometry.CutoutPoints(this).Count;
             var seen = new HashSet<int>();
             foreach (var binding in Bindings)
             {
-                if (binding is null || binding.Point < 0 || binding.Point >= PartGeometry.CutoutPoints(this).Count || !seen.Add(binding.Point))
-                    throw new InvalidDataException("Cutout attachments need unique valid point indices.");
+                if (binding is null || binding.Point < 0 || binding.Point >= pointCount || !seen.Add(binding.Point))
+                    throw new InvalidDataException("Point attachments need unique valid point indices.");
+                if (Geometry is RoundedPolylineCurveDefinition2D && binding.Toward is not null)
+                    throw new InvalidDataException("Curve points pin to controls; they do not use a toward frame.");
                 if (!isControl(binding.Control) || binding.Toward is not null && !isControl(binding.Toward))
                     throw new InvalidDataException("Unknown cutout attachment control.");
                 if (binding.Control == binding.Toward) throw new InvalidDataException("An attachment must point toward a different control.");

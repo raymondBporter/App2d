@@ -16,6 +16,9 @@ internal static class Program
         {
             switch (args)
             {
+                case ["--smoke-rounded-paths", var curveOutput]:
+                    using (var proofs = new ProofRenders(FindAssets(preferSource: true), Path.GetFullPath(curveOutput), ProofRenders.Mode.RoundedPaths)) proofs.Run();
+                    return 0;
                 case ["--write-pterosaur", var flyingRoot]: PterosaurTemplate.Write(Path.GetFullPath(flyingRoot)); return 0;
                 case ["--smoke-editor-surface", var surfaceOutput]:
                     Editor.EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput)); return 0;

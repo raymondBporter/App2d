@@ -152,6 +152,11 @@ public static class PartGeometry
     {
         if (part.Geometry is CurveDefinition2D curve)
         {
+            if (curve is RoundedPolylineCurveDefinition2D rounded)
+            {
+                var (path, depths) = RoundedCurve(part, rounded, world);
+                return path.SampleParameters(part.CurveSections).Select(t => new Vector3(path.Evaluate(t), path.Interpolate(depths, t) + part.Depth)).ToList();
+            }
             var a = world(part.A); var b = world(part.B!);
             var across = new Vector2(b.Y - a.Y, a.X - b.X);
             var along = new Vector2(b.X - a.X, b.Y - a.Y);
@@ -208,6 +213,15 @@ public static class PartGeometry
         var p = new Vector2(point.X, point.Y);
         if (part.Geometry is CurveDefinition2D curve)
         {
+            if (curve is RoundedPolylineCurveDefinition2D)
+            {
+                // Pick the same sampled path that is drawn, including its pinned interior controls.
+                var path = Contour(part, world);
+                var nearest = float.PositiveInfinity;
+                for (var i = 1; i < path.Count; i++)
+                    nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, new(path[i - 1].X, path[i - 1].Y), new(path[i].X, path[i].Y), 1e-10f));
+                return nearest / MathF.Max(part.Width, .06f);
+            }
             var a = world(part.A); var b = world(part.B!);
             var origin = new Vector2(a.X, a.Y);
             var along = new Vector2(b.X - a.X, b.Y - a.Y);
@@ -285,6 +299,24 @@ public static class PartGeometry
         var up = new Vector2(direction.X, direction.Y);
         up = up.LengthSquared() > 1e-10f ? Vector2.Normalize(up) : Vector2.UnitY;
         return new(origin, new(up.Y, -up.X), up, 0);
+    }
+
+    private static (RoundedPolylineCurve2D Curve, float[] Depths) RoundedCurve(PuppetPart part, RoundedPolylineCurveDefinition2D definition, Func<string, Vector3> world)
+    {
+        var a = world(part.A); var b = world(part.B!);
+        var along = new Vector2(b.X - a.X, b.Y - a.Y); var across = new Vector2(along.Y, -along.X);
+        var points = new Vector2[definition.Points.Count]; var depths = new float[points.Length];
+        for (var i = 0; i < points.Length; i++)
+        {
+            var p = definition.Points[i];
+            points[i] = new Vector2(a.X, a.Y) + across * p.X + along * p.Y;
+            depths[i] = a.Z + (b.Z - a.Z) * p.Y;
+        }
+        foreach (var binding in part.Bindings ?? [])
+        {
+            var p = world(binding.Control); points[binding.Point] = new(p.X, p.Y); depths[binding.Point] = p.Z;
+        }
+        return (new RoundedPolylineCurve2D(points, definition.Softness), depths);
     }
 
 

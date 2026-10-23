@@ -278,6 +278,13 @@ internal sealed class EditorSmoke(string output)
                 var pose = PoseEvaluator.Sample(reopened.Resolve("linkage"), reopened.Animations["linkage-move"], .5f);
                 Record(pose.Contacts.Count == 1 && Vector3.Distance(pose.World("tool"), target) < 1e-4f, "the reopened bone rig holds its contact target");
             }),
+            ("37-rounded-path-inspector", shell =>
+            {
+                var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.EditRig = false;
+                s.Selection.Part = "left-arm"; shell.Viewport.Fit(s.Evaluate("person"));
+                var part = s.SubjectModel!.Asset.Parts.Single(p => p.Id == "left-arm");
+                Record(part.Bindings?.Count == 3 && part.CurveSections == 20, "the Person arm exposes its rounded path in the existing part inspector");
+            }),
         ];
         return workspace;
     }

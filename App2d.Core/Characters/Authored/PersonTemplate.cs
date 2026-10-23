@@ -53,6 +53,15 @@ public static class PersonTemplate
             Parts = [.. study.Parts.Select(p => p with { })],
         };
         StarterContent.AddPersonExtras(model);
+        foreach (var side in new[] { "left", "right" })
+            foreach (var (start, joint, end, name) in new[] { ("shoulder", "elbow", "hand", "arm"), ("hip", "knee", "foot", "leg") })
+            {
+                var a = side + "-" + start; var b = side + "-" + joint; var c = side + "-" + end;
+                var part = model.Parts.Single(p => p.A == a && p.B == b);
+                model.Parts.RemoveAll(p => p.A == b && p.B == c);
+                part.Id = side + "-" + name;
+                ModelAuthoring.SetRoundedPath(part, [a, b, c]);
+            }
         model.Validate(); return model;
     }
 

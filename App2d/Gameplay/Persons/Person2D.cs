@@ -69,6 +69,7 @@ public sealed partial class Person2D : ICombatant2D
 
         _motor = new PersonLocomotion2D(collision, physics, Body, traversal, tileMap);
         _motor.JumpStarted += () => JumpStarted?.Invoke();
+        _motor.AirJumpStarted += () => AirJumpStarted?.Invoke();
         _motor.Landed += speed =>
         {
             LandingSpeedThisFrame = speed;
@@ -110,6 +111,7 @@ public sealed partial class Person2D : ICombatant2D
     };
 
     public event Action? JumpStarted;
+    public event Action? AirJumpStarted;
     public event Action<float>? Landed;
     public event Action? Footstep;
     public event Action? Damaged;

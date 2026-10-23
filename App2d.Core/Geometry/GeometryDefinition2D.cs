@@ -23,6 +23,7 @@ namespace App2d.Core.Geometry;
 [JsonDerivedType(typeof(CompositeShapeDefinition2D), ShapeKinds2D.Composite)]
 [JsonDerivedType(typeof(LineCurveDefinition2D), CurveKinds2D.Line)]
 [JsonDerivedType(typeof(PolylineCurveDefinition2D), CurveKinds2D.Polyline)]
+[JsonDerivedType(typeof(RoundedPolylineCurveDefinition2D), CurveKinds2D.RoundedPolyline)]
 [JsonDerivedType(typeof(ArcCurveDefinition2D), CurveKinds2D.Arc)]
 [JsonDerivedType(typeof(QuadraticBezierCurveDefinition2D), CurveKinds2D.QuadraticBezier)]
 [JsonDerivedType(typeof(CubicBezierCurveDefinition2D), CurveKinds2D.CubicBezier)]

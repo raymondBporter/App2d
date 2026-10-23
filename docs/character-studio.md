@@ -26,6 +26,30 @@ The transport's **Preview end** menu follows the clip's loop setting by default.
 Loop wraps to the beginning, and Ping pong plays to the end and back. A ping pong trip from start to end takes
 one clip duration. Preview speed and end mode are session settings; they do not change the saved clip.
 
+## Rounded drawing paths
+
+Person arms and legs use the shared `rounded-polyline` curve with 20 base sections and softness 1.
+Each curve point pins to an existing pose control through the part's `bindings`; drawing paths do not
+create or solve IK chains. The same path can use more points for a tail. In Model, select a limb to edit
+its ordered controls, insert/remove points, or change **Bend softness** and **Curve sections**. An ordinary
+stroke can become a path with **Make rounded control path**. These edits use normal undo, save and reopen.
+
+The curve library joins straight spans with quadratic Bezier fillets, limiting each corner's trim to
+48% of its shorter neighboring span. It samples exact fillet boundaries in addition to the base sections;
+section count is not an exact vertex count. Pose depth uses the same interpolation weights as XY.
+An intentional reverse turn must come from the controls; rounding adds no wobble. The Person torso and
+animation controls are unchanged. Torso deformation remains future work.
+
+`RoundedPolylineCurve2D` and its typed definition also work without characters. In a character part,
+unbound points retain the usual normalized A-to-B stroke frame, while bound points use their named
+control's XYZ position (curve bindings cannot use `toward`). Existing cutout bindings retain their
+rest-offset behavior. Drawing, selection and bounds share `PartGeometry.Contour`.
+
+Run `dotnet run --project App2d.CharacterStudio -- --smoke-rounded-paths artifacts/rounded-paths`
+for 24 before/after frames of walk, run, landing and sword motion through the game renderer, with close-up
+and game-scale figures. The report includes triangle counts. Spine region export currently rasterizes
+the setup curve; it does not preserve interior deformation, which remains in the native backup.
+
 ## Character layers
 
 Model controls, variant rest positions, appearance attachment origins, and animation translations are edited as
