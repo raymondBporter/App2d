@@ -455,6 +455,48 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Undo();
                 Record(Part("hair").Wave?.Amplitude == .06f, "removing the wave undoes");
             }),
+            ("39-canonical-bone-editing", shell =>
+            {
+                var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = true;
+                s.Selection.Select(control: "left-shoulder"); shell.Viewport.Fit(s.Evaluate("person"));
+                var doc = s.SubjectModel!;
+                ModelControl Control(string id) => doc.Asset.Controls.Single(c => c.Id == id);
+                Vector3 Rest(string id) => s.Assets.Resolve("person")!.Rest[id];
+                Record(Control("left-shoulder").Node == RigNodeKinds.Bone && Control("left-elbow").Link is { IsTip: true } && Control("left-hand").Link is { IsTip: true } && doc.Asset.Version == CharacterModel.CurrentVersion,
+                    "the Person left arm reads as a bone chain at version " + CharacterModel.CurrentVersion);
+                var before = doc.Serialize();
+                var hand = Rest("left-hand");
+                var elbow = Rest("left-elbow");
+                Check(s.Edit(doc, () => ModelAuthoring.ResizeBone(doc.Asset, "left-shoulder", Control("left-shoulder").Length + .2f)), s);
+                var stretched = Rest("left-elbow") - elbow;
+                Record(MathF.Abs(stretched.Length() - .2f) < 1e-4f && Vector3.Distance(Rest("left-hand") - hand, stretched) < 1e-4f, "lengthening the upper arm moves the bound elbow and hand by the same 0.2 without stretching");
+                Check(s.Edit(doc, () => ModelAuthoring.RotateRestBone(doc.Asset, "left-shoulder", -MathF.PI / 2)), s);
+                Record(MathF.Abs(Rest("left-elbow").X - Rest("left-shoulder").X) < 1e-4f && Rest("left-elbow").Y < Rest("left-shoulder").Y, "turning the upper arm straight down carries the elbow with it");
+                s.BeginDrag();
+                s.DragControl("left-elbow", Rest("left-elbow") + new Vector3(.3f, 0, 0));
+                s.EndDrag();
+                Record(s.MessageIsError && s.Message.Contains("bound to 'left-shoulder'"), "dragging the bound elbow is refused with its reason: " + s.Message);
+                var shoulder = Rest("left-shoulder");
+                var reach = Rest("left-hand") - shoulder;
+                s.BeginDrag();
+                s.DragControl("left-shoulder", shoulder + new Vector3(-.1f, 0, 0));
+                s.EndDrag();
+                Record(Vector3.Distance(Rest("left-shoulder"), shoulder + new Vector3(-.1f, 0, 0)) < 1e-4f && Vector3.Distance(Rest("left-hand") - Rest("left-shoulder"), reach) < 1e-4f,
+                    "dragging the shoulder's origin moves it through its local setup and the bound arm comes along");
+                while (doc.CanUndo)
+                {
+                    s.Undo();
+                }
+
+                Record(before == doc.Serialize(), "every bone edit undoes exactly");
+                Check(s.Edit(doc, () => ModelAuthoring.ConvertToBoneChain(doc.Asset, ["right-shoulder", "right-elbow", "right-hand"])), s);
+                var converted = s.Assets.Resolve("person")!;
+                var reference = ResolvedModel.From(CharacterModel.FromJson(before));
+                Record(converted.Order.All(c => Vector3.Distance(converted.Rest[c.Id], reference.Rest[c.Id]) < 1e-4f) && Control("right-elbow").Link is { IsTip: true }, "converting the right arm to a bone chain keeps every rest position");
+                s.Undo();
+                Record(before == doc.Serialize() && Control("right-shoulder").Node == RigNodeKinds.Point, "the conversion undoes");
+                s.Selection.Select(control: "left-shoulder");
+            }),
         ];
         return workspace;
     }
@@ -478,7 +520,12 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         Check(s.Edit(document, () =>
         {
             var model = document.Asset;
-            ModelAuthoring.AddBone(model, null, "root");
+            // The image rig is the native affine scenario (scale and shear channels), so its root is a legacy affine node.
+            var root = ModelAuthoring.AddBone(model, null, "root");
+            root.Node = RigNodeKinds.Affine;
+            root.Local = null;
+            root.Transform = new();
+            model.Validate();
             foreach (var (id, color, offset) in new[] { ("back", "#e3ac47", -.15f), ("front", "#57b0b2", .15f) })
             {
                 var part = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "root");

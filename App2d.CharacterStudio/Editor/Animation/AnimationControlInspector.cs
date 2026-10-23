@@ -48,7 +48,8 @@ internal sealed class AnimationControlInspector(EditorSession session)
                 Ui.Help("Rotation is solved by the IK target.");
             }
 
-            if (model.Controls[control].Transform is not null && boneIk)
+            var affine = model.Controls[control].Node == RigNodeKinds.Affine;
+            if (affine && boneIk)
             {
                 var scaleChannel = new Channel(MotionClip.ScaleKind, control);
                 var scale = ClipAuthoring.Value(clip, scaleChannel, time).Value.X + 1;
@@ -57,7 +58,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
                     session.Change(document, () => ClipAuthoring.SetKey(document.Asset, scaleChannel, time, new(scale - 1, scale - 1, 0)));
                 }
             }
-            else if (model.Controls[control].Transform is not null)
+            else if (affine)
             {
                 void Axis(string label, string kind, int axis)
                 {

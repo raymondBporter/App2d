@@ -32,6 +32,15 @@ public static class ModelAuthoring
         model.Build = null;
         foreach (var control in model.Controls)
         {
+            var node = resolved.Nodes[control.Id];
+            if (node.Kind == RigNodeKinds.Bone)
+            {
+                // A bone node's resolved setup (including a build rule's fitted dimensions) is its new authored setup.
+                control.Local = node.Setup with { };
+                control.Length = node.Length;
+                continue;
+            }
+
             control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
             if (resolved.SetupTransforms.TryGetValue(control.Id, out var setup))
             {
@@ -91,28 +100,36 @@ public static class ModelAuthoring
         return control;
     }
 
-    /// <summary>Adds a bone at a parent's tip. Its own local +X axis points toward its tip.</summary>
+    /// <summary>
+    /// Adds a canonical bone node at a parent's tip, continuing its direction: bound to the tip when the parent is a bone with
+    /// a length, else a local offset along the parent's +X. Its own local +X axis points toward its tip. Beneath a legacy
+    /// affine node it adds an affine child so that rig stays editable by its adapter.
+    /// </summary>
     public static ModelControl AddBone(CharacterModel model, string? parent, string? id = null)
     {
         var basis = parent is null ? null : Control(model, parent);
-        var origin = basis is null ? Vector3.Zero : basis.Rest.XYZ + Rotation2D.ApplyXY(new(MathF.Max(basis.Length, .3f), 0, 0), basis.RestAngle);
-        var bone = AddControl(model, parent, origin, id ?? UniqueId("bone", Names(model)));
-        bone.RestAngle = basis?.RestAngle ?? 0;
-        bone.Length = .5f;
-        if (basis is null || basis.Transform is not null)
+        if (basis is { Node: RigNodeKinds.Affine })
         {
-            bone.Node = RigNodeKinds.Affine;
-            bone.Transform = new()
-            {
-                X = basis is null ? origin.X : MathF.Max(basis.Length, .3f)
-            };
-        }
-
-        if (bone.Transform is not null)
-        {
+            var origin = basis.Rest.XYZ + Rotation2D.ApplyXY(new(MathF.Max(basis.Length, .3f), 0, 0), basis.RestAngle);
+            var affine = AddControl(model, parent, origin, id ?? UniqueId("bone", Names(model)));
+            affine.RestAngle = basis.RestAngle;
+            affine.Length = .5f;
+            affine.Transform = new() { X = MathF.Max(basis.Length, .3f) };
             SyncAffineRest(model);
+            model.Validate();
+            return affine;
+        }
+        var bone = new ModelControl { Id = id ?? UniqueId("bone", Names(model)), Parent = parent, Node = RigNodeKinds.Bone, Length = .5f };
+        if (basis is { Length: > 0 })
+        {
+            bone.Link = new RigLink();
+        }
+        else if (basis is not null)
+        {
+            bone.Local = new RigSetup { X = .3f };
         }
 
+        model.Controls.Add(bone);
         model.Validate();
         return bone;
     }
@@ -169,6 +186,40 @@ public static class ModelAuthoring
     public static void Reparent(CharacterModel model, string id, string? parent)
     {
         var control = Control(model, id);
+        if (control.Node == RigNodeKinds.Bone)
+        {
+            // The bone keeps its character frame: its setup is re-expressed in the new parent's frame and any link is dropped.
+            var nodes = RigGraph.Compile(model);
+            var node = nodes[id];
+            var target = parent is null ? null : nodes[parent];
+            if (target is { Kind: RigNodeKinds.Affine })
+            {
+                throw new InvalidOperationException($"Cannot hang bone '{id}' from the affine node '{parent}'; the legacy affine adapter carries no canonical bones.");
+            }
+
+            var frame = target?.RestFrame ?? Matrix3x2.Identity;
+            if (!new Frame2D(frame).TryToLocal(new(node.Rest.X, node.Rest.Y), out var local))
+            {
+                throw new InvalidOperationException("Cannot reparent a bone beneath a collapsed parent.");
+            }
+
+            var parentScale = target is null ? 1 : Vector2.TransformNormal(Vector2.UnitX, frame).Length();
+            var ownScale = Vector2.TransformNormal(Vector2.UnitX, node.RestFrame).Length();
+            var parentHand = target?.Handedness ?? 1;
+            control.Link = null;
+            control.Local = new RigSetup
+            {
+                X = local.X,
+                Y = local.Y,
+                Rotation = parentHand * (node.RestAngle - (target?.RestAngle ?? 0)),
+                Scale = ownScale / parentScale,
+                Reflect = node.Handedness != parentHand,
+                Layer = node.RestLayer - (target?.RestLayer ?? 0),
+            };
+            control.Parent = parent;
+            model.Validate();
+            return;
+        }
         if (control.Transform is not null)
         {
             var resolved = ResolvedModel.From(model);
@@ -187,6 +238,9 @@ public static class ModelAuthoring
             SyncAffineRest(model);
         }
     }
+
+    /// <summary>Converts a parent-to-child run of point controls into canonical bone nodes; see <see cref="RigConversion.ToBoneChain"/>.</summary>
+    public static IReadOnlyList<string> ConvertToBoneChain(CharacterModel model, IReadOnlyList<string> controls) => RigConversion.ToBoneChain(model, controls);
 
     /// <summary>Makes <paramref name="end"/> the tip of a two-bone chain over its parent and grandparent.</summary>
     public static ModelChain AddChain(CharacterModel model, string end) => AddIk(model, end, bone: false);
@@ -413,10 +467,40 @@ public static class ModelAuthoring
         }
     }
 
-    /// <summary>Moves a control's rest position, and with <paramref name="children"/> its whole subtree by the same amount.</summary>
+    /// <summary>
+    /// Moves a control's rest position, and with <paramref name="children"/> its whole subtree by the same amount. A bone
+    /// node moves through its local setup (its bound origin cannot move: change the parent's length or the link); point
+    /// descendants keep or shift their character-frame rest by the flag, bone descendants follow their parent unless the
+    /// flag is off, when their local setup is re-expressed so they stay in place.
+    /// </summary>
     public static void MoveRest(CharacterModel model, string id, Vector3 position, bool children)
     {
-        if (Control(model, id).Transform is not null)
+        var moving = Control(model, id);
+        if (moving.Node == RigNodeKinds.Bone)
+        {
+            if (moving.Link is not null)
+            {
+                throw new InvalidOperationException($"'{id}' is bound to '{moving.Parent}' at t = {moving.Link.T:0.##}; change the parent's length or the link instead of its origin.");
+            }
+
+            var nodes = RigGraph.Compile(model);
+            var before = nodes[id].Rest;
+            var parentNode = moving.Parent is null ? null : nodes[moving.Parent];
+            if (!new Frame2D(parentNode?.RestFrame ?? Matrix3x2.Identity).TryToLocal(new(position.X, position.Y), out var local))
+            {
+                throw new InvalidOperationException("Cannot move a bone beneath a collapsed parent.");
+            }
+
+            var setup = moving.Local ?? new RigSetup();
+            setup.X = local.X;
+            setup.Y = local.Y;
+            setup.Layer = position.Z - (parentNode?.RestLayer ?? 0);
+            moving.Local = setup;
+            CarryDescendants(model, id, position - before, children, nodes);
+            model.Validate();
+            return;
+        }
+        if (moving.Transform is not null)
         {
             var resolved = ResolvedModel.From(model);
             var deltaAffine = position - resolved.Rest[id];
@@ -451,18 +535,71 @@ public static class ModelAuthoring
             }
             return;
         }
-        var delta = position - Control(model, id).Rest.XYZ;
-        var moved = children ? Subtree(model.Controls, id) : [Control(model, id)];
-        foreach (var control in moved)
+        var rest = RigGraph.Compile(model);
+        var delta = position - moving.Rest.XYZ;
+        moving.Rest = PuppetPoint.From(position);
+        CarryDescendants(model, id, delta, children, rest);
+        model.Validate();
+    }
+
+    /// <summary>
+    /// After a control moved by <paramref name="delta"/>: with <paramref name="children"/>, point descendants shift with it
+    /// (bone descendants follow through the hierarchy); without, bone children re-express their local setup against the
+    /// moved parent so every descendant keeps its character-frame rest. A bound child always follows its parent.
+    /// </summary>
+    private static void CarryDescendants(CharacterModel model, string id, Vector3 delta, bool children, IReadOnlyDictionary<string, RigNode> before)
+    {
+        if (children)
         {
-            control.Rest = PuppetPoint.From(control.Rest.XYZ + delta);
+            foreach (var control in Subtree(model.Controls, id).Where(c => c.Id != id && c.Node == RigNodeKinds.Point))
+            {
+                control.Rest = PuppetPoint.From(control.Rest.XYZ + delta);
+            }
+
+            return;
+        }
+        var after = RigGraph.Compile(model);
+        foreach (var child in model.Controls.Where(c => c.Parent == id && c.Node == RigNodeKinds.Bone && c.Link is null))
+        {
+            var keep = before[child.Id].Rest;
+            if (!new Frame2D(after[id].RestFrame).TryToLocal(new(keep.X, keep.Y), out var local))
+            {
+                throw new InvalidOperationException("Cannot keep a bone in place beneath a collapsed parent.");
+            }
+
+            var setup = child.Local ?? new RigSetup();
+            setup.X = local.X;
+            setup.Y = local.Y;
+            setup.Layer = keep.Z - after[id].RestLayer;
+            child.Local = setup;
         }
     }
 
-    /// <summary>Turns a bone in the rest pose, carrying descendant origins and their rest directions.</summary>
+    /// <summary>Turns a bone in the rest pose to a character-frame direction, carrying descendant origins and their rest directions.</summary>
     public static void RotateRestBone(CharacterModel model, string id, float angle)
     {
         var bone = Control(model, id);
+        if (bone.Node == RigNodeKinds.Bone)
+        {
+            var nodes = RigGraph.Compile(model);
+            var node = nodes[id];
+            var parentNode = bone.Parent is null ? null : nodes[bone.Parent];
+            var setup = bone.Local ?? new RigSetup();
+            setup.Rotation = node.CharacterOriented ? angle : (parentNode?.Handedness ?? 1) * (angle - (parentNode?.RestAngle ?? 0));
+            bone.Local = setup;
+            // Point descendants are authored in the character frame, so they turn about the pivot explicitly; bone and affine
+            // descendants are parent-local and follow.
+            var about = new Vector2(node.Rest.X, node.Rest.Y);
+            var turn = angle - node.RestAngle;
+            foreach (var control in Subtree(model.Controls, id).Where(c => c.Id != id && c.Node == RigNodeKinds.Point))
+            {
+                control.Rest = PuppetPoint.From(Rotation2D.ApplyXYAround(control.Rest.XYZ, about, turn));
+                control.RestAngle += turn;
+            }
+
+            model.Validate();
+            return;
+        }
         if (bone.Transform is { } affine)
         {
             var resolved = ResolvedModel.From(model);
@@ -479,7 +616,7 @@ public static class ModelAuthoring
         }
         var delta = angle - bone.RestAngle;
         var pivot = bone.Rest.XY;
-        foreach (var control in Subtree(model.Controls, id))
+        foreach (var control in Subtree(model.Controls, id).Where(c => c.Node == RigNodeKinds.Point))
         {
             if (control != bone)
             {
@@ -491,13 +628,22 @@ public static class ModelAuthoring
         model.Validate();
     }
 
-    /// <summary>Changes a segment's length, carrying the connected IK joint and its descendants to the new tip.</summary>
+    /// <summary>
+    /// Changes a segment's length. Children bound to the bone follow the new tip through their links without any frame
+    /// stretching; for legacy point and affine bones the connected IK joint and its descendants are carried to the new tip.
+    /// </summary>
     public static void ResizeBone(CharacterModel model, string id, float length)
     {
         new Limit(.01f, 100).Check(length, "bone length");
         var bone = Control(model, id);
+        if (bone.Node == RigNodeKinds.Bone)
+        {
+            bone.Length = length;
+            model.Validate();
+            return;
+        }
         var next = model.IkChains.Where(c => c.Solver == ModelChain.BoneSolver && (c.Root == id || c.Joint == id))
-            .Select(c => c.Root == id ? c.Joint : c.End).Distinct().ToArray();
+            .Select(c => c.Root == id ? c.Joint : c.End).Where(child => Control(model, child) is not { Node: RigNodeKinds.Bone, Link: not null }).Distinct().ToArray();
         if (next.Length == 0)
         {
             bone.Length = length;
@@ -528,16 +674,27 @@ public static class ModelAuthoring
     /// </summary>
     public static void MoveRest(ResolvedModel resolved, ModelVariant variant, string id, Vector3 position, bool children)
     {
+        if (resolved.Controls[id].Node == RigNodeKinds.Bone)
+        {
+            throw new InvalidOperationException($"'{id}' is a bone node; a variant cannot override its setup until P6 typed overrides. Edit the base model.");
+        }
+
         var delta = position - resolved.Rest[id];
         var moved = children ? Subtree(resolved.Base.Controls, id) : [resolved.Controls[id]];
-        foreach (var control in moved)
+        // A bone descendant follows its parent through the hierarchy; a variant has no override that could hold it in place.
+        if (!children && resolved.Base.Controls.FirstOrDefault(c => c.Parent == id && c.Node == RigNodeKinds.Bone) is { } bound)
+        {
+            throw new InvalidOperationException($"Moving '{id}' alone would carry its bone child '{bound.Id}', which a variant cannot pin; move it with its children or edit the base model.");
+        }
+
+        foreach (var control in moved.Where(c => c.Node != RigNodeKinds.Bone))
         {
             variant.Rest[control.Id] = PuppetPoint.From(resolved.Rest[control.Id] + delta);
         }
 
         if (!children && resolved.Controls[id].Transform is not null)
         {
-            foreach (var child in Subtree(resolved.Base.Controls, id).Where(c => c.Id != id))
+            foreach (var child in Subtree(resolved.Base.Controls, id).Where(c => c.Id != id && c.Node != RigNodeKinds.Bone))
             {
                 variant.Rest[child.Id] = PuppetPoint.From(resolved.Rest[child.Id]);
             }
@@ -645,8 +802,8 @@ public static class ModelAuthoring
         }
 
         RotateRestBone(model, id, MathF.Atan2(delta.Y, delta.X));
-        var bone = Control(model, id);
-        var unit = bone.Transform is null ? 1 : Vector2.TransformNormal(Vector2.UnitX, ResolvedModel.From(model).RestTransforms[id]).Length();
+        // The frame's X axis carries the inherited uniform scale (and the point control's unit axes), so the tip lands exactly.
+        var unit = Vector2.TransformNormal(Vector2.UnitX, RigGraph.Compile(model)[id].RestFrame).Length();
         if (unit > 1e-6f)
         {
             ResizeBone(model, id, delta.Length() / unit);

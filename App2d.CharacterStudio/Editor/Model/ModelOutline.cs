@@ -68,7 +68,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
                 ImGui.PopStyleColor();
             }
         }
-        var selectedBone = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control && (c.Length > 0 || c.Transform is not null));
+        var selectedBone = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control && (c.Length > 0 || c.Node != RigNodeKinds.Point));
         if (Base is not null && Ui.Button(selectedBone is null ? "Add shape to selected control" : "Add shape to selected bone", session.Selection.Control is not null || structure.Controls.Count > 0))
         {
             ImGui.OpenPopup("add-part");
@@ -119,7 +119,12 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
             var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanAvailWidth | (children.Length == 0 ? ImGuiTreeNodeFlags.Leaf : 0)
                 | (session.Selection.Control == control.Id ? ImGuiTreeNodeFlags.Selected : 0);
             var ik = structure.IkChains.FirstOrDefault(c => c.Joint == control.Id || c.End == control.Id || c.Solver == ModelChain.BoneSolver && c.Root == control.Id);
-            var label = control.Length > 0 ? $"{control.Id}  (bone {control.Length:0.##})" : control.Id;
+            var label = control.Node switch
+            {
+                RigNodeKinds.Bone => $"{control.Id}  (bone {control.Length:0.##}{(control.Link is not null ? ", bound" : "")})",
+                RigNodeKinds.Affine => $"{control.Id}  (affine{(control.Length > 0 ? $" {control.Length:0.##}" : "")})",
+                _ => control.Length > 0 ? $"{control.Id}  (bone {control.Length:0.##})" : control.Id,
+            };
             var open = ImGui.TreeNodeEx(control.Id, flags, label + (ik is null ? "" : ik.End == control.Id ? "  (IK end)" : ik.Root == control.Id ? "  (IK rotation)" : "  (IK bend)"));
             if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen())
             {
@@ -178,7 +183,9 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
             var pointEnd = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control);
             var pointJoint = structure.Controls.FirstOrDefault(c => c.Id == pointEnd?.Parent);
             var pointRoot = structure.Controls.FirstOrDefault(c => c.Id == pointJoint?.Parent);
-            var pointChain = pointEnd is { Length: 0, Transform: null } && pointJoint is { Length: 0, Transform: null } && pointRoot is { Length: 0, Transform: null };
+            // A point chain moves positions only; it needs point or tip-bound bone controls. A bone constraint needs two lengths.
+            var pointChain = pointEnd is { Node: not RigNodeKinds.Affine, Length: 0 } && pointJoint is { Node: not RigNodeKinds.Affine } && pointRoot is { Node: not RigNodeKinds.Affine }
+                && (pointJoint.Length == 0 || pointEnd is { Node: RigNodeKinds.Bone, Link.IsTip: true }) && (pointRoot.Length == 0 || pointJoint is { Node: RigNodeKinds.Bone, Link.IsTip: true });
             var boneChain = pointEnd is not null && pointJoint is { Length: > 0 } && pointRoot is { Length: > 0 };
             if (Ui.Button("Make IK constraint", pointChain || boneChain))
             {
@@ -189,7 +196,9 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip("Select an endpoint with a parent and grandparent. Bone children must sit at their parent's +X tip; point chains retain their existing behavior.");
+                ImGui.SetTooltip(boneChain && pointChain
+                    ? "Select an endpoint with a parent and grandparent. Lengths are declared on both segments: this makes a rigid bone constraint (frames turn). A point chain would need the lengths cleared."
+                    : "Select an endpoint with a parent and grandparent. Two declared lengths make a rigid bone constraint; otherwise a point chain, which moves positions only.");
             }
         }
         Ui.Header("IK constraints");

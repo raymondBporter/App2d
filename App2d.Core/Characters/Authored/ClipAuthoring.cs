@@ -124,24 +124,34 @@ public static partial class ClipAuthoring
             SetKey(clip, channel, time, new(offset.X / scale, offset.Y / scale, offset.Z));
             return channel;
         }
+        // The inverse of the evaluator's frame graph: the desired origin in the carrier's local axes, less the node's setup
+        // origin, in reference units; its layer offset less the node's. Uniform scale and reflection of the carrier divide out.
         var spec = model.Controls[control];
-        if (model.SetupTransforms.TryGetValue(control, out var setup))
+        var node = model.Nodes[control];
+        if (!Carrier(model, pose, node).TryToLocal(world, out var inCarrier))
         {
-            var parent = spec.Parent is null ? Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y) : pose.Bones[spec.Parent];
-            if (!Matrix3x2.Invert(parent, out var inverse))
-            {
-                throw new InvalidOperationException("Cannot pose a bone through a collapsed parent transform.");
-            }
-
-            var local = Vector2.Transform(new(world.X, world.Y), inverse);
-            var ratio = Ratio(model, clip, trackScale());
-            SetKey(clip, channel, time, new((local.X - setup.X) / ratio, (local.Y - setup.Y) / ratio, world.Z - model.Rest[control].Z));
-            return channel;
-            string trackScale() => Track(clip, channel)?.Scale ?? spec.Scale;
+            throw new InvalidOperationException("Cannot pose a control through a collapsed parent frame.");
         }
-        var (parentPoint, parentAngle, parentRest) = Frame(model, pose, spec.Parent);
-        SetKey(clip, channel, time, Delta(world, parentPoint, parentAngle, model.Rest[control] - parentRest, Ratio(model, clip, Track(clip, channel)?.Scale ?? spec.Scale)));
+
+        var parentLength = node.Parent is null ? 0 : model.Nodes[node.Parent].Length;
+        var setupOrigin = node.Kind == RigNodeKinds.Affine ? new Vector2(node.Affine!.X, node.Affine.Y) : node.Origin(parentLength);
+        var units = Ratio(model, clip, Track(clip, channel)?.Scale ?? spec.Scale);
+        SetKey(clip, channel, time, new((inCarrier.X - setupOrigin.X) / units, (inCarrier.Y - setupOrigin.Y) / units, inCarrier.Z - node.Layer));
         return channel;
+    }
+
+    /// <summary>The placement a node's local setup composes onto in this pose: the evaluator's carrier rule.</summary>
+    private static Geometry.LayeredFrame2D Carrier(ResolvedModel model, EvaluatedPose pose, RigNode node)
+    {
+        if (node.Parent is null)
+        {
+            return Geometry.LayeredFrame2D.FromMatrix(Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y));
+        }
+
+        var parent = model.Nodes[node.Parent];
+        return parent.Kind == RigNodeKinds.Affine && node.Kind != RigNodeKinds.Affine
+            ? Geometry.LayeredFrame2D.FromRotation(pose.Angles[parent.Id], pose.Points[parent.Id])
+            : pose.Placement(parent.Id);
     }
 
     /// <summary>Adds <paramref name="radians"/> to a control's rotation at a time.</summary>
@@ -644,15 +654,6 @@ public static partial class ClipAuthoring
         }
         index = keys.FindIndex(k => time(k) > time(key));
         keys.Insert(index < 0 ? keys.Count : index, key);
-    }
-
-    private static (Vector3 Point, float Angle, Vector3 Origin) Frame(ResolvedModel model, EvaluatedPose pose, string? frame) =>
-        frame is null || frame == CharacterModel.Locomotion ? (pose.Locomotion, 0, Vector3.Zero) : (pose.Points[frame], pose.Angles[frame], model.Rest[frame]);
-
-    private static Vector3 Delta(Vector3 world, Vector3 framePoint, float frameAngle, Vector3 restOffset, float ratio)
-    {
-        var local = Rotation2D.ApplyXY(world - framePoint, -frameAngle) - restOffset;
-        return new(local.X / ratio, local.Y / ratio, local.Z);
     }
 
     /// <summary>The locomotion frame's origin at a clip time, as the evaluator places it for the first cycle.</summary>

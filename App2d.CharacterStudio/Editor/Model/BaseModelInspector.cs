@@ -5,6 +5,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Mathematics.Transforms;
 using ImGuiNET;
+using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor.Model;
 
@@ -48,60 +49,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
         if (session.Selection.Control is { } id && model.Controls.FirstOrDefault(c => c.Id == id) is { } control)
         {
             Ui.Header((control.Length > 0 ? "Bone " : "Control ") + control.Id);
-            var rest = control.Rest.Layered;
-
-            if (control.Transform is not null && Resolved is { } resolved)
-            {
-                rest = LayeredPoint2D.From(resolved.Rest[id]);
-            }
-
-            if (CharacterUi.LayeredPoint(control.Length > 0 ? "Origin" : "Rest", ref rest))
-            {
-                session.Change(document,
-                    () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
-            }
-
-            if (control.Length > 0)
-            {
-                var length = control.Length;
-                if (Ui.Drag("Bone length", ref length, .01f, .01f, 100))
-                {
-                    session.Change(document,
-                        () => ModelAuthoring.ResizeBone(document.Asset, id, length));
-                }
-
-                var degrees = float.RadiansToDegrees(control.RestAngle);
-                if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
-                {
-                    session.Change(document,
-                        () => ModelAuthoring.RotateRestBone(document.Asset, id, float.DegreesToRadians(degrees)));
-                }
-
-                Ui.Help("The bone starts at this control and points along its local +X axis. Its children and attached shapes follow rotation.");
-            }
-            if (control.Transform is { } transform)
-            {
-                Ui.Header("Local affine transform");
-                void Number(string label, float value, Action<Affine2D, float> set, float min = -100, float max = 100)
-                {
-                    if (Ui.Drag(label, ref value, .01f, min, max))
-                    {
-                        session.Change(document, () =>
-                        {
-                            set(document.Asset.Controls.First(c => c.Id == id).Transform!, value);
-                            ModelAuthoring.SyncAffineRest(document.Asset);
-                        });
-                    }
-                }
-                Number("Local X", transform.X, (t, v) => t.X = v);
-                Number("Local Y", transform.Y, (t, v) => t.Y = v);
-                Number("Local rotation (degrees)", float.RadiansToDegrees(transform.Rotation), (t, v) => t.Rotation = float.DegreesToRadians(v), -720, 720);
-                Number("Scale X", transform.ScaleX, (t, v) => t.ScaleX = v);
-                Number("Scale Y", transform.ScaleY, (t, v) => t.ScaleY = v);
-                Number("Shear X (degrees)", float.RadiansToDegrees(transform.ShearX), (t, v) => t.ShearX = float.DegreesToRadians(v), -720, 720);
-                Number("Shear Y (degrees)", float.RadiansToDegrees(transform.ShearY), (t, v) => t.ShearY = float.DegreesToRadians(v), -720, 720);
-            }
-
+            ControlSetup(document, control, id);
             var children = session.MoveChildren;
             if (ImGui.Checkbox("Move children with it", ref children))
             {
@@ -295,6 +243,248 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                     ModelAuthoring.RemovePart(document.Asset, partId);
                     session.Selection.Clear();
                 });
+            }
+        }
+    }
+
+    /// <summary>
+    /// The selected control's setup, by its declared node kind: a point control's character-frame rest; a bone node's origin
+    /// (derived, moved through its local setup or fixed by its link), local similarity, length, link and direction; the legacy
+    /// affine adapter's channels. Every field says where the value lives, and an edit a kind cannot take is refused with its reason.
+    /// </summary>
+    private void ControlSetup(AssetDocument<CharacterModel> document, ModelControl control, string id)
+    {
+        var resolved = Resolved;
+        var node = resolved?.Nodes.GetValueOrDefault(id);
+        ModelControl Live() => document.Asset.Controls.First(c => c.Id == id);
+        switch (control.Node)
+        {
+            case RigNodeKinds.Bone:
+            {
+                ImGui.TextDisabled(control.Link is { } link
+                    ? $"Bone node: origin bound to '{control.Parent}' at t = {link.T:0.##}" + (link.OffsetX != 0 || link.OffsetY != 0 ? $" + ({link.OffsetX:0.###}, {link.OffsetY:0.###})" : "") + (link.Orientation == RigLinkOrientations.Character ? ", character axes" : "")
+                    : "Bone node: parent-local setup; rest is derived");
+                if (node is not null)
+                {
+                    var origin = LayeredPoint2D.From(node.Rest);
+                    if (control.Link is null)
+                    {
+                        if (CharacterUi.LayeredPoint("Origin (character)", ref origin))
+                        {
+                            session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, origin.ToVector3(), session.MoveChildren));
+                        }
+                    }
+                    else
+                    {
+                        ImGui.TextDisabled($"Origin (character): {node.Rest.X:0.###}, {node.Rest.Y:0.###}, layer {node.Rest.Z:0.###}; change the parent's length or the link.");
+                    }
+
+                    var direction = float.RadiansToDegrees(node.RestAngle);
+                    if (Ui.Drag("Direction (degrees, character)", ref direction, 1f, -720, 720))
+                    {
+                        session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, float.DegreesToRadians(direction)));
+                    }
+                }
+                var length = control.Length;
+                if (Ui.Drag("Bone length", ref length, .01f, 0, 100))
+                {
+                    session.Change(document, () =>
+                    {
+                        if (length < .01f)
+                        {
+                            Live().Length = 0;
+                            document.Asset.Validate();
+                        }
+                        else
+                        {
+                            ModelAuthoring.ResizeBone(document.Asset, id, length);
+                        }
+                    });
+                }
+
+                Ui.Help(control.Length > 0 ? "Children bound along this bone follow its length; their frames keep their own scale." : "Zero length: an ordinary control, still a handle, socket or target.");
+                Ui.Header("Local setup");
+                var local = control.Local ?? new RigSetup();
+                void Local(Action<RigSetup> set) => session.Change(document, () =>
+                {
+                    var live = Live();
+                    live.Local ??= new RigSetup();
+                    set(live.Local);
+                    document.Asset.Validate();
+                });
+                if (control.Link is null)
+                {
+                    var xy = new Vector2(local.X, local.Y);
+                    if (Ui.Drag2("Local X / Y", ref xy, .005f, -10000, 10000))
+                    {
+                        Local(l => { l.X = xy.X; l.Y = xy.Y; });
+                    }
+                }
+                var rotation = float.RadiansToDegrees(local.Rotation);
+                if (Ui.Drag("Local rotation (degrees)", ref rotation, 1f, -720, 720))
+                {
+                    Local(l => l.Rotation = float.DegreesToRadians(rotation));
+                }
+
+                var scale = local.Scale;
+                if (Ui.Drag("Uniform scale", ref scale, .01f, .001f, 1000))
+                {
+                    Local(l => l.Scale = scale);
+                }
+
+                var reflect = local.Reflect;
+                if (ImGui.Checkbox("Reflect (mirror local Y)", ref reflect))
+                {
+                    Local(l => l.Reflect = reflect);
+                }
+
+                var layer = local.Layer;
+                if (Ui.Drag("Layer offset from parent", ref layer, .005f, -32, 32))
+                {
+                    Local(l => l.Layer = layer);
+                }
+
+                if (control.Parent is { } parentId)
+                {
+                    Ui.Header("Link");
+                    var parent = document.Asset.Controls.First(c => c.Id == parentId);
+                    if (control.Link is { } bound)
+                    {
+                        var t = bound.T;
+                        if (Ui.Drag("Position along parent (t)", ref t, .01f, -10, 10))
+                        {
+                            session.Change(document, () => { Live().Link!.T = t; document.Asset.Validate(); });
+                        }
+
+                        var offset = new Vector2(bound.OffsetX, bound.OffsetY);
+                        if (Ui.Drag2("Offset in parent axes", ref offset, .005f, -100, 100))
+                        {
+                            session.Change(document, () => { Live().Link!.OffsetX = offset.X; Live().Link!.OffsetY = offset.Y; document.Asset.Validate(); });
+                        }
+
+                        if (Ui.Combo("Orientation", bound.Orientation, RigLinkOrientations.All) is { } orientation)
+                        {
+                            session.Edit(document, () => { Live().Link!.Orientation = orientation; document.Asset.Validate(); });
+                        }
+
+                        if (ImGui.Button("Unbind (keep place as a local offset)"))
+                        {
+                            session.Edit(document, () =>
+                            {
+                                var live = Live();
+                                var rest = (Resolved ?? throw new InvalidDataException("The model does not resolve; repair it first.")).Nodes[id].Rest;
+                                live.Link = null;
+                                ModelAuthoring.MoveRest(document.Asset, id, rest, children: true);
+                            });
+                        }
+
+                        Ui.Help(parent.Length > 0 ? "t = 0 is the parent's origin, 1 its tip; the parent's final length places it." : "The parent has no length: t has nothing to measure along until it gets one.");
+                    }
+                    else if (parent.Node != RigNodeKinds.Affine && ImGui.Button("Bind to parent tip"))
+                    {
+                        session.Edit(document, () =>
+                        {
+                            var live = Live();
+                            live.Link = new RigLink();
+                            if (live.Local is not null)
+                            {
+                                live.Local.X = live.Local.Y = 0;
+                            }
+
+                            document.Asset.Validate();
+                        });
+                    }
+                }
+                break;
+            }
+            case RigNodeKinds.Affine:
+            {
+                ImGui.TextDisabled("Legacy affine node (adapter until P11): a full parent-local affine setup; scale and shear are not similarities.");
+                var rest = node is null ? control.Rest.Layered : LayeredPoint2D.From(resolved!.Rest[id]);
+                if (CharacterUi.LayeredPoint("Origin (character)", ref rest))
+                {
+                    session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
+                }
+
+                if (control.Length > 0)
+                {
+                    var length = control.Length;
+                    if (Ui.Drag("Bone length", ref length, .01f, .01f, 100))
+                    {
+                        session.Change(document, () => ModelAuthoring.ResizeBone(document.Asset, id, length));
+                    }
+
+                    var degrees = float.RadiansToDegrees(control.RestAngle);
+                    if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
+                    {
+                        session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, float.DegreesToRadians(degrees)));
+                    }
+                }
+                var transform = control.Transform!;
+                Ui.Header("Legacy affine setup");
+                void Number(string label, float value, Action<Affine2D, float> set, float min = -100, float max = 100)
+                {
+                    if (Ui.Drag(label, ref value, .01f, min, max))
+                    {
+                        session.Change(document, () =>
+                        {
+                            set(Live().Transform!, value);
+                            ModelAuthoring.SyncAffineRest(document.Asset);
+                        });
+                    }
+                }
+                Number("Local X", transform.X, (t, v) => t.X = v);
+                Number("Local Y", transform.Y, (t, v) => t.Y = v);
+                Number("Local rotation (degrees)", float.RadiansToDegrees(transform.Rotation), (t, v) => t.Rotation = float.DegreesToRadians(v), -720, 720);
+                Number("Scale X", transform.ScaleX, (t, v) => t.ScaleX = v);
+                Number("Scale Y", transform.ScaleY, (t, v) => t.ScaleY = v);
+                Number("Shear X (degrees)", float.RadiansToDegrees(transform.ShearX), (t, v) => t.ShearX = float.DegreesToRadians(v), -720, 720);
+                Number("Shear Y (degrees)", float.RadiansToDegrees(transform.ShearY), (t, v) => t.ShearY = float.DegreesToRadians(v), -720, 720);
+                break;
+            }
+            default:
+            {
+                ImGui.TextDisabled("Point control: character-frame rest; its parent-local setup is derived when the model resolves.");
+                var rest = control.Rest.Layered;
+                if (CharacterUi.LayeredPoint("Rest (character)", ref rest))
+                {
+                    session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
+                }
+
+                if (control.Length > 0)
+                {
+                    var length = control.Length;
+                    if (Ui.Drag("Bone length", ref length, .01f, .01f, 100))
+                    {
+                        session.Change(document, () => ModelAuthoring.ResizeBone(document.Asset, id, length));
+                    }
+
+                    var degrees = float.RadiansToDegrees(control.RestAngle);
+                    if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
+                    {
+                        session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, float.DegreesToRadians(degrees)));
+                    }
+
+                    Ui.Help("The bone starts at this control and points along its local +X axis. Its children and attached shapes follow rotation.");
+                }
+                // A run of single children below this control can become a canonical bone chain.
+                var run = new List<string> { id };
+                for (var next = document.Asset.Controls.Where(c => c.Parent == run[^1]).ToArray(); next.Length == 1 && next[0].Node == RigNodeKinds.Point; next = document.Asset.Controls.Where(c => c.Parent == run[^1]).ToArray())
+                {
+                    run.Add(next[0].Id);
+                }
+
+                if (run.Count >= 2 && control.RestAngle == 0 && ImGui.Button($"Convert to bone chain ({string.Join(" > ", run)})"))
+                {
+                    structural.Request(document, $"convert '{string.Join("', '", run)}' to bone nodes", () => ModelAuthoring.ConvertToBoneChain(document.Asset, run));
+                }
+
+                if (run.Count >= 2)
+                {
+                    Ui.Help("Bone nodes carry a length and bind their children to it; rest positions and point IK are unchanged, their frames turn along the bones.");
+                }
+
+                break;
             }
         }
     }

@@ -413,7 +413,7 @@ public sealed class MotionClip
                 Require(track.Kind != RotateKind || !model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
                 if (track.Kind is ScaleKind or ShearKind)
                 {
-                    Require(control.Transform is not null, $"{field}: scale and shear require an affine bone.");
+                    Require(control.Node == RigNodeKinds.Affine, $"{field}: scale and shear channels belong to the legacy affine adapter; a canonical node is a similarity with a length.");
                     Require(track.Scale is null or CharacterModel.Unit, $"{field}: scale and shear cannot use proportion measurements.");
                 }
                 else
