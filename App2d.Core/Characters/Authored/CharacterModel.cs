@@ -113,7 +113,8 @@ public sealed record LookPreset
 public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
-    public const int CurrentVersion = 5;
+    /// <summary>Version 6 moved a curve's wave into the typed <c>wave</c> modifier; version-5 files read through <see cref="ModelFormat5Reader"/>.</summary>
+    public const int CurrentVersion = 6;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -145,7 +146,7 @@ public sealed class CharacterModel
     public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(json, "model");
+    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(ModelFormat5Reader.Read(json), "model");
     public static CharacterModel FromJson(string json)
     {
         var model = FromDraftJson(json);

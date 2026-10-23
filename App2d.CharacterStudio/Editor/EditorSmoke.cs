@@ -2,6 +2,7 @@ using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
@@ -428,6 +429,31 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Part = "left-arm"; shell.Viewport.Fit(s.Evaluate("person"));
                 var part = s.SubjectModel!.Asset.Parts.Single(p => p.Id == "left-arm");
                 Record(part.Bindings?.Count == 3 && part.CurveSections == 20, "the Person arm exposes its rounded path in the existing part inspector");
+            }),
+            ("38-curve-wave-modifier", shell =>
+            {
+                var s = shell.Session; s.Open("curve-face"); s.Compare.Clear(); s.EditRig = false;
+                s.Selection.Part = "hair"; shell.Viewport.Fit(s.Evaluate("curve-face"));
+                var doc = s.SubjectModel!;
+                PuppetPart Part(string id) => doc.Asset.Parts.Single(p => p.Id == id);
+                Record(Part("hair").Wave is { PhaseControl: "hair-wave" } && doc.Asset.Parts.All(p => p.Id == "hair" || p.Wave is null), "only the hair curve carries a wave modifier after reading the version-5 file");
+                var before = doc.Serialize();
+                Check(s.Edit(doc, () => Part("mouth").Wave = CurveWave.Starter), s);
+                Record(Part("mouth").Wave is not null, "a curve part gains a wave modifier");
+                s.Undo();
+                Record(before == doc.Serialize() && Part("mouth").Wave is null, "adding the wave undoes exactly");
+                Record(!s.Edit(doc, () => ModelAuthoring.RemoveControl(doc.Asset, "hair-wave")) && doc.Asset.Controls.Any(c => c.Id == "hair-wave"), "deleting the referenced phase control is refused: " + s.Message);
+                Check(s.Edit(doc, () => Part("hair").Wave = Part("hair").Wave! with { Amplitude = .06f }), s);
+                s.SaveAll();
+                var saved = File.ReadAllText(doc.Path!);
+                var reopened = AuthoredCatalog.Load(s.Assets.Root);
+                Record(reopened.Errors.Count == 0 && reopened.Models["curve-face"].Parts.Single(p => p.Id == "hair").Wave?.Amplitude == .06f && saved.Contains("\"wave\"") && !saved.Contains("waveAmplitude"),
+                    "the wave saves as the typed modifier at version " + CharacterModel.CurrentVersion + " and reopens");
+                Check(s.Edit(doc, () => Part("hair").Wave = null), s);
+                Record(Part("hair").Wave is null && s.Edit(doc, () => ModelAuthoring.RemoveControl(doc.Asset, "hair-wave")), "removing the wave frees its phase control");
+                s.Undo();
+                s.Undo();
+                Record(Part("hair").Wave?.Amplitude == .06f, "removing the wave undoes");
             }),
         ];
         return workspace;

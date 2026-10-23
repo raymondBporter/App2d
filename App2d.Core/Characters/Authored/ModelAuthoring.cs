@@ -142,7 +142,7 @@ public static class ModelAuthoring
             throw new InvalidOperationException($"{owner}: part '{bound.Id}' uses '{id}'; detach its points first.");
         }
 
-        if (model.Parts.FirstOrDefault(p => p.WavePhaseControl == id) is { } wave)
+        if (model.Parts.FirstOrDefault(p => p.Wave?.References(id) == true) is { } wave)
         {
             throw new InvalidOperationException($"{owner}: part '{wave.Id}' uses '{id}'; detach its wave control first.");
         }
@@ -315,8 +315,8 @@ public static class ModelAuthoring
         }
         else
         {
-            part.WaveAmplitude = 0;
-            part.WavePhaseControl = null;
+            // The wave modifier belongs to linked curves; a shape carries none.
+            part.Wave = null;
         }
         part.Geometry = geometry;
         if (part.Geometry is IShape2D && part.Material is { Fill: null, Outline: null })

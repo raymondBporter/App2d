@@ -31,7 +31,7 @@ public static class PartPicking2D
         if (part.Geometry is ICurve2D curve)
         {
             var pickWidth = MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
-            if (part.Bindings is { Count: > 0 } || part.WaveAmplitude != 0 || part.ScaleX != part.ScaleY)
+            if (part.Bindings is { Count: > 0 } || part.Wave is { Deforms: true } || part.ScaleX != part.ScaleY)
             {
                 var path = PartContours2D.Contour(part, world, bone, rest, restBone);
                 var nearest = float.PositiveInfinity;

@@ -4,6 +4,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
 using System.Numerics;
+using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Authored;
 
@@ -183,16 +184,18 @@ public sealed class CurveAttachmentTests
             part.Bindings = null;
         }
 
-        part.WaveAmplitude = .1f;
-        part.WaveCycles = 2;
-        part.WavePhaseControl = "wave";
+        part.Wave = new() { Amplitude = .1f, Cycles = 2, PhaseControl = "wave" };
         model.Controls.Add(new()
         {
             Id = "wave",
             Parent = "root"
         });
-        model = CharacterModel.FromJson(model.ToJson());
+        var json = model.ToJson();
+        Assert.Contains("\"wave\"", json);
+        Assert.DoesNotContain("waveAmplitude", json);
+        model = CharacterModel.FromJson(json);
         part = model.Parts[0];
+        Assert.Equal(new CurveWave { Amplitude = .1f, Cycles = 2, PhaseControl = "wave" }, part.Wave);
         var resolved = ResolvedModel.From(model);
         var rest = PoseEvaluator.Rest(resolved);
         var initial = PartContours2D.Contour(part, rest.World, id => resolved.Rest[id]);
@@ -218,7 +221,11 @@ public sealed class CurveAttachmentTests
             TestModels.Near(Vector3.Transform(shifted[i], Matrix4x4.CreateRotationZ(.7f)) + new Vector3(3, 4, 0), carried[i], 1e-5f);
         }
 
+        // The modifier's own references refuse the deletion, and catch a reference that was deleted behind its back.
         Assert.Throws<InvalidOperationException>(() => ModelAuthoring.RemoveControl(model, "wave"));
+        model.Controls.RemoveAll(c => c.Id == "wave");
+        var dangling = Assert.Throws<InvalidDataException>(model.Validate);
+        Assert.Contains("wave phase control", dangling.Message);
     }
 
     [Theory]
@@ -230,17 +237,17 @@ public sealed class CurveAttachmentTests
     {
         var model = Model();
         var part = model.Parts[0];
-        part.WaveAmplitude = .1f;
+        part.Wave = new() { Amplitude = .1f };
         switch (failure)
         {
             case "height":
-                part.WaveAmplitude = float.NaN;
+                part.Wave.Amplitude = float.NaN;
                 break;
             case "cycles":
-                part.WaveCycles = 0;
+                part.Wave.Cycles = 0;
                 break;
             case "control":
-                part.WavePhaseControl = "missing";
+                part.Wave.PhaseControl = "missing";
                 break;
             case "shape":
                 part.Bindings = null;
@@ -248,6 +255,73 @@ public sealed class CurveAttachmentTests
                 break;
         }
         Assert.Throws<InvalidDataException>(model.Validate);
+    }
+
+    [Fact]
+    public void ReplacingACurveWithAShapeDropsItsWaveModifier()
+    {
+        var model = Model();
+        var part = model.Parts[0];
+        part.Bindings = null;
+        part.Wave = CurveWave.Starter;
+        model.Validate();
+        ModelAuthoring.SetPartGeometry(model, part.Id, new Ellipse2D { Center = Vector2.Zero, Radii = new(.5f, .5f) }.Validated());
+        Assert.Null(part.Wave);
+        Assert.DoesNotContain("wave", model.ToJson());
+    }
+
+    /// <summary>The version-5 compatibility boundary (ModelFormat5Reader): loose part fields become the typed modifier; the file is not touched.</summary>
+    [Fact]
+    public void VersionFiveWaveFieldsReadIntoTheTypedModifier()
+    {
+        var model = Model();
+        model.Controls.Add(new() { Id = "wave", Parent = "root" });
+        model.Parts.Add(new()
+        {
+            Id = "plain", A = "start", B = "end",
+            Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(),
+            Material = new() { Fill = "#00ff00" }
+        });
+        var node = JsonNode.Parse(model.ToJson())!;
+        node["version"] = 5;
+        var stroke = node["parts"]![0]!;
+        stroke["waveAmplitude"] = .045f;
+        stroke["waveCycles"] = 5;
+        stroke["wavePhaseControl"] = "wave";
+        // Version 5 applied no wave for a zero amplitude; cycles alone carried no meaning.
+        var plain = node["parts"]![1]!;
+        plain["WaveCycles"] = 3;
+        var legacy = node.ToJsonString();
+
+        var read = CharacterModel.FromJson(legacy);
+        Assert.Equal(CharacterModel.CurrentVersion, read.Version);
+        Assert.Equal(new CurveWave { Amplitude = .045f, Cycles = 5, PhaseControl = "wave" }, read.Parts[0].Wave);
+        Assert.Null(read.Parts[1].Wave);
+        var written = read.ToJson();
+        Assert.Contains("\"version\": 6", written);
+        Assert.DoesNotContain("waveAmplitude", written);
+        Assert.DoesNotContain("waveCycles", written);
+        Assert.Equal(written, CharacterModel.FromJson(written).ToJson());
+
+        // Other version-5 content reads as before, and older versions stay rejected.
+        node["parts"]![0]!.AsObject().Remove("waveAmplitude");
+        node["parts"]![0]!.AsObject().Remove("waveCycles");
+        node["parts"]![0]!.AsObject().Remove("wavePhaseControl");
+        Assert.Null(CharacterModel.FromJson(node.ToJsonString()).Parts[0].Wave);
+        node["parts"]![1]!.AsObject().Remove("WaveCycles");
+        node["version"] = 4;
+        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(node.ToJsonString())).Message);
+    }
+
+    [Fact]
+    public void OnlyTheCurveFaceHairCarriesTheWaveModifier()
+    {
+        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
+        Assert.Empty(catalog.Errors);
+        var face = catalog.Models["curve-face"];
+        Assert.Equal(new CurveWave { Amplitude = .045f, Cycles = 5, PhaseControl = "hair-wave" }, face.Parts.Single(p => p.Id == "hair").Wave);
+        Assert.All(catalog.Models.Values.SelectMany(m => m.Parts).Where(p => p.Id != "hair" || p.A != "hair-left"), p => Assert.Null(p.Wave));
+        Assert.All(catalog.Models.Values.SelectMany(m => m.Parts).Where(p => p.Geometry is not ICurve2D), p => Assert.Null(p.Wave));
     }
 
     [Theory]

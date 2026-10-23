@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;
 
-/// <summary>Attached curve handles, sampling and optional bumps along the curve normal.</summary>
+/// <summary>Attached curve handles and sampling, applying a curve's <see cref="CurveWave"/> modifier when it has one.</summary>
 public static class PartCurves2D
 {
     /// <summary>Point indices follow curve order: start, handle(s), end.</summary>
@@ -85,13 +85,11 @@ public static class PartCurves2D
             PolylineCurve2D polyline => polyline.Points.Length,
             _ => 33
         };
-        NormalOffsetCurve2D? wave = null;
-        if (part.WaveAmplitude != 0)
+        ICurve2D? wave = null;
+        if (part.Wave is { Deforms: true } modifier)
         {
-            var phase = part.WavePhaseControl is { } control && coordinates.TryToLocal(world(control).XY, out var local) ? local.Y * part.WaveCycles : 0;
-            var amplitude = part.WaveAmplitude * (worldSpace ? Vector2.Distance(a.XY, b.XY) : 1);
-            wave = new(source, t => amplitude * .5f * (1 + MathF.Sin(MathF.Tau * (part.WaveCycles * t - phase))));
-            count = Math.Max(count, Math.Max(33, (int)MathF.Ceiling(part.WaveCycles * 16) + 1));
+            wave = modifier.Apply(source, modifier.Phase(coordinates, world), worldSpace ? Vector2.Distance(a.XY, b.XY) : 1);
+            count = Math.Max(count, modifier.Samples);
         }
         var parameters = source is RoundedPolylineCurve2D sampled
             ? sampled.SampleParameters(Math.Max(part.CurveSections, wave is null ? 0 : count - 1))

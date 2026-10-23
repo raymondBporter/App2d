@@ -257,7 +257,7 @@ Before the P0c additions, the extended capture was compared against the committe
 | Arena outcomes incl. misses | Preserve exactly; an attack that starts landing is an intentional difference | P8c/P9b | Hits, events, end states exact |
 | Person build proportions | Preserve exactly through data bindings/presets | P4a/P6b | tall-thin, short-broad, brute, cinder cases 1e-4; resolved measures (section 8) exact to 1e-4 |
 | Fixed facial vocabulary | Scoped: expressions become profile bindings; procedural style retained until P7c | P2b/P7c | `expressions` exact; head silhouette 1e-3 |
-| Wave and point bindings | Scoped: typed curve modifier and unchanged bindings | P2a | hair / wing / limb silhouettes 1e-3 |
+| Wave and point bindings | Scoped: typed curve modifier and unchanged bindings; wave exercised in P2a (`CurveWave`, see 7.9), no reference moved | P2a | hair / wing / limb silhouettes 1e-3 |
 | Facing mirror (X only, Z kept) | Preserve exactly; exercised in P1a (`ActorPose.Placement` is the mirrored entity-to-world frame with layer 0; every `/left` case unchanged) | P1a | All `/left` cases |
 
 ### 7.2 Point IK chains versus rigid bones
@@ -316,7 +316,7 @@ Disposition: preserve exactly through P8's attached colliders: the same shapes, 
 
 - Person build proportions: preserve exactly through P4a bindings and P6b migration; the variant cases and the resolved measures in section 8 are the acceptance set (1e-4).
 - Fixed facial vocabulary: scoped to profile bindings in P7c, procedural style retained through P2b; `expressions` exact and the head silhouette 1e-3.
-- Wave and point bindings: scoped to the typed curve modifier (P2a) and unchanged bindings; hair, wing and rounded-limb silhouettes 1e-3.
+- Wave and point bindings: scoped to the typed curve modifier (P2a) and unchanged bindings; hair, wing and rounded-limb silhouettes 1e-3. Exercised (P2a, 2026-10-23): the wave is `CurveWave` on `PuppetPart.Wave` (curve parts only), applied by `PartCurves2D` with the same sine profile, span scaling, phase rule and sample count as before; the curve-face hair case `curve-face/curve-face-hair-wave@0.5` and every other curve-face, pterosaur wing and Person rounded-limb case passed unchanged at the recorded tolerances. The reference file was not regenerated. `curve-face.json` stays at version 5 on disk and reads through `ModelFormat5Reader`; point bindings were not touched.
 - Not decided: whether hurt regions should rotate with bones once they are colliders (left to P8c with evidence); whether explicit-bone controls' absolute Z semantics matter for any future import (no shipped case, so local was chosen and the fixtures pin Z = 0); whether the wheel's inherited affine is retired or replaced by a scoped deformation (P11, with the adapter named until then); and a tolerance for rendered pixels, since no pixel reference exists yet (the Studio smokes remain unreviewed renders).
 
 P0 gate: the reference set is reproducible (section 6 and the P0c comparison above), existing failures are identified (section 2.1), and every general-affine and point-specific case has a stated disposition. No new abstraction was added; the only new code is test fixtures and the capture.
@@ -342,7 +342,7 @@ Schema versions in files versus the code's current version (every file is parsed
 
 ### Models
 
-Defaults applied by `CharacterModel`/`ModelControl`/`PuppetPart` when JSON omits them: control `length` 0, `restAngle` 0, `scale` `unit`, `transform` null (point semantics); chain `solver` `point`, `bend` 1, `frame` `locomotion`; part `scaleX/Y` 1, `waveAmplitude` 0, `waveCycles` 1, `curveSections` 20, `face` `none`, `hidden` false; model `ink` `#222b32`, `lineWidth` .045, `structureRevision` 1.
+Defaults applied by `CharacterModel`/`ModelControl`/`PuppetPart` when JSON omits them: control `length` 0, `restAngle` 0, `scale` `unit`, `transform` null (point semantics); chain `solver` `point`, `bend` 1, `frame` `locomotion`; part `scaleX/Y` 1, `waveAmplitude` 0, `waveCycles` 1, `curveSections` 20, `face` `none`, `hidden` false; model `ink` `#222b32`, `lineWidth` .045, `structureRevision` 1. (P2a, 2026-10-23: the loose wave fields are now the version-5 reader's input only; the current part has `wave` null by default, and the model format is 6. The files inventoried here are unchanged on disk.)
 
 | Model | File | Ver | Rev | Build | Controls (affine / explicit length>0) | Chains point/bone | Measures | Parts (geometry kinds) | Wave / face parts | Materials | Slots / skins | Sockets | Motion sets (roles) | Hurt layouts (regions) | Groups | Looks | Source |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
