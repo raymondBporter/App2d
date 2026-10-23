@@ -9,6 +9,7 @@ namespace App2d.CharacterStudio.Editor.Model;
 internal sealed class VariantModelInspector(EditorSession session, ModelPartInspector parts)
 {
     private string _lookName = "";
+    private readonly AttachmentInspector _attachments = new(session);
     private ResolvedModel? Resolved => session.Assets.Resolve(session.SubjectId);
 
     public void Draw(AssetDocument<ModelVariant> document)
@@ -88,6 +89,11 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
                     }
                 }));
         }
+        if (session.Selection.Attachment is { } attachmentId)
+        {
+            _attachments.DrawVariant(document, basis.Asset, attachmentId);
+        }
+
         if (session.Selection.Control is { } control && resolved is not null)
         {
             Ui.Header("Control " + control);

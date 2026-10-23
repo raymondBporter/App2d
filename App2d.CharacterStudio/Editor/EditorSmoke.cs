@@ -567,6 +567,55 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Check(s.Save(lever), s);
                 Record(AuthoringWorkspace.Open(s.Assets.Root).Resolve("lever")!.Nodes["beam"].Length == 1.2f, "the lever's parameter default saves and reopens");
             }),
+            ("41-library-parts", shell =>
+            {
+                // P5c: one library part on both feet as two instances, swapped on one variant only, edited once for every
+                // wearer, found through uses / used by, undone in order and saved with its wearers.
+                var s = shell.Session;
+                var library = s.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
+                Record(library.SequenceEqual(["boot", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot and sandal as library parts");
+                s.Open("person");
+                Check(s.NewPart("mitt", "Mitt", "hair-short"), s);
+                var mitt = s.PartDocument!;
+                Record(s.Mode == Workspace.Appearance && mitt.Asset.Solids.Count > 0 && mitt.IsNew, "a library part converted from a hair prop opens in Appearance as a new draft");
+                s.PreviewSocket = Humanoid.LeftHandSocket;
+                Record(s.PreviewAttachmentOn(s.Assets.Resolve("person")!) is { Instance.Socket: Humanoid.LeftHandSocket }, "the open part previews on the wearer's chosen socket before it is attached");
+                Check(s.AttachPart("mitt", Humanoid.LeftHandSocket), s);
+                Check(s.AttachPart("mitt", Humanoid.RightHandSocket, mirror: true), s);
+                var person = s.Assets.Model("person")!;
+                Record(person.Asset.Attachments.Count == 2 && person.Asset.Attachments.All(a => a.Asset == "mitt") && person.Asset.Attachments[1].Mirror && s.PreviewAttachmentOn(s.Assets.Resolve("person")!) is null,
+                    "one asset occupies both hands as two instances (the right one mirrored) and the preview instance withdraws");
+                var right = person.Asset.Attachments[1].Id;
+                s.Open("tall-thin");
+                var tall = s.SubjectVariant!;
+                Check(s.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, person.Asset, right, o => o.Asset = "boot")), s);
+                Record(s.Assets.Resolve("tall-thin")!.Attachment(right)!.Asset.Id == "boot" && s.Assets.Resolve("person")!.Attachment(right)!.Asset.Id == "mitt" && s.Assets.Resolve("short-broad")!.Attachment(right)!.Asset.Id == "mitt",
+                    "swapping the right instance on tall-thin leaves the base and short-broad wearing the mitt");
+                Record(s.Assets.UsedBy("mitt").Any(r => r.Id == "person") && s.Assets.Wearers("mitt").Contains("short-broad") && s.Assets.UsedBy("boot").Any(r => r.Id == "tall-thin"),
+                    "uses / used by follow the instances and the override");
+                var fillBefore = s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill;
+                s.Open("mitt");
+                Check(s.Edit(mitt, () => { var solid = mitt.Asset.Solids[0]; solid.Material = solid.RenderMaterial with { Fill = "#13579b" }; mitt.Asset.Validate(); }), s);
+                Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill == "#13579b" && s.Assets.Resolve("person")!.Attachments[0].Solids[0].RenderMaterial.Fill == "#13579b",
+                    "one shared edit reaches every wearer's preview without copying the asset");
+                s.Undo();
+                Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill == fillBefore && mitt.CanRedo, "the shared edit undoes in order from the part editor");
+                s.Redo();
+                s.SaveAll();
+                Record(!s.MessageIsError && File.Exists(Path.Combine(s.Assets.Root, "parts", "mitt.json")), "save all writes the part before the characters that wear it: " + s.Message);
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+                Record(reopened.LoadErrors.Count == 0 && reopened.Resolve("person")!.Attachments.Count == 2 && reopened.Resolve("tall-thin")!.Attachment(right)!.Asset.Id == "boot"
+                    && reopened.Resolve("person")!.Attachments[0].Solids[0].RenderMaterial.Fill == "#13579b" && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
+                    "the part, its instances and the variant's swap reopen together");
+                s.Open("person");
+                s.Selection.Select(attachment: right);
+                Check(s.Edit(person, () => ModelAuthoring.RemoveAttachment(person.Asset, right)), s);
+                Record(s.Assets.Problems(tall).Any(p => p.Contains(right)), "removing an instance the variant overrides reports the dangling override by name instead of dropping it");
+                s.Undo();
+                Record(person.Asset.Attachments.Count == 2 && s.Assets.Problems(tall).Count == 0, "undo restores the instance and the variant resolves again");
+                s.Selection.Select(attachment: right);
+                shell.Viewport.Fit(s.Evaluate("person"));
+            }),
         ];
         return workspace;
     }

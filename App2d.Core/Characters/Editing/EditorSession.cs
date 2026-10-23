@@ -17,6 +17,8 @@ public sealed class Selection
 {
     public string? Control { get; set; }
     public string? Part { get; set; }
+    /// <summary>Model workspace: the library part instance (by instance ID) being edited on the character or overridden on the variant.</summary>
+    public string? Attachment { get; set; }
     public string? Chain { get; set; }
     /// <summary>Animation workspace: the appearance slot being keyed.</summary>
     public string? Slot { get; set; }
@@ -26,18 +28,19 @@ public sealed class Selection
     public string? Action { get; set; }
     public string? Hit { get; set; }
     /// <summary>Selects one workspace target and clears the previous selection.</summary>
-    public void Select(string? control = null, string? part = null, string? chain = null, string? slot = null)
+    public void Select(string? control = null, string? part = null, string? chain = null, string? slot = null, string? attachment = null)
     {
         Clear();
         Control = control;
         Part = part;
         Chain = chain;
         Slot = slot;
+        Attachment = attachment;
     }
 
     public void Clear()
     {
-        Control = Part = Chain = Slot = Action = Hit = null;
+        Control = Part = Chain = Slot = Action = Hit = Attachment = null;
         Key = null;
     }
 }
@@ -100,6 +103,10 @@ public sealed class EditorSession
     /// <summary>Animate-only equipment preview; never changes an entity's loadout.</summary>
     public string PreviewProp { get; set; } = "";
     public string PreviewSocket { get; set; } = "";
+    /// <summary>Appearance workspace: the library part (P5c) open for editing; previewed on the subject at <see cref="PreviewSocket"/> unless the subject already wears it.</summary>
+    public string? PreviewPart { get; private set; }
+    public bool PreviewMirror { get; set; }
+    public AssetDocument<PartAsset>? PartDocument => Assets.Part(PreviewPart);
     public bool PreviewWeapon { get; set; }
     public bool EditWeapon { get; set; }
     public string? Skin { get; set; }
@@ -124,7 +131,7 @@ public sealed class EditorSession
     public string Message { get; private set; } = "";
     public bool MessageIsError { get; private set; }
 
-    public AssetDocument? ActiveDocument => Mode switch { Workspace.Model => Assets.Find(SubjectId), Workspace.Animate => Assets.Find(ClipId), Workspace.Appearance => AppearanceDocument, _ => Assets.Find(EntityId) };
+    public AssetDocument? ActiveDocument => Mode switch { Workspace.Model => Assets.Find(SubjectId), Workspace.Animate => Assets.Find(ClipId), Workspace.Appearance => (AssetDocument?)PartDocument ?? AppearanceDocument, _ => Assets.Find(EntityId) };
     public AssetDocument<EntityAsset>? EntityDocument => Assets.Entity(EntityId);
     /// <summary>The open entity compiled against the drafts, or null with <see cref="EntityError"/> saying why.</summary>
     public ResolvedEntity? Entity => Assets.CompileEntity(EntityId, out _);
@@ -157,7 +164,26 @@ public sealed class EditorSession
                 Mode = Workspace.Entity;
                 SetEntity(entity.Id);
                 break;
+            case AssetDocument<PartAsset> part:
+                // The shared asset is edited in Appearance on a wearer: the subject, or the first model when none is open.
+                Mode = Workspace.Appearance;
+                PreviewPart = part.Id;
+                PreviewProp = "";
+                PreviewWeapon = EditWeapon = false;
+                Selection.Clear();
+                if (SubjectId is null && Assets.Models.OrderBy(m => m.Id, StringComparer.Ordinal).FirstOrDefault() is { } first)
+                {
+                    SetSubject(first.Id);
+                }
+
+                if (Assets.Resolve(SubjectId) is { } wearer && wearer.Base.Sockets.All(s => s.Id != PreviewSocket))
+                {
+                    PreviewSocket = wearer.Base.Sockets.FirstOrDefault()?.Id ?? "";
+                }
+
+                break;
             case AssetDocument<PropAsset> prop:
+                PreviewPart = null;
                 if (prop.Asset.Usage != "prop")
                 {
                     Mode = Workspace.Appearance;
@@ -624,6 +650,24 @@ public sealed class EditorSession
             yield return wearer;
         }
 
+        if (Mode == Workspace.Appearance && PartDocument is { } openPart)
+        {
+            yield return openPart;
+            // Attaching from the part editor edits the wearer's base model, so that step undoes here too.
+            if (SubjectModel is { } subject)
+            {
+                yield return subject;
+            }
+            else if (SubjectVariant is { } openVariant)
+            {
+                yield return openVariant;
+                if (Assets.Model(openVariant.Asset.Base) is { } openBasis)
+                {
+                    yield return openBasis;
+                }
+            }
+        }
+
         if (Mode == Workspace.Animate && EditWeapon && Assets.Prop(PreviewProp) is { } prop)
         {
             yield return prop;
@@ -751,6 +795,91 @@ public sealed class EditorSession
         Assets.Create(AppearanceAuthoring.Duplicate(prop.Asset, id, name));
         Open(id);
     }, $"Created appearance '{id}'.");
+
+    // ---- Library parts (P5c) -------------------------------------------------------------------------------------------
+
+    /// <summary>A new library part: one shape on the origin, or a prop's hair/clothing solids with the grip as the origin.</summary>
+    public bool NewPart(string id, string name, string? fromProp = null) => Attempt(() =>
+    {
+        PartAsset part;
+        if (fromProp is null)
+        {
+            var model = Assets.Resolve(SubjectId);
+            part = new PartAsset
+            {
+                Id = id,
+                Name = name,
+                Ink = model?.Base.Ink ?? "#222b32",
+                LineWidth = model?.Base.LineWidth ?? .045f,
+                Parts = [new() { Id = "shape", A = PartLocation.Origin, Geometry = App2d.Core.Shapes.RoundedRectangle2D.Builder.FromSize(.16f, .12f, .03f), Material = new() { Fill = "#b97549", Outline = new() } }],
+            };
+            part.Validate();
+        }
+        else
+        {
+            var prop = Assets.Prop(fromProp)?.Asset ?? SeedAppearance?.Invoke(fromProp) ?? throw new InvalidDataException($"No appearance '{fromProp}'.");
+            part = PartAsset.FromProp(prop, id, name, prop.Usage == "hair" ? "hair" : "clothing");
+        }
+        Assets.Create(part);
+        Open(id);
+    }, $"Created library part '{id}'. Edit it here; attach it to a wearer, then save all.");
+
+    public bool DuplicatePart(string source, string id, string name) => Attempt(() =>
+    {
+        var part = Assets.Part(source) ?? throw new InvalidDataException($"No library part '{source}'.");
+        var copy = PartAsset.FromJson(part.Asset.ToJson());
+        copy.Id = id;
+        copy.Name = name;
+        copy.Validate();
+        Assets.Create(copy);
+        Open(id);
+    }, $"Created library part '{id}'.");
+
+    /// <summary>Instances the open part on the subject's base model at a socket. A variant subject attaches on its base: instances are structure, overrides are the variant's.</summary>
+    public bool AttachPart(string partId, string socketId, bool mirror = false) => Attempt(() =>
+    {
+        if (Assets.Part(partId) is null)
+        {
+            throw new InvalidDataException("Choose a library part first.");
+        }
+
+        var basis = SubjectModel ?? Assets.Model(SubjectVariant?.Asset.Base) ?? throw new InvalidDataException("Choose a wearer (a model or variant) first.");
+        if (basis.Asset.Sockets.All(s => s.Id != socketId))
+        {
+            throw new InvalidDataException($"'{basis.Id}' has no socket '{socketId}'.");
+        }
+
+        string? created = null;
+        basis.Edit(() => created = ModelAuthoring.AddAttachment(basis.Asset, partId, socketId, Assets.PartOf, mirror: mirror).Id);
+        Selection.Select(attachment: created);
+    }, $"Attached '{partId}' on '{socketId}'" + (SubjectVariant is not null ? $" of the base '{SubjectVariant.Asset.Base}' (every variant wears it; override it per variant)." : "."));
+
+    /// <summary>
+    /// The open part previewed on a wearer that does not instance it yet: a temporary instance at <see cref="PreviewSocket"/>,
+    /// never written anywhere. Null when the wearer already wears the part (its real instances show) or nothing is open.
+    /// </summary>
+    public ResolvedAttachment? PreviewAttachmentOn(ResolvedModel model)
+    {
+        if (Mode != Workspace.Appearance || PartDocument is not { } part || model.Attachments.Any(a => a.Asset.Id == part.Id))
+        {
+            return null;
+        }
+
+        var sockets = model.Base.Sockets.ToDictionary(s => s.Id, StringComparer.Ordinal);
+        if (!sockets.ContainsKey(PreviewSocket))
+        {
+            return null;
+        }
+
+        try
+        {
+            return ResolvedAttachment.Resolve(new() { Id = "preview", Asset = part.Id, Socket = PreviewSocket, Mirror = PreviewMirror }, Assets.PartOf, sockets, "Preview");
+        }
+        catch (InvalidDataException)
+        {
+            return null;
+        }
+    }
 
     public bool EquipAppearance(string entityId, string propId, string socketId) => Attempt(() =>
     {

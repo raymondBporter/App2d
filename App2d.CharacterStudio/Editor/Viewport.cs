@@ -142,6 +142,12 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 {
                     _drawings[i].AddProp(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket));
                 }
+
+                // A library part being edited previews on the wearer at the chosen socket until it is attached for real.
+                if (session.PreviewAttachmentOn(subject.Model) is { } preview)
+                {
+                    _drawings[i].AddAttachment(preview, preview.Placement(new ActorPose(subject.Pose, Vector2.Zero, 1).SocketPlacement(preview.Socket)));
+                }
             }
         }
         Render(_target!, width, height, anchor, ppu, views, centerX);

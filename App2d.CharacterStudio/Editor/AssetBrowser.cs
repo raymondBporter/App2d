@@ -17,11 +17,12 @@ internal sealed partial class AssetBrowser(EditorSession session)
 {
     private enum Create
     {
-        None, Model, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip
+        None, Model, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip,
+        Part, PartFromProp, DuplicatePart
     }
     private string _modelTemplate = "empty";
     private string _appearanceTemplate = "hair";
-    private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Sources"];
+    private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Parts", "Sources"];
     private string _search = "", _filter = "All";
     private Create _create;
     private string _name = "", _id = "", _source = "", _preset = "", _template = EntityAuthoring.Guard;
@@ -48,6 +49,16 @@ internal sealed partial class AssetBrowser(EditorSession session)
             if (ImGui.MenuItem("Appearance: hair / clothing..."))
             {
                 Start(Create.Appearance, "", "New appearance");
+            }
+
+            if (ImGui.MenuItem("Library part: new shape..."))
+            {
+                Start(Create.Part, "", "New part");
+            }
+
+            if (ImGui.MenuItem("Library part: from hair / clothing...", "", false, session.Assets.Props.Any(p => p.Asset.Usage != "prop")))
+            {
+                Start(Create.PartFromProp, session.Assets.Props.First(p => p.Asset.Usage != "prop").Id, "New part");
             }
 
             foreach (var template in CharacterTemplates.All)
@@ -126,6 +137,17 @@ internal sealed partial class AssetBrowser(EditorSession session)
         }
         if (_filter == "All" && _search.Length == 0)
         {
+            if (session.Assets.Parts.Any())
+            {
+                Ui.Header("Library parts");
+                foreach (var part in session.Assets.Parts.OrderBy(p => p.Name))
+                {
+                    Row(part, 0);
+                }
+
+                Ui.Header("Characters");
+            }
+
             foreach (var model in session.Assets.Models.OrderBy(m => m.Name))
             {
                 Row(model, 0);
@@ -272,6 +294,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
             AssetKind.Variant => "Variants",
             AssetKind.Animation => "Animations",
             AssetKind.Entity => "Entities",
+            AssetKind.Part => "Parts",
             _ => "Props"
         }) &&
         (document.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || document.Id.Contains(_search, StringComparison.OrdinalIgnoreCase));
@@ -302,12 +325,14 @@ internal sealed partial class AssetBrowser(EditorSession session)
             AssetKind.Variant => "[V]",
             AssetKind.Animation => "[A]",
             AssetKind.Entity => "[E]",
+            AssetKind.Part => "[L]",
             _ => "[P]"
         };
         var label = $"{new string(' ', indent * 3)}{tag} {document.Name}{(document.Dirty || document.IsNew ? " *" : "")}";
         var selected = document.Id == session.SubjectId && session.Mode == Workspace.Model || document.Id == session.ClipId && session.Mode == Workspace.Animate
             || document.Id == session.EntityId && session.Mode == Workspace.Entity
-            || document.Id == session.PreviewProp && session.Mode == Workspace.Appearance;
+            || document.Id == session.PreviewProp && session.Mode == Workspace.Appearance
+            || document.Id == session.PreviewPart && session.Mode == Workspace.Appearance;
         if (problems.Count > 0)
         {
             ImGui.PushStyleColor(ImGuiCol.Text, UiTheme.Warning);
@@ -337,6 +362,32 @@ internal sealed partial class AssetBrowser(EditorSession session)
                     if (ImGui.MenuItem("Duplicate appearance"))
                     {
                         Start(Create.DuplicateAppearance, art.Id, art.Name + " copy");
+                    }
+
+                    if (ImGui.MenuItem("Convert to library part"))
+                    {
+                        Start(Create.PartFromProp, art.Id, art.Name);
+                    }
+
+                    break;
+                case AssetDocument<PartAsset> part:
+                    if (ImGui.MenuItem("Duplicate library part"))
+                    {
+                        Start(Create.DuplicatePart, part.Id, part.Name + " copy");
+                    }
+
+                    var wearers = session.Assets.Wearers(part.Id);
+                    if (wearers.Count > 0 && ImGui.BeginMenu($"Worn by ({wearers.Count})"))
+                    {
+                        foreach (var wearer in wearers)
+                        {
+                            if (ImGui.MenuItem(session.Assets.Find(wearer)?.Name ?? wearer))
+                            {
+                                session.Open(wearer);
+                            }
+                        }
+
+                        ImGui.EndMenu();
                     }
 
                     break;
@@ -463,6 +514,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
         {
             Create.Appearance => "New hair or clothing",
             Create.DuplicateAppearance => "Duplicate appearance " + _source,
+            Create.Part => "New library part",
+            Create.PartFromProp => "Library part from " + _source,
+            Create.DuplicatePart => "Duplicate library part " + _source,
             Create.Model => "New model from " + CharacterTemplates.Get(_modelTemplate).Name,
             Create.EmptyModel => "New model from Empty",
             Create.TemplateModel => "New model from " + session.Assets.ModelTemplates[_source].Name,
@@ -509,6 +563,20 @@ internal sealed partial class AssetBrowser(EditorSession session)
                 }
 
                 Ui.Help("Edit the silhouette on a character, then equip and save it. For a torso-fitted tunic, edit the body's fill and fabric paint in Model.");
+                break;
+            case Create.Part:
+                Ui.Help("A reusable library part: one shape on its origin to start. Attach it to any socket of any character, as many times as needed; every wearer shares the asset.");
+                break;
+            case Create.PartFromProp:
+                if (Ui.Combo("From appearance", _source, session.Assets.Props.Where(p => p.Asset.Usage != "prop").Select(p => p.Id).Order(StringComparer.Ordinal)) is { } fromProp)
+                {
+                    _source = fromProp;
+                }
+
+                Ui.Help("Copies the prop's cutout pieces into a library part whose origin is the prop's attachment point. The prop stays for the entities that equip it.");
+                break;
+            case Create.DuplicatePart:
+                Ui.Help("An independent copy of the library part. Wearers keep the original; attach the copy where it should differ.");
                 break;
             case Create.Variant:
                 if (Ui.Combo("Base model", _source, session.Assets.Models.Select(m => m.Id)) is { } basis)
@@ -586,6 +654,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
     {
         Create.Appearance => session.NewAppearance(_id, _name, _appearanceTemplate),
         Create.DuplicateAppearance => session.DuplicateAppearance(_source, _id, _name),
+        Create.Part => session.NewPart(_id, _name),
+        Create.PartFromProp => session.NewPart(_id, _name, _source),
+        Create.DuplicatePart => session.DuplicatePart(_source, _id, _name),
         Create.Model => session.NewModel(_id, _name, _modelTemplate),
         Create.EmptyModel => session.NewModel(_id, _name, "empty"),
         Create.TemplateModel => session.NewModel(_id, _name, _source),

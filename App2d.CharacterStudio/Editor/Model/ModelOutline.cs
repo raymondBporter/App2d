@@ -98,6 +98,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
             Ui.Help("Variants restyle, resize or hide parts. Adding shapes belongs to the base.");
         }
 
+        Attachments(structure);
         if (structure.Slots.Count > 0)
         {
             Ui.Header("Slots (back to front)");
@@ -108,6 +109,82 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
 
             Ui.Help("Choose the skin above the viewport. Animate edits attachment choices and draw order.");
         }
+    }
+
+    private string _attachAsset = "", _attachSocket = "";
+    private bool _attachMirror;
+
+    /// <summary>Library part instances on the base (P5c): select one to edit the instance or, on a variant, its override; attach another from the library.</summary>
+    private void Attachments(CharacterModel structure)
+    {
+        var resolved = Resolved;
+        if (structure.Attachments.Count > 0 || session.Assets.Parts.Any())
+        {
+            Ui.Header("Library parts");
+        }
+
+        foreach (var instance in structure.Attachments)
+        {
+            var shown = resolved?.Attachment(instance.Id);
+            var asset = shown?.Asset.Id ?? instance.Asset;
+            var swapped = shown is not null && shown.Asset.Id != instance.Asset;
+            var label = $"{instance.Id}  ({session.Assets.Part(asset)?.Name ?? asset + " (missing)"} on {instance.Socket}{(shown?.Instance.Mirror ?? instance.Mirror ? ", mirrored" : "")}{(swapped ? ", overridden" : "")}{(shown?.Instance.Hidden ?? instance.Hidden ? ", hidden" : "")})";
+            if (ImGui.Selectable(label, session.Selection.Attachment == instance.Id))
+            {
+                session.Selection.Select(attachment: instance.Id);
+            }
+        }
+        if (Base is not { } document || !session.Assets.Parts.Any() || structure.Sockets.Count == 0)
+        {
+            if (Variant is not null && structure.Attachments.Count > 0)
+            {
+                Ui.Help("Select an instance to swap or restyle it on this variant; the base owns the instances.");
+            }
+            else if (Base is not null && structure.Sockets.Count == 0 && session.Assets.Parts.Any())
+            {
+                Ui.Help("Add a socket to attach library parts.");
+            }
+
+            return;
+        }
+        var assets = session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
+        var sockets = structure.Sockets.Select(s => s.Id).ToArray();
+        if (!assets.Contains(_attachAsset))
+        {
+            _attachAsset = assets[0];
+        }
+
+        if (!sockets.Contains(_attachSocket))
+        {
+            _attachSocket = sockets[0];
+        }
+
+        ImGui.SetNextItemWidth(120 * Ui.Scale);
+        if (Ui.Combo("##attach-asset", _attachAsset, assets, a => session.Assets.Part(a)?.Name ?? a) is { } chosen)
+        {
+            _attachAsset = chosen;
+        }
+
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(110 * Ui.Scale);
+        if (Ui.Combo("##attach-socket", _attachSocket, sockets) is { } socket)
+        {
+            _attachSocket = socket;
+        }
+
+        ImGui.SameLine();
+        ImGui.Checkbox("Mirror##attach", ref _attachMirror);
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Attach"))
+        {
+            var asset = _attachAsset;
+            var at = _attachSocket;
+            var mirror = _attachMirror;
+            session.Edit(document, () => session.Selection.Select(attachment: ModelAuthoring.AddAttachment(document.Asset, asset, at, session.Assets.PartOf, mirror: mirror).Id),
+                $"Attached '{asset}' on '{at}'.");
+        }
+
+        Ui.Help("The same library part can sit on several sockets as separate instances (mirror one for the other side). The asset itself is shared: edit it from the instance's inspector.");
     }
 
     private void Rig(CharacterModel structure)

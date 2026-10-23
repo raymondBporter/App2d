@@ -53,6 +53,36 @@ internal static class ModelOverlay
         }
     }
 
+    /// <summary>Outlines every piece of a library part instance at its evaluated placement: the payload parts' contours and the solids' outlines.</summary>
+    public static void DrawAttachment(ViewportFrame frame, ResolvedAttachment attachment, EvaluatedPose pose)
+    {
+        var placement = attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket));
+        var (world, local) = attachment.Lookups(placement);
+        var color = StudioTheme.Selection.PackedValue;
+        foreach (var part in attachment.Parts.Where(p => !p.Hidden))
+        {
+            var outline = PartContours2D.Contour(part, world, local, world, local).Select(p => frame.Screen(p)).ToArray();
+            for (var i = 1; i < outline.Length; i++)
+            {
+                frame.Draw.AddLine(outline[i - 1], outline[i], color, 2);
+            }
+
+            if (part.Geometry is not App2d.Core.Geometry.Curves.ICurve2D && outline.Length > 1)
+            {
+                frame.Draw.AddLine(outline[^1], outline[0], color, 2);
+            }
+        }
+        foreach (var solid in attachment.Solids)
+        {
+            var points = (solid.Outline ?? solid.Vertices).Select(v => frame.Screen(placement.At(new Vector3(v.X, v.Y, 0)))).ToArray();
+            for (var i = 0; i < points.Length; i++)
+            {
+                frame.Draw.AddLine(points[i], points[(i + 1) % points.Length], color, 2);
+            }
+        }
+        frame.Draw.AddCircleFilled(frame.Screen(placement.Origin), 4 * Ui.Scale, color);
+    }
+
     public static Vector3 BoneTip(ModelControl control, EvaluatedPose pose)
     {
         return pose.Placement(control.Id).At(new Vector2(control.Length, 0));

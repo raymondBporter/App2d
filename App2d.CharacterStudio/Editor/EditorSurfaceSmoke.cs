@@ -92,6 +92,21 @@ internal static class EditorSurfaceSmoke
             session.EditRig = false;
             session.Selection.Select(part: Humanoid.Body);
             Capture("model-variant-part");
+            if (assets.Part("boot") is { } boot)
+            {
+                // P5c: a library part on a wearer (preview before attaching), then the instance on the base model.
+                session.Open("person");
+                session.Open(boot.Id);
+                session.PreviewSocket = Humanoid.LeftFootSocket;
+                Capture("appearance-library-part");
+                if (session.AttachPart(boot.Id, Humanoid.LeftFootSocket))
+                {
+                    session.Open("person");
+                    session.Selection.Select(attachment: assets.Model("person")!.Asset.Attachments[^1].Id);
+                    Capture("model-attachment");
+                    session.Undo();
+                }
+            }
 
             var cutoutModel = assets.Models.FirstOrDefault(m => m.Asset.Parts.Any(p => p.Geometry is SimplePolygon2D));
             if (cutoutModel is not null)

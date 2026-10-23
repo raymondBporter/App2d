@@ -205,10 +205,20 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
 
 - **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
   model, and its declared **Parameters** (P4a: units, default, ranges, bindings; add a parameter, bind a property of the
-  selected control or part to it, remove either; a bound field says which parameter produces it). On a variant: parameter
-  values with the base's presets, part overrides with **Reset to base**, and looks. **Edit rig** shows control handles.
+  selected control, part or attachment to it, remove either; a bound field says which parameter produces it), and its
+  **Library parts** (P5c: the instances of shared part assets on its sockets; attach one from the library with a socket
+  and an optional mirror, select an instance in the list or by clicking it in the viewport to edit its asset, socket,
+  placement, size, mirror, layer, fit, fill and visibility, or remove it; **Edit shared part** opens the asset itself,
+  whose edits reach every wearer). On a variant: parameter values with the base's presets, part overrides with
+  **Reset to base**, looks, and per-instance attachment overrides (swap the asset, restyle, re-place, hide; click a
+  marked label to clear and follow the base again). **Edit rig** shows control handles.
 - **Appearance**: reusable hair, beards and clothes, editable cutout silhouettes, colors, ink, depth and thickness,
-  with wearer preview and equipment binding.
+  with wearer preview and equipment binding; and the shared **library parts** (P5c: pieces of shapes, curves, images and
+  solids on named locations, shared materials, the wearers that instance the part, preview on any model or variant at a
+  chosen socket with mirror, **Attach to** the wearer's base, uses / used by). The browser lists library parts first
+  (`[L]`), filters them with **Parts**, creates one from a shape or from a hair/clothing prop (New menu or right-click
+  the prop), duplicates one and lists its wearers from the right-click menu. A part's own outline points are edited as
+  coordinates in this pass; viewport dragging of library-part outlines arrives with the P7 cutout tools.
 - **Animate**: clips compatible with the subject's base. Dragging keys the channel it drives (autokey), contacts,
   markers, face keys, easing and onion skin. **Compare** pins two more builds at the same phase and world scale.
 - **Entity**: model and motion set with per-role overrides, controller, movement box, hurt regions, equipment and the

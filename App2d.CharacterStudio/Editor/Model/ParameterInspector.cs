@@ -140,9 +140,15 @@ internal sealed class ParameterInspector(EditorSession session)
             target = property => PropertyRef.OfPart(part, property);
             owner = "part " + part;
         }
+        else if (session.Selection.Attachment is { } attachment && model.Attachments.Any(a => a.Id == attachment))
+        {
+            properties = RigProperties.Attachment;
+            target = property => PropertyRef.OfAttachment(attachment, property);
+            owner = "attachment " + attachment;
+        }
         else
         {
-            Ui.Help("Select a control or part to bind one of its properties.");
+            Ui.Help("Select a control, part or attachment to bind one of its properties.");
             return;
         }
 

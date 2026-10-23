@@ -34,16 +34,32 @@ internal sealed class ModelViewport(EditorSession session, Viewport viewport, Mo
                 return;
             }
         }
+        if (session.Selection.Attachment is { } selectedAttachment && model.Attachment(selectedAttachment) is { } attachment)
+        {
+            ModelOverlay.DrawAttachment(frame, attachment, pose);
+        }
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
+            var at = frame.World(ViewportFrame.Mouse);
             var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : [.. pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!)];
             var (Part, Score) = visibleParts
                 .Where(p => !p.Hidden)
-                .Select(p => (Part: p, Score: PartPicking2D.Distance(p, model, pose, frame.World(ViewportFrame.Mouse))))
+                .Select(p => (Part: p, Score: PartPicking2D.Distance(p, model, pose, at)))
                 .Where(h => h.Score <= 1)
                 .OrderBy(h => h.Score)
                 .FirstOrDefault();
-            if (Part is not null)
+            // Library part instances pick through the same score as the model's parts; the nearest of either wins.
+            var (Attachment, AttachmentScore) = model.Attachments
+                .Where(a => !a.Instance.Hidden)
+                .Select(a => (Attachment: a, Score: PartPicking2D.Distance(a, pose, at)))
+                .Where(h => h.Score <= 1)
+                .OrderBy(h => h.Score)
+                .FirstOrDefault();
+            if (Attachment is not null && (Part is null || AttachmentScore <= Score))
+            {
+                session.Selection.Select(attachment: Attachment.Id);
+            }
+            else if (Part is not null)
             {
                 session.Selection.Select(part: Part.Id);
             }

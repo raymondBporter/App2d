@@ -14,6 +14,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 {
     private string _newSet = "";
     private readonly ParameterInspector _parameters = new(session);
+    private readonly AttachmentInspector _attachments = new(session);
     private ResolvedModel? Resolved => session.Assets.Resolve(session.SubjectId);
 
     public void Draw(AssetDocument<CharacterModel> document)
@@ -79,6 +80,11 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
             Ui.Help("Deleting removes shapes attached to it. Children, chains and measures must be changed first.");
         }
+        if (session.Selection.Attachment is { } attachmentId)
+        {
+            _attachments.DrawBase(document, attachmentId);
+        }
+
         if (session.Selection.Chain is { } chainId && model.IkChains.FirstOrDefault(c => c.Id == chainId) is { } chain)
         {
             Ui.Header("IK constraint " + chain.Id);
