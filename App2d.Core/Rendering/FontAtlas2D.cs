@@ -39,6 +39,7 @@ internal sealed class FontAtlas2D : IDisposable
     }
 
     public Glyph GetGlyph(char character) => _glyphs.GetValueOrDefault(character, _glyphs['?']);
+    public float Advance(char character) => GetGlyph(character).Advance;
     public float Measure(string text)
     {
         var width = 0f;

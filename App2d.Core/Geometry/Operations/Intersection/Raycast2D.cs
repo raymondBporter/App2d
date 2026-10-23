@@ -11,9 +11,37 @@ namespace App2d.Core.Geometry.Operations.Intersection;
 /// the reported distance is the ray parameter, which equals a distance in input units for a unit direction.
 /// A ray starting inside a solid reports the exit with its outward normal. Inputs are finite.
 /// </summary>
-public static class Raycast2D
+public static partial class Raycast2D
 {
     private const float Epsilon = 0.000001f;
+
+    /// <summary>Casts against a finite, two-sided segment. Collinear rays miss; the normal is counterclockwise from Start to End.</summary>
+    /// <param name="origin">The finite ray origin.</param>
+    /// <param name="direction">A finite, nonzero direction; it need not be normalized.</param>
+    /// <param name="segment">The finite segment endpoints.</param>
+    /// <param name="maxDistance">The largest ray parameter accepted.</param>
+    /// <param name="hit">The crossing, normal and ray parameter.</param>
+    public static bool TrySegment(Vector2 origin, Vector2 direction, Segment<Vector2> segment, float maxDistance, out RayHit2D hit)
+    {
+        // Double intermediates avoid cancellation when a ray has just left a nearby optical surface.
+        var edge = segment.End.ToVector2d() - segment.Start.ToVector2d();
+        var axis = direction.ToVector2d();
+        var denominator = axis.Cross(edge);
+        if (Math.Abs(denominator) < 1e-12 || edge.LengthSquared() == 0)
+        {
+            return Miss(out hit);
+        }
+        var offset = segment.Start.ToVector2d() - origin.ToVector2d();
+        var distance = offset.Cross(edge) / denominator;
+        var fraction = offset.Cross(axis) / denominator;
+        if (distance < 0 || distance > maxDistance || fraction < 0 || fraction > 1)
+        {
+            return Miss(out hit);
+        }
+        var normal = Vector2.Normalize(new Vector2((float)-edge.Y, (float)edge.X));
+        hit = new(origin + direction * (float)distance, normal, (float)distance);
+        return true;
+    }
 
     /// <summary>Casts a ray against a circle.</summary>
     /// <param name="origin">The ray origin.</param>

@@ -44,7 +44,10 @@ public readonly partial record struct BSpline2D : ICurve2D
             }
         }
     }
-    private sealed record Prepared(float[] Knots, Vector2[] DerivativePoints, float[] DerivativeKnots);
+    private sealed record Prepared(float[] Knots, Vector2[] DerivativePoints, float[] DerivativeKnots)
+    {
+        internal PolynomialCurveSpan2D[]? RaycastSpans;
+    }
 
     public Vector2 Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, Clamping.Clamp01(amount));
     public Vector2 EvaluateDerivative(float amount)

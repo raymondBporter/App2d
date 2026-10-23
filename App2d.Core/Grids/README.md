@@ -6,7 +6,7 @@ the same math. Everything here is independent of rendering and the shape hierarc
 
 | Type | Purpose |
 | --- | --- |
-| `GridCell2D` | Signed integer `(X, Y)` coordinates; also a dictionary key |
+| `Vector2i` (Mathematics) | Signed integer `(X, Y)` coordinates; also a dictionary key |
 | `GridSize2D` | Width, height, checked cell count, row-major indices, and partial-block counts |
 | `GridCellRange2D` | Inclusive minimum/maximum cells, containment, intersection, and allocation-free iteration |
 | `GridGeometry2D` | Cell size and origin; world/cell conversion, centers, rectangles, and rectangle-to-cell ranges |
@@ -16,11 +16,15 @@ Geometry and storage compose: use `Grid2D<Vector2>` for a dense wind field, or k
 `GridGeometry2D` alongside a dictionary for a sparse, potentially unbounded spatial index.
 The coordinate, size, range, and geometry types are small value types. Cells do not allocate
 individual objects. Existing storage can reuse `GridSize2D` and `GridGeometry2D` directly.
+Coordinates use `App2d.Core.Mathematics.Vector2i`, shared with non-grid code.
+Use plain dimensions or an integer vector when only a pair of numbers is needed;
+`GridSize2D` adds the validation and addressing rules of finite grid storage.
 
 ## Dense wind data
 
 ```csharp
 using App2d.Core.Grids;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 var wind = new Grid2D<Vector2>(64, 32, cellSize: 128f, origin: new(-4096, -2048));
@@ -28,7 +32,7 @@ wind.Fill(new Vector2(12f, 0f));
 wind[4, 2] = new Vector2(25f, 3f);
 
 int index = wind.Size.GetIndex(4, 2); // 4 + 2 * 64
-GridCell2D coordinates = wind.Size.GetCell(index);
+Vector2i coordinates = wind.Size.GetCell(index);
 var cellBounds = wind.GetCellBounds(coordinates); // Rect2D implements IRect2D.
 var center = wind.Geometry.GetCellCenter(coordinates);
 
@@ -47,7 +51,7 @@ Interpolation, evolution over time, and object response belong to the wind syste
 
 ```csharp
 var geometry = new GridGeometry2D(256f);
-var buckets = new Dictionary<GridCell2D, List<int>>();
+var buckets = new Dictionary<Vector2i, List<int>>();
 
 if (geometry.TryGetCellRange(objectBounds, out var cells) && cells.CellCount <= 4096)
 {

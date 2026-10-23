@@ -2,6 +2,7 @@ using App2d.Core.Collision.BroadPhase;
 using App2d.Core.Collision.Filtering;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
+using App2d.Core.Mathematics;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 
@@ -15,11 +16,11 @@ public sealed class CollisionSystem2D
     private readonly List<Collider2D> _colliders = [];
     private readonly List<BroadPhasePair2D<Collider2D>> _candidatePairs = [];
     private readonly List<Collider2D> _queryCandidates = [];
-    private readonly Dictionary<GridCell2D, List<Collider2D>> _staticCells = [];
-    private readonly Dictionary<GridCell2D, List<Collider2D>> _dynamicCells = [];
+    private readonly Dictionary<Vector2i, List<Collider2D>> _staticCells = [];
+    private readonly Dictionary<Vector2i, List<Collider2D>> _dynamicCells = [];
     private readonly List<Collider2D> _staticOverflow = [];
     private readonly List<Collider2D> _dynamicOverflow = [];
-    private readonly List<GridCell2D> _staleCells = [];
+    private readonly List<Vector2i> _staleCells = [];
     private readonly CombinedPairFilter _combinedFilter = new();
     private int _nextColliderId = 1;
     private int _queryStamp;
@@ -223,7 +224,7 @@ public sealed class CollisionSystem2D
         }
     }
 
-    private void RebuildIndex(ColliderMobility2D mobility, Dictionary<GridCell2D, List<Collider2D>> cells, List<Collider2D> overflow)
+    private void RebuildIndex(ColliderMobility2D mobility, Dictionary<Vector2i, List<Collider2D>> cells, List<Collider2D> overflow)
     {
         foreach (var bucket in cells.Values)
         {
@@ -262,7 +263,7 @@ public sealed class CollisionSystem2D
         }
     }
 
-    private void AddToIndex(Collider2D collider, Dictionary<GridCell2D, List<Collider2D>> cells, List<Collider2D> overflow)
+    private void AddToIndex(Collider2D collider, Dictionary<Vector2i, List<Collider2D>> cells, List<Collider2D> overflow)
     {
         var bounds = collider.WorldObject.WorldBounds;
         if (!_grid.TryGetCellRange(bounds, out var range) ||
@@ -311,7 +312,7 @@ public sealed class CollisionSystem2D
         }
     }
 
-    private static void QueryCells(Dictionary<GridCell2D, List<Collider2D>> cells, GridCellRange2D range, Rect2D bounds, int stamp, List<Collider2D> results)
+    private static void QueryCells(Dictionary<Vector2i, List<Collider2D>> cells, GridCellRange2D range, Rect2D bounds, int stamp, List<Collider2D> results)
     {
         foreach (var cell in range)
         {

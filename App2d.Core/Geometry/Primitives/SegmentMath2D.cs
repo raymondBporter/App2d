@@ -6,6 +6,12 @@ namespace App2d.Core.Geometry.Primitives;
 /// <summary>Shared operations on concrete segments with Vector2 endpoints.</summary>
 public static class SegmentMath2D
 {
+    extension<TSegment>(TSegment segment) where TSegment : ISegment<TSegment, Vector2>
+    {
+        /// <summary>The midpoint of any segment with Vector2 endpoints; no point-interface or wrapper is needed.</summary>
+        public Vector2 Midpoint => ((segment.Start.ToVector2d() + segment.End.ToVector2d()) * .5).ToVector2();
+    }
+
     public static float Length<TSegment>(this TSegment segment)
         where TSegment : ISegment<TSegment, Vector2> => Vector2.Distance(segment.Start, segment.End);
 

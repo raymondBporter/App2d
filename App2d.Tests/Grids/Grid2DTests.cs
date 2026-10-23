@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Tests.Grids;
@@ -72,8 +73,8 @@ public sealed class Grid2DTests
     public void WorldCoordinatesUseFloorAndRespectRectangularCells(float x, float y, int cx, int cy)
     {
         var geometry = new GridGeometry2D(new Size2D(10, 20), new(-70, 30));
-        Assert.Equal(new GridCell2D(cx, cy), geometry.WorldToCell(new Vector2(x, y) + geometry.Origin));
-        Assert.Equal(new GridCell2D(cx, cy), geometry.WorldToCell(geometry.GetCellCenter(new(cx, cy))));
+        Assert.Equal(new Vector2i(cx, cy), geometry.WorldToCell(new Vector2(x, y) + geometry.Origin));
+        Assert.Equal(new Vector2i(cx, cy), geometry.WorldToCell(geometry.GetCellCenter(new(cx, cy))));
     }
 
     [Fact]
@@ -81,10 +82,10 @@ public sealed class Grid2DTests
     {
         var grid = new Grid2D<float>(3, 2, 10f, new(-10, -20));
         Assert.True(grid.TryGetCell(new(-10, -20), out var minimum));
-        Assert.Equal(new GridCell2D(0, 0), minimum);
+        Assert.Equal(new Vector2i(0, 0), minimum);
         Assert.False(grid.TryGetCell(grid.WorldBounds.Max, out _));
-        Assert.Equal(new GridCell2D(2, 1), grid.Geometry.WorldToCellClamped(grid.WorldBounds.Max, grid.Size));
-        Assert.Equal(new GridCell2D(0, 1), grid.Geometry.WorldToCellClamped(new(-float.MaxValue, float.MaxValue), grid.Size));
+        Assert.Equal(new Vector2i(2, 1), grid.Geometry.WorldToCellClamped(grid.WorldBounds.Max, grid.Size));
+        Assert.Equal(new Vector2i(0, 1), grid.Geometry.WorldToCellClamped(new(-float.MaxValue, float.MaxValue), grid.Size));
     }
 
     [Fact]
@@ -101,8 +102,8 @@ public sealed class Grid2DTests
     {
         var geometry = new GridGeometry2D(10f);
         var range = geometry.GetCellRange(new Rect2D(new(-10), new(10)));
-        Assert.Equal(new GridCell2D(-1, -1), range.Minimum);
-        Assert.Equal(new GridCell2D(1, 1), range.Maximum);
+        Assert.Equal(new Vector2i(-1, -1), range.Minimum);
+        Assert.Equal(new Vector2i(1, 1), range.Maximum);
         Assert.Equal(9, range.CellCount);
         Assert.Equal(1, geometry.GetCellRange(new Rect2D(new(10), new(10))).CellCount);
 
@@ -118,9 +119,9 @@ public sealed class Grid2DTests
     public void RangeIterationIncludesIntegerLimitsWithoutWrapping()
     {
         var range = new GridCellRange2D(new(int.MaxValue - 1, int.MaxValue), new(int.MaxValue, int.MaxValue));
-        GridCell2D[] cells = [.. range];
+        Vector2i[] cells = [.. range];
         Assert.Equal([range.Minimum, range.Maximum], cells);
-        Assert.Empty((GridCell2D[])[.. default(GridCellRange2D)]);
+        Assert.Empty((Vector2i[])[.. default(GridCellRange2D)]);
         Assert.False(default(GridCellRange2D).Contains(default));
         Assert.Equal(4294967296L,
             new GridCellRange2D(new(int.MinValue, 0), new(int.MaxValue, 0)).CellCount);

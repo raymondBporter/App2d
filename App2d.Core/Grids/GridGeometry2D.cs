@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -27,7 +28,7 @@ public readonly record struct GridGeometry2D
     public Vector2 Origin { get; }
     public bool IsValid => CellSize.IsValid && NumericValidation.IsFinite(Origin);
 
-    public GridCell2D WorldToCell(Vector2 position)
+    public Vector2i WorldToCell(Vector2 position)
     {
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
         if (!TryWorldToCell(position, out var cell))
@@ -38,7 +39,7 @@ public readonly record struct GridGeometry2D
         return cell;
     }
 
-    public bool TryWorldToCell(Vector2 position, out GridCell2D cell)
+    public bool TryWorldToCell(Vector2 position, out Vector2i cell)
     {
         cell = default;
         if (!IsValid || !NumericValidation.IsFinite(position))
@@ -58,7 +59,7 @@ public readonly record struct GridGeometry2D
     }
 
     /// <summary>Clamps to a nonempty finite grid. Even distant finite world positions safely reach an edge cell.</summary>
-    public GridCell2D WorldToCellClamped(Vector2 position, GridSize2D size)
+    public Vector2i WorldToCellClamped(Vector2 position, GridSize2D size)
     {
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
         ArgGuard.Finite(position);
@@ -68,10 +69,10 @@ public readonly record struct GridGeometry2D
             (int)Math.Clamp(Math.Floor(((double)position.Y - Origin.Y) / CellSize.Height), 0, size.Height - 1));
     }
 
-    public Rect2D GetCellBounds(GridCell2D cell) => new(
+    public Rect2D GetCellBounds(Vector2i cell) => new(
         Corner(cell.X, cell.Y), Corner((double)cell.X + 1, (double)cell.Y + 1));
 
-    public Vector2 GetCellCenter(GridCell2D cell) => Corner(cell.X + .5, cell.Y + .5);
+    public Vector2 GetCellCenter(Vector2i cell) => Corner(cell.X + .5, cell.Y + .5);
 
     /// <summary>Snaps a finite world point to its nearest cell corner. Halfway ties round to an even grid index.</summary>
     public Vector2 SnapToNearestCorner(Vector2 position)

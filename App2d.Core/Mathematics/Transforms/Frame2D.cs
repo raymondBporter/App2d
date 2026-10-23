@@ -34,6 +34,10 @@ public readonly record struct Frame2D
         return new(origin, axis, axis.PerpCcw);
     }
 
+    /// <summary>A rotation frame authored in degrees, with an optional world-space origin.</summary>
+    public static Frame2D FromRotationDegrees(float degrees, Vector2 origin = default) =>
+        FromRotation(float.DegreesToRadians(degrees), origin);
+
     /// <summary>Uses the supplied Y axis and its clockwise perpendicular as X; does not normalize or choose a fallback.</summary>
     public static Frame2D FromYAxis(Vector2 origin, Vector2 yAxis) => new(origin, yAxis.PerpCw, yAxis);
 

@@ -5,8 +5,16 @@ using System.Numerics;
 
 namespace App2d.Core.Geometry.Curves;
 
+/// <summary>Exposes an exact parameter restriction to geometric queries without sampling or reflection.</summary>
+public interface ICurveSlice2D : ICurve2D
+{
+    ICurve2D SourceCurve { get; }
+    float From { get; }
+    float To { get; }
+}
+
 /// <summary>A parameter interval of another curve, remapped to [0, 1] without resampling its geometry.</summary>
-public readonly record struct CurveSlice2D<TCurve> : ICurve2D where TCurve : ICurve2D
+public readonly record struct CurveSlice2D<TCurve> : ICurveSlice2D where TCurve : ICurve2D
 {
     public CurveSlice2D(TCurve source, float from, float to)
     {
@@ -19,6 +27,7 @@ public readonly record struct CurveSlice2D<TCurve> : ICurve2D where TCurve : ICu
     }
 
     public TCurve Source { get; }
+    ICurve2D ICurveSlice2D.SourceCurve => Source;
     public float From { get; }
     public float To { get; }
 

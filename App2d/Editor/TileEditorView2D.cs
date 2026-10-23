@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
+using App2d.Core.Mathematics;
 using App2d.Core.Objects;
 using App2d.Core.Shapes;
 using App2d.Presentation;
@@ -30,7 +31,7 @@ internal static class TileEditorView2D
         var hasTile = editor.TryGetHoveredTile(out var tileX, out var tileY);
         if (hasTile)
         {
-            var bounds = editor.GridGeometry.GetCellBounds(new GridCell2D(tileX, tileY));
+            var bounds = editor.GridGeometry.GetCellBounds(new Vector2i(tileX, tileY));
             renderer.DrawShape(Rectangle2D.Builder.Create(bounds.Min, bounds.Max),
                 outlineColor: GameUiTheme.EditorSelection, screenStrokeWidth: 2f);
         }
@@ -107,13 +108,13 @@ internal static class TileEditorView2D
         var cells = grid.GetCellRange(clipped);
         for (var x = cells.Minimum.X; x <= cells.Maximum.X; x++)
         {
-            var worldX = grid.GetCellBounds(new GridCell2D(x, 0)).Left;
+            var worldX = grid.GetCellBounds(new Vector2i(x, 0)).Left;
             renderer.DrawWorldSegment(new(worldX, clipped.Bottom), new(worldX, clipped.Top), GameUiTheme.EditorGrid, 1f);
         }
 
         for (var y = cells.Minimum.Y; y <= cells.Maximum.Y; y++)
         {
-            var worldY = grid.GetCellBounds(new GridCell2D(0, y)).Bottom;
+            var worldY = grid.GetCellBounds(new Vector2i(0, y)).Bottom;
             renderer.DrawWorldSegment(new(clipped.Left, worldY), new(clipped.Right, worldY), GameUiTheme.EditorGrid, 1f);
         }
     }

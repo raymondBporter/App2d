@@ -214,44 +214,44 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
             }
             else
             {
-            if (Ui.Combo("Attach to", part.A, controls) is { } a)
-            {
-                session.Edit(document, () =>
+                if (Ui.Combo("Attach to", part.A, controls) is { } a)
                 {
-                    Part(document, partId).A = a;
-                    document.Asset.Validate();
-                });
-            }
-
-            if (part.Geometry is not ICurve2D && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
-            {
-                session.Edit(document, () =>
-                {
-                    var edited = Part(document, partId);
-                    edited.Frame = bone == "(none)" ? null : bone;
-                    if (edited.Frame is not null)
+                    session.Edit(document, () =>
                     {
-                        edited.B = null;
-                    }
+                        Part(document, partId).A = a;
+                        document.Asset.Validate();
+                    });
+                }
 
-                    document.Asset.Validate();
-                });
-            }
-
-            if (Ui.Combo(part.Geometry is ICurve2D ? "End" : "Point toward", part.B ?? "(none)", part.Geometry is ICurve2D ? controls : controls.Prepend("(none)")) is { } b)
-            {
-                session.Edit(document, () =>
+                if (part.Geometry is not ICurve2D && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
                 {
-                    var edited = Part(document, partId);
-                    edited.B = b == "(none)" ? null : b;
-                    if (edited.B is not null)
+                    session.Edit(document, () =>
                     {
-                        edited.Frame = null;
-                    }
+                        var edited = Part(document, partId);
+                        edited.Frame = bone == "(none)" ? null : bone;
+                        if (edited.Frame is not null)
+                        {
+                            edited.B = null;
+                        }
 
-                    document.Asset.Validate();
-                });
-            }
+                        document.Asset.Validate();
+                    });
+                }
+
+                if (Ui.Combo(part.Geometry is ICurve2D ? "End" : "Point toward", part.B ?? "(none)", part.Geometry is ICurve2D ? controls : controls.Prepend("(none)")) is { } b)
+                {
+                    session.Edit(document, () =>
+                    {
+                        var edited = Part(document, partId);
+                        edited.B = b == "(none)" ? null : b;
+                        if (edited.B is not null)
+                        {
+                            edited.Frame = null;
+                        }
+
+                        document.Asset.Validate();
+                    });
+                }
 
                 if (part.Geometry is ICurve2D && part.Bindings is not { Count: > 0 } && ImGui.Button("Make rounded control path"))
                 {

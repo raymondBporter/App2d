@@ -103,6 +103,9 @@ public static class Rect2DExtensions
         /// <returns>True when the point is in or on the rectangle.</returns>
         public bool Contains(Vector2 point) => Containment2D.Rectangle(point, rectangle.Min, rectangle.Max);
 
+        /// <summary>Tests the open interior; points on any edge or corner are excluded.</summary>
+        public bool ContainsInterior(Vector2 point) => Containment2D.RectangleInterior(point, rectangle.Min, rectangle.Max);
+
         /// <summary>Tests whether another rectangle lies entirely inside this one, shared edges included.</summary>
         /// <param name="other">The rectangle to test.</param>
         /// <returns>True when the whole other rectangle is contained.</returns>
