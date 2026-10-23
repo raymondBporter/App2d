@@ -3,7 +3,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Vegetation;
 
@@ -50,4 +49,4 @@ public sealed class VegetationBladeTip2D
 }
 
 /// <summary>One convex piece of a clipping; an outline draws it in ink like the living plant (width in world units).</summary>
-internal readonly record struct VegetationTipPolygon2D(Vector2[] Points, XnaColor Fill, XnaColor? Outline, float OutlineWidth);
+internal readonly record struct VegetationTipPolygon2D(Vector2[] Points, Color4b Fill, Color4b? Outline, float OutlineWidth);

@@ -7,7 +7,6 @@ using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterStudio.Editor;
 
@@ -71,7 +70,7 @@ internal static class EditorSurfaceSmoke
                 {
                     gui.Begin(1f / 60);
                     shell.Draw();
-                    using (device.UseRenderTarget(target, new Color(19, 23, 29)))
+                    using (device.UseRenderTarget(target, StudioTheme.ApplicationBackground))
                     {
                         gui.Render();
                     }

@@ -2,7 +2,6 @@ using App2d.Core;
 using App2d.Core.Rendering;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
@@ -20,15 +19,15 @@ internal sealed partial class NoodleEditorHost : NoodleToolHost
 
     protected override void DrawScene(Renderer2D renderer, FrameTime time)
     {
-        renderer.Clear(new XnaColor(17, 22, 33));
+        renderer.Clear(new Color4b(17, 22, 33));
         renderer.DrawGrid(50, 5);
         var limb = _person.TargetLimb;
-        renderer.DrawWorldCircle(limb.Shoulder, limb.UpperLength + limb.LowerLength, new XnaColor(117, 255, 178, 45), 1);
+        renderer.DrawWorldCircle(limb.Shoulder, limb.UpperLength + limb.LowerLength, new Color4b(117, 255, 178, 45), 1);
         _person.Render(renderer, _showWeights);
         if (!limb.Pose.ReachesTarget)
         {
             Span<Vector2> line = [limb.Pose.End, limb.Target];
-            renderer.DrawWorldPolyline(line, new XnaColor(255, 118, 118, 150), 2);
+            renderer.DrawWorldPolyline(line, new Color4b(255, 118, 118, 150), 2);
         }
         _person.RenderControls(renderer);
         _jointShowcase.Render(renderer, Camera, time.TotalSeconds);

@@ -15,7 +15,6 @@ using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -65,7 +64,7 @@ internal static class TilesetRenderingSmoke2D
             camera.Position = new(x, map.Origin.Y + 18f * 32f);
             level.UpdateStreaming(camera.Position);
             world.Update(level.CaptureContent(), level.CaptureWorld(), 1f / 120f);
-            target.SavePng(Path.Combine(directory, $"level-{index:00}.png"), new Color(170, 208, 226), () =>
+            target.SavePng(Path.Combine(directory, $"level-{index:00}.png"), new Color4b(170, 208, 226), () =>
             {
                 renderer.BeginFrame(1280, 720, default);
                 world.DrawTrees(renderer, camera.VisibleWorldBounds);
@@ -146,7 +145,7 @@ internal static class TilesetRenderingSmoke2D
 
         void Save(string name)
         {
-            target.SavePng(Path.Combine(directory, name), new Color(170, 208, 226), () =>
+            target.SavePng(Path.Combine(directory, name), new Color4b(170, 208, 226), () =>
             {
                 renderer.BeginFrame(1280, 720, default);
                 world.DrawTrees(renderer, camera.VisibleWorldBounds);

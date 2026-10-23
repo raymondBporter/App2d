@@ -14,14 +14,14 @@ internal static class ModelOverlay
         var draw = frame.Draw;
         foreach (var control in model.Order.Where(c => c.Parent is not null))
         {
-            draw.AddLine(frame.Screen(pose.World(control.Parent!)), frame.Screen(pose.World(control.Id)), Ui.Color(104, 112, 122, 170), 1.5f);
+            draw.AddLine(frame.Screen(pose.World(control.Parent!)), frame.Screen(pose.World(control.Id)), StudioTheme.ModelBoneLink.PackedValue, 1.5f);
         }
 
         foreach (var control in model.Order.Where(c => c.Length > 0))
         {
             var origin = pose.World(control.Id);
             var selected = selectedControl == control.Id;
-            var color = selected ? Ui.Color(232, 169, 55) : Ui.Color(84, 179, 160);
+            var color = selected ? StudioTheme.Selection.PackedValue : StudioTheme.Bone.PackedValue;
             draw.AddLine(frame.Screen(origin), frame.Screen(BoneTip(control, pose)), color, (selected ? 4 : 2.5f) * Ui.Scale);
             draw.AddCircleFilled(frame.Screen(BoneTip(control, pose)), 4 * Ui.Scale, color);
         }
@@ -30,11 +30,11 @@ internal static class ModelOverlay
             var p = frame.Screen(pose.World(control.Id));
             var selected = selectedControl == control.Id;
             var end = model.Chains.Values.Any(c => c.End == control.Id);
-            draw.AddCircleFilled(p, (selected ? 6 : 4.5f) * Ui.Scale, selected ? Ui.Color(232, 169, 55) : end ? Ui.Color(50, 145, 160) : Ui.Color(230, 233, 229));
-            draw.AddCircle(p, (selected ? 6 : 4.5f) * Ui.Scale, Ui.Color(64, 78, 89), 16, 1);
+            draw.AddCircleFilled(p, (selected ? 6 : 4.5f) * Ui.Scale, selected ? StudioTheme.Selection.PackedValue : end ? StudioTheme.TargetControl.PackedValue : StudioTheme.ControlFill.PackedValue);
+            draw.AddCircle(p, (selected ? 6 : 4.5f) * Ui.Scale, StudioTheme.ControlOutline.PackedValue, 16, 1);
             if (selected)
             {
-                draw.AddText(p + new Vector2(9, -18) * Ui.Scale, Ui.Color(44, 53, 68), control.Id);
+                draw.AddText(p + new Vector2(9, -18) * Ui.Scale, StudioTheme.ControlLabel.PackedValue, control.Id);
             }
         }
     }
@@ -44,12 +44,12 @@ internal static class ModelOverlay
         var outline = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]).Select(p => frame.Screen(p)).ToArray();
         for (var i = 1; i < outline.Length; i++)
         {
-            frame.Draw.AddLine(outline[i - 1], outline[i], Ui.Color(232, 169, 55), 2);
+            frame.Draw.AddLine(outline[i - 1], outline[i], StudioTheme.Selection.PackedValue, 2);
         }
 
         if (part.Geometry is not ICurve2D && outline.Length > 1)
         {
-            frame.Draw.AddLine(outline[^1], outline[0], Ui.Color(232, 169, 55), 2);
+            frame.Draw.AddLine(outline[^1], outline[0], StudioTheme.Selection.PackedValue, 2);
         }
     }
 

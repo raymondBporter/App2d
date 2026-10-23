@@ -303,7 +303,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         }
 
         var socket = new ActorPose(primary.Subject.Pose, Vector2.Zero, 1).Socket(worn.Socket);
-        var gold = Ui.Color(220, 157, 39);
+        var gold = StudioTheme.AppearanceSelection.PackedValue;
         for (var i = 0; i < points.Count; i++)
         {
             var p = frame.Screen(ActorPose.PropPoint(socket, doc.Asset, points[i]));

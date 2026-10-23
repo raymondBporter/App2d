@@ -10,7 +10,6 @@ using App2d.Core.Vegetation;
 using App2d.Rendering;
 using System.Collections.Immutable;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -224,11 +223,11 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
     private void CreateGoal(Vector2 position)
     {
         var pole = new WorldObject2D(Capsule2D.Builder.Create(Vector2.Zero, new Vector2(0f, 190f), 5f),
-            new SolidColorShader(new XnaColor(238, 242, 232)));
+            new SolidColorShader(new Color4b(238, 242, 232)));
         pole.Transform.Position = position;
         var flag = new WorldObject2D(ConvexPolygon2D.Builder.Create([
             Vector2.Zero, new Vector2(92f, -30f), new Vector2(0f, -60f)]),
-            new SolidColorShader(new XnaColor(255, 79, 120)));
+            new SolidColorShader(new Color4b(255, 79, 120)));
         flag.Transform.Position = position + new Vector2(0f, 185f);
         _goal.Add(pole);
         _goal.Add(flag);

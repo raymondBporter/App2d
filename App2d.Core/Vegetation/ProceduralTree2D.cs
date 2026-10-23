@@ -4,7 +4,6 @@ using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Vegetation;
 
@@ -35,7 +34,7 @@ public sealed class ProceduralTree2D
         {
             var radius = _height * float.Lerp(0.12f, 0.21f, random.NextSingle());
             _crowns.Add(new(end, radius, random.NextFloat(MathF.Tau),
-                XnaColor.Lerp(new(32, 87, 68), new(83, 145, 88), random.NextSingle())));
+                Color4b.Lerp(new(32, 87, 68), new(83, 145, 88), random.NextSingle())));
         }
         if (depth == 0)
         {
@@ -59,11 +58,11 @@ public sealed class ProceduralTree2D
             quad[1] = branch.End - normal * branch.Width * 0.32f;
             quad[2] = branch.End + normal * branch.Width * 0.32f;
             quad[3] = branch.Start + normal * branch.Width * 0.5f;
-            renderer.DrawWorldConvexPolygon(quad, new XnaColor(78, 65, 48));
+            renderer.DrawWorldConvexPolygon(quad, new Color4b(78, 65, 48));
             // A narrow lit face makes the trunk read against the canopy.
             quad[0] = branch.Start;
             quad[1] = branch.End;
-            renderer.DrawWorldConvexPolygon(quad, new XnaColor(105, 87, 57));
+            renderer.DrawWorldConvexPolygon(quad, new Color4b(105, 87, 57));
         }
         Span<Vector2> leaves = stackalloc Vector2[10];
         foreach (var crown in _crowns)
@@ -79,5 +78,5 @@ public sealed class ProceduralTree2D
     }
 
     private readonly record struct Branch(Vector2 Start, Vector2 End, float Width);
-    private readonly record struct Crown(Vector2 Center, float Radius, float Phase, XnaColor Color);
+    private readonly record struct Crown(Vector2 Center, float Radius, float Phase, Color4b Color);
 }

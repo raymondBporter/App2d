@@ -87,7 +87,7 @@ internal static class TrialsRenderingSmoke2D
             }
         }
 
-        void Save(string name) => target.SavePng(Path.Combine(directory, name), Microsoft.Xna.Framework.Color.Black, () =>
+        void Save(string name) => target.SavePng(Path.Combine(directory, name), Color4b.Black, () =>
         {
             renderer.BeginFrame(1280, 720, time);
             game.RenderFrame(renderer, time);

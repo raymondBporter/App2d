@@ -2,7 +2,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -18,7 +17,7 @@ internal sealed partial class ProofRenders
         var subjects = new[] { "hero", "maul-brute", "cinder-gunner" };
         foreach (var poseName in new[] { "idle", "run", "attack", "back" })
         {
-            using (GraphicsDevice.UseRenderTarget(target, new Color(241, 236, 223)))
+            using (GraphicsDevice.UseRenderTarget(target, new Color4b(241, 236, 223)))
             {
                 for (var column = 0; column < subjects.Length; column++)
                 {
@@ -72,7 +71,7 @@ internal sealed partial class ProofRenders
             ("person-hit", .12f),
             ("person-death", .5f)
         };
-        using (GraphicsDevice.UseRenderTarget(target, new Color(241, 236, 223)))
+        using (GraphicsDevice.UseRenderTarget(target, new Color4b(241, 236, 223)))
         {
             for (var i = 0; i < samples.Length; i++)
             {
@@ -98,7 +97,7 @@ internal sealed partial class ProofRenders
             ("rock-thrower-throw", .8f), ("rock-thrower-throw", 1.05f), ("rock-thrower-throw", 1.14f),
             ("person-hit", .12f), ("person-death", .5f)
         };
-        using (GraphicsDevice.UseRenderTarget(target, new Color(241, 236, 223)))
+        using (GraphicsDevice.UseRenderTarget(target, new Color4b(241, 236, 223)))
         {
             for (var i = 0; i < throws.Length; i++)
             {
@@ -134,7 +133,7 @@ internal sealed partial class ProofRenders
             ("baby-triceratops-hit", .12f),
             ("baby-triceratops-death", .8f)
         };
-        using (GraphicsDevice.UseRenderTarget(target, new Color(241, 236, 223)))
+        using (GraphicsDevice.UseRenderTarget(target, new Color4b(241, 236, 223)))
         {
             for (var i = 0; i < babySamples.Length; i++)
             {
@@ -196,7 +195,7 @@ internal sealed partial class ProofRenders
                 var rushSeconds = Math.Clamp(at - start, 0, finish - start);
                 var brakeSeconds = Math.Clamp(at - finish, 0, config.BrakeSeconds);
                 var travelled = charging ? config.ChargeSpeed * (rushSeconds + brakeSeconds - brakeSeconds * brakeSeconds / (2 * config.BrakeSeconds)) : 0;
-                animationTarget.SavePng(Path.Combine(folder, $"frame-{frame:D4}.png"), new Color(241, 236, 223), () =>
+                animationTarget.SavePng(Path.Combine(folder, $"frame-{frame:D4}.png"), new Color4b(241, 236, 223), () =>
                     _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(640, 480,
                         new(charging ? 100 + travelled * 65 : 160, 430), charging ? 65 : 125), Matrix.Identity));
             }

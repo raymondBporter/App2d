@@ -15,7 +15,6 @@ using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -63,7 +62,7 @@ internal static class CombatContactStudy2D
             using var enemies = new EnemyPresentation2D(scene, textures, traversal, new Silent());
             using var contacts = new CombatContactPresentation2D(scene);
             var timing = HitstopTimingStudy2D.CreateVariants();
-            var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5000, 2), new SolidColorShader(new Color(70, 88, 93)));
+            var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5000, 2), new SolidColorShader(new Color4b(70, 88, 93)));
             ground.Transform.Position = new(-250, 0);
             scene.Add(ground);
             var hits = 0;
@@ -139,7 +138,7 @@ internal static class CombatContactStudy2D
 
                     contacts.Enabled = effects;
                     contacts.Advance(0);
-                    target.SavePng(Path.Combine(directory, $"{name}-{label}-{step / 2:000}.png"), new Color(145, 176, 190), () =>
+                    target.SavePng(Path.Combine(directory, $"{name}-{label}-{step / 2:000}.png"), new Color4b(145, 176, 190), () =>
                     {
                         renderer.BeginFrame(640, 240, default);
                         renderer.Draw(scene);

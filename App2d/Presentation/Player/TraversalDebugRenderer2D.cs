@@ -1,8 +1,8 @@
 using App2d.Contracts.Player;
 using App2d.Core.Validation;
 using App2d.Rendering;
+using App2d.Core.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.Player;
 
@@ -28,8 +28,8 @@ public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
             standingArc[i] = playerPosition + new Vector2(_standingJumpArc[i].X * facing, _standingJumpArc[i].Y);
         }
 
-        renderer.DrawWorldPolyline(runningArc, new XnaColor(255, 92, 137, 220), 3f);
-        renderer.DrawWorldPolyline(standingArc, new XnaColor(110, 235, 255, 220), 2f);
+        renderer.DrawWorldPolyline(runningArc, DebugTheme.RunningJump, 3f);
+        renderer.DrawWorldPolyline(standingArc, DebugTheme.StandingJump, 2f);
     }
 
     public void DrawUI(Renderer2D renderer)

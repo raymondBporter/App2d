@@ -1,7 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -15,7 +14,7 @@ internal sealed partial class ProofRenders
         var drawing = new PuppetDrawing();
         using var target = RenderCapture2D.CreateTarget(GraphicsDevice, 1440, 1080);
         var roles = new[] { "hover", "fold", "dive", "brake", "low-recovery", "reset" };
-        target.SavePng(Path.Combine(_smokePath, "pterosaur-poses.png"), new Color(247, 241, 221), () =>
+        target.SavePng(Path.Combine(_smokePath, "pterosaur-poses.png"), new Color4b(247, 241, 221), () =>
         {
             for (var row = 0; row < roles.Length; row++)
             {
@@ -29,7 +28,7 @@ internal sealed partial class ProofRenders
             }
         });
 
-        target.SavePng(Path.Combine(_smokePath, "pterosaur-silhouette.png"), new Color(247, 241, 221), () =>
+        target.SavePng(Path.Combine(_smokePath, "pterosaur-silhouette.png"), new Color4b(247, 241, 221), () =>
         {
             for (var row = 0; row < 2; row++)
             {

@@ -6,7 +6,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
 using System.Text.Json;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -77,7 +76,7 @@ internal sealed partial class ProofRenders
                 var centerX = pose.Locomotion.X + item.ViewX;
                 BuildScenery(scenery, item.Scene, centerX, seconds);
                 var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .5f - centerX * ReviewPpu, ReviewHeight * .84f), ReviewPpu);
-                target.SavePng(Path.Combine(folder, $"{f:D3}.png"), new Color(241, 240, 232), () =>
+                target.SavePng(Path.Combine(folder, $"{f:D3}.png"), new Color4b(241, 240, 232), () =>
                 {
                     _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
                     _renderer.DrawActor(drawing, projection, Matrix.Identity);
@@ -218,10 +217,10 @@ internal sealed partial class ProofRenders
     private static void BuildScenery(CharacterMesh mesh, string scene, float centerX, float seconds)
     {
         mesh.Clear();
-        var ink = new Color(150, 162, 152);
-        var faint = new Color(196, 204, 194);
+        var ink = new Color4b(150, 162, 152);
+        var faint = new Color4b(196, 204, 194);
         const float pixel = 1 / ReviewPpu;
-        void Line(float x0, float y0, float x1, float y1, float width, Color color) => mesh.Line(new(x0, y0, 7), new(x1, y1, 7), width * pixel, color);
+        void Line(float x0, float y0, float x1, float y1, float width, Color4b color) => mesh.Line(new(x0, y0, 7), new(x1, y1, 7), width * pixel, color);
         switch (scene)
         {
             case "air":

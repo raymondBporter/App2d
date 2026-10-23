@@ -46,8 +46,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         ArgGuard.Finite(point);
         ArgGuard.Finite(uv);
         EnsureCapacity(Count + 1);
-        var vertex = _vertexFactory(point, material, uv);
-        _vertices[Count++] = vertex;
+        _vertices[Count++] = _vertexFactory(point, material, uv);
         Version++;
         Min = Vector3.Min(Min, point);
         Max = Vector3.Max(Max, point);

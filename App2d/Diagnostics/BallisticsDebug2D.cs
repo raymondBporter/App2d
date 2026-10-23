@@ -1,8 +1,8 @@
 using App2d.Contracts.Player;
 using App2d.Core.Validation;
 using App2d.Rendering;
+using App2d.Core.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Diagnostics;
 
@@ -87,8 +87,8 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
             return;
         }
 
-        var referenceColor = new XnaColor(255, 220, 65);
-        var worldColor = new XnaColor(255, 100, 180);
+        var referenceColor = DebugTheme.BallisticsReference;
+        var worldColor = DebugTheme.BallisticsWorld;
         DrawShot(renderer, reference, referenceColor);
         DrawShot(renderer, world, worldColor);
     }
@@ -113,7 +113,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         $"{label}: g={shot.Gravity / _traversal.TileSize:0.00} m/s^2 | rise {shot.Rise / _traversal.TileSize:0.00}m | " +
         $"range {shot.Range / _traversal.TileSize:0.00}m | t={Math.Min(_elapsed, shot.FlightSeconds):0.00}/{shot.FlightSeconds:0.00}s";
 
-    private void DrawShot(Renderer2D renderer, Shot shot, XnaColor color)
+    private void DrawShot(Renderer2D renderer, Shot shot, Color4b color)
     {
         var elapsed = Math.Min(_elapsed, shot.FlightSeconds);
         Span<Vector2> trail = stackalloc Vector2[97];
@@ -127,7 +127,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 
         // A fixed launch-height baseline makes the range visible even over empty space.
         var end = shot.PositionAt(shot.FlightSeconds);
-        renderer.DrawWorldPolyline([shot.Origin, end], new XnaColor(color.R, color.G, color.B, (byte)80));
+        renderer.DrawWorldPolyline([shot.Origin, end], new Color4b(color.R, color.G, color.B, DebugTheme.BallisticsRayAlpha));
         renderer.DrawWorldCircle(shot.Origin, _traversal.TileSize * 0.08f, color);
         renderer.DrawWorldCircle(end, _traversal.TileSize * 0.08f, color);
     }

@@ -6,7 +6,6 @@ using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Text.Json;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterStudio.Editor;
 
@@ -126,7 +125,7 @@ internal sealed class EditorApp : Game
             }
             GraphicsDevice.SetRenderTarget(_capture);
         }
-        GraphicsDevice.Clear(new Color(19, 23, 29));
+        GraphicsDevice.Clear(StudioTheme.ApplicationBackground);
         _gui.Render();
         if (_smoke is not null)
         {

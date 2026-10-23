@@ -4,7 +4,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -81,8 +80,8 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
             edge.Transform.Scale = new(length + 2, width + 2);
             fill.Transform.Scale = new(length, width);
             var alpha = (byte)(255 * (1 - MathF.Pow(t, 3)));
-            ((Ink)edge.Shader).BaseColor = new Color(24, 27, 32, (int)alpha);
-            ((Ink)fill.Shader).BaseColor = new Color(255, 250, 222, (int)alpha);
+            ((Ink)edge.Shader).BaseColor = new Color4b(24, 27, 32, (int)alpha);
+            ((Ink)fill.Shader).BaseColor = new Color4b(255, 250, 222, (int)alpha);
         }
     }
 
@@ -111,7 +110,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
 
     private sealed class Ink : IShader2D
     {
-        public Color BaseColor { get; set; }
+        public Color4b BaseColor { get; set; }
     }
 
     private sealed class Burst

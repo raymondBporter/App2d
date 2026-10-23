@@ -4,7 +4,6 @@ using App2d.Core.Tiles;
 using App2d.Presentation.World.Presentation;
 using System.Collections.Immutable;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Presentation.World;
 
@@ -45,7 +44,7 @@ public sealed class GrassCuttingTests
     public void CutFlowersBurstIntoFivePetalsAndACenter()
     {
         var patch = new VegetationPatch2D(0f, 64f, 7f,
-            new(30f, 30f, 30f, 3f, 6f, Color.DarkGreen, Color.LightGreen, 0f, 0f, 1f), 107);
+            new(30f, 30f, 30f, 3f, 6f, Color4b.DarkGreen, Color4b.LightGreen, 0f, 0f, 1f), 107);
         Assert.True(patch.FlowerCount > 0);
         var tips = patch.CreateClippings(12f, Wind(0f)).ToArray();
         Assert.Equal(patch.BladeCount + patch.FlowerCount * 6, tips.Length);
@@ -166,7 +165,7 @@ public sealed class GrassCuttingTests
     private static void AssertBladeTop(float top) =>
         Assert.True(MathF.Abs(top - 37f) < 1e-3f || MathF.Abs(top - 28f) < 1e-3f, $"Unexpected blade top {top}.");
     private static VegetationPatch2D Patch(float endX = 32f) => new(0f, endX, 7f,
-        new(30f, 30f, 30f, 3f, 6f, Color.DarkGreen, Color.LightGreen, 0f, 0f, 0f), 107);
+        new(30f, 30f, 30f, 3f, 6f, Color4b.DarkGreen, Color4b.LightGreen, 0f, 0f, 0f), 107);
     private static VegetationWind2D Wind(float strength = 5f) => new(0f, strength, 1.15f, 0.027f, 0.12f);
     private static GrassClipping2D Clipping() =>
         new(Patch().CreateClippings(12f, Wind()).First(), new(0f, 100f), 4f, 0.7f, 1f);

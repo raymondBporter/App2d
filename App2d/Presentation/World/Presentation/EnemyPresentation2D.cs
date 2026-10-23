@@ -18,7 +18,6 @@ using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using System.Collections.Immutable;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -177,7 +176,7 @@ public sealed class EnemyPresentation2D(
                 IShape2D shape = rock
                     ? ConvexPolygon2D.Builder.Create([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
                     : AxisAlignedRectangle2D.Builder.CreateFromSize(Vector2.One);
-                var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new XnaColor(133, 139, 134) : XnaColor.OrangeRed)) { ZIndex = 2 };
+                var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new Color4b(133, 139, 134) : Color4b.OrangeRed)) { ZIndex = 2 };
                 _bolts.Add(bolt);
                 scene.Add(bolt);
             }
@@ -301,7 +300,7 @@ public sealed class EnemyPresentation2D(
                 _person.PlayDeath();
             }
 
-            _marker = new WorldObject2D(Circle2D.Builder.Create(8f), new SolidColorShader(new XnaColor(255, 46, 166))) { ZIndex = 3 };
+            _marker = new WorldObject2D(Circle2D.Builder.Create(8f), new SolidColorShader(new Color4b(255, 46, 166))) { ZIndex = 3 };
             scene.Add(_marker);
         }
 

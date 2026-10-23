@@ -2,7 +2,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -16,7 +15,7 @@ internal sealed partial class ProofRenders
         var props = new[] { "sword", "pistol", "hammer", "spear", "sheath" };
         var angles = new[] { (0f, 0f), (45f, 0f), (90f, 0f), (135f, 0f), (180f, 0f), (30f, 45f) };
         var drawing = new PuppetDrawing();
-        target.SavePng(Path.Combine(_smokePath, "weapon-turntable.png"), new Color(237, 238, 226), () =>
+        target.SavePng(Path.Combine(_smokePath, "weapon-turntable.png"), new Color4b(237, 238, 226), () =>
         {
             for (var row = 0; row < props.Length; row++)
             {
@@ -33,7 +32,7 @@ internal sealed partial class ProofRenders
 
         var model = catalog.Resolve("person");
         var clip = catalog.Animations["player-sword-backhand"];
-        target.SavePng(Path.Combine(_smokePath, "sword-swing.png"), new Color(237, 238, 226), () =>
+        target.SavePng(Path.Combine(_smokePath, "sword-swing.png"), new Color4b(237, 238, 226), () =>
         {
             for (var row = 0; row < 2; row++)
             {

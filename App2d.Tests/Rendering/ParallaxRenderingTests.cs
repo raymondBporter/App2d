@@ -7,7 +7,6 @@ using App2d.Gameplay.World.Vegetation;
 using App2d.Presentation.World.Vegetation;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Rendering;
 
@@ -21,27 +20,27 @@ public sealed class ParallaxRenderingTests
         var camera = new Camera2D { Position = new(200f, 100f) };
         using var renderer = new Renderer2D(camera, graphics.Device);
         var layer = new ParallaxLayer2D(4f);
-        var scenery = Rectangle(12f, 12f, XnaColor.Red);
+        var scenery = Rectangle(12f, 12f, Color4b.Red);
         scenery.Transform.Position = new(40f, 20f);
         layer.Scene.Add(scenery);
-        var world = Rectangle(12f, 12f, XnaColor.Lime);
+        var world = Rectangle(12f, 12f, Color4b.Lime);
         world.Transform.Position = new(230f, 100f);
         var originalTransform = scenery.Transform.Matrix;
 
         var first = Render();
-        Assert.Equal(XnaColor.Red, At(first, 64, 64));
-        Assert.Equal(XnaColor.Lime, At(first, 94, 64));
+        Assert.Equal(Color4b.Red, At(first, 64, 64));
+        Assert.Equal(Color4b.Lime, At(first, 94, 64));
         camera.Position += new Vector2(40f, 20f);
         var moved = Render();
-        Assert.Equal(XnaColor.Red, At(moved, 56, 68)); // One fifth of both camera displacements.
-        Assert.Equal(XnaColor.Lime, At(moved, 54, 84));
+        Assert.Equal(Color4b.Red, At(moved, 56, 68)); // One fifth of both camera displacements.
+        Assert.Equal(Color4b.Lime, At(moved, 54, 84));
         Assert.Equal(new Vector2(240f, 120f), camera.Position);
         Assert.Equal(originalTransform, scenery.Transform.Matrix);
 
-        XnaColor[] Render()
+        Color4b[] Render()
         {
             renderer.BeginFrame(128, 128, default);
-            renderer.Clear(XnaColor.Transparent);
+            renderer.Clear(Color4b.Transparent);
             renderer.Draw(layer);
             renderer.Draw(world);
             renderer.EndFrame();
@@ -59,12 +58,12 @@ public sealed class ParallaxRenderingTests
         var camera = new Camera2D { Position = new(x, 0f), Zoom = zoom, Rotation = rotation };
         using var renderer = new Renderer2D(camera, graphics.Device);
         var layer = new ParallaxLayer2D(1f) { RepeatWidth = 64f };
-        layer.Scene.Add(Rectangle(64f, 512f, XnaColor.White));
+        layer.Scene.Add(Rectangle(64f, 512f, Color4b.White));
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         renderer.Draw(layer);
         renderer.EndFrame();
-        Assert.All(graphics.ReadPixels(), pixel => Assert.Equal(XnaColor.White, pixel));
+        Assert.All(graphics.ReadPixels(), pixel => Assert.Equal(Color4b.White, pixel));
     }
 
     [Fact]
@@ -73,20 +72,20 @@ public sealed class ParallaxRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var near = new ParallaxLayer2D(1f);
-        near.Scene.Add(Rectangle(256f, 256f, XnaColor.Red));
+        near.Scene.Add(Rectangle(256f, 256f, Color4b.Red));
         var far = new ParallaxLayer2D(4f);
-        var distantVisual = Rectangle(256f, 256f, XnaColor.Blue);
+        var distantVisual = Rectangle(256f, 256f, Color4b.Blue);
         distantVisual.ZIndex = int.MaxValue;
         far.Scene.Add(distantVisual);
         ParallaxBackground2D background = [near, far];
-        Assert.Equal(XnaColor.Red, RenderCenter());
+        Assert.Equal(Color4b.Red, RenderCenter());
         near.Depth = 8f;
-        Assert.Equal(XnaColor.Blue, RenderCenter());
+        Assert.Equal(Color4b.Blue, RenderCenter());
 
-        XnaColor RenderCenter()
+        Color4b RenderCenter()
         {
             renderer.BeginFrame(128, 128, default);
-            renderer.Clear(XnaColor.Transparent);
+            renderer.Clear(Color4b.Transparent);
             renderer.Draw(background);
             renderer.EndFrame();
             return At(graphics.ReadPixels(), 64, 64);
@@ -101,15 +100,15 @@ public sealed class ParallaxRenderingTests
         using var renderer = new Renderer2D(camera, graphics.Device);
         var layer = new ParallaxLayer2D(4f) { RepeatWidth = 64f };
         layer.Scene.Add(new WorldObject2D(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f),
-            new SolidColorShader(XnaColor.Red)));
-        var world = Rectangle(12f, 12f, XnaColor.Lime);
+            new SolidColorShader(Color4b.Red)));
+        var world = Rectangle(12f, 12f, Color4b.Lime);
         world.Transform.Position = camera.Position;
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         Assert.Throws<InvalidOperationException>(() => renderer.Draw(layer));
         renderer.Draw(world);
         renderer.EndFrame();
-        Assert.Equal(XnaColor.Lime, At(graphics.ReadPixels(), 64, 64));
+        Assert.Equal(Color4b.Lime, At(graphics.ReadPixels(), 64, 64));
     }
 
     [Fact]
@@ -120,18 +119,18 @@ public sealed class ParallaxRenderingTests
         using var renderer = new Renderer2D(game.Camera, graphics.Device);
         var withoutBackground = Render();
         var layer = new ParallaxLayer2D(4f);
-        var distantVisual = Rectangle(512f, 512f, XnaColor.Magenta);
+        var distantVisual = Rectangle(512f, 512f, Color4b.Magenta);
         distantVisual.ZIndex = int.MaxValue;
         layer.Scene.Add(distantVisual);
         game.Background.Add(layer);
         var withBackground = Render();
         Assert.Equal(At(withoutBackground, 64, 64), At(withBackground, 64, 64));
-        Assert.NotEqual(XnaColor.Magenta, At(withBackground, 64, 64));
-        Assert.Equal(XnaColor.Magenta, At(withBackground, 0, 127));
+        Assert.NotEqual(Color4b.Magenta, At(withBackground, 64, 64));
+        Assert.Equal(Color4b.Magenta, At(withBackground, 0, 127));
         game.DrawGraphics = false;
-        Assert.Equal(new XnaColor(24, 27, 36), At(Render(), 64, 64));
+        Assert.Equal(new Color4b(24, 27, 36), At(Render(), 64, 64));
 
-        XnaColor[] Render()
+        Color4b[] Render()
         {
             renderer.BeginFrame(128, 128, default);
             game.RenderFrame(renderer, default);
@@ -140,10 +139,10 @@ public sealed class ParallaxRenderingTests
         }
     }
 
-    private static WorldObject2D Rectangle(float width, float height, XnaColor color) =>
+    private static WorldObject2D Rectangle(float width, float height, Color4b color) =>
         new(Rectangle2D.Builder.CreateFromSize(width, height), new SolidColorShader(color));
 
-    private static XnaColor At(XnaColor[] pixels, int x, int y) => pixels[y * 128 + x];
+    private static Color4b At(Color4b[] pixels, int x, int y) => pixels[y * 128 + x];
 
     private sealed class TreeGame : Game2D
     {

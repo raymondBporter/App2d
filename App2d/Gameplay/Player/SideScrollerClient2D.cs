@@ -21,7 +21,6 @@ using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using System.Collections.Immutable;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Gameplay.Player;
 
@@ -267,7 +266,7 @@ internal sealed class SideScrollerClient2D : IDisposable
             var feedbackProgress = 1f - _saveFeedbackSeconds / SaveFeedbackDurationSeconds;
             var alpha = (int)Math.Clamp(230f * (1f - feedbackProgress), 0f, 230f);
             renderer.DrawWorldCircle(_saveFeedbackCenter, float.Lerp(28f, 108f, feedbackProgress),
-                _lastSaveSucceeded ? new XnaColor(105, 225, 255, alpha) : new XnaColor(255, 95, 95, alpha), 4f);
+                _lastSaveSucceeded ? new Color4b(105, 225, 255, alpha) : new Color4b(255, 95, 95, alpha), 4f);
         }
     }
 

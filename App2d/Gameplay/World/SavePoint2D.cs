@@ -31,6 +31,6 @@ internal sealed class SavePoint2D
         return entered;
     }
     public void SetActive(bool active) => IsActive = active;
-    private Rect2D TriggerBounds => new(
-        _basePosition + new Vector2(-64f, -8f), _basePosition + new Vector2(64f, 132f));
+    private Rect2D TriggerBounds =>
+        new(_basePosition + new Vector2(-64f, -8f), _basePosition + new Vector2(64f, 132f));
 }

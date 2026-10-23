@@ -6,7 +6,6 @@ using App2d.Core.Shapes;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
 
 namespace App2d.Tests.Rendering;
@@ -26,13 +25,13 @@ public sealed class RetainedMeshRenderingTests
         using var renderer = new Renderer2D(camera, graphics.Device);
         var mesh = Quad(8);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(Color.Transparent);
-        renderer.DrawMesh(mesh, new SolidColorShader(Color.Red), Matrix3x2.CreateTranslation(-24, 0));
-        renderer.DrawMesh(mesh, new SolidColorShader(Color.Lime), Matrix3x2.CreateTranslation(24, 0));
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawMesh(mesh, new SolidColorShader(Color4b.Red), Matrix3x2.CreateTranslation(-24, 0));
+        renderer.DrawMesh(mesh, new SolidColorShader(Color4b.Lime), Matrix3x2.CreateTranslation(24, 0));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Color.Red, pixels[64 * 128 + 40]);
-        Assert.Equal(Color.Lime, pixels[64 * 128 + 88]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 40]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 88]);
         Assert.Equal(1, renderer.MeshUploadCount);
         Assert.Equal(2, renderer.MeshDrawCount);
 
@@ -40,13 +39,13 @@ public sealed class RetainedMeshRenderingTests
         camera.Zoom = 2;
         camera.Rotation = MathF.PI / 2;
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(Color.Transparent);
-        renderer.DrawMesh(mesh, new SolidColorShader(Color.Blue),
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawMesh(mesh, new SolidColorShader(Color4b.Blue),
             Matrix3x2.CreateScale(2, .5f) * Matrix3x2.CreateTranslation(12, 16));
         renderer.EndFrame();
         pixels = graphics.ReadPixels();
-        Assert.Equal(Color.Blue, pixels[64 * 128 + 96]);
-        Assert.Equal(Color.Transparent, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Blue, pixels[64 * 128 + 96]);
+        Assert.Equal(Color4b.Transparent, pixels[64 * 128 + 64]);
         Assert.Equal(1, renderer.MeshUploadCount);
     }
 
@@ -66,18 +65,18 @@ public sealed class RetainedMeshRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         IShader2D material = kind switch
         {
-            "solid" => new SolidColorShader(new Color(240, 80, 20, 128)),
-            "gradient" => new LinearGradientShader(new Color(240, 80, 20, 128), new Color(20, 80, 240, 180)),
+            "solid" => new SolidColorShader(new Color4b(240, 80, 20, 128)),
+            "gradient" => new LinearGradientShader(new Color4b(240, 80, 20, 128), new Color4b(20, 80, 240, 180)),
             "tile" => new TextureShader2D(texture, new(16), filterMode: TextureFilter.Point),
             "origin" => new TextureShader2D(texture, new(32), filterMode: TextureFilter.Point, imageOrigin: new(-16, 16)),
             _ => new SpriteShader2D(texture, TextureFilter.Point) { FlipX = kind.Contains('X'), FlipY = kind.Contains('Y') }
         };
         var shape = Rectangle2D.Builder.Create(new(-16, -16), new(16, 16));
         var mesh = Quad();
-        Color[] Render(bool retained)
+        Color4b[] Render(bool retained)
         {
             renderer.BeginFrame(128, 128, default);
-            renderer.Clear(Color.White);
+            renderer.Clear(Color4b.White);
             if (retained)
             {
                 renderer.DrawMesh(mesh, material);
@@ -112,21 +111,21 @@ public sealed class RetainedMeshRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var mesh = Quad();
         var material = new SpriteShader2D(texture, TextureFilter.Point);
-        Color Sample()
+        Color4b Sample()
         {
             renderer.BeginFrame(128, 128, default);
-            renderer.Clear(Color.Transparent);
+            renderer.Clear(Color4b.Transparent);
             renderer.DrawMesh(mesh, material);
             renderer.EndFrame();
             return graphics.ReadPixels()[56 * 128 + 56];
         }
-        Assert.Equal(new Color(128, 0, 0, 128), Sample());
+        Assert.Equal(new Color4b(128, 0, 0, 128), Sample());
         material.FlipX = true;
-        Assert.Equal(Color.Lime, Sample());
+        Assert.Equal(Color4b.Lime, Sample());
         Assert.Equal(2, renderer.MeshUploadCount);
         material.FlipX = false;
         material.Texture = replacement;
-        Assert.Equal(Color.Magenta, Sample());
+        Assert.Equal(Color4b.Magenta, Sample());
         Assert.Equal(2, renderer.MeshUploadCount);
         replacement.Dispose();
         renderer.BeginFrame(128, 128, default);
@@ -141,17 +140,17 @@ public sealed class RetainedMeshRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var mesh = Quad(24);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(Color.Transparent);
-        renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(96, 96), Color.Red);
-        renderer.DrawMesh(mesh, new SolidColorShader(new Color(0, 0, 255, 128)), Matrix3x2.CreateTranslation(8, 0));
-        renderer.DrawMesh(Quad(8), new LinearGradientShader(Color.Lime, Color.Lime));
-        renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(8, 8), Color.Yellow);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(96, 96), Color4b.Red);
+        renderer.DrawMesh(mesh, new SolidColorShader(new Color4b(0, 0, 255, 128)), Matrix3x2.CreateTranslation(8, 0));
+        renderer.DrawMesh(Quad(8), new LinearGradientShader(Color4b.Lime, Color4b.Lime));
+        renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(8, 8), Color4b.Yellow);
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Color.Yellow, pixels[64 * 128 + 64]);
-        Assert.Equal(Color.Lime, pixels[64 * 128 + 70]);
-        Assert.Equal(new Color(127, 0, 128, 255), pixels[64 * 128 + 80]);
-        Assert.Equal(Color.Red, pixels[64 * 128 + 30]);
+        Assert.Equal(Color4b.Yellow, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 70]);
+        Assert.Equal(new Color4b(127, 0, 128, 255), pixels[64 * 128 + 80]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 30]);
     }
 
     [Fact]
@@ -160,16 +159,16 @@ public sealed class RetainedMeshRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var mesh = Quad(8);
-        var material = new ChangingMaterial { BaseColor = Color.Red };
+        var material = new ChangingMaterial { BaseColor = Color4b.Red };
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(Color.Transparent);
+        renderer.Clear(Color4b.Transparent);
         renderer.DrawMesh(mesh, material, Matrix3x2.CreateTranslation(-24, 0));
-        material.BaseColor = Color.Blue;
+        material.BaseColor = Color4b.Blue;
         renderer.DrawMesh(mesh, material, Matrix3x2.CreateTranslation(24, 0));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Color.Red, pixels[64 * 128 + 40]);
-        Assert.Equal(Color.Blue, pixels[64 * 128 + 88]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 40]);
+        Assert.Equal(Color4b.Blue, pixels[64 * 128 + 88]);
         Assert.Equal(0, renderer.MeshUploadCount);
     }
 
@@ -181,7 +180,7 @@ public sealed class RetainedMeshRenderingTests
         var a = Quad();
         var b = Quad();
         var c = Quad();
-        var material = new SolidColorShader(Color.White);
+        var material = new SolidColorShader(Color4b.White);
         renderer.BeginFrame(128, 128, default);
         renderer.DrawMesh(a, material);
         var bytes = renderer.CachedMeshBytes;
@@ -211,17 +210,17 @@ public sealed class RetainedMeshRenderingTests
         var points = new Vector2[96];
         VertexGenerator2D.WriteCircle(points, Vector2.Zero, 24);
         var shape = SimplePolygon2D.Builder.Create(points);
-        var item = new WorldObject2D(shape, new SolidColorShader(Color.Lime));
+        var item = new WorldObject2D(shape, new SolidColorShader(Color4b.Lime));
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(Color.Transparent);
+        renderer.Clear(Color4b.Transparent);
         renderer.Draw(item);
         renderer.Draw(item);
         renderer.EndFrame();
         Assert.Equal(1, renderer.MeshUploadCount);
         Assert.Equal(2, renderer.MeshDrawCount);
-        Assert.Equal(Color.Lime, graphics.ReadPixels()[64 * 128 + 64]);
+        Assert.Equal(Color4b.Lime, graphics.ReadPixels()[64 * 128 + 64]);
     }
 
     [Theory]
@@ -238,10 +237,10 @@ public sealed class RetainedMeshRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(Color.Transparent);
-        renderer.DrawMesh(mesh, new SolidColorShader(Color.Lime));
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawMesh(mesh, new SolidColorShader(Color4b.Lime));
         renderer.EndFrame();
-        Assert.Equal(Color.Lime, graphics.ReadPixels()[64 * 128 + 64]);
+        Assert.Equal(Color4b.Lime, graphics.ReadPixels()[64 * 128 + 64]);
         Assert.Equal((long)vertexCount * VertexPositionColorTexture.VertexDeclaration.VertexStride + 3 * indexBytes,
             renderer.CachedMeshBytes);
     }
@@ -263,18 +262,18 @@ public sealed class RetainedMeshRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(Color.Transparent);
-        renderer.DrawMesh(mesh, new SolidColorShader(Color.Lime));
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawMesh(mesh, new SolidColorShader(Color4b.Lime));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Color.Lime, pixels[64 * 128 + 36]);
-        Assert.Equal(Color.Lime, pixels[64 * 128 + 92]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 36]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 92]);
         Assert.Equal(2, renderer.MeshDrawCount);
     }
 
     private sealed class ChangingMaterial : IShader2D
     {
-        public Color BaseColor { get; set; }
+        public Color4b BaseColor { get; set; }
     }
 
     private static Texture2D CreateTexture()

@@ -62,31 +62,31 @@ internal sealed class AnimationTimeline(EditorSession session)
             y += RowHeight * scale;
         }
         ContactRows(draw, document, primary.Model, origin.X, ref y, X);
-        PointRow(draw, "Markers", clip.Markers.Select(m => (m.Time, m.Id)), origin.X, y, X, Ui.Color(210, 140, 220));
+        PointRow(draw, "Markers", clip.Markers.Select(m => (m.Time, m.Id)), origin.X, y, X, StudioTheme.TimelineMarker.PackedValue);
         y += RowHeight * scale;
         foreach (var face in clip.Faces)
         {
-            PointRow(draw, "Face " + face.Part, face.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, Ui.Color(240, 200, 90));
+            PointRow(draw, "Face " + face.Part, face.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, StudioTheme.TimelineFaceKey.PackedValue);
             y += RowHeight * scale;
         }
         foreach (var slot in clip.Attachments)
         {
-            PointRow(draw, "Slot " + slot.Slot, slot.Keys.Select(k => (k.Time, k.Attachment ?? "hidden")), origin.X, y, X, Ui.Color(90, 200, 240));
+            PointRow(draw, "Slot " + slot.Slot, slot.Keys.Select(k => (k.Time, k.Attachment ?? "hidden")), origin.X, y, X, StudioTheme.TimelineDiscreteKey.PackedValue);
             y += RowHeight * scale;
         }
         foreach (var colors in clip.Colors)
         {
-            PointRow(draw, colors.Slot + " " + colors.Kind, colors.Keys.Select(k => (k.Time, "tint")), origin.X, y, X, Ui.Color(210, 150, 240));
+            PointRow(draw, colors.Slot + " " + colors.Kind, colors.Keys.Select(k => (k.Time, "tint")), origin.X, y, X, StudioTheme.TimelineTintKey.PackedValue);
             y += RowHeight * scale;
         }
         if (clip.DrawOrder.Count > 0)
         {
-            PointRow(draw, "Draw order", clip.DrawOrder.Select(k => (k.Time, "order")), origin.X, y, X, Ui.Color(90, 200, 240));
+            PointRow(draw, "Draw order", clip.DrawOrder.Select(k => (k.Time, "order")), origin.X, y, X, StudioTheme.TimelineDiscreteKey.PackedValue);
             y += RowHeight * scale;
         }
 
         var head = X(session.Transport.Time);
-        draw.AddLine(new(head, origin.Y), new(head, y), Ui.Color(232, 169, 55), 2);
+        draw.AddLine(new(head, origin.Y), new(head, y), StudioTheme.Selection.PackedValue, 2);
         KeyMenu(document);
         if (!ImGui.GetIO().WantTextInput && session.Selection.Key is { } selectedKey && ImGui.IsKeyPressed(ImGuiKey.Delete))
         {
@@ -100,13 +100,13 @@ internal sealed class AnimationTimeline(EditorSession session)
     private void Ruler(ImDrawListPtr draw, MotionClip clip, float left, float right, float y, Func<float, float> X, Func<float, float> Time)
     {
         var height = RowHeight * Ui.Scale;
-        draw.AddRectFilled(new(left, y), new(right, y + height), Ui.Color(34, 42, 52));
+        draw.AddRectFilled(new(left, y), new(right, y + height), StudioTheme.TimelineRulerBackground.PackedValue);
         for (var i = 0; i <= 10; i++)
         {
             var time = clip.Duration * i / 10;
             var x = X(time);
-            draw.AddLine(new(x, y + height * .55f), new(x, y + height), Ui.Color(120, 130, 140));
-            draw.AddText(new(x + 2, y), Ui.Color(120, 130, 140), $"{time:0.##}");
+            draw.AddLine(new(x, y + height * .55f), new(x, y + height), StudioTheme.TimelineRulerText.PackedValue);
+            draw.AddText(new(x + 2, y), StudioTheme.TimelineRulerText.PackedValue, $"{time:0.##}");
         }
         ImGui.SetCursorScreenPos(new(left, y));
         ImGui.InvisibleButton("ruler", new(Math.Max(1, right - left), height));
@@ -123,8 +123,8 @@ internal sealed class AnimationTimeline(EditorSession session)
         var height = RowHeight * scale;
         var center = y + height / 2;
         var clip = document.Asset;
-        draw.AddText(new(x0 + 4, y + 2), Ui.Color(200, 205, 210), label);
-        draw.AddLine(new(X(0), center), new(X(clip.Duration), center), Ui.Color(60, 70, 80));
+        draw.AddText(new(x0 + 4, y + 2), StudioTheme.TimelineText.PackedValue, label);
+        draw.AddLine(new(X(0), center), new(X(clip.Duration), center), StudioTheme.TimelineGuide.PackedValue);
         var times = ClipAuthoring.KeyTimes(clip, channels);
         var row = (label, channels);
         foreach (var time in times)
@@ -133,7 +133,7 @@ internal sealed class AnimationTimeline(EditorSession session)
             var x = X(shown);
             var r = 5 * scale;
             var selected = session.Selection.Key is { } k && MathF.Abs(k - time) < ClipAuthoring.SameTime && _keyRow?.Row == label;
-            draw.AddQuadFilled(new(x, center - r), new(x + r, center), new(x, center + r), new(x - r, center), selected ? Ui.Color(232, 169, 55) : Ui.Color(150, 200, 210));
+            draw.AddQuadFilled(new(x, center - r), new(x + r, center), new(x, center + r), new(x - r, center), selected ? StudioTheme.Selection.PackedValue : StudioTheme.TimelineKey.PackedValue);
             ImGui.SetCursorScreenPos(new(x - r, center - r));
             ImGui.InvisibleButton($"key-{label}-{time:R}", new(2 * r, 2 * r));
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
@@ -212,13 +212,13 @@ internal sealed class AnimationTimeline(EditorSession session)
         var height = RowHeight * scale;
         foreach (var chain in model.Chains.Values.Where(c => c.Frame == CharacterModel.Locomotion))
         {
-            draw.AddText(new(x0 + 4, y + 2), Ui.Color(160, 200, 170), "Plant " + chain.Id);
-            draw.AddLine(new(X(0), y + height / 2), new(X(document.Asset.Duration), y + height / 2), Ui.Color(50, 60, 60));
+            draw.AddText(new(x0 + 4, y + 2), StudioTheme.TimelinePlantText.PackedValue, "Plant " + chain.Id);
+            draw.AddLine(new(X(0), y + height / 2), new(X(document.Asset.Duration), y + height / 2), StudioTheme.TimelinePlantGuide.PackedValue);
             foreach (var contact in document.Asset.Contacts.Where(c => c.Chain == chain.Id))
             {
                 var min = new Vector2(X(contact.Start), y + 4 * scale);
                 var max = new Vector2(X(contact.Finish), y + height - 4 * scale);
-                draw.AddRectFilled(min, max, Ui.Color(36, 140, 104, 200), 3);
+                draw.AddRectFilled(min, max, StudioTheme.TimelinePlantFill.PackedValue, 3);
                 ImGui.SetCursorScreenPos(min);
                 ImGui.InvisibleButton($"contact-{chain.Id}-{contact.Start:R}", Vector2.Max(max - min, Vector2.One));
                 if (ImGui.IsItemClicked())
@@ -241,7 +241,7 @@ internal sealed class AnimationTimeline(EditorSession session)
     {
         var scale = Ui.Scale;
         var height = RowHeight * scale;
-        draw.AddText(new(x0 + 4, y + 2), Ui.Color(200, 205, 210), label);
+        draw.AddText(new(x0 + 4, y + 2), StudioTheme.TimelineText.PackedValue, label);
         foreach (var (time, name) in points)
         {
             var x = X(time);

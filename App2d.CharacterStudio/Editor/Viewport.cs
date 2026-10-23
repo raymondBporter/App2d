@@ -8,7 +8,6 @@ using App2d.Core.Rendering.Characters;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio.Editor;
@@ -191,13 +190,13 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         Render(_inset!, width, height, new(width / 2f - centerX * GamePpu, height * .85f), GamePpu, views, centerX);
         var min = start + size - new Vector2(width + 8, height + 8);
         draw.AddImage(_insetId, min, min + new Vector2(width, height));
-        draw.AddRect(min, min + new Vector2(width, height), Ui.Color(90, 100, 96), 0, ImDrawFlags.None, 1);
-        draw.AddText(min + new Vector2(6, 4), Ui.Color(90, 100, 96), "game size");
+        draw.AddRect(min, min + new Vector2(width, height), StudioTheme.MutedText.PackedValue, 0, ImDrawFlags.None, 1);
+        draw.AddText(min + new Vector2(6, 4), StudioTheme.MutedText.PackedValue, "game size");
     }
 
     private void Render(RenderTarget2D target, int width, int height, Vector2 anchor, float ppu, SubjectView[] views, float centerX)
     {
-        using var bound = device.UseRenderTarget(target, new Color(237, 238, 226));
+        using var bound = device.UseRenderTarget(target, StudioTheme.ViewportBackground);
         var projection = PointCharacterRenderer.Projection(width, height, anchor, ppu);
         BuildGround(centerX, width / ppu, ppu);
         renderer.Draw(_ground, projection, Matrix.Identity, writeDepth: false);
@@ -210,7 +209,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private void BuildGround(float centerX, float span, float ppu)
     {
         _ground.Clear();
-        var ink = new Color(154, 169, 158);
+        var ink = StudioTheme.GroundGuide;
         var pixel = 1 / ppu;
         _ground.Line(new(centerX - span, 0, 7), new(centerX + span, 0, 7), pixel, ink);
         var first = (int)MathF.Floor((centerX - span / 2 - 1) * 4);

@@ -3,15 +3,14 @@ using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle.Rigging;
 
 internal static class RigDocumentRenderer2D
 {
-    private static readonly XnaColor BoneColor = new(235, 239, 248, 220);
-    private static readonly XnaColor SelectedColor = new(117, 255, 178);
-    private static readonly XnaColor CollisionColor = new(255, 165, 72, 225);
+    private static readonly Color4b BoneColor = new(235, 239, 248, 220);
+    private static readonly Color4b SelectedColor = new(117, 255, 178);
+    private static readonly Color4b CollisionColor = new(255, 165, 72, 225);
 
     public static void Render(Renderer2D renderer, RigDocument2D document, object? selection)
     {
@@ -34,11 +33,11 @@ internal static class RigDocumentRenderer2D
     {
         var geometry = shape.CreateGeometry();
         var drawingColor = shape.Color;
-        var color = XnaColor.FromNonPremultiplied(
+        var color = Color4b.FromNonPremultiplied(
             drawingColor.R, drawingColor.G, drawingColor.B, drawingColor.A);
         if (shape.Purpose == RigShapePurpose.Collision)
         {
-            color = new XnaColor(CollisionColor.R, CollisionColor.G, CollisionColor.B, (byte)60);
+            color = new Color4b(CollisionColor.R, CollisionColor.G, CollisionColor.B, (byte)60);
         }
 
         var item = new WorldObject2D(geometry, new SolidColorShader(color));

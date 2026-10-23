@@ -4,7 +4,6 @@ using App2d.Core.Rendering;
 using App2d.Noodle.Rigging;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
@@ -21,7 +20,7 @@ internal sealed class BoneEditorHost : NoodleToolHost
     internal void ShowShapeStudy() => _panel.Select(_document.Shapes.FirstOrDefault());
     protected override void DrawScene(Renderer2D renderer, FrameTime time)
     {
-        renderer.Clear(new XnaColor(17, 22, 33));
+        renderer.Clear(new Color4b(17, 22, 33));
         renderer.DrawGrid(50, 5);
         RigDocumentRenderer2D.Render(renderer, _document, _panel.SelectedItem);
     }

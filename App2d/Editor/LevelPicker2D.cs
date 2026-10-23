@@ -1,9 +1,9 @@
 using App2d.Core.Input;
 using App2d.Core.Rendering;
 using App2d.Levels;
+using App2d.Presentation;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Editor;
 
@@ -67,23 +67,23 @@ internal sealed class LevelPicker2D(IReadOnlyList<WorldMapAsset2D> maps)
 
     public void Draw(Renderer2D renderer)
     {
-        renderer.DrawScreenText("F2  Levels   |   F1  Edit", new(32, 54), XnaColor.White);
+        renderer.DrawScreenText("F2  Levels   |   F1  Edit", new(32, 54), GameUiTheme.Text);
         if (!IsOpen)
         {
             return;
         }
 
-        renderer.DrawScreenRoundedRectangle(new(24, 82, 500, 440), 12, new(20, 28, 43, 245));
-        renderer.DrawScreenText("LEVEL PLAYGROUND", new(40, 104), new(255, 214, 100));
+        renderer.DrawScreenRoundedRectangle(new(24, 82, 500, 440), 12, GameUiTheme.MenuPanel);
+        renderer.DrawScreenText("LEVEL PLAYGROUND", new(40, 104), GameUiTheme.MenuHeading);
         for (var row = 0; row < Math.Min(PageSize, maps.Count - First); row++)
         {
             var index = First + row;
             var bounds = Row(row);
             var selected = index == _selected || bounds.Contains(_mouse.X, _mouse.Y);
-            renderer.DrawScreenRoundedRectangle(bounds, 6, selected ? new(62, 85, 115) : new(34, 46, 64));
-            renderer.DrawScreenText(maps[index].Name, new(54, bounds.Top + 12), XnaColor.White);
+            renderer.DrawScreenRoundedRectangle(bounds, 6, selected ? GameUiTheme.MenuRowSelected : GameUiTheme.MenuRow);
+            renderer.DrawScreenText(maps[index].Name, new(54, bounds.Top + 12), GameUiTheme.Text);
         }
-        renderer.DrawScreenText("Up/Down + Enter, or click to travel", new(40, 394), XnaColor.White);
-        renderer.DrawScreenText("F2 closes   -   game paused", new(40, 416), new(165, 182, 201));
+        renderer.DrawScreenText("Up/Down + Enter, or click to travel", new(40, 394), GameUiTheme.Text);
+        renderer.DrawScreenText("F2 closes   -   game paused", new(40, 416), GameUiTheme.MenuHelp);
     }
 }

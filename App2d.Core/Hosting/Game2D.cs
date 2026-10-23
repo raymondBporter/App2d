@@ -7,7 +7,6 @@ using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Hosting;
 
@@ -35,7 +34,7 @@ public abstract class Game2D : IDisposable
     public bool DrawFps { get; set; }
     public bool DrawCollisionShapes { get; set; }
     public virtual string WindowTitle => "App2d";
-    protected virtual XnaColor BackgroundColor => new(24, 27, 36);
+    protected virtual Color4b BackgroundColor => DebugTheme.Background;
     public virtual IGameToolUi2D? ToolUi => null;
 
     public virtual void Initialize()
@@ -49,7 +48,7 @@ public abstract class Game2D : IDisposable
     /// <summary>Called between BeginFrame and EndFrame. Game graphics, then world debug, then UI.</summary>
     public void RenderFrame(Renderer2D renderer, FrameTime time)
     {
-        renderer.Clear(DrawGraphics ? BackgroundColor : new XnaColor(24, 27, 36));
+        renderer.Clear(DrawGraphics ? BackgroundColor : DebugTheme.Background);
         if (DrawGraphics)
         {
             renderer.Draw(Background);
@@ -99,8 +98,8 @@ public abstract class Game2D : IDisposable
 
         if (DrawCollisionShapes)
         {
-            var fillColor = new XnaColor(70, 245, 190, 55);
-            var outlineColor = new XnaColor(70, 245, 190, 235);
+            var fillColor = DebugTheme.ColliderFill;
+            var outlineColor = DebugTheme.ColliderOutline;
             if (PhysicsWorld is { } physicsWorld)
             {
                 foreach (var body in physicsWorld.Bodies)
@@ -112,8 +111,8 @@ public abstract class Game2D : IDisposable
                 }
             }
 
-            var attackFillColor = new XnaColor(255, 82, 92, 70);
-            var attackOutlineColor = new XnaColor(255, 105, 70, 245);
+            var attackFillColor = DebugTheme.AttackFill;
+            var attackOutlineColor = DebugTheme.AttackOutline;
             foreach (var provider in _debugAttackShapeProviders)
             {
                 foreach (var attackShape in provider())

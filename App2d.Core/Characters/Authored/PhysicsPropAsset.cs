@@ -34,7 +34,7 @@ public sealed class PhysicsPropAsset
             throw new InvalidDataException($"{owner}: a physics prop needs a finite drawable shape.");
         Shape.Validate();
         Body.Validate();
-        if (!ColorRgba32.TryParseRgb(Fill.AsSpan(), out _))
+        if (!ColorExtensions.TryParseRgb(Fill.AsSpan(), out _))
             throw new InvalidDataException($"{owner} fill must be a #RRGGBB color.");
         ArgGuard.NonNegative(HitVelocityScale, nameof(HitVelocityScale));
         ArgGuard.NonNegative(HitAngularKick, nameof(HitAngularKick));

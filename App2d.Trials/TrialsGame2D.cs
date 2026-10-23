@@ -5,7 +5,6 @@ using App2d.Core.Physics;
 using App2d.Core.Validation;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Trials;
 
@@ -78,8 +77,8 @@ public sealed partial class TrialsGame2D : Game2D
 
     public override void RenderUI(Renderer2D renderer, FrameTime time)
     {
-        renderer.DrawScreenText("TRIALS / PROTOTYPE", new Vector2(24f, 32f), XnaColor.White);
-        renderer.DrawScreenText("A/D or arrows: drive    W/S: lean    Space: brake    R: reset    Esc: exit", new Vector2(24f, 56f), new XnaColor(176, 187, 204));
+        renderer.DrawScreenText("TRIALS / PROTOTYPE", new Vector2(24f, 32f), Color4b.White);
+        renderer.DrawScreenText("A/D or arrows: drive    W/S: lean    Space: brake    R: reset    Esc: exit", new Vector2(24f, 56f), new Color4b(176, 187, 204));
         base.RenderUI(renderer, time);
     }
 

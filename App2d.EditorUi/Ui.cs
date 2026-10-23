@@ -7,7 +7,6 @@ namespace App2d.EditorUi;
 /// <summary>Small shared widgets. Labels sit above full-width controls so the narrow side panels stay readable.</summary>
 public static class Ui
 {
-    public static readonly Vector4 Accent = new(.42f, .84f, .75f, 1), Warning = new(.98f, .66f, .38f, 1), Override = new(.55f, .72f, 1, 1);
     public static float Scale { get; internal set; } = 1;
 
     public static uint Color(byte r, byte g, byte b, byte a = 255) => (uint)(a << 24 | b << 16 | g << 8 | r);
@@ -129,7 +128,7 @@ public static class Ui
     public static void Header(string text)
     {
         ImGui.Spacing();
-        ImGui.TextColored(Accent, text.ToUpperInvariant());
+        ImGui.TextColored(UiTheme.Accent, text.ToUpperInvariant());
     }
     public static void Help(string text)
     {
@@ -139,7 +138,7 @@ public static class Ui
     }
     public static void Problem(string text)
     {
-        ImGui.PushStyleColor(ImGuiCol.Text, Warning);
+        ImGui.PushStyleColor(ImGuiCol.Text, UiTheme.Warning);
         ImGui.TextWrapped(text);
         ImGui.PopStyleColor();
     }
@@ -182,14 +181,14 @@ public static class Ui
 
     public static bool ColorHex(string label, ref string hex)
     {
-        var color = ColorRgba32.ParseRgb(hex);
+        var color = ColorExtensions.FromHexRgb(hex);
         var value = new Vector3(color.R, color.G, color.B) / 255;
         if (!ImGui.ColorEdit3(label, ref value, ImGuiColorEditFlags.NoInputs))
         {
             return false;
         }
 
-        hex = ColorRgba32.FromVector4(new(value, 1)).ToHexRgb();
+        hex = ColorExtensions.FromVector4(new(value, 1)).ToHexRgb();
         return true;
     }
 
@@ -225,7 +224,7 @@ public static class Ui
         }
 
         ImGui.SameLine();
-        ImGui.TextColored(Override, "overridden");
+        ImGui.TextColored(UiTheme.Override, "overridden");
         ImGui.SameLine();
         return ImGui.SmallButton("Reset to base##" + id);
     }

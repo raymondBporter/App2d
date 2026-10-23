@@ -310,7 +310,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
             || document.Id == session.PreviewProp && session.Mode == Workspace.Appearance;
         if (problems.Count > 0)
         {
-            ImGui.PushStyleColor(ImGuiCol.Text, Ui.Warning);
+            ImGui.PushStyleColor(ImGuiCol.Text, UiTheme.Warning);
         }
 
         if (ImGui.Selectable(label, selected))
@@ -459,7 +459,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
             _create = Create.None;
             return;
         }
-        ImGui.TextColored(Ui.Accent, _create switch
+        ImGui.TextColored(UiTheme.Accent, _create switch
         {
             Create.Appearance => "New hair or clothing",
             Create.DuplicateAppearance => "Duplicate appearance " + _source,

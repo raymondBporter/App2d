@@ -81,7 +81,7 @@ internal static class References
                 var label = document is null ? $"{group.Key} (missing)" : $"[{AssetKinds.Label(document.Kind)[0]}] {document.Name}";
                 if (document is null)
                 {
-                    ImGui.PushStyleColor(ImGuiCol.Text, Ui.Warning);
+                    ImGui.PushStyleColor(ImGuiCol.Text, UiTheme.Warning);
                 }
 
                 if (ImGui.Selectable($"{label}##{title}{group.Key}") && document is not null && document.Kind != AssetKind.Prop)

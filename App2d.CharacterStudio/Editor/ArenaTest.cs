@@ -6,7 +6,6 @@ using App2d.Core.Rendering.Characters;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterStudio.Editor;
 
@@ -145,7 +144,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
             _target = RenderCapture2D.CreateTarget(device, width, height);
             _targetId = gui.Register(_target);
         }
-        using (device.UseRenderTarget(_target, new Color(237, 238, 226)))
+        using (device.UseRenderTarget(_target, StudioTheme.ViewportBackground))
         {
             if (Arena is not null)
             {
@@ -160,7 +159,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
         ImGui.GetWindowDrawList().AddImage(_targetId, start, start + new Vector2(width, height));
         if (Arena is null)
         {
-            ImGui.GetWindowDrawList().AddText(start + new Vector2(20, 20) * Ui.Scale, Ui.Color(160, 70, 40), "Nothing to play: no roster entity compiled.");
+            ImGui.GetWindowDrawList().AddText(start + new Vector2(20, 20) * Ui.Scale, StudioTheme.ErrorText.PackedValue, "Nothing to play: no roster entity compiled.");
         }
     }
 

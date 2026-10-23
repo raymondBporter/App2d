@@ -1,7 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Drawing;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Rendering.Characters;
 
@@ -20,5 +19,5 @@ public sealed class AuthoredCharacterShader(ResolvedModel model) : IShader2D
     public FacePose? Face { get; set; }
     /// <summary>A live blade trail in the pose's actor space, drawn behind the character.</summary>
     public BladeSwoosh? Swoosh { get; set; }
-    public Color BaseColor => Color.White;
+    public Color4b BaseColor => Color4b.White;
 }

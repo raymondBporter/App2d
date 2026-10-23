@@ -35,7 +35,7 @@ public readonly record struct Limit(float Min, float Max, float SoftMin, float S
     }
     public static void Color(string? value, string field)
     {
-        if (!ColorRgba32.TryParseRgb(value.AsSpan(), out _))
+        if (!ColorExtensions.TryParseRgb(value.AsSpan(), out _))
         {
             throw new InvalidDataException($"{field} must be a #rrggbb color; found '{value}'.");
         }

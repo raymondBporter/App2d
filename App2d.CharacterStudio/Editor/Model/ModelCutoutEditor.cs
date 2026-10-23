@@ -73,7 +73,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
         for (var i = 0; i < points.Count; i++)
         {
             var at = frame.Screen(contour[i]);
-            frame.Draw.AddCircleFilled(at, 4.5f * Ui.Scale, Ui.Color(232, 169, 55));
+            frame.Draw.AddCircleFilled(at, 4.5f * Ui.Scale, StudioTheme.Selection.PackedValue);
             if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(at, ViewportFrame.Mouse) < 9 * Ui.Scale)
             {
                 _cutoutDrag = i;

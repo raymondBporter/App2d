@@ -123,7 +123,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     {
         var document = Session.ActiveDocument;
         var rightEdge = ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X;
-        ImGui.TextColored(Ui.Accent, "CHARACTER EDITOR");
+        ImGui.TextColored(UiTheme.Accent, "CHARACTER EDITOR");
         ImGui.SameLine();
         foreach (var mode in new[] { Workspace.Model, Workspace.Animate, Workspace.Entity, Workspace.Appearance })
         {
@@ -246,7 +246,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         view.Overlay(frame);
         if (frame.Primary is null)
         {
-            frame.Draw.AddText(frame.Origin + new Vector2(20, 20) * Ui.Scale, Ui.Color(90, 90, 80), Session.Mode == Workspace.Entity ? Session.EntityError ?? "Open or create an entity." : "Open or create a model to begin.");
+            frame.Draw.AddText(frame.Origin + new Vector2(20, 20) * Ui.Scale, StudioTheme.EmptyMessage.PackedValue, Session.Mode == Workspace.Entity ? Session.EntityError ?? "Open or create an entity." : "Open or create a model to begin.");
         }
 
         frame.Draw.PopClipRect();
@@ -347,7 +347,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         {
             var p = frame.Screen(contact.Target);
             var good = contact.Residual < .005f;
-            var color = good ? Ui.Color(36, 140, 104) : Ui.Color(240, 106, 50);
+            var color = good ? StudioTheme.ConstraintSatisfied.PackedValue : StudioTheme.ConstraintWarning.PackedValue;
             frame.Draw.AddLine(p - new Vector2(8, 0), p + new Vector2(8, 0), color, 2);
             frame.Draw.AddLine(p - new Vector2(0, 8), p + new Vector2(0, 8), color, 2);
             if (!good)
@@ -357,7 +357,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         }
         foreach (var chain in primary.Subject.Pose.Chains.Where(c => !c.Reached && c.Residual > .005f))
         {
-            frame.Draw.AddText(frame.Screen(primary.Subject.Pose.World(primary.Subject.Model.Chains[chain.Chain].End)) + new Vector2(8, -18), Ui.Color(240, 106, 50), $"{chain.Chain} short {chain.Residual:F3}");
+            frame.Draw.AddText(frame.Screen(primary.Subject.Pose.World(primary.Subject.Model.Chains[chain.Chain].End)) + new Vector2(8, -18), StudioTheme.ConstraintWarning.PackedValue, $"{chain.Chain} short {chain.Residual:F3}");
         }
     }
 

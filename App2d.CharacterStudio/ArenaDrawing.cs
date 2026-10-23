@@ -2,7 +2,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -49,14 +48,14 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
     {
         var mesh = _overlay;
         mesh.Clear();
-        var ground = new Color(154, 169, 158);
+        var ground = new Color4b(154, 169, 158);
         mesh.Line(new(centerX - 40, 0, 7), new(centerX + 40, 0, 7), pixel * 2, ground);
         for (var x = (int)MathF.Floor(centerX - 14); x <= centerX + 14; x++)
         {
             mesh.Line(new(x, 0, 7), new(x, -8 * pixel, 7), pixel, ground);
         }
 
-        void Outline(EntityRegion region, Color color, float width)
+        void Outline(EntityRegion region, Color4b color, float width)
         {
             var points = region.Outline().Select(p => new Vector3(p, -6)).ToList();
             for (var i = 0; i < points.Count; i++)
@@ -66,7 +65,7 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
         }
         foreach (var actor in actors)
         {
-            Outline(actor.Movement, new Color(120, 120, 120), 1.5f);
+            Outline(actor.Movement, new Color4b(120, 120, 120), 1.5f);
             if (!detail || !actor.Alive)
             {
                 continue;
@@ -74,12 +73,12 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 
             foreach (var region in actor.Hurt)
             {
-                Outline(region, new Color(60, 120, 220), 2);
+                Outline(region, new Color4b(60, 120, 220), 2);
             }
 
             foreach (var region in actor.Attacks)
             {
-                mesh.Polygon([.. region.Outline().Select(q => new Vector3(q, -6.1f))], new Color(235, 60, 50, 90), new Color(220, 40, 30), 3 * pixel);
+                mesh.Polygon([.. region.Outline().Select(q => new Vector3(q, -6.1f))], new Color4b(235, 60, 50, 90), new Color4b(220, 40, 30), 3 * pixel);
             }
 
             foreach (var equipment in actor.Entity.Equipment)
@@ -87,7 +86,7 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
                 mesh.Disk(ActorPose.PropPoint(actor.Pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip) with
                 {
                     Z = -6.2f
-                }, 5 * pixel, new Color(240, 200, 40));
+                }, 5 * pixel, new Color4b(240, 200, 40));
             }
 
             foreach (var anchor in actor.Anchors.Values)
@@ -96,7 +95,7 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
                 {
                     Z = -6.2f
                 };
-                var green = new Color(36, 140, 104);
+                var green = new Color4b(36, 140, 104);
                 mesh.Line(p - new Vector3(9 * pixel, 0, 0), p + new Vector3(9 * pixel, 0, 0), 2 * pixel, green);
                 mesh.Line(p - new Vector3(0, 9 * pixel, 0), p + new Vector3(0, 9 * pixel, 0), 2 * pixel, green);
             }

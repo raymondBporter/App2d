@@ -6,7 +6,6 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Rendering;
 
@@ -21,12 +20,12 @@ public sealed class MonoGameRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var triangle = Triangle2D.Builder.Create(new(-16, -12), new(16, -12), new(0, 16));
-        var item = new WorldObject2D(triangle, new SolidColorShader(XnaColor.Lime));
+        var item = new WorldObject2D(triangle, new SolidColorShader(Color4b.Lime));
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         if (overlay)
         {
-            renderer.DrawShapeOverlay(item, XnaColor.Lime, XnaColor.White);
+            renderer.DrawShapeOverlay(item, Color4b.Lime, Color4b.White);
         }
         else
         {
@@ -36,13 +35,13 @@ public sealed class MonoGameRenderingTests
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Lime, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 64]);
         if (overlay)
         {
-            Assert.Equal(XnaColor.White, pixels[76 * 128 + 64]);
+            Assert.Equal(Color4b.White, pixels[76 * 128 + 64]);
         }
 
-        Assert.Equal(XnaColor.Transparent, pixels[84 * 128 + 64]);
+        Assert.Equal(Color4b.Transparent, pixels[84 * 128 + 64]);
     }
 
     [Theory]
@@ -54,12 +53,12 @@ public sealed class MonoGameRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var halfSpace = HalfSpace2D.Builder.Create(Vector2.UnitY, 0);
-        var item = new WorldObject2D(halfSpace, new SolidColorShader(XnaColor.Blue));
+        var item = new WorldObject2D(halfSpace, new SolidColorShader(Color4b.Blue));
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         if (overlay)
         {
-            renderer.DrawShapeOverlay(item, XnaColor.Blue, XnaColor.White);
+            renderer.DrawShapeOverlay(item, Color4b.Blue, Color4b.White);
         }
         else
         {
@@ -72,8 +71,8 @@ public sealed class MonoGameRenderingTests
 
         var pixels = graphics.ReadPixels();
         Assert.Equal(new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity, 0)), item.LocalBounds);
-        Assert.Equal(XnaColor.Blue, pixels[80 * 128 + 64]);
-        Assert.Equal(XnaColor.Transparent, pixels[48 * 128 + 64]);
+        Assert.Equal(Color4b.Blue, pixels[80 * 128 + 64]);
+        Assert.Equal(Color4b.Transparent, pixels[48 * 128 + 64]);
     }
 
     [Fact]
@@ -82,23 +81,23 @@ public sealed class MonoGameRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.Draw(new WorldObject2D(Circle2D.Builder.Create(12, new(-30, 20)), new SolidColorShader(XnaColor.Lime)));
-        renderer.Draw(new WorldObject2D(Capsule2D.Builder.Create(new(10, 20), new(35, 20), 8), new SolidColorShader(XnaColor.Blue)));
-        renderer.DrawScreenRoundedRectangle(new(10, 95, 60, 120), 10, XnaColor.Red);
-        renderer.DrawWorldCircle(new(0, -10), 8, XnaColor.White);
+        renderer.Clear(Color4b.Transparent);
+        renderer.Draw(new WorldObject2D(Circle2D.Builder.Create(12, new(-30, 20)), new SolidColorShader(Color4b.Lime)));
+        renderer.Draw(new WorldObject2D(Capsule2D.Builder.Create(new(10, 20), new(35, 20), 8), new SolidColorShader(Color4b.Blue)));
+        renderer.DrawScreenRoundedRectangle(new(10, 95, 60, 120), 10, Color4b.Red);
+        renderer.DrawWorldCircle(new(0, -10), 8, Color4b.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Lime, pixels[44 * 128 + 34]);
-        Assert.Equal(XnaColor.Transparent, pixels[44 * 128 + 48]);
-        Assert.Equal(XnaColor.Blue, pixels[44 * 128 + 80]);
-        Assert.Equal(XnaColor.Blue, pixels[44 * 128 + 103]);
-        Assert.Equal(XnaColor.Transparent, pixels[55 * 128 + 80]);
-        Assert.Equal(XnaColor.Red, pixels[107 * 128 + 35]);
-        Assert.Equal(XnaColor.Transparent, pixels[95 * 128 + 10]);
-        Assert.Equal(XnaColor.White, pixels[74 * 128 + 72]);
-        Assert.Equal(XnaColor.Transparent, pixels[74 * 128 + 64]);
+        Assert.Equal(Color4b.Lime, pixels[44 * 128 + 34]);
+        Assert.Equal(Color4b.Transparent, pixels[44 * 128 + 48]);
+        Assert.Equal(Color4b.Blue, pixels[44 * 128 + 80]);
+        Assert.Equal(Color4b.Blue, pixels[44 * 128 + 103]);
+        Assert.Equal(Color4b.Transparent, pixels[55 * 128 + 80]);
+        Assert.Equal(Color4b.Red, pixels[107 * 128 + 35]);
+        Assert.Equal(Color4b.Transparent, pixels[95 * 128 + 10]);
+        Assert.Equal(Color4b.White, pixels[74 * 128 + 72]);
+        Assert.Equal(Color4b.Transparent, pixels[74 * 128 + 64]);
     }
 
     [Theory]
@@ -113,11 +112,11 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var sprite = new SpriteShader2D(texture, TextureFilter.Point) { FlipX = flipX, FlipY = flipY };
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64), sprite));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        XnaColor[] expected = [XnaColor.Red, XnaColor.Lime, XnaColor.Blue, XnaColor.Yellow];
+        Color4b[] expected = [Color4b.Red, Color4b.Lime, Color4b.Blue, Color4b.Yellow];
         for (var y = 0; y < 2; y++)
         {
             for (var x = 0; x < 2; x++)
@@ -131,11 +130,11 @@ public sealed class MonoGameRenderingTests
     public void TextureUploadPreservesChannelsAndBlendsStraightAlphaOnce()
     {
         using var texture = CreateTexture(translucent: true);
-        Assert.Equal(new XnaColor(255, 0, 0, 128), texture.CopyPixels()[0]);
+        Assert.Equal(new Color4b(255, 0, 0, 128), texture.CopyPixels()[0]);
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Blue);
+        renderer.Clear(Color4b.Blue);
         renderer.DrawScreenTexture(texture, new(0, 0, 128, 128));
         renderer.EndFrame();
         var color = graphics.ReadPixels()[16 * 128 + 16];
@@ -152,12 +151,12 @@ public sealed class MonoGameRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64),
             new TextureShader2D(texture, new Vector2(32), filterMode: TextureFilter.Point)));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Blue, pixels[40 * 128 + 40]);
+        Assert.Equal(Color4b.Blue, pixels[40 * 128 + 40]);
         Assert.Equal(pixels[40 * 128 + 40], pixels[40 * 128 + 72]);
         Assert.Equal(pixels[40 * 128 + 40], pixels[72 * 128 + 40]);
     }
@@ -169,14 +168,14 @@ public sealed class MonoGameRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64),
             new TextureShader2D(texture, new Vector2(64), filterMode: TextureFilter.Point, imageOrigin: new Vector2(-32, 32))));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Red, pixels[40 * 128 + 40]);
-        Assert.Equal(XnaColor.Lime, pixels[40 * 128 + 88]);
-        Assert.Equal(XnaColor.Blue, pixels[88 * 128 + 40]);
+        Assert.Equal(Color4b.Red, pixels[40 * 128 + 40]);
+        Assert.Equal(Color4b.Lime, pixels[40 * 128 + 88]);
+        Assert.Equal(Color4b.Blue, pixels[88 * 128 + 40]);
     }
 
     [Fact]
@@ -187,17 +186,17 @@ public sealed class MonoGameRenderingTests
         var scene = new Scene2D
         {
             new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64),
-            new SolidColorShader(XnaColor.Lime))
+            new SolidColorShader(Color4b.Lime))
             { ZIndex = 1 },
             new WorldObject2D(Rectangle2D.Builder.CreateFromSize(96, 96),
-            new LinearGradientShader(XnaColor.Red, XnaColor.Blue))
+            new LinearGradientShader(Color4b.Red, Color4b.Blue))
         };
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         renderer.Draw(scene);
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Lime, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 64]);
         Assert.True(pixels[20 * 128 + 64].R > pixels[20 * 128 + 64].B);
         Assert.True(pixels[108 * 128 + 64].B > pixels[108 * 128 + 64].R);
     }
@@ -214,12 +213,12 @@ public sealed class MonoGameRenderingTests
         renderer.EndFrame();
         texture.Dispose();
         renderer.BeginFrame(64, 96, default);
-        renderer.Clear(XnaColor.Blue);
-        renderer.DrawScreenRoundedRectangle(new(4, 4, 40, 40), 8, XnaColor.Red);
-        renderer.DrawScreenText("HUD — 120", new(4, 80), XnaColor.White);
+        renderer.Clear(Color4b.Blue);
+        renderer.DrawScreenRoundedRectangle(new(4, 4, 40, 40), 8, Color4b.Red);
+        renderer.DrawScreenText("HUD — 120", new(4, 80), Color4b.White);
         renderer.EndFrame();
         Assert.Equal(new Vector2(64, 96), camera.ViewportSize);
-        Assert.Equal(XnaColor.Red, graphics.ReadPixels()[20 * 128 + 20]);
+        Assert.Equal(Color4b.Red, graphics.ReadPixels()[20 * 128 + 20]);
         Assert.Throws<ObjectDisposedException>(() => texture.CopyPixels());
     }
 

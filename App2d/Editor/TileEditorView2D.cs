@@ -2,22 +2,16 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
 using App2d.Core.Objects;
 using App2d.Core.Shapes;
+using App2d.Presentation;
 using App2d.Rendering;
 using App2d.Things;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Editor;
 
 /// <summary>Draws the tile grid, cursor and editor status while editor mode is active.</summary>
 internal static class TileEditorView2D
 {
-    private static readonly XnaColor CursorColor = new(255, 214, 64);
-
-    // Low alpha and a hairline stroke: the grid must read as a faint reference, never
-    // compete visually with the cursor outline or the painted tiles themselves.
-    private static readonly XnaColor GridColor = new(255, 255, 255, 28);
-
     public static void DrawWorldDebug(Renderer2D renderer, TileEditor2D editor)
     {
         if (!editor.IsActive)
@@ -38,14 +32,14 @@ internal static class TileEditorView2D
         {
             var bounds = editor.GridGeometry.GetCellBounds(new GridCell2D(tileX, tileY));
             renderer.DrawShape(Rectangle2D.Builder.Create(bounds.Min, bounds.Max),
-                outlineColor: CursorColor, screenStrokeWidth: 2f);
+                outlineColor: GameUiTheme.EditorSelection, screenStrokeWidth: 2f);
         }
     }
 
     private static void DrawThings(Renderer2D renderer, TileEditor2D editor)
     {
-        var selectedColor = new XnaColor(255, 214, 64);
-        var disabledColor = new XnaColor(130, 130, 140, 180);
+        var selectedColor = GameUiTheme.EditorSelection;
+        var disabledColor = GameUiTheme.EditorDisabled;
 
         foreach (var thing in editor.PositionThings)
         {
@@ -68,7 +62,7 @@ internal static class TileEditorView2D
             var descriptor = ThingTypeRegistry2D.Require(positionDefinition.TypeKey);
             if (descriptor.IsObject && editor.TryGetObjectAsset(positionDefinition.Asset, out var previewAsset))
             {
-                DrawObject(renderer, editor, previewAsset, positionPreview, new XnaColor(105, 245, 180, 220), isSelected: false);
+                DrawObject(renderer, editor, previewAsset, positionPreview, GameUiTheme.EditorPlacementPreview, isSelected: false);
             }
             else
             {
@@ -78,7 +72,7 @@ internal static class TileEditorView2D
     }
 
     /// <summary>An object's collider (or drawn shape) outline at its placement, and its path when it moves.</summary>
-    private static void DrawObject(Renderer2D renderer, TileEditor2D editor, ObjectAsset2D asset, Vector2 position, XnaColor color, bool isSelected)
+    private static void DrawObject(Renderer2D renderer, TileEditor2D editor, ObjectAsset2D asset, Vector2 position, Color4b color, bool isSelected)
     {
         renderer.DrawShape(asset.Collision ?? asset.Geometry!, Matrix3x2.CreateTranslation(position), outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
         var path = ObjectPathPreview2D.Sample(asset, position);
@@ -114,13 +108,13 @@ internal static class TileEditorView2D
         for (var x = cells.Minimum.X; x <= cells.Maximum.X; x++)
         {
             var worldX = grid.GetCellBounds(new GridCell2D(x, 0)).Left;
-            renderer.DrawWorldSegment(new(worldX, clipped.Bottom), new(worldX, clipped.Top), GridColor, 1f);
+            renderer.DrawWorldSegment(new(worldX, clipped.Bottom), new(worldX, clipped.Top), GameUiTheme.EditorGrid, 1f);
         }
 
         for (var y = cells.Minimum.Y; y <= cells.Maximum.Y; y++)
         {
             var worldY = grid.GetCellBounds(new GridCell2D(0, y)).Bottom;
-            renderer.DrawWorldSegment(new(clipped.Left, worldY), new(clipped.Right, worldY), GridColor, 1f);
+            renderer.DrawWorldSegment(new(clipped.Left, worldY), new(clipped.Right, worldY), GameUiTheme.EditorGrid, 1f);
         }
     }
 

@@ -14,7 +14,6 @@ using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -77,7 +76,7 @@ internal static class GiantTreeStudy2D
         {
             camera.Zoom = zoom;
             camera.Position = focus;
-            target.SavePng(Path.Combine(directory, name), new Color(172, 204, 180), () =>
+            target.SavePng(Path.Combine(directory, name), new Color4b(172, 204, 180), () =>
             {
                 renderer.BeginFrame(1280, 720, default);
                 world.SetVisibleTerrain(terrain.Capture(camera.VisibleWorldBounds));

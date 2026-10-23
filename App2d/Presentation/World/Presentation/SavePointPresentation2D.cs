@@ -3,7 +3,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -26,7 +25,7 @@ internal sealed class SavePointPresentation2D : IDisposable
 
         var baseStone = new WorldObject2D(
             AxisAlignedRectangle2D.Builder.CreateFromSize(58f, 14f),
-            new LinearGradientShader(new XnaColor(68, 77, 96), new XnaColor(31, 38, 54)))
+            new LinearGradientShader(new Color4b(68, 77, 96), new Color4b(31, 38, 54)))
         {
             ZIndex = 1
         };
@@ -41,7 +40,7 @@ internal sealed class SavePointPresentation2D : IDisposable
                 new Vector2(11f, 52f),
                 new Vector2(-11f, 52f)
             ]),
-            new LinearGradientShader(new XnaColor(91, 103, 125), new XnaColor(37, 45, 62)))
+            new LinearGradientShader(new Color4b(91, 103, 125), new Color4b(37, 45, 62)))
         {
             ZIndex = 1
         };
@@ -49,7 +48,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         Add(pedestal);
 
         _glow = new WorldObject2D(Circle2D.Builder.Create(31f),
-            new SolidColorShader(new XnaColor(93, 224, 255, 38)))
+            new SolidColorShader(new Color4b(93, 224, 255, 38)))
         {
             IsVisible = false,
             ZIndex = 1
@@ -122,7 +121,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         _visuals.Clear();
     }
 
-    private static LinearGradientShader ActiveOrbShader() => new(new XnaColor(245, 255, 255), new XnaColor(44, 193, 255));
+    private static LinearGradientShader ActiveOrbShader() => new(new Color4b(245, 255, 255), new Color4b(44, 193, 255));
 
-    private static LinearGradientShader InactiveOrbShader() => new(new XnaColor(132, 139, 158), new XnaColor(53, 60, 78));
+    private static LinearGradientShader InactiveOrbShader() => new(new Color4b(132, 139, 158), new Color4b(53, 60, 78));
 }

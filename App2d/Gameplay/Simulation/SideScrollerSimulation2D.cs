@@ -73,9 +73,17 @@ public sealed class SideScrollerSimulation2D : IDisposable
             SideScrollerLayers2D.World, SideScrollerLayers2D.Player, SideScrollerLayers2D.Enemy);
         level.UpdateStreaming(respawn.Position);
 
-        var player = new Person2D(ids.Allocate(), collision, physics, traversal, respawn.Position,
-            SideScrollerLayers2D.Player, SideScrollerLayers2D.World, CombatFaction2D.Player,
-            maximumHealth: definition.PlayerMaximumHealth, tileMap: definition.TileMap);
+        var player = new Person2D(
+            ids.Allocate(),
+            collision,
+            physics,
+            traversal,
+            respawn.Position,
+            SideScrollerLayers2D.Player,
+            SideScrollerLayers2D.World,
+            CombatFaction2D.Player,
+            maximumHealth: definition.PlayerMaximumHealth,
+            tileMap: definition.TileMap);
         combatants.Register(player);
         var contactDamage = new ContactDamageSystem2D(collision, SideScrollerLayers2D.Enemy, combatants);
         var combat = new CombatSystem2D(collision, combatants);

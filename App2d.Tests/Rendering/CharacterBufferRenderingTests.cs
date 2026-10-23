@@ -1,7 +1,6 @@
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.Tests.Rendering;
@@ -11,7 +10,7 @@ public sealed class CharacterBufferRenderingTests
 {
     private static readonly Matrix Projection = PointCharacterRenderer.Projection(128, 128, new(64), 1);
 
-    private static void AddTriangle(CharacterMesh mesh, Color color) =>
+    private static void AddTriangle(CharacterMesh mesh, Color4b color) =>
         mesh.Triangle(new(-12, -12, 0), new(12, -12, 0), new(0, 12, 0), color);
 
     [Fact]
@@ -20,21 +19,21 @@ public sealed class CharacterBufferRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new PointCharacterRenderer(graphics.Device);
         var drawing = new PuppetDrawing();
-        AddTriangle(drawing.Mesh, Color.Red);
-        AddTriangle(drawing.Mesh, Color.Blue);
+        AddTriangle(drawing.Mesh, Color4b.Red);
+        AddTriangle(drawing.Mesh, Color4b.Blue);
         drawing.Batches.Add(new(0, 3, WriteDepth: false));
         drawing.Batches.Add(new(3, 3, Blend: "additive", WriteDepth: false));
-        graphics.Device.Clear(Color.Transparent);
+        graphics.Device.Clear(Color4b.Transparent);
         renderer.Draw(drawing, Projection, Matrix.CreateTranslation(-24, 0, 0));
         renderer.Draw(drawing, Projection, Matrix.CreateTranslation(24, 0, 0));
         Assert.Equal(1, renderer.MeshUploadCount);
         Assert.Equal(4, renderer.MeshDrawCount);
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Color.Magenta, pixels[64 * 128 + 40]);
-        Assert.Equal(Color.Magenta, pixels[64 * 128 + 88]);
+        Assert.Equal(Color4b.Magenta, pixels[64 * 128 + 40]);
+        Assert.Equal(Color4b.Magenta, pixels[64 * 128 + 88]);
 
         var other = new CharacterMesh(3);
-        AddTriangle(other, Color.Lime);
+        AddTriangle(other, Color4b.Lime);
         renderer.Draw(other, Projection, Matrix.Identity, writeDepth: false);
         renderer.Draw(drawing, Projection, Matrix.Identity);
         Assert.Equal(2, renderer.MeshUploadCount);
@@ -46,21 +45,21 @@ public sealed class CharacterBufferRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new PointCharacterRenderer(graphics.Device);
         var mesh = new CharacterMesh(3);
-        AddTriangle(mesh, Color.Red);
+        AddTriangle(mesh, Color4b.Red);
         var version = mesh.Version;
-        graphics.Device.Clear(Color.Transparent);
+        graphics.Device.Clear(Color4b.Transparent);
         renderer.Draw(mesh, Projection, Matrix.CreateTranslation(-32, 0, 0), writeDepth: false);
         mesh.Clear();
-        AddTriangle(mesh, Color.Lime);
+        AddTriangle(mesh, Color4b.Lime);
         Assert.True(mesh.Version > version);
         renderer.Draw(mesh, Projection, Matrix.Identity, writeDepth: false);
-        AddTriangle(mesh, Color.Blue);
+        AddTriangle(mesh, Color4b.Blue);
         renderer.Draw(mesh, Projection, Matrix.CreateTranslation(32, 0, 0), writeDepth: false);
         Assert.Equal(3, renderer.MeshUploadCount);
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Color.Red, pixels[64 * 128 + 32]);
-        Assert.Equal(Color.Lime, pixels[64 * 128 + 64]);
-        Assert.Equal(Color.Blue, pixels[64 * 128 + 96]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 32]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Blue, pixels[64 * 128 + 96]);
     }
 
     [Fact]
@@ -71,13 +70,13 @@ public sealed class CharacterBufferRenderingTests
         var mesh = new CharacterMesh(3);
         renderer.Draw(mesh, Projection, Matrix.Identity);
         Assert.Equal(0, renderer.MeshUploadCount);
-        AddTriangle(mesh, Color.Red);
+        AddTriangle(mesh, Color4b.Red);
         Assert.Throws<ArgumentOutOfRangeException>(() => renderer.Draw(mesh, Projection, Matrix.Identity, start: -3));
         Assert.Throws<ArgumentOutOfRangeException>(() => renderer.Draw(mesh, Projection, Matrix.Identity, start: 1, count: 2));
         Assert.Throws<ArgumentOutOfRangeException>(() => renderer.Draw(mesh, Projection, Matrix.Identity, count: 6));
         renderer.Draw(mesh, Projection, Matrix.Identity, start: 3);
         Assert.Equal(0, renderer.MeshUploadCount);
-        mesh.Vertex(Vector3.Zero, Color.Red);
+        mesh.Vertex(Vector3.Zero, Color4b.Red);
         Assert.Throws<ArgumentOutOfRangeException>(() => renderer.Draw(mesh, Projection, Matrix.Identity));
         Assert.Equal(0, renderer.MeshDrawCount);
     }
@@ -89,13 +88,13 @@ public sealed class CharacterBufferRenderingTests
         using var target = new RenderTarget2D(graphics.Device, 128, 128, false, SurfaceFormat.Color, DepthFormat.Depth24);
         graphics.Device.SetRenderTarget(target);
         using var texture = new Texture2D(graphics.Device, 1, 1);
-        texture.SetData([new Color(255, 0, 0, 128)]);
+        texture.SetData([new Color4b(255, 0, 0, 128)]);
         using var renderer = new PointCharacterRenderer(graphics.Device);
         var mesh = new CharacterMesh(3);
         // Near opaque green, then farther textured red: depth read must keep the near triangle.
-        mesh.Triangle(new(-12, -12, -1), new(12, -12, -1), new(0, 12, -1), Color.Lime);
-        mesh.Triangle(new(-12, -12, 1), new(12, -12, 1), new(0, 12, 1), Color.White);
-        graphics.Device.Clear(Color.White);
+        mesh.Triangle(new(-12, -12, -1), new(12, -12, -1), new(0, 12, -1), Color4b.Lime);
+        mesh.Triangle(new(-12, -12, 1), new(12, -12, 1), new(0, 12, 1), Color4b.White);
+        graphics.Device.Clear(Color4b.White);
         graphics.Device.BlendState = BlendState.Opaque;
         graphics.Device.DepthStencilState = DepthStencilState.None;
         graphics.Device.RasterizerState = RasterizerState.CullClockwise;
@@ -109,10 +108,10 @@ public sealed class CharacterBufferRenderingTests
         Assert.Same(RasterizerState.CullClockwise, graphics.Device.RasterizerState);
         Assert.Same(SamplerState.PointWrap, graphics.Device.SamplerStates[0]);
         graphics.Device.SetRenderTarget(null);
-        var pixels = new Color[128 * 128];
+        var pixels = new Color4b[128 * 128];
         target.GetData(pixels);
-        Assert.Equal(Color.Lime, pixels[64 * 128 + 64]);
-        Assert.Equal(new Color(255, 127, 127, 191), pixels[64 * 128 + 96]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 64]);
+        Assert.Equal(new Color4b(255, 127, 127, 191), pixels[64 * 128 + 96]);
         Assert.Equal(1, renderer.MeshUploadCount);
     }
 
@@ -124,14 +123,14 @@ public sealed class CharacterBufferRenderingTests
         var mesh = new CharacterMesh();
         for (var triangle = 0; triangle < 8192; triangle++)
         {
-            mesh.Triangle(new(-40, -12, 0), new(-16, -12, 0), new(-28, 12, 0), Color.Red);
+            mesh.Triangle(new(-40, -12, 0), new(-16, -12, 0), new(-28, 12, 0), Color4b.Red);
         }
-        mesh.Triangle(new(16, -12, 0), new(40, -12, 0), new(28, 12, 0), Color.Blue);
-        graphics.Device.Clear(Color.Transparent);
+        mesh.Triangle(new(16, -12, 0), new(40, -12, 0), new(28, 12, 0), Color4b.Blue);
+        graphics.Device.Clear(Color4b.Transparent);
         renderer.Draw(mesh, Projection, Matrix.Identity, writeDepth: false);
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Color.Red, pixels[64 * 128 + 36]);
-        Assert.Equal(Color.Blue, pixels[64 * 128 + 92]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 36]);
+        Assert.Equal(Color4b.Blue, pixels[64 * 128 + 92]);
         Assert.Equal(2, renderer.MeshDrawCount);
         Assert.Equal(1, renderer.MeshUploadCount);
     }
@@ -142,7 +141,7 @@ public sealed class CharacterBufferRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new PointCharacterRenderer(graphics.Device);
         var mesh = new CharacterMesh(3);
-        AddTriangle(mesh, Color.Red);
+        AddTriangle(mesh, Color4b.Red);
         renderer.Draw(mesh, Projection, Matrix.Identity);
         Assert.True(renderer.CachedMeshBytes > 0);
         renderer.ClearMeshCache();

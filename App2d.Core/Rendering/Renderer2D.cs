@@ -13,7 +13,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using GpuTexture = Microsoft.Xna.Framework.Graphics.Texture2D;
 using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
-using XnaColor = Microsoft.Xna.Framework.Color;
 using XnaMatrix = Microsoft.Xna.Framework.Matrix;
 using XnaVector2 = Microsoft.Xna.Framework.Vector2;
 using XnaVector3 = Microsoft.Xna.Framework.Vector3;
@@ -75,7 +74,7 @@ public sealed partial class Renderer2D : IDisposable
         _frameActive = false;
     }
 
-    public void Clear(XnaColor color)
+    public void Clear(Color4b color)
     {
         RequireFrame();
         Flush();
@@ -170,7 +169,7 @@ public sealed partial class Renderer2D : IDisposable
                 var pixels = texture.CopyPixels();
                 for (var i = 0; i < pixels.Length; i++)
                 {
-                    pixels[i] = XnaColor.FromNonPremultiplied(pixels[i].R, pixels[i].G, pixels[i].B, pixels[i].A);
+                    pixels[i] = Color4b.FromNonPremultiplied(pixels[i].R, pixels[i].G, pixels[i].B, pixels[i].A);
                 }
 
                 gpu.SetData(pixels);
@@ -257,9 +256,9 @@ public sealed partial class Renderer2D : IDisposable
         _vertices[_vertexCount++] = c;
     }
 
-    private static VertexPositionColorTexture Vertex(Vector2 point, XnaColor color, Vector2 uv = default) =>
+    private static VertexPositionColorTexture Vertex(Vector2 point, Color4b color, Vector2 uv = default) =>
         new(new XnaVector3(point.X, point.Y, 0),
-            XnaColor.FromNonPremultiplied(color.R, color.G, color.B, color.A), new XnaVector2(uv.X, uv.Y));
+            Color4b.FromNonPremultiplied(color.R, color.G, color.B, color.A), new XnaVector2(uv.X, uv.Y));
 
     private static VertexPositionColorTexture MaterialVertex(Vector2 local, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
     {
@@ -332,7 +331,7 @@ public sealed partial class Renderer2D : IDisposable
         }
     }
 
-    public void DrawScreenRoundedRectangle(ScreenRectangle2D bounds, float radius, XnaColor color, float strokeWidth = 0f)
+    public void DrawScreenRoundedRectangle(ScreenRectangle2D bounds, float radius, Color4b color, float strokeWidth = 0f)
     {
         RequireFrame();
         ArgGuard.NonNegative(radius);
@@ -364,11 +363,11 @@ public sealed partial class Renderer2D : IDisposable
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(text);
         DrawScreenRoundedRectangle(new(topLeft.X, topLeft.Y, topLeft.X + _font.Measure(text) + 28f, topLeft.Y + _font.LineHeight + 18f),
-            9f, new XnaColor(20, 28, 43, 220));
-        DrawScreenText(text, topLeft + new Vector2(14, 9 + _font.Ascent), XnaColor.White);
+            9f, DebugTheme.LabelBackground);
+        DrawScreenText(text, topLeft + new Vector2(14, 9 + _font.Ascent), DebugTheme.LabelText);
     }
 
-    public void DrawScreenText(string text, Vector2 baseline, XnaColor color)
+    public void DrawScreenText(string text, Vector2 baseline, Color4b color)
     {
         RequireFrame();
         ArgGuard.ThrowIfNullOrWhiteSpace(text);
@@ -394,16 +393,16 @@ public sealed partial class Renderer2D : IDisposable
         RequireFrame();
         ArgGuard.ThrowIfNull(texture);
         SelectTexture(texture, new(TextureAddressMode.Clamp, TextureAddressMode.Clamp, TextureFilter.Linear));
-        TexturedQuad(bounds, new(0, 0, texture.Width, texture.Height), texture.Width, texture.Height, XnaColor.White);
+        TexturedQuad(bounds, new(0, 0, texture.Width, texture.Height), texture.Width, texture.Height, Color4b.White);
     }
 
     /// <summary>Draws a transient convex world-space polygon without creating a scene object.</summary>
-    public void DrawWorldConvexPolygon(ReadOnlySpan<Vector2> points, XnaColor color) =>
+    public void DrawWorldConvexPolygon(ReadOnlySpan<Vector2> points, Color4b color) =>
         DrawWorldConvexPolygon(points, color, null, 0f);
 
     /// <summary>Draws a transient convex world-space polygon with optional fill and outline in world units.</summary>
-    public void DrawWorldConvexPolygon(ReadOnlySpan<Vector2> points, XnaColor? fillColor,
-        XnaColor? outlineColor = null, float worldStrokeWidth = 0f)
+    public void DrawWorldConvexPolygon(ReadOnlySpan<Vector2> points, Color4b? fillColor,
+        Color4b? outlineColor = null, float worldStrokeWidth = 0f)
     {
         RequireFrame();
         ArgGuard.ThrowIfTooShort(points, 3);
@@ -441,7 +440,7 @@ public sealed partial class Renderer2D : IDisposable
         }
     }
 
-    private void TexturedQuad(ScreenRectangle2D bounds, ScreenRectangle2D source, int width, int height, XnaColor color)
+    private void TexturedQuad(ScreenRectangle2D bounds, ScreenRectangle2D source, int width, int height, Color4b color)
     {
         var a = Vertex(new(bounds.Left, bounds.Top), color, new(source.Left / width, source.Top / height));
         var b = Vertex(new(bounds.Right, bounds.Top), color, new(source.Right / width, source.Top / height));
@@ -451,7 +450,7 @@ public sealed partial class Renderer2D : IDisposable
         Triangle(a, c, d);
     }
 
-    public void DrawWorldCircle(Vector2 center, float radius, XnaColor color, float strokeWidth = 2f)
+    public void DrawWorldCircle(Vector2 center, float radius, Color4b color, float strokeWidth = 2f)
     {
         RequireFrame();
         ArgGuard.NonNegative(radius);
@@ -464,7 +463,7 @@ public sealed partial class Renderer2D : IDisposable
     }
 
     /// <summary>Draws a world circle with stroke width specified in world units, scaling with camera zoom.</summary>
-    public void DrawWorldThickCircle(Vector2 center, float radius, XnaColor color, float worldStrokeWidth)
+    public void DrawWorldThickCircle(Vector2 center, float radius, Color4b color, float worldStrokeWidth)
     {
         RequireFrame();
         ArgGuard.Positive(worldStrokeWidth);
@@ -472,7 +471,7 @@ public sealed partial class Renderer2D : IDisposable
         DrawWorldCircle(center, radius, color, screenWidth);
     }
 
-    public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, XnaColor color, float strokeWidth = 2f,
+    public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, Color4b color, float strokeWidth = 2f,
         LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
@@ -493,7 +492,7 @@ public sealed partial class Renderer2D : IDisposable
     }
 
     /// <summary>Draws a polyline with stroke width specified in world units, scaling with camera zoom.</summary>
-    public void DrawWorldThickPolyline(ReadOnlySpan<Vector2> points, float worldStrokeWidth, XnaColor color,
+    public void DrawWorldThickPolyline(ReadOnlySpan<Vector2> points, float worldStrokeWidth, Color4b color,
         LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
@@ -513,23 +512,23 @@ public sealed partial class Renderer2D : IDisposable
         for (var x = (int)MathF.Floor(visible.Left / spacing); x <= (int)MathF.Ceiling(visible.Right / spacing); x++)
         {
             Line(_camera.WorldToDevice(new(x * spacing, visible.Bottom)), _camera.WorldToDevice(new(x * spacing, visible.Top)),
-                new XnaColor(255, 255, 255, x == 0 ? 85 : x % majorLineEvery == 0 ? 35 : 18), x == 0 ? 2 : 1);
+                x == 0 ? DebugTheme.GridAxis : x % majorLineEvery == 0 ? DebugTheme.GridMajor : DebugTheme.GridMinor, x == 0 ? 2 : 1);
         }
 
         for (var y = (int)MathF.Floor(visible.Bottom / spacing); y <= (int)MathF.Ceiling(visible.Top / spacing); y++)
         {
             Line(_camera.WorldToDevice(new(visible.Left, y * spacing)), _camera.WorldToDevice(new(visible.Right, y * spacing)),
-                new XnaColor(255, 255, 255, y == 0 ? 85 : y % majorLineEvery == 0 ? 35 : 18), y == 0 ? 2 : 1);
+                y == 0 ? DebugTheme.GridAxis : y % majorLineEvery == 0 ? DebugTheme.GridMajor : DebugTheme.GridMinor, y == 0 ? 2 : 1);
         }
     }
 
-    public void DrawShapeOutline(SpatialObject2D item, XnaColor color, float screenStrokeWidth = 2f) =>
+    public void DrawShapeOutline(SpatialObject2D item, Color4b color, float screenStrokeWidth = 2f) =>
         DrawShape(item, outlineColor: color, screenStrokeWidth: screenStrokeWidth);
 
-    public void DrawShapeOverlay(SpatialObject2D item, XnaColor fillColor, XnaColor outlineColor, float screenStrokeWidth = 2f) =>
+    public void DrawShapeOverlay(SpatialObject2D item, Color4b fillColor, Color4b outlineColor, float screenStrokeWidth = 2f) =>
         DrawShape(item, fillColor, outlineColor, screenStrokeWidth);
 
-    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, XnaColor color, float width)
+    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, Color4b color, float width)
     {
         if (shape is CompositeShape2D composite)
         {
@@ -548,7 +547,7 @@ public sealed partial class Renderer2D : IDisposable
         }
     }
 
-    private void StrokePolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, XnaColor color, float width)
+    private void StrokePolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, Color4b color, float width)
     {
         foreach (var segment in MeshTopology.Segments<Vector2>(points))
         {
@@ -556,11 +555,11 @@ public sealed partial class Renderer2D : IDisposable
         }
     }
 
-    private void Line(Vector2 start, Vector2 end, XnaColor color, float width,
+    private void Line(Vector2 start, Vector2 end, Color4b color, float width,
         LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt) =>
         Line(start, end, color, width, width, startCap, endCap);
 
-    private void Line(Vector2 start, Vector2 end, XnaColor color, float startWidth, float endWidth,
+    private void Line(Vector2 start, Vector2 end, Color4b color, float startWidth, float endWidth,
         LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
     {
         Span<Vector2> vertices = stackalloc Vector2[StrokeTessellation2D.MaximumSegmentVertices];

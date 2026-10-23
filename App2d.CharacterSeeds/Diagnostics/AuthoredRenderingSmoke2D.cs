@@ -15,7 +15,6 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Immutable;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -105,8 +104,8 @@ internal static class AuthoredRenderingSmoke2D
                 using (device.UseRenderTarget(target))
                 {
                     close.BeginFrame(1400, 500, default);
-                    close.Clear(new Color(145, 176, 190));
-                    var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(2000, 2), new SolidColorShader(Color.DarkSlateGray));
+                    close.Clear(new Color4b(145, 176, 190));
+                    var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(2000, 2), new SolidColorShader(Color4b.DarkSlateGray));
                     ground.Transform.Position = new(position.X, 0);
                     close.Draw(ground);
                     close.Draw(scene);
@@ -116,13 +115,13 @@ internal static class AuthoredRenderingSmoke2D
                         && elapsed >= swing.Hits[0].Start && elapsed < swing.Hits[0].Finish)
                     {
                         var hit = swing.Hits[0].Window;
-                        var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color(235, 60, 50, 110)));
+                        var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color4b(235, 60, 50, 110)));
                         box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2);
                         close.Draw(box);
                     }
                     if (name == "gun-run-shot")
                     {
-                        var dot = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(3, 3), new SolidColorShader(new Color(240, 200, 40)));
+                        var dot = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(3, 3), new SolidColorShader(new Color4b(240, 200, 40)));
                         dot.Transform.Position = position + hero.Muzzle(facing, false);
                         close.Draw(dot);
                     }
@@ -216,10 +215,10 @@ internal static class AuthoredRenderingSmoke2D
                     };
                 }).ToImmutableArray();
                 view.ApplyState(states, [], 70);
-                target.SavePng(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png"), new Color(145, 176, 190), () =>
+                target.SavePng(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png"), new Color4b(145, 176, 190), () =>
                 {
                     renderer.BeginFrame(1400, 500, default);
-                    renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1200, 2), new SolidColorShader(Color.DarkSlateGray)));
+                    renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1200, 2), new SolidColorShader(Color4b.DarkSlateGray)));
                     renderer.Draw(scene);
                     renderer.DrawScreenLabel("AUTHORED ENEMIES / EQUIPMENT, CHARGE AND PROJECTILE POSES", new(24, 24));
                     renderer.EndFrame();

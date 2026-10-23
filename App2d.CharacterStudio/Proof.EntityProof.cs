@@ -2,7 +2,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterStudio;
 
@@ -30,7 +29,7 @@ internal sealed partial class ProofRenders
         _proofTarget ??= RenderCapture2D.CreateTarget(GraphicsDevice, EntityWidth, EntityHeight);
         var arena = _arenaDrawing ??= new(_renderer);
         var (name, centerX, actors) = _entityFrames[_smokeIndex];
-        _proofTarget.SavePng(Path.Combine(_smokePath, name + ".png"), new Color(237, 238, 226), () =>
+        _proofTarget.SavePng(Path.Combine(_smokePath, name + ".png"), new Color4b(237, 238, 226), () =>
         {
             foreach (var (viewport, ppu, anchorY) in new[] { (
                 new Viewport(0, 0, EntityWidth, EntityPanelHeight), EntityPpu, EntityPanelHeight * .9f),

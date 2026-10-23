@@ -8,14 +8,13 @@ using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Rendering;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Trials;
 
 /// <summary>A heightfield source sampled once into the shared visible/collidable terrain boundary.</summary>
 public sealed class TrialsTerrain2D
 {
-    private static readonly XnaColor SurfaceColor = new(117, 193, 150);
+    private static readonly Color4b SurfaceColor = new(117, 193, 150);
     private static readonly Lazy<CourseData> DefaultCourse = new(() => CreateCourse(TrialsCourse2D.Default.CreateCurve(), TrialsCourse2D.Default.YMin));
     private readonly CourseData _data;
 
@@ -35,7 +34,7 @@ public sealed class TrialsTerrain2D
     private TrialsTerrain2D(PhysicsWorld2D world, CourseData data)
     {
         _data = data;
-        Ground = new WorldObject2D(data.Solid, new SolidColorShader(new XnaColor(18, 23, 28)));
+        Ground = new WorldObject2D(data.Solid, new SolidColorShader(new Color4b(18, 23, 28)));
         var body = world.AddBody(Ground, BodyMotionType2D.Static);
         body.Restitution = 0f;
         body.Friction = 1.4f;

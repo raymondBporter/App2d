@@ -3,16 +3,15 @@ using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
 internal sealed class NoodlePerson2D
 {
-    private static readonly XnaColor BodyColor = new(151, 111, 255);
-    private static readonly XnaColor FaceColor = new(27, 25, 48);
-    private static readonly XnaColor SelectedControlColor = new(117, 255, 178);
-    private static readonly XnaColor AvailableControlColor = new(197, 187, 232, 210);
+    private static readonly Color4b BodyColor = new(151, 111, 255);
+    private static readonly Color4b FaceColor = new(27, 25, 48);
+    private static readonly Color4b SelectedControlColor = new(117, 255, 178);
+    private static readonly Color4b AvailableControlColor = new(197, 187, 232, 210);
 
     private readonly SolidColorShader _bodyShader = new(BodyColor);
     private readonly NoodleArm2D _leftArm;

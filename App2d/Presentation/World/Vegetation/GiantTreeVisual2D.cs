@@ -5,15 +5,14 @@ using App2d.Core.Vegetation;
 using App2d.Gameplay.World.Vegetation;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World.Vegetation;
 
 /// <summary>Massive bark columns, flat branch tops, moss and layered wind-driven foliage.</summary>
 public sealed class GiantTreeVisual2D
 {
-    private static readonly XnaColor Ink = new(37, 46, 32);
-    private static readonly XnaColor Bark = new(108, 78, 49);
+    private static readonly Color4b Ink = new(37, 46, 32);
+    private static readonly Color4b Bark = new(108, 78, 49);
     private readonly List<Crown> _crowns = [];
     private readonly List<Vector2[]> _bark = [];
     private readonly List<Vector2[]> _moss = [];
@@ -80,9 +79,9 @@ public sealed class GiantTreeVisual2D
             WriteLeaves(center, crown.Radii, crown.Phase, leaves);
             renderer.DrawWorldConvexPolygon(leaves, Ink);
             WriteLeaves(center + new Vector2(0, 2f), crown.Radii * 0.96f, crown.Phase, leaves);
-            renderer.DrawWorldConvexPolygon(leaves, XnaColor.Lerp(new(40, 96, 62), new(80, 137, 67), crown.Shade));
+            renderer.DrawWorldConvexPolygon(leaves, Color4b.Lerp(new(40, 96, 62), new(80, 137, 67), crown.Shade));
             WriteLeaves(center + crown.Radii * new Vector2(-0.12f, 0.25f), crown.Radii * new Vector2(0.7f, 0.52f), crown.Phase, leaves);
-            renderer.DrawWorldConvexPolygon(leaves, XnaColor.Lerp(new(64, 122, 64), new(113, 157, 79), crown.Shade));
+            renderer.DrawWorldConvexPolygon(leaves, Color4b.Lerp(new(64, 122, 64), new(113, 157, 79), crown.Shade));
         }
 
         var root = Tree.Root;
@@ -101,12 +100,12 @@ public sealed class GiantTreeVisual2D
         // A broad illuminated face keeps a giant column readable at normal play zoom.
         wood[1] = root + new Vector2(-width * 0.1f, 0);
         wood[2] = root + new Vector2(-width * 0.06f, height);
-        renderer.DrawWorldConvexPolygon(wood, new XnaColor(136, 99, 59));
+        renderer.DrawWorldConvexPolygon(wood, new Color4b(136, 99, 59));
         foreach (var bark in _bark)
         {
             if (visible.Top >= bark[0].Y && visible.Bottom <= bark[2].Y)
             {
-                renderer.DrawWorldConvexPolygon(bark, new XnaColor(82, 61, 43));
+                renderer.DrawWorldConvexPolygon(bark, new Color4b(82, 61, 43));
             }
         }
 
@@ -125,13 +124,13 @@ public sealed class GiantTreeVisual2D
             renderer.DrawWorldConvexPolygon(wood, Bark);
             renderer.DrawWorldSegment(wood[0], wood[1], Ink, 2f);
             renderer.DrawWorldSegment(wood[2], wood[3], Ink, 1.5f);
-            renderer.DrawWorldSegment(new(b.Left + 2f, b.Top - 3f), new(b.Right - 2f, b.Top - 3f), new XnaColor(161, 120, 65), 1.5f);
+            renderer.DrawWorldSegment(new(b.Left + 2f, b.Top - 3f), new(b.Right - 2f, b.Top - 3f), new Color4b(161, 120, 65), 1.5f);
         }
         foreach (var moss in _moss)
         {
             if (visible.Contains(moss[0]) || visible.Contains(moss[2]))
             {
-                renderer.DrawWorldConvexPolygon(moss, new XnaColor(101, 147, 57));
+                renderer.DrawWorldConvexPolygon(moss, new Color4b(101, 147, 57));
             }
         }
 

@@ -5,7 +5,6 @@ using App2d.Core.Rendering.Textures;
 using App2d.Core.Validation;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.Player;
 
@@ -29,15 +28,15 @@ public static class PlayerHud2D
         const float segmentGap = 3f;
         var lifePanel = new ScreenRectangle2D(left, top, left + 350f, top + panelHeight);
         var barBounds = new ScreenRectangle2D(barLeft, top + 13f, barLeft + barWidth, top + 39f);
-        var panelColor = new XnaColor(20, 28, 43, 220);
-        var accentColor = new XnaColor(113, 224, 255);
-        var emptyHealthColor = new XnaColor(7, 12, 20, 235);
+        var panelColor = GameUiTheme.HudPanel;
+        var accentColor = GameUiTheme.HudAccent;
+        var emptyHealthColor = GameUiTheme.EmptyBar;
         var filledHealthColor = currentHealth > maximumHealth * 0.3f
-            ? new XnaColor(72, 224, 121)
-            : new XnaColor(245, 76, 76);
+            ? GameUiTheme.Health
+            : GameUiTheme.LowHealth;
 
         renderer.DrawScreenRoundedRectangle(lifePanel, 9f, panelColor);
-        renderer.DrawScreenText("LIFE", new Vector2(left + 14f, top + 35f), XnaColor.White);
+        renderer.DrawScreenText("LIFE", new Vector2(left + 14f, top + 35f), GameUiTheme.Text);
         renderer.DrawScreenRoundedRectangle(barBounds, 6f, emptyHealthColor);
 
         var filledSegments = Math.Clamp(currentHealth, 0, maximumHealth);
@@ -61,7 +60,7 @@ public static class PlayerHud2D
         renderer.DrawScreenRoundedRectangle(barBounds, 6f, accentColor, 3f);
         if (maximumHealth > 20)
         {
-            renderer.DrawScreenText($"{currentHealth}/{maximumHealth}", new Vector2(barLeft + 88, top + 33), XnaColor.White);
+            renderer.DrawScreenText($"{currentHealth}/{maximumHealth}", new Vector2(barLeft + 88, top + 33), GameUiTheme.Text);
         }
 
         const float weaponTop = top + panelHeight + 10f;
@@ -82,8 +81,8 @@ public static class PlayerHud2D
                 renderer.DrawScreenRoundedRectangle(new(energyLeft, weaponTop + 30, energyLeft + fill, weaponTop + 43), 4, accentColor);
             }
 
-            renderer.DrawScreenText("Y / Q  SHOT", new(left + 12, weaponTop + 66), spells.Energy >= spells.ShotCost ? XnaColor.White : XnaColor.Gray);
-            renderer.DrawScreenText("B / R  HEAL", new(left + 182, weaponTop + 66), spells.Energy >= spells.HealCost && currentHealth < maximumHealth ? XnaColor.White : XnaColor.Gray);
+            renderer.DrawScreenText("Y / Q  SHOT", new(left + 12, weaponTop + 66), spells.Energy >= spells.ShotCost ? GameUiTheme.Text : GameUiTheme.DisabledText);
+            renderer.DrawScreenText("B / R  HEAL", new(left + 182, weaponTop + 66), spells.Energy >= spells.HealCost && currentHealth < maximumHealth ? GameUiTheme.Text : GameUiTheme.DisabledText);
             var progress = charging ? spells.ChargeProgress : spells.IsHealing ? spells.HealProgress : 0;
             if (progress > 0)
             {
@@ -93,7 +92,7 @@ public static class PlayerHud2D
         }
     }
 
-    private static void DrawWeaponIcon(Renderer2D renderer, Texture2D texture, ScreenRectangle2D bounds, XnaColor panelColor, XnaColor accentColor)
+    private static void DrawWeaponIcon(Renderer2D renderer, Texture2D texture, ScreenRectangle2D bounds, Color4b panelColor, Color4b accentColor)
     {
         renderer.DrawScreenRoundedRectangle(bounds, 9f, panelColor);
         renderer.DrawScreenRoundedRectangle(bounds, 9f, accentColor, 3f);

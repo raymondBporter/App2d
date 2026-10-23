@@ -54,7 +54,7 @@ public sealed class PuppetDrawing
             }
 
             var frame = PartAttachment2D.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
-            AddImage(part, frame, ColorRgba32.FromVector4(slot.Color).ToColor(), slot.Slot.Blend, -i * .001f);
+            AddImage(part, frame, ColorExtensions.FromVector4(slot.Color), slot.Slot.Blend, -i * .001f);
         }
     }
 
@@ -134,7 +134,7 @@ public sealed class PuppetDrawing
 
             if (part.Material?.Texture is not null)
             {
-                AddImage(part, PartAttachment2D.FrameOf(part, world, angle, transform), Microsoft.Xna.Framework.Color.White, "normal", null);
+                AddImage(part, PartAttachment2D.FrameOf(part, world, angle, transform), Color4b.White, "normal", null);
                 continue;
             }
             var start = Mesh.Count;
@@ -206,11 +206,11 @@ public sealed class PuppetDrawing
         }
     }
 
-    private void AddImage(PuppetPart part, PartFrame2D frame, Microsoft.Xna.Framework.Color color, string blend, float? depth)
+    private void AddImage(PuppetPart part, PartFrame2D frame, Color4b color, string blend, float? depth)
     {
         var material = part.RenderMaterial;
         var own = ColorExtensions.FromHexRgba(material.Tint ?? "ffffffff");
-        var fill = material.Fill is null ? Microsoft.Xna.Framework.Color.White : ColorExtensions.FromHexRgb(material.Fill);
+        var fill = material.Fill is null ? Color4b.White : ColorExtensions.FromHexRgb(material.Fill);
         var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
         color = new((byte)(color.R * own.R / 255 * fill.R / 255), (byte)(color.G * own.G / 255 * fill.G / 255),
             (byte)(color.B * own.B / 255 * fill.B / 255), (byte)(color.A * own.A / 255));

@@ -19,8 +19,8 @@ using App2d.Presentation.Audio;
 using App2d.Presentation.World;
 using App2d.Rendering;
 using App2d.Things;
+using App2d.Core.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d;
 
@@ -172,7 +172,7 @@ public sealed class SideScrollerGame : Game2D
         $"App2d Side Scroller | PAD: {(_isControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     public override IGameToolUi2D? ToolUi => _editorUi;
-    protected override XnaColor BackgroundColor => new(103, 196, 235);
+    protected override Color4b BackgroundColor => new(103, 196, 235);
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -277,7 +277,7 @@ public sealed class SideScrollerGame : Game2D
                 }
 
                 Span<Vector2> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
-                renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? XnaColor.Gold : XnaColor.Cyan, 2f);
+                renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? DebugTheme.ActiveZone : DebugTheme.ZoneOutline, 2f);
             }
         }
     }

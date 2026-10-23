@@ -4,7 +4,6 @@ using App2d.Core.Rendering.Characters;
 using App2d.Tests.Authored;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.Tests.Rendering;
@@ -33,10 +32,10 @@ public sealed class WardrobeDepthTests
         var drawing = new PuppetDrawing();
         drawing.Build(entity, pose);
         graphics.Device.SetRenderTarget(target);
-        graphics.Device.Clear(Color.White);
+        graphics.Device.Clear(Color4b.White);
         renderer.Draw(drawing.Mesh, projection, world);
         graphics.Device.SetRenderTarget(null);
-        var pixels = new Color[128 * 128];
+        var pixels = new Color4b[128 * 128];
         target.GetData(pixels);
         var elbow = pose.World("left-elbow");
         var hand = pose.World("left-hand");
@@ -71,7 +70,7 @@ public sealed class WardrobeDepthTests
         var projection = PointCharacterRenderer.Projection(128, 128, new(64, 48), 160);
         var world = Matrix.CreateTranslation(-hips.X, -hips.Y, 0) * Matrix.CreateScale(facing, 1, 1);
         var drawing = new PuppetDrawing();
-        Color[] Render(bool dressed)
+        Color4b[] Render(bool dressed)
         {
             if (dressed)
             {
@@ -83,10 +82,10 @@ public sealed class WardrobeDepthTests
             }
 
             graphics.Device.SetRenderTarget(target);
-            graphics.Device.Clear(Color.White);
+            graphics.Device.Clear(Color4b.White);
             renderer.Draw(drawing.Mesh, projection, world);
             graphics.Device.SetRenderTarget(null);
-            var pixels = new Color[128 * 128];
+            var pixels = new Color4b[128 * 128];
             target.GetData(pixels);
             return pixels;
         }

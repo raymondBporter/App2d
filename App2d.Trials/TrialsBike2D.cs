@@ -6,7 +6,6 @@ using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Trials;
 
@@ -26,9 +25,9 @@ public sealed class TrialsBike2D
     private static readonly Vector2 SwingPivot = new(-12f, 4f);
     private static readonly Vector2 RearShockMount = new(-42f, 28f);
     private static readonly Vector2 ForkAxis = Vector2.Normalize(Head - FrontAxle);
-    private static readonly XnaColor FrameColor = new(255, 197, 102);
-    private static readonly XnaColor TireColor = new(26, 32, 40);
-    private static readonly XnaColor MetalColor = new(175, 197, 210);
+    private static readonly Color4b FrameColor = new(255, 197, 102);
+    private static readonly Color4b TireColor = new(26, 32, 40);
+    private static readonly Color4b MetalColor = new(175, 197, 210);
     private static readonly Circle2D Rim = Circle2D.Builder.Create(21f);
     private static readonly Circle2D InnerRim = Circle2D.Builder.Create(18f);
     private static readonly Circle2D Hub = Circle2D.Builder.Create(4f);
@@ -150,7 +149,7 @@ public sealed class TrialsBike2D
             var head = Vector2.Transform(Head, Frame.WorldObject.Transform.Matrix);
             var axis = FrontJoint.WorldAxis;
             renderer.DrawWorldThickSegment(head, head - axis * 34f, 7f, MetalColor);
-            renderer.DrawWorldThickSegment(head - axis * 20f, FrontJoint.SecondWorldAnchor, 4f, new XnaColor(224, 234, 240));
+            renderer.DrawWorldThickSegment(head - axis * 20f, FrontJoint.SecondWorldAnchor, 4f, new Color4b(224, 234, 240));
         }
 
         void DrawShock()
@@ -164,10 +163,10 @@ public sealed class TrialsBike2D
             for (var segment = 1; segment <= 10; segment++)
             {
                 var point = Vector2.Lerp(start, end, segment / 11f) + normal * (segment % 2 == 0 ? -4f : 4f);
-                renderer.DrawWorldThickSegment(previous, point, 2f, new XnaColor(230, 116, 94));
+                renderer.DrawWorldThickSegment(previous, point, 2f, new Color4b(230, 116, 94));
                 previous = point;
             }
-            renderer.DrawWorldThickSegment(previous, end, 2f, new XnaColor(230, 116, 94));
+            renderer.DrawWorldThickSegment(previous, end, 2f, new Color4b(230, 116, 94));
         }
 
         void DrawWheel(RigidBody2D wheel)

@@ -5,7 +5,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Rendering;
 
@@ -54,14 +53,14 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawShape(shape, fillColor: XnaColor.Lime, outlineColor: XnaColor.White);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawShape(shape, fillColor: Color4b.Lime, outlineColor: Color4b.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Lime, pixels[64 * 128 + 64]);
-        Assert.Contains(XnaColor.White, pixels);
-        Assert.Equal(XnaColor.Transparent, pixels[10 * 128 + 10]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 64]);
+        Assert.Contains(Color4b.White, pixels);
+        Assert.Equal(Color4b.Transparent, pixels[10 * 128 + 10]);
     }
 
     [Fact]
@@ -70,15 +69,15 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
+        renderer.Clear(Color4b.Transparent);
         renderer.DrawShape(Rectangle2D.Builder.Create(new(-10, -10), new(10, 10)),
-            Matrix3x2.CreateTranslation(20, 0), outlineColor: XnaColor.White, screenStrokeWidth: 4);
+            Matrix3x2.CreateTranslation(20, 0), outlineColor: Color4b.White, screenStrokeWidth: 4);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Transparent, pixels[64 * 128 + 84]);
-        Assert.Equal(XnaColor.White, pixels[64 * 128 + 94]);
-        Assert.Equal(XnaColor.Transparent, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Transparent, pixels[64 * 128 + 84]);
+        Assert.Equal(Color4b.White, pixels[64 * 128 + 94]);
+        Assert.Equal(Color4b.Transparent, pixels[64 * 128 + 64]);
     }
 
     [Fact]
@@ -90,13 +89,13 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawTriangleMesh(mesh, fillColor: XnaColor.Lime, outlineColor: XnaColor.White);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawTriangleMesh(mesh, fillColor: Color4b.Lime, outlineColor: Color4b.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Lime, pixels[64 * 128 + 64]);
-        Assert.Equal(XnaColor.White, pixels[64 * 128 + 84]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.White, pixels[64 * 128 + 84]);
     }
 
     [Fact]
@@ -105,14 +104,14 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2.UnitY, 0), XnaColor.Blue, XnaColor.White);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2.UnitY, 0), Color4b.Blue, Color4b.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Blue, pixels[90 * 128 + 64]);
-        Assert.Equal(XnaColor.Transparent, pixels[35 * 128 + 64]);
-        Assert.Equal(XnaColor.White, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Blue, pixels[90 * 128 + 64]);
+        Assert.Equal(Color4b.Transparent, pixels[35 * 128 + 64]);
+        Assert.Equal(Color4b.White, pixels[64 * 128 + 64]);
     }
 
     [Theory]
@@ -123,13 +122,13 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2.UnitX, offset), XnaColor.Blue, XnaColor.White);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2.UnitX, offset), Color4b.Blue, Color4b.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(fillsView ? XnaColor.Blue : XnaColor.Transparent, pixels[64 * 128 + 64]);
-        Assert.DoesNotContain(XnaColor.White, pixels);
+        Assert.Equal(fillsView ? Color4b.Blue : Color4b.Transparent, pixels[64 * 128 + 64]);
+        Assert.DoesNotContain(Color4b.White, pixels);
     }
 
     [Theory]
@@ -141,14 +140,14 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawWorldSegment(new(-20, 20), new(20, 20), XnaColor.Red, 8, cap);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawWorldSegment(new(-20, 20), new(20, 20), Color4b.Red, 8, cap);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Red, pixels[44 * 128 + 64]);
-        Assert.Equal(extends ? XnaColor.Red : XnaColor.Transparent, pixels[44 * 128 + 41]);
-        Assert.Equal(squareCorner ? XnaColor.Red : XnaColor.Transparent, pixels[40 * 128 + 40]);
+        Assert.Equal(Color4b.Red, pixels[44 * 128 + 64]);
+        Assert.Equal(extends ? Color4b.Red : Color4b.Transparent, pixels[44 * 128 + 41]);
+        Assert.Equal(squareCorner ? Color4b.Red : Color4b.Transparent, pixels[40 * 128 + 40]);
     }
 
     [Fact]
@@ -157,16 +156,16 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawWorldLine(new Line2D(Vector2.Zero, Vector2.UnitX), XnaColor.Red, 2);
-        renderer.DrawWorldRay(new Ray2D(new(0, -20), Vector2.UnitX), XnaColor.Blue, 2);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawWorldLine(new Line2D(Vector2.Zero, Vector2.UnitX), Color4b.Red, 2);
+        renderer.DrawWorldRay(new Ray2D(new(0, -20), Vector2.UnitX), Color4b.Blue, 2);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Red, pixels[64 * 128 + 10]);
-        Assert.Equal(XnaColor.Red, pixels[64 * 128 + 110]);
-        Assert.Equal(XnaColor.Transparent, pixels[84 * 128 + 40]);
-        Assert.Equal(XnaColor.Blue, pixels[84 * 128 + 90]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 10]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 110]);
+        Assert.Equal(Color4b.Transparent, pixels[84 * 128 + 40]);
+        Assert.Equal(Color4b.Blue, pixels[84 * 128 + 90]);
     }
 
     [Theory]
@@ -177,14 +176,14 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D { Zoom = zoom }, graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawWorldThickSegment(new(-20, 0), new(20, 0), 4, XnaColor.Red);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawWorldThickSegment(new(-20, 0), new(20, 0), 4, Color4b.Red);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Red, pixels[64 * 128 + 64]);
-        Assert.Equal(coversThreePixelsOut ? XnaColor.Red : XnaColor.Transparent, pixels[61 * 128 + 64]);
-        Assert.Equal(XnaColor.Transparent, pixels[58 * 128 + 64]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 64]);
+        Assert.Equal(coversThreePixelsOut ? Color4b.Red : Color4b.Transparent, pixels[61 * 128 + 64]);
+        Assert.Equal(Color4b.Transparent, pixels[58 * 128 + 64]);
     }
 
     [Fact]
@@ -193,14 +192,14 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawWorldThickSegment(new(-40, 0), new(40, 0), 2, 10, XnaColor.Red);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawWorldThickSegment(new(-40, 0), new(40, 0), 2, 10, Color4b.Red);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Red, pixels[64 * 128 + 34]);
-        Assert.Equal(XnaColor.Transparent, pixels[60 * 128 + 34]);
-        Assert.Equal(XnaColor.Red, pixels[60 * 128 + 94]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 34]);
+        Assert.Equal(Color4b.Transparent, pixels[60 * 128 + 34]);
+        Assert.Equal(Color4b.Red, pixels[60 * 128 + 94]);
     }
 
     [Fact]
@@ -209,12 +208,12 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawWorldThickSegment(new(-20, 0.3f), new(20, 0.3f), 0.1f, XnaColor.Red);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawWorldThickSegment(new(-20, 0.3f), new(20, 0.3f), 0.1f, Color4b.Red);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Red, pixels[63 * 128 + 64]);
+        Assert.Equal(Color4b.Red, pixels[63 * 128 + 64]);
     }
 
     [Theory]
@@ -225,17 +224,17 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D { Zoom = zoom }, graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawWorldThickPolyline([new(-20, 0), new(0, 0), new(0, 20)], 4, XnaColor.Red);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawWorldThickPolyline([new(-20, 0), new(0, 0), new(0, 20)], 4, Color4b.Red);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(XnaColor.Red, pixels[64 * 128 + 56]);
-        Assert.Equal(coversThreePixelsOut ? XnaColor.Red : XnaColor.Transparent, pixels[61 * 128 + 56]);
-        Assert.Equal(XnaColor.Transparent, pixels[58 * 128 + 56]);
-        Assert.Equal(XnaColor.Red, pixels[54 * 128 + 64]);
-        Assert.Equal(coversThreePixelsOut ? XnaColor.Red : XnaColor.Transparent, pixels[54 * 128 + 67]);
-        Assert.Equal(XnaColor.Transparent, pixels[54 * 128 + 70]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 56]);
+        Assert.Equal(coversThreePixelsOut ? Color4b.Red : Color4b.Transparent, pixels[61 * 128 + 56]);
+        Assert.Equal(Color4b.Transparent, pixels[58 * 128 + 56]);
+        Assert.Equal(Color4b.Red, pixels[54 * 128 + 64]);
+        Assert.Equal(coversThreePixelsOut ? Color4b.Red : Color4b.Transparent, pixels[54 * 128 + 67]);
+        Assert.Equal(Color4b.Transparent, pixels[54 * 128 + 70]);
     }
 
     [Theory]
@@ -246,15 +245,15 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D { Zoom = zoom }, graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawWorldThickCircle(Vector2.Zero, 20, XnaColor.Red, 4);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawWorldThickCircle(Vector2.Zero, 20, Color4b.Red, 4);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
         var radius = (int)(20 * zoom);
-        Assert.Equal(XnaColor.Red, pixels[64 * 128 + 64 + radius - 1]);
-        Assert.Equal(coversThreePixelsIn ? XnaColor.Red : XnaColor.Transparent, pixels[64 * 128 + 64 + radius - 3]);
-        Assert.Equal(XnaColor.Transparent, pixels[64 * 128 + 64 + radius - 6]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + 64 + radius - 1]);
+        Assert.Equal(coversThreePixelsIn ? Color4b.Red : Color4b.Transparent, pixels[64 * 128 + 64 + radius - 3]);
+        Assert.Equal(Color4b.Transparent, pixels[64 * 128 + 64 + radius - 6]);
     }
 
     [Theory]
@@ -265,17 +264,17 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D { Zoom = zoom }, graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        renderer.Clear(XnaColor.Transparent);
-        renderer.DrawWorldConvexPolygon([new(-20, -20), new(20, -20), new(20, 20), new(-20, 20)], XnaColor.Lime, XnaColor.Red, 4);
+        renderer.Clear(Color4b.Transparent);
+        renderer.DrawWorldConvexPolygon([new(-20, -20), new(20, -20), new(20, 20), new(-20, 20)], Color4b.Lime, Color4b.Red, 4);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
         var edge = 64 + (int)(20 * zoom);
-        Assert.Equal(XnaColor.Lime, pixels[64 * 128 + 64]);
-        Assert.Equal(XnaColor.Red, pixels[64 * 128 + edge - 1]);
-        Assert.Equal(coversThreePixelsIn ? XnaColor.Red : XnaColor.Lime, pixels[64 * 128 + edge - 3]);
-        Assert.Equal(XnaColor.Lime, pixels[64 * 128 + edge - 6]);
-        Assert.Equal(XnaColor.Transparent, pixels[64 * 128 + edge + 6]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Red, pixels[64 * 128 + edge - 1]);
+        Assert.Equal(coversThreePixelsIn ? Color4b.Red : Color4b.Lime, pixels[64 * 128 + edge - 3]);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + edge - 6]);
+        Assert.Equal(Color4b.Transparent, pixels[64 * 128 + edge + 6]);
     }
 
     [Fact]
@@ -284,9 +283,9 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickSegment(Vector2.Zero, Vector2.UnitX, 0, XnaColor.Red));
-        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickPolyline([Vector2.Zero, Vector2.UnitX], -1, XnaColor.Red));
-        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickCircle(Vector2.Zero, 5, XnaColor.Red, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickSegment(Vector2.Zero, Vector2.UnitX, 0, Color4b.Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickPolyline([Vector2.Zero, Vector2.UnitX], -1, Color4b.Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickCircle(Vector2.Zero, 5, Color4b.Red, 0));
         Assert.Throws<ArgumentException>(() => renderer.DrawWorldConvexPolygon([Vector2.Zero, Vector2.UnitX, Vector2.UnitY], null));
         renderer.EndFrame();
     }

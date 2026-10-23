@@ -13,7 +13,7 @@ namespace App2d.Gameplay.World;
 /// <summary>Side-scroller one-way surfaces and per-actor drop-through exclusions, installed on a generic physics world.</summary>
 public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhysicsCollisionCallbacks2D
 {
-    private static readonly ConditionalWeakTable<PhysicsWorld2D, PlatformCollisionRules2D> Rules = new();
+    private static readonly ConditionalWeakTable<PhysicsWorld2D, PlatformCollisionRules2D> Rules = [];
     private readonly PhysicsWorld2D _world;
     private readonly IPairFilter2D<RigidBody2D> _previousPairFilter;
     private readonly IPhysicsCollisionCallbacks2D? _previousCallbacks;
@@ -31,8 +31,7 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
     }
 
     /// <summary>Installs once per world, preserving any existing pair filter and collision callbacks.</summary>
-    public static PlatformCollisionRules2D Attach(PhysicsWorld2D world) =>
-        Rules.GetValue(ArgGuard.RequireNotNull(world), static world => new(world));
+    public static PlatformCollisionRules2D Attach(PhysicsWorld2D world) => Rules.GetValue(ArgGuard.RequireNotNull(world), static world => new(world));
 
     public PlatformSurface2D Surface(RigidBody2D body)
     {
@@ -152,7 +151,6 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
             return Vector2.Dot(point, normal);
         }
         var bounds = worldObject.WorldBounds;
-        return Vector2.Dot(bounds.Center, normal) +
-            (MathF.Abs(normal.X) * bounds.Size.X + MathF.Abs(normal.Y) * bounds.Size.Y) * 0.5f;
+        return Vector2.Dot(bounds.Center, normal) + (MathF.Abs(normal.X) * bounds.Size.X + MathF.Abs(normal.Y) * bounds.Size.Y) * 0.5f;
     }
 }

@@ -1,7 +1,6 @@
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Trials;
 
@@ -12,9 +11,9 @@ public sealed partial class TrialsGame2D
         var clouds = new ParallaxLayer2D(depth: 12f) { RepeatWidth = 1_800f };
         var mountains = new ParallaxLayer2D(depth: 4f) { RepeatWidth = 1_800f };
         var hills = new ParallaxLayer2D(depth: 1f) { RepeatWidth = 1_800f };
-        var cloudShader = new SolidColorShader(new XnaColor(109, 129, 157, 100));
-        var mountainShader = new SolidColorShader(new XnaColor(40, 57, 76));
-        var hillShader = new SolidColorShader(new XnaColor(48, 78, 78));
+        var cloudShader = new SolidColorShader(new Color4b(109, 129, 157, 100));
+        var mountainShader = new SolidColorShader(new Color4b(40, 57, 76));
+        var hillShader = new SolidColorShader(new Color4b(48, 78, 78));
 
         for (var i = 0; i < 5; i++)
         {

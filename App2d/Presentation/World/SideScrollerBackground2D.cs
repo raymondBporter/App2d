@@ -1,7 +1,6 @@
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World;
 
@@ -13,9 +12,9 @@ public static class SideScrollerBackground2D
         var clouds = new ParallaxLayer2D(depth: 12f) { RepeatWidth = 3_760f };
         var mountains = new ParallaxLayer2D(depth: 4.5f) { RepeatWidth = 6_000f };
         var hills = new ParallaxLayer2D(depth: 1.4f) { RepeatWidth = 6_630f };
-        var cloudShader = new SolidColorShader(new XnaColor(240, 250, 255, 205));
-        var mountainShader = new SolidColorShader(new XnaColor(90, 145, 177));
-        var hillShader = new SolidColorShader(new XnaColor(70, 128, 125));
+        var cloudShader = new SolidColorShader(new Color4b(240, 250, 255, 205));
+        var mountainShader = new SolidColorShader(new Color4b(90, 145, 177));
+        var hillShader = new SolidColorShader(new Color4b(70, 128, 125));
 
         for (var i = 0; i < 8; i++)
         {

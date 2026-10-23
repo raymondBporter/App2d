@@ -263,16 +263,16 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
         var scale = Ui.Scale;
         var angles = subject.Pose.SocketAngles.GetValueOrDefault(weapon.Socket.Id);
         var tip = frame.Screen(ActorPose.PropPoint(socket, weapon.Prop, weapon.Prop.Tip));
-        draw.AddLine(center, tip, Ui.Color(232, 169, 55), 1);
-        draw.AddCircle(tip, 6 * scale, Ui.Color(232, 169, 55), 20, 2);
-        draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, .24f, 0))), Ui.Color(55, 155, 100), 2);
-        draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, 0, .24f))), Ui.Color(70, 145, 225), 2);
-        draw.AddCircle(center, 38 * scale, Ui.Color(232, 169, 55, 130), 48, 1);
+        draw.AddLine(center, tip, StudioTheme.Selection.PackedValue, 1);
+        draw.AddCircle(tip, 6 * scale, StudioTheme.Selection.PackedValue, 20, 2);
+        draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, .24f, 0))), StudioTheme.WeaponAxisY.PackedValue, 2);
+        draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, 0, .24f))), StudioTheme.WeaponAxisZ.PackedValue, 2);
+        draw.AddCircle(center, 38 * scale, StudioTheme.RotationGuide.PackedValue, 48, 1);
         var screenAngle = new ActorPose(subject.Pose, Vector2.Zero, 1).SocketBaseAngle(weapon.Socket) + weapon.Socket.Angle + angles.Z;
         var turn = center + new Vector2(MathF.Cos(screenAngle), -MathF.Sin(screenAngle)) * 38 * scale;
         var tilt = center + new Vector2(-65, -30) * scale;
         var twist = center + new Vector2(-65, 25) * scale;
-        foreach (var (name, point, color) in new[] { ("Turn", turn, Ui.Color(232, 169, 55)), ("Tilt", tilt, Ui.Color(70, 145, 225)), ("Twist", twist, Ui.Color(55, 155, 100)) })
+        foreach (var (name, point, color) in new[] { ("Turn", turn, StudioTheme.Selection.PackedValue), ("Tilt", tilt, StudioTheme.WeaponAxisZ.PackedValue), ("Twist", twist, StudioTheme.WeaponAxisY.PackedValue) })
         {
             draw.AddCircleFilled(point, 7 * scale, color);
             draw.AddText(point + new Vector2(10, -7) * scale, color, name);
@@ -312,7 +312,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
                 session.PoseWeapon(_weaponStart);
             }
         }
-        draw.AddText(frame.Origin + new Vector2(10, 8) * scale, Ui.Color(55, 105, 120), "WEAPON: " + weapon.Socket.Id + (session.AutoKey ? " | AUTOKEY" : " | key pose to keep changes"));
+        draw.AddText(frame.Origin + new Vector2(10, 8) * scale, StudioTheme.WeaponCaption.PackedValue, "WEAPON: " + weapon.Socket.Id + (session.AutoKey ? " | AUTOKEY" : " | key pose to keep changes"));
         return true;
     }
 }

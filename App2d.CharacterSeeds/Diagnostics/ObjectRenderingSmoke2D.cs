@@ -12,7 +12,6 @@ using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -52,7 +51,7 @@ internal static class ObjectRenderingSmoke2D
             }
             if (step % 90 != 0) continue;
             view.ApplyState(content, WorldState2D.Empty with { Objects = [.. items.Select(o => o.CaptureState())] });
-            target.SavePng(Path.Combine(directory, $"objects-{step:000}.png"), new Color(235, 242, 245), () =>
+            target.SavePng(Path.Combine(directory, $"objects-{step:000}.png"), new Color4b(235, 242, 245), () =>
             {
                 renderer.BeginFrame(900, 450, default);
                 foreach (var item in items)
@@ -60,7 +59,7 @@ internal static class ObjectRenderingSmoke2D
                     var curve = item.Placement.Asset.Motion!.Curve;
                     var origin = item.Placement.Position;
                     for (var segment = 1; segment <= 64; segment++)
-                        renderer.DrawWorldSegment(origin + curve.Evaluate((segment - 1) / 64f), origin + curve.Evaluate(segment / 64f), new Color(145, 165, 180), 1);
+                        renderer.DrawWorldSegment(origin + curve.Evaluate((segment - 1) / 64f), origin + curve.Evaluate(segment / 64f), new Color4b(145, 165, 180), 1);
                 }
                 renderer.Draw(scene);
                 renderer.EndFrame();

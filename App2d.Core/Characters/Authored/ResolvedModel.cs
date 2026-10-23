@@ -154,7 +154,7 @@ public sealed class ResolvedModel
 
     public static PuppetPart Override(PuppetPart part, PartOverride change)
     {
-        var result = part with
+        return part with
         {
             ScaleX = change.ScaleX ?? part.ScaleX,
             ScaleY = change.ScaleY ?? part.ScaleY,
@@ -165,6 +165,5 @@ public sealed class ResolvedModel
             FaceX = change.FaceX ?? part.FaceX,
             Hidden = change.Hidden ?? part.Hidden,
         };
-        return result;
     }
 }

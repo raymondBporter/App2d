@@ -59,7 +59,7 @@ public sealed class PointCharacterRenderer : IDisposable
     public void ClearDepth()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        _device.Clear(ClearOptions.DepthBuffer, Microsoft.Xna.Framework.Color.Transparent, 1, 0);
+        _device.Clear(ClearOptions.DepthBuffer, Color4b.Transparent, 1, 0);
     }
 
     /// <summary>Draws one actor layered against itself only: a new depth layer, the swoosh (if any) behind, then the puppet.</summary>

@@ -3,7 +3,6 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
-using Color = Microsoft.Xna.Framework.Color;
 using Quaternion = System.Numerics.Quaternion;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = System.Numerics.Vector3;
@@ -192,7 +191,7 @@ public sealed class BladeSwoosh
     /// One strip of the sheet from section i-1 (trail fraction <paramref name="u0"/>) to trail fraction <paramref name="u1"/>,
     /// between the fractions across the sheet that <paramref name="near"/> and <paramref name="far"/> give at each point.
     /// </summary>
-    private void Band(CharacterMesh mesh, int i, float u0, float u1, Func<float, float> near, Func<float, float> far, Color color)
+    private void Band(CharacterMesh mesh, int i, float u0, float u1, Func<float, float> near, Func<float, float> far, Color4b color)
     {
         if (u1 <= u0)
         {

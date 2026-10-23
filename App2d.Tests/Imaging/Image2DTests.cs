@@ -1,7 +1,6 @@
 using App2d.Core.Imaging;
 using App2d.Core.Rendering.Textures;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Imaging;
 
@@ -99,10 +98,10 @@ public sealed class Image2DTests
         Assert.True(mask[2, 1]);
         Assert.Equal(mask.AsSpan().ToArray(), mask.Skeletonize().AsSpan().ToArray());
 
-        colors[0, 0] = XnaColor.Black;
-        Assert.Equal(XnaColor.Red, texture.CopyPixels()[0]);
+        colors[0, 0] = Color4b.Black;
+        Assert.Equal(Color4b.Red, texture.CopyPixels()[0]);
         texture.Dispose();
-        Assert.Equal(XnaColor.Black, colors[0, 0]);
+        Assert.Equal(Color4b.Black, colors[0, 0]);
         Assert.Throws<ObjectDisposedException>(() => texture.CopyImage());
     }
 

@@ -149,11 +149,7 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
         Version++;
     }
 
-    private sealed record LoadedChunk(
-        List<ChunkCollider> Colliders,
-        TerrainChunkState2D State);
+    private sealed record LoadedChunk(List<ChunkCollider> Colliders, TerrainChunkState2D State);
 
-    private readonly record struct ChunkCollider(
-        SpatialObject2D Platform,
-        RigidBody2D Body);
+    private readonly record struct ChunkCollider(SpatialObject2D Platform, RigidBody2D Body);
 }

@@ -1,25 +1,24 @@
 using App2d.Core.Geometry.Primitives;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Rendering;
 
 /// <summary>Material data evaluated by the MonoGame renderer in object space.</summary>
 public interface IShader2D
 {
-    XnaColor BaseColor { get; }
-    XnaColor GetVertexColor(Vector2 position, Rect2D bounds) => BaseColor;
+    Color4b BaseColor { get; }
+    Color4b GetVertexColor(Vector2 position, Rect2D bounds) => BaseColor;
 }
 
-public sealed class SolidColorShader(XnaColor color) : IShader2D
+public sealed class SolidColorShader(Color4b color) : IShader2D
 {
-    public XnaColor BaseColor { get; } = color;
+    public Color4b BaseColor { get; } = color;
 }
 
-public sealed class LinearGradientShader(XnaColor startColor, XnaColor endColor) : IShader2D
+public sealed class LinearGradientShader(Color4b startColor, Color4b endColor) : IShader2D
 {
-    public XnaColor BaseColor => XnaColor.White;
-    public XnaColor GetVertexColor(Vector2 position, Rect2D bounds) =>
-        XnaColor.Lerp(startColor, endColor,
+    public Color4b BaseColor => Color4b.White;
+    public Color4b GetVertexColor(Vector2 position, Rect2D bounds) =>
+        Color4b.Lerp(startColor, endColor,
             bounds.Size.Y > 0f ? Math.Clamp((bounds.Max.Y - position.Y) / bounds.Size.Y, 0f, 1f) : 0f);
 }

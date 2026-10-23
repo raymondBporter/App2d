@@ -22,7 +22,6 @@ using App2d.Presentation.Player;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -50,7 +49,7 @@ internal static class SpellRenderingSmoke2D
         floor.CollisionLayer = 1;
         floor.CollisionMask = 2;
         var scene = new Scene2D();
-        var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1000, 20), new SolidColorShader(new Color(44, 64, 79)));
+        var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1000, 20), new SolidColorShader(new Color4b(44, 64, 79)));
         ground.Transform.Position = floor.WorldObject.Transform.Position;
         scene.Add(ground);
         var audio = new SilentSounds();
@@ -159,7 +158,7 @@ internal static class SpellRenderingSmoke2D
         }
         void Save(string name, string caption)
         {
-            target.SavePng(Path.Combine(output, name), new Color(108, 133, 149), () =>
+            target.SavePng(Path.Combine(output, name), new Color4b(108, 133, 149), () =>
             {
                 renderer.BeginFrame(1100, 650, default);
                 renderer.Draw(scene);

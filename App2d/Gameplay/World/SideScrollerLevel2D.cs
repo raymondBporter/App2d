@@ -61,8 +61,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             tileMap.TileSize != _tileSize,
             $"The loaded map's tile size ({tileMap.TileSize}) does not match " +
             $"the traversal metrics' tile size ({_tileSize}).");
-        var authoredSpawn = _worldThingSpecs.FirstOrDefault(
-            thing => thing.Enabled && thing.Kind == WorldThingKind2D.PlayerSpawn);
+        var authoredSpawn = _worldThingSpecs
+            .FirstOrDefault(thing => thing.Enabled && thing.Kind == WorldThingKind2D.PlayerSpawn);
         if (authoredSpawn is not null)
         {
             SpawnPoint = authoredSpawn.Position;
@@ -78,8 +78,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                 traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
         }
 
-        GoalThing = _worldThingSpecs.FirstOrDefault(
-            thing => thing.Enabled && thing.Kind == WorldThingKind2D.Goal);
+        GoalThing = _worldThingSpecs
+            .FirstOrDefault(thing => thing.Enabled && thing.Kind == WorldThingKind2D.Goal);
         GoalX = GoalThing?.Position.X ?? float.PositiveInfinity;
         GoalGroundY = GoalThing?.Position.Y ?? TileMap.Origin.Y;
     }
@@ -96,8 +96,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public EnemySystem2D EnemySystem { get; } = new();
     public int ActiveChunkCount => _environment?.Streamer.ActiveChunkCount ?? 0;
     public int LoadedColliderCount => _environment?.Streamer.LoadedColliderCount ?? 0;
-    public static int MaximumActiveChunkCount =>
-        SideScrollerChunkStreamer2D.MaximumActiveChunkCount;
+    public static int MaximumActiveChunkCount => SideScrollerChunkStreamer2D.MaximumActiveChunkCount;
 
     public WorldThingSpec2D? FindSavePoint(long thingId) =>
         _worldThingSpecs.FirstOrDefault(
@@ -142,8 +141,12 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public void CreateSimulation(
-        CollisionSystem2D collision, PhysicsWorld2D physics, EntityIdAllocator2D ids,
-        uint worldLayer, uint playerLayer, uint enemyLayer)
+        CollisionSystem2D collision,
+        PhysicsWorld2D physics,
+        EntityIdAllocator2D ids,
+        uint worldLayer,
+        uint playerLayer,
+        uint enemyLayer)
     {
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
@@ -289,9 +292,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     private LevelEnvironment RequireEnvironment() =>
-        StateGuard.RequireNotNull(
-            _environment,
-            "Create the level simulation before using it.");
+        StateGuard.RequireNotNull(_environment, "Create the level simulation before using it.");
 
     private void CreateSavePoints()
     {
@@ -299,9 +300,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         {
             if (spec.Enabled && spec.Kind == WorldThingKind2D.SavePoint)
             {
-                _savePoints.Add(new SavePoint2D(
-                    spec,
-                    _traversal.PlayerColliderSize.Y / 2f + _traversal.GroundProbeDistance));
+                _savePoints.Add(new SavePoint2D(spec, _traversal.PlayerColliderSize.Y / 2f + _traversal.GroundProbeDistance));
             }
         }
     }
@@ -338,8 +337,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         }
     }
 
-    private float TileCenterX(int x) =>
-        TileMap.Origin.X + (x + 0.5f) * _tileSize;
+    private float TileCenterX(int x) => TileMap.Origin.X + (x + 0.5f) * _tileSize;
 
     private sealed record LevelEnvironment(
         CollisionSystem2D Collision,

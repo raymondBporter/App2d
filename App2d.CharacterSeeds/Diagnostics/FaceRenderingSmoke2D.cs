@@ -6,7 +6,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterSeeds.Diagnostics;
@@ -26,7 +25,7 @@ internal static class FaceRenderingSmoke2D
         var drawing = new PuppetDrawing();
         using var renderer = new PointCharacterRenderer(device);
         using var labels = new Renderer2D(new Camera2D(), device);
-        RenderCapture2D.SavePng(device, 1280, 1160, Path.Combine(directory, "faces-expressions.png"), new Color(230, 234, 227), () =>
+        RenderCapture2D.SavePng(device, 1280, 1160, Path.Combine(directory, "faces-expressions.png"), new Color4b(230, 234, 227), () =>
         {
             labels.BeginFrame(1280, 1160, default);
             for (var i = 0; i < FaceExpressions.Names.Count; i++)

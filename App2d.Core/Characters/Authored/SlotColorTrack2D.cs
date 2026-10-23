@@ -28,7 +28,7 @@ public sealed record SlotColorTrack2D
     public static Vector4 Evaluate(MotionClip clip, SkeletonSlot2D slot, float time)
     {
         SkeletonAppearance2D.Color(slot.Color);
-        var value = ColorRgba32.ParseRgba(slot.Color).ToVector4();
+        var value = ColorExtensions.FromHexRgba(slot.Color).ToNumericsVector4();
         foreach (var track in clip.Colors.Where(t => t.Slot == slot.Id))
         {
             if (track.Keys.Count == 0 || track.SetupBeforeFirst && time < track.Keys[0].Time)

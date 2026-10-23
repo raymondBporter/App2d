@@ -3,7 +3,6 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Vegetation;
 
@@ -21,17 +20,17 @@ public enum VegetationLayer2D
 /// </summary>
 public sealed class VegetationPatch2D
 {
-    public static readonly XnaColor InkColor = new(35, 48, 31);
+    public static readonly Color4b InkColor = new(35, 48, 31);
     private const int SegmentCount = 4;
     private const float GrazedTuftChance = 0.2f;
     // Ink widths are world units relative to a 4.5-unit blade, so the doodle reads the same at any zoom.
     private const float OutlineWidth = 0.8f;
     private const float DetailOutlineWidth = 0.65f;
     private const float ClippingWidthScale = 0.45f;
-    private static readonly XnaColor[] FlowerColors =
+    private static readonly Color4b[] FlowerColors =
         [new(232, 69, 44), new(122, 79, 214), new(242, 194, 48), new(255, 143, 194)];
-    private static readonly XnaColor FlowerCenterColor = new(255, 210, 58);
-    private static readonly XnaColor StemColor = new(62, 154, 42);
+    private static readonly Color4b FlowerCenterColor = new(255, 210, 58);
+    private static readonly Color4b StemColor = new(62, 154, 42);
 
     private readonly Blade[] _blades;
     private readonly Flower[] _flowers;
@@ -349,7 +348,7 @@ public sealed class VegetationPatch2D
         FillDisc(renderer, head, 3f * scale, FlowerCenterColor);
     }
 
-    private void FillDisc(Renderer2D renderer, Vector2 center, float radius, XnaColor color)
+    private void FillDisc(Renderer2D renderer, Vector2 center, float radius, Color4b color)
     {
         var disc = Disc(center, radius, color);
         renderer.DrawWorldConvexPolygon(disc.Points, disc.Fill);
@@ -359,7 +358,7 @@ public sealed class VegetationPatch2D
     /// <summary>An ink width scaled to this patch's blade size, in world units.</summary>
     private float Ink(float width) => width * _style.BladeWidth / 4.5f;
 
-    private static VegetationTipPolygon2D Disc(Vector2 center, float radius, XnaColor color)
+    private static VegetationTipPolygon2D Disc(Vector2 center, float radius, Color4b color)
     {
         var points = new Vector2[10];
         for (var index = 0; index < points.Length; index++)
@@ -391,7 +390,7 @@ public sealed class VegetationPatch2D
             : Math.Min(1f, Math.Max(blade.GrazedKeep, height * (1f + roughness * blade.CutJitter) / blade.Height));
 
     private static Section2D Section(Blade blade, float from, float to, VegetationWind2D wind, float widthScale,
-        XnaColor color)
+        Color4b color)
     {
         var bottom = Center(blade, from, wind);
         var top = Center(blade, to, wind);
@@ -409,10 +408,10 @@ public sealed class VegetationPatch2D
         blade.Root + new Vector2(blade.Lean * weight * weight +
             wind.Offset(blade.Root.X, weight, blade.Phase, blade.WindResponse), blade.Height * weight);
 
-    private static XnaColor Shade(XnaColor color, VegetationLayer2D layer) =>
-        layer == VegetationLayer2D.Back ? XnaColor.Lerp(color, XnaColor.Black, 0.08f) : color;
+    private static Color4b Shade(Color4b color, VegetationLayer2D layer) =>
+        layer == VegetationLayer2D.Back ? Color4b.Lerp(color, Color4b.Black, 0.08f) : color;
 
-    private readonly record struct Section2D(Vector2 A, Vector2 B, Vector2 C, Vector2 D, XnaColor Color);
+    private readonly record struct Section2D(Vector2 A, Vector2 B, Vector2 C, Vector2 D, Color4b Color);
 
     private readonly record struct Blade(
         Vector2 Root,
@@ -421,13 +420,13 @@ public sealed class VegetationPatch2D
         float Lean,
         float Phase,
         float WindResponse,
-        XnaColor Color,
+        Color4b Color,
         VegetationLayer2D Layer,
         float CutJitter = 0f,
         float GrazedKeep = 0f,
         bool Uncuttable = false);
 
-    private readonly record struct Flower(Vector2 Root, float Height, float Phase, XnaColor Color);
+    private readonly record struct Flower(Vector2 Root, float Height, float Phase, Color4b Color);
 }
 
 /// <summary>
@@ -441,8 +440,8 @@ public readonly record struct VegetationStyle2D(
     float TallHeight,
     float BladeWidth,
     float Spacing,
-    XnaColor DarkColor,
-    XnaColor LightColor,
+    Color4b DarkColor,
+    Color4b LightColor,
     float TallChance,
     float FrontChance,
     float FlowerChance,

@@ -25,7 +25,7 @@ internal static class PropDrawing
             var vertices = solid.Vertices.Select(p => ActorPose.PropPoint(frame, prop, p)).ToArray();
             var analysis = new TriangleMeshAnalysis3D(vertices, solid.Triangles, handedness);
             var material = solid.RenderMaterial;
-            var fill = material.Fill is { } fillHex ? ColorExtensions.FromHexRgb(fillHex) : (Microsoft.Xna.Framework.Color?)null;
+            var fill = material.Fill is { } fillHex ? ColorExtensions.FromHexRgb(fillHex) : (Color4b?)null;
             var outline = material.Outline;
             var ink = outline?.Color is { } outlineHex ? ColorExtensions.FromHexRgb(outlineHex) : ColorExtensions.FromHexRgb(prop.Ink);
             var outlineWidth = outline?.Width ?? prop.LineWidth;

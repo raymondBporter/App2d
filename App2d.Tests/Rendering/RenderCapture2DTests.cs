@@ -1,6 +1,5 @@
 using App2d.Core.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Rendering;
 
@@ -24,15 +23,15 @@ public sealed class RenderCapture2DTests
     {
         using var graphics = new GraphicsTestContext();
         using var target = RenderCapture2D.CreateTarget(graphics.Device, 16, 16);
-        using (graphics.Device.UseRenderTarget(target, XnaColor.Red))
+        using (graphics.Device.UseRenderTarget(target, Color4b.Red))
         {
             Assert.Same(target, Assert.Single(graphics.Device.GetRenderTargets()).RenderTarget);
         }
 
         Assert.Same(graphics.Target, Assert.Single(graphics.Device.GetRenderTargets()).RenderTarget);
-        var pixels = new XnaColor[16 * 16];
+        var pixels = new Color4b[16 * 16];
         target.GetData(pixels);
-        Assert.All(pixels, pixel => Assert.Equal(XnaColor.Red, pixel));
+        Assert.All(pixels, pixel => Assert.Equal(Color4b.Red, pixel));
     }
 
     [Fact]
@@ -42,11 +41,11 @@ public sealed class RenderCapture2DTests
         var path = TemporaryPng();
         try
         {
-            RenderCapture2D.SavePng(graphics.Device, 8, 8, path, XnaColor.Blue,
+            RenderCapture2D.SavePng(graphics.Device, 8, 8, path, Color4b.Blue,
                 () => Assert.Equal(8, Assert.IsType<RenderTarget2D>(Assert.Single(graphics.Device.GetRenderTargets()).RenderTarget).Width));
 
             Assert.Same(graphics.Target, Assert.Single(graphics.Device.GetRenderTargets()).RenderTarget);
-            Assert.All(Decode(graphics.Device, path, 8, 8), pixel => Assert.Equal(XnaColor.Blue, pixel));
+            Assert.All(Decode(graphics.Device, path, 8, 8), pixel => Assert.Equal(Color4b.Blue, pixel));
         }
         finally
         {
@@ -62,10 +61,10 @@ public sealed class RenderCapture2DTests
         var path = TemporaryPng();
         try
         {
-            target.SavePng(path, XnaColor.Lime, () => Assert.Same(target, Assert.Single(graphics.Device.GetRenderTargets()).RenderTarget));
+            target.SavePng(path, Color4b.Lime, () => Assert.Same(target, Assert.Single(graphics.Device.GetRenderTargets()).RenderTarget));
 
             Assert.Same(graphics.Target, Assert.Single(graphics.Device.GetRenderTargets()).RenderTarget);
-            Assert.All(Decode(graphics.Device, path, 8, 8), pixel => Assert.Equal(XnaColor.Lime, pixel));
+            Assert.All(Decode(graphics.Device, path, 8, 8), pixel => Assert.Equal(Color4b.Lime, pixel));
         }
         finally
         {
@@ -82,11 +81,11 @@ public sealed class RenderCapture2DTests
         try
         {
             graphics.Device.SetRenderTarget(target);
-            graphics.Device.Clear(XnaColor.Lime);
+            graphics.Device.Clear(Color4b.Lime);
             target.SavePng(path);
 
             Assert.Empty(graphics.Device.GetRenderTargets());
-            Assert.All(Decode(graphics.Device, path, 8, 8), pixel => Assert.Equal(XnaColor.Lime, pixel));
+            Assert.All(Decode(graphics.Device, path, 8, 8), pixel => Assert.Equal(Color4b.Lime, pixel));
         }
         finally
         {
@@ -96,12 +95,12 @@ public sealed class RenderCapture2DTests
 
     private static string TemporaryPng() => Path.Combine(Path.GetTempPath(), $"app2d-capture-{Guid.NewGuid():N}.png");
 
-    private static XnaColor[] Decode(GraphicsDevice device, string path, int width, int height)
+    private static Color4b[] Decode(GraphicsDevice device, string path, int width, int height)
     {
         using var stream = File.OpenRead(path);
         using var image = Texture2D.FromStream(device, stream);
         Assert.Equal((width, height), (image.Width, image.Height));
-        var pixels = new XnaColor[width * height];
+        var pixels = new Color4b[width * height];
         image.GetData(pixels);
         return pixels;
     }

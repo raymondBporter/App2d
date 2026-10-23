@@ -5,7 +5,6 @@ using App2d.Core.Rendering.Textures;
 using App2d.Core.Validation;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 using XnaMatrix = Microsoft.Xna.Framework.Matrix;
 using XnaVector3 = Microsoft.Xna.Framework.Vector3;
 
@@ -115,7 +114,7 @@ public sealed partial class Renderer2D
         for (var i = 0; i < vertices.Length; i++)
         {
             vertices[i] = material is SolidColorShader
-                ? Vertex(mesh.Vertices[i], XnaColor.White)
+                ? Vertex(mesh.Vertices[i], Color4b.White)
                 : MaterialVertex(mesh.Vertices[i], Matrix3x2.Identity, bounds, material);
         }
 

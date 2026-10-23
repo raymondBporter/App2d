@@ -113,7 +113,7 @@ internal static class SkeletonAppearance2D
     }
     public static void Color(string color)
     {
-        if (!ColorRgba32.TryParseRgba(color.AsSpan(), out _))
+        if (!ColorExtensions.TryParseRgba(color.AsSpan(), out _))
         {
             throw new InvalidDataException("Slot colors must be eight RGBA hexadecimal digits.");
         }

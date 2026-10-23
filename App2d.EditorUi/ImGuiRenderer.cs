@@ -2,7 +2,6 @@ using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Runtime.InteropServices;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.EditorUi;
 
@@ -14,7 +13,7 @@ internal sealed class ImGuiRenderer : IDisposable
     {
         public Vector2 Position;
         public Vector2 UV;
-        public Color Color;
+        public Color4b Color;
         public static readonly VertexDeclaration Declaration = new(20,
             new VertexElement(0, VertexElementFormat.Vector2, VertexElementUsage.Position, 0),
             new VertexElement(8, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
@@ -108,7 +107,7 @@ internal sealed class ImGuiRenderer : IDisposable
                     {
                         Position = new(v.pos.X, v.pos.Y),
                         UV = new(v.uv.X, v.uv.Y),
-                        Color = new Color { PackedValue = v.col }
+                        Color = new Color4b { PackedValue = v.col }
                     };
                 }
                 for (var i = 0; i < list.IdxBuffer.Size; i++)

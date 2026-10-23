@@ -2,18 +2,17 @@ using App2d.Core.Imaging;
 using App2d.Core.Validation;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Rendering.Textures;
 
 /// <summary>Decoded straight-alpha RGBA pixels, uploaded lazily by the renderer.</summary>
 public sealed class Texture2D : IDisposable
 {
-    private XnaColor[]? _pixels;
+    private Color4b[]? _pixels;
     private readonly int _width;
     private readonly int _height;
 
-    private Texture2D(string sourcePath, int width, int height, XnaColor[] pixels)
+    private Texture2D(string sourcePath, int width, int height, Color4b[] pixels)
     {
         SourcePath = sourcePath;
         _width = width;
@@ -39,12 +38,12 @@ public sealed class Texture2D : IDisposable
         }
     }
     public bool IsDisposed => _pixels is null;
-    internal XnaColor[] Pixels => _pixels ?? throw new ObjectDisposedException(nameof(Texture2D));
+    internal Color4b[] Pixels => _pixels ?? throw new ObjectDisposedException(nameof(Texture2D));
     internal event Action<Texture2D>? Disposed;
-    public XnaColor[] CopyPixels() => [.. Pixels];
+    public Color4b[] CopyPixels() => [.. Pixels];
 
     /// <summary>Copies the decoded pixels into an independently editable CPU image.</summary>
-    public Image2D<XnaColor> CopyImage() => new(Width, Height, Pixels);
+    public Image2D<Color4b> CopyImage() => new(Width, Height, Pixels);
 
     public static Texture2D Load(string path)
     {
@@ -72,14 +71,14 @@ public sealed class Texture2D : IDisposable
         var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
         try
         {
-            var pixels = new XnaColor[checked(bitmap.Width * bitmap.Height)];
+            var pixels = new Color4b[checked(bitmap.Width * bitmap.Height)];
             var row = new byte[checked(bitmap.Width * 4)];
             for (var y = 0; y < bitmap.Height; y++)
             {
                 Marshal.Copy(data.Scan0 + y * data.Stride, row, 0, row.Length);
                 for (var x = 0; x < bitmap.Width; x++)
                 {
-                    pixels[y * bitmap.Width + x] = new XnaColor(row[x * 4 + 2], row[x * 4 + 1], row[x * 4], row[x * 4 + 3]);
+                    pixels[y * bitmap.Width + x] = new Color4b(row[x * 4 + 2], row[x * 4 + 1], row[x * 4], row[x * 4 + 3]);
                 }
             }
             return new Texture2D(sourceName, bitmap.Width, bitmap.Height, pixels);

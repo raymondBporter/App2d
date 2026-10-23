@@ -150,8 +150,15 @@ The engine is grouped by responsibility:
   placed by `Similarity2D`, with span overloads for reusable buffers. Collision can
   query `(shapeA, poseA, shapeB, poseB)` directly through `ShapeCollision2D.Overlaps`
   or `TryGetContact`; no registered spatial objects are required.
-- `ColorRgba32` holds straight RGBA byte channels, parses RGB/RGBA hex, and converts
-  to normalized `Vector4` for float color math. `ColorExtensions` adapts it to MonoGame.
+- `Color4b` is the shared global alias for `Microsoft.Xna.Framework.Color`, with four
+  byte channels. `ColorExtensions` parses and formats RGB/RGBA hex and converts to
+  normalized `System.Numerics.Vector4` for float color math, using straight alpha.
+- Appearance palettes are simple source files: [UiTheme](App2d.EditorUi/UiTheme.cs)
+  for shared controls, [StudioTheme](App2d.CharacterStudio/Editor/StudioTheme.cs) for
+  editor viewports and timelines, [GameUiTheme](App2d/Presentation/GameUiTheme.cs) for
+  the HUD, menus and level-editor overlays, and [DebugTheme](App2d.Core/Rendering/DebugTheme.cs)
+  for grids, colliders and diagnostics. Edit their named colors, rebuild and restart.
+  ImGui colors use normalized float RGBA; renderer palettes use `Color4b` byte RGBA.
 - `App2d.Core/Rendering` contains the renderer, shader abstractions, and the `GraphicsSurface2D` WinForms host surface.
 - `App2d.Core` presents guards, mathematics, animation, geometry, collision, physics, and the
   render-agnostic `SpatialObject2D`. `App2d.Core/Tiles` presents the tile maps and mesher.
@@ -852,7 +859,8 @@ matrix. This is why the click marker remains correct after resize and zoom.
 `IShader2D` describes a solid, gradient, tiled, or sprite material. `Renderer2D`
 transforms geometry into device-space triangles and submits ordered batches through
 MonoGame's `GraphicsDevice` and `BasicEffect`. Color values use
-`Microsoft.Xna.Framework.Color`; floating-point HUD bounds use `ScreenRectangle2D`.
+`Color4b` (the global alias for `Microsoft.Xna.Framework.Color`); floating-point HUD
+bounds use `ScreenRectangle2D`.
 Gradients interpolate vertex colors, and textures use XNA sampler states. Circles and
 capsules are tessellated according to their on-screen size. The host requests 4x MSAA.
 

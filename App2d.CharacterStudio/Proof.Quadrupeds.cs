@@ -1,7 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -15,7 +14,7 @@ internal sealed partial class ProofRenders
         using var target = RenderCapture2D.CreateTarget(GraphicsDevice, 1440, 960);
         var drawing = new PuppetDrawing();
         var roles = new[] { "idle", "scrape", "head-down", "walk", "rush", "brake", "run", "recover" };
-        target.SavePng(Path.Combine(_smokePath, "triceratops-poses.png"), new Color(247, 241, 221), () =>
+        target.SavePng(Path.Combine(_smokePath, "triceratops-poses.png"), new Color4b(247, 241, 221), () =>
         {
             for (var row = 0; row < roles.Length; row++)
             {
@@ -32,7 +31,7 @@ internal sealed partial class ProofRenders
             }
         });
 
-        target.SavePng(Path.Combine(_smokePath, "triceratops-silhouette.png"), new Color(247, 241, 221), () =>
+        target.SavePng(Path.Combine(_smokePath, "triceratops-silhouette.png"), new Color4b(247, 241, 221), () =>
         {
             for (var row = 0; row < 2; row++)
             {

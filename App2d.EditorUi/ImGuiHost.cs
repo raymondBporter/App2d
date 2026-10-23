@@ -57,23 +57,8 @@ public sealed class ImGuiHost : IDisposable
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
         io.NativePtr->IniFilename = null;
-        ImGui.StyleColorsDark();
+        UiTheme.Apply();
         var style = ImGui.GetStyle();
-        style.WindowRounding = 4;
-        style.FrameRounding = 4;
-        style.GrabRounding = 4;
-        style.WindowPadding = new(12, 12);
-        style.ItemSpacing = new(8, 8);
-        style.FramePadding = new(7, 5);
-        style.Colors[(int)ImGuiCol.WindowBg] = new(.075f, .091f, .115f, 1);
-        style.Colors[(int)ImGuiCol.ChildBg] = new(.075f, .091f, .115f, 1);
-        style.Colors[(int)ImGuiCol.FrameBg] = new(.13f, .16f, .20f, 1);
-        style.Colors[(int)ImGuiCol.Header] = new(.13f, .31f, .34f, 1);
-        style.Colors[(int)ImGuiCol.HeaderHovered] = new(.17f, .40f, .42f, 1);
-        style.Colors[(int)ImGuiCol.Button] = new(.16f, .27f, .31f, 1);
-        style.Colors[(int)ImGuiCol.ButtonHovered] = new(.21f, .42f, .45f, 1);
-        style.Colors[(int)ImGuiCol.CheckMark] = Ui.Accent;
-        style.Colors[(int)ImGuiCol.SliderGrab] = Ui.Accent;
         _baseStyle = *style.NativePtr;
         ApplyScale();
     }

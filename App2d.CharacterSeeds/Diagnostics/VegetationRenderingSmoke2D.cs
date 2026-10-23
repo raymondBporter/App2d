@@ -12,7 +12,6 @@ using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -85,7 +84,7 @@ internal static class VegetationRenderingSmoke2D
 
         void Save(string name)
         {
-            target.SavePng(Path.Combine(directory, name), new Color(103, 196, 235), () =>
+            target.SavePng(Path.Combine(directory, name), new Color4b(103, 196, 235), () =>
             {
                 renderer.BeginFrame(1280, 720, default);
                 world.DrawTrees(renderer, camera.VisibleWorldBounds);

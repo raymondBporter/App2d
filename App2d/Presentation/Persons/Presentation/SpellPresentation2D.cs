@@ -4,7 +4,6 @@ using App2d.Core.Audio;
 using App2d.Presentation.Audio;
 using App2d.Rendering;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.Persons.Presentation;
 
@@ -78,24 +77,24 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D<SoundEffect2D> sounds
         {
             var p = Math.Clamp(_state.Spells.HealProgress, 0, 1);
             var radius = float.Lerp(26, 10, p);
-            renderer.DrawWorldCircle(Center, radius, new Color(93, 219, 255, 150), 1.5f);
-            renderer.DrawWorldCircle(Center, 3 + p * 5, new Color(211, 250, 255, 230), 3f);
+            renderer.DrawWorldCircle(Center, radius, new Color4b(93, 219, 255, 150), 1.5f);
+            renderer.DrawWorldCircle(Center, 3 + p * 5, new Color4b(211, 250, 255, 230), 3f);
             for (var i = 0; i < 6; i++)
             {
                 var angle = _clock * 4 + i * MathF.Tau / 6;
                 var offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius;
-                renderer.DrawWorldCircle(Center + offset, 1.5f, new Color(179, 245, 255), 2f);
+                renderer.DrawWorldCircle(Center + offset, 1.5f, new Color4b(179, 245, 255), 2f);
             }
         }
         if (_pulse > 0)
         {
             var p = 1 - _pulse / .4f;
-            renderer.DrawWorldCircle(_pulsePosition, float.Lerp(10, 44, p), new Color(175, 250, 233, (int)(230 * (1 - p))), 3f);
+            renderer.DrawWorldCircle(_pulsePosition, float.Lerp(10, 44, p), new Color4b(175, 250, 233, (int)(230 * (1 - p))), 3f);
         }
         if (_cancel > 0)
         {
             renderer.DrawWorldCircle(Center, 10 + (1 - _cancel / .18f) * 10,
-                new Color(124, 177, 200, (int)(140 * _cancel / .18f)), 1f);
+                new Color4b(124, 177, 200, (int)(140 * _cancel / .18f)), 1f);
         }
     }
 

@@ -2,14 +2,13 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Characters.Drawing;
 
 /// <summary>Bold vector features that work on both the original dome and edited heads.</summary>
 public static class FaceDrawing
 {
-    public static void Build(CharacterMesh mesh, FacePose pose, Func<Vector2, Vector3> at, float width, Color ink)
+    public static void Build(CharacterMesh mesh, FacePose pose, Func<Vector2, Vector3> at, float width, Color4b ink)
     {
         void Line(Vector2 a, Vector2 b, float weight = 1) => mesh.Line(at(a), at(b), width * weight, ink);
         void Curve(Vector2 a, Vector2 control, Vector2 b, float weight = 1)
@@ -21,7 +20,7 @@ public static class FaceDrawing
                 Line(points[i - 1], points[i], weight);
             }
         }
-        void Oval(Vector2 center, float rx, float ry, Color? fill = null, float depth = 0)
+        void Oval(Vector2 center, float rx, float ry, Color4b? fill = null, float depth = 0)
         {
             var offset = new Vector3(0, 0, depth);
             mesh.Ellipse(center, new(rx, ry), point => at(point) - offset, fill ?? ink);
@@ -50,7 +49,7 @@ public static class FaceDrawing
                 Oval(center, rx, ry);
                 if (wide > .01f)
                 {
-                    Oval(center, rx * .77f, ry * .84f, Color.Lerp(ink, Color.White, wide), .002f);
+                    Oval(center, rx * .77f, ry * .84f, Color4b.Lerp(ink, Color4b.White, wide), .002f);
                     var pupil = MathF.Min(.035f / MathF.Max(1, open), ry * .55f);
                     Oval(center + new Vector2(pose.Gaze * .015f, 0), pupil, pupil, ink, .004f);
                 }

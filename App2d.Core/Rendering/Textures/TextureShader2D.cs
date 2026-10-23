@@ -1,7 +1,6 @@
 using App2d.Core.Validation;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Rendering.Textures;
 
@@ -22,5 +21,5 @@ public sealed class TextureShader2D(Texture2D texture, Vector2 tileSize,
     public TextureAddressMode TileModeX { get; } = tileModeX;
     public TextureAddressMode TileModeY { get; } = tileModeY;
     public TextureFilter FilterMode { get; } = filterMode;
-    public XnaColor BaseColor => XnaColor.White;
+    public Color4b BaseColor => Color4b.White;
 }

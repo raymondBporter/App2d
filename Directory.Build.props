@@ -1,4 +1,9 @@
 <Project>
+  <!-- Share the byte-color alias across projects that reference MonoGame. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'App2d.Analyzers' and '$(MSBuildProjectName)' != 'App2d.Analyzers.CodeFixes'">
+    <Using Include="Microsoft.Xna.Framework.Color" Alias="Color4b" />
+  </ItemGroup>
+
   <!-- Analyzer references are build/editor tools, never runtime references. -->
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'App2d.Analyzers' and '$(MSBuildProjectName)' != 'App2d.Analyzers.CodeFixes' and '$(MSBuildProjectName)' != 'App2d.Analyzers.Tests'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)App2d.Analyzers/App2d.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

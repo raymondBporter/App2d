@@ -6,7 +6,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
 using System.Text.Json;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -72,7 +71,7 @@ internal sealed partial class ProofRenders
             if (shape && ShapesOf(clip).FirstOrDefault(w => seconds >= w.Start - 1e-4f && seconds < w.Finish - 1e-4f).Hull is { } hull)
             {
                 // The player's hit: one shape fixed to the player for the live window, made from everything the blade covers then.
-                var red = new Color(214, 62, 48);
+                var red = new Color4b(214, 62, 48);
                 const float w = 2 / LabPpu;
                 for (var k = 0; k < hull.Length; k++)
                 {
@@ -80,7 +79,7 @@ internal sealed partial class ProofRenders
                 }
             }
             BuildScenery(scenery, "ground", 0, seconds);
-            target.SavePng(path, new Color(241, 240, 232), () =>
+            target.SavePng(path, new Color4b(241, 240, 232), () =>
             {
                 _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
                 _renderer.DrawActor(drawing, projection, Matrix.Identity, trail);

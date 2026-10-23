@@ -204,7 +204,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             var label = $"{role}{(required ? " (required)" : "")}";
             if (effective is null && required)
             {
-                ImGui.PushStyleColor(ImGuiCol.Text, Ui.Warning);
+                ImGui.PushStyleColor(ImGuiCol.Text, UiTheme.Warning);
                 ImGui.TextUnformatted(label + ": unassigned");
                 ImGui.PopStyleColor();
             }
@@ -216,7 +216,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             if (overridden)
             {
                 ImGui.SameLine();
-                ImGui.TextColored(Ui.Override, "entity");
+                ImGui.TextColored(UiTheme.Override, "entity");
                 ImGui.SameLine();
                 if (ImGui.SmallButton("Use set"))
                 {
@@ -648,7 +648,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         var hit = Hit();
         var basis = Base;
         ImGui.Separator();
-        ImGui.TextColored(Ui.Accent, "Hit " + hitId);
+        ImGui.TextColored(UiTheme.Accent, "Hit " + hitId);
         ImGui.SameLine();
         if (ImGui.SmallButton("Remove hit"))
         {
@@ -769,10 +769,10 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 draw.AddLine(points[i], points[(i + 1) % points.Length], color, width);
             }
         }
-        Outline(preview.Movement, Ui.Color(120, 120, 120), 1.5f);
+        Outline(preview.Movement, StudioTheme.MovementRegion.PackedValue, 1.5f);
         foreach (var region in preview.Hurt)
         {
-            Outline(region, Ui.Color(60, 120, 220), 2);
+            Outline(region, StudioTheme.HurtRegion.PackedValue, 2);
         }
 
         foreach (var (hit, region) in preview.Attacks)
@@ -780,20 +780,20 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             var points = region.Outline().Select(Screen).ToArray();
             for (var i = 1; i < points.Length - 1; i++)
             {
-                draw.AddTriangleFilled(points[0], points[i], points[i + 1], Ui.Color(235, 60, 50, 90));
+                draw.AddTriangleFilled(points[0], points[i], points[i + 1], StudioTheme.AttackFill.PackedValue);
             }
 
-            Outline(region, Ui.Color(220, 40, 30), 2.5f);
-            draw.AddText(points[2] + new Vector2(4, -16), Ui.Color(200, 40, 30), hit.Window.Id);
+            Outline(region, StudioTheme.AttackOutline.PackedValue, 2.5f);
+            draw.AddText(points[2] + new Vector2(4, -16), StudioTheme.AttackLabel.PackedValue, hit.Window.Id);
         }
         foreach (var equipment in preview.Entity.Equipment)
         {
             var tip = ActorPose.PropPoint(preview.Pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip);
-            draw.AddCircleFilled(frame.Screen(tip), 4 * Ui.Scale, Ui.Color(240, 200, 40));
+            draw.AddCircleFilled(frame.Screen(tip), 4 * Ui.Scale, StudioTheme.WeaponTip.PackedValue);
         }
         if (preview.Action is { Mask: not null } masked)
         {
-            draw.AddText(frame.Origin + new Vector2(12, frame.Size.Y - 28 * Ui.Scale), Ui.Color(70, 80, 90), $"{masked.Id} over {session.PreviewRole}: layer weight {preview.Weight:P0}");
+            draw.AddText(frame.Origin + new Vector2(12, frame.Size.Y - 28 * Ui.Scale), StudioTheme.LayerMaskText.PackedValue, $"{masked.Id} over {session.PreviewRole}: layer weight {preview.Weight:P0}");
         }
 
         if (frame.Hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
@@ -863,7 +863,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         var width = ImGui.GetContentRegionAvail().X;
         var height = 26 * Ui.Scale;
         float X(float t) => start.X + t / clip.Duration * width;
-        draw.AddRectFilled(start, start + new Vector2(width, height), Ui.Color(222, 225, 214));
+        draw.AddRectFilled(start, start + new Vector2(width, height), StudioTheme.ActionTrackBackground.PackedValue);
         if (action is not null)
         {
             var hits = action.Hits;
@@ -871,40 +871,40 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             {
                 var open = hits.Min(h => h.Start);
                 var close = hits.Max(h => h.Finish);
-                draw.AddRectFilled(start, new(X(open), start.Y + height), Ui.Color(240, 214, 150));
-                draw.AddRectFilled(new(X(close), start.Y), start + new Vector2(width, height), Ui.Color(184, 204, 226));
+                draw.AddRectFilled(start, new(X(open), start.Y + height), StudioTheme.AnticipationFill.PackedValue);
+                draw.AddRectFilled(new(X(close), start.Y), start + new Vector2(width, height), StudioTheme.RecoveryFill.PackedValue);
                 foreach (var hit in hits)
                 {
-                    draw.AddRectFilled(new(X(hit.Start), start.Y), new(X(hit.Finish), start.Y + height), Ui.Color(228, 96, 80));
+                    draw.AddRectFilled(new(X(hit.Start), start.Y), new(X(hit.Finish), start.Y + height), StudioTheme.AttackWindow.PackedValue);
                 }
 
-                draw.AddText(start + new Vector2(4, 5 * Ui.Scale), Ui.Color(90, 70, 30), "anticipation");
-                draw.AddText(new(X(close) + 4, start.Y + 5 * Ui.Scale), Ui.Color(40, 60, 90), "recovery");
+                draw.AddText(start + new Vector2(4, 5 * Ui.Scale), StudioTheme.AnticipationText.PackedValue, "anticipation");
+                draw.AddText(new(X(close) + 4, start.Y + 5 * Ui.Scale), StudioTheme.RecoveryText.PackedValue, "recovery");
             }
             if (action.Mask is not null)
             {
                 for (var i = 1; i <= 64; i++)
                 {
                     float T(int k) => clip.Duration * k / 64;
-                    draw.AddLine(new(X(T(i - 1)), start.Y + height * (1 - action.Weight(T(i - 1)))), new(X(T(i)), start.Y + height * (1 - action.Weight(T(i)))), Ui.Color(40, 110, 90), 1.5f);
+                    draw.AddLine(new(X(T(i - 1)), start.Y + height * (1 - action.Weight(T(i - 1)))), new(X(T(i)), start.Y + height * (1 - action.Weight(T(i)))), StudioTheme.ActionBlendCurve.PackedValue, 1.5f);
                 }
             }
 
             foreach (var cue in action.Events)
             {
                 var x = X(cue.Seconds);
-                draw.AddTriangleFilled(new(x - 4, start.Y + height + 8), new(x + 4, start.Y + height + 8), new(x, start.Y + height), Ui.Color(40, 90, 160));
-                draw.AddText(new(x + 5, start.Y + height), Ui.Color(40, 90, 160), cue.Event.Id);
+                draw.AddTriangleFilled(new(x - 4, start.Y + height + 8), new(x + 4, start.Y + height + 8), new(x, start.Y + height), StudioTheme.ActionEvent.PackedValue);
+                draw.AddText(new(x + 5, start.Y + height), StudioTheme.ActionEvent.PackedValue, cue.Event.Id);
             }
         }
         foreach (var marker in clip.Markers)
         {
             var x = X(marker.Time);
-            draw.AddLine(new(x, start.Y - 2), new(x, start.Y + height + 2), Ui.Color(70, 70, 70), 1);
-            draw.AddText(new(x + 3, start.Y - 15 * Ui.Scale), Ui.Color(70, 70, 70), marker.Id);
+            draw.AddLine(new(x, start.Y - 2), new(x, start.Y + height + 2), StudioTheme.ActionMarker.PackedValue, 1);
+            draw.AddText(new(x + 3, start.Y - 15 * Ui.Scale), StudioTheme.ActionMarker.PackedValue, marker.Id);
         }
         var playhead = X(session.Transport.Time);
-        draw.AddLine(new(playhead, start.Y - 4), new(playhead, start.Y + height + 4), Ui.Color(232, 169, 55), 2);
+        draw.AddLine(new(playhead, start.Y - 4), new(playhead, start.Y + height + 4), StudioTheme.Selection.PackedValue, 2);
         ImGui.SetCursorScreenPos(start);
         ImGui.InvisibleButton("phases", new(width, height + 14 * Ui.Scale));
         if (ImGui.IsItemActive())

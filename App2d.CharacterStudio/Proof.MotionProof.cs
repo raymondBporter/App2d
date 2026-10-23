@@ -4,7 +4,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -52,7 +51,7 @@ internal sealed partial class ProofRenders
         var seconds = frame * clip.Duration / ProofFrames;
         var panel = ProofWidth / ProofSubjects.Length;
         const int band = ProofHeight - ProofPanelHeight;
-        using (GraphicsDevice.UseRenderTarget(_proofTarget, new Color(237, 238, 226)))
+        using (GraphicsDevice.UseRenderTarget(_proofTarget, new Color4b(237, 238, 226)))
         {
             for (var i = 0; i < ProofSubjects.Length; i++)
             {
@@ -80,7 +79,7 @@ internal sealed partial class ProofRenders
     private void BuildProofGround(EvaluatedPose pose, float centerX, float ppu)
     {
         _proofGround.Clear();
-        var ink = new Color(154, 169, 158);
+        var ink = new Color4b(154, 169, 158);
         var pixel = 1 / ppu;
         _proofGround.Line(new(centerX - 20, 0, 7), new(centerX + 20, 0, 7), pixel, ink);
         var first = (int)MathF.Floor((centerX - 6) * 4);
@@ -91,7 +90,7 @@ internal sealed partial class ProofRenders
 
         foreach (var contact in pose.Contacts)
         {
-            var color = contact.Residual < .005f ? new Color(36, 140, 104) : new Color(240, 106, 50);
+            var color = contact.Residual < .005f ? new Color4b(36, 140, 104) : new Color4b(240, 106, 50);
             var p = contact.Target with
             {
                 Z = 6.9f

@@ -19,7 +19,6 @@ using App2d.Presentation.Player;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -37,7 +36,7 @@ internal static class GunRenderingSmoke2D
         var ids = new EntityIdAllocator2D();
         var person = new Person2D(ids.Allocate(), collision, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
         var floor = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(800f, 20f),
-            new SolidColorShader(new XnaColor(54, 74, 85)));
+            new SolidColorShader(new Color4b(54, 74, 85)));
         floor.Transform.Position = new Vector2(0, person.WorldObject.WorldBounds.Bottom - 10f);
         scene.Add(floor);
         var floorBody = physics.AddBody(floor, BodyMotionType2D.Static);
@@ -107,7 +106,7 @@ internal static class GunRenderingSmoke2D
             Save($"gun-recoil-{facing}.png", "RECOIL");
 
             var wall = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(8f, 70f),
-                new SolidColorShader(new XnaColor(54, 74, 85)));
+                new SolidColorShader(new Color4b(54, 74, 85)));
             wall.Transform.Position = new Vector2(facing * 170f, 7f);
             scene.Add(wall);
             var wallBody = physics.AddBody(wall, BodyMotionType2D.Static);
@@ -151,7 +150,7 @@ internal static class GunRenderingSmoke2D
 
         void Save(string name, string caption)
         {
-            target.SavePng(Path.Combine(outputDirectory, name), new XnaColor(145, 176, 190), () =>
+            target.SavePng(Path.Combine(outputDirectory, name), new Color4b(145, 176, 190), () =>
             {
                 renderer.BeginFrame(width, height, default);
                 renderer.Draw(scene);

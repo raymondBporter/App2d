@@ -7,19 +7,18 @@ using App2d.Core.Rendering;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Rendering;
 
 public sealed partial class Renderer2D
 {
     /// <summary>Draws a shape in world coordinates, with a fill, an outline, or both.</summary>
-    public void DrawShape(IShape2D shape, XnaColor? fillColor = null, XnaColor? outlineColor = null,
+    public void DrawShape(IShape2D shape, Color4b? fillColor = null, Color4b? outlineColor = null,
         float screenStrokeWidth = 2f) =>
         DrawShape(shape, Matrix3x2.Identity, fillColor, outlineColor, screenStrokeWidth);
 
     /// <summary>Draws a local shape through a local-to-world transform.</summary>
-    public void DrawShape(IShape2D shape, Matrix3x2 localToWorld, XnaColor? fillColor = null, XnaColor? outlineColor = null, float screenStrokeWidth = 2f)
+    public void DrawShape(IShape2D shape, Matrix3x2 localToWorld, Color4b? fillColor = null, Color4b? outlineColor = null, float screenStrokeWidth = 2f)
     {
         RequireFrame();
         ArgGuard.ThrowIfNull(shape);
@@ -31,7 +30,7 @@ public sealed partial class Renderer2D
     }
 
     /// <summary>Draws the shape and transform of an existing spatial object.</summary>
-    public void DrawShape(SpatialObject2D item, XnaColor? fillColor = null, XnaColor? outlineColor = null,
+    public void DrawShape(SpatialObject2D item, Color4b? fillColor = null, Color4b? outlineColor = null,
         float screenStrokeWidth = 2f)
     {
         RequireFrame();
@@ -47,7 +46,7 @@ public sealed partial class Renderer2D
     }
 
     private void DrawShapeCore(IShape2D shape, Matrix3x2 matrix, Rect2D bounds,
-        XnaColor? fillColor, XnaColor? outlineColor, float width)
+        Color4b? fillColor, Color4b? outlineColor, float width)
     {
         SelectBatch(null, null);
         if (fillColor is { } fill)
@@ -62,13 +61,13 @@ public sealed partial class Renderer2D
     }
 
     /// <summary>Draws an indexed triangle mesh. The outline follows edges used by exactly one triangle.</summary>
-    public void DrawTriangleMesh(TriangleMesh2D mesh, XnaColor? fillColor = null, XnaColor? outlineColor = null,
+    public void DrawTriangleMesh(TriangleMesh2D mesh, Color4b? fillColor = null, Color4b? outlineColor = null,
         float screenStrokeWidth = 2f) =>
         DrawTriangleMesh(mesh, Matrix3x2.Identity, fillColor, outlineColor, screenStrokeWidth);
 
     /// <summary>Draws an indexed mesh through a local-to-world transform.</summary>
-    public void DrawTriangleMesh(TriangleMesh2D mesh, Matrix3x2 localToWorld, XnaColor? fillColor = null,
-        XnaColor? outlineColor = null, float screenStrokeWidth = 2f)
+    public void DrawTriangleMesh(TriangleMesh2D mesh, Matrix3x2 localToWorld, Color4b? fillColor = null,
+        Color4b? outlineColor = null, float screenStrokeWidth = 2f)
     {
         RequireFrame();
         ArgGuard.ThrowIfNull(mesh);
@@ -93,7 +92,7 @@ public sealed partial class Renderer2D
     }
 
     /// <summary>Draws a finite world-space segment with pixel-sized width and optional caps.</summary>
-    public void DrawWorldSegment(Vector2 start, Vector2 end, XnaColor color,
+    public void DrawWorldSegment(Vector2 start, Vector2 end, Color4b color,
         float screenStrokeWidth = 2f, LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
@@ -106,13 +105,13 @@ public sealed partial class Renderer2D
     }
 
     /// <summary>Draws a segment with width specified in world units, scaling with camera zoom.</summary>
-    public void DrawWorldThickSegment(Vector2 start, Vector2 end, float worldWidth, XnaColor color,
+    public void DrawWorldThickSegment(Vector2 start, Vector2 end, float worldWidth, Color4b color,
         LineCap2D cap = LineCap2D.Butt) =>
         DrawWorldThickSegment(start, end, worldWidth, worldWidth, color, cap, cap);
 
     /// <summary>Draws a tapered segment with start and end widths specified in world units, scaling with camera zoom.</summary>
     public void DrawWorldThickSegment(Vector2 start, Vector2 end, float startWorldWidth, float endWorldWidth,
-        XnaColor color, LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
+        Color4b color, LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
     {
         RequireFrame();
         ArgGuard.Finite(start);
@@ -128,7 +127,7 @@ public sealed partial class Renderer2D
     }
 
     /// <summary>Draws the visible part of an infinite world-space line.</summary>
-    public void DrawWorldLine(Line2D line, XnaColor color, float screenStrokeWidth = 2f)
+    public void DrawWorldLine(Line2D line, Color4b color, float screenStrokeWidth = 2f)
     {
         RequireFrame();
         if (!line.IsValid)
@@ -149,7 +148,7 @@ public sealed partial class Renderer2D
     }
 
     /// <summary>Draws the visible part of a world-space ray. Its origin can have a cap.</summary>
-    public void DrawWorldRay(Ray2D ray, XnaColor color, float screenStrokeWidth = 2f,
+    public void DrawWorldRay(Ray2D ray, Color4b color, float screenStrokeWidth = 2f,
         LineCap2D originCap = LineCap2D.Butt)
     {
         RequireFrame();
@@ -179,7 +178,7 @@ public sealed partial class Renderer2D
         return new Rect2D(new(-padding), _camera.ViewportSize + new Vector2(padding));
     }
 
-    private static void ValidateShapeStyle(XnaColor? fillColor, XnaColor? outlineColor, float width)
+    private static void ValidateShapeStyle(Color4b? fillColor, Color4b? outlineColor, float width)
     {
         if (fillColor is null && outlineColor is null)
         {

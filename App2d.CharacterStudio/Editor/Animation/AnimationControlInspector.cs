@@ -128,7 +128,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
             {
                 if (result.Residual < .005f)
                 {
-                    ImGui.TextColored(Ui.Accent, "Planted and reached.");
+                    ImGui.TextColored(UiTheme.Accent, "Planted and reached.");
                 }
                 else
                 {

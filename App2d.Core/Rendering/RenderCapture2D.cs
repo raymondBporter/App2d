@@ -1,6 +1,5 @@
 using App2d.Core.Validation;
 using Microsoft.Xna.Framework.Graphics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Rendering;
 
@@ -21,7 +20,7 @@ public static class RenderCapture2D
     }
 
     /// <summary>Binds the target, optionally clearing it, until the scope is disposed; disposal restores the targets bound before.</summary>
-    public static Scope UseRenderTarget(this GraphicsDevice device, RenderTarget2D target, XnaColor? clearColor = null)
+    public static Scope UseRenderTarget(this GraphicsDevice device, RenderTarget2D target, Color4b? clearColor = null)
     {
         ArgGuard.ThrowIfNull(device);
         ArgGuard.ThrowIfNull(target);
@@ -55,7 +54,7 @@ public static class RenderCapture2D
     }
 
     /// <summary>Clears the target, runs the draw calls into it, restores the previous targets and writes the PNG.</summary>
-    public static void SavePng(this RenderTarget2D target, string path, XnaColor clearColor, Action draw)
+    public static void SavePng(this RenderTarget2D target, string path, Color4b clearColor, Action draw)
     {
         ArgGuard.ThrowIfNull(target);
         ArgGuard.ThrowIfNull(draw);
@@ -68,7 +67,7 @@ public static class RenderCapture2D
     }
 
     /// <summary>Draws into a new standard target of the given size and writes it as a PNG.</summary>
-    public static void SavePng(GraphicsDevice device, int width, int height, string path, XnaColor clearColor, Action draw)
+    public static void SavePng(GraphicsDevice device, int width, int height, string path, Color4b clearColor, Action draw)
     {
         using var target = CreateTarget(device, width, height);
         target.SavePng(path, clearColor, draw);

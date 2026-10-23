@@ -14,7 +14,6 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Immutable;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterSeeds.Diagnostics;
 
@@ -45,7 +44,7 @@ internal static class EnemyRenderingSmoke2D
         view.Update(states, [new RivalAttackStarted2D(rivalId, new(220f, 0f), UnarmedAttackKind2D.Kick, 0.42f)], 0.18f, 1);
         using var renderer = new Renderer2D(new Camera2D { Zoom = 1.35f, Position = new(20f, 25f) }, device);
         using var target = RenderCapture2D.CreateTarget(device, 1100, 450, DepthFormat.None, 0);
-        target.SavePng(Path.Combine(directory, "enemy-client-views.png"), new XnaColor(145, 176, 190), () =>
+        target.SavePng(Path.Combine(directory, "enemy-client-views.png"), new Color4b(145, 176, 190), () =>
         {
             renderer.BeginFrame(1100, 450, default);
             renderer.Draw(scene);
