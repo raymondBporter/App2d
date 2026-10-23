@@ -92,6 +92,16 @@ internal static class EditorSurfaceSmoke
             session.EditRig = false;
             session.Selection.Select(part: Humanoid.Body);
             Capture("model-variant-part");
+            // P6c: the variant's rig inspector shows each property's provenance, the length/tip override and the limits placeholder.
+            session.EditRig = true;
+            session.Selection.Select(control: Humanoid.LeftElbow);
+            if (assets.Variant("tall-thin") is { } tall && assets.Resolve("tall-thin") is { } resolved)
+            {
+                session.Edit(tall, () => ModelAuthoring.ResizeBone(resolved, tall.Asset, Humanoid.LeftElbow, resolved.Nodes[Humanoid.LeftElbow].Length + .15f));
+                Capture("model-variant-rig");
+                session.Undo();
+            }
+            session.EditRig = false;
             if (assets.Part("boot") is { } boot)
             {
                 // P5c: a library part on a wearer (preview before attaching), then the instance on the base model.

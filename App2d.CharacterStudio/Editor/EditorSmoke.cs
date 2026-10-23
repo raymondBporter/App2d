@@ -616,6 +616,61 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Select(attachment: right);
                 shell.Viewport.Fit(s.Evaluate("person"));
             }),
+            ("42-variant-recipe-overrides", shell =>
+            {
+                // P6: a variant's recipe overrides are typed, addressed by stable IDs and shown with their provenance. Lengthening
+                // a variant forearm and swapping its glove leaves the base alone, an unoverridden base edit propagates, resetting
+                // one property restores inheritance, a bone tip drags on the variant, a point tip is refused with its reason, a
+                // role rebinds, a duplicate is a sibling and making the variant independent flattens the recipe.
+                var s = shell.Session; s.Open("tall-thin"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = true;
+                var tall = s.SubjectVariant!;
+                var person = s.Assets.Model("person")!;
+                var right = person.Asset.Attachments[1].Id;
+                ResolvedModel Tall() => s.Assets.Resolve("tall-thin")!;
+                Record(tall.Asset.Version == ModelVariant.CurrentVersion && tall.Asset.Overrides.Count == 2 && tall.Asset.Override(PropertyRef.OfAttachment(right, RigProperties.Asset))?.Selection == "boot",
+                    $"tall-thin reads at variant version {ModelVariant.CurrentVersion} with its body material and glove swap as typed overrides");
+                var baseBefore = person.Serialize();
+                var broadBefore = s.Assets.Resolve("short-broad")!.Nodes["left-elbow"].Length;
+                var forearm = Tall().Nodes["left-elbow"].Length;
+                var hand = Tall().Rest["left-hand"];
+                s.Selection.Select(control: "left-elbow");
+                s.BeginDrag();
+                s.DragBoneTip("left-elbow", new Vector2(hand.X, hand.Y) + Vector2.Normalize(new Vector2(hand.X, hand.Y) - new Vector2(Tall().Rest["left-elbow"].X, Tall().Rest["left-elbow"].Y)) * .2f);
+                s.EndDrag();
+                Record(!s.MessageIsError && MathF.Abs(Tall().Nodes["left-elbow"].Length - forearm - .2f) < 1e-3f && Tall().Provenance(PropertyRef.OfControl("left-elbow", RigProperties.Length)) == PropertySource.Override && Tall().Masks(PropertyRef.OfControl("left-elbow", RigProperties.Length)),
+                    "dragging the variant's forearm tip lengthens it by 0.2 as an override that masks the arms binding");
+                Record(person.Serialize() == baseBefore && !person.Dirty && s.Assets.Resolve("short-broad")!.Nodes["left-elbow"].Length == broadBefore && s.Assets.Resolve("short-broad")!.Attachment(right)!.Asset.Id == "mitt",
+                    "the longer forearm and the swapped glove leave the base and short-broad unchanged");
+                s.BeginDrag();
+                s.DragBoneTip("right-elbow", new Vector2(0, 0));
+                s.EndDrag();
+                Record(s.MessageIsError && s.Message.Contains("only drag a bone node") && !tall.Asset.HasOverride(PropertyRef.OfControl("right-elbow", RigProperties.Length)),
+                    "dragging a point control's legacy tip on the variant is refused with its reason, not ignored: " + s.Message);
+                var shoulder = Tall().Nodes["left-shoulder"].Length;
+                Check(s.Edit(person, () => ModelAuthoring.ResizeBone(person.Asset, "left-shoulder", person.Asset.Controls.Single(c => c.Id == "left-shoulder").Length + .1f)), s);
+                Record(MathF.Abs(Tall().Nodes["left-shoulder"].Length - shoulder - .1f * tall.Asset.Parameters["arms"]) < 1e-4f && MathF.Abs(Tall().Nodes["left-elbow"].Length - forearm - .2f) < 1e-3f,
+                    "an unoverridden base edit (the upper arm's length) propagates through the arms binding while the forearm override holds");
+                s.Undo();
+                Check(s.Edit(tall, () => ModelAuthoring.ResetOverride(tall.Asset, PropertyRef.OfControl("left-elbow", RigProperties.Length))), s);
+                Record(MathF.Abs(Tall().Nodes["left-elbow"].Length - forearm) < 1e-5f && Tall().Provenance(PropertyRef.OfControl("left-elbow", RigProperties.Length)) == PropertySource.ParameterBinding && tall.Asset.Overrides.Count == 2,
+                    "resetting the length override restores inheritance from the arms binding without writing a copy of the value");
+                Check(s.Edit(tall, () => ModelAuthoring.SetOverride(tall.Asset, person.Asset, PropertyOverride.Of(PropertyRef.OfRole("walk"), "person-heavy-walk"))), s);
+                Record(s.Assets.CompileEntity("spear-guard")?.Roles["walk"] is { Clip.Id: "person-heavy-walk", Source: "variant:tall-thin" } && s.Assets.UsedBy("person-heavy-walk").Any(r => r.Id == "tall-thin"),
+                    "an animation-role override on the variant reaches the entity standing on it and the reference graph");
+                Check(s.DuplicateVariant("tall-thin", "tall-twin", "Tall twin"), s);
+                Record(s.SubjectVariant?.Asset.Base == "person" && s.Assets.Resolve("tall-twin")!.RoleClips["walk"] == "person-heavy-walk", "duplicating makes a sibling of the same base with the same overrides");
+                Check(s.MakeIndependent("tall-thin", "tall-flat", "Tall flat"), s);
+                var flat = s.Assets.Resolve("tall-flat")!;
+                Record(s.SubjectModel?.Id == "tall-flat" && flat.Base.Parameters.Count == 0 && flat.Base.MotionSets[0].Roles["walk"] == "person-heavy-walk" && flat.Base.Attachments[1].Asset == "boot"
+                    && Tall().Order.All(c => Vector3.Distance(Tall().Rest[c.Id], flat.Rest[c.Id]) < 1e-5f),
+                    "making the variant independent flattens its resolved recipe: lengths, the swapped glove and the role binding become authored");
+                s.Open("tall-thin");
+                Check(s.Edit(tall, () => ModelAuthoring.SetOverride(tall.Asset, person.Asset, PropertyOverride.Of(PropertyRef.OfControl("left-elbow", RigProperties.Length), forearm + .15f))), s);
+                s.SetMode(Workspace.Model);
+                s.EditRig = true;
+                s.Selection.Select(control: "left-elbow");
+                shell.Viewport.Fit(s.Evaluate("tall-thin"));
+            }),
         ];
         return workspace;
     }
