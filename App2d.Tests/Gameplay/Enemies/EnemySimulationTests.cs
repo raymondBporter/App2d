@@ -1,73 +1,44 @@
-using App2d.Contracts.Combat;
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
-using App2d.Gameplay.Persons;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Enemies;
 
 public sealed class EnemySimulationTests
 {
-    [Fact]
-    public void HammerUsesGameplayTimeAndHitsOnlyOnceDuringItsDamageWindow()
-    {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var brute = CreateBrute(physics);
-        var target = new Vector2(62f, -10f);
-        var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics,
-            TraversalMetricsLoader2D.Load(TestAssetPath.Root), target, 2, 1, CombatFaction2D.Player);
-        brute.Update(0.35f, new Vector2(1000f)); // Expire initial cooldown out of range.
-        brute.Update(0f, target);
-        Assert.IsType<HammerStarted2D>(Assert.Single(brute.DrainEvents()));
-        brute.Update(0.49f, target);
-        Assert.False(brute.IsHammerActive);
-        brute.TryResolveHammerHit(player);
-        Assert.Equal(5, player.Health.Current);
-        brute.Update(0.02f, target);
-        Assert.True(brute.IsHammerActive);
-        var strike = Assert.IsType<HammerStruck2D>(Assert.Single(brute.DrainEvents()));
-        Assert.Equal(brute.Enemy.Id, strike.EntityId);
-        Assert.Equal(target, strike.Position);
-        brute.TryResolveHammerHit(player);
-        Assert.Equal(3, player.Health.Current);
-        player.Reset(target);
-        brute.TryResolveHammerHit(player);
-        Assert.Equal(5, player.Health.Current); // Per-attack hit registration survives target reset.
-        brute.Update(0.10f, target);
-        Assert.False(brute.IsHammerActive);
-        Assert.Empty(brute.DrainEvents());
-        brute.Update(0.20f, target);
-        Assert.False(brute.CaptureState().IsAttacking);
-        Assert.Empty(brute.GetActiveAttackHitboxes());
-    }
+    private static readonly AuthoredCatalog Authored = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
 
     [Fact]
     public void StreamingFreezesAttackTimeAndDamageInterruptsBeforeTheStrike()
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var brute = CreateBrute(physics);
-        brute.Update(0.35f, new Vector2(1000f));
-        brute.Update(0.2f, new Vector2(62f, 0f));
+        var target = new Vector2(40f, 0f);
+        brute.Update(0.2f, target);
+        brute.SyncAfterPhysics();
         brute.DrainEvents();
         var before = brute.CaptureState();
         brute.SetSimulationEnabled(false);
-        brute.Update(1f, Vector2.Zero);
+        brute.Update(1f, target);
+        brute.SyncAfterPhysics();
         Assert.Equal(before.AttackElapsedSeconds, brute.CaptureState().AttackElapsedSeconds);
-        Assert.False(brute.IsHammerActive);
+        Assert.Empty(brute.GetActiveAttackHitboxes());
         brute.SetSimulationEnabled(true);
-        Assert.True(brute.Enemy.TakeDamage(1, Vector2.Zero));
-        brute.Update(0f, Vector2.Zero);
+        Assert.True(brute.TakeDamage(1, Vector2.Zero));
+        brute.Update(0f, target);
+        brute.SyncAfterPhysics();
         Assert.False(brute.CaptureState().IsAttacking);
+        Assert.Empty(brute.GetActiveAttackHitboxes());
         Assert.Empty(brute.DrainEvents());
         Assert.True(before.IsAttacking);
         Assert.Equal(0.2f, before.AttackElapsedSeconds);
-        Assert.Equal(BoilerBrute2D.AttackDurationSeconds, before.AttackDurationSeconds);
     }
 
     [Fact]
@@ -80,7 +51,7 @@ public sealed class EnemySimulationTests
         var inactive = Assert.Single(enemies.CaptureStates());
         Assert.False(inactive.IsEnabled);
         enemies.UpdateStreaming(_ => true);
-        enemies.Update(0.1f, new Vector2(1000f));
+        enemies.Update(0.1f, new Vector2(400f, 0f));
         physics.Step(0.1f);
         enemies.SyncAfterPhysics();
         var moving = Assert.Single(enemies.CaptureStates());
@@ -113,7 +84,10 @@ public sealed class EnemySimulationTests
         Assert.False(rival.CaptureState().IsAlive);
     }
 
-    private static BoilerBrute2D CreateBrute(PhysicsWorld2D physics) => new(
-        EntityId2D.Create(), physics.CollisionSystem, physics, Vector2.Zero, -100f, 100f, 1, 4);
-
+    private static AuthoredEntityEnemy2D CreateBrute(PhysicsWorld2D physics)
+    {
+        var brute = new AuthoredEntityEnemy2D(EntityId2D.Create(), Authored.Entities["maul-brute"], physics, Vector2.Zero, 1, 4);
+        brute.SetSimulationEnabled(true);
+        return brute;
+    }
 }

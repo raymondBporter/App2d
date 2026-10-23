@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "person-hammer-slam",
   "name": "Hammer slam",
   "model": "person",
@@ -392,5 +392,9 @@
         }
       ]
     }
-  ]
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

@@ -1,3 +1,4 @@
+using App2d.Core.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace App2d.Noodle;
@@ -9,8 +10,14 @@ internal static class EditorUiSmoke
         Directory.CreateDirectory(outputDirectory);
         using var window = new Form { ClientSize = new Size(1380, 840) };
         using var device = new GraphicsDevice(GraphicsAdapter.DefaultAdapter, GraphicsProfile.HiDef,
-            new PresentationParameters { DeviceWindowHandle = window.Handle, BackBufferWidth = 1380, BackBufferHeight = 840,
-                DepthStencilFormat = DepthFormat.Depth24, PresentationInterval = PresentInterval.Immediate });
+            new PresentationParameters
+            {
+                DeviceWindowHandle = window.Handle,
+                BackBufferWidth = 1380,
+                BackBufferHeight = 840,
+                DepthStencilFormat = DepthFormat.Depth24,
+                PresentationInterval = PresentInterval.Immediate
+            });
         using var bones = new BoneEditorHost();
         using var prototype = new NoodleEditorHost();
         using var rigid = new RigidCharacterHost();
@@ -25,15 +32,15 @@ internal static class EditorUiSmoke
 
         void Render(NoodleToolHost host, string name)
         {
-            using var target = new RenderTarget2D(device, 1380, 840, false, SurfaceFormat.Color, DepthFormat.Depth24);
+            using var target = RenderCapture2D.CreateTarget(device, 1380, 840, DepthFormat.Depth24, 0);
             for (var frame = 0; frame < 4; frame++)
             {
-                device.SetRenderTarget(target);
-                host.RenderStudy(device, 1380, 840);
-                device.SetRenderTarget(null);
+                using (device.UseRenderTarget(target))
+                {
+                    host.RenderStudy(device, 1380, 840);
+                }
             }
-            using var stream = File.Create(Path.Combine(outputDirectory, name + ".png"));
-            target.SaveAsPng(stream, target.Width, target.Height);
+            target.SavePng(Path.Combine(outputDirectory, name + ".png"));
         }
     }
 }

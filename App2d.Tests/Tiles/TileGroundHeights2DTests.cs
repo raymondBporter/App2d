@@ -9,7 +9,12 @@ public sealed class TileGroundHeights2DTests
     {
         var map = new EditableTileMap2D(3, 8, 32f, 4);
         // Column 0 solid to row 2, column 1 solid to row 4, column 2 solid to row 1.
-        map.Fill((x, y) => y < x switch { 0 => 3, 1 => 5, _ => 2 }
+        map.Fill((x, y) => y < x switch
+        {
+            0 => 3,
+            1 => 5,
+            _ => 2
+        }
             ? TileKind2D.Solid
             : TileKind2D.Empty);
 

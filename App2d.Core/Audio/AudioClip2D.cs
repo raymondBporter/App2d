@@ -27,11 +27,17 @@ public sealed class AudioClip2D
         {
             var read = reader.Read(samples.AsSpan(sampleCount));
             if (read == 0)
+            {
                 break;
+            }
+
             sampleCount += read;
         }
         if (sampleCount != samples.Length)
+        {
             Array.Resize(ref samples, sampleCount);
+        }
+
         Samples = samples;
     }
 

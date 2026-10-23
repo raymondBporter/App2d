@@ -1,6 +1,10 @@
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.IO;
-using App2d.Core.Curves;
 using App2d.Core.Shapes;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
@@ -20,7 +24,9 @@ public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
     public static PuppetPoint Lerp(PuppetPoint a, PuppetPoint b, float t) => From(Vector3.Lerp(a.XYZ, b.XYZ, t));
     public void Check(string field)
     {
-        new Limit(-10000, 10000).Check(X, field + ".x"); new Limit(-10000, 10000).Check(Y, field + ".y"); new Limit(-32, 32).Check(Z, field + ".z");
+        new Limit(-10000, 10000).Check(X, field + ".x");
+        new Limit(-10000, 10000).Check(Y, field + ".y");
+        new Limit(-32, 32).Check(Z, field + ".z");
     }
 }
 
@@ -48,34 +54,60 @@ public sealed record PuppetChain
 public sealed record PartPaint
 {
     public RenderMaterialDefinition2D? Material { get; set; }
-    public List<PuppetPoint> Points { get; set; } = [];
+    public List<Vector2> Points { get; set; } = [];
 
     public static void Check(IReadOnlyList<PartPaint>? paint)
     {
-        if (paint is null) return;
-        if (paint.Count > 64) throw new InvalidDataException("A part supports at most 64 paint patches.");
+        if (paint is null)
+        {
+            return;
+        }
+
+        if (paint.Count > 64)
+        {
+            throw new InvalidDataException("A part supports at most 64 paint patches.");
+        }
+
         Span<Vector2> xy = stackalloc Vector2[64];
         foreach (var patch in paint)
         {
-            if (patch?.Points is not { Count: >= 3 and <= 64 }) throw new InvalidDataException("Paint needs 3 to 64 polygon points.");
-            if (patch.Material?.Fill is null) throw new InvalidDataException("Paint needs a material fill.");
+            if (patch?.Points is not { Count: >= 3 and <= 64 })
+            {
+                throw new InvalidDataException("Paint needs 3 to 64 polygon points.");
+            }
+
+            if (patch.Material?.Fill is null)
+            {
+                throw new InvalidDataException("Paint needs a material fill.");
+            }
+
+            if (patch.Material.Asset is not null || patch.Material.Paint is not null)
+            {
+                throw new InvalidDataException("A paint layer needs a plain material fill.");
+            }
             patch.Material.Validate("paint.material");
-            if (patch.Material.Outline is not null) throw new InvalidDataException("Paint patch outlines are not supported.");
+            if (patch.Material.Outline is not null)
+            {
+                throw new InvalidDataException("Paint patch outlines are not supported.");
+            }
+
             var vertices = xy[..patch.Points.Count];
             for (var i = 0; i < patch.Points.Count; i++)
             {
                 var point = patch.Points[i];
-                point.Check("paint.point");
-                if (point.Z != 0) throw new InvalidDataException("Paint coordinates are XY only.");
-                vertices[i] = point.XY;
+                new Limit(-10000, 10000).Check(point.X, "paint.point.x");
+                new Limit(-10000, 10000).Check(point.Y, "paint.point.y");
+                vertices[i] = point;
             }
             if (!PolygonGeometry2D.IsConvexPerimeter(vertices, 1e-8d))
+            {
                 throw new InvalidDataException("Paint patches must be convex and have area.");
+            }
         }
     }
 }
 
-/// <summary>A cutout point follows a control frame with its rest offset; a rounded-curve point pins to the control position.</summary>
+/// <summary>One cutout point or Bézier handle follows a control frame with its rest offset; a rounded path point pins to the control position.</summary>
 public sealed record PartPointBinding
 {
     public int Point { get; set; }
@@ -84,90 +116,167 @@ public sealed record PartPointBinding
     public string? Toward { get; set; }
 }
 
-/// <summary>Stroke endpoints follow controls. Other shapes attach to A; B optionally points their local +Y axis.</summary>
+/// <summary>Curve endpoints follow controls. Shapes attach to A; B optionally points their local +Y axis.</summary>
 public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
-    [JsonIgnore]
-    public string Kind { get; set; } = PuppetPartKinds.Ellipse;
     /// <summary>The shape or curve attached to this part.</summary>
-    public GeometryDefinition2D? Geometry { get; set; }
+    public IGeometryValue2D? Geometry { get; set; }
     /// <summary>Authored drawing style.</summary>
     public RenderMaterialDefinition2D? Material { get; set; }
     public string A { get; set; } = "";
     public string? B { get; set; }
+
     /// <summary>Optional bone whose XY rotation carries this shape's local offset and direction.</summary>
     public string? Frame { get; set; }
     /// <summary>Additional shape rotation in its bone frame, in radians.</summary>
     public float Angle { get; set; }
+    /// <summary>Local geometry scale, applied before its attachment frame for every shape or curve.</summary>
     public float ScaleX { get; set; } = 1;
     public float ScaleY { get; set; } = 1;
-    public float Width { get; set; } = .4f;
-    public float Height { get; set; } = .4f;
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public float Depth { get; set; }
-    public List<PartPaint>? Paint { get; set; }
-    /// <summary>Cutout points follow attachment frames; rounded-curve points pin directly to named controls.</summary>
+
+    /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
     public List<PartPointBinding>? Bindings { get; set; }
-    /// <summary>Base sampling density for rounded curves; exact fillet boundaries are added by the curve library.</summary>
+    /// <summary>Optional sine bumps along a curve's normal, in units of its endpoint span. Negative bends to the other side.</summary>
+    public float WaveAmplitude { get; set; }
+    public float WaveCycles { get; set; } = 1;
+    /// <summary>Moving this control along the endpoint span moves the wave by the same distance.</summary>
+    public string? WavePhaseControl { get; set; }
+    /// <summary>Base sampling density for rounded paths; exact fillet boundaries are added by the curve library.</summary>
     public int CurveSections { get; set; } = 20;
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
+
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
     public bool Hidden { get; set; }
 
     [JsonIgnore]
-    public RenderMaterialDefinition2D RenderMaterial => Material
-        ?? throw new InvalidDataException($"Part '{Id}' needs a material.");
+    public RenderMaterialDefinition2D RenderMaterial => Material ?? throw new InvalidDataException($"Part '{Id}' needs a material.");
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
     {
-        if (A is null || !isControl(A)) throw new InvalidDataException("Unknown control: " + A);
-        if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
-        if (Frame is not null && !isControl(Frame)) throw new InvalidDataException("Unknown part frame: " + Frame);
-        if (Frame is not null && B is not null) throw new InvalidDataException("A part uses either a bone frame or a toward control.");
-        if (Geometry is not ShapeDefinition2D and not CurveDefinition2D)
-            throw new InvalidDataException("A part needs a shape or curve definition.");
-        if (Geometry is ShapeDefinition2D shape)
+        if (A is null || !isControl(A))
         {
-            var built = shape.Build();
-            if (WorldShape2D.OutlineVertexCount(built, 48) == 0)
-                throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
+            throw new InvalidDataException("Unknown control: " + A);
         }
-        if (Geometry is CurveDefinition2D curve) _ = curve.Build();
-        if (CurveSections is < 2 or > 128) throw new InvalidDataException("Curve sections must be between 2 and 128.");
-        if (Geometry is RoundedPolylineCurveDefinition2D { Points.Count: > 64 }) throw new InvalidDataException("A character curve supports at most 64 points.");
-        var linkedStroke = Geometry is CurveDefinition2D;
-        if (linkedStroke && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
-        if (linkedStroke && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
+        if (B is not null && !isControl(B))
+        {
+            throw new InvalidDataException("Unknown control: " + B);
+        }
+        if (Frame is not null && !isControl(Frame))
+        {
+            throw new InvalidDataException("Unknown part frame: " + Frame);
+        }
+        if (Frame is not null && B is not null)
+        {
+            throw new InvalidDataException("A part uses either a bone frame or a toward control.");
+        }
+        if (Geometry is not IShape2D and not ICurve2D)
+        {
+            throw new InvalidDataException("A part needs a shape or curve.");
+        }
+        if (Geometry is IShape2D shape)
+        {
+            var built = shape.Validated();
+            if (built.GetOutlineVertCount(48) == 0)
+            {
+                throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
+            }
+        }
+        if (Geometry is ICurve2D curve)
+        {
+            _ = curve.Validated();
+        }
+
+        if (CurveSections is < 2 or > 128)
+        {
+            throw new InvalidDataException("Curve sections must be between 2 and 128.");
+        }
+
+        if (Geometry is RoundedPolylineCurve2D rounded && rounded.Points.Length > 64)
+        {
+            throw new InvalidDataException("A character curve supports at most 64 points.");
+        }
+
+        var linkedCurve = Geometry is ICurve2D;
+        if (linkedCurve && (B is null || A == B))
+        {
+            throw new InvalidDataException("A linked curve needs two different controls.");
+        }
+
+        if (linkedCurve && Frame is not null)
+        {
+            throw new InvalidDataException("A linked curve cannot use a bone frame.");
+        }
+
+        new Limit(-1, 1).Check(WaveAmplitude, "part.waveAmplitude");
+        new Limit(.1f, 16).Check(WaveCycles, "part.waveCycles");
+        if ((WaveAmplitude != 0 || WavePhaseControl is not null) && !linkedCurve)
+        {
+            throw new InvalidDataException("Normal waves require a curve.");
+        }
+
+        if (WavePhaseControl is not null && !isControl(WavePhaseControl))
+        {
+            throw new InvalidDataException("Unknown wave phase control: " + WavePhaseControl);
+        }
+
         new Limit(-1000, 1000).Check(Angle, "part.angle");
-        new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
-        new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
+        new Limit(-100, 100).Check(OffsetX, "part.offsetX");
+        new Limit(-100, 100).Check(OffsetY, "part.offsetY");
         new Limit(-16, 16).Check(Depth, "part.depth");
-        if (Material is null) throw new InvalidDataException("A part needs a material.");
+        if (Material is null)
+        {
+            throw new InvalidDataException("A part needs a material.");
+        }
+
         Material.Validate("part.material");
-        if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY)) throw new InvalidDataException("Part scale must be finite.");
-        PartPaint.Check(Paint);
+        if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY))
+        {
+            throw new InvalidDataException("Part scale must be finite.");
+        }
+
         if (Bindings is { Count: > 0 })
         {
-            if (Geometry is not SimplePolygonShapeDefinition2D and not RoundedPolylineCurveDefinition2D)
-                throw new InvalidDataException("Point attachments require a cutout or rounded curve.");
-            var pointCount = Geometry is RoundedPolylineCurveDefinition2D rounded ? rounded.Points.Count : PartGeometry.CutoutPoints(this).Count;
+            var pointCount = Geometry switch
+            {
+                SimplePolygon2D polygon => polygon.Vertices.Length,
+                ICurve2D bezier => PartCurves2D.ControlPoints(bezier).Count,
+                _ => throw new InvalidDataException("Point attachments require a cutout or Bézier curve.")
+            };
             var seen = new HashSet<int>();
             foreach (var binding in Bindings)
             {
                 if (binding is null || binding.Point < 0 || binding.Point >= pointCount || !seen.Add(binding.Point))
+                {
                     throw new InvalidDataException("Point attachments need unique valid point indices.");
-                if (Geometry is RoundedPolylineCurveDefinition2D && binding.Toward is not null)
-                    throw new InvalidDataException("Curve points pin to controls; they do not use a toward frame.");
+                }
+
+                if (Geometry is RoundedPolylineCurve2D && binding.Toward is not null)
+                {
+                    throw new InvalidDataException("Rounded path points pin to controls; they do not use a toward frame.");
+                }
+
                 if (!isControl(binding.Control) || binding.Toward is not null && !isControl(binding.Toward))
-                    throw new InvalidDataException("Unknown cutout attachment control.");
-                if (binding.Control == binding.Toward) throw new InvalidDataException("An attachment must point toward a different control.");
+                {
+                    throw new InvalidDataException("Unknown point attachment control.");
+                }
+
+                if (binding.Control == binding.Toward)
+                {
+                    throw new InvalidDataException("An attachment must point toward a different control.");
+                }
             }
         }
-        if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
+        if (Face != "none" && !FaceExpressions.Contains(Face))
+        {
+            throw new InvalidDataException("Unknown part expression: " + Face);
+        }
+
         new Limit(-1, 1).Check(FaceX, "part.faceX");
     }
 }
@@ -200,7 +309,7 @@ public sealed record PuppetMotion
 public sealed class PuppetDefinition
 {
     public const string FormatId = "app2d-puppet";
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Name { get; set; } = "New character";
@@ -212,53 +321,75 @@ public sealed class PuppetDefinition
     public List<PuppetPart> Parts { get; set; } = [];
     public List<PuppetMotion> Motions { get; set; } = [new()];
     public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
-    { WriteIndented = true, UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, Converters = { new Vector2JsonConverter() } };
+    {
+        WriteIndented = true,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        Converters = { new Vector2JsonConverter() }
+    };
 
-    public string ToJson() => PartAssetJson.Write(this, Parts, JsonOptions);
+    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
     public static PuppetDefinition FromJson(string json)
     {
-        PartAssetJson.RequireTypedJson(json);
         var definition = JsonSerializer.Deserialize<PuppetDefinition>(json, JsonOptions) ?? throw new InvalidDataException("Empty puppet file.");
-        PartAssetJson.Restore(definition.Parts);
-        definition.Validate(); return definition;
+        definition.Validate();
+        return definition;
     }
     public void Save(string path)
     {
-        Validate(); IO.AtomicFile.WriteAllText(path, ToJson());
+        Validate();
+        AtomicFile.WriteAllText(path, ToJson());
     }
 
     public void Validate()
     {
-        void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
+        void Require([DoesNotReturnIf(false)] bool condition, string message)
+        {
+            if (!condition)
+            {
+                throw new InvalidDataException(message);
+            }
+        }
         void Number(float value, float min, float max, string field) => new Limit(min, max).Check(value, field);
         void Point(PuppetPoint point, string field) => point.Check(field);
         Require(Format == FormatId && Version == CurrentVersion, "Unsupported puppet format/version.");
         Require(!string.IsNullOrWhiteSpace(Name), "A character name is required.");
         Require(Controls is not null && Bones is not null && Chains is not null && Parts is not null && Motions is not null, "Puppet collections cannot be null.");
         Require(Controls.Count <= 256 && Parts.Count <= 512 && Motions.Count is > 0 and <= 128, "Puppet capacity exceeded or no motions defined.");
-        Limit.Color(Ink, "ink"); Number(LineWidth, .001f, 1, "lineWidth");
+        Limit.Color(Ink, "ink");
+        Number(LineWidth, .001f, 1, "lineWidth");
         var controls = new Dictionary<string, PuppetControl>(StringComparer.Ordinal);
         foreach (var control in Controls)
         {
             Require(control is not null && !string.IsNullOrWhiteSpace(control.Id), "Every control needs an ID.");
-            Require(controls.TryAdd(control.Id, control), "Duplicate control: " + control.Id); Point(control.Rest, control.Id);
+            Require(controls.TryAdd(control.Id, control), "Duplicate control: " + control.Id);
+            Point(control.Rest, control.Id);
         }
         void Reference(string? id) => Require(id is not null && controls.ContainsKey(id), "Unknown control: " + id);
         var parents = new Dictionary<string, string>();
         foreach (var bone in Bones)
         {
-            Require(bone is not null, "Null bone."); Reference(bone.From); Reference(bone.To);
+            Require(bone is not null, "Null bone.");
+            Reference(bone.From);
+            Reference(bone.To);
             Require(bone.From != bone.To && parents.TryAdd(bone.To, bone.From), "Bones must form a forest with one parent per control.");
         }
         foreach (var id in controls.Keys)
         {
-            var seen = new HashSet<string>(); var current = id;
-            while (parents.TryGetValue(current, out var parent)) { Require(seen.Add(current), "Bone cycle at " + current); current = parent; }
+            var seen = new HashSet<string>();
+            var current = id;
+            while (parents.TryGetValue(current, out var parent))
+            {
+                Require(seen.Add(current), "Bone cycle at " + current);
+                current = parent;
+            }
         }
         var solvedControls = new HashSet<string>();
         foreach (var chain in Chains)
         {
-            Require(chain is not null, "Null IK chain."); Reference(chain.Root); Reference(chain.Joint); Reference(chain.End);
+            Require(chain is not null, "Null IK chain.");
+            Reference(chain.Root);
+            Reference(chain.Joint);
+            Reference(chain.End);
             Require(chain.Bend is -1 or 1, "IK bend must be -1 or 1.");
             Require(parents.GetValueOrDefault(chain.Joint) == chain.Root && parents.GetValueOrDefault(chain.End) == chain.Joint, "IK needs two connected bones.");
             Require(solvedControls.Add(chain.Joint) && solvedControls.Add(chain.End), "IK chains cannot share solved controls.");
@@ -271,7 +402,11 @@ public sealed class PuppetDefinition
             while (true)
             {
                 Require(!solvedControls.Contains(current), "Nested IK chains are not supported yet.");
-                if (!parents.TryGetValue(current, out var parent)) break;
+                if (!parents.TryGetValue(current, out var parent))
+                {
+                    break;
+                }
+
                 current = parent;
             }
         }
@@ -285,19 +420,29 @@ public sealed class PuppetDefinition
         foreach (var motion in Motions)
         {
             Require(motion?.Keys is not null && motion.Contacts is not null, "Incomplete motion.");
-            Number(motion.Duration, .05f, 60, "motion.duration"); Require(motion.Keys.Count <= 4096, "Too many keys.");
+            Number(motion.Duration, .05f, 60, "motion.duration");
+            Require(motion.Keys.Count <= 4096, "Too many keys.");
             var previous = -1f;
             foreach (var key in motion.Keys)
             {
-                Require(key?.Points is not null, "Incomplete key."); Number(key.Time, 0, motion.Duration, "key.time");
-                Require(key.Time > previous, "Key times must be strictly increasing."); previous = key.Time; Point(key.Position, "key.position");
-                foreach (var (id, p) in key.Points) { Reference(id); Point(p, "key." + id); }
+                Require(key?.Points is not null, "Incomplete key.");
+                Number(key.Time, 0, motion.Duration, "key.time");
+                Require(key.Time > previous, "Key times must be strictly increasing.");
+                previous = key.Time;
+                Point(key.Position, "key.position");
+                foreach (var (id, p) in key.Points)
+                {
+                    Reference(id);
+                    Point(p, "key." + id);
+                }
             }
             foreach (var contact in motion.Contacts)
             {
                 Require(contact is not null && Chains.Any(c => c.End == contact.End), "Contacts need an IK end control.");
-                Number(contact.Start, 0, motion.Duration, "contact.start"); Number(contact.Finish, 0, motion.Duration, "contact.finish");
-                Require(contact.Finish > contact.Start, "Contact finish must follow its start."); Point(contact.Target, "contact.target");
+                Number(contact.Start, 0, motion.Duration, "contact.start");
+                Number(contact.Finish, 0, motion.Duration, "contact.finish");
+                Require(contact.Finish > contact.Start, "Contact finish must follow its start.");
+                Point(contact.Target, "contact.target");
             }
             foreach (var group in motion.Contacts.GroupBy(c => c.End))
             {
@@ -313,12 +458,17 @@ public sealed class PuppetDefinition
 
     public void RemoveControl(string id)
     {
-        Controls.RemoveAll(c => c.Id == id); Bones.RemoveAll(b => b.From == id || b.To == id);
+        Controls.RemoveAll(c => c.Id == id);
+        Bones.RemoveAll(b => b.From == id || b.To == id);
         Chains.RemoveAll(c => c.Root == id || c.Joint == id || c.End == id);
-        Parts.RemoveAll(p => p.A == id || p.B == id || p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true);
+        Parts.RemoveAll(p => p.A == id || p.B == id || p.WavePhaseControl == id || p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true);
         foreach (var motion in Motions)
         {
-            foreach (var key in motion.Keys) key.Points.Remove(id);
+            foreach (var key in motion.Keys)
+            {
+                key.Points.Remove(id);
+            }
+
             motion.Contacts.RemoveAll(c => !Chains.Any(chain => chain.End == c.End));
         }
     }

@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -46,7 +46,6 @@ public sealed class EditableTileMap2DTests
     {
         const TileKind2D grippableSolid = TileKind2D.Solid | TileKind2D.Grippable;
         var map = Seed(3, 1, 32f, 3, (x, _) => x < 2 ? grippableSolid : TileKind2D.Solid);
-
         Assert.True(map.IsSolid(0, 0));
         Assert.True(map.GetTileKind(0, 0).IsGrippable());
 

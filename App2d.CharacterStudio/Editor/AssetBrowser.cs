@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -14,9 +15,11 @@ namespace App2d.CharacterStudio.Editor;
 /// </summary>
 internal sealed partial class AssetBrowser(EditorSession session)
 {
-    private enum Create { None, Model, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip, ImportSpine }
+    private enum Create
+    {
+        None, Model, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip
+    }
     private string _modelTemplate = "empty";
-    private string _spineImages = "";
     private string _appearanceTemplate = "hair";
     private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Sources"];
     private string _search = "", _filter = "All";
@@ -35,74 +38,186 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
     public void Draw()
     {
-        if (ImGui.Button("New")) ImGui.OpenPopup("new-asset");
+        if (ImGui.Button("New"))
+        {
+            ImGui.OpenPopup("new-asset");
+        }
+
         if (ImGui.BeginPopup("new-asset"))
         {
-            if (ImGui.MenuItem("Appearance: hair / clothing...")) Start(Create.Appearance, "", "New appearance");
-            foreach (var template in CharacterTemplates.All)
-                if (ImGui.MenuItem("Model: " + template.Name + " template"))
-                { _modelTemplate = template.Id; Start(Create.Model, "", "New " + template.Name.ToLowerInvariant()); }
-            if (ImGui.MenuItem("Model: empty")) Start(Create.EmptyModel, "", "New model");
-            foreach (var template in session.Assets.ModelTemplates.Values.OrderBy(t => t.Name, StringComparer.Ordinal))
-                if (ImGui.MenuItem($"Model: {template.Name} template##{template.Id}")) Start(Create.TemplateModel, template.Id, "New " + template.Name);
-            var basis = session.Assets.BaseOf(session.SubjectId ?? "");
-            if (ImGui.MenuItem("Variant...", "", false, session.Assets.Models.Any())) Start(Create.Variant, basis ?? session.Assets.Models.First().Id, "New variant");
-            if (ImGui.MenuItem("Animation for " + (session.SubjectId ?? "subject") + "...", "", false, session.SubjectId is not null)) Start(Create.Animation, session.SubjectId!, "New animation");
-            if (ImGui.MenuItem("Entity from " + (session.SubjectId ?? "a model") + "...", "", false, session.Assets.Models.Any())) Start(Create.Entity, session.SubjectId ?? session.Assets.Models.First().Id, "New entity");
-            ImGui.Separator();
-            if (ImGui.MenuItem("Import .puppet.json...")) PickPuppet();
-            if (ImGui.MenuItem("Import Spine 4.2 JSON..."))
+            if (ImGui.MenuItem("Appearance: hair / clothing..."))
             {
-                using var dialog = new OpenFileDialog { Filter = "Spine JSON (*.json)|*.json", Title = "Import Spine 4.2" };
-                if (dialog.ShowDialog() == DialogResult.OK) { _spineImages = ""; Start(Create.ImportSpine, dialog.FileName, Path.GetFileNameWithoutExtension(dialog.FileName)); }
+                Start(Create.Appearance, "", "New appearance");
             }
-            if (ImGui.MenuItem("Convert imported motion...", "", false, session.Sources.Entries.Count > 0)) _filter = "Sources";
+
+            foreach (var template in CharacterTemplates.All)
+            {
+                if (ImGui.MenuItem("Model: " + template.Name + " template"))
+                {
+                    _modelTemplate = template.Id;
+                    Start(Create.Model, "", "New " + template.Name.ToLowerInvariant());
+                }
+            }
+
+            if (ImGui.MenuItem("Model: empty"))
+            {
+                Start(Create.EmptyModel, "", "New model");
+            }
+
+            foreach (var template in session.Assets.ModelTemplates.Values.OrderBy(t => t.Name, StringComparer.Ordinal))
+            {
+                if (ImGui.MenuItem($"Model: {template.Name} template##{template.Id}"))
+                {
+                    Start(Create.TemplateModel, template.Id, "New " + template.Name);
+                }
+            }
+
+            var basis = session.Assets.BaseOf(session.SubjectId ?? "");
+            if (ImGui.MenuItem("Variant...", "", false, session.Assets.Models.Any()))
+            {
+                Start(Create.Variant, basis ?? session.Assets.Models.First().Id, "New variant");
+            }
+
+            if (ImGui.MenuItem("Animation for " + (session.SubjectId ?? "subject") + "...", "", false, session.SubjectId is not null))
+            {
+                Start(Create.Animation, session.SubjectId!, "New animation");
+            }
+
+            if (ImGui.MenuItem("Entity from " + (session.SubjectId ?? "a model") + "...", "", false, session.Assets.Models.Any()))
+            {
+                Start(Create.Entity, session.SubjectId ?? session.Assets.Models.First().Id, "New entity");
+            }
+
+            ImGui.Separator();
+            if (ImGui.MenuItem("Import .puppet.json..."))
+            {
+                PickPuppet();
+            }
+
+            if (ImGui.MenuItem("Convert imported motion...", "", false, session.Sources.Entries.Count > 0))
+            {
+                _filter = "Sources";
+            }
+
             ImGui.EndPopup();
         }
-        ImGui.SameLine(); ImGui.SetNextItemWidth(-1); ImGui.InputTextWithHint("##search", "Search names and ids", ref _search, 64);
-        for (var i = 0; i < Filters.Length; i++) { if (ImGui.RadioButton(Filters[i], _filter == Filters[i])) _filter = Filters[i]; if (i % 2 == 0) ImGui.SameLine(); }
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(-1);
+        ImGui.InputTextWithHint("##search", "Search names and ids", ref _search, 64);
+        for (var i = 0; i < Filters.Length; i++)
+        {
+            if (ImGui.RadioButton(Filters[i], _filter == Filters[i]))
+            {
+                _filter = Filters[i];
+            }
+
+            if (i % 2 == 0)
+            {
+                ImGui.SameLine();
+            }
+        }
         RefreshProblems();
         ImGui.BeginChild("assets");
-        if (_filter == "Sources") { Sources(); ImGui.EndChild(); return; }
+        if (_filter == "Sources")
+        {
+            Sources();
+            ImGui.EndChild();
+            return;
+        }
         if (_filter == "All" && _search.Length == 0)
         {
             foreach (var model in session.Assets.Models.OrderBy(m => m.Name))
             {
                 Row(model, 0);
-                foreach (var variant in session.Assets.Variants.Where(v => v.Asset.Base == model.Id).OrderBy(v => v.Name)) Row(variant, 1);
-                foreach (var clip in session.Assets.Clips.Where(c => c.Asset.Model == model.Id).OrderBy(c => c.Name)) Row(clip, 1);
-                foreach (var entity in session.Assets.EntitiesOn(model.Id).OrderBy(e => e.Name)) Row(entity, 1);
+                foreach (var variant in session.Assets.Variants.Where(v => v.Asset.Base == model.Id).OrderBy(v => v.Name))
+                {
+                    Row(variant, 1);
+                }
+
+                foreach (var clip in session.Assets.Clips.Where(c => c.Asset.Model == model.Id).OrderBy(c => c.Name))
+                {
+                    Row(clip, 1);
+                }
+
+                foreach (var entity in session.Assets.EntitiesOn(model.Id).OrderBy(e => e.Name))
+                {
+                    Row(entity, 1);
+                }
             }
         }
         else
         {
-            foreach (var document in session.Assets.Documents.Where(Matches).OrderBy(d => d.Kind).ThenBy(d => d.Name)) Row(document, 0);
+            foreach (var document in session.Assets.Documents.Where(Matches).OrderBy(d => d.Kind).ThenBy(d => d.Name))
+            {
+                Row(document, 0);
+            }
         }
         // Assets whose base is missing still belong somewhere visible, so they can be repaired.
         var orphans = session.Assets.Documents.Where(d => d.Kind is AssetKind.Variant or AssetKind.Animation && session.Assets.Model(session.Assets.BaseOf(d.Id)) is null
             || d is AssetDocument<EntityAsset> e && session.Assets.Model(session.Assets.BaseOf(e.Asset.Model)) is null).ToArray();
-        if (orphans.Length > 0 && _filter == "All" && _search.Length == 0) { Ui.Header("Missing base"); foreach (var orphan in orphans) Row(orphan, 0); }
-        if (_filter == "All" && _search.Length == 0 && session.Assets.Props.Any()) { Ui.Header("Props"); foreach (var prop in session.Assets.Props.OrderBy(p => p.Name)) Row(prop, 0); }
-        if (session.Assets.LoadErrors.Count > 0) { Ui.Header("Unreadable files"); foreach (var error in session.Assets.LoadErrors) Ui.Problem(error); }
+        if (orphans.Length > 0 && _filter == "All" && _search.Length == 0)
+        {
+            Ui.Header("Missing base");
+            foreach (var orphan in orphans)
+            {
+                Row(orphan, 0);
+            }
+        }
+        if (_filter == "All" && _search.Length == 0 && session.Assets.Props.Any())
+        {
+            Ui.Header("Props");
+            foreach (var prop in session.Assets.Props.OrderBy(p => p.Name))
+            {
+                Row(prop, 0);
+            }
+        }
+        if (session.Assets.LoadErrors.Count > 0)
+        {
+            Ui.Header("Unreadable files");
+            foreach (var error in session.Assets.LoadErrors)
+            {
+                Ui.Problem(error);
+            }
+        }
         ImGui.EndChild();
     }
 
     private void Sources()
     {
-        if (session.Sources.Entries.Count == 0) { Ui.Help("No imported libraries: the characters catalog lists none."); return; }
+        if (session.Sources.Entries.Count == 0)
+        {
+            Ui.Help("No imported libraries: the characters catalog lists none.");
+            return;
+        }
         Ui.Help("Imported motion, read-only. Choose a clip to convert it onto a model through an explicit mapping.");
         foreach (var entry in session.Sources.Entries)
         {
-            if (!ImGui.TreeNode($"{entry.Label} ({entry.ClipCount})##{entry.Id}")) continue;
+            if (!ImGui.TreeNode($"{entry.Label} ({entry.ClipCount})##{entry.Id}"))
+            {
+                continue;
+            }
+
             PointLibrary? library = null;
-            try { session.Sources.TryGet(entry.Id, out library); }
-            catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException) { Ui.Problem(ex.Message); }
+            try
+            {
+                session.Sources.TryGet(entry.Id, out library);
+            }
+            catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException)
+            {
+                Ui.Problem(ex.Message);
+            }
             foreach (var clip in library?.Clips.Values.Where(c => _search.Length == 0 || c.Label.Contains(_search, StringComparison.OrdinalIgnoreCase) || c.Id.Contains(_search, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(c => c.Category, StringComparer.Ordinal).ThenBy(c => c.Label, StringComparer.Ordinal) ?? Enumerable.Empty<PointClip>())
             {
-                if (ImGui.Selectable($"{clip.Label}##{clip.Id}")) StartImport(library!, clip.Id);
+                if (ImGui.Selectable($"{clip.Label}##{clip.Id}"))
+                {
+                    StartImport(library!, clip.Id);
+                }
+
                 if (ImGui.IsItemHovered())
+                {
                     ImGui.SetTooltip($"{entry.Id}/{clip.Id}\n{clip.Category}, {clip.Duration:F2} s{(clip.Loop ? ", loops" : "")}{(clip.Placeholder ? ", placeholder" : "")}" + (clip.Warnings.Count > 0 ? "\n\n" + string.Join("\n", clip.Warnings) : ""));
+                }
             }
             ImGui.TreePop();
         }
@@ -111,10 +226,16 @@ internal sealed partial class AssetBrowser(EditorSession session)
     private void StartImport(PointLibrary library, string clip)
     {
         var models = session.Assets.Models.Select(m => m.Id).Order(StringComparer.Ordinal).ToArray();
-        if (models.Length == 0) { session.Report("Create or import a base model first; imported motion converts onto a model.", true); return; }
+        if (models.Length == 0)
+        {
+            session.Report("Create or import a base model first; imported motion converts onto a model.", true);
+            return;
+        }
         var target = new[] { library.Anatomy, session.Assets.BaseOf(session.SubjectId ?? "") }.FirstOrDefault(id => id is not null && models.Contains(id)) ?? models[0];
         Start(Create.ImportClip, library.Id + "/" + clip, library.Clips[clip].Label);
-        _library = library.Id; _clip = clip; _rest = LibraryImport.DefaultRest(library, clip);
+        _library = library.Id;
+        _clip = clip;
+        _rest = LibraryImport.DefaultRest(library, clip);
         Target(target);
     }
 
@@ -127,36 +248,81 @@ internal sealed partial class AssetBrowser(EditorSession session)
     private void PickPuppet()
     {
         using var dialog = new OpenFileDialog { Filter = "Puppet character (*.puppet.json)|*.puppet.json|JSON (*.json)|*.json", Title = "Import a puppet character" };
-        if (dialog.ShowDialog() != DialogResult.OK) return;
-        try { _puppet = PuppetDefinition.FromJson(File.ReadAllText(dialog.FileName)); }
-        catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException or UnauthorizedAccessException) { session.Report($"{Path.GetFileName(dialog.FileName)}: {ex.Message}", true); return; }
+        if (dialog.ShowDialog() != DialogResult.OK)
+        {
+            return;
+        }
+
+        try
+        {
+            _puppet = PuppetDefinition.FromJson(File.ReadAllText(dialog.FileName));
+        }
+        catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException or UnauthorizedAccessException)
+        {
+            session.Report($"{Path.GetFileName(dialog.FileName)}: {ex.Message}", true);
+            return;
+        }
         Start(Create.ImportPuppet, dialog.FileName, _puppet.Name);
     }
 
     private bool Matches(AssetDocument document) =>
-        (_filter == "All" || _filter == document.Kind switch { AssetKind.Model => "Models", AssetKind.Variant => "Variants", AssetKind.Animation => "Animations", AssetKind.Entity => "Entities", _ => "Props" }) &&
+        (_filter == "All" || _filter == document.Kind switch
+        {
+            AssetKind.Model => "Models",
+            AssetKind.Variant => "Variants",
+            AssetKind.Animation => "Animations",
+            AssetKind.Entity => "Entities",
+            _ => "Props"
+        }) &&
         (document.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || document.Id.Contains(_search, StringComparison.OrdinalIgnoreCase));
 
     private void RefreshProblems()
     {
         var revision = session.Assets.Revision;
-        if (revision == _problemsFor) return;
-        _problems.Clear(); _problemsFor = revision;
-        foreach (var document in session.Assets.Documents) _problems[document.Id] = session.Assets.Problems(document);
+        if (revision == _problemsFor)
+        {
+            return;
+        }
+
+        _problems.Clear();
+        _problemsFor = revision;
+        foreach (var document in session.Assets.Documents)
+        {
+            _problems[document.Id] = session.Assets.Problems(document);
+        }
     }
 
     private void Row(AssetDocument document, int indent)
     {
         ImGui.PushID(document.Id);
         var problems = _problems.GetValueOrDefault(document.Id) ?? [];
-        var tag = document.Kind switch { AssetKind.Model => "[M]", AssetKind.Variant => "[V]", AssetKind.Animation => "[A]", AssetKind.Entity => "[E]", _ => "[P]" };
+        var tag = document.Kind switch
+        {
+            AssetKind.Model => "[M]",
+            AssetKind.Variant => "[V]",
+            AssetKind.Animation => "[A]",
+            AssetKind.Entity => "[E]",
+            _ => "[P]"
+        };
         var label = $"{new string(' ', indent * 3)}{tag} {document.Name}{(document.Dirty || document.IsNew ? " *" : "")}";
         var selected = document.Id == session.SubjectId && session.Mode == Workspace.Model || document.Id == session.ClipId && session.Mode == Workspace.Animate
             || document.Id == session.EntityId && session.Mode == Workspace.Entity
             || document.Id == session.PreviewProp && session.Mode == Workspace.Appearance;
-        if (problems.Count > 0) ImGui.PushStyleColor(ImGuiCol.Text, Ui.Warning);
-        if (ImGui.Selectable(label, selected)) session.Open(document.Id);
-        if (problems.Count > 0) ImGui.PopStyleColor();
+        if (problems.Count > 0)
+        {
+            ImGui.PushStyleColor(ImGuiCol.Text, UiTheme.Warning);
+        }
+
+        if (ImGui.Selectable(label, selected))
+        {
+            session.Open(document.Id);
+        }
+
+        if (problems.Count > 0)
+        {
+            ImGui.PopStyleColor();
+        }
+
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip($"{document.Id}\n{document.Path ?? "not saved yet"}" + (SourceOf(document) is { } source ? $"\nconverted from {source.File}{(source.Motion is null ? "" : ": " + source.Motion)}" : "")
@@ -168,29 +334,81 @@ internal sealed partial class AssetBrowser(EditorSession session)
             switch (document)
             {
                 case AssetDocument<PropAsset> art when art.Asset.Usage != "prop":
-                    if (ImGui.MenuItem("Duplicate appearance")) Start(Create.DuplicateAppearance, art.Id, art.Name + " copy");
+                    if (ImGui.MenuItem("Duplicate appearance"))
+                    {
+                        Start(Create.DuplicateAppearance, art.Id, art.Name + " copy");
+                    }
+
                     break;
                 case AssetDocument<CharacterModel> model:
-                    if (ImGui.MenuItem("New variant of this")) Start(Create.Variant, model.Id, model.Name + " variant");
-                    if (ImGui.MenuItem("New animation for this")) { session.Open(model.Id); Start(Create.Animation, model.Id, "New animation"); }
-                    if (ImGui.MenuItem("Create entity from this model")) Start(Create.Entity, model.Id, model.Name + " entity");
+                    if (ImGui.MenuItem("New variant of this"))
+                    {
+                        Start(Create.Variant, model.Id, model.Name + " variant");
+                    }
+
+                    if (ImGui.MenuItem("New animation for this"))
+                    {
+                        session.Open(model.Id);
+                        Start(Create.Animation, model.Id, "New animation");
+                    }
+                    if (ImGui.MenuItem("Create entity from this model"))
+                    {
+                        Start(Create.Entity, model.Id, model.Name + " entity");
+                    }
+
                     break;
                 case AssetDocument<ModelVariant> variant:
-                    if (ImGui.MenuItem("Open base", "", false, session.Assets.Model(variant.Asset.Base) is not null)) session.Open(variant.Asset.Base);
-                    if (ImGui.MenuItem("Duplicate variant")) Start(Create.DuplicateVariant, variant.Id, variant.Name + " copy");
-                    if (ImGui.MenuItem("Make independent model")) Start(Create.Independent, variant.Id, variant.Name + " model");
-                    if (ImGui.MenuItem("Create entity from this variant")) Start(Create.Entity, variant.Id, variant.Name + " entity");
+                    if (ImGui.MenuItem("Open base", "", false, session.Assets.Model(variant.Asset.Base) is not null))
+                    {
+                        session.Open(variant.Asset.Base);
+                    }
+
+                    if (ImGui.MenuItem("Duplicate variant"))
+                    {
+                        Start(Create.DuplicateVariant, variant.Id, variant.Name + " copy");
+                    }
+
+                    if (ImGui.MenuItem("Make independent model"))
+                    {
+                        Start(Create.Independent, variant.Id, variant.Name + " model");
+                    }
+
+                    if (ImGui.MenuItem("Create entity from this variant"))
+                    {
+                        Start(Create.Entity, variant.Id, variant.Name + " entity");
+                    }
+
                     break;
                 case AssetDocument<MotionClip> clip:
-                    if (ImGui.MenuItem("Duplicate animation")) Start(Create.DuplicateAnimation, clip.Id, clip.Name + " copy");
+                    if (ImGui.MenuItem("Duplicate animation"))
+                    {
+                        Start(Create.DuplicateAnimation, clip.Id, clip.Name + " copy");
+                    }
+
                     break;
                 case AssetDocument<EntityAsset> entity:
-                    if (ImGui.MenuItem("Open model", "", false, session.Assets.Find(entity.Asset.Model) is not null)) session.Open(entity.Asset.Model);
-                    if (ImGui.MenuItem("Duplicate entity")) Start(Create.DuplicateEntity, entity.Id, entity.Name + " copy");
+                    if (ImGui.MenuItem("Open model", "", false, session.Assets.Find(entity.Asset.Model) is not null))
+                    {
+                        session.Open(entity.Asset.Model);
+                    }
+
+                    if (ImGui.MenuItem("Duplicate entity"))
+                    {
+                        Start(Create.DuplicateEntity, entity.Id, entity.Name + " copy");
+                    }
+
                     break;
             }
-            if (document.Kind is AssetKind.Model or AssetKind.Variant && ImGui.MenuItem("Pin to compare", "", false, document.Id != session.SubjectId)) session.Pin(document.Id);
-            if (document.IsNew && ImGui.MenuItem("Discard (never saved)")) session.Discard(document.Id);
+            if (document.Kind is AssetKind.Model or AssetKind.Variant && ImGui.MenuItem("Pin to compare", "", false, document.Id != session.SubjectId))
+            {
+                session.Pin(document.Id);
+            }
+
+            if (document.IsNew && ImGui.MenuItem("Discard (never saved)"))
+            {
+                session.Discard(document.Id);
+            }
+
             ImGui.EndPopup();
         }
         ImGui.PopID();
@@ -205,20 +423,43 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
     private void Start(Create kind, string source, string name)
     {
-        _create = kind; _source = source; _name = name; _idEdited = false; _id = session.Assets.SuggestId(Slug(name)); _open = true;
-        _preset = ""; _duration = 1; _loop = true;
+        _create = kind;
+        _source = source;
+        _name = name;
+        _idEdited = false;
+        _id = session.Assets.SuggestId(Slug(name));
+        _open = true;
+        _preset = "";
+        _duration = 1;
+        _loop = true;
     }
 
-    private static string Slug(string name) { var slug = NotId().Replace(name.ToLowerInvariant(), "-").Trim('-'); return slug.Length == 0 ? "asset" : slug[..Math.Min(slug.Length, 60)]; }
+    private static string Slug(string name)
+    {
+        var slug = NotId().Replace(name.ToLowerInvariant(), "-").Trim('-');
+        return slug.Length == 0 ? "asset" : slug[..Math.Min(slug.Length, 60)];
+    }
 
     /// <summary>Drawn at the end of the frame so the modal sits above every panel.</summary>
     public void DrawDialogs()
     {
-        if (_create == Create.None) return;
+        if (_create == Create.None)
+        {
+            return;
+        }
+
         const string title = "New asset";
-        if (_open) { ImGui.OpenPopup(title); _open = false; }
-        if (!ImGui.BeginPopupModal(title, ImGuiWindowFlags.AlwaysAutoResize)) { _create = Create.None; return; }
-        ImGui.TextColored(Ui.Accent, _create switch
+        if (_open)
+        {
+            ImGui.OpenPopup(title);
+            _open = false;
+        }
+        if (!ImGui.BeginPopupModal(title, ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            _create = Create.None;
+            return;
+        }
+        ImGui.TextColored(UiTheme.Accent, _create switch
         {
             Create.Appearance => "New hair or clothing",
             Create.DuplicateAppearance => "Duplicate appearance " + _source,
@@ -236,9 +477,17 @@ internal sealed partial class AssetBrowser(EditorSession session)
             _ => "Duplicate entity " + _source,
         });
         ImGui.SetNextItemWidth(320 * Ui.Scale);
-        if (Ui.Text("Name", ref _name, 100) && !_idEdited) _id = session.Assets.SuggestId(Slug(_name));
+        if (Ui.Text("Name", ref _name, 100) && !_idEdited)
+        {
+            _id = session.Assets.SuggestId(Slug(_name));
+        }
+
         ImGui.SetNextItemWidth(320 * Ui.Scale);
-        if (Ui.Text("ID (file name and stable reference)", ref _id, 64)) _idEdited = true;
+        if (Ui.Text("ID (file name and stable reference)", ref _id, 64))
+        {
+            _idEdited = true;
+        }
+
         switch (_create)
         {
             case Create.Model:
@@ -246,32 +495,56 @@ internal sealed partial class AssetBrowser(EditorSession session)
                 break;
             case Create.TemplateModel:
                 var recipe = session.Assets.ModelTemplates[_source];
-                if (recipe.Description.Length > 0) Ui.Help(recipe.Description);
+                if (recipe.Description.Length > 0)
+                {
+                    Ui.Help(recipe.Description);
+                }
+
                 Ui.Help($"Copies {recipe.Model} and {recipe.Animations.Count} animation(s) into independent drafts. Save all to keep the bundle.");
                 break;
             case Create.Appearance:
-                if (Ui.Combo("Starting shape", _appearanceTemplate, AppearanceAuthoring.Templates) is { } artTemplate) _appearanceTemplate = artTemplate;
+                if (Ui.Combo("Starting shape", _appearanceTemplate, AppearanceAuthoring.Templates) is { } artTemplate)
+                {
+                    _appearanceTemplate = artTemplate;
+                }
+
                 Ui.Help("Edit the silhouette on a character, then equip and save it. For a torso-fitted tunic, edit the body's fill and fabric paint in Model.");
                 break;
             case Create.Variant:
-                if (Ui.Combo("Base model", _source, session.Assets.Models.Select(m => m.Id)) is { } basis) { _source = basis; _preset = ""; }
+                if (Ui.Combo("Base model", _source, session.Assets.Models.Select(m => m.Id)) is { } basis)
+                {
+                    _source = basis;
+                    _preset = "";
+                }
                 if (session.Assets.Model(_source) is { } model && BuildRules.For(model.Asset) is { } rule)
                 {
                     var presets = rule.Presets.Select(p => p.Id).Prepend("").ToArray();
-                    if (Ui.Combo("Starting build", _preset, presets, id => id.Length == 0 ? "Base proportions" : rule.Presets.First(p => p.Id == id).Name) is { } preset) _preset = preset;
+                    if (Ui.Combo("Starting build", _preset, presets, id => id.Length == 0 ? "Base proportions" : rule.Presets.First(p => p.Id == id).Name) is { } preset)
+                    {
+                        _preset = preset;
+                    }
                 }
                 break;
             case Create.Animation:
                 Ui.Help($"Authored against {_source}'s proportions for preview; plays on every build of {session.Assets.BaseOf(_source)}.");
-                Ui.Drag("Duration (seconds)", ref _duration, .01f, .05f, 60); ImGui.Checkbox("Loop", ref _loop);
+                Ui.Drag("Duration (seconds)", ref _duration, .01f, .05f, 60);
+                ImGui.Checkbox("Loop", ref _loop);
                 break;
             case Create.Independent:
                 Ui.Help("Flattens the resolved variant into a new base with structure revision 1. Animations are not carried over: copy or convert them explicitly.");
                 break;
             case Create.Entity:
                 var subjects = session.Assets.Models.Select(m => m.Id).Concat(session.Assets.Variants.Select(v => v.Id)).Order(StringComparer.Ordinal);
-                if (Ui.Combo("Model or variant", _source, subjects, id => session.Assets.Find(id)?.Name is { } n ? $"{n} ({id})" : id) is { } subject) _source = subject;
-                if (Ui.Combo("Gameplay template", _template, EntityAuthoring.Templates.Select(t => t.Id), id => EntityAuthoring.Templates.First(t => t.Id == id).Name) is { } template) _template = template;
+                if (Ui.Combo("Model or variant", _source, subjects, id => session.Assets.Find(id)?.Name is { } n ? $"{n} ({id})" : id) is { } subject)
+                {
+                    _source = subject;
+                }
+
+                if (Ui.Combo("Gameplay template", _template, EntityAuthoring.Templates.Select(t => t.Id), id => EntityAuthoring.Templates.First(t => t.Id == id).Name) is { } template)
+                {
+                    _template = template;
+                }
+
                 Ui.Help(EntityAuthoring.Templates.First(t => t.Id == _template).Description + " The template copies defaults; the entity keeps no link to it.");
                 break;
             case Create.DuplicateEntity:
@@ -284,15 +557,28 @@ internal sealed partial class AssetBrowser(EditorSession session)
             case Create.ImportClip:
                 ImportFields();
                 break;
-            case Create.ImportSpine:
-                Ui.Help("Creates a new model and animations from Spine 4.2 region attachments. Source files remain untouched. Unsupported features are reported before drafts are created.");
-                Ui.Text("Images directory (optional)", ref _spineImages, 512);
-                break;
         }
-        if (session.Assets.Exists(_id)) Ui.Problem($"The id '{_id}' is already used.");
-        if (ImGui.Button("Create") && Commit()) { _create = Create.None; ImGui.CloseCurrentPopup(); }
-        ImGui.SameLine(); if (ImGui.Button("Cancel")) { _create = Create.None; ImGui.CloseCurrentPopup(); }
-        if (session.MessageIsError) Ui.Problem(session.Message);
+        if (session.Assets.Exists(_id))
+        {
+            Ui.Problem($"The id '{_id}' is already used.");
+        }
+
+        if (ImGui.Button("Create") && Commit())
+        {
+            _create = Create.None;
+            ImGui.CloseCurrentPopup();
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("Cancel"))
+        {
+            _create = Create.None;
+            ImGui.CloseCurrentPopup();
+        }
+        if (session.MessageIsError)
+        {
+            Ui.Problem(session.Message);
+        }
+
         ImGui.EndPopup();
     }
 
@@ -311,7 +597,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
         Create.Entity => session.NewEntity(_id, _name, _source, _template),
         Create.DuplicateEntity => session.DuplicateEntity(_source, _id, _name),
         Create.ImportPuppet => session.ImportPuppet(_source, _id, _name),
-        Create.ImportSpine => session.ImportSpine(_source, _id, _name, _spineImages.Length == 0 ? null : _spineImages),
         Create.ImportClip => session.ImportLibraryClip(_library, _clip, _target, _mapping, _id, _name, _rest),
         _ => false,
     };
@@ -319,21 +604,46 @@ internal sealed partial class AssetBrowser(EditorSession session)
     private void ImportFields()
     {
         Ui.Help("Motion is copied as offsets from the reference frame, scaled by each measure, so the model keeps its own proportions. The library is not changed; the mapping is saved with the clip.");
-        if (Ui.Combo("Onto base model", _target, session.Assets.Models.Select(m => m.Id).Order(StringComparer.Ordinal), id => session.Assets.Find(id)?.Name is { } n ? $"{n} ({id})" : id) is { } target) Target(target);
-        if (!session.Sources.TryGet(_library, out var library) || session.Assets.Model(_target) is not { } model) return;
-        if (Ui.Combo("Reference clip (its first frame is the model's rest)", _rest, library.Clips.Keys.Order(StringComparer.Ordinal)) is { } rest) _rest = rest;
+        if (Ui.Combo("Onto base model", _target, session.Assets.Models.Select(m => m.Id).Order(StringComparer.Ordinal), id => session.Assets.Find(id)?.Name is { } n ? $"{n} ({id})" : id) is { } target)
+        {
+            Target(target);
+        }
+
+        if (!session.Sources.TryGet(_library, out var library) || session.Assets.Model(_target) is not { } model)
+        {
+            return;
+        }
+
+        if (Ui.Combo("Reference clip (its first frame is the model's rest)", _rest, library.Clips.Keys.Order(StringComparer.Ordinal)) is { } rest)
+        {
+            _rest = rest;
+        }
+
         var controls = model.Asset.Controls;
         ImGui.TextDisabled($"{controls.Count(c => _mapping.ContainsKey(c.Id))} of {controls.Count} controls follow source points; the others keep their rest offset. IK joints only measure.");
         ImGui.BeginChild("mapping", new(460 * Ui.Scale, 230 * Ui.Scale), ImGuiChildFlags.Borders);
         foreach (var control in controls)
         {
             ImGui.PushID(control.Id);
-            ImGui.TextUnformatted(control.Id); ImGui.SameLine(150 * Ui.Scale); ImGui.SetNextItemWidth(-1);
+            ImGui.TextUnformatted(control.Id);
+            ImGui.SameLine(150 * Ui.Scale);
+            ImGui.SetNextItemWidth(-1);
             var current = _mapping.TryGetValue(control.Id, out var points) ? string.Join(" + ", points) : "(rest)";
             if (ImGui.BeginCombo("##map", current))
             {
-                if (ImGui.Selectable("(rest)", points is null)) _mapping.Remove(control.Id);
-                foreach (var name in library.PointNames) if (ImGui.Selectable(name, points is [var only] && only == name)) _mapping[control.Id] = [name];
+                if (ImGui.Selectable("(rest)", points is null))
+                {
+                    _mapping.Remove(control.Id);
+                }
+
+                foreach (var name in library.PointNames)
+                {
+                    if (ImGui.Selectable(name, points is [var only] && only == name))
+                    {
+                        _mapping[control.Id] = [name];
+                    }
+                }
+
                 ImGui.EndCombo();
             }
             ImGui.PopID();

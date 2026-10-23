@@ -1,6 +1,9 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Operations.Transforms;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
@@ -22,15 +25,22 @@ public sealed class AuthoredHero2D
     public AuthoredHero2D(ResolvedEntity entity, Vector2 colliderSize)
     {
         Entity = entity;
-        if (entity.Controller.Id != EntityControllers.Traversal) throw new InvalidDataException($"Entity '{entity.Id}' must use the '{EntityControllers.Traversal}' controller to drive the game's player.");
+        if (entity.Controller.Id != EntityControllers.Traversal)
+        {
+            throw new InvalidDataException($"Entity '{entity.Id}' must use the '{EntityControllers.Traversal}' controller to drive the game's player.");
+        }
+
         Attack = entity.Actions.GetValueOrDefault(EntityControllers.Attack) ?? throw new InvalidDataException($"Entity '{entity.Id}' has no attack action.");
         WorldUnitsPerModelUnit = colliderSize.Y / entity.Model.DrawnHeight();
         _halfHeight = colliderSize.Y / 2;
         for (var swing = Attack; swing is not null && !_shapes.ContainsKey(swing.Id); swing = swing.Next is { } next ? entity.Actions[next] : null)
         {
             if (swing.Hits is not [{ Window: { Socket: null, Prop: null } } hit])
+            {
                 throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window, fixed to the actor (no socket or prop): the player's sword hit is a box on the player.");
-            _shapes[swing.Id] = WorldShape2D.Scaled(hit.Shape, WorldUnitsPerModelUnit);
+            }
+
+            _shapes[swing.Id] = ShapeTransforms2D.Scaled(hit.Shape, WorldUnitsPerModelUnit);
         }
     }
 
@@ -48,9 +58,13 @@ public sealed class AuthoredHero2D
     /// </summary>
     internal MeleeAttackProfile2D Profile(string? id)
     {
-        var swing = Swing(id); var hit = swing.Hits[0];
+        var swing = Swing(id);
+        var hit = swing.Hits[0];
         var centre = ToWorld(new(hit.Window.OffsetX, hit.Window.OffsetY));
-        return new(swing.Clip.Duration, hit.Start, hit.Finish, swing.Clip.Duration, centre.X, centre.Y) { Shape = _shapes[swing.Id] };
+        return new(swing.Clip.Duration, hit.Start, hit.Finish, swing.Clip.Duration, centre.X, centre.Y)
+        {
+            Shape = _shapes[swing.Id]
+        };
     }
 
     /// <summary>
@@ -59,7 +73,11 @@ public sealed class AuthoredHero2D
     /// </summary>
     public string Chain(string? last, float sinceEnd)
     {
-        if (last is null || Swing(last).Next is not { } next) return Attack.Id;
+        if (last is null || Swing(last).Next is not { } next)
+        {
+            return Attack.Id;
+        }
+
         var recovery = Swing(last).Recovery;
         var window = recovery is null ? 0 : recovery.Markers.FirstOrDefault(m => m.Id == PersonLoadout.SheatheMarker)?.Time ?? recovery.Duration;
         return sinceEnd <= window ? next : Attack.Id;
@@ -67,7 +85,7 @@ public sealed class AuthoredHero2D
 
     /// <summary>The player's bolt from the shoot action's projectile, in world units.</summary>
     internal GunPersonWeapon2D.Shot? Shot => Entity.Actions.GetValueOrDefault(EntityControllers.Shoot)?.Projectile is { } p
-        ? new(ShapeBounds2D.Calculate(p.Shape.Build()).Size * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, p.Damage) : null;
+        ? new(ShapeBounds2D.Calculate(p.Shape.Validated()).Size * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, p.Damage) : null;
 
     /// <summary>Where a shot leaves the pistol: the muzzle at the shoot (or wall-shot) action's fire event.</summary>
     public Vector2 Muzzle(float facing, bool wallGrip)
@@ -82,7 +100,10 @@ public sealed class AuthoredHero2D
     }
 
     private ActorPose Pose(MotionClip clip, float seconds, float facing) =>
-        new(PoseEvaluator.Sample(Entity.Model, clip, Math.Clamp(seconds, 0, clip.Duration), input: new() { InPlace = true }), Vector2.Zero, facing < 0 ? -1 : 1);
+        new(PoseEvaluator.Sample(Entity.Model, clip, Math.Clamp(seconds, 0, clip.Duration), input: new()
+        {
+            InPlace = true
+        }), Vector2.Zero, facing < 0 ? -1 : 1);
 
     private Vector2 ToWorld(Vector2 units) => units * WorldUnitsPerModelUnit - new Vector2(0, _halfHeight);
 }

@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -43,7 +43,7 @@ public sealed class Grid2D<T>
     public Span<T> AsSpan() => _values;
     public Span<T> GetRowSpan(int y)
     {
-        ArgGuard.ThrowIfNotInClosedRange(y, 0, Height - 1);
+        ArgGuard.InRange(y, 0, Height - 1);
         return _values.AsSpan(y * Width, Width);
     }
 
@@ -51,7 +51,11 @@ public sealed class Grid2D<T>
     public void Clear() => _values.AsSpan().Clear();
     public Rect2D GetCellBounds(GridCell2D cell)
     {
-        if (!Size.Contains(cell)) ArgGuard.ThrowOutOfRange(cell, "Cell must be inside the grid.");
+        if (!Size.Contains(cell))
+        {
+            ArgGuard.ThrowOutOfRange(cell, "Cell must be inside the grid.");
+        }
+
         return Geometry.GetCellBounds(cell);
     }
     public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2D => Geometry.GetCellRange(bounds, Size);

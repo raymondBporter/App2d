@@ -1,5 +1,7 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.IO;
+using App2d.Core.Rendering;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -12,25 +14,31 @@ public static class EntityVocabulary
     public static void Require(string? value, IReadOnlyList<string> allowed, string field)
     {
         if (value is null || !allowed.Contains(value, StringComparer.Ordinal))
+        {
             throw new InvalidDataException($"{field} must be one of {string.Join(", ", allowed)}; found '{value}'.");
+        }
     }
 }
 
 /// <summary>An authored value's accepted range. The soft range is the editor's suggested slider span; files may hold any value within the hard range.</summary>
-public readonly record struct Limit(float Min, float Max, float SoftMin, float SoftMax)
+public readonly record struct Limit(float Min, float Max, float SoftMin, float SoftMax) : IInterval<float>
 {
     public Limit(float min, float max) : this(min, max, min, max) { }
     public Limit Soft(float min, float max) => this with { SoftMin = min, SoftMax = max };
-    public float Clamp(float value) => Math.Clamp(value, Min, Max);
+    public float Clamp(float value) => IntervalMath<float>.Clamp(this, value);
     public void Check(float value, string field)
     {
         if (!float.IsFinite(value) || value < Min || value > Max)
+        {
             throw new InvalidDataException($"{field} must be between {Min} and {Max}; found {value}.");
+        }
     }
     public static void Color(string? value, string field)
     {
-        if (value is null || value.Length != 7 || value[0] != '#' || !uint.TryParse(value.AsSpan(1), System.Globalization.NumberStyles.HexNumber, null, out _))
+        if (!ColorExtensions.TryParseRgb(value.AsSpan(), out _))
+        {
             throw new InvalidDataException($"{field} must be a #rrggbb color; found '{value}'.");
+        }
     }
 }
 
@@ -47,7 +55,20 @@ public static class AuthoredJson
 
     private static JsonSerializerOptions Create(bool strict, bool compactExtrusions)
     {
-        var resolver = new DefaultJsonTypeInfoResolver(); resolver.Modifiers.Add(info => OmitDefaults(info, compactExtrusions));
+        var resolver = new DefaultJsonTypeInfoResolver();
+        resolver.Modifiers.Add(info =>
+        {
+            KeyframeComponents(info);
+            // Runtime-only members are outside the file schema, including when checking unknown input fields.
+            for (var i = info.Properties.Count - 1; i >= 0; i--)
+            {
+                if (info.Properties[i].Get is null && info.Properties[i].Set is null)
+                {
+                    info.Properties.RemoveAt(i);
+                }
+            }
+            OmitDefaults(info, compactExtrusions);
+        });
         return new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -59,19 +80,64 @@ public static class AuthoredJson
             Converters = { new Vector2JsonConverter() }
         };
     }
+
+    // Keep the authored file vocabulary at the serialization boundary. Working keys store vectors only.
+    private static void KeyframeComponents(JsonTypeInfo info)
+    {
+        Components<ClipKey>(info, nameof(ClipKey.Value), ["x", "y", "z"], static (key, i) => key.Value[i],
+            static (key, i, component) => { var value = key.Value; value[i] = component; key.Value = value; });
+        Components<SlotColorKey2D>(info, nameof(SlotColorKey2D.Value), ["r", "g", "b", "a"], static (key, i) => key.Value[i],
+            static (key, i, component) => { var value = key.Value; value[i] = component; key.Value = value; });
+        Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control1), ["x1", "y1"], static (curve, i) => curve.Control1[i],
+            static (curve, i, component) => { var value = curve.Control1; value[i] = component; curve.Control1 = value; });
+        Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control2), ["x2", "y2"], static (curve, i) => curve.Control2[i],
+            static (curve, i, component) => { var value = curve.Control2; value[i] = component; curve.Control2 = value; });
+    }
+
+    private static void Components<T>(JsonTypeInfo info, string vectorName, string[] names,
+        Func<T, int, float> get, Action<T, int, float> set)
+    {
+        if (info.Type != typeof(T))
+            return;
+        var name = info.Options.PropertyNamingPolicy?.ConvertName(vectorName) ?? vectorName;
+        var vector = info.Properties.Single(property => property.Name == name);
+        var position = info.Properties.IndexOf(vector);
+        info.Properties.RemoveAt(position);
+        for (var i = 0; i < names.Length; i++)
+        {
+            var component = i;
+            var property = info.CreateJsonPropertyInfo(typeof(float), names[i]);
+            property.Get = owner => get((T)owner, component);
+            property.Set = (owner, value) => set((T)owner, component, (float)value!);
+            info.Properties.Insert(position + i, property);
+        }
+    }
+
     private static void OmitDefaults(JsonTypeInfo info, bool compactExtrusions)
     {
-        if (info.Kind != JsonTypeInfoKind.Object || info.Type.Namespace?.StartsWith(typeof(AuthoredJson).Namespace!, StringComparison.Ordinal) != true || info.Type.GetConstructor(Type.EmptyTypes) is null) return;
+        if (info.Kind != JsonTypeInfoKind.Object || info.Type.Namespace?.StartsWith(typeof(AuthoredJson).Namespace!, StringComparison.Ordinal) != true || info.Type.GetConstructor(Type.EmptyTypes) is null)
+        {
+            return;
+        }
+
         var defaults = Activator.CreateInstance(info.Type)!;
         foreach (var property in info.Properties)
         {
-            if (property.Get is null || AlwaysWritten.Contains(property.Name)) continue;
+            if (property.Get is null || AlwaysWritten.Contains(property.Name))
+            {
+                continue;
+            }
+
             var baseline = property.Get(defaults);
             // An extrusion's outline is its editable source. Its mesh is rebuilt when loaded.
-            if (compactExtrusions && info.Type == typeof(PropSolid) && property.Name is ("vertices" or "triangles"))
+            if (compactExtrusions && info.Type == typeof(PropSolid) && property.Name is "vertices" or "triangles")
+            {
                 property.ShouldSerialize = (owner, value) => ((PropSolid)owner).Outline is null && !Equals(value, baseline);
+            }
             else
+            {
                 property.ShouldSerialize = (_, value) => !Equals(value, baseline);
+            }
         }
     }
 }

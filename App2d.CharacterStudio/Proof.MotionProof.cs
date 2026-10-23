@@ -1,8 +1,9 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
@@ -21,55 +22,79 @@ internal sealed partial class ProofRenders
 
     private AuthoredCatalog ProofCatalog()
     {
-        if (_proofCatalog is not null) return _proofCatalog;
+        if (_proofCatalog is not null)
+        {
+            return _proofCatalog;
+        }
+
         var catalog = AuthoredCatalog.Load(Path.Combine(_assetRoot, "authored"));
-        if (catalog.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
+        if (catalog.Errors.Count > 0)
+        {
+            throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
+        }
+
         return _proofCatalog = catalog;
     }
 
     private bool PrepareMotionProof()
     {
-        if (_smokeIndex >= ProofClips.Length * ProofFrames) { WriteMotionProofReport(); return false; }
+        if (_smokeIndex >= ProofClips.Length * ProofFrames)
+        {
+            WriteMotionProofReport();
+            return false;
+        }
         var catalog = ProofCatalog();
-        _proofTarget ??= new(GraphicsDevice, ProofWidth, ProofHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        var clipId = ProofClips[_smokeIndex / ProofFrames]; var frame = _smokeIndex % ProofFrames;
-        var clip = catalog.Animations[clipId]; var seconds = frame * clip.Duration / ProofFrames;
+        _proofTarget ??= RenderCapture2D.CreateTarget(GraphicsDevice, ProofWidth, ProofHeight);
+        var clipId = ProofClips[_smokeIndex / ProofFrames];
+        var frame = _smokeIndex % ProofFrames;
+        var clip = catalog.Animations[clipId];
+        var seconds = frame * clip.Duration / ProofFrames;
         var panel = ProofWidth / ProofSubjects.Length;
         const int band = ProofHeight - ProofPanelHeight;
-        GraphicsDevice.SetRenderTarget(_proofTarget); GraphicsDevice.Clear(new Color(237, 238, 226));
-        for (var i = 0; i < ProofSubjects.Length; i++)
+        using (GraphicsDevice.UseRenderTarget(_proofTarget, new Color4b(237, 238, 226)))
         {
-            var model = catalog.Resolve(ProofSubjects[i]);
-            var pose = PoseEvaluator.Sample(model, clip, seconds);
-            _proofDrawings[i].Build(model, pose);
-            // Close-up: the view follows this subject's travel, so ground ticks scroll past a planted foot.
-            GraphicsDevice.Viewport = new(i * panel, 0, panel, ProofPanelHeight);
-            var close = PointCharacterRenderer.Projection(panel, ProofPanelHeight, new(panel * .5f - pose.Locomotion.X * ProofPpu, ProofPanelHeight * .92f), ProofPpu);
-            BuildProofGround(pose, pose.Locomotion.X, ProofPpu);
-            _renderer.Draw(_proofGround, close, Matrix.Identity, writeDepth: false);
-            _renderer.Draw(_proofDrawings[i].Mesh, close, Matrix.Identity);
-            // Game scale: a fixed camera at arena size, so travel and readability show at player size.
-            GraphicsDevice.Viewport = new(0, ProofPanelHeight, ProofWidth, band);
-            var game = PointCharacterRenderer.Projection(ProofWidth, band, new(ProofWidth * .12f + i * 11 * GamePpu, band * .85f), GamePpu);
-            BuildProofGround(pose, 5, GamePpu);
-            _renderer.Draw(_proofGround, game, Matrix.Identity, writeDepth: false);
-            _renderer.Draw(_proofDrawings[i].Mesh, game, Matrix.Identity);
+            for (var i = 0; i < ProofSubjects.Length; i++)
+            {
+                var model = catalog.Resolve(ProofSubjects[i]);
+                var pose = PoseEvaluator.Sample(model, clip, seconds);
+                _proofDrawings[i].Build(model, pose);
+                // Close-up: the view follows this subject's travel, so ground ticks scroll past a planted foot.
+                GraphicsDevice.Viewport = new(i * panel, 0, panel, ProofPanelHeight);
+                var close = PointCharacterRenderer.Projection(panel, ProofPanelHeight, new(panel * .5f - pose.Locomotion.X * ProofPpu, ProofPanelHeight * .92f), ProofPpu);
+                BuildProofGround(pose, pose.Locomotion.X, ProofPpu);
+                _renderer.Draw(_proofGround, close, Matrix.Identity, writeDepth: false);
+                _renderer.DrawActor(_proofDrawings[i], close, Matrix.Identity);
+                // Game scale: a fixed camera at arena size, so travel and readability show at player size.
+                GraphicsDevice.Viewport = new(0, ProofPanelHeight, ProofWidth, band);
+                var game = PointCharacterRenderer.Projection(ProofWidth, band, new(ProofWidth * .12f + i * 11 * GamePpu, band * .85f), GamePpu);
+                BuildProofGround(pose, 5, GamePpu);
+                _renderer.Draw(_proofGround, game, Matrix.Identity, writeDepth: false);
+                _renderer.DrawActor(_proofDrawings[i], game, Matrix.Identity);
+            }
         }
-        GraphicsDevice.SetRenderTarget(null);
-        using var stream = File.Create(Path.Combine(_smokePath, $"{clipId}-{frame:D2}.png"));
-        _proofTarget.SaveAsPng(stream, ProofWidth, ProofHeight);
+        _proofTarget.SavePng(Path.Combine(_smokePath, $"{clipId}-{frame:D2}.png"));
         return true;
     }
 
     private void BuildProofGround(EvaluatedPose pose, float centerX, float ppu)
     {
-        _proofGround.Clear(); var ink = new Color(154, 169, 158); var pixel = 1 / ppu;
+        _proofGround.Clear();
+        var ink = new Color4b(154, 169, 158);
+        var pixel = 1 / ppu;
         _proofGround.Line(new(centerX - 20, 0, 7), new(centerX + 20, 0, 7), pixel, ink);
         var first = (int)MathF.Floor((centerX - 6) * 4);
-        for (var x = first; x <= first + 48; x++) _proofGround.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
+        for (var x = first; x <= first + 48; x++)
+        {
+            _proofGround.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
+        }
+
         foreach (var contact in pose.Contacts)
         {
-            var color = contact.Residual < .005f ? new Color(36, 140, 104) : new Color(240, 106, 50); var p = contact.Target with { Z = 6.9f };
+            var color = contact.Residual < .005f ? new Color4b(36, 140, 104) : new Color4b(240, 106, 50);
+            var p = contact.Target with
+            {
+                Z = 6.9f
+            };
             _proofGround.Line(p - new Vector3(8 * pixel, 0, 0), p + new Vector3(8 * pixel, 0, 0), 2 * pixel, color);
             _proofGround.Line(p - new Vector3(0, 8 * pixel, 0), p + new Vector3(0, 8 * pixel, 0), 2 * pixel, color);
         }
@@ -83,7 +108,8 @@ internal sealed partial class ProofRenders
         {
             foreach (var subject in ProofSubjects)
             {
-                var model = catalog.Resolve(subject); var clip = catalog.Animations[clipId];
+                var model = catalog.Resolve(subject);
+                var clip = catalog.Animations[clipId];
                 var poses = Enumerable.Range(0, 481).Select(i => PoseEvaluator.Sample(model, clip, i * clip.Duration / 240.0, repeat: true)).ToArray();
                 var stride = PoseEvaluator.Sample(model, clip, clip.Duration, repeat: true).Locomotion.X - poses[0].Locomotion.X;
                 var contact = poses.SelectMany(p => p.Contacts).Select(c => c.Residual).DefaultIfEmpty().Max();

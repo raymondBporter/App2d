@@ -49,7 +49,11 @@ public sealed class WorldMusicTests
         director.Update(content, across, .002f);
         Assert.Equal(2, requests.Count);
         Assert.Equal(target, requests[1]);
-        for (var frame = 0; frame < 600; frame++) director.Update(content, across, 1f / 60);
+        for (var frame = 0; frame < 600; frame++)
+        {
+            director.Update(content, across, 1f / 60);
+        }
+
         Assert.Equal(2, requests.Count); // Staying there never requests another restart.
     }
 
@@ -67,7 +71,10 @@ public sealed class WorldMusicTests
         var requests = 0;
         var director = new WorldMusicDirector2D(soundtrack, (_, _) => requests++);
         for (var frame = 0; frame < 600; frame++)
+        {
             director.Update(content, new(frame % 2 == 0 ? 9.99f : 10.01f, 1), 1f / 60);
+        }
+
         Assert.Equal(1, requests);
     }
 
@@ -76,27 +83,40 @@ public sealed class WorldMusicTests
     {
         var a = new WorldZone2D("a", "A", new(Vector2.Zero, new(10, 10)));
         var b = new WorldZone2D("b", "B", new(new(10, 0), new(20, 10)));
-        var content = LevelContent2D.Empty with { Zones = [a, b] };
+        var content = LevelContent2D.Empty with
+        {
+            Zones = [a, b]
+        };
         var soundtrack = new WorldSoundtrack2D(new Dictionary<string, MusicCue2D> { ["orchestra"] = MusicStreamTests.Cue(), ["rock"] = MusicStreamTests.Cue() },
             new("orchestra", "explore"), new Dictionary<string, MusicSelection2D> { ["b"] = new("rock", "drive") });
         var selected = new List<MusicSelection2D>();
         var director = new WorldMusicDirector2D(soundtrack, (p, m) => selected.Add(new(p, m)));
         director.Update(content, new(1, 1), 0);
         Assert.Equal(new("orchestra", "explore"), Assert.Single(selected));
-        for (var i = 0; i < 10; i++) director.Update(content, new(i % 2 == 0 ? 11 : 9, 1), .1f);
+        for (var i = 0; i < 10; i++)
+        {
+            director.Update(content, new(i % 2 == 0 ? 11 : 9, 1), .1f);
+        }
+
         Assert.Single(selected);
         director.Update(content, new(11, 1), 0);
         director.Update(content, new(11, 1), .8f);
         Assert.Equal(new("rock", "drive"), selected[^1]);
-        director.Update(content, new(50, 50), 0); director.Update(content, new(50, 50), 1);
-        Assert.Equal(new("orchestra", "explore"), selected[^1]); Assert.Null(director.CurrentZone);
-        director.PieceOverride = "rock"; director.MoodOverride = "combat";
-        director.Update(content, new(1, 1), 0); director.Update(content, new(1, 1), 1);
+        director.Update(content, new(50, 50), 0);
+        director.Update(content, new(50, 50), 1);
+        Assert.Equal(new("orchestra", "explore"), selected[^1]);
+        Assert.Null(director.CurrentZone);
+        director.PieceOverride = "rock";
+        director.MoodOverride = "combat";
+        director.Update(content, new(1, 1), 0);
+        director.Update(content, new(1, 1), 1);
         Assert.Equal(new("rock", "combat"), selected[^1]);
         Assert.Throws<ArgumentException>(() => director.PieceOverride = "missing");
         Assert.Throws<ArgumentException>(() => director.MoodOverride = "missing");
-        director.PieceOverride = "auto"; director.MoodOverride = "auto";
-        director.Update(content, new(1, 1), 0); director.Update(content, new(1, 1), 1);
+        director.PieceOverride = "auto";
+        director.MoodOverride = "auto";
+        director.Update(content, new(1, 1), 0);
+        director.Update(content, new(1, 1), 1);
         Assert.Equal(new("orchestra", "explore"), selected[^1]);
     }
 
@@ -111,7 +131,8 @@ public sealed class WorldMusicTests
         var cue = soundtrack.Cues[id];
         using var stream = new MusicStream2D(cue);
         stream.Restart("combat");
-        var first = new float[1024 * 2]; stream.Read(first);
+        var first = new float[1024 * 2];
+        stream.Read(first);
         Assert.Contains(first, x => x != 0);
         var buffer = new float[997 * 2];
         var remaining = cue.LoopFrames - 1024;
@@ -123,14 +144,24 @@ public sealed class WorldMusicTests
             remaining -= count;
         }
         Assert.Equal(0, stream.FramePosition);
-        var looped = new float[first.Length]; stream.Read(looped);
-        for (var i = 0; i < first.Length; i++) Assert.Equal(first[i], looped[i], 5);
+        var looped = new float[first.Length];
+        stream.Read(looped);
+        for (var i = 0; i < first.Length; i++)
+        {
+            Assert.Equal(first[i], looped[i], 5);
+        }
     }
 
     private static string FindRoot()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
-            if (Directory.Exists(Path.Combine(dir.FullName, "Assets/Static/audio/music"))) return dir.FullName;
+        {
+            if (Directory.Exists(Path.Combine(dir.FullName, "Assets/Static/audio/music")))
+            {
+                return dir.FullName;
+            }
+        }
+
         throw new DirectoryNotFoundException("Cannot locate durable music assets.");
     }
 }

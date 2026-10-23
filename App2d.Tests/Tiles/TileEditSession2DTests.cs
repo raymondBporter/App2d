@@ -141,7 +141,9 @@ public sealed class TileEditSession2DTests
         session.EndStroke();
 
         for (var x = 0; x <= 4; x++)
+        {
             Assert.Equal(TileKind2D.Solid, map.GetTileKind(x, 0));
+        }
     }
 
     [Fact]
@@ -248,6 +250,8 @@ public sealed class TileEditSession2DTests
         session.EndStroke();
 
         for (var x = 0; x < 3; x++)
+        {
             Assert.Equal(TileKind2D.Solid, map.GetTileKind(x, 0));
+        }
     }
 }

@@ -1,6 +1,6 @@
 {
   "format": "app2d-prop",
-  "version": 2,
+  "version": 3,
   "id": "sheath",
   "name": "Sheath",
   "lineWidth": 0.012,
@@ -114,7 +114,10 @@
         5,
         9
       ],
-      "material": { "fill": "#344b53", "outline": {} },
+      "material": {
+        "fill": "#344b53",
+        "outline": {}
+      },
       "outline": [
         {
           "x": 0.075,
@@ -313,7 +316,10 @@
         8,
         15
       ],
-      "material": { "fill": "#c5a26b", "outline": {} },
+      "material": {
+        "fill": "#c5a26b",
+        "outline": {}
+      },
       "outline": [
         {
           "x": 0.078,
@@ -417,7 +423,10 @@
         3,
         5
       ],
-      "material": { "fill": "#c5a26b", "outline": {} },
+      "material": {
+        "fill": "#c5a26b",
+        "outline": {}
+      },
       "outline": [
         {
           "x": 0.71,

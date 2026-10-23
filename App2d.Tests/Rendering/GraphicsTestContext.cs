@@ -26,10 +26,10 @@ internal sealed class GraphicsTestContext : IDisposable
         Device.SetRenderTarget(Target);
     }
 
-    public Microsoft.Xna.Framework.Color[] ReadPixels()
+    public Color4b[] ReadPixels()
     {
         Device.SetRenderTarget(null);
-        var pixels = new Microsoft.Xna.Framework.Color[128 * 128];
+        var pixels = new Color4b[128 * 128];
         Target.GetData(pixels);
         Device.SetRenderTarget(Target);
         return pixels;

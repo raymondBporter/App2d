@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -15,7 +16,10 @@ internal sealed class RigDocument2D
     {
         var bone = new RigBone2D(_nextBoneId++, name ?? $"bone-{_nextBoneId - 1}", parent);
         if (parent is not null)
+        {
             bone.LocalX = parent.Length;
+        }
+
         Bones.Add(bone);
         return bone;
     }
@@ -36,21 +40,31 @@ internal sealed class RigDocument2D
         return shape;
     }
 
-    public static Matrix3x2 GetWorldTransform(RigBone2D bone)
+    public static Matrix3x2 GetWorldTransform(RigBone2D bone) => GetWorldFrame(bone).Matrix;
+
+    public static Frame2D GetWorldFrame(RigBone2D bone)
     {
-        var local = Matrix3x2.CreateRotation(MathF.PI / 180f * bone.AngleDegrees) *
-            Matrix3x2.CreateTranslation(bone.LocalX, bone.LocalY);
-        return bone.Parent is null ? local : local * GetWorldTransform(bone.Parent);
+        var local = Frame2D.FromRotation(float.DegreesToRadians(bone.AngleDegrees), new(bone.LocalX, bone.LocalY));
+        return bone.Parent is null ? local : local.Then(GetWorldFrame(bone.Parent));
     }
 
     public bool Remove(object item)
     {
         if (item is RigShape2D shape)
+        {
             return Shapes.Remove(shape);
+        }
+
         if (item is not RigBone2D bone)
+        {
             return false;
+        }
+
         if (Bones.Any(candidate => candidate.Parent == bone) || Shapes.Any(shape => shape.AttachedBone == bone))
+        {
             throw new InvalidOperationException("Delete or reattach this bone's children and shapes first.");
+        }
+
         return Bones.Remove(bone);
     }
 
@@ -107,9 +121,15 @@ internal sealed class RigDocument2D
         headShape.LocalX = 45f;
         ((RigCircleShape2D)headShape).Radius = 39f;
         foreach (var limb in new[] { leftUpperArm, rightUpperArm, leftForearm, rightForearm })
+        {
             AddCapsule(document, limb, limb.Length, 17f, limb.Length / 2f, $"{limb.Name}-shape");
+        }
+
         foreach (var limb in new[] { leftThigh, rightThigh, leftShin, rightShin })
+        {
             AddCapsule(document, limb, limb.Length, 21f, limb.Length / 2f, $"{limb.Name}-shape");
+        }
+
         return document;
     }
 

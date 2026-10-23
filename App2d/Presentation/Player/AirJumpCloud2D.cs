@@ -30,8 +30,8 @@ public sealed class AirJumpCloud2D : IDisposable
         // Draw all shadows before all fills so overlapping lobes form one cloud.
         for (var i = 0; i < _puffs.Length; i++)
         {
-            var shade = new WorldObject2D(new Circle2D(1), new CloudInk()) { ZIndex = 5, IsVisible = false };
-            var fill = new WorldObject2D(new Circle2D(1), new CloudInk()) { ZIndex = 6, IsVisible = false };
+            var shade = new WorldObject2D(Circle2D.Builder.Create(1), new CloudInk()) { ZIndex = 5, IsVisible = false };
+            var fill = new WorldObject2D(Circle2D.Builder.Create(1), new CloudInk()) { ZIndex = 6, IsVisible = false };
             scene.Add(shade);
             scene.Add(fill);
             _puffs[i] = (shade, fill);
@@ -39,7 +39,7 @@ public sealed class AirJumpCloud2D : IDisposable
         // Fixed pool: three clouds, each made of three soft lobes. No per-jump allocations.
         for (var i = 0; i < _wisps.Length; i++)
         {
-            _wisps[i] = new WorldObject2D(new Circle2D(1), new CloudInk()) { ZIndex = 6, IsVisible = false };
+            _wisps[i] = new WorldObject2D(Circle2D.Builder.Create(1), new CloudInk()) { ZIndex = 6, IsVisible = false };
             scene.Add(_wisps[i]);
         }
     }
@@ -54,7 +54,7 @@ public sealed class AirJumpCloud2D : IDisposable
 
     public void Advance(float dt, Vector2 feet)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(dt);
+        ArgGuard.NonNegative(dt);
         var previousAge = _age;
         _age = Math.Min(Duration, _age + dt);
         for (var i = 0; i < WispBirths.Length; i++)

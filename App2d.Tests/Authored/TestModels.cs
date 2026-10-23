@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Curves;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -31,8 +32,8 @@ internal static class TestModels
         Measures = [new() { Id = "leg", Path = ["hip", "knee", "foot"] }, new() { Id = "arm", Path = ["shoulder", "elbow", "hand"] }],
         Parts =
         [
-            new() { Id = "torso", A = "hip", B = "shoulder", Geometry = RoundedRectangleShapeDefinition2D.FromSize(new(.4f, .4f), .05f), Material = new() { Fill = "#fff8e7", Outline = new() } },
-            new() { Id = "upper-arm", A = "shoulder", B = "elbow", Geometry = new LineCurveDefinition2D { Start = new(0, 0), End = new(0, 1) }, Material = new() },
+            new() { Id = "torso", A = "hip", B = "shoulder", Geometry = RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), Material = new() { Fill = "#fff8e7", Outline = new() } },
+            new() { Id = "upper-arm", A = "shoulder", B = "elbow", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() },
         ],
     };
 
@@ -61,10 +62,17 @@ internal static class TestModels
         {
             var seconds = i * motion.Duration / 240.0;
             var cycleTime = seconds % motion.Duration;
-            if (motion.Contacts.Any(c => Math.Abs(cycleTime - c.Finish) < 1e-5)) continue;
+            if (motion.Contacts.Any(c => Math.Abs(cycleTime - c.Finish) < 1e-5))
+            {
+                continue;
+            }
+
             var expected = PuppetPose.Sample(puppet, motion, seconds, repeat: true);
             var actual = PoseEvaluator.Sample(model, clip, seconds, repeat: true);
-            foreach (var control in puppet.Controls) Near(expected.World(control.Id), actual.World(control.Id), 1e-4f, $"{control.Id} at {seconds:F4}s");
+            foreach (var control in puppet.Controls)
+            {
+                Near(expected.World(control.Id), actual.World(control.Id), 1e-4f, $"{control.Id} at {seconds:F4}s");
+            }
         }
     }
 
@@ -75,7 +83,10 @@ internal static class TestModels
             for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
             {
                 var path = Path.Combine(directory.FullName, "Assets", "Characters");
-                if (File.Exists(Path.Combine(path, "catalog.json"))) return Path.Combine(path, "authored");
+                if (File.Exists(Path.Combine(path, "catalog.json")))
+                {
+                    return Path.Combine(path, "authored");
+                }
             }
             throw new DirectoryNotFoundException("Character assets not found.");
         }
@@ -83,8 +94,11 @@ internal static class TestModels
 
     public static void CopyModelTemplates(string root)
     {
-        var target = Path.Combine(root, "templates"); Directory.CreateDirectory(target);
+        var target = Path.Combine(root, "templates");
+        Directory.CreateDirectory(target);
         foreach (var file in Directory.EnumerateFiles(Path.Combine(AuthoredRoot, "templates"), "*.json"))
+        {
             File.Copy(file, Path.Combine(target, Path.GetFileName(file)));
+        }
     }
 }

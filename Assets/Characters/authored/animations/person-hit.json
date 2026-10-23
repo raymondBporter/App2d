@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "person-hit",
   "name": "Hit recoil",
   "model": "person",
@@ -17,16 +17,14 @@
   },
   "tracks": [
     {
-      "kind": "translate",
       "target": "hips",
       "keys": [
         {
-          "time": 0,
           "x": -0.045,
           "y": -0.025
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "x": -0.1,
           "y": -0.055
         },
@@ -52,11 +50,10 @@
       "target": "hips",
       "keys": [
         {
-          "time": 0,
           "angle": 0.16
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "angle": 0.32
         },
         {
@@ -70,8 +67,7 @@
           "ease": "smooth"
         },
         {
-          "time": 0.3,
-          "angle": 0
+          "time": 0.3
         }
       ]
     },
@@ -80,11 +76,10 @@
       "target": "chest",
       "keys": [
         {
-          "time": 0,
           "angle": 0.08
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "angle": 0.16
         },
         {
@@ -98,8 +93,7 @@
           "ease": "smooth"
         },
         {
-          "time": 0.3,
-          "angle": 0
+          "time": 0.3
         }
       ]
     },
@@ -108,12 +102,11 @@
       "target": "left-arm",
       "keys": [
         {
-          "time": 0,
           "x": 0.1,
           "y": 0.1
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "x": 0.22,
           "y": 0.16
         },
@@ -133,12 +126,11 @@
       "target": "right-arm",
       "keys": [
         {
-          "time": 0,
           "x": -0.05,
           "y": 0.06
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "x": -0.12,
           "y": 0.16
         },
@@ -174,5 +166,9 @@
         }
       ]
     }
-  ]
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

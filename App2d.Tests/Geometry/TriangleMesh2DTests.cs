@@ -1,9 +1,10 @@
-using App2d.Core;
 using App2d.Core.Collision.Contacts;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Operations.Conversion;
+using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Mathematics;
-using App2d.Core.Meshes;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -19,7 +20,7 @@ public sealed class TriangleMesh2DTests
     public void EarClippingPreservesAConcaveOutlineInEitherWinding(bool reverse)
     {
         var points = reverse ? [.. Notched.Reverse()] : Notched;
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(points);
+        var mesh = PolygonTriangulation2D.Triangulate(points);
         Assert.Equal(4, mesh.TriangleCount);
         Assert.Equal(3f, mesh.Area, 5);
         Assert.Equal(new Vector2(0, 0), mesh.Bounds.Min);
@@ -38,16 +39,16 @@ public sealed class TriangleMesh2DTests
     public void MeshRejectsBadIndicesAndDegenerateTriangles()
     {
         Assert.Throws<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 1]));
-        Assert.Throws<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 1, 9]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TriangleMesh2D(Notched, [0, 1, 9]));
         Assert.Throws<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 0, 1]));
-        Assert.Throws<ArgumentException>(() => TriangleMesh2D.TriangulateSimplePolygon(
+        Assert.Throws<ArgumentException>(() => PolygonTriangulation2D.Triangulate(
             [new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 1), new Vector2(1, 0)]));
     }
 
     [Fact]
     public void TinyValidPolygonsDoNotDependOnAWorldScaleEpsilon()
     {
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(
+        var mesh = PolygonTriangulation2D.Triangulate(
             [new Vector2(0, 0), new Vector2(1e-5f, 0), new Vector2(1e-5f, 1e-5f), new Vector2(0, 1e-5f)]);
         Assert.InRange(mesh.Area, .9e-10f, 1.1e-10f);
         Assert.True(mesh.ContainsPoint(new(5e-6f, 5e-6f)));
@@ -57,30 +58,52 @@ public sealed class TriangleMesh2DTests
     [Fact]
     public void EdgeToleranceCanIncludeAPointJustOutsideTheMeshBounds()
     {
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(
+        var mesh = PolygonTriangulation2D.Triangulate(
             [new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1)]);
         Assert.False(mesh.ContainsPoint(new(1.0001f, 0)));
         Assert.True(mesh.ContainsPoint(new(1.0001f, 0), .001));
     }
 
     [Fact]
-    public void CrossProductsShareOneDoublePrecisionOrientation()
+    public void FloatAndDoubleCrossProductsShareTheSameSignConvention()
     {
-        var a = new Vector2(1, 2); var b = new Vector2(4, 2); var c = new Vector2(1, 5);
-        Assert.Equal(9d, a.Orientation(b, c));
-        Assert.Equal(9d, (b - a).CrossDouble(c - a));
+        var a = new Vector2(1, 2);
+        var b = new Vector2(4, 2);
+        var c = new Vector2(1, 5);
+        Assert.Equal(9f, a.Orientation(b, c));
+        Assert.Equal(9d, new Vector2d(b - a).Cross(new(c - a)));
         Assert.Equal(9f, (b - a).Cross(c - a));
-        Assert.Equal(-9d, a.Orientation(c, b));
+        Assert.Equal(-9f, a.Orientation(c, b));
+        Assert.Equal(9d, new Vector2d(a).Orientation(new(b), new(c)));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NearlyCollinearTrianglesRetainTheirAreaAndHull(bool reverse)
+    {
+        Vector2[] points = [Vector2.Zero, new(16_777_216, 16_777_215), new(16_777_215, 16_777_214)];
+        if (reverse)
+        {
+            Array.Reverse(points);
+        }
+
+        var mesh = PolygonTriangulation2D.Triangulate(points);
+        var hull = PolygonGeometry2D.ConvexHull(points);
+
+        Assert.Equal(.5f, mesh.Area);
+        Assert.Equal(3, hull.Length);
+        Assert.Equal(1d, PolygonGeometry2D.SignedAreaTwiceDouble(hull));
     }
 
     [Fact]
     public void ConcaveMeshTrianglesWorkAsACompositeCollisionShape()
     {
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(Notched);
+        var mesh = PolygonTriangulation2D.Triangulate(Notched);
         var shape = mesh.ToCompositeShape();
         var world = new SpatialObject2D(shape);
-        var solidPoint = new SpatialObject2D(new Circle2D(.1f, new(.5f, 1.5f)));
-        var notch = new SpatialObject2D(new Circle2D(.1f, new(1.5f, 1.5f)));
+        var solidPoint = new SpatialObject2D(Circle2D.Builder.Create(.1f, new(.5f, 1.5f)));
+        var notch = new SpatialObject2D(Circle2D.Builder.Create(.1f, new(1.5f, 1.5f)));
 
         Assert.Equal(mesh.Area, shape.Area, 5);
         Assert.True(ShapeCollision2D.TryGetContact(world, solidPoint, out _));
@@ -93,7 +116,11 @@ public sealed class TriangleMesh2DTests
     public void ConvexClippingHandlesEitherWindingAndInterpolatesDepth(bool reverse)
     {
         Vector2[] clip = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
-        if (reverse) Array.Reverse(clip);
+        if (reverse)
+        {
+            Array.Reverse(clip);
+        }
+
         Vector3[] subject = [new(-1, .5f, 0), new(2, .5f, 3), new(2, 1.5f, 3), new(-1, 1.5f, 0)];
         var clipped = PolygonClipping2D.ClipConvexXY(subject, [.. clip.Select(p => new Vector3(p, 0))]);
         Assert.NotEmpty(clipped);

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "triceratops-head-down",
   "name": "Triceratops \u00B7 head-down",
   "model": "triceratops",
@@ -56,5 +56,9 @@
     }
   ],
   "markers": [],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

@@ -81,7 +81,9 @@ public sealed class DirtyChunkTracker2DTests
         {
             rebuilt.Add(chunk);
             if (chunk == new TileChunk2D(0, 0))
+            {
                 tracker.Mark(new TileChunk2D(5, 5));
+            }
         });
 
         Assert.Single(rebuilt);

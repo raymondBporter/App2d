@@ -1,17 +1,17 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
 internal sealed class NoodlePerson2D
 {
-    private static readonly XnaColor BodyColor = new(151, 111, 255);
-    private static readonly XnaColor FaceColor = new(27, 25, 48);
-    private static readonly XnaColor SelectedControlColor = new(117, 255, 178);
-    private static readonly XnaColor AvailableControlColor = new(197, 187, 232, 210);
+    private static readonly Color4b BodyColor = new(151, 111, 255);
+    private static readonly Color4b FaceColor = new(27, 25, 48);
+    private static readonly Color4b SelectedControlColor = new(117, 255, 178);
+    private static readonly Color4b AvailableControlColor = new(197, 187, 232, 210);
 
     private readonly SolidColorShader _bodyShader = new(BodyColor);
     private readonly NoodleArm2D _leftArm;
@@ -49,22 +49,25 @@ internal sealed class NoodlePerson2D
             new("right foot", _rightLeg)
         ];
 
-        _torso = Create(new Capsule2D(new Vector2(0f, -49f), new Vector2(0f, 47f), 45f), new(0f, 8f));
-        _pelvis = Create(new Capsule2D(new Vector2(-18f, 0f), new Vector2(18f, 0f), 34f), new(0f, -57f));
-        _neck = Create(new Capsule2D(new Vector2(0f, -11f), new Vector2(0f, 15f), 18f), new(0f, 93f));
-        _head = Create(new Circle2D(47f), new(0f, 151f));
+        _torso = Create(Capsule2D.Builder.Create(new Vector2(0f, -49f), new Vector2(0f, 47f), 45f), new(0f, 8f));
+        _pelvis = Create(Capsule2D.Builder.Create(new Vector2(-18f, 0f), new Vector2(18f, 0f), 34f), new(0f, -57f));
+        _neck = Create(Capsule2D.Builder.Create(new Vector2(0f, -11f), new Vector2(0f, 15f), 18f), new(0f, 93f));
+        _head = Create(Circle2D.Builder.Create(47f), new(0f, 151f));
         var faceShader = new SolidColorShader(FaceColor);
-        _leftEye = Create(new Circle2D(5f), new(-15f, 159f), faceShader);
-        _rightEye = Create(new Circle2D(5f), new(15f, 159f), faceShader);
+        _leftEye = Create(Circle2D.Builder.Create(5f), new(-15f, 159f), faceShader);
+        _rightEye = Create(Circle2D.Builder.Create(5f), new(15f, 159f), faceShader);
     }
 
     public NoodleArm2D TargetLimb => _limbs[_selectedLimbIndex].Limb;
     public string SelectedControlName => _limbs[_selectedLimbIndex].Name;
-    public string[] ControlNames => _limbs.Select(limb => limb.Name).ToArray();
+    public string[] ControlNames => [.. _limbs.Select(limb => limb.Name)];
     public void SelectControl(string name)
     {
         var index = Array.FindIndex(_limbs, limb => limb.Name == name);
-        if (index >= 0) _selectedLimbIndex = index;
+        if (index >= 0)
+        {
+            _selectedLimbIndex = index;
+        }
     }
 
     public void SelectNearestControl(Vector2 position)
@@ -76,7 +79,9 @@ internal sealed class NoodlePerson2D
             var limb = _limbs[limbIndex].Limb;
             var distanceSquared = Vector2.DistanceSquared(position, limb.Target);
             if (distanceSquared > bestDistanceSquared)
+            {
                 continue;
+            }
 
             bestDistanceSquared = distanceSquared;
             bestLimbIndex = limbIndex;
@@ -120,7 +125,9 @@ internal sealed class NoodlePerson2D
             var color = isSelected ? SelectedControlColor : AvailableControlColor;
             renderer.DrawWorldCircle(limb.Target, isSelected ? 15f : 10f, color, isSelected ? 3f : 2f);
             if (!isSelected)
+            {
                 continue;
+            }
 
             Span<Vector2> horizontal = [limb.Target - new Vector2(22f, 0f), limb.Target + new Vector2(22f, 0f)];
             Span<Vector2> vertical = [limb.Target - new Vector2(0f, 22f), limb.Target + new Vector2(0f, 22f)];

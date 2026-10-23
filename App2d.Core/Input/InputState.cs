@@ -27,7 +27,9 @@ public sealed class InputState
         surface.PreviewKeyDown += (_, e) =>
         {
             if (e.KeyCode is Keys.Left or Keys.Right or Keys.Up or Keys.Down)
+            {
                 e.IsInputKey = true;
+            }
         };
         surface.MouseMove += (_, e) => Mouse.SetClientPosition(new Vector2(e.X, e.Y));
         surface.MouseDown += (_, e) =>
@@ -41,7 +43,13 @@ public sealed class InputState
             Mouse.SetClientPosition(new Vector2(e.X, e.Y));
             SetMouseButton(e.Button, false);
         };
-        surface.MouseWheel += (_, e) => { if (!IsSuppressed && !IsMouseCapturedByUi) Mouse.AddWheelDelta(e.Delta); };
+        surface.MouseWheel += (_, e) =>
+        {
+            if (!IsSuppressed && !IsMouseCapturedByUi)
+            {
+                Mouse.AddWheelDelta(e.Delta);
+            }
+        };
     }
 
     internal void SetDeviceMapping(Size clientSize, int deviceWidth, int deviceHeight) =>
@@ -57,13 +65,20 @@ public sealed class InputState
     {
         Keyboard.EndFrame();
         Mouse.EndFrame();
-        Gamepad = Gamepad with { Pressed = GamepadButton2D.None, Released = GamepadButton2D.None };
+        Gamepad = Gamepad with
+        {
+            Pressed = GamepadButton2D.None,
+            Released = GamepadButton2D.None
+        };
     }
 
     internal void SetSuppressed(bool isSuppressed)
     {
         if (_isSuppressed == isSuppressed)
+        {
             return;
+        }
+
         _isSuppressed = isSuppressed;
         CancelButtons();
     }
@@ -77,8 +92,16 @@ public sealed class InputState
     /// <summary>Cancel only the devices captured by the tool UI, before a simulation tick can consume their transitions.</summary>
     internal void SetToolCapture(bool keyboard, bool mouse)
     {
-        if (keyboard && !IsKeyboardCapturedByUi) Keyboard.CancelHeld();
-        if (mouse && !IsMouseCapturedByUi) Mouse.CancelHeld();
+        if (keyboard && !IsKeyboardCapturedByUi)
+        {
+            Keyboard.CancelHeld();
+        }
+
+        if (mouse && !IsMouseCapturedByUi)
+        {
+            Mouse.CancelHeld();
+        }
+
         IsKeyboardCapturedByUi = keyboard;
         IsMouseCapturedByUi = mouse;
     }

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "player-climb-off",
   "name": "Turn off ladder",
   "model": "person",
@@ -492,5 +492,9 @@
         }
       ]
     }
-  ]
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

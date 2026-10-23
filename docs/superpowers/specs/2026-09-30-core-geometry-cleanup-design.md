@@ -81,8 +81,8 @@ Namespaces follow folders: `App2d.Core.Geometry`, `App2d.Core.Shapes`, `App2d.Co
   shared `Geometry.Point2D`. Definitions are records so editors use `with` expressions; `WithKind` re-authors a
   definition as another kind fitted to the same bounds.
 - Entity files are version 2: hit windows, the movement box, projectiles and guards store a `shape` definition instead
-  of width/height pairs. `EntityAssetUpgrade` converts version 1 files in memory on load; the shipped entities were
-  rewritten through the saver.
+  of width/height pairs. All shipped entities use this format. Loading requires the current version; older entity
+  formats are no longer upgraded.
 - `EntityRegion` carries a local shape plus a `Similarity2D` pose. A hit window's shape lives in its anchor frame
   (origin pushed along the anchor axis, +X along the axis, +Y toward the frame's across direction), so every kind,
   boxes included, rotates with its socket or prop. The movement shape sits on the feet with +X toward facing.

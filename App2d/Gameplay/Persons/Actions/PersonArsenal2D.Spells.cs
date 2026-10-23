@@ -24,10 +24,22 @@ public sealed partial class PersonArsenal2D
     public void SetSpellInput(bool castHeld, bool castPressed, bool healHeld, bool canHeal, bool canCast, float facing)
     {
         var tuning = _spellTuning;
-        if (!healHeld) _healNeedsRelease = false;
-        if (!healHeld || !canHeal) CancelHealing();
+        if (!healHeld)
+        {
+            _healNeedsRelease = false;
+        }
+
+        if (!healHeld || !canHeal)
+        {
+            CancelHealing();
+        }
+
         _gun.SetInput(castHeld, canCast && !_healing && !IsMeleeAttackActive && _energy >= tuning.ShotCost);
-        if (castPressed) _gun.Use(facing);
+        if (castPressed)
+        {
+            _gun.Use(facing);
+        }
+
         if (healHeld && canHeal && !_healNeedsRelease && !SpellBusy && !IsMeleeAttackActive &&
             _energy >= tuning.HealCost && _spellHealth is { IsAlive: true } health && health.Current < health.Maximum)
         {
@@ -39,14 +51,22 @@ public sealed partial class PersonArsenal2D
 
     public void CancelHealing()
     {
-        if (_healing) Publish(new HealCancelled2D(_spellPosition()));
+        if (_healing)
+        {
+            Publish(new HealCancelled2D(_spellPosition()));
+        }
+
         _healing = false;
         _healElapsed = 0;
     }
 
     private bool SpendEnergy(int amount)
     {
-        if (_energy < amount) return false;
+        if (_energy < amount)
+        {
+            return false;
+        }
+
         _energy -= amount;
         return true;
     }
@@ -63,11 +83,23 @@ public sealed partial class PersonArsenal2D
 
     private void UpdateHealing(float deltaSeconds)
     {
-        if (!_healing || _spellHealth is not { IsAlive: true } health) return;
+        if (!_healing || _spellHealth is not { IsAlive: true } health)
+        {
+            return;
+        }
+
         var t = _spellTuning;
         _healElapsed += deltaSeconds;
-        if (_healElapsed + .000001f < t.HealSeconds) return;
-        if (health.Current >= health.Maximum || !SpendEnergy(t.HealCost)) { CancelHealing(); return; }
+        if (_healElapsed + .000001f < t.HealSeconds)
+        {
+            return;
+        }
+
+        if (health.Current >= health.Maximum || !SpendEnergy(t.HealCost))
+        {
+            CancelHealing();
+            return;
+        }
         var amount = health.Heal(Math.Max(1, (int)MathF.Round(health.Maximum * t.HealFraction)));
         Publish(new HealCompleted2D(_spellPosition(), amount));
         _healElapsed = 0;

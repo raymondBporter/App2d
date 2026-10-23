@@ -1,6 +1,7 @@
-using App2d.Core;
 using App2d.Core.Collision.Contacts;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Collision;
@@ -15,7 +16,7 @@ public sealed class PolygonContactTests
         return placed;
     }
 
-    private static ConvexPolygon2D Diamond(float size) => new([new(0, -size), new(size, 0), new(0, size), new(-size, 0)]);
+    private static ConvexPolygon2D Diamond(float size) => ConvexPolygon2D.Builder.Create([new(0, -size), new(size, 0), new(0, size), new(-size, 0)]);
 
     public static TheoryData<string> Partners =>
     [
@@ -32,13 +33,13 @@ public sealed class PolygonContactTests
     private static IShape2D CreatePartner(string shapeName) => shapeName switch
     {
         nameof(ConvexPolygon2D) => Diamond(1),
-        nameof(Rectangle2D) => Rectangle2D.FromSize(new Vector2(2, 2)),
-        nameof(AxisAlignedRectangle2D) => new AxisAlignedRectangle2D(new(-1), new(1)),
-        nameof(Triangle2D) => new Triangle2D(new(-1, -1), new(1, -1), new(0, 1)),
-        nameof(Capsule2D) => new Capsule2D(new(-.5f, 0), new(.5f, 0), .5f),
-        nameof(Circle2D) => new Circle2D(1),
-        nameof(Ellipse2D) => new Ellipse2D(new(1.2f, .8f)),
-        nameof(HalfSpace2D) => new HalfSpace2D(-Vector2.UnitX, 1),
+        nameof(Rectangle2D) => Rectangle2D.Builder.CreateFromSize(2, 2),
+        nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1), new(1)),
+        nameof(Triangle2D) => Triangle2D.Builder.Create(new(-1, -1), new(1, -1), new(0, 1)),
+        nameof(Capsule2D) => Capsule2D.Builder.Create(new(-.5f, 0), new(.5f, 0), .5f),
+        nameof(Circle2D) => Circle2D.Builder.Create(1),
+        nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(1.2f, .8f)),
+        nameof(HalfSpace2D) => HalfSpace2D.Builder.Create(-Vector2.UnitX, 1),
         _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
     };
 
@@ -62,11 +63,11 @@ public sealed class PolygonContactTests
     {
         var diamond = At(Diamond(1), Vector2.Zero);
         Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Diamond(1), new(2.01f, 0)), out _));
-        Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Rectangle2D.FromSize(new Vector2(2, 2)), new(2.01f, 0)), out _));
-        Assert.False(ShapeCollision2D.TryGetContact(diamond, At(new Capsule2D(new(0, -1), new(0, 1), .5f), new(1.51f, 0)), out _));
+        Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Rectangle2D.Builder.CreateFromSize(2, 2), new(2.01f, 0)), out _));
+        Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Capsule2D.Builder.Create(new(0, -1), new(0, 1), .5f), new(1.51f, 0)), out _));
 
         // A box edge normal is the shortest escape when a diamond tip pokes into a box.
-        var box = At(Rectangle2D.FromSize(new Vector2(2, 2)), Vector2.Zero);
+        var box = At(Rectangle2D.Builder.CreateFromSize(2, 2), Vector2.Zero);
         Assert.True(ShapeCollision2D.TryGetContact(box, At(Diamond(1), new(1.9f, 0)), out var contact));
         Assert.Equal(.1f, contact.PenetrationDepth, 4);
         Assert.Equal(-Vector2.UnitX, contact.Normal);

@@ -28,6 +28,7 @@ The first folder describes the asset lifecycle:
 | Levels and zone definitions | `Static/levels/<id>` | `AssetLocations.Levels` |
 | Music, manifests, and licenses | `Static/audio/music` | `AssetLocations.Music` |
 | Character models, clips, props, and entities | `Characters/authored` | `AssetLocations.AuthoredCharacters` |
+| Passive physics prop definitions | `Characters/authored/physics-props` | `AuthoredCatalog.PhysicsProps` |
 | Imported character motion libraries | `Characters/<id>` | `AssetLocations.CharacterLibrary` |
 | Curated and baked sound effects | `Static/audio/sfx` | `AssetLocations.SoundEffects` (generated copy) |
 | Tilesets and UI images | `Static` or an importer from `Sources` | `AssetLocations.Tilesets` / `UI` (generated output) |

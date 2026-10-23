@@ -1,7 +1,10 @@
-using App2d.Core;
 using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -17,13 +20,11 @@ public sealed class LinearGeometry2DTests
         Assert.True(ray.IsValid);
         Assert.Equal(new Vector2(.6f, .8f), line.Direction);
         Assert.Equal(line.Direction, ray.Direction);
-        Assert.Equal(new Vector2(-1, -1), line.GetPoint(-5));
-        Assert.Equal(new Vector2(5, 7), ray.GetPoint(5));
-        Assert.Equal(line.GetPoint(-5), line.PointAt(-5));
-        Assert.Equal(ray.GetPoint(5), ray.PointAt(5));
-        Assert.True(line.ContainsPoint(line.GetPoint(-5)));
-        Assert.False(ray.ContainsPoint(line.GetPoint(-5)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ray.GetPoint(-1));
+        Assert.Equal(new Vector2(-1, -1), line.PointAt(-5));
+        Assert.Equal(new Vector2(5, 7), ray.PointAt(5));
+        Assert.True(line.ContainsPoint(line.PointAt(-5)));
+        Assert.False(ray.ContainsPoint(line.PointAt(-5)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ray.PointAt(-1));
         Assert.Throws<ArgumentOutOfRangeException>(() => ray.PointAt(-1));
     }
 
@@ -95,7 +96,7 @@ public sealed class LinearGeometry2DTests
     [Fact]
     public void GeometryContractIncludesShapesLinesAndRaysWithExplicitPointTolerance()
     {
-        IGeometry2D[] geometries = [new Circle2D(2), new Line2D(default, Vector2.UnitX), new Ray2D(default, Vector2.UnitX)];
+        IGeometry2D[] geometries = [Circle2D.Builder.Create(2), new Line2D(default, Vector2.UnitX), new Ray2D(default, Vector2.UnitX)];
         Assert.All(geometries, geometry => Assert.True(geometry.ContainsPoint(Vector2.UnitX)));
         Assert.All(geometries, geometry => Assert.False(geometry.ContainsPoint(new(3, 1))));
         var line = new Line2D(default, Vector2.UnitX);
@@ -165,13 +166,13 @@ public sealed class LinearGeometry2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => Line2D.FromPoints(Vector2.One, Vector2.One));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Ray2D(new(float.NaN, 0), Vector2.UnitX));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, new(float.PositiveInfinity, 1)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => default(Ray2D).GetPoint(0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => default(Ray2D).PointAt(0));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).ClosestPoint(default));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Ray2D).ContainsPoint(default));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).Intersects(new Line2D(default, Vector2.UnitX)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => RayIntersection2D.IntersectsBounds(default, Rect2D.Unbounded, 10));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SpatialRaycast2D.IntersectsBounds(default, Rect2D.Unbounded, 10));
         Assert.Throws<ArgumentOutOfRangeException>(() => Array.Empty<SpatialObject2D>().Raycast(default, 10, out _));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, Vector2.UnitX).GetPoint(float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, Vector2.UnitX).PointAt(float.NaN));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Ray2D(default, Vector2.UnitX).DistanceTo(new(float.NaN, 0)));
     }
 

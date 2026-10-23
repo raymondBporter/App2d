@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Authored;
@@ -14,14 +15,20 @@ public sealed class AppearanceAndBuildTests
         var tall = ResolvedModel.From(Person, variant);
         Assert.True(tall.Rest["head"].Y > ResolvedModel.From(Person).Rest["head"].Y + .2f);
         // A base edit to an unoverridden value reaches the variant through its build.
-        var edited = PersonTemplate.Model(); var head = edited.Controls.Single(c => c.Id == "head"); head.Rest = head.Rest with { Y = head.Rest.Y + .1f };
+        var edited = PersonTemplate.Model();
+        var head = edited.Controls.Single(c => c.Id == "head");
+        head.Rest = head.Rest with
+        {
+            Y = head.Rest.Y + .1f
+        };
         Assert.Equal(tall.Rest["head"].Y + .1f * PersonBuild.TallThin.Torso, ResolvedModel.From(edited, variant).Rest["head"].Y, 4);
     }
 
     [Fact]
     public void ExplicitRestOverridesWinOverTheBuild()
     {
-        var variant = PersonBuild.TallThin.Apply(Person, "tall", "Tall"); variant.Rest["head"] = new(0, 3);
+        var variant = PersonBuild.TallThin.Apply(Person, "tall", "Tall");
+        variant.Rest["head"] = new(0, 3);
         Assert.Equal(3, ResolvedModel.From(Person, variant).Rest["head"].Y);
     }
 
@@ -30,7 +37,10 @@ public sealed class AppearanceAndBuildTests
     {
         var variant = new ModelVariant { Id = "odd", Name = "Odd", Base = "person", Build = { ["tail"] = 1.2f } };
         Assert.Contains("build.tail", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Person, variant)).Message);
-        variant.Build = new() { ["legs"] = 5 };
+        variant.Build = new()
+        {
+            ["legs"] = 5
+        };
         Assert.Contains("build.legs", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Person, variant)).Message);
         Assert.Throws<InvalidDataException>(() => ResolvedModel.From(TestModels.Creature(), new ModelVariant { Id = "x", Name = "X", Base = "creature", Build = { ["legs"] = 1.1f } }));
     }
@@ -69,12 +79,15 @@ public sealed class AppearanceAndBuildTests
             Model = "person",
             Duration = 1,
             Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
-            Tracks = [new() { Kind = MotionClip.TargetKind, Target = "left-arm", Keys = [new() { X = -.2f, Y = .9f }, new() { Time = .5f, X = -.2f, Y = .9f, Bend = bend }] }],
+            Tracks = [new() { Kind = MotionClip.TargetKind, Target = "left-arm", Keys = [new() { Value = new(-.2f, .9f, 0) }, new() { Time = .5f, Value = new(-.2f, .9f, 0), Bend = bend }] }],
         };
         float ElbowSide(MotionClip clip, double seconds)
         {
-            clip.Validate(model); var pose = PoseEvaluator.Sample(model, clip, seconds);
-            var shoulder = pose.Points["left-shoulder"]; var hand = pose.Points["left-hand"]; var elbow = pose.Points["left-elbow"];
+            clip.Validate(model);
+            var pose = PoseEvaluator.Sample(model, clip, seconds);
+            var shoulder = pose.Points["left-shoulder"];
+            var hand = pose.Points["left-hand"];
+            var elbow = pose.Points["left-elbow"];
             return MathF.Sign((hand.X - shoulder.X) * (elbow.Y - shoulder.Y) - (hand.Y - shoulder.Y) * (elbow.X - shoulder.X));
         }
         var flipped = Reach(1);
@@ -88,9 +101,14 @@ public sealed class AppearanceAndBuildTests
     [Fact]
     public void AGameplayExpressionNeverMovesTheBody()
     {
-        var model = ResolvedModel.From(Person); var clip = AuthoredCatalog.Load(TestModels.AuthoredRoot).Animations["person-walk"];
-        var plain = PoseEvaluator.Sample(model, clip, .4); var hurt = PoseEvaluator.Sample(model, clip, .4, input: new("hurt"));
-        foreach (var (id, point) in plain.Points) Assert.Equal(point, hurt.Points[id]);
+        var model = ResolvedModel.From(Person);
+        var clip = AuthoredCatalog.Load(TestModels.AuthoredRoot).Animations["person-walk"];
+        var plain = PoseEvaluator.Sample(model, clip, .4);
+        var hurt = PoseEvaluator.Sample(model, clip, .4, input: new("hurt"));
+        foreach (var (id, point) in plain.Points)
+        {
+            Assert.Equal(point, hurt.Points[id]);
+        }
     }
 
     [Fact]
@@ -107,10 +125,13 @@ public sealed class AppearanceAndBuildTests
     [Theory, InlineData(ClipEase.Linear, .5f), InlineData(ClipEase.Smooth, .5f), InlineData(ClipEase.Step, 0)]
     public void KeysEaseTowardTheNextKey(string ease, float middle)
     {
-        var keys = new List<ClipKey> { new() { Time = 0, Y = 0, Ease = ease }, new() { Time = 1, Y = 1 } };
+        var keys = new List<ClipKey> { new() { Time = 0, Value = new(0, 0, 0), Ease = ease }, new() { Time = 1, Value = new(0, 1, 0) } };
         Assert.Equal(middle, PoseEvaluator.Interpolate(keys, .5f).Value.Y, 4);
         Assert.Equal(1, PoseEvaluator.Interpolate(keys, 1).Value.Y, 4);
-        if (ease == ClipEase.Smooth) Assert.True(PoseEvaluator.Interpolate(keys, .1f).Value.Y < .1f);
+        if (ease == ClipEase.Smooth)
+        {
+            Assert.True(PoseEvaluator.Interpolate(keys, .1f).Value.Y < .1f);
+        }
     }
 
     [Fact]
@@ -120,7 +141,8 @@ public sealed class AppearanceAndBuildTests
         Assert.Contains("duplicate marker", Assert.Throws<InvalidDataException>(clip.Validate).Message);
         clip.Markers = [new() { Id = "late", Time = 3 }];
         Assert.Throws<InvalidDataException>(clip.Validate);
-        clip.Markers = []; clip.Faces = [new() { Part = "head", Keys = [new() { Expression = "grinning" }] }];
+        clip.Markers = [];
+        clip.Faces = [new() { Part = "head", Keys = [new() { Expression = "grinning" }] }];
         Assert.Contains("grinning", Assert.Throws<InvalidDataException>(clip.Validate).Message);
     }
 }

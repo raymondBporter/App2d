@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "baby-triceratops-recover",
   "name": "Baby triceratops / recover",
   "model": "baby-triceratops-rig",
@@ -74,5 +74,9 @@
     }
   ],
   "markers": [],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

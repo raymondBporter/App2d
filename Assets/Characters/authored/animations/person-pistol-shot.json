@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "person-pistol-shot",
   "name": "Pistol shot",
   "model": "person",
@@ -356,5 +356,9 @@
         }
       ]
     }
-  ]
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

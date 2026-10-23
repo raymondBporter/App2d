@@ -1,10 +1,8 @@
+using App2d.Core.Input;
+using App2d.Core.Rendering;
 using App2d.Editor;
 using App2d.Levels;
-using App2d.Core.Rendering;
-using App2d.Core.Input;
-using App2d.Core.Tiles;
 using Microsoft.Data.Sqlite;
-using System.Numerics;
 
 namespace App2d.Tests.Levels;
 
@@ -20,7 +18,11 @@ public sealed class WorldMapEditorTests
             WorldMapAsset2D Create(string id, int identity, float x)
             {
                 var path = Path.Combine(root, id + ".db");
-                using (var db = LevelDatabase2D.Open(path)) db.Save(new(16, 16, 32, 4, new(x, 0)), 0);
+                using (var db = LevelDatabase2D.Open(path))
+                {
+                    db.Save(new(16, 16, 32, 4, new(x, 0)), 0);
+                }
+
                 return WorldFile2D.LoadMap(path, id, id, "zone", identity);
             }
             var left = Create("left", 0, 0);
@@ -40,7 +42,11 @@ public sealed class WorldMapEditorTests
             editor.CycleMap(1); // Still holding the mouse: commit the old map before changing files.
             Assert.Equal(1, editor.SelectedMapIndex);
             Assert.Equal(right.TileMap.WorldBounds, editor.MapBounds);
-            using (var db = LevelDatabase2D.OpenRead(left.DatabasePath)) Assert.True(db.Load().IsSolid(4, 4));
+            using (var db = LevelDatabase2D.OpenRead(left.DatabasePath))
+            {
+                Assert.True(db.Load().IsSolid(4, 4));
+            }
+
             input.SetMouseButton(MouseButtons.Left, false);
             input.CancelButtons();
             input.EndFrame();
@@ -56,17 +62,27 @@ public sealed class WorldMapEditorTests
             editor.Update(input);
             Assert.False(left.TileMap.IsSolid(4, 4));
             Assert.True(right.TileMap.IsSolid(8, 8));
-            using (var db = LevelDatabase2D.OpenRead(left.DatabasePath)) Assert.False(db.Load().IsSolid(4, 4));
-            using (var db = LevelDatabase2D.OpenRead(right.DatabasePath)) Assert.True(db.Load().IsSolid(8, 8));
+            using (var db = LevelDatabase2D.OpenRead(left.DatabasePath))
+            {
+                Assert.False(db.Load().IsSolid(4, 4));
+            }
+
+            using (var db = LevelDatabase2D.OpenRead(right.DatabasePath))
+            {
+                Assert.True(db.Load().IsSolid(8, 8));
+            }
         }
         finally
         {
             foreach (var path in Directory.EnumerateFiles(root, "*.db"))
+            {
                 foreach (var mode in new[] { SqliteOpenMode.ReadOnly, SqliteOpenMode.ReadWriteCreate })
                 {
                     using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = mode }.ToString());
                     SqliteConnection.ClearPool(connection);
                 }
+            }
+
             Directory.Delete(root, true);
         }
     }

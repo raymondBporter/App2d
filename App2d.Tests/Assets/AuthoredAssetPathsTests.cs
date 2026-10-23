@@ -34,7 +34,11 @@ public sealed class AuthoredAssetPathsTests : IDisposable
     public void PackagedGameUsesItsOwnAssets(bool useSourceAssets, bool sourceTreeExists)
     {
         Directory.CreateDirectory(_root);
-        if (sourceTreeExists) Directory.CreateDirectory(Path.Combine(_root, "Assets", "Static"));
+        if (sourceTreeExists)
+        {
+            Directory.CreateDirectory(Path.Combine(_root, "Assets", "Static"));
+        }
+
         var output = Path.Combine(_root, "output", "game");
         var packaged = Path.Combine(output, "Assets");
 

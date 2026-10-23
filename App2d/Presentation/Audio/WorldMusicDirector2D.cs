@@ -20,8 +20,15 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
         set
         {
             if (value != "auto" && !soundtrack.Cues.ContainsKey(value))
+            {
                 throw new ArgumentException("Use auto, or a cue ID from music_status.");
-            if (value != "auto" && _moodOverride != "auto") soundtrack.Validate(new(value, _moodOverride));
+            }
+
+            if (value != "auto" && _moodOverride != "auto")
+            {
+                soundtrack.Validate(new(value, _moodOverride));
+            }
+
             _pieceOverride = value;
         }
     }
@@ -31,14 +38,17 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
         set
         {
             if (value != "auto" && soundtrack.Cues.Values.Any(c => !c.Moods.ContainsKey(value)))
+            {
                 throw new ArgumentException("Use auto, explore, drive or combat.");
+            }
+
             _moodOverride = value;
         }
     }
 
     public void Update(LevelContent2D content, Vector2 playerPosition, float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         CurrentZone = WorldZone2D.FindAt(content.Zones.AsSpan(), playerPosition);
         var authored = soundtrack.ForZone(CurrentZone);
         var desired = new MusicSelection2D(
@@ -53,7 +63,11 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
         {
             _candidateSeconds += deltaSeconds;
         }
-        if (desired == CurrentSelection || (CurrentSelection is not null && _candidateSeconds < ZoneDwellSeconds)) return;
+        if (desired == CurrentSelection || (CurrentSelection is not null && _candidateSeconds < ZoneDwellSeconds))
+        {
+            return;
+        }
+
         soundtrack.Validate(desired);
         select(desired.Piece, desired.Mood);
         CurrentSelection = desired;

@@ -6,7 +6,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Rendering;
 
@@ -34,17 +33,17 @@ public sealed class GameRenderPassTests
         using var graphics = new GraphicsTestContext();
         using var game = new TestGame();
         using var renderer = new Renderer2D(game.Camera, graphics.Device);
-        game.DeveloperConsole.Execute($"draw_graphics {drawGraphics}");
-        var background = drawGraphics ? XnaColor.Red : new XnaColor(24, 27, 36);
+        game.DrawGraphics = drawGraphics;
+        var background = drawGraphics ? Color4b.Red : new Color4b(24, 27, 36);
 
         // The grid starts disabled, and its toggle is independent of the graphics toggle.
         var withoutGrid = Render();
         Assert.Equal(background, At(withoutGrid, 64, 80));
-        game.DeveloperConsole.Execute("draw_grid true");
+        game.DrawGrid = true;
         var withGrid = Render();
         Assert.True(At(withGrid, 64, 80).G > background.G);
         Assert.Equal(background, At(withGrid, 80, 80));
-        Assert.Equal(XnaColor.Blue, At(withGrid, 64, 16)); // UI covers the grid's vertical axis.
+        Assert.Equal(Color4b.Blue, At(withGrid, 64, 16)); // UI covers the grid's vertical axis.
         Assert.Equal(drawGraphics ? new[] { "game", "debug", "ui" } : ["debug", "ui"], game.Passes);
 
         // World diagnostics use the game camera; screen UI does not move with it.
@@ -52,12 +51,12 @@ public sealed class GameRenderPassTests
         var moved = Render();
         Assert.True(At(moved, 51, 80).G > background.G);
         Assert.Equal(background, At(moved, 64, 80));
-        Assert.Equal(XnaColor.Blue, At(moved, 64, 16));
+        Assert.Equal(Color4b.Blue, At(moved, 64, 16));
 
-        game.DeveloperConsole.Execute("toggle draw_grid");
+        game.DrawGrid = false;
         Assert.Equal(background, At(Render(), 51, 80));
 
-        XnaColor[] Render()
+        Color4b[] Render()
         {
             game.Passes.Clear();
             renderer.BeginFrame(128, 128, default);
@@ -67,7 +66,7 @@ public sealed class GameRenderPassTests
         }
     }
 
-    private static XnaColor At(XnaColor[] pixels, int x, int y) => pixels[y * 128 + x];
+    private static Color4b At(Color4b[] pixels, int x, int y) => pixels[y * 128 + x];
 
     private sealed class TestGame : Game2D
     {
@@ -76,9 +75,11 @@ public sealed class GameRenderPassTests
         public void AttachWorld(PhysicsWorld2D world) => AttachPhysicsWorld(world);
 
         public TestGame() => Scene.Add(new WorldObject2D(
-            Rectangle2D.FromSize(new Vector2(512)), new SolidColorShader(XnaColor.Red)));
+            Rectangle2D.Builder.CreateFromSize(512, 512), new SolidColorShader(Color4b.Red)));
 
-        public override void Update(FrameTime time, InputState input) { }
+        public override void Update(FrameTime time, InputState input)
+        {
+        }
 
         public override void Render(Renderer2D renderer)
         {
@@ -95,7 +96,7 @@ public sealed class GameRenderPassTests
         public override void RenderUI(Renderer2D renderer, FrameTime time)
         {
             Passes.Add("ui");
-            renderer.DrawScreenRoundedRectangle(new(56, 0, 72, 32), 0, XnaColor.Blue);
+            renderer.DrawScreenRoundedRectangle(new(56, 0, 72, 32), 0, Color4b.Blue);
             base.RenderUI(renderer, time);
         }
     }

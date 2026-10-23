@@ -5,7 +5,6 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Core.Geometry;
 using App2d.Core.Physics;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
@@ -16,11 +15,11 @@ using System.Numerics;
 namespace App2d.Gameplay.Simulation;
 
 /// <summary>
-/// Authoritative session. Owns stepping and progression for its participants, but has
+/// Fixed-step gameplay session. Owns stepping and progression for its participants, but has
 /// no input devices, renderer, audio playback or save-file access. It is the one place
 /// the local game advances gameplay.
 /// </summary>
-public sealed partial class SideScrollerSession2D : IDisposable
+public sealed class SideScrollerSession2D : IDisposable
 {
     public const float FixedDeltaSeconds = 1f / 120f;
     private const float DeathRestartDelaySeconds = 1.1f;
@@ -39,24 +38,26 @@ public sealed partial class SideScrollerSession2D : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(_advancing, "Travel requires a completed simulation tick.");
-        ArgGuard.ThrowIfNotFinite(destination);
-        if (destination.X < _world.Bounds.Min.X || destination.X >= _world.Bounds.Max.X ||
-            destination.Y < _world.Bounds.Min.Y || destination.Y >= _world.Bounds.Max.Y)
-            throw new ArgumentOutOfRangeException(nameof(destination));
+        ArgGuard.InRange(destination, _world.Bounds.Min, _world.Bounds.Max, bounds: RangeBounds.ClosedOpen);
+
         _pendingPlaygroundTravel = destination;
     }
 
-    public SideScrollerSession2D(PhysicsWorld2D physics, Person2D player,
-        ISessionPlayerActions2D actions, ISideScrollerSessionWorld2D world,
-        RespawnState2D respawn, CombatSystem2D? combat = null)
+    public SideScrollerSession2D(
+        PhysicsWorld2D physics,
+        Person2D player,
+        ISessionPlayerActions2D actions,
+        ISideScrollerSessionWorld2D world,
+        RespawnState2D respawn,
+        CombatSystem2D? combat = null)
     {
         _physics = ArgGuard.RequireNotNull(physics);
         _combat = combat;
         _world = ArgGuard.RequireNotNull(world);
         ArgGuard.ThrowIfNull(player);
         ArgGuard.ThrowIfNull(actions);
-        ArgGuard.ThrowIfNotFinite(respawn.Position);
-        ArgGuard.ThrowIfNotInClosedRange(respawn.HitPoints, 1, player.Health.Maximum, nameof(respawn));
+        ArgGuard.Finite(respawn.Position);
+        ArgGuard.InRange(respawn.HitPoints, 1, player.Health.Maximum, nameof(respawn));
         StateGuard.ThrowIf(!physics.Bodies.Contains(player.Body), "The player must belong to the session's physics world.");
         StateGuard.ThrowIf(!ReferenceEquals(player.Actions, actions), "The session actions must be attached to the player.");
 
@@ -80,42 +81,37 @@ public sealed partial class SideScrollerSession2D : IDisposable
     public ImmutableArray<EnemyState2D> CaptureEnemies() => _world.CaptureEnemies();
     public ImmutableArray<PlayerState2D> CapturePlayers() => [.. _players.Select(p => p.CaptureState())];
 
-    public SessionSnapshot2D CaptureSnapshot()
+    /// <summary>A complete observation at a tick boundary, with no events.</summary>
+    public SessionFrame2D CaptureSnapshot()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(_advancing, "Snapshots require a completed simulation tick.");
-        return new(Tick, CapturePlayers(), CaptureContent(), CaptureWorld(), CaptureEnemies());
+        return new(Tick, CapturePlayers(), CaptureContent(), CaptureWorld(), CaptureEnemies(), []);
     }
 
     public void SetPaused(bool paused)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(_advancing, "Pause changes require a completed simulation tick.");
-        if (paused == IsPaused) return;
+        if (paused == IsPaused)
+        {
+            return;
+        }
+
         if (paused)
-            foreach (var player in _players) player.Actions.InterruptPrimary();
+        {
+            foreach (var player in _players)
+            {
+                player.Actions.InterruptPrimary();
+            }
+        }
+
         IsPaused = paused;
     }
 
     /// <summary>
-    /// Checks one input against the current tick without changing state. A transport
-    /// should call this and drop rejected inputs; <see cref="Advance"/> throws on them.
-    /// </summary>
-    public bool TryValidateInput(PlayerInput2D input, out InputRejection2D rejection)
-    {
-        var participant = FindParticipant(input.EntityId);
-        rejection = participant is null ? InputRejection2D.UnknownPlayer
-            : input.Tick != Tick + 1 ? InputRejection2D.WrongTick
-            : input.Sequence <= participant.LastInputSequence ? InputRejection2D.StaleSequence
-            : !IsValidMovement(input.Command) ? InputRejection2D.InvalidMovement
-            : InputRejection2D.None;
-        return rejection == InputRejection2D.None;
-    }
-
-    /// <summary>
     /// Advances exactly one fixed tick. Each input applies to its player for this tick;
-    /// a player without an input this tick repeats its previous command, so a missing
-    /// packet degrades to "hold what you were doing" rather than stalling the session.
+    /// a player without a new input this tick continues its previous command.
     /// </summary>
     public SessionFrame2D Advance(params ReadOnlySpan<PlayerInput2D> inputs)
     {
@@ -125,12 +121,23 @@ public sealed partial class SideScrollerSession2D : IDisposable
         // Reject the entire batch before changing simulation state.
         for (var i = 0; i < inputs.Length; i++)
         {
-            if (!TryValidateInput(inputs[i], out var rejection))
-                throw ArgGuard.CreateInvalid($"Input for player {inputs[i].EntityId.Value} was rejected: {rejection}.", nameof(inputs));
+            var input = inputs[i];
+            if (FindParticipant(input.EntityId) is null)
+            {
+                throw ArgGuard.CreateInvalid($"Player {input.EntityId.Value} is not in this session.", nameof(inputs));
+            }
+
+            if (!IsValidMovement(input.Command))
+            {
+                throw ArgGuard.CreateInvalid($"Input for player {input.EntityId.Value} has an invalid movement.", nameof(inputs));
+            }
+
             for (var j = 0; j < i; j++)
             {
-                if (inputs[j].EntityId == inputs[i].EntityId)
-                    throw ArgGuard.CreateInvalid($"Input for player {inputs[i].EntityId.Value} was rejected: {InputRejection2D.DuplicatePlayer}.", nameof(inputs));
+                if (inputs[j].EntityId == input.EntityId)
+                {
+                    throw ArgGuard.CreateInvalid($"Player {input.EntityId.Value} has more than one input this tick.", nameof(inputs));
+                }
             }
         }
 
@@ -140,9 +147,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
             Tick++;
             foreach (var input in inputs)
             {
-                var participant = FindParticipant(input.EntityId)!;
-                participant.LastInputSequence = input.Sequence;
-                participant.LastCommand = input.Command;
+                FindParticipant(input.EntityId)!.LastCommand = input.Command;
             }
             _events.Clear();
             if (_pendingPlaygroundTravel is { } destination)
@@ -158,19 +163,28 @@ public sealed partial class SideScrollerSession2D : IDisposable
             }
             Step();
             foreach (var occurrence in _world.DrainEnemyEvents())
+            {
                 _events.Add(new EnemyOccurred2D(new SessionEventStamp2D(Tick, ++_eventSequence, occurrence.EntityId), occurrence));
-            return new SessionFrame2D(Tick, CapturePlayers(), [.. _events])
-            { Content = CaptureContent(), Enemies = CaptureEnemies(), World = CaptureWorld() };
+            }
+
+            return new SessionFrame2D(Tick, CapturePlayers(), CaptureContent(), CaptureWorld(), CaptureEnemies(), [.. _events]);
         }
-        finally { _advancing = false; }
+        finally
+        {
+            _advancing = false;
+        }
     }
 
     private void Step()
     {
         const float dt = FixedDeltaSeconds;
         _world.UpdateStreaming(StreamingFocus);
-        _world.UpdateMovingPlatforms(dt);
-        foreach (var player in _players) player.Person.BeginFrame(dt);
+        _world.UpdateWorldMotion(dt);
+        foreach (var player in _players)
+        {
+            player.Person.BeginFrame(dt);
+        }
+
         _world.UpdateEnemies(dt, EnemyTarget);
 
         foreach (var player in _players)
@@ -197,7 +211,10 @@ public sealed partial class SideScrollerSession2D : IDisposable
             if (player.WasRestarting)
             {
                 if (player.RestartSeconds <= 0f)
+                {
                     Respawn(player);
+                }
+
                 continue;
             }
 
@@ -215,12 +232,14 @@ public sealed partial class SideScrollerSession2D : IDisposable
                 player.Person.Health.Reset();
                 player.Respawn = new RespawnState2D(checkpoint.Position, player.Person.Health.Current, checkpoint.ThingId);
                 _world.SetActiveSavePoint(checkpoint.ThingId);
-                _events.Add(new CheckpointActivated2D(Stamp(player), checkpoint.ThingId,
-                    player.Person.Health.Current, player.Person.Position));
+                _events.Add(new CheckpointActivated2D(Stamp(player), checkpoint.ThingId, player.Person.Health.Current, player.Person.Position));
             }
 
             if (player.Person.Position.Y < _world.Bounds.Min.Y - 260f)
+            {
                 Respawn(player);
+            }
+
             if (player.GoalEligible && !player.ReachedGoal && player.Person.Position.X >= _world.GoalX)
             {
                 player.ReachedGoal = true;
@@ -232,7 +251,11 @@ public sealed partial class SideScrollerSession2D : IDisposable
     private void StepPhysics()
     {
         _physics.Step(FixedDeltaSeconds);
-        foreach (var player in _players) player.Person.UpdateAfterPhysics(FixedDeltaSeconds);
+        foreach (var player in _players)
+        {
+            player.Person.UpdateAfterPhysics(FixedDeltaSeconds);
+        }
+
         _world.SyncEnemiesAfterPhysics();
     }
 
@@ -255,7 +278,13 @@ public sealed partial class SideScrollerSession2D : IDisposable
         get
         {
             foreach (var player in _players)
-                if (player.Person.IsAlive) return player.Person.Position;
+            {
+                if (player.Person.IsAlive)
+                {
+                    return player.Person.Position;
+                }
+            }
+
             return _players[0].Person.Position;
         }
     }
@@ -267,7 +296,13 @@ public sealed partial class SideScrollerSession2D : IDisposable
     private Participant? FindParticipant(EntityId2D id)
     {
         foreach (var player in _players)
-            if (player.Person.Id == id) return player;
+        {
+            if (player.Person.Id == id)
+            {
+                return player;
+            }
+        }
+
         return null;
     }
 
@@ -277,10 +312,18 @@ public sealed partial class SideScrollerSession2D : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
         _combat?.DamageResolved -= OnCombatDamage;
-        foreach (var player in _players) player.Unsubscribe();
+        foreach (var player in _players)
+        {
+            player.Unsubscribe();
+        }
+
         _events.Clear();
     }
 
@@ -295,14 +338,11 @@ public sealed partial class SideScrollerSession2D : IDisposable
         public float MoveX { get; set; }
         public bool ReachedGoal { get; set; }
         public bool GoalEligible { get; set; } = true;
-        public long LastInputSequence { get; set; }
         public PersonCommand2D LastCommand { get; set; }
         /// <summary>Within-tick scratch: whether this tick began inside the death restart delay.</summary>
         public bool WasRestarting { get; set; }
 
-        public PlayerState2D CaptureState() => new(Person.CaptureState(), LastInputSequence, MoveX,
-            Actions.Equipment, Actions.IsMeleeAttackActive,
-            RestartSeconds, Respawn.CheckpointId, ReachedGoal, Actions.CaptureWeaponState());
+        public PlayerState2D CaptureState() => new(Person.CaptureState(), MoveX, Actions.Equipment, Actions.IsMeleeAttackActive, RestartSeconds, Respawn.CheckpointId, ReachedGoal, Actions.CaptureWeaponState());
 
         public void Subscribe(SideScrollerSession2D session)
         {
@@ -316,20 +356,30 @@ public sealed partial class SideScrollerSession2D : IDisposable
             void onMelee(float duration) => Attack(PlayerAttackKind2D.Melee, duration);
             void onDownward(float duration) => Attack(PlayerAttackKind2D.Downward, duration);
             void onShot() => Attack(PlayerAttackKind2D.Shot, 0f);
-            void onUnarmed(UnarmedAttackKind2D kind, float duration) =>
-                Attack(kind == UnarmedAttackKind2D.Punch ? PlayerAttackKind2D.Punch : PlayerAttackKind2D.Kick, duration);
+            void onUnarmed(UnarmedAttackKind2D kind, float duration) => Attack(kind == UnarmedAttackKind2D.Punch ? PlayerAttackKind2D.Punch : PlayerAttackKind2D.Kick, duration);
 
-            Person.JumpStarted += onJump; _unsubscribe.Add(() => Person.JumpStarted -= onJump);
-            Person.AirJumpStarted += onAirJump; _unsubscribe.Add(() => Person.AirJumpStarted -= onAirJump);
-            Person.Landed += onLanded; _unsubscribe.Add(() => Person.Landed -= onLanded);
-            Person.Footstep += onFootstep; _unsubscribe.Add(() => Person.Footstep -= onFootstep);
-            Person.Damaged += onDamaged; _unsubscribe.Add(() => Person.Damaged -= onDamaged);
-            Person.Died += onDied; _unsubscribe.Add(() => Person.Died -= onDied);
-            Actions.WeaponOccurred += onWeapon; _unsubscribe.Add(() => Actions.WeaponOccurred -= onWeapon);
-            Actions.MeleeAttackStarted += onMelee; _unsubscribe.Add(() => Actions.MeleeAttackStarted -= onMelee);
-            Actions.DownAttackStarted += onDownward; _unsubscribe.Add(() => Actions.DownAttackStarted -= onDownward);
-            Actions.ShotStarted += onShot; _unsubscribe.Add(() => Actions.ShotStarted -= onShot);
-            Actions.UnarmedAttackStarted += onUnarmed; _unsubscribe.Add(() => Actions.UnarmedAttackStarted -= onUnarmed);
+            Person.JumpStarted += onJump;
+            _unsubscribe.Add(() => Person.JumpStarted -= onJump);
+            Person.AirJumpStarted += onAirJump;
+            _unsubscribe.Add(() => Person.AirJumpStarted -= onAirJump);
+            Person.Landed += onLanded;
+            _unsubscribe.Add(() => Person.Landed -= onLanded);
+            Person.Footstep += onFootstep;
+            _unsubscribe.Add(() => Person.Footstep -= onFootstep);
+            Person.Damaged += onDamaged;
+            _unsubscribe.Add(() => Person.Damaged -= onDamaged);
+            Person.Died += onDied;
+            _unsubscribe.Add(() => Person.Died -= onDied);
+            Actions.WeaponOccurred += onWeapon;
+            _unsubscribe.Add(() => Actions.WeaponOccurred -= onWeapon);
+            Actions.MeleeAttackStarted += onMelee;
+            _unsubscribe.Add(() => Actions.MeleeAttackStarted -= onMelee);
+            Actions.DownAttackStarted += onDownward;
+            _unsubscribe.Add(() => Actions.DownAttackStarted -= onDownward);
+            Actions.ShotStarted += onShot;
+            _unsubscribe.Add(() => Actions.ShotStarted -= onShot);
+            Actions.UnarmedAttackStarted += onUnarmed;
+            _unsubscribe.Add(() => Actions.UnarmedAttackStarted -= onUnarmed);
 
             void Attack(PlayerAttackKind2D kind, float duration) =>
                 session._events.Add(new AttackStarted2D(session.Stamp(this), kind, duration, Person.IsWallGripping));
@@ -337,7 +387,11 @@ public sealed partial class SideScrollerSession2D : IDisposable
 
         public void Unsubscribe()
         {
-            foreach (var detach in _unsubscribe) detach();
+            foreach (var detach in _unsubscribe)
+            {
+                detach();
+            }
+
             _unsubscribe.Clear();
         }
     }

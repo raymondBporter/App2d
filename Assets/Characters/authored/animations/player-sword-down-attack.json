@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "player-sword-down-attack",
   "name": "Sword downward stab",
   "model": "person",
@@ -310,5 +310,9 @@
         }
       ]
     }
-  ]
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

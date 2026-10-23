@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 2,
+  "version": 4,
   "id": "short-broad",
   "name": "Short and broad",
   "base": "person",

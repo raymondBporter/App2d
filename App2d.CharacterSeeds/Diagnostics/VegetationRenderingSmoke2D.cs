@@ -1,0 +1,99 @@
+using App2d.Contracts.Persons;
+using App2d.Contracts.Simulation;
+using App2d.Core.Assets;
+using App2d.Core.Characters.Authored;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
+using App2d.Core.Tiles;
+using App2d.Core.Vegetation;
+using App2d.Gameplay.Simulation;
+using App2d.Gameplay.World;
+using App2d.Presentation.Persons;
+using App2d.Presentation.World.Presentation;
+using App2d.Rendering;
+using Microsoft.Xna.Framework.Graphics;
+
+namespace App2d.CharacterSeeds.Diagnostics;
+
+/// <summary>Exercises actual authored sword damage and captures the resulting foliage.</summary>
+internal static class VegetationRenderingSmoke2D
+{
+    public static void Run(GraphicsDevice device, TextureCache2D textures, string directory)
+    {
+        var map = new EditableTileMap2D(SideScrollerLevel2D.WorldWidthTiles,
+            SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
+            SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
+        for (var x = 0; x < map.Width; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
+        var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
+        var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
+        using var game = SideScrollerSimulation2D.Create(new(traversal, map,
+            [new(1, WorldThingKind2D.PlayerSpawn, "Start", true, new(-368f, 40f))])
+        {
+            AuthoredCharacters = catalog
+        });
+        var scene = new Scene2D();
+        using var world = new WorldPresentation2D(scene, textures);
+        using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
+        var camera = new Camera2D { Zoom = 2.2f, Position = new(-260f, 98f) };
+        using var renderer = new Renderer2D(camera, device);
+        using var target = RenderCapture2D.CreateTarget(device, 1280, 720, DepthFormat.None, 0);
+        for (var i = 0; i < 90; i++)
+        {
+            Step(default);
+        }
+
+        Save("vegetation-before.png");
+        var cutFrame = -1;
+        for (var i = 0; i < 180; i++)
+        {
+            Step(new()
+            {
+                PrimaryHeld = i == 0
+            });
+            if (cutFrame < 0 && game.Session.CaptureWorld().CutGrass.Count > 0)
+            {
+                cutFrame = i;
+                Save("vegetation-sword-cut.png");
+            }
+            if (cutFrame >= 0 && i - cutFrame is 18 or 42 or 84 or 132)
+            {
+                Save($"vegetation-flight-{i - cutFrame:000}.png");
+            }
+        }
+        if (cutFrame < 0)
+        {
+            throw new InvalidOperationException("The authored sword never cut the grass.");
+        }
+
+        Save("vegetation-after.png");
+
+        void Step(PersonCommand2D command)
+        {
+            var tick = game.Session.Tick + 1;
+            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, command));
+            var state = frame.Players[0];
+            world.Update(frame.Content, frame.World, 1f / 120f);
+            player.Equip(state.Equipment);
+            player.ApplyState(state.Person, tick, state.MoveX, false, state.IsMeleeAttackActive);
+            player.Advance(1f / 120f);
+        }
+
+        void Save(string name)
+        {
+            target.SavePng(Path.Combine(directory, name), new Color4b(103, 196, 235), () =>
+            {
+                renderer.BeginFrame(1280, 720, default);
+                world.DrawTrees(renderer, camera.VisibleWorldBounds);
+                renderer.Draw(scene, int.MinValue, 0);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
+                renderer.Draw(scene, 1, int.MaxValue);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
+                renderer.EndFrame();
+            });
+        }
+    }
+}

@@ -1,3 +1,4 @@
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 namespace App2d.Core.Collision;
 
@@ -24,7 +25,10 @@ public sealed class Collider2D
         set
         {
             if (_mobility == value)
+            {
                 return;
+            }
+
             var previous = _mobility;
             _mobility = value;
             System.OnMobilityChanged(previous, value);

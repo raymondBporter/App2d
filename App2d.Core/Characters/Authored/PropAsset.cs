@@ -1,44 +1,52 @@
-using App2d.Core.Meshes;
 using App2d.Core.Geometry;
-using App2d.Core.Curves;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Operations.Curves;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Shapes;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
-/// <summary>Local prop art: a stroke through its points, or a filled polygon. X runs along the socket axis, Y across it, Z is depth.</summary>
+/// <summary>Local prop geometry and appearance. X runs along the socket axis, Y across it; optional vertex depths supply Z.</summary>
 public sealed record PropShape
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public GeometryDefinition2D? Geometry { get; set; }
+    public IGeometryValue2D? Geometry { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public RenderMaterialDefinition2D? Material { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<float>? Depths { get; set; }
+    /// <summary>Drawing vertices derived from Geometry and Depths; excluded from authored JSON.</summary>
     [JsonIgnore] public List<PuppetPoint> Points { get; set; } = [];
-    public float Width { get; set; } = .05f;
     [JsonIgnore]
     public RenderMaterialDefinition2D RenderMaterial => Material
         ?? throw new InvalidDataException("A prop shape needs a material.");
 
-    [JsonIgnore] public bool IsFilled => Geometry is ShapeDefinition2D;
-
-    public GeometryDefinition2D Definition() => Geometry
-        ?? throw new InvalidDataException("A prop shape needs typed geometry.");
+    [JsonIgnore] public bool IsFilled => Geometry is IShape2D;
 
     public void RestorePoints()
     {
-        if (Geometry is null) return;
-        Vector2[] xy;
-        if (Geometry is ShapeDefinition2D definition)
+        if (Geometry is null)
         {
-            var shape = definition.Build();
+            return;
+        }
+
+        Vector2[] xy;
+        if (Geometry is IShape2D definition)
+        {
+            var shape = definition.Validated();
             var count = shape.GetOutlineVertCount(48);
-            if (count == 0) throw new InvalidDataException($"A {definition.Kind} cannot be used as prop art.");
+            if (count == 0)
+            {
+                throw new InvalidDataException($"A {definition.Kind} cannot be used as prop art.");
+            }
+
             xy = new Vector2[count];
             shape.GetOutlineVerts(xy, 48);
         }
@@ -46,21 +54,24 @@ public sealed record PropShape
         {
             xy = Geometry switch
             {
-                LineCurveDefinition2D line => [line.Start, line.End],
-                PolylineCurveDefinition2D polyline => [.. polyline.Points],
-                CurveDefinition2D curve => Sample(curve),
+                LineSegmentCurve2D line => [line.Start, line.End],
+                PolylineCurve2D polyline => [.. polyline.Points],
+                ICurve2D curve => Sample(curve),
                 _ => throw new InvalidDataException("A prop needs shape or curve geometry.")
             };
         }
         if (Depths is { } depths && depths.Count != xy.Length)
+        {
             throw new InvalidDataException("Prop depth count must match geometry points.");
+        }
+
         Points = [.. xy.Select((point, i) => new PuppetPoint(point.X, point.Y, Depths is { } z ? z[i] : 0))];
     }
 
-    private static Vector2[] Sample(CurveDefinition2D curve)
+    private static Vector2[] Sample(ICurve2D curve)
     {
-        var built = curve.Build();
-        return [.. Enumerable.Range(0, 33).Select(i => built.Evaluate(i / 32f))];
+        var built = curve.Validated();
+        return Curve2D.Sample(built, 32);
     }
 }
 
@@ -88,7 +99,7 @@ public sealed class PropAsset
 {
     public const string FormatId = "app2d-prop", GripPoint = "grip", TipPoint = "tip", SecondGripPoint = "second-grip", MuzzlePoint = "muzzle";
     public static readonly IReadOnlyList<string> PointNames = [GripPoint, TipPoint, SecondGripPoint, MuzzlePoint];
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -119,31 +130,34 @@ public sealed class PropAsset
     public string ToJson()
     {
         foreach (var shape in Shapes)
-            if (shape.Geometry is not null && shape.Points.Count == 0) shape.RestorePoints();
+        {
+            if (shape.Geometry is not null && shape.Points.Count == 0)
+            {
+                shape.RestorePoints();
+            }
+        }
+
         var root = JsonNode.Parse(JsonSerializer.Serialize(this, AuthoredJson.Options))!.AsObject();
         var entries = root["shapes"]!.AsArray();
         for (var i = 0; i < Shapes.Count; i++)
         {
             var entry = entries[i]!.AsObject();
-            entry["geometry"] = JsonNode.Parse(Shapes[i].Definition().ToGeometryJson());
             entry["depths"] = JsonSerializer.SerializeToNode(Shapes[i].Points.Select(point => point.Z).ToArray(), AuthoredJson.Options);
-            entry["material"] = JsonSerializer.SerializeToNode(Shapes[i].RenderMaterial, AuthoredJson.Options);
-        }
-        var solids = root["solids"]!.AsArray();
-        for (var i = 0; i < Solids.Count; i++)
-        {
-            var entry = solids[i]!.AsObject();
-            entry["material"] = JsonSerializer.SerializeToNode(Solids[i].RenderMaterial, AuthoredJson.Options);
         }
         return root.ToJsonString(AuthoredJson.Options);
     }
     internal string ToSnapshotJson() => JsonSerializer.Serialize(this, AuthoredJson.SnapshotOptions);
     internal static PropAsset FromDraftJson(string json)
     {
-        RequireTypedJson(json);
         var prop = AuthoredAsset.Parse<PropAsset>(json, "prop");
         if (prop.Shapes is not null)
-            foreach (var shape in prop.Shapes) shape?.RestorePoints();
+        {
+            foreach (var shape in prop.Shapes)
+            {
+                shape?.RestorePoints();
+            }
+        }
+
         return prop;
     }
     public static PropAsset FromJson(string json)
@@ -153,8 +167,16 @@ public sealed class PropAsset
         {
             foreach (var solid in prop.Solids)
             {
-                if (solid?.Outline is not { } outline) continue;
-                if (outline.Count is < 3 or > 256) throw new InvalidDataException($"Prop '{prop.Id}': outline needs 3 to 256 points.");
+                if (solid?.Outline is not { } outline)
+                {
+                    continue;
+                }
+
+                if (outline.Count is < 3 or > 256)
+                {
+                    throw new InvalidDataException($"Prop '{prop.Id}': outline needs 3 to 256 points.");
+                }
+
                 var mesh = PropGeometry.Extrude(outline, solid.Thickness, solid.RenderMaterial.Fill!);
                 solid.Vertices = mesh.Vertices;
                 solid.Triangles = mesh.Triangles;
@@ -165,37 +187,19 @@ public sealed class PropAsset
         return prop;
     }
 
-    private static void RequireTypedJson(string json)
+    public void Save(string path)
     {
-        using var document = JsonDocument.Parse(json);
-        foreach (var group in document.RootElement.EnumerateObject())
-        {
-            if (group.Value.ValueKind != JsonValueKind.Array ||
-                !group.Name.Equals("shapes", StringComparison.OrdinalIgnoreCase) &&
-                !group.Name.Equals("solids", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
+        Validate();
+        AuthoredAsset.Write(path, ToJson());
+    }
 
-            foreach (var item in group.Value.EnumerateArray())
-            {
-                if (item.ValueKind != JsonValueKind.Object) continue;
-                foreach (var field in item.EnumerateObject())
-                {
-                    if (field.Name.Equals("kind", StringComparison.OrdinalIgnoreCase) ||
-                        field.Name.Equals("points", StringComparison.OrdinalIgnoreCase) ||
-                        field.Name.Equals("fill", StringComparison.OrdinalIgnoreCase) ||
-                        field.Name.Equals("outlined", StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new JsonException($"Prop field '{field.Name}' is from the old drawing format; use geometry and material.");
-                    }
-                }
-            }
+    private static void Require([DoesNotReturnIf(false)] bool condition, string message)
+    {
+        if (!condition)
+        {
+            throw new InvalidDataException(message);
         }
     }
-    public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
-
-    private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
 
     public void Validate()
     {
@@ -204,22 +208,40 @@ public sealed class PropAsset
         AuthoredAsset.RequireId(Id, "prop id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         EntityVocabulary.Require(Usage, ["prop", "hair", "clothing"], owner + " usage");
-        if (Attachment is not null) AuthoredAsset.RequireId(Attachment, owner + " attachment");
-        if (BackView is not null) { AuthoredAsset.RequireId(BackView, owner + " backView"); Require(BackView != Id, owner + ": back view cannot reference itself."); }
-        Limit.Color(Ink, $"{owner} ink"); new Limit(.001f, 1).Check(LineWidth, $"{owner} lineWidth");
+        if (Attachment is not null)
+        {
+            AuthoredAsset.RequireId(Attachment, owner + " attachment");
+        }
+
+        if (BackView is not null)
+        {
+            AuthoredAsset.RequireId(BackView, owner + " backView");
+            Require(BackView != Id, owner + ": back view cannot reference itself.");
+        }
+        Limit.Color(Ink, $"{owner} ink");
+        new Limit(.001f, 1).Check(LineWidth, $"{owner} lineWidth");
         new Limit(.001f, 100).Check(Scale, $"{owner} scale");
-        Grip.Check($"{owner} grip"); Tip.Check($"{owner} tip"); SecondGrip?.Check($"{owner} secondGrip"); Muzzle?.Check($"{owner} muzzle");
+        Grip.Check($"{owner} grip");
+        Tip.Check($"{owner} tip");
+        SecondGrip?.Check($"{owner} secondGrip");
+        Muzzle?.Check($"{owner} muzzle");
         Require(Solids?.Count <= 128, $"{owner}: solids must be a list of at most 128.");
         Require(Solids.Sum(s => s?.Vertices?.Count ?? 0) <= 32768 && Solids.Sum(s => s?.Triangles?.Count ?? 0) <= 196608, $"{owner}: mesh is too large.");
         foreach (var solid in Solids)
         {
             Require(solid?.Vertices is not null && solid.Triangles is not null, $"{owner}: incomplete solid.");
             Require(solid.Vertices.Count >= 3 && solid.Triangles.Count >= 3 && solid.Triangles.Count % 3 == 0, $"{owner}: a solid needs indexed triangles.");
-            foreach (var vertex in solid.Vertices) vertex.Check(owner + " mesh vertex");
-            Require(solid.Triangles.All(i => i >= 0 && i < solid.Vertices.Count), $"{owner}: triangle index outside vertices.");
-            for (var i = 0; i < solid.Triangles.Count; i += 3)
+            foreach (var vertex in solid.Vertices)
             {
-                var a = solid.Vertices[solid.Triangles[i]].XYZ; var b = solid.Vertices[solid.Triangles[i + 1]].XYZ; var c = solid.Vertices[solid.Triangles[i + 2]].XYZ;
+                vertex.Check(owner + " mesh vertex");
+            }
+
+            Require(solid.Triangles.All(i => i >= 0 && i < solid.Vertices.Count), $"{owner}: triangle index outside vertices.");
+            foreach (var (ia, ib, ic) in MeshTopology.Triangles(CollectionsMarshal.AsSpan(solid.Triangles)))
+            {
+                var a = solid.Vertices[ia].XYZ;
+                var b = solid.Vertices[ib].XYZ;
+                var c = solid.Vertices[ic].XYZ;
                 Require(new Triangle3D(a, b, c).DoubleArea > 1e-8d, $"{owner}: degenerate triangle.");
             }
             Require(solid.Material is not null, owner + " mesh material is required.");
@@ -229,21 +251,40 @@ public sealed class PropAsset
             {
                 Require(outline.Count is >= 3 and <= 256, owner + ": outline needs 3 to 256 points.");
                 new Limit(.0001f, 32).Check(solid.Thickness, owner + " thickness");
-                foreach (var p in outline) p.Check(owner + " outline");
+                foreach (var p in outline)
+                {
+                    p.Check(owner + " outline");
+                }
             }
         }
         Require(Shapes?.Count <= 128, $"{owner}: shapes must be a list of at most 128.");
         for (var i = 0; i < Shapes.Count; i++)
         {
-            var shape = Shapes[i]; var field = $"{owner} shapes[{i}]";
+            var shape = Shapes[i];
+            var field = $"{owner} shapes[{i}]";
             Require(shape?.Points is not null, $"{field}: incomplete shape.");
-            if (shape.Geometry is not null && shape.Points.Count == 0) shape.RestorePoints();
-            Require(shape.Geometry is ShapeDefinition2D or CurveDefinition2D, $"{field}: typed geometry is required.");
-            if (shape.Geometry is ShapeDefinition2D typedShape) _ = typedShape.Build();
-            if (shape.Geometry is CurveDefinition2D typedCurve) _ = typedCurve.Build();
+            if (shape.Geometry is not null && shape.Points.Count == 0)
+            {
+                shape.RestorePoints();
+            }
+
+            Require(shape.Geometry is IShape2D or ICurve2D, $"{field}: typed geometry is required.");
+            if (shape.Geometry is IShape2D typedShape)
+            {
+                _ = typedShape.Validated();
+            }
+
+            if (shape.Geometry is ICurve2D typedCurve)
+            {
+                _ = typedCurve.Validated();
+            }
+
             Require(shape.IsFilled ? shape.Points.Count >= 3 : shape.Points.Count >= 2, $"{field}: a stroke needs two points and a polygon three.");
-            foreach (var point in shape.Points) point.Check(field + " point");
-            new Limit(.001f, 10).Check(shape.Width, field + " width");
+            foreach (var point in shape.Points)
+            {
+                point.Check(field + " point");
+            }
+
             Require(shape.Material is not null, field + " material is required.");
             shape.Material.Validate(field + " material");
         }

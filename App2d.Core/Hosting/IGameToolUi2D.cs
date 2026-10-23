@@ -9,7 +9,6 @@ public interface IGameToolUi2D : IDisposable
     void BeginFrame(GraphicsDevice device, FrameTime time);
     bool CaptureMouse { get; }
     bool CaptureKeyboard { get; }
-    bool IsEditingText { get; }
     void Render();
     void ReleaseDevice();
 }

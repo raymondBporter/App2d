@@ -53,7 +53,11 @@ public sealed class BallisticsDebug2DTests
         var largeStep = Create();
         smallSteps.Launch(Vector2.Zero, 1f);
         largeStep.Launch(Vector2.Zero, 1f);
-        for (var i = 0; i < 60; i++) smallSteps.Advance(1f / 120f);
+        for (var i = 0; i < 60; i++)
+        {
+            smallSteps.Advance(1f / 120f);
+        }
+
         largeStep.Advance(0.5f);
         AssertClose(smallSteps.Reference!.Value.PositionAt(smallSteps.ElapsedSeconds),
             largeStep.Reference!.Value.PositionAt(largeStep.ElapsedSeconds));

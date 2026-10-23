@@ -12,13 +12,10 @@ public sealed class AnimationClip2D<TFrame>
     private readonly float[] _frameDurations;
     private readonly float[] _frameEndTimes;
 
-    public AnimationClip2D(
-        IEnumerable<TFrame> frames,
-        float framesPerSecond,
-        bool isLooping = true)
+    public AnimationClip2D(IEnumerable<TFrame> frames, float framesPerSecond, bool isLooping = true)
     {
         ArgGuard.ThrowIfNull(frames);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(framesPerSecond);
+        ArgGuard.Positive(framesPerSecond);
 
         _frames = [.. frames];
         ArgGuard.ThrowIfTooShort(_frames.AsSpan(), 1, nameof(frames));
@@ -27,17 +24,13 @@ public sealed class AnimationClip2D<TFrame>
         _frameDurations = new float[_frames.Length];
         Array.Fill(_frameDurations, 1f / framesPerSecond);
         _frameEndTimes = CreateFrameEndTimes(_frameDurations, out var duration);
-
         UniformFramesPerSecond = framesPerSecond;
         UniformFrameDuration = 1f / framesPerSecond;
         Duration = duration;
         IsLooping = isLooping;
     }
 
-    public AnimationClip2D(
-        IEnumerable<TFrame> frames,
-        IEnumerable<float> frameDurations,
-        bool isLooping = true)
+    public AnimationClip2D(IEnumerable<TFrame> frames, IEnumerable<float> frameDurations, bool isLooping = true)
     {
         ArgGuard.ThrowIfNull(frames);
         ArgGuard.ThrowIfNull(frameDurations);
@@ -46,18 +39,11 @@ public sealed class AnimationClip2D<TFrame>
         _frameDurations = [.. frameDurations];
         ArgGuard.ThrowIfTooShort(_frames.AsSpan(), 1, nameof(frames));
         ArgGuard.ThrowIfContainsNull(_frames.AsSpan(), nameof(frames));
-        ArgGuard.ThrowIf(_frameDurations.Length != _frames.Length,
-            "Frame durations must contain exactly one value for every frame.", nameof(frameDurations));
+        ArgGuard.ThrowIf(_frameDurations.Length != _frames.Length, "Frame durations must contain exactly one value for every frame.", nameof(frameDurations));
         for (var index = 0; index < _frameDurations.Length; index++)
         {
-            var duration = _frameDurations[index];
-            if (!NumericValidation.IsFiniteAndPositive(duration))
-            {
-                ArgGuard.ThrowOutOfRange(
-                    duration,
-                    $"Frame duration at index {index} must be positive and finite.",
-                    nameof(frameDurations));
-            }
+            if (!NumericValidation.IsPositive(_frameDurations[index]))
+                ArgGuard.ThrowOutOfRange(_frameDurations[index], $"Frame duration at index {index} must be positive and finite.", nameof(frameDurations));
         }
 
         _frameEndTimes = CreateFrameEndTimes(_frameDurations, out var totalDuration);
@@ -74,10 +60,8 @@ public sealed class AnimationClip2D<TFrame>
     public bool HasUniformFrameDuration => UniformFrameDuration is not null;
     public float? UniformFramesPerSecond { get; }
     public float? UniformFrameDuration { get; }
-    public float FramesPerSecond => UniformFramesPerSecond ??
-        throw StateGuard.Create("This animation clip uses per-frame durations.");
-    public float FrameDuration => UniformFrameDuration ??
-        throw StateGuard.Create("This animation clip uses per-frame durations.");
+    public float FramesPerSecond => UniformFramesPerSecond ?? throw StateGuard.Create("This animation clip uses per-frame durations.");
+    public float FrameDuration => UniformFrameDuration ?? throw StateGuard.Create("This animation clip uses per-frame durations.");
     public float Duration { get; }
     public bool IsLooping { get; }
 
@@ -87,9 +71,11 @@ public sealed class AnimationClip2D<TFrame>
 
     public int GetFrameIndexAtTime(float elapsedSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(elapsedSeconds);
+        ArgGuard.NonNegative(elapsedSeconds);
         if (elapsedSeconds >= Duration)
+        {
             return FrameCount - 1;
+        }
 
         var low = 0;
         var high = _frameEndTimes.Length - 1;
@@ -97,26 +83,25 @@ public sealed class AnimationClip2D<TFrame>
         {
             var middle = low + (high - low) / 2;
             if (elapsedSeconds < _frameEndTimes[middle])
+            {
                 high = middle;
+            }
             else
+            {
                 low = middle + 1;
+            }
         }
         return low;
     }
 
-    private static float[] CreateFrameEndTimes(
-        float[] durations,
-        out float totalDuration)
+    private static float[] CreateFrameEndTimes(float[] durations, out float totalDuration)
     {
         var endTimes = new float[durations.Length];
         double elapsed = 0d;
         for (var index = 0; index < durations.Length; index++)
         {
             elapsed += durations[index];
-            ArgGuard.ThrowIfNotFiniteOrGreaterThanOrEqual(
-                (float)elapsed,
-                float.MaxValue,
-                nameof(durations));
+            ArgGuard.LessThan((float)elapsed, float.MaxValue, nameof(durations));
             endTimes[index] = (float)elapsed;
         }
         totalDuration = (float)elapsed;

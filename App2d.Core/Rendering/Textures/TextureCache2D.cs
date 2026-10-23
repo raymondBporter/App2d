@@ -16,7 +16,9 @@ public sealed class TextureCache2D(string contentRoot) : IDisposable
         ThrowIfDisposed();
         var fullPath = ResolvePath(relativePath);
         if (_textures.TryGetValue(fullPath, out var cached))
+        {
             return cached;
+        }
 
         var texture = Texture2D.Load(fullPath);
         _textures.Add(fullPath, texture);
@@ -28,7 +30,9 @@ public sealed class TextureCache2D(string contentRoot) : IDisposable
         ThrowIfDisposed();
         var fullPath = ResolvePath(relativePath);
         if (!_textures.Remove(fullPath, out var texture))
+        {
             return false;
+        }
 
         texture.Dispose();
         return true;
@@ -43,7 +47,9 @@ public sealed class TextureCache2D(string contentRoot) : IDisposable
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
 
         ReleaseAll();
         _disposed = true;
@@ -55,7 +61,9 @@ public sealed class TextureCache2D(string contentRoot) : IDisposable
     private void ReleaseAll()
     {
         foreach (var texture in _textures.Values)
+        {
             texture.Dispose();
+        }
 
         _textures.Clear();
     }

@@ -1,6 +1,7 @@
 using App2d.Contracts.Combat;
 using App2d.Core;
 using App2d.Core.Physics;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Gameplay.Combat;
@@ -9,7 +10,7 @@ public interface ICombatant2D
 {
     EntityId2D Id { get; }
     SpatialObject2D WorldObject { get; }
-    PhysicsBody2D Body { get; }
+    RigidBody2D Body { get; }
     Health2D Health { get; }
     CombatFaction2D Faction { get; }
     bool IsAlive { get; }

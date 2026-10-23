@@ -2,13 +2,12 @@ using App2d.Core;
 using App2d.Core.Rendering;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
 internal sealed partial class RigidCharacterHost : NoodleToolHost
 {
-    private static readonly XnaColor ActiveColor = new(116, 255, 180);
+    private static readonly Color4b ActiveColor = new(116, 255, 180);
     private readonly RigidCharacterDemo2D _demo = new();
     private readonly PoseAuthoring2D _author = new();
     private readonly RigidPuppetRenderer2D _puppet = new(RigidPartSet2D.PrototypeSets[0]);
@@ -23,7 +22,9 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
     private string _notice = "SplineMan turns from a three-quarter idle into a clear side profile while moving.";
 
     public RigidCharacterHost() : base("SplineBRO — Reusable Side-Scroller Rig", new Size(1280, 800),
-        new Camera2D { Position = new Vector2(0, -66), Zoom = 1.15f }) { }
+        new Camera2D { Position = new Vector2(0, -66), Zoom = 1.15f })
+    {
+    }
 
     protected override void UpdateScene(FrameTime time, bool keyboardCaptured)
     {
@@ -47,31 +48,70 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
     }
     protected override void DrawScene(Renderer2D renderer, FrameTime time)
     {
-        renderer.Clear(new XnaColor(13, 18, 29));
+        renderer.Clear(new Color4b(13, 18, 29));
         DrawWorld(renderer);
         var hips = _authoring ? _demo.Hips : _demo.DisplayHips;
         var pose = _authoring ? _author.Pose : _demo.Pose;
         var solved = StandardSkeleton2D.Solve(hips, pose, _demo.Facing);
         _puppet.Render(renderer, solved, time.TotalSeconds, _authoring ? .65f : _demo.SideViewAmount);
-        if (_showBones) DrawBones(renderer, solved);
-        if (_authoring) DrawAuthoringControls(renderer, hips, pose);
-        else DrawFootPlantStatus(renderer, solved);
+        if (_showBones)
+        {
+            DrawBones(renderer, solved);
+        }
+
+        if (_authoring)
+        {
+            DrawAuthoringControls(renderer, hips, pose);
+        }
+        else
+        {
+            DrawFootPlantStatus(renderer, solved);
+        }
     }
     protected override void HandleSceneInput(bool mouseCaptured, bool keyboardCaptured)
     {
-        if (ImGui.IsKeyPressed(ImGuiKey.F1, false)) HandleCommand(Keys.F1);
-        if (_authoring && ImGui.GetIO().KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.S, false)) HandleCommand(Keys.S, true);
+        if (ImGui.IsKeyPressed(ImGuiKey.F1, false))
+        {
+            HandleCommand(Keys.F1);
+        }
+
+        if (_authoring && ImGui.GetIO().KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.S, false))
+        {
+            HandleCommand(Keys.S, true);
+        }
+
         if (!keyboardCaptured)
+        {
             foreach (var (imGuiKey, command) in Shortcuts)
-                if (command is not Keys.F1 and not Keys.S && ImGui.IsKeyPressed(imGuiKey, false)) HandleCommand(command, ImGui.GetIO().KeyCtrl);
-        if (mouseCaptured || !ImGui.IsMouseDown(ImGuiMouseButton.Left)) _draggingControl = false;
-        if (mouseCaptured) return;
+            {
+                if (command is not Keys.F1 and not Keys.S && ImGui.IsKeyPressed(imGuiKey, false))
+                {
+                    HandleCommand(command, ImGui.GetIO().KeyCtrl);
+                }
+            }
+        }
+
+        if (mouseCaptured || !ImGui.IsMouseDown(ImGuiMouseButton.Left))
+        {
+            _draggingControl = false;
+        }
+
+        if (mouseCaptured)
+        {
+            return;
+        }
+
         if (_authoring && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
             _selectedControl = FindNearestControl(Camera.DeviceToWorld(ImGui.GetIO().MousePos));
-            _draggingControl = true; _customPlayback = false;
+            _draggingControl = true;
+            _customPlayback = false;
         }
-        if (_draggingControl) MoveSelectedControl(Camera.DeviceToWorld(ImGui.GetIO().MousePos));
+        if (_draggingControl)
+        {
+            MoveSelectedControl(Camera.DeviceToWorld(ImGui.GetIO().MousePos));
+        }
+
         ZoomAtPointer(.45f, 2.4f);
     }
     private static readonly (ImGuiKey, Keys)[] Shortcuts =
@@ -108,22 +148,37 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
                 _authoring = !_authoring;
                 _customPlayback = false;
                 if (_authoring)
+                {
                     _author.Pose = _demo.Pose;
+                }
+
                 _notice = _authoring
                     ? "Drag a hand/foot target, then press K. Those few floats are the whole keyframe."
                     : "Gameplay resumed: locomotion is procedural; attacks are keyframes; curves are additive.";
                 break;
             case Keys.Q when _authoring:
-                _author.Pose = _author.Pose with { TorsoAngle = _author.Pose.TorsoAngle + 0.04f };
+                _author.Pose = _author.Pose with
+                {
+                    TorsoAngle = _author.Pose.TorsoAngle + 0.04f
+                };
                 break;
             case Keys.E when _authoring:
-                _author.Pose = _author.Pose with { TorsoAngle = _author.Pose.TorsoAngle - 0.04f };
+                _author.Pose = _author.Pose with
+                {
+                    TorsoAngle = _author.Pose.TorsoAngle - 0.04f
+                };
                 break;
             case Keys.Z when _authoring:
-                _author.Pose = _author.Pose with { HeadAngle = _author.Pose.HeadAngle + 0.04f };
+                _author.Pose = _author.Pose with
+                {
+                    HeadAngle = _author.Pose.HeadAngle + 0.04f
+                };
                 break;
             case Keys.X when _authoring:
-                _author.Pose = _author.Pose with { HeadAngle = _author.Pose.HeadAngle - 0.04f };
+                _author.Pose = _author.Pose with
+                {
+                    HeadAngle = _author.Pose.HeadAngle - 0.04f
+                };
                 break;
             case Keys.K when _authoring:
                 _author.Capture();
@@ -167,13 +222,13 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
             new(5000f, RigidCharacterDemo2D.GroundY - 190f),
             new(-5000f, RigidCharacterDemo2D.GroundY - 190f)
         ];
-        renderer.DrawWorldConvexPolygon(ground, new XnaColor(28, 39, 53));
+        renderer.DrawWorldConvexPolygon(ground, new Color4b(28, 39, 53));
         Span<Vector2> groundLine =
         [
             new(-5000f, RigidCharacterDemo2D.GroundY),
             new(5000f, RigidCharacterDemo2D.GroundY)
         ];
-        renderer.DrawWorldPolyline(groundLine, new XnaColor(77, 105, 123), 4f);
+        renderer.DrawWorldPolyline(groundLine, new Color4b(77, 105, 123), 4f);
     }
 
     private static void DrawBones(Renderer2D renderer, SolvedRigidPose2D pose)
@@ -181,10 +236,13 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
         foreach (var bone in pose.Bones.Values)
         {
             if (bone.Length <= 0.01f)
+            {
                 continue;
+            }
+
             Span<Vector2> line = [bone.Start, bone.End];
-            renderer.DrawWorldPolyline(line, new XnaColor(255, 245, 207, 220), 3f);
-            renderer.DrawWorldCircle(bone.Start, 5f, new XnaColor(22, 26, 38), 3f);
+            renderer.DrawWorldPolyline(line, new Color4b(255, 245, 207, 220), 3f);
+            renderer.DrawWorldCircle(bone.Start, 5f, new Color4b(22, 26, 38), 3f);
         }
     }
 
@@ -193,9 +251,9 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
         var left = pose.Bones[StandardBones2D.FootLeft].Start;
         var right = pose.Bones[StandardBones2D.FootRight].Start;
         renderer.DrawWorldCircle(left, 7f,
-            _demo.LeftFootPlanted ? ActiveColor : new XnaColor(255, 196, 91), 2f);
+            _demo.LeftFootPlanted ? ActiveColor : new Color4b(255, 196, 91), 2f);
         renderer.DrawWorldCircle(right, 7f,
-            _demo.RightFootPlanted ? ActiveColor : new XnaColor(255, 196, 91), 2f);
+            _demo.RightFootPlanted ? ActiveColor : new Color4b(255, 196, 91), 2f);
     }
 
     private void DrawAuthoringControls(Renderer2D renderer, Vector2 hips, RigidPose2D pose)
@@ -204,10 +262,13 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
         {
             var world = StandardSkeleton2D.ToWorld(hips, pose.GetTarget(control), _demo.Facing);
             var selected = control == _selectedControl;
-            var color = selected ? ActiveColor : new XnaColor(187, 193, 224, 220);
+            var color = selected ? ActiveColor : new Color4b(187, 193, 224, 220);
             renderer.DrawWorldCircle(world, selected ? 13f : 9f, color, selected ? 4f : 2f);
             if (!selected)
+            {
                 continue;
+            }
+
             Span<Vector2> horizontal = [world - new Vector2(18f, 0f), world + new Vector2(18f, 0f)];
             Span<Vector2> vertical = [world - new Vector2(0f, 18f), world + new Vector2(0f, 18f)];
             renderer.DrawWorldPolyline(horizontal, color, 2f);
@@ -224,7 +285,10 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
             var target = StandardSkeleton2D.ToWorld(_demo.Hips, _author.Pose.GetTarget(control), _demo.Facing);
             var distance = Vector2.DistanceSquared(world, target);
             if (distance >= bestDistance)
+            {
                 continue;
+            }
+
             bestDistance = distance;
             best = control;
         }

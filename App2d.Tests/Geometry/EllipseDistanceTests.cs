@@ -1,8 +1,12 @@
-using App2d.Core;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Containment;
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -31,7 +35,10 @@ public sealed class EllipseDistanceTests
             var distance = Vector2.Distance(point, closest);
             var sampled = float.PositiveInfinity;
             for (var i = 0; i < 8192; i++)
+            {
                 sampled = MathF.Min(sampled, Vector2.Distance(point, VertexGenerator2D.PointOnEllipse(center, radii, i * MathF.Tau / 8192)));
+            }
+
             var scale = MathF.Max(a, b);
             Assert.True(distance <= sampled + 1e-4f * scale, $"Point {point}: iterative {distance} is worse than sampled {sampled}.");
             Assert.True(distance >= sampled - MathF.Max(1e-3f * scale, 4e-6f * scale * scale), $"Point {point}: iterative {distance} is unrealistically better than sampled {sampled}.");
@@ -48,34 +55,38 @@ public sealed class EllipseDistanceTests
         Assert.Equal(-.5f, Distance2D.SignedDistanceToEllipse(new(0, .5f), default, radii), 5);
         Assert.Equal(0f, Distance2D.SignedDistanceToEllipse(new(2, 0), default, radii), 5);
         Assert.Equal(0f, Distance2D.DistanceToEllipse(new(1, .3f), default, radii));
-        Assert.Equal(1f, ShapeDistance2D.SignedDistance(new Vector2(3, 0), new Ellipse2D(radii)), 5);
-        Assert.Equal(-1f, ShapeDistance2D.SignedDistance(Vector2.Zero, new Ellipse2D(radii)), 5);
-        var placed = new SpatialObject2D(new Ellipse2D(radii));
+        Assert.Equal(1f, ShapeDistance2D.SignedDistance(new Vector2(3, 0), Ellipse2D.Builder.Create(radii)), 5);
+        Assert.Equal(-1f, ShapeDistance2D.SignedDistance(Vector2.Zero, Ellipse2D.Builder.Create(radii)), 5);
+        var placed = new SpatialObject2D(Ellipse2D.Builder.Create(radii));
         placed.Transform.Rotation = MathF.PI / 2;
         placed.Transform.Scale = new(2);
         placed.Transform.Position = new(10, 10);
-        Assert.Equal(2f, ShapeDistance2D.SignedDistance(new Vector2(10, 16), placed), 4); // vertical semi-axis is now 4
-        Assert.Equal(4f, ShapeDistance2D.SignedDistance(new Vector2(16, 10), placed), 4); // horizontal semi-axis is now 2
+        Assert.Equal(2f, SpatialDistance2D.SignedDistance(new Vector2(10, 16), placed), 4); // vertical semi-axis is now 4
+        Assert.Equal(4f, SpatialDistance2D.SignedDistance(new Vector2(16, 10), placed), 4); // horizontal semi-axis is now 2
     }
 
     [Fact]
     public void CircleAgainstEllipseIsExactInBothDirectionsAndMatchesSignedDistance()
     {
-        var ellipse = new SpatialObject2D(new Ellipse2D(new(2, 1)));
+        var ellipse = new SpatialObject2D(Ellipse2D.Builder.Create(new(2, 1)));
         ellipse.Transform.Rotation = .4f;
         ellipse.Transform.Scale = new(-1.5f, 1.5f);
         ellipse.Transform.Position = new(5, -3);
-        var circle = new SpatialObject2D(new Circle2D(.75f));
+        var circle = new SpatialObject2D(Circle2D.Builder.Create(.75f));
         var random = new Random(11);
         var contacts = 0;
         for (var i = 0; i < 200; i++)
         {
             circle.Transform.Position = ellipse.Transform.Position + new Vector2(random.NextFloat(-4f, 4f), random.NextFloat(-4f, 4f));
-            var signed = ShapeDistance2D.SignedDistance(circle, ellipse);
-            Assert.Equal(signed, ShapeDistance2D.SignedDistance(ellipse, circle), 5);
+            var signed = SpatialDistance2D.SignedDistance(circle, ellipse);
+            Assert.Equal(signed, SpatialDistance2D.SignedDistance(ellipse, circle), 5);
             var hit = ShapeCollision2D.TryGetContact(circle, ellipse, out var contact);
             Assert.Equal(signed < 0f, hit);
-            if (!hit) continue;
+            if (!hit)
+            {
+                continue;
+            }
+
             contacts++;
             Assert.Equal(-signed, contact.PenetrationDepth, 4);
             Assert.True(ShapeCollision2D.TryGetContact(ellipse, circle, out var reverse));
@@ -92,8 +103,8 @@ public sealed class EllipseDistanceTests
     [Fact]
     public void CircleInsideEllipseEscapesTowardTheNearestBoundary()
     {
-        var ellipse = new SpatialObject2D(new Ellipse2D(new(4, 1)));
-        var circle = new SpatialObject2D(new Circle2D(.25f));
+        var ellipse = new SpatialObject2D(Ellipse2D.Builder.Create(new(4, 1)));
+        var circle = new SpatialObject2D(Circle2D.Builder.Create(.25f));
         circle.Transform.Position = new(1, .2f);
         Assert.True(ShapeCollision2D.TryGetContact(circle, ellipse, out var contact));
         Assert.True(contact.Normal.Y > .9f, $"Expected an upward escape, got {contact.Normal}.");

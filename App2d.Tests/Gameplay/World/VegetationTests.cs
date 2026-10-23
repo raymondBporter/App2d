@@ -1,11 +1,11 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
@@ -21,7 +21,11 @@ public sealed class VegetationTests
         map.SetTileKind(12, 20, TileKind2D.Ladder);
         map.SetTileKind(13, 20, TileKind2D.Solid);
         Assert.True(VegetationPlacement2D.HasGrass(map, 9, 19));
-        for (var x = 10; x <= 13; x++) Assert.False(VegetationPlacement2D.HasGrass(map, x, 19));
+        for (var x = 10; x <= 13; x++)
+        {
+            Assert.False(VegetationPlacement2D.HasGrass(map, x, 19));
+        }
+
         map.SetTileKind(14, 19, TileKind2D.Solid | TileKind2D.Grippable);
         Assert.True(VegetationPlacement2D.HasGrass(map, 14, 19));
         map.SetTileKind(31, 31, TileKind2D.Solid);
@@ -82,22 +86,41 @@ public sealed class VegetationTests
     public void OnlyTheActiveSwordDamageWindowCutsGrass(bool cast, bool shouldCut)
     {
         using var game = Create();
-        for (var i = 0; i < 80; i++) Step(default);
+        for (var i = 0; i < 80; i++)
+        {
+            Step(default);
+        }
+
         Assert.Empty(game.Session.CaptureWorld().CutGrass);
-        Step(new() { PrimaryHeld = !cast, CastHeld = cast });
+        Step(new()
+        {
+            PrimaryHeld = !cast,
+            CastHeld = cast
+        });
         Assert.Empty(game.Session.CaptureWorld().CutGrass); // Windup, not damage.
-        for (var i = 0; i < 50; i++) Step(new() { PrimaryHeld = !cast, CastHeld = cast });
+        for (var i = 0; i < 50; i++)
+        {
+            Step(new()
+            {
+                PrimaryHeld = !cast,
+                CastHeld = cast
+            });
+        }
+
         Assert.Equal(shouldCut, game.Session.CaptureWorld().CutGrass.Count > 0);
         if (shouldCut)
         {
             var cuts = game.Session.CaptureWorld().CutGrass;
-            for (var i = 0; i < 30; i++) Step(default);
+            for (var i = 0; i < 30; i++)
+            {
+                Step(default);
+            }
+
             Assert.Same(cuts, game.Session.CaptureWorld().CutGrass);
         }
         void Step(PersonCommand2D command)
         {
-            var tick = game.Session.Tick + 1;
-            game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, command));
+            game.Session.Advance(new PlayerInput2D(game.Player.Id, command));
         }
     }
 
@@ -105,9 +128,12 @@ public sealed class VegetationTests
     public void AirborneDownwardSwordCutsWithoutBouncingOffGrass()
     {
         using var game = Create();
-        var tick = game.Session.Tick + 1;
-        game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick,
-            new() { PrimaryHeld = true, DownHeld = true }));
+        game.Session.Advance(new PlayerInput2D(game.Player.Id,
+            new()
+            {
+                PrimaryHeld = true,
+                DownHeld = true
+            }));
         Assert.NotEmpty(game.Session.CaptureWorld().CutGrass);
         Assert.False(game.Player.DownAttackBouncedThisFrame);
     }
@@ -139,11 +165,15 @@ public sealed class VegetationTests
         var map = new EditableTileMap2D(SideScrollerLevel2D.WorldWidthTiles,
             SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
             SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
-        for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < map.Width; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         return map;
     }
 
     private static SideScrollerSimulation2D Create() => SideScrollerSimulation2D.Create(
-        new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), Map(), [],
+        new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), Map(),
             [new(1, WorldThingKind2D.PlayerSpawn, "Start", true, new(-368f, 40f))]));
 }

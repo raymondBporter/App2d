@@ -1,13 +1,14 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Objects;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Tiles;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Presentation.World.Presentation;
+using App2d.Tests.Gameplay.World;
 using System.Collections.Immutable;
 using System.Numerics;
 
@@ -29,7 +30,10 @@ public sealed class WorldPresentationTests
         var visuals = scene.ToArray();
         Assert.NotEmpty(visuals);
         view.ApplyState(LevelContent2D.Empty, WorldState2D.Empty);
-        view.ApplyState(LevelContent2D.Empty with { Revision = 2 }, WorldState2D.Empty);
+        view.ApplyState(LevelContent2D.Empty with
+        {
+            Revision = 2
+        }, WorldState2D.Empty);
         view.SetVisibleTerrain(visible);
         Assert.Equal(visuals, [.. scene]);
         view.SetVisibleTerrain([]);
@@ -54,16 +58,16 @@ public sealed class WorldPresentationTests
         view.Update(content, original, 0f);
         Assert.Equal(visuals, [.. scene]); // No rebuilding unchanged chunks.
         var platformVisual = Assert.Single(scene, v => v.Transform.Position == Platform().Position);
-        var platform = Assert.Single(level.MovingPlatforms);
+        var platform = Assert.Single(level.Objects);
         Assert.NotSame(platform.WorldObject, platformVisual);
-        level.UpdateMovingPlatforms(0.1f);
+        level.UpdateWorldMotion(0.1f);
         physics.Step(0.1f);
         Assert.Equal(Platform().Position, platformVisual.Transform.Position);
         view.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.Equal(platform.WorldObject.Transform.Position, platformVisual.Transform.Position);
-        Assert.NotEqual(original.MovingPlatforms[0].Position, platformVisual.Transform.Position);
-        level.ReloadMovingPlatforms([Platform() with { Size = new Size2D(100f, 12f) }]);
-        Assert.NotEqual(platform.Id, Assert.Single(level.CaptureContent().MovingPlatforms).Id);
+        Assert.NotEqual(original.Objects[0].Position, platformVisual.Transform.Position);
+        level.ReloadObjects([ObjectPlatforms.Place("lift", new(-200f, 100f), new(96f, 0f), 48f, 100f, 12f)]);
+        Assert.NotEqual(platform.Id, Assert.Single(level.CaptureContent().Objects).Id);
         view.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.DoesNotContain(platformVisual, scene);
         view.Update(LevelContent2D.Empty, WorldState2D.Empty, 0f);
@@ -73,8 +77,7 @@ public sealed class WorldPresentationTests
     private static EditableTileMap2D CreateMap() => new(SideScrollerLevel2D.WorldWidthTiles,
         SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
         SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-    private static SideScrollerLevel2D CreateLevel(EditableTileMap2D map, MovingPlatformSpec2D[]? platforms = null) =>
-            new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms);
-    private static MovingPlatformSpec2D Platform() => new(41, "Lift", true,
-        new Vector2(-200f, 100f), new Vector2(96f, 0f), new Size2D(80f, 14f), 48f, 0xFF25D2BEu);
+    private static SideScrollerLevel2D CreateLevel(EditableTileMap2D map, ObjectPlacement2D[]? objects = null) =>
+            new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, objects: objects);
+    private static ObjectPlacement2D Platform() => ObjectPlatforms.Place("lift", new(-200f, 100f), new(96f, 0f), 48f, 80f, 14f);
 }

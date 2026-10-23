@@ -1,4 +1,7 @@
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
@@ -29,7 +32,7 @@ public sealed record HitWindow
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     /// <summary>The region in the anchor frame; any convex shape definition.</summary>
-    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.3f, .3f));
+    public IShape2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.3f, .3f);
     public int Damage { get; set; } = 1;
     /// <summary>Played where the hit lands; null plays the game's default impact.</summary>
     public string? Sound { get; set; }
@@ -43,7 +46,7 @@ public sealed record ProjectileDef
 {
     public float Speed { get; set; } = 8;
     /// <summary>The bolt's shape around its position; its bounds size the bolt in flight.</summary>
-    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.16f, .08f));
+    public IShape2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.16f, .08f);
     public int Damage { get; set; } = 1;
     public float Lifetime { get; set; } = 3;
     /// <summary>Downward acceleration in model units/s²; zero preserves straight shots.</summary>
@@ -121,14 +124,14 @@ public sealed record ControllerConfig
 /// <summary>The stable body-local movement shape: feet at the origin, +X toward facing. Animation never changes it.</summary>
 public sealed record MovementDef
 {
-    public ShapeDefinition2D Shape { get; set; } = Box(.55f, 1.9f);
+    public IShape2D Shape { get; set; } = Box(.55f, 1.9f);
 
     /// <summary>A rectangle standing on the feet, offset sideways toward facing.</summary>
     /// <param name="width">The finite, positive width.</param>
     /// <param name="height">The finite, positive height.</param>
     /// <param name="offsetX">How far the box centre sits ahead of the feet.</param>
     /// <returns>A rectangle definition from the feet up to the height.</returns>
-    public static RectangleShapeDefinition2D Box(float width, float height, float offsetX = 0) => RectangleShapeDefinition2D.FromSize(new(width, height), new(offsetX, height / 2));
+    public static Rectangle2D Box(float width, float height, float offsetX = 0) => Rectangle2D.Builder.FromSize(width, height, new(offsetX, height / 2));
 }
 
 public sealed record HurtOverride
@@ -155,7 +158,7 @@ public sealed record GuardDef
 {
     public string Prop { get; set; } = "";
     /// <summary>The shield region in the prop's anchor frame.</summary>
-    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.9f, 1.4f));
+    public IShape2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.9f, 1.4f);
 }
 
 /// <summary>
@@ -185,22 +188,45 @@ public sealed class EntityAsset
     public List<EntityActionDef> Actions { get; set; } = [];
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    public static EntityAsset FromJson(string json) { var entity = AuthoredAsset.Parse<EntityAsset>(EntityAssetUpgrade.ToCurrent(json), "entity"); entity.Validate(); return entity; }
-    public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
+    public static EntityAsset FromJson(string json)
+    {
+        var entity = AuthoredAsset.Parse<EntityAsset>(json, "entity");
+        entity.Validate();
+        return entity;
+    }
+    public void Save(string path)
+    {
+        Validate();
+        AuthoredAsset.Write(path, ToJson());
+    }
 
-    private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
+    private static void Require([DoesNotReturnIf(false)] bool condition, string message)
+    {
+        if (!condition)
+        {
+            throw new InvalidDataException(message);
+        }
+    }
 
     /// <summary>A convex shape definition that builds and fits the authored limits: extents between .01 and the size limit, centre within 100 units.</summary>
-    private static void CheckShape(ShapeDefinition2D? shape, string field, float sizeLimit = 100)
+    private static void CheckShape(IShape2D? shape, string field, float sizeLimit = 100)
     {
         Require(shape is not null, $"{field}: a shape is required.");
         IShape2D built;
-        try { built = shape.Build(); }
-        catch (Exception error) when (error is ArgumentException or InvalidOperationException or NotSupportedException) { throw new InvalidDataException($"{field}: {error.Message}", error); }
+        try
+        {
+            built = shape.Validated();
+        }
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException or NotSupportedException)
+        {
+            throw new InvalidDataException($"{field}: {error.Message}", error);
+        }
         Require(built is IConvexShape2D, $"{field}: the shape must be convex; composites and half-spaces are not supported here.");
         var bounds = ShapeBounds2D.Calculate(built);
-        new Limit(.01f, sizeLimit).Check(bounds.Width, field + " width"); new Limit(.01f, sizeLimit).Check(bounds.Height, field + " height");
-        new Limit(-100, 100).Check(bounds.Center.X, field + " centre x"); new Limit(-100, 100).Check(bounds.Center.Y, field + " centre y");
+        new Limit(.01f, sizeLimit).Check(bounds.Width, field + " width");
+        new Limit(.01f, sizeLimit).Check(bounds.Height, field + " height");
+        new Limit(-100, 100).Check(bounds.Center.X, field + " centre x");
+        new Limit(-100, 100).Check(bounds.Center.Y, field + " centre y");
     }
 
     /// <summary>Checks the file on its own. References to models, clips and props are checked when compiling.</summary>
@@ -208,14 +234,22 @@ public sealed class EntityAsset
     {
         var owner = $"Entity '{Id}'";
         Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
-        AuthoredAsset.RequireId(Id, "entity id"); AuthoredAsset.RequireId(Model, $"{owner} model"); AuthoredAsset.RequireId(MotionSet, $"{owner} motionSet");
+        AuthoredAsset.RequireId(Id, "entity id");
+        AuthoredAsset.RequireId(Model, $"{owner} model");
+        AuthoredAsset.RequireId(MotionSet, $"{owner} motionSet");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(Roles is not null && Controller is not null && Movement is not null && Hurt?.Regions is not null && Equipment is not null && Actions is not null,
             $"{owner}: collections cannot be null.");
-        foreach (var (role, clip) in Roles) { AuthoredAsset.RequireId(role, $"{owner} roles"); AuthoredAsset.RequireId(clip, $"{owner} roles.{role}"); }
+        foreach (var (role, clip) in Roles)
+        {
+            AuthoredAsset.RequireId(role, $"{owner} roles");
+            AuthoredAsset.RequireId(clip, $"{owner} roles.{role}");
+        }
         var spec = EntityControllers.Get(Controller.Kind, $"{owner} controller.kind");
-        new Limit(0, 100).Check(Controller.WalkSpeed, $"{owner} controller.walkSpeed"); new Limit(0, 100).Check(Controller.RunSpeed, $"{owner} controller.runSpeed");
-        new Limit(0, 100).Check(Controller.JumpSpeed, $"{owner} controller.jumpSpeed"); new Limit(0, 100).Check(Controller.Range, $"{owner} controller.range");
+        new Limit(0, 100).Check(Controller.WalkSpeed, $"{owner} controller.walkSpeed");
+        new Limit(0, 100).Check(Controller.RunSpeed, $"{owner} controller.runSpeed");
+        new Limit(0, 100).Check(Controller.JumpSpeed, $"{owner} controller.jumpSpeed");
+        new Limit(0, 100).Check(Controller.Range, $"{owner} controller.range");
         new Limit(0, 60).Check(Controller.Cooldown, $"{owner} controller.cooldown");
         new Limit(0, 100).Check(Controller.VerticalRange, $"{owner} controller.verticalRange");
         new Limit(0, 100).Check(Controller.RetreatRange, $"{owner} controller.retreatRange");
@@ -234,19 +268,28 @@ public sealed class EntityAsset
             new Limit(.1f, 30).Check(flight.DiveSpeed, $"{owner} flight.diveSpeed");
             new Limit(0, 10).Check(flight.LowSpeed, $"{owner} flight.lowSpeed");
         }
-        new Limit(1, 10000).Check(Health, $"{owner} health"); new Limit(.1f, 100).Check(Mass, $"{owner} mass");
+        new Limit(1, 10000).Check(Health, $"{owner} health");
+        new Limit(.1f, 100).Check(Mass, $"{owner} mass");
         CheckShape(Movement.Shape, $"{owner} movement.shape");
-        if (Hurt.Layout is not null) AuthoredAsset.RequireId(Hurt.Layout, $"{owner} hurt.layout");
+        if (Hurt.Layout is not null)
+        {
+            AuthoredAsset.RequireId(Hurt.Layout, $"{owner} hurt.layout");
+        }
+
         foreach (var (region, change) in Hurt.Regions)
         {
             Require(change is not null, $"{owner} hurt.regions.{region}: null override.");
-            if (change.Pad is { } pad) new Limit(0, 10).Check(pad, $"{owner} hurt.regions.{region}.pad");
+            if (change.Pad is { } pad)
+            {
+                new Limit(0, 10).Check(pad, $"{owner} hurt.regions.{region}.pad");
+            }
         }
         var props = new HashSet<string>(StringComparer.Ordinal);
         foreach (var binding in Equipment)
         {
             Require(binding is not null, $"{owner}: null equipment.");
-            AuthoredAsset.RequireId(binding.Prop, $"{owner} equipment prop"); AuthoredAsset.RequireId(binding.Socket, $"{owner} equipment '{binding.Prop}' socket");
+            AuthoredAsset.RequireId(binding.Prop, $"{owner} equipment prop");
+            AuthoredAsset.RequireId(binding.Socket, $"{owner} equipment '{binding.Prop}' socket");
             Require(props.Add(binding.Prop), $"{owner}: prop '{binding.Prop}' is equipped twice.");
         }
         var actions = new HashSet<string>(StringComparer.Ordinal);
@@ -263,19 +306,41 @@ public sealed class EntityAsset
             var field = $"{owner} action '{action.Id}'";
             Require(actions.Add(action.Id), $"{owner}: duplicate action '{action.Id}'.");
             Require(spec.Actions.Contains(action.Id) || chained.Contains(action.Id), $"{field}: the '{spec.Id}' controller does not support it (supports: {string.Join(", ", spec.Actions)}, and any action another names as next).");
-            if (action.Next is not null) { AuthoredAsset.RequireId(action.Next, field + " next"); Require(Actions.Any(a => a?.Id == action.Next), $"{field} next: no action '{action.Next}'."); }
-            if (action.Recovery is not null) AuthoredAsset.RequireId(action.Recovery, field + " recovery");
+            if (action.Next is not null)
+            {
+                AuthoredAsset.RequireId(action.Next, field + " next");
+                Require(Actions.Any(a => a?.Id == action.Next), $"{field} next: no action '{action.Next}'.");
+            }
+            if (action.Recovery is not null)
+            {
+                AuthoredAsset.RequireId(action.Recovery, field + " recovery");
+            }
+
             Require((action.Role is null) != (action.Clip is null), $"{field}: name exactly one of role or clip.");
-            if (action.Role is not null) AuthoredAsset.RequireId(action.Role, field + " role");
-            if (action.Clip is not null) AuthoredAsset.RequireId(action.Clip, field + " clip");
-            if (action.Mask is not null) AuthoredAsset.RequireId(action.Mask, field + " mask");
-            new Limit(0, 5).Check(action.BlendIn, field + " blendIn"); new Limit(0, 5).Check(action.BlendOut, field + " blendOut");
+            if (action.Role is not null)
+            {
+                AuthoredAsset.RequireId(action.Role, field + " role");
+            }
+
+            if (action.Clip is not null)
+            {
+                AuthoredAsset.RequireId(action.Clip, field + " clip");
+            }
+
+            if (action.Mask is not null)
+            {
+                AuthoredAsset.RequireId(action.Mask, field + " mask");
+            }
+
+            new Limit(0, 5).Check(action.BlendIn, field + " blendIn");
+            new Limit(0, 5).Check(action.BlendOut, field + " blendOut");
             Require(action.Mask is not null || action.BlendIn == 0 && action.BlendOut == 0, $"{field}: blending needs a mask; a whole-body action replaces locomotion at once.");
             var fires = action.Events.Any(e => e?.Id == EntityControllers.Fire);
             Require(fires == (action.Projectile is not null), fires ? $"{field}: a '{EntityControllers.Fire}' event needs a projectile." : $"{field}: a projectile needs a '{EntityControllers.Fire}' event to launch it.");
             if (action.Projectile is { } shot)
             {
-                new Limit(.1f, 200).Check(shot.Speed, field + " projectile.speed"); CheckShape(shot.Shape, field + " projectile.shape", 10);
+                new Limit(.1f, 200).Check(shot.Speed, field + " projectile.speed");
+                CheckShape(shot.Shape, field + " projectile.shape", 10);
                 new Limit(0, 10000).Check(shot.Damage, field + " projectile.damage");
                 new Limit(.05f, 30).Check(shot.Lifetime, field + " projectile.lifetime");
                 new Limit(0, 200).Check(shot.Gravity, field + " projectile.gravity");
@@ -288,20 +353,32 @@ public sealed class EntityAsset
                 AuthoredAsset.RequireId(hit.Id, field + " hit id");
                 Require(hits.Add(hit.Id), $"{field}: duplicate hit window '{hit.Id}'.");
                 Require(hit.Socket is null || hit.Prop is null, $"{field} hit '{hit.Id}': anchor to a socket or a prop, not both (neither fixes it to the actor).");
-                if (hit.Prop is not null) { Require(props.Contains(hit.Prop), $"{field} hit '{hit.Id}': prop '{hit.Prop}' is not equipped."); EntityVocabulary.Require(hit.Point, PropAsset.PointNames, $"{field} hit '{hit.Id}' point"); }
-                CheckTime(hit.Start, $"{field} hit '{hit.Id}' start"); CheckTime(hit.Finish, $"{field} hit '{hit.Id}' finish");
+                if (hit.Prop is not null)
+                {
+                    Require(props.Contains(hit.Prop), $"{field} hit '{hit.Id}': prop '{hit.Prop}' is not equipped.");
+                    EntityVocabulary.Require(hit.Point, PropAsset.PointNames, $"{field} hit '{hit.Id}' point");
+                }
+                CheckTime(hit.Start, $"{field} hit '{hit.Id}' start");
+                CheckTime(hit.Finish, $"{field} hit '{hit.Id}' finish");
                 new Limit(-100, 100).Check(hit.Along, $"{field} hit '{hit.Id}' along");
-                new Limit(-100, 100).Check(hit.OffsetX, $"{field} hit '{hit.Id}' offsetX"); new Limit(-100, 100).Check(hit.OffsetY, $"{field} hit '{hit.Id}' offsetY");
+                new Limit(-100, 100).Check(hit.OffsetX, $"{field} hit '{hit.Id}' offsetX");
+                new Limit(-100, 100).Check(hit.OffsetY, $"{field} hit '{hit.Id}' offsetY");
                 CheckShape(hit.Shape, $"{field} hit '{hit.Id}' shape");
                 new Limit(0, 10000).Check(hit.Damage, $"{field} hit '{hit.Id}' damage");
-                if (hit.Sound is not null) AuthoredAsset.RequireId(hit.Sound, $"{field} hit '{hit.Id}' sound");
+                if (hit.Sound is not null)
+                {
+                    AuthoredAsset.RequireId(hit.Sound, $"{field} hit '{hit.Id}' sound");
+                }
             }
             foreach (var cue in action.Events)
             {
                 Require(cue?.At is not null, $"{field}: incomplete event.");
                 AuthoredAsset.RequireId(cue.Id, field + " event id");
                 CheckTime(cue.At, $"{field} event '{cue.Id}'");
-                if (cue.Sound is not null) AuthoredAsset.RequireId(cue.Sound, $"{field} event '{cue.Id}' sound");
+                if (cue.Sound is not null)
+                {
+                    AuthoredAsset.RequireId(cue.Sound, $"{field} event '{cue.Id}' sound");
+                }
             }
         }
     }
@@ -330,8 +407,17 @@ public sealed record ControllerSpec(string Id, IReadOnlyList<string> RequiredRol
 /// </summary>
 public static class EntityControllers
 {
-    public const string Walker = "walker", Platformer = "platformer", Stationary = "stationary", Flying = "flying", Traversal = "traversal";
-    public const string Attack = "attack", Jump = "jump", Hit = "hit", Death = "death", Shoot = "shoot", WallShot = "wall-shot";
+    public const string Walker = "walker";
+    public const string Platformer = "platformer";
+    public const string Stationary = "stationary";
+    public const string Flying = "flying";
+    public const string Traversal = "traversal";
+    public const string Attack = "attack";
+    public const string Jump = "jump";
+    public const string Hit = "hit";
+    public const string Death = "death";
+    public const string Shoot = "shoot";
+    public const string WallShot = "wall-shot";
     /// <summary>A second swing played while the weapon is still out from the first.</summary>
     public const string FollowUp = "follow-up";
     public const string Idle = "idle";
@@ -355,5 +441,7 @@ public static class EntityControllers
 
     public static IReadOnlyCollection<ControllerSpec> All => Specs.Values;
     public static ControllerSpec Get(string? kind, string field) =>
-        kind is not null && Specs.TryGetValue(kind, out var spec) ? spec : throw new InvalidDataException($"{field}: unknown controller '{kind}' (known: {string.Join(", ", Specs.Keys)}).");
+        kind is not null && Specs.TryGetValue(kind, out var spec)
+        ? spec
+        : throw new InvalidDataException($"{field}: unknown controller '{kind}' (known: {string.Join(", ", Specs.Keys)}).");
 }

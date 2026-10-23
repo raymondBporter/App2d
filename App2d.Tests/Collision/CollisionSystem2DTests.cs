@@ -1,7 +1,7 @@
-using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Collision;
@@ -18,7 +18,7 @@ public sealed class CollisionSystem2DTests
         var random = new Random(173);
         for (var i = 0; i < 80; i++)
         {
-            var shape = new SpatialObject2D(Rectangle2D.FromSize(new Vector2(8 + i % 7, 10)));
+            var shape = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(8 + i % 7, 10));
             shape.Transform.Position = new(random.Next(-8, 9) * 16, random.Next(-4, 5) * 16);
             system.AddCollider(shape, i % 2 == 0 ? ColliderMobility2D.Static : ColliderMobility2D.Dynamic);
         }
@@ -37,7 +37,7 @@ public sealed class CollisionSystem2DTests
     public void UnrepresentableGridCoordinatesUseTheOverflowPathWithoutLosingColliders()
     {
         var system = new CollisionSystem2D { CellSize = 1e-20f };
-        var shape = new SpatialObject2D(new Circle2D(2));
+        var shape = new SpatialObject2D(Circle2D.Builder.Create(2));
         shape.Transform.Position = new(50, -50);
         var collider = system.AddCollider(shape);
         var results = new List<Collider2D>();
@@ -52,7 +52,7 @@ public sealed class CollisionSystem2DTests
     {
         var system = new CollisionSystem2D();
         var collider = system.AddCollider(
-            new SpatialObject2D(new Circle2D(10f)));
+            new SpatialObject2D(Circle2D.Builder.Create(10f)));
 
         Assert.Same(collider, Assert.Single(system.Colliders));
         Assert.True(system.RemoveCollider(collider));
@@ -63,7 +63,7 @@ public sealed class CollisionSystem2DTests
     public void BoundsQueriesUseLayersAndTrackDynamicMovement()
     {
         var system = new CollisionSystem2D { CellSize = 32f };
-        var worldObject = new SpatialObject2D(new Circle2D(4f));
+        var worldObject = new SpatialObject2D(Circle2D.Builder.Create(4f));
         var collider = system.AddCollider(
             worldObject,
             ColliderMobility2D.Dynamic);
@@ -95,7 +95,7 @@ public sealed class CollisionSystem2DTests
     public void StaticTransformChangesRefreshTheStaticIndex()
     {
         var system = new CollisionSystem2D { CellSize = 32f };
-        var worldObject = new SpatialObject2D(new Circle2D(4f));
+        var worldObject = new SpatialObject2D(Circle2D.Builder.Create(4f));
         system.AddCollider(worldObject, ColliderMobility2D.Static);
         var results = new List<Collider2D>();
         system.QueryBounds(
@@ -114,11 +114,11 @@ public sealed class CollisionSystem2DTests
     {
         var system = new CollisionSystem2D();
         var firstStatic = system.AddCollider(
-            new SpatialObject2D(new Circle2D(10f)));
-        var secondStaticObject = new SpatialObject2D(new Circle2D(10f));
+            new SpatialObject2D(Circle2D.Builder.Create(10f)));
+        var secondStaticObject = new SpatialObject2D(Circle2D.Builder.Create(10f));
         secondStaticObject.Transform.Position = new Vector2(5f, 0f);
         system.AddCollider(secondStaticObject);
-        var dynamicObject = new SpatialObject2D(new Circle2D(10f));
+        var dynamicObject = new SpatialObject2D(Circle2D.Builder.Create(10f));
         dynamicObject.Transform.Position = new Vector2(15f, 0f);
         var dynamicCollider = system.AddCollider(
             dynamicObject,
@@ -141,14 +141,14 @@ public sealed class CollisionSystem2DTests
     public void OverlapReturnsExactContactsFromNearbyCandidates()
     {
         var system = new CollisionSystem2D();
-        var target = new SpatialObject2D(new Circle2D(10f));
+        var target = new SpatialObject2D(Circle2D.Builder.Create(10f));
         target.Transform.Position = new Vector2(15f, 0f);
         var collider = system.AddCollider(target);
         collider.CollisionLayer = ActorLayer;
         var overlaps = new List<CollisionOverlap2D>();
 
         var count = system.Overlap(
-            new SpatialObject2D(new Circle2D(10f)),
+            new SpatialObject2D(Circle2D.Builder.Create(10f)),
             overlaps,
             ActorLayer);
 

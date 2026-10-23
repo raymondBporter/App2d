@@ -1,5 +1,10 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
-using App2d.Core.Rendering.Characters;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json;
@@ -11,51 +16,53 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void TrapezoidTapersTowardItsUpperControlAndPickingFollowsTheTaper()
     {
-        var part = new PuppetPart { Kind = "trapezoid", A = "base", B = "top", Width = 2, Height = 2 };
-        part.Geometry = PartGeometry.FromPreset(part);
+        var part = new PuppetPart { Geometry = new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated(), A = "base", B = "top", ScaleX = 2, ScaleY = 2 };
         // Local up points right in this pose, so the narrow end is at world X = 1.
         static Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
-        var contour = PartGeometry.Contour(part, World);
+        var contour = PartContours2D.Contour(part, World);
         Assert.Equal(.7f, contour.Where(p => p.X > .999f).Max(p => MathF.Abs(p.Y)), 5);
         Assert.Equal(1, contour.Where(p => p.X < -.999f).Max(p => MathF.Abs(p.Y)), 5);
-        Assert.True(PartGeometry.Distance(part, World, new(.9f, .9f, 0)) > 1);
-        Assert.True(PartGeometry.Distance(part, World, new(.9f, .6f, 0)) < 1);
-        Assert.True(PartGeometry.Distance(part with { Geometry = RectangleShapeDefinition2D.FromSize(Vector2.One) }, World, new(.9f, .9f, 0)) < 1);
+        Assert.True(PartPicking2D.Distance(part, World, new(.9f, .9f, 0)) > 1);
+        Assert.True(PartPicking2D.Distance(part, World, new(.9f, .6f, 0)) < 1);
+        Assert.True(PartPicking2D.Distance(part with
+        {
+            Geometry = Rectangle2D.Builder.FromSize(Vector2.One)
+        }, World, new(.9f, .9f, 0)) < 1);
     }
 
     [Fact]
     public void EditorCanAddRoundedBoxesAndFourVertexTrapezoids()
     {
-        var model = Core.Characters.Authored.PersonTemplate.Model();
-        var box = Core.Characters.Authored.ModelAuthoring.AddPart(model, "box", "hips");
-        var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, "trapezoid", "hips");
+        var model = PersonTemplate.Model();
+        var box = Core.Characters.Authored.ModelAuthoring.AddPart(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "hips");
+        var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated(), "hips");
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
-        Assert.Equal("box", restored.Parts.Single(p => p.Id == box.Id).Kind);
-        Assert.Equal(4, Assert.IsType<SimplePolygonShapeDefinition2D>(restored.Parts.Single(p => p.Id == trapezoid.Id).Geometry).Vertices.Count);
-        Assert.Equal("polygon", restored.Parts.Single(p => p.Id == "body").Kind);
+        Assert.IsType<RoundedRectangle2D>(restored.Parts.Single(p => p.Id == box.Id).Geometry);
+        Assert.Equal(4, Assert.IsType<SimplePolygon2D>(restored.Parts.Single(p => p.Id == trapezoid.Id).Geometry).Vertices.Length);
+        Assert.IsType<SimplePolygon2D>(restored.Parts.Single(p => p.Id == "body").Geometry);
     }
 
     [Fact]
-    public void ChangingPartKindKeepsItsIdentityAndSuppliesAStrokeEndpoint()
+    public void ChangingGeometryKeepsItsIdentityAndSuppliesACurveEndpoint()
     {
         var model = Core.Characters.Authored.ModelAuthoring.Empty("test", "Test");
         Core.Characters.Authored.ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
         Core.Characters.Authored.ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
-        var part = Core.Characters.Authored.ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "root");
+        var part = Core.Characters.Authored.ModelAuthoring.AddPart(model, GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse), "root");
         var id = part.Id;
 
-        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Stroke);
+        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, id, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated());
         Assert.Equal(id, part.Id);
-        Assert.Equal(PuppetPartKinds.Stroke, part.Kind);
+        Assert.IsType<LineSegmentCurve2D>(part.Geometry);
         Assert.Equal("tip", part.B);
 
-        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Trapezoid);
+        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, id, new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated());
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
-        Assert.Equal(PuppetPartKinds.Polygon, restored.Parts.Single().Kind);
+        Assert.IsType<SimplePolygon2D>(restored.Parts.Single().Geometry);
         Assert.Equal(id, restored.Parts.Single().Id);
 
-        var stroke = Core.Characters.Authored.ModelAuthoring.AddPart(model, PuppetPartKinds.Stroke, "root", "tip");
-        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, stroke.Id, PuppetPartKinds.Box);
+        var stroke = Core.Characters.Authored.ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "root", "tip");
+        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, stroke.Id, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f));
         Assert.NotNull(stroke.RenderMaterial.Fill);
         Assert.NotNull(stroke.RenderMaterial.Outline);
     }
@@ -64,9 +71,11 @@ public sealed class PuppetAuthoringTests
     public void EmptyAndHeadlessCharactersNeedNoLibraryOrAnatomy()
     {
         var empty = PuppetDefinition.FromJson(new PuppetDefinition().ToJson());
-        var drawing = new PuppetDrawing(); drawing.Build(empty, PuppetPose.Rest(empty));
+        var drawing = new PuppetDrawing();
+        drawing.Build(empty, PuppetPose.Rest(empty));
         Assert.Equal(0, drawing.Mesh.Count);
-        var puppet = PuppetTemplates.StickFigure(); puppet.RemoveControl("head");
+        var puppet = PuppetTemplates.StickFigure();
+        puppet.RemoveControl("head");
         puppet = PuppetDefinition.FromJson(puppet.ToJson());
         var pose = PuppetPose.Sample(puppet, puppet.Motions[0], 0);
         drawing.Build(puppet, pose);
@@ -90,7 +99,8 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void PlantedFeetStayInWorldSpaceDuringTravelBetweenKeys()
     {
-        var puppet = PuppetTemplates.StepStudy(); var motion = puppet.Motions[0];
+        var puppet = PuppetTemplates.StepStudy();
+        var motion = puppet.Motions[0];
         for (var i = 0; i <= 120; i++)
         {
             var pose = PuppetPose.Sample(puppet, motion, i * motion.Duration / 120);
@@ -108,7 +118,8 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void WalkNearlyExtendsEachSupportKneeWhileTheSwingKneeStillFlexes()
     {
-        var puppet = PuppetTemplates.StepStudy(); var motion = puppet.Motions[0];
+        var puppet = PuppetTemplates.StepStudy();
+        var motion = puppet.Motions[0];
         foreach (var (time, support, swing) in new[] { (.3, "right", "left"), (.9, "left", "right") })
         {
             var pose = PuppetPose.Sample(puppet, motion, time);
@@ -116,7 +127,7 @@ public sealed class PuppetAuthoringTests
             {
                 var thigh = Vector3.Normalize(pose.Points[side + "-hip"] - pose.Points[side + "-knee"]);
                 var shin = Vector3.Normalize(pose.Points[side + "-foot"] - pose.Points[side + "-knee"]);
-                return MathF.Acos(Math.Clamp(Vector3.Dot(thigh, shin), -1, 1)) * 180 / MathF.PI;
+                return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector3.Dot(thigh, shin), -1, 1)));
             }
             Assert.InRange(KneeAngle(support), 165, 178);
             Assert.InRange(KneeAngle(swing), 90, 145);
@@ -128,7 +139,8 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void UnreachableContactPreservesLengthsAndReportsResidual()
     {
-        var puppet = PuppetTemplates.StepStudy(); var motion = puppet.Motions[0];
+        var puppet = PuppetTemplates.StepStudy();
+        var motion = puppet.Motions[0];
         motion.Contacts[0].Target = new(20, 0);
         var pose = PuppetPose.Sample(puppet, motion, .2);
         Assert.True(pose.Contacts[0].Error > 18);
@@ -141,7 +153,11 @@ public sealed class PuppetAuthoringTests
         var puppet = PuppetTemplates.StepStudy();
         foreach (var bend in new[] { -1, 1 })
         {
-            foreach (var chain in puppet.Chains) chain.Bend = bend;
+            foreach (var chain in puppet.Chains)
+            {
+                chain.Bend = bend;
+            }
+
             for (var i = 0; i < 24; i++)
             {
                 var pose = PuppetPose.Sample(puppet, puppet.Motions[0], i / 20f);
@@ -158,7 +174,9 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void RemovingAChainControlCleansContactsAndEveryKey()
     {
-        var puppet = PuppetTemplates.StepStudy(); puppet.RemoveControl("right-knee"); puppet.Validate();
+        var puppet = PuppetTemplates.StepStudy();
+        puppet.RemoveControl("right-knee");
+        puppet.Validate();
         Assert.DoesNotContain(puppet.Chains, c => c.End == "right-foot");
         Assert.DoesNotContain(puppet.Motions[0].Contacts, c => c.End == "right-foot");
         Assert.All(puppet.Motions[0].Keys, k => Assert.False(k.Points.ContainsKey("right-knee")));
@@ -167,30 +185,44 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void InvalidTopologyAndOverlappingContactsAreRejected()
     {
-        var puppet = PuppetTemplates.StickFigure(); puppet.Bones.Add(new() { From = "head", To = "hips" });
+        var puppet = PuppetTemplates.StickFigure();
+        puppet.Bones.Add(new()
+        {
+            From = "head",
+            To = "hips"
+        });
         Assert.Contains("cycle", Assert.Throws<InvalidDataException>(puppet.Validate).Message);
-        puppet = PuppetTemplates.StepStudy(); puppet.Motions[0].Contacts.Add(puppet.Motions[0].Contacts[0] with { });
+        puppet = PuppetTemplates.StepStudy();
+        puppet.Motions[0].Contacts.Add(puppet.Motions[0].Contacts[0] with
+        {
+        });
         Assert.Contains("overlap", Assert.Throws<InvalidDataException>(puppet.Validate).Message);
-        puppet = PuppetTemplates.StickFigure(); puppet.Controls.Find(c => c.Id == "left-knee")!.Rest = puppet.Controls.Find(c => c.Id == "left-hip")!.Rest;
+        puppet = PuppetTemplates.StickFigure();
+        puppet.Controls.Find(c => c.Id == "left-knee")!.Rest = puppet.Controls.Find(c => c.Id == "left-hip")!.Rest;
         Assert.Contains("length", Assert.Throws<InvalidDataException>(puppet.Validate).Message);
     }
 
     [Fact]
     public void BodyTranslationMovesDescendantsWhileContactsRemainPinned()
     {
-        var puppet = PuppetTemplates.StepStudy(); var motion = puppet.Motions[0];
+        var puppet = PuppetTemplates.StepStudy();
+        var motion = puppet.Motions[0];
         var pose = PuppetPose.Sample(puppet, motion, .3);
-        var originalHead = pose.Points["head"]; pose.Move(puppet, "hips", pose.Points["hips"] + new Vector3(.03f, -.02f, 0));
+        var originalHead = pose.Points["head"];
+        pose.Move(puppet, "hips", pose.Points["hips"] + new Vector3(.03f, -.02f, 0));
         Assert.InRange(Vector3.Distance(originalHead + new Vector3(.03f, -.02f, 0), pose.Points["head"]), 0, 1e-6f);
         motion.Keys = [pose.Key(.3f)];
         var evaluated = PuppetPose.Sample(puppet, motion, .3);
-        Assert.InRange(evaluated.Contacts[0].Error, 0, .00001f); AssertBoneLengths(puppet, evaluated);
+        Assert.InRange(evaluated.Contacts[0].Error, 0, .00001f);
+        AssertBoneLengths(puppet, evaluated);
     }
 
     [Fact]
     public void RepeatedMotionCarriesRootTravelAndContactTargetsTogether()
     {
-        var puppet = PuppetTemplates.StepStudy(); var motion = puppet.Motions[0]; motion.Loop = true;
+        var puppet = PuppetTemplates.StepStudy();
+        var motion = puppet.Motions[0];
+        motion.Loop = true;
         var first = PuppetPose.Sample(puppet, motion, .3, true);
         var later = PuppetPose.Sample(puppet, motion, motion.Duration * 3 + .3, true);
         Assert.InRange(later.Position.X - first.Position.X, 1.49999f, 1.50001f);
@@ -201,14 +233,23 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void WalkSeamMatchesEveryControlAndMaintainsForwardTravel()
     {
-        var puppet = PuppetTemplates.StepStudy(); var motion = puppet.Motions[0];
+        var puppet = PuppetTemplates.StepStudy();
+        var motion = puppet.Motions[0];
         Assert.True(motion.Loop);
         var start = PuppetPose.Sample(puppet, motion, 0);
         var end = PuppetPose.Sample(puppet, motion, motion.Duration);
-        foreach (var id in start.Points.Keys) Assert.InRange(Vector3.Distance(start.Points[id], end.Points[id]), 0, 1e-5f);
+        foreach (var id in start.Points.Keys)
+        {
+            Assert.InRange(Vector3.Distance(start.Points[id], end.Points[id]), 0, 1e-5f);
+        }
+
         var before = PuppetPose.Sample(puppet, motion, motion.Duration - .0001, true);
         var after = PuppetPose.Sample(puppet, motion, motion.Duration + .0001, true);
-        foreach (var id in start.Points.Keys) Assert.InRange(Vector3.Distance(before.World(id), after.World(id)), 0, .001f);
+        foreach (var id in start.Points.Keys)
+        {
+            Assert.InRange(Vector3.Distance(before.World(id), after.World(id)), 0, .001f);
+        }
+
         Assert.True(after.Position.X > before.Position.X);
         Assert.True(start.World("right-shoulder").Z > start.World("left-shoulder").Z);
         Assert.True(start.World("right-hand").X < start.World("right-shoulder").X);
@@ -220,9 +261,19 @@ public sealed class PuppetAuthoringTests
     {
         var puppet = PuppetTemplates.StickFigure();
         var hand = puppet.Controls.Single(c => c.Id == "right-hand").Rest.XYZ;
-        puppet.Controls.Add(new() { Id = "grip", Rest = PuppetPoint.From(hand + new Vector3(.1f, .1f, 0)) });
-        puppet.Bones.Add(new() { From = "right-hand", To = "grip" }); puppet.Validate();
-        var pose = PuppetPose.Rest(puppet); pose.Move(puppet, "right-hand", hand + new Vector3(.2f, .1f, 0));
+        puppet.Controls.Add(new()
+        {
+            Id = "grip",
+            Rest = PuppetPoint.From(hand + new Vector3(.1f, .1f, 0))
+        });
+        puppet.Bones.Add(new()
+        {
+            From = "right-hand",
+            To = "grip"
+        });
+        puppet.Validate();
+        var pose = PuppetPose.Rest(puppet);
+        pose.Move(puppet, "right-hand", hand + new Vector3(.2f, .1f, 0));
         Assert.InRange(Vector3.Distance(pose.Points["grip"] - pose.Points["right-hand"], new(.1f, .1f, 0)), 0, 1e-6f);
         Assert.Throws<InvalidOperationException>(() => pose.Move(puppet, "right-elbow", Vector3.Zero));
     }
@@ -230,7 +281,8 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void PrimitivesProduceFiniteGeometryAtAllStudyPoses()
     {
-        var puppet = PuppetTemplates.StepStudy(); var drawing = new PuppetDrawing();
+        var puppet = PuppetTemplates.StepStudy();
+        var drawing = new PuppetDrawing();
         for (var i = 0; i <= 30; i++)
         {
             drawing.Build(puppet, PuppetPose.Sample(puppet, puppet.Motions[0], i * .04));
@@ -242,22 +294,36 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void RunPlantsEachFootThenFliesTwicePerLoop()
     {
-        var puppet = PuppetDefinition.FromJson(PuppetTemplates.RunStudy().ToJson()); var motion = puppet.Motions[0];
+        var puppet = PuppetDefinition.FromJson(PuppetTemplates.RunStudy().ToJson());
+        var motion = puppet.Motions[0];
         var airborne = 0;
         for (var i = 0; i <= 240; i++)
         {
             var pose = PuppetPose.Sample(puppet, motion, i * motion.Duration / 240, repeat: true);
             foreach (var contact in pose.Contacts)
+            {
                 Assert.InRange(Vector3.Distance(pose.World(contact.End), contact.Target), 0, .00001f);
+            }
+
             foreach (var foot in new[] { "left-foot", "right-foot" })
+            {
                 Assert.True(pose.World(foot).Y >= .025f - .00001f, $"{foot} dips below the ground at sample {i}.");
-            if (pose.Contacts.Count == 0) airborne++;
+            }
+
+            if (pose.Contacts.Count == 0)
+            {
+                airborne++;
+            }
+
             AssertBoneLengths(puppet, pose);
         }
         Assert.InRange(airborne, 70, 110);
         var end = PuppetPose.Sample(puppet, motion, motion.Duration - 1e-4);
         var next = PuppetPose.Sample(puppet, motion, motion.Duration + 1e-4, repeat: true);
-        foreach (var id in next.Points.Keys) Assert.InRange(Vector3.Distance(end.World(id), next.World(id)), 0, .01f);
+        foreach (var id in next.Points.Keys)
+        {
+            Assert.InRange(Vector3.Distance(end.World(id), next.World(id)), 0, .01f);
+        }
     }
 
     private static void AssertBoneLengths(PuppetDefinition puppet, PuppetPose pose)

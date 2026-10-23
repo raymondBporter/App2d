@@ -1,4 +1,5 @@
 using App2d.Core.Tiles;
+using App2d.Core.Validation;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -46,11 +47,12 @@ public static class CombatLevelGenerator2D
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(tilesets);
-        if (settings.Beats is < 6 or > 60 || settings.JumpRiseTiles is < 1 or > 4 ||
-            !float.IsFinite(settings.Difficulty) || settings.Difficulty is < 0 or > 1 ||
-            !float.IsFinite(settings.Exploration) || settings.Exploration is < 0 or > 1 ||
-            settings.TilesetIndex >= tilesets.Count)
-            throw new ArgumentException("Use 6–60 beats, 1–4 jump-rise tiles, difficulty/exploration in [0,1], and an existing tileset.", nameof(settings));
+        ArgGuard.InRange(settings.Beats, 6, 60);
+        ArgGuard.InRange(settings.JumpRiseTiles, 1, 4);
+        ArgGuard.InRange(settings.Difficulty, 0f, 1f);
+        ArgGuard.InRange(settings.Exploration, 0f, 1f);
+        ArgGuard.Index(settings.TilesetIndex, tilesets.Count);
+
         ValidateRoster(settings.MeleeEnemies, MeleeTypes);
         ValidateRoster(settings.RangedEnemies, RangedTypes);
 
@@ -89,8 +91,16 @@ public static class CombatLevelGenerator2D
             {
                 var count = recipe.StartsWith("introduce-", StringComparison.Ordinal) ? 1 :
                     1 + (int)MathF.Floor(settings.Difficulty * 3);
-                if (recipe == "combined-fight") count = Math.Max(2, count);
-                if (recipe == "climax" && settings.Difficulty >= .3f) count = Math.Max(2, count);
+                if (recipe == "combined-fight")
+                {
+                    count = Math.Max(2, count);
+                }
+
+                if (recipe == "climax" && settings.Difficulty >= .3f)
+                {
+                    count = Math.Max(2, count);
+                }
+
                 for (var enemy = 0; enemy < count; enemy++)
                 {
                     var ranged = recipe == "introduce-ranged" || recipe is "combined-fight" or "climax" && enemy == count - 1 && count > 1;
@@ -117,7 +127,10 @@ public static class CombatLevelGenerator2D
             {
                 // An elevated optional detour above the main route; no progression item is required.
                 for (var step = 1; step <= 3; step++)
+                {
                     Platform(start + step * 5, 4, Floor + step * settings.JumpRiseTiles);
+                }
+
                 var top = Floor + 3 * settings.JumpRiseTiles;
                 Platform(start + 20, 12, top);
                 Place(settings.MeleeEnemies[0], $"Overlook guard {i + 1}", start + 25, top, 96);
@@ -134,13 +147,19 @@ public static class CombatLevelGenerator2D
         void Fill(int x, int width, int bottom, int height)
         {
             for (var column = x; column < x + width; column++)
+            {
                 for (var row = bottom; row < bottom + height; row++)
+                {
                     map.SetTile(column, row, new(TileKind2D.Solid | TileKind2D.Grippable, settings.TilesetIndex));
+                }
+            }
         }
         void Platform(int x, int width, int row)
         {
             for (var column = x; column < x + width; column++)
+            {
                 map.SetTile(column, row, new(TileKind2D.OneWay, settings.TilesetIndex));
+            }
         }
         void Place(string type, string name, int column, int surface, float clearance) =>
             placements.Add(new(type, name, map.Origin.X + (column + .5f) * TileSize, map.Origin.Y + surface * TileSize + clearance));
@@ -153,7 +172,10 @@ public static class CombatLevelGenerator2D
         var draft = Generate(settings, tilesets, origin);
         var root = Path.GetFullPath(directory);
         if (Directory.Exists(root) || File.Exists(root))
+        {
             throw new IOException($"Output already exists: {root}. Choose a fresh directory for the next draft.");
+        }
+
         Directory.CreateDirectory(root);
         using (var db = LevelDatabase2D.Open(Path.Combine(root, "level.db")))
         {
@@ -173,13 +195,26 @@ public static class CombatLevelGenerator2D
         Write("world.json", new WorldFile2D.WorldDocument(1,
             [new("generated", $"Generated {settings.Seed}", -1,
                 [new("generated", $"Combat draft {settings.Seed}", 1, "level.db")])]));
-        Write("zones.json", new { version = 1, zones = draft.Beats.Select(b => new
+        Write("zones.json", new
         {
-            id = $"beat-{b.Index + 1:D2}", name = $"{b.Index + 1}: {b.Recipe}",
-            minX = draft.Map.Origin.X + b.StartTile * TileSize, minY = draft.Map.WorldBounds.Min.Y,
-            maxX = draft.Map.Origin.X + (b.StartTile + b.WidthTiles) * TileSize, maxY = draft.Map.WorldBounds.Max.Y, priority = 0
-        }) });
-        Write("generation.json", new { settings, beats = draft.Beats, placements = draft.Placements });
+            version = 1,
+            zones = draft.Beats.Select(b => new
+            {
+                id = $"beat-{b.Index + 1:D2}",
+                name = $"{b.Index + 1}: {b.Recipe}",
+                minX = draft.Map.Origin.X + b.StartTile * TileSize,
+                minY = draft.Map.WorldBounds.Min.Y,
+                maxX = draft.Map.Origin.X + (b.StartTile + b.WidthTiles) * TileSize,
+                maxY = draft.Map.WorldBounds.Max.Y,
+                priority = 0
+            })
+        });
+        Write("generation.json", new
+        {
+            settings,
+            beats = draft.Beats,
+            placements = draft.Placements
+        });
         return manifest;
 
         void Write(string name, object value) => File.WriteAllText(Path.Combine(root, name), JsonSerializer.Serialize(value, JsonOptions));
@@ -188,6 +223,8 @@ public static class CombatLevelGenerator2D
     private static void ValidateRoster(IReadOnlyList<string> roster, HashSet<string> allowed)
     {
         if (roster is null || roster.Count == 0 || roster.Any(t => !allowed.Contains(t)))
+        {
             throw new ArgumentException($"Enemy roster must contain supported types: {string.Join(", ", allowed.Order())}.");
+        }
     }
 }

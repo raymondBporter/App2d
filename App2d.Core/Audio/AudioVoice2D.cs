@@ -18,14 +18,14 @@ public readonly record struct AudioVoice2D
 
     public void SetVolume(float volume, float rampSeconds = 0f)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volume, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNegative(rampSeconds);
+        ArgGuard.InRange(volume, 0f, 1f);
+        ArgGuard.NonNegative(rampSeconds);
         _mixer?.SetVoiceVolume(_sequence, volume, rampSeconds);
     }
 
     public void Stop(float fadeOutSeconds = 0f)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(fadeOutSeconds);
+        ArgGuard.NonNegative(fadeOutSeconds);
         _mixer?.StopVoice(_sequence, fadeOutSeconds);
     }
 }

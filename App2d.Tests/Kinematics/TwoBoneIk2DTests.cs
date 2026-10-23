@@ -47,7 +47,8 @@ public sealed class TwoBoneIk2DTests
     {
         var pose = TwoBoneIk2D.SolveExact(Vector2.Zero, new(distance, 0), 1, 1, 1);
         AssertClose(new(distance, 0), pose.End);
-        AssertClose(1, Vector2.Distance(pose.Root, pose.Joint)); AssertClose(1, Vector2.Distance(pose.Joint, pose.End));
+        AssertClose(1, Vector2.Distance(pose.Root, pose.Joint));
+        AssertClose(1, Vector2.Distance(pose.Joint, pose.End));
         Assert.True(pose.ReachesTarget);
     }
 

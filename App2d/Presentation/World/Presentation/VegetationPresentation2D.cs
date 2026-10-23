@@ -1,8 +1,10 @@
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
-using App2d.Core.Rendering.Vegetation;
 using App2d.Core.Tiles;
+using App2d.Core.Vegetation;
+using App2d.Gameplay.World.Vegetation;
+using App2d.Presentation.World.Vegetation;
 using App2d.Rendering;
 using System.Collections.Immutable;
 using System.Numerics;
@@ -24,28 +26,48 @@ public sealed class VegetationPresentation2D
 
     public void SetGiantTrees(ImmutableArray<GiantTree2D> trees)
     {
-        if (_giantTrees == trees) return;
+        if (_giantTrees == trees)
+        {
+            return;
+        }
+
         _giantTrees = trees;
         _giantTreeVisuals = [.. trees.Select(tree => new GiantTreeVisual2D(tree))];
     }
 
     public void SetTerrain(ImmutableArray<TerrainChunkState2D> terrain)
     {
-        if (_terrain == terrain) return;
+        if (_terrain == terrain)
+        {
+            return;
+        }
+
         _terrain = terrain;
         var sources = terrain.ToDictionary(c => c.Chunk);
         var visible = terrain.Select(c => c.Chunk).ToHashSet();
-        foreach (var key in _chunks.Keys.Where(k => !visible.Contains(k)).ToArray()) _chunks.Remove(key);
+        foreach (var key in _chunks.Keys.Where(k => !visible.Contains(k)).ToArray())
+        {
+            _chunks.Remove(key);
+        }
+
         foreach (var map in terrain)
         {
-            if (_chunks.TryGetValue(map.Chunk, out var old) && ReferenceEquals(old.Source, map)) continue;
+            if (_chunks.TryGetValue(map.Chunk, out var old) && ReferenceEquals(old.Source, map))
+            {
+                continue;
+            }
+
             var patches = new List<Patch>();
             var trees = new List<ProceduralTree2D>();
             for (var y = map.Chunk.Y * map.ChunkSize; y < Math.Min(map.Height, (map.Chunk.Y + 1) * map.ChunkSize); y++)
             {
                 for (var x = map.Chunk.X * map.ChunkSize; x < Math.Min(map.Width, (map.Chunk.X + 1) * map.ChunkSize); x++)
                 {
-                    if (!VegetationPlacement2D.HasGrass(map, x, y)) continue;
+                    if (!VegetationPlacement2D.HasGrass(map, x, y))
+                    {
+                        continue;
+                    }
+
                     var cell = new GrassCell2D(x, y);
                     var seed = VegetationPlacement2D.Seed(x, y);
                     var root = map.Origin + new Vector2(x, y + 1) * map.TileSize;
@@ -101,7 +123,11 @@ public sealed class VegetationPresentation2D
 
     public void ApplyCuts(ImmutableHashSet<GrassCell2D> cuts)
     {
-        if (ReferenceEquals(_cuts, cuts)) return;
+        if (ReferenceEquals(_cuts, cuts))
+        {
+            return;
+        }
+
         if (_cuts is not null)
         {
             foreach (var chunk in _chunks.Values)
@@ -109,7 +135,9 @@ public sealed class VegetationPresentation2D
                 foreach (var patch in chunk.Patches)
                 {
                     if (cuts.Contains(patch.Cell) && !_cuts.Contains(patch.Cell))
+                    {
                         Burst(patch);
+                    }
                 }
             }
         }
@@ -118,7 +146,7 @@ public sealed class VegetationPresentation2D
 
     public void Advance(float dt)
     {
-        Core.Validation.ArgGuard.ThrowIfNotFiniteOrNegative(dt);
+        Core.Validation.ArgGuard.NonNegative(dt);
         _time += dt;
         var wind = Wind();
         for (var i = _clippings.Count - 1; i >= 0; i--)
@@ -127,13 +155,20 @@ public sealed class VegetationPresentation2D
             var previousBounds = piece.Shape.WorldBounds(piece.Position, piece.Rotation);
             piece.Advance(dt, wind);
             var bounds = piece.Shape.WorldBounds(piece.Position, piece.Rotation);
-            if (piece.IsExpired || HitsGround(previousBounds, bounds)) _clippings.RemoveAt(i);
+            if (piece.IsExpired || HitsGround(previousBounds, bounds))
+            {
+                _clippings.RemoveAt(i);
+            }
         }
     }
 
     private bool HitsGround(Rect2D previous, Rect2D current)
     {
-        if (current.Bottom >= previous.Bottom || _chunks.Count == 0) return false;
+        if (current.Bottom >= previous.Bottom || _chunks.Count == 0)
+        {
+            return false;
+        }
+
         var map = _chunks.Values.First().Source;
         var firstX = Math.Clamp((int)MathF.Floor((Math.Min(previous.Left, current.Left) - map.Origin.X) / map.TileSize), 0, map.Width - 1);
         var lastX = Math.Clamp((int)MathF.Floor((Math.Max(previous.Right, current.Right) - map.Origin.X) / map.TileSize), 0, map.Width - 1);
@@ -143,11 +178,17 @@ public sealed class VegetationPresentation2D
         {
             for (var x = firstX; x <= lastX; x++)
             {
-                if (!_chunks.TryGetValue(new(x / map.ChunkSize, y / map.ChunkSize), out var chunk)) continue;
+                if (!_chunks.TryGetValue(new(x / map.ChunkSize, y / map.ChunkSize), out var chunk))
+                {
+                    continue;
+                }
+
                 var kind = chunk.Source.GetTileKind(x, y);
                 var top = map.Origin.Y + (y + 1) * map.TileSize;
                 if ((kind.IsCollidable() || kind.IsSpikes()) && current.Bottom <= top && previous.Bottom > top)
+                {
                     return true;
+                }
             }
         }
 
@@ -157,11 +198,20 @@ public sealed class VegetationPresentation2D
     public void DrawTrees(Renderer2D renderer, Rect2D visible)
     {
         var wind = Wind();
-        foreach (var tree in _giantTreeVisuals) tree.Render(renderer, visible, wind);
+        foreach (var tree in _giantTreeVisuals)
+        {
+            tree.Render(renderer, visible, wind);
+        }
+
         foreach (var chunk in _chunks.Values)
         {
             foreach (var tree in chunk.Trees)
-                if (visible.Intersects(tree.Bounds)) tree.Render(renderer, wind);
+            {
+                if (visible.Intersects(tree.Bounds))
+                {
+                    tree.Render(renderer, wind);
+                }
+            }
         }
     }
 
@@ -184,11 +234,17 @@ public sealed class VegetationPresentation2D
             }
         }
 
-        if (layer != VegetationLayer2D.Front) return;
+        if (layer != VegetationLayer2D.Front)
+        {
+            return;
+        }
+
         foreach (var piece in _clippings)
         {
             if (visible.Intersects(piece.Shape.WorldBounds(piece.Position, piece.Rotation)))
+            {
                 piece.Shape.Render(renderer, piece.Position, piece.Rotation, piece.Opacity);
+            }
         }
     }
 
@@ -200,7 +256,11 @@ public sealed class VegetationPresentation2D
         var scale = patch.Size / 32f;
         foreach (var tip in patch.Visual.CreateClippings(patch.Size * VegetationPlacement2D.CutHeightInTiles, Wind(), CutRoughness))
         {
-            if (_clippings.Count >= 256) break;
+            if (_clippings.Count >= 256)
+            {
+                break;
+            }
+
             _clippings.Add(new(tip,
                 new Vector2(random.NextFloat(-0.5f, 0.5f) * 65f, random.NextFloat(90f, 130f)) * scale,
                 random.NextFloat(-0.5f, 0.5f) * 12f, random.NextFloat(MathF.Tau), scale));

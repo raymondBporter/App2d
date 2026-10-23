@@ -27,7 +27,10 @@ public sealed class WorldSoundtrack2D
         Default = fallback;
         Zones = zones.ToImmutableDictionary(StringComparer.Ordinal);
         Validate(Default);
-        foreach (var selection in Zones.Values) Validate(selection);
+        foreach (var selection in Zones.Values)
+        {
+            Validate(selection);
+        }
     }
 
     public MusicSelection2D ForZone(WorldZone2D? zone) => zone is not null && Zones.TryGetValue(zone.Id, out var selection) ? selection : Default;
@@ -46,18 +49,32 @@ public sealed class WorldSoundtrack2D
         var file = JsonSerializer.Deserialize<SoundtrackFile>(File.ReadAllText(Path.Combine(root, "soundtrack.json")), Options)
             ?? throw new InvalidDataException("Empty soundtrack definition.");
         if (file.Version != 1 || file.Cues is not { Length: > 0 } || file.Zones is null)
+        {
             throw new InvalidDataException("Expected soundtrack format version 1.");
+        }
+
         var cues = new Dictionary<string, MusicCue2D>(StringComparer.Ordinal);
         foreach (var id in file.Cues)
         {
             if (string.IsNullOrWhiteSpace(id) || id.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '-'))
+            {
                 throw new InvalidDataException("Music cue IDs must use letters, digits and hyphens.");
+            }
+
             if (!cues.TryAdd(id, MusicCue2D.Load(Path.Combine(root, id, "manifest.json"))))
+            {
                 throw new InvalidDataException($"Duplicate music cue '{id}'.");
+            }
         }
         var ids = worldZones.Select(z => z.Id).ToHashSet(StringComparer.Ordinal);
         foreach (var zoneId in file.Zones.Keys)
-            if (!ids.Contains(zoneId)) throw new InvalidDataException($"Soundtrack refers to missing world zone '{zoneId}'.");
+        {
+            if (!ids.Contains(zoneId))
+            {
+                throw new InvalidDataException($"Soundtrack refers to missing world zone '{zoneId}'.");
+            }
+        }
+
         return new(cues, file.Default, file.Zones);
     }
 

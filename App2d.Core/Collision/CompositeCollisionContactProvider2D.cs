@@ -1,4 +1,5 @@
 using App2d.Core.Collision.Contacts;
+using App2d.Core.Spatial;
 
 namespace App2d.Core.Collision;
 
@@ -10,7 +11,9 @@ public sealed class CompositeCollisionContactProvider2D(params IEnumerable<IColl
         foreach (var provider in providers)
         {
             if (provider.TryGetContact(first, second, out contact))
+            {
                 return true;
+            }
         }
 
         contact = default;

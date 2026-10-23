@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
@@ -8,9 +9,9 @@ using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Persons;
-using App2d.Levels;
 using App2d.Presentation.Persons;
 using System.Numerics;
 
@@ -35,7 +36,10 @@ public sealed class PersonLadderPresentationTests
             VelocityIterations = 2
         };
         for (var y = 1; y <= 20; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Ladder);
+        }
+
         _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
             new Vector2(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
             2u, 1u, CombatFaction2D.Player, tileMap: _map);
@@ -88,15 +92,20 @@ public sealed class PersonLadderPresentationTests
         {
             _person.BeginFrame(Dt);
             _person.ApplyCommand(new PersonCommand2D
-            { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash }, Dt);
+            {
+                MoveX = move,
+                ClimbY = climb,
+                JumpHeld = jump || jumpOff,
+                DashHeld = dash
+            }, Dt);
             _physics.Step(Dt);
             _person.UpdateAfterPhysics(Dt);
         }
     }
 
-    private PhysicsBody2D AddSolid(Vector2 center, Vector2 size)
+    private RigidBody2D AddSolid(Vector2 center, Vector2 size)
     {
-        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(size));
+        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size));
         spatial.Transform.Position = center;
         var body = _physics.AddBody(spatial, BodyMotionType2D.Static);
         body.CollisionLayer = 1u;

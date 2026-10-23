@@ -1,6 +1,7 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
+using App2d.Gameplay.World.Vegetation;
 using System.Collections.Immutable;
 using System.Numerics;
 using System.Text.Json;
@@ -20,22 +21,34 @@ public static class GiantTreeFile2D
     public static ImmutableArray<GiantTree2D> Load(string path, IChunkedTileMap2D map)
     {
         ArgGuard.ThrowIfNull(map);
-        if (!File.Exists(path)) return [];
+        if (!File.Exists(path))
+        {
+            return [];
+        }
+
         try
         {
             var file = JsonSerializer.Deserialize<TreeFile>(File.ReadAllText(path), Options)
                 ?? throw new InvalidDataException("Tree document is null.");
-            if (file.Version != 1 || file.Trees is null) throw new InvalidDataException("Expected tree format version 1.");
+            if (file.Version != 1 || file.Trees is null)
+            {
+                throw new InvalidDataException("Expected tree format version 1.");
+            }
+
             var length = WorldRange(file.BranchLengthTiles, map.TileSize, "branchLengthTiles");
             var gap = WorldRange(file.BranchGapTiles, map.TileSize, "branchGapTiles");
             var foliage = WorldRange(file.FoliageRadiusTiles, map.TileSize, "foliageRadiusTiles");
             var trees = ImmutableArray.CreateBuilder<GiantTree2D>(file.Trees.Length);
             foreach (var entry in file.Trees)
             {
-                if (entry is null) throw new InvalidDataException("A tree entry cannot be null.");
-                ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(entry.XTiles, 0f, map.Width - 1f, "xTiles");
+                if (entry is null)
+                {
+                    throw new InvalidDataException("A tree entry cannot be null.");
+                }
+
+                ArgGuard.InRange(entry.XTiles, 0f, map.Width - 1f, "xTiles");
                 var ground = entry.RootYTiles ?? TileGroundHeights2D.AtColumn(map, (int)entry.XTiles);
-                ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(ground, 0f, map.Height, "rootYTiles");
+                ArgGuard.InRange(ground, 0f, map.Height, "rootYTiles");
                 var root = map.Origin + new Vector2(entry.XTiles, ground) * map.TileSize;
                 trees.Add(new(root, new()
                 {
@@ -55,12 +68,16 @@ public static class GiantTreeFile2D
         }
     }
 
-    private static Interval1D WorldRange(float[]? values, float tileSize, string name)
+    private static Interval<float> WorldRange(float[]? values, float tileSize, string name)
     {
-        if (values is not { Length: 2 }) throw new InvalidDataException($"{name} must be [minimum, maximum].");
-        var range = new Interval1D(values[0] * tileSize, values[1] * tileSize);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(range.Min, name);
-        ArgGuard.ThrowIfNotFiniteOrLessThan(range.Max, range.Min, name);
+        if (values is not { Length: 2 })
+        {
+            throw new InvalidDataException($"{name} must be [minimum, maximum].");
+        }
+
+        var range = new Interval<float>(values[0] * tileSize, values[1] * tileSize);
+        ArgGuard.Positive(range.Min, name);
+        ArgGuard.AtLeast(range.Max, range.Min, name);
         return range;
     }
 

@@ -7,7 +7,7 @@ namespace App2d.Gameplay.Persons;
 /// Small deterministic command producer for the first hostile person. It uses
 /// ordinary person commands and intentionally leaves advanced traversal alone.
 /// </summary>
-internal sealed partial class RivalBrain2D(float minimumX, float maximumX)
+internal sealed class RivalBrain2D(float minimumX, float maximumX)
 {
     private const float PunchRange = 78f;
     private const float KickRange = 104f;
@@ -17,10 +17,7 @@ internal sealed partial class RivalBrain2D(float minimumX, float maximumX)
     private float _jumpHoldSeconds;
     private bool _nextAttackIsKick = true;
 
-    public PersonCommand2D Decide(
-        Person2D person,
-        Vector2 targetPosition,
-        float deltaSeconds)
+    public PersonCommand2D Decide(Person2D person, Vector2 targetPosition, float deltaSeconds)
     {
         _attackDelaySeconds = Math.Max(0f, _attackDelaySeconds - deltaSeconds);
         _dashDelaySeconds = Math.Max(0f, _dashDelaySeconds - deltaSeconds);
@@ -37,12 +34,11 @@ internal sealed partial class RivalBrain2D(float minimumX, float maximumX)
             MathF.Abs(offset.Y) <= 80f &&
             CanMove(person.Position.X, MathF.Sign(offset.X));
         if (dashPressed)
+        {
             _dashDelaySeconds = 2.1f;
+        }
 
-        var jumpPressed =
-            _jumpDelaySeconds <= 0f &&
-            person.IsGrounded &&
-            offset.Y >= 72f;
+        var jumpPressed = _jumpDelaySeconds <= 0f && person.IsGrounded && offset.Y >= 72f;
         if (jumpPressed)
         {
             _jumpDelaySeconds = 0.9f;
@@ -82,16 +78,27 @@ internal sealed partial class RivalBrain2D(float minimumX, float maximumX)
     private float ChooseMovement(float positionX, float targetOffsetX)
     {
         if (positionX <= minimumX + 24f)
+        {
             return 1f;
+        }
+
         if (positionX >= maximumX - 24f)
+        {
             return -1f;
+        }
 
         var distance = MathF.Abs(targetOffsetX);
         var direction = MathF.Sign(targetOffsetX);
         if (distance > 68f)
+        {
             return direction;
+        }
+
         if (distance < 34f)
+        {
             return -direction;
+        }
+
         return 0f;
     }
 

@@ -1,0 +1,278 @@
+{
+  "format": "app2d-clip",
+  "version": 3,
+  "id": "curve-face-surprised",
+  "name": "Surprised",
+  "model": "curve-face",
+  "structureRevision": 2,
+  "duration": 2,
+  "loop": true,
+  "tracks": [
+    {
+      "kind": "translate",
+      "target": "mouth-left",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "mouth-right",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": -0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "mouth-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": -0.3,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "mouth-upper-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.6,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "left-eye-upper-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "left-eye-lower-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": -0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "left-brow-left",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "left-brow-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "left-brow-right",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "right-eye-upper-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "right-eye-lower-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": -0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "right-brow-left",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "right-brow-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "right-brow-right",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ]
+}

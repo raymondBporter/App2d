@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.ComponentModel;
@@ -60,14 +61,22 @@ internal sealed class RigRectangleShape2D(int id, string name, RigBone2D bone) :
     public float Width
     {
         get => _width;
-        set { _width = Positive(value); _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius); }
+        set
+        {
+            _width = Positive(value);
+            _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius);
+        }
     }
 
     [Category("Geometry")]
     public float Height
     {
         get => _height;
-        set { _height = Positive(value); _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius); }
+        set
+        {
+            _height = Positive(value);
+            _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius);
+        }
     }
 
     [Category("Geometry"), DisplayName("Corner radius")]
@@ -80,8 +89,8 @@ internal sealed class RigRectangleShape2D(int id, string name, RigBone2D bone) :
     private float MaximumRadius => MathF.Min(Width, Height) / 2f;
 
     internal override IShape2D CreateGeometry() => CornerRadius > 0f
-        ? RoundedRectangle2D.FromSize(new Vector2(Width, Height), CornerRadius)
-        : Rectangle2D.FromSize(new Vector2(Width, Height));
+        ? RoundedRectangle2D.Builder.CreateFromSize(Width, Height, CornerRadius)
+        : Rectangle2D.Builder.CreateFromSize(Width, Height);
 
     private static float Positive(float value) => float.IsFinite(value) && value > 1f ? value : 1f;
 }
@@ -97,7 +106,7 @@ internal sealed class RigCircleShape2D(int id, string name, RigBone2D bone) : Ri
         set => _radius = float.IsFinite(value) && value > 1f ? value : 1f;
     }
 
-    internal override IShape2D CreateGeometry() => new Circle2D(Radius);
+    internal override IShape2D CreateGeometry() => Circle2D.Builder.Create(Radius);
 }
 
 internal sealed class RigCapsuleShape2D(int id, string name, RigBone2D bone) : RigShape2D(id, name, bone)
@@ -120,7 +129,7 @@ internal sealed class RigCapsuleShape2D(int id, string name, RigBone2D bone) : R
     }
 
     internal override IShape2D CreateGeometry() =>
-        new Capsule2D(new Vector2(-Length / 2f, 0f), new Vector2(Length / 2f, 0f), Radius);
+        Capsule2D.Builder.Create(new Vector2(-Length / 2f, 0f), new Vector2(Length / 2f, 0f), Radius);
 }
 
 internal sealed class RigPolygonShape2D(int id, string name, RigBone2D bone) : RigShape2D(id, name, bone)
@@ -133,12 +142,12 @@ internal sealed class RigPolygonShape2D(int id, string name, RigBone2D bone) : R
         get => _vertices;
         set
         {
-            _ = new ConvexPolygon2D(Parse(value));
+            _ = ConvexPolygon2D.Builder.Create(Parse(value));
             _vertices = value;
         }
     }
 
-    internal override IShape2D CreateGeometry() => new ConvexPolygon2D(Parse(Vertices));
+    internal override IShape2D CreateGeometry() => ConvexPolygon2D.Builder.Create(Parse(Vertices));
 
     private static IEnumerable<Vector2> Parse(string text)
     {

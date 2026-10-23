@@ -1,6 +1,6 @@
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.World;
 using System.Collections.Immutable;
@@ -21,7 +21,7 @@ public interface ISideScrollerSessionWorld2D
     Rect2D Bounds { get; }
     float GoalX { get; }
     void UpdateStreaming(Vector2 focus);
-    void UpdateMovingPlatforms(float deltaSeconds);
+    void UpdateWorldMotion(float deltaSeconds);
     void UpdateEnemies(float deltaSeconds, Vector2 targetPosition);
     void SyncEnemiesAfterPhysics();
     void ResolveDamage(Person2D player);

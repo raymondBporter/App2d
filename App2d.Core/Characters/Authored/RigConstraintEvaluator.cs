@@ -1,5 +1,7 @@
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -22,8 +24,16 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
     public void Apply(RigIkTarget target)
     {
-        if (target.Bend is not (-1 or 1)) throw new ArgumentOutOfRangeException(nameof(target), "Bend must be -1 or 1.");
-        if (_targets.ContainsKey(target.Constraint)) throw new InvalidOperationException($"Constraint '{target.Constraint}' already has a target in this pose.");
+        if (target.Bend is not (-1 or 1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(target), "Bend must be -1 or 1.");
+        }
+
+        if (_targets.ContainsKey(target.Constraint))
+        {
+            throw new InvalidOperationException($"Constraint '{target.Constraint}' already has a target in this pose.");
+        }
+
         var result = Solve(target.Constraint, target.Position, target.Bend);
         _targets.Add(target.Constraint, (target, pose.Chains.Count));
         pose.Chains.Add(result);
@@ -31,12 +41,20 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
     public void Apply(RigContactPin pin)
     {
-        if (!float.IsFinite(pin.Release) || pin.Release is < 0 or > 1) throw new ArgumentOutOfRangeException(nameof(pin), "Contact release must be between 0 and 1.");
-        if (!_targets.TryGetValue(pin.Constraint, out var goal)) throw new InvalidOperationException($"Contact '{pin.Constraint}' needs an IK target first.");
+        ArgGuard.InRange(pin.Release, 0f, 1f, nameof(pin));
+
+        if (!_targets.TryGetValue(pin.Constraint, out var goal))
+        {
+            throw new InvalidOperationException($"Contact '{pin.Constraint}' needs an IK target first.");
+        }
+
         var target = pin.Release > 0 ? Vector3.Lerp(pin.Position, goal.Target.Position, pin.Release) : pin.Position;
         var result = Solve(pin.Constraint, target, goal.Target.Bend);
         pose.Chains[goal.Index] = result;
-        if (pin.Release == 0) pose.Contacts.Add(new(pin.Constraint, target, result.Residual));
+        if (pin.Release == 0)
+        {
+            pose.Contacts.Add(new(pin.Constraint, target, result.Residual));
+        }
     }
 
     /// <summary>Converts a sampled offset into a goal. Point constraints retain the original rotation-only frame convention.</summary>
@@ -46,7 +64,10 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         var point = locomotion ? pose.Locomotion : pose.Points[chain.Frame];
         var rest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
         if (chain.Solver == ModelChain.PointSolver || locomotion)
+        {
             return point + Rotation2D.ApplyXY(model.Rest[chain.End] - rest + delta, locomotion ? 0 : pose.Angles[chain.Frame]);
+        }
+
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
         var local = Vector2.Transform(XY(model.Rest[chain.End]), setupInverse) + XY(delta);
         return new(Vector2.Transform(local, frame), point.Z + model.Rest[chain.End].Z - rest.Z + delta.Z);
@@ -59,7 +80,10 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         var point = locomotion ? pose.Locomotion : pose.Points[chain.Frame];
         var rest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
         if (chain.Solver == ModelChain.PointSolver || locomotion)
+        {
             return Rotation2D.ApplyXY(world - point, locomotion ? 0 : -pose.Angles[chain.Frame]) - (model.Rest[chain.End] - rest);
+        }
+
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
         Matrix3x2.Invert(frame, out var inverse);
         var delta = Vector2.Transform(XY(world), inverse) - Vector2.Transform(XY(model.Rest[chain.End]), setupInverse);
@@ -70,15 +94,25 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
     {
         var frame = pose.Bones[chain.Frame];
         if (!Matrix3x2.Invert(model.RestTransforms[chain.Frame], out var setupInverse) || !Matrix3x2.Invert(frame, out _))
+        {
             throw new InvalidDataException($"Bone constraint '{chain.Id}': target frame '{chain.Frame}' is collapsed.");
+        }
+
         return (setupInverse, frame);
     }
 
     private ChainResult Solve(string id, Vector3 target, int bend)
     {
         if (!target.IsFinite())
+        {
             throw new InvalidDataException($"Constraint '{id}': target must be finite.");
-        if (!model.Chains.TryGetValue(id, out var chain)) throw new InvalidDataException($"Unknown IK constraint '{id}'.");
+        }
+
+        if (!model.Chains.TryGetValue(id, out var chain))
+        {
+            throw new InvalidDataException($"Unknown IK constraint '{id}'.");
+        }
+
         return chain.Solver == ModelChain.BoneSolver ? BoneFrameIk.Solve(model, pose, chain, target, bend, _foldDirections[id]) : SolvePoints(chain, target, bend);
     }
 
@@ -91,20 +125,29 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         var end = new Vector3(solved.End, target.Z);
         MoveDescendants(chain.Joint, joint - pose.Points[chain.Joint], chain.End);
         MoveDescendants(chain.End, end - pose.Points[chain.End], null);
-        Place(chain.Joint, joint); Place(chain.End, end);
+        Place(chain.Joint, joint);
+        Place(chain.End, end);
         return new(chain.Id, Vector2.Distance(solved.End, XY(target)), solved.ReachesTarget);
 
         void Place(string id, Vector3 point)
         {
             pose.Points[id] = point;
-            var frame = pose.Bones[id]; frame.M31 = point.X; frame.M32 = point.Y; pose.Bones[id] = frame;
+            var frame = pose.Bones[id];
+            frame.M31 = point.X;
+            frame.M32 = point.Y;
+            pose.Bones[id] = frame;
         }
         void MoveDescendants(string id, Vector3 delta, string? except)
         {
             foreach (var child in model.Children[id])
             {
-                if (child == except) continue;
-                Place(child, pose.Points[child] + delta); MoveDescendants(child, delta, null);
+                if (child == except)
+                {
+                    continue;
+                }
+
+                Place(child, pose.Points[child] + delta);
+                MoveDescendants(child, delta, null);
             }
         }
     }

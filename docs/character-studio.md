@@ -1,5 +1,7 @@
 # Character Studio
 
+The proposed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.
+
 The studio is the character editor: one window, one viewport and one document workflow over the authored assets in
 `Assets/Characters/authored`, which the game plays. Its design and history are in
 [Character editor replacement](character-editor-replacement.md).
@@ -10,8 +12,7 @@ the referenced model and animations into independent drafts. Add a recipe and it
 no C# menu entry is needed. Person includes seven starter clips, Quadruped and Triceratops eight each, and Stalker five.
 Use **Save all** to save the created bundle. Existing model, clip and entity files are unaffected by template creation.
 
-**Export Spine** and **New > Import Spine 4.2 JSON** provide an initial bone/slot/skin/image interchange path.
-See [Spine 4.2 interchange](spine-interchange.md) for the editor workflow, supported timelines, and conversion limits.
+For a small curve animation example, choose **New → Model: Curve face template** and press Play on **Expressions — play me**. Its separate clips show smile, blink, wink, angry, worried, surprised and crossed eyes; Hair wave shows moving bumps along a curve's normal. In Model, select a curve part and use **Edit curve handles** or **Normal wave**. In Animate, the named controls use the same translation and scale keys as the rest of the rig. Create a fresh template instance to get all nine clips and the added controls.
 
 ## Run
 
@@ -47,8 +48,7 @@ rest-offset behavior. Drawing, selection and bounds share `PartGeometry.Contour`
 
 Run `dotnet run --project App2d.CharacterStudio -- --smoke-rounded-paths artifacts/rounded-paths`
 for 24 before/after frames of walk, run, landing and sword motion through the game renderer, with close-up
-and game-scale figures. The report includes triangle counts. Spine region export currently rasterizes
-the setup curve; it does not preserve interior deformation, which remains in the native backup.
+and game-scale figures. The report includes triangle counts.
 
 ## Character layers
 
@@ -197,7 +197,7 @@ facings, including game-size views. Clothing follows the rig rigidly; this first
 
 ## Workspaces
 
-In **Model → Edit rig**, **Add root bone** creates a bone with an origin, rest angle, and length; **Add child bone** starts at the selected bone's tip. Drag the origin to move it, drag the tip to change its rest angle and length, or edit those values in the inspector. Turn off **Edit rig** and use **Add shape to selected bone** to attach an ellipse, box, capsule, or polygon in that bone's local frame. The shape's offset and angle remain editable. **Save** writes these as controls and parts in the ordinary model JSON; **Animate** uses a `rotate` track on an unconstrained bone control. Existing point-control models and their animations continue to use the same editor.
+In **Model → Edit rig**, **Add root bone** creates a bone with an origin, rest angle, and length; **Add child bone** starts at the selected bone's tip. Drag the origin to move it, drag the tip to change its rest angle and length, or edit those values in the inspector. Turn off **Edit rig** and use **Add shape to selected bone** to attach library geometry in that bone's local frame. The menu and **Geometry** field use the geometry library's own names: rectangle, rounded rectangle, capsule, polygons and curves. Curves connect two controls. Shapes and curves share the same fill and outline material fields. The shape's offset and angle remain editable. **Save** writes these as controls and parts in the ordinary model JSON; **Animate** uses a `rotate` track on an unconstrained bone control. Existing point-control models and their animations continue to use the same editor.
 
 To add bone IK, create a root, child and endpoint, select the endpoint and press **Make IK constraint**. The first two bones supply the segment lengths; the endpoint may itself have artwork and child bones. Bone children must meet their parent's +X tip. The new constraint appears under **IK constraints**, with a bend direction, target frame and reference measure. In **Animate**, drag the endpoint to key the constraint's target. Both segments turn, carrying attached shapes and descendants. The root still has translation and uniform-scale channels; its rotation belongs to IK. Existing point controls use the compatible point solver through the same UI.
 
@@ -252,7 +252,7 @@ studies; `--write-player-moves <authored-dir>` regenerates the player move set.
 `--write-weapons <authored-dir>` replaces the five starter weapon assets and their sample orientation tracks, keeping
 body keys and entity settings. It is a regeneration command and overwrites edits to those weapon assets/tracks.
 
-The game has two more: `dotnet run --project App2d -- --render-smoke <dir>` draws authored entities through the game
+The game has two more: `dotnet run --project App2d.CharacterSeeds -- --render-smoke <dir>` draws authored entities through the game
 presentation, and `-- --face-smoke <dir>` draws every expression on the Person.
 
 ## Code

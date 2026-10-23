@@ -30,7 +30,9 @@ public sealed class PlayerSaveStore2D
         try
         {
             if (!File.Exists(Path))
+            {
                 return null;
+            }
 
             var json = File.ReadAllText(Path);
             return JsonSerializer.Deserialize<PlayerSave2D>(json, JsonOptions);

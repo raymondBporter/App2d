@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "shield-defender-idle",
   "name": "Shell defender / idle",
   "model": "person",
@@ -76,7 +76,6 @@
       "target": "left-arm",
       "keys": [
         {
-          "time": 0,
           "x": 0.5,
           "y": 0.12,
           "ease": "smooth"
@@ -101,5 +100,9 @@
     }
   ],
   "markers": [],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

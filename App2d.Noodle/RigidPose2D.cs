@@ -1,4 +1,4 @@
-using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -73,7 +73,7 @@ internal sealed class PoseClip2D
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
         ArgGuard.ThrowIf(frames.Length == 0, "A pose clip needs at least one keyframe.", nameof(frames));
-        ArgGuard.ThrowIf(frames[0].Time != 0f || frames.Any(frame => !NumericValidation.IsFiniteAndNonNegative(frame.Time)),
+        ArgGuard.ThrowIf(frames[0].Time != 0f || frames.Any(frame => !NumericValidation.IsNonNegative(frame.Time)),
             "Pose times must be finite, non-negative, and begin at zero.", nameof(frames));
         for (var index = 1; index < frames.Length; index++)
         {
@@ -93,19 +93,29 @@ internal sealed class PoseClip2D
     public RigidPose2D Sample(float time)
     {
         if (_frames.Length == 1 || Duration <= 0f)
+        {
             return _frames[0].Pose;
+        }
+
         if (Loops)
+        {
             time -= MathF.Floor(time / Duration) * Duration;
+        }
         else
+        {
             time = Math.Clamp(time, 0f, Duration);
+        }
 
         for (var index = 1; index < _frames.Length; index++)
         {
             var after = _frames[index];
             if (time > after.Time)
+            {
                 continue;
+            }
+
             var before = _frames[index - 1];
-            var amount = Interpolation.SmoothStep((time - before.Time) / (after.Time - before.Time));
+            var amount = Progress.SmoothStep((time - before.Time) / (after.Time - before.Time));
             return RigidPose2D.Lerp(before.Pose, after.Pose, amount);
         }
 

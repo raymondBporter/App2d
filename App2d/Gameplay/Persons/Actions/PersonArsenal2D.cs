@@ -4,8 +4,9 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Simulation;
@@ -20,7 +21,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
 
     public PersonArsenal2D(
         EntityIdAllocator2D ids,
-        PhysicsBody2D ownerBody,
+        RigidBody2D ownerBody,
         Vector2 muzzleOffset,
         CollisionSystem2D collision,
         uint worldLayer,
@@ -76,12 +77,18 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
-        foreach (var hitbox in _sword.ActiveHitboxes) yield return hitbox;
-        foreach (var hitbox in _gun.ActiveHitboxes) yield return hitbox;
+        foreach (var hitbox in _sword.ActiveHitboxes)
+        {
+            yield return hitbox;
+        }
+
+        foreach (var hitbox in _gun.ActiveHitboxes)
+        {
+            yield return hitbox;
+        }
     }
 
-    public IEnumerable<SpatialObject2D> GetActiveSwordHitboxes() =>
-        _sword.ActiveHitboxes;
+    public IEnumerable<SpatialObject2D> GetActiveSwordHitboxes() => _sword.ActiveHitboxes;
 
     public void BeginFrame(float deltaSeconds)
     {
@@ -107,11 +114,9 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         _energyRecharge = 0;
     }
 
-    public float UsePrimary(float facing) =>
-        SpellBusy ? facing : _sword.Use(facing);
+    public float UsePrimary(float facing) => SpellBusy ? facing : _sword.Use(facing);
 
-    public float UseDownwardPrimary(float facing) =>
-        SpellBusy ? facing : _sword.UseDownward(facing);
+    public float UseDownwardPrimary(float facing) => SpellBusy ? facing : _sword.UseDownward(facing);
 
     public float UseSecondary(float facing) => facing;
 }

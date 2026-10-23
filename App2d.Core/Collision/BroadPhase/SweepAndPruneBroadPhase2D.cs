@@ -1,5 +1,5 @@
 using App2d.Core.Collision.Filtering;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Collision.BroadPhase;
@@ -38,14 +38,21 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
             {
                 var candidate = _proxies[candidateIndex];
                 if (candidate.PrimaryMinimum > current.PrimaryMaximum)
+                {
                     break;
+                }
+
                 if (!OverlapsSecondaryAxis(current, candidate))
+                {
                     continue;
+                }
 
                 var first = current.Ordinal < candidate.Ordinal ? current.Item : candidate.Item;
                 var second = current.Ordinal < candidate.Ordinal ? candidate.Item : current.Item;
                 if (pairFilter.ShouldTest(first, second))
+                {
                     pairs.Add(new BroadPhasePair2D<T>(first, second));
+                }
             }
         }
     }
@@ -75,7 +82,9 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
     {
         var comparison = first.PrimaryMinimum.CompareTo(second.PrimaryMinimum);
         if (comparison != 0)
+        {
             return comparison;
+        }
 
         comparison = first.PrimaryMaximum.CompareTo(second.PrimaryMaximum);
         return comparison != 0

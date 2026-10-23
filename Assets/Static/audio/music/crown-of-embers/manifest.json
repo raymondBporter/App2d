@@ -7,12 +7,7 @@
   "key": "D minor",
   "asset_id": "crown-of-embers",
   "presentation": {
-    "stem_names": [
-      "Landscape",
-      "Hero theme",
-      "String motion",
-      "Battle"
-    ],
+    "stem_names": ["Landscape", "Hero theme", "String motion", "Battle"],
     "mood_names": {
       "explore": "Explore",
       "drive": "Advance",
@@ -42,24 +37,9 @@
     }
   ],
   "moods": {
-    "explore": [
-      1,
-      0.64,
-      0,
-      0
-    ],
-    "drive": [
-      0.92,
-      0.9,
-      0.7,
-      0
-    ],
-    "combat": [
-      0.86,
-      1,
-      1,
-      0.9
-    ]
+    "explore": [1, 0.64, 0, 0],
+    "drive": [0.92, 0.9, 0.7, 0],
+    "combat": [0.86, 1, 1, 0.9]
   },
   "transition": {
     "quantize_beats": 4,

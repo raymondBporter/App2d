@@ -1,9 +1,9 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
@@ -33,37 +33,37 @@ internal sealed record RigidPartAsset2D(
     float Radius,
     float JointOverlap,
     int DrawOrder,
-    XnaColor Color);
+    Color4b Color);
 
 internal sealed class RigidPartSet2D(
     string name,
     IEnumerable<RigidPartAsset2D> parts,
-    XnaColor accent,
+    Color4b accent,
     RigidPartStyle2D style = RigidPartStyle2D.SolidPrototype)
 {
     public string Name { get; } = name;
     public IReadOnlyList<RigidPartAsset2D> Parts { get; } = [.. parts.OrderBy(part => part.DrawOrder)];
-    public XnaColor Accent { get; } = accent;
+    public Color4b Accent { get; } = accent;
     public RigidPartStyle2D Style { get; } = style;
 
     public static IReadOnlyList<RigidPartSet2D> PrototypeSets { get; } =
     [
         CreateSplineMan(),
-        Create("PLUM KNIGHT", new XnaColor(149, 103, 244), new XnaColor(112, 72, 207), new XnaColor(238, 181, 123)),
-        Create("MINT BANDIT", new XnaColor(54, 202, 159), new XnaColor(26, 141, 123), new XnaColor(246, 194, 142))
+        Create("PLUM KNIGHT", new Color4b(149, 103, 244), new Color4b(112, 72, 207), new Color4b(238, 181, 123)),
+        Create("MINT BANDIT", new Color4b(54, 202, 159), new Color4b(26, 141, 123), new Color4b(246, 194, 142))
     ];
 
     private static RigidPartSet2D CreateSplineMan()
     {
-        var body = new XnaColor(74, 171, 255);
-        var shadow = new XnaColor(38, 92, 151);
-        var skin = new XnaColor(255, 194, 139);
+        var body = new Color4b(74, 171, 255);
+        var shadow = new Color4b(38, 92, 151);
+        var skin = new Color4b(255, 194, 139);
 
-        RigidPartAsset2D Limb(string bone, float radius, int order, XnaColor color) =>
+        RigidPartAsset2D Limb(string bone, float radius, int order, Color4b color) =>
             new(bone, $"spline://splineman/{bone}", RigidPartShape2D.SplineLimb, radius, 8f, order, color);
-        RigidPartAsset2D Torso(string bone, int order, XnaColor color) =>
+        RigidPartAsset2D Torso(string bone, int order, Color4b color) =>
             new(bone, $"spline://splineman/{bone}", RigidPartShape2D.SplineTorso, 0f, 0f, order, color);
-        RigidPartAsset2D Head(string bone, float radius, int order, XnaColor color) =>
+        RigidPartAsset2D Head(string bone, float radius, int order, Color4b color) =>
             new(bone, $"spline://splineman/{bone}", RigidPartShape2D.SplineHead, radius, 0f, order, color);
 
         return new RigidPartSet2D("SPLINEMAN / PROFILE TEST",
@@ -82,15 +82,15 @@ internal sealed class RigidPartSet2D(
             Limb(StandardBones2D.UpperArmRight, 16f, 23, body),
             Limb(StandardBones2D.ForearmRight, 13f, 24, body),
             Limb(StandardBones2D.HandRight, 12f, 25, skin)
-        ], new XnaColor(255, 222, 102), RigidPartStyle2D.SplineMan);
+        ], new Color4b(255, 222, 102), RigidPartStyle2D.SplineMan);
     }
 
-    private static RigidPartSet2D Create(string name, XnaColor body, XnaColor shadow, XnaColor skin)
+    private static RigidPartSet2D Create(string name, Color4b body, Color4b shadow, Color4b skin)
     {
-        RigidPartAsset2D Segment(string bone, float radius, int order, XnaColor color) =>
+        RigidPartAsset2D Segment(string bone, float radius, int order, Color4b color) =>
             new(bone, $"solid://{name.ToLowerInvariant().Replace(' ', '-')}/{bone}.png",
                 RigidPartShape2D.Segment, radius, 7f, order, color);
-        RigidPartAsset2D Circle(string bone, float radius, int order, XnaColor color) =>
+        RigidPartAsset2D Circle(string bone, float radius, int order, Color4b color) =>
             new(bone, $"solid://{name.ToLowerInvariant().Replace(' ', '-')}/{bone}.png",
                 RigidPartShape2D.Circle, radius, 0f, order, color);
 
@@ -110,7 +110,7 @@ internal sealed class RigidPartSet2D(
             Segment(StandardBones2D.UpperArmRight, 17f, 23, body),
             Segment(StandardBones2D.ForearmRight, 14f, 24, body),
             Segment(StandardBones2D.HandRight, 12f, 25, skin)
-        ], new XnaColor(255, 219, 109));
+        ], new Color4b(255, 219, 109));
     }
 }
 
@@ -131,7 +131,10 @@ internal sealed class RigidPuppetRenderer2D
         set
         {
             if (ReferenceEquals(_partSet, value))
+            {
                 return;
+            }
+
             _partSet = value;
             RebuildParts();
         }
@@ -152,7 +155,9 @@ internal sealed class RigidPuppetRenderer2D
             instance.Object.Transform.Scale = GetViewScale(instance.Asset, sideViewAmount);
             renderer.Draw(instance.Object);
             if (_partSet.Style == RigidPartStyle2D.SplineMan)
-                renderer.DrawShapeOutline(instance.Object, new XnaColor(24, 32, 52, 225), 2f);
+            {
+                renderer.DrawShapeOutline(instance.Object, new Color4b(24, 32, 52, 225), 2f);
+            }
         }
 
         DrawAttachments(renderer, pose, totalSeconds);
@@ -167,7 +172,7 @@ internal sealed class RigidPuppetRenderer2D
             var nominalLength = GetNominalLength(asset.Bone);
             IShape2D shape = asset.Shape switch
             {
-                RigidPartShape2D.Circle => new Circle2D(asset.Radius),
+                RigidPartShape2D.Circle => Circle2D.Builder.Create(asset.Radius),
                 RigidPartShape2D.SplineLimb => SplineSilhouette2D.CreateLimb(
                     nominalLength,
                     asset.Radius,
@@ -175,7 +180,7 @@ internal sealed class RigidPuppetRenderer2D
                     asset.JointOverlap),
                 RigidPartShape2D.SplineTorso => SplineSilhouette2D.CreateTorso(nominalLength),
                 RigidPartShape2D.SplineHead => SplineSilhouette2D.CreateHead(asset.Radius),
-                _ => new Capsule2D(
+                _ => Capsule2D.Builder.Create(
                     new Vector2(-asset.JointOverlap, 0f),
                     new Vector2(nominalLength + asset.JointOverlap, 0f),
                     asset.Radius)
@@ -191,7 +196,7 @@ internal sealed class RigidPuppetRenderer2D
         var swordDirection = Polar2D.Direction(swordAngle);
         var swordStart = hand.Position - swordDirection * 10f;
         var swordEnd = swordStart + swordDirection * 112f;
-        DrawThickSegment(renderer, swordStart, swordEnd, 6f, new XnaColor(219, 230, 241));
+        renderer.DrawWorldThickSegment(swordStart, swordEnd, 12f, new Color4b(219, 230, 241));
         var guard = swordDirection.PerpCcw;
         Span<Vector2> guardLine = [hand.Position - guard * 19f, hand.Position + guard * 19f];
         renderer.DrawWorldPolyline(guardLine, _partSet.Accent, 7f);
@@ -217,11 +222,11 @@ internal sealed class RigidPuppetRenderer2D
 
         if (_partSet.Style != RigidPartStyle2D.SplineMan)
         {
-            renderer.DrawWorldCircle(ToWorld(10f, 6f), 4f, new XnaColor(31, 31, 48), 4f);
+            renderer.DrawWorldCircle(ToWorld(10f, 6f), 4f, new Color4b(31, 31, 48), 4f);
             return;
         }
 
-        var ink = new XnaColor(24, 32, 52);
+        var ink = new Color4b(24, 32, 52);
         var primaryEye = ToWorld(float.Lerp(7f, 12f, sideViewAmount), 8f);
         renderer.DrawWorldCircle(primaryEye, 4f, ink, 4f);
 
@@ -230,7 +235,7 @@ internal sealed class RigidPuppetRenderer2D
         {
             var alpha = (byte)(220f * secondEyeVisibility);
             renderer.DrawWorldCircle(ToWorld(-2f, 8f), 3.5f,
-                new XnaColor((byte)24, (byte)32, (byte)52, alpha), 3.5f);
+                new Color4b((byte)24, (byte)32, (byte)52, alpha), 3.5f);
         }
 
         // The nose grows into a readable profile as movement turns the puppet
@@ -242,7 +247,7 @@ internal sealed class RigidPuppetRenderer2D
             ToWorld(25f + noseAmount, 1f),
             ToWorld(24f, -3f)
         ];
-        renderer.DrawWorldConvexPolygon(nose, new XnaColor(232, 151, 105));
+        renderer.DrawWorldConvexPolygon(nose, new Color4b(232, 151, 105));
 
         Span<Vector2> mouth = [ToWorld(19f, -10f), ToWorld(27f, -9f)];
         renderer.DrawWorldPolyline(mouth, ink, 2f);
@@ -251,10 +256,14 @@ internal sealed class RigidPuppetRenderer2D
     private Vector2 GetViewScale(RigidPartAsset2D asset, float sideViewAmount)
     {
         if (_partSet.Style != RigidPartStyle2D.SplineMan)
+        {
             return Vector2.One;
+        }
 
         if (asset.Shape == RigidPartShape2D.SplineHead)
+        {
             return new Vector2(float.Lerp(1f, 0.88f, sideViewAmount), 1f);
+        }
 
         var transverseScale = asset.Shape switch
         {
@@ -262,14 +271,6 @@ internal sealed class RigidPuppetRenderer2D
             _ => float.Lerp(1f, 0.92f, sideViewAmount)
         };
         return new Vector2(1f, transverseScale);
-    }
-
-    private static void DrawThickSegment(Renderer2D renderer, Vector2 start, Vector2 end, float halfWidth, XnaColor color)
-    {
-        var direction = Vector2.Normalize(end - start);
-        var normal = direction.PerpCcw * halfWidth;
-        Span<Vector2> polygon = [start - normal, end - normal, end + normal, start + normal];
-        renderer.DrawWorldConvexPolygon(polygon, color);
     }
 
     private static float GetNominalLength(string bone) => bone switch

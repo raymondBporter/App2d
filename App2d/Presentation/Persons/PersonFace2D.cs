@@ -16,13 +16,17 @@ public sealed class PersonFace2D
     public void Celebrate() => _celebrate = 1.8f;
     public void Reset()
     {
-        _clock = 0; _hit = _landing = _celebrate = _fall = 0;
-        Expression = "relaxed"; Pose = _pose = FaceExpressions.Get(Expression);
+        _clock = 0;
+        _hit = _landing = _celebrate = _fall = 0;
+        Expression = "relaxed";
+        Pose = _pose = FaceExpressions.Get(Expression);
     }
     public void Update(PersonState2D state, float dt)
     {
         _clock += dt;
-        _hit = MathF.Max(0, _hit - dt); _landing = MathF.Max(0, _landing - dt); _celebrate = MathF.Max(0, _celebrate - dt);
+        _hit = MathF.Max(0, _hit - dt);
+        _landing = MathF.Max(0, _landing - dt);
+        _celebrate = MathF.Max(0, _celebrate - dt);
         _fall = state.IsAlive && !state.IsGrounded && !state.IsWallGripping && !state.IsClimbingLadder && state.LinearVelocity.Y < 0 ? _fall + dt : 0;
         Expression = !state.IsAlive ? "knocked-out"
             : _hit > 0 ? "hurt"

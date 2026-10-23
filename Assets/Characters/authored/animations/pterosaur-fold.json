@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "pterosaur-fold",
   "name": "Pterosaur \u00B7 fold",
   "model": "pterosaur",
@@ -116,5 +116,9 @@
       "time": 0.4
     }
   ],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

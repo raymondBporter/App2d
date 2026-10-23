@@ -1,12 +1,18 @@
 # Character resources and migration
 
+For the current full migration proposal, see [Character system and Studio migration plan](character-system-migration-plan.md). It supersedes the future sequence below; this document retains the implementation history and current resource background.
+
 Review and migrations: 2026-10-09. Resource-backed templates and the shared IK/contact layer are implemented. The later stages remain a proposed sequence.
 
 Keep the existing authored pipeline and make its remaining assumptions explicit. Character Studio already has reusable model, animation, appearance and entity resources; replacing that pipeline would discard working authoring and playback behavior. The goal is that a new anatomy or content template needs data, while a new solver or rendering technique needs code.
 
 ## What exists
 
-Before these changes, `Assets/Characters/authored` contained 5 models, 7 variants, 73 animations, 26 props and 10 entities. All five shipped models use point controls and IK chains. Their version 2 files are unchanged; the loader now adapts versions 2 and 3 to version 4 in memory. The affine/bone and image-slot paths are also implemented and tested, but none of those five models uses them.
+The authored library uses model format 5, clip format 3, variant format 4, entity format 2, prop format 3 and template format 1. The 2026-10-15 cleanup converted the 95 older model, clip and variant files once and removed automatic format upgrades. Paint coordinates are XY only. Point controls and IK chains remain native rig features alongside explicit bone frames and image slots.
+
+Geometry is the actual shape or curve value, serialized with its `kind` and source parameters. Placement uses `scaleX`/`scaleY`, rotation, offsets and rig attachments; the same transform places outlines, picking and editable points. Shape dimensions belong to the geometry, including rounded rectangles. Appearance uses `material`, with `strokeWidth` for curves on both character parts and props (omitted values inherit the owning asset's line width). Parts and variants have no generic `width`/`height` fields. The 2026-10-17 migration updated checked-in models, variants and props once; older files must be converted explicitly. Prototype puppet format is now 3.
+
+Surface paint belongs to `RenderMaterialDefinition2D`, alongside fill, outline, texture and tint. A model's `materials` dictionary holds shared definitions; a part or variant selects one with `"material": { "asset": "spotted-hide", "fill": "#b97549" }`. Inline fields override the named definition. Omitted `paint` inherits; `"paint": []` clears it. Paint stays in normalized shape coordinates and uses the existing clipping and deformation path. Character Studio's Material selector changes the reference, while edits under Surface paint update the shared definition for every user. Definitions are scoped to their model; no separate material catalog or hair/clothing class is needed.
 
 | Concern | Current implementation | Remaining boundary |
 | --- | --- | --- |
@@ -19,13 +25,61 @@ Before these changes, `Assets/Characters/authored` contained 5 models, 7 variant
 | Rendering | Orthographic XY projection with depth testing and local 3D prop orientation. `CharacterLayer2D` exposes depth as character order. | Slot order, continuous part depth and solid depth must retain their respective behavior when attachments are unified. |
 | Gameplay | `EntityAsset` already owns equipment, actions, health, hit windows, damage, projectiles and movement/hurt shapes. | `PersonLoadout`, `PersonMoves`, controller vocabularies and the arena contain game/profile assumptions. Keep these above the reusable rig. |
 
+Motion and slot-color tracks use the shared [keyframe sampler](../App2d.Core/Animation/README.md). It owns ordered key
+lookup, interval progress and held/exact endpoints; small struct policies keep each track's value and curve rules.
+The existing authored key formats, independent component curves, absolute handles, full rotation turns and color
+clamping retain their behavior. The primitive also supports unrelated value tracks without a character dependency.
+
+Explicit bone channels use `Affine2D.EvaluateMatrix`, sharing channel-to-matrix math with the editable transform.
+Sampling no longer clones an editor transform per bone. Setup channels, versions and notifications are untouched;
+unchanged channels preserve exact cached matrices, including imported singular maps. Planar depth and local 3D prop
+orientation continue through their existing frames.
+
 Important code entry points:
 
 - [Model and IK validation](../App2d.Core/Characters/Authored/CharacterModel.cs), [pose evaluation](../App2d.Core/Characters/Authored/PoseEvaluator.cs), [contact anchors](../App2d.Core/Characters/Authored/EntityAnimator.cs).
-- [Drawing and the image-only slot restriction](../App2d.Core/Rendering/Characters/PuppetDrawing.cs), [orthographic renderer](../App2d.Core/Rendering/Characters/PointCharacterRenderer.cs), [world submission](../App2d.Core/Rendering/Renderer2D.Characters.cs).
+- [Drawing and the image-only slot restriction](../App2d.Core/Characters/Drawing/PuppetDrawing.cs), [orthographic renderer](../App2d.Core/Rendering/Characters/PointCharacterRenderer.cs), [world submission](../App2d.Core/Rendering/Renderer2D.Characters.cs).
 - [Hardcoded Person proportions](../App2d.Core/Characters/Authored/PersonBuild.cs), [loadout](../App2d.Core/Characters/Authored/PersonLoadout.cs), [player clip bindings](../App2d/Presentation/Persons/PersonAnimationDirector.cs).
 
-Names such as `left-arm`, `hips` and `sword-hand` are useful inside a human template. A general evaluator should only resolve references supplied by that template. Optional semantic bindings can map a humanoid tool's “left hand” role to an arbitrary control ID. A closed solver identifier such as `two-bone-ik` is also appropriate: JSON selects a tested implementation and supplies its parameters. Moving every literal into a constants class would not address the dependency problem.
+Character seed generators live together in the `App2d.CharacterSeeds` library: prototype puppets, Person and creature templates, starter content, wardrobe art, fallback templates, player pose scripts, weapon art, spell clips and swing studies. It depends on Core; Studio, the game and tests reference it. Existing namespaces and generation commands are preserved. Core's editor session accepts optional seed factories, supplied by Studio, while authored models and appearance resources take priority. The authored JSON remains under `Assets/Characters/authored`; this reorganization does not regenerate it.
+
+[`Humanoid`](../App2d.Core/Characters/Humanoid.cs) is the built-in humanoid vocabulary: plain string constants for controls, drawing parts, IK chains, groups, reference measures and attachment sockets. For example, `Humanoid.LeftHand`, `Humanoid.LeftForearm` and `Humanoid.HeadSocket` keep those roles explicit. The current humanoid has sockets and no image slots. The generic rig and evaluator continue to accept arbitrary IDs from resources; other anatomies define their own names. `PersonLoadout` retains the weapon, hair and animation marker IDs.
+
+The shared `person` model now draws hands and bare feet on its existing controls. Its `skin` material supplies their
+default color and the head's; variants with custom skin colors override the four extremity parts too. No controls or
+animation structure changed. `left-hand-art` / `right-hand-art` follow the hand-to-elbow frame for gloves or cuffs;
+`left-foot-art` / `right-foot-art` follow the foot-to-knee frame for footwear. Local +Y points up the limb, and +X points
+toward the toes at rest. Both frames follow the evaluated pose, depth and character facing.
+
+Footwear uses ordinary editable clothing props, with material and outline data in
+`props/sandal-left.json`, `sandal-right.json`, `boot-left.json` and `boot-right.json`.
+Cinder wears sandals and the maul brute wears short boots. To change a pair, replace the two foot equipment entries:
+
+```json
+{ "prop": "boot-left", "socket": "left-foot-art" },
+{ "prop": "boot-right", "socket": "right-foot-art" }
+```
+
+Studio's **New > Appearance > sandal / boot** starts an editable left shoe. Duplicate it for the right foot and equip
+each on its own socket; **Entity > Equipment** removes the old pair. Equipment prop IDs remain unique per entity,
+so left and right shoes are separate assets sharing the same initial drawing. Hair, garments, footwear and weapons
+remain independent equipment choices, while body surface changes use the existing materials. They can reuse one
+model, animation set and controller; a combination needs no new C# enemy class. Weapon artwork alone does not change
+an entity's attack clips, hit windows or damage rules.
+
+BoilerBrute and GreenDinosaur world placements use the authored `maul-brute` and `stalker-pest` entities through `AuthoredEntityEnemy2D`. Their old gameplay classes, sprite views and hammer-specific messages are removed; missing authored entities produce an error. Presentation uses the same authored final pose and `EntityCue2D` events as other authored enemies. The placement IDs remain compatible with saved maps. Shieldback and Rival still have code-defined fallbacks when their authored entities are absent; those paths remain supported.
+
+Passive physics props load from `physics-props/*.json` into `AuthoredCatalog.PhysicsProps`. The first is
+[`dumbbell.json`](../Assets/Characters/authored/physics-props/dumbbell.json): its `shape` is a composite of one rectangle and two circles,
+shared by collision and presentation. Geometry uses the existing tagged shape JSON directly. Composite `parts` must be nonempty
+and convex; their coordinates, and all physics-prop settings, use game world units rather than character model units.
+
+`body` holds plain `PhysicsBodySettings2D` data: motion type, mass, moment of inertia, rotation locking, gravity scale,
+friction and restitution. Settings validate before `CreateBody` registers the live body and collider in `PhysicsWorld2D`.
+The spawning world supplies identity and collision layers. `fill` is a solid `#RRGGBB` color; `hitVelocityScale` and
+`hitAngularKick` configure the response to a registered strike. Physics props are currently passive and indestructible.
+They need no character model, skeleton or animation. Existing `tumble-prop` map placements spawn the catalog's `dumbbell`
+through the shared `PhysicsProp2D` runtime; the old dumbbell-specific class and duplicated drawing shape are removed.
 
 ## First migration: resource-backed model templates
 
@@ -60,7 +114,7 @@ This change does not replace the old content-generation commands. `PersonTemplat
 
 ## Second migration: typed IK and contact evaluation
 
-Model format **4** adds `constraints`. Formats 2 and 3 upgrade in memory when loaded. Saving a document writes the current format; loading does not rewrite files. The existing `chains` collection remains supported for point IK, and old animation `target` tracks and `contacts` keep their IDs and meanings. Recipes copy the new constraints along with their clips.
+Model format **4** includes `constraints`. Loading requires the current format, and saving writes it. The `chains` collection supplies point IK; animation `target` tracks and `contacts` keep their IDs and meanings. Recipes copy constraints along with their clips.
 
 For example, this complete minimal model is a machine linkage with two rigid segments and an endpoint:
 
@@ -100,6 +154,12 @@ The root's translation and supported scale can still be animated. Its rotation i
 Point-library retargeting and prototype motion conversion do not infer bone rotations yet; they report that limitation for a bone-constrained target model. Noodle's existing rest export can now receive a Studio bone constraint when its tips connect. A new Noodle check verifies that its exported bones and attachments match a known pose through this same solver. Noodle's procedural runtime and deforming skin remain future ports.
 
 ## One reusable rig, several ways to drive it
+
+Quadratic and cubic Bézier parts now accept the same `bindings` as cutouts. Their point indices are start, handle(s), end: 0/1/2 for a quadratic and 0/1/2/3 for a cubic. Each bound point preserves its drawing offset from a named control's rest frame; `toward` optionally rotates that offset. Unbound points keep following the ordinary two-endpoint curve frame. Curve XY and character layer order use the same Bézier weights. No face names or expression channels are needed.
+
+Choose **New → Model: Curve face template** and play **Expressions — play me** for a tour. Its nine clips include smile, blink, wink, angry, worried, surprised, crossed eyes and traveling hair bumps. The two curves around each eye flatten into a blink or straighten into the two lines of an X. Two mouth curves can share a bend for a smile or separate into an open mouth. Brows use the same point attachments. These are ordinary translation and scale tracks, with no expression-specific renderer. The existing human face presets are still available.
+
+Select a curve in rig editing, expand **Edit curve handles**, and use **Follow** to change attachments. The **Geometry** field switches between library shapes and curves; detach point bindings before replacing their geometry. Parts store the geometry definition and material directly, with no separate character kind or stroke flag. Existing native model JSON already uses this format. **Normal wave** adds `waveAmplitude` and `waveCycles` to any curve, using the existing `NormalOffsetCurve2D`. `wavePhaseControl` optionally names a normal rig control: translating it along the endpoint span carries the sine bumps along the curve. Heights are relative to that span, negative heights use the other normal direction, and character layer order remains unchanged. The hair study demonstrates this with a cubic curve and one translation track. Sampling and picking share the deformed path.
 
 A joint should not need to become a different object type when switching from keyed motion to IK or physics. Separate the stable structure, what draws on it, and what drives it:
 
@@ -158,7 +218,7 @@ The bone bridge exports neither animation nor constraints/physics. Collision-onl
 
 Preserve stable IDs, motion reference measures, coordinate conventions, interpolation/easing, contact endpoints, draw order and action timing. Load-time adapters should not rewrite source assets. Any later on-disk conversion should target a copy first, report unsupported data, and pass save/reopen plus pose/region/render comparisons before replacing originals.
 
-Useful existing validation includes authored catalog/pose/entity tests, bone and Spine/slot tests, `App2d.Noodle --check`, and Studio's editor/motion/entity/weapon/wardrobe smoke modes. Automated pose parity complements image comparisons: neither alone covers both contact/gameplay behavior and occlusion.
+Useful existing validation includes authored catalog/pose/entity tests, bone and slot tests, `App2d.Noodle --check`, and Studio's editor/motion/entity/weapon/wardrobe smoke modes. Automated pose parity complements image comparisons: neither alone covers both contact/gameplay behavior and occlusion.
 
 ## Validation of the template migration
 

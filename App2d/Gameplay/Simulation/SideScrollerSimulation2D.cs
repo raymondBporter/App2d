@@ -26,8 +26,16 @@ public sealed class SideScrollerSimulation2D : IDisposable
         SideScrollerLevel2D level, Person2D player, PersonArsenal2D arsenal,
         SideScrollerSession2D session)
     {
-        Definition = definition; Ids = ids; Collision = collision; Physics = physics; Combatants = combatants;
-        Combat = combat; Level = level; Player = player; Arsenal = arsenal; Session = session;
+        Definition = definition;
+        Ids = ids;
+        Collision = collision;
+        Physics = physics;
+        Combatants = combatants;
+        Combat = combat;
+        Level = level;
+        Player = player;
+        Arsenal = arsenal;
+        Session = session;
     }
 
     public SideScrollerSessionDefinition2D Definition { get; }
@@ -59,16 +67,23 @@ public sealed class SideScrollerSimulation2D : IDisposable
             VelocityIterations = definition.VelocityIterations,
         };
 
-        var level = new SideScrollerLevel2D(traversal, definition.TileMap,
-            definition.MovingPlatforms, definition.WorldThings, definition.Zones, definition.GiantTrees);
+        var level = new SideScrollerLevel2D(traversal, definition.TileMap, definition.WorldThings, definition.Zones, definition.GiantTrees, definition.Objects);
         var respawn = ResolveRespawn(level, definition);
         level.CreateSimulation(collision, physics, ids,
             SideScrollerLayers2D.World, SideScrollerLayers2D.Player, SideScrollerLayers2D.Enemy);
         level.UpdateStreaming(respawn.Position);
 
-        var player = new Person2D(ids.Allocate(), collision, physics, traversal, respawn.Position,
-            SideScrollerLayers2D.Player, SideScrollerLayers2D.World, CombatFaction2D.Player,
-            maximumHealth: definition.PlayerMaximumHealth, tileMap: definition.TileMap);
+        var player = new Person2D(
+            ids.Allocate(),
+            collision,
+            physics,
+            traversal,
+            respawn.Position,
+            SideScrollerLayers2D.Player,
+            SideScrollerLayers2D.World,
+            CombatFaction2D.Player,
+            maximumHealth: definition.PlayerMaximumHealth,
+            tileMap: definition.TileMap);
         combatants.Register(player);
         var contactDamage = new ContactDamageSystem2D(collision, SideScrollerLayers2D.Enemy, combatants);
         var combat = new CombatSystem2D(collision, combatants);
@@ -102,7 +117,11 @@ public sealed class SideScrollerSimulation2D : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
         Session.Dispose();
         Level.Dispose();

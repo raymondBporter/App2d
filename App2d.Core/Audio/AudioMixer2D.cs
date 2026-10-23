@@ -21,7 +21,7 @@ public sealed class AudioMixer2D : IDisposable
 
     public AudioMixer2D(int maxConcurrentVoices = DefaultMaxConcurrentVoices)
     {
-        ArgGuard.ThrowIfNotPositive(maxConcurrentVoices);
+        ArgGuard.Positive(maxConcurrentVoices);
         _mixer = new VoiceMixer(maxConcurrentVoices);
         _masterVolume = new VolumeSampleProvider(_mixer);
         _output = new WaveOut();
@@ -37,7 +37,7 @@ public sealed class AudioMixer2D : IDisposable
         get => _masterVolume.Volume;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0f, 1f);
+            ArgGuard.InRange(value, 0f, 1f);
             _masterVolume.Volume = value;
         }
     }
@@ -52,11 +52,13 @@ public sealed class AudioMixer2D : IDisposable
     public void Play(AudioClip2D clip, float volume = 1f, float playbackRate = 1f)
     {
         ArgGuard.ThrowIfNull(clip);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volume, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(playbackRate, 0.5f, 2f);
+        ArgGuard.InRange(volume, 0f, 1f);
+        ArgGuard.InRange(playbackRate, 0.5f, 2f);
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (volume == 0f)
+        {
             return;
+        }
 
         _ = _mixer.Play(clip, volume, playbackRate);
     }
@@ -67,8 +69,8 @@ public sealed class AudioMixer2D : IDisposable
         float playbackRate = 1f)
     {
         ArgGuard.ThrowIfNull(clip);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volume, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(playbackRate, 0.5f, 2f);
+        ArgGuard.InRange(volume, 0f, 1f);
+        ArgGuard.InRange(playbackRate, 0.5f, 2f);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         var sequence = _mixer.Play(clip, volume, playbackRate);
@@ -86,19 +88,25 @@ public sealed class AudioMixer2D : IDisposable
         float rampSeconds)
     {
         if (!_disposed)
+        {
             _mixer.SetVolume(sequence, volume, ToFrameCount(rampSeconds));
+        }
     }
 
     internal void StopVoice(long sequence, float fadeOutSeconds)
     {
         if (!_disposed)
+        {
             _mixer.Stop(sequence, ToFrameCount(fadeOutSeconds));
+        }
     }
 
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
 
         _disposed = true;
         _output.Dispose();
@@ -130,7 +138,9 @@ public sealed class AudioMixer2D : IDisposable
                     foreach (var voice in _voices)
                     {
                         if (voice.Clip is not null)
+                        {
                             count++;
+                        }
                     }
                     return count;
                 }
@@ -145,7 +155,9 @@ public sealed class AudioMixer2D : IDisposable
                 throw new NotSupportedException($"Sound effects must be mono or stereo, not {channels} channels.");
             }
             if (clip.FrameCount == 0)
+            {
                 return 0;
+            }
 
             lock (_sync)
             {
@@ -181,14 +193,18 @@ public sealed class AudioMixer2D : IDisposable
         public bool IsPlaying(long sequence)
         {
             if (sequence == 0)
+            {
                 return false;
+            }
 
             lock (_sync)
             {
                 foreach (var voice in _voices)
                 {
                     if (voice.Sequence == sequence && voice.Clip is not null)
+                    {
                         return true;
+                    }
                 }
                 return false;
             }
@@ -202,7 +218,9 @@ public sealed class AudioMixer2D : IDisposable
                 {
                     ref var voice = ref _voices[index];
                     if (voice.Sequence != sequence || voice.Clip is null)
+                    {
                         continue;
+                    }
 
                     voice.SetVolume(volume, rampFrames);
                     return;
@@ -218,12 +236,19 @@ public sealed class AudioMixer2D : IDisposable
                 {
                     ref var voice = ref _voices[index];
                     if (voice.Sequence != sequence || voice.Clip is null)
+                    {
                         continue;
+                    }
 
                     if (fadeFrames == 0)
+                    {
                         voice = default;
+                    }
                     else
+                    {
                         voice.BeginStop(fadeFrames);
+                    }
+
                     return;
                 }
             }
@@ -240,7 +265,9 @@ public sealed class AudioMixer2D : IDisposable
                     ref var voice = ref _voices[voiceIndex];
                     var clip = voice.Clip;
                     if (clip is null)
+                    {
                         continue;
+                    }
 
                     MixVoice(ref voice, requestedFrames, buffer);
                     if (voice.Clip is not null &&
@@ -321,7 +348,9 @@ public sealed class AudioMixer2D : IDisposable
             public void SetVolume(float volume, int rampFrames)
             {
                 if (_stopWhenSilent)
+                {
                     return;
+                }
 
                 SetVolumeCore(volume, rampFrames);
             }
@@ -339,7 +368,9 @@ public sealed class AudioMixer2D : IDisposable
                     Volume += _volumeStep;
                     _volumeRampFramesRemaining--;
                     if (_volumeRampFramesRemaining == 0)
+                    {
                         Volume = _targetVolume;
+                    }
                 }
 
                 return _stopWhenSilent &&

@@ -1,5 +1,5 @@
-using App2d.Core.Rendering.Vegetation;
 using App2d.Core.Validation;
+using App2d.Core.Vegetation;
 using System.Numerics;
 
 namespace App2d.Presentation.World.Presentation;
@@ -19,7 +19,7 @@ internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 veloci
 
     public void Advance(float dt, VegetationWind2D wind)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(dt);
+        ArgGuard.NonNegative(dt);
         var targetAge = Math.Min(LifetimeSeconds, Age + dt);
         var remaining = targetAge - Age;
         var startTime = wind.TotalSeconds - dt;
@@ -28,7 +28,10 @@ internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 veloci
         while (remaining > 0f)
         {
             var step = Math.Min(remaining, 1f / 120f);
-            var field = wind with { TotalSeconds = startTime + elapsed + step };
+            var field = wind with
+            {
+                TotalSeconds = startTime + elapsed + step
+            };
             var drift = field.Offset(Position.X, 1f, phase, 1f) * 5f;
             var flutter = MathF.Sin(Age * 13f + phase) * 34f * scale;
             var acceleration = new Vector2(drift + flutter - Velocity.X * 1.8f, -280f * scale);

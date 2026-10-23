@@ -13,7 +13,9 @@ public static partial class AuthoredAsset
     public static void RequireId(string? id, string field)
     {
         if (id is null || !IdPattern().IsMatch(id))
+        {
             throw new InvalidDataException($"{field} must be a lowercase id of letters, digits and hyphens; found '{id}'.");
+        }
     }
 
     public static T Parse<T>(string json, string kind) where T : class =>

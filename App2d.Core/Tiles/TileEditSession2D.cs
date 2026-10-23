@@ -36,11 +36,15 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
         StateGuard.ThrowIf(!IsStrokeActive, "Begin a stroke before painting.");
 
         if (x < 0 || x >= _map.Width || y < 0 || y >= _map.Height)
+        {
             return;
+        }
 
         var before = _map.GetTile(x, y);
         if (before == tile)
+        {
             return;
+        }
 
         _map.SetTile(x, y, tile);
         _currentStroke.Add(new TileEdit2D(x, y, before, tile));
@@ -71,7 +75,9 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
         {
             Paint(x, y, tile);
             if (x == toX && y == toY)
+            {
                 return;
+            }
 
             var doubledError = error * 2;
             if (doubledError > -deltaY)
@@ -96,11 +102,15 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     {
         StateGuard.ThrowIf(!IsStrokeActive, "Begin a stroke before filling.");
         if (startX < 0 || startX >= _map.Width || startY < 0 || startY >= _map.Height)
+        {
             return;
+        }
 
         var target = _map.GetTile(startX, startY);
         if (FloodCellsMatch(target, replacement))
+        {
             return;
+        }
 
         var visited = new bool[_map.Width * _map.Height];
         var pending = new Queue<(int X, int Y)>();
@@ -110,15 +120,22 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
         {
             var (x, y) = pending.Dequeue();
             if (x < 0 || x >= _map.Width || y < 0 || y >= _map.Height)
+            {
                 continue;
+            }
 
             var index = y * _map.Width + x;
             if (visited[index])
+            {
                 continue;
+            }
+
             visited[index] = true;
 
             if (!FloodCellsMatch(_map.GetTile(x, y), target))
+            {
                 continue;
+            }
 
             Paint(x, y, replacement);
             pending.Enqueue((x - 1, y));
@@ -140,7 +157,9 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
         IsStrokeActive = false;
 
         if (_currentStroke.Count == 0)
+        {
             return [];
+        }
 
         _undoStack.Add([.. _currentStroke]);
         var chunks = CollectChunks(_currentStroke);
@@ -156,7 +175,9 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     {
         StateGuard.ThrowIf(IsStrokeActive, "Finish the stroke before undoing.");
         if (_undoStack.Count == 0)
+        {
             return [];
+        }
 
         var stroke = _undoStack[^1];
         _undoStack.RemoveAt(_undoStack.Count - 1);
@@ -178,7 +199,10 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     {
         var chunks = new HashSet<TileChunk2D>();
         foreach (var edit in edits)
+        {
             chunks.Add(_map.TileToChunk(edit.X, edit.Y));
+        }
+
         return chunks;
     }
 

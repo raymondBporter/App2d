@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
@@ -30,7 +31,9 @@ public sealed class PersonVariantMotionTests
     [Theory, MemberData(nameof(Cases))]
     public void LimbsKeepTheirLengthsAndEveryTargetIsReached(string clipName, string build)
     {
-        var model = Build(build); var clip = Clip(clipName); clip.Validate(model);
+        var model = Build(build);
+        var clip = Clip(clipName);
+        clip.Validate(model);
         foreach (var seconds in TwoCycles(clip))
         {
             var pose = PoseEvaluator.Sample(model, clip, seconds, repeat: true);
@@ -47,7 +50,8 @@ public sealed class PersonVariantMotionTests
     [Theory, InlineData("standard"), InlineData("tall"), InlineData("short")]
     public void LimbSegmentsScaleWithTheirBuildValue(string build)
     {
-        var model = Build(build); var standard = Build("standard");
+        var model = Build(build);
+        var standard = Build("standard");
         Assert.Equal(standard.Length("left-hip", "left-knee") * BuildValues(build).Legs, model.Length("left-hip", "left-knee"), 4);
         Assert.Equal(standard.Length("right-shoulder", "right-elbow") * BuildValues(build).Arms, model.Length("right-shoulder", "right-elbow"), 4);
     }
@@ -55,7 +59,9 @@ public sealed class PersonVariantMotionTests
     [Theory, MemberData(nameof(Cases))]
     public void PlantedFeetStayPutAndStrideScalesWithLegLength(string clipName, string build)
     {
-        var model = Build(build); var clip = Clip(clipName); var standard = Build("standard");
+        var model = Build(build);
+        var clip = Clip(clipName);
+        var standard = Build("standard");
         float Stride(ResolvedModel m) => PoseEvaluator.Sample(m, clip, clip.Duration, repeat: true).Locomotion.X - PoseEvaluator.Sample(m, clip, 0).Locomotion.X;
         Assert.InRange(MathF.Abs(Stride(model) - Stride(standard) * BuildValues(build).Legs), 0, 1e-4f);
         foreach (var contact in clip.Contacts)
@@ -73,22 +79,28 @@ public sealed class PersonVariantMotionTests
     [Theory, MemberData(nameof(Cases))]
     public void TheLoopSeamIsContinuous(string clipName, string build)
     {
-        var model = Build(build); var clip = Clip(clipName);
+        var model = Build(build);
+        var clip = Clip(clipName);
         var before = PoseEvaluator.Sample(model, clip, clip.Duration - 1e-4, repeat: true);
         var after = PoseEvaluator.Sample(model, clip, clip.Duration, repeat: true);
-        foreach (var id in model.Rest.Keys) TestModels.Near(before.World(id), after.World(id), .01f, id);
+        foreach (var id in model.Rest.Keys)
+        {
+            TestModels.Near(before.World(id), after.World(id), .01f, id);
+        }
+
         TestModels.Near(before.Locomotion, after.Locomotion, .001f, "travel");
     }
 
     [Theory, InlineData("walk"), InlineData("run")]
     public void BuildsKeepTheReferenceJointAngles(string clipName)
     {
-        var clip = Clip(clipName); var standard = Build("standard");
+        var clip = Clip(clipName);
+        var standard = Build("standard");
         static float Bend(EvaluatedPose pose, ModelChain chain)
         {
             var a = Vector2.Normalize(XY(pose.World(chain.Root) - pose.World(chain.Joint)));
             var b = Vector2.Normalize(XY(pose.World(chain.End) - pose.World(chain.Joint)));
-            return MathF.Acos(Math.Clamp(Vector2.Dot(a, b), -1, 1)) * 180 / MathF.PI;
+            return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector2.Dot(a, b), -1, 1)));
         }
         foreach (var build in new[] { "tall", "short" })
         {
@@ -96,8 +108,12 @@ public sealed class PersonVariantMotionTests
             for (var i = 0; i < 48; i++)
             {
                 var seconds = i * clip.Duration / 48.0;
-                var a = PoseEvaluator.Sample(standard, clip, seconds); var b = PoseEvaluator.Sample(model, clip, seconds);
-                foreach (var chain in standard.Chains.Values) Assert.InRange(MathF.Abs(Bend(a, chain) - Bend(b, chain)), 0, 1f);
+                var a = PoseEvaluator.Sample(standard, clip, seconds);
+                var b = PoseEvaluator.Sample(model, clip, seconds);
+                foreach (var chain in standard.Chains.Values)
+                {
+                    Assert.InRange(MathF.Abs(Bend(a, chain) - Bend(b, chain)), 0, 1f);
+                }
             }
         }
     }
@@ -105,9 +121,13 @@ public sealed class PersonVariantMotionTests
     [Fact]
     public void EditingTheSharedClipChangesEveryBuild()
     {
-        var clip = Clip("walk"); var builds = sourceArray.Select(Build).ToArray();
+        var clip = Clip("walk");
+        var builds = sourceArray.Select(Build).ToArray();
         var before = builds.Select(m => PoseEvaluator.Sample(m, clip, 0).World("hips").Y).ToArray();
-        clip.Tracks.Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" }).Keys[0].Y += .1f;
+        clip.Tracks.Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" }).Keys[0].Value = clip.Tracks
+            .Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" })
+            .Keys[0].Value with
+        { Y = clip.Tracks.Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" }).Keys[0].Value.Y + .1f };
         var after = builds.Select(m => PoseEvaluator.Sample(m, clip, 0).World("hips").Y).ToArray();
         Assert.Equal(.1f * PersonTemplate.LegLength, after[0] - before[0], 4);
         Assert.Equal(.1f * PersonTemplate.LegLength * PersonBuild.TallThin.Legs, after[1] - before[1], 4);
@@ -118,16 +138,25 @@ public sealed class PersonVariantMotionTests
     public void AnUnreachableBuildKeepsLimbLengthsAndReportsTheShortfall()
     {
         // Straighten the left leg and ask it to plant below its reach; the right-leg reference measure stays unchanged.
-        var hip = Person.Controls.Single(c => c.Id == "left-hip").Rest.XYZ; var foot = Person.Controls.Single(c => c.Id == "left-foot").Rest.XYZ;
+        var hip = Person.Controls.Single(c => c.Id == "left-hip").Rest.XYZ;
+        var foot = Person.Controls.Single(c => c.Id == "left-foot").Rest.XYZ;
         var variant = new ModelVariant { Id = "stiff-left", Name = "Stiff left", Base = "person", Rest = { ["left-knee"] = PuppetPoint.From(Vector3.Lerp(hip, foot, .5f)) } };
-        var model = ResolvedModel.From(Person, variant); var clip = Clip("walk"); clip.Validate(model);
+        var model = ResolvedModel.From(Person, variant);
+        var clip = Clip("walk");
+        clip.Validate(model);
         var misses = 0;
         foreach (var seconds in TwoCycles(clip))
         {
             var pose = PoseEvaluator.Sample(model, clip, seconds, repeat: true,
-                input: new() { Contact = (chain, target) => chain == "left-leg" ? target - new Vector3(0, .1f, 0) : target });
+                input: new()
+                {
+                    Contact = (chain, target) => chain == "left-leg" ? target - new Vector3(0, .1f, 0) : target
+                });
             Assert.InRange(MathF.Abs(model.Length("left-hip", "left-knee") - Vector2.Distance(XY(pose.World("left-hip")), XY(pose.World("left-knee")))), 0, 1e-4f);
-            if (pose.Chains.Single(c => c.Chain == "left-leg") is { Reached: false, Residual: > 1e-3f }) misses++;
+            if (pose.Chains.Single(c => c.Chain == "left-leg") is { Reached: false, Residual: > 1e-3f })
+            {
+                misses++;
+            }
         }
         Assert.True(misses > 0, "Expected the straightened leg to report reach errors.");
     }

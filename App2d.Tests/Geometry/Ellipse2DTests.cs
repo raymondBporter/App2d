@@ -1,116 +1,85 @@
-using App2d.Core;
-using App2d.Core.Collision.Contacts;
-using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
+using static App2d.Tests.Geometry.VectorComparers;
 
 namespace App2d.Tests.Geometry;
 
 public sealed class Ellipse2DTests
 {
+    // Radii (3, 1) at (2, 1), rotated 30 degrees.
+    private static readonly Ellipse2D Tilted = Ellipse2D.Builder.Create(new(3, 1), new(2, 1), MathF.PI / 6);
+
     [Fact]
-    public void AreaContainmentAndBoundsUseTheExactEllipse()
+    public void ContainsSupportDistanceAndBoundsAgreeWithTheOutline()
     {
-        var ellipse = new Ellipse2D(new(3, 2), new(4, -1));
-        Assert.Equal(6f * MathF.PI, ellipse.Area, 5);
-        Assert.Equal(new Rect2D(new(1, -3), new(7, 1)), ShapeBounds2D.Calculate(ellipse));
-        Assert.True(ellipse.ContainsPoint(new(7, -1)));
-        Assert.True(ellipse.ContainsPoint(new(4, 1)));
-        Assert.False(ellipse.ContainsPoint(new(7, 1)));
-        Assert.Equal(ellipse.Center, ellipse.GetSupportPoint(Vector2.Zero));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Ellipse2D(new(0, 1)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Ellipse2D(new(float.NaN, 1)));
+        var outline = new Vector2[512];
+        Tilted.WriteVertices(outline);
+        var bounds = ShapeBounds2D.Calculate(Tilted);
+        Assert.Equal(Rect2D.FromPoints(outline).Min, bounds.Min, Loose);
+        Assert.Equal(Rect2D.FromPoints(outline).Max, bounds.Max, Loose);
+        foreach (var v in outline) Assert.InRange(ShapeDistance2D.SignedDistance(v, Tilted), -1e-3f, 1e-3f);
+        var tip = Tilted.Frame.FromFrame(new(3, 0));
+        Assert.Equal(tip, Tilted.GetSupportPoint(Tilted.Axis), Near);
+        Assert.True(Tilted.ContainsPoint(Tilted.Frame.FromFrame(new(2.9f, 0))));
+        Assert.False(Tilted.ContainsPoint(new(4.9f, 1)));
     }
 
     [Fact]
-    public void SupportPointMaximizesProjectionInAnyDirection()
+    public void TransformedBoundsComposeTheFrame()
     {
-        var ellipse = new Ellipse2D(new(3, 1), new(2, -4));
-        foreach (var direction in new[] { Vector2.UnitX, -Vector2.UnitY, Vector2.Normalize(new Vector2(1, 2)) })
-        {
-            var support = ellipse.GetSupportPoint(direction);
-            Assert.InRange(Containment2D.NormalizedEllipseRadius(support, ellipse.Center, ellipse.Radii), .99999f, 1.00001f);
-            for (var i = 0; i < 256; i++)
-            {
-                var sample = VertexGenerator2D.PointOnEllipse(ellipse.Center, ellipse.Radii, i * MathF.Tau / 256);
-                Assert.True(Vector2.Dot(support, direction) >= Vector2.Dot(sample, direction) - 1e-5f);
-            }
-        }
-        Assert.Equal(new Vector2(5, -4), ellipse.GetSupportPoint(Vector2.UnitX));
+        var turnBack = Matrix3x2.CreateRotation(-MathF.PI / 6, new Vector2(2, 1));
+        var bounds = ShapeBounds2D.CalculateTransformed(Tilted, turnBack);
+        Assert.Equal(new Vector2(-1, 0), bounds.Min, Loose);
+        Assert.Equal(new Vector2(5, 2), bounds.Max, Loose);
     }
 
     [Fact]
-    public void RaycastFindsTheExactEllipseBoundary()
+    public void RaycastHitsTheRotatedPerimeter()
     {
-        var ellipse = new SpatialObject2D(new Ellipse2D(new(2, 1), new(1, 0)));
-        Assert.True(RayIntersection2D.TryIntersect(new Ray2D(new(-5, 0), Vector2.UnitX), ellipse, 20, out var hit));
-        Assert.Equal(4f, hit.Distance, 5);
-        Assert.Equal(new Vector2(-1, 0), hit.Point);
-        Assert.Equal(-Vector2.UnitX, hit.Normal);
-        Assert.False(RayIntersection2D.TryIntersect(new Ray2D(new(-5, 2), Vector2.UnitX), ellipse, 20, out _));
-
-        var broad = new SpatialObject2D(new Ellipse2D(new(2000, 1)));
-        Assert.True(RayIntersection2D.TryIntersect(new Ray2D(new(-3000, 0), Vector2.UnitX), broad, 2000, out var broadHit));
-        Assert.Equal(1000f, broadHit.Distance, 3);
+        var origin = Tilted.Frame.FromFrame(new(10, 0));
+        Assert.True(ShapeRaycast2D.TryIntersect(origin, -Tilted.Axis, Tilted, 100, out var hit));
+        Assert.Equal(Tilted.Frame.FromFrame(new(3, 0)), hit.Point, Loose);
+        Assert.Equal(Tilted.Axis, hit.Normal, Loose);
+        Assert.Equal(7f, hit.Distance, 3);
     }
 
     [Fact]
-    public void PointAndShapeDistancesIncludeEllipse()
+    public void CircleQueryAgainstARotatedEllipseMatchesTheUnrotatedOne()
     {
-        var ellipse = new Ellipse2D(new(2, 1));
-        Assert.InRange(ShapeDistance2D.SignedDistance(new Vector2(3, 0), ellipse), .999f, 1.001f);
-        Assert.InRange(ShapeDistance2D.SignedDistance(Vector2.Zero, ellipse), -1.001f, -.99f);
-        var first = new SpatialObject2D(ellipse);
-        var second = new SpatialObject2D(new Circle2D(1));
-        second.Transform.Position = new(4, 0);
-        Assert.InRange(ShapeDistance2D.Distance(first, second), .999f, 1.001f);
-    }
-
-    public static TheoryData<string> ConvexPartners =>
-    [
-        nameof(Circle2D),
-        nameof(Capsule2D),
-        nameof(Rectangle2D),
-        nameof(Triangle2D),
-        nameof(ConvexPolygon2D),
-        nameof(Ellipse2D)
-    ];
-
-    private static IShape2D CreatePartner(string shapeName) => shapeName switch
-    {
-        nameof(Circle2D) => new Circle2D(.75f),
-        nameof(Capsule2D) => new Capsule2D(new(0, -.5f), new(0, .5f), .5f),
-        nameof(Rectangle2D) => Rectangle2D.FromSize(new Vector2(1, 1)),
-        nameof(Triangle2D) => new Triangle2D(new(-.5f, -.5f), new(.5f, -.5f), new(0, .5f)),
-        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]),
-        nameof(Ellipse2D) => new Ellipse2D(new(.75f, .5f)),
-        _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
-    };
-
-    [Theory]
-    [MemberData(nameof(ConvexPartners))]
-    public void ContactWorksAgainstEveryFiniteConvexPartnerInEitherOrder(string shapeName)
-    {
-        var partnerShape = CreatePartner(shapeName);
-        var ellipse = new SpatialObject2D(new Ellipse2D(new(2, 1)));
-        var partner = new SpatialObject2D(partnerShape);
-        partner.Transform.Position = new(1.7f, 0);
-        Assert.True(ShapeCollision2D.TryGetContact(ellipse, partner, out var forward));
-        Assert.True(ShapeCollision2D.TryGetContact(partner, ellipse, out var reverse));
-        Assert.True(forward.PenetrationDepth > 0);
-        Assert.InRange(MathF.Abs(forward.PenetrationDepth - reverse.PenetrationDepth), 0, .01f);
-        Assert.InRange(Vector2.Distance(forward.Normal, -reverse.Normal), 0, .01f);
+        var flat = Ellipse2D.Builder.Create(new(3, 1), new(2, 1));
+        var pose = Similarity2D.FromAxis(Vector2.Zero, OrientedFrame2D.AxisFromAngle(MathF.PI / 6));
+        var probe = Circle2D.Builder.Create(.5f, new(4.5f, 1.2f));
+        var viaFlatPosed = ShapeConvexQuery2D.Query(probe, Similarity2D.Identity, flat, pose);
+        var viaTilted = ShapeConvexQuery2D.Query(probe, Similarity2D.Identity, Ellipse2D.Builder.Create(new(3, 1), pose.TransformPoint(new(2, 1)), MathF.PI / 6), Similarity2D.Identity);
+        Assert.Equal(viaFlatPosed.SignedDistance, viaTilted.SignedDistance, 4);
     }
 
     [Fact]
-    public void HalfSpaceContactUsesExactSupportPoint()
+    public void PairSolversFallBackForRotatedEllipsesAndStayExactForAligned()
     {
-        var ellipse = new SpatialObject2D(new Ellipse2D(new(2, 1)));
-        ellipse.Transform.Position = new(0, .5f);
-        var ground = new SpatialObject2D(new HalfSpace2D(Vector2.UnitY, 0));
-        Assert.True(ShapeCollision2D.TryGetContact(ellipse, ground, out var contact));
-        Assert.Equal(Vector2.UnitY, contact.Normal);
-        Assert.Equal(.5f, contact.PenetrationDepth, 5);
+        var a = Ellipse2D.Builder.Create(new(2, 1), new(-1, 0));
+        var b = Ellipse2D.Builder.Create(new(2, 1), new(2, 0));
+        var composite = CompositeShape2D.Builder.Create([a, b], includeOverlap: false, areaOutlineSegments: 256);
+        var turned = Similarity2D.FromAxis(Vector2.Zero, OrientedFrame2D.AxisFromAngle(.7f));
+        var ar = Ellipse2D.Builder.Create(new(2, 1), turned.TransformPoint(new(-1, 0)), .7f);
+        var br = Ellipse2D.Builder.Create(new(2, 1), turned.TransformPoint(new(2, 0)), .7f);
+        var rotated = CompositeShape2D.Builder.Create([ar, br], includeOverlap: false, areaOutlineSegments: 256);
+        Assert.Equal(composite.Area, rotated.Area, 2);
+        Assert.Equal(composite.Diameter, rotated.Diameter, 2);
+    }
+
+    [Fact]
+    public void EllipseJsonRoundTripsAndReadsWithoutAnAngle()
+    {
+        Assert.Equal(MathF.PI / 6, Assert.IsType<Ellipse2D>(GeometryJson2D.ShapeFromJson(Tilted.ToJson()).Validated()).AngleRadians, 5);
+        Assert.True(Assert.IsType<Ellipse2D>(GeometryJson2D.ShapeFromJson("{\"kind\":\"ellipse\",\"center\":{\"x\":0,\"y\":0},\"radii\":{\"x\":2,\"y\":1}}").Validated()).IsAxisAligned);
     }
 }

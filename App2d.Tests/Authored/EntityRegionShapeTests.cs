@@ -1,8 +1,10 @@
-using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 using System.Text.Json;
 
@@ -35,7 +37,7 @@ public sealed class EntityRegionShapeTests
     public void RegionTestsTheActualPhysicsShapeInsteadOfItsBoundingBox()
     {
         var region = EntityRegion.Box("attack", Vector2.Zero, new(2));
-        var target = new SpatialObject2D(new Circle2D(.1f));
+        var target = new SpatialObject2D(Circle2D.Builder.Create(.1f));
         target.Transform.Position = new(1.1f, 1.1f);
         Assert.True(region.Shape is Rectangle2D);
         Assert.False(region.Overlaps(target));
@@ -49,16 +51,18 @@ public sealed class EntityRegionShapeTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var asset = EntityAsset.FromJson(catalog.Entities["hero"].Asset.ToJson());
         var window = asset.Actions.SelectMany(action => action.Hits).First();
-        window.Shape = new CircleShapeDefinition2D { Center = new(0, 0), Radius = .2f };
+        window.Shape = new Circle2D { Center = new(0, 0), Radius = .2f }.Validated();
         var restored = EntityAsset.FromJson(asset.ToJson());
         var entity = ResolvedEntity.Compile(restored, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
         var hit = entity.Actions.Values.SelectMany(action => action.Hits).First(h => h.Window.Id == window.Id);
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, entity.Actions.Values.First(action => action.Hits.Contains(hit)).Clip, hit.Start), new(3, 0), 1);
         Assert.IsType<Circle2D>(EntityCollision.Attack(entity, pose, hit).Shape);
 
-        window.Shape = new CircleShapeDefinition2D { Center = new(0, 0), Radius = 0 };
+#pragma warning disable APP2D001 // A deliberately invalid shape; asset validation must reject it.
+        window.Shape = new Circle2D { Center = new(0, 0), Radius = 0 };
+#pragma warning restore APP2D001
         Assert.Contains("shape", Assert.Throws<InvalidDataException>(asset.Validate).Message);
-        window.Shape = new HalfSpaceShapeDefinition2D { Normal = new(0, 1), Offset = 0 };
+        window.Shape = new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated();
         Assert.Contains("convex", Assert.Throws<InvalidDataException>(asset.Validate).Message);
         Assert.Throws<JsonException>(() => EntityAsset.FromJson(restored.ToJson().Replace("\"kind\": \"circle\"", "\"kind\": \"blob\"")));
     }
@@ -71,7 +75,7 @@ public sealed class EntityRegionShapeTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var asset = EntityAsset.FromJson(catalog.Entities["spear-guard"].Asset.ToJson());
         var window = asset.Actions.SelectMany(action => action.Hits).First();
-        window.Shape = new CapsuleShapeDefinition2D { Start = new(-.3f, 0), End = new(.3f, 0), Radius = .1f };
+        window.Shape = new Capsule2D { Start = new(-.3f, 0), End = new(.3f, 0), Radius = .1f }.Validated();
         var entity = ResolvedEntity.Compile(asset, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
         var attack = entity.Actions["attack"];
         var hit = attack.Hits.First(h => h.Window.Id == window.Id);
@@ -80,10 +84,10 @@ public sealed class EntityRegionShapeTests
         var capsule = Assert.IsType<Capsule2D>(region.Shape);
         var frame = EntityCollision.Anchor(entity, pose, hit.Window);
         var worldAxis = region.Pose.TransformPoint(capsule.End) - region.Pose.TransformPoint(capsule.Start);
-        Assert.True(Vector2.Dot(worldAxis, frame.Axis) > 0);
+        Assert.True(Vector2.Dot(worldAxis, frame.XAxis.XY) > 0);
         Assert.Equal(.6f, worldAxis.Length(), 3);
         Assert.Equal(.1f, capsule.Radius, 3);
-        Assert.True(Vector2.Dot(region.Pose.YAxis, frame.Across) >= 0, "the frame keeps its across direction when the actor is mirrored");
+        Assert.True(Vector2.Dot(region.Pose.YAxis, frame.YAxis.XY) >= 0, "the frame keeps its across direction when the actor is mirrored");
     }
 
     [Fact]
@@ -105,9 +109,9 @@ public sealed class EntityRegionShapeTests
     [Fact]
     public void PlacedRegionsRotateMirrorAndScaleThroughTheirPose()
     {
-        var region = new EntityRegion("r", Rectangle2D.FromSize(new Vector2(2, 1)), Similarity2D.FromAxis(new(5, 5), Vector2.UnitY));
+        var region = new EntityRegion("r", Rectangle2D.Builder.CreateFromSize(2, 1), Similarity2D.FromAxis(new(5, 5), Vector2.UnitY));
         Assert.Equal(new Rect2D(new(4.5f, 4), new(5.5f, 6)), region.Bounds);
-        var probe = new SpatialObject2D(new Circle2D(.05f));
+        var probe = new SpatialObject2D(Circle2D.Builder.Create(.05f));
         probe.Transform.Position = new(5, 5.9f);
         Assert.True(region.Overlaps(probe));
         probe.Transform.Position = new(5.8f, 5);
@@ -117,7 +121,7 @@ public sealed class EntityRegionShapeTests
         Assert.True(Vector2.Distance(placed.Min, region.Bounds.Min) < 1e-4f && Vector2.Distance(placed.Max, region.Bounds.Max) < 1e-4f);
         Assert.Equal(new Rect2D(new(9, 8), new(11, 12)), region.Scaled(2).Bounds);
         Assert.All(region.Outline(), point => Assert.True(region.Bounds.InflatedBy(1e-4f, 1e-4f).Contains(point)));
-        var mirrored = new EntityRegion("m", new Capsule2D(new(0, 0), new(1, 0), .1f), Similarity2D.FromAxis(Vector2.Zero, new(-1, 0), mirror: true));
+        var mirrored = new EntityRegion("m", Capsule2D.Builder.Create(new(0, 0), new(1, 0), .1f), Similarity2D.FromAxis(Vector2.Zero, new(-1, 0), mirror: true));
         Assert.Equal(new Vector2(-1, .5f), mirrored.Pose.TransformPoint(new(1, .5f)));
     }
 }

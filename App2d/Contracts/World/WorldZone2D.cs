@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -11,12 +11,13 @@ public sealed record WorldZone2D
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(id);
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
-        if (!bounds.IsFinite || !NumericValidation.IsFiniteAndPositive(bounds.Size))
-        {
-            throw new ArgumentOutOfRangeException(nameof(bounds), "Zones need finite, positive rectangles.");
-        }
+        ArgGuard.Finite(bounds.Min, nameof(bounds));
+        ArgGuard.Positive(bounds.Size, nameof(bounds));
 
-        Id = id; Name = name; Bounds = bounds; Priority = priority;
+        Id = id;
+        Name = name;
+        Bounds = bounds;
+        Priority = priority;
     }
 
     public string Id { get; }
@@ -31,7 +32,7 @@ public sealed record WorldZone2D
     /// <summary>Highest priority wins; equal priorities use ordinal ID, independent of file order.</summary>
     public static WorldZone2D? FindAt(ReadOnlySpan<WorldZone2D> zones, Vector2 point)
     {
-        ArgGuard.ThrowIfNotFinite(point);
+        ArgGuard.Finite(point);
         WorldZone2D? result = null;
         foreach (var zone in zones)
         {

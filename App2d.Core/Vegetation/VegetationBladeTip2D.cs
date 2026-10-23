@@ -1,0 +1,52 @@
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Rendering;
+using App2d.Rendering;
+using System.Numerics;
+
+namespace App2d.Core.Vegetation;
+
+/// <summary>A frozen piece of cut foliage: a blade sliver or a flower petal, in world space at release.</summary>
+public sealed class VegetationBladeTip2D
+{
+    private readonly VegetationTipPolygon2D[] _polygons;
+    private readonly Rect2D _localBounds;
+    public Vector2 ReleasePosition { get; }
+
+    internal VegetationBladeTip2D(IReadOnlyList<VegetationTipPolygon2D> polygons)
+    {
+        var bounds = Rect2D.FromPoints([.. polygons.SelectMany(p => p.Points)]);
+        ReleasePosition = bounds.Center;
+        _localBounds = new(bounds.Min - ReleasePosition, bounds.Max - ReleasePosition);
+        _polygons = [.. polygons.Select(p => p with { Points = [.. p.Points.Select(point => point - ReleasePosition)] })];
+    }
+
+    public Rect2D WorldBounds(Vector2 position, float rotation) =>
+        _localBounds.TransformedBy(Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position));
+
+    public void Render(Renderer2D renderer, Vector2 position, float rotation, float opacity)
+    {
+        var transform = Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position);
+        Span<Vector2> points = stackalloc Vector2[16];
+        Span<Vector2> ring = stackalloc Vector2[17];
+        foreach (var polygon in _polygons)
+        {
+            var world = points[..polygon.Points.Length];
+            VertexTransforms2D.Transform(polygon.Points, world, transform);
+
+            renderer.DrawWorldConvexPolygon(world, polygon.Fill.ScaleAlpha(opacity));
+            if (polygon.Outline is not { } outline)
+            {
+                continue;
+            }
+
+            var closed = ring[..(world.Length + 1)];
+            world.CopyTo(closed);
+            closed[^1] = world[0];
+            renderer.DrawWorldThickPolyline(closed, polygon.OutlineWidth, outline.ScaleAlpha(opacity));
+        }
+    }
+}
+
+/// <summary>One convex piece of a clipping; an outline draws it in ink like the living plant (width in world units).</summary>
+internal readonly record struct VegetationTipPolygon2D(Vector2[] Points, Color4b Fill, Color4b? Outline, float OutlineWidth);

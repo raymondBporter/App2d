@@ -22,9 +22,15 @@ if (args is ["--create-playground", var playgroundDirectory])
     return;
 }
 
-if (args.SequenceEqual(["--migrate-level"]))
+// Brings every map of a world to the current level format and moves a manifest's objects into its maps.
+if (args is ["--migrate-level"] or ["--migrate-level", _])
 {
-    using var database = LevelBootstrap2D.OpenForEditing();
+    var worldManifest = args is ["--migrate-level", var worldFile] ? Path.GetFullPath(worldFile) : LevelBootstrap2D.WorldManifestPath;
+    foreach (var migrated in LevelBootstrap2D.MigrateWorld(worldManifest))
+    {
+        Console.WriteLine($"Migrated map: {migrated}");
+    }
+
     return;
 }
 
@@ -34,7 +40,9 @@ if (args is ["--create-map", var mapPath, var width, var height, var originX, va
     var map = new App2d.Core.Tiles.EditableTileMap2D(int.Parse(width, culture), int.Parse(height, culture), 32, 32,
         new(float.Parse(originX, culture), float.Parse(originY, culture)), LevelBootstrap2D.TerrainTilesetIds);
     // CreateNew prevents accidentally replacing authored terrain.
-    using (File.Open(mapPath, FileMode.CreateNew, FileAccess.Write)) { }
+    using (File.Open(mapPath, FileMode.CreateNew, FileAccess.Write))
+    {
+    }
     using var database = App2d.Levels.LevelDatabase2D.Open(mapPath);
     database.Save(map, 0);
     Console.WriteLine($"Created map: {Path.GetFullPath(mapPath)}");
@@ -43,67 +51,7 @@ if (args is ["--create-map", var mapPath, var width, var height, var originX, va
 
 ApplicationConfiguration.Initialize();
 
-if (args is ["--smoke-editor-ui", var editorDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(editorDirectory, editorOnly: true);
-    return;
-}
-
-if (args is ["--giant-tree-study", var giantTreeDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(giantTreeDirectory, giantTreesOnly: true);
-    return;
-}
-
-if (args is ["--spell-study", var spellDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(spellDirectory, spellsOnly: true);
-    return;
-}
-
-if (args is ["--hitstop-study", var timingDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(timingDirectory, timingOnly: true);
-    return;
-}
-
-if (args is ["--contact-study", var contactDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(contactDirectory, contactOnly: true);
-    return;
-}
-
-if (args is ["--face-smoke", var faceDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(faceDirectory, facesOnly: true);
-    return;
-}
-
-if (args is ["--platform-study", var platformDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(platformDirectory, platformOnly: true);
-    return;
-}
-
-if (args is ["--render-smoke", var outputDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(outputDirectory);
-    return;
-}
-
-if (args is ["--tileset-smoke", var tilesetDirectory, .. var tilesetPairs] &&
-    (tilesetPairs is ["level"] || tilesetPairs.Length is > 0 and var count && count % 2 == 0))
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(tilesetDirectory, tilesetPairs: tilesetPairs);
-    return;
-}
-
-if (args is ["--vegetation-smoke", var vegetationDirectory])
-{
-    App2d.Diagnostics.RenderingSmoke2D.Run(vegetationDirectory, vegetationOnly: true);
-    return;
-}
-
+// Rendering smokes and studies run from App2d.CharacterSeeds, which references the game; the game does not reference it.
 var selectedWorld = args is ["--world", var worldPath] ? Path.GetFullPath(worldPath) : null;
 using var host = new GameHost(new SideScrollerGame(selectedWorld));
 host.Run();

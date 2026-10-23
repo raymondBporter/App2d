@@ -1,6 +1,6 @@
-using App2d.Core.Curves;
-using App2d.Core.Geometry;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Noodle;
@@ -31,7 +31,7 @@ internal static class RigidPrototypeChecks2D
 
         var start = new Vector2(1f, 2f);
         var end = new Vector2(9f, -3f);
-        var curve = new CubicBezier2D(start, new(3f, 8f), new(7f, 5f), end);
+        var curve = CubicBezier2D.Builder.Create(start, new(3f, 8f), new(7f, 5f), end);
         var atStart = curve.Evaluate(0f);
         var atEnd = curve.Evaluate(1f);
         Require(Vector2.DistanceSquared(start, atStart) < 0.0001f, "Cubic evaluation must preserve its start point.");
@@ -96,7 +96,11 @@ internal static class RigidPrototypeChecks2D
     private static void CheckPoseInterpolation()
     {
         var start = RigidPose2D.Neutral;
-        var end = start with { HandRight = new Vector2(160f, 100f), TorsoAngle = 0.2f };
+        var end = start with
+        {
+            HandRight = new Vector2(160f, 100f),
+            TorsoAngle = 0.2f
+        };
         var clip = new PoseClip2D("check", false, new(0f, start), new(1f, end));
         var middle = clip.Sample(0.5f);
         RequireClose(middle.HandRight.X, (start.HandRight.X + end.HandRight.X) * 0.5f, "pose midpoint");
@@ -122,12 +126,16 @@ internal static class RigidPrototypeChecks2D
     private static void RequireClose(float actual, float expected, string label)
     {
         if (MathF.Abs(actual - expected) > 0.02f)
+        {
             throw new InvalidOperationException($"{label}: expected {expected}, got {actual}.");
+        }
     }
 
     private static void Require(bool condition, string message)
     {
         if (!condition)
+        {
             throw new InvalidOperationException(message);
+        }
     }
 }

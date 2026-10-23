@@ -29,7 +29,9 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
     public void Dispose()
     {
         if (!Directory.Exists(_directory))
+        {
             return;
+        }
 
         // See LevelDatabase2DTests.Dispose for why pools must be cleared before deleting:
         // Microsoft.Data.Sqlite pools native handles, which can keep the file locked for a
@@ -81,7 +83,9 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
         // writes only the chunks table, so a prior full Save is what supplies the meta
         // rows (width/height/tile_size/...) that Load() requires.
         using (var bake = LevelDatabase2D.Open(path))
+        {
             bake.Save(map, sourceSeed: 0UL);
+        }
 
         var session = new TileEditSession2D(map);
         session.BeginStroke();
@@ -92,7 +96,9 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
         var chunks = session.EndStroke();
 
         using (var edit = LevelDatabase2D.Open(path))
+        {
             edit.SaveChunks(map, chunks.ToArray());
+        }
 
         using var reader = LevelDatabase2D.OpenRead(path);
         var loaded = reader.Load();
@@ -121,7 +127,9 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
         map.SetTileKind(2, 2, TileKind2D.OneWay);
 
         using (var bake = LevelDatabase2D.Open(path))
+        {
             bake.Save(map, sourceSeed: 0UL);
+        }
 
         var session = new TileEditSession2D(map);
         session.BeginStroke();
@@ -130,7 +138,9 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
         var chunks = session.EndStroke();
 
         using (var edit = LevelDatabase2D.Open(path))
+        {
             edit.SaveChunks(map, chunks.ToArray());
+        }
 
         using var reader = LevelDatabase2D.OpenRead(path);
 

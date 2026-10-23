@@ -1,0 +1,40 @@
+using App2d.Core.Geometry.Operations.Curves;
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Mathematics;
+using App2d.Core.Validation;
+using System.Numerics;
+
+namespace App2d.Core.Geometry.Curves;
+
+/// <summary>Offsets another curve along its local normal by a caller-provided profile.</summary>
+public sealed class NormalOffsetCurve2D : ICurve2D
+{
+    private const float DerivativeSampleDistance = 0.001f;
+    private readonly ICurve2D _source;
+    private readonly Func<float, float> _offset;
+
+    public NormalOffsetCurve2D(ICurve2D source, Func<float, float> offset)
+    {
+        ArgGuard.ThrowIfNull(source);
+        ArgGuard.ThrowIfNull(offset);
+        _source = source;
+        _offset = offset;
+    }
+
+    public Vector2 Evaluate(float amount) => EvaluateCore(Clamping.Clamp01(amount));
+
+    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 128);
+
+    public Vector2 EvaluateDerivative(float amount)
+    {
+        amount = Clamping.Clamp01(amount);
+        var lower = MathF.Max(0f, amount - DerivativeSampleDistance);
+        var upper = MathF.Min(1f, amount + DerivativeSampleDistance);
+        return upper == lower
+            ? Vector2.Zero
+            : (EvaluateCore(upper) - EvaluateCore(lower)) / (upper - lower);
+    }
+
+    private Vector2 EvaluateCore(float amount) =>
+        _source.Evaluate(amount) + Curve2D.Normal(_source, amount) * _offset(amount);
+}

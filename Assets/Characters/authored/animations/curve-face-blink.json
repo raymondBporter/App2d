@@ -1,0 +1,204 @@
+{
+  "format": "app2d-clip",
+  "version": 3,
+  "id": "curve-face-blink",
+  "name": "Blink",
+  "model": "curve-face",
+  "structureRevision": 2,
+  "duration": 2,
+  "loop": true,
+  "tracks": [
+    {
+      "kind": "translate",
+      "target": "left-eye-upper-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.8,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.94,
+          "y": -0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.06,
+          "y": -0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "left-eye-lower-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.8,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.94,
+          "y": 0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.06,
+          "y": 0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "scale",
+      "target": "left-eye",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.8,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.94,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.06,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "right-eye-upper-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.8,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.94,
+          "y": -0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.06,
+          "y": -0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "right-eye-lower-bend",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.8,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.94,
+          "y": 0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.06,
+          "y": 0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "scale",
+      "target": "right-eye",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.8,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.94,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.06,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ]
+}

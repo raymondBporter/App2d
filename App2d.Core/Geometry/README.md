@@ -1,5 +1,59 @@
 # Geometry
 
+## Solid mass properties
+
+`ShapeMassProperties2D.Calculate(shape, density: 1d)` in
+`App2d.Core.Geometry.Operations.MassProperties` returns `MassProperties2D` with
+double-precision `Area`, `Mass`, `CenterOfMass` (`Vector2d`), and `MomentOfInertia`.
+The input is a solid 2D lamina with uniform mass per unit area; constant thickness
+is absorbed into density. Geometry stays in the shape's local coordinates.
+
+The defining integrals are:
+
+- `mass = density * integral(dA)`
+- `center = integral(position * dA) / area`
+- `I = density * integral(|position - center|² * dA)`
+
+`I` describes rotation about the axis perpendicular to the plane through the center
+of mass. Mass farther from that center contributes in proportion to distance squared.
+The [OpenStax derivation](https://openstax.org/books/university-physics-volume-1/pages/10-5-calculating-moments-of-inertia)
+explains the integral and parallel-axis theorem;
+[Box2D's geometry implementation](https://github.com/erincatto/box2d/blob/main/src/geometry.c)
+provides an independent reference for disk, capsule and polygon mass properties.
+
+| Solid shape | Center | Centroidal polar inertia, total mass `m` |
+| --- | --- | --- |
+| Circle / disk, radius `r` | Circle center | `m * r² / 2` |
+| Ellipse, semi-axes `a`, `b` | Ellipse center | `m * (a² + b²) / 4` |
+| Rectangle / axis-aligned rectangle, width `w`, height `h` | Rectangle center | `m * (w² + h²) / 12` |
+| Triangle, side lengths `a`, `b`, `c` | Mean of its three vertices | `m * (a² + b² + c²) / 36` |
+| Convex or concave simple polygon | Area-weighted centroid | Exact signed edge integrals, either winding |
+| Capsule | Spine midpoint | Exact rectangle plus two semicircles |
+| Rounded rectangle | Outer rectangle center | Exact inner rectangle, edge strips and quarter disks |
+| Additive composite (`IncludeOverlap = true`) | Mass-weighted part centroids | Sum of part inertias, shifted to the combined center |
+
+Polygon integration shifts coordinates near the shape before summing, then integrates
+inertia directly about its centroid. Translation therefore does not introduce the
+large-origin cancellation of subtracting `mass * |center|²` from an origin inertia.
+Curved primitives use formulas, with no outline sampling. Compound pieces combine via
+`I = sum(I_part + mass_part * |center_part - center|²)`. Additive overlap counts as
+multiple layers of material, matching the composite's additive area semantics.
+
+`properties.WithMass(mass)` chooses a new uniform density without moving the center.
+`properties.MomentOfInertiaAbout(point)` uses `I_point = I_center + mass * distance²`.
+Infinite half-spaces, unknown custom shapes, and composites requesting overlap-counted-once
+union mass (`IncludeOverlap = false`, more than one part) throw `NotSupportedException`.
+Use a simple polygon outline or a decomposition into non-overlapping additive parts for
+those unions in this first implementation. No bounding-box or sampled inertia is substituted.
+
+`RigidBody2D.SetMassFromDensity` and `SetMassFromShape` apply these results to live
+physics and include the current uniform scale. At fixed density, scaling lengths by
+`s` scales mass by `s²` and inertia by `s⁴`; at fixed total mass, inertia scales by `s²`.
+Rotation and mirroring preserve scalar inertia. Nonuniform scale and shear retain the
+existing collision restriction; recalculate mass properties after changing size.
+
+## Geometry organization
+
 `App2d.Core` geometry is layered so that each kind of question has one home:
 
 | Namespace | Holds | Depends on |
@@ -13,8 +67,28 @@
 ## Geometry
 
 Value types: `Rect2D` (the only axis-aligned box; `Unbounded` covers the plane), `IRect2D` + `Rect2DExtensions`
-(anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `Interval1D`, `Line2D`, `Ray2D`,
-`RayHit2D`, `IGeometry2D`.
+(anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `OrientedFrame2D` (a center and a
+unit axis that oriented shapes project every query through), `Interval<T>`, `Line2D`, `Ray2D`, `RayHit2D`, `IGeometry2D`.
+
+`Rectangle2D`, `RoundedRectangle2D` and `Ellipse2D` carry a unit `Axis` for their local +X and so rotate in local space;
+an unset axis reads as +X. Their JSON writes `center`, `size` (or `radii`) and `angleRadians`, and the two rectangle kinds
+also read the axis-aligned `min`/`max` spelling, never mixed with `center`/`size`. `AxisAlignedRectangle2D` keeps `Min`/`Max`
+and is the one shape that never rotates. `ShapeTransforms2D.Posed(shape, Similarity2D)` carries any built-in shape through
+a translation, rotation, uniform scale and optional mirror and returns a shape of the same kind.
+
+`IInterval<T>` supplies ordered scalar `Min`/`Max` endpoints. `Interval<T>`, authored `Limit` values
+and physics `ConstraintLimit1D` share `IntervalMath<T>` operations without converting structs to interfaces.
+The contract is closed and permits infinite endpoints; it does not impose domain-specific validation.
+`Length` is an endpoint difference, including for integer ranges; it is not an inclusive element count.
+Arguments enable convenient calls such as `limits.Contains(3f)` and `limits.Overlaps(new Interval<float>(2, 5))`.
+For queries where C# cannot infer the scalar from arguments, name it once: `IntervalMath<float>.Length(limits)`
+or `IntervalMath<float>.TryIntersect(limits, authoredLimit, out var shared)`.
+Rectangles expose `XInterval` and `YInterval` while retaining their existing vector storage.
+
+`ISegment<TSelf, TPoint>` supplies `Start`/`End` and a static abstract `Create` factory.
+`LineSegmentCurve2D` and Noodle's bone segment implement it with `Vector2` endpoints.
+`SegmentMath2D` adds `segment.Length()`, clamped `segment.PointAt(amount)`, and `segment.Reversed()`.
+Reversing calls the concrete type's factory and returns that same type.
 
 `GiantTree2D(root, settings, seed)` creates immutable, seeded tree-level geometry. `GiantTreeSettings2D`
 uses world units; `Branches` gives exact flat-topped platform bounds. `GiantTreeVisual2D` adds bark, moss,
@@ -62,6 +136,45 @@ var ground = Line2D.Horizontal(0);
 if (Raycast2D.TryCircle(origin, direction, center, radius, 100, out var rayHit)) { /* rayHit.Point, .Normal, .Distance */ }
 ```
 
+## Curves
+
+`ICurve2D` evaluates a geometric path and its derivative at a normalized parameter. It does not own a clock:
+animation can pass eased progress to `Evaluate`, or move the curve's control points to change a face or contour.
+
+```csharp
+var mouth = CubicBezier2D.Builder.Create(start, firstHandle, secondHandle, end);
+var point = mouth.Evaluate((float)Easing.EaseInOutSine.Sample(phase));
+var (left, right) = mouth.Split(.5f);
+var middle = mouth.Slice(.25f, .75f);
+```
+
+`Split` and `Slice` use Bezier parameters, not distance or elapsed time. Subdivision preserves the original path;
+each result maps its own parameter range to [0, 1]. A slice with equal endpoints is a constant point curve.
+The methods return value types without allocating arrays.
+
+For any `ICurve2D`, import `App2d.Core.Geometry.Operations.Curves` to use the same `Split(t)` and
+`Slice(from, to)` extension names. Their `CurveSlice2D<TCurve>` results retain the original curve and remap
+its parameter without resampling the path. Derivatives include the parameter scale; collapsed intervals have
+zero derivative. Distance queries use a polyline approximation of the restricted path. Concrete cubic calls
+keep returning concrete `CubicBezier2D` pieces. `CubicBezier2D.FromHermite` converts endpoint tangents with
+respect to normalized progress into the same shared cubic representation.
+
+`FindParametersAtX(x, parameters)` writes all intersections into a span of at least three doubles, sorted in [0, 1].
+It includes tangencies and endpoints and uses the shared `PolynomialRoots` solver. A curve lying entirely on that X
+has infinitely many matches and throws. `ParameterAtX(x)` is the convenience query when exactly one result is expected;
+it throws for missing or ambiguous results.
+
+Animation's `KeyCurve2D.ToCurve(start, end)` represents a segment as a cubic in `(normalized time, channel value)`.
+Its X controls guarantee a unique time lookup. Its `Slice` first converts time bounds to Bezier parameters, then
+uses the same subdivision as drawing curves. Relative/absolute value handles remain authored data; absolute handles
+can move away from and return to equal endpoint values. The existing keyframe JSON fields are unchanged.
+
+`KeyCurve2D.Split(time, start, end)` returns the two time segments; `Slice(from, to, start, end)` extracts one
+interval. Both use sampled values for the new key endpoints. Handles are stored as two `Vector2` values;
+motion keys store `Vector3`, and tint keys store `Vector4`. `AuthoredJson` maps these vectors to the existing
+scalar file fields, including their sparse defaults. `KeyframeSampling` owns the shared ordered-key lookup,
+and `ClipEase.Interpolate` owns the shared scalar interpolation policy. Component timing curves stay independent.
+
 ## Shapes
 
 `IShape2D` classes delegate their `Area`, `ContainsPoint` and `GetSupportPoint` to the raw operations and keep no
@@ -79,11 +192,15 @@ bounds cache. The switch tables map a shape to raw parameters once:
 `TriangleMesh2D` is a mesh, not a shape; `ToCompositeShape()` bridges to collision. `CompositeShape2D` is the
 non-convex shape and always resolves per part.
 
-Composite area is cached at construction. The default sums part areas, including overlap; use
-`new CompositeShape2D(parts, includeOverlap: false)` to count the covered region once. `ShapeArea2D.Union(parts)`
-also calculates that area directly. Circles, ellipses and capsules stay analytic, and rectangles, triangles and convex polygons use
-their exact edges. The shared boundary integral keeps only exposed edges and conic arcs, handling multiple
+Composite area queries sum part areas by default, including overlap; use
+`CompositeShape2D.Builder.Create(parts, includeOverlap: false)` to count the covered region once. `ShapeArea2D.Union(parts)`
+also calculates that area directly. Circles, ellipses in any orientation and capsules stay analytic, and rectangles, triangles and
+convex polygons use their exact edges. The shared boundary integral keeps only exposed edges and conic arcs, handling multiple
 overlaps, disconnected regions and holes. Two axis-aligned rectangles use a direct formula.
+`ShapeArea2D.Intersection(first, second)` returns the overlap of two convex shapes from the same walk by selecting the arcs
+and edges of each shape that lie inside the other, exact for every kind the union is exact for and precise for thin slivers,
+with a direct formula for two axis-aligned rectangles. Each conic part carries its own frame, so a rotated ellipse projects
+into the other part's coordinates before the crossings are solved.
 Ellipse/segment intersections are quadratic in normalized ellipse coordinates; ellipse/ellipse and circle/ellipse
 intersections are quartic and can have four boundary crossings. Two bounded half-angle charts avoid an infinite
 parameter at PI. `PolynomialRoots` isolates real roots using derivatives and bisection; the exposed arcs have an
@@ -99,10 +216,28 @@ Rounded rectangles use inscribed polygon outlines; `areaOutlineSegments` (defaul
 including custom convex shapes sampled through their support mapping. This sampling affects area only.
 The area mode and sample count survive shape-definition JSON round trips; older definitions retain summed area.
 
-`ShapeDefinition2D` is the editable, JSON-tagged form of every built-in shape, mirroring `CurveDefinition2D`:
-`FromShape(shape).ToJson()` writes it, `FromJson(json).Build()` reads it back through the validating constructors,
-and `ShapeKinds2D` lists the kind tags, also available as `IShape2D.Kind` on runtime shapes. Both definition families
-use `System.Numerics.Vector2` directly. `IO.Vector2JsonConverter` is registered in geometry and character authoring
+Built-in shapes and serializable curves are readonly record structs. Their constructors only store source parameters
+and snapshot collection inputs; they can represent invalid geometry. `geometry.Validate()` checks that same value.
+The nested `Builder` types are static factories with no instance properties or fields: `Builder.Create(...)`
+constructs a value, validates it, and returns it. Half-space factories also normalize the normal and offset.
+Analyzer `APP2D001` warns on unchecked construction and offers a factory fix, or explicit `Validated()` for an object
+initializer. An intentional unvalidated draft can suppress that warning while editing and validate later.
+
+The geometry value is also the JSON data. `geometry.ToJson()` writes its kind and source fields;
+`GeometryJson2D.FromJson(json)`, `ShapeFromJson(json)`, and `CurveFromJson(json)` read the actual values without
+geometric validation. `JsonSerializer.Deserialize<Circle2D>(json, GeometryJson2D.JsonOptions)` also reads a circle
+directly. Missing required members, unknown kinds, and unknown JSON properties remain deserialization errors.
+Fields accepting either shapes or curves use `IGeometryValue2D`; shape-only and curve-only fields use `IShape2D`
+and `ICurve2D`. Editors change these same values with `with` expressions, including collection snapshots.
+There is no definition hierarchy, stateful builder hierarchy, or builder-to-runtime conversion cache.
+
+Polygon triangulation, convex pieces, spline knots and derivatives, and composite union area are derived query data.
+They are calculated on demand and cached against immutable source snapshots. Source changes through `with` use
+the new parameters instead of stale constructor caches. Computed properties such as area, diameter, and arc endpoints
+are excluded from the JSON schema. `ShapeKinds2D` and `CurveKinds2D` list the kind tags.
+`Rectangle2D` uses `"kind": "rectangle"`; `AxisAlignedRectangle2D` uses `"kind": "axis-aligned-rectangle"`.
+The kind alone selects the rectangle type, including inside composite parts; there is no `axisAligned` flag.
+Geometry values use `System.Numerics.Vector2` directly. `IO.Vector2JsonConverter` is registered in geometry and character authoring
 settings and preserves the existing `{ "x": ..., "y": ... }` coordinate format. It can also be registered in other
 `JsonSerializerOptions.Converters` collections.
 

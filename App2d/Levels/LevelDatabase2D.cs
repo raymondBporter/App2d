@@ -12,7 +12,7 @@ namespace App2d.Levels;
 /// </summary>
 public sealed partial class LevelDatabase2D : IDisposable
 {
-    public const int CurrentFormatVersion = 2;
+    public const int CurrentFormatVersion = 3;
 
     private readonly SqliteConnection _connection;
 
@@ -22,12 +22,15 @@ public sealed partial class LevelDatabase2D : IDisposable
 
     public int ChunkRowCount => (int)ReadScalarLong("SELECT COUNT(*) FROM chunks;");
 
-    public static LevelDatabase2D Open(string path)
+    /// <summary>Opens or creates a level for editing and upgrades its format. Migrated object assets are written under <paramref name="worldRoot"/>, the file's own directory by default.</summary>
+    public static LevelDatabase2D Open(string path, string? worldRoot = null)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(path);
         var directory = Path.GetDirectoryName(Path.GetFullPath(path));
         if (!string.IsNullOrEmpty(directory))
+        {
             Directory.CreateDirectory(directory);
+        }
 
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
@@ -39,7 +42,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         try
         {
             EnableForeignKeys(connection);
-            Migrate(connection);
+            Migrate(connection, worldRoot ?? (string.IsNullOrEmpty(directory) ? Environment.CurrentDirectory : directory));
         }
         catch
         {
@@ -74,14 +77,13 @@ public sealed partial class LevelDatabase2D : IDisposable
         if (version > CurrentFormatVersion)
         {
             connection.Dispose();
-            StateGuard.Throw(
-                $"The level file is format version {version}, newer than this build understands ({CurrentFormatVersion}).");
+            StateGuard.Throw($"The level file is format version {version}, newer than this build understands ({CurrentFormatVersion}).");
         }
         if (version < CurrentFormatVersion)
         {
             connection.Dispose();
             StateGuard.Throw(
-                $"The level file is format version {version}; open it for editing once to upgrade it to {CurrentFormatVersion}.");
+                $"The level file is format version {version}; run 'dotnet run --project App2d -- --migrate-level <world.json>' to upgrade it to {CurrentFormatVersion}.");
         }
 
         return database;
@@ -112,7 +114,9 @@ public sealed partial class LevelDatabase2D : IDisposable
         for (var cy = 0; cy < map.ChunkRows; cy++)
         {
             for (var cx = 0; cx < map.ChunkColumns; cx++)
+            {
                 WriteChunk(map, new TileChunk2D(cx, cy), buffer);
+            }
         }
 
         transaction.Commit();
@@ -136,7 +140,10 @@ public sealed partial class LevelDatabase2D : IDisposable
         using var transaction = _connection.BeginTransaction();
         WriteTilesetCatalog(map.TilesetIds);
         foreach (var chunk in chunks)
+        {
             WriteChunk(map, chunk, buffer);
+        }
+
         transaction.Commit();
     }
 
@@ -177,8 +184,9 @@ public sealed partial class LevelDatabase2D : IDisposable
         command.ExecuteNonQuery();
     }
 
-    private static void Migrate(SqliteConnection connection)
+    private static void Migrate(SqliteConnection connection, string worldRoot)
     {
+        ArgGuard.ThrowIfNullOrWhiteSpace(worldRoot);
         long version;
         using (var versionCommand = connection.CreateCommand())
         {
@@ -188,9 +196,14 @@ public sealed partial class LevelDatabase2D : IDisposable
 
         if (version > CurrentFormatVersion)
         {
-            StateGuard.Throw(
-                $"The level file's format version ({version}) is newer than " +
-                $"this build supports ({CurrentFormatVersion}).");
+            StateGuard.Throw($"The level file's format version ({version}) is newer than this build supports ({CurrentFormatVersion}).");
+        }
+
+        // A current file is left untouched: even re-stamping the same version bumps SQLite's change counter,
+        // which would dirty a committed level in git every time the editor opens it.
+        if (version == CurrentFormatVersion)
+        {
+            return;
         }
 
         using var transaction = connection.BeginTransaction();
@@ -219,6 +232,18 @@ public sealed partial class LevelDatabase2D : IDisposable
             version = 2;
         }
 
+        if (version == 2)
+        {
+            using (var createObjects = connection.CreateCommand())
+            {
+                createObjects.CommandText = ObjectReferencesSql;
+                createObjects.ExecuteNonQuery();
+            }
+
+            MovingPlatformMigration2D.Convert(connection, worldRoot);
+            version = 3;
+        }
+
         using (var stamp = connection.CreateCommand())
         {
             stamp.CommandText = $"PRAGMA user_version = {CurrentFormatVersion};";
@@ -236,7 +261,10 @@ public sealed partial class LevelDatabase2D : IDisposable
         foreach (var tile in tiles)
         {
             if (tile.Kind == TileKind2D.Empty)
+            {
                 continue;
+            }
+
             isEmpty = false;
             break;
         }
@@ -282,7 +310,9 @@ public sealed partial class LevelDatabase2D : IDisposable
     {
         WriteMeta("tileset_count", tilesetIds.Count);
         for (var index = 0; index < tilesetIds.Count; index++)
+        {
             WriteMeta($"tileset_{index}", tilesetIds[index]);
+        }
     }
 
     private string[]? ReadTilesetCatalog()
@@ -290,15 +320,22 @@ public sealed partial class LevelDatabase2D : IDisposable
         using var countCommand = _connection.CreateCommand();
         countCommand.CommandText = "SELECT value FROM meta WHERE key = 'tileset_count';";
         if (countCommand.ExecuteScalar() is not string countText)
+        {
             return null;
+        }
 
         var count = int.Parse(countText, CultureInfo.InvariantCulture);
         if (count <= 0 || count > TileCell2D.MaximumTilesetCount)
+        {
             throw new InvalidDataException($"Level tileset count {count} is outside the supported range.");
+        }
 
         var ids = new string[count];
         for (var index = 0; index < count; index++)
+        {
             ids[index] = RequireMeta($"tileset_{index}");
+        }
+
         return ids;
     }
 
@@ -307,16 +344,12 @@ public sealed partial class LevelDatabase2D : IDisposable
         using var command = _connection.CreateCommand();
         command.CommandText = "SELECT value FROM meta WHERE key = $key;";
         command.Parameters.AddWithValue("$key", key);
-        return StateGuard.RequireNotNull(
-            command.ExecuteScalar() as string,
-            $"The level file is missing required metadata '{key}'.");
+        return StateGuard.RequireNotNull(command.ExecuteScalar() as string, $"The level file is missing required metadata '{key}'.");
     }
 
-    private long RequireMetaLong(string key) =>
-        long.Parse(RequireMeta(key), CultureInfo.InvariantCulture);
+    private long RequireMetaLong(string key) => long.Parse(RequireMeta(key), CultureInfo.InvariantCulture);
 
-    private float RequireMetaFloat(string key) =>
-        float.Parse(RequireMeta(key), CultureInfo.InvariantCulture);
+    private float RequireMetaFloat(string key) => float.Parse(RequireMeta(key), CultureInfo.InvariantCulture);
 
     private long ReadScalarLong(string sql)
     {

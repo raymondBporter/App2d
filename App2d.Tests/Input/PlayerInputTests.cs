@@ -13,7 +13,10 @@ public sealed class PlayerInputTests
     {
         var input = new InputState();
         var mapper = new PlayerInputMapper2D();
-        input.SetGamepad(new(default, button, button, default) { IsConnected = true });
+        input.SetGamepad(new(default, button, button, default)
+        {
+            IsConnected = true
+        });
         var command = mapper.Capture(input);
         Assert.Equal(shot, command.CastHeld);
         Assert.Equal(!shot, command.HealHeld);
@@ -29,7 +32,10 @@ public sealed class PlayerInputTests
         var input = new InputState();
         input.SetKey(Keys.Space, true);
         input.SetMouseButton(MouseButtons.Left, true);
-        input.SetGamepad(new(default, GamepadButton2D.A, GamepadButton2D.A, default) { IsConnected = true });
+        input.SetGamepad(new(default, GamepadButton2D.A, GamepadButton2D.A, default)
+        {
+            IsConnected = true
+        });
 
         Assert.True(input.Keyboard.IsDown(Keys.Space));
         Assert.True(input.Keyboard.WasPressed(Keys.Space));
@@ -48,7 +54,10 @@ public sealed class PlayerInputTests
 
         input.SetKey(Keys.Space, false);
         input.SetMouseButton(MouseButtons.Left, false);
-        input.SetGamepad(new(default, default, default, GamepadButton2D.A) { IsConnected = true });
+        input.SetGamepad(new(default, default, default, GamepadButton2D.A)
+        {
+            IsConnected = true
+        });
         Assert.True(input.Keyboard.WasReleased(Keys.Space));
         Assert.True(input.Mouse.WasReleased(MouseButtons.Left));
         Assert.True(input.Gamepad.WasReleased(GamepadButton2D.A));
@@ -99,7 +108,10 @@ public sealed class PlayerInputTests
         input.SetGamepad(pad);
         Assert.True(mapper.Capture(input).JumpHeld);
         input.SetKey(Keys.Space, false);
-        pad = pad with { Pressed = default };
+        pad = pad with
+        {
+            Pressed = default
+        };
         input.SetGamepad(pad);
         Assert.True(mapper.Capture(input).JumpHeld); // The pad still holds the logical button.
         input.EndFrame();
@@ -134,7 +146,11 @@ public sealed class PlayerInputTests
     {
         var input = new InputState();
         var mapper = new PlayerInputMapper2D();
-        foreach (var key in new[] { Keys.E, Keys.B, Keys.F3 }) input.SetKey(key, true);
+        foreach (var key in new[] { Keys.E, Keys.B, Keys.F3 })
+        {
+            input.SetKey(key, true);
+        }
+
         var pad = new GamepadState2D(default, GamepadButton2D.LeftShoulder | GamepadButton2D.RightShoulder,
             GamepadButton2D.LeftShoulder | GamepadButton2D.RightShoulder, default);
         input.SetGamepad(pad);

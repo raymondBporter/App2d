@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
@@ -32,7 +32,7 @@ public sealed class Direction2DTests
         Assert.Equal(direction.Vector, line.Direction);
         Assert.Equal(new Ray2D(new(2, 3), new Vector2(3, 4)), ray);
         Assert.Equal(new Line2D(new(2, 3), new Vector2(3, 4)), line);
-        Assert.Equal(new Vector2(5, 7), ray.GetPoint(5));
+        Assert.Equal(new Vector2(5, 7), ray.PointAt(5));
         Assert.Equal(direction, Direction2D.FromPoints(new(2, 3), new(5, 7)));
     }
 

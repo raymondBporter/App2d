@@ -1,3 +1,5 @@
+using App2d.CharacterSeeds;
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 
@@ -11,32 +13,74 @@ public sealed class AppearanceAuthoringTests : IDisposable
         foreach (var file in Directory.EnumerateFiles(TestModels.AuthoredRoot, "*.json", SearchOption.AllDirectories))
         {
             var target = Path.Combine(_root, Path.GetRelativePath(TestModels.AuthoredRoot, file));
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!); File.Copy(file, target);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(file, target);
         }
     }
     public void Dispose() => Directory.Delete(_root, true);
 
     [Fact]
+    public void SharedMaterialEditReachesOtherVariantsAndSupportsUndoAndReopen()
+    {
+        var session = new EditorSession(AuthoringWorkspace.Open(_root));
+        session.Open("cinder");
+        var document = session.Assets.Model("person")!;
+        var before = document.Serialize();
+        string? PatchColor(string id) => session.Assets.Resolve(id)!.Parts.Single(p => p.Id == "body").RenderMaterial.Paint![1].Material!.Fill;
+        var original = PatchColor("club-caveman-build");
+        Assert.True(session.Edit(document, () =>
+        {
+            var material = document.Asset.Materials["spotted-hide"];
+            var patches = material.Paint!.ToList();
+            patches[1] = patches[1] with { Material = patches[1].Material! with { Fill = "#123456" } };
+            document.Asset.Materials["spotted-hide"] = material with { Paint = patches };
+        }), session.Message);
+        Assert.Equal("#123456", PatchColor("club-caveman-build"));
+        Assert.Equal("#123456", PatchColor("cinder"));
+        Assert.False(session.SubjectVariant!.Dirty);
+        session.Undo();
+        Assert.Equal(before, document.Serialize());
+        Assert.Equal(original, PatchColor("club-caveman-build"));
+        session.Redo();
+        session.SaveAll();
+        Assert.False(session.MessageIsError, session.Message);
+        var reopened = AuthoringWorkspace.Open(_root);
+        Assert.Empty(reopened.LoadErrors);
+        Assert.Equal("#123456", reopened.Resolve("shield-defender-build")!.Parts.Single(p => p.Id == "body").RenderMaterial.Paint![1].Material!.Fill);
+        Assert.DoesNotContain("\"points\"", File.ReadAllText(Path.Combine(_root, "variants", "cinder.json")));
+    }
+
+    [Fact]
     public void NewHairEditsUndoEquipAndReopenInThePlayerLoadout()
     {
-        var s = new EditorSession(AuthoringWorkspace.Open(_root)); s.Open("hero");
+        var s = new EditorSession(AuthoringWorkspace.Open(_root));
+        s.Open("hero");
         Assert.True(s.NewAppearance("custom-hair", "Custom hair", "hair"), s.Message);
         Assert.Equal(Workspace.Appearance, s.Mode);
-        var doc = s.AppearanceDocument!; var before = doc.Asset.ToJson();
+        var doc = s.AppearanceDocument!;
+        var before = doc.Asset.ToJson();
         var points = doc.Asset.Solids[1].Outline!.Select(p => p with { Y = p.Y + .05f }).ToArray();
-        s.BeginDrag(); s.Change(doc, () => AppearanceAuthoring.Cutout(doc.Asset, 1, points, .02f)); s.EndDrag();
-        s.Undo(); Assert.Equal(before, doc.Asset.ToJson()); s.Redo();
+        s.BeginDrag();
+        s.Change(doc, () => AppearanceAuthoring.Cutout(doc.Asset, 1, points, .02f));
+        s.EndDrag();
+        s.Undo();
+        Assert.Equal(before, doc.Asset.ToJson());
+        s.Redo();
         Assert.Equal(.02f, doc.Asset.Solids[1].Thickness);
-        Assert.True(s.EquipAppearance("hero", doc.Id, PersonWardrobe.HeadSocket), s.Message);
-        s.Undo(); Assert.DoesNotContain(s.EntityDocument!.Asset.Equipment, e => e.Prop == doc.Id);
-        s.Redo(); Assert.Contains(s.EntityDocument!.Asset.Equipment, e => e.Prop == doc.Id);
-        s.Edit(s.EntityDocument, () => s.EntityDocument.Asset.Equipment.RemoveAll(e => e.Prop == PersonWardrobe.ShortHair));
-        s.SaveAll(); Assert.False(s.MessageIsError, s.Message);
+        Assert.True(s.EquipAppearance("hero", doc.Id, Humanoid.HeadSocket), s.Message);
+        s.Undo();
+        Assert.DoesNotContain(s.EntityDocument!.Asset.Equipment, e => e.Prop == doc.Id);
+        s.Redo();
+        Assert.Contains(s.EntityDocument!.Asset.Equipment, e => e.Prop == doc.Id);
+        s.Edit(s.EntityDocument, () => s.EntityDocument.Asset.Equipment.RemoveAll(e => e.Prop == PersonLoadout.ShortHair));
+        s.SaveAll();
+        Assert.False(s.MessageIsError, s.Message);
         Assert.DoesNotContain("\"vertices\"", File.ReadAllText(Path.Combine(_root, "props", "custom-hair.json")));
-        var catalog = AuthoredCatalog.Load(_root); Assert.Empty(catalog.Errors);
+        var catalog = AuthoredCatalog.Load(_root);
+        Assert.Empty(catalog.Errors);
         var clip = catalog.Animations["player-idle"];
         var equipped = PersonLoadout.Dressed(clip, 0, PersonGear.None, catalog.Entities["hero"]).ToArray();
-        Assert.Equal(("custom-hair", PersonWardrobe.HeadSocket), Assert.Single(equipped));
+        Assert.Equal(("custom-hair", Humanoid.HeadSocket), Assert.Single(equipped));
         Assert.NotNull(catalog.Props[doc.Id].Solids[1].Outline);
         Assert.Equal(.02f, catalog.Props[doc.Id].Solids[1].Thickness);
     }
@@ -44,7 +88,8 @@ public sealed class AppearanceAuthoringTests : IDisposable
     [Fact]
     public void DuplicateKeepsIndependentGeometryAndBadOutlineLeavesItIntact()
     {
-        var original = AppearanceAuthoring.New("original", "Original", "skirt", "#222b32", .045f);
+        var original = AppearanceAuthoring.New("original", "Original", "skirt", "#222b32", .045f,
+            id => PersonWardrobe.Props().Single(p => p.Id == id));
         var copy = AppearanceAuthoring.Duplicate(original, "copy", "Copy");
         copy.Solids[0].Outline![0] = new(4, 4);
         Assert.NotEqual(original.Solids[0].Outline![0], copy.Solids[0].Outline![0]);
@@ -53,10 +98,34 @@ public sealed class AppearanceAuthoringTests : IDisposable
         Assert.Equal(before, original.ToJson());
     }
 
+    [Theory]
+    [InlineData("sandal")]
+    [InlineData("boot")]
+    public void FootwearTemplatesEquipBothFeetAndSurviveUndoSaveAndThePlayerLoadout(string template)
+    {
+        var session = new EditorSession(AuthoringWorkspace.Open(_root));
+        session.Open("hero");
+        Assert.True(session.NewAppearance("custom-left", "Custom left shoe", template), session.Message);
+        Assert.Equal(Humanoid.LeftFootSocket, session.AppearanceDocument!.Asset.Attachment);
+        Assert.True(session.EquipAppearance("hero", "custom-left", Humanoid.LeftFootSocket), session.Message);
+        Assert.True(session.DuplicateAppearance("custom-left", "custom-right", "Custom right shoe"), session.Message);
+        Assert.True(session.EquipAppearance("hero", "custom-right", Humanoid.RightFootSocket), session.Message);
+        session.Undo();
+        Assert.DoesNotContain(session.EntityDocument!.Asset.Equipment, e => e.Prop == "custom-right");
+        session.Redo();
+        session.SaveAll();
+        Assert.False(session.MessageIsError, session.Message);
+        var catalog = AuthoredCatalog.Load(_root);
+        Assert.Empty(catalog.Errors);
+        var worn = PersonLoadout.Dressed(catalog.Animations["player-idle"], 0, PersonGear.None, catalog.Entities["hero"]).ToArray();
+        Assert.Contains(("custom-left", Humanoid.LeftFootSocket), worn);
+        Assert.Contains(("custom-right", Humanoid.RightFootSocket), worn);
+    }
+
     [Fact]
     public void HairOutlineJsonRebuildsItsMeshAndKeepsMeshOnlyProps()
     {
-        var hair = PersonWardrobe.Props().Single(p => p.Id == PersonWardrobe.ShortHair);
+        var hair = PersonWardrobe.Props().Single(p => p.Id == PersonLoadout.ShortHair);
         var json = hair.ToJson();
         Assert.Contains("\"outline\"", json);
         Assert.DoesNotContain("\"vertices\"", json);
@@ -79,7 +148,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
     [Fact]
     public void EditedHairJsonSurvivesWardrobeSeedingAndSuppliesNewHairTemplate()
     {
-        var path = Path.Combine(_root, "props", PersonWardrobe.ShortHair + ".json");
+        var path = Path.Combine(_root, "props", PersonLoadout.ShortHair + ".json");
         var original = File.ReadAllText(path);
         Assert.DoesNotContain("\"vertices\"", original);
         var edited = original.Replace("#654334", "#123456", StringComparison.Ordinal);

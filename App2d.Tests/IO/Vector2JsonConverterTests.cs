@@ -1,8 +1,9 @@
 using App2d.Core.Characters;
-using App2d.Core.Curves;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.IO;
-using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,9 +14,9 @@ public sealed class Vector2JsonConverterTests
 {
     public static TheoryData<string> AuthoringOptions =>
     [
-        nameof(GeometryDefinition2D),
-        nameof(ShapeDefinition2D),
-        nameof(CurveDefinition2D),
+        nameof(IGeometryValue2D),
+        nameof(IShape2D),
+        nameof(ICurve2D),
         nameof(AuthoredJson.Options),
         nameof(AuthoredJson.Tolerant),
         nameof(PuppetDefinition)
@@ -23,9 +24,9 @@ public sealed class Vector2JsonConverterTests
 
     private static JsonSerializerOptions GetOptions(string optionsName) => optionsName switch
     {
-        nameof(GeometryDefinition2D) => GeometryDefinition2D.JsonOptions,
-        nameof(ShapeDefinition2D) => ShapeDefinition2D.JsonOptions,
-        nameof(CurveDefinition2D) => CurveDefinition2D.JsonOptions,
+        nameof(IGeometryValue2D) => GeometryJson2D.JsonOptions,
+        nameof(IShape2D) => GeometryJson2D.JsonOptions,
+        nameof(ICurve2D) => GeometryJson2D.JsonOptions,
         nameof(AuthoredJson.Options) => AuthoredJson.Options,
         nameof(AuthoredJson.Tolerant) => AuthoredJson.Tolerant,
         nameof(PuppetDefinition) => PuppetDefinition.JsonOptions,
@@ -80,7 +81,7 @@ public sealed class Vector2JsonConverterTests
     [InlineData("{\"x\":1")]
     public void StrictOptionsRejectMalformedCoordinatesAndUnknownMembers(string json)
     {
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2>(json, GeometryDefinition2D.JsonOptions));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2>(json, GeometryJson2D.JsonOptions));
     }
 
     [Fact]

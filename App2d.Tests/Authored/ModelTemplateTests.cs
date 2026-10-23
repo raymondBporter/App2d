@@ -1,17 +1,37 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Shapes;
 using System.Text.Json;
 
 namespace App2d.Tests.Authored;
 
 public sealed class ModelTemplateTests : IDisposable
 {
+    [Fact]
+    public void AuthoredResourcesTakePriorityOverSeedFactories()
+    {
+        var session = new EditorSession(AuthoringWorkspace.Open(TestModels.AuthoredRoot))
+        {
+            SeedModel = (_, _, _) => throw new InvalidOperationException("Should use the authored model template."),
+            SeedAppearance = _ => throw new InvalidOperationException("Should use the authored appearance.")
+        };
+        Assert.True(session.NewModel("resource-person", "Resource person", "person"), session.Message);
+        Assert.True(session.NewAppearance("resource-hair", "Resource hair", "hair"), session.Message);
+    }
+
     private readonly string _root = Path.Combine(Path.GetTempPath(), "model-templates-" + Guid.NewGuid().ToString("N"));
-    public void Dispose() { if (Directory.Exists(_root)) Directory.Delete(_root, true); }
+    public void Dispose()
+    {
+        if (Directory.Exists(_root))
+        {
+            Directory.Delete(_root, true);
+        }
+    }
 
     [Theory]
     [InlineData("person", 7)]
+    [InlineData("curve-face", 9)]
     [InlineData("quadruped", 8)]
     [InlineData("triceratops", 8)]
     [InlineData("stalker", 5)]
@@ -36,7 +56,11 @@ public sealed class ModelTemplateTests : IDisposable
             {
                 var before = PoseEvaluator.Sample(source, original, original.Duration * phase);
                 var after = PoseEvaluator.Sample(copy, created, created.Duration * phase);
-                foreach (var point in before.Points) TestModels.Near(point.Value, after.Points[point.Key], 1e-6f);
+                foreach (var point in before.Points)
+                {
+                    TestModels.Near(point.Value, after.Points[point.Key], 1e-6f);
+                }
+
                 Assert.Equal(before.Angles.OrderBy(p => p.Key), after.Angles.OrderBy(p => p.Key));
                 Assert.Equal(before.Contacts, after.Contacts);
             }
@@ -54,17 +78,20 @@ public sealed class ModelTemplateTests : IDisposable
     public void AJsonRecipeCreatesAnUnrelatedBoneRigAndSavesAnIndependentBundle()
     {
         SeedMachine();
-        var assets = AuthoringWorkspace.Open(_root); var session = new EditorSession(assets);
+        var assets = AuthoringWorkspace.Open(_root);
+        var session = new EditorSession(assets);
         Assert.Empty(assets.LoadErrors);
         Assert.Contains("oscillator", assets.ModelTemplates.Keys);
         Assert.True(session.NewModel("crank", "Crank", "oscillator"), session.Message);
         Assert.Equal("crank-swing", session.ClipId); // The default clip does not have to be called idle.
-        var model = assets.Model("crank")!; var clip = assets.Clip("crank-swing")!;
+        var model = assets.Model("crank")!;
+        var clip = assets.Clip("crank-swing")!;
         Assert.Equal("crank-swing", model.Asset.MotionSets.Single().Roles["operate"]);
         Assert.Equal("source-performance", clip.Asset.Markers.Single().Id); // Opaque labels are not text-replaced.
         Assert.True(session.Edit(clip, () => clip.Asset.Tracks[0].Keys[1].Angle = .8f), session.Message);
         Assert.Equal(.4f, assets.Clip("source-performance")!.Asset.Tracks[0].Keys[1].Angle);
-        session.SaveAll(); Assert.False(session.MessageIsError, session.Message);
+        session.SaveAll();
+        Assert.False(session.MessageIsError, session.Message);
         var reopened = AuthoredCatalog.Load(_root);
         Assert.Empty(reopened.Errors);
         var pose = PoseEvaluator.Sample(reopened.Resolve("crank"), reopened.Animations["crank-swing"], 1);
@@ -84,23 +111,39 @@ public sealed class ModelTemplateTests : IDisposable
     public void InvalidOrConflictingBundlesNeverLeavePartialDocuments(string failure)
     {
         SeedMachine();
-        var assets = AuthoringWorkspace.Open(_root); var session = new EditorSession(assets);
+        var assets = AuthoringWorkspace.Open(_root);
+        var session = new EditorSession(assets);
         var recipe = assets.ModelTemplates["oscillator"];
         var id = "copy";
         switch (failure)
         {
-            case "missing-model": recipe.Model = "missing"; break;
-            case "missing-clip": recipe.Animations["swing"] = "missing"; break;
-            case "unlisted-role": assets.Model("machine")!.Asset.MotionSets[0].Roles["operate"] = "missing"; break;
-            case "incompatible-clip": assets.Clip("source-performance")!.Asset.Model = "other"; break;
-            case "model-collision": id = "machine"; break;
+            case "missing-model":
+                recipe.Model = "missing";
+                break;
+            case "missing-clip":
+                recipe.Animations["swing"] = "missing";
+                break;
+            case "unlisted-role":
+                assets.Model("machine")!.Asset.MotionSets[0].Roles["operate"] = "missing";
+                break;
+            case "incompatible-clip":
+                assets.Clip("source-performance")!.Asset.Model = "other";
+                break;
+            case "model-collision":
+                id = "machine";
+                break;
             case "clip-collision":
                 var second = MotionClip.FromJson(assets.Clip("source-performance")!.Serialize());
-                second.Id = "copy-second"; assets.Create(second);
+                second.Id = "copy-second";
+                assets.Create(second);
                 recipe.Animations["second"] = second.Id; // The first copy could succeed; the second must prevent the entire bundle.
                 break;
-            case "unreadable-collision": File.WriteAllText(Path.Combine(_root, "animations", "copy-swing.json"), "{ broken"); break;
-            case "long-id": id = new string('a', 64); break; // Valid model ID; invalid generated clip ID.
+            case "unreadable-collision":
+                File.WriteAllText(Path.Combine(_root, "animations", "copy-swing.json"), "{ broken");
+                break;
+            case "long-id":
+                id = new string('a', 64);
+                break; // Valid model ID; invalid generated clip ID.
         }
         var before = assets.Documents.ToDictionary(d => d.Id, d => d.Serialize());
         var subject = session.SubjectId;
@@ -108,8 +151,15 @@ public sealed class ModelTemplateTests : IDisposable
         Assert.True(session.MessageIsError);
         Assert.Equal(subject, session.SubjectId);
         Assert.Equal(before.Keys.Order(), assets.Documents.Select(d => d.Id).Order());
-        foreach (var (key, json) in before) Assert.Equal(json, assets.Find(key)!.Serialize());
-        if (failure == "unreadable-collision") Assert.Equal("{ broken", File.ReadAllText(Path.Combine(_root, "animations", "copy-swing.json")));
+        foreach (var (key, json) in before)
+        {
+            Assert.Equal(json, assets.Find(key)!.Serialize());
+        }
+
+        if (failure == "unreadable-collision")
+        {
+            Assert.Equal("{ broken", File.ReadAllText(Path.Combine(_root, "animations", "copy-swing.json")));
+        }
     }
 
     [Fact]
@@ -147,7 +197,7 @@ public sealed class ModelTemplateTests : IDisposable
         var model = ModelAuthoring.Empty("machine", "Machine");
         var root = ModelAuthoring.AddBone(model, null, "mount");
         var child = ModelAuthoring.AddBone(model, root.Id, "pendulum");
-        ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, child.Id);
+        ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), child.Id);
         model.MotionSets = [new() { Id = "cycle", Name = "Cycle", Roles = new() { ["operate"] = "source-performance" } }];
         var clip = ClipAuthoring.New(ResolvedModel.From(model), "source-performance", "Swing", 1, true);
         clip.Tracks = [new() { Kind = MotionClip.RotateKind, Target = child.Id, Keys = [new(), new() { Time = 1, Angle = .4f }] }];

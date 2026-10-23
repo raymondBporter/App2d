@@ -1,10 +1,11 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
-using App2d.Core.Geometry;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
+using App2d.Tests.Gameplay.World;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Simulation;
@@ -19,7 +20,7 @@ public sealed class SideScrollerSimulation2DTests
         Assert.Equal([.. server.Session.PlayerIds], [.. client.Session.PlayerIds]);
         Assert.Equal(server.Level.EnemySystem.Combatants.Select(c => c.Id),
             client.Level.EnemySystem.Combatants.Select(c => c.Id));
-        Assert.Equal(server.Level.MovingPlatforms.Select(p => p.Id), client.Level.MovingPlatforms.Select(p => p.Id));
+        Assert.Equal(server.Level.Objects.Select(p => p.Id), client.Level.Objects.Select(p => p.Id));
         Assert.Equal(server.Ids.Next, client.Ids.Next);
 
         var playerId = server.Session.PlayerIds[0];
@@ -31,13 +32,22 @@ public sealed class SideScrollerSimulation2DTests
                 JumpHeld = tick is >= 10 and < 30,
                 PrimaryHeld = tick is >= 40 and < 130,
             };
-            var input = new PlayerInput2D(playerId, tick, tick, command);
+            var input = new PlayerInput2D(playerId, command);
             var a = server.Session.Advance(input);
             var b = client.Session.Advance(input);
             Assert.Equal(a.Players.ToArray(), b.Players.ToArray());
             Assert.Equal(a.Events.ToArray(), b.Events.ToArray());
-            Assert.Equal(a.Enemies.ToArray(), b.Enemies.ToArray());
-            Assert.Equal([.. a.World.MovingPlatforms], [.. b.World.MovingPlatforms]);
+            Assert.Equal(a.Enemies.Length, b.Enemies.Length);
+            foreach (var (left, right) in a.Enemies.Zip(b.Enemies))
+            {
+                Assert.Equal(left with { AuthoredEntity = null, AuthoredPose = null, PhysicsProp = null, Bolts = default },
+                    right with { AuthoredEntity = null, AuthoredPose = null, PhysicsProp = null, Bolts = default });
+                Assert.Equal(left.PhysicsProp?.ToJson(), right.PhysicsProp?.ToJson());
+                Assert.Equal([.. left.Bolts], [.. right.Bolts]);
+                Assert.Equal(left.AuthoredPose?.Local.Points.OrderBy(p => p.Key), right.AuthoredPose?.Local.Points.OrderBy(p => p.Key));
+                Assert.Equal(left.AuthoredPose?.Local.Angles.OrderBy(p => p.Key), right.AuthoredPose?.Local.Angles.OrderBy(p => p.Key));
+            }
+            Assert.Equal([.. a.World.Objects], [.. b.World.Objects]);
             Assert.Equal([.. a.World.Checkpoints], [.. b.World.Checkpoints]);
         }
         Assert.NotEmpty(server.Session.CaptureContent().Terrain);
@@ -46,13 +56,19 @@ public sealed class SideScrollerSimulation2DTests
     [Fact]
     public void SavedProgressResumesAtItsCheckpointOnlyWhenItStillExists()
     {
-        using var resumed = SideScrollerSimulation2D.Create(Definition() with { SavedProgress = new(2, 3) });
+        using var resumed = SideScrollerSimulation2D.Create(Definition() with
+        {
+            SavedProgress = new(2, 3)
+        });
         var player = resumed.Session.CapturePlayers()[0];
         Assert.Equal(2, player.CheckpointId);
         Assert.Equal(3, player.Person.HitPoints);
         Assert.Equal(Checkpoint, player.Person.Position);
 
-        using var fresh = SideScrollerSimulation2D.Create(Definition() with { SavedProgress = new(99, 3) });
+        using var fresh = SideScrollerSimulation2D.Create(Definition() with
+        {
+            SavedProgress = new(99, 3)
+        });
         var freshPlayer = fresh.Session.CapturePlayers()[0];
         Assert.Null(freshPlayer.CheckpointId);
         Assert.Equal(fresh.Definition.PlayerMaximumHealth, freshPlayer.Person.HitPoints);
@@ -66,7 +82,11 @@ public sealed class SideScrollerSimulation2DTests
     {
         var map = new EditableTileMap2D(SideScrollerLevel2D.WorldWidthTiles, SideScrollerLevel2D.WorldHeightTiles,
             32f, SideScrollerLevel2D.ChunkSizeTiles, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < map.Width; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         WorldThingSpec2D[] things =
         [
             new(1, WorldThingKind2D.PlayerSpawn, null, true, Spawn),
@@ -77,8 +97,10 @@ public sealed class SideScrollerSimulation2DTests
             new(6, WorldThingKind2D.Rival, null, true, new Vector2(300f, 50f)),
             new(7, WorldThingKind2D.TumbleProp, null, true, new Vector2(500f, 50f)),
         ];
-        MovingPlatformSpec2D[] platforms =
-            [new(41, "Lift", true, new Vector2(-200f, 100f), new Vector2(96f, 0f), new Size2D(80f, 14f), 48f, 0xFF25D2BEu)];
-        return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms, things);
+        return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, things)
+        {
+            AuthoredCharacters = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot),
+            Objects = [ObjectPlatforms.Place("lift", new(-200f, 100f), new(96f, 0f), 48f, 80f, 14f)]
+        };
     }
 }

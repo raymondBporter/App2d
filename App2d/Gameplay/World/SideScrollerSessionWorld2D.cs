@@ -1,6 +1,6 @@
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
@@ -21,7 +21,7 @@ public sealed class SideScrollerSessionWorld2D(
     public Rect2D Bounds => level.TileMap.WorldBounds;
     public float GoalX => level.GoalX;
     public void UpdateStreaming(Vector2 focus) => level.UpdateStreaming(focus);
-    public void UpdateMovingPlatforms(float dt) => level.UpdateMovingPlatforms(dt);
+    public void UpdateWorldMotion(float dt) => level.UpdateWorldMotion(dt);
     public void UpdateEnemies(float dt, Vector2 target) => level.EnemySystem.Update(dt, target);
     public void SyncEnemiesAfterPhysics() => level.EnemySystem.SyncAfterPhysics();
     public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => level.UpdateSavePoints(dt, bounds);
@@ -32,7 +32,9 @@ public sealed class SideScrollerSessionWorld2D(
         if (player.IsAlive && player.Actions is PersonArsenal2D arsenal)
         {
             foreach (var hitbox in arsenal.GetActiveSwordHitboxes())
+            {
                 level.CutGrass(hitbox.WorldBounds);
+            }
         }
 
         _ = level.EnemySystem.TryResolvePlayerHits(player);

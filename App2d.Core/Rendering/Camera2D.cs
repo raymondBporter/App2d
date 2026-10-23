@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -26,7 +26,7 @@ public sealed class Camera2D
         get;
         set
         {
-            ArgGuard.ThrowIfNotFinite(value);
+            ArgGuard.Finite(value);
             field = value;
             Position = Position;
         }
@@ -55,7 +55,11 @@ public sealed class Camera2D
         get;
         set
         {
-            if (value is { } height) ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
+            if (value is { } height)
+            {
+                ArgGuard.Positive(height);
+            }
+
             field = value;
             Position = Position;
         }
@@ -72,7 +76,7 @@ public sealed class Camera2D
         get;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
+            ArgGuard.Positive(value);
             field = Math.Clamp(value, MinZoom, MaxZoom);
             Position = Position;
         }
@@ -103,10 +107,12 @@ public sealed class Camera2D
     /// <summary>Constrain a desired center, with optional room for render effects such as shake.</summary>
     public Vector2 ClampToWorld(Vector2 desiredPosition, float padding = 0f)
     {
-        ArgGuard.ThrowIfNotFinite(desiredPosition);
-        ArgGuard.ThrowIfNotFiniteOrNegative(padding);
+        ArgGuard.Finite(desiredPosition);
+        ArgGuard.NonNegative(padding);
         if (WorldBounds is not { } bounds)
+        {
             return desiredPosition;
+        }
 
         var halfView = VisibleWorldBounds.Size / 2f + new Vector2(padding);
         return new Vector2(
@@ -114,7 +120,7 @@ public sealed class Camera2D
             ClampCenter(desiredPosition.Y, bounds.Min.Y, bounds.Max.Y, halfView.Y));
     }
 
-    private static float ClampCenter(float value, float min, float max, float halfView) =>
+    private static float ClampCenter(float value, float min, float max, float halfView) => 
         max - min <= halfView * 2f ? min + (max - min) / 2f : Math.Clamp(value, min + halfView, max - halfView);
 
     public void SetViewport(int width, int height)

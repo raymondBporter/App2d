@@ -2,13 +2,126 @@
 
 A small MonoGame/XNA 2D engine and the side-scroller built on it.
 
-The solution has five projects. `App2d.Core` is the engine: mathematics, geometry,
+The solution has seven projects. `App2d.Core` is the engine: mathematics, geometry,
 collision, physics, tiles, rendering, audio, authored characters, and the WinForms game
 host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
-level storage, the editor, and diagnostics. `App2d.Tests` holds every test.
+level storage, the editor, and the in-game debug tools. `App2d.Tests` holds every test.
 `App2d.CharacterStudio` is the character editor and `App2d.Noodle` holds the rig
-experiments; both build on `App2d.Core`. `tools/ClothLab` is a small cape study.
+experiments; both build on `App2d.Core`. `App2d.EditorUi` supplies shared editor UI.
+`App2d.CharacterSeeds` is the home for everything that is not the game or Studio: the
+retained character generators and the rendering smokes and studies, run with
+`dotnet run --project App2d.CharacterSeeds -- <flag>`. It references the game; the game
+does not reference it. `tools/ClothLab` is a small cape study.
 Everything targets `net10.0-windows10.0.19041.0`.
+
+`App2d.Trials` is a separate, minimal trials-game prototype. Run it with
+`dotnet run --project App2d.Trials`. It uses the shared `GameHost`, `Game2D` camera,
+and physics world to simulate a double-triangle bike on a cubic B-spline terrain course.
+Use **A/D** or **Left/Right** to drive, **W/S** to lean, **Space** to brake,
+**R** to reset, and **Esc** to close. The camera follows the terrain height; surface marks show movement.
+Three repeating depth layers provide clouds, distant mountains, and nearby hills;
+both games use the shared [parallax layer API](docs/rendering-passes.md#parallax-layers).
+No external assets are needed. `TrialsBike2D` holds the editable tube geometry, fork,
+wheel radius, motor and suspension tuning. The front triangle and rear swingarm are
+separate rigid bodies. A front wheel joint allows 28 units of travel along the fork;
+a rear pivot and wheel bearing keep the rear triangle connected while its shock
+compresses up to 14 units. Wheels rotate freely and rear-wheel torque drives through
+ground friction. The fork telescopes and the rear shock graphic follows its mounts.
+
+`TrialsCourse2D` holds the course `Width`, `FrequencyAmplitudes` and additive `Ramps`.
+Change `Width` in that file to grow the default map, or pass a different configuration to
+`TrialsGame2D(course)` / `TrialsTerrain2D(world, course)`. Width is measured from `XMin`
+to `XMax = XMin + Width`, including the area left of the spawn. Frequencies are cycles
+per world unit (`1 / wavelength`), amplitudes are heights in world units, and ramps use
+world-space X/Y points. Increasing width adds more waves without stretching their scale
+or moving authored ramps. The final wave fade follows the new right endpoint.
+
+```csharp
+var course = TrialsCourse2D.Default with
+{
+    Width = 40_000f,
+    FrequencyAmplitudes = [(1f / 2400f, 48f), (1f / 700f, 20f)],
+    Ramps = [PolylineCurve2D.Builder.Create([new(2000, 0), new(2200, 120), new(2400, 0)])]
+};
+using var game = new TrialsGame2D(course);
+```
+
+`ControlPointSpacing`, `YMin`, `WaveStartX` and wave fade lengths are also configurable.
+The control-point grid remains anchored when width changes, with an exact final endpoint
+even when the width is not a multiple of the spacing. Empty wave/ramp collections are valid.
+The default map keeps the three waves and two hand-shaped ramp profiles.
+The clamped cubic `BSpline2D` has continuous position, first and second
+derivatives at its simple interior knots; its control points influence the curve rather
+than being interpolation targets. `Curve2D.ToPolyline` samples each knot span adaptively,
+with a 12-unit chord limit and 0.05-unit sampled-deviation target. Visible and collidable
+terrain use the same sampled boundary. `SimplePolygon2D.Builder.BelowPolyline` closes
+the region down to a bottom plane and builds narrow strip triangles directly. This is a
+finite default course of width 12800 from x = -1600 to 11200, with a flat starting area.
+
+`IHeightField2D` in Core describes the solid `XMin <= x <= XMax` and
+`YMin <= y <= HeightAt(x)`: a function on top, vertical end caps, and a supplied flat bottom.
+`PolylineHeightField2D`, `BSplineHeightField2D`, and `FunctionHeightField2D` share this API.
+The function source needs no vertices; height, slope, outward top normal and containment
+queries evaluate the source directly. B-splines invert their X coordinate before evaluating
+Y, and require strictly increasing control-point X coordinates. Polyline slopes use the
+segment to the right at corners. Supplied bottoms must lie below the top; evaluating an
+invalid height throws instead of moving the bottom or changing the function.
+
+```csharp
+using App2d.Core.Geometry.HeightFields;
+using App2d.Core.Geometry.Operations.HeightFields;
+
+IHeightField2D hills = new FunctionHeightField2D(
+    xMin: -1000f, xMax: 1000f, yMin: -200f,
+    height: x => 30f * MathF.Sin(x / 100f),
+    slope: x => 0.3f * MathF.Cos(x / 100f),
+    yMax: 30f);
+var normal = hills.NormalAt(50f); // normalize((-slope, 1))
+var collider = hills.ToShape(); // HeightFieldShape2D implements IShape2D.
+var terrain = new TrialsTerrain2D(world, hills);
+```
+
+No minimum/maximum search is performed. `YMax` is a conservative upper bound: polylines
+use their highest vertex, B-splines use their highest control point, and functions may supply
+a bound or leave it at positive infinity. `Bounds()` permits infinite rectangles.
+`YMin = float.NegativeInfinity` supports unbounded-downward source queries; polygon baking
+then requires `ToClippedShape(finiteBottom)` (or `ToClippedPolygon`) explicitly. Sampling is an approximation;
+choose a segment length that resolves a function's shortest features. Trials samples once
+and shares that boundary between drawing, camera heights and existing shape collision.
+The side-scroller's tile terrain remains unchanged.
+
+`HeightFieldShape2D` attaches directly to a `SpatialObject2D`/`WorldObject2D`, with bounds,
+area, mass/inertia, point distances, raycasts, drawing and JSON support. Its serialized data
+is the frozen polyline top and finite `YMin`; analytic delegates remain in the source API.
+Polyline sources retain their authored edges exactly; B-splines and functions are sampled
+once, and every shape operation uses the same approximation.
+
+Collision splits heightfields with a linear slope scan: nonincreasing top-edge slopes keep
+one convex run; an increasing slope starts the next run at the shared vertex. Each run
+closes vertically down to `YMin`. Cross products compare slopes without division, and
+exactly collinear samples collapse inside the collision pieces. Their interiors are disjoint
+and their union is the heightfield. This needs no general polygon decomposition or root
+search. All built-in finite shapes and half-spaces use the existing convex collision path
+against these pieces; circles use the complete outer perimeter to avoid internal seams.
+Concave pair contacts retain the solver's per-piece behavior rather than claiming a single
+global minimum escape translation. Other shapes can still encounter shared piece edges
+at concave joins; this is a smaller set of edges than a triangle decomposition.
+
+Circle-versus-simple-polygon contacts query the actual outer perimeter, including its
+vertices, rather than internal triangle seams. Containment determines the outward normal;
+other shapes use the existing convex-part contacts, with bounds rejection before narrow phase.
+Large composites cache a local-space bounds tree so only nearby parts reach the narrow phase;
+moving or rotating the body reuses the tree, and equal-depth contacts retain source-part ordering.
+The spline is the authoring curve; collision uses its polyline approximation, not an analytic
+spline contact. Adaptive deviation checks sample quarter/midpoints and are not certified
+error bounds for arbitrary user-defined curves.
+
+A support function on an entire nonconvex spline would make GJK see its convex hull,
+bridging valleys. Minkowski support addition is valid for convex shapes:
+`support(A + B, d) = support(A,d) + support(B,d)`. A disk adds `r * normalize(d)`.
+`NormalOffsetCurve2D` instead evaluates `C(t) + offset(t)*normal(t)`; it can describe a
+local wheel-center path for a constant radius, but endpoints and overlapping offsets
+still require geometric handling. It is not a general nonconvex GJK collision shape.
 
 Within the game project, `Contracts` owns commands, immutable observations/events, and
 shared configuration; `Gameplay` owns the simulation; `Presentation` owns views, camera,
@@ -23,10 +136,29 @@ The engine is grouped by responsibility:
   cell geometry and ranges, and dense `Grid2D<T>` storage. Tile maps, viewport terrain,
   and the collision spatial index share it. See [the grid API](App2d.Core/Grids/README.md)
   for wind-field and sparse-bucket examples and boundary rules.
+- `App2d.Core/Imaging` contains plain `Image2D<T>` pixel arrays, pixel mapping and
+  arithmetic, and binary skeletonization. See [the image pipeline](App2d.Core/Imaging/README.md)
+  for converting decoded textures into float channels, masks, and skeletons.
 - `App2d.Core/Mathematics` contains transforms and reusable numeric helpers, including
   `Similarity2D` — the validated rotation + uniform scale + mirror + translation pose
   that collision consumes. The namespace uses `Mathematics` rather than `Math` so it
   never shadows `System.Math`.
+- `Frame2D` and `Frame3D` describe affine coordinate systems with explicit axes, an
+  origin, composition, and point/direction transforms. Sockets return `Frame3D`;
+  callers project an axis or point with `.XY` when entering 2D gameplay.
+- Geometry supplies `Rect2D.FromPoints(points).InflatedBy(padding)` and shape outlines
+  placed by `Similarity2D`, with span overloads for reusable buffers. Collision can
+  query `(shapeA, poseA, shapeB, poseB)` directly through `ShapeCollision2D.Overlaps`
+  or `TryGetContact`; no registered spatial objects are required.
+- `Color4b` is the shared global alias for `Microsoft.Xna.Framework.Color`, with four
+  byte channels. `ColorExtensions` parses and formats RGB/RGBA hex and converts to
+  normalized `System.Numerics.Vector4` for float color math, using straight alpha.
+- Appearance palettes are simple source files: [UiTheme](App2d.EditorUi/UiTheme.cs)
+  for shared controls, [StudioTheme](App2d.CharacterStudio/Editor/StudioTheme.cs) for
+  editor viewports and timelines, [GameUiTheme](App2d/Presentation/GameUiTheme.cs) for
+  the HUD, menus and level-editor overlays, and [DebugTheme](App2d.Core/Rendering/DebugTheme.cs)
+  for grids, colliders and diagnostics. Edit their named colors, rebuild and restart.
+  ImGui colors use normalized float RGBA; renderer palettes use `Color4b` byte RGBA.
 - `App2d.Core/Rendering` contains the renderer, shader abstractions, and the `GraphicsSurface2D` WinForms host surface.
 - `App2d.Core` presents guards, mathematics, animation, geometry, collision, physics, and the
   render-agnostic `SpatialObject2D`. `App2d.Core/Tiles` presents the tile maps and mesher.
@@ -89,12 +221,12 @@ session (a player with no input this tick repeats its last command), and immutab
 per-player, enemy, level-content, and world observations plus gameplay events return
 to `SideScrollerClient2D`. Presses and releases are derived inside the simulation from
 consecutive commands, so a lost or repeated command cannot drop or double an action.
-The production level, weapons, enemy actors, moving platforms, checkpoints, and
+The production level, weapons, enemy actors, authored objects, checkpoints, and
 terrain colliders run without constructing graphics or playing audio. Client presentation owns
 sprites, terrain, effects, HUD, and sound; the host handles persistence and editing.
 Terrain observations use cached immutable chunk revisions, including neighboring
-tiles for correct edge rendering. Simulation and presentation are separate folders of the game project. A complete `SessionSnapshot2D` supports attaching at any tick; input
-production and display-time advancement run independently of received frames.
+tiles for correct edge rendering. Simulation and presentation are separate folders of the game project. `CaptureSnapshot()` returns a complete frame with no events to
+initialize presentation; display-time advancement runs independently of simulation ticks.
 Persistent character poses and attack phases reconstruct from state, and terrain
 observations can be rebuilt from values without a live map. See
 [the session architecture](docs/session-architecture.md) for the frame and observation flow.
@@ -140,7 +272,7 @@ forgotten when those chunks unload, so returning grass is full height. Snapshot
 attachment preserves this bounded state; cuts are not written to the
 level or player save. Seeded branching trees occupy
 open stretches behind the terrain and actors; they are decorative and cannot be chopped.
-The shared rendering code lives in `App2d.Core/Rendering/Vegetation`.
+The shared vegetation code lives in `App2d.Core/Vegetation`.
 Wind deformation currently runs on the CPU and uses the existing GPU triangle batch.
 The camera's terrain coverage includes extra foliage margin for overhanging canopies.
 
@@ -168,18 +300,29 @@ Ladders are non-solid grippable cells (`Grippable` without
 `Solid`), so the existing four-bit tile kind and level format remain compatible.
 
 The sidebar's **Things** button switches to authored map objects. A small code-owned type list
-currently offers the player spawn, goal, three enemy types, tumble props, and moving platforms.
-The position-only types deliberately expose just reusable definition names plus instance name,
-enablement, and position; their health, AI, art, physics, and other tuning remain in gameplay
-code. Moving platforms keep their richer rectangle, art, path, and speed properties. A native
-WinForms `PropertyGrid` writes only when **Apply** is pressed, while MonoGame draws map markers,
-placement ghosts, selection outlines, paths, and draggable endpoints. This avoids turning the
-renderer into a general UI library. All definitions, instances, transforms, and typed pieces
-remain relational rows in the level database. Moving-platform changes reload live; the other
-map objects are picked up on the next run.
+currently offers objects, the player spawn, goal, three enemy types, and tumble props. An object
+definition picks one of the world's `objects/*.json` files, which carries the shape, material,
+physics and path; the moving lifts are such objects. The position-only types deliberately expose
+just reusable definition names plus instance name, enablement, and position; their health, AI,
+art, physics, and other tuning remain in gameplay code. A native WinForms `PropertyGrid` writes
+only when **Apply** is pressed, while MonoGame draws map markers, placement ghosts, selection
+outlines, object outlines and their paths. Any placed thing drags to a new grid corner, and
+**Undo** reverts the last thing edit. This avoids turning the renderer into a general UI
+library. All definitions, instances, and transforms remain relational rows in the level
+database. Object placements reload live as they are placed, dragged, edited or deleted; the
+other map objects are picked up on the next run.
 
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
+
+`Geometry/Meshes/MeshTopology` provides allocation-free `foreach` views:
+`Triangles(indices)` reads index triples, `TriangleFan(vertexCount)` supplies
+first-vertex fan indices, and `Edges(vertexCount, closed)` supplies directed perimeter
+or polyline edges. `TriangleMesh2D.Triangles` and `MeshTopology.IndexedTriangles<T>`
+resolve index triples to vertex values. Span views borrow their buffers without
+copying; do not change the buffers or resize their owning lists during enumeration.
+Fewer than three fan vertices produce no faces. A fan requires the perimeter to be
+visible from its first vertex; concave outlines still use `PolygonTriangulation2D`.
 
 Every shape implements local-space point containment. `SpatialObject2D` owns only a
 shape and transform and applies the inverse transform for point queries. Physics bodies
@@ -225,8 +368,10 @@ from its injected `CollisionSystem2D`:
 ```text
 substep integration
     -> collision-system candidate + contact query
+    -> OnBeforeCollision: accept or reject the detected contact
     -> iterative contact + constraint position projections
     -> contact response + constraint velocity projections
+after all substeps: OnAfterCollision once per accepted body pair
 ```
 
 `GameHost` feeds gameplay exact 1/120-second updates through an accumulator. The
@@ -237,10 +382,53 @@ button press or mouse-wheel action.
 
 The defaults are semi-implicit Euler integration, mass-weighted MTV correction, and a
 linear impulse solver. Physics policies remain replaceable through `Integrator`,
-`PairFilter`, `PositionSolver`, and `VelocitySolver`. Collision shape/contact policy is
+`PairFilter`, `CollisionCallbacks`, `PositionSolver`, and `VelocitySolver`. Collision shape/contact policy is
 configured independently through `CollisionSystem2D.ContactProvider`. `Constraints` run their
 position projection during each `PositionIterations` pass, followed by their velocity
-projection for `VelocityIterations` passes.
+projection for `VelocityIterations` passes. Contact response is revisited between
+velocity passes so joints and supporting contacts can settle together.
+
+`IPhysicsConstraint2D.PrepareVelocity(dt)` runs once per substep after contact response,
+before velocity iterations. Existing constraints inherit a no-op. Stateful impulse
+constraints use it to prepare anchor masses and reset their per-substep impulse.
+
+`SoftPointJoint2D` brings two body-local anchors together with a damped spring in both
+axes, without restricting relative rotation or projecting positions. Offset anchors use
+the bodies' centers of mass, angular velocity and inertia. Its implicit impulse solver
+uses [Solver2D's soft constraint coefficients](https://box2d.org/posts/2024/02/solver2d/#soft-constraints)
+with accumulated impulses so extra solver iterations do not multiply spring strength.
+Tune `FrequencyHertz` for stiffness and `DampingRatio` for settling: below 1 overshoots,
+1 is critical damping, and above 1 is overdamped. The underlying equation is
+`x'' + 2*zeta*omega*x' + omega²*x = 0`, with `omega = 2*pi*frequency`.
+Keep frequency below half the physics substep rate; integration adds some numerical damping.
+
+Suspension uses three additional constraints:
+
+- `RevoluteJoint2D`: firm coincident anchors, free relative rotation (swingarm pivot or wheel bearing).
+- `WheelJoint2D`: firm motion perpendicular to a body-local guide axis, a spring/damper
+  along that axis, optional travel limits, and free wheel rotation. The axis rotates with
+  the first body; differentiating that moving direction is included in the angular lever arm.
+- `SpringDamperJoint2D`: a shock between two offset mounts. It applies spring/damping
+  only along their connecting line, including the mounts' angular velocities and reaction
+  torques. Optional length limits prevent bottoming or extending beyond the stops.
+
+Trials uses a 6 Hz fork, 7 Hz rear shock and damping ratios of 0.7, with twelve
+position/velocity passes at 120 Hz. The shock has no separate rigid body: its two
+mount points determine its length and direction. The swingarm determines the axle's arc.
+
+For the math, let `n` be the unit suspension direction and `v` relative attachment velocity.
+`n^T v = dot(n,v)` is a scalar speed. Multiplying back by `n` gives the projected vector,
+so damping is `Fd = -c * n * dot(n,v) = -c * (n n^T) * v`. No division is needed for a unit vector;
+for a non-unit direction `a`, the projection matrix is `(a a^T)/(a^T a)`.
+Complete `n` with a perpendicular unit vector `t` to form the orthogonal basis `R = [n t]`.
+Then `R * diag(c,0) * R^T = c * n n^T`: ordinary change of basis for damping along one axis.
+In a single linearized suspension coordinate `q`, the oscillator is
+`m_eff*q'' + c*q' + k*(q-q0) = external_force`. A whole bike also has rotating axes,
+changing lever arms, gravity and contacts; we solve their coupled impulses rather than
+treating world X and Y as independent oscillators. Spring frequency defines
+`k = m_eff*omega²`, damping defines `c = 2*zeta*m_eff*omega`.
+See [Catto's soft constraint derivation](https://box2d.org/files/ErinCatto_SoftConstraints_GDC2011.pdf)
+and the [wheel joint constraint equations](https://github.com/erincatto/box2d/blob/main/src/wheel_joint.c).
 
 `DistanceConstraint2D` holds direct references to two bodies and locally projects them
 back to a configurable `RestLength`, weighted by inverse mass. Its velocity projection
@@ -260,6 +448,21 @@ phases remain available as reusable references for other workloads.
 Physics adds `DefaultPhysicsPairFilter2D` for motion-type policy. Its defaults reject static-static, static-kinematic, and
 kinematic-kinematic pairs, so at least one body must currently be dynamic. The six
 pairing switches can opt specific combinations back in without changing the broad phase.
+
+`IPairFilter2D` decides eligibility before geometry exists, with the same answer in
+either argument order. `RigidBody2D.CanCollideWith` checks enabled/layer-mask flags;
+`PhysicsWorld2D.CanCollide` also consults both the collision-system and physics-world
+pair filters. Gameplay support queries use the latter so a filtered pair cannot
+still count as ground.
+
+Set `PhysicsWorld2D.CollisionCallbacks` to an `IPhysicsCollisionCallbacks2D` policy:
+`OnBeforeCollision(contact)` runs after detection and before recording or response;
+return false to discard the contact. It can run repeatedly as position iterations
+refresh geometry. `OnAfterCollision(contact)` runs once per accepted pair after
+the complete step's response and constraints. Sensors receive notifications without
+physical response. Removing bodies in the after callback is supported; recursive
+stepping is rejected. Raw collision/raycast queries remain geometric queries and
+do not invoke physics callbacks.
 
 ## Ray queries
 
@@ -282,7 +485,7 @@ var ray = Ray2D.FromPoints(origin, mouseWorld);
 
 if (physics.Raycast(ray, 800f, out var hit, layerMask: WorldLayer))
 {
-    PhysicsBody2D body = hit.Item;
+    RigidBody2D body = hit.Item;
     Vector2 point = hit.Point;
     Vector2 normal = hit.Normal;
     float distance = hit.Distance;
@@ -294,15 +497,46 @@ small, it retains the nearest hits. Because each generic hit contains a managed 
 reference, back that span with an array or pooled array rather than `stackalloc`.
 Physics queries skip disabled colliders and accept a layer mask, sensor toggle, and an
 optional predicate. Scene queries return `WorldObject2D` references; physics queries
-return `PhysicsBody2D` references.
+return `RigidBody2D` references.
 
 Bodies support static, kinematic, and dynamic motion; linear/angular velocity; force,
 torque, and impulses; mass and inertia; gravity scaling; restitution; sensors; and
-collision layers/masks. A body can set `OneWaySurfaceNormal` to the outward normal
-of its blocking face (`+Y` for a floor, `+X` for a wall). Contacts from other faces
-or from bodies passing through are ignored. `IsOneWayPlatform` is a `+Y` shorthand.
+collision layers/masks. Side-scroller platform behavior lives in App2d's
+`PlatformCollisionRules2D`, rather than on `RigidBody2D`:
+
+```csharp
+var platforms = PlatformCollisionRules2D.Attach(physics);
+platforms.Surface(platformBody).OneWaySurfaceNormal = Vector2.UnitY;
+platforms.IgnorePlatform(playerBody, platformBody); // only this pair drops through
+```
+
+Attaching preserves existing pair filters and callbacks. Drop-through exclusions
+run in the pair filter before narrow phase; the normal, previous-side and approach
+checks run in `OnBeforeCollision`. Surface slop and wall-grip metadata also live in
+the game policy. Body removal cleans its state. Trials attaches no platform policy.
 Accumulated forces clear after a public step. The latest contacts remain available
 through `LastContacts`, `IsTouching(body)`, and directional `IsTouching(body, direction)`.
+
+Uniform solid mass properties are available through
+`ShapeMassProperties2D.Calculate(shape, density)` in
+`App2d.Core.Geometry.Operations.MassProperties`. It returns area, mass, center of
+mass, and moment of inertia about that center. See the
+[formulas and supported shapes](App2d.Core/Geometry/README.md#solid-mass-properties).
+On a live rigid body, choose either:
+
+```csharp
+body.SetMassFromDensity(0.01f); // mass per square world unit
+// Or choose total mass and derive inertia from the uniform solid shape:
+body.SetMassFromShape(2f);
+```
+
+Both include the body's current uniform scale and set `LocalCenterOfMass`;
+`WorldCenterOfMass` follows its transform. Recalculate after resizing. Contacts
+and center-to-center distance constraints use this center, and integration rotates
+around it. Linear velocity describes the center's motion. Existing explicit
+`Mass`, `MomentOfInertia`, and `PhysicsBodySettings2D` values remain supported;
+shape-derived values are opt-in. Trials derives the frame's mass distribution from its
+solid tubes and each wheel's inertia from `I = 0.5 * mass * radius²` (mass 1.2, radius 26).
 
 A simple platform controller can therefore remain gameplay code:
 
@@ -339,6 +573,10 @@ See [the authoring pipeline](tools/ArtPipeline/README.md).
 ```powershell
 dotnet run --project App2d
 ```
+
+Level files written before the current format are upgraded once with
+`dotnet run --project App2d -- --migrate-level` (old moving-platform rows become `objects/*.json`
+assets and object things); see [world maps](docs/world-maps.md).
 
 Run the C# / Dear ImGui character editor with:
 
@@ -403,9 +641,9 @@ mapping, and traversal diagnostics have similarly narrow owners.
 
 The 640x96-tile level provides merged tilemap collision, explicit one-way strips, fall
 respawning, an authorable goal flag, smooth bounded camera follow, and procedural parallax
-depths. Authored moving platforms use kinematic one-way slabs that follow horizontal or
-vertical ping-pong paths with smooth turnarounds. Physics carries supported dynamic bodies
-along those surfaces. The same kinematic motion driver also accepts other `ICurve2D` paths;
+depths. Authored objects provide the moving lifts: kinematic one-way rectangles defined in
+`objects/*.json` that ping-pong along a line with smooth turnarounds. Physics carries supported
+dynamic bodies along those surfaces. The same kinematic motion driver accepts any `ICurve2D` path;
 see [Kinematics](App2d/Gameplay/World/KINEMATICS.md).
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
 ledges are authored in `Assets/Static/levels/cavern/level.db`, the committed level file
@@ -442,23 +680,27 @@ nearby static solid wall suspends the player; jumping launches away. One-way pla
 do not allow wall grip.
 
 Short sound effects are decoded once at startup and played through one polyphonic mixer.
-Gameplay emits semantic cues through `ISoundEffectSink2D`, so movement, combat, and weapon
-code never knows asset paths or audio-device details. `SoundEffectBank2D` owns the cue-to-file
-mapping, per-cue levels, non-repeating variants, and subtle per-play volume and pitch variation.
-`SpatialSoundEffectSink2D` wraps the bank with the player's live position as its listener.
+The sound-effect machinery lives in `App2d.Core/Audio` and is generic over the game's cue
+enum: gameplay emits semantic cues through `ISoundEffectSink2D<SoundEffect2D>`, so movement,
+combat, and weapon code never knows asset paths or audio-device details. `SoundEffectBank2D`
+loads a cue table of `SoundCue2D` values (stems, level, pitch jitter, falloff) and plays
+non-repeating variants with subtle per-play volume and pitch variation. The game's table is
+`SoundEffectCues2D` next to the `SoundEffect2D` enum. `SpatialSoundEffectSink2D` wraps the
+bank with the player's live position as its listener and a per-cue falloff lookup.
 World effects use `PlayAt(effect, position)`; controllable effects use `BeginAt` and can
 move their source with `SetPosition`. The game updates active voices each frame, multiplying
 their requested volume by smooth distance falloff. `SoundFalloff2D` sets the tuning:
 ordinary effects stay at full volume within 96 world units (3 tiles) and fade to silence
-at 800 (25 tiles); hammer impacts use 128 and 1200 units. Out-of-range one-shots are
-skipped. Player movement/feedback and global cues use `Play`/`Begin` at their normal levels.
-Set `sfx_volume` in the developer
-console to a value from 0 through 1 to adjust the master sound-effect level.
+at 800 (25 tiles); the hammer impact cue carries 128 to 1200 units, and the gun charge cue
+holds its pitch. Out-of-range one-shots are skipped. Player movement/feedback and global
+cues use `Play`/`Begin` at their normal levels.
+The debug panel (F5) has an SFX volume slider from 0 through 1 for the master
+sound-effect level.
 
 Music plays automatically from four synchronized Ogg stems on a separate streaming
 bus. Rectangular world zones choose the piece and mood, with a default outside zones
-and smooth transitions. `music_volume`, `music_piece`, `music_mood`, `music_status`
-and `draw_zones` are available in the developer console. Geometry is authored in
+and smooth transitions. Music volume, piece and mood overrides, a now-playing readout
+and a zone outline toggle are in the debug panel (F5). Geometry is authored in
 `Assets/Static/levels/cavern/zones.json`; music assignments live in
 `Assets/Static/audio/music/soundtrack.json`. See [music and zones](docs/music-and-zones.md).
 
@@ -540,57 +782,56 @@ Developer / editor controls:
   motor, with no drag, speed cap, inherited velocity, or terrain collisions. Each
   marker stops at launch height and leaves its trail for comparison. Editor mode
   freezes them. Labels interpret 1 tile as 1 meter for this experiment only; gameplay
-  units and movement are unchanged. In the console, set `ballistics_speed`,
-  `ballistics_angle`, or `ballistics_gravity`, then press F4 to repeat the experiment.
+  units and movement are unchanged. Adjust speed, angle, or reference gravity in the
+  debug panel's Ballistics section (F5), then press F4 to repeat the experiment.
 - F1: toggle the tile editor; freezes gameplay, detaches the camera, and switches the
   mouse to painting (left button paints or selects from the right sidebar, right erases,
   middle-drag pans, wheel zooms, and `Ctrl+Z` undoes an edit)
-- Backtick (`): open or close the developer console
+- F5: open or close the debug panel
 - Escape: close
 
 Input ownership stays small: `InputState` reads keyboard/mouse events, and
 `App2d/Input/XboxControllerInput2D` reads controller state. Default gameplay bindings
 live together in `PlayerInputMapper2D`, which produces `PersonCommand2D` without
 camera or pointer coordinates. Attacks use facing direction. `PlayerDebugInput2D`
-owns temporary player inspection keys; the editor and console own their shortcuts.
-Opening the editor/console or losing window focus cancels held gameplay input.
+owns temporary player inspection keys; the editor and debug panel own their shortcuts.
+Opening the editor or losing window focus cancels held gameplay input.
 Held buttons must be released before they can trigger again after cancellation.
 
 Interaction behavior and a pause menu are future gameplay work. E remains available for interaction; Escape currently retains its host close
 behavior. There is no remapping UI or configurable binding file yet.
 
-## Developer console
+## Debug panel
 
-Press backtick (`) to open the in-game developer console. Gameplay keeps running, but
-gameplay input is suppressed while the console has focus. Variables can be read by name
-and changed with either whitespace or an equals sign:
+Press F5 to open or close the in-game debug panel: a floating ImGui window of
+checkboxes, sliders, dropdowns and buttons. It is non-modal, so gameplay keeps running
+and keeps its keys except while a slider or value field is being edited. Hover a control
+for its description. The engine registers the Draw toggles; the side scroller adds the
+rest:
 
-```text
-draw_fps
-draw_fps true
-draw_grid = true
-draw_collision_shapes = true
-draw_graphics = false
-camera_zoom = 2
-```
+- Draw: graphics, grid, FPS, collision shapes, zones, traversal metrics
+- Audio: SFX and music volume, music mood and piece overrides, now playing
+- Camera: zoom
+- World: reload giant trees
+- Ballistics: speed, angle, reference gravity
+- Resources: registered resource keys, consumers and sources
 
-`camera_zoom` controls gameplay framing (default `1.35`, range `0.05`–`20`);
+Camera zoom controls gameplay framing (default `1.35`, range `0.05`–`20`);
 larger values zoom in. Visible terrain follows the camera automatically.
 Gameplay scales uniformly from a 1080-pixel-high reference view: resizing the
 window preserves the visible world height at the current zoom, while wider
 aspect ratios reveal more world horizontally. Editor picking and panning use
 the same camera transform.
 
-`list` shows registered variables, `help` shows syntax, `toggle <name>` flips a boolean,
-and `clear` clears the output. Tab completes names and Up/Down navigate command history.
-Games can expose additional runtime values with
-`DeveloperConsole.RegisterVariable(name, getter, setter, description)` and can register
-their `PhysicsWorld2D` for collider visualization with `RegisterDebugPhysicsWorld`.
+Games expose runtime values with `DebugPanel.Section(title)` followed by `Toggle`,
+`Slider`, `Choice`, `Button` or `Readout`; a section is created on first use, so a game
+can extend the engine's Draw section. `Game2D` also exposes `DrawGraphics`, `DrawGrid`,
+`DrawFps` and `DrawCollisionShapes` directly for tests and captures, and games register
+their `PhysicsWorld2D` for collider visualization with `AttachPhysicsWorld`.
 Physics collision shapes are drawn as translucent green overlays above the game
-graphics, while active combat hitboxes use a red-orange overlay. Set
-`draw_graphics = false` (or `toggle draw_graphics`) to keep the simulation running and
-inspect collision geometry; all world debug and UI remain available.
-`draw_grid = true` enables the world-space debug grid (off by default).
+graphics, while active combat hitboxes use a red-orange overlay. Turn off Graphics to
+keep the simulation running and inspect collision geometry; all world debug and UI
+remain available. Grid enables the world-space debug grid (off by default).
 The grid and other world diagnostics draw over game graphics, while HUD, menus,
 and diagnostic labels draw last.
 
@@ -618,14 +859,14 @@ matrix. This is why the click marker remains correct after resize and zoom.
 `IShader2D` describes a solid, gradient, tiled, or sprite material. `Renderer2D`
 transforms geometry into device-space triangles and submits ordered batches through
 MonoGame's `GraphicsDevice` and `BasicEffect`. Color values use
-`Microsoft.Xna.Framework.Color`; floating-point HUD bounds use `ScreenRectangle2D`.
+`Color4b` (the global alias for `Microsoft.Xna.Framework.Color`); floating-point HUD
+bounds use `ScreenRectangle2D`.
 Gradients interpolate vertex colors, and textures use XNA sampler states. Circles and
 capsules are tessellated according to their on-screen size. The host requests 4x MSAA.
 
 `GraphicsSurface2D` owns a WindowsDX graphics device bound to a WinForms child control.
 It resizes the backbuffer with the control, while the existing 120 Hz simulation,
-keyboard/mouse input, native property inspector, and developer console keep their
-existing host. The former Skia raster/OpenGL backend and `APP2D_RENDER_BACKEND`
+keyboard/mouse input and native property inspector keep their existing host. The former Skia raster/OpenGL backend and `APP2D_RENDER_BACKEND`
 switch have been removed.
 
 Scene objects also expose a general-purpose `ZIndex`. Lower values render first, and
@@ -711,6 +952,21 @@ their gameplay timing. The character artwork is rendered by a separate visual ob
 that follows the smaller physics collider, keeping transparent frame padding out of
 collision calculations.
 
+## Code formatting
+
+The existing `.editorconfig` keeps statements on separate lines and requires braces
+around control-flow bodies. It does not impose a line-width limit. Apply these rules
+with the formatter included in the .NET SDK:
+
+```powershell
+dotnet format style App2d.slnx --diagnostics IDE0011 --severity warn
+dotnet format whitespace App2d.slnx
+```
+
+Add `--verify-no-changes` to both commands to check formatting without editing files.
+For the standalone cape study, use `tools/ClothLab/ClothLab.csproj` in place of
+`App2d.slnx`.
+
 ## Graphics verification
 
 Build and test on Windows with a Direct3D-capable adapter:
@@ -718,7 +974,7 @@ Build and test on Windows with a Direct3D-capable adapter:
 ```powershell
 dotnet build App2d.slnx
 dotnet test App2d.slnx
-dotnet run --project App2d -- --render-smoke artifacts/monogame-smoke
+dotnet run --project App2d.CharacterSeeds -- --render-smoke artifacts/monogame-smoke
 ```
 
 Rendering tests draw into real GPU render targets and read pixels back to check sprite

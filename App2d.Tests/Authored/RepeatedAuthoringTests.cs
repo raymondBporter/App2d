@@ -1,3 +1,5 @@
+using App2d.CharacterSeeds;
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Mathematics;
@@ -30,8 +32,11 @@ public sealed class RepeatedAuthoringTests : IDisposable
     /// <summary>The spear guard thrusting from the upper body over its walk.</summary>
     private static EntityAsset SkirmishingGuard()
     {
-        var guard = StarterContent.SpearGuardEntity(); guard.Id = "skirmisher";
-        guard.Actions[0].Mask = StarterContent.Upper; guard.Actions[0].BlendIn = .08f; guard.Actions[0].BlendOut = .12f;
+        var guard = StarterContent.SpearGuardEntity();
+        guard.Id = "skirmisher";
+        guard.Actions[0].Mask = Humanoid.UpperGroup;
+        guard.Actions[0].BlendIn = .08f;
+        guard.Actions[0].BlendOut = .12f;
         return guard;
     }
 
@@ -40,13 +45,25 @@ public sealed class RepeatedAuthoringTests : IDisposable
     [Fact]
     public void AMaskedLayerBlendsFromTheBaseToTheOverlayAndLeavesTheLegsAlone()
     {
-        var catalog = AuthoredCatalog.Load(_root); var person = catalog.Resolve("person");
-        var walk = catalog.Animations["person-walk"]; var thrust = catalog.Animations["person-thrust"];
-        var upper = person.Base.Groups.Single(g => g.Id == StarterContent.Upper).Targets.ToHashSet();
+        var catalog = AuthoredCatalog.Load(_root);
+        var person = catalog.Resolve("person");
+        var walk = catalog.Animations["person-walk"];
+        var thrust = catalog.Animations["person-thrust"];
+        var upper = person.Base.Groups.Single(g => g.Id == Humanoid.UpperGroup).Targets.ToHashSet();
         Assert.Equal(PersonLoadout.UpperBody.Order(), upper.Order());
-        EvaluatedPose At(float weight) => PoseEvaluator.Sample(person, walk, .45, input: new() { Overlay = new(thrust, .5, upper, weight) });
-        var plain = PoseEvaluator.Sample(person, walk, .45); var none = At(0); var half = At(.5f); var full = At(1);
-        foreach (var (id, point) in plain.Points) TestModels.Near(point, none.Points[id], 1e-6f, $"weight 0 leaves {id} on the base");
+        EvaluatedPose At(float weight) => PoseEvaluator.Sample(person, walk, .45, input: new()
+        {
+            Overlay = new(thrust, .5, upper, weight)
+        });
+        var plain = PoseEvaluator.Sample(person, walk, .45);
+        var none = At(0);
+        var half = At(.5f);
+        var full = At(1);
+        foreach (var (id, point) in plain.Points)
+        {
+            TestModels.Near(point, none.Points[id], 1e-6f, $"weight 0 leaves {id} on the base");
+        }
+
         Assert.True(Vector3.Distance(plain.World("right-hand"), full.World("right-hand")) > .2f, "the thrust moves the spear hand");
         Assert.True(MathF.Abs(full.Angles["chest"] - plain.Angles["chest"]) > .05f, "the thrust turns the chest");
         // Channels blend before the hierarchy is built: the chest's rotation is halfway at half weight.
@@ -64,34 +81,56 @@ public sealed class RepeatedAuthoringTests : IDisposable
     public void MaskedActionsAreCheckedAgainstTheModel()
     {
         var catalog = AuthoredCatalog.Load(_root);
-        var blendWithoutMask = StarterContent.SpearGuardEntity(); blendWithoutMask.Actions[0].BlendIn = .1f;
+        var blendWithoutMask = StarterContent.SpearGuardEntity();
+        blendWithoutMask.Actions[0].BlendIn = .1f;
         Assert.Contains("blending needs a mask", Assert.Throws<InvalidDataException>(blendWithoutMask.Validate).Message);
-        var unknown = SkirmishingGuard(); unknown.Actions[0].Mask = "tail";
+        var unknown = SkirmishingGuard();
+        unknown.Actions[0].Mask = "tail";
         Assert.Contains("mask: 'person' has no control group 'tail'", Assert.Throws<InvalidDataException>(() => Compile(catalog, unknown)).Message);
-        var tooLong = SkirmishingGuard(); tooLong.Actions[0].BlendIn = 2;
+        var tooLong = SkirmishingGuard();
+        tooLong.Actions[0].BlendIn = 2;
         Assert.Contains("exceed the clip", Assert.Throws<InvalidDataException>(() => Compile(catalog, tooLong)).Message);
-        var jump = StarterContent.PlayerEntity(); jump.Actions.Single(a => a.Id == "jump").Mask = StarterContent.Upper;
+        var jump = StarterContent.PlayerEntity();
+        jump.Actions.Single(a => a.Id == "jump").Mask = Humanoid.UpperGroup;
         Assert.Contains("cannot be masked", Assert.Throws<InvalidDataException>(() => Compile(catalog, jump)).Message);
 
         var model = PersonTemplate.Model();
-        model.Groups.Add(new() { Id = "knees", Targets = ["left-knee"] });
+        model.Groups.Add(new()
+        {
+            Id = "knees",
+            Targets = ["left-knee"]
+        });
         Assert.Contains("solved by IK; name its chain instead", Assert.Throws<InvalidDataException>(model.Validate).Message);
     }
 
     [Fact]
     public void AnUpperAttackDoesNotStealLegContacts()
     {
-        var catalog = AuthoredCatalog.Load(_root); var entity = Compile(catalog, SkirmishingGuard());
+        var catalog = AuthoredCatalog.Load(_root);
+        var entity = Compile(catalog, SkirmishingGuard());
         var attack = entity.Actions["attack"];
         Assert.NotNull(attack.Mask);
-        Assert.Equal(0, attack.Weight(0)); Assert.Equal(1, attack.Weight(attack.Clip.Duration / 2)); Assert.Equal(0, attack.Weight(attack.Clip.Duration), 4);
+        Assert.Equal(0, attack.Weight(0));
+        Assert.Equal(1, attack.Weight(attack.Clip.Duration / 2));
+        Assert.Equal(0, attack.Weight(attack.Clip.Duration), 4);
 
-        var animator = new EntityAnimator(entity); var walk = entity.Clip("walk")!;
+        var animator = new EntityAnimator(entity);
+        var walk = entity.Clip("walk")!;
         var speed = PoseEvaluator.CycleTravel(entity.Model, walk).X / walk.Duration;
-        var position = Vector2.Zero; var events = new List<AnimationEvent>();
-        void Step() { position.X += speed * Dt; animator.Step(Dt, position, 1, "walk", speed * Dt, false, events); }
-        for (var i = 0; i < 90; i++) Step();
-        var before = animator.Anchors.ToDictionary(); var phase = animator.RoleTime;
+        var position = Vector2.Zero;
+        var events = new List<AnimationEvent>();
+        void Step()
+        {
+            position.X += speed * Dt;
+            animator.Step(Dt, position, 1, "walk", speed * Dt, false, events);
+        }
+        for (var i = 0; i < 90; i++)
+        {
+            Step();
+        }
+
+        var before = animator.Anchors.ToDictionary();
+        var phase = animator.RoleTime;
         Assert.NotEmpty(before);
 
         Assert.True(animator.TryStart("attack"));
@@ -99,17 +138,34 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Step();
         Assert.True(animator.RoleTime > phase, "the walk keeps its phase under the attack");
         foreach (var (chain, anchor) in before)
-            if (animator.Anchors.TryGetValue(chain, out var held)) Assert.Equal(anchor, held);
+        {
+            if (animator.Anchors.TryGetValue(chain, out var held))
+            {
+                Assert.Equal(anchor, held);
+            }
+        }
 
-        var strikes = 0; var planted = 0;
+        var strikes = 0;
+        var planted = 0;
         while (animator.Action is not null)
         {
-            events.Clear(); Step();
+            events.Clear();
+            Step();
             strikes += events.Count(e => e.Id == "swing");
             Assert.Equal("walk", animator.Role);
             foreach (var chain in new[] { "left-leg", "right-leg" })
-                if (animator.Anchors.TryGetValue(chain, out var anchor)) { TestModels.Near(anchor, animator.Pose.World(entity.Model.Chains[chain].End), 1e-4f, chain); planted++; }
-            if (animator.ActionComplete) animator.EndAction();
+            {
+                if (animator.Anchors.TryGetValue(chain, out var anchor))
+                {
+                    TestModels.Near(anchor, animator.Pose.World(entity.Model.Chains[chain].End), 1e-4f, chain);
+                    planted++;
+                }
+            }
+
+            if (animator.ActionComplete)
+            {
+                animator.EndAction();
+            }
         }
         Assert.Equal(1, strikes);
         Assert.True(planted > 60, "feet stay planted on their anchors through the attack");
@@ -117,9 +173,14 @@ public sealed class RepeatedAuthoringTests : IDisposable
 
         // The whole-body thrust, by contrast, owns the legs and starts with fresh contacts.
         var standing = new EntityAnimator(catalog.Entities["spear-guard"]);
-        for (var i = 0; i < 30; i++) standing.Step(Dt, Vector2.Zero, 1, "idle", 0, false, []);
+        for (var i = 0; i < 30; i++)
+        {
+            standing.Step(Dt, Vector2.Zero, 1, "idle", 0, false, []);
+        }
+
         Assert.NotEmpty(standing.Anchors);
-        Assert.True(standing.TryStart("attack")); Assert.Empty(standing.Anchors);
+        Assert.True(standing.TryStart("attack"));
+        Assert.Empty(standing.Anchors);
     }
 
     // ---- Motion sets, looks and entities through the session -------------------------------------------------------
@@ -130,14 +191,21 @@ public sealed class RepeatedAuthoringTests : IDisposable
         var session = Session();
         // Heavy motion on the short build and on the tall build; standard motion on the tall build too.
         Ok(session, session.NewEntity("heavy-short", "Heavy short", "short-broad", EntityAuthoring.Guard));
-        Ok(session, session.Edit(session.EntityDocument, () => { session.EntityDocument!.Asset.MotionSet = "heavy"; session.EntityDocument.Asset.Actions[0].Clip = "person-thrust"; session.EntityDocument.Asset.Actions[0].Role = null; }));
+        Ok(session, session.Edit(session.EntityDocument, () =>
+        {
+            session.EntityDocument!.Asset.MotionSet = "heavy";
+            session.EntityDocument.Asset.Actions[0].Clip = "person-thrust";
+            session.EntityDocument.Asset.Actions[0].Role = null;
+        }));
         Ok(session, session.DuplicateEntity("heavy-short", "heavy-tall", "Heavy tall"));
         Ok(session, session.Edit(session.EntityDocument, () => session.EntityDocument!.Asset.Model = "tall-thin"));
         Ok(session, session.DuplicateEntity("heavy-tall", "standard-tall", "Standard tall"));
         Ok(session, session.Edit(session.EntityDocument, () => session.EntityDocument!.Asset.MotionSet = "standard"));
 
-        var heavyShort = session.Assets.CompileEntity("heavy-short", out var error); Assert.True(heavyShort is not null, error);
-        var heavyTall = session.Assets.CompileEntity("heavy-tall")!; var standardTall = session.Assets.CompileEntity("standard-tall")!;
+        var heavyShort = session.Assets.CompileEntity("heavy-short", out var error);
+        Assert.True(heavyShort is not null, error);
+        var heavyTall = session.Assets.CompileEntity("heavy-tall")!;
+        var standardTall = session.Assets.CompileEntity("standard-tall")!;
         Assert.Equal(StarterContent.HeavyWalk, heavyShort.Clip("walk")!.Id);
         Assert.Equal(StarterContent.HeavyWalk, heavyTall.Clip("walk")!.Id);
         Assert.Equal("person-walk", standardTall.Clip("walk")!.Id);
@@ -195,7 +263,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.SaveLook("fern", "Fern"));
         Assert.True(person.Dirty);
         Assert.Equal("#88aa66", person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Material?.Fill);
-        Assert.Null(person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Width); // looks carry appearance, never sizes
+        Assert.Null(person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].ScaleX); // looks carry appearance, never sizes
         Assert.Equal("#d8e9db", person.Asset.Parts.Single(p => p.Id == "body").RenderMaterial.Fill); // the base's own parts are untouched
     }
 
@@ -214,8 +282,24 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Assert.Empty(session.Assets.Problems(document));
         Ok(session, session.Edit(document, () =>
         {
-            document.Asset.Equipment.Add(new() { Prop = "spear", Socket = "right-grip" });
-            document.Asset.Actions[0].Hits.Add(new() { Id = "tip", Prop = "spear", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
+            document.Asset.Equipment.Add(new()
+            {
+                Prop = "spear",
+                Socket = "right-grip"
+            });
+            document.Asset.Actions[0].Hits.Add(new()
+            {
+                Id = "tip",
+                Prop = "spear",
+                Start = new()
+                {
+                    Marker = "strike"
+                },
+                Finish = new()
+                {
+                    Marker = "recover"
+                }
+            });
         }));
         Assert.Equal("role:attack", session.Entity!.Actions["attack"].Source);
         Assert.Equal("entity", session.Entity.Roles["attack"].Source);
@@ -223,11 +307,14 @@ public sealed class RepeatedAuthoringTests : IDisposable
         // Preview the thrust in the viewport: the hit region shows only inside strike → recover.
         session.PreviewActionOf("attack");
         var strike = session.Entity.Actions["attack"].Hits[0];
-        session.Seek(strike.Start - .01f); Assert.Empty(session.EvaluateEntity()!.Attacks);
-        session.Seek(strike.Start + .01f); var preview = session.EvaluateEntity()!;
+        session.Seek(strike.Start - .01f);
+        Assert.Empty(session.EvaluateEntity()!.Attacks);
+        session.Seek(strike.Start + .01f);
+        var preview = session.EvaluateEntity()!;
         Assert.Single(preview.Attacks);
         Assert.Equal(3, preview.Hurt.Count);
-        Assert.Single(session.Scene()); Assert.NotNull(session.Scene()[0].Entity);
+        Assert.Single(session.Scene());
+        Assert.NotNull(session.Scene()[0].Entity);
 
         // A new entity plays in a test snapshot before it is ever saved.
         Assert.Contains(session.Assets.SnapshotEntities().Entities, e => e.Id == "pike");
@@ -239,7 +326,8 @@ public sealed class RepeatedAuthoringTests : IDisposable
         // Duplicating keeps references: a sibling on the same variant, clips and props.
         Ok(reopened, reopened.DuplicateEntity("pike", "pike-2", "Pike guard 2"));
         var copy = reopened.Assets.CompileEntity("pike-2")!;
-        Assert.Equal("tall-thin", copy.Model.Id); Assert.Equal("spear", copy.Equipment.Single().Prop.Id);
+        Assert.Equal("tall-thin", copy.Model.Id);
+        Assert.Equal("spear", copy.Equipment.Single().Prop.Id);
         Assert.Same(reopened.Assets.Clip("person-thrust")!.Asset, copy.Actions["attack"].Clip);
     }
 
@@ -270,7 +358,8 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.Edit(walk, () => walk.Asset.Markers.Add(new() { Id = "step", Time = .3f })));
         foreach (var id in new[] { "heavy-guard", "spear-guard", "player" })
         {
-            var entity = session.Assets.CompileEntity(id, out var error); Assert.True(entity is not null, error);
+            var entity = session.Assets.CompileEntity(id, out var error);
+            Assert.True(entity is not null, error);
             Assert.Same(walk.Asset, entity.Clip("walk"));
             Assert.Contains(entity.Clip("walk")!.Markers, m => m.Id == "step");
         }
@@ -282,8 +371,10 @@ public sealed class RepeatedAuthoringTests : IDisposable
     [Fact]
     public void AFiftyVariantCatalogLoadsQuicklyAndSharesItsClips()
     {
-        var person = AuthoredCatalog.Load(_root).Models["person"]; var random = new Random(4);
-        var looks = person.Looks.Select(l => l.Id).ToArray(); var sets = new[] { "standard", "heavy", "deliberate" };
+        var person = AuthoredCatalog.Load(_root).Models["person"];
+        var random = new Random(4);
+        var looks = person.Looks.Select(l => l.Id).ToArray();
+        var sets = new[] { "standard", "heavy", "deliberate" };
         for (var i = 0; i < 50; i++)
         {
             var build = new PersonBuild
@@ -307,7 +398,8 @@ public sealed class RepeatedAuthoringTests : IDisposable
         var catalog = AuthoredCatalog.Load(_root);
         var loaded = clock.Elapsed;
         Assert.True(catalog.Errors.Count == 0, string.Join("\n", catalog.Errors));
-        Assert.Equal(52, catalog.Variants.Count); Assert.Equal(53, catalog.Entities.Count);
+        Assert.Equal(52, catalog.Variants.Count);
+        Assert.Equal(53, catalog.Entities.Count);
         Assert.Equal(clipFiles, catalog.Animations.Count); // fifty people, no copied clips
         var idles = catalog.Entities.Values.Where(e => e.Id.StartsWith("villager-")).Select(e => e.Clip("idle")).Distinct(ReferenceEqualityComparer.Instance).ToList();
         Assert.Single(idles); // every villager's idle is the one shared clip object
@@ -315,7 +407,11 @@ public sealed class RepeatedAuthoringTests : IDisposable
 
         clock.Restart();
         var workspace = AuthoringWorkspace.Open(_root);
-        foreach (var document in workspace.Documents) Assert.Empty(workspace.Problems(document));
+        foreach (var document in workspace.Documents)
+        {
+            Assert.Empty(workspace.Problems(document));
+        }
+
         Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5), $"workspace open and check took {clock.Elapsed}");
     }
 }

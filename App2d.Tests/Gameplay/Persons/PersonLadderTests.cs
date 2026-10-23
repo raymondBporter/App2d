@@ -1,14 +1,16 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Persons;
-using App2d.Levels;
+using App2d.Gameplay.World;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Persons;
@@ -32,7 +34,10 @@ public sealed class PersonLadderTests
             VelocityIterations = 2
         };
         for (var y = 1; y <= 20; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Ladder);
+        }
+
         _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
             new Vector2(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
             2u, 1u, CombatFaction2D.Player, tileMap: _map);
@@ -77,7 +82,6 @@ public sealed class PersonLadderTests
         var initialY = _person.Position.Y;
 
         Step(climb: 1f);
-
         Assert.True(_person.IsClimbingLadder);
         var remaining = MathF.Abs(_person.WorldObject.WorldBounds.Center.X - 144f);
         Assert.InRange(remaining, 0.1f, MathF.Abs(offset) - 0.1f);
@@ -132,7 +136,10 @@ public sealed class PersonLadderTests
     public void OverlappingGrabRangesChooseNearestLadder()
     {
         for (var y = 1; y <= 20; y++)
+        {
             _map.SetTileKind(5, y, TileKind2D.Ladder);
+        }
+
         _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
 
         Step(climb: 1f, frames: 30);
@@ -245,19 +252,21 @@ public sealed class PersonLadderTests
     public void DescendingOntoOneWayFloorStopsAndStands(int firstLadderRow)
     {
         var platform = AddSolid(new Vector2(144f, 208f), new Vector2(96f, 32f));
-        platform.IsOneWayPlatform = true;
+        PlatformCollisionRules2D.Attach(_physics).Surface(platform).OneWaySurfaceNormal = Vector2.UnitY;
         Step(climb: 1f, frames: 200);
         Assert.True(_person.IsClimbingLadder);
         Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);
         for (var y = 1; y < firstLadderRow; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Empty);
+        }
 
         Step(climb: -1f, frames: 240);
 
         Assert.True(_person.IsGrounded);
         Assert.False(_person.IsClimbingLadder);
         Assert.InRange(_person.WorldObject.WorldBounds.Bottom, 223.9f, 224.1f);
-        Assert.Equal(0, _person.Body.IgnoredOneWayPlatformCount);
+        Assert.Equal(0, PlatformCollisionRules2D.Attach(_physics).IgnoredPlatformCount(_person.Body));
         Assert.Equal(1f, _person.Body.GravityScale);
 
         Step(frames: 60);
@@ -278,7 +287,7 @@ public sealed class PersonLadderTests
         Assert.False(_person.IsGrounded);
         Assert.False(_person.IsClimbingLadder);
         Assert.True(_person.Body.LinearVelocity.Y < 0f);
-        Assert.Equal(1, _person.Body.IgnoredOneWayPlatformCount);
+        Assert.Equal(1, PlatformCollisionRules2D.Attach(_physics).IgnoredPlatformCount(_person.Body));
         Step(climb: -1f, frames: 120, down: true);
         Assert.True(_person.WorldObject.WorldBounds.Top < 192f);
     }
@@ -300,7 +309,10 @@ public sealed class PersonLadderTests
     {
         Step(climb: 1f, frames: 180);
         for (var y = 1; y < 8; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Empty);
+        }
+
         Step(climb: -1f, frames: 90);
         Assert.False(_person.IsClimbingLadder);
         Assert.Equal(1f, _person.Body.GravityScale);
@@ -311,7 +323,10 @@ public sealed class PersonLadderTests
     {
         Step(climb: 1f, frames: 60);
         for (var y = 1; y <= 20; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Empty);
+        }
+
         Step(frames: 30);
         Assert.False(_person.IsClimbingLadder);
         Assert.Equal(1f, _person.Body.GravityScale);
@@ -349,15 +364,21 @@ public sealed class PersonLadderTests
         {
             _person.BeginFrame(Dt);
             _person.ApplyCommand(new PersonCommand2D
-            { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash, DownHeld = down }, Dt);
+            {
+                MoveX = move,
+                ClimbY = climb,
+                JumpHeld = jump || jumpOff,
+                DashHeld = dash,
+                DownHeld = down
+            }, Dt);
             _physics.Step(Dt);
             _person.UpdateAfterPhysics(Dt);
         }
     }
 
-    private PhysicsBody2D AddSolid(Vector2 center, Vector2 size)
+    private RigidBody2D AddSolid(Vector2 center, Vector2 size)
     {
-        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(size));
+        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size));
         spatial.Transform.Position = center;
         var body = _physics.AddBody(spatial, BodyMotionType2D.Static);
         body.CollisionLayer = 1u;

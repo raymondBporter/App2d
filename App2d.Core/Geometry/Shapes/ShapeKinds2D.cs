@@ -1,0 +1,21 @@
+namespace App2d.Core.Geometry.Shapes;
+
+/// <summary>Stable kind IDs used by authored shape JSON and shape editors.</summary>
+public static class ShapeKinds2D
+{
+    public const string Circle = "circle";
+    public const string Ellipse = "ellipse";
+    public const string Capsule = "capsule";
+    public const string Rectangle = "rectangle";
+    public const string AxisAlignedRectangle = "axis-aligned-rectangle";
+    public const string RoundedRectangle = "rounded-rectangle";
+    public const string Triangle = "triangle";
+    public const string ConvexPolygon = "convex-polygon";
+    public const string SimplePolygon = "simple-polygon";
+    public const string HalfSpace = "half-space";
+    public const string Composite = "composite";
+    public const string HeightField = "height-field";
+
+    /// <summary>Every kind in a stable order for editors and validation.</summary>
+    public static IReadOnlyList<string> All { get; } = [Circle, Ellipse, Capsule, Rectangle, AxisAlignedRectangle, RoundedRectangle, Triangle, ConvexPolygon, SimplePolygon, HalfSpace, Composite, HeightField];
+}

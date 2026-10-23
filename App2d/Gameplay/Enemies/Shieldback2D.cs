@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
-public sealed partial class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
+public sealed class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
 {
     private bool _simulationEnabled = true;
     public PatrolEnemy2D Enemy { get; } = ArgGuard.RequireNotNull(enemy);
@@ -13,7 +13,9 @@ public sealed partial class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
     public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.Shieldback,
         Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, Enemy.Facing,
         _simulationEnabled, Enemy.IsAlive)
-    { MoveSpeed = Enemy.Speed };
+    {
+        MoveSpeed = Enemy.Speed
+    };
 
     public void SetSimulationEnabled(bool isEnabled)
     {
@@ -23,10 +25,15 @@ public sealed partial class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        ArgGuard.ThrowIfNotFinite(targetPosition);
-        if (_simulationEnabled) Enemy.Update(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
+        ArgGuard.Finite(targetPosition);
+        if (_simulationEnabled)
+        {
+            Enemy.Update(deltaSeconds);
+        }
     }
 
-    public void SyncAfterPhysics() { }
+    public void SyncAfterPhysics()
+    {
+    }
 }

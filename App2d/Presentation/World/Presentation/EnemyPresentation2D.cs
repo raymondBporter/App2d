@@ -5,7 +5,9 @@ using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Animation;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Rendering.Textures;
@@ -16,13 +18,12 @@ using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using System.Collections.Immutable;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World.Presentation;
 
 /// <summary>Client-owned enemy views indexed by entity ID. Never reads live actors.</summary>
 public sealed class EnemyPresentation2D(
-    Scene2D scene, TextureCache2D textures, TraversalMetrics2D traversal, ISoundEffectSink2D sounds) : IDisposable
+    Scene2D scene, TextureCache2D textures, TraversalMetrics2D traversal, ISoundEffectSink2D<SoundEffect2D> sounds) : IDisposable
 {
     private readonly Dictionary<EntityId2D, View> _views = [];
     private readonly HashSet<EntityId2D> _presentIds = [];
@@ -40,7 +41,7 @@ public sealed class EnemyPresentation2D(
 
     public void Advance(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         _secondsSinceState += deltaSeconds;
         RenderStates(_states, [], deltaSeconds, _tick + (long)(_secondsSinceState * 120f), extrapolate: true);
     }
@@ -48,7 +49,7 @@ public sealed class EnemyPresentation2D(
     public void Update(ImmutableArray<EnemyState2D> states,
         IEnumerable<EnemyEvent2D> events, float dt, long tick)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(dt);
+        ArgGuard.NonNegative(dt);
         _states = states.IsDefault ? [] : states;
         _tick = tick;
         _secondsSinceState = 0f;
@@ -59,19 +60,11 @@ public sealed class EnemyPresentation2D(
     {
         _hitstop.Prune(states);
         _eventBuffer.Clear();
-        foreach (var occurrence in events) _eventBuffer.Add(occurrence);
+        _eventBuffer.AddRange(events);
         var occurrences = _eventBuffer.Count == 0 ? null : _eventBuffer.ToLookup(e => e.EntityId);
         foreach (var occurrence in _eventBuffer)
         {
-            if (occurrence is HammerStarted2D)
-            {
-                sounds.PlayAt(SoundEffect2D.HammerWindup, occurrence.Position);
-            }
-            else if (occurrence is HammerStruck2D)
-            {
-                sounds.PlayAt(SoundEffect2D.HammerImpact, occurrence.Position);
-            }
-            else if (occurrence is EntityCue2D cue)
+            if (occurrence is EntityCue2D cue)
             {
                 sounds.PlayAt(cue.Cue switch
                 {
@@ -101,6 +94,7 @@ public sealed class EnemyPresentation2D(
             {
                 var state = observed;
                 if (extrapolate && state.IsEnabled)
+                {
                     state = state with
                     {
                         AttackElapsedSeconds = state.AttackElapsedSeconds + _secondsSinceState,
@@ -109,29 +103,44 @@ public sealed class EnemyPresentation2D(
                         {
                             LandingSpeedThisFrame = 0f,
                             InvulnerabilitySeconds = Math.Max(0f, state.Person.InvulnerabilitySeconds - _secondsSinceState),
-                            Action = state.Person.Action with { ElapsedSeconds = state.Person.Action.ElapsedSeconds + _secondsSinceState }
+                            Action = state.Person.Action with
+                            {
+                                ElapsedSeconds = state.Person.Action.ElapsedSeconds + _secondsSinceState
+                            }
                         }
                     };
+                }
+
                 state = _hitstop.SampleState(state);
                 _presentIds.Add(state.Id);
                 if (!_views.TryGetValue(state.Id, out var view))
                 {
-                    if (!state.IsEnabled) continue;
+                    if (!state.IsEnabled)
+                    {
+                        continue;
+                    }
+
                     view = state.AuthoredEntity is { } entity ? new AuthoredPoseView(scene, entity)
                         : state.Kind switch
                         {
+                            EnemyKind2D.Shieldback => new ShieldbackView(scene, textures),
                             EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
-                            EnemyKind2D.TumbleProp => new PropView(scene),
-                            _ => new AnimatedView(scene, textures, state.Kind)
+                            EnemyKind2D.PhysicsProp => new PropView(scene, state.PhysicsProp
+                                ?? throw ArgGuard.CreateInvalid("A physics prop needs its authored asset.", nameof(states))),
+                            _ => throw ArgGuard.CreateInvalid("An authored enemy needs its resolved entity.", nameof(states))
                         };
                     _views.Add(state.Id, view);
                 }
-                view.Update(state, occurrences?[state.Id] ?? Array.Empty<EnemyEvent2D>(), state.IsEnabled ? dt : 0f, tick);
+                view.Update(state, occurrences?[state.Id] ?? [], state.IsEnabled ? dt : 0f, tick);
             }
         }
         foreach (var id in _views.Keys)
         {
-            if (_presentIds.Contains(id)) continue;
+            if (_presentIds.Contains(id))
+            {
+                continue;
+            }
+
             _views[id].Dispose();
             _views.Remove(id);
         }
@@ -140,7 +149,11 @@ public sealed class EnemyPresentation2D(
     public void Dispose()
     {
         _hitstop.Reset();
-        foreach (var view in _views.Values) view.Dispose();
+        foreach (var view in _views.Values)
+        {
+            view.Dispose();
+        }
+
         _views.Clear();
     }
 
@@ -160,21 +173,32 @@ public sealed class EnemyPresentation2D(
             while (_bolts.Count < count)
             {
                 var rock = state.Bolts[_bolts.Count].Gravity > 0;
-                App2d.Core.Shapes.IShape2D shape = rock
-                    ? new ConvexPolygon2D([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
-                    : AxisAlignedRectangle2D.FromSize(Vector2.One);
-                var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new XnaColor(133, 139, 134) : XnaColor.OrangeRed)) { ZIndex = 2 };
-                _bolts.Add(bolt); scene.Add(bolt);
+                IShape2D shape = rock
+                    ? ConvexPolygon2D.Builder.Create([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
+                    : AxisAlignedRectangle2D.Builder.CreateFromSize(Vector2.One);
+                var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new Color4b(133, 139, 134) : Color4b.OrangeRed)) { ZIndex = 2 };
+                _bolts.Add(bolt);
+                scene.Add(bolt);
             }
             for (var i = 0; i < _bolts.Count; i++)
             {
                 _bolts[i].IsVisible = i < count;
-                if (i >= count) continue;
+                if (i >= count)
+                {
+                    continue;
+                }
+
                 _bolts[i].Transform.Position = state.Bolts[i].Position;
                 _bolts[i].Transform.Scale = state.Bolts[i].Size;
             }
         }
-        public void Dispose() { foreach (var bolt in _bolts) scene.Remove(bolt); }
+        public void Dispose()
+        {
+            foreach (var bolt in _bolts)
+            {
+                scene.Remove(bolt);
+            }
+        }
     }
 
     /// <summary>Draws the simulation's own final pose for an authored entity; nothing here samples animation.</summary>
@@ -188,8 +212,16 @@ public sealed class EnemyPresentation2D(
         public AuthoredPoseView(Scene2D scene, ResolvedEntity entity)
         {
             _entity = entity;
-            _scene = scene; _bolts = new(scene); _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
-            _visual = new(AxisAlignedRectangle2D.FromSize(new Vector2(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
+            _scene = scene;
+            _bolts = new(scene);
+            _shader = new(entity.Model)
+            {
+                Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))]
+            };
+            _visual = new(AxisAlignedRectangle2D.Builder.CreateFromSize(12, 12, new(0, 2)), _shader)
+            {
+                ZIndex = 1
+            };
             _visual.Transform.Scale = new(GameWorldUnits2D.WorldUnitsPerAuthoredUnit);
             scene.Add(_visual);
         }
@@ -197,8 +229,13 @@ public sealed class EnemyPresentation2D(
         {
             _visual.IsVisible = state.IsEnabled && state.AuthoredPose is not null;
             _bolts.Update(state);
-            if (state.AuthoredPose is not { } pose) return;
-            _shader.Pose = pose.Local; _shader.Facing = pose.Facing;
+            if (state.AuthoredPose is not { } pose)
+            {
+                return;
+            }
+
+            _shader.Pose = pose.Local;
+            _shader.Facing = pose.Facing;
             // A throwable is visible only while being prepared, and leaves the hand on the fire marker.
             var action = state.ActionId is { } id ? _entity.Actions.GetValueOrDefault(id) : null;
             var holding = action?.Projectile?.Gravity > 0 && state.ActionSeconds < action.Events.First(e => e.Event.Id == EntityControllers.Fire).Seconds;
@@ -206,62 +243,42 @@ public sealed class EnemyPresentation2D(
                 !_entity.Actions.Values.Any(a => a.Projectile?.Gravity > 0) || holding).Select(e => (e.Prop, e.Socket))];
             _visual.Transform.Position = GameWorldUnits2D.AuthoredToWorld(pose.Position);
         }
-        public override void Dispose() { _scene.Remove(_visual); _bolts.Dispose(); }
+        public override void Dispose()
+        {
+            _scene.Remove(_visual);
+            _bolts.Dispose();
+        }
     }
 
-    private sealed class AnimatedView : View
+    private sealed class ShieldbackView : View
     {
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
         private readonly SpriteShader2D _shader;
-        private readonly AnimationClip2D<Texture2D> _walk;
-        private readonly AnimationClip2D<Texture2D>? _attack;
         private readonly AnimationPlayer2D<Texture2D> _animation = new();
-        private readonly Vector2 _offset;
-        private bool _wasAttacking;
 
-        public AnimatedView(Scene2D scene, TextureCache2D textures, EnemyKind2D kind)
+        public ShieldbackView(Scene2D scene, TextureCache2D textures)
         {
             _scene = scene;
-            var (asset, size, offset) = kind switch
-            {
-                EnemyKind2D.Shieldback => ("shieldback", new Vector2(144f, 108f), new Vector2(0f, 10f)),
-                EnemyKind2D.GreenDinosaur => ("green-dinosaur", new Vector2(112f), new Vector2(0f, 24f)),
-                EnemyKind2D.BoilerBrute => ("boiler-brute", new Vector2(196f), new Vector2(0f, 32f)),
-                _ => throw ArgGuard.CreateOutOfRange(kind, "Unknown enemy kind.")
-            };
-            _offset = offset;
-            _walk = CharacterAnimationAssets2D.LoadClip(textures, asset, "walk");
-            if (kind == EnemyKind2D.BoilerBrute)
-                _attack = CharacterAnimationAssets2D.LoadClip(textures, asset, "hammer-attack");
-            _animation.Play(_walk);
+            _animation.Play(CharacterAnimationAssets2D.LoadClip(textures, "shieldback", "walk"));
             _shader = new SpriteShader2D(_animation.CurrentFrame);
-            _visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(size), _shader);
+            _visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(144f, 108f), _shader);
             scene.Add(_visual);
         }
 
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
         {
             _visual.IsVisible = state.IsEnabled && state.IsAlive;
-            _visual.Transform.Position = state.Position + _offset;
+            _visual.Transform.Position = state.Position + new Vector2(0f, 10f);
             _shader.FlipX = state.Facing < 0f;
-            if (!_visual.IsVisible) return;
-            if (state.IsAttacking && _attack is not null)
+            if (!_visual.IsVisible)
             {
-                // Fit authored poses to authoritative attack time. Changing art cannot change damage timing.
-                StateGuard.ThrowIf(!float.IsFinite(state.AttackDurationSeconds) || state.AttackDurationSeconds <= 0f,
-                    "An attacking enemy needs a positive attack duration in its state.");
-                var progress = Math.Clamp(state.AttackElapsedSeconds / state.AttackDurationSeconds, 0f, 1f);
-                _shader.Texture = _attack[_attack.GetFrameIndexAtTime(progress * _attack.Duration)];
+                return;
             }
-            else
-            {
-                if (_wasAttacking) _animation.Play(_walk, restart: true);
-                _animation.PlaybackSpeed = Math.Clamp(MathF.Abs(state.Velocity.X) / MathF.Max(1f, state.MoveSpeed), 0.65f, 1.15f);
-                _animation.Update(dt);
-                _shader.Texture = _animation.CurrentFrame;
-            }
-            _wasAttacking = state.IsAttacking;
+
+            _animation.PlaybackSpeed = Math.Clamp(MathF.Abs(state.Velocity.X) / MathF.Max(1f, state.MoveSpeed), 0.65f, 1.15f);
+            _animation.Update(dt);
+            _shader.Texture = _animation.CurrentFrame;
         }
 
         public override void Dispose() => _scene.Remove(_visual);
@@ -278,8 +295,12 @@ public sealed class EnemyPresentation2D(
             _scene = scene;
             _person = new PersonPresentation2D(scene, textures, traversal);
             _person.Equip(EquipmentKind2D.Unarmed);
-            if (!isAlive) _person.PlayDeath();
-            _marker = new WorldObject2D(new Circle2D(8f), new SolidColorShader(new XnaColor(255, 46, 166))) { ZIndex = 3 };
+            if (!isAlive)
+            {
+                _person.PlayDeath();
+            }
+
+            _marker = new WorldObject2D(Circle2D.Builder.Create(8f), new SolidColorShader(new Color4b(255, 46, 166))) { ZIndex = 3 };
             scene.Add(_marker);
         }
 
@@ -289,9 +310,15 @@ public sealed class EnemyPresentation2D(
             {
                 switch (occurrence)
                 {
-                    case RivalAttackStarted2D attack: _person.PlayUnarmedAttack(attack.Kind, attack.DurationSeconds); break;
-                    case RivalDamaged2D: _person.PlayHit(); break;
-                    case RivalDied2D: _person.PlayDeath(); break;
+                    case RivalAttackStarted2D attack:
+                        _person.PlayUnarmedAttack(attack.Kind, attack.DurationSeconds);
+                        break;
+                    case RivalDamaged2D:
+                        _person.PlayHit();
+                        break;
+                    case RivalDied2D:
+                        _person.PlayDeath();
+                        break;
                 }
             }
             _person.SetVisible(state.IsEnabled);
@@ -311,14 +338,10 @@ public sealed class EnemyPresentation2D(
     {
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
-        public PropView(Scene2D scene)
+        public PropView(Scene2D scene, PhysicsPropAsset asset)
         {
             _scene = scene;
-            var shape = new CompositeShape2D([
-                Rectangle2D.FromSize(new Vector2(72f, 18f)),
-                new Circle2D(16f, new Vector2(-42f, 0f)),
-                new Circle2D(16f, new Vector2(42f, 0f))]);
-            _visual = new WorldObject2D(shape, new SolidColorShader(new XnaColor(0xFF, 0x9A, 0x3B))) { ZIndex = 1 };
+            _visual = new WorldObject2D(asset.Shape, new SolidColorShader(ColorExtensions.FromHexRgb(asset.Fill))) { ZIndex = 1 };
             scene.Add(_visual);
         }
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)

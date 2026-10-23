@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Physics;
@@ -49,7 +50,10 @@ public sealed class WorldZoneTests
             File.WriteAllText(path, "{\"version\":1,\"zones\":[" + entry.Replace("\"maxX\":10", "\"maxX\":0") + "]}");
             Assert.Throws<InvalidDataException>(() => WorldZoneFile2D.Load(path));
         }
-        finally { File.Delete(path); }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Fact]

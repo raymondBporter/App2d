@@ -1,5 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry.Operations.Transforms;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -54,23 +56,22 @@ internal static class RigAuthoredBridge2D
             Frame = bone,
             OffsetX = shape.LocalX * UnitsPerPixel,
             OffsetY = shape.LocalY * UnitsPerPixel,
-            Angle = MathF.PI / 180f * shape.AngleDegrees,
+            Angle = float.DegreesToRadians(shape.AngleDegrees),
             Material = new RenderMaterialDefinition2D
             {
                 Fill = $"#{shape.Color.R:x2}{shape.Color.G:x2}{shape.Color.B:x2}",
                 Outline = new() { Width = 0 }
             },
             Hidden = shape.Purpose == RigShapePurpose.Collision,
-            Width = 1,
-            Height = 1,
-            Geometry = ShapeDefinition2D.FromShape(WorldShape2D.Scaled((IConvexShape2D)shape.CreateGeometry(), UnitsPerPixel))
+            ScaleX = 1,
+            ScaleY = 1,
+            Geometry = ShapeTransforms2D.Scaled((IConvexShape2D)shape.CreateGeometry(), UnitsPerPixel)
         };
-        if (part.Geometry is RoundedRectangleShapeDefinition2D rounded)
+        if (part.Geometry is RoundedRectangle2D rounded)
         {
-            part.Width = rounded.Max.X - rounded.Min.X;
-            part.Height = rounded.Max.Y - rounded.Min.Y;
+            part.ScaleX = rounded.Size.X;
+            part.ScaleY = rounded.Size.Y;
         }
-        PartGeometry.RestoreEditorFields(part);
         return part;
     }
 }

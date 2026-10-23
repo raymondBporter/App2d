@@ -2,17 +2,18 @@ using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Combat;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-internal sealed partial class SwordPersonWeapon2D(
+internal sealed class SwordPersonWeapon2D(
     EntityIdAllocator2D ids,
-    PhysicsBody2D ownerBody,
+    RigidBody2D ownerBody,
     CombatFaction2D ownerFaction,
     uint targetLayer,
     CombatSystem2D combat,
@@ -23,7 +24,7 @@ internal sealed partial class SwordPersonWeapon2D(
         EquipmentKind2D.Sword,
         ids.Allocate(),
         ownerBody,
-        authored?.Shape() ?? AxisAlignedRectangle2D.FromSize(new Vector2(56f, 72f)),
+        authored?.Shape() ?? AxisAlignedRectangle2D.Builder.CreateFromSize(56f, 72f),
         authored?.Profile(null) ?? new MeleeAttackProfile2D(
             durationSeconds: 0.35f,
             damageStartSeconds: 0.10f,
@@ -43,7 +44,10 @@ internal sealed partial class SwordPersonWeapon2D(
 
     public bool ConsumeBounce() => _downAttack.ConsumeBounce();
     public override PersonActionState2D CaptureActionState() => _downAttack.IsAttackActive
-        ? _downAttack.CaptureActionState() with { Kind = Contracts.Simulation.PlayerAttackKind2D.Downward }
+        ? _downAttack.CaptureActionState() with
+        {
+            Kind = Contracts.Simulation.PlayerAttackKind2D.Downward
+        }
         : base.CaptureActionState();
 
     public override bool IsAttackActive => base.IsAttackActive || _downAttack.IsAttackActive;
@@ -71,7 +75,7 @@ internal sealed partial class SwordPersonWeapon2D(
 
     private sealed class DownwardSwing(
         EntityId2D sourceId,
-        PhysicsBody2D body,
+        RigidBody2D body,
         CombatFaction2D faction,
         uint layer,
         CombatSystem2D combatSystem,
@@ -79,7 +83,7 @@ internal sealed partial class SwordPersonWeapon2D(
         Action<WeaponEvent2D> emit,
         Func<Rect2D, bool>? spikeOverlap) : MeleePersonWeapon2D(
             EquipmentKind2D.Sword, sourceId, body,
-            AxisAlignedRectangle2D.FromSize(new Vector2(64f, 48f)),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(64f, 48f),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.25f,
                 // Strike immediately; the slash flash spans the first two poses at 24 fps.
@@ -127,7 +131,9 @@ internal sealed partial class SwordPersonWeapon2D(
         protected override void OnHit()
         {
             if (_hasBounced)
+            {
                 return;
+            }
 
             _hasBounced = true;
             _bouncePending = true;

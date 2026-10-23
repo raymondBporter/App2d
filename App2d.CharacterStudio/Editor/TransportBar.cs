@@ -18,24 +18,77 @@ internal static class TransportBar
             foreach (var c in clips)
             {
                 var playable = session.Assets.CanPlay(c.Id, session.SubjectId!, out var error);
-                if (ImGui.Selectable(c.Name + (playable ? "" : "  (incompatible)"), c.Id == session.ClipId)) session.SetClip(c.Id);
-                if (!playable && ImGui.IsItemHovered()) ImGui.SetTooltip(error);
+                if (ImGui.Selectable(c.Name + (playable ? "" : "  (incompatible)"), c.Id == session.ClipId))
+                {
+                    session.SetClip(c.Id);
+                }
+
+                if (!playable && ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip(error);
+                }
             }
             ImGui.EndCombo();
         }
-        if (clip is null) { ImGui.SameLine(); ImGui.TextDisabled(clips.Length == 0 ? "No animations for this model yet." : ""); return; }
-        var transport = session.Transport; var duration = clip.Asset.Duration;
-        ImGui.SameLine(); if (ImGui.Button(transport.Playing ? "Pause" : "Play", new(64 * Ui.Scale, 0))) session.TogglePlay();
-        ImGui.SameLine(); if (ImGui.Button("|<")) session.Seek(0);
-        ImGui.SameLine(); if (ImGui.Button(">|")) session.Seek(duration);
-        ImGui.SameLine(); ImGui.SetNextItemWidth(Math.Max(120, ImGui.GetContentRegionAvail().X - (preview ? 250 : 170) * Ui.Scale));
+        if (clip is null)
+        {
+            ImGui.SameLine();
+            ImGui.TextDisabled(clips.Length == 0 ? "No animations for this model yet." : "");
+            return;
+        }
+        var transport = session.Transport;
+        var duration = clip.Asset.Duration;
+        ImGui.SameLine();
+        if (ImGui.Button(transport.Playing ? "Pause" : "Play", new(64 * Ui.Scale, 0)))
+        {
+            session.TogglePlay();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button("|<"))
+        {
+            session.Seek(0);
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button(">|"))
+        {
+            session.Seek(duration);
+        }
+
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(Math.Max(120, ImGui.GetContentRegionAvail().X - (preview ? 250 : 170) * Ui.Scale));
         var time = transport.Time;
-        if (ImGui.SliderFloat("##time", ref time, 0, duration, $"%.3f / {duration:F3} s")) { session.Transport.Pause(); session.Seek(time); }
-        ImGui.SameLine(); ImGui.SetNextItemWidth(90 * Ui.Scale);
-        var speed = transport.Speed; if (ImGui.SliderFloat("##speed", ref speed, .1f, 2, "%.2fx speed")) transport.Speed = speed;
+        if (ImGui.SliderFloat("##time", ref time, 0, duration, $"%.3f / {duration:F3} s"))
+        {
+            session.Transport.Pause();
+            session.Seek(time);
+        }
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(90 * Ui.Scale);
+        var speed = transport.Speed;
+        if (ImGui.SliderFloat("##speed", ref speed, .1f, 2, "%.2fx speed"))
+        {
+            transport.Speed = speed;
+        }
+
         PlaybackModePicker.Draw(session, clip.Asset);
-        if (preview) { ImGui.SameLine(); var rest = session.ShowRest; if (ImGui.Checkbox("Rest", ref rest)) session.ShowRest = rest; }
-        if (preview && session.EditRig) Ui.Help("Editing the rig shows rest. Turn off Edit rig to watch the build move.");
-        else if (transport.EndMode(clip.Asset) == PlaybackEndMode.Hold && transport.Time >= duration) ImGui.TextDisabled("Holding the final pose.");
+        if (preview)
+        {
+            ImGui.SameLine();
+            var rest = session.ShowRest;
+            if (ImGui.Checkbox("Rest", ref rest))
+            {
+                session.ShowRest = rest;
+            }
+        }
+        if (preview && session.EditRig)
+        {
+            Ui.Help("Editing the rig shows rest. Turn off Edit rig to watch the build move.");
+        }
+        else if (transport.EndMode(clip.Asset) == PlaybackEndMode.Hold && transport.Time >= duration)
+        {
+            ImGui.TextDisabled("Holding the final pose.");
+        }
     }
 }

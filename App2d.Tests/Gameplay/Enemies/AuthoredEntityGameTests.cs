@@ -1,12 +1,13 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Enemies;
@@ -19,12 +20,25 @@ public sealed class AuthoredEntityGameTests
     {
         var authored = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
-        { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
+        for (var x = 0; x < 640; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
+        {
+            AuthoredCharacters = authored,
+            PlayerMaximumHealth = 30
+        });
         var hero = new AuthoredHero2D(authored.Entities["hero"], game.Player.Body.WorldObject.LocalBounds.Size);
         var cut = hero.Attack.Clip;
-        void Tick(int ticks) { for (var i = 0; i < ticks; i++) { var tick = game.Session.Tick + 1; game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D())); } }
+        void Tick(int ticks)
+        {
+            for (var i = 0; i < ticks; i++)
+            {
+                game.Session.Advance(new PlayerInput2D(game.Player.Id, new PersonCommand2D()));
+            }
+        }
         string? Swing() => game.Arsenal.CaptureActionState().Swing;
         game.Arsenal.UsePrimary(1);
         // The gameplay swing lasts exactly as long as the drawn side cut, and damages only between its strike and recover markers.
@@ -39,7 +53,7 @@ public sealed class AuthoredEntityGameTests
         Assert.True(first.X > 20, $"hit box ahead of the player: {first}");
         Tick(2);
         Assert.True(Box() is { } later && Vector2.Distance(first, later) < .01f, $"the box stays put on the player: {first} then {Box()}");
-        Assert.True(Vector2.Distance(new Core.SpatialObject2D(hero.Shape()).LocalBounds.Size, game.Arsenal.GetActiveAttackHitboxes().First().WorldBounds.Size) < .01f, "the box is the entity's size");
+        Assert.True(Vector2.Distance(new SpatialObject2D(hero.Shape()).LocalBounds.Size, game.Arsenal.GetActiveAttackHitboxes().First().WorldBounds.Size) < .01f, "the box is the entity's size");
         // Pressing again during a swing queues the next one in the combo; it starts as the last ends.
         game.Arsenal.UsePrimary(1);
         Tick((int)MathF.Ceiling(cut.Duration * 120));

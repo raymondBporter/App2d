@@ -1,12 +1,13 @@
 using App2d.Core.Collision.BroadPhase;
 using App2d.Core.Collision.Filtering;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Collision;
 
-public sealed partial class CollisionSystem2D
+public sealed class CollisionSystem2D
 {
     private const int MaximumCellsPerCollider = 4_096;
     private const int MaximumRetainedCells = 1_024;
@@ -38,9 +39,12 @@ public sealed partial class CollisionSystem2D
         get => _grid.CellSize.Width;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
+            ArgGuard.Positive(value);
             if (CellSize == value)
+            {
                 return;
+            }
+
             _grid = new(value);
             _staticIndexDirty = true;
             _dynamicIndexDirty = true;
@@ -63,7 +67,10 @@ public sealed partial class CollisionSystem2D
     {
         RequireOwned(collider);
         if (!_colliders.Remove(collider))
+        {
             return false;
+        }
+
         collider.Detach();
         MarkIndexDirty(collider.Mobility);
         return true;
@@ -87,7 +94,9 @@ public sealed partial class CollisionSystem2D
         foreach (var first in _colliders)
         {
             if (!first.IsEnabled || first.Mobility != ColliderMobility2D.Dynamic)
+            {
                 continue;
+            }
 
             QueryBoundsCore(first.WorldObject.WorldBounds, _queryCandidates);
             foreach (var second in _queryCandidates)
@@ -145,7 +154,10 @@ public sealed partial class CollisionSystem2D
     {
         ArgGuard.ThrowIfNull(results);
         if (excluded is not null)
+        {
             RequireOwned(excluded);
+        }
+
         SynchronizeIndexes();
         QueryBoundsCore(bounds, results);
         LastBoundsQueryCandidateCount = results.Count;
@@ -214,27 +226,40 @@ public sealed partial class CollisionSystem2D
     private void RebuildIndex(ColliderMobility2D mobility, Dictionary<GridCell2D, List<Collider2D>> cells, List<Collider2D> overflow)
     {
         foreach (var bucket in cells.Values)
+        {
             bucket.Clear();
+        }
+
         overflow.Clear();
         foreach (var collider in _colliders)
         {
             if (collider.Mobility != mobility)
+            {
                 continue;
+            }
+
             AddToIndex(collider, cells, overflow);
         }
 
         // Buckets are kept for reuse, but drop empties once the index grows
         // large so a wandering world can't retain cells forever.
         if (cells.Count <= MaximumRetainedCells)
+        {
             return;
+        }
+
         _staleCells.Clear();
         foreach (var (cell, bucket) in cells)
         {
             if (bucket.Count == 0)
+            {
                 _staleCells.Add(cell);
+            }
         }
         foreach (var cell in _staleCells)
+        {
             cells.Remove(cell);
+        }
     }
 
     private void AddToIndex(Collider2D collider, Dictionary<GridCell2D, List<Collider2D>> cells, List<Collider2D> overflow)
@@ -266,16 +291,24 @@ public sealed partial class CollisionSystem2D
             range.CellCount > MaximumCellsPerCollider)
         {
             foreach (var collider in _colliders)
+            {
                 TryAddQueryCandidate(collider, bounds, stamp, results);
+            }
+
             return;
         }
 
         QueryCells(_staticCells, range, bounds, stamp, results);
         QueryCells(_dynamicCells, range, bounds, stamp, results);
         foreach (var collider in _staticOverflow)
+        {
             TryAddQueryCandidate(collider, bounds, stamp, results);
+        }
+
         foreach (var collider in _dynamicOverflow)
+        {
             TryAddQueryCandidate(collider, bounds, stamp, results);
+        }
     }
 
     private static void QueryCells(Dictionary<GridCell2D, List<Collider2D>> cells, GridCellRange2D range, Rect2D bounds, int stamp, List<Collider2D> results)
@@ -306,10 +339,15 @@ public sealed partial class CollisionSystem2D
     private int NextQueryStamp()
     {
         if (_queryStamp != int.MaxValue)
+        {
             return ++_queryStamp;
+        }
 
         foreach (var collider in _colliders)
+        {
             collider.QueryStamp = 0;
+        }
+
         _queryStamp = 1;
         return _queryStamp;
     }
@@ -317,9 +355,13 @@ public sealed partial class CollisionSystem2D
     private void MarkIndexDirty(ColliderMobility2D mobility)
     {
         if (mobility == ColliderMobility2D.Static)
+        {
             _staticIndexDirty = true;
+        }
         else
+        {
             _dynamicIndexDirty = true;
+        }
     }
 
     private void RequireOwned(Collider2D collider)

@@ -1,8 +1,8 @@
 using App2d.Contracts.World;
-using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using System.Collections.Immutable;
@@ -10,7 +10,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
-internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunkedTileMap2D tileMap, uint worldLayer, uint actorMask) : IDisposable
+internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunkedTileMap2D tileMap, uint worldLayer, uint actorMask) : IDisposable
 {
     private const int HorizontalChunkRadius = 2;
     private const int VerticalChunkRadius = 1;
@@ -28,12 +28,19 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
     public long Version { get; private set; }
     public ImmutableArray<TerrainChunkState2D> CaptureState()
     {
-        if (_states.IsDefault) _states = [.. _loadedChunks.Values.OrderBy(c => c.State.Chunk.Y).ThenBy(c => c.State.Chunk.X).Select(c => c.State)];
+        if (_states.IsDefault)
+        {
+            _states = [.. _loadedChunks.Values.OrderBy(c => c.State.Chunk.Y).ThenBy(c => c.State.Chunk.X).Select(c => c.State)];
+        }
+
         return _states;
     }
     public void Dispose()
     {
-        foreach (var chunk in _loadedChunks.Keys.ToArray()) Unload(chunk);
+        foreach (var chunk in _loadedChunks.Keys.ToArray())
+        {
+            Unload(chunk);
+        }
     }
 
     public IReadOnlyList<SpatialObject2D> Platforms => _platforms;
@@ -50,7 +57,9 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
     public void Invalidate(TileChunk2D chunk)
     {
         if (!_loadedChunks.ContainsKey(chunk))
+        {
             return;
+        }
 
         Unload(chunk);
         Load(chunk);
@@ -58,7 +67,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
 
     public void Update(Vector2 focus)
     {
-        ArgGuard.ThrowIfNotFinite(focus);
+        ArgGuard.Finite(focus);
         var center = _tileMap.WorldToChunk(focus);
         var minimumX = Math.Max(0, center.X - HorizontalChunkRadius);
         var maximumX = Math.Min(_tileMap.ChunkColumns - 1, center.X + HorizontalChunkRadius);
@@ -76,7 +85,9 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
         }
 
         foreach (var chunk in _unloadBuffer)
+        {
             Unload(chunk);
+        }
 
         for (var y = minimumY; y <= maximumY; y++)
         {
@@ -84,7 +95,9 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
             {
                 var chunk = new TileChunk2D(x, y);
                 if (!_loadedChunks.ContainsKey(chunk))
+                {
                     Load(chunk);
+                }
             }
         }
     }
@@ -103,7 +116,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
             var bounds = isOneWay
                 ? new Rect2D(new Vector2(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
                 : collision.Bounds;
-            var platform = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(bounds.Size));
+            var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(bounds.Size));
             platform.Transform.Position = bounds.Center;
             _platforms.Add(platform);
 
@@ -112,8 +125,9 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
             body.Restitution = 0f;
             body.CollisionLayer = worldLayer;
             body.CollisionMask = actorMask;
-            body.IsOneWayPlatform = isOneWay;
-            body.IsWallGrippable = collision.Kind.IsGrippable();
+            var surface = PlatformCollisionRules2D.Attach(_physics).Surface(body);
+            surface.OneWaySurfaceNormal = isOneWay ? Vector2.UnitY : null;
+            surface.IsWallGrippable = collision.Kind.IsGrippable();
             colliders.Add(new ChunkCollider(platform, body));
         }
 
@@ -135,11 +149,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
         Version++;
     }
 
-    private sealed record LoadedChunk(
-        List<ChunkCollider> Colliders,
-        TerrainChunkState2D State);
+    private sealed record LoadedChunk(List<ChunkCollider> Colliders, TerrainChunkState2D State);
 
-    private readonly record struct ChunkCollider(
-        SpatialObject2D Platform,
-        PhysicsBody2D Body);
+    private readonly record struct ChunkCollider(SpatialObject2D Platform, RigidBody2D Body);
 }

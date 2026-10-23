@@ -1,11 +1,13 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio.Editor;
@@ -16,6 +18,8 @@ internal sealed record SubjectView(Subject Subject, Vector3 Offset);
 /// <summary>One frame of the viewport as the workspace views see it: where things are on screen and what the mouse is doing.</summary>
 internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, Vector2 size, Vector2 anchor, float ppu, IReadOnlyList<SubjectView> subjects, bool hovered)
 {
+    private readonly Frame2D _coordinates = new(origin + anchor, new(ppu, 0), new(0, -ppu));
+
     public ImDrawListPtr Draw { get; } = draw;
     public Vector2 Origin { get; } = origin;
     public Vector2 Size { get; } = size;
@@ -28,15 +32,14 @@ internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, Vector2 
     public Vector2 Screen(Vector3 world, int subject = 0)
     {
         var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        return Origin + anchor + new Vector2(world.X + offset.X, -(world.Y + offset.Y)) * Ppu;
+        return _coordinates.TransformPoint(world.XY + offset.XY);
     }
 
     /// <summary>The world position under a screen point, in a subject's own space, keeping <paramref name="z"/>.</summary>
     public Vector3 World(Vector2 screen, float z = 0, int subject = 0)
     {
         var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        var local = (screen - Origin - anchor) / Ppu;
-        return new(local.X - offset.X, -local.Y - offset.Y, z);
+        return new(_coordinates.ToLocal(screen) - offset.XY, z);
     }
 }
 
@@ -70,7 +73,10 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         Pan = default;
         _fittedFor = subject?.Id;
 
-        if (subject is null) return;
+        if (subject is null)
+        {
+            return;
+        }
 
         var points = DrawingPoints(subject.Model).ToArray();
         var (min, max) = (MathF.Min(0, points.Min(p => p.Y)), MathF.Max(1, points.Max(p => p.Y)));
@@ -85,7 +91,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private static IEnumerable<Vector3> DrawingPoints(ResolvedModel model)
     {
         var pose = PoseEvaluator.Rest(model);
-        return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]))
+        return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]))
             .Concat(model.Rest.Values)
             .Concat(model.Order.Where(c => c.Length > 0).Select(c =>
             {
@@ -97,8 +103,13 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
 
     public ViewportFrame Draw(Vector2 available, IReadOnlyList<Subject> scene, EditorSession session)
     {
-        if (scene.Count > 0 && _fittedFor != scene[0].Id) Fit(scene[0]);
-        var width = Math.Max(1, (int)available.X); var height = Math.Max(1, (int)available.Y);
+        if (scene.Count > 0 && _fittedFor != scene[0].Id)
+        {
+            Fit(scene[0]);
+        }
+
+        var width = Math.Max(1, (int)available.X);
+        var height = Math.Max(1, (int)available.Y);
         Ensure(ref _target, ref _targetId, width, height);
 
         var spacing = scene.Select(s => DrawingPoints(s.Model).Select(p => p.X)).Select(xs => xs.Max() - xs.Min()).DefaultIfEmpty(0).Max() + 1.1f;
@@ -108,7 +119,11 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         var centerX = _centerX + followX + (views.Length - 1) * spacing / 2;
         var anchor = new Vector2(width / 2f - centerX * ppu, height / 2f + _centerY * ppu) + Pan;
 
-        while (_drawings.Count < views.Length) _drawings.Add(new());
+        while (_drawings.Count < views.Length)
+        {
+            _drawings.Add(new());
+        }
+
         for (var i = 0; i < views.Length; i++)
         {
             var subject = views[i].Subject;
@@ -122,66 +137,108 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 if (session.Mode == Workspace.Appearance && session.Entity is { } wearer && wearer.Model.Id == subject.Model.Id)
                 {
                     foreach (var item in wearer.Equipment.Where(e => e.Prop.Id != session.PreviewProp))
+                    {
                         _drawings[i].AddProp(item.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(item.Socket));
+                    }
                 }
 
                 if (session.Mode is Workspace.Animate or Workspace.Appearance && session.WeaponFor(subject.Model) is { } weapon)
+                {
                     _drawings[i].AddProp(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket));
+                }
             }
         }
         Render(_target!, width, height, anchor, ppu, views, centerX);
 
-        var start = ImGui.GetCursorScreenPos(); var size = new Vector2(width, height);
+        var start = ImGui.GetCursorScreenPos();
+        var size = new Vector2(width, height);
         ImGui.InvisibleButton("viewport", size, ImGuiButtonFlags.MouseButtonLeft | ImGuiButtonFlags.MouseButtonRight | ImGuiButtonFlags.MouseButtonMiddle);
         var hovered = ImGui.IsItemHovered();
-        var draw = ImGui.GetWindowDrawList(); draw.AddImage(_targetId, start, start + size);
-        if (GameSize && views.Length > 0) DrawInset(draw, start, size, views, centerX);
+        var draw = ImGui.GetWindowDrawList();
+        draw.AddImage(_targetId, start, start + size);
+        if (GameSize && views.Length > 0)
+        {
+            DrawInset(draw, start, size, views, centerX);
+        }
+
         if (hovered)
         {
             var io = ImGui.GetIO();
-            if (io.MouseWheel != 0) Zoom = Math.Clamp(Zoom * MathF.Pow(1.1f, io.MouseWheel), .1f, 10);
-            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle)) Pan += io.MouseDelta;
+            if (io.MouseWheel != 0)
+            {
+                Zoom = Math.Clamp(Zoom * MathF.Pow(1.1f, io.MouseWheel), .1f, 10);
+            }
+
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
+            {
+                Pan += io.MouseDelta;
+            }
         }
         return new(draw, start, size, anchor, ppu, views, hovered);
     }
 
     private void DrawInset(ImDrawListPtr draw, Vector2 start, Vector2 size, SubjectView[] views, float centerX)
     {
-        var width = (int)MathF.Min(size.X * .45f, 520 * Ui.Scale); var height = (int)MathF.Min(size.Y * .28f, 150 * Ui.Scale);
-        if (width < 40 || height < 40) return;
+        var width = (int)MathF.Min(size.X * .45f, 520 * Ui.Scale);
+        var height = (int)MathF.Min(size.Y * .28f, 150 * Ui.Scale);
+        if (width < 40 || height < 40)
+        {
+            return;
+        }
+
         Ensure(ref _inset, ref _insetId, width, height);
         Render(_inset!, width, height, new(width / 2f - centerX * GamePpu, height * .85f), GamePpu, views, centerX);
         var min = start + size - new Vector2(width + 8, height + 8);
         draw.AddImage(_insetId, min, min + new Vector2(width, height));
-        draw.AddRect(min, min + new Vector2(width, height), Ui.Color(90, 100, 96), 0, ImDrawFlags.None, 1);
-        draw.AddText(min + new Vector2(6, 4), Ui.Color(90, 100, 96), "game size");
+        draw.AddRect(min, min + new Vector2(width, height), StudioTheme.MutedText.PackedValue, 0, ImDrawFlags.None, 1);
+        draw.AddText(min + new Vector2(6, 4), StudioTheme.MutedText.PackedValue, "game size");
     }
 
     private void Render(RenderTarget2D target, int width, int height, Vector2 anchor, float ppu, SubjectView[] views, float centerX)
     {
-        device.SetRenderTarget(target); device.Clear(new Color(237, 238, 226));
+        using var bound = device.UseRenderTarget(target, StudioTheme.ViewportBackground);
         var projection = PointCharacterRenderer.Projection(width, height, anchor, ppu);
         BuildGround(centerX, width / ppu, ppu);
         renderer.Draw(_ground, projection, Matrix.Identity, writeDepth: false);
-        for (var i = 0; i < views.Length; i++) renderer.Draw(_drawings[i], projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
-        device.SetRenderTarget(null);
+        for (var i = 0; i < views.Length; i++)
+        {
+            renderer.DrawActor(_drawings[i], projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
+        }
     }
 
     private void BuildGround(float centerX, float span, float ppu)
     {
-        _ground.Clear(); var ink = new Color(154, 169, 158); var pixel = 1 / ppu;
+        _ground.Clear();
+        var ink = StudioTheme.GroundGuide;
+        var pixel = 1 / ppu;
         _ground.Line(new(centerX - span, 0, 7), new(centerX + span, 0, 7), pixel, ink);
-        var first = (int)MathF.Floor((centerX - span / 2 - 1) * 4); var last = (int)MathF.Ceiling((centerX + span / 2 + 1) * 4);
-        for (var x = first; x <= last && x - first < 2000; x++) _ground.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
+        var first = (int)MathF.Floor((centerX - span / 2 - 1) * 4);
+        var last = (int)MathF.Ceiling((centerX + span / 2 + 1) * 4);
+        for (var x = first; x <= last && x - first < 2000; x++)
+        {
+            _ground.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
+        }
     }
 
     private void Ensure(ref RenderTarget2D? target, ref nint id, int width, int height)
     {
-        if (target is not null && target.Width == width && target.Height == height) return;
-        if (target is not null) { gui.Unregister(id); target.Dispose(); }
+        if (target is not null && target.Width == width && target.Height == height)
+        {
+            return;
+        }
+
+        if (target is not null)
+        {
+            gui.Unregister(id);
+            target.Dispose();
+        }
         target = new(device, width, height, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         id = gui.Register(target);
     }
 
-    public void Dispose() { _target?.Dispose(); _inset?.Dispose(); }
+    public void Dispose()
+    {
+        _target?.Dispose();
+        _inset?.Dispose();
+    }
 }

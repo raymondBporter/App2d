@@ -1,16 +1,17 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Persons;
-using App2d.Levels;
 using App2d.Presentation.Persons;
 using System.Numerics;
 
@@ -114,12 +115,17 @@ public sealed class PersonBalancePresentationTests
     {
         _person.BeginFrame(Dt);
         _person.ApplyCommand(new PersonCommand2D
-        { MoveX = move, JumpHeld = jump || drop, DownHeld = drop, DashHeld = dash }, Dt);
+        {
+            MoveX = move,
+            JumpHeld = jump || drop,
+            DownHeld = drop,
+            DashHeld = dash
+        }, Dt);
         _physics.Step(Dt);
         _person.UpdateAfterPhysics(Dt);
     }
 
-    private PhysicsBody2D AddLedge(int edge, float overhang = 0.4f, BodyMotionType2D motion = BodyMotionType2D.Static)
+    private RigidBody2D AddLedge(int edge, float overhang = 0.4f, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
         var bounds = _person.WorldObject.WorldBounds;
         return edge > 0
@@ -127,9 +133,9 @@ public sealed class PersonBalancePresentationTests
             : AddSupport(bounds.Left + bounds.Size.X * overhang, 200f, motion);
     }
 
-    private PhysicsBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
+    private RigidBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
-        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(right - left, 32f)));
+        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(right - left, 32f));
         spatial.Transform.Position = new Vector2((left + right) / 2f, -16f);
         var body = _physics.AddBody(spatial, motion);
         body.CollisionLayer = 1u;

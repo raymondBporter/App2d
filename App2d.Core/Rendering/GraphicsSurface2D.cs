@@ -18,7 +18,9 @@ public sealed class GraphicsSurface2D : Control
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque, true);
     }
 
-    protected override void OnPaintBackground(PaintEventArgs pevent) { }
+    protected override void OnPaintBackground(PaintEventArgs pevent)
+    {
+    }
 
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -29,7 +31,10 @@ public sealed class GraphicsSurface2D : Control
         }
 
         if (_device?.GraphicsDeviceStatus == GraphicsDeviceStatus.Lost)
+        {
             ReleaseDevice();
+        }
+
         if (_device is null)
         {
             _device = new GraphicsDevice(GraphicsAdapter.DefaultAdapter, GraphicsProfile.HiDef, CreateParameters());
@@ -66,13 +71,21 @@ public sealed class GraphicsSurface2D : Control
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) ReleaseDevice();
+        if (disposing)
+        {
+            ReleaseDevice();
+        }
+
         base.Dispose(disposing);
     }
 
     private void ReleaseDevice()
     {
-        if (_device is null) return;
+        if (_device is null)
+        {
+            return;
+        }
+
         DeviceDisposing?.Invoke();
         _device.Dispose();
         _device = null;

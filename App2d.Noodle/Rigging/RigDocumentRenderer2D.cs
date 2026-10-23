@@ -3,22 +3,26 @@ using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle.Rigging;
 
 internal static class RigDocumentRenderer2D
 {
-    private static readonly XnaColor BoneColor = new(235, 239, 248, 220);
-    private static readonly XnaColor SelectedColor = new(117, 255, 178);
-    private static readonly XnaColor CollisionColor = new(255, 165, 72, 225);
+    private static readonly Color4b BoneColor = new(235, 239, 248, 220);
+    private static readonly Color4b SelectedColor = new(117, 255, 178);
+    private static readonly Color4b CollisionColor = new(255, 165, 72, 225);
 
     public static void Render(Renderer2D renderer, RigDocument2D document, object? selection)
     {
         foreach (var shape in document.Shapes)
+        {
             DrawShape(renderer, document, shape, ReferenceEquals(shape, selection));
+        }
+
         foreach (var bone in document.Bones)
+        {
             DrawBone(renderer, document, bone, ReferenceEquals(bone, selection));
+        }
     }
 
     private static void DrawShape(
@@ -29,22 +33,28 @@ internal static class RigDocumentRenderer2D
     {
         var geometry = shape.CreateGeometry();
         var drawingColor = shape.Color;
-        var color = XnaColor.FromNonPremultiplied(
+        var color = Color4b.FromNonPremultiplied(
             drawingColor.R, drawingColor.G, drawingColor.B, drawingColor.A);
         if (shape.Purpose == RigShapePurpose.Collision)
-            color = new XnaColor(CollisionColor.R, CollisionColor.G, CollisionColor.B, (byte)60);
+        {
+            color = new Color4b(CollisionColor.R, CollisionColor.G, CollisionColor.B, (byte)60);
+        }
 
         var item = new WorldObject2D(geometry, new SolidColorShader(color));
-        var boneTransform = RigDocument2D.GetWorldTransform(shape.AttachedBone);
-        item.Transform.Position = Vector2.Transform(new Vector2(shape.LocalX, shape.LocalY), boneTransform);
-        item.Transform.Rotation = new Vector2(boneTransform.M11, boneTransform.M12).AngleRadians +
-            MathF.PI / 180f * shape.AngleDegrees;
+        var boneFrame = RigDocument2D.GetWorldFrame(shape.AttachedBone);
+        item.Transform.Position = boneFrame.TransformPoint(new(shape.LocalX, shape.LocalY));
+        item.Transform.Rotation = boneFrame.XAxis.AngleRadians + float.DegreesToRadians(shape.AngleDegrees);
         renderer.Draw(item);
 
         if (shape.Purpose != RigShapePurpose.Visual)
+        {
             renderer.DrawShapeOutline(item, CollisionColor, 2f);
+        }
+
         if (isSelected)
+        {
             renderer.DrawShapeOutline(item, SelectedColor, 4f);
+        }
     }
 
     private static void DrawBone(

@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -18,7 +18,7 @@ public readonly record struct GridGeometry2D
     public GridGeometry2D(Size2D cellSize, Vector2 origin = default)
     {
         ArgGuard.ThrowIf(!cellSize.IsValid, "Cell size must have positive finite dimensions.", nameof(cellSize));
-        ArgGuard.ThrowIfNotFinite(origin);
+        ArgGuard.Finite(origin);
         CellSize = cellSize;
         Origin = origin;
     }
@@ -31,18 +31,28 @@ public readonly record struct GridGeometry2D
     {
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
         if (!TryWorldToCell(position, out var cell))
+        {
             ArgGuard.ThrowOutOfRange(position, "Position must be finite and map to 32-bit cell coordinates.");
+        }
+
         return cell;
     }
 
     public bool TryWorldToCell(Vector2 position, out GridCell2D cell)
     {
         cell = default;
-        if (!IsValid || !NumericValidation.IsFinite(position)) return false;
+        if (!IsValid || !NumericValidation.IsFinite(position))
+        {
+            return false;
+        }
         // Double intermediates avoid overflowing a float subtraction or wrapping a float-to-int conversion.
         var x = Math.Floor(((double)position.X - Origin.X) / CellSize.Width);
         var y = Math.Floor(((double)position.Y - Origin.Y) / CellSize.Height);
-        if (x < int.MinValue || x > int.MaxValue || y < int.MinValue || y > int.MaxValue) return false;
+        if (x < int.MinValue || x > int.MaxValue || y < int.MinValue || y > int.MaxValue)
+        {
+            return false;
+        }
+
         cell = new((int)x, (int)y);
         return true;
     }
@@ -51,7 +61,7 @@ public readonly record struct GridGeometry2D
     public GridCell2D WorldToCellClamped(Vector2 position, GridSize2D size)
     {
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
-        ArgGuard.ThrowIfNotFinite(position);
+        ArgGuard.Finite(position);
         ArgGuard.ThrowIf(size.IsEmpty, "Cannot clamp to an empty grid.", nameof(size));
         return new(
             (int)Math.Clamp(Math.Floor(((double)position.X - Origin.X) / CellSize.Width), 0, size.Width - 1),
@@ -61,13 +71,13 @@ public readonly record struct GridGeometry2D
     public Rect2D GetCellBounds(GridCell2D cell) => new(
         Corner(cell.X, cell.Y), Corner((double)cell.X + 1, (double)cell.Y + 1));
 
-    public Vector2 GetCellCenter(GridCell2D cell) => Corner((double)cell.X + .5, (double)cell.Y + .5);
+    public Vector2 GetCellCenter(GridCell2D cell) => Corner(cell.X + .5, cell.Y + .5);
 
     /// <summary>Snaps a finite world point to its nearest cell corner. Halfway ties round to an even grid index.</summary>
     public Vector2 SnapToNearestCorner(Vector2 position)
     {
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
-        ArgGuard.ThrowIfNotFinite(position);
+        ArgGuard.Finite(position);
         return Corner(
             Math.Round(((double)position.X - Origin.X) / CellSize.Width),
             Math.Round(((double)position.Y - Origin.Y) / CellSize.Height));
@@ -89,10 +99,17 @@ public readonly record struct GridGeometry2D
     public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2D
     {
         // Value-type rectangles cannot be null; avoid boxing them in unoptimized builds.
-        if (!typeof(TRect).IsValueType) ArgGuard.ThrowIfNull(bounds);
+        if (!typeof(TRect).IsValueType)
+        {
+            ArgGuard.ThrowIfNull(bounds);
+        }
+
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
         if (!TryGetCellRange(bounds, out var cells))
+        {
             ArgGuard.ThrowOutOfRange(bounds, "Bounds must be finite, ordered, and fit the grid coordinate and cell-count limits.");
+        }
+
         return cells;
     }
 
@@ -109,7 +126,11 @@ public readonly record struct GridGeometry2D
 
         var width = (long)max.X - min.X + 1;
         var height = (long)max.Y - min.Y + 1;
-        if (width > long.MaxValue / height) return false;
+        if (width > long.MaxValue / height)
+        {
+            return false;
+        }
+
         cells = new(min, max);
         return true;
     }
@@ -117,10 +138,18 @@ public readonly record struct GridGeometry2D
     /// <summary>Clips a finite ordered rectangle to a finite grid. Disjoint or empty grids return an empty range.</summary>
     public GridCellRange2D GetCellRange<TRect>(TRect bounds, GridSize2D size) where TRect : IRect2D
     {
-        if (!typeof(TRect).IsValueType) ArgGuard.ThrowIfNull(bounds);
-        ArgGuard.ThrowIfNotFiniteOrNotComponentWiseGreaterThanOrEqual(bounds.Max, bounds.Min, nameof(bounds), nameof(bounds));
+        if (!typeof(TRect).IsValueType)
+        {
+            ArgGuard.ThrowIfNull(bounds);
+        }
+
+        ArgGuard.AtLeast(bounds.Max, bounds.Min, nameof(bounds), nameof(bounds));
         var world = GetBounds(size);
-        if (size.IsEmpty || !world.TryIntersect(bounds, out var clipped)) return default;
+        if (size.IsEmpty || !world.TryIntersect(bounds, out var clipped))
+        {
+            return default;
+        }
+
         return new(WorldToCellClamped(clipped.Min, size), WorldToCellClamped(clipped.Max, size));
     }
 
@@ -129,7 +158,10 @@ public readonly record struct GridGeometry2D
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
         var point = new Vector2((float)(Origin.X + x * CellSize.Width), (float)(Origin.Y + y * CellSize.Height));
         if (!NumericValidation.IsFinite(point))
+        {
             ArgGuard.ThrowOutOfRange(point, "Grid bounds must fit finite world coordinates.");
+        }
+
         return point;
     }
 }

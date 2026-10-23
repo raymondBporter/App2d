@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "pterosaur-hit",
   "name": "Pterosaur / hit",
   "model": "pterosaur",
@@ -15,16 +15,13 @@
       "kind": "rotate",
       "target": "body",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.135,
           "angle": 0.3
         },
         {
-          "time": 0.45,
-          "angle": 0
+          "time": 0.45
         }
       ]
     },
@@ -32,16 +29,13 @@
       "kind": "rotate",
       "target": "near-shoulder",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.135,
           "angle": -0.8
         },
         {
-          "time": 0.45,
-          "angle": 0
+          "time": 0.45
         }
       ]
     },
@@ -49,16 +43,13 @@
       "kind": "rotate",
       "target": "far-shoulder",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.135,
           "angle": 0.8
         },
         {
-          "time": 0.45,
-          "angle": 0
+          "time": 0.45
         }
       ]
     },
@@ -66,16 +57,13 @@
       "kind": "rotate",
       "target": "near-bend",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.135,
           "angle": -0.5
         },
         {
-          "time": 0.45,
-          "angle": 0
+          "time": 0.45
         }
       ]
     },
@@ -83,16 +71,13 @@
       "kind": "rotate",
       "target": "far-bend",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.135,
           "angle": 0.5
         },
         {
-          "time": 0.45,
-          "angle": 0
+          "time": 0.45
         }
       ]
     }
@@ -100,5 +85,8 @@
   "contacts": [],
   "markers": [],
   "faces": [],
-  "loop": false
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

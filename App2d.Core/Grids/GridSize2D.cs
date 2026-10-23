@@ -6,10 +6,10 @@ public readonly record struct GridSize2D
 {
     public GridSize2D(int width, int height)
     {
-        ArgGuard.ThrowIfNegative(width);
-        ArgGuard.ThrowIfNegative(height);
+        ArgGuard.NonNegative(width);
+        ArgGuard.NonNegative(height);
         var count = (long)width * height;
-        ArgGuard.ThrowIfGreaterThan(count, (long)int.MaxValue);
+        ArgGuard.AtMost(count, int.MaxValue);
         Width = width;
         Height = height;
         CellCount = (int)count;
@@ -26,8 +26,8 @@ public readonly record struct GridSize2D
 
     public int GetIndex(int x, int y)
     {
-        ArgGuard.ThrowIfNotInClosedRange(x, 0, Width - 1);
-        ArgGuard.ThrowIfNotInClosedRange(y, 0, Height - 1);
+        ArgGuard.Index(x, Width);
+        ArgGuard.Index(y, Height);
         return x + y * Width;
     }
 
@@ -41,15 +41,15 @@ public readonly record struct GridSize2D
 
     public GridCell2D GetCell(int index)
     {
-        ArgGuard.ThrowIfNotInClosedRange(index, 0, CellCount - 1);
+        ArgGuard.Index(index, CellCount);
         return new(index % Width, index / Width);
     }
 
     /// <summary>Number of blocks needed to cover this grid, including partial edge blocks.</summary>
     public GridSize2D DivideRoundUp(int blockWidth, int blockHeight)
     {
-        ArgGuard.ThrowIfNotPositive(blockWidth);
-        ArgGuard.ThrowIfNotPositive(blockHeight);
+        ArgGuard.Positive(blockWidth);
+        ArgGuard.Positive(blockHeight);
         return new((int)((Width + (long)blockWidth - 1) / blockWidth),
             (int)((Height + (long)blockHeight - 1) / blockHeight));
     }

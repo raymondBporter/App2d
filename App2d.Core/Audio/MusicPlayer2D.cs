@@ -13,16 +13,33 @@ public sealed class MusicPlayer2D : IDisposable
     {
         _mixer = new(cues);
         _output = new WaveOut();
-        try { _output.Init(_mixer); _output.Play(); }
-        catch { _output.Dispose(); _mixer.Dispose(); throw; }
+        try
+        {
+            _output.Init(_mixer);
+            _output.Play();
+        }
+        catch
+        {
+            _output.Dispose();
+            _mixer.Dispose();
+            throw;
+        }
     }
 
-    public float Volume { get => _mixer.Volume; set => _mixer.Volume = value; }
+    public float Volume
+    {
+        get => _mixer.Volume; set => _mixer.Volume = value;
+    }
     public void Select(string piece, string mood) => _mixer.Select(piece, mood);
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
-        _output.Dispose(); _mixer.Dispose();
+        _output.Dispose();
+        _mixer.Dispose();
     }
 }

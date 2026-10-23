@@ -1,4 +1,5 @@
-using App2d.Core.Meshes;
+using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Operations.Polygons;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -6,22 +7,38 @@ namespace App2d.Tests.Geometry;
 public sealed class TriangleMeshBuilder3DTests
 {
     [Fact]
+    public void FailedVertexFactoryPreservesThePreviousMeshAndVersion()
+    {
+        var builder = new TriangleMeshBuilder3D<Vector3, bool>((point, fail, _) =>
+            fail ? throw new InvalidOperationException() : point, 3);
+        builder.Vertex(Vector3.One, false);
+        var version = builder.Version;
+        Assert.Throws<InvalidOperationException>(() => builder.Vertex(Vector3.Zero, true));
+        Assert.Equal(1, builder.Count);
+        Assert.Equal(version, builder.Version);
+        Assert.Equal(Vector3.One, builder.Vertices[0]);
+    }
+
+    [Fact]
     public void RibbonSharesCrossSectionsKeepsDepthAndCapsOnlyTheEnds()
     {
         var builder = new TriangleMeshBuilder3D<Vector3, byte>((point, _, _) => point);
         builder.Ribbon([new(0, 0, 0), new(1, 0, 1), new(2, 0, 2)], 0, .2f);
         Assert.Equal(28, builder.TriangleCount);
-        Assert.Equal(-.1f, builder.Min.Y, 5); Assert.Equal(.1f, builder.Max.Y, 5);
-        Assert.Equal(0, builder.Min.Z); Assert.Equal(2, builder.Max.Z);
+        Assert.Equal(-.1f, builder.Min.Y, 5);
+        Assert.Equal(.1f, builder.Max.Y, 5);
+        Assert.Equal(0, builder.Min.Z);
+        Assert.Equal(2, builder.Max.Z);
         Assert.All(builder.Vertices.ToArray(), p => Assert.True(float.IsFinite(p.X + p.Y + p.Z)));
-        builder.Clear(); builder.Ribbon([Vector3.Zero, Vector3.Zero, Vector3.Zero], 0, .2f);
+        builder.Clear();
+        builder.Ribbon([Vector3.Zero, Vector3.Zero, Vector3.Zero], 0, .2f);
         Assert.All(builder.Vertices.ToArray(), p => Assert.True(float.IsFinite(p.X + p.Y + p.Z)));
     }
 
     [Fact]
     public void IndexedTwoDimensionalMeshCanBePlacedAndColoredInThreeDimensions()
     {
-        var source = TriangleMesh2D.TriangulateSimplePolygon(
+        var source = PolygonTriangulation2D.Triangulate(
             [new(0f, 0f), new(2f, 0f), new(2f, 2f), new(1f, 1f), new(0f, 2f)]);
         var builder = new TriangleMeshBuilder3D<(Vector3 Position, int Material), int>(
             (point, material, _) => (point, material), initialCapacity: 3);

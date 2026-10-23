@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Authored;
@@ -10,7 +11,9 @@ public sealed class HumanProportionsTests
     public void EveryHumanHasEightyPercentLegsAndKeepsItsUpperBody(string id)
     {
         var actual = Catalog.Resolve(id);
-        var original = ResolvedModel.From(PersonTemplate.StudyReference(), actual.Variant);
+        var reference = PersonTemplate.StudyReference();
+        reference.Materials = actual.Base.Materials;
+        var original = ResolvedModel.From(reference, actual.Variant);
         foreach (var side in new[] { "left", "right" })
         {
             Assert.Equal(original.Length(side + "-hip", side + "-knee") * .8f, actual.Length(side + "-hip", side + "-knee"), 5);
@@ -22,11 +25,15 @@ public sealed class HumanProportionsTests
         Assert.Equal(original.Measure("torso"), actual.Measure("torso"), 5);
         foreach (var part in new[] { "head", "body" })
         {
-            var before = original.Parts.Single(p => p.Id == part); var after = actual.Parts.Single(p => p.Id == part);
-            Assert.Equal(before.Width, after.Width); Assert.Equal(before.Height, after.Height);
+            var before = original.Parts.Single(p => p.Id == part);
+            var after = actual.Parts.Single(p => p.Id == part);
+            Assert.Equal(before.ScaleX, after.ScaleX);
+            Assert.Equal(before.ScaleY, after.ScaleY);
         }
         foreach (var control in PersonTemplate.Model().Controls)
+        {
             TestModels.Near(control.Rest.XYZ, Catalog.Resolve("person").Rest[control.Id]);
+        }
     }
 
     [Theory, InlineData("person-walk"), InlineData("person-run"), InlineData("person-heavy-walk")]
@@ -36,13 +43,18 @@ public sealed class HumanProportionsTests
         foreach (var id in new[] { "person", "tall-thin", "short-broad", "brute", "cinder" })
         {
             var model = Catalog.Resolve(id);
-            var original = ResolvedModel.From(PersonTemplate.StudyReference(), model.Variant);
+            var reference = PersonTemplate.StudyReference();
+            reference.Materials = model.Base.Materials;
+            var original = ResolvedModel.From(reference, model.Variant);
             Assert.Equal(PoseEvaluator.CycleTravel(original, clip).X * .8f, PoseEvaluator.CycleTravel(model, clip).X, 5);
             for (var i = 0; i <= 240; i++)
             {
                 var pose = PoseEvaluator.Sample(model, clip, i * clip.Duration / 120.0, repeat: true);
                 foreach (var chain in pose.Chains.Where(c => c.Chain.EndsWith("-leg")))
+                {
                     Assert.True(chain.Reached, $"{id}/{clipId}/{chain.Chain} at frame {i}: {chain.Residual}");
+                }
+
                 Assert.All(pose.Contacts, c => Assert.InRange(c.Residual, 0, 1e-4f));
             }
             foreach (var contact in clip.Contacts)

@@ -1,6 +1,6 @@
 {
   "format": "app2d-prop",
-  "version": 2,
+  "version": 3,
   "id": "sword",
   "name": "Sword",
   "lineWidth": 0.02,
@@ -11,7 +11,6 @@
   },
   "shapes": [
     {
-      "width": 0.006,
       "geometry": {
         "kind": "line",
         "start": {
@@ -29,7 +28,8 @@
       ],
       "material": {
         "fill": "#714b3e",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.006
       }
     }
   ],
@@ -203,7 +203,10 @@
         8,
         15
       ],
-      "material": { "fill": "#465963", "outline": {} },
+      "material": {
+        "fill": "#465963",
+        "outline": {}
+      },
       "outline": [
         {
           "x": 0.045,
@@ -351,7 +354,10 @@
         5,
         9
       ],
-      "material": { "fill": "#dce5e7", "outline": {} },
+      "material": {
+        "fill": "#dce5e7",
+        "outline": {}
+      },
       "outline": [
         {
           "x": 0.065,

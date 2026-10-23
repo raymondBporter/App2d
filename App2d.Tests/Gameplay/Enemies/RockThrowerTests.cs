@@ -1,15 +1,16 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using System.Numerics;
 using System.Text.Json;
 
@@ -31,7 +32,11 @@ public sealed class RockThrowerTests
 
     private static void Tick(AuthoredEntityEnemy2D enemy, Vector2 target, int ticks)
     {
-        for (var i = 0; i < ticks; i++) { enemy.Update(1f / 120, target); enemy.SyncAfterPhysics(); }
+        for (var i = 0; i < ticks; i++)
+        {
+            enemy.Update(1f / 120, target);
+            enemy.SyncAfterPhysics();
+        }
     }
 
     [Theory, InlineData(-1), InlineData(1)]
@@ -70,7 +75,8 @@ public sealed class RockThrowerTests
         enemy.TakeDamage(6, Vector2.Zero);
         for (var i = 0; i < 180; i++)
         {
-            Tick(enemy, player.Position, 1); enemy.TryResolvePlayerHit(player);
+            Tick(enemy, player.Position, 1);
+            enemy.TryResolvePlayerHit(player);
         }
         Assert.Equal(28, player.Health.Current);
         Assert.Empty(enemy.CaptureState().Bolts);
@@ -86,7 +92,7 @@ public sealed class RockThrowerTests
             Assert.Single(enemy.CaptureState().Bolts);
             if (wall)
             {
-                var obstacle = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(1, 300)));
+                var obstacle = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1, 300));
                 obstacle.Transform.Position = new(100, 100);
                 physics.AddBody(obstacle, BodyMotionType2D.Static).CollisionLayer = 1;
             }
@@ -96,10 +102,17 @@ public sealed class RockThrowerTests
             }
 
             enemy.TakeDamage(6, Vector2.Zero);
-            for (var i = 0; i < 400; i++) { Tick(enemy, player.Position, 1); enemy.TryResolvePlayerHit(player); }
+            for (var i = 0; i < 400; i++)
+            {
+                Tick(enemy, player.Position, 1);
+                enemy.TryResolvePlayerHit(player);
+            }
             Assert.Equal(30, player.Health.Current);
             Assert.Empty(enemy.CaptureState().Bolts);
-            if (wall) Assert.Contains(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "rock-impact");
+            if (wall)
+            {
+                Assert.Contains(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "rock-impact");
+            }
         }
     }
 
@@ -107,7 +120,7 @@ public sealed class RockThrowerTests
     public void ClosePlayerGetsOneShortRetreatThenAPauseThenAThrow()
     {
         var (enemy, physics, player) = Create();
-        var floor = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(500, 20)));
+        var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(500, 20));
         floor.Transform.Position = new(0, -10);
         physics.AddBody(floor, BodyMotionType2D.Static).CollisionLayer = 1;
         player.WorldObject.Transform.Position = new(60, 26);
@@ -124,16 +137,31 @@ public sealed class RockThrowerTests
     public void SoloAndPairedEncountersSpawnTheirProjectiles(bool paired)
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < 640; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         var things = new List<WorldThingSpec2D>
         {
             new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
             new(2, WorldThingKind2D.RockThrower, null, true, new(-168, 40))
         };
-        if (paired) things.Add(new(3, WorldThingKind2D.ClubCaveman, null, true, new(-280, 40)));
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], things)
-        { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
-        for (var i = 0; i < 150; i++) game.Session.Advance();
+        if (paired)
+        {
+            things.Add(new(3, WorldThingKind2D.ClubCaveman, null, true, new(-280, 40)));
+        }
+
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, things)
+        {
+            AuthoredCharacters = Catalog,
+            PlayerMaximumHealth = 100
+        });
+        for (var i = 0; i < 150; i++)
+        {
+            game.Session.Advance();
+        }
+
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
         {
             game.Session.Advance();

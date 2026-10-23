@@ -8,19 +8,13 @@
       "frameCount": 8,
       "supportBoneMaxDrift": 0,
       "loopPoseMaxError": 0.0,
-      "supportPixel": [
-        239.56922912597656,
-        375.57176208496094
-      ]
+      "supportPixel": [239.56922912597656, 375.57176208496094]
     },
     "balance-right-foot": {
       "frameCount": 8,
       "supportBoneMaxDrift": 0,
       "loopPoseMaxError": 0.0,
-      "supportPixel": [
-        285.745849609375,
-        376.4282531738281
-      ]
+      "supportPixel": [285.745849609375, 376.4282531738281]
     }
   },
   "references": {

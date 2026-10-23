@@ -1,7 +1,8 @@
 using App2d.Contracts.Combat;
 using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -45,23 +46,42 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 
             var force = knockback(combatant);
             var direction = impactDirection == Vector2.Zero ? force : impactDirection;
-            if (direction.LengthSquared() > 0) direction = Vector2.Normalize(direction);
+            if (direction.LengthSquared() > 0)
+            {
+                direction = Vector2.Normalize(direction);
+            }
+
             var attackerPosition = Combatants.Find(attackerId.IsValid ? attackerId : attackSourceId)?.WorldObject.Transform.Position;
             var blocked = combatant is ICombatGuard2D protectedTarget && protectedTarget.CanBlock(hitbox.WorldBounds, direction, attackerPosition);
-            if (combatant is IAuthoredHurt2D authored && !authored.OverlapsHurt(hitbox.WorldBounds) && !blocked) continue;
-            if (!combatant.TryRegisterHit(attackSourceId, attackId)) continue;
+            if (combatant is IAuthoredHurt2D authored && !authored.OverlapsHurt(hitbox.WorldBounds) && !blocked)
+            {
+                continue;
+            }
+
+            if (!combatant.TryRegisterHit(attackSourceId, attackId))
+            {
+                continue;
+            }
+
             var position = combatant is IAuthoredHurt2D hurt ? hurt.HurtContact(hitbox.WorldBounds)
                 : Vector2.Clamp(hitbox.WorldBounds.Center, combatant.WorldObject.WorldBounds.Min, combatant.WorldObject.WorldBounds.Max);
             var contact = new CombatContact2D(attackSourceId, attackId,
                 position ?? combatant.WorldObject.Transform.Position, direction, impactKind)
-            { AttackerId = attackerId.IsValid ? attackerId : attackSourceId };
+            {
+                AttackerId = attackerId.IsValid ? attackerId : attackSourceId
+            };
             // Physical contact can still bounce a downward attack off an invulnerable target.
             // Only accepted damage emits the contact fact used by audiovisual feedback.
             if (combatant is not ICombatGuard2D guard || !guard.TryBlock(hitbox.WorldBounds, direction, attackerPosition))
+            {
                 Damage(combatant, damage, force, contact);
+            }
+
             hitAny = true;
             if (stopAfterFirstHit)
+            {
                 break;
+            }
         }
 
         return hitAny;
@@ -81,7 +101,9 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         foreach (var combatant in Candidates(hitbox, targetLayer))
         {
             if (!combatant.IsAlive || combatant.Faction == attackerFaction)
+            {
                 continue;
+            }
 
             var force = knockback(combatant);
             if (combatant is IAuthoredHurt2D hurt && !hurt.OverlapsHurt(hitbox.WorldBounds) &&
@@ -91,20 +113,27 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
             }
 
             if (combatant is not ICombatGuard2D guard || !guard.TryBlock(hitbox.WorldBounds, force, null))
+            {
                 Damage(combatant, damage, force);
+            }
+
             return true;
         }
 
         return false;
     }
 
-    private ICombatant2D? GetCombatant(Collider2D collider) =>
-        Combatants.Find(collider.EntityId);
+    private ICombatant2D? GetCombatant(Collider2D collider) => Combatants.Find(collider.EntityId);
 
     private IEnumerable<ICombatant2D> Candidates(SpatialObject2D hitbox, uint targetLayer)
     {
         foreach (var overlap in _overlaps)
-            if (GetCombatant(overlap.Collider) is { } c && c is not IAuthoredHurt2D) yield return c;
+        {
+            if (GetCombatant(overlap.Collider) is { } c && c is not IAuthoredHurt2D)
+            {
+                yield return c;
+            }
+        }
         // Hurt geometry can extend past the terrain collider (heads, long bodies).
         foreach (var id in Combatants.Ids)
         {
@@ -121,12 +150,20 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
     {
         var wasAlive = combatant.IsAlive;
         if (!combatant.TakeDamage(damage, knockback))
+        {
             return;
+        }
 
         var killed = wasAlive && !combatant.IsAlive;
-        if (killed && combatant.Faction == CombatFaction2D.Enemy) DefeatedEnemies++;
+        if (killed && combatant.Faction == CombatFaction2D.Enemy)
+        {
+            DefeatedEnemies++;
+        }
+
         DamageResolved?.Invoke(new CombatDamage2D(combatant.Id, combatant.Faction,
             combatant.WorldObject.Transform.Position, killed)
-        { Contact = contact });
+        {
+            Contact = contact
+        });
     }
 }

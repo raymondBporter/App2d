@@ -20,13 +20,36 @@ public sealed class ImGuiHost : IDisposable
     public float UiScale { get; private set; }
     public float DpiScale => _platform.DpiScale;
     public float UserScale { get; set; }
-    public bool WantCaptureMouse { get { MakeCurrent(); return ImGui.GetIO().WantCaptureMouse; } }
-    public bool WantCaptureKeyboard { get { MakeCurrent(); return ImGui.GetIO().WantCaptureKeyboard; } }
-    public bool WantTextInput { get { MakeCurrent(); return ImGui.GetIO().WantTextInput; } }
+    public bool WantCaptureMouse
+    {
+        get
+        {
+            MakeCurrent();
+            return ImGui.GetIO().WantCaptureMouse;
+        }
+    }
+    public bool WantCaptureKeyboard
+    {
+        get
+        {
+            MakeCurrent();
+            return ImGui.GetIO().WantCaptureKeyboard;
+        }
+    }
+    public bool WantTextInput
+    {
+        get
+        {
+            MakeCurrent();
+            return ImGui.GetIO().WantTextInput;
+        }
+    }
 
     public unsafe ImGuiHost(GraphicsDevice device, IImGuiPlatform platform, float userScale = 1)
     {
-        _device = device; _platform = platform; UserScale = userScale;
+        _device = device;
+        _platform = platform;
+        UserScale = userScale;
         _context = ImGui.CreateContext();
         ImGui.SetCurrentContext(_context);
         _renderer = new(device);
@@ -34,18 +57,8 @@ public sealed class ImGuiHost : IDisposable
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
         io.NativePtr->IniFilename = null;
-        ImGui.StyleColorsDark(); var style = ImGui.GetStyle();
-        style.WindowRounding = 4; style.FrameRounding = 4; style.GrabRounding = 4;
-        style.WindowPadding = new(12, 12); style.ItemSpacing = new(8, 8); style.FramePadding = new(7, 5);
-        style.Colors[(int)ImGuiCol.WindowBg] = new(.075f, .091f, .115f, 1);
-        style.Colors[(int)ImGuiCol.ChildBg] = new(.075f, .091f, .115f, 1);
-        style.Colors[(int)ImGuiCol.FrameBg] = new(.13f, .16f, .20f, 1);
-        style.Colors[(int)ImGuiCol.Header] = new(.13f, .31f, .34f, 1);
-        style.Colors[(int)ImGuiCol.HeaderHovered] = new(.17f, .40f, .42f, 1);
-        style.Colors[(int)ImGuiCol.Button] = new(.16f, .27f, .31f, 1);
-        style.Colors[(int)ImGuiCol.ButtonHovered] = new(.21f, .42f, .45f, 1);
-        style.Colors[(int)ImGuiCol.CheckMark] = Ui.Accent;
-        style.Colors[(int)ImGuiCol.SliderGrab] = Ui.Accent;
+        UiTheme.Apply();
+        var style = ImGui.GetStyle();
         _baseStyle = *style.NativePtr;
         ApplyScale();
     }
@@ -61,14 +74,29 @@ public sealed class ImGuiHost : IDisposable
     {
         // Rebuild fonts only between frames, including after a monitor or user scale change.
         var scale = DpiScale * Math.Clamp(UserScale, .75f, 2);
-        if (MathF.Abs(scale - UiScale) < .001f) return;
-        UiScale = scale; Ui.Scale = scale;
-        var style = ImGui.GetStyle(); *style.NativePtr = _baseStyle;
+        if (MathF.Abs(scale - UiScale) < .001f)
+        {
+            return;
+        }
+
+        UiScale = scale;
+        Ui.Scale = scale;
+        var style = ImGui.GetStyle();
+        *style.NativePtr = _baseStyle;
         style.ScaleAllSizes(scale);
-        var io = ImGui.GetIO(); io.Fonts.Clear(); io.FontGlobalScale = 1;
+        var io = ImGui.GetIO();
+        io.Fonts.Clear();
+        io.FontGlobalScale = 1;
         var fontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "segoeui.ttf");
-        if (File.Exists(fontPath)) io.Fonts.AddFontFromFileTTF(fontPath, 17 * scale);
-        else { io.Fonts.AddFontDefault(); io.FontGlobalScale = 17 * scale / 13; }
+        if (File.Exists(fontPath))
+        {
+            io.Fonts.AddFontFromFileTTF(fontPath, 17 * scale);
+        }
+        else
+        {
+            io.Fonts.AddFontDefault();
+            io.FontGlobalScale = 17 * scale / 13;
+        }
         _renderer.RebuildFont();
     }
 
@@ -77,26 +105,39 @@ public sealed class ImGuiHost : IDisposable
 
     public void Begin(float seconds)
     {
-        MakeCurrent(); ApplyScale();
+        MakeCurrent();
+        ApplyScale();
         var io = ImGui.GetIO();
         io.DisplaySize = new Vector2(_device.PresentationParameters.BackBufferWidth, _device.PresentationParameters.BackBufferHeight);
-        io.DisplayFramebufferScale = Vector2.One; io.DeltaTime = MathF.Max(seconds, 1e-5f);
+        io.DisplayFramebufferScale = Vector2.One;
+        io.DeltaTime = MathF.Max(seconds, 1e-5f);
         _platform.UpdateInput(io);
         ImGui.NewFrame();
     }
 
     public void Render()
     {
-        MakeCurrent(); ImGui.Render(); _renderer.Render(ImGui.GetDrawData());
+        MakeCurrent();
+        ImGui.Render();
+        _renderer.Render(ImGui.GetDrawData());
     }
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         var previous = ImGui.GetCurrentContext();
         ImGui.SetCurrentContext(_context);
         _disposed = true;
-        _platform.Dispose(); _renderer.Dispose(); ImGui.DestroyContext(_context);
-        if (previous != _context) ImGui.SetCurrentContext(previous);
+        _platform.Dispose();
+        _renderer.Dispose();
+        ImGui.DestroyContext(_context);
+        if (previous != _context)
+        {
+            ImGui.SetCurrentContext(previous);
+        }
     }
 }

@@ -1,31 +1,30 @@
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Characters;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
+using App2d.Gameplay.World.Vegetation;
 using System.Collections.Immutable;
 using System.Numerics;
 
 namespace App2d.Contracts.World;
 
-/// <summary>Fixed per platform instance; a replaced platform gets a new runtime ID.</summary>
-public readonly record struct MovingPlatformDefinition2D(EntityId2D Id, long ThingId, Size2D Size, uint ColorArgb);
-public readonly record struct MovingPlatformState2D(EntityId2D Id, Vector2 Position);
+/// <summary>Fixed per placed object; a replaced object gets a new runtime ID.</summary>
+public sealed record ObjectDefinition2D(EntityId2D Id, string PlacementId, IShape2D? Geometry, RenderMaterialDefinition2D? Material, string TextureRoot);
+public readonly record struct ObjectState2D(EntityId2D Id, Vector2 Position, float Rotation);
 public readonly record struct CheckpointPlacement2D(long ThingId, Vector2 BasePosition);
 public readonly record struct CheckpointState2D(long ThingId, bool IsActive);
 
 /// <summary>
 /// Level content that changes only when authoring or streaming changes: active terrain,
-/// platform definitions, checkpoint placements, and the goal. Successive ticks share one
+/// object definitions, checkpoint placements, and the goal. Successive ticks share one
 /// instance; <see cref="Revision"/> lets a receiver skip content it already holds.
 /// </summary>
-public sealed record LevelContent2D(
-    long Revision,
-    ImmutableArray<TerrainChunkState2D> Terrain,
-    ImmutableArray<MovingPlatformDefinition2D> MovingPlatforms,
-    ImmutableArray<CheckpointPlacement2D> Checkpoints,
-    Vector2? GoalPosition)
+public sealed record LevelContent2D(long Revision, ImmutableArray<TerrainChunkState2D> Terrain, ImmutableArray<CheckpointPlacement2D> Checkpoints, Vector2? GoalPosition)
 {
-    public static LevelContent2D Empty { get; } = new(0, [], [], [], null);
+    public static LevelContent2D Empty { get; } = new(0, [], [], null);
+    public ImmutableArray<ObjectDefinition2D> Objects { get; init; } = [];
     /// <summary>Whole-level regions, available even when their terrain chunks are unloaded.</summary>
     public ImmutableArray<WorldZone2D> Zones { get; init; } = [];
     /// <summary>Whole trees shared by simulation and presentation, independent of root-chunk streaming.</summary>
@@ -33,13 +32,12 @@ public sealed record LevelContent2D(
 }
 
 /// <summary>Per-tick dynamic world observation, not a physics restore point.</summary>
-public sealed record WorldState2D(
-    ImmutableArray<MovingPlatformState2D> MovingPlatforms,
-    ImmutableArray<CheckpointState2D> Checkpoints)
+public sealed record WorldState2D(ImmutableArray<CheckpointState2D> Checkpoints)
 {
+    public ImmutableArray<ObjectState2D> Objects { get; init; } = [];
     /// <summary>Cuts in active simulation chunks; forgotten on unload and included in attach snapshots.</summary>
     public ImmutableHashSet<GrassCell2D> CutGrass { get; init; } = [];
-    public static WorldState2D Empty { get; } = new([], []);
+    public static WorldState2D Empty { get; } = new([]);
 }
 
 /// <summary>
@@ -68,14 +66,17 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
         int chunkSize, float tileSize, Vector2 origin, ImmutableArray<string> tilesetIds,
         ImmutableArray<TileCollisionRectangle2D> collisions, ImmutableArray<byte> cells)
     {
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
-        ArgGuard.ThrowIfNotPositive(chunkSize);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
-        ArgGuard.ThrowIfNotFinite(origin);
-        ArgGuard.ThrowIfNegative(revision);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
+        ArgGuard.Positive(chunkSize);
+        ArgGuard.Positive(tileSize);
+        ArgGuard.Finite(origin);
+        ArgGuard.NonNegative(revision);
         if (chunk.X < 0 || chunk.Y < 0 || chunk.X > (width - 1) / chunkSize || chunk.Y > (height - 1) / chunkSize)
+        {
             ArgGuard.ThrowOutOfRange(chunk, "Chunk coordinates must lie within the map.");
+        }
+
         var cellCount = checked((chunkSize + 2) * (chunkSize + 2));
         ArgGuard.ThrowIf(cells.IsDefault || cells.Length != cellCount,
             "Cells must include the complete chunk and its one-cell halo.", nameof(cells));

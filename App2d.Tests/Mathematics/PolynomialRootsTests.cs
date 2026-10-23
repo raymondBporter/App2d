@@ -53,6 +53,58 @@ public sealed class PolynomialRootsTests
     }
 
     [Fact]
+    public void QuadraticsKeepSmallRootsWhenTheOtherRootWouldCauseCancellation()
+    {
+        foreach (var scale in new[] { 1d, 1e-280, -1e280 })
+        {
+            AssertRelativeRoots([scale, -1e16 * scale, scale], [1e-16, 1e16]);
+            AssertRelativeRoots([scale, 1e16 * scale, scale], [-1e16, -1e-16]);
+        }
+        AssertRelativeRoots([1, -1e200, 1], [1e-200, 1e200]);
+    }
+
+    [Fact]
+    public void ZeroConstantQuadraticsKeepDistinctTinyRootsWithoutSquaringThem()
+    {
+        AssertRelativeRoots([0, -1e-200, 1], [0, 1e-200]);
+        AssertRelativeRoots([0, 1e-200, 1], [-1e-200, 0]);
+        AssertRoots([0, 0, 1], -1, 1, [0]);
+        AssertRoots([1, -1, double.Epsilon], -double.MaxValue, double.MaxValue, [1]);
+    }
+
+    [Fact]
+    public void QuadraticTangenciesRetainTheNumericalSolversEvaluationTolerance()
+    {
+        AssertRoots([1, -2, 1], 1, 1, [1]);
+        AssertRoots([Math.BitIncrement(1d), -2, 1], 0, 2, [1]);
+        AssertRoots([Math.BitDecrement(1d), -2, 1], 0, 2, [1]);
+        AssertRoots([1 + 1e-10, -2, 1], 0, 2, []);
+        AssertRoots([1 - 1e-10, -2, 1], 0, 2, [1 - 1e-5, 1 + 1e-5], 1e-11);
+    }
+
+    [Fact]
+    public void QuadraticFormulaRootsRetainInclusiveBoundariesAndLeaveUnusedStorageAlone()
+    {
+        AssertRoots([6, -5, 1], 2, 2, [2]);
+        AssertRoots([6, -5, 1], 3, 3, [3]);
+        AssertRoots([6, -5, 1], 2 + 1e-8, 3 - 1e-8, []);
+        AssertRoots([6, -5, 1], 2, 3 - 1e-8, [2]);
+        AssertRoots([6, -5, 1], 2 + 1e-8, 3, [3]);
+        Span<double> roots = [99, 99, 99];
+        Assert.Equal(1, PolynomialRoots.FindRealRoots([1, -2, 1], 0, 2, roots));
+        Assert.Equal(1d, roots[0]);
+        Assert.Equal(99d, roots[1]);
+        Assert.Equal(99d, roots[2]);
+    }
+
+    [Fact]
+    public void CubicsAndQuarticsStillResolveWhenTheirDerivativeCoefficientsHaveATinyScale()
+    {
+        AssertRelativeRoots([-1, 0, 0, 1e-240], [1e80]);
+        AssertRelativeRoots([-1, 0, 2e-200, 0, 1e-200], [-1e50, 1e50]);
+    }
+
+    [Fact]
     public void QuarticsWithFourKnownRootsKeepAllOfThem()
     {
         var random = new Random(71599);
@@ -89,11 +141,32 @@ public sealed class PolynomialRootsTests
         Assert.Throws<ArgumentException>(() => PolynomialRoots.FindRealRoots([1, 1], 1, -1, new double[4]));
     }
 
+    private static void AssertRelativeRoots(double[] coefficients, double[] expected)
+    {
+        Span<double> roots = stackalloc double[4];
+        var count = PolynomialRoots.FindRealRoots(coefficients, -double.MaxValue, double.MaxValue, roots);
+        Assert.Equal(expected.Length, count);
+        for (var i = 0; i < count; i++)
+        {
+            if (expected[i] == 0d)
+            {
+                Assert.Equal(0d, roots[i]);
+            }
+            else
+            {
+                Assert.InRange(Math.Abs(roots[i] / expected[i] - 1d), 0, 2e-14);
+            }
+        }
+    }
+
     private static void AssertRoots(double[] coefficients, double minimum, double maximum, double[] expected, double tolerance = 1e-12)
     {
         Span<double> roots = stackalloc double[4];
         var count = PolynomialRoots.FindRealRoots(coefficients, minimum, maximum, roots);
         Assert.Equal(expected.Length, count);
-        for (var i = 0; i < count; i++) Assert.InRange(Math.Abs(roots[i] - expected[i]), 0, tolerance);
+        for (var i = 0; i < count; i++)
+        {
+            Assert.InRange(Math.Abs(roots[i] - expected[i]), 0, tolerance);
+        }
     }
 }

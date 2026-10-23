@@ -1,5 +1,5 @@
-using App2d.Core.Curves;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -22,10 +22,10 @@ internal static class SplineSilhouette2D
         float tipRadius,
         float overlap)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(length);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(rootRadius);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tipRadius);
-        ArgGuard.ThrowIfNotFiniteOrNegative(overlap);
+        ArgGuard.Positive(length);
+        ArgGuard.Positive(rootRadius);
+        ArgGuard.Positive(tipRadius);
+        ArgGuard.NonNegative(overlap);
 
         var startX = -overlap;
         var endX = length + overlap;
@@ -48,7 +48,7 @@ internal static class SplineSilhouette2D
 
     public static ConvexPolygon2D CreateTorso(float length)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(length);
+        ArgGuard.Positive(length);
         const float startX = -8f;
         var endX = length + 9f;
         const float hipRadius = 27f;
@@ -127,7 +127,7 @@ internal static class SplineSilhouette2D
 
         public void CurveTo(Vector2 control1, Vector2 control2, Vector2 end)
         {
-            var curve = new CubicBezier2D(_current, control1, control2, end);
+            var curve = CubicBezier2D.Builder.Create(_current, control1, control2, end);
             for (var sample = 1; sample <= SamplesPerCurve; sample++)
             {
                 var amount = sample / (float)SamplesPerCurve;
@@ -139,8 +139,11 @@ internal static class SplineSilhouette2D
         public ConvexPolygon2D BuildConvex()
         {
             if (Vector2.DistanceSquared(_points[^1], _start) <= 0.0001f)
+            {
                 _points.RemoveAt(_points.Count - 1);
-            return new ConvexPolygon2D(PolygonGeometry2D.ConvexHull(_points));
+            }
+
+            return ConvexPolygon2D.Builder.Create(PolygonGeometry2D.ConvexHull(_points));
         }
     }
 }

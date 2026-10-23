@@ -2,8 +2,10 @@ using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using System.Numerics;
@@ -11,10 +13,10 @@ using System.Numerics;
 namespace App2d.Gameplay.Persons.Actions;
 
 /// <summary>Weapon-free punch and kick actions shared by human and AI persons.</summary>
-public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
+public sealed class UnarmedPersonActions2D : IPersonActionSet2D
 {
     private readonly CombatSystem2D _combat;
-    private readonly PhysicsBody2D _ownerBody;
+    private readonly RigidBody2D _ownerBody;
     private readonly CombatFaction2D _ownerFaction;
     private readonly uint _targetLayer;
     private readonly Attack _punch;
@@ -22,7 +24,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
 
     public UnarmedPersonActions2D(
         EntityIdAllocator2D ids,
-        PhysicsBody2D ownerBody,
+        RigidBody2D ownerBody,
         CombatFaction2D ownerFaction,
         uint targetLayer,
         CombatSystem2D combat)
@@ -35,7 +37,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
         _punch = new Attack(
             ids.Allocate(),
             UnarmedAttackKind2D.Punch,
-            AxisAlignedRectangle2D.FromSize(new Vector2(48f, 48f)),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(48f, 48f),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.28f,
                 damageStartSeconds: 0.07f,
@@ -48,7 +50,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
         _kick = new Attack(
             ids.Allocate(),
             UnarmedAttackKind2D.Kick,
-            AxisAlignedRectangle2D.FromSize(new Vector2(66f, 42f)),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(66f, 42f),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.42f,
                 damageStartSeconds: 0.14f,
@@ -71,9 +73,14 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
         if (_punch.Action.IsVisible)
+        {
             yield return _punch.Action.WorldObject;
+        }
+
         if (_kick.Action.IsVisible)
+        {
             yield return _kick.Action.WorldObject;
+        }
     }
 
     public void BeginFrame(float deltaSeconds)
@@ -102,11 +109,16 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
     {
         var other = ReferenceEquals(requested, _punch) ? _kick : _punch;
         if (other.Action.IsInProgress)
+        {
             return facing;
+        }
 
         requested.Direction = MathF.Sign(facing);
         if (requested.Action.TryStart())
+        {
             AttackStarted?.Invoke(requested.Kind, requested.Action.DurationSeconds);
+        }
+
         return facing;
     }
 
@@ -149,8 +161,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
         Vector2 knockback)
     {
         public UnarmedAttackKind2D Kind { get; } = kind;
-        public MeleeAttack2D Action { get; } =
-            new(sourceId, new SpatialObject2D(hitboxShape), profile);
+        public MeleeAttack2D Action { get; } = new(sourceId, new SpatialObject2D(hitboxShape), profile);
         public int Damage { get; } = damage;
         public Vector2 Knockback { get; } = knockback;
         public float Direction { get; set; } = 1f;

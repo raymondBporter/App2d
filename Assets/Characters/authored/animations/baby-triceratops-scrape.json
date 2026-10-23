@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "baby-triceratops-scrape",
   "name": "Baby triceratops / scrape",
   "model": "baby-triceratops-rig",
@@ -36,8 +36,8 @@
         {},
         {
           "time": 0.25,
-          "x": 0.11199999999999999,
-          "y": 0.08399999999999999
+          "x": 0.112,
+          "y": 0.084
         },
         {
           "time": 0.45,
@@ -73,5 +73,9 @@
       "time": 0.45
     }
   ],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

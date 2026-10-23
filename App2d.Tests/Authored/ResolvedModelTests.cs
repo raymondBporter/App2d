@@ -12,7 +12,7 @@ public sealed class ResolvedModelTests
         Name = "Long arm",
         Base = "creature",
         Rest = { ["elbow"] = new(.6f, 1.2f), ["hand"] = new(1.2f, 1.5f) },
-        Parts = { ["torso"] = new() { Width = .9f, Material = new() { Fill = "#aa3300" } } },
+        Parts = { ["torso"] = new() { ScaleX = .9f, Material = new() { Fill = "#aa3300" } } },
     };
 
     [Fact]
@@ -24,8 +24,9 @@ public sealed class ResolvedModelTests
         TestModels.Near(new(1.2f, 1.5f, 0), resolved.Rest["hand"]);
         Assert.Equal(new PuppetPoint(.8f, 1.5f), model.Controls.Single(c => c.Id == "hand").Rest);
         var torso = resolved.Parts.Single(p => p.Id == "torso");
-        Assert.Equal(.9f, torso.Width); Assert.Equal("#aa3300", torso.RenderMaterial.Fill);
-        Assert.Equal(.4f, model.Parts.Single(p => p.Id == "torso").Width);
+        Assert.Equal(.9f, torso.ScaleX);
+        Assert.Equal("#aa3300", torso.RenderMaterial.Fill);
+        Assert.Equal(1f, model.Parts.Single(p => p.Id == "torso").ScaleX);
         Assert.Equal(1.5f * 2 * MathF.Sqrt(.2f), resolved.Measures["arm"], 4);
         Assert.Equal(2 * MathF.Sqrt(.26f), resolved.Measures["leg"], 4);
     }
@@ -33,7 +34,8 @@ public sealed class ResolvedModelTests
     [Fact]
     public void UnoverriddenBaseValuesPropagate()
     {
-        var model = TestModels.Creature(); var variant = LongArm();
+        var model = TestModels.Creature();
+        var variant = LongArm();
         model.Controls.Single(c => c.Id == "knee").Rest = new(.15f, .5f);
         TestModels.Near(new(.15f, .5f, 0), ResolvedModel.From(model, variant).Rest["knee"]);
     }
@@ -41,10 +43,15 @@ public sealed class ResolvedModelTests
     [Fact]
     public void OrderPlacesParentsFirstAndChildrenAreIndexed()
     {
-        var model = TestModels.Creature(); model.Controls.Reverse();
+        var model = TestModels.Creature();
+        model.Controls.Reverse();
         var resolved = ResolvedModel.From(model);
         var index = resolved.Order.Select((c, i) => (c.Id, i)).ToDictionary(p => p.Id, p => p.i);
-        foreach (var control in model.Controls.Where(c => c.Parent is not null)) Assert.True(index[control.Parent!] < index[control.Id]);
+        foreach (var control in model.Controls.Where(c => c.Parent is not null))
+        {
+            Assert.True(index[control.Parent!] < index[control.Id]);
+        }
+
         Assert.Equal(expected, resolved.Children["body"].Order());
         Assert.Empty(resolved.Children["foot"]);
     }
@@ -63,11 +70,27 @@ public sealed class ResolvedModelTests
         var variant = LongArm();
         switch (edit)
         {
-            case "wrong-base": variant.Base = "hound"; break;
-            case "unknown-control": variant.Rest["tail"] = new(1, 1); break;
-            case "unknown-part": variant.Parts["wing"] = new() { Width = 1 }; break;
-            case "zero-bone": variant.Rest["elbow"] = new(0, 1.5f); break;
-            case "bad-fill": variant.Parts["torso"].Material = new() { Fill = "red" }; break;
+            case "wrong-base":
+                variant.Base = "hound";
+                break;
+            case "unknown-control":
+                variant.Rest["tail"] = new(1, 1);
+                break;
+            case "unknown-part":
+                variant.Parts["wing"] = new()
+                {
+                    ScaleX = 1
+                };
+                break;
+            case "zero-bone":
+                variant.Rest["elbow"] = new(0, 1.5f);
+                break;
+            case "bad-fill":
+                variant.Parts["torso"].Material = new()
+                {
+                    Fill = "red"
+                };
+                break;
         }
         var error = Assert.Throws<InvalidDataException>(() => ResolvedModel.From(TestModels.Creature(), variant));
         Assert.Contains(fragment, error.Message);

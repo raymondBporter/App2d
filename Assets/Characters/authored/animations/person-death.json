@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "person-death",
   "name": "Recoil and collapse",
   "model": "person",
@@ -20,12 +20,11 @@
       "target": "hips",
       "keys": [
         {
-          "time": 0,
           "x": -0.045,
           "y": -0.025
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "x": -0.13,
           "y": -0.06
         },
@@ -60,11 +59,10 @@
       "target": "hips",
       "keys": [
         {
-          "time": 0,
           "angle": 0.16
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "angle": 0.34
         },
         {
@@ -94,11 +92,10 @@
       "target": "chest",
       "keys": [
         {
-          "time": 0,
           "angle": 0.08
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "angle": 0.18
         },
         {
@@ -128,12 +125,11 @@
       "target": "left-arm",
       "keys": [
         {
-          "time": 0,
           "x": 0.1,
           "y": 0.1
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "x": 0.24,
           "y": 0.18
         },
@@ -162,12 +158,11 @@
       "target": "right-arm",
       "keys": [
         {
-          "time": 0,
           "x": -0.05,
           "y": 0.06
         },
         {
-          "time": 0.016666666666666666,
+          "time": 0.016666668,
           "x": -0.14,
           "y": 0.18
         },
@@ -194,9 +189,7 @@
       "kind": "orient",
       "target": "right-grip",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.075,
           "ease": "smooth"
@@ -242,5 +235,9 @@
         }
       ]
     }
-  ]
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

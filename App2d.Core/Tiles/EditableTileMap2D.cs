@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -23,11 +23,11 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         Vector2 origin = default,
         IReadOnlyList<string>? tilesetIds = null)
     {
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
-        ArgGuard.ThrowIfNotPositive(chunkSize);
-        ArgGuard.ThrowIfNotFinite(origin);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
+        ArgGuard.Positive(tileSize);
+        ArgGuard.Positive(chunkSize);
+        ArgGuard.Finite(origin);
 
         ChunkSize = chunkSize;
         _tiles = new(width, height, tileSize, origin);
@@ -77,15 +77,21 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     {
         var index = GridSize.GetIndex(x, y);
         if (tile.TilesetIndex >= _tilesetIds.Length)
+        {
             ArgGuard.ThrowOutOfRange(tile.TilesetIndex, "Tileset index must exist in the map catalog.");
+        }
 
         if (_tiles[index] == tile)
+        {
             return;
+        }
 
         _tiles[index] = tile;
 
         if (ChunkChanged is null)
+        {
             return;
+        }
 
         // Terrain visuals sample the tile's 3x3 neighbourhood across chunk borders, so a
         // tile on a chunk edge or corner can change up to four chunks' appearance. Chunk
@@ -102,7 +108,9 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         foreach (var chunkX in DistinctPair(minChunkX, maxChunkX))
         {
             foreach (var chunkY in DistinctPair(minChunkY, maxChunkY))
+            {
                 ChunkChanged.Invoke(new TileChunk2D(chunkX, chunkY));
+            }
         }
     }
 
@@ -117,7 +125,9 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         {
             var row = _tiles.GetRowSpan(y);
             for (var x = 0; x < Width; x++)
+            {
                 row[x] = new TileCell2D(source(x, y), 0);
+            }
         }
     }
 
@@ -140,7 +150,9 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
+            {
                 destination[y * width + x] = _tiles[startX + x, startY + y].Kind;
+            }
         }
 
         return destination[..(width * height)];
@@ -200,7 +212,9 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         for (var index = 0; index < width * height; index++)
         {
             if (source[index].TilesetIndex >= _tilesetIds.Length)
+            {
                 ArgGuard.ThrowOutOfRange(source[index].TilesetIndex, "Tileset index must exist in the map catalog.");
+            }
         }
 
         for (var y = 0; y < height; y++)
@@ -248,13 +262,17 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     private void ValidateChunk(TileChunk2D chunk)
     {
         if (!ChunkGridSize.Contains(chunk.X, chunk.Y))
+        {
             ArgGuard.ThrowOutOfRange(chunk, "Chunk coordinates must be inside the map.");
+        }
     }
 
     private static string[] ValidateTilesets(IReadOnlyList<string> tilesetIds)
     {
         if (tilesetIds.Count == 0 || tilesetIds.Count > TileCell2D.MaximumTilesetCount)
+        {
             ArgGuard.ThrowOutOfRange(tilesetIds.Count, "A map must have between 1 and 16 tilesets.");
+        }
 
         var result = new string[tilesetIds.Count];
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -263,7 +281,10 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
             var id = tilesetIds[index];
             ArgGuard.ThrowIfNullOrWhiteSpace(id);
             if (!seen.Add(id))
+            {
                 ArgGuard.ThrowInvalid($"Tileset ID '{id}' is duplicated.", nameof(tilesetIds));
+            }
+
             result[index] = id;
         }
 

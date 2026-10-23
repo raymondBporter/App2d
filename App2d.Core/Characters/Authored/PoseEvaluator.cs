@@ -1,4 +1,5 @@
-using App2d.Core.Mathematics;
+using App2d.Core.Animation;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -63,17 +64,25 @@ public static class PoseEvaluator
     public static EvaluatedPose Sample(ResolvedModel model, MotionClip? clip, double seconds, bool repeat = false, PoseInput input = default)
     {
         clip ??= Still;
-        ArgGuard.ThrowIfNotFiniteOrNegative(seconds);
+        ArgGuard.NonNegative(seconds);
         var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
         var time = (float)(cycles > 0 ? seconds % clip.Duration : Math.Min(seconds, clip.Duration));
         float Ratio(string scale) => scale == CharacterModel.Unit ? 1 : model.Measure(scale) / clip.Reference[scale];
 
         var travelRatio = Ratio(clip.Travel.Scale);
-        Vector2 Travel(float t) { var (value, _) = Interpolate(clip.Travel.Keys, t); return new Vector2(value.X, value.Y) * travelRatio; }
+        Vector2 Travel(float t)
+        {
+            var (value, _) = Interpolate(clip.Travel.Keys, t);
+            return new Vector2(value.X, value.Y) * travelRatio;
+        }
         var cycleTravel = (Travel(clip.Duration) - Travel(0)) * (float)cycles;
         var cycleOrigin = new Vector3(Travel(0) + cycleTravel, 0);
         var pose = new EvaluatedPose { Locomotion = new(Travel(time) + cycleTravel, 0) };
-        if (input.InPlace) { cycleOrigin -= pose.Locomotion; pose.Locomotion = Vector3.Zero; }
+        if (input.InPlace)
+        {
+            cycleOrigin -= pose.Locomotion;
+            pose.Locomotion = Vector3.Zero;
+        }
 
         var tracks = clip.Tracks.ToDictionary(t => (t.Kind, t.Target));
         var overlay = input.Overlay is { Weight: > 0 } layer ? layer : null;
@@ -88,11 +97,20 @@ public static class PoseEvaluator
         Vector3 LayerDelta(bool fromOverlay, string kind, string target, string defaultScale)
         {
             var (track, at, source) = Read(fromOverlay, kind, target);
-            if (track is null) return default;
-            var (value, _) = Interpolate(track, at); var scale = track.Scale ?? defaultScale;
+            if (track is null)
+            {
+                return default;
+            }
+
+            var (value, _) = Interpolate(track, at);
+            var scale = track.Scale ?? defaultScale;
             var ratio = scale == CharacterModel.Unit ? 1 : model.Measure(scale) / source.Reference[scale];
             var delta = new Vector3(value.X * ratio, value.Y * ratio, value.Z);
-            if (!input.ReverseHorizontalMotion || kind == MotionClip.ScaleKind) return delta;
+            if (!input.ReverseHorizontalMotion || kind == MotionClip.ScaleKind)
+            {
+                return delta;
+            }
+
             return new(-delta.X, kind == MotionClip.ShearKind ? -delta.Y : delta.Y, delta.Z);
         }
         Vector3 Delta(string kind, string target, string defaultScale) => !Masked(target) ? LayerDelta(false, kind, target, defaultScale)
@@ -113,18 +131,13 @@ public static class PoseEvaluator
                 var translate = Delta(MotionClip.TranslateKind, control.Id, control.Scale);
                 var scale = Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit);
                 var shear = Delta(MotionClip.ShearKind, control.Id, CharacterModel.Unit);
-                var local = setup with
-                {
-                    X = setup.X + translate.X,
-                    Y = setup.Y + translate.Y,
-                    Rotation = setup.Rotation + Angle(control.Id),
-                    ScaleX = setup.ScaleX * (1 + scale.X),
-                    ScaleY = setup.ScaleY * (1 + scale.Y),
-                    ShearX = setup.ShearX + shear.X,
-                    ShearY = setup.ShearY + shear.Y
-                };
+                var local = setup.EvaluateMatrix(
+                    new(setup.X + translate.X, setup.Y + translate.Y),
+                    setup.Rotation + Angle(control.Id),
+                    new(setup.ScaleX * (1 + scale.X), setup.ScaleY * (1 + scale.Y)),
+                    new(setup.ShearX + shear.X, setup.ShearY + shear.Y));
                 var parent = control.Parent is null ? Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y) : pose.Bones[control.Parent];
-                var matrix = local.Matrix * parent;
+                var matrix = local * parent;
                 pose.Bones[control.Id] = matrix;
                 pose.Points[control.Id] = new(matrix.M31, matrix.M32, model.Rest[control.Id].Z + translate.Z);
                 angles[control.Id] = MathF.Atan2(matrix.M12, matrix.M11);
@@ -135,7 +148,7 @@ public static class PoseEvaluator
             var parentRestAngle = control.Parent is null ? 0 : model.Controls[control.Parent].RestAngle;
             var parentRest = control.Parent is null ? Vector3.Zero : model.Rest[control.Parent];
             var offset = model.Rest[control.Id] - parentRest + Delta(MotionClip.TranslateKind, control.Id, control.Scale);
-            pose.Points[control.Id] = parentPoint + RotateXY(offset, parentAngle - parentRestAngle);
+            pose.Points[control.Id] = parentPoint + Rotation2D.ApplyXY(offset, parentAngle - parentRestAngle);
             angles[control.Id] = parentAngle + control.RestAngle - parentRestAngle + Angle(control.Id);
             pose.Bones[control.Id] = Matrix3x2.CreateRotation(angles[control.Id]) * Matrix3x2.CreateTranslation(pose.Points[control.Id].X, pose.Points[control.Id].Y);
         }
@@ -148,13 +161,30 @@ public static class PoseEvaluator
         foreach (var contact in clip.Contacts)
         {
             var masked = Masked(contact.Chain);
-            if (masked && weight >= 1) continue;
-            if (!(time >= contact.Start && (time < contact.Finish || time == clip.Duration && contact.Finish == clip.Duration))) continue;
-            var chain = model.Chains[contact.Chain]; var ratio = Ratio(chain.Scale);
+            if (masked && weight >= 1)
+            {
+                continue;
+            }
+
+            if (!(time >= contact.Start && (time < contact.Finish || time == clip.Duration && contact.Finish == clip.Duration)))
+            {
+                continue;
+            }
+
+            var chain = model.Chains[contact.Chain];
+            var ratio = Ratio(chain.Scale);
             var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), contact.Target.Y * ratio, contact.Target.Z);
             // A masked chain fading in leaves its base contact gradually; it is neither held nor reported as planted.
-            if (masked) { constraints.Apply(new RigContactPin(chain.Id, target, weight)); continue; }
-            if (input.Contact is { } hold) target = hold(chain.Id, target);
+            if (masked)
+            {
+                constraints.Apply(new RigContactPin(chain.Id, target, weight));
+                continue;
+            }
+            if (input.Contact is { } hold)
+            {
+                target = hold(chain.Id, target);
+            }
+
             constraints.Apply(new RigContactPin(chain.Id, target));
         }
         foreach (var socket in model.Base.Sockets)
@@ -169,14 +199,21 @@ public static class PoseEvaluator
         }
         foreach (var control in model.Order)
         {
-            var frame = pose.Bones[control.Id]; var point = pose.Points[control.Id];
-            frame.M31 = point.X; frame.M32 = point.Y; pose.Bones[control.Id] = frame;
+            var frame = pose.Bones[control.Id];
+            var point = pose.Points[control.Id];
+            frame.M31 = point.X;
+            frame.M32 = point.Y;
+            pose.Bones[control.Id] = frame;
         }
         SkeletonAppearance2D.Evaluate(model, clip, time, input.Skin, pose);
         var overlayFace = overlay is not null && weight >= .5f;
         foreach (var part in model.Parts)
         {
-            if (part.Hidden || part.Face == "none") continue;
+            if (part.Hidden || part.Face == "none")
+            {
+                continue;
+            }
+
             pose.Expressions[part.Id] = input.Expression ?? (overlayFace ? FaceAt(overlay!.Clip, part.Id, overlayTime) : null) ?? FaceAt(clip, part.Id, time) ?? part.Face;
         }
         return pose;
@@ -185,9 +222,15 @@ public static class PoseEvaluator
     /// <summary>The locomotion frame's travel over one cycle on this model: the stride gameplay matches against ground distance.</summary>
     public static Vector2 CycleTravel(ResolvedModel model, MotionClip clip)
     {
-        var keys = clip.Travel.Keys; if (keys.Count == 0) return Vector2.Zero;
+        var keys = clip.Travel.Keys;
+        if (keys.Count == 0)
+        {
+            return Vector2.Zero;
+        }
+
         var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
-        var (end, _) = Interpolate(keys, clip.Duration); var (start, _) = Interpolate(keys, 0);
+        var (end, _) = Interpolate(keys, clip.Duration);
+        var (start, _) = Interpolate(keys, 0);
         return new Vector2(end.X - start.X, end.Y - start.Y) * ratio;
     }
 
@@ -195,30 +238,32 @@ public static class PoseEvaluator
     public static string? FaceAt(MotionClip clip, string part, float time)
     {
         var track = clip.Faces.FirstOrDefault(f => f.Part == part);
-        if (track is null || track.Keys.Count == 0) return null;
+        if (track is null || track.Keys.Count == 0)
+        {
+            return null;
+        }
+
         return (track.Keys.LastOrDefault(k => k.Time <= time) ?? track.Keys[0]).Expression;
     }
 
     /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>
-    public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false)
+    public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false) =>
+        KeyframeSampling.Sample(keys, time, (Value: Vector3.Zero, Angle: 0f), new MotionInterpolation(rotate));
+
+    private readonly struct MotionInterpolation(bool rotate) : IKeyframeInterpolation<ClipKey, (Vector3 Value, float Angle)>
     {
-        if (keys.Count == 0) return default;
-        static (Vector3, float) Of(ClipKey k) => (new(k.X, k.Y, k.Z), k.Angle);
-        if (time <= keys[0].Time) return Of(keys[0]);
-        for (var i = 1; i < keys.Count; i++)
+        public (Vector3 Value, float Angle) GetValue(ClipKey key) => (key.Value, key.Angle);
+
+        public (Vector3 Value, float Angle) Interpolate(ClipKey a, ClipKey b, float phase)
         {
-            if (time > keys[i].Time) continue;
-            if (time == keys[i].Time) return Of(keys[i]);
-            var a = keys[i - 1]; var b = keys[i]; var phase = (time - a.Time) / (b.Time - a.Time);
-            float At(float start, float end, KeyCurve2D? curve) => a.Ease == ClipEase.Step ? start : curve?.Evaluate(phase, start, end)
-                ?? start + (end - start) * ClipEase.Apply(a.Ease, phase);
-            return (new(At(a.X, b.X, rotate ? null : a.Curve), At(a.Y, b.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
-                At(a.Z, b.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))), At(a.Angle, b.Angle, rotate ? a.Curve : null));
+            var sample = new ClipEase.Sampler(phase, a.Ease);
+            return (new(sample.Interpolate(a.Value.X, b.Value.X, rotate ? null : a.Curve),
+                sample.Interpolate(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
+                sample.Interpolate(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
+                sample.Interpolate(a.Angle, b.Angle, rotate ? a.Curve : null));
         }
-        return Of(keys[^1]);
     }
 
-    public static Vector3 RotateXY(Vector3 v, float angle) => Rotation2D.ApplyXY(v, angle);
     public static (Vector3 Value, float Angle) Interpolate(ClipTrack track, float time) =>
         track.SetupBeforeFirst && track.Keys.Count > 0 && time < track.Keys[0].Time ? default : Interpolate(track.Keys, time, track.Kind == MotionClip.RotateKind);
 }

@@ -1,17 +1,17 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Player;
 using App2d.Contracts.Simulation;
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Simulation;
@@ -48,7 +48,11 @@ public sealed class WeaponSessionTests
         var shot = game.Fire();
         Assert.Equal(PlayerAttackKind2D.Shot, shot.Players[0].Person.Action.Kind);
         Assert.True(shot.Players[0].Person.Action.IsActive);
-        for (var i = 0; i < 12; i++) game.Step();
+        for (var i = 0; i < 12; i++)
+        {
+            game.Step();
+        }
+
         var snapshot = game.Session.CaptureSnapshot();
         Assert.Equal(EquipmentKind2D.Sword, snapshot.Players[0].Equipment);
         Assert.False(snapshot.Players[0].Person.Action.IsActive);
@@ -70,7 +74,11 @@ public sealed class WeaponSessionTests
         var next = game.Step();
         Assert.Equal(first.Id, Assert.Single(next.Players[0].Weapons.Projectiles).Id);
         Assert.NotEqual(first.Position, next.Players[0].Weapons.Projectiles[0].Position);
-        for (var i = 0; i < 200; i++) game.Step();
+        for (var i = 0; i < 200; i++)
+        {
+            game.Step();
+        }
+
         Assert.Empty(game.Session.CapturePlayers()[0].Weapons.Projectiles);
         var second = Assert.Single(game.Fire().Players[0].Weapons.Projectiles);
         Assert.NotEqual(first.Id, second.Id);
@@ -108,7 +116,11 @@ public sealed class WeaponSessionTests
         using var game = new Fixture();
         var start = game.Step(Hold);
         Assert.IsType<ChargeStarted2D>(Assert.Single(start.Events.OfType<WeaponOccurred2D>()).Occurrence);
-        for (var i = 0; i < 30; i++) game.Step(Hold);
+        for (var i = 0; i < 30; i++)
+        {
+            game.Step(Hold);
+        }
+
         var cancelled = game.Step();
         var fact = Assert.IsType<ChargeCancelled2D>(Assert.Single(cancelled.Events.OfType<WeaponOccurred2D>()).Occurrence);
         Assert.InRange(fact.Progress, 0.4f, 0.5f);
@@ -136,7 +148,11 @@ public sealed class WeaponSessionTests
             var combat = new CombatSystem2D(Physics.CollisionSystem, Registry);
             var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), Player.Body, Metrics.GunMuzzleOffset,
                 Physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat,
-                health: Player.Health, spells: new() { ShotChargeSeconds = .6f, ShotRecoverySeconds = .06f });
+                health: Player.Health, spells: new()
+                {
+                    ShotChargeSeconds = .6f,
+                    ShotRecoverySeconds = .06f
+                });
             Player.AttachActions(arsenal);
             Session = new SideScrollerSession2D(Physics, Player, arsenal, new EmptyWorld(),
                 new RespawnState2D(Vector2.Zero, Player.Health.Maximum), combat);
@@ -145,11 +161,15 @@ public sealed class WeaponSessionTests
         public SessionFrame2D Fire()
         {
             Step(Hold);
-            for (var i = 1; i < 71; i++) Step(Hold);
+            for (var i = 1; i < 71; i++)
+            {
+                Step(Hold);
+            }
+
             return Step(Hold);
         }
         public SessionFrame2D Step(PersonCommand2D command = default) => Session.Advance(
-            new PlayerInput2D(Player.Id, Session.Tick + 1, Session.Tick + 1, command));
+            new PlayerInput2D(Player.Id, command));
         public void Dispose() => Session.Dispose();
     }
 
@@ -157,12 +177,24 @@ public sealed class WeaponSessionTests
     {
         public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
         public float GoalX => 9000f;
-        public void UpdateStreaming(Vector2 position) { }
-        public void UpdateMovingPlatforms(float dt) { }
-        public void UpdateEnemies(float dt, Vector2 position) { }
-        public void SyncEnemiesAfterPhysics() { }
-        public void ResolveDamage(Person2D player) { }
+        public void UpdateStreaming(Vector2 position)
+        {
+        }
+        public void UpdateWorldMotion(float dt)
+        {
+        }
+        public void UpdateEnemies(float dt, Vector2 position)
+        {
+        }
+        public void SyncEnemiesAfterPhysics()
+        {
+        }
+        public void ResolveDamage(Person2D player)
+        {
+        }
         public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => null;
-        public void SetActiveSavePoint(long? id) { }
+        public void SetActiveSavePoint(long? id)
+        {
+        }
     }
 }

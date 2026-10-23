@@ -1,6 +1,7 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Rendering.Characters;
+using App2d.Core.Geometry;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -15,21 +16,28 @@ public sealed class PersonWardrobeTests
         // A square with the upper-right quarter removed. Fan triangulation would fill the notch.
         PuppetPoint[] outline = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)];
         var solid = PropGeometry.Extrude(reverse ? outline.Reverse() : outline, .02f, "#aaaaaa");
-        var area = 0f; var edges = new Dictionary<(int, int), int>();
+        var area = 0f;
+        var edges = new Dictionary<(int, int), int>();
         for (var i = 0; i < solid.Triangles.Count; i += 3)
         {
-            var a = solid.Triangles[i]; var b = solid.Triangles[i + 1]; var c = solid.Triangles[i + 2];
-            var pa = solid.Vertices[a].XYZ; var pb = solid.Vertices[b].XYZ; var pc = solid.Vertices[c].XYZ;
+            var a = solid.Triangles[i];
+            var b = solid.Triangles[i + 1];
+            var c = solid.Triangles[i + 2];
+            var pa = solid.Vertices[a].XYZ;
+            var pb = solid.Vertices[b].XYZ;
+            var pc = solid.Vertices[c].XYZ;
             if (pa.Z < 0 && pb.Z < 0 && pc.Z < 0)
             {
-                var cross = Vector3.Cross(pb - pa, pc - pa); Assert.True(cross.Z < 0);
+                var cross = Vector3.Cross(pb - pa, pc - pa);
+                Assert.True(cross.Z < 0);
                 area += -cross.Z / 2;
                 var center = (pa + pb + pc) / 3;
                 Assert.False(center.X > 1 && center.Y > 1);
             }
             foreach (var (u, v) in new[] { (a, b), (b, c), (c, a) })
             {
-                var edge = u < v ? (u, v) : (v, u); edges[edge] = edges.GetValueOrDefault(edge) + 1;
+                var edge = u < v ? (u, v) : (v, u);
+                edges[edge] = edges.GetValueOrDefault(edge) + 1;
             }
         }
         Assert.Equal(3, area, 5);
@@ -40,8 +48,8 @@ public sealed class PersonWardrobeTests
     public void HairStaysWhenUnarmedAndChangesForTheBackView()
     {
         var clip = new MotionClip { Markers = [new() { Id = PersonLoadout.BackViewMarker, Time = .2f }] };
-        Assert.Equal((PersonWardrobe.ShortHair, PersonWardrobe.HeadSocket), Assert.Single(PersonLoadout.Dressed(clip, 0, PersonGear.None)));
-        Assert.Equal((PersonWardrobe.ShortHairBack, PersonWardrobe.HeadSocket), Assert.Single(PersonLoadout.Dressed(clip, .3f, PersonGear.None)));
+        Assert.Equal((PersonLoadout.ShortHair, Humanoid.HeadSocket), Assert.Single(PersonLoadout.Dressed(clip, 0, PersonGear.None)));
+        Assert.Equal((PersonLoadout.ShortHairBack, Humanoid.HeadSocket), Assert.Single(PersonLoadout.Dressed(clip, .3f, PersonGear.None)));
     }
 
     [Fact]
@@ -50,25 +58,28 @@ public sealed class PersonWardrobeTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var entity = catalog.Entities["maul-brute"];
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, catalog.Animations["person-death"], .6f), Vector2.Zero, 1);
-        var socket = pose.Socket(entity.Sockets[PersonWardrobe.HeadSocket]);
-        TestModels.Near(Vector3.UnitX, socket.Along3);
-        TestModels.Near(Vector3.UnitY, socket.Across3);
+        var socket = pose.Socket(entity.Sockets[Humanoid.HeadSocket]);
+        TestModels.Near(Vector3.UnitX, socket.XAxis);
+        TestModels.Near(Vector3.UnitY, socket.YAxis);
         TestModels.Near(pose.World("head"), socket.Origin);
     }
 
     [Fact]
     public void GarmentsFollowTheActualTorsoDuringTheHammerSlamInBothFacings()
     {
-        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot); Assert.Empty(catalog.Errors);
-        var entity = catalog.Entities["maul-brute"]; var clip = catalog.Animations["person-hammer-slam"];
-        var socket = entity.Sockets[PersonWardrobe.BodySocket];
+        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
+        Assert.Empty(catalog.Errors);
+        var entity = catalog.Entities["maul-brute"];
+        var clip = catalog.Animations["person-hammer-slam"];
+        var socket = entity.Sockets[Humanoid.BodySocket];
         foreach (var facing in new[] { -1, 1 })
         {
             foreach (var at in new[] { 0, .55, .78, 1.1 })
             {
                 var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, at), Vector2.Zero, facing);
-                var expected = pose.World("chest") - pose.World("hips"); expected.Z = 0;
-                TestModels.Near(Vector3.Normalize(expected), pose.Socket(socket).Across3);
+                var expected = pose.World("chest") - pose.World("hips");
+                expected.Z = 0;
+                TestModels.Near(Vector3.Normalize(expected), pose.Socket(socket).YAxis);
                 TestModels.Near(pose.World("hips"), pose.Socket(socket).Origin);
             }
         }
@@ -77,12 +88,13 @@ public sealed class PersonWardrobeTests
     [Fact]
     public void PackagedWardrobeCompilesAndDrawsWithExistingEnemyActions()
     {
-        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot); Assert.Empty(catalog.Errors);
+        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
+        Assert.Empty(catalog.Errors);
         var drawing = new PuppetDrawing();
         foreach (var id in new[] { "maul-brute", "cinder-gunner" })
         {
             var entity = catalog.Entities[id];
-            Assert.Equal(3, entity.Equipment.Count(e => e.Socket.Id is PersonWardrobe.HeadSocket or PersonWardrobe.BodySocket));
+            Assert.Equal(3, entity.Equipment.Count(e => e.Socket.Id is Humanoid.HeadSocket or Humanoid.BodySocket));
             foreach (var clip in entity.Roles.Values.Select(r => r.Clip).Concat(entity.Actions.Values.Select(a => a.Clip)))
             {
                 for (var frame = 0; frame <= 12; frame++)
@@ -93,7 +105,10 @@ public sealed class PersonWardrobeTests
                 }
             }
         }
-        foreach (var prop in PersonWardrobe.Props()) prop.Validate();
+        foreach (var prop in PersonWardrobe.Props())
+        {
+            prop.Validate();
+        }
     }
 
     [Fact]
@@ -102,14 +117,18 @@ public sealed class PersonWardrobeTests
         var part = new PuppetPart
         {
             A = "origin",
-            Kind = "ellipse",
-            Width = 2,
-            Height = 1,
-            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(-2, -2), new(2, -2), new(2, 2), new(-2, 2)] }],
-            Geometry = new App2d.Core.Shapes.EllipseShapeDefinition2D { Center = new(0, 0), Radii = new(.5f, .5f) },
-            Material = new() { Fill = "#fff8e7", Outline = new() { Width = 0 } },
+            ScaleX = 2,
+            ScaleY = 1,
+            Geometry = new App2d.Core.Shapes.Ellipse2D { Center = new(0, 0), Radii = new(.5f, .5f) }.Validated(),
+            Material = new()
+            {
+                Fill = "#fff8e7",
+                Outline = new() { Width = 0 },
+                Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(-2, -2), new(2, -2), new(2, 2), new(-2, 2)] }]
+            },
         };
-        var drawing = new PuppetDrawing(); drawing.Build("#000000", .04f, [part], _ => Vector3.Zero);
+        var drawing = new PuppetDrawing();
+        drawing.Build("#000000", .04f, [part], _ => Vector3.Zero);
         var red = drawing.Mesh.Vertices.ToArray().Where(v => v.Color.R == 255 && v.Color.G == 0).ToArray();
         Assert.NotEmpty(red);
         foreach (var vertex in red)
@@ -119,7 +138,7 @@ public sealed class PersonWardrobeTests
             Assert.InRange(p.Z, -.0001f, 0);
         }
         // Resizing the body also resizes the paint, without changing a clothing socket or prop scale.
-        drawing.Build("#000000", .04f, [part with { Width = 4 }], _ => Vector3.Zero);
+        drawing.Build("#000000", .04f, [part with { ScaleX = 4 }], _ => Vector3.Zero);
         Assert.InRange(drawing.Mesh.Max.X, 1.999f, 2.001f);
     }
 
@@ -133,12 +152,12 @@ public sealed class PersonWardrobeTests
             var body = entity.Model.Parts.Single(p => p.Id == "body");
             if (id == "maul-brute")
             {
-                Assert.Empty(body.Paint!);
+                Assert.Empty(body.RenderMaterial.Paint!);
                 Assert.Equal(entity.Model.Parts.Single(p => p.Id == "head").RenderMaterial.Fill, body.RenderMaterial.Fill);
             }
             else
             {
-                Assert.NotEmpty(body.Paint!);
+                Assert.NotEmpty(body.RenderMaterial.Paint!);
             }
 
             Assert.DoesNotContain(entity.Equipment, e => e.Prop.Id.EndsWith("-tunic", StringComparison.Ordinal));

@@ -1,12 +1,12 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Assets;
-using App2d.Core.Characters.Authored;
 using App2d.Core.Validation;
 
 namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --export-spine model-or-variant json-path | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --angelia-gallery [output-directory]]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --smoke-rounded-paths output-directory]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -17,49 +17,76 @@ internal static class Program
             switch (args)
             {
                 case ["--smoke-rounded-paths", var curveOutput]:
-                    using (var proofs = new ProofRenders(FindAssets(preferSource: true), Path.GetFullPath(curveOutput), ProofRenders.Mode.RoundedPaths)) proofs.Run();
-                    return 0;
-                case ["--write-pterosaur", var flyingRoot]: PterosaurTemplate.Write(Path.GetFullPath(flyingRoot)); return 0;
-                case ["--smoke-editor-surface", var surfaceOutput]:
-                    Editor.EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput)); return 0;
-                case ["--export-spine", var subject, var spinePath]:
+                    using (var proofs = new ProofRenders(FindAssets(preferSource: true), Path.GetFullPath(curveOutput), ProofRenders.Mode.RoundedPaths))
                     {
-                        var catalog = AuthoredCatalog.Load(Path.Combine(FindAssets(preferSource: true), "authored"));
-                        var model = catalog.Resolve(subject);
-                        var package = App2d.Core.Characters.Spine.SpineExport2D.Build(model, catalog.Animations.Values.Where(c => c.Model == model.Base.Id));
-                        package.Save(spinePath); foreach (var note in package.Notes) Console.WriteLine(note); return 0;
+                        proofs.Run();
                     }
-                case ["--write-quadrupeds", var quadRoot]: QuadrupedTemplate.Write(Path.GetFullPath(quadRoot)); return 0;
-                case ["--convert-studies", var output]: PersonTemplate.WriteStudies(Path.GetFullPath(output)); return 0;
-                case ["--write-player-moves", var moves]: PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves)); return 0;
-                case ["--write-spells", var spells]: PlayerMoves.PlayerMoves.WriteSpells(Path.GetFullPath(spells)); return 0;
-                case ["--write-weapons", var root]: PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root)); return 0;
-                case ["--write-wardrobe", var root]: PersonWardrobe.Write(Path.GetFullPath(root)); return 0;
-                case ["--replace-wardrobe-art", var root]: PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true); return 0;
+
+                    return 0;
+                case ["--write-pterosaur", var flyingRoot]:
+                    PterosaurTemplate.Write(Path.GetFullPath(flyingRoot));
+                    return 0;
+                case ["--smoke-editor-surface", var surfaceOutput]:
+                    Editor.EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput));
+                    return 0;
+                case ["--write-quadrupeds", var quadRoot]:
+                    QuadrupedTemplate.Write(Path.GetFullPath(quadRoot));
+                    return 0;
+                case ["--convert-studies", var output]:
+                    PersonTemplate.WriteStudies(Path.GetFullPath(output));
+                    return 0;
+                case ["--write-player-moves", var moves]:
+                    PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves));
+                    return 0;
+                case ["--write-spells", var spells]:
+                    PlayerMoves.PlayerMoves.WriteSpells(Path.GetFullPath(spells));
+                    return 0;
+                case ["--write-weapons", var root]:
+                    PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root));
+                    return 0;
+                case ["--write-wardrobe", var root]:
+                    PersonWardrobe.Write(Path.GetFullPath(root));
+                    return 0;
+                case ["--replace-wardrobe-art", var root]:
+                    PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true);
+                    return 0;
                 case [] or ["--editor"] or ["--smoke-editor", _]:
                     {
                         using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
-                        editor.Run(); return 0;
-                    }
-                case ["--angelia-gallery"] or ["--angelia-gallery", _]:
-                    {
-                        using var gallery = new AngeliaGallery.AngeliaGalleryApp(FindAssets(), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
-                        gallery.Run(); return 0;
+                        editor.Run();
+                        return 0;
                     }
                 case ["--smoke-pterosaur" or "--smoke-quadrupeds" or "--smoke-motion" or "--smoke-entities" or "--review-moves" or "--smoke-weapons" or "--smoke-wardrobe" or "--swing-lab", var output]:
                     {
-                        var mode = args[0] switch { "--smoke-pterosaur" => ProofRenders.Mode.Pterosaur, "--smoke-quadrupeds" => ProofRenders.Mode.Quadrupeds, "--smoke-motion" => ProofRenders.Mode.Motion, "--smoke-entities" => ProofRenders.Mode.Entities, "--smoke-weapons" => ProofRenders.Mode.Weapons, "--smoke-wardrobe" => ProofRenders.Mode.Wardrobe, "--swing-lab" => ProofRenders.Mode.SwingLab, _ => ProofRenders.Mode.MoveReview };
+                        var mode = args[0] switch
+                        {
+                            "--smoke-pterosaur" => ProofRenders.Mode.Pterosaur,
+                            "--smoke-quadrupeds" => ProofRenders.Mode.Quadrupeds,
+                            "--smoke-motion" => ProofRenders.Mode.Motion,
+                            "--smoke-entities" => ProofRenders.Mode.Entities,
+                            "--smoke-weapons" => ProofRenders.Mode.Weapons,
+                            "--smoke-wardrobe" => ProofRenders.Mode.Wardrobe,
+                            "--swing-lab" => ProofRenders.Mode.SwingLab,
+                            _ => ProofRenders.Mode.MoveReview
+                        };
                         using var proofs = new ProofRenders(FindAssets(), Path.GetFullPath(output), mode);
-                        proofs.Run(); return 0;
+                        proofs.Run();
+                        return 0;
                     }
-                default: throw ArgGuard.CreateInvalid(Usage);
+                default:
+                    throw ArgGuard.CreateInvalid(Usage);
             }
         }
         catch (Exception ex)
         {
-            var log = Path.Combine(AppContext.BaseDirectory, "character-studio-error.log"); File.WriteAllText(log, ex.ToString());
+            var log = Path.Combine(AppContext.BaseDirectory, "character-studio-error.log");
+            File.WriteAllText(log, ex.ToString());
             Console.Error.WriteLine(ex);
-            if (args.Length == 0) MessageBox.Show(ex.Message + "\n\nDetails: " + log, "Character Studio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (args.Length == 0)
+            {
+                MessageBox.Show(ex.Message + "\n\nDetails: " + log, "Character Studio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
             return 1;
         }
     }
@@ -75,7 +102,10 @@ internal static class Program
             for (var folder = new DirectoryInfo(Environment.CurrentDirectory); folder is not null; folder = folder.Parent)
             {
                 var root = Path.Combine(folder.FullName, "Assets", "Characters");
-                if (Directory.Exists(Path.Combine(root, "authored"))) return root;
+                if (Directory.Exists(Path.Combine(root, "authored")))
+                {
+                    return root;
+                }
             }
         }
 

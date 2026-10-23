@@ -1,5 +1,6 @@
-using App2d.Core.Mathematics;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -24,7 +25,12 @@ public sealed class AuthoredArena
     {
         internal Actor(int index, ResolvedEntity entity, Vector2 position, int facing)
         {
-            Index = index; Entity = entity; Animator = new(entity); Position = position; Facing = facing; Health = entity.Asset.Health;
+            Index = index;
+            Entity = entity;
+            Animator = new(entity);
+            Position = position;
+            Facing = facing;
+            Health = entity.Asset.Health;
             Animator.Step(0, position, facing, EntityControllers.Idle, 0, false, []);
         }
         public int Index { get; }
@@ -55,7 +61,10 @@ public sealed class AuthoredArena
     {
         var list = entities.ToList();
         ArgGuard.ThrowIf(list.Count == 0, "The arena needs at least one entity.", nameof(entities));
-        for (var i = 0; i < list.Count; i++) Actors.Add(new(i, list[i], new(i == 0 ? -6 : -2 + 3.2f * i, 0), i == 0 ? 1 : -1));
+        for (var i = 0; i < list.Count; i++)
+        {
+            Actors.Add(new(i, list[i], new(i == 0 ? -6 : -2 + 3.2f * i, 0), i == 0 ? 1 : -1));
+        }
     }
 
     public List<Actor> Actors { get; } = [];
@@ -69,24 +78,48 @@ public sealed class AuthoredArena
     public void Teleport(int index, Vector2 position)
     {
         var actor = Actors[index];
-        actor.Position = position; actor.Velocity = Vector2.Zero; actor.Grounded = position.Y <= 0; actor.Launched = false;
-        actor.Animator.Reset(); actor.Animator.Step(0, position, actor.Facing, EntityControllers.Idle, 0, false, []);
+        actor.Position = position;
+        actor.Velocity = Vector2.Zero;
+        actor.Grounded = position.Y <= 0;
+        actor.Launched = false;
+        actor.Animator.Reset();
+        actor.Animator.Step(0, position, actor.Facing, EntityControllers.Idle, 0, false, []);
     }
 
     public void Step(ArenaInput input)
     {
         Tick++;
-        foreach (var actor in Actors) Control(actor, actor.Index == 0 ? input : Think(actor));
+        foreach (var actor in Actors)
+        {
+            Control(actor, actor.Index == 0 ? input : Think(actor));
+        }
+
         foreach (var attacker in Actors)
         {
-            if (!attacker.Alive) continue;
+            if (!attacker.Alive)
+            {
+                continue;
+            }
+
             foreach (var (hit, region) in attacker.Attacks)
             {
                 foreach (var target in Actors)
                 {
-                    if (target == attacker || !target.Alive || (target.Index == 0) == (attacker.Index == 0)) continue;
-                    if (!target.Hurt.Any(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero))) continue;
-                    if (!attacker.Ledger.TryHit(attacker.Animator.ActionSequence, hit.Window.Id, target.Index)) continue;
+                    if (target == attacker || !target.Alive || target.Index == 0 == (attacker.Index == 0))
+                    {
+                        continue;
+                    }
+
+                    if (!target.Hurt.Any(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero)))
+                    {
+                        continue;
+                    }
+
+                    if (!attacker.Ledger.TryHit(attacker.Animator.ActionSequence, hit.Window.Id, target.Index))
+                    {
+                        continue;
+                    }
+
                     Hits.Add(new(Tick, attacker.Index, target.Index, hit.Window.Id, hit.Window.Damage));
                     Damage(target, hit.Window.Damage);
                 }
@@ -101,45 +134,95 @@ public sealed class AuthoredArena
         for (var i = Bolts.Count - 1; i >= 0; i--)
         {
             var bolt = Bolts[i];
-            bolt = bolt with { Position = bolt.Position + bolt.Velocity * StepSeconds, Lifetime = bolt.Lifetime - StepSeconds };
+            bolt = bolt with
+            {
+                Position = bolt.Position + bolt.Velocity * StepSeconds,
+                Lifetime = bolt.Lifetime - StepSeconds
+            };
             var box = new EntityRegion("bolt", bolt.Shape, Similarity2D.FromTranslation(bolt.Position));
-            var target = Actors.FirstOrDefault(t => t.Alive && (t.Index == 0) != (bolt.Owner == 0) && t.Hurt.Any(h => h.Overlaps(box, Vector2.Zero, Vector2.Zero)));
-            if (target is not null) { Hits.Add(new(Tick, bolt.Owner, target.Index, "bolt", bolt.Damage)); Damage(target, bolt.Damage); }
-            if (target is not null || bolt.Lifetime <= 0 || bolt.Position.Y < 0 || MathF.Abs(bolt.Position.X) > HalfWidth + 2) Bolts.RemoveAt(i);
-            else Bolts[i] = bolt;
+            var target = Actors.FirstOrDefault(t => t.Alive && t.Index == 0 != (bolt.Owner == 0) && t.Hurt.Any(h => h.Overlaps(box, Vector2.Zero, Vector2.Zero)));
+            if (target is not null)
+            {
+                Hits.Add(new(Tick, bolt.Owner, target.Index, "bolt", bolt.Damage));
+                Damage(target, bolt.Damage);
+            }
+            if (target is not null || bolt.Lifetime <= 0 || bolt.Position.Y < 0 || MathF.Abs(bolt.Position.X) > HalfWidth + 2)
+            {
+                Bolts.RemoveAt(i);
+            }
+            else
+            {
+                Bolts[i] = bolt;
+            }
         }
     }
 
     private ArenaInput Think(Actor actor)
     {
-        if (!actor.Alive || !Player.Alive) return default;
-        var dx = Player.Position.X - actor.Position.X; var config = actor.Entity.Asset.Controller;
+        if (!actor.Alive || !Player.Alive)
+        {
+            return default;
+        }
+
+        var dx = Player.Position.X - actor.Position.X;
+        var config = actor.Entity.Asset.Controller;
         var direction = MathF.Sign(dx);
-        if (MathF.Abs(dx) <= config.Range) return new(direction * 1e-4f, Attack: true); // face the target, stand and attack
+        if (MathF.Abs(dx) <= config.Range)
+        {
+            return new(direction * 1e-4f, Attack: true); // face the target, stand and attack
+        }
+
         return MathF.Abs(dx) < 14 ? new(direction) : default;
     }
 
     private void Control(Actor actor, ArenaInput input)
     {
-        var animator = actor.Animator; var config = actor.Entity.Asset.Controller; var spec = actor.Entity.Controller;
-        actor.Cooldown = MathF.Max(0, actor.Cooldown - StepSeconds); actor.HurtTime = MathF.Max(0, actor.HurtTime - StepSeconds);
-        var events = _scratch; events.Clear();
+        var animator = actor.Animator;
+        var config = actor.Entity.Asset.Controller;
+        var spec = actor.Entity.Controller;
+        actor.Cooldown = MathF.Max(0, actor.Cooldown - StepSeconds);
+        actor.HurtTime = MathF.Max(0, actor.HurtTime - StepSeconds);
+        var events = _scratch;
+        events.Clear();
         var reaction = actor.Reaction.Role(actor.Entity, actor.Alive);
-        if (!actor.Alive) { animator.Step(StepSeconds, actor.Position, actor.Facing, reaction ?? animator.Role, 0, reaction is null, events, actor.Expression); return; }
-        if (actor.Reaction.Tick(StepSeconds)) actor.Cooldown = MathF.Max(actor.Cooldown, actor.Entity.Asset.Controller.Cooldown);
+        if (!actor.Alive)
+        {
+            animator.Step(StepSeconds, actor.Position, actor.Facing, reaction ?? animator.Role, 0, reaction is null, events, actor.Expression);
+            return;
+        }
+        if (actor.Reaction.Tick(StepSeconds))
+        {
+            actor.Cooldown = MathF.Max(actor.Cooldown, actor.Entity.Asset.Controller.Cooldown);
+        }
         // Staggered: the controller neither steers nor starts actions.
-        if (actor.Reaction.Staggered) input = default;
+        if (actor.Reaction.Staggered)
+        {
+            input = default;
+        }
 
         var move = spec.Moves || input.Attack ? Math.Clamp(input.Move, -1, 1) : 0;
         // Turn before acting, so an attack starts toward where the controller is steering.
-        if (animator.Action is null && MathF.Abs(move) > 0) actor.Facing = move > 0 ? 1 : -1;
-        if (!spec.Moves) move = 0;
+        if (animator.Action is null && MathF.Abs(move) > 0)
+        {
+            actor.Facing = move > 0 ? 1 : -1;
+        }
+
+        if (!spec.Moves)
+        {
+            move = 0;
+        }
+
         if (animator.Action is null && actor.Grounded)
         {
             // Rejected requests (a guard asked to jump) simply do nothing: there is no accidental idle substitute.
             if (input.Attack && actor.Cooldown <= 0 && animator.TryStart(EntityControllers.Attack))
+            {
                 actor.Cooldown = animator.Current!.Clip.Duration + config.Cooldown;
-            else if (input.Jump && spec.Jumps) animator.TryStart(EntityControllers.Jump);
+            }
+            else if (input.Jump && spec.Jumps)
+            {
+                animator.TryStart(EntityControllers.Jump);
+            }
         }
         var action = animator.Action;
         var speed = input.Run && config.RunSpeed > 0 ? config.RunSpeed : config.WalkSpeed;
@@ -151,9 +234,20 @@ public sealed class AuthoredArena
         var position = before + velocity * StepSeconds;
         position.X = Math.Clamp(position.X, -HalfWidth, HalfWidth);
         var landed = false;
-        if (position.Y <= 0 && !actor.Grounded) { position.Y = 0; velocity.Y = 0; actor.Grounded = true; landed = true; }
-        actor.Position = position; actor.Velocity = velocity;
-        if (landed && action == EntityControllers.Jump) { animator.EndAction(); actor.Launched = false; }
+        if (position.Y <= 0 && !actor.Grounded)
+        {
+            position.Y = 0;
+            velocity.Y = 0;
+            actor.Grounded = true;
+            landed = true;
+        }
+        actor.Position = position;
+        actor.Velocity = velocity;
+        if (landed && action == EntityControllers.Jump)
+        {
+            animator.EndAction();
+            actor.Launched = false;
+        }
 
         var role = MathF.Abs(velocity.X) < 1e-3f ? EntityControllers.Idle
             : input.Run && actor.Entity.Clip(EntityControllers.Run) is not null ? EntityControllers.Run : EntityControllers.Walk;
@@ -161,9 +255,21 @@ public sealed class AuthoredArena
         if (!actor.Grounded && animator.Locomoting)
         {
             // Airborne without an action: the fall role when assigned, otherwise the explicit fallback of holding the pose.
-            if (actor.Entity.Clip(EntityControllers.Fall) is not null) { role = EntityControllers.Fall; } else { role = animator.Role; hold = true; }
+            if (actor.Entity.Clip(EntityControllers.Fall) is not null)
+            {
+                role = EntityControllers.Fall;
+            }
+            else
+            {
+                role = animator.Role;
+                hold = true;
+            }
         }
-        if (actor.Reaction.Role(actor.Entity, true) is { } hit) { role = hit; hold = false; }
+        if (actor.Reaction.Role(actor.Entity, true) is { } hit)
+        {
+            role = hit;
+            hold = false;
+        }
         var ground = actor.Grounded ? MathF.Abs(position.X - before.X) : 0;
         animator.Step(StepSeconds, position, actor.Facing, role, ground, hold, events, actor.Expression);
 
@@ -171,21 +277,37 @@ public sealed class AuthoredArena
         {
             Events.Add(new(Tick, actor.Index, e, position));
             if (e is { Kind: AnimationEvent.EventKind, Id: EntityControllers.Launch } && animator.Action == EntityControllers.Jump)
-            { actor.Grounded = false; actor.Launched = true; actor.Velocity = new(actor.Velocity.X, config.JumpSpeed); }
+            {
+                actor.Grounded = false;
+                actor.Launched = true;
+                actor.Velocity = new(actor.Velocity.X, config.JumpSpeed);
+            }
             if (e is { Kind: AnimationEvent.EventKind, Id: EntityControllers.Fire } && animator.Current?.Projectile is { } shot)
             {
                 var (muzzle, axis) = EntityCollision.Muzzle(actor.Entity, actor.Pose);
-                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, (IConvexShape2D)shot.Shape.Build(), shot.Lifetime, shot.Damage));
+                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, (IConvexShape2D)shot.Shape.Validated(), shot.Lifetime, shot.Damage));
             }
         }
-        if (animator.ActionComplete && animator.Action != EntityControllers.Jump) animator.EndAction();
+        if (animator.ActionComplete && animator.Action != EntityControllers.Jump)
+        {
+            animator.EndAction();
+        }
     }
 
     private static void Damage(Actor target, int damage)
     {
-        target.Health = Math.Max(0, target.Health - damage); target.HurtTime = HurtSeconds;
+        target.Health = Math.Max(0, target.Health - damage);
+        target.HurtTime = HurtSeconds;
         // A hit interrupts the target's action and staggers it; contacts are released and re-captured from the next pose.
-        if (target.Alive) target.Reaction.Hit(target.Animator); else target.Reaction.Die(target.Animator);
+        if (target.Alive)
+        {
+            target.Reaction.Hit(target.Animator);
+        }
+        else
+        {
+            target.Reaction.Die(target.Animator);
+        }
+
         target.Launched = false;
     }
 }

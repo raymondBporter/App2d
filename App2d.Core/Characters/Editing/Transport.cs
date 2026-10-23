@@ -14,7 +14,10 @@ public sealed class Transport
     public float Time => (float)_clock.TimeSeconds;
     public long Cycles => _clock.Cycles;
     public bool Playing => _clock.IsPlaying;
-    public float Speed { get => (float)_clock.Speed; set => _clock.Speed = value; }
+    public float Speed
+    {
+        get => (float)_clock.Speed; set => _clock.Speed = value;
+    }
     /// <summary>Optional editor preview behavior; null uses the clip's loop setting.</summary>
     public PlaybackEndMode? EndModeOverride { get; set; }
 
@@ -26,18 +29,39 @@ public sealed class Transport
     public void Play(MotionClip clip)
     {
         Configure(clip);
-        if (_clock.EndMode == PlaybackEndMode.Hold && Time >= clip.Duration) _clock.Seek(0);
+        if (_clock.EndMode == PlaybackEndMode.Hold && Time >= clip.Duration)
+        {
+            _clock.Seek(0);
+        }
+
         _clock.Play();
     }
     public void Pause()
     {
         _clock.Pause();
-        if (_clock.EndMode == PlaybackEndMode.Loop) _clock.Seek(_clock.TimeSeconds);
+        if (_clock.EndMode == PlaybackEndMode.Loop)
+        {
+            _clock.Seek(_clock.TimeSeconds);
+        }
     }
-    public void Toggle(MotionClip clip) { if (Playing) Pause(); else Play(clip); }
+    public void Toggle(MotionClip clip)
+    {
+        if (Playing)
+        {
+            Pause();
+        }
+        else
+        {
+            Play(clip);
+        }
+    }
     public void Seek(MotionClip? clip, float time)
     {
-        if (clip is not null) Configure(clip);
+        if (clip is not null)
+        {
+            Configure(clip);
+        }
+
         _clock.Seek(clip is null ? 0 : Math.Clamp(time, 0, clip.Duration));
     }
 

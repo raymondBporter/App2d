@@ -1,11 +1,12 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Core;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Combat;
@@ -19,14 +20,18 @@ public sealed class CombatDamageEventTests
         var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var target = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics,
             metrics, Vector2.Zero, 2, 1, CombatFaction2D.Enemy);
-        var registry = new CombatantRegistry2D(); registry.Register(target);
+        var registry = new CombatantRegistry2D();
+        registry.Register(target);
         var combat = new CombatSystem2D(physics.CollisionSystem, registry);
-        var facts = new List<CombatDamage2D>(); combat.DamageResolved += facts.Add;
-        var weapon = EntityId2D.Create(); var player = EntityId2D.Create();
+        var facts = new List<CombatDamage2D>();
+        combat.DamageResolved += facts.Add;
+        var weapon = EntityId2D.Create();
+        var player = EntityId2D.Create();
         Assert.True(combat.ResolveAttack(target.WorldObject, weapon, 1, CombatFaction2D.Player,
             2, 1, _ => Vector2.Zero, impactKind: CombatImpactKind2D.Sword, attackerId: player));
         var contact = Assert.Single(facts).Contact!.Value;
-        Assert.Equal(player, contact.AttackerId); Assert.Equal(weapon, contact.SourceId);
+        Assert.Equal(player, contact.AttackerId);
+        Assert.Equal(weapon, contact.SourceId);
         Assert.False(combat.ResolveAttack(target.WorldObject, weapon, 1, CombatFaction2D.Player,
             2, 1, _ => Vector2.Zero, impactKind: CombatImpactKind2D.Sword, attackerId: player));
         Assert.Single(facts);
@@ -41,9 +46,11 @@ public sealed class CombatDamageEventTests
             metrics, Vector2.Zero, 2, 1, CombatFaction2D.Enemy);
         Assert.True(target.TakeDamage(1, Vector2.Zero));
         var health = target.Health.Current;
-        var registry = new CombatantRegistry2D(); registry.Register(target);
+        var registry = new CombatantRegistry2D();
+        registry.Register(target);
         var combat = new CombatSystem2D(physics.CollisionSystem, registry);
-        var facts = new List<CombatDamage2D>(); combat.DamageResolved += facts.Add;
+        var facts = new List<CombatDamage2D>();
+        combat.DamageResolved += facts.Add;
         Assert.True(combat.ResolveAttack(target.WorldObject, EntityId2D.Create(), 1, CombatFaction2D.Player,
             2, 1, _ => new(0, -200), impactKind: CombatImpactKind2D.Sword));
         Assert.Equal(health, target.Health.Current);
@@ -56,7 +63,7 @@ public sealed class CombatDamageEventTests
     public void DamageFactIdentifiesTheTargetAndImpactPosition(int damage, bool killed)
     {
         var physics = new PhysicsWorld2D();
-        var shape = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(30f)));
+        var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(30f, 30f));
         shape.Transform.Position = new(600f, 200f);
         var body = physics.AddBody(shape, BodyMotionType2D.Dynamic);
         body.CollisionLayer = 2;

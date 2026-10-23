@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "pterosaur-brake",
   "name": "Pterosaur \u00B7 brake",
   "model": "pterosaur",
@@ -135,5 +135,9 @@
       "time": 0.16
     }
   ],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

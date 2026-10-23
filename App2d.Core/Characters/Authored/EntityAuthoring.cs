@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Geometry;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -52,25 +53,50 @@ public static class EntityAuthoring
         switch (template)
         {
             case Guard:
-                entity.Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .9f, Range = 1.6f, Cooldown = 1 };
+                entity.Controller = new()
+                {
+                    Kind = EntityControllers.Walker,
+                    WalkSpeed = .9f,
+                    Range = 1.6f,
+                    Cooldown = 1
+                };
                 entity.Actions = [new() { Id = EntityControllers.Attack, Role = "attack" }];
                 break;
             case Platformer:
-                entity.Controller = new() { Kind = EntityControllers.Platformer, WalkSpeed = 1.5f, RunSpeed = 3, JumpSpeed = 6, Range = 1.5f, Cooldown = .4f };
+                entity.Controller = new()
+                {
+                    Kind = EntityControllers.Platformer,
+                    WalkSpeed = 1.5f,
+                    RunSpeed = 3,
+                    JumpSpeed = 6,
+                    Range = 1.5f,
+                    Cooldown = .4f
+                };
                 entity.Actions = [new() { Id = EntityControllers.Jump, Role = EntityControllers.Jump, Events = [new() { Id = EntityControllers.Launch, At = new() { At = .25f } }] }];
                 break;
             case Stationary:
-                entity.Controller = new() { Kind = EntityControllers.Stationary, WalkSpeed = 0, Range = 1.2f, Cooldown = 1 };
+                entity.Controller = new()
+                {
+                    Kind = EntityControllers.Stationary,
+                    WalkSpeed = 0,
+                    Range = 1.2f,
+                    Cooldown = 1
+                };
                 break;
-            default: throw new InvalidDataException($"Unknown entity template '{template}' (known: {string.Join(", ", Templates.Select(t => t.Id))}).");
+            default:
+                throw new InvalidDataException($"Unknown entity template '{template}' (known: {string.Join(", ", Templates.Select(t => t.Id))}).");
         }
-        entity.Validate(); return entity;
+        entity.Validate();
+        return entity;
     }
 
     /// <summary>A copy that keeps every model, clip and prop reference: a sibling, not a child. There is no entity inheritance.</summary>
     public static EntityAsset Duplicate(EntityAsset source, string id, string name)
     {
-        var copy = AuthoredAsset.Parse<EntityAsset>(source.ToJson(), "entity"); copy.Id = id; copy.Name = name; return copy;
+        var copy = AuthoredAsset.Parse<EntityAsset>(source.ToJson(), "entity");
+        copy.Id = id;
+        copy.Name = name;
+        return copy;
     }
 
     /// <summary>The movement box around the rest pose's visible parts: full height from the feet, a narrow body width. Explicit, never automatic.</summary>
@@ -78,11 +104,14 @@ public static class EntityAuthoring
     public static MovementDef FitMovement(ResolvedModel model, float offsetX = 0)
     {
         var pose = PoseEvaluator.Rest(model);
-        var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]))
+        var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]))
             .Concat(model.Rest.Values).DefaultIfEmpty(Vector3.Zero).ToList();
         var height = MathF.Max(.2f, points.Max(p => p.Y));
         var width = Math.Clamp((points.Max(p => p.X) - points.Min(p => p.X)) * .6f, .2f, height);
-        return new() { Shape = MovementDef.Box(MathF.Round(width, 3), MathF.Round(height, 3), offsetX) };
+        return new()
+        {
+            Shape = MovementDef.Box(MathF.Round(width, 3), MathF.Round(height, 3), offsetX)
+        };
     }
 
     // ---- Motion sets ---------------------------------------------------------------------------------------------
@@ -91,10 +120,16 @@ public static class EntityAuthoring
     public static MotionSet AddMotionSet(CharacterModel model, string id, string name, string? copyFrom)
     {
         AuthoredAsset.RequireId(id, "motion set id");
-        if (model.MotionSets.Any(s => s.Id == id)) throw new InvalidDataException($"'{model.Id}' already has a motion set '{id}'.");
+        if (model.MotionSets.Any(s => s.Id == id))
+        {
+            throw new InvalidDataException($"'{model.Id}' already has a motion set '{id}'.");
+        }
+
         var roles = copyFrom is null ? [] : new Dictionary<string, string>(Set(model, copyFrom).Roles, StringComparer.Ordinal);
         var set = new MotionSet { Id = id, Name = name, Roles = roles };
-        model.MotionSets.Add(set); model.Validate(); return set;
+        model.MotionSets.Add(set);
+        model.Validate();
+        return set;
     }
 
     /// <summary>Assigns a clip to a role, or unassigns it with null. The clip must be written for this base.</summary>
@@ -102,9 +137,18 @@ public static class EntityAuthoring
     {
         AuthoredAsset.RequireId(role, "role");
         var set = Set(model, setId);
-        if (clip is null) { set.Roles.Remove(role); return; }
-        if (clip.Model != model.Id) throw new InvalidDataException($"Animation '{clip.Id}' is for model '{clip.Model}', not '{model.Id}'.");
-        set.Roles[role] = clip.Id; model.Validate();
+        if (clip is null)
+        {
+            set.Roles.Remove(role);
+            return;
+        }
+        if (clip.Model != model.Id)
+        {
+            throw new InvalidDataException($"Animation '{clip.Id}' is for model '{clip.Model}', not '{model.Id}'.");
+        }
+
+        set.Roles[role] = clip.Id;
+        model.Validate();
     }
 
     public static MotionSet Set(CharacterModel model, string id) =>
@@ -117,7 +161,10 @@ public static class EntityAuthoring
     {
         var look = model.Looks.FirstOrDefault(l => l.Id == lookId) ?? throw new InvalidDataException($"'{model.Id}' has no look '{lookId}'.");
         foreach (var (part, change) in look.Parts)
+        {
             variant.Parts[part] = (variant.Parts.GetValueOrDefault(part) ?? new()).Merge(change);
+        }
+
         variant.Validate();
     }
 
@@ -131,12 +178,21 @@ public static class EntityAuthoring
         var parts = new Dictionary<string, PartOverride>(StringComparer.Ordinal);
         foreach (var (part, change) in variant.Parts)
         {
-            var look = new PartOverride { Material = change.Material, Paint = change.Paint, Face = change.Face, FaceX = change.FaceX, Hidden = change.Hidden };
-            if (!look.IsEmpty) parts[part] = look;
+            var look = new PartOverride { Material = change.Material, Face = change.Face, FaceX = change.FaceX, Hidden = change.Hidden };
+            if (!look.IsEmpty)
+            {
+                parts[part] = look;
+            }
         }
-        if (parts.Count == 0) throw new InvalidDataException($"Variant '{variant.Id}' overrides no colors, faces or visibility to save as a look.");
+        if (parts.Count == 0)
+        {
+            throw new InvalidDataException($"Variant '{variant.Id}' overrides no colors, faces or visibility to save as a look.");
+        }
+
         var preset = new LookPreset { Id = id, Name = name, Parts = parts };
-        model.Looks.RemoveAll(l => l.Id == id); model.Looks.Add(preset); model.Validate();
+        model.Looks.RemoveAll(l => l.Id == id);
+        model.Looks.Add(preset);
+        model.Validate();
         return preset;
     }
 }

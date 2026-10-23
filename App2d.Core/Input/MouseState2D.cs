@@ -31,17 +31,31 @@ public sealed class MouseState2D
 
     internal void SetButton(MouseButtons button, bool isDown, bool suppressed)
     {
-        if (!isDown) _blocked.Remove(button);
+        if (!isDown)
+        {
+            _blocked.Remove(button);
+        }
+
         if (suppressed)
         {
-            if (isDown) _blocked.Add(button);
+            if (isDown)
+            {
+                _blocked.Add(button);
+            }
+
             return;
         }
-        if (_blocked.Contains(button)) return;
+        if (_blocked.Contains(button))
+        {
+            return;
+        }
 
         if (isDown)
         {
-            if (_down.Add(button)) _pressed.Add(button);
+            if (_down.Add(button))
+            {
+                _pressed.Add(button);
+            }
         }
         else if (_down.Remove(button))
         {

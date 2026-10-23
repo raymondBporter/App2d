@@ -1,4 +1,5 @@
 ﻿using App2d.Core.Collision.Contacts;
+using App2d.Core.Spatial;
 
 namespace App2d.Core.Collision;
 

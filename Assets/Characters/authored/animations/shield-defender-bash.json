@@ -1,12 +1,11 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "shield-defender-bash",
   "name": "Shell defender / pullback bash recovery",
   "model": "person",
   "structureRevision": 1,
   "duration": 1.4,
-  "loop": false,
   "reference": {
     "leg": 0.9914766,
     "arm": 0.6544882,
@@ -22,7 +21,6 @@
       "target": "left-arm",
       "keys": [
         {
-          "time": 0,
           "x": 0.5,
           "y": 0.12,
           "ease": "smooth"
@@ -76,9 +74,6 @@
       "target": "right-arm",
       "keys": [
         {
-          "time": 0,
-          "x": 0,
-          "y": 0,
           "ease": "smooth"
         },
         {
@@ -95,20 +90,14 @@
         },
         {
           "time": 1.4,
-          "x": 0,
-          "y": 0,
           "ease": "smooth"
         }
       ]
     },
     {
-      "kind": "translate",
       "target": "hips",
       "keys": [
         {
-          "time": 0,
-          "x": 0,
-          "y": 0,
           "ease": "smooth"
         },
         {
@@ -131,8 +120,6 @@
         },
         {
           "time": 1.4,
-          "x": 0,
-          "y": 0,
           "ease": "smooth"
         }
       ]
@@ -142,8 +129,6 @@
       "target": "chest",
       "keys": [
         {
-          "time": 0,
-          "angle": 0,
           "ease": "smooth"
         },
         {
@@ -163,7 +148,6 @@
         },
         {
           "time": 1.4,
-          "angle": 0,
           "ease": "smooth"
         }
       ]
@@ -210,5 +194,9 @@
         }
       ]
     }
-  ]
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

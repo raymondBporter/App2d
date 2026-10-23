@@ -9,7 +9,11 @@ public sealed class ResourceManager2DTests
     {
         using var resources = new ResourceManager2D();
         var calls = 0;
-        resources.Register("map/cavern", () => { calls++; return new object(); }, "levels/cavern/level.db");
+        resources.Register("map/cavern", () =>
+        {
+            calls++;
+            return new object();
+        }, "levels/cavern/level.db");
 
         Assert.False(resources.Snapshot()[0].IsLoaded);
         Assert.Throws<InvalidOperationException>(() => resources.Get<object>("map/cavern"));
@@ -33,7 +37,11 @@ public sealed class ResourceManager2DTests
         var calls = 0;
         resources.Register("sound/hit", () =>
         {
-            if (++calls == 1) throw new IOException("missing file");
+            if (++calls == 1)
+            {
+                throw new IOException("missing file");
+            }
+
             return new object();
         });
 

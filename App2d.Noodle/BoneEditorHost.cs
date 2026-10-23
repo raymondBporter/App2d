@@ -4,7 +4,6 @@ using App2d.Core.Rendering;
 using App2d.Noodle.Rigging;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
@@ -21,20 +20,39 @@ internal sealed class BoneEditorHost : NoodleToolHost
     internal void ShowShapeStudy() => _panel.Select(_document.Shapes.FirstOrDefault());
     protected override void DrawScene(Renderer2D renderer, FrameTime time)
     {
-        renderer.Clear(new XnaColor(17, 22, 33));
+        renderer.Clear(new Color4b(17, 22, 33));
         renderer.DrawGrid(50, 5);
         RigDocumentRenderer2D.Render(renderer, _document, _panel.SelectedItem);
     }
     protected override void HandleSceneInput(bool mouseCaptured, bool keyboardCaptured)
     {
-        if (ImGui.GetIO().KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.S, false)) AfterFrame(ExportModel);
+        if (ImGui.GetIO().KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.S, false))
+        {
+            AfterFrame(ExportModel);
+        }
+
         if (!keyboardCaptured)
         {
-            if (ImGui.IsKeyPressed(ImGuiKey.Escape, false)) Close();
+            if (ImGui.IsKeyPressed(ImGuiKey.Escape, false))
+            {
+                Close();
+            }
         }
-        if (mouseCaptured || !ImGui.IsMouseDown(ImGuiMouseButton.Middle)) _panning = false;
-        if (mouseCaptured) return;
-        if (ImGui.IsMouseClicked(ImGuiMouseButton.Middle)) _panning = true;
+        if (mouseCaptured || !ImGui.IsMouseDown(ImGuiMouseButton.Middle))
+        {
+            _panning = false;
+        }
+
+        if (mouseCaptured)
+        {
+            return;
+        }
+
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Middle))
+        {
+            _panning = true;
+        }
+
         if (_panning)
         {
             var delta = ImGui.GetIO().MouseDelta;
@@ -44,19 +62,33 @@ internal sealed class BoneEditorHost : NoodleToolHost
     }
     private void ExportModel()
     {
-        if (!_panel.Commit()) return;
+        if (!_panel.Commit())
+        {
+            return;
+        }
+
         using var dialog = new SaveFileDialog { Filter = "App2d model (*.model.json)|*.model.json|JSON (*.json)|*.json", FileName = "noodle-rig.model.json" };
-        if (dialog.ShowDialog(Window) != DialogResult.OK) return;
+        if (dialog.ShowDialog(Window) != DialogResult.OK)
+        {
+            return;
+        }
+
         try
         {
             var fileName = Path.GetFileName(dialog.FileName);
             var name = fileName.EndsWith(".model.json", StringComparison.OrdinalIgnoreCase) ? fileName[..^".model.json".Length] : Path.GetFileNameWithoutExtension(fileName);
-            if (string.IsNullOrWhiteSpace(name)) name = "Noodle rig";
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = "Noodle rig";
+            }
+
             CharacterModel model = RigAuthoredBridge2D.Export(_document, PuppetImport.Slug(name, "noodle-rig"), name);
             model.Save(dialog.FileName);
             MessageBox.Show(Window, $"Saved authored model to {dialog.FileName}", "Model exported");
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or NotSupportedException)
-        { MessageBox.Show(Window, ex.Message, "Model export failed", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+        {
+            MessageBox.Show(Window, ex.Message, "Model export failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }

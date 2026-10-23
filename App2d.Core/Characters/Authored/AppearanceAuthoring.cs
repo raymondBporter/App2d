@@ -3,15 +3,17 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>Editable appearance assets use the existing prop file format, attachments, undo, and runtime meshes.</summary>
 public static class AppearanceAuthoring
 {
-    public static readonly string[] Templates = ["hair", "beard", "skirt", "blank"];
+    public static readonly string[] Templates = ["hair", "beard", "skirt", "sandal", "boot", "blank"];
 
     public static PropAsset New(string id, string name, string template, string ink, float lineWidth, Func<string, PropAsset?>? findTemplate = null)
     {
         var source = template switch
         {
-            "hair" => PersonWardrobe.ShortHair,
+            "hair" => PersonLoadout.ShortHair,
             "beard" => "brute-beard",
             "skirt" => "cinder-hide-wrap",
+            "sandal" => "sandal-left",
+            "boot" => "boot-left",
             "blank" => null,
             _ => throw new InvalidDataException("Unknown appearance template.")
         };
@@ -19,23 +21,32 @@ public static class AppearanceAuthoring
             ? new PropAsset
             {
                 Usage = "clothing",
-                Attachment = PersonWardrobe.BodySocket,
+                Attachment = Humanoid.BodySocket,
                 Tip = default
             }
-            : PropAsset.FromJson((findTemplate?.Invoke(source) ?? PersonWardrobe.Props().Single(p => p.Id == source)).ToJson());
+            : PropAsset.FromJson((findTemplate?.Invoke(source) ?? throw new InvalidDataException($"Appearance template '{source}' was not found.")).ToJson());
 
         art.Id = id;
         art.Name = name;
         art.Ink = ink;
         art.LineWidth = lineWidth;
         art.BackView = null;
-        if (source is null) art.Solids.Add(PropGeometry.Extrude([new(-.15f, 0), new(.15f, 0), new(.15f, .3f), new(-.15f, .3f)], .02f, "#b97549"));
-        art.Validate(); return art;
+        if (source is null)
+        {
+            art.Solids.Add(PropGeometry.Extrude([new(-.15f, 0), new(.15f, 0), new(.15f, .3f), new(-.15f, .3f)], .02f, "#b97549"));
+        }
+
+        art.Validate();
+        return art;
     }
 
     public static PropAsset Duplicate(PropAsset source, string id, string name)
     {
-        var copy = PropAsset.FromJson(source.ToJson()); copy.Id = id; copy.Name = name; copy.Validate(); return copy;
+        var copy = PropAsset.FromJson(source.ToJson());
+        copy.Id = id;
+        copy.Name = name;
+        copy.Validate();
+        return copy;
     }
 
     /// <summary>Build and validate before replacing anything, so an invalid outline leaves the last good drawing intact.</summary>

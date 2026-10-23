@@ -1,6 +1,6 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
-using App2d.Core;
+using App2d.Core.Spatial;
 
 namespace App2d.Gameplay.Persons.Actions;
 
@@ -11,7 +11,13 @@ internal abstract class PersonWeapon2DBase(EquipmentKind2D kind) : IPersonWeapon
     public virtual PersonActionState2D CaptureActionState() => default;
 
     public abstract float Use(float facing);
-    public virtual void BeginFrame(float deltaSeconds) { }
-    public virtual void UpdateAfterPhysics(float deltaSeconds, float facing) { }
-    public virtual void Reset() { }
+    public virtual void BeginFrame(float deltaSeconds)
+    {
+    }
+    public virtual void UpdateAfterPhysics(float deltaSeconds, float facing)
+    {
+    }
+    public virtual void Reset()
+    {
+    }
 }

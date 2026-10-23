@@ -1,12 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Validation;
 
 /// <summary>
 /// Argument validation with caller names and rejected values. Numeric predicates live in NumericValidation;
-/// throwing/message construction lives in ArgGuard.Exceptions. Explicit NotFiniteOr guards reject infinity/NaN.
+/// Numeric checks require finite values by default and return the validated value for use in initializers.
 /// </summary>
 public static partial class ArgGuard
 {
@@ -14,14 +13,10 @@ public static partial class ArgGuard
     public static void ThrowIfNull<T>([NotNull] T? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (value is null) ThrowNullException(paramName);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNan<T>([NotNull] T value,
-    [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : struct, INumber<T>
-    {
-        if (T.IsNaN(value)) ThrowNaNException(paramName);
+        if (value is null)
+        {
+            ThrowNullException(paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,7 +32,10 @@ public static partial class ArgGuard
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         ThrowIfNull(value, paramName);
-        if (string.IsNullOrWhiteSpace(value)) ThrowInvalid("Value cannot be empty or whitespace.", paramName);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            ThrowInvalid("Value cannot be empty or whitespace.", paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -52,9 +50,11 @@ public static partial class ArgGuard
     public static void ThrowIfTooShort<T>(ReadOnlySpan<T> value, int minimumLength,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        ThrowIfNegative(minimumLength);
+        NonNegative(minimumLength);
         if (value.Length < minimumLength)
+        {
             ThrowOutOfRange(value.Length, $"Collection must contain at least {minimumLength} items.", paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -62,14 +62,34 @@ public static partial class ArgGuard
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         foreach (var item in value)
-            if (item is null) ThrowInvalid("Collection cannot contain null values.", paramName);
+        {
+            if (item is null)
+            {
+                ThrowInvalid("Collection cannot contain null values.", paramName);
+            }
+        }
     }
 
     /// <summary>For domain-specific argument rules that do not fit a numeric guard.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIf([DoesNotReturnIf(true)] bool invalidCondition, string message, string? paramName = null)
+    public static void ThrowIf([DoesNotReturnIf(true)] bool invalidCondition, string? message = null, string? paramName = null,
+        [CallerArgumentExpression(nameof(invalidCondition))] string? expression = null)
     {
-        if (invalidCondition) ThrowInvalid(message, paramName);
+        if (invalidCondition)
+        {
+            ThrowInvalid(message ?? $"Condition must be false: {expression}.", paramName);
+        }
+    }
+
+    /// <summary>Requires a custom condition, capturing its source expression when no message is supplied.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNot([DoesNotReturnIf(false)] bool condition, string? message = null, string? paramName = null,
+        [CallerArgumentExpression(nameof(condition))] string? expression = null)
+    {
+        if (!condition)
+        {
+            ThrowInvalid(message ?? $"Condition must be true: {expression}.", paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

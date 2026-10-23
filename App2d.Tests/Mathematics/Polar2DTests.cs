@@ -1,4 +1,5 @@
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
 namespace App2d.Tests.Mathematics;
@@ -13,7 +14,7 @@ public sealed class Polar2DTests
     [InlineData(450, 0, 1)]
     public void DirectionsFollowYUpCounterClockwiseConvention(float degrees, float x, float y)
     {
-        var radians = degrees * MathF.PI / 180f;
+        var radians = float.DegreesToRadians(degrees);
         AssertClose(new(x, y), Polar2D.Direction(radians));
         AssertClose(new Vector2(x, y) * 7f, Polar2D.ToCartesian(7, radians));
     }
@@ -84,10 +85,18 @@ public sealed class Polar2DTests
     [Fact]
     public void RepeatedConversionsDoNotAllocate()
     {
-        for (var i = 0; i < 100; i++) Convert(i);
+        for (var i = 0; i < 100; i++)
+        {
+            Convert(i);
+        }
+
         var before = GC.GetAllocatedBytesForCurrentThread();
         var sum = 0f;
-        for (var i = 0; i < 1000; i++) sum += Convert(i);
+        for (var i = 0; i < 1000; i++)
+        {
+            sum += Convert(i);
+        }
+
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         Assert.True(float.IsFinite(sum));
         Assert.Equal(0, allocated);

@@ -1,5 +1,9 @@
 using App2d.Core.Geometry;
-using App2d.Core.Mathematics;
+using App2d.Core.Geometry.Operations.Containment;
+using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -29,9 +33,9 @@ public sealed class GeometryQueryTests
         Vector2[] points = [new(-1, -1), new(1, -1), new(1, 1), new(-1, 1)];
         var axis = new Vector2(2, -3);
         var offset = new Vector2(4, 2);
-        Assert.Equal(new Interval1D(-3, 7), Projection2D.Polygon(points.AsSpan(), axis, offset));
-        Assert.Equal(new Interval1D(-3, 7), Projection2D.Polygon((IReadOnlyList<Vector2>)points, axis, offset));
-        Assert.Equal(new Interval1D(0, 0), Projection2D.Polygon(points.AsSpan(), default, offset));
+        Assert.Equal(new Interval<float>(-3, 7), Projection2D.Polygon(points.AsSpan(), axis, offset));
+        Assert.Equal(new Interval<float>(-3, 7), Projection2D.Polygon((IReadOnlyList<Vector2>)points, axis, offset));
+        Assert.Equal(new Interval<float>(0, 0), Projection2D.Polygon(points.AsSpan(), default, offset));
         Assert.Throws<ArgumentOutOfRangeException>(() => Projection2D.Polygon([], axis));
     }
 

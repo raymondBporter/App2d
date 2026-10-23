@@ -1,13 +1,16 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Collision.Filtering;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Persons;
-using App2d.Levels;
+using App2d.Gameplay.World;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Persons;
@@ -68,7 +71,7 @@ public sealed class PersonBalanceTests
     [InlineData(BodyMotionType2D.Kinematic, true)]
     public void SupportsSolidAndOneWayPlatformEdges(BodyMotionType2D motion, bool oneWay)
     {
-        AddLedge(-1, motion: motion).IsOneWayPlatform = oneWay;
+        PlatformCollisionRules2D.Attach(_physics).Surface(AddLedge(-1, motion: motion)).OneWaySurfaceNormal = oneWay ? Vector2.UnitY : null;
         Step();
         Assert.Equal(-1, _person.BalanceDirection);
     }
@@ -77,7 +80,7 @@ public sealed class PersonBalanceTests
     public void IgnoredOneWayPlatformDoesNotSupportBalance()
     {
         var platform = AddLedge(1);
-        platform.IsOneWayPlatform = true;
+        PlatformCollisionRules2D.Attach(_physics).Surface(platform).OneWaySurfaceNormal = Vector2.UnitY;
         Step();
         Assert.Equal(1, _person.BalanceDirection);
         Step(drop: true);
@@ -114,12 +117,39 @@ public sealed class PersonBalanceTests
     {
         _person.BeginFrame(Dt);
         _person.ApplyCommand(new PersonCommand2D
-        { MoveX = move, JumpHeld = jump || drop, DownHeld = drop, DashHeld = dash }, Dt);
+        {
+            MoveX = move,
+            JumpHeld = jump || drop,
+            DownHeld = drop,
+            DashHeld = dash
+        }, Dt);
         _physics.Step(Dt);
         _person.UpdateAfterPhysics(Dt);
     }
 
-    private PhysicsBody2D AddLedge(int edge, float overhang = 0.4f, BodyMotionType2D motion = BodyMotionType2D.Static)
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GroundAndBalanceQueriesHonorBothWorldPairFilterStages(bool colliderFilter)
+    {
+        AddLedge(1);
+        Step();
+        Assert.True(_person.IsGrounded);
+        if (colliderFilter)
+            _physics.CollisionSystem.PairFilter = new RejectAll<Collider2D>();
+        else
+            _physics.PairFilter = new RejectAll<RigidBody2D>();
+        Step();
+        Assert.False(_person.IsGrounded);
+        Assert.Equal(0, _person.BalanceDirection);
+    }
+
+    private sealed class RejectAll<T> : IPairFilter2D<T> where T : class
+    {
+        public bool ShouldTest(T first, T second) => false;
+    }
+
+    private RigidBody2D AddLedge(int edge, float overhang = 0.4f, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
         var bounds = _person.WorldObject.WorldBounds;
         return edge > 0
@@ -127,9 +157,9 @@ public sealed class PersonBalanceTests
             : AddSupport(bounds.Left + bounds.Size.X * overhang, 200f, motion);
     }
 
-    private PhysicsBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
+    private RigidBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
-        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(right - left, 32f)));
+        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(right - left, 32f));
         spatial.Transform.Position = new Vector2((left + right) / 2f, -16f);
         var body = _physics.AddBody(spatial, motion);
         body.CollisionLayer = 1u;

@@ -19,7 +19,9 @@ public static class TileGroundHeights2D
 
         var heights = new int[map.Width];
         for (var x = 0; x < map.Width; x++)
+        {
             heights[x] = AtColumn(map, x);
+        }
 
         return heights;
     }
@@ -30,7 +32,10 @@ public static class TileGroundHeights2D
         ArgGuard.ThrowIf(x < 0 || x >= map.Width, "Column must lie within the map.", nameof(x));
         var y = 0;
         while (y < map.Height && map.IsSolid(x, y))
+        {
             y++;
+        }
+
         return Math.Max(1, y);
     }
 }

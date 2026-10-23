@@ -45,7 +45,11 @@ internal sealed class FontAtlas2D : IDisposable
         var maximum = 0f;
         foreach (var character in text)
         {
-            if (character == '\n') { maximum = Math.Max(maximum, width); width = 0f; }
+            if (character == '\n')
+            {
+                maximum = Math.Max(maximum, width);
+                width = 0f;
+            }
             else
             {
                 width += GetGlyph(character).Advance;

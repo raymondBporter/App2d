@@ -4,10 +4,7 @@
   "blend": "sword-downward.blend",
   "rig": "Armature",
   "profile": {
-    "resolution": [
-      512,
-      512
-    ],
+    "resolution": [512, 512],
     "engine": "BLENDER_EEVEE",
     "camera": {
       "name": "Camera",
@@ -15,16 +12,8 @@
       "lens": 50.0,
       "sensorWidth": 36.0,
       "sensorFit": "AUTO",
-      "location": [
-        0.0,
-        -10.0,
-        0.0
-      ],
-      "rotation": [
-        1.5707963705062866,
-        -0.0,
-        -0.0
-      ]
+      "location": [0.0, -10.0, 0.0],
+      "rotation": [1.5707963705062866, -0.0, -0.0]
     },
     "viewTransform": "Standard",
     "look": "None",

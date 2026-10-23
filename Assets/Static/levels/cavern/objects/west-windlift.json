@@ -1,0 +1,62 @@
+{
+  "format": "app2d-object",
+  "version": 1,
+  "id": "west-windlift",
+  "name": "West windlift",
+  "geometry": {
+    "kind": "rectangle",
+    "min": {
+      "x": -48,
+      "y": -8
+    },
+    "max": {
+      "x": 48,
+      "y": 8
+    }
+  },
+  "material": {
+    "asset": null,
+    "paint": null,
+    "fill": "#d4923a",
+    "strokeWidth": null,
+    "outline": null,
+    "texture": null,
+    "tint": null
+  },
+  "physics": {
+    "motionType": "Kinematic",
+    "mass": 1,
+    "momentOfInertia": 1,
+    "freezeRotation": true,
+    "gravityScale": 1,
+    "friction": 0,
+    "restitution": 0,
+    "transfersContactMotion": true
+  },
+  "surface": {
+    "oneWayNormal": {
+      "x": 0,
+      "y": 1
+    },
+    "oneWaySlop": 2
+  },
+  "motion": {
+    "curve": {
+      "kind": "line",
+      "start": {
+        "x": 0,
+        "y": 0
+      },
+      "end": {
+        "x": 352,
+        "y": 0
+      }
+    },
+    "periodSeconds": 5.631999969482422,
+    "repeat": true,
+    "progress": [
+      "ping-pong",
+      "smooth"
+    ]
+  }
+}

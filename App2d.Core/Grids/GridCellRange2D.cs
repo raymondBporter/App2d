@@ -8,12 +8,15 @@ public readonly record struct GridCellRange2D
 
     public GridCellRange2D(GridCell2D minimum, GridCell2D maximum)
     {
-        ArgGuard.ThrowIfLessThan(maximum.X, minimum.X, nameof(maximum));
-        ArgGuard.ThrowIfLessThan(maximum.Y, minimum.Y, nameof(maximum));
+        ArgGuard.AtLeast(maximum.X, minimum.X, nameof(maximum));
+        ArgGuard.AtLeast(maximum.Y, minimum.Y, nameof(maximum));
         var width = (long)maximum.X - minimum.X + 1;
         var height = (long)maximum.Y - minimum.Y + 1;
         if (width > long.MaxValue / height)
+        {
             ArgGuard.ThrowOutOfRange(maximum, "The cell count must fit a signed 64-bit integer.");
+        }
+
         Minimum = minimum;
         Maximum = maximum;
         _hasCells = true;
@@ -31,7 +34,11 @@ public readonly record struct GridCellRange2D
 
     public GridCellRange2D Intersect(GridCellRange2D other)
     {
-        if (IsEmpty || other.IsEmpty) return default;
+        if (IsEmpty || other.IsEmpty)
+        {
+            return default;
+        }
+
         var min = new GridCell2D(Math.Max(Minimum.X, other.Minimum.X), Math.Max(Minimum.Y, other.Minimum.Y));
         var max = new GridCell2D(Math.Min(Maximum.X, other.Maximum.X), Math.Min(Maximum.Y, other.Maximum.Y));
         return min.X > max.X || min.Y > max.Y ? default : new(min, max);
@@ -52,7 +59,11 @@ public readonly record struct GridCellRange2D
 
         public bool MoveNext()
         {
-            if (_finished || _range.IsEmpty) return false;
+            if (_finished || _range.IsEmpty)
+            {
+                return false;
+            }
+
             if (!_started)
             {
                 Current = _range.Minimum;

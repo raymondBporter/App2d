@@ -1,6 +1,6 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
-using App2d.Core;
+using App2d.Core.Spatial;
 
 namespace App2d.Gameplay.Persons.Actions;
 

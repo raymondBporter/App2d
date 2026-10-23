@@ -2,18 +2,19 @@ using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
-using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-internal abstract partial class MeleePersonWeapon2D(
+internal abstract class MeleePersonWeapon2D(
     EquipmentKind2D kind,
     EntityId2D attackSourceId,
-    PhysicsBody2D ownerBody,
+    RigidBody2D ownerBody,
     IShape2D hitboxShape,
     MeleeAttackProfile2D attackProfile,
     int damage,
@@ -24,7 +25,7 @@ internal abstract partial class MeleePersonWeapon2D(
     Action<float> attackStarted,
     Action<WeaponEvent2D> publish, AuthoredHero2D? authored = null) : PersonWeapon2DBase(kind)
 {
-    private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
+    private readonly RigidBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
     private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
     private readonly Action<float> _attackStarted = ArgGuard.RequireNotNull(attackStarted);
     private readonly Action<WeaponEvent2D> _publish = ArgGuard.RequireNotNull(publish);
@@ -45,7 +46,9 @@ internal abstract partial class MeleePersonWeapon2D(
         get
         {
             if (_attack.IsVisible)
+            {
                 yield return _attack.WorldObject;
+            }
         }
     }
 
@@ -53,7 +56,10 @@ internal abstract partial class MeleePersonWeapon2D(
     {
         var direction = MathF.Sign(facing);
         if (_attack.IsInProgress)
+        {
             _bufferedAttackDirection = direction;
+        }
+
         if (authored is not null)
         {
             _nextSwing = authored.Chain(_swing, _attack.IsInProgress ? 0 : _sinceSwing);
@@ -104,7 +110,13 @@ internal abstract partial class MeleePersonWeapon2D(
 
     protected Vector2 OwnerPosition => _ownerBody.WorldObject.Transform.Position;
     protected void ReportImpact(Vector2 position) => _publish(new SwordImpact2D(position));
-    protected virtual void OnHit() { }
+    protected virtual void OnHit()
+    {
+    }
 
-    private void NotifyAttackStarted() { _swing = _nextSwing; _attackStarted(_attack.DurationSeconds); }
+    private void NotifyAttackStarted()
+    {
+        _swing = _nextSwing;
+        _attackStarted(_attack.DurationSeconds);
+    }
 }

@@ -4,25 +4,23 @@ using App2d.Core;
 using App2d.Core.Assets;
 using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Hosting;
 using App2d.Core.Input;
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Rendering.Vegetation;
-using App2d.Core.Shapes;
-using App2d.Core.Validation;
+using App2d.Core.Vegetation;
 using App2d.Editor;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Persistence;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World;
 using App2d.Rendering;
 using App2d.Things;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d;
 
@@ -37,7 +35,7 @@ public sealed class SideScrollerGame : Game2D
     private readonly SideScrollerSimulation2D _simulation;
     private readonly SideScrollerSession2D _session;
     private readonly SideScrollerClient2D _client;
-    private readonly SoundEffectBank2D _sounds;
+    private readonly SoundEffectBank2D<SoundEffect2D> _sounds;
     private readonly MusicPlayer2D _music;
     private readonly WorldMusicDirector2D _musicDirector;
     private bool _showZones;
@@ -56,7 +54,7 @@ public sealed class SideScrollerGame : Game2D
         _resources.Get<AuthoredCatalog>("characters/authored", "presentation");
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
         var textures = _resources.GetLoad<TextureCache2D>("textures/runtime", "presentation");
-        _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects), AssetPaths.Current.SoundEffects);
+        _resources.Register("audio/sfx", () => new SoundEffectBank2D<SoundEffect2D>(AssetPaths.Current.SoundEffects, SoundEffectCues2D.Cues), AssetPaths.Current.SoundEffects);
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
@@ -64,9 +62,9 @@ public sealed class SideScrollerGame : Game2D
         var movement = ShapeBounds2D.Calculate(hero.MovementShape);
         var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(movement.Height) / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f, new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height), GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
-        _sounds = _resources.GetLoad<SoundEffectBank2D>("audio/sfx", "presentation");
-        DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
-            "Set sound-effect volume from 0 (muted) to 1 (full volume).");
+        _sounds = _resources.GetLoad<SoundEffectBank2D<SoundEffect2D>>("audio/sfx", "presentation");
+        DebugPanel.Section("Audio").Slider("SFX volume", () => _sounds.Volume, value => _sounds.Volume = value, 0f, 1f,
+            "Master sound-effect level from 0 (muted) to 1 (full volume).");
 
         _resources.Register("level/cavern", () => worldManifest is null ? LevelBootstrap2D.Load() : LevelBootstrap2D.LoadWorld(worldManifest),
             worldManifest ?? LevelBootstrap2D.CavernLevelPath);
@@ -85,7 +83,6 @@ public sealed class SideScrollerGame : Game2D
         // The one construction recipe for the simulation; the host only adds I/O and presentation.
         _simulation = SideScrollerSimulation2D.Create(new SideScrollerSessionDefinition2D(
             Traversal, tileMap,
-            [.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)],
             [.. loadedLevel.PositionThings
                 .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
                 .Select(ThingTypeRegistry2D.ToRuntime)])
@@ -96,6 +93,7 @@ public sealed class SideScrollerGame : Game2D
                 SpellJsonOptions)
                 ?? throw new InvalidDataException("Player spell tuning is missing."),
             AuthoredCharacters = _authored,
+            Objects = loadedLevel.Objects,
             Zones = loadedLevel.Zones,
             GiantTrees = loadedLevel.GiantTrees,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
@@ -109,32 +107,30 @@ public sealed class SideScrollerGame : Game2D
         var playerId = _session.PlayerIds[0];
         var startPosition = snapshot.FindPlayer(playerId)!.Value.Person.Position;
         Camera.ReferenceViewportHeight = 1080f;
-        var cameraController = new SideScrollerCamera2D(Scene, Camera,
+        SideScrollerBackground2D.AddTo(Background);
+        var cameraController = new SideScrollerCamera2D(Camera,
             tileMap.WorldBounds, startPosition);
-        DeveloperConsole.RegisterVariable("camera_zoom", () => Camera.Zoom, value =>
-        {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
-            Camera.Zoom = value;
-        }, "Camera zoom (0.05 to 20; default 1.35). Larger values zoom in.");
+        DebugPanel.Section("Camera").Slider("Zoom", () => Camera.Zoom, value => Camera.Zoom = value, 0.05f, 20f,
+            "Camera zoom; default 1.35. Larger values zoom in.", logarithmic: true);
 
         // Only editor mode opens a writable database handle.
-        _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => App2d.Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
+        _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
         _resources.Get<App2d.Levels.WorldAsset2D>("level/cavern", "editor");
-        _editorUi = new(_editor, Textures);
+        _editorUi = new(_editor, Textures, DebugPanel);
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
-        _editor.ConfigureMaps(loadedLevel.Maps);
-        _editor.ThingsChanged += things =>
+        _editor.ConfigureMaps(loadedLevel.Maps, loadedLevel.Root);
+        _editor.ObjectsChanged += objects =>
         {
-            loadedLevel.Maps[_editor.SelectedMapIndex].MovingPlatforms = things.ToArray();
-            _simulation.Level.ReloadMovingPlatforms([.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)]);
+            loadedLevel.Maps[_editor.SelectedMapIndex].Objects = objects;
+            _simulation.Level.ReloadObjects(loadedLevel.Objects);
         };
 
-        DeveloperConsole.RegisterCommand("reload_trees", "Reload giant-trees.json: positions and dimensions are in tiles; ranges are [min, max].", _ =>
+        DebugPanel.Section("World").Button("Reload giant trees", () =>
         {
             var trees = loadedLevel.LoadGiantTrees();
             _simulation.Level.ReloadGiantTrees(trees);
-            return ConsoleCommandResult.From($"Loaded {trees.Length} giant trees with {trees.Sum(tree => tree.Branches.Length)} branch platforms.");
-        });
+            return $"Loaded {trees.Length} giant trees with {trees.Sum(tree => tree.Branches.Length)} branch platforms.";
+        }, "Reload giant-trees.json: positions and dimensions are in tiles; ranges are [min, max].");
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored));
@@ -144,42 +140,39 @@ public sealed class SideScrollerGame : Game2D
         _music = new MusicPlayer2D(soundtrack.Cues);
         _musicDirector = new(soundtrack, _music.Select);
         _musicDirector.Update(snapshot.Content, startPosition, 0f);
-        DeveloperConsole.RegisterVariable("music_volume", () => _music.Volume, value => _music.Volume = value,
-            "Music volume from 0 to 1; default 0.45. Independent of sound effects.");
-        DeveloperConsole.RegisterVariable("music_mood", () => _musicDirector.MoodOverride, value => _musicDirector.MoodOverride = value,
-            "auto follows the zone; explore, drive or combat auditions a mood.");
-        DeveloperConsole.RegisterVariable("music_piece", () => _musicDirector.PieceOverride, value => _musicDirector.PieceOverride = value,
-            "auto follows zones; crown-of-embers or copper-circuit auditions a piece.");
-        DeveloperConsole.RegisterVariable("draw_zones", () => _showZones, value => _showZones = value,
-            "Draw authored zone boundaries. Use music_status to see the zone at the player.");
-        DeveloperConsole.RegisterCommand("music_status", "Show the current zone, music selection and available cues.", _ =>
-            ConsoleCommandResult.From($"Zone: {_musicDirector.CurrentZone?.Name ?? "outside zones"} ({_musicDirector.CurrentZone?.Id ?? "default"})",
-                $"Music: {_musicDirector.CurrentSelection?.Piece} / {_musicDirector.CurrentSelection?.Mood}; volume {_music.Volume:0.00}",
-                $"Cues: {string.Join(", ", soundtrack.Cues.Keys)}"));
-        DeveloperConsole.RegisterCommand("resources", "List resource keys, sources and consumers; optionally filter by key.", args =>
-            ConsoleCommandResult.From([.. _resources.Snapshot()
-                .Where(resource => args.Count == 0 || resource.Key.Contains(args[0], StringComparison.OrdinalIgnoreCase))
-                .Select(resource => $"{resource.Key} [{resource.Type.Name}] {(resource.IsLoaded ? "loaded" : "unloaded")} | used by: {string.Join(", ", resource.Owners)} | source: {resource.Source ?? "in memory"}")]));
+        var moods = soundtrack.Cues.Values.SelectMany(cue => cue.Moods.Keys).Distinct()
+            .Where(mood => soundtrack.Cues.Values.All(cue => cue.Moods.ContainsKey(mood))).Order();
+        DebugPanel.Section("Audio")
+            .Slider("Music volume", () => _music.Volume, value => _music.Volume = value, 0f, 1f,
+                "Music level from 0 to 1; default 0.45. Independent of sound effects.")
+            .Choice("Music mood", () => _musicDirector.MoodOverride, value => _musicDirector.MoodOverride = value, ["auto", .. moods],
+                "auto follows the zone; any other mood auditions it.")
+            .Choice("Music piece", () => _musicDirector.PieceOverride, value => _musicDirector.PieceOverride = value, ["auto", .. soundtrack.Cues.Keys.Order()],
+                "auto follows zones; a cue ID auditions that piece.")
+            .Readout("Now playing", () =>
+                $"Zone: {_musicDirector.CurrentZone?.Name ?? "outside zones"} ({_musicDirector.CurrentZone?.Id ?? "default"})\nMusic: {_musicDirector.CurrentSelection?.Piece} / {_musicDirector.CurrentSelection?.Mood}");
+        DebugPanel.Section("Draw").Toggle("Zones", () => _showZones, value => _showZones = value,
+            "Draw authored zone boundaries; the player's zone is gold.");
+        DebugPanel.Section("Resources").Readout("Registered", () => string.Join('\n', _resources.Snapshot()
+            .Select(resource => $"{resource.Key} [{resource.Type.Name}] {(resource.IsLoaded ? "loaded" : "unloaded")} | used by: {string.Join(", ", resource.Owners)} | source: {resource.Source ?? "in memory"}")));
         _client.CheckpointActivated += checkpoint =>
             _client.ShowSaveResult(_saveStore.TrySave(new PlayerSave2D(checkpoint.CheckpointId, checkpoint.HitPoints)), checkpoint.Position);
-        DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _client.ShowTraversalDebug,
-            value => _client.ShowTraversalDebug = value, "Draw jump arcs and tile-relative movement metrics.");
-        DeveloperConsole.RegisterVariable("ballistics_speed", () => _client.Ballistics.SpeedTilesPerSecond,
-            value => _client.Ballistics.SpeedTilesPerSecond = value,
-            "Reference launch speed in tiles/s (0.1 to 100, default 10). Press F4 to fire with new settings.");
-        DeveloperConsole.RegisterVariable("ballistics_angle", () => _client.Ballistics.AngleDegrees,
-            value => _client.Ballistics.AngleDegrees = value,
-            "Reference launch angle above horizontal in degrees (1 to 90, default 45).");
-        DeveloperConsole.RegisterVariable("ballistics_gravity", () => _client.Ballistics.ReferenceGravityTilesPerSecondSquared,
-            value => _client.Ballistics.ReferenceGravityTilesPerSecondSquared = value,
-            "Yellow reference gravity in tiles/s^2 (0.1 to 200, default 10). Pink uses current world gravity.");
+        DebugPanel.Section("Draw").Toggle("Traversal metrics", () => _client.ShowTraversalDebug, value => _client.ShowTraversalDebug = value,
+            "Draw jump arcs and tile-relative movement metrics (also F3).");
+        DebugPanel.Section("Ballistics")
+            .Slider("Speed (tiles/s)", () => _client.Ballistics.SpeedTilesPerSecond, value => _client.Ballistics.SpeedTilesPerSecond = value, 0.1f, 100f,
+                "Reference launch speed; default 10. Press F4 to fire with new settings.")
+            .Slider("Angle (degrees)", () => _client.Ballistics.AngleDegrees, value => _client.Ballistics.AngleDegrees = value, 1f, 90f,
+                "Launch angle above horizontal; default 45.")
+            .Slider("Reference gravity (tiles/s^2)", () => _client.Ballistics.ReferenceGravityTilesPerSecondSquared, value => _client.Ballistics.ReferenceGravityTilesPerSecondSquared = value, 0.1f, 200f,
+                "Yellow marker gravity; default 10. Pink uses current world gravity.");
     }
 
     public override string WindowTitle =>
         $"App2d Side Scroller | PAD: {(_isControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     public override IGameToolUi2D? ToolUi => _editorUi;
-    protected override XnaColor BackgroundColor => new(103, 196, 235);
+    protected override Color4b BackgroundColor => new(103, 196, 235);
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -188,9 +181,16 @@ public sealed class SideScrollerGame : Game2D
         {
             var wasOpen = _levelPicker.IsOpen;
             if (_levelPicker.Update(input) is { } destination)
-                _session.TravelForPlaytesting(App2d.Levels.PlaygroundMaps2D.Arrival(
+            {
+                _session.TravelForPlaytesting(Levels.PlaygroundMaps2D.Arrival(
                     _loadedWorld.Maps[destination], Traversal.PlayerColliderSize.Y, Traversal.GroundProbeDistance));
-            if (wasOpen != _levelPicker.IsOpen) input.CancelButtons();
+            }
+
+            if (wasOpen != _levelPicker.IsOpen)
+            {
+                input.CancelButtons();
+            }
+
             if (_levelPicker.IsOpen)
             {
                 _session.SetPaused(true);
@@ -207,9 +207,15 @@ public sealed class SideScrollerGame : Game2D
                 position.X >= m.TileMap.WorldBounds.Min.X && position.X < m.TileMap.WorldBounds.Max.X &&
                 position.Y >= m.TileMap.WorldBounds.Min.Y && position.Y < m.TileMap.WorldBounds.Max.Y);
             if (index >= 0 && index != _editor.SelectedMapIndex)
+            {
                 _editor.CycleMap(index - _editor.SelectedMapIndex);
+            }
         }
-        if (wasEditing != _editor.IsActive) input.CancelButtons();
+        if (wasEditing != _editor.IsActive)
+        {
+            input.CancelButtons();
+        }
+
         _session.SetPaused(_editor.IsActive);
         if (_editor.IsActive)
         {
@@ -231,7 +237,11 @@ public sealed class SideScrollerGame : Game2D
     {
         _musicDirector.Update(_client.Content, _client.State.Person.Position, time.DeltaSeconds);
         _client.UpdateFeedback(time.DeltaSeconds);
-        if (!_editor.IsActive && !_levelPicker.IsOpen) _client.AdvancePresentation(time.DeltaSeconds);
+        if (!_editor.IsActive && !_levelPicker.IsOpen)
+        {
+            _client.AdvancePresentation(time.DeltaSeconds);
+        }
+
         _client.WorldSounds.Update();
     }
 
@@ -261,9 +271,13 @@ public sealed class SideScrollerGame : Game2D
             foreach (var zone in _client.Content.Zones)
             {
                 var b = zone.Bounds;
-                if (!b.Intersects(Camera.VisibleWorldBounds)) continue;
+                if (!b.Intersects(Camera.VisibleWorldBounds))
+                {
+                    continue;
+                }
+
                 Span<Vector2> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
-                renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? XnaColor.Gold : XnaColor.Cyan, 2f);
+                renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? DebugTheme.ActiveZone : DebugTheme.ZoneOutline, 2f);
             }
         }
     }
@@ -271,7 +285,11 @@ public sealed class SideScrollerGame : Game2D
     public override void RenderUI(Renderer2D renderer, FrameTime time)
     {
         _client.DrawUI(renderer);
-        if (!_editor.IsActive) _levelPicker.Draw(renderer);
+        if (!_editor.IsActive)
+        {
+            _levelPicker.Draw(renderer);
+        }
+
         base.RenderUI(renderer, time);
     }
 
@@ -279,7 +297,11 @@ public sealed class SideScrollerGame : Game2D
     private static AuthoredCatalog LoadAuthored()
     {
         var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
-        if (catalog.Errors.Count > 0) throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
+        if (catalog.Errors.Count > 0)
+        {
+            throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
+        }
+
         return catalog;
     }
 

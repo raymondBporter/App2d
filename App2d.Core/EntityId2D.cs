@@ -13,7 +13,7 @@ public readonly record struct EntityId2D
 
     public EntityId2D(long value)
     {
-        ArgGuard.ThrowIfNotPositive(value);
+        ArgGuard.Positive(value);
         Value = value;
     }
 

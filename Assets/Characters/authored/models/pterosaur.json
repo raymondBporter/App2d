@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 2,
+  "version": 5,
   "id": "pterosaur",
   "name": "Pterosaur",
   "structureRevision": 1,
@@ -9,6 +9,7 @@
   "controls": [
     {
       "id": "body",
+      "name": null,
       "rest": {
         "x": 0,
         "y": 0.7,
@@ -18,6 +19,7 @@
     {
       "id": "body-up",
       "parent": "body",
+      "name": null,
       "rest": {
         "x": 0,
         "y": 1.2,
@@ -27,6 +29,7 @@
     {
       "id": "head",
       "parent": "body",
+      "name": null,
       "rest": {
         "x": 0.3,
         "y": 0.75,
@@ -36,6 +39,7 @@
     {
       "id": "head-up",
       "parent": "head",
+      "name": null,
       "rest": {
         "x": 0.3,
         "y": 1.25,
@@ -45,6 +49,7 @@
     {
       "id": "jaw",
       "parent": "head",
+      "name": null,
       "rest": {
         "x": 0.44,
         "y": 0.68,
@@ -54,6 +59,7 @@
     {
       "id": "jaw-up",
       "parent": "jaw",
+      "name": null,
       "rest": {
         "x": 0.44,
         "y": 1.18,
@@ -63,6 +69,7 @@
     {
       "id": "near-shoulder",
       "parent": "body",
+      "name": null,
       "rest": {
         "x": -0.1,
         "y": 0.82,
@@ -72,6 +79,7 @@
     {
       "id": "near-bend",
       "parent": "near-shoulder",
+      "name": null,
       "rest": {
         "x": -0.48,
         "y": 1.3,
@@ -81,6 +89,7 @@
     {
       "id": "near-tip",
       "parent": "near-bend",
+      "name": null,
       "rest": {
         "x": -1.08,
         "y": 1.55,
@@ -90,6 +99,7 @@
     {
       "id": "near-leg",
       "parent": "body",
+      "name": null,
       "rest": {
         "x": -0.08,
         "y": 0.51,
@@ -99,6 +109,7 @@
     {
       "id": "near-foot",
       "parent": "near-leg",
+      "name": null,
       "rest": {
         "x": -0.09,
         "y": 0.32,
@@ -108,6 +119,7 @@
     {
       "id": "near-toe-0",
       "parent": "near-foot",
+      "name": null,
       "rest": {
         "x": -0.135,
         "y": 0.27,
@@ -117,6 +129,7 @@
     {
       "id": "near-toe-1",
       "parent": "near-foot",
+      "name": null,
       "rest": {
         "x": -0.09,
         "y": 0.25500003,
@@ -126,6 +139,7 @@
     {
       "id": "near-toe-2",
       "parent": "near-foot",
+      "name": null,
       "rest": {
         "x": -0.045,
         "y": 0.27,
@@ -135,6 +149,7 @@
     {
       "id": "far-shoulder",
       "parent": "body",
+      "name": null,
       "rest": {
         "x": 0.1,
         "y": 0.82,
@@ -144,6 +159,7 @@
     {
       "id": "far-bend",
       "parent": "far-shoulder",
+      "name": null,
       "rest": {
         "x": 0.48,
         "y": 1.3,
@@ -153,6 +169,7 @@
     {
       "id": "far-tip",
       "parent": "far-bend",
+      "name": null,
       "rest": {
         "x": 1.08,
         "y": 1.55,
@@ -162,6 +179,7 @@
     {
       "id": "far-leg",
       "parent": "body",
+      "name": null,
       "rest": {
         "x": 0.08,
         "y": 0.51,
@@ -171,6 +189,7 @@
     {
       "id": "far-foot",
       "parent": "far-leg",
+      "name": null,
       "rest": {
         "x": 0.09,
         "y": 0.32,
@@ -180,6 +199,7 @@
     {
       "id": "far-toe-0",
       "parent": "far-foot",
+      "name": null,
       "rest": {
         "x": 0.045,
         "y": 0.27,
@@ -189,6 +209,7 @@
     {
       "id": "far-toe-1",
       "parent": "far-foot",
+      "name": null,
       "rest": {
         "x": 0.09,
         "y": 0.25500003,
@@ -198,6 +219,7 @@
     {
       "id": "far-toe-2",
       "parent": "far-foot",
+      "name": null,
       "rest": {
         "x": 0.135,
         "y": 0.27,
@@ -206,76 +228,11 @@
     }
   ],
   "chains": [],
+  "constraints": [],
   "measures": [],
   "parts": [
     {
       "id": "far-wing",
-      "a": "body",
-      "b": "body-up",
-      "width": 1,
-      "height": 1,
-      "depth": 0.12,
-      "paint": [
-        {
-          "points": [
-            {
-              "x": 0.15,
-              "y": 0.15,
-              "z": 0
-            },
-            {
-              "x": 0.18,
-              "y": 0.15,
-              "z": 0
-            },
-            {
-              "x": 0.53,
-              "y": 0.59,
-              "z": 0
-            },
-            {
-              "x": 0.48,
-              "y": 0.6,
-              "z": 0
-            }
-          ],
-          "material": {
-            "fill": "#80506d"
-          }
-        }
-      ],
-      "bindings": [
-        {
-          "control": "far-shoulder"
-        },
-        {
-          "point": 1,
-          "control": "far-shoulder",
-          "toward": "far-bend"
-        },
-        {
-          "point": 2,
-          "control": "far-bend",
-          "toward": "far-tip"
-        },
-        {
-          "point": 3,
-          "control": "far-tip",
-          "toward": "far-bend"
-        },
-        {
-          "point": 4,
-          "control": "far-tip"
-        },
-        {
-          "point": 5,
-          "control": "far-bend"
-        }
-      ],
-      "material": {
-        "fill": "#9e5f7e",
-        "outline": {}
-      },
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -304,168 +261,158 @@
             "y": 0.6
           }
         ]
-      }
-    },
-    {
-      "id": "far-leg",
-      "a": "far-leg",
-      "b": "far-foot",
-      "width": 0.025,
-      "height": 0.1,
-      "depth": 0.12,
-      "material": {
-        "fill": "#302632",
-        "outline": {}
       },
-      "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
-      }
-    },
-    {
-      "id": "far-toe-0",
-      "a": "far-foot",
-      "b": "far-toe-0",
-      "width": 0.021,
-      "height": 0.1,
-      "depth": 0.12,
       "material": {
-        "fill": "#302632",
-        "outline": {}
+        "fill": "#9e5f7e",
+        "outline": {},
+        "paint": [
+          {
+            "material": {
+              "fill": "#80506d"
+            },
+            "points": [
+              {
+                "x": 0.15,
+                "y": 0.15
+              },
+              {
+                "x": 0.18,
+                "y": 0.15
+              },
+              {
+                "x": 0.53,
+                "y": 0.59
+              },
+              {
+                "x": 0.48,
+                "y": 0.6
+              }
+            ]
+          }
+        ]
       },
-      "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
-      }
-    },
-    {
-      "id": "far-toe-1",
-      "a": "far-foot",
-      "b": "far-toe-1",
-      "width": 0.021,
-      "height": 0.1,
-      "depth": 0.12,
-      "material": {
-        "fill": "#302632",
-        "outline": {}
-      },
-      "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
-      }
-    },
-    {
-      "id": "far-toe-2",
-      "a": "far-foot",
-      "b": "far-toe-2",
-      "width": 0.021,
-      "height": 0.1,
-      "depth": 0.12,
-      "material": {
-        "fill": "#302632",
-        "outline": {}
-      },
-      "geometry": {
-        "kind": "line",
-        "start": {
-          "x": 0,
-          "y": 0
-        },
-        "end": {
-          "x": 0,
-          "y": 1
-        }
-      }
-    },
-    {
-      "id": "near-wing",
       "a": "body",
       "b": "body-up",
-      "width": 1,
-      "height": 1,
-      "depth": -0.02,
-      "paint": [
-        {
-          "points": [
-            {
-              "x": -0.15,
-              "y": 0.15,
-              "z": 0
-            },
-            {
-              "x": -0.18,
-              "y": 0.15,
-              "z": 0
-            },
-            {
-              "x": -0.53,
-              "y": 0.59,
-              "z": 0
-            },
-            {
-              "x": -0.48,
-              "y": 0.6,
-              "z": 0
-            }
-          ],
-          "material": {
-            "fill": "#80506d"
-          }
-        }
-      ],
+      "depth": 0.12,
       "bindings": [
         {
-          "control": "near-shoulder"
+          "control": "far-shoulder"
         },
         {
           "point": 1,
-          "control": "near-shoulder",
-          "toward": "near-bend"
+          "control": "far-shoulder",
+          "toward": "far-bend"
         },
         {
           "point": 2,
-          "control": "near-bend",
-          "toward": "near-tip"
+          "control": "far-bend",
+          "toward": "far-tip"
         },
         {
           "point": 3,
-          "control": "near-tip",
-          "toward": "near-bend"
+          "control": "far-tip",
+          "toward": "far-bend"
         },
         {
           "point": 4,
-          "control": "near-tip"
+          "control": "far-tip"
         },
         {
           "point": 5,
-          "control": "near-bend"
+          "control": "far-bend"
         }
-      ],
-      "material": {
-        "fill": "#b56e8b",
-        "outline": {}
+      ]
+    },
+    {
+      "id": "far-leg",
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
       },
+      "material": {
+        "fill": "#302632",
+        "outline": {},
+        "strokeWidth": 0.025
+      },
+      "a": "far-leg",
+      "b": "far-foot",
+      "depth": 0.12
+    },
+    {
+      "id": "far-toe-0",
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#302632",
+        "outline": {},
+        "strokeWidth": 0.021
+      },
+      "a": "far-foot",
+      "b": "far-toe-0",
+      "depth": 0.12
+    },
+    {
+      "id": "far-toe-1",
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#302632",
+        "outline": {},
+        "strokeWidth": 0.021
+      },
+      "a": "far-foot",
+      "b": "far-toe-1",
+      "depth": 0.12
+    },
+    {
+      "id": "far-toe-2",
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#302632",
+        "outline": {},
+        "strokeWidth": 0.021
+      },
+      "a": "far-foot",
+      "b": "far-toe-2",
+      "depth": 0.12
+    },
+    {
+      "id": "near-wing",
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -494,19 +441,70 @@
             "y": 0.6
           }
         ]
-      }
+      },
+      "material": {
+        "fill": "#b56e8b",
+        "outline": {},
+        "paint": [
+          {
+            "material": {
+              "fill": "#80506d"
+            },
+            "points": [
+              {
+                "x": -0.15,
+                "y": 0.15
+              },
+              {
+                "x": -0.18,
+                "y": 0.15
+              },
+              {
+                "x": -0.53,
+                "y": 0.59
+              },
+              {
+                "x": -0.48,
+                "y": 0.6
+              }
+            ]
+          }
+        ]
+      },
+      "a": "body",
+      "b": "body-up",
+      "depth": -0.02,
+      "bindings": [
+        {
+          "control": "near-shoulder"
+        },
+        {
+          "point": 1,
+          "control": "near-shoulder",
+          "toward": "near-bend"
+        },
+        {
+          "point": 2,
+          "control": "near-bend",
+          "toward": "near-tip"
+        },
+        {
+          "point": 3,
+          "control": "near-tip",
+          "toward": "near-bend"
+        },
+        {
+          "point": 4,
+          "control": "near-tip"
+        },
+        {
+          "point": 5,
+          "control": "near-bend"
+        }
+      ]
     },
     {
       "id": "near-leg",
-      "a": "near-leg",
-      "b": "near-foot",
-      "width": 0.025,
-      "height": 0.1,
-      "depth": -0.02,
-      "material": {
-        "fill": "#302632",
-        "outline": {}
-      },
       "geometry": {
         "kind": "line",
         "start": {
@@ -517,19 +515,18 @@
           "x": 0,
           "y": 1
         }
-      }
+      },
+      "material": {
+        "fill": "#302632",
+        "outline": {},
+        "strokeWidth": 0.025
+      },
+      "a": "near-leg",
+      "b": "near-foot",
+      "depth": -0.02
     },
     {
       "id": "near-toe-0",
-      "a": "near-foot",
-      "b": "near-toe-0",
-      "width": 0.021,
-      "height": 0.1,
-      "depth": -0.02,
-      "material": {
-        "fill": "#302632",
-        "outline": {}
-      },
       "geometry": {
         "kind": "line",
         "start": {
@@ -540,19 +537,18 @@
           "x": 0,
           "y": 1
         }
-      }
+      },
+      "material": {
+        "fill": "#302632",
+        "outline": {},
+        "strokeWidth": 0.021
+      },
+      "a": "near-foot",
+      "b": "near-toe-0",
+      "depth": -0.02
     },
     {
       "id": "near-toe-1",
-      "a": "near-foot",
-      "b": "near-toe-1",
-      "width": 0.021,
-      "height": 0.1,
-      "depth": -0.02,
-      "material": {
-        "fill": "#302632",
-        "outline": {}
-      },
       "geometry": {
         "kind": "line",
         "start": {
@@ -563,19 +559,18 @@
           "x": 0,
           "y": 1
         }
-      }
+      },
+      "material": {
+        "fill": "#302632",
+        "outline": {},
+        "strokeWidth": 0.021
+      },
+      "a": "near-foot",
+      "b": "near-toe-1",
+      "depth": -0.02
     },
     {
       "id": "near-toe-2",
-      "a": "near-foot",
-      "b": "near-toe-2",
-      "width": 0.021,
-      "height": 0.1,
-      "depth": -0.02,
-      "material": {
-        "fill": "#302632",
-        "outline": {}
-      },
       "geometry": {
         "kind": "line",
         "start": {
@@ -586,21 +581,18 @@
           "x": 0,
           "y": 1
         }
-      }
+      },
+      "material": {
+        "fill": "#302632",
+        "outline": {},
+        "strokeWidth": 0.021
+      },
+      "a": "near-foot",
+      "b": "near-toe-2",
+      "depth": -0.02
     },
     {
       "id": "tail",
-      "a": "body",
-      "b": "body-up",
-      "width": 0.3,
-      "height": 0.15,
-      "offsetX": -0.27,
-      "offsetY": -0.05,
-      "depth": -0.04,
-      "material": {
-        "fill": "#805473",
-        "outline": {}
-      },
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -617,20 +609,21 @@
             "y": 0.5
           }
         ]
-      }
-    },
-    {
-      "id": "body",
-      "a": "body",
-      "b": "body-up",
-      "width": 0.45,
-      "height": 0.38,
-      "offsetY": -0.01,
-      "depth": -0.07,
+      },
       "material": {
         "fill": "#805473",
         "outline": {}
       },
+      "a": "body",
+      "b": "body-up",
+      "offsetX": -0.27,
+      "offsetY": -0.05,
+      "depth": -0.04,
+      "scaleX": 0.3,
+      "scaleY": 0.15
+    },
+    {
+      "id": "body",
       "geometry": {
         "kind": "ellipse",
         "center": {
@@ -641,21 +634,20 @@
           "x": 0.5,
           "y": 0.5
         }
-      }
+      },
+      "material": {
+        "fill": "#805473",
+        "outline": {}
+      },
+      "a": "body",
+      "b": "body-up",
+      "offsetY": -0.01,
+      "depth": -0.07,
+      "scaleX": 0.45,
+      "scaleY": 0.38
     },
     {
       "id": "crest",
-      "a": "head",
-      "b": "head-up",
-      "width": 0.18,
-      "height": 0.3,
-      "offsetX": -0.075,
-      "offsetY": 0.19,
-      "depth": -0.15,
-      "material": {
-        "fill": "#e4b364",
-        "outline": {}
-      },
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -672,21 +664,21 @@
             "y": -0.5
           }
         ]
-      }
+      },
+      "material": {
+        "fill": "#e4b364",
+        "outline": {}
+      },
+      "a": "head",
+      "b": "head-up",
+      "offsetX": -0.075,
+      "offsetY": 0.19,
+      "depth": -0.15,
+      "scaleX": 0.18,
+      "scaleY": 0.3
     },
     {
       "id": "head",
-      "a": "head",
-      "b": "head-up",
-      "width": 0.33,
-      "height": 0.29,
-      "offsetX": 0.015,
-      "offsetY": 0.015,
-      "depth": -0.16,
-      "material": {
-        "fill": "#ba829d",
-        "outline": {}
-      },
       "geometry": {
         "kind": "ellipse",
         "center": {
@@ -697,21 +689,21 @@
           "x": 0.5,
           "y": 0.5
         }
-      }
+      },
+      "material": {
+        "fill": "#ba829d",
+        "outline": {}
+      },
+      "a": "head",
+      "b": "head-up",
+      "offsetX": 0.015,
+      "offsetY": 0.015,
+      "depth": -0.16,
+      "scaleX": 0.33,
+      "scaleY": 0.29
     },
     {
       "id": "beak",
-      "a": "head",
-      "b": "head-up",
-      "width": 0.35,
-      "height": 0.23,
-      "offsetX": 0.3,
-      "offsetY": -0.015,
-      "depth": -0.17,
-      "material": {
-        "fill": "#edbd71",
-        "outline": {}
-      },
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -728,21 +720,21 @@
             "y": -0.22
           }
         ]
-      }
+      },
+      "material": {
+        "fill": "#edbd71",
+        "outline": {}
+      },
+      "a": "head",
+      "b": "head-up",
+      "offsetX": 0.3,
+      "offsetY": -0.015,
+      "depth": -0.17,
+      "scaleX": 0.35,
+      "scaleY": 0.23
     },
     {
       "id": "lower-beak",
-      "a": "jaw",
-      "b": "jaw-up",
-      "width": 0.26,
-      "height": 0.075,
-      "offsetX": 0.1,
-      "offsetY": -0.025,
-      "depth": -0.18,
-      "material": {
-        "fill": "#d99a54",
-        "outline": {}
-      },
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -759,20 +751,21 @@
             "y": -0.5
           }
         ]
-      }
+      },
+      "material": {
+        "fill": "#d99a54",
+        "outline": {}
+      },
+      "a": "jaw",
+      "b": "jaw-up",
+      "offsetX": 0.1,
+      "offsetY": -0.025,
+      "depth": -0.18,
+      "scaleX": 0.26,
+      "scaleY": 0.075
     },
     {
       "id": "eye",
-      "a": "head",
-      "b": "head-up",
-      "width": 0.048,
-      "height": 0.069,
-      "offsetX": 0.079,
-      "offsetY": 0.019,
-      "depth": -0.19,
-      "material": {
-        "fill": "#302632"
-      },
       "geometry": {
         "kind": "ellipse",
         "center": {
@@ -783,20 +776,20 @@
           "x": 0.5,
           "y": 0.5
         }
-      }
-    },
-    {
-      "id": "brow",
-      "a": "head",
-      "b": "head-up",
-      "width": 0.1,
-      "height": 0.035,
-      "offsetX": 0.075,
-      "offsetY": 0.092,
-      "depth": -0.19,
+      },
       "material": {
         "fill": "#302632"
       },
+      "a": "head",
+      "b": "head-up",
+      "offsetX": 0.079,
+      "offsetY": 0.019,
+      "depth": -0.19,
+      "scaleX": 0.048,
+      "scaleY": 0.069
+    },
+    {
+      "id": "brow",
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -817,9 +810,21 @@
             "y": 0.12
           }
         ]
-      }
+      },
+      "material": {
+        "fill": "#302632"
+      },
+      "a": "head",
+      "b": "head-up",
+      "offsetX": 0.075,
+      "offsetY": 0.092,
+      "depth": -0.19,
+      "scaleX": 0.1,
+      "scaleY": 0.035
     }
   ],
+  "slots": [],
+  "skins": [],
   "sockets": [
     {
       "id": "head-art",

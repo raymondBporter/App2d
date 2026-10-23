@@ -1,6 +1,5 @@
 using App2d.Core.Validation;
 using Microsoft.Xna.Framework.Graphics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Rendering.Textures;
 
@@ -16,5 +15,5 @@ public sealed class SpriteShader2D(Texture2D texture, TextureFilter filterMode =
     public TextureFilter FilterMode { get; } = filterMode;
     public bool FlipX { get; set; }
     public bool FlipY { get; set; }
-    public XnaColor BaseColor => XnaColor.White;
+    public Color4b BaseColor => Color4b.White;
 }

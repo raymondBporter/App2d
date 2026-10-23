@@ -14,7 +14,7 @@ using System.Numerics;
 namespace App2d.Gameplay.Enemies;
 
 /// <summary>A hostile person: shared simulation and actions, AI commands.</summary>
-public sealed partial class RivalEnemy2D : IEnemyActor2D
+public sealed class RivalEnemy2D : IEnemyActor2D
 {
     private readonly List<EnemyEvent2D> _events = [];
     private readonly UnarmedPersonActions2D _actions;
@@ -41,8 +41,8 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(combat);
-        ArgGuard.ThrowIfNotFinite(position);
-        ArgGuard.ThrowIfNotFiniteOrGreaterThanOrEqual(minimumX, maximumX);
+        ArgGuard.Finite(position);
+        ArgGuard.LessThan(minimumX, maximumX);
         Person = new Person2D(
             ids.Allocate(),
             collision,
@@ -80,13 +80,15 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        ArgGuard.ThrowIfNotFinite(targetPosition);
+        ArgGuard.NonNegative(deltaSeconds);
+        ArgGuard.Finite(targetPosition);
         _lastDeltaSeconds = deltaSeconds;
         Person.BeginFrame(deltaSeconds);
 
         if (!_simulationEnabled || !Person.IsAlive)
+        {
             return;
+        }
 
         var command = _brain.Decide(
             Person,
@@ -99,14 +101,20 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
     public void SyncAfterPhysics()
     {
         if (!_simulationEnabled)
+        {
             return;
+        }
 
         Person.UpdateAfterPhysics(_lastDeltaSeconds);
     }
 
     public EnemyState2D CaptureState() => new(Person.Id, EnemyKind2D.Rival,
         Person.Position, Person.Body.LinearVelocity, 0f, Person.Facing, _simulationEnabled, Person.IsAlive)
-    { Person = Person.CaptureState(), MoveX = _lastMoveX, IsAttacking = _actions.IsAttackActive };
+    {
+        Person = Person.CaptureState(),
+        MoveX = _lastMoveX,
+        IsAttacking = _actions.IsAttackActive
+    };
 
     public ImmutableArray<EnemyEvent2D> DrainEvents()
     {

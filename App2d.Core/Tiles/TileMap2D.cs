@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -15,10 +15,10 @@ public sealed class TileMap2D : ISolidTileMap2D
 
     public TileMap2D(int width, int height, float tileSize, Vector2 origin = default)
     {
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
-        ArgGuard.ThrowIfNotFinite(origin);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
+        ArgGuard.Positive(tileSize);
+        ArgGuard.Finite(origin);
 
         _solidTiles = new(width, height, tileSize, origin);
         _kindAt = (x, y) => _solidTiles[x, y] ? TileKind2D.Solid : TileKind2D.Empty;
@@ -37,7 +37,10 @@ public sealed class TileMap2D : ISolidTileMap2D
         get
         {
             if (_collisionRectanglesDirty)
+            {
                 RebuildCollisionRectangles();
+            }
+
             return _collisionRectangles;
         }
     }
@@ -52,11 +55,13 @@ public sealed class TileMap2D : ISolidTileMap2D
 
     public void Fill(int x, int y, int width, int height, bool isSolid = true)
     {
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
 
         if (!GridSize.Contains(x, y) || width > Width - x || height > Height - y)
+        {
             ArgGuard.ThrowOutOfRange(width, "Fill rectangle must stay inside the tilemap.");
+        }
 
         for (var row = y; row < y + height; row++)
         {

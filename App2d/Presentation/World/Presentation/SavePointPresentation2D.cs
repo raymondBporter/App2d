@@ -3,7 +3,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -25,8 +24,8 @@ internal sealed class SavePointPresentation2D : IDisposable
         _basePosition = placement.BasePosition;
 
         var baseStone = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(new Vector2(58f, 14f)),
-            new LinearGradientShader(new XnaColor(68, 77, 96), new XnaColor(31, 38, 54)))
+            AxisAlignedRectangle2D.Builder.CreateFromSize(58f, 14f),
+            new LinearGradientShader(new Color4b(68, 77, 96), new Color4b(31, 38, 54)))
         {
             ZIndex = 1
         };
@@ -34,23 +33,22 @@ internal sealed class SavePointPresentation2D : IDisposable
         Add(baseStone);
 
         var pedestal = new WorldObject2D(
-            new ConvexPolygon2D(
+            ConvexPolygon2D.Builder.Create(
             [
                 new Vector2(-20f, 0f),
                 new Vector2(20f, 0f),
                 new Vector2(11f, 52f),
                 new Vector2(-11f, 52f)
             ]),
-            new LinearGradientShader(new XnaColor(91, 103, 125), new XnaColor(37, 45, 62)))
+            new LinearGradientShader(new Color4b(91, 103, 125), new Color4b(37, 45, 62)))
         {
             ZIndex = 1
         };
         pedestal.Transform.Position = _basePosition + new Vector2(0f, 12f);
         Add(pedestal);
 
-        _glow = new WorldObject2D(
-            new Circle2D(31f),
-            new SolidColorShader(new XnaColor(93, 224, 255, 38)))
+        _glow = new WorldObject2D(Circle2D.Builder.Create(31f),
+            new SolidColorShader(new Color4b(93, 224, 255, 38)))
         {
             IsVisible = false,
             ZIndex = 1
@@ -59,7 +57,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         Add(_glow);
 
         _orb = new WorldObject2D(
-            new ConvexPolygon2D(
+            ConvexPolygon2D.Builder.Create(
             [
                 new Vector2(0f, 24f),
                 new Vector2(18f, 0f),
@@ -79,7 +77,7 @@ internal sealed class SavePointPresentation2D : IDisposable
 
     public void Update(float deltaSeconds, bool isActive)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         SetActive(isActive);
         _animationSeconds += deltaSeconds;
 
@@ -99,19 +97,31 @@ internal sealed class SavePointPresentation2D : IDisposable
     public void SetActive(bool active)
     {
         if (IsActive == active)
+        {
             return;
+        }
 
         IsActive = active;
         _glow.IsVisible = active;
         _orb.Shader = active ? ActiveOrbShader() : InactiveOrbShader();
     }
 
-    private void Add(WorldObject2D visual) { _scene.Add(visual); _visuals.Add(visual); }
-    public void Dispose() { foreach (var visual in _visuals) _scene.Remove(visual); _visuals.Clear(); }
+    private void Add(WorldObject2D visual)
+    {
+        _scene.Add(visual);
+        _visuals.Add(visual);
+    }
+    public void Dispose()
+    {
+        foreach (var visual in _visuals)
+        {
+            _scene.Remove(visual);
+        }
 
-    private static LinearGradientShader ActiveOrbShader() =>
-        new(new XnaColor(245, 255, 255), new XnaColor(44, 193, 255));
+        _visuals.Clear();
+    }
 
-    private static LinearGradientShader InactiveOrbShader() =>
-        new(new XnaColor(132, 139, 158), new XnaColor(53, 60, 78));
+    private static LinearGradientShader ActiveOrbShader() => new(new Color4b(245, 255, 255), new Color4b(44, 193, 255));
+
+    private static LinearGradientShader InactiveOrbShader() => new(new Color4b(132, 139, 158), new Color4b(53, 60, 78));
 }

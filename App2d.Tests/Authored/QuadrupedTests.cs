@@ -1,8 +1,9 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Meshes;
-using App2d.Core.Rendering.Characters;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Operations.Polygons;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -14,7 +15,8 @@ public sealed class QuadrupedTests
     [InlineData(true)]
     public void StarterClipsResolveAndKeepFourLegsReachable(bool dinosaur)
     {
-        var model = QuadrupedTemplate.Model(triceratops: dinosaur); var resolved = ResolvedModel.From(model);
+        var model = QuadrupedTemplate.Model(triceratops: dinosaur);
+        var resolved = ResolvedModel.From(model);
         Assert.Equal(4, model.Chains.Count);
         Assert.Equal(model.ToJson(), CharacterModel.FromJson(model.ToJson()).ToJson());
         foreach (var clip in QuadrupedTemplate.Clips(model))
@@ -32,36 +34,46 @@ public sealed class QuadrupedTests
     [Fact]
     public void WalkingContactHoldsFootInWorldAndAdvancesAtNextLoop()
     {
-        var model = QuadrupedTemplate.Model(); var resolved = ResolvedModel.From(model);
+        var model = QuadrupedTemplate.Model();
+        var resolved = ResolvedModel.From(model);
         var clip = QuadrupedTemplate.Clips(model).Single(c => c.Id.EndsWith("-walk"));
-        var a = PoseEvaluator.Sample(resolved, clip, .2f); var b = PoseEvaluator.Sample(resolved, clip, .4f);
+        var a = PoseEvaluator.Sample(resolved, clip, .2f);
+        var b = PoseEvaluator.Sample(resolved, clip, .4f);
         Assert.True(Vector3.Distance(a.World("near-front-foot"), b.World("near-front-foot")) < .001f);
         var next = PoseEvaluator.Sample(resolved, clip, clip.Duration + .2f, repeat: true);
-        Assert.True(Vector3.Distance(next.World("near-front-foot") - a.World("near-front-foot"), new(clip.Travel.Keys[^1].X, 0, 0)) < .001f);
+        Assert.True(Vector3.Distance(next.World("near-front-foot") - a.World("near-front-foot"), new(clip.Travel.Keys[^1].Value.X, 0, 0)) < .001f);
     }
 
     [Fact]
     public void ConcaveCutoutPickingAndPaintRespectTheNotch()
     {
-        List<PuppetPoint> points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)];
+        List<Vector2> points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)];
         var part = new PuppetPart
         {
             A = "body",
-            Kind = "polygon",
-            Width = 1,
-            Height = 1,
-            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }],
-            Material = new() { Fill = "#fff8e7", Outline = new() }
+            ScaleX = 1,
+            ScaleY = 1,
+            Material = new()
+            {
+                Fill = "#fff8e7",
+                Outline = new(),
+                Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }]
+            }
         };
-        PartGeometry.SetPolygon(part, points);
+        ModelAuthoring.SetCutout(part, points);
         part.Validate(_ => true);
-        Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
-        Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.8f, .8f, 0)) > 1);
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(points.Select(p => p.XY)); Assert.Equal(.51f, mesh.Area, 5);
-        var drawing = new PuppetDrawing(); drawing.Build("#000000", 0, [part], _ => Vector3.Zero);
+        Assert.True(PartPicking2D.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
+        Assert.True(PartPicking2D.Distance(part, _ => Vector3.Zero, new(.8f, .8f, 0)) > 1);
+        var mesh = PolygonTriangulation2D.Triangulate(points);
+        Assert.Equal(.51f, mesh.Area, 5);
+        var drawing = new PuppetDrawing();
+        drawing.Build("#000000", 0, [part], _ => Vector3.Zero);
         foreach (var vertex in drawing.Mesh.Vertices)
+        {
             Assert.True(vertex.Position.X <= .30001f || vertex.Position.Y <= .30001f, "Fill or paint spills across the notch.");
-        Assert.Throws<InvalidDataException>(() => PartGeometry.SetPolygon(part, [new(0, 0), new(1, 1), new(0, 1), new(1, 0)]));
+        }
+
+        Assert.Throws<InvalidDataException>(() => ModelAuthoring.SetCutout(part, [new(0, 0), new(1, 1), new(0, 1), new(1, 0)]));
     }
 
     [Fact]
@@ -75,7 +87,10 @@ public sealed class QuadrupedTests
             Assert.Equal(4, model.Chains.Count);
             var clips = catalog.Animations.Values.Where(c => c.Model == id).ToList();
             Assert.Equal(8, clips.Count);
-            foreach (var clip in clips) clip.Validate(model);
+            foreach (var clip in clips)
+            {
+                clip.Validate(model);
+            }
         }
     }
 
@@ -85,17 +100,24 @@ public sealed class QuadrupedTests
         var root = Path.Combine(Path.GetTempPath(), "quadruped-" + Guid.NewGuid().ToString("N"));
         try
         {
-            QuadrupedTemplate.Write(root); TestModels.CopyModelTemplates(root);
+            QuadrupedTemplate.Write(root);
+            TestModels.CopyModelTemplates(root);
             var session = new EditorSession(AuthoringWorkspace.Open(root));
             Assert.True(session.NewModel("dino", "Dino", "triceratops"), session.Message);
-            Assert.Equal("dino-idle", session.ClipId); Assert.False(session.EditRig);
+            Assert.Equal("dino-idle", session.ClipId);
+            Assert.False(session.EditRig);
             var created = session.Assets.Clips.Where(c => c.Asset.Model == "dino").ToArray();
             Assert.Equal(8, created.Length);
             Assert.All(created, c => Assert.True(c.IsNew));
-            session.SaveAll(); Assert.False(session.MessageIsError, session.Message);
-            var catalog = AuthoredCatalog.Load(root); Assert.Equal(8, catalog.Animations.Values.Count(c => c.Model == "dino"));
+            session.SaveAll();
+            Assert.False(session.MessageIsError, session.Message);
+            var catalog = AuthoredCatalog.Load(root);
+            Assert.Equal(8, catalog.Animations.Values.Count(c => c.Model == "dino"));
             Assert.NotNull(catalog.Resolve("dino"));
         }
-        finally { Directory.Delete(root, true); }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
     }
 }

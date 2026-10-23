@@ -3,16 +3,15 @@ using App2d.Core.Rendering;
 using App2d.Noodle.Projectors;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
 internal sealed class JointShowcase2D
 {
-    private static readonly XnaColor GuideColor = new(174, 186, 211, 105);
-    private static readonly XnaColor RequestedColor = new(255, 177, 90, 150);
-    private static readonly XnaColor ConstrainedColor = new(78, 206, 255);
-    private static readonly XnaColor LabelColor = new(207, 217, 235);
+    private static readonly Color4b GuideColor = new(174, 186, 211, 105);
+    private static readonly Color4b RequestedColor = new(255, 177, 90, 150);
+    private static readonly Color4b ConstrainedColor = new(78, 206, 255);
+    private static readonly Color4b LabelColor = new(207, 217, 235);
 
     private readonly PolarLinkProjector2D _revolute = new(78f, -0.8f, 0.8f);
     private readonly AxisProjector2D _prismatic = new(new Vector2(1f, 0.18f), -72f, 72f);
@@ -105,7 +104,7 @@ internal sealed class JointShowcase2D
         Vector2 worldPosition)
     {
         var screenPosition = camera.WorldToDevice(worldPosition);
-        renderer.DrawScreenText(name, screenPosition, XnaColor.White);
+        renderer.DrawScreenText(name, screenPosition, Color4b.White);
         renderer.DrawScreenText(equation, screenPosition + new Vector2(0f, 22f), LabelColor);
     }
 }

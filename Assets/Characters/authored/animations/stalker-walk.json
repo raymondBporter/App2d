@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "stalker-walk",
   "name": "Stalker walk",
   "model": "stalker",
@@ -147,5 +147,9 @@
       "time": 0.5
     }
   ],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

@@ -1,10 +1,11 @@
 using App2d.Core;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-public sealed partial class Projectile2D(SpatialObject2D worldObject)
+public sealed class Projectile2D(SpatialObject2D worldObject)
 {
     public SpatialObject2D WorldObject { get; } = worldObject;
     public EntityId2D Id { get; private set; }
@@ -15,7 +16,7 @@ public sealed partial class Projectile2D(SpatialObject2D worldObject)
 
     public void Launch(Vector2 position, Vector2 velocity, float lifetime, Vector2 origin, EntityId2D id)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(lifetime);
+        ArgGuard.Positive(lifetime);
         ArgGuard.ThrowIf(!id.IsValid, "A projectile requires a valid entity ID.", nameof(id));
 
         Id = id;
@@ -28,7 +29,9 @@ public sealed partial class Projectile2D(SpatialObject2D worldObject)
     public void Update(float deltaSeconds)
     {
         if (!IsActive)
+        {
             return;
+        }
 
         WorldObject.Transform.Position += Velocity * deltaSeconds;
         RemainingLifetime = Math.Max(0f, RemainingLifetime - deltaSeconds);

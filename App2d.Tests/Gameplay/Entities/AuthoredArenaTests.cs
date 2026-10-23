@@ -1,3 +1,5 @@
+using App2d.CharacterSeeds;
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Gameplay.Entities;
@@ -15,19 +17,28 @@ public sealed class AuthoredArenaTests
     public void TheSpearGuardCannotJumpButThePlayerOnTheSameBaseCan()
     {
         var guardArena = Arena("spear-guard");
-        for (var i = 0; i < 120; i++) guardArena.Step(new(Jump: true));
+        for (var i = 0; i < 120; i++)
+        {
+            guardArena.Step(new(Jump: true));
+        }
+
         Assert.Equal(0, guardArena.Player.Position.Y);
         Assert.Null(guardArena.Player.Animator.Action);
         Assert.DoesNotContain(guardArena.Events, e => e.Event.Id == EntityControllers.Launch);
 
-        var playerArena = Arena("player"); var peak = 0f; var landedTick = 0L;
+        var playerArena = Arena("player");
+        var peak = 0f;
+        var landedTick = 0L;
         playerArena.Step(new(Jump: true));
         Assert.Equal(EntityControllers.Jump, playerArena.Player.Animator.Action);
         for (var i = 0; i < 240; i++)
         {
             playerArena.Step(new(Move: .5f));
             peak = MathF.Max(peak, playerArena.Player.Position.Y);
-            if (landedTick == 0 && peak > 0 && playerArena.Player.Grounded) landedTick = playerArena.Tick;
+            if (landedTick == 0 && peak > 0 && playerArena.Player.Grounded)
+            {
+                landedTick = playerArena.Tick;
+            }
         }
         Assert.InRange(peak, 1, 2.5f);
         Assert.NotEqual(0, landedTick);
@@ -42,9 +53,14 @@ public sealed class AuthoredArenaTests
     public void TheGunnerShootsBoltsThatHitFromRange()
     {
         var arena = Arena("player", "cinder-gunner");
-        arena.Teleport(0, new(0, 0)); arena.Teleport(1, new(4, 0));
+        arena.Teleport(0, new(0, 0));
+        arena.Teleport(1, new(4, 0));
         var flew = false;
-        for (var i = 0; i < 480; i++) { arena.Step(default); flew |= arena.Bolts.Count > 0; }
+        for (var i = 0; i < 480; i++)
+        {
+            arena.Step(default);
+            flew |= arena.Bolts.Count > 0;
+        }
         Assert.True(flew, "the gunner fired");
         Assert.Contains(arena.Hits, h => h.Attacker == 1 && h.Window == "bolt" && h.Damage == 2);
         Assert.Contains(arena.Events, e => e.Actor == 1 && e.Event.Sound == "shot");
@@ -53,19 +69,34 @@ public sealed class AuthoredArenaTests
     [Fact]
     public void AMaskedAttackKeepsWalkingWhileAWholeBodyOneStands()
     {
-        var skirmisher = StarterContent.SpearGuardEntity(); skirmisher.Id = "skirmisher";
-        skirmisher.Actions[0].Mask = StarterContent.Upper; skirmisher.Actions[0].BlendIn = .08f; skirmisher.Actions[0].BlendOut = .12f;
+        var skirmisher = StarterContent.SpearGuardEntity();
+        skirmisher.Id = "skirmisher";
+        skirmisher.Actions[0].Mask = Humanoid.UpperGroup;
+        skirmisher.Actions[0].BlendIn = .08f;
+        skirmisher.Actions[0].BlendOut = .12f;
         var masked = ResolvedEntity.Compile(skirmisher, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
         foreach (var (entity, walks) in new[] { (masked, true), (Catalog.Entities["spear-guard"], false) })
         {
             var arena = new AuthoredArena([entity]);
-            for (var i = 0; i < 60; i++) arena.Step(new(Move: 1));
+            for (var i = 0; i < 60; i++)
+            {
+                arena.Step(new(Move: 1));
+            }
+
             arena.Step(new(Move: 1, Attack: true));
             Assert.Equal(EntityControllers.Attack, arena.Player.Animator.Action);
             var start = arena.Player.Position.X;
-            for (var i = 0; i < 60; i++) arena.Step(new(Move: 1));
+            for (var i = 0; i < 60; i++)
+            {
+                arena.Step(new(Move: 1));
+            }
+
             Assert.Equal(EntityControllers.Attack, arena.Player.Animator.Action);
-            if (walks) { Assert.True(arena.Player.Position.X > start + .3f); Assert.Equal(EntityControllers.Walk, arena.Player.Animator.Role); }
+            if (walks)
+            {
+                Assert.True(arena.Player.Position.X > start + .3f);
+                Assert.Equal(EntityControllers.Walk, arena.Player.Animator.Role);
+            }
             else
             {
                 Assert.Equal(start, arena.Player.Position.X, 5);
@@ -77,8 +108,13 @@ public sealed class AuthoredArenaTests
     public void TheGuardsThrustHitsOncePerAttackOnlyInsideItsWindow()
     {
         var arena = Arena("player", "spear-guard");
-        arena.Teleport(0, new(0, 0)); arena.Teleport(1, new(2.05f, 0));
-        for (var i = 0; i < 360; i++) arena.Step(default);
+        arena.Teleport(0, new(0, 0));
+        arena.Teleport(1, new(2.05f, 0));
+        for (var i = 0; i < 360; i++)
+        {
+            arena.Step(default);
+        }
+
         var guard = arena.Actors[1];
         var hits = arena.Hits.Where(h => h.Attacker == 1).ToList();
         Assert.NotEmpty(hits);
@@ -99,8 +135,13 @@ public sealed class AuthoredArenaTests
     public void TheGuardTurnsToItsTargetBeforeThrusting(int side)
     {
         var arena = Arena("player", "spear-guard");
-        arena.Teleport(0, new(0, 0)); arena.Teleport(1, new(2.05f * side, 0));
-        for (var i = 0; i < 120; i++) arena.Step(default);
+        arena.Teleport(0, new(0, 0));
+        arena.Teleport(1, new(2.05f * side, 0));
+        for (var i = 0; i < 120; i++)
+        {
+            arena.Step(default);
+        }
+
         Assert.Equal(-side, arena.Actors[1].Facing);
         Assert.Contains(arena.Hits, h => h.Attacker == 1);
     }
@@ -109,9 +150,17 @@ public sealed class AuthoredArenaTests
     public void TheNonPersonCreatureWalksPlantsAndAttacks()
     {
         var arena = Arena("player", "stalker-pest");
-        arena.Teleport(0, new(-3, 0)); arena.Teleport(1, new(1, 0));
+        arena.Teleport(0, new(-3, 0));
+        arena.Teleport(1, new(1, 0));
         var anchored = 0;
-        for (var i = 0; i < 900 && arena.Player.Alive; i++) { arena.Step(default); if (arena.Actors[1].Animator.Anchors.Count > 0) anchored++; }
+        for (var i = 0; i < 900 && arena.Player.Alive; i++)
+        {
+            arena.Step(default);
+            if (arena.Actors[1].Animator.Anchors.Count > 0)
+            {
+                anchored++;
+            }
+        }
         Assert.Contains(arena.Events, e => e.Actor == 1 && e.Event.Id == "step");
         Assert.Contains(arena.Hits, h => h.Attacker == 1 && h.Window == "sting");
         Assert.Contains(arena.Events, e => e.Actor == 1 && e.Event.Sound == "bite");
@@ -123,14 +172,18 @@ public sealed class AuthoredArenaTests
     public void ThePlayerCanDefeatAGuardAndAHitInterruptsItsAttack()
     {
         var arena = Arena("player", "spear-guard");
-        arena.Teleport(0, new(0, 0)); arena.Teleport(1, new(1.9f, 0));
+        arena.Teleport(0, new(0, 0));
+        arena.Teleport(1, new(1.9f, 0));
         var interrupted = false;
         for (var i = 0; i < 2400 && arena.Actors[1].Alive; i++)
         {
             var guardWasAttacking = arena.Actors[1].Animator.Action is not null;
             var before = arena.Hits.Count;
             arena.Step(new(Attack: true));
-            if (guardWasAttacking && arena.Hits.Skip(before).Any(h => h.Target == 1) && arena.Actors[1].Animator.Action is null) interrupted = true;
+            if (guardWasAttacking && arena.Hits.Skip(before).Any(h => h.Target == 1) && arena.Actors[1].Animator.Action is null)
+            {
+                interrupted = true;
+            }
         }
         Assert.False(arena.Actors[1].Alive);
         arena.Step(default); // the face input reaches the pose on the next evaluation
@@ -143,7 +196,8 @@ public sealed class AuthoredArenaTests
     {
         static (List<ArenaEvent>, List<ArenaHit>, List<float>) Run()
         {
-            var arena = Arena("player", "spear-guard", "stalker-pest"); var xs = new List<float>();
+            var arena = Arena("player", "spear-guard", "stalker-pest");
+            var xs = new List<float>();
             for (var i = 0; i < 1200; i++)
             {
                 arena.Step(new(Move: MathF.Sin(i * .01f), Run: i % 400 > 200, Jump: i % 300 == 0, Attack: i % 90 == 0));
@@ -151,8 +205,11 @@ public sealed class AuthoredArenaTests
             }
             return (arena.Events, arena.Hits, xs);
         }
-        var (e1, h1, x1) = Run(); var (e2, h2, x2) = Run();
-        Assert.Equal(e1, e2); Assert.Equal(h1, h2); Assert.Equal(x1, x2);
+        var (e1, h1, x1) = Run();
+        var (e2, h2, x2) = Run();
+        Assert.Equal(e1, e2);
+        Assert.Equal(h1, h2);
+        Assert.Equal(x1, x2);
         Assert.NotEmpty(h1);
     }
 }

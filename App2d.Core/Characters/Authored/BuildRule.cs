@@ -18,8 +18,10 @@ public interface IBuildRule
     string Id { get; }
     IReadOnlyList<BuildValue> Values { get; }
     IReadOnlyList<BuildPreset> Presets { get; }
+
     /// <summary>Throws when the model lacks a control or part the rule's geometry needs.</summary>
     void Check(CharacterModel model);
+
     /// <summary>Rewrites rest positions and parts in place. Missing values take their defaults.</summary>
     void Apply(CharacterModel model, IReadOnlyDictionary<string, float> values, Dictionary<string, Vector3> rest, List<PuppetPart> parts);
 }
@@ -34,7 +36,11 @@ public static class BuildRules
     /// <summary>Checks a variant's stored values against its base's rule: known IDs, values in range.</summary>
     public static void CheckValues(CharacterModel model, IReadOnlyDictionary<string, float> values, string owner)
     {
-        if (values.Count == 0) return;
+        if (values.Count == 0)
+        {
+            return;
+        }
+
         var rule = For(model) ?? throw new InvalidDataException($"{owner}: base '{model.Id}' exposes no build values.");
         foreach (var (id, value) in values)
         {

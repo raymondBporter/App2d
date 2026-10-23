@@ -1,6 +1,6 @@
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
-using App2d.Core;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
@@ -10,34 +10,25 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
-public sealed partial class EnemySystem2D
+public sealed class EnemySystem2D
 {
     private readonly List<RegisteredEnemy> _registeredEnemies = [];
     private readonly List<ICombatant2D> _combatants = [];
 
     public IReadOnlyList<ICombatant2D> Combatants => _combatants;
-    public int Count => _combatants.Count(
-        combatant => combatant.Faction == CombatFaction2D.Enemy);
+    public int Count => _combatants.Count(combatant => combatant.Faction == CombatFaction2D.Enemy);
 
-    public ImmutableArray<EnemyState2D> CaptureStates() =>
-        [.. _registeredEnemies.Select(e => e.Actor.CaptureState())];
+    public ImmutableArray<EnemyState2D> CaptureStates() => [.. _registeredEnemies.Select(e => e.Actor.CaptureState())];
 
-    public ImmutableArray<EnemyEvent2D> DrainEvents() =>
-        [.. _registeredEnemies.SelectMany(e => e.Actor.DrainEvents())];
+    public ImmutableArray<EnemyEvent2D> DrainEvents() => [.. _registeredEnemies.SelectMany(e => e.Actor.DrainEvents())];
 
     public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
     {
         ArgGuard.ThrowIfNull(actor);
-        StateGuard.ThrowIf(
-            _combatants.Any(item => item.Id == actor.Combatant.Id),
-            "The enemy combatant is already registered.");
+        StateGuard.ThrowIf(_combatants.Any(item => item.Id == actor.Combatant.Id), "The enemy combatant is already registered.");
 
         actor.SetSimulationEnabled(false);
-        _registeredEnemies.Add(
-            new RegisteredEnemy(
-                actor,
-                actor as IEnemyAttackSource2D,
-                homeChunk));
+        _registeredEnemies.Add(new RegisteredEnemy(actor, actor as IEnemyAttackSource2D, homeChunk));
         _combatants.Add(actor.Combatant);
     }
 
@@ -49,7 +40,9 @@ public sealed partial class EnemySystem2D
         {
             var isEnabled = isChunkActive(registered.HomeChunk);
             if (registered.IsEnabled == isEnabled)
+            {
                 continue;
+            }
 
             registered.IsEnabled = isEnabled;
             registered.Actor.SetSimulationEnabled(isEnabled);
@@ -58,13 +51,15 @@ public sealed partial class EnemySystem2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        ArgGuard.ThrowIfNotFinite(targetPosition);
+        ArgGuard.NonNegative(deltaSeconds);
+        ArgGuard.Finite(targetPosition);
 
         foreach (var registered in _registeredEnemies)
         {
             if (registered.IsEnabled)
+            {
                 registered.Actor.Update(deltaSeconds, targetPosition);
+            }
         }
     }
 
@@ -73,7 +68,9 @@ public sealed partial class EnemySystem2D
         foreach (var registered in _registeredEnemies)
         {
             if (registered.IsEnabled)
+            {
                 registered.Actor.SyncAfterPhysics();
+            }
         }
     }
 
@@ -99,17 +96,18 @@ public sealed partial class EnemySystem2D
         foreach (var registered in _registeredEnemies)
         {
             if (!registered.IsEnabled || registered.AttackSource is null)
+            {
                 continue;
+            }
 
             foreach (var hitbox in registered.AttackSource.GetActiveAttackHitboxes())
+            {
                 yield return hitbox;
+            }
         }
     }
 
-    private sealed class RegisteredEnemy(
-        IEnemyActor2D actor,
-        IEnemyAttackSource2D? attackSource,
-        TileChunk2D homeChunk)
+    private sealed class RegisteredEnemy(IEnemyActor2D actor, IEnemyAttackSource2D? attackSource, TileChunk2D homeChunk)
     {
         public IEnemyActor2D Actor { get; } = actor;
         public IEnemyAttackSource2D? AttackSource { get; } = attackSource;

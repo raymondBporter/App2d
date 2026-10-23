@@ -1,4 +1,4 @@
-using App2d.Core.Meshes;
+using App2d.Core.Geometry.Meshes;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -21,6 +21,17 @@ public sealed class TriangleMeshAnalysis3DTests
         Assert.True(reflected.TryGetFaceNormal(0, out normal));
         Assert.Equal(-Vector3.UnitZ, normal);
         Assert.Equal(4, reflected.FeatureEdges(-Vector3.UnitZ, .7f).Count());
+    }
+
+    [Fact]
+    public void FeatureEdgesNormalizeExtremeViewDirections()
+    {
+        Vector3[] vertices = [Vector3.Zero, Vector3.UnitX, Vector3.UnitY];
+        var mesh = new TriangleMeshAnalysis3D(vertices, [0, 1, 2]);
+        var expected = mesh.FeatureEdges(Vector3.UnitZ, .7f).ToArray();
+        Assert.Equal(expected, mesh.FeatureEdges(new(0, 0, float.Epsilon), .7f));
+        Assert.Equal(expected, mesh.FeatureEdges(new(0, 0, float.MaxValue), .7f));
+        Assert.Empty(mesh.FeatureEdges(new(0, 0, -float.MaxValue), .7f));
     }
 
     [Fact]

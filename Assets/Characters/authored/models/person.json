@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 2,
+  "version": 5,
   "id": "person",
   "name": "Person",
   "structureRevision": 1,
@@ -8,6 +8,7 @@
   "controls": [
     {
       "id": "hips",
+      "name": null,
       "rest": {
         "x": 0,
         "y": 0.805,
@@ -18,6 +19,7 @@
     {
       "id": "chest",
       "parent": "hips",
+      "name": null,
       "rest": {
         "x": 0,
         "y": 1.4549999,
@@ -28,6 +30,7 @@
     {
       "id": "head",
       "parent": "chest",
+      "name": null,
       "rest": {
         "x": 0,
         "y": 1.8349999,
@@ -38,6 +41,7 @@
     {
       "id": "left-shoulder",
       "parent": "chest",
+      "name": null,
       "rest": {
         "x": -0.11165064,
         "y": 1.375,
@@ -48,6 +52,7 @@
     {
       "id": "left-elbow",
       "parent": "left-shoulder",
+      "name": null,
       "rest": {
         "x": -0.061650638,
         "y": 1.055,
@@ -57,6 +62,7 @@
     {
       "id": "left-hand",
       "parent": "left-elbow",
+      "name": null,
       "rest": {
         "x": -0.08165064,
         "y": 0.72499996,
@@ -66,6 +72,7 @@
     {
       "id": "left-hip",
       "parent": "hips",
+      "name": null,
       "rest": {
         "x": -0.06,
         "y": 0.805,
@@ -76,6 +83,7 @@
     {
       "id": "left-knee",
       "parent": "left-hip",
+      "name": null,
       "rest": {
         "x": 0.012000006,
         "y": 0.413,
@@ -85,6 +93,7 @@
     {
       "id": "left-foot",
       "parent": "left-knee",
+      "name": null,
       "rest": {
         "x": -0.06,
         "y": 0.025,
@@ -94,6 +103,7 @@
     {
       "id": "right-shoulder",
       "parent": "chest",
+      "name": null,
       "rest": {
         "x": 0.06834937,
         "y": 1.375,
@@ -104,6 +114,7 @@
     {
       "id": "right-elbow",
       "parent": "right-shoulder",
+      "name": null,
       "rest": {
         "x": 0.11834937,
         "y": 1.055,
@@ -113,6 +124,7 @@
     {
       "id": "right-hand",
       "parent": "right-elbow",
+      "name": null,
       "rest": {
         "x": 0.09834937,
         "y": 0.72499996,
@@ -122,6 +134,7 @@
     {
       "id": "right-hip",
       "parent": "hips",
+      "name": null,
       "rest": {
         "x": 0.06,
         "y": 0.805,
@@ -132,6 +145,7 @@
     {
       "id": "right-knee",
       "parent": "right-hip",
+      "name": null,
       "rest": {
         "x": 0.132,
         "y": 0.413,
@@ -141,6 +155,7 @@
     {
       "id": "right-foot",
       "parent": "right-knee",
+      "name": null,
       "rest": {
         "x": 0.06,
         "y": 0.025,
@@ -150,38 +165,39 @@
   ],
   "chains": [
     {
-      "id": "left-arm",
       "root": "left-shoulder",
       "joint": "left-elbow",
       "end": "left-hand",
       "bend": -1,
       "frame": "left-shoulder",
-      "scale": "arm"
+      "scale": "arm",
+      "id": "left-arm"
     },
     {
-      "id": "left-leg",
       "root": "left-hip",
       "joint": "left-knee",
       "end": "left-foot",
-      "scale": "leg"
+      "scale": "leg",
+      "id": "left-leg"
     },
     {
-      "id": "right-arm",
       "root": "right-shoulder",
       "joint": "right-elbow",
       "end": "right-hand",
       "bend": -1,
       "frame": "right-shoulder",
-      "scale": "arm"
+      "scale": "arm",
+      "id": "right-arm"
     },
     {
-      "id": "right-leg",
       "root": "right-hip",
       "joint": "right-knee",
       "end": "right-foot",
-      "scale": "leg"
+      "scale": "leg",
+      "id": "right-leg"
     }
   ],
+  "constraints": [],
   "measures": [
     {
       "id": "leg",
@@ -210,9 +226,6 @@
   "parts": [
     {
       "id": "chest-head",
-      "a": "chest",
-      "b": "head",
-      "width": 0.045,
       "geometry": {
         "kind": "line",
         "start": {
@@ -224,13 +237,14 @@
           "y": 1
         }
       },
-      "material": {}
+      "material": {
+        "strokeWidth": 0.045
+      },
+      "a": "chest",
+      "b": "head"
     },
     {
       "id": "left-arm",
-      "a": "left-shoulder",
-      "b": "left-hand",
-      "width": 0.045,
       "geometry": {
         "kind": "rounded-polyline",
         "points": [
@@ -249,10 +263,13 @@
         ],
         "softness": 1
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
+      "a": "left-shoulder",
+      "b": "left-hand",
       "bindings": [
         {
-          "point": 0,
           "control": "left-shoulder"
         },
         {
@@ -263,14 +280,10 @@
           "point": 2,
           "control": "left-hand"
         }
-      ],
-      "curveSections": 20
+      ]
     },
     {
       "id": "left-leg",
-      "a": "left-hip",
-      "b": "left-foot",
-      "width": 0.045,
       "geometry": {
         "kind": "rounded-polyline",
         "points": [
@@ -289,10 +302,13 @@
         ],
         "softness": 1
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
+      "a": "left-hip",
+      "b": "left-foot",
       "bindings": [
         {
-          "point": 0,
           "control": "left-hip"
         },
         {
@@ -303,14 +319,10 @@
           "point": 2,
           "control": "left-foot"
         }
-      ],
-      "curveSections": 20
+      ]
     },
     {
       "id": "right-arm",
-      "a": "right-shoulder",
-      "b": "right-hand",
-      "width": 0.045,
       "geometry": {
         "kind": "rounded-polyline",
         "points": [
@@ -329,10 +341,13 @@
         ],
         "softness": 1
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
+      "a": "right-shoulder",
+      "b": "right-hand",
       "bindings": [
         {
-          "point": 0,
           "control": "right-shoulder"
         },
         {
@@ -343,14 +358,10 @@
           "point": 2,
           "control": "right-hand"
         }
-      ],
-      "curveSections": 20
+      ]
     },
     {
       "id": "right-leg",
-      "a": "right-hip",
-      "b": "right-foot",
-      "width": 0.045,
       "geometry": {
         "kind": "rounded-polyline",
         "points": [
@@ -369,10 +380,13 @@
         ],
         "softness": 1
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
+      "a": "right-hip",
+      "b": "right-foot",
       "bindings": [
         {
-          "point": 0,
           "control": "right-hip"
         },
         {
@@ -383,16 +397,10 @@
           "point": 2,
           "control": "right-foot"
         }
-      ],
-      "curveSections": 20
+      ]
     },
     {
       "id": "body",
-      "a": "hips",
-      "b": "chest",
-      "width": 0.36,
-      "height": 0.68,
-      "offsetY": 0.32,
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -545,16 +553,15 @@
       "material": {
         "fill": "#d8e9db",
         "outline": {}
-      }
+      },
+      "a": "hips",
+      "b": "chest",
+      "offsetY": 0.32,
+      "scaleX": 0.36,
+      "scaleY": 0.68
     },
     {
       "id": "head",
-      "a": "head",
-      "width": 0.56,
-      "height": 0.58,
-      "depth": -0.12,
-      "face": "relaxed",
-      "faceX": 0.065,
       "geometry": {
         "kind": "ellipse",
         "center": {
@@ -567,11 +574,111 @@
         }
       },
       "material": {
-        "fill": "#fff8e7",
-        "outline": {}
-      }
+        "outline": {},
+        "asset": "skin"
+      },
+      "a": "head",
+      "depth": -0.12,
+      "face": "relaxed",
+      "faceX": 0.065,
+      "scaleX": 0.56,
+      "scaleY": 0.58
+    },
+    {
+      "id": "left-hand",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": -0.014
+        },
+        "radii": {
+          "x": 0.043,
+          "y": 0.055
+        }
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "left-hand",
+      "b": "left-elbow",
+      "depth": -0.004
+    },
+    {
+      "id": "right-hand",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": -0.014
+        },
+        "radii": {
+          "x": 0.043,
+          "y": 0.055
+        }
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "right-hand",
+      "b": "right-elbow",
+      "depth": -0.004
+    },
+    {
+      "id": "left-foot",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0.044,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.088,
+          "y": 0.024
+        }
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "left-foot",
+      "b": "left-knee",
+      "depth": -0.004
+    },
+    {
+      "id": "right-foot",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0.044,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.088,
+          "y": 0.024
+        }
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "right-foot",
+      "b": "right-knee",
+      "depth": -0.004
     }
   ],
+  "slots": [],
+  "skins": [],
   "sockets": [
     {
       "id": "right-grip",
@@ -623,6 +730,26 @@
       "control": "hips",
       "frame": "hips",
       "toward": "chest"
+    },
+    {
+      "id": "left-hand-art",
+      "control": "left-hand",
+      "toward": "left-elbow"
+    },
+    {
+      "id": "right-hand-art",
+      "control": "right-hand",
+      "toward": "right-elbow"
+    },
+    {
+      "id": "left-foot-art",
+      "control": "left-foot",
+      "toward": "left-knee"
+    },
+    {
+      "id": "right-foot-art",
+      "control": "right-foot",
+      "toward": "right-knee"
     }
   ],
   "motionSets": [
@@ -780,5 +907,141 @@
         }
       }
     }
-  ]
+  ],
+  "materials": {
+    "spotted-hide": {
+      "fill": "#b97549",
+      "paint": [
+        {
+          "material": {
+            "fill": "#f3dcc6"
+          },
+          "points": [
+            {
+              "x": -0.35,
+              "y": 0.65
+            },
+            {
+              "x": 0.8,
+              "y": 0.65
+            },
+            {
+              "x": 0.8,
+              "y": -0.04
+            }
+          ]
+        },
+        {
+          "material": {
+            "fill": "#765033"
+          },
+          "points": [
+            {
+              "x": -0.16499999,
+              "y": 0.2
+            },
+            {
+              "x": -0.19700336,
+              "y": 0.24300073
+            },
+            {
+              "x": -0.26891428,
+              "y": 0.25362104
+            },
+            {
+              "x": -0.32658234,
+              "y": 0.22386362
+            },
+            {
+              "x": -0.32658234,
+              "y": 0.1761364
+            },
+            {
+              "x": -0.26891425,
+              "y": 0.14637896
+            },
+            {
+              "x": -0.19700338,
+              "y": 0.15699926
+            }
+          ]
+        },
+        {
+          "material": {
+            "fill": "#765033"
+          },
+          "points": [
+            {
+              "x": 0.28,
+              "y": -0.07
+            },
+            {
+              "x": 0.24234898,
+              "y": -0.019180954
+            },
+            {
+              "x": 0.15774791,
+              "y": -0.0066296905
+            },
+            {
+              "x": 0.08990312,
+              "y": -0.041797556
+            },
+            {
+              "x": 0.08990312,
+              "y": -0.098202445
+            },
+            {
+              "x": 0.15774795,
+              "y": -0.13337031
+            },
+            {
+              "x": 0.24234897,
+              "y": -0.120819055
+            }
+          ]
+        },
+        {
+          "material": {
+            "fill": "#765033"
+          },
+          "points": [
+            {
+              "x": -0.16,
+              "y": -0.3
+            },
+            {
+              "x": -0.18635571,
+              "y": -0.2648176
+            },
+            {
+              "x": -0.24557647,
+              "y": -0.25612825
+            },
+            {
+              "x": -0.2930678,
+              "y": -0.28047523
+            },
+            {
+              "x": -0.2930678,
+              "y": -0.3195248
+            },
+            {
+              "x": -0.24557644,
+              "y": -0.34387177
+            },
+            {
+              "x": -0.18635572,
+              "y": -0.33518243
+            }
+          ]
+        }
+      ],
+      "outline": {}
+    },
+    "skin": {
+      "fill": "#fff8e7",
+      "outline": {}
+    }
+  }
 }

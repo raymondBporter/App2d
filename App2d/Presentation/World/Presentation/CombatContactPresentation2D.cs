@@ -4,7 +4,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -15,14 +14,18 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
     private const int MaximumBursts = 32;
     private static readonly float[] Angles = [-1.05f, -.45f, .12f, .72f, 2.7f];
     private static readonly float[] Lengths = [10, 17, 20, 12, 9];
-    private static readonly ConvexPolygon2D Shard = new([new(-.5f, 0), new(0, -.5f), new(.5f, 0), new(0, .5f)]);
+    private static readonly ConvexPolygon2D Shard = ConvexPolygon2D.Builder.Create([new(-.5f, 0), new(0, -.5f), new(.5f, 0), new(0, .5f)]);
 
     public bool Enabled { get; set; } = true;
 
     /// <summary>The caller delivers each session event once; a miss never creates an effect.</summary>
     public void Present(CombatDamage2D damage)
     {
-        if (damage.Contact is not { Kind: CombatImpactKind2D.Sword } contact) return;
+        if (damage.Contact is not { Kind: CombatImpactKind2D.Sword } contact)
+        {
+            return;
+        }
+
         var burst = _bursts.FirstOrDefault(b => b.Age >= b.Duration);
         if (burst is null)
         {
@@ -46,8 +49,12 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
 
     public void Advance(float dt)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(dt);
-        foreach (var burst in _bursts) { burst.Age += dt; Draw(burst); }
+        ArgGuard.NonNegative(dt);
+        foreach (var burst in _bursts)
+        {
+            burst.Age += dt;
+            Draw(burst);
+        }
     }
 
     private void Draw(Burst burst)
@@ -58,7 +65,11 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
         {
             var (edge, fill) = burst.Pieces[i];
             edge.IsVisible = fill.IsVisible = live;
-            if (!live) continue;
+            if (!live)
+            {
+                continue;
+            }
+
             var angle = burst.Angle + Angles[i];
             var axis = Polar2D.Direction(angle);
             var distance = (3 + 17 * t) * burst.Size;
@@ -69,24 +80,38 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
             edge.Transform.Scale = new(length + 2, width + 2);
             fill.Transform.Scale = new(length, width);
             var alpha = (byte)(255 * (1 - MathF.Pow(t, 3)));
-            ((Ink)edge.Shader).BaseColor = new Color(24, 27, 32, (int)alpha);
-            ((Ink)fill.Shader).BaseColor = new Color(255, 250, 222, (int)alpha);
+            ((Ink)edge.Shader).BaseColor = new Color4b(24, 27, 32, (int)alpha);
+            ((Ink)fill.Shader).BaseColor = new Color4b(255, 250, 222, (int)alpha);
         }
     }
 
     public void Reset()
     {
-        foreach (var burst in _bursts) { burst.Age = burst.Duration; Draw(burst); }
+        foreach (var burst in _bursts)
+        {
+            burst.Age = burst.Duration;
+            Draw(burst);
+        }
     }
 
     public void Dispose()
     {
         foreach (var burst in _bursts)
-            foreach (var (edge, fill) in burst.Pieces) { scene.Remove(edge); scene.Remove(fill); }
+        {
+            foreach (var (edge, fill) in burst.Pieces)
+            {
+                scene.Remove(edge);
+                scene.Remove(fill);
+            }
+        }
+
         _bursts.Clear();
     }
 
-    private sealed class Ink : IShader2D { public Color BaseColor { get; set; } }
+    private sealed class Ink : IShader2D
+    {
+        public Color4b BaseColor { get; set; }
+    }
 
     private sealed class Burst
     {
@@ -100,7 +125,9 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
             {
                 var edge = new WorldObject2D(Shard, new Ink()) { ZIndex = 5, IsVisible = false };
                 var fill = new WorldObject2D(Shard, new Ink()) { ZIndex = 6, IsVisible = false };
-                scene.Add(edge); scene.Add(fill); Pieces[i] = (edge, fill);
+                scene.Add(edge);
+                scene.Add(fill);
+                Pieces[i] = (edge, fill);
             }
         }
     }

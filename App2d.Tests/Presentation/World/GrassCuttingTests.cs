@@ -1,11 +1,9 @@
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
-using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using App2d.Presentation.World.Presentation;
 using System.Collections.Immutable;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Presentation.World;
 
@@ -46,7 +44,7 @@ public sealed class GrassCuttingTests
     public void CutFlowersBurstIntoFivePetalsAndACenter()
     {
         var patch = new VegetationPatch2D(0f, 64f, 7f,
-            new(30f, 30f, 30f, 3f, 6f, Color.DarkGreen, Color.LightGreen, 0f, 0f, 1f), 107);
+            new(30f, 30f, 30f, 3f, 6f, Color4b.DarkGreen, Color4b.LightGreen, 0f, 0f, 1f), 107);
         Assert.True(patch.FlowerCount > 0);
         var tips = patch.CreateClippings(12f, Wind(0f)).ToArray();
         Assert.Equal(patch.BladeCount + patch.FlowerCount * 6, tips.Length);
@@ -68,15 +66,24 @@ public sealed class GrassCuttingTests
     {
         var piece = Clipping();
         var start = piece.Position;
-        piece.Advance(0.15f, Wind() with { TotalSeconds = 0.15 });
+        piece.Advance(0.15f, Wind() with
+        {
+            TotalSeconds = 0.15
+        });
         Assert.True(piece.Position.Y > start.Y);
         Assert.NotEqual(start.X, piece.Position.X);
         Assert.NotEqual(0f, piece.Rotation);
         Assert.Equal(1f, piece.Opacity);
-        piece.Advance(0.7f, Wind() with { TotalSeconds = 0.85 });
+        piece.Advance(0.7f, Wind() with
+        {
+            TotalSeconds = 0.85
+        });
         Assert.True(piece.Velocity.Y < 0f);
         Assert.InRange(piece.Opacity, 0.01f, 0.99f);
-        piece.Advance(0.2f, Wind() with { TotalSeconds = 1.05 });
+        piece.Advance(0.2f, Wind() with
+        {
+            TotalSeconds = 1.05
+        });
         Assert.True(piece.IsExpired);
         Assert.Equal(0f, piece.Opacity);
     }
@@ -86,14 +93,34 @@ public sealed class GrassCuttingTests
     {
         var calm = Clipping();
         var windy = Clipping();
-        calm.Advance(0.4f, Wind(0f) with { TotalSeconds = 0.4 });
-        windy.Advance(0.4f, Wind(15f) with { TotalSeconds = 0.4 });
+        calm.Advance(0.4f, Wind(0f) with
+        {
+            TotalSeconds = 0.4
+        });
+        windy.Advance(0.4f, Wind(15f) with
+        {
+            TotalSeconds = 0.4
+        });
         Assert.True(MathF.Abs(calm.Position.X - windy.Position.X) > 0.01f);
         Assert.Equal(calm.Position.Y, windy.Position.Y);
         var fast = Clipping();
         var slow = Clipping();
-        for (var i = 1; i <= 48; i++) fast.Advance(1f / 120f, Wind() with { TotalSeconds = i / 120d });
-        for (var i = 1; i <= 12; i++) slow.Advance(1f / 30f, Wind() with { TotalSeconds = i / 30d });
+        for (var i = 1; i <= 48; i++)
+        {
+            fast.Advance(1f / 120f, Wind() with
+            {
+                TotalSeconds = i / 120d
+            });
+        }
+
+        for (var i = 1; i <= 12; i++)
+        {
+            slow.Advance(1f / 30f, Wind() with
+            {
+                TotalSeconds = i / 30d
+            });
+        }
+
         Assert.InRange(Vector2.Distance(fast.Position, slow.Position), 0f, 0.002f);
     }
 
@@ -101,7 +128,11 @@ public sealed class GrassCuttingTests
     public void LiveCutsBurstOnlyOnceAndLandingRemovesPiecesBeforeTheirTimeout()
     {
         var map = new EditableTileMap2D(16, 16, 32f, 16, Vector2.Zero, ["ink-medieval-ground"]);
-        for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 1, TileKind2D.Solid);
+        for (var x = 0; x < map.Width; x++)
+        {
+            map.SetTileKind(x, 1, TileKind2D.Solid);
+        }
+
         var terrain = TerrainChunkState2D.Capture(map, new(0, 0), 1);
         // Grass grows in patches, so cut the whole row to be sure some of it is grassy.
         ImmutableHashSet<GrassCell2D> row = [.. Enumerable.Range(0, map.Width).Select(x => new GrassCell2D(x, 1))];
@@ -113,7 +144,11 @@ public sealed class GrassCuttingTests
         Assert.True(count > 0);
         view.ApplyCuts(row);
         Assert.Equal(count, view.ClippingCount);
-        for (var i = 0; i < 108; i++) view.Advance(1f / 120f);
+        for (var i = 0; i < 108; i++)
+        {
+            view.Advance(1f / 120f);
+        }
+
         Assert.True(view.ClippingCount < count); // 0.9 s: ground, not the 1 s timeout.
         view.Advance(0.2f);
         Assert.Equal(0, view.ClippingCount);
@@ -130,7 +165,7 @@ public sealed class GrassCuttingTests
     private static void AssertBladeTop(float top) =>
         Assert.True(MathF.Abs(top - 37f) < 1e-3f || MathF.Abs(top - 28f) < 1e-3f, $"Unexpected blade top {top}.");
     private static VegetationPatch2D Patch(float endX = 32f) => new(0f, endX, 7f,
-        new(30f, 30f, 30f, 3f, 6f, Color.DarkGreen, Color.LightGreen, 0f, 0f, 0f), 107);
+        new(30f, 30f, 30f, 3f, 6f, Color4b.DarkGreen, Color4b.LightGreen, 0f, 0f, 0f), 107);
     private static VegetationWind2D Wind(float strength = 5f) => new(0f, strength, 1.15f, 0.027f, 0.12f);
     private static GrassClipping2D Clipping() =>
         new(Patch().CreateClippings(12f, Wind()).First(), new(0f, 100f), 4f, 0.7f, 1f);

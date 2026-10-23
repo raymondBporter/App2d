@@ -27,15 +27,38 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
     internal MusicMixer2D(IReadOnlyDictionary<string, MusicCue2D> cues, Func<MusicCue2D, MusicStream2D> open)
     {
         _cues = new(cues, StringComparer.Ordinal);
-        try { foreach (var (id, cue) in cues) _streams.Add(id, open(cue)); }
-        catch { Dispose(); throw; }
+        try
+        {
+            foreach (var (id, cue) in cues)
+            {
+                _streams.Add(id, open(cue));
+            }
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     public WaveFormat WaveFormat { get; } = WaveFormat.CreateIeeeFloatWaveFormat(MusicCue2D.SampleRate, 2);
     public float Volume
     {
-        get { lock (_controlSync) return _volume; }
-        set { ArgGuard.ThrowIfNotInClosedRange(value, 0f, 1f); lock (_controlSync) _volume = value; }
+        get
+        {
+            lock (_controlSync)
+            {
+                return _volume;
+            }
+        }
+        set
+        {
+            ArgGuard.InRange(value, 0f, 1f);
+            lock (_controlSync)
+            {
+                _volume = value;
+            }
+        }
     }
 
     public void Select(string piece, string mood)
@@ -44,8 +67,12 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (!_cues.TryGetValue(piece, out var cue) || !cue.Moods.ContainsKey(mood))
+            {
                 throw new ArgumentException($"Unknown music selection: {piece} / {mood}");
-            _requestedPiece = piece; _requestedMood = mood;
+            }
+
+            _requestedPiece = piece;
+            _requestedMood = mood;
         }
     }
 
@@ -58,7 +85,11 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
 
     public int Read(Span<float> buffer)
     {
-        if (buffer.Length % 2 != 0) throw new ArgumentException("Music buffers must contain stereo frames.");
+        if (buffer.Length % 2 != 0)
+        {
+            throw new ArgumentException("Music buffers must contain stereo frames.");
+        }
+
         lock (_renderSync)
         {
             buffer.Clear();
@@ -66,10 +97,20 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
             float volume;
             lock (_controlSync)
             {
-                if (_disposed || _requestedPiece is null) return buffer.Length;
-                requestedPiece = _requestedPiece; requestedMood = _requestedMood; volume = _volume;
+                if (_disposed || _requestedPiece is null)
+                {
+                    return buffer.Length;
+                }
+
+                requestedPiece = _requestedPiece;
+                requestedMood = _requestedMood;
+                volume = _volume;
             }
-            if (volume != _appliedVolume) SetVolumeRamp(volume);
+            if (volume != _appliedVolume)
+            {
+                SetVolumeRamp(volume);
+            }
+
             var written = 0;
             while (written < buffer.Length)
             {
@@ -77,12 +118,23 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
                 // Rapid boundary crossings coalesce into the most recent request.
                 if (requestedPiece != _currentPiece && _outgoing is null)
                 {
-                    _outgoing = _current; _current = _streams[requestedPiece];
-                    _current.Restart(requestedMood!); _currentPiece = requestedPiece; _fadePosition = 0;
+                    _outgoing = _current;
+                    _current = _streams[requestedPiece];
+                    _current.Restart(requestedMood!);
+                    _currentPiece = requestedPiece;
+                    _fadePosition = 0;
                 }
-                if (requestedPiece == _currentPiece) _current!.SetMood(requestedMood!);
+                if (requestedPiece == _currentPiece)
+                {
+                    _current!.SetMood(requestedMood!);
+                }
+
                 var frames = Math.Min(MusicStream2D.BlockFrames, (buffer.Length - written) / 2);
-                if (_fadePosition < FadeFrames) frames = Math.Min(frames, FadeFrames - _fadePosition);
+                if (_fadePosition < FadeFrames)
+                {
+                    frames = Math.Min(frames, FadeFrames - _fadePosition);
+                }
+
                 var samples = frames * 2;
                 _current!.Read(_first.AsSpan(0, samples));
                 _outgoing?.Read(_second.AsSpan(0, samples));
@@ -96,10 +148,25 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
                         buffer[written + index] = (_first[index] * mix +
                             (_outgoing is null ? 0f : _second[index] * (1 - mix))) * _gain;
                     }
-                    if (_fadePosition < FadeFrames) _fadePosition++;
-                    if (_volumeRamp > 0) { _gain += _volumeStep; if (--_volumeRamp == 0) _gain = _appliedVolume; }
+                    if (_fadePosition < FadeFrames)
+                    {
+                        _fadePosition++;
+                    }
+
+                    if (_volumeRamp > 0)
+                    {
+                        _gain += _volumeStep;
+                        if (--_volumeRamp == 0)
+                        {
+                            _gain = _appliedVolume;
+                        }
+                    }
                 }
-                if (_fadePosition == FadeFrames) _outgoing = null;
+                if (_fadePosition == FadeFrames)
+                {
+                    _outgoing = null;
+                }
+
                 written += samples;
             }
             return buffer.Length;
@@ -110,12 +177,19 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
     {
         lock (_controlSync)
         {
-            if (_disposed) return;
+            if (_disposed)
+            {
+                return;
+            }
+
             _disposed = true;
         }
         lock (_renderSync)
         {
-            foreach (var stream in _streams.Values) stream.Dispose();
+            foreach (var stream in _streams.Values)
+            {
+                stream.Dispose();
+            }
         }
     }
 }

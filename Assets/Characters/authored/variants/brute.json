@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 2,
+  "version": 4,
   "id": "brute",
   "name": "Brute",
   "base": "person",
@@ -15,15 +15,35 @@
   "parts": {
     "body": {
       "material": {
-        "fill": "#ead6c1"
-      },
-      "paint": []
+        "fill": "#ead6c1",
+        "paint": []
+      }
     },
     "head": {
       "material": {
         "fill": "#ead6c1"
       },
       "face": "angry"
+    },
+    "left-hand": {
+      "material": {
+        "fill": "#ead6c1"
+      }
+    },
+    "right-hand": {
+      "material": {
+        "fill": "#ead6c1"
+      }
+    },
+    "left-foot": {
+      "material": {
+        "fill": "#ead6c1"
+      }
+    },
+    "right-foot": {
+      "material": {
+        "fill": "#ead6c1"
+      }
     }
   }
 }

@@ -3,12 +3,15 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Objects;
 using App2d.Core.Physics;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
+using App2d.Gameplay.World.Vegetation;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
@@ -22,9 +25,9 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     private readonly float _tileSize;
     private readonly TraversalMetrics2D _traversal;
-    private IReadOnlyList<MovingPlatformSpec2D> _movingPlatformSpecs;
     private readonly IReadOnlyList<WorldThingSpec2D> _worldThingSpecs;
-    private readonly List<MovingPlatform2D> _movingPlatforms = [];
+    private IReadOnlyList<ObjectPlacement2D> _objectPlacements;
+    private readonly List<AuthoredObject2D> _objects = [];
     private readonly List<SavePoint2D> _savePoints = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
@@ -35,35 +38,31 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private CombatantRegistry2D? _combatants;
     private bool _disposed;
 
-    public SideScrollerLevel2D(
-        TraversalMetrics2D traversal,
-        IChunkedTileMap2D tileMap,
-        IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null,
-        IReadOnlyList<WorldThingSpec2D>? worldThings = null,
-        IEnumerable<WorldZone2D>? zones = null,
-        IEnumerable<GiantTree2D>? giantTrees = null)
+    public SideScrollerLevel2D(TraversalMetrics2D traversal, IChunkedTileMap2D tileMap, IReadOnlyList<WorldThingSpec2D>? worldThings = null, IEnumerable<WorldZone2D>? zones = null, IEnumerable<GiantTree2D>? giantTrees = null, IReadOnlyList<ObjectPlacement2D>? objects = null)
     {
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
         _traversal = traversal;
         _tileSize = traversal.TileSize;
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(_tileSize);
-        _movingPlatformSpecs = movingPlatforms ?? [];
+        ArgGuard.Positive(_tileSize);
         _worldThingSpecs = worldThings ?? [];
+        _objectPlacements = ValidatePlacements(objects ?? []);
         TileMap = tileMap;
         Zones = zones is null ? [] : [.. zones];
         GiantTrees = giantTrees is null ? [] : ValidateTrees(giantTrees);
 
         // Only an editable map can change under us. A read-only map never raises the event.
         if (tileMap is IChangingTileMap2D editable)
+        {
             editable.ChunkChanged += OnMapChanged;
+        }
 
         StateGuard.ThrowIf(
             tileMap.TileSize != _tileSize,
             $"The loaded map's tile size ({tileMap.TileSize}) does not match " +
             $"the traversal metrics' tile size ({_tileSize}).");
-        var authoredSpawn = _worldThingSpecs.FirstOrDefault(
-            thing => thing.Enabled && thing.Kind == WorldThingKind2D.PlayerSpawn);
+        var authoredSpawn = _worldThingSpecs
+            .FirstOrDefault(thing => thing.Enabled && thing.Kind == WorldThingKind2D.PlayerSpawn);
         if (authoredSpawn is not null)
         {
             SpawnPoint = authoredSpawn.Position;
@@ -79,8 +78,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                 traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
         }
 
-        GoalThing = _worldThingSpecs.FirstOrDefault(
-            thing => thing.Enabled && thing.Kind == WorldThingKind2D.Goal);
+        GoalThing = _worldThingSpecs
+            .FirstOrDefault(thing => thing.Enabled && thing.Kind == WorldThingKind2D.Goal);
         GoalX = GoalThing?.Position.X ?? float.PositiveInfinity;
         GoalGroundY = GoalThing?.Position.Y ?? TileMap.Origin.Y;
     }
@@ -93,12 +92,11 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public WorldThingSpec2D? GoalThing { get; }
     public IReadOnlyList<WorldThingSpec2D> SavePointThings => [.. _worldThingSpecs.Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)];
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
-    public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;
+    public IReadOnlyList<AuthoredObject2D> Objects => _objects;
     public EnemySystem2D EnemySystem { get; } = new();
     public int ActiveChunkCount => _environment?.Streamer.ActiveChunkCount ?? 0;
     public int LoadedColliderCount => _environment?.Streamer.LoadedColliderCount ?? 0;
-    public static int MaximumActiveChunkCount =>
-        SideScrollerChunkStreamer2D.MaximumActiveChunkCount;
+    public static int MaximumActiveChunkCount => SideScrollerChunkStreamer2D.MaximumActiveChunkCount;
 
     public WorldThingSpec2D? FindSavePoint(long thingId) =>
         _worldThingSpecs.FirstOrDefault(
@@ -121,14 +119,18 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         foreach (var cell in cells)
         {
             if (!TileMap.GetTileKind(cell.X, cell.Y).IsSpikes())
+            {
                 continue;
+            }
 
             var tileMin = TileMap.GridGeometry.GetCellBounds(cell).Min;
             var spikeBounds = new Rect2D(
                 tileMin + new Vector2(horizontalInset, 0f),
                 tileMin + new Vector2(_tileSize - horizontalInset, _tileSize * 0.9f));
             if (!actorBounds.Intersects(spikeBounds))
+            {
                 continue;
+            }
 
             sourceX = tileMin.X + _tileSize / 2f;
             return true;
@@ -139,8 +141,12 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public void CreateSimulation(
-        CollisionSystem2D collision, PhysicsWorld2D physics, EntityIdAllocator2D ids,
-        uint worldLayer, uint playerLayer, uint enemyLayer)
+        CollisionSystem2D collision,
+        PhysicsWorld2D physics,
+        EntityIdAllocator2D ids,
+        uint worldLayer,
+        uint playerLayer,
+        uint enemyLayer)
     {
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
@@ -149,16 +155,17 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         var streamer = new SideScrollerChunkStreamer2D(physics, TileMap, worldLayer, playerLayer | enemyLayer);
         _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
-        CreateMovingPlatformsFromSpecs();
+        CreateObjects();
         CreateGiantTreeBranches();
         CreateSavePoints();
     }
 
     /// <summary>Per-tick dynamic observation.</summary>
-    public WorldState2D CaptureWorld() => new(
-        [.. _movingPlatforms.Select(p => p.CaptureState())],
-        [.. _savePoints.Select(p => p.CaptureState())])
-    { CutGrass = _cutGrass };
+    public WorldState2D CaptureWorld() => new([.. _savePoints.Select(p => p.CaptureState())])
+    {
+        CutGrass = _cutGrass,
+        Objects = [.. _objects.Select(o => o.CaptureState())]
+    };
 
     /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
     public LevelContent2D CaptureContent()
@@ -168,22 +175,25 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         if (_content is null || _contentKey != key)
         {
             _contentKey = key;
-            _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(),
-                [.. _movingPlatforms.Select(p => p.CaptureDefinition())],
-                [.. _savePoints.Select(p => p.CapturePlacement())],
-                GoalThing?.Position)
-            { Zones = Zones, GiantTrees = GiantTrees };
+            _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(), [.. _savePoints.Select(p => p.CapturePlacement())], GoalThing?.Position)
+            {
+                Objects = [.. _objects.Select(o => o.CaptureDefinition())],
+                Zones = Zones,
+                GiantTrees = GiantTrees
+            };
         }
         return _content;
     }
 
     public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Rect2D playerBounds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         foreach (var savePoint in _savePoints)
         {
             if (savePoint.Update(deltaSeconds, playerBounds))
+            {
                 return savePoint.Spec;
+            }
         }
 
         return null;
@@ -192,35 +202,54 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public void SetActiveSavePoint(long? thingId)
     {
         foreach (var savePoint in _savePoints)
+        {
             savePoint.SetActive(savePoint.Spec.ThingId == thingId);
+        }
     }
 
-    public void UpdateMovingPlatforms(float deltaSeconds)
+    public void UpdateWorldMotion(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        foreach (var platform in _movingPlatforms)
-            platform.Update(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
+        foreach (var item in _objects) item.Update(deltaSeconds);
     }
 
-    public void ReloadMovingPlatforms(IReadOnlyList<MovingPlatformSpec2D> specs)
+    /// <summary>Replaces every placed object; existing objects are disposed and content gets a new revision.</summary>
+    public void ReloadObjects(IReadOnlyList<ObjectPlacement2D> placements)
     {
-        ArgGuard.ThrowIfNull(specs);
+        ArgGuard.ThrowIfNull(placements);
+        ValidatePlacements(placements);
         _definitionRevision++;
-        foreach (var platform in _movingPlatforms)
-            platform.Dispose();
-        _movingPlatforms.Clear();
-        _movingPlatformSpecs = specs;
-        CreateMovingPlatformsFromSpecs();
+        foreach (var item in _objects) item.Dispose();
+        _objects.Clear();
+        _objectPlacements = placements;
+        CreateObjects();
+    }
+
+    private static IReadOnlyList<ObjectPlacement2D> ValidatePlacements(IReadOnlyList<ObjectPlacement2D> placements)
+    {
+        foreach (var placement in placements) placement.Validate();
+        ArgGuard.ThrowIf(placements.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != placements.Count, "Object placements need unique IDs.", nameof(placements));
+        return placements;
+    }
+
+    private void CreateObjects()
+    {
+        var environment = RequireEnvironment();
+        foreach (var placement in _objectPlacements)
+            _objects.Add(new(environment.Ids.Allocate(), placement, environment.Physics, environment.WorldLayer, environment.WorldLayer | environment.PlayerLayer | environment.EnemyLayer));
     }
 
     public void UpdateStreaming(Vector2 focus)
     {
-        ArgGuard.ThrowIfNotFinite(focus);
+        ArgGuard.Finite(focus);
         var environment = RequireEnvironment();
         var previousVersion = environment.Streamer.Version;
         environment.Streamer.Update(focus);
         if (environment.Streamer.Version != previousVersion)
+        {
             ForgetUnloadedGrass(environment.Streamer);
+        }
+
         EnemySystem.UpdateStreaming(environment.Streamer.IsChunkActive);
     }
 
@@ -230,7 +259,9 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public void FlushDirtyChunks()
     {
         if (_dirtyChunks.IsEmpty)
+        {
             return;
+        }
 
         var environment = RequireEnvironment();
         _dirtyChunks.Flush(environment.Streamer.Invalidate);
@@ -261,29 +292,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     private LevelEnvironment RequireEnvironment() =>
-        StateGuard.RequireNotNull(
-            _environment,
-            "Create the level simulation before using it.");
-
-    private void CreateMovingPlatformsFromSpecs()
-    {
-        var environment = RequireEnvironment();
-        foreach (var spec in _movingPlatformSpecs)
-        {
-            if (!spec.Enabled)
-                continue;
-            _movingPlatforms.Add(new MovingPlatform2D(
-                environment.Ids.Allocate(),
-                environment.Physics,
-                spec.Position,
-                spec.Travel,
-                spec.Size,
-                spec.Speed,
-                environment.WorldLayer,
-                environment.PlayerLayer | environment.EnemyLayer,
-                spec.ThingId, spec.ColorArgb));
-        }
-    }
+        StateGuard.RequireNotNull(_environment, "Create the level simulation before using it.");
 
     private void CreateSavePoints()
     {
@@ -291,9 +300,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         {
             if (spec.Enabled && spec.Kind == WorldThingKind2D.SavePoint)
             {
-                _savePoints.Add(new SavePoint2D(
-                    spec,
-                    _traversal.PlayerColliderSize.Y / 2f + _traversal.GroundProbeDistance));
+                _savePoints.Add(new SavePoint2D(spec, _traversal.PlayerColliderSize.Y / 2f + _traversal.GroundProbeDistance));
             }
         }
     }
@@ -308,12 +315,20 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
-        if (TileMap is IChangingTileMap2D editable) editable.ChunkChanged -= OnMapChanged;
-        foreach (var platform in _movingPlatforms) platform.Dispose();
-        _movingPlatforms.Clear();
+        if (TileMap is IChangingTileMap2D editable)
+        {
+            editable.ChunkChanged -= OnMapChanged;
+        }
+
         RemoveGiantTreeBranches();
+        foreach (var item in _objects) item.Dispose();
+        _objects.Clear();
         _environment?.Streamer.Dispose();
         foreach (var enemy in EnemySystem.Combatants)
         {
@@ -322,8 +337,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         }
     }
 
-    private float TileCenterX(int x) =>
-        TileMap.Origin.X + (x + 0.5f) * _tileSize;
+    private float TileCenterX(int x) => TileMap.Origin.X + (x + 0.5f) * _tileSize;
 
     private sealed record LevelEnvironment(
         CollisionSystem2D Collision,

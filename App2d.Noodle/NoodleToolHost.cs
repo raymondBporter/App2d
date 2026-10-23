@@ -3,7 +3,6 @@ using App2d.Core.Rendering;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
-using System.Numerics;
 
 namespace App2d.Noodle;
 
@@ -37,11 +36,20 @@ internal abstract class NoodleToolHost : IDisposable
         _timer.Tick += OnTick;
     }
 
-    public void Run() { _clock.Start(); _timer.Start(); Application.Run(Window); }
+    public void Run()
+    {
+        _clock.Start();
+        _timer.Start();
+        Application.Run(Window);
+    }
     protected abstract void DrawControls();
     protected abstract void DrawScene(Renderer2D renderer, FrameTime time);
-    protected virtual void HandleSceneInput(bool mouseCaptured, bool keyboardCaptured) { }
-    protected virtual void UpdateScene(FrameTime time, bool keyboardCaptured) { }
+    protected virtual void HandleSceneInput(bool mouseCaptured, bool keyboardCaptured)
+    {
+    }
+    protected virtual void UpdateScene(FrameTime time, bool keyboardCaptured)
+    {
+    }
     protected void Close() => _closeRequested = true;
     protected void AfterFrame(Action action) => _afterFrame = action;
 
@@ -51,14 +59,22 @@ internal abstract class NoodleToolHost : IDisposable
         _time = new FrameTime((float)Math.Clamp(now - _previousTime, 0, .05), now, _time.FrameNumber + 1);
         _previousTime = now;
         _surface.Refresh();
-        var action = _afterFrame; _afterFrame = null;
+        var action = _afterFrame;
+        _afterFrame = null;
         action?.Invoke();
-        if (_closeRequested) Window.Close();
+        if (_closeRequested)
+        {
+            Window.Close();
+        }
     }
 
     private void Render(GraphicsDevice device, int width, int height)
     {
-        if (_rendering) return;
+        if (_rendering)
+        {
+            return;
+        }
+
         _rendering = true;
         try
         {
@@ -77,17 +93,30 @@ internal abstract class NoodleToolHost : IDisposable
             }
             _renderer ??= new Renderer2D(Camera, device);
             _renderer.BeginFrame(canvasWidth, height, _time);
-            try { DrawScene(_renderer, _time); }
-            finally { _renderer.EndFrame(); }
+            try
+            {
+                DrawScene(_renderer, _time);
+            }
+            finally
+            {
+                _renderer.EndFrame();
+            }
             _gui.Render();
         }
-        finally { _rendering = false; }
+        finally
+        {
+            _rendering = false;
+        }
     }
 
     protected void ZoomAtPointer(float min = .1f, float max = 10f)
     {
         var io = ImGui.GetIO();
-        if (io.MouseWheel == 0) return;
+        if (io.MouseWheel == 0)
+        {
+            return;
+        }
+
         var before = Camera.DeviceToWorld(io.MousePos);
         Camera.Zoom = Math.Clamp(Camera.Zoom * MathF.Pow(1.1f, io.MouseWheel), min, max);
         Camera.Position += before - Camera.DeviceToWorld(io.MousePos);
@@ -102,14 +131,30 @@ internal abstract class NoodleToolHost : IDisposable
 
     private void OnShown(object? sender, EventArgs e) => _surface.Focus();
     private void OnClosed(object? sender, FormClosedEventArgs e) => _timer.Stop();
-    private void ReleaseDevice() { _gui?.Dispose(); _gui = null; _renderer?.Dispose(); _renderer = null; }
+    private void ReleaseDevice()
+    {
+        _gui?.Dispose();
+        _gui = null;
+        _renderer?.Dispose();
+        _renderer = null;
+    }
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
-        _timer.Stop(); _timer.Tick -= OnTick;
-        Window.Shown -= OnShown; Window.FormClosed -= OnClosed;
-        _surface.RenderFrame -= Render; _surface.DeviceDisposing -= ReleaseDevice;
-        ReleaseDevice(); _timer.Dispose(); _surface.Dispose(); Window.Dispose();
+        _timer.Stop();
+        _timer.Tick -= OnTick;
+        Window.Shown -= OnShown;
+        Window.FormClosed -= OnClosed;
+        _surface.RenderFrame -= Render;
+        _surface.DeviceDisposing -= ReleaseDevice;
+        ReleaseDevice();
+        _timer.Dispose();
+        _surface.Dispose();
+        Window.Dispose();
     }
 }

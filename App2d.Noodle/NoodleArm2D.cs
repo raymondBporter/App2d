@@ -1,10 +1,10 @@
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
@@ -14,12 +14,12 @@ namespace App2d.Noodle;
 /// </summary>
 internal sealed class NoodleArm2D
 {
-    private static readonly XnaColor DefaultSkinColor = new(241, 166, 105);
-    private static readonly XnaColor UpperWeightColor = new(255, 102, 116);
-    private static readonly XnaColor LowerWeightColor = new(70, 190, 255);
-    private static readonly XnaColor OutlineColor = new(255, 226, 183, 235);
-    private static readonly XnaColor BoneColor = new(248, 244, 221, 220);
-    private static readonly XnaColor JointColor = new(21, 29, 43, 255);
+    private static readonly Color4b DefaultSkinColor = new(241, 166, 105);
+    private static readonly Color4b UpperWeightColor = new(255, 102, 116);
+    private static readonly Color4b LowerWeightColor = new(70, 190, 255);
+    private static readonly Color4b OutlineColor = new(255, 226, 183, 235);
+    private static readonly Color4b BoneColor = new(248, 244, 221, 220);
+    private static readonly Color4b JointColor = new(21, 29, 43, 255);
 
     private readonly int _sectionCount;
     private readonly float _radius;
@@ -28,7 +28,7 @@ internal sealed class NoodleArm2D
     private readonly Vector2[] _lowerEdge;
     private readonly float[] _lowerWeights;
     private readonly int _defaultBendDirection;
-    private readonly XnaColor _skinColor;
+    private readonly Color4b _skinColor;
     private readonly WorldObject2D _shoulderCap;
     private readonly WorldObject2D _wristCap;
     private readonly SolidColorShader _skinShader;
@@ -42,7 +42,7 @@ internal sealed class NoodleArm2D
         float radius,
         Vector2? defaultTarget = null,
         int bendDirection = 1,
-        XnaColor? skinColor = null,
+        Color4b? skinColor = null,
         int sectionCount = 36)
     {
         Shoulder = shoulder;
@@ -59,8 +59,8 @@ internal sealed class NoodleArm2D
         _upperEdge = new Vector2[sectionCount + 1];
         _lowerEdge = new Vector2[sectionCount + 1];
         _lowerWeights = new float[sectionCount + 1];
-        _shoulderCap = new WorldObject2D(new Circle2D(radius), _skinShader);
-        _wristCap = new WorldObject2D(new Circle2D(radius * 0.72f), _skinShader);
+        _shoulderCap = new WorldObject2D(Circle2D.Builder.Create(radius), _skinShader);
+        _wristCap = new WorldObject2D(Circle2D.Builder.Create(radius * 0.72f), _skinShader);
         Target = DefaultTarget;
         RebuildSkin();
     }
@@ -76,7 +76,9 @@ internal sealed class NoodleArm2D
     public void SetTarget(Vector2 target)
     {
         if (!target.IsFinite())
+        {
             return;
+        }
 
         Target = target;
         RebuildSkin();
@@ -110,9 +112,13 @@ internal sealed class NoodleArm2D
             quad[3] = _upperEdge[section];
             var weight = (_lowerWeights[section] + _lowerWeights[section + 1]) * 0.5f;
             if (showWeights)
-                renderer.DrawWorldConvexPolygon(quad, XnaColor.Lerp(UpperWeightColor, LowerWeightColor, weight));
+            {
+                renderer.DrawWorldConvexPolygon(quad, Color4b.Lerp(UpperWeightColor, LowerWeightColor, weight));
+            }
             else
+            {
                 renderer.DrawWorldConvexPolygon(quad, _skinColor);
+            }
         }
 
         renderer.Draw(_wristCap);
@@ -147,7 +153,7 @@ internal sealed class NoodleArm2D
         {
             var distance = totalLength * section / _sectionCount;
             var restCenter = Shoulder + new Vector2(distance, 0f);
-            var lowerWeight = Interpolation.SmoothStep(
+            var lowerWeight = Progress.SmoothStep(
                 (distance - (UpperLength - blendRadius)) / (blendRadius * 2f));
             var upperPoint = Vector2.Transform(restCenter, upperSkin);
             var lowerPoint = Vector2.Transform(restCenter, lowerSkin);
@@ -164,9 +170,13 @@ internal sealed class NoodleArm2D
                 _ => _centers[section + 1] - _centers[section - 1]
             };
             if (tangent.LengthSquared() <= float.Epsilon)
+            {
                 tangent = Vector2.UnitX;
+            }
             else
+            {
                 tangent = Vector2.Normalize(tangent);
+            }
 
             var normal = new Vector2(-tangent.Y, tangent.X);
             var progress = section / (float)_sectionCount;

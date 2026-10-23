@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "player-sword-side-cut",
   "name": "Sword draw and side cut",
   "model": "person",
@@ -490,5 +490,9 @@
       "time": 0.13333336
     }
   ],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

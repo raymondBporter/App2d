@@ -16,20 +16,40 @@ public sealed class PropertyInspector
     public bool Draw(object? model)
     {
         Bind(model);
-        if (model is null) return false;
+        if (model is null)
+        {
+            return false;
+        }
+
         var changed = false;
         foreach (var group in Properties(model).GroupBy(p => p.Category).OrderBy(g => g.Key))
+        {
             Ui.Section(group.Key, () =>
             {
                 foreach (var property in group.OrderBy(p => p.DisplayName))
                 {
                     ImGui.PushID(property.Name);
-                    try { changed |= Field(model, property); }
-                    finally { ImGui.PopID(); }
-                    if (property.Description.Length > 0 && ImGui.IsItemHovered()) ImGui.SetTooltip(property.Description);
+                    try
+                    {
+                        changed |= Field(model, property);
+                    }
+                    finally
+                    {
+                        ImGui.PopID();
+                    }
+                    if (property.Description.Length > 0 && ImGui.IsItemHovered())
+                    {
+                        ImGui.SetTooltip(property.Description);
+                    }
                 }
             });
-        if (Error is { } error) Ui.Problem(error);
+        }
+
+        if (Error is { } error)
+        {
+            Ui.Problem(error);
+        }
+
         return changed;
     }
 
@@ -37,18 +57,38 @@ public sealed class PropertyInspector
     public bool Commit(object? model)
     {
         Bind(model);
-        if (model is null) return true;
+        if (model is null)
+        {
+            return true;
+        }
+
         _errors.Clear();
         foreach (var property in Properties(model).Where(p => !p.IsReadOnly && p.PropertyType == typeof(string)))
-            if (_text.TryGetValue(property.Name, out var text) && !Equals(property.GetValue(model) ?? "", text)) Set(model, property, text);
+        {
+            if (_text.TryGetValue(property.Name, out var text) && !Equals(property.GetValue(model) ?? "", text))
+            {
+                Set(model, property, text);
+            }
+        }
+
         return Error is null;
     }
 
-    public void Reset() { _model = null; _text.Clear(); _errors.Clear(); }
+    public void Reset()
+    {
+        _model = null;
+        _text.Clear();
+        _errors.Clear();
+    }
     private void Bind(object? model)
     {
-        if (ReferenceEquals(_model, model)) return;
-        Reset(); _model = model;
+        if (ReferenceEquals(_model, model))
+        {
+            return;
+        }
+
+        Reset();
+        _model = model;
     }
 
     private static IEnumerable<PropertyDescriptor> Properties(object model) =>
@@ -56,15 +96,35 @@ public sealed class PropertyInspector
 
     private bool Field(object model, PropertyDescriptor property)
     {
-        var value = property.GetValue(model); var label = property.DisplayName; var type = property.PropertyType;
-        if (property.IsReadOnly) { ImGui.TextUnformatted($"{label}: {value}"); return false; }
+        var value = property.GetValue(model);
+        var label = property.DisplayName;
+        var type = property.PropertyType;
+        if (property.IsReadOnly)
+        {
+            ImGui.TextUnformatted($"{label}: {value}");
+            return false;
+        }
         if (type == typeof(string))
         {
-            if (!_text.TryGetValue(property.Name, out var text)) text = value as string ?? "";
-            Ui.Text(label, ref text, 8192); _text[property.Name] = text;
-            if (!ImGui.IsItemDeactivatedAfterEdit()) return false;
-            if (!Equals(value ?? "", text)) return Set(model, property, text);
-            _errors.Remove(property.Name); return false;
+            if (!_text.TryGetValue(property.Name, out var text))
+            {
+                text = value as string ?? "";
+            }
+
+            Ui.Text(label, ref text, 8192);
+            _text[property.Name] = text;
+            if (!ImGui.IsItemDeactivatedAfterEdit())
+            {
+                return false;
+            }
+
+            if (!Equals(value ?? "", text))
+            {
+                return Set(model, property, text);
+            }
+
+            _errors.Remove(property.Name);
+            return false;
         }
         if (type == typeof(float))
         {
@@ -74,7 +134,8 @@ public sealed class PropertyInspector
         if (type == typeof(int))
         {
             var number = (int)value!;
-            ImGui.TextUnformatted(label); ImGui.SetNextItemWidth(-1);
+            ImGui.TextUnformatted(label);
+            ImGui.SetNextItemWidth(-1);
             return ImGui.DragInt("##value", ref number) && Set(model, property, number);
         }
         if (type == typeof(bool))
@@ -90,7 +151,8 @@ public sealed class PropertyInspector
         {
             var color = (Color)value!;
             var rgba = new Vector4(color.R, color.G, color.B, color.A) / 255;
-            ImGui.TextUnformatted(label); ImGui.SetNextItemWidth(-1);
+            ImGui.TextUnformatted(label);
+            ImGui.SetNextItemWidth(-1);
             return ImGui.ColorEdit4("##value", ref rgba) && Set(model, property,
                 Color.FromArgb(Byte(rgba.W), Byte(rgba.X), Byte(rgba.Y), Byte(rgba.Z)));
         }
@@ -101,10 +163,16 @@ public sealed class PropertyInspector
     private static int Byte(float value) => (int)MathF.Round(Math.Clamp(value, 0, 1) * 255);
     private bool Set(object model, PropertyDescriptor property, object value)
     {
-        try { property.SetValue(model, value); _errors.Remove(property.Name); return true; }
+        try
+        {
+            property.SetValue(model, value);
+            _errors.Remove(property.Name);
+            return true;
+        }
         catch (Exception exception) when (Root(exception) is ArgumentException or InvalidOperationException or FormatException)
         {
-            _errors[property.Name] = $"{property.DisplayName}: {Root(exception).Message}"; return false;
+            _errors[property.Name] = $"{property.DisplayName}: {Root(exception).Message}";
+            return false;
         }
     }
     private static Exception Root(Exception exception) => exception is TargetInvocationException { InnerException: { } inner } ? inner : exception;

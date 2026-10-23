@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "pterosaur-low-recovery",
   "name": "Pterosaur \u00B7 low-recovery",
   "model": "pterosaur",
@@ -124,5 +124,9 @@
   ],
   "contacts": [],
   "markers": [],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

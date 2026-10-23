@@ -14,7 +14,7 @@ namespace App2d.Core.Characters.Authored;
 /// </summary>
 public sealed record AssetSource
 {
-    public const string Puppet = "puppet", Library = "library", Spine = "spine";
+    public const string Puppet = "puppet", Library = "library";
     public string Kind { get; set; } = "";
     public string File { get; set; } = "";
     public string? Motion { get; set; }
@@ -23,10 +23,16 @@ public sealed record AssetSource
 
     public void Validate(string owner)
     {
-        EntityVocabulary.Require(Kind, [Puppet, Library, Spine], owner + " source kind");
-        if (string.IsNullOrWhiteSpace(File)) throw new InvalidDataException($"{owner} source: a file is required.");
+        EntityVocabulary.Require(Kind, [Puppet, Library], owner + " source kind");
+        if (string.IsNullOrWhiteSpace(File))
+        {
+            throw new InvalidDataException($"{owner} source: a file is required.");
+        }
+
         if (Points?.Any(p => p.Value is null || p.Value.Count == 0 || p.Value.Any(string.IsNullOrWhiteSpace)) == true)
+        {
             throw new InvalidDataException($"{owner} source: every mapped control needs at least one source point.");
+        }
     }
 }
 
@@ -53,12 +59,29 @@ public static partial class PuppetImport
     {
         puppet.Validate();
         var used = new HashSet<string>(taken, StringComparer.Ordinal);
-        if (!used.Add(modelId)) throw new InvalidDataException($"The id '{modelId}' is already used.");
+        if (!used.Add(modelId))
+        {
+            throw new InvalidDataException($"The id '{modelId}' is already used.");
+        }
 
         // Control IDs are model-local, so only clashes inside this model matter.
-        var ids = new Dictionary<string, string>(StringComparer.Ordinal); var localIds = new HashSet<string>(StringComparer.Ordinal) { CharacterModel.Locomotion, CharacterModel.Unit };
-        string Unique(string basis, HashSet<string> set) { var id = basis; for (var n = 2; !set.Add(id); n++) id = $"{basis}-{n}"; return id; }
-        foreach (var control in puppet.Controls) ids[control.Id] = Unique(Slug(control.Id, "control"), localIds);
+        var ids = new Dictionary<string, string>(StringComparer.Ordinal);
+        var localIds = new HashSet<string>(StringComparer.Ordinal) { CharacterModel.Locomotion, CharacterModel.Unit };
+        string Unique(string basis, HashSet<string> set)
+        {
+            var id = basis;
+            for (var n = 2; !set.Add(id); n++)
+            {
+                id = $"{basis}-{n}";
+            }
+
+            return id;
+        }
+        foreach (var control in puppet.Controls)
+        {
+            ids[control.Id] = Unique(Slug(control.Id, "control"), localIds);
+        }
+
         var parents = puppet.Bones.ToDictionary(b => ids[b.To], b => ids[b.From], StringComparer.Ordinal);
         var grounded = puppet.Motions.SelectMany(m => m.Contacts).Select(c => ids[c.End]).ToHashSet(StringComparer.Ordinal);
         var chainIds = new HashSet<string>(StringComparer.Ordinal);
@@ -105,7 +128,12 @@ public static partial class PuppetImport
         {
             var id = Unique(Slug($"{modelId}-{motion.Name}", modelId + "-motion"), used);
             var clip = PuppetMotionConverter.Convert(converted, motion, model, id, motion.Name, reach ?? CharacterModel.Unit);
-            clip.Source = new() { Kind = AssetSource.Puppet, File = sourcePath, Motion = motion.Name };
+            clip.Source = new()
+            {
+                Kind = AssetSource.Puppet,
+                File = sourcePath,
+                Motion = motion.Name
+            };
             clips.Add(clip);
         }
         return new(model, clips);
@@ -136,18 +164,37 @@ public static class LibraryImport
         {
             foreach (var (control, points) in new (string, string[])[]
             {
-                ("hips", ["leg_l_0", "leg_r_0"]), ("chest", ["arm_l_0", "arm_r_0"]), ("head", ["head"]),
-                ("right-shoulder", ["arm_l_0"]), ("right-elbow", ["arm_l_1"]), ("right-hand", ["arm_l_2"]),
-                ("left-shoulder", ["arm_r_0"]), ("left-elbow", ["arm_r_1"]), ("left-hand", ["arm_r_2"]),
-                ("right-hip", ["leg_l_0"]), ("right-knee", ["leg_l_1"]), ("right-foot", ["leg_l_2"]),
-                ("left-hip", ["leg_r_0"]), ("left-knee", ["leg_r_1"]), ("left-foot", ["leg_r_2"]),
+                ("hips", ["leg_l_0", "leg_r_0"]),
+                ("chest", ["arm_l_0", "arm_r_0"]),
+                ("head", ["head"]),
+                ("right-shoulder", ["arm_l_0"]),
+                ("right-elbow", ["arm_l_1"]),
+                ("right-hand", ["arm_l_2"]),
+                ("left-shoulder", ["arm_r_0"]),
+                ("left-elbow", ["arm_r_1"]),
+                ("left-hand", ["arm_r_2"]),
+                ("right-hip", ["leg_l_0"]),
+                ("right-knee", ["leg_l_1"]),
+                ("right-foot", ["leg_l_2"]),
+                ("left-hip", ["leg_r_0"]),
+                ("left-knee", ["leg_r_1"]),
+                ("left-foot", ["leg_r_2"]),
             })
             {
-                if (model.Controls.Any(c => c.Id == control) && points.All(names.Contains)) mapping[control] = [.. points];
+                if (model.Controls.Any(c => c.Id == control) && points.All(names.Contains))
+                {
+                    mapping[control] = [.. points];
+                }
             }
         }
         foreach (var control in model.Controls)
-            if (!mapping.ContainsKey(control.Id) && names.Contains(control.Id)) mapping[control.Id] = [control.Id];
+        {
+            if (!mapping.ContainsKey(control.Id) && names.Contains(control.Id))
+            {
+                mapping[control.Id] = [control.Id];
+            }
+        }
+
         return mapping;
     }
 
@@ -172,7 +219,8 @@ public static class LibraryImport
         public Sampler(PointLibrary library, string clipId, IReadOnlyDictionary<string, List<string>> points)
         {
             Clip = library.Clips.TryGetValue(clipId, out var clip) ? clip : throw new KeyNotFoundException($"Library '{library.Id}' has no clip '{clipId}'.");
-            _raw = new Vector3[library.PointNames.Count]; _units = Units(library);
+            _raw = new Vector3[library.PointNames.Count];
+            _units = Units(library);
             var index = library.PointNames.Select((n, i) => (n, i)).ToDictionary(p => p.n, p => p.i, StringComparer.Ordinal);
             _indices = points.ToDictionary(p => p.Key, p => p.Value.Select(n => index.TryGetValue(n, out var i) ? i : throw new InvalidDataException($"Library '{library.Id}' has no point '{n}' (mapped to '{p.Key}').")).ToArray(), StringComparer.Ordinal);
         }
@@ -188,9 +236,18 @@ public static class LibraryImport
     {
         var resolved = ResolvedModel.From(model);
         if (model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
+        {
             throw new InvalidDataException("Point-library retargeting cannot infer bone-frame rotations. Import a point rig or author the bone constraint's target in Animate.");
+        }
+
         foreach (var control in points.Keys)
-            if (!resolved.Controls.ContainsKey(control)) throw new InvalidDataException($"The mapping names '{control}', which model '{model.Id}' does not have.");
+        {
+            if (!resolved.Controls.ContainsKey(control))
+            {
+                throw new InvalidDataException($"The mapping names '{control}', which model '{model.Id}' does not have.");
+            }
+        }
+
         restClip ??= DefaultRest(library, clipId);
         var source = new Sampler(library, clipId, points);
         var reference = new Sampler(library, restClip, points).At(0);
@@ -214,15 +271,36 @@ public static class LibraryImport
         // The clip's reference measures are the model's own, so a model-scaled offset is already in reference units.
         Vector3? Offset(IReadOnlyDictionary<string, Vector3> now, string target, string? frame, string scale)
         {
-            if (!now.ContainsKey(target) || frame is not null && !now.ContainsKey(frame)) return null;
+            if (!now.ContainsKey(target) || frame is not null && !now.ContainsKey(frame))
+            {
+                return null;
+            }
+
             var current = now[target] - (frame is null ? Vector3.Zero : now[frame]);
             var rest = reference[target] - (frame is null ? Vector3.Zero : reference[frame]);
             return (current - rest) * Ratio(scale);
         }
         var tracks = new List<ClipTrack>();
         foreach (var control in resolved.Order.Where(c => !solved.Contains(c.Id)))
-            tracks.Add(new() { Kind = MotionClip.TranslateKind, Target = control.Id, Keys = [] });
-        foreach (var chain in model.IkChains) tracks.Add(new() { Kind = MotionClip.TargetKind, Target = chain.Id, Keys = [] });
+        {
+            tracks.Add(new()
+            {
+                Kind = MotionClip.TranslateKind,
+                Target = control.Id,
+                Keys = []
+            });
+        }
+
+        foreach (var chain in model.IkChains)
+        {
+            tracks.Add(new()
+            {
+                Kind = MotionClip.TargetKind,
+                Target = chain.Id,
+                Keys = []
+            });
+        }
+
         var count = (int)MathF.Floor(duration * Rate + 1e-4f);
         var times = Enumerable.Range(0, count + 1).Select(i => MathF.Min(duration, i / (float)Rate)).Append(duration).Distinct().ToArray();
         foreach (var time in times)
@@ -241,11 +319,19 @@ public static class LibraryImport
                     var control = resolved.Controls[track.Target];
                     delta = Offset(now, control.Id, control.Parent, control.Scale);
                 }
-                if (delta is { } d) track.Keys.Add(new() { Time = time, X = d.X, Y = d.Y, Z = d.Z });
+                if (delta is { } d)
+                {
+                    track.Keys.Add(new()
+                    {
+                        Time = time,
+                        Value = new(d.X, d.Y, d.Z)
+                    });
+                }
             }
         }
-        clip.Tracks = [.. tracks.Where(t => t.Keys.Any(k => MathF.Abs(k.X) > Epsilon || MathF.Abs(k.Y) > Epsilon || MathF.Abs(k.Z) > Epsilon))];
-        clip.Validate(resolved); return clip;
+        clip.Tracks = [.. tracks.Where(t => t.Keys.Any(k => MathF.Abs(k.Value.X) > Epsilon || MathF.Abs(k.Value.Y) > Epsilon || MathF.Abs(k.Value.Z) > Epsilon))];
+        clip.Validate(resolved);
+        return clip;
     }
 
     /// <summary>
@@ -258,13 +344,20 @@ public static class LibraryImport
         foreach (var measure in model.Base.Measures.Where(m => m.Path.All(reference.ContainsKey)))
         {
             var length = measure.Path.Zip(measure.Path.Skip(1)).Sum(p => Vector2.Distance(reference[p.First].XY, reference[p.Second].XY));
-            if (length > .001f) ratios[measure.Id] = model.Measures[measure.Id] / length;
+            if (length > .001f)
+            {
+                ratios[measure.Id] = model.Measures[measure.Id] / length;
+            }
         }
         var overall = ratios.Count > 0 ? ratios.Values.Average() : Height(model.Rest.Values) / MathF.Max(.001f, Height(reference.Values));
         return (ratios, overall);
     }
 
-    private static float Height(IEnumerable<Vector3> points) { var ys = points.Select(p => p.Y).ToArray(); return ys.Length == 0 ? 1 : ys.Max() - ys.Min(); }
+    private static float Height(IEnumerable<Vector3> points)
+    {
+        var ys = points.Select(p => p.Y).ToArray();
+        return ys.Length == 0 ? 1 : ys.Max() - ys.Min();
+    }
 }
 
 /// <summary>The imported point libraries listed in the characters catalog, loaded on first use and kept read-only.</summary>
@@ -273,7 +366,11 @@ public sealed class SourceLibraries
     public sealed record Entry(string Id, string Label, string Anatomy, string Path, int ClipCount);
     private readonly Dictionary<string, PointLibrary> _loaded = new(StringComparer.Ordinal);
 
-    private SourceLibraries(string root, IReadOnlyList<Entry> entries) { Root = root; Entries = entries; }
+    private SourceLibraries(string root, IReadOnlyList<Entry> entries)
+    {
+        Root = root;
+        Entries = entries;
+    }
     public string Root { get; }
     public IReadOnlyList<Entry> Entries { get; }
 
@@ -281,7 +378,11 @@ public sealed class SourceLibraries
     public static SourceLibraries Open(string charactersRoot)
     {
         var path = Path.Combine(charactersRoot, "catalog.json");
-        if (!File.Exists(path)) return new(charactersRoot, []);
+        if (!File.Exists(path))
+        {
+            return new(charactersRoot, []);
+        }
+
         using var catalog = JsonDocument.Parse(File.ReadAllText(path));
         var entries = catalog.RootElement.GetProperty("libraries").EnumerateArray().Select(e => new Entry(
             e.GetProperty("id").GetString()!, e.GetProperty("label").GetString()!, e.GetProperty("anatomy").GetString()!,
@@ -291,9 +392,17 @@ public sealed class SourceLibraries
 
     public bool TryGet(string id, [NotNullWhen(true)] out PointLibrary? library)
     {
-        if (_loaded.TryGetValue(id, out library)) return true;
+        if (_loaded.TryGetValue(id, out library))
+        {
+            return true;
+        }
+
         var entry = Entries.FirstOrDefault(e => e.Id == id);
-        if (entry is null) return false;
+        if (entry is null)
+        {
+            return false;
+        }
+
         _loaded[id] = library = PointLibrary.Load(Path.Combine(Root, entry.Path));
         return true;
     }

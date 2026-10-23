@@ -9,8 +9,15 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../App2d.Core/App2d.Core.csproj" />
+    <ProjectReference Include="../App2d.CharacterSeeds/App2d.CharacterSeeds.csproj" />
     <ProjectReference Include="../App2d/App2d.csproj" />
     <ProjectReference Include="../App2d.EditorUi/App2d.EditorUi.csproj" />
     <None Include="../Assets/Characters/**" Exclude="../Assets/Characters/provenance/**" Link="Assets/Characters/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Philips.CodeAnalysis.DuplicateCodeAnalyzer" Version="2.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

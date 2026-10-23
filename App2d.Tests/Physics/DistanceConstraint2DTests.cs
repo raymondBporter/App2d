@@ -1,8 +1,8 @@
-using App2d.Core;
 using App2d.Core.Constraints;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Physics;
@@ -68,12 +68,12 @@ public sealed class DistanceConstraint2DTests
         Assert.Equal(new Vector2(10f, 0f), second.LinearVelocity);
     }
 
-    private static (PhysicsBody2D First, PhysicsBody2D Second) CreateBodies(float firstX, float secondX)
+    private static (RigidBody2D First, RigidBody2D Second) CreateBodies(float firstX, float secondX)
     {
         var world = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var firstObject = new SpatialObject2D(new Circle2D(0.5f));
+        var firstObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
         firstObject.Transform.Position = new Vector2(firstX, 0f);
-        var secondObject = new SpatialObject2D(new Circle2D(0.5f));
+        var secondObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
         secondObject.Transform.Position = new Vector2(secondX, 0f);
         return (
             world.AddBody(firstObject, BodyMotionType2D.Static),

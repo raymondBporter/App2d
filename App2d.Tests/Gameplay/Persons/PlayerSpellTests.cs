@@ -1,18 +1,19 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Player;
 using App2d.Contracts.Simulation;
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Persons;
@@ -25,7 +26,10 @@ public sealed class PlayerSpellTests
     [Fact]
     public void EnergyRechargesWithTimeClampsAtMaximumAndDoesNotBankAtFull()
     {
-        using var f = new Fixture(new() { StartingEnergy = 0 });
+        using var f = new Fixture(new()
+        {
+            StartingEnergy = 0
+        });
         f.Steps(119); // Includes the fixture's initial settling tick: one second total.
         Assert.Equal(10, f.Spells.Energy);
         f.Steps(240);
@@ -43,7 +47,10 @@ public sealed class PlayerSpellTests
     [Fact]
     public void RechargeContinuesDuringHealingAndCasting()
     {
-        using var f = new Fixture(new() { StartingEnergy = 30 });
+        using var f = new Fixture(new()
+        {
+            StartingEnergy = 30
+        });
         f.Steps(30, Cast);
         Assert.Equal(2, f.Spells.Energy);
         f.Steps(329);
@@ -57,9 +64,18 @@ public sealed class PlayerSpellTests
     [Fact]
     public void FractionalRechargeSurvivesPauseAndResetsOnRespawn()
     {
-        using var f = new Fixture(new() { StartingEnergy = 0, EnergyPerSecond = 7 });
-        using var unpaused = new Fixture(new() { StartingEnergy = 0, EnergyPerSecond = 7 });
-        f.Steps(50); unpaused.Steps(50);
+        using var f = new Fixture(new()
+        {
+            StartingEnergy = 0,
+            EnergyPerSecond = 7
+        });
+        using var unpaused = new Fixture(new()
+        {
+            StartingEnergy = 0,
+            EnergyPerSecond = 7
+        });
+        f.Steps(50);
+        unpaused.Steps(50);
         f.Session.SetPaused(true);
         Assert.Equal(2, f.Spells.Energy);
         f.Session.SetPaused(false);
@@ -88,20 +104,29 @@ public sealed class PlayerSpellTests
         f.Steps(60, Cast);
         Assert.Single(f.Events.OfType<GunFired2D>());
         f.Step(default);
-        f.Step(new() { PrimaryHeld = true });
+        f.Step(new()
+        {
+            PrimaryHeld = true
+        });
         Assert.True(f.Arsenal.IsMeleeAttackActive);
     }
 
     [Fact]
     public void ReleasingEarlyDoesNotSpendEnergyAndEmptyMeterCannotFire()
     {
-        using var f = new Fixture(new() { StartingEnergy = 30, EnergyPerSecond = 0 });
-        f.Steps(15, Cast); f.Step(default);
+        using var f = new Fixture(new()
+        {
+            StartingEnergy = 30,
+            EnergyPerSecond = 0
+        });
+        f.Steps(15, Cast);
+        f.Step(default);
         Assert.Equal(30, f.Spells.Energy);
         Assert.Empty(f.Events.OfType<GunFired2D>());
         f.Steps(30, Cast);
         Assert.Equal(0, f.Spells.Energy);
-        f.Steps(30); f.Steps(60, Cast);
+        f.Steps(30);
+        f.Steps(60, Cast);
         Assert.Single(f.Events.OfType<GunFired2D>());
         Assert.False(f.Player.CaptureState().IsChargingPrimary);
     }
@@ -147,9 +172,21 @@ public sealed class PlayerSpellTests
             "dash" => Heal with { DashHeld = true },
             _ => Heal
         };
-        if (reason == "damage") Assert.True(f.Player.TakeDamage(1, Vector2.Zero));
-        if (reason == "pause") { f.Session.SetPaused(true); f.Session.SetPaused(false); }
-        if (reason == "floor") f.Floor.IsCollider = false;
+        if (reason == "damage")
+        {
+            Assert.True(f.Player.TakeDamage(1, Vector2.Zero));
+        }
+
+        if (reason == "pause")
+        {
+            f.Session.SetPaused(true);
+            f.Session.SetPaused(false);
+        }
+        if (reason == "floor")
+        {
+            f.Floor.IsCollider = false;
+        }
+
         f.Step(command);
         Assert.False(f.Spells.IsHealing);
         Assert.Equal(90, f.Spells.Energy);
@@ -164,26 +201,46 @@ public sealed class PlayerSpellTests
     [Fact]
     public void ProjectileAndMeleeHitsDoNotRestoreEnergy()
     {
-        using var f = new Fixture(new() { StartingEnergy = 30, EnergyPerSecond = 0 });
+        using var f = new Fixture(new()
+        {
+            StartingEnergy = 30,
+            EnergyPerSecond = 0
+        });
         var target = f.Target(new(65, 0));
         f.Steps(30, Cast);
         Assert.True(target.Health.Current < target.Health.Maximum);
         Assert.Equal(0, f.Spells.Energy); // Projectile damage cannot refund itself.
         f.Steps(150);
-        f.Step(new() { PrimaryHeld = true }); f.Steps(35);
+        f.Step(new()
+        {
+            PrimaryHeld = true
+        });
+        f.Steps(35);
         Assert.Equal(26, target.Health.Current); // Both the projectile and melee dealt damage.
         Assert.Equal(0, f.Spells.Energy);
         // Another attack into invulnerability makes contact but earns nothing.
-        f.Steps(10); f.Step(new() { PrimaryHeld = true }); f.Steps(35);
+        f.Steps(10);
+        f.Step(new()
+        {
+            PrimaryHeld = true
+        });
+        f.Steps(35);
         Assert.Equal(0, f.Spells.Energy);
     }
 
     [Fact]
     public void CustomTimingAndSharedEnergyLimitBothSpells()
     {
-        using var f = new Fixture(new() { ShotChargeSeconds = .1f, HealSeconds = .5f, StartingEnergy = 60, EnergyPerSecond = 0 });
+        using var f = new Fixture(new()
+        {
+            ShotChargeSeconds = .1f,
+            HealSeconds = .5f,
+            StartingEnergy = 60,
+            EnergyPerSecond = 0
+        });
         f.Player.Health.Damage(12);
-        f.Steps(12, Cast); f.Steps(25);
+        f.Steps(12, Cast);
+        f.Steps(25);
         Assert.Equal(30, f.Spells.Energy);
         f.Steps(60, Heal);
         Assert.Equal(24, f.Player.Health.Current);
@@ -203,7 +260,7 @@ public sealed class PlayerSpellTests
         public Person2D Player { get; }
         public PersonArsenal2D Arsenal { get; }
         public SideScrollerSession2D Session { get; }
-        public PhysicsBody2D Floor { get; }
+        public RigidBody2D Floor { get; }
         public List<WeaponEvent2D> Events { get; } = [];
         public SpellState2D Spells => Player.CaptureState().Spells;
 
@@ -211,12 +268,16 @@ public sealed class PlayerSpellTests
         {
             Player = new(_ids.Allocate(), Physics.CollisionSystem, Physics, _metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player, 30);
             _registry.Register(Player);
-            Floor = Physics.AddBody(new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(1000, 20))), BodyMotionType2D.Static);
+            Floor = Physics.AddBody(new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1000, 20)), BodyMotionType2D.Static);
             Floor.WorldObject.Transform.Position = new(0, Player.WorldObject.WorldBounds.Bottom - 10);
-            Floor.CollisionLayer = 1; Floor.CollisionMask = 2;
+            Floor.CollisionLayer = 1;
+            Floor.CollisionMask = 2;
             var combat = new CombatSystem2D(Physics.CollisionSystem, _registry);
             Arsenal = new(_ids, Player.Body, _metrics.GunMuzzleOffset, Physics.CollisionSystem, 1, 4,
-                CombatFaction2D.Player, combat, health: Player.Health, spells: tuning ?? new() { EnergyPerSecond = 0 });
+                CombatFaction2D.Player, combat, health: Player.Health, spells: tuning ?? new()
+                {
+                    EnergyPerSecond = 0
+                });
             Player.AttachActions(Arsenal);
             Arsenal.WeaponOccurred += Events.Add;
             Session = new(Physics, Player, Arsenal, new EmptyWorld(), new(Vector2.Zero, 30), combat);
@@ -234,10 +295,20 @@ public sealed class PlayerSpellTests
 
         public SessionFrame2D Step(PersonCommand2D command)
         {
-            foreach (var target in _targets) target.BeginFrame(SideScrollerSession2D.FixedDeltaSeconds);
-            return Session.Advance(new PlayerInput2D(Player.Id, Session.Tick + 1, Session.Tick + 1, command));
+            foreach (var target in _targets)
+            {
+                target.BeginFrame(SideScrollerSession2D.FixedDeltaSeconds);
+            }
+
+            return Session.Advance(new PlayerInput2D(Player.Id, command));
         }
-        public void Steps(int count, PersonCommand2D command = default) { for (var i = 0; i < count; i++) Step(command); }
+        public void Steps(int count, PersonCommand2D command = default)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                Step(command);
+            }
+        }
         public void Dispose() => Session.Dispose();
     }
 
@@ -245,12 +316,24 @@ public sealed class PlayerSpellTests
     {
         public Rect2D Bounds => new(new(-10000), new(10000));
         public float GoalX => 9000;
-        public void UpdateStreaming(Vector2 position) { }
-        public void UpdateMovingPlatforms(float dt) { }
-        public void UpdateEnemies(float dt, Vector2 position) { }
-        public void SyncEnemiesAfterPhysics() { }
-        public void ResolveDamage(Person2D player) { }
+        public void UpdateStreaming(Vector2 position)
+        {
+        }
+        public void UpdateWorldMotion(float dt)
+        {
+        }
+        public void UpdateEnemies(float dt, Vector2 position)
+        {
+        }
+        public void SyncEnemiesAfterPhysics()
+        {
+        }
+        public void ResolveDamage(Person2D player)
+        {
+        }
         public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => null;
-        public void SetActiveSavePoint(long? id) { }
+        public void SetActiveSavePoint(long? id)
+        {
+        }
     }
 }

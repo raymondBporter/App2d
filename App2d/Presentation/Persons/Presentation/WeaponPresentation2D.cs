@@ -1,6 +1,7 @@
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Animation;
+using App2d.Core.Audio;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
@@ -14,7 +15,7 @@ namespace App2d.Presentation.Persons.Presentation;
 public sealed class WeaponPresentation2D : IDisposable
 {
     private readonly Scene2D _scene;
-    private readonly ISoundEffectSink2D _sounds;
+    private readonly ISoundEffectSink2D<SoundEffect2D> _sounds;
     private readonly WorldObject2D _glow;
     private readonly WorldObject2D _flash;
     private readonly AnimationPlayer2D<Texture2D> _chargeAnimation = new();
@@ -33,7 +34,7 @@ public sealed class WeaponPresentation2D : IDisposable
     private WeaponState2D _state = WeaponState2D.Empty;
     private EquipmentKind2D _equipment = EquipmentKind2D.Sword;
 
-    public WeaponPresentation2D(Scene2D scene, TextureCache2D textures, ISoundEffectSink2D sounds)
+    public WeaponPresentation2D(Scene2D scene, TextureCache2D textures, ISoundEffectSink2D<SoundEffect2D> sounds)
     {
         _scene = scene;
         _sounds = sounds;
@@ -67,7 +68,7 @@ public sealed class WeaponPresentation2D : IDisposable
     public void Update(WeaponState2D state, EquipmentKind2D equipment,
         IEnumerable<WeaponEvent2D> occurrences, float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         _state = state;
         _equipment = equipment;
         _flashSeconds = Math.Max(0f, _flashSeconds - deltaSeconds);
@@ -76,7 +77,9 @@ public sealed class WeaponPresentation2D : IDisposable
         {
             switch (occurrence)
             {
-                case ChargeStarted2D started: StartCharge(started.Position); break;
+                case ChargeStarted2D started:
+                    StartCharge(started.Position);
+                    break;
                 case ChargeCancelled2D cancelled:
                     StopCharge();
                     _cancelProgress = cancelled.Progress;
@@ -102,7 +105,11 @@ public sealed class WeaponPresentation2D : IDisposable
         // Ongoing effects follow state, including after pause or a newly attached view.
         if (state.IsCharging)
         {
-            if (!_charging) StartCharge(state.MuzzlePosition);
+            if (!_charging)
+            {
+                StartCharge(state.MuzzlePosition);
+            }
+
             _chargeVoice.SetPosition(state.MuzzlePosition);
             _chargeAnimation.Update(deltaSeconds);
             ((SpriteShader2D)_glow.Shader).Texture = _chargeAnimation.CurrentFrame;
@@ -121,14 +128,28 @@ public sealed class WeaponPresentation2D : IDisposable
 
         _activeIds.Clear();
         if (!state.Projectiles.IsDefault)
-            foreach (var projectile in state.Projectiles) _activeIds.Add(projectile.Id);
+        {
+            foreach (var projectile in state.Projectiles)
+            {
+                _activeIds.Add(projectile.Id);
+            }
+        }
+
         foreach (var bolt in _bolts)
         {
-            if (_activeIds.Contains(bolt.Id)) continue;
+            if (_activeIds.Contains(bolt.Id))
+            {
+                continue;
+            }
+
             bolt.Visual.IsVisible = false;
             bolt.Trail.Fade(deltaSeconds);
         }
-        if (state.Projectiles.IsDefault) return;
+        if (state.Projectiles.IsDefault)
+        {
+            return;
+        }
+
         foreach (var projectile in state.Projectiles)
         {
             var bolt = _bolts.Find(b => b.Id == projectile.Id);
@@ -154,8 +175,11 @@ public sealed class WeaponPresentation2D : IDisposable
 
     private WorldObject2D CreateVisual(Texture2D texture, Vector2 size)
     {
-        var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(size), new SpriteShader2D(texture))
-        { IsVisible = false, ZIndex = 2 };
+        var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size), new SpriteShader2D(texture))
+        {
+            IsVisible = false,
+            ZIndex = 2
+        };
         _scene.Add(visual);
         return visual;
     }

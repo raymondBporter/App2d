@@ -6,7 +6,7 @@ public sealed class Health2D
 {
     public Health2D(int maximum)
     {
-        ArgGuard.ThrowIfNotPositive(maximum);
+        ArgGuard.Positive(maximum);
 
         Maximum = maximum;
         Current = maximum;
@@ -18,8 +18,12 @@ public sealed class Health2D
 
     public int Heal(int amount)
     {
-        ArgGuard.ThrowIfNotPositive(amount);
-        if (!IsAlive) return 0;
+        ArgGuard.Positive(amount);
+        if (!IsAlive)
+        {
+            return 0;
+        }
+
         var restored = Math.Min(amount, Maximum - Current);
         Current += restored;
         return restored;
@@ -27,9 +31,11 @@ public sealed class Health2D
 
     public bool Damage(int amount)
     {
-        ArgGuard.ThrowIfNotPositive(amount);
+        ArgGuard.Positive(amount);
         if (!IsAlive)
+        {
             return false;
+        }
 
         Current = Math.Max(0, Current - amount);
         return true;
@@ -39,7 +45,7 @@ public sealed class Health2D
 
     public void Reset(int current)
     {
-        ArgGuard.ThrowIfNotInClosedRange(current, 1, Maximum);
+        ArgGuard.InRange(current, 1, Maximum);
 
         Current = current;
     }

@@ -1,17 +1,19 @@
-using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
+using App2d.Gameplay.World.Vegetation;
 using System.Collections.Immutable;
+using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
 public sealed partial class SideScrollerLevel2D
 {
-    private readonly List<PhysicsBody2D> _giantTreeBranches = [];
+    private readonly List<RigidBody2D> _giantTreeBranches = [];
     public ImmutableArray<GiantTree2D> GiantTrees { get; private set; } = [];
-    public IReadOnlyList<PhysicsBody2D> GiantTreeBranches => _giantTreeBranches;
+    public IReadOnlyList<RigidBody2D> GiantTreeBranches => _giantTreeBranches;
 
     /// <summary>Replaces the authored trees and their one-way platforms, publishing new level content.</summary>
     public void ReloadGiantTrees(IEnumerable<GiantTree2D> trees)
@@ -39,12 +41,12 @@ public sealed partial class SideScrollerLevel2D
         {
             foreach (var branch in tree.Branches)
             {
-                var platform = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(branch.Bounds.Size));
+                var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(branch.Bounds.Size));
                 platform.Transform.Position = branch.Bounds.Center;
                 var body = environment.Physics.AddBody(platform, BodyMotionType2D.Static);
                 body.CollisionLayer = environment.WorldLayer;
                 body.CollisionMask = environment.PlayerLayer | environment.EnemyLayer;
-                body.IsOneWayPlatform = true;
+                PlatformCollisionRules2D.Attach(environment.Physics).Surface(body).OneWaySurfaceNormal = Vector2.UnitY;
                 body.Restitution = 0;
                 _giantTreeBranches.Add(body);
             }
@@ -53,7 +55,11 @@ public sealed partial class SideScrollerLevel2D
 
     private void RemoveGiantTreeBranches()
     {
-        foreach (var body in _giantTreeBranches) _environment!.Physics.RemoveBody(body);
+        foreach (var body in _giantTreeBranches)
+        {
+            _environment!.Physics.RemoveBody(body);
+        }
+
         _giantTreeBranches.Clear();
     }
 }

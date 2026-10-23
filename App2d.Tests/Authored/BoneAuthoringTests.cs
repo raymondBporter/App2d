@@ -1,7 +1,7 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Mathematics;
-using App2d.Core.Rendering.Characters;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -14,7 +14,7 @@ public sealed class BoneAuthoringTests
         var model = ModelAuthoring.Empty("bones", "Bones");
         var root = ModelAuthoring.AddBone(model, null, "root");
         var child = ModelAuthoring.AddBone(model, root.Id, "child");
-        var shape = ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, child.Id);
+        var shape = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), child.Id);
         shape.Angle = .15f;
         ModelAuthoring.RotateRestBone(model, root.Id, .3f);
 
@@ -41,7 +41,7 @@ public sealed class BoneAuthoringTests
         var pose = PoseEvaluator.Sample(resolved, clip, 1);
         Near(new(.5f * MathF.Cos(.5f), .5f * MathF.Sin(.5f)), pose.World(child.Id));
         Assert.Equal(.4f, pose.Angles[child.Id], 4);
-        var frame = PartGeometry.FrameOf(shape, pose.World, id => pose.Angles[id]);
+        var frame = PartAttachment2D.FrameOf(shape, pose.World, id => pose.Angles[id]);
         var expected = new Vector2(pose.World(child.Id).X, pose.World(child.Id).Y) + Rotation2D.Apply(new(.25f, 0), .4f);
         Near(expected, frame.Origin);
         Near(Rotation2D.Apply(Vector2.UnitX, .55f), new Vector3(frame.Right, 0));
@@ -56,7 +56,7 @@ public sealed class BoneAuthoringTests
         var model = ModelAuthoring.Empty("bones", "Bones");
         var bone = ModelAuthoring.AddBone(model, null, "root");
         var other = ModelAuthoring.AddBone(model, bone.Id, "child");
-        var shape = ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, bone.Id);
+        var shape = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), bone.Id);
         shape.B = other.Id;
         Assert.Throws<InvalidDataException>(model.Validate);
     }

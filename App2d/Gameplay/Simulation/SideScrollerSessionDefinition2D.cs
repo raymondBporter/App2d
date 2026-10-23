@@ -1,10 +1,11 @@
 using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
+using App2d.Core.Objects;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.World;
+using App2d.Gameplay.World.Vegetation;
 
 namespace App2d.Gameplay.Simulation;
 
@@ -24,14 +25,11 @@ public readonly record struct SavedProgress2D(long SavePointId, int HitPoints);
 /// in the same order get identical actors, identities, and physics; nothing here is a live
 /// simulation object.
 /// </summary>
-public sealed record SideScrollerSessionDefinition2D(
-    TraversalMetrics2D Traversal,
-    IChunkedTileMap2D TileMap,
-    IReadOnlyList<MovingPlatformSpec2D> MovingPlatforms,
-    IReadOnlyList<WorldThingSpec2D> WorldThings)
+public sealed record SideScrollerSessionDefinition2D(TraversalMetrics2D Traversal, IChunkedTileMap2D TileMap, IReadOnlyList<WorldThingSpec2D> WorldThings)
 {
     /// <summary>Authored entities; placements they cover spawn from these, otherwise the built-in sprite enemies.</summary>
     public AuthoredCatalog? AuthoredCharacters { get; init; }
+    public IReadOnlyList<ObjectPlacement2D> Objects { get; init; } = [];
     /// <summary>Rectangular regions shared by simulation and presentation consumers.</summary>
     public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; init; } = [];
     public System.Collections.Immutable.ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
@@ -46,16 +44,22 @@ public sealed record SideScrollerSessionDefinition2D(
     {
         ArgGuard.ThrowIfNull(Traversal);
         ArgGuard.ThrowIfNull(TileMap);
-        ArgGuard.ThrowIfNull(MovingPlatforms);
         ArgGuard.ThrowIfNull(WorldThings);
+        ArgGuard.ThrowIfNull(Objects);
+        foreach (var placement in Objects) placement.Validate();
+        ArgGuard.ThrowIf(Objects.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != Objects.Count,
+            "Object placements need unique IDs.", nameof(Objects));
         ArgGuard.ThrowIf(GiantTrees.IsDefault || GiantTrees.Any(tree => tree is null), "Trees must be initialized and non-null.", nameof(GiantTrees));
         if (Zones.IsDefault || Zones.Any(z => z is null) || Zones.Select(z => z.Id).Distinct(StringComparer.Ordinal).Count() != Zones.Length)
+        {
             throw new ArgumentException("Zones must be initialized and have unique IDs.", nameof(Zones));
-        ArgGuard.ThrowIfNotPositive(PlayerMaximumHealth);
+        }
+
+        ArgGuard.Positive(PlayerMaximumHealth);
         ArgGuard.ThrowIfNull(Spells);
         Spells.Validate();
-        ArgGuard.ThrowIfNotPositive(PositionIterations);
-        ArgGuard.ThrowIfNotPositive(VelocityIterations);
+        ArgGuard.Positive(PositionIterations);
+        ArgGuard.Positive(VelocityIterations);
         return this;
     }
 }

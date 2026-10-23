@@ -1,4 +1,5 @@
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Rendering;
@@ -25,7 +26,9 @@ public sealed class WorldObject2D(IShape2D shape, IShader2D shader) : SpatialObj
         set
         {
             if (_zIndex == value)
+            {
                 return;
+            }
 
             _zIndex = value;
             ZIndexChanged?.Invoke();

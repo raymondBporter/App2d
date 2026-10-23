@@ -13,7 +13,7 @@ public static class GroundSupport2D
     /// The velocity of the fastest-rising support touching <paramref name="body"/> from below (a moving platform's; terrain
     /// is still), or null when nothing supports it.
     /// </summary>
-    public static Vector2? Velocity(IReadOnlyList<PhysicsContact2D> contacts, PhysicsBody2D body, Func<PhysicsBody2D, bool> canSupport)
+    public static Vector2? Velocity(IReadOnlyList<PhysicsContact2D> contacts, RigidBody2D body, Func<RigidBody2D, bool> canSupport)
     {
         Vector2? support = null;
         foreach (var contact in contacts)
@@ -22,7 +22,9 @@ public static class GroundSupport2D
                 : contact.Second == body && -contact.Geometry.Normal.Y >= MinimumNormalY ? contact.First
                 : null;
             if (other is not null && canSupport(other) && (support is not { } best || other.LinearVelocity.Y > best.Y))
+            {
                 support = other.LinearVelocity;
+            }
         }
         return support;
     }

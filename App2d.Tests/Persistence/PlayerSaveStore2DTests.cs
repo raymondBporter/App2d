@@ -42,7 +42,9 @@ public sealed class PlayerSaveStore2DTests : IDisposable
     public void Dispose()
     {
         if (Directory.Exists(_directory))
+        {
             Directory.Delete(_directory, recursive: true);
+        }
     }
 
     private PlayerSaveStore2D NewStore() =>

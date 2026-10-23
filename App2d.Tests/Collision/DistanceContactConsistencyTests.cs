@@ -1,7 +1,8 @@
-using App2d.Core;
 using App2d.Core.Collision.Contacts;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Collision;
@@ -11,13 +12,13 @@ public sealed class DistanceContactConsistencyTests
     [Fact]
     public void SignedDistancesAgreeWithExistingContactDepthsAcrossSupportedPairsAndPoses()
     {
-        IShape2D circle = new Circle2D(1.3f, new(.2f, -.1f));
-        IShape2D capsule = new Capsule2D(new(-1.5f, -.2f), new(1, .4f), .6f);
-        IShape2D rectangle = Rectangle2D.FromSize(new Vector2(2, 3));
-        IShape2D polygon = new ConvexPolygon2D([new(-1, -1), new(2, -1), new(.5f, 2)]);
-        IShape2D triangle = new Triangle2D(new(-1, -1), new(2, -1), new(.5f, 2));
-        IShape2D halfSpace = new HalfSpace2D(Vector2.UnitY, .3f);
-        IShape2D ellipse = new Ellipse2D(new(1.6f, .7f), new(.1f, -.2f));
+        IShape2D circle = Circle2D.Builder.Create(1.3f, new(.2f, -.1f));
+        IShape2D capsule = Capsule2D.Builder.Create(new(-1.5f, -.2f), new(1, .4f), .6f);
+        IShape2D rectangle = Rectangle2D.Builder.CreateFromSize(2, 3);
+        IShape2D polygon = ConvexPolygon2D.Builder.Create([new(-1, -1), new(2, -1), new(.5f, 2)]);
+        IShape2D triangle = Triangle2D.Builder.Create(new(-1, -1), new(2, -1), new(.5f, 2));
+        IShape2D halfSpace = HalfSpace2D.Builder.Create(Vector2.UnitY, .3f);
+        IShape2D ellipse = Ellipse2D.Builder.Create(new(1.6f, .7f), new(.1f, -.2f));
         (IShape2D First, IShape2D Second)[] pairs =
         [
             (circle, circle), (circle, capsule), (circle, rectangle), (circle, polygon),
@@ -37,8 +38,8 @@ public sealed class DistanceContactConsistencyTests
             {
                 var first = Place(firstShape);
                 var second = Place(secondShape);
-                var distance = ShapeDistance2D.SignedDistance(first, second);
-                var reversed = ShapeDistance2D.SignedDistance(second, first);
+                var distance = SpatialDistance2D.SignedDistance(first, second);
+                var reversed = SpatialDistance2D.SignedDistance(second, first);
                 Assert.True(MathF.Abs(distance - reversed) < .0001f, $"Asymmetric distance: {distance}, {reversed}");
                 var hasContact = ShapeCollision2D.TryGetContact(first, second, out var contact);
                 Assert.Equal(distance < 0f, hasContact);

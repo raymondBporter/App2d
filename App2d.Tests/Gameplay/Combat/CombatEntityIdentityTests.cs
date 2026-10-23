@@ -1,11 +1,12 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Core;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Combat;
@@ -140,7 +141,7 @@ public sealed class CombatEntityIdentityTests
 
     private PatrolEnemy2D CreateEnemy()
     {
-        var shape = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(30f)));
+        var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(30f, 30f));
         var body = _physics.AddBody(shape, BodyMotionType2D.Dynamic);
         body.CollisionLayer = EnemyLayer;
         return new PatrolEnemy2D(EntityId2D.Create(), shape, body, -100f, 100f, 10f, 10);

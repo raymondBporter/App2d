@@ -1,6 +1,7 @@
-using App2d.Core;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 using System.Text.Json;
 
@@ -63,9 +64,11 @@ public sealed class Affine2DTests
         var transform = new Affine2D { Position = new(3, -4), Rotation = .7f, Scale = new(-2, 3) };
         var matrix = Matrix3x2.CreateScale(-2, 3) * Matrix3x2.CreateRotation(.7f) * Matrix3x2.CreateTranslation(3, -4);
         Assert.Equal(matrix, transform.Matrix);
-        transform.ShearX = -.2f; transform.ShearY = .3f;
+        transform.ShearX = -.2f;
+        transform.ShearY = .3f;
         var parent = new Affine2D { Position = new(7, 2), Rotation = -1.1f, Scale = new(.8f, 1.4f), ShearY = -.4f };
-        var composed = transform.Then(parent); var point = new Vector2(1.2f, -.8f);
+        var composed = transform.Then(parent);
+        var point = new Vector2(1.2f, -.8f);
         Near(parent.TransformPoint(transform.TransformPoint(point)), composed.TransformPoint(point));
         Near(Vector2.TransformNormal(point, transform.Matrix), transform.TransformDirection(point));
         Assert.True(composed.TryInverse(out var inverse));
@@ -88,8 +91,13 @@ public sealed class Affine2DTests
         var matrix = new Matrix3x2(m11, m12, m21, m22, m31, m32);
         var affine = Affine2D.FromMatrix(matrix);
         Assert.Equal(matrix, affine.Matrix);
-        Assert.Equal(matrix, (affine with { }).Matrix);
-        var restored = new Affine2D(); restored.CopyFrom(affine); Assert.Equal(matrix, restored.Matrix);
+        Assert.Equal(matrix, affine.EvaluateMatrix(affine.Position, affine.Rotation, affine.Scale, new(affine.ShearX, affine.ShearY)));
+        Assert.Equal(matrix, (affine with
+        {
+        }).Matrix);
+        var restored = new Affine2D();
+        restored.CopyFrom(affine);
+        Assert.Equal(matrix, restored.Matrix);
         Near(Vector2.Transform(new(2, -3), matrix), affine.TransformPoint(new(2, -3)));
         Assert.Equal(matrix.GetDeterminant() != 0, affine.TryInverse(out _));
         var fromChannels = new Affine2D
@@ -104,36 +112,110 @@ public sealed class Affine2DTests
     }
 
     [Fact]
+    public void DirectChannelEvaluationAppliesScaleRotationThenTranslationAndAllowsCollapse()
+    {
+        var matrix = Affine2D.CreateMatrix(new(10, 20), MathF.PI / 2, new(2, 3));
+        Near(new(4, 22), Vector2.Transform(new(1, 2), matrix));
+        Near(new(-6, 2), Vector2.TransformNormal(new(1, 2), matrix));
+        var collapsed = Affine2D.CreateMatrix(new(10, 20), 0, new(0, 3));
+        Near(new(10, 26), Vector2.Transform(new(100, 2), collapsed));
+        Assert.Equal(0, collapsed.GetDeterminant());
+    }
+
+    [Fact]
+    public void ProposedChannelsMatchAnEditedCopyWithoutEditingOrNotifyingTheOwner()
+    {
+        var transform = Affine2D.FromMatrix(new(-2, .3f, 1.1f, 3, 7, 2));
+        var before = JsonSerializer.Serialize(transform, JsonOptions);
+        var version = transform.Version;
+        var notifications = 0;
+        transform.Changed += () => notifications++;
+        var expected = transform with { X = -3, Rotation = 2 * MathF.Tau, ScaleY = 0, ShearX = -.2f };
+        var actual = transform.EvaluateMatrix(new(-3, transform.Y), 2 * MathF.Tau, new(transform.ScaleX, 0), new(-.2f, transform.ShearY));
+        Assert.Equal(expected.Matrix, actual);
+        Assert.Equal(before, JsonSerializer.Serialize(transform, JsonOptions));
+        Assert.Equal(version, transform.Version);
+        Assert.Equal(0, notifications);
+    }
+
+    [Fact]
+    public void EqualChannelProposalsKeepSignedZeroWhenAnotherChannelChanges()
+    {
+        var negativeZero = BitConverter.Int32BitsToSingle(int.MinValue);
+        var transform = new Affine2D { X = 1, ShearY = .1f };
+        transform.X = negativeZero;
+        var expected = transform with { X = 0, Y = 2, ShearY = .2f };
+        var actual = transform.EvaluateMatrix(new(0, 2), 0, Vector2.One, new(0, .2f));
+        Assert.Equal(expected.Matrix, actual);
+        Assert.Equal(int.MinValue, BitConverter.SingleToInt32Bits(actual.M31));
+    }
+
+    [Fact]
+    public void DirectAndProposedMatrixEvaluationAllocateNoManagedMemory()
+    {
+        var transform = new Affine2D { X = 2, Rotation = .4f, Scale = new(-2, 3), ShearY = .2f };
+        float Sample() => transform.EvaluateMatrix(new(3, 4), .7f, new(-3, 2), new(.1f, -.2f)).M11
+            + Affine2D.CreateMatrix(new(3, 4), .7f, new(-3, 2), new(.1f, -.2f)).M22;
+        for (var i = 0; i < 100; i++) Sample();
+        var total = 0f;
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1000; i++) total += Sample();
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(float.IsFinite(total));
+        Assert.Equal(0, allocated);
+    }
+
+    [Fact]
     public void CopiesDoNotShareSubscribersAndCachesDoNotAffectValueEquality()
     {
         var transform = new Affine2D { Position = new(2, 3), Scale = new(2, 1), ShearY = .3f };
-        var notifications = 0; transform.Changed += () => notifications++;
-        var saved = transform with { }; var hash = transform.GetHashCode(); var version = transform.Version;
+        var notifications = 0;
+        transform.Changed += () => notifications++;
+        var saved = transform with
+        {
+        };
+        var hash = transform.GetHashCode();
+        var version = transform.Version;
         _ = transform.Matrix;
-        Assert.Equal(saved, transform); Assert.Equal(hash, transform.GetHashCode()); Assert.Equal(version, transform.Version);
-        var other = transform with { X = 9, ShearX = .4f };
-        Assert.Equal(0, notifications); Assert.Equal(new Vector2(2, 3), transform.Position);
+        Assert.Equal(saved, transform);
+        Assert.Equal(hash, transform.GetHashCode());
+        Assert.Equal(version, transform.Version);
+        var other = transform with
+        {
+            X = 9,
+            ShearX = .4f
+        };
+        Assert.Equal(0, notifications);
+        Assert.Equal(new Vector2(2, 3), transform.Position);
         transform.CopyFrom(other);
-        Assert.Equal(1, notifications); Assert.Equal(other, transform);
-        transform.CopyFrom(other); transform.Position = transform.Position; transform.Scale = transform.Scale;
+        Assert.Equal(1, notifications);
+        Assert.Equal(other, transform);
+        transform.CopyFrom(other);
+        transform.Position = transform.Position;
+        transform.Scale = transform.Scale;
         Assert.Equal(1, notifications);
         transform.CopyFrom(saved);
-        Assert.Equal(2, notifications); Assert.Equal(saved, transform);
+        Assert.Equal(2, notifications);
+        Assert.Equal(saved, transform);
     }
 
     [Fact]
     public void ChannelEditsInvalidateSceneBoundsAndCollisionPose()
     {
-        var placed = new SpatialObject2D(Rectangle2D.FromSize(new Vector2(2, 2)));
-        var bounds = placed.WorldBounds; _ = placed.CollisionPose;
+        var placed = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2, 2));
+        var bounds = placed.WorldBounds;
+        _ = placed.CollisionPose;
         placed.Transform.X = 3;
-        Assert.NotEqual(bounds, placed.WorldBounds); Assert.Equal(new(3, 0), placed.CollisionPose.Translation);
+        Assert.NotEqual(bounds, placed.WorldBounds);
+        Assert.Equal(new(3, 0), placed.CollisionPose.Translation);
         bounds = placed.WorldBounds;
         placed.Transform.ShearY = .4f;
         Assert.NotEqual(bounds, placed.WorldBounds);
         Assert.Throws<InvalidOperationException>(() => placed.CollisionPose);
-        placed.Transform.ShearY = 0; placed.Transform.ScaleX = 0;
-        Assert.False(placed.Transform.TryInverse(out _)); Assert.False(placed.ContainsWorldPoint(new(3, 0)));
+        placed.Transform.ShearY = 0;
+        placed.Transform.ScaleX = 0;
+        Assert.False(placed.Transform.TryInverse(out _));
+        Assert.False(placed.ContainsWorldPoint(new(3, 0)));
         Assert.Throws<InvalidOperationException>(() => placed.CollisionPose);
     }
 

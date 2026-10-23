@@ -19,7 +19,9 @@ public sealed class LevelDatabase2DTests : IDisposable
     public void Dispose()
     {
         if (!Directory.Exists(_directory))
+        {
             return;
+        }
 
         // Microsoft.Data.Sqlite pools native sqlite3 handles by default: disposing a
         // SqliteConnection returns the handle to the pool rather than closing it, which
@@ -91,7 +93,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         var original = BuildMap();
 
         using (var database = LevelDatabase2D.Open(path))
+        {
             database.Save(original, sourceSeed: 0xA2D_2026_0823UL);
+        }
 
         using var reopened = LevelDatabase2D.Open(path);
         var loaded = reopened.Load();
@@ -105,7 +109,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         for (var y = 0; y < original.Height; y++)
         {
             for (var x = 0; x < original.Width; x++)
+            {
                 Assert.Equal(original.GetTileKind(x, y), loaded.GetTileKind(x, y));
+            }
         }
     }
 
@@ -169,7 +175,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         var original = BuildMap();
 
         using (var first = LevelDatabase2D.Open(path))
+        {
             first.Save(original, sourceSeed: 0UL);
+        }
 
         using var second = LevelDatabase2D.Open(path);
         var loaded = second.Load();
@@ -182,7 +190,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         for (var y = 0; y < original.Height; y++)
         {
             for (var x = 0; x < original.Width; x++)
+            {
                 Assert.Equal(original.GetTileKind(x, y), loaded.GetTileKind(x, y));
+            }
         }
     }
 
@@ -191,7 +201,9 @@ public sealed class LevelDatabase2DTests : IDisposable
     {
         var path = NewPath();
         using (var database = LevelDatabase2D.Open(path))
+        {
             database.Save(BuildMap(), sourceSeed: 0UL);
+        }
 
         using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
@@ -231,7 +243,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         var original = BuildMap();
 
         using (var database = LevelDatabase2D.Open(path))
+        {
             database.Save(original, sourceSeed: 0xA2D_2026_0823UL);
+        }
 
         var copyPath = Path.Combine(_directory, "level-copy.db");
         File.Copy(path, copyPath);
@@ -248,7 +262,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         for (var y = 0; y < original.Height; y++)
         {
             for (var x = 0; x < original.Width; x++)
+            {
                 Assert.Equal(original.GetTileKind(x, y), loaded.GetTileKind(x, y));
+            }
         }
     }
 
@@ -258,7 +274,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         var path = NewPath();
         var original = BuildMap();
         using (var database = LevelDatabase2D.Open(path))
+        {
             database.Save(original, sourceSeed: 0UL);
+        }
 
         using var reader = LevelDatabase2D.OpenRead(path);
         var loaded = reader.Load();
@@ -267,7 +285,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         for (var y = 0; y < original.Height; y++)
         {
             for (var x = 0; x < original.Width; x++)
+            {
                 Assert.Equal(original.GetTileKind(x, y), loaded.GetTileKind(x, y));
+            }
         }
     }
 
@@ -276,7 +296,9 @@ public sealed class LevelDatabase2DTests : IDisposable
     {
         var path = NewPath();
         using (var database = LevelDatabase2D.Open(path))
+        {
             database.Save(BuildMap(), sourceSeed: 0UL);
+        }
 
         // Microsoft.Data.Sqlite pools native handles (see the class Dispose() comment
         // above): the read-write connection just disposed keeps the OS file handle open
@@ -292,7 +314,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         var before = File.ReadAllBytes(path);
 
         using (var reader = LevelDatabase2D.OpenRead(path))
+        {
             reader.Load();
+        }
 
         var after = File.ReadAllBytes(path);
 
@@ -324,7 +348,9 @@ public sealed class LevelDatabase2DTests : IDisposable
         map.SetTile(2, 3, new TileCell2D(TileKind2D.Solid | TileKind2D.Grippable, 1));
 
         using (var database = LevelDatabase2D.Open(path))
+        {
             database.Save(map, sourceSeed: 0UL);
+        }
 
         using var reader = LevelDatabase2D.OpenRead(path);
         var loaded = reader.Load();

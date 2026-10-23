@@ -8,7 +8,7 @@ public sealed class BladeSwooshTests
 {
     private static (Vector3 Guard, Vector3 Tip) At(float degrees)
     {
-        var (s, c) = MathF.SinCos(degrees * MathF.PI / 180);
+        var (s, c) = MathF.SinCos(float.DegreesToRadians(degrees));
         return (new(c * .1f, s * .1f, 0), new(c * .9f, s * .9f, 0));
     }
 
@@ -17,8 +17,14 @@ public sealed class BladeSwooshTests
     private static CharacterMesh Swing(int sweep, params (float Time, float Degrees, bool On)[] frames)
     {
         var swoosh = new BladeSwoosh { Style = SwooshStyle.Primary with { InkWidth = 0 }, Sweep = sweep };
-        foreach (var (time, degrees, on) in frames) { var (g, t) = At(degrees); swoosh.Record(time, g, t, on); }
-        var mesh = new CharacterMesh(); swoosh.Build(mesh); return mesh;
+        foreach (var (time, degrees, on) in frames)
+        {
+            var (g, t) = At(degrees);
+            swoosh.Record(time, g, t, on);
+        }
+        var mesh = new CharacterMesh();
+        swoosh.Build(mesh);
+        return mesh;
     }
 
     [Fact]
@@ -27,7 +33,7 @@ public sealed class BladeSwooshTests
         // One 90 degree step: a chord would sag to 0.64 at 45 degrees; the rebuilt rotation keeps the tip at 0.9.
         var mesh = Swing((0, 90, true), (1 / 60f, 0, true));
         var near45 = mesh.Vertices.ToArray().Select(v => new Vector2(v.Position.X, v.Position.Y))
-            .Where(p => MathF.Abs(MathF.Atan2(p.Y, p.X) * 180 / MathF.PI - 45) < 4).Max(p => p.Length());
+            .Where(p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) - 45) < 4).Max(p => p.Length());
         Assert.InRange(near45, .88f, .905f);
         Assert.All(mesh.Vertices.ToArray(), v => Assert.True(new Vector2(v.Position.X, v.Position.Y).Length() <= .901f));
     }
@@ -39,8 +45,8 @@ public sealed class BladeSwooshTests
         // the trail back over the start. The trail must stay on the clockwise side (x >= 0 half, bar the thin guard end).
         var mesh = Swing((0, 90, true), (1 / 60f, 30, true), (2 / 60f, -140, true));
         var points = mesh.Vertices.ToArray().Select(v => new Vector2(v.Position.X, v.Position.Y)).Where(p => p.Length() > .3f).ToArray();
-        Assert.Contains(points, p => MathF.Abs(MathF.Atan2(p.Y, p.X) * 180 / MathF.PI + 45) < 6);
-        Assert.DoesNotContain(points, p => MathF.Abs(MathF.Atan2(p.Y, p.X) * 180 / MathF.PI - 160) < 10);
+        Assert.Contains(points, p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) + 45) < 6);
+        Assert.DoesNotContain(points, p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) - 160) < 10);
     }
 
     [Fact]
@@ -62,9 +68,18 @@ public sealed class BladeSwooshTests
         // the camera (-Z). In the screen plane that is back, a short stub, forward: the trail must stay near the guard's
         // height rather than sweep a half circle over the top or underneath.
         var swoosh = new BladeSwoosh { Style = SwooshStyle.Primary with { InkWidth = 0 } };
-        static (Vector3, Vector3) Yaw(float degrees) { var (s, c) = MathF.SinCos(degrees * MathF.PI / 180); return (Vector3.Zero, new(c * .9f, 0, -s * .9f)); }
-        foreach (var (time, degrees) in new[] { (0f, 180f), (1 / 60f, 90f), (2 / 60f, 0f) }) { var (g, t) = Yaw(degrees); swoosh.Record(time, g, t, true); }
-        var mesh = new CharacterMesh(); swoosh.Build(mesh);
+        static (Vector3, Vector3) Yaw(float degrees)
+        {
+            var (s, c) = MathF.SinCos(float.DegreesToRadians(degrees));
+            return (Vector3.Zero, new(c * .9f, 0, -s * .9f));
+        }
+        foreach (var (time, degrees) in new[] { (0f, 180f), (1 / 60f, 90f), (2 / 60f, 0f) })
+        {
+            var (g, t) = Yaw(degrees);
+            swoosh.Record(time, g, t, true);
+        }
+        var mesh = new CharacterMesh();
+        swoosh.Build(mesh);
         Assert.True(mesh.Count > 0);
         Assert.All(mesh.Vertices.ToArray(), v => Assert.InRange(v.Position.Y, -.01f, .01f));
         Assert.Contains(mesh.Vertices.ToArray(), v => v.Position.Z < -.8f);

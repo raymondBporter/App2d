@@ -12,7 +12,7 @@ internal sealed class PolarLinkProjector2D
 
     public PolarLinkProjector2D(float length, float minimumAngle, float maximumAngle)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(length);
+        ArgGuard.Positive(length);
         Length = length;
         AngleLimits = ConstraintLimit1D.Between(minimumAngle, maximumAngle);
     }

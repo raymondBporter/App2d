@@ -52,11 +52,31 @@ public sealed class AuthoringWorkspace
         // Only unreadable files are load errors; reference problems stay visible on their documents.
         var loaded = catalog.Models.Keys.Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Concat(catalog.Props.Keys).Concat(catalog.EntityAssets.Keys).Select(catalog.PathOf).ToList();
         workspace.LoadErrors = [.. catalog.Errors.Where(e => !loaded.Any(path => e.StartsWith(path + ":", StringComparison.Ordinal))), .. templates.Errors];
-        foreach (var model in catalog.Models.Values) workspace.Add(AssetDocuments.Of(model, catalog.PathOf(model.Id)));
-        foreach (var variant in catalog.Variants.Values) workspace.Add(AssetDocuments.Of(variant, catalog.PathOf(variant.Id)));
-        foreach (var clip in catalog.Animations.Values) workspace.Add(AssetDocuments.Of(clip, catalog.PathOf(clip.Id)));
-        foreach (var prop in catalog.Props.Values) workspace.Add(AssetDocuments.Of(prop, catalog.PathOf(prop.Id)));
-        foreach (var entity in catalog.EntityAssets.Values) workspace.Add(AssetDocuments.Of(entity, catalog.PathOf(entity.Id)));
+        foreach (var model in catalog.Models.Values)
+        {
+            workspace.Add(AssetDocuments.Of(model, catalog.PathOf(model.Id)));
+        }
+
+        foreach (var variant in catalog.Variants.Values)
+        {
+            workspace.Add(AssetDocuments.Of(variant, catalog.PathOf(variant.Id)));
+        }
+
+        foreach (var clip in catalog.Animations.Values)
+        {
+            workspace.Add(AssetDocuments.Of(clip, catalog.PathOf(clip.Id)));
+        }
+
+        foreach (var prop in catalog.Props.Values)
+        {
+            workspace.Add(AssetDocuments.Of(prop, catalog.PathOf(prop.Id)));
+        }
+
+        foreach (var entity in catalog.EntityAssets.Values)
+        {
+            workspace.Add(AssetDocuments.Of(entity, catalog.PathOf(entity.Id)));
+        }
+
         return workspace;
     }
 
@@ -82,7 +102,10 @@ public sealed class AuthoringWorkspace
         foreach (var kind in Enum.GetValues<AssetKind>())
         {
             var folder = Path.Combine(Root, AssetKinds.Folder(kind));
-            if (Directory.Exists(folder)) ids.UnionWith(Directory.EnumerateFiles(folder, "*.json").Select(Path.GetFileNameWithoutExtension).OfType<string>());
+            if (Directory.Exists(folder))
+            {
+                ids.UnionWith(Directory.EnumerateFiles(folder, "*.json").Select(Path.GetFileNameWithoutExtension).OfType<string>());
+            }
         }
         return ids;
     }
@@ -102,18 +125,34 @@ public sealed class AuthoringWorkspace
             _ => throw ArgGuard.CreateInvalid($"Not an authored asset: {typeof(T).Name}."),
         };
         AuthoredAsset.RequireId(document.Id, AssetKinds.Label(document.Kind) + " id");
-        if (Exists(document.Id)) throw new InvalidDataException($"The id '{document.Id}' is already used.");
-        Add(document); return (AssetDocument<T>)document;
+        if (Exists(document.Id))
+        {
+            throw new InvalidDataException($"The id '{document.Id}' is already used.");
+        }
+
+        Add(document);
+        return (AssetDocument<T>)document;
     }
 
     /// <summary>Removes a document that was created in this session and never saved. Saved assets are files and stay.</summary>
     public void Discard(AssetDocument document)
     {
-        if (!document.IsNew) throw new InvalidOperationException($"'{document.Id}' is saved; delete its file to remove it.");
-        if (!_documents.Remove(document.Id)) return;
+        if (!document.IsNew)
+        {
+            throw new InvalidOperationException($"'{document.Id}' is saved; delete its file to remove it.");
+        }
+
+        if (!_documents.Remove(document.Id))
+        {
+            return;
+        }
+
         _discarded += document.Version + 2;
         // Caches are keyed on document versions, which a new document with the same ID would repeat from zero.
-        _resolved.Clear(); _playable.Clear(); _entities.Clear(); _usedBy = null;
+        _resolved.Clear();
+        _playable.Clear();
+        _entities.Clear();
+        _usedBy = null;
     }
 
     /// <summary>The base model a model or variant ID stands on.</summary>
@@ -123,13 +162,29 @@ public sealed class AuthoringWorkspace
     public ResolvedModel? Resolve(string? id, out string? error)
     {
         error = null;
-        var variant = Variant(id); var model = Model(variant?.Asset.Base ?? id);
-        if (model is null) { error = variant is null ? $"No model or variant '{id}'." : $"Variant '{id}' references missing base model '{variant.Asset.Base}'."; return null; }
+        var variant = Variant(id);
+        var model = Model(variant?.Asset.Base ?? id);
+        if (model is null)
+        {
+            error = variant is null ? $"No model or variant '{id}'." : $"Variant '{id}' references missing base model '{variant.Asset.Base}'.";
+            return null;
+        }
         var key = variant?.Id ?? model.Id;
-        if (_resolved.TryGetValue(key, out var cached) && cached.ModelVersion == model.Version && cached.VariantVersion == (variant?.Version ?? -1)) { error = cached.Error; return cached.Resolved; }
+        if (_resolved.TryGetValue(key, out var cached) && cached.ModelVersion == model.Version && cached.VariantVersion == (variant?.Version ?? -1))
+        {
+            error = cached.Error;
+            return cached.Resolved;
+        }
         ResolvedModel? resolved = null;
-        try { resolved = ResolvedModel.From(model.Asset, variant?.Asset); resolved.TextureRoot = Root; }
-        catch (Exception ex) when (IsAssetError(ex)) { error = ex.Message; }
+        try
+        {
+            resolved = ResolvedModel.From(model.Asset, variant?.Asset);
+            resolved.TextureRoot = Root;
+        }
+        catch (Exception ex) when (IsAssetError(ex))
+        {
+            error = ex.Message;
+        }
         _resolved[key] = (model.Version, variant?.Version ?? -1, resolved, error);
         return resolved;
     }
@@ -138,15 +193,34 @@ public sealed class AuthoringWorkspace
     /// <summary>Whether a clip's draft can play on a model or variant: same base, structurally compatible. Revision drift from an unsaved base edit is tolerated here and settled on save.</summary>
     public bool CanPlay(string clipId, string subjectId, out string? error)
     {
-        var clip = Clip(clipId); var model = Resolve(subjectId, out error);
-        if (clip is null) { error = $"No animation '{clipId}'."; return false; }
-        if (model is null) return false;
-        var baseDocument = Model(model.Base.Id)!; var variant = Variant(subjectId);
+        var clip = Clip(clipId);
+        var model = Resolve(subjectId, out error);
+        if (clip is null)
+        {
+            error = $"No animation '{clipId}'.";
+            return false;
+        }
+        if (model is null)
+        {
+            return false;
+        }
+
+        var baseDocument = Model(model.Base.Id)!;
+        var variant = Variant(subjectId);
         if (_playable.TryGetValue((clipId, subjectId), out var cached) && cached.ClipVersion == clip.Version && cached.ModelVersion == baseDocument.Version && cached.VariantVersion == (variant?.Version ?? -1))
-        { error = cached.Error; return error is null; }
+        {
+            error = cached.Error;
+            return error is null;
+        }
         error = null;
-        try { clip.Asset.Validate(model, exactRevision: false); }
-        catch (Exception ex) when (IsAssetError(ex)) { error = ex.Message; }
+        try
+        {
+            clip.Asset.Validate(model, exactRevision: false);
+        }
+        catch (Exception ex) when (IsAssetError(ex))
+        {
+            error = ex.Message;
+        }
         _playable[(clipId, subjectId)] = (clip.Version, baseDocument.Version, variant?.Version ?? -1, error);
         return error is null;
     }
@@ -159,9 +233,17 @@ public sealed class AuthoringWorkspace
     {
         error = null;
         var document = Entity(id);
-        if (document is null) { error = $"No entity '{id}'."; return null; }
+        if (document is null)
+        {
+            error = $"No entity '{id}'.";
+            return null;
+        }
         var revision = Revision;
-        if (_entities.TryGetValue(document.Id, out var cached) && cached.Revision == revision) { error = cached.Error; return cached.Entity; }
+        if (_entities.TryGetValue(document.Id, out var cached) && cached.Revision == revision)
+        {
+            error = cached.Error;
+            return cached.Entity;
+        }
         ResolvedEntity? entity = null;
         try
         {
@@ -169,7 +251,10 @@ public sealed class AuthoringWorkspace
                 model => Find(model) is null ? throw new KeyNotFoundException(model) : Resolve(model, out var problem) ?? throw new InvalidDataException(problem),
                 clip => Clip(clip)?.Asset, prop => Prop(prop)?.Asset);
         }
-        catch (Exception ex) when (IsAssetError(ex)) { error = ex.Message; }
+        catch (Exception ex) when (IsAssetError(ex))
+        {
+            error = ex.Message;
+        }
         _entities[document.Id] = (revision, entity, error);
         return entity;
     }
@@ -185,34 +270,64 @@ public sealed class AuthoringWorkspace
         var problems = new List<string>(LoadErrors);
         T? Copy<T>(AssetDocument<T>? document, Func<string, T> parse) where T : class
         {
-            if (document is null) return null;
-            try { return parse(JsonSerializer.Serialize(document.Asset, AuthoredJson.Options)); }
-            catch (Exception ex) when (IsAssetError(ex)) { problems.Add($"{document.Id}: {ex.Message}"); return null; }
+            if (document is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                return parse(JsonSerializer.Serialize(document.Asset, AuthoredJson.Options));
+            }
+            catch (Exception ex) when (IsAssetError(ex))
+            {
+                problems.Add($"{document.Id}: {ex.Message}");
+                return null;
+            }
         }
         var clips = Clips.Select(c => Copy(c, MotionClip.FromJson)).OfType<MotionClip>().ToDictionary(c => c.Id, StringComparer.Ordinal);
         var props = Props.Select(p => Copy(p, PropAsset.FromJson)).OfType<PropAsset>().ToDictionary(p => p.Id, StringComparer.Ordinal);
         var resolved = new Dictionary<string, ResolvedModel>(StringComparer.Ordinal);
         ResolvedModel ResolveCopy(string id)
         {
-            if (resolved.TryGetValue(id, out var cached)) return cached;
+            if (resolved.TryGetValue(id, out var cached))
+            {
+                return cached;
+            }
+
             var variant = Copy(Variant(id), ModelVariant.FromJson);
             var model = Copy(Model(variant?.Base ?? id), CharacterModel.FromJson) ?? throw new KeyNotFoundException($"No model or variant '{id}'.");
-            var copy = ResolvedModel.From(model, variant); copy.TextureRoot = Root;
+            var copy = ResolvedModel.From(model, variant);
+            copy.TextureRoot = Root;
             return resolved[id] = copy;
         }
         var entities = new List<ResolvedEntity>();
         foreach (var document in Entities.OrderBy(e => e.Id, StringComparer.Ordinal))
         {
             var asset = Copy(document, EntityAsset.FromJson);
-            if (asset is null) continue;
-            try { entities.Add(ResolvedEntity.Compile(asset, ResolveCopy, clips.GetValueOrDefault, props.GetValueOrDefault)); }
-            catch (Exception ex) when (IsAssetError(ex)) { problems.Add(ex.Message); }
+            if (asset is null)
+            {
+                continue;
+            }
+
+            try
+            {
+                entities.Add(ResolvedEntity.Compile(asset, ResolveCopy, clips.GetValueOrDefault, props.GetValueOrDefault));
+            }
+            catch (Exception ex) when (IsAssetError(ex))
+            {
+                problems.Add(ex.Message);
+            }
         }
         return (entities, problems);
     }
 
     /// <summary>Clips that name this subject's base model, playable or not; compatibility is checked separately, never inferred from names.</summary>
-    public IEnumerable<AssetDocument<MotionClip>> ClipsFor(string subjectId) { var basis = BaseOf(subjectId); return Clips.Where(c => c.Asset.Model == basis); }
+    public IEnumerable<AssetDocument<MotionClip>> ClipsFor(string subjectId)
+    {
+        var basis = BaseOf(subjectId);
+        return Clips.Where(c => c.Asset.Model == basis);
+    }
 
     /// <summary>
     /// What an asset references directly: a variant its base, a clip its model, a model the clips its motion sets assign, and
@@ -223,18 +338,46 @@ public sealed class AuthoringWorkspace
         var uses = new List<AssetReference>();
         switch (Find(id))
         {
-            case AssetDocument<PropAsset> prop when prop.Asset.BackView is { } back: uses.Add(new(back, "back view")); break;
-            case AssetDocument<ModelVariant> variant: uses.Add(new(variant.Asset.Base, "base")); break;
-            case AssetDocument<MotionClip> clip: uses.Add(new(clip.Asset.Model, "model")); break;
+            case AssetDocument<PropAsset> prop when prop.Asset.BackView is { } back:
+                uses.Add(new(back, "back view"));
+                break;
+            case AssetDocument<ModelVariant> variant:
+                uses.Add(new(variant.Asset.Base, "base"));
+                break;
+            case AssetDocument<MotionClip> clip:
+                uses.Add(new(clip.Asset.Model, "model"));
+                break;
             case AssetDocument<CharacterModel> model:
-                foreach (var set in model.Asset.MotionSets) foreach (var (role, clip) in set.Roles.OrderBy(r => r.Key, StringComparer.Ordinal)) uses.Add(new(clip, $"motion set {set.Name}: {role}"));
+                foreach (var set in model.Asset.MotionSets)
+                {
+                    foreach (var (role, clip) in set.Roles.OrderBy(r => r.Key, StringComparer.Ordinal))
+                    {
+                        uses.Add(new(clip, $"motion set {set.Name}: {role}"));
+                    }
+                }
+
                 break;
             case AssetDocument<EntityAsset> entity:
                 var asset = entity.Asset;
                 uses.Add(new(asset.Model, "model"));
-                foreach (var (role, clip) in asset.Roles.OrderBy(r => r.Key, StringComparer.Ordinal)) uses.Add(new(clip, $"role {role} (override)"));
-                foreach (var action in asset.Actions) if (action.Clip is not null) uses.Add(new(action.Clip, $"action {action.Id}"));
-                foreach (var binding in asset.Equipment) uses.Add(new(binding.Prop, $"equipment on {binding.Socket}"));
+                foreach (var (role, clip) in asset.Roles.OrderBy(r => r.Key, StringComparer.Ordinal))
+                {
+                    uses.Add(new(clip, $"role {role} (override)"));
+                }
+
+                foreach (var action in asset.Actions)
+                {
+                    if (action.Clip is not null)
+                    {
+                        uses.Add(new(action.Clip, $"action {action.Id}"));
+                    }
+                }
+
+                foreach (var binding in asset.Equipment)
+                {
+                    uses.Add(new(binding.Prop, $"equipment on {binding.Socket}"));
+                }
+
                 break;
         }
         return uses;
@@ -268,23 +411,58 @@ public sealed class AuthoringWorkspace
     public IReadOnlyList<string> Problems(AssetDocument document)
     {
         var problems = new List<string>();
-        void Try(Action check) { try { check(); } catch (Exception ex) when (IsAssetError(ex)) { problems.Add(ex.Message); } }
+        void Try(Action check)
+        {
+            try
+            {
+                check();
+            }
+            catch (Exception ex) when (IsAssetError(ex))
+            {
+                problems.Add(ex.Message);
+            }
+        }
         switch (document)
         {
-            case AssetDocument<CharacterModel> model: Try(model.Asset.Validate); break;
-            case AssetDocument<ModelVariant> variant: if (Resolve(variant.Id, out var error) is null) problems.Add(error!); break;
+            case AssetDocument<CharacterModel> model:
+                Try(model.Asset.Validate);
+                break;
+            case AssetDocument<ModelVariant> variant:
+                if (Resolve(variant.Id, out var error) is null)
+                {
+                    problems.Add(error!);
+                }
+
+                break;
             case AssetDocument<MotionClip> clip:
                 var basis = Resolve(clip.Asset.Model, out var missing);
-                if (basis is null) { problems.Add(missing!); break; }
+                if (basis is null)
+                {
+                    problems.Add(missing!);
+                    break;
+                }
                 Try(() => clip.Asset.Validate(basis, exactRevision: false));
                 if (problems.Count == 0 && clip.Asset.StructureRevision != basis.Base.StructureRevision && !StructureChanged(Model(basis.Base.Id)!))
+                {
                     problems.Add($"Clip '{clip.Id}' was authored against structure revision {clip.Asset.StructureRevision} of '{basis.Base.Id}'; the model is at revision {basis.Base.StructureRevision}.");
+                }
+
                 break;
             case AssetDocument<PropAsset> prop:
                 Try(prop.Asset.Validate);
-                if (prop.Asset.BackView is { } back && Prop(back) is null) problems.Add($"No back-view appearance '{back}'.");
+                if (prop.Asset.BackView is { } back && Prop(back) is null)
+                {
+                    problems.Add($"No back-view appearance '{back}'.");
+                }
+
                 break;
-            case AssetDocument<EntityAsset> entity: if (CompileEntity(entity.Id, out var compile) is null) problems.Add(compile!); break;
+            case AssetDocument<EntityAsset> entity:
+                if (CompileEntity(entity.Id, out var compile) is null)
+                {
+                    problems.Add(compile!);
+                }
+
+                break;
         }
         return problems;
     }
@@ -304,34 +482,61 @@ public sealed class AuthoringWorkspace
                 model.Asset.Validate();
                 if (!model.IsNew && StructureChanged(model))
                 {
-                    var from = model.Asset.StructureRevision; model.Edit(() => model.Asset.StructureRevision++);
+                    var from = model.Asset.StructureRevision;
+                    model.Edit(() => model.Asset.StructureRevision++);
                     var resolved = ResolvedModel.From(model.Asset);
                     foreach (var clip in Dependents(model.Id).Clips.Where(c => c.Asset.StructureRevision == from))
                     {
-                        try { clip.Asset.Validate(resolved, exactRevision: false); }
-                        catch (Exception ex) when (IsAssetError(ex)) { continue; }
-                        clip.Edit(() => clip.Asset.StructureRevision = model.Asset.StructureRevision); updated.Add(clip);
+                        try
+                        {
+                            clip.Asset.Validate(resolved, exactRevision: false);
+                        }
+                        catch (Exception ex) when (IsAssetError(ex))
+                        {
+                            continue;
+                        }
+                        clip.Edit(() => clip.Asset.StructureRevision = model.Asset.StructureRevision);
+                        updated.Add(clip);
                     }
                 }
                 break;
-            case AssetDocument<ModelVariant> variant: variant.Asset.Validate(); break;
-            case AssetDocument<MotionClip> clip: clip.Asset.Validate(); break;
-            case AssetDocument<PropAsset> prop: prop.Asset.Validate(); break;
-            case AssetDocument<EntityAsset> entity: entity.Asset.Validate(); break;
+            case AssetDocument<ModelVariant> variant:
+                variant.Asset.Validate();
+                break;
+            case AssetDocument<MotionClip> clip:
+                clip.Asset.Validate();
+                break;
+            case AssetDocument<PropAsset> prop:
+                prop.Asset.Validate();
+                break;
+            case AssetDocument<EntityAsset> entity:
+                entity.Asset.Validate();
+                break;
         }
         var path = document.Path ?? DefaultPath(document);
-        if (document.IsNew && File.Exists(path)) throw new InvalidDataException($"A file already exists at {path}; it did not load, so it is left alone. Choose another id, or repair or remove that file.");
+        if (document.IsNew && File.Exists(path))
+        {
+            throw new InvalidDataException($"A file already exists at {path}; it did not load, so it is left alone. Choose another id, or repair or remove that file.");
+        }
+
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         AuthoredAsset.Write(path, document is AssetDocument<PropAsset> propDocument ? propDocument.Asset.ToJson() : document.Serialize());
         document.MarkSaved(path);
-        if (document is AssetDocument<CharacterModel> saved) _savedStructure[saved.Id] = ModelAuthoring.StructureSignature(saved.Asset);
+        if (document is AssetDocument<CharacterModel> saved)
+        {
+            _savedStructure[saved.Id] = ModelAuthoring.StructureSignature(saved.Asset);
+        }
+
         return new(path, updated, Problems(document));
     }
 
     private void Add(AssetDocument document)
     {
         _documents[document.Id] = document;
-        if (document is AssetDocument<CharacterModel> { IsNew: false } model) _savedStructure[model.Id] = ModelAuthoring.StructureSignature(model.Asset);
+        if (document is AssetDocument<CharacterModel> { IsNew: false } model)
+        {
+            _savedStructure[model.Id] = ModelAuthoring.StructureSignature(model.Asset);
+        }
     }
 
     public static bool IsAssetError(Exception ex) =>

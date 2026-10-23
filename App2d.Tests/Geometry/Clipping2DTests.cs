@@ -1,4 +1,6 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -68,10 +70,13 @@ public sealed class Clipping2DTests
     public void DiagonalClipCanProduceFiveVerticesWithoutAllocating()
     {
         Span<Vector2> output = stackalloc Vector2[5];
-        var halfSpace = new HalfSpace2D(new(1, 1), 2);
+        var halfSpace = HalfSpace2D.Builder.Create(new(1, 1), 2);
         var count = PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, halfSpace.Normal, halfSpace.Offset, output);
         Assert.Equal(5, count);
-        foreach (var point in output[..count]) Assert.True(halfSpace.ContainsPoint(point));
+        foreach (var point in output[..count])
+        {
+            Assert.True(halfSpace.ContainsPoint(point));
+        }
     }
 
     [Fact]

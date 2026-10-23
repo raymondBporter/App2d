@@ -17,14 +17,27 @@ object Export(PuppetDefinition definition)
         var pose = PuppetPose.Sample(definition, motion, motion.Duration * (double)i / intervals);
         return definition.Controls.SelectMany(c => Point(pose.World(c.Id) - new Vector3(pose.Position.X, 0, 0))).ToArray();
     }).ToArray();
-    if (frames.Any(frame => frame.Any(value => !float.IsFinite(value)))) throw new InvalidOperationException("Nonfinite sampled pose.");
+    if (frames.Any(frame => frame.Any(value => !float.IsFinite(value))))
+    {
+        throw new InvalidOperationException("Nonfinite sampled pose.");
+    }
+
     if (frames[0].Zip(frames[^1]).Max(p => MathF.Abs(p.First - p.Second)) > .0001f)
+    {
         throw new InvalidOperationException("The sampled local pose is discontinuous at the loop seam.");
+    }
+
     return new
     {
-        name = definition.Name, duration = motion.Duration, travel = Point(travel), speed = Round(travel.X / motion.Duration),
-        controls = definition.Controls.Select(c => c.Id), frames, parts = definition.Parts,
-        ink = definition.Ink, lineWidth = definition.LineWidth,
+        name = definition.Name,
+        duration = motion.Duration,
+        travel = Point(travel),
+        speed = Round(travel.X / motion.Duration),
+        controls = definition.Controls.Select(c => c.Id),
+        frames,
+        parts = definition.Parts,
+        ink = definition.Ink,
+        lineWidth = definition.LineWidth,
         face = FaceExpressions.Get(definition.Parts.Single(p => p.Id == "head").Face)
     };
 }
@@ -32,8 +45,16 @@ var json = JsonSerializer.Serialize(new { walk = Export(PuppetTemplates.StepStud
 var fragment = File.ReadAllText(Path.Combine(source, "cape.template.html"))
     .Replace("/*__PUPPET_DATA__*/", json)
     .Replace("/*__CAPE_SIMULATION__*/", File.ReadAllText(Path.Combine(source, "cape-simulation.js")));
-if (fragment.Contains("/*__")) throw new InvalidOperationException("Unfilled template marker.");
-if (System.Text.Encoding.UTF8.GetByteCount(fragment) >= 1_000_000) throw new InvalidOperationException("Preview exceeds inline size limit.");
+if (fragment.Contains("/*__"))
+{
+    throw new InvalidOperationException("Unfilled template marker.");
+}
+
+if (System.Text.Encoding.UTF8.GetByteCount(fragment) >= 1_000_000)
+{
+    throw new InvalidOperationException("Preview exceeds inline size limit.");
+}
+
 Directory.CreateDirectory(Path.GetDirectoryName(output)!);
 File.WriteAllText(output, fragment);
 Console.WriteLine($"Exported actual walk/run poses and cape experiment: {output}");

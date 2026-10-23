@@ -21,7 +21,7 @@ public sealed class AnimationPlayer2D<TFrame>
         get => (float)_clock.Speed;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(PlaybackSpeed));
+            ArgGuard.NonNegative(value, nameof(PlaybackSpeed));
             _clock.Speed = value;
         }
     }
@@ -34,7 +34,9 @@ public sealed class AnimationPlayer2D<TFrame>
         var mode = endMode ?? (clip.IsLooping ? PlaybackEndMode.Loop : PlaybackEndMode.Hold);
 
         if (ReferenceEquals(Clip, clip) && !restart && IsPlaying && _clock.EndMode == mode)
+        {
             return;
+        }
 
         _clock.Configure(clip.Duration, mode);
         Clip = clip;
@@ -47,23 +49,29 @@ public sealed class AnimationPlayer2D<TFrame>
     public void Resume()
     {
         if (Clip is not null && !IsFinished)
+        {
             _clock.Play();
+        }
     }
 
     public void Stop(bool resetToFirstFrame = true)
     {
         _clock.Stop(resetToFirstFrame);
         if (!resetToFirstFrame)
+        {
             return;
+        }
 
         CurrentFrameIndex = 0;
     }
 
     public void Update(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         if (!IsPlaying || Clip is null || deltaSeconds == 0f || PlaybackSpeed == 0f)
+        {
             return;
+        }
 
         _clock.Advance(deltaSeconds);
         CurrentFrameIndex = Clip.GetFrameIndexAtTime(ElapsedSeconds);

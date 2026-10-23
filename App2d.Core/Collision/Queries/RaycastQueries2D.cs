@@ -1,4 +1,5 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Collision.Queries;
@@ -15,7 +16,7 @@ public static class RaycastQueries2D
     {
         ArgGuard.ThrowIfNull(worldObjects);
         ray.Validate();
-        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
+        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
 
         var found = false;
         var nearestDistance = maxDistance;
@@ -23,7 +24,7 @@ public static class RaycastQueries2D
         foreach (var worldObject in worldObjects)
         {
             if (filter is not null && !filter(worldObject) ||
-                !RayIntersection2D.TryIntersect(
+                !SpatialRaycast2D.TryIntersect(
                     ray,
                     worldObject,
                     nearestDistance,
@@ -50,15 +51,17 @@ public static class RaycastQueries2D
     {
         ArgGuard.ThrowIfNull(worldObjects);
         ray.Validate();
-        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
+        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
         if (hits.IsEmpty)
+        {
             return 0;
+        }
 
         var hitCount = 0;
         foreach (var worldObject in worldObjects)
         {
             if (filter is not null && !filter(worldObject) ||
-                !RayIntersection2D.TryIntersect(
+                !SpatialRaycast2D.TryIntersect(
                     ray,
                     worldObject,
                     maxDistance,
@@ -84,9 +87,14 @@ public static class RaycastQueries2D
         where T : class
     {
         if (hitCount == hits.Length && candidate.Distance >= hits[^1].Distance)
+        {
             return;
+        }
+
         if (hitCount < hits.Length)
+        {
             hitCount++;
+        }
 
         var insertionIndex = hitCount - 1;
         while (insertionIndex > 0 && candidate.Distance < hits[insertionIndex - 1].Distance)

@@ -1,20 +1,22 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Player;
 using App2d.Core;
+using App2d.Core.Audio;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using System.Numerics;
@@ -75,7 +77,10 @@ public sealed class SwordDownAttackTests
     public void GroundedOrWithoutDownUsesNormalSword(bool grounded, bool downHeld)
     {
         using var game = new Fixture(grounded);
-        game.Step(Attack with { DownHeld = downHeld }, 0f);
+        game.Step(Attack with
+        {
+            DownHeld = downHeld
+        }, 0f);
         Assert.Equal(1, game.NormalAttacks);
         Assert.Equal(0, game.DownAttacks);
         game.AssertFrame("sword-attack", 1);
@@ -87,13 +92,22 @@ public sealed class SwordDownAttackTests
     public void OppositeAttackCannotOverlapOrReplaceCurrentSwing(bool startDown)
     {
         using var game = new Fixture();
-        game.Step(Attack with { DownHeld = startDown }, 0.05f);
+        game.Step(Attack with
+        {
+            DownHeld = startDown
+        }, 0.05f);
         game.Step(default, 0f); // Release so the next command is a new press.
-        game.Step(Attack with { DownHeld = !startDown }, 0.05f);
+        game.Step(Attack with
+        {
+            DownHeld = !startDown
+        }, 0.05f);
         Assert.Equal(startDown ? 1 : 0, game.DownAttacks);
         Assert.Equal(startDown ? 0 : 1, game.NormalAttacks);
         game.Step(default, 0.5f);
-        game.Step(Attack with { DownHeld = !startDown }, 0f);
+        game.Step(Attack with
+        {
+            DownHeld = !startDown
+        }, 0f);
         Assert.Equal(1, game.DownAttacks);
         Assert.Equal(1, game.NormalAttacks);
     }
@@ -109,9 +123,15 @@ public sealed class SwordDownAttackTests
         Assert.Single(game.Arsenal.GetActiveAttackHitboxes());
         switch (cause)
         {
-            case "damage": Assert.True(game.Person.TakeDamage(1, Vector2.Zero)); break;
-            case "reset": game.Person.Reset(Vector2.Zero); break;
-            case "disable": game.Person.SetSimulationEnabled(false); break;
+            case "damage":
+                Assert.True(game.Person.TakeDamage(1, Vector2.Zero));
+                break;
+            case "reset":
+                game.Person.Reset(Vector2.Zero);
+                break;
+            case "disable":
+                game.Person.SetSimulationEnabled(false);
+                break;
         }
         Assert.Empty(game.Arsenal.GetActiveAttackHitboxes());
         Assert.False(game.Arsenal.IsMeleeAttackActive);
@@ -126,7 +146,11 @@ public sealed class SwordDownAttackTests
         var movement = new PersonCommand2D { MoveX = 1f };
         for (var i = 0; i < 60; i++)
         {
-            attacking.Step(movement with { DownHeld = true, PrimaryHeld = i == 0 }, 1f / 120f);
+            attacking.Step(movement with
+            {
+                DownHeld = true,
+                PrimaryHeld = i == 0
+            }, 1f / 120f);
             baseline.Step(movement, 1f / 120f);
             Assert.Equal(baseline.Person.Position, attacking.Person.Position);
             Assert.Equal(baseline.Person.Body.LinearVelocity, attacking.Person.Body.LinearVelocity);
@@ -141,8 +165,16 @@ public sealed class SwordDownAttackTests
     {
         using var game = new Fixture();
         game.Physics.Gravity = new Vector2(0f, -1900f);
-        if (target != "spikes") game.AddEnemy(new Vector2(0f, -55f));
-        if (target != "enemy") game.AddSpikes();
+        if (target != "spikes")
+        {
+            game.AddEnemy(new Vector2(0f, -55f));
+        }
+
+        if (target != "enemy")
+        {
+            game.AddSpikes();
+        }
+
         game.Person.Body.LinearVelocity = new Vector2(120f, -900f);
         game.Step(Attack, 0f);
         Assert.True(game.Person.DownAttackBouncedThisFrame);
@@ -175,9 +207,19 @@ public sealed class SwordDownAttackTests
         using var game = new Fixture();
         game.Person.Body.LinearVelocity = new Vector2(0f, -200f);
         if (scenario == "dead-enemy")
+        {
             game.AddEnemy(new Vector2(0f, -55f)).TakeDamage(5, Vector2.Zero);
-        if (scenario == "normal") game.AddSpikes();
-        game.Step(Attack with { DownHeld = scenario != "normal" }, 0f);
+        }
+
+        if (scenario == "normal")
+        {
+            game.AddSpikes();
+        }
+
+        game.Step(Attack with
+        {
+            DownHeld = scenario != "normal"
+        }, 0f);
         if (scenario == "recovery")
         {
             game.Step(default, 0.09f);
@@ -231,7 +273,10 @@ public sealed class SwordDownAttackTests
 
         public Fixture(bool grounded = false)
         {
-            Physics = new(_collision) { Gravity = Vector2.Zero };
+            Physics = new(_collision)
+            {
+                Gravity = Vector2.Zero
+            };
             TileMap = new(SideScrollerLevel2D.WorldWidthTiles, SideScrollerLevel2D.WorldHeightTiles,
                 32f, SideScrollerLevel2D.ChunkSizeTiles, SideScrollerLevel2D.WorldOrigin);
             Level = new(_metrics, TileMap);
@@ -240,7 +285,7 @@ public sealed class SwordDownAttackTests
             if (grounded)
             {
                 var floor = Physics.AddBody(new SpatialObject2D(
-                    AxisAlignedRectangle2D.FromSize(new Vector2(500f, 20f))), BodyMotionType2D.Static);
+                    AxisAlignedRectangle2D.Builder.CreateFromSize(500f, 20f)), BodyMotionType2D.Static);
                 floor.WorldObject.Transform.Position = new(0f, Person.WorldObject.WorldBounds.Bottom - 10f);
                 floor.CollisionLayer = 1;
                 floor.CollisionMask = 2;
@@ -279,7 +324,7 @@ public sealed class SwordDownAttackTests
 
         public void AddContactEnemy(Vector2 position)
         {
-            var spatial = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(24f, 40f)));
+            var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(24f, 40f));
             spatial.Transform.Position = position;
             var body = Physics.AddBody(spatial, BodyMotionType2D.Static);
             body.CollisionLayer = 4;
@@ -306,8 +351,10 @@ public sealed class SwordDownAttackTests
         }
     }
 
-    private sealed class SilentSounds : ISoundEffectSink2D
+    private sealed class SilentSounds : ISoundEffectSink2D<SoundEffect2D>
     {
-        public void Play(SoundEffect2D effect) { }
+        public void Play(SoundEffect2D effect)
+        {
+        }
     }
 }

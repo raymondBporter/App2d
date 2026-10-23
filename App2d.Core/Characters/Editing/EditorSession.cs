@@ -1,12 +1,16 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Editing;
 
 /// <summary>Model edits rest geometry and appearance; Animate edits motion; Entity edits what a character does in the game.</summary>
-public enum Workspace { Model, Animate, Entity, Appearance }
+public enum Workspace
+{
+    Model, Animate, Entity, Appearance
+}
 
 /// <summary>What the author has picked. Session state, never saved into assets.</summary>
 public sealed class Selection
@@ -14,12 +18,28 @@ public sealed class Selection
     public string? Control { get; set; }
     public string? Part { get; set; }
     public string? Chain { get; set; }
+    /// <summary>Animation workspace: the appearance slot being keyed.</summary>
+    public string? Slot { get; set; }
     /// <summary>A selected key time on the timeline.</summary>
     public float? Key { get; set; }
     /// <summary>Entity workspace: the action, and the hit window inside it, being edited.</summary>
     public string? Action { get; set; }
     public string? Hit { get; set; }
-    public void Clear() { Control = Part = Chain = Action = Hit = null; Key = null; }
+    /// <summary>Selects one workspace target and clears the previous selection.</summary>
+    public void Select(string? control = null, string? part = null, string? chain = null, string? slot = null)
+    {
+        Clear();
+        Control = control;
+        Part = part;
+        Chain = chain;
+        Slot = slot;
+    }
+
+    public void Clear()
+    {
+        Control = Part = Chain = Slot = Action = Hit = null;
+        Key = null;
+    }
 }
 
 /// <summary>A model or variant evaluated for display. <see cref="Clip"/> is null when it shows rest. <see cref="Entity"/>, when set, draws its equipment too.</summary>
@@ -39,6 +59,9 @@ public sealed record EntityPreview(ResolvedEntity Entity, ActorPose Pose, float 
 /// </summary>
 public sealed class EditorSession
 {
+    /// <summary>Optional seed factories for workspaces without source assets. Authored resources take priority.</summary>
+    public Func<string, string, string, ModelTemplateInstance>? SeedModel { get; init; }
+    public Func<string, PropAsset?>? SeedAppearance { get; init; }
     private MotionClip? _pending;
     private (string Clip, int Version, float Time) _pendingFor;
     private bool _dragging;
@@ -49,7 +72,10 @@ public sealed class EditorSession
         Assets = assets;
         Sources = sources ?? SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(assets.Root))!);
         var first = assets.Variants.Select(v => v.Id).Concat(assets.Models.Select(m => m.Id)).Order(StringComparer.Ordinal).FirstOrDefault();
-        if (first is not null) Open(first);
+        if (first is not null)
+        {
+            Open(first);
+        }
     }
 
     public AuthoringWorkspace Assets { get; }
@@ -81,7 +107,11 @@ public sealed class EditorSession
 
     public (PropAsset Prop, ModelSocket Socket)? WeaponFor(ResolvedModel model)
     {
-        if (!PreviewWeapon || Assets.Prop(PreviewProp) is not { } prop) return null;
+        if (!PreviewWeapon || Assets.Prop(PreviewProp) is not { } prop)
+        {
+            return null;
+        }
+
         var socket = model.Base.Sockets.FirstOrDefault(s => s.Id == PreviewSocket);
         return socket is null ? null : (prop.Asset, socket);
     }
@@ -98,7 +128,14 @@ public sealed class EditorSession
     public AssetDocument<EntityAsset>? EntityDocument => Assets.Entity(EntityId);
     /// <summary>The open entity compiled against the drafts, or null with <see cref="EntityError"/> saying why.</summary>
     public ResolvedEntity? Entity => Assets.CompileEntity(EntityId, out _);
-    public string? EntityError { get { Assets.CompileEntity(EntityId, out var error); return error; } }
+    public string? EntityError
+    {
+        get
+        {
+            Assets.CompileEntity(EntityId, out var error);
+            return error;
+        }
+    }
     public AssetDocument<CharacterModel>? SubjectModel => Assets.Model(SubjectId);
     public AssetDocument<ModelVariant>? SubjectVariant => Assets.Variant(SubjectId);
     public AssetDocument<MotionClip>? ClipDocument => Assets.Clip(ClipId);
@@ -113,42 +150,67 @@ public sealed class EditorSession
         switch (Assets.Find(id))
         {
             case AssetDocument<MotionClip> clip:
-                Mode = Workspace.Animate; SetClip(clip.Id);
+                Mode = Workspace.Animate;
+                SetClip(clip.Id);
                 break;
             case AssetDocument<EntityAsset> entity:
-                Mode = Workspace.Entity; SetEntity(entity.Id);
+                Mode = Workspace.Entity;
+                SetEntity(entity.Id);
                 break;
             case AssetDocument<PropAsset> prop:
                 if (prop.Asset.Usage != "prop")
                 {
-                    Mode = Workspace.Appearance; PreviewProp = prop.Id; PreviewSocket = prop.Asset.Attachment ?? PersonWardrobe.HeadSocket;
-                    PreviewWeapon = true; Selection.Clear(); break;
+                    Mode = Workspace.Appearance;
+                    PreviewProp = prop.Id;
+                    PreviewSocket = prop.Asset.Attachment ?? Humanoid.HeadSocket;
+                    PreviewWeapon = true;
+                    Selection.Clear();
+                    break;
                 }
-                SetMode(Workspace.Animate); PreviewProp = prop.Id; PreviewWeapon = EditWeapon = true;
+                SetMode(Workspace.Animate);
+                PreviewProp = prop.Id;
+                PreviewWeapon = EditWeapon = true;
                 Report("Weapon preview opened. Choose its attachment socket; asset and OBJ controls are in the inspector.");
                 break;
             case AssetDocument document:
-                Mode = Workspace.Model; SetSubject(document.Id);
+                Mode = Workspace.Model;
+                SetSubject(document.Id);
                 break;
-            default: Report($"No asset '{id}'.", true); return;
+            default:
+                Report($"No asset '{id}'.", true);
+                return;
         }
     }
 
     public void SetMode(Workspace mode)
     {
-        CommitAll(); Mode = mode;
+        CommitAll();
+        Mode = mode;
         if (mode == Workspace.Appearance && AppearanceDocument?.Asset.Usage is null or "prop")
         {
             var art = Assets.Props.FirstOrDefault(p => p.Asset.Usage != "prop");
-            if (art is not null) { PreviewProp = art.Id; PreviewSocket = art.Asset.Attachment ?? PersonWardrobe.HeadSocket; }
+            if (art is not null)
+            {
+                PreviewProp = art.Id;
+                PreviewSocket = art.Asset.Attachment ?? Humanoid.HeadSocket;
+            }
         }
-        if (mode == Workspace.Animate && ClipId is null) SetClip(Assets.ClipsFor(SubjectId ?? "").Select(c => c.Id).Order(StringComparer.Ordinal).FirstOrDefault());
+        if (mode == Workspace.Animate && ClipId is null)
+        {
+            SetClip(Assets.ClipsFor(SubjectId ?? "").Select(c => c.Id).Order(StringComparer.Ordinal).FirstOrDefault());
+        }
+
         if (mode == Workspace.Entity)
         {
             // Prefer an entity on the open subject, so switching from Model to Entity lands on something related.
             if (EntityId is null || Assets.Entity(EntityId) is null)
+            {
                 SetEntity(Assets.Entities.OrderBy(e => Assets.BaseOf(e.Asset.Model) == Assets.BaseOf(SubjectId ?? "") ? 0 : 1).ThenBy(e => e.Id, StringComparer.Ordinal).FirstOrDefault()?.Id);
-            else Transport.Seek(TransportClip, Transport.Time);
+            }
+            else
+            {
+                Transport.Seek(TransportClip, Transport.Time);
+            }
         }
     }
 
@@ -156,34 +218,68 @@ public sealed class EditorSession
     public void SetEntity(string? id)
     {
         var entity = Assets.Entity(id);
-        EntityId = entity?.Id; PreviewAction = null; PreviewRole = EntityControllers.Idle; Selection.Clear();
+        EntityId = entity?.Id;
+        PreviewAction = null;
+        PreviewRole = EntityControllers.Idle;
+        Selection.Clear();
         if (entity is not null && Assets.BaseOf(entity.Asset.Model) is not null && entity.Asset.Model != SubjectId)
         {
             var sameBase = SubjectId is not null && Assets.BaseOf(SubjectId) == Assets.BaseOf(entity.Asset.Model);
-            SubjectId = entity.Asset.Model; if (!sameBase) Compare.Clear();
-            if (ClipId is null || Assets.Clip(ClipId)?.Asset.Model != Assets.BaseOf(SubjectId)) ClipId = Assets.ClipsFor(SubjectId).Select(c => c.Id).Order(StringComparer.Ordinal).FirstOrDefault();
+            SubjectId = entity.Asset.Model;
+            if (!sameBase)
+            {
+                Compare.Clear();
+            }
+
+            if (ClipId is null || Assets.Clip(ClipId)?.Asset.Model != Assets.BaseOf(SubjectId))
+            {
+                ClipId = Assets.ClipsFor(SubjectId).Select(c => c.Id).Order(StringComparer.Ordinal).FirstOrDefault();
+            }
         }
-        Transport.Pause(); Transport.Seek(TransportClip, 0);
+        Transport.Pause();
+        Transport.Seek(TransportClip, 0);
     }
 
     /// <summary>Previews a locomotion role; an open masked action keeps playing over it.</summary>
-    public void PreviewRoleOf(string role) { PreviewRole = role; if (PreviewAction is null) Transport.Seek(TransportClip, 0); }
+    public void PreviewRoleOf(string role)
+    {
+        PreviewRole = role;
+        if (PreviewAction is null)
+        {
+            Transport.Seek(TransportClip, 0);
+        }
+    }
 
     /// <summary>Previews an action from its start, or the locomotion role again with null.</summary>
     public void PreviewActionOf(string? action)
     {
-        PreviewAction = action; Selection.Action = action; Selection.Hit = null;
-        Transport.Pause(); Transport.Seek(TransportClip, 0);
+        PreviewAction = action;
+        Selection.Action = action;
+        Selection.Hit = null;
+        Transport.Pause();
+        Transport.Seek(TransportClip, 0);
     }
 
     public void SetSubject(string id)
     {
-        if (Assets.BaseOf(id) is null) { Report($"'{id}' is not a model or variant.", true); return; }
+        if (Assets.BaseOf(id) is null)
+        {
+            Report($"'{id}' is not a model or variant.", true);
+            return;
+        }
         var sameBase = SubjectId is not null && Assets.BaseOf(SubjectId) == Assets.BaseOf(id);
-        SubjectId = id; Selection.Clear();
-        if (!sameBase) Compare.Clear();
+        SubjectId = id;
+        Selection.Clear();
+        if (!sameBase)
+        {
+            Compare.Clear();
+        }
+
         if (ClipId is null || Assets.Clip(ClipId)?.Asset.Model != Assets.BaseOf(id))
+        {
             ClipId = Assets.ClipsFor(id).Select(c => c.Id).Order(StringComparer.Ordinal).FirstOrDefault();
+        }
+
         Transport.Seek(ClipDocument?.Asset, Transport.Time);
     }
 
@@ -192,16 +288,33 @@ public sealed class EditorSession
     {
         var clip = Assets.Clip(id);
         ClipId = clip?.Id;
-        if (clip is not null && (SubjectId is null || Assets.BaseOf(SubjectId) != clip.Asset.Model)) { SubjectId = clip.Asset.Model; Compare.Clear(); Selection.Clear(); }
+        if (clip is not null && (SubjectId is null || Assets.BaseOf(SubjectId) != clip.Asset.Model))
+        {
+            SubjectId = clip.Asset.Model;
+            Compare.Clear();
+            Selection.Clear();
+        }
         var phase = clip is null ? 0 : Transport.Time / Math.Max(clip.Asset.Duration, 1e-3f);
         Transport.Seek(clip?.Asset, clip is null ? 0 : Math.Clamp(phase, 0, 1) * clip.Asset.Duration);
     }
 
     public void Pin(string id)
     {
-        if (id == SubjectId || Compare.Contains(id)) return;
-        if (Assets.BaseOf(id) != Assets.BaseOf(SubjectId ?? "")) { Report($"'{id}' has a different base; compare pins share one structure.", true); return; }
-        if (Compare.Count >= 2) Compare.RemoveAt(0);
+        if (id == SubjectId || Compare.Contains(id))
+        {
+            return;
+        }
+
+        if (Assets.BaseOf(id) != Assets.BaseOf(SubjectId ?? ""))
+        {
+            Report($"'{id}' has a different base; compare pins share one structure.", true);
+            return;
+        }
+        if (Compare.Count >= 2)
+        {
+            Compare.RemoveAt(0);
+        }
+
         Compare.Add(id);
     }
 
@@ -210,17 +323,34 @@ public sealed class EditorSession
     /// <summary>The clip a subject plays in the current workspace, or null for rest. Unkeyed pose edits show until the time changes.</summary>
     public MotionClip? ClipFor(string subjectId)
     {
-        if (Mode == Workspace.Entity) return null;
-        if ((Mode is Workspace.Model or Workspace.Appearance) && (EditRig || ShowRest)) return null;
-        if (ClipId is null || !Assets.CanPlay(ClipId, subjectId, out _)) return null;
+        if (Mode == Workspace.Entity)
+        {
+            return null;
+        }
+
+        if ((Mode is Workspace.Model or Workspace.Appearance) && (EditRig || ShowRest))
+        {
+            return null;
+        }
+
+        if (ClipId is null || !Assets.CanPlay(ClipId, subjectId, out _))
+        {
+            return null;
+        }
+
         return PendingValid() ? _pending : ClipDocument!.Asset;
     }
 
     public Subject? Evaluate(string subjectId)
     {
         var model = Assets.Resolve(subjectId);
-        if (model is null) return null;
-        var clip = ClipFor(subjectId); var input = new PoseInput(Expression) { Skin = model.Base.Skins.Any(s => s.Id == Skin) ? Skin : null };
+        if (model is null)
+        {
+            return null;
+        }
+
+        var clip = ClipFor(subjectId);
+        var input = new PoseInput(Expression) { Skin = model.Base.Skins.Any(s => s.Id == Skin) ? Skin : null };
         var pose = clip is null ? PoseEvaluator.Rest(model, input)
             : PoseEvaluator.Sample(model, clip, Transport.Playing ? Transport.Seconds(clip) : Transport.Time, repeat: Transport.Repeats(clip), input);
         return new(subjectId, model, pose, clip);
@@ -230,7 +360,10 @@ public sealed class EditorSession
     public IReadOnlyList<Subject> Scene()
     {
         if (Mode == Workspace.Entity)
+        {
             return EvaluateEntity() is { } preview ? [new(preview.Entity.Id, preview.Entity.Model, preview.Pose.Local, TransportClip, preview.Entity)] : [];
+        }
+
         return [.. new[] { SubjectId }.Concat(Compare).OfType<string>().Select(Evaluate).OfType<Subject>()];
     }
 
@@ -246,9 +379,14 @@ public sealed class EditorSession
     /// </summary>
     public EntityPreview? EvaluateEntity()
     {
-        if (Entity is not { } entity) return null;
+        if (Entity is not { } entity)
+        {
+            return null;
+        }
+
         var action = PreviewAction is { } id ? entity.Actions.GetValueOrDefault(id) : null;
-        var time = Transport.Time; var weight = 1f;
+        var time = Transport.Time;
+        var weight = 1f;
         EvaluatedPose local;
         if (action is null)
         {
@@ -259,7 +397,10 @@ public sealed class EditorSession
         else if (action.Mask is { } mask)
         {
             weight = action.Weight(time);
-            local = PoseEvaluator.Sample(entity.Model, entity.Clip(PreviewRole), time, repeat: true, new(Expression) { Overlay = new(action.Clip, time, mask, weight) });
+            local = PoseEvaluator.Sample(entity.Model, entity.Clip(PreviewRole), time, repeat: true, new(Expression)
+            {
+                Overlay = new(action.Clip, time, mask, weight)
+            });
         }
         else
         {
@@ -274,18 +415,39 @@ public sealed class EditorSession
 
     public void Tick(float seconds)
     {
-        if (TransportClip is { } clip) Transport.Advance(clip, seconds);
-        else Transport.Pause();
+        if (TransportClip is { } clip)
+        {
+            Transport.Advance(clip, seconds);
+        }
+        else
+        {
+            Transport.Pause();
+        }
     }
 
-    public void TogglePlay() { if (TransportClip is { } clip) { CommitAll(); Transport.Toggle(clip); } }
+    public void TogglePlay()
+    {
+        if (TransportClip is { } clip)
+        {
+            CommitAll();
+            Transport.Toggle(clip);
+        }
+    }
     public void Seek(float time) => Transport.Seek(TransportClip, time);
 
     // ---- Gestures ------------------------------------------------------------------------------------------------
 
     /// <summary>Starts a viewport drag. Everything until <see cref="EndDrag"/> is one undo step.</summary>
-    public void BeginDrag() { Transport.Pause(); _dragging = true; }
-    public void EndDrag() { _dragging = false; CommitAll(); }
+    public void BeginDrag()
+    {
+        Transport.Pause();
+        _dragging = true;
+    }
+    public void EndDrag()
+    {
+        _dragging = false;
+        CommitAll();
+    }
 
     /// <summary>
     /// Moves a control to a world position. In Model it changes rest geometry: the base's, or the variant's overrides. In
@@ -293,7 +455,11 @@ public sealed class EditorSession
     /// </summary>
     public void DragControl(string control, Vector3 world)
     {
-        if (!_dragging) BeginDrag();
+        if (!_dragging)
+        {
+            BeginDrag();
+        }
+
         Attempt(() =>
         {
             if (Mode == Workspace.Model)
@@ -312,7 +478,11 @@ public sealed class EditorSession
             }
             var clip = ClipDocument ?? throw new InvalidOperationException("Choose an animation to pose.");
             var subject = Assets.Resolve(SubjectId) ?? throw new InvalidDataException("The preview model does not resolve.");
-            if (!Assets.CanPlay(clip.Id, SubjectId!, out var error)) throw new InvalidDataException(error);
+            if (!Assets.CanPlay(clip.Id, SubjectId!, out var error))
+            {
+                throw new InvalidDataException(error);
+            }
+
             var time = Transport.Time;
             if (AutoKey)
             {
@@ -323,7 +493,10 @@ public sealed class EditorSession
                 });
                 return;
             }
-            if (!PendingValid()) { _pending = MotionClip.FromJson(clip.Serialize()); }
+            if (!PendingValid())
+            {
+                _pending = MotionClip.FromJson(clip.Serialize());
+            }
             ClipAuthoring.Pose(subject, _pending!, PoseEvaluator.Sample(subject, _pending, time), time, control, world);
             _pendingFor = (clip.Id, clip.Version, time);
         });
@@ -333,11 +506,29 @@ public sealed class EditorSession
     public void KeyPose()
     {
         var clip = ClipDocument;
-        if (clip is null) return;
-        var pending = PendingValid() ? _pending : null; var time = Transport.Time;
+        if (clip is null)
+        {
+            return;
+        }
+
+        var pending = PendingValid() ? _pending : null;
+        var time = Transport.Time;
         // Keyed on a copy, so a refused key leaves the unkeyed pose intact to key once the clip is repaired.
-        if (Attempt(() => clip.Edit(() => { if (pending is not null) clip.Replace(AuthoredAsset.Parse<MotionClip>(pending.ToJson(), "animation")); ClipAuthoring.KeyPose(clip.Asset, time); }), "Keyed pose at " + time.ToString("F3") + "s")) _pending = null;
-        else if (pending is not null) _pendingFor = (clip.Id, clip.Version, time);
+        if (Attempt(() => clip.Edit(() =>
+        {
+            if (pending is not null)
+            {
+                clip.Replace(AuthoredAsset.Parse<MotionClip>(pending.ToJson(), "animation"));
+            }
+            ClipAuthoring.KeyPose(clip.Asset, time);
+        }), "Keyed pose at " + time.ToString("F3") + "s"))
+        {
+            _pending = null;
+        }
+        else if (pending is not null)
+        {
+            _pendingFor = (clip.Id, clip.Version, time);
+        }
     }
 
     public void DiscardPendingPose() => _pending = null;
@@ -349,9 +540,18 @@ public sealed class EditorSession
         Attempt(() =>
         {
             var clip = ClipDocument ?? throw new InvalidOperationException("Choose an animation first.");
-            var channel = new Channel(MotionClip.OrientKind, PreviewSocket); var time = Transport.Time;
-            if (AutoKey) { clip.Change(() => ClipAuthoring.SetKey(clip.Asset, channel, time, radians)); return; }
-            if (!PendingValid()) _pending = MotionClip.FromJson(clip.Serialize());
+            var channel = new Channel(MotionClip.OrientKind, PreviewSocket);
+            var time = Transport.Time;
+            if (AutoKey)
+            {
+                clip.Change(() => ClipAuthoring.SetKey(clip.Asset, channel, time, radians));
+                return;
+            }
+            if (!PendingValid())
+            {
+                _pending = MotionClip.FromJson(clip.Serialize());
+            }
+
             ClipAuthoring.SetKey(_pending!, channel, time, radians);
             _pendingFor = (clip.Id, clip.Version, time);
         });
@@ -365,19 +565,48 @@ public sealed class EditorSession
     /// <summary>Applies a discrete edit to a document as one undo step, reporting instead of throwing when it is refused.</summary>
     public bool Edit(AssetDocument? document, Action change, string? success = null)
     {
-        if (document is null) { Report("Nothing is open to edit.", true); return false; }
+        if (document is null)
+        {
+            Report("Nothing is open to edit.", true);
+            return false;
+        }
         var applied = Attempt(() => document.Edit(change), success);
-        KeepTransport(); return applied;
+        KeepTransport();
+        return applied;
     }
 
     /// <summary>Applies one frame of a continuous edit, such as a slider drag. Commit closes it.</summary>
-    public void Change(AssetDocument? document, Action change) { if (document is not null) { Attempt(() => document.Change(change)); KeepTransport(); } }
+    public void Change(AssetDocument? document, Action change)
+    {
+        if (document is not null)
+        {
+            Attempt(() => document.Change(change));
+            KeepTransport();
+        }
+    }
 
     /// <summary>After an edit or undo shortens the transport clip, brings the time back inside it so new keys stay in range.</summary>
-    private void KeepTransport() { if (TransportClip is { } clip && Transport.Time > clip.Duration) Transport.Seek(clip, Transport.Time); }
+    private void KeepTransport()
+    {
+        if (TransportClip is { } clip && Transport.Time > clip.Duration)
+        {
+            Transport.Seek(clip, Transport.Time);
+        }
+    }
 
     /// <summary>Closes every open transaction; call once no widget or drag is active.</summary>
-    public void CommitAll() { if (_dragging) return; foreach (var document in Assets.Documents) document.Commit(); }
+    public void CommitAll()
+    {
+        if (_dragging)
+        {
+            return;
+        }
+
+        foreach (var document in Assets.Documents)
+        {
+            document.Commit();
+        }
+    }
 
     /// <summary>
     /// Documents the open workspace edits: the active one and, for a variant, its base, which saving a look changes. Undo
@@ -385,10 +614,25 @@ public sealed class EditorSession
     /// </summary>
     private IEnumerable<AssetDocument> UndoScope()
     {
-        if (ActiveDocument is { } active) yield return active;
-        if (Mode == Workspace.Appearance && EntityDocument is { } wearer) yield return wearer;
-        if (Mode == Workspace.Animate && EditWeapon && Assets.Prop(PreviewProp) is { } prop) yield return prop;
-        if (Mode == Workspace.Model && SubjectVariant is { } variant && Assets.Model(variant.Asset.Base) is { } basis) yield return basis;
+        if (ActiveDocument is { } active)
+        {
+            yield return active;
+        }
+
+        if (Mode == Workspace.Appearance && EntityDocument is { } wearer)
+        {
+            yield return wearer;
+        }
+
+        if (Mode == Workspace.Animate && EditWeapon && Assets.Prop(PreviewProp) is { } prop)
+        {
+            yield return prop;
+        }
+
+        if (Mode == Workspace.Model && SubjectVariant is { } variant && Assets.Model(variant.Asset.Base) is { } basis)
+        {
+            yield return basis;
+        }
     }
 
     public bool CanUndo => UndoScope().Any(d => d.CanUndo);
@@ -397,34 +641,70 @@ public sealed class EditorSession
     public void Undo()
     {
         var document = UndoScope().Where(d => d.CanUndo).MaxBy(d => d.UndoSequence);
-        if (document is null) return;
-        _pending = null; document.Undo(); KeepSelection(); KeepTransport();
+        if (document is null)
+        {
+            return;
+        }
+
+        _pending = null;
+        document.Undo();
+        KeepSelection();
+        KeepTransport();
     }
 
     public void Redo()
     {
         var document = UndoScope().Where(d => d.CanRedo).MaxBy(d => d.RedoSequence);
-        if (document is null) return;
-        _pending = null; document.Redo(); KeepSelection(); KeepTransport();
+        if (document is null)
+        {
+            return;
+        }
+
+        _pending = null;
+        document.Redo();
+        KeepSelection();
+        KeepTransport();
     }
 
     /// <summary>After undo, drops an entity selection or preview that no longer exists instead of pointing at nothing.</summary>
     private void KeepSelection()
     {
-        if (EntityDocument?.Asset is not { } entity) return;
-        if (Selection.Action is { } action && entity.Actions.All(a => a.Id != action)) { Selection.Action = Selection.Hit = null; }
-        if (PreviewAction is { } previewed && entity.Actions.All(a => a.Id != previewed)) PreviewAction = null;
+        if (EntityDocument?.Asset is not { } entity)
+        {
+            return;
+        }
+
+        if (Selection.Action is { } action && entity.Actions.All(a => a.Id != action))
+        {
+            Selection.Action = Selection.Hit = null;
+        }
+        if (PreviewAction is { } previewed && entity.Actions.All(a => a.Id != previewed))
+        {
+            PreviewAction = null;
+        }
     }
 
     public bool Save(AssetDocument? document)
     {
-        if (document is null) return false;
+        if (document is null)
+        {
+            return false;
+        }
+
         return Attempt(() =>
         {
             var report = Assets.Save(document);
             var text = "Saved " + report.Path;
-            if (report.Updated.Count > 0) text += $". Moved {report.Updated.Count} clip(s) to the new structure revision; save them too: {string.Join(", ", report.Updated.Select(d => d.Id))}";
-            if (report.Problems.Count > 0) text += ". Needs repair: " + report.Problems[0];
+            if (report.Updated.Count > 0)
+            {
+                text += $". Moved {report.Updated.Count} clip(s) to the new structure revision; save them too: {string.Join(", ", report.Updated.Select(d => d.Id))}";
+            }
+
+            if (report.Problems.Count > 0)
+            {
+                text += ". Needs repair: " + report.Problems[0];
+            }
+
             Report(text, report.Problems.Count > 0);
         });
     }
@@ -448,42 +728,19 @@ public sealed class EditorSession
 
     // ---- New assets ----------------------------------------------------------------------------------------------
 
-    public bool ExportSpine(string path) => Attempt(() =>
-    {
-        var model = Assets.Resolve(SubjectId) ?? throw new InvalidDataException("Open a model or variant first.");
-        var clips = Assets.ClipsFor(model.Id).Select(c => c.Asset).ToArray();
-        Characters.Spine.SpineExport2D.Build(model, clips).Save(path);
-    }, "Exported Spine 4.2 JSON, images, atlas and native backup. See the adjacent conversion notes.");
-
-    public bool ImportSpine(string path, string id, string name, string? imagesDirectory = null) => Attempt(() =>
-    {
-        var result = Characters.Spine.SpineImport2D.Load(path, id, name, imagesDirectory);
-        if (Assets.Exists(id) || result.Animations.Any(c => Assets.Exists(c.Id))) throw new InvalidDataException("An imported asset id is already used. Choose a different model id.");
-        foreach (var (image, bytes) in result.Images)
-        {
-            var target = IO.FilePaths.ResolveUnderRoot(Assets.Root, image);
-            if (File.Exists(target)) throw new InvalidDataException($"Imported image already exists: {image}. Choose a different model id.");
-        }
-        foreach (var (image, bytes) in result.Images)
-        {
-            var target = IO.FilePaths.ResolveUnderRoot(Assets.Root, image); Directory.CreateDirectory(Path.GetDirectoryName(target)!); File.WriteAllBytes(target, bytes);
-        }
-        Assets.Create(result.Model); foreach (var clip in result.Animations) Assets.Create(clip);
-        Open(id); EditRig = false; Skin = result.Model.Skins.FirstOrDefault()?.Id;
-    }, "Imported Spine 4.2 as new editable drafts. Save all to keep the model and animations.");
-
     public bool NewAppearance(string id, string name, string template) => Attempt(() =>
     {
         var model = Assets.Resolve(SubjectId);
         Assets.Create(AppearanceAuthoring.New(id, name, template, model?.Base.Ink ?? "#222b32", model?.Base.LineWidth ?? .045f,
-            source => Assets.Prop(source)?.Asset));
+            source => Assets.Prop(source)?.Asset ?? SeedAppearance?.Invoke(source)));
         Open(id);
     }, $"Created appearance '{id}'. Edit the outline, then equip it on an entity and save all.");
 
     public bool DuplicateAppearance(string source, string id, string name) => Attempt(() =>
     {
         var prop = Assets.Prop(source) ?? throw new InvalidDataException($"No appearance '{source}'.");
-        Assets.Create(AppearanceAuthoring.Duplicate(prop.Asset, id, name)); Open(id);
+        Assets.Create(AppearanceAuthoring.Duplicate(prop.Asset, id, name));
+        Open(id);
     }, $"Created appearance '{id}'.");
 
     public bool EquipAppearance(string entityId, string propId, string socketId) => Attempt(() =>
@@ -491,11 +748,19 @@ public sealed class EditorSession
         var entity = Assets.Entity(entityId) ?? throw new InvalidDataException("Choose an entity first.");
         var prop = Assets.Prop(propId) ?? throw new InvalidDataException("Choose an appearance first.");
         var model = Assets.Resolve(entity.Asset.Model) ?? throw new InvalidDataException("The entity's model is invalid.");
-        if (model.Base.Sockets.All(s => s.Id != socketId)) throw new InvalidDataException("Choose a socket on this entity's model.");
+        if (model.Base.Sockets.All(s => s.Id != socketId))
+        {
+            throw new InvalidDataException("Choose a socket on this entity's model.");
+        }
+
         entity.Edit(() =>
         {
             entity.Asset.Equipment.RemoveAll(e => e.Prop == prop.Id);
-            entity.Asset.Equipment.Add(new() { Prop = prop.Id, Socket = socketId });
+            entity.Asset.Equipment.Add(new()
+            {
+                Prop = prop.Id,
+                Socket = socketId
+            });
         });
     }, $"Equipped '{propId}' on '{entityId}'. Save all to keep the appearance and its binding.");
 
@@ -505,21 +770,28 @@ public sealed class EditorSession
         var bundle = template == "empty" ? new ModelTemplateInstance(ModelAuthoring.Empty(id, name), [], null)
             : Assets.ModelTemplates.TryGetValue(template, out var recipe)
                 ? recipe.Instantiate(id, name, source => Assets.Model(source)?.Asset, source => Assets.Clip(source)?.Asset)
-                : BuiltInTemplate(template, id, name);
+                : SeedModel?.Invoke(template, id, name) ?? throw new InvalidDataException($"Unknown model template '{template}'.");
         foreach (var destination in bundle.Animations.Select(c => c.Id).Prepend(bundle.Model.Id))
-            if (Assets.Exists(destination)) throw new InvalidDataException($"The id '{destination}' is already used; choose another model id.");
-        Assets.Create(bundle.Model);
-        foreach (var clip in bundle.Animations) Assets.Create(clip);
-        Open(id); EditRig = template == "empty";
-        if (bundle.PreviewAnimation is { } preview) SetClip(preview);
-    }, $"Created model '{id}'.");
+        {
+            if (Assets.Exists(destination))
+            {
+                throw new InvalidDataException($"The id '{destination}' is already used; choose another model id.");
+            }
+        }
 
-    private static ModelTemplateInstance BuiltInTemplate(string template, string id, string name)
-    {
-        var starter = CharacterTemplates.Get(template);
-        var model = starter.Model(id, name);
-        return new(model, starter.Clips(model), starter.Preview is { } preview ? id + "-" + preview : null);
-    }
+        Assets.Create(bundle.Model);
+        foreach (var clip in bundle.Animations)
+        {
+            Assets.Create(clip);
+        }
+
+        Open(id);
+        EditRig = template == "empty";
+        if (bundle.PreviewAnimation is { } preview)
+        {
+            SetClip(preview);
+        }
+    }, $"Created model '{id}'.");
 
     /// <summary>A new variant of a base, optionally starting from one of its build presets.</summary>
     public bool NewVariant(string id, string name, string baseId, string? preset = null) => Attempt(() =>
@@ -530,51 +802,66 @@ public sealed class EditorSession
         {
             var rule = BuildRules.For(basis.Asset) ?? throw new InvalidDataException($"'{baseId}' exposes no build presets.");
             var values = (rule.Presets.FirstOrDefault(p => p.Id == preset) ?? throw new InvalidDataException($"No preset '{preset}'.")).Values;
-            foreach (var (value, amount) in values) if (amount != (rule.Values.First(v => v.Id == value).Default)) variant.Build[value] = amount;
+            foreach (var (value, amount) in values)
+            {
+                if (amount != rule.Values.First(v => v.Id == value).Default)
+                {
+                    variant.Build[value] = amount;
+                }
+            }
         }
-        Assets.Create(variant); Open(id);
+        Assets.Create(variant);
+        Open(id);
     }, $"Created variant '{id}'.");
 
     /// <summary>A sibling of a variant, referencing the same base; never a chain of variants.</summary>
     public bool DuplicateVariant(string sourceId, string id, string name) => Attempt(() =>
     {
         var source = Assets.Variant(sourceId) ?? throw new InvalidDataException($"No variant '{sourceId}'.");
-        var copy = AuthoredAsset.Parse<ModelVariant>(source.Serialize(), "variant"); copy.Id = id; copy.Name = name;
-        Assets.Create(copy); Open(id);
+        var copy = AuthoredAsset.Parse<ModelVariant>(source.Serialize(), "variant");
+        copy.Id = id;
+        copy.Name = name;
+        Assets.Create(copy);
+        Open(id);
     }, $"Created variant '{id}'.");
 
     /// <summary>Flattens a variant into a new independent base. Its clips are not carried over: compatibility must be established explicitly.</summary>
     public bool MakeIndependent(string variantId, string id, string name) => Attempt(() =>
     {
         var resolved = Assets.Resolve(variantId, out var error) ?? throw new InvalidDataException(error);
-        Assets.Create(ModelAuthoring.Flatten(resolved, id, name)); Open(id);
+        Assets.Create(ModelAuthoring.Flatten(resolved, id, name));
+        Open(id);
     }, $"Created independent model '{id}'. Its animations must be copied or converted explicitly.");
 
     public bool NewClip(string id, string name, float duration = 1, bool loop = true) => Attempt(() =>
     {
         var preview = Assets.Resolve(SubjectId, out var error) ?? throw new InvalidDataException(error ?? "Open a model or variant first.");
-        Assets.Create(ClipAuthoring.New(preview, id, name, duration, loop)); Open(id);
+        Assets.Create(ClipAuthoring.New(preview, id, name, duration, loop));
+        Open(id);
     }, $"Created animation '{id}'.");
 
     /// <summary>A deliberate specialized copy of a shared clip.</summary>
     public bool DuplicateClip(string sourceId, string id, string name) => Attempt(() =>
     {
         var source = Assets.Clip(sourceId) ?? throw new InvalidDataException($"No animation '{sourceId}'.");
-        Assets.Create(ClipAuthoring.Duplicate(source.Asset, id, name)); Open(id);
+        Assets.Create(ClipAuthoring.Duplicate(source.Asset, id, name));
+        Open(id);
     }, $"Created animation '{id}'.");
 
     /// <summary>A new entity on a model or variant, starting from a template's gameplay defaults.</summary>
     public bool NewEntity(string id, string name, string modelId, string template) => Attempt(() =>
     {
         var model = Assets.Resolve(modelId, out var error) ?? throw new InvalidDataException(error);
-        Assets.Create(EntityAuthoring.New(template, id, name, model)); Open(id);
+        Assets.Create(EntityAuthoring.New(template, id, name, model));
+        Open(id);
     }, $"Created entity '{id}' on '{modelId}'.");
 
     /// <summary>A sibling entity keeping every model, clip and prop reference.</summary>
     public bool DuplicateEntity(string sourceId, string id, string name) => Attempt(() =>
     {
         var source = Assets.Entity(sourceId) ?? throw new InvalidDataException($"No entity '{sourceId}'.");
-        Assets.Create(EntityAuthoring.Duplicate(source.Asset, id, name)); Open(id);
+        Assets.Create(EntityAuthoring.Duplicate(source.Asset, id, name));
+        Open(id);
     }, $"Created entity '{id}'.");
 
     /// <summary>Sets an entity's own assignment for a role, or with null removes it so the selected motion set's applies again.</summary>
@@ -584,9 +871,17 @@ public sealed class EditorSession
         return Edit(document, () =>
         {
             AuthoredAsset.RequireId(role, "role");
-            if (clipId is null) { document!.Asset.Roles.Remove(role); return; }
+            if (clipId is null)
+            {
+                document!.Asset.Roles.Remove(role);
+                return;
+            }
             var clip = Assets.Clip(clipId) ?? throw new InvalidDataException($"No animation '{clipId}'.");
-            if (clip.Asset.Model != Assets.BaseOf(document!.Asset.Model)) throw new InvalidDataException($"Animation '{clipId}' is for model '{clip.Asset.Model}', not '{Assets.BaseOf(document.Asset.Model)}'.");
+            if (clip.Asset.Model != Assets.BaseOf(document!.Asset.Model))
+            {
+                throw new InvalidDataException($"Animation '{clipId}' is for model '{clip.Asset.Model}', not '{Assets.BaseOf(document.Asset.Model)}'.");
+            }
+
             document.Asset.Roles[role] = clipId;
         }, clipId is null ? $"Role '{role}' follows the motion set again." : $"Role '{role}' overridden with '{clipId}'.");
     }
@@ -598,7 +893,7 @@ public sealed class EditorSession
         return Edit(document, () =>
         {
             var model = Assets.Resolve(document!.Asset.Model, out var error) ?? throw new InvalidDataException(error);
-            var current = ShapeBounds2D.Calculate(document.Asset.Movement.Shape.Build());
+            var current = ShapeBounds2D.Calculate(document.Asset.Movement.Shape.Validated());
             document.Asset.Movement = EntityAuthoring.FitMovement(model, current.Center.X);
         }, "Fitted the movement box to the rest pose.");
     }
@@ -611,7 +906,11 @@ public sealed class EditorSession
     public bool RemoveMotionSet(string baseId, string setId)
     {
         var users = Assets.EntitiesOn(baseId).Where(e => e.Asset.MotionSet == setId).Select(e => e.Id).ToList();
-        if (users.Count > 0) { Report($"Motion set '{setId}' is selected by {string.Join(", ", users)}; choose another set there first.", true); return false; }
+        if (users.Count > 0)
+        {
+            Report($"Motion set '{setId}' is selected by {string.Join(", ", users)}; choose another set there first.", true);
+            return false;
+        }
         return Edit(Assets.Model(baseId), () => Assets.Model(baseId)!.Asset.MotionSets.RemoveAll(s => s.Id == setId), $"Removed motion set '{setId}'.");
     }
 
@@ -636,8 +935,13 @@ public sealed class EditorSession
     /// <summary>Saves the open variant's colors, faces and visibility as a look on its base. The base document becomes dirty.</summary>
     public bool SaveLook(string lookId, string name)
     {
-        var variant = SubjectVariant; var model = Assets.Model(variant?.Asset.Base);
-        if (variant is null || model is null) { Report("Open a variant with a base to save its look.", true); return false; }
+        var variant = SubjectVariant;
+        var model = Assets.Model(variant?.Asset.Base);
+        if (variant is null || model is null)
+        {
+            Report("Open a variant with a base to save its look.", true);
+            return false;
+        }
         return Edit(model, () => EntityAuthoring.SaveLook(model.Asset, variant.Asset, lookId, name), $"Saved look '{name}' on base '{model.Name}'; save the base to keep it.");
     }
 
@@ -646,10 +950,23 @@ public sealed class EditorSession
     {
         var document = Assets.Find(id) ?? throw new InvalidDataException($"No asset '{id}'.");
         Assets.Discard(document);
-        if (EntityId == id) SetEntity(null);
-        if (ClipId == id) SetClip(null);
+        if (EntityId == id)
+        {
+            SetEntity(null);
+        }
+
+        if (ClipId == id)
+        {
+            SetClip(null);
+        }
+
         Compare.Remove(id);
-        if (SubjectId == id) { SubjectId = null; Selection.Clear(); SetClip(null); }
+        if (SubjectId == id)
+        {
+            SubjectId = null;
+            Selection.Clear();
+            SetClip(null);
+        }
     }, $"Discarded unsaved '{id}'.");
 
     // ---- Imports -------------------------------------------------------------------------------------------------
@@ -659,7 +976,12 @@ public sealed class EditorSession
     {
         var puppet = PuppetDefinition.FromJson(File.ReadAllText(path));
         var result = PuppetImport.Convert(puppet, id, name, SourcePath(path), Assets.TakenIds);
-        Assets.Create(result.Model); foreach (var clip in result.Clips) Assets.Create(clip);
+        Assets.Create(result.Model);
+        foreach (var clip in result.Clips)
+        {
+            Assets.Create(clip);
+        }
+
         Open(result.Clips.Count > 0 ? result.Clips[0].Id : id);
         Report($"Imported model '{id}' and {result.Clips.Count} animation(s) from {Path.GetFileName(path)}; the file is unchanged. Review contacts and depth, then save.");
     });
@@ -671,8 +993,13 @@ public sealed class EditorSession
     public bool ImportLibraryClip(string library, string clip, string modelId, IReadOnlyDictionary<string, List<string>> points, string id, string name, string? restClip = null) => Attempt(() =>
     {
         var model = Assets.Model(modelId) ?? throw new InvalidDataException($"No base model '{modelId}'.");
-        if (Assets.Exists(id)) throw new InvalidDataException($"The id '{id}' is already used.");
-        Assets.Create(LibraryImport.Convert(Sources.Get(library), clip, model.Asset, points, id, name, restClip)); Open(id);
+        if (Assets.Exists(id))
+        {
+            throw new InvalidDataException($"The id '{id}' is already used.");
+        }
+
+        Assets.Create(LibraryImport.Convert(Sources.Get(library), clip, model.Asset, points, id, name, restClip));
+        Open(id);
         Report($"Converted {library}/{clip} onto '{modelId}'. It has no contacts yet: plant the feet in Animate, check depth, then save.");
     });
 
@@ -685,11 +1012,28 @@ public sealed class EditorSession
 
     // ---- Messages ------------------------------------------------------------------------------------------------
 
-    public void Report(string message, bool error = false) { Message = message; MessageIsError = error; }
+    public void Report(string message, bool error = false)
+    {
+        Message = message;
+        MessageIsError = error;
+    }
 
     private bool Attempt(Action action, string? success = null)
     {
-        try { action(); if (success is not null) Report(success); return true; }
-        catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException or UnauthorizedAccessException) { Report(ex.Message, true); return false; }
+        try
+        {
+            action();
+            if (success is not null)
+            {
+                Report(success);
+            }
+
+            return true;
+        }
+        catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException or UnauthorizedAccessException)
+        {
+            Report(ex.Message, true);
+            return false;
+        }
     }
 }
