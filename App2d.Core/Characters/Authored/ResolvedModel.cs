@@ -72,6 +72,10 @@ public sealed class ResolvedModel
         }
         RestTransforms = frames;
         SetupTransforms = setups;
+        // Authored rest Z is an absolute character layer; the evaluator composes layers by addition, so each control
+        // carries only its offset from its parent (a root keeps its rest Z). Summing offsets down the tree reproduces
+        // every authored value without double counting (character-migration-baseline.md, section 7.4).
+        LayerOffsets = order.ToDictionary(c => c.Id, c => rest[c.Id].Z - (c.Parent is null ? 0 : rest[c.Parent].Z), StringComparer.Ordinal);
         BoneFrameIk.ValidateFrames(Controls, Chains.Values, frames);
         Measures = model.Measures.ToDictionary(m => m.Id, m => m.Path.Zip(m.Path.Skip(1)).Sum(p => Length(p.First, p.Second)), StringComparer.Ordinal);
     }
@@ -82,6 +86,11 @@ public sealed class ResolvedModel
     public IReadOnlyDictionary<string, Vector3> Rest { get; }
     public IReadOnlyDictionary<string, Matrix3x2> RestTransforms { get; }
     public IReadOnlyDictionary<string, Affine2D> SetupTransforms { get; }
+    /// <summary>Each control's drawing layer relative to its parent (a root's is its rest Z). Composed layers reproduce the authored absolute rest Z.</summary>
+    public IReadOnlyDictionary<string, float> LayerOffsets { get; }
+
+    /// <summary>A control's rest placement: its rest frame at its absolute rest layer.</summary>
+    public LayeredFrame2D RestPlacement(string control) => new(new Frame2D(RestTransforms[control]), Rest[control].Z);
     public string TextureRoot { get; set; } = Environment.CurrentDirectory;
     public IReadOnlyList<PuppetPart> Parts { get; }
     public IReadOnlyDictionary<string, float> Measures { get; }

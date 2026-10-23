@@ -1,4 +1,6 @@
 using App2d.Core.Animation;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -50,6 +52,9 @@ public sealed class EvaluatedPose
     public List<ChainResult> Chains { get; } = [];
     public List<ContactResult> Contacts { get; } = [];
     public Vector3 World(string id) => Points[id];
+
+    /// <summary>A control's evaluated placement: its bone frame at its drawing layer. Artwork, sockets and handles attach to this.</summary>
+    public LayeredFrame2D Placement(string id) => new(new Frame2D(Bones[id]), Points[id].Z);
 }
 
 /// <summary>Samples channels, builds the hierarchy, then solves IK and contacts. No graphics.</summary>
@@ -126,31 +131,40 @@ public static class PoseEvaluator
         var angles = pose.Angles;
         foreach (var control in model.Order)
         {
+            // Every control is one local placement composed onto a carrier: frames multiply, layers add. The authored
+            // rest Z is already split into per-control layer offsets, and a translate-Z key is a further local offset,
+            // so an animated parent layer carries its children without double counting.
+            var translate = Delta(MotionClip.TranslateKind, control.Id, control.Scale);
+            var localLayer = model.LayerOffsets[control.Id] + translate.Z;
             if (model.SetupTransforms.TryGetValue(control.Id, out var setup))
             {
-                var translate = Delta(MotionClip.TranslateKind, control.Id, control.Scale);
                 var scale = Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit);
                 var shear = Delta(MotionClip.ShearKind, control.Id, CharacterModel.Unit);
-                var local = setup.EvaluateMatrix(
+                var local = new LayeredFrame2D(new(setup.EvaluateMatrix(
                     new(setup.X + translate.X, setup.Y + translate.Y),
                     setup.Rotation + Angle(control.Id),
                     new(setup.ScaleX * (1 + scale.X), setup.ScaleY * (1 + scale.Y)),
-                    new(setup.ShearX + shear.X, setup.ShearY + shear.Y));
-                var parent = control.Parent is null ? Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y) : pose.Bones[control.Parent];
-                var matrix = local * parent;
-                pose.Bones[control.Id] = matrix;
-                pose.Points[control.Id] = new(matrix.M31, matrix.M32, model.Rest[control.Id].Z + translate.Z);
-                angles[control.Id] = MathF.Atan2(matrix.M12, matrix.M11);
+                    new(setup.ShearX + shear.X, setup.ShearY + shear.Y))), localLayer);
+                var carrier = control.Parent is null ? LayeredFrame2D.FromMatrix(Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y)) : pose.Placement(control.Parent);
+                var placed = local.Then(carrier);
+                pose.Bones[control.Id] = placed.Frame.Matrix;
+                pose.Points[control.Id] = placed.Origin;
+                angles[control.Id] = MathF.Atan2(placed.XAxis.Y, placed.XAxis.X);
                 continue;
             }
+            // A point control keeps the model-space convention: its rest offset from the parent turns by the parent's
+            // rotation since rest, and its own angle accumulates rather than being read back from the matrix, so
+            // full turns stay unwrapped.
             var parentPoint = control.Parent is null ? pose.Locomotion : pose.Points[control.Parent];
             var parentAngle = control.Parent is null ? 0 : angles[control.Parent];
             var parentRestAngle = control.Parent is null ? 0 : model.Controls[control.Parent].RestAngle;
             var parentRest = control.Parent is null ? Vector3.Zero : model.Rest[control.Parent];
-            var offset = model.Rest[control.Id] - parentRest + Delta(MotionClip.TranslateKind, control.Id, control.Scale);
-            pose.Points[control.Id] = parentPoint + Rotation2D.ApplyXY(offset, parentAngle - parentRestAngle);
+            var offset = (model.Rest[control.Id] - parentRest + translate).XY;
+            var turned = LayeredFrame2D.FromRotation(parentAngle - parentRestAngle, parentPoint);
             angles[control.Id] = parentAngle + control.RestAngle - parentRestAngle + Angle(control.Id);
-            pose.Bones[control.Id] = Matrix3x2.CreateRotation(angles[control.Id]) * Matrix3x2.CreateTranslation(pose.Points[control.Id].X, pose.Points[control.Id].Y);
+            var point = turned.At(new Vector3(offset, localLayer));
+            pose.Points[control.Id] = point;
+            pose.Bones[control.Id] = Matrix3x2.CreateRotation(angles[control.Id]) * Matrix3x2.CreateTranslation(point.X, point.Y);
         }
         var constraints = new RigConstraintEvaluator(model, pose);
         foreach (var chain in model.IkConstraints)

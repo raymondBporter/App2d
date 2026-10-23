@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
@@ -317,9 +318,20 @@ public sealed class ResolvedEntity
 /// </summary>
 public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing)
 {
-    public Vector3 Place(Vector3 local) => new(Position.X + local.X * Facing, Position.Y + local.Y, local.Z);
-    public Vector3 ToLocal(Vector3 world) => new((world.X - Position.X) * Facing, world.Y - Position.Y, world.Z);
+    /// <summary>
+    /// The entity-to-world placement: actor-local XY mirrored to the facing at the actor's position, with no layer
+    /// offset, so a character's draw order is the same whichever way it faces.
+    /// </summary>
+    public LayeredFrame2D Placement => new(new Frame2D(Position, new(Facing, 0), Vector2.UnitY), 0);
+
+    /// <summary>The same placement for real 3D prop geometry: the planar frame extended with an unchanged Z axis.</summary>
+    public Frame3D Placement3D => new(new(Position, 0), new(Facing, 0, 0), Vector3.UnitY, Vector3.UnitZ);
+
+    public Vector3 Place(Vector3 local) => Placement.At(local);
+    public Vector3 ToLocal(Vector3 world) => Placement.ToLocal(world);
     public Vector3 World(string control) => Place(Local.Points[control]);
+    /// <summary>A control's placement in the world: its evaluated frame and layer carried by the actor's placement.</summary>
+    public LayeredFrame2D ControlPlacement(string control) => Local.Placement(control).Then(Placement);
 
     /// <summary>The socket's XY base angle before authored socket orientation, shared with editor handles.</summary>
     public float SocketBaseAngle(ModelSocket socket)
