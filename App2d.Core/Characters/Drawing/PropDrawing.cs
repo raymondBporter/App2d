@@ -14,22 +14,37 @@ internal static class PropDrawing
 {
     private static readonly Vector3 LightDirection = Vector3.Normalize(new(-.3f, .5f, -1));
 
-    public static void Add(CharacterMesh mesh, PropAsset prop, Frame3D frame)
+    public static void Add(CharacterMesh mesh, PropAsset prop, Frame3D frame) =>
+        Add(mesh, prop.Solids, prop.Ink, prop.LineWidth, point => PropPlacement3D.PropPoint(frame, prop, point), frame);
+
+    /// <summary>Solids placed by <paramref name="place"/>: a prop's grip-relative points, or a library part's lifted local points (P5b).</summary>
+    public static void Add(CharacterMesh mesh, IReadOnlyList<PropSolid> solids, string inkColor, float lineWidth, Func<PuppetPoint, Vector3> place, Frame3D? frame = null)
     {
-        if (!Orientation3D.TryGetHandedness(frame.XAxis, frame.YAxis, frame.ZAxis, out var handedness))
+        var handedness = 1;
+        if (frame is { } placed && !Orientation3D.TryGetHandedness(placed.XAxis, placed.YAxis, placed.ZAxis, out handedness))
         {
             return;
         }
 
-        foreach (var solid in prop.Solids)
+        if (frame is null && solids.Count > 0)
         {
-            var vertices = solid.Vertices.Select(p => PropPlacement3D.PropPoint(frame, prop, p)).ToArray();
+            // Read the handedness from the placement of a unit frame, as a lifted mirrored instance reverses it.
+            var origin = place(new(0, 0, 0));
+            if (!Orientation3D.TryGetHandedness(place(new(1, 0, 0)) - origin, place(new(0, 1, 0)) - origin, place(new(0, 0, 1)) - origin, out handedness))
+            {
+                return;
+            }
+        }
+
+        foreach (var solid in solids)
+        {
+            var vertices = solid.Vertices.Select(place).ToArray();
             var analysis = new TriangleMeshAnalysis3D(vertices, solid.Triangles, handedness);
             var material = solid.RenderMaterial;
             var fill = material.Fill is { } fillHex ? ColorExtensions.FromHexRgb(fillHex) : (Color4b?)null;
             var outline = material.Outline;
-            var ink = outline?.Color is { } outlineHex ? ColorExtensions.FromHexRgb(outlineHex) : ColorExtensions.FromHexRgb(prop.Ink);
-            var outlineWidth = outline?.Width ?? prop.LineWidth;
+            var ink = outline?.Color is { } outlineHex ? ColorExtensions.FromHexRgb(outlineHex) : ColorExtensions.FromHexRgb(inkColor);
+            var outlineWidth = outline?.Width ?? lineWidth;
             var face = 0;
             foreach (var (a, b, c) in MeshTopology.Triangles(CollectionsMarshal.AsSpan(solid.Triangles)))
             {

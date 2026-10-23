@@ -22,6 +22,50 @@ public static class PartPicking2D
         Distance(part, pose.World, point, pose.Placement, id => model.Rest[id], model.RestPlacement, model.Base.LineWidth);
 
     /// <summary>
+    /// The picking score of a library part instance at a placement (P5b): the best of its payload pieces through the same
+    /// part picking, and of its solids by their outline in the placement's plane. Shapes, curves, images and meshes share it.
+    /// </summary>
+    public static float Distance(ResolvedAttachment attachment, LayeredFrame2D placement, Vector3 point)
+    {
+        var (world, frame) = attachment.Lookups(placement);
+        var best = float.PositiveInfinity;
+        foreach (var part in attachment.Parts.Where(p => !p.Hidden))
+        {
+            best = MathF.Min(best, Distance(part, world, point, frame, world, frame, attachment.Asset.LineWidth));
+        }
+
+        var p = point.XY;
+        foreach (var solid in attachment.Solids)
+        {
+            var outline = (solid.Outline ?? solid.Vertices).Select(v => placement.At(new Vector3(v.X, v.Y, 0)).XY).ToArray();
+            if (outline.Length < 3)
+            {
+                continue;
+            }
+
+            var inside = false;
+            var nearest = float.PositiveInfinity;
+            for (int i = 0, j = outline.Length - 1; i < outline.Length; j = i++)
+            {
+                var a = outline[j];
+                var b = outline[i];
+                if (a.Y > p.Y != b.Y > p.Y && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X)
+                {
+                    inside = !inside;
+                }
+
+                nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, a, b));
+            }
+            best = MathF.Min(best, inside ? 0 : nearest / .06f);
+        }
+        return best;
+    }
+
+    /// <summary>The picking score of an instance in an evaluated pose: its placement on the socket's evaluated placement.</summary>
+    public static float Distance(ResolvedAttachment attachment, EvaluatedPose pose, Vector3 point) =>
+        Distance(attachment, attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket)), point);
+
+    /// <summary>
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>

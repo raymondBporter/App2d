@@ -32,13 +32,15 @@ public sealed class PuppetDrawing
     /// <summary>
     /// Faces come from the pose's evaluated expressions, never from the parts' stored defaults. <paramref name="face"/>, when
     /// given, replaces the drawn expression with a gameplay-blended face on every part that shows one; a clip that hides the
-    /// face ("none", for a back view) still hides it.
+    /// face ("none", for a back view) still hides it. Slot attachments and library part instances draw through the same
+    /// per-part path as the model's own parts (P5b): any payload kind, one placement.
     /// </summary>
     public void Build(ResolvedModel model, EvaluatedPose pose, FacePose? face = null)
     {
+        Clear();
         TextureRoot = model.TextureRoot;
         var managed = model.Base.Skins.SelectMany(s => s.Attachments.Values).SelectMany(a => a.Values).ToHashSet(StringComparer.Ordinal);
-        Build(model.Base.Ink, model.Base.LineWidth, model.Parts.Where(p => !managed.Contains(p.Id)), pose.World,
+        Add(model.Base.Ink, model.Base.LineWidth, model.Parts.Where(p => !managed.Contains(p.Id)), pose.World,
             part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, pose.Placement, id => model.Rest[id], model.RestPlacement);
         for (var i = 0; i < pose.Slots.Count; i++)
         {
@@ -48,13 +50,52 @@ public sealed class PuppetDrawing
                 continue;
             }
 
-            if (part.Material?.Texture is null)
+            // A slot's attachment is an ordinary part with the slot's color and blend: an image keeps the slot order as its
+            // depth, geometry draws at its own layer through the shared path.
+            Add(model.Base.Ink, model.Base.LineWidth, [part], pose.World, null, null, pose.Placement, id => model.Rest[id], model.RestPlacement,
+                ColorExtensions.FromVector4(slot.Color), slot.Slot.Blend, -i * .001f);
+        }
+        AddAttachments(model, pose);
+    }
+
+    /// <summary>
+    /// Every visible library part instance on its socket (P5b): the instance placement on the socket's evaluated placement
+    /// carries the payload's locations; shapes, curves and images draw through the shared part path and solids through the
+    /// one planar-to-3D bridge, exactly as a prop on the same socket would.
+    /// </summary>
+    public void AddAttachments(ResolvedModel model, EvaluatedPose pose)
+    {
+        if (model.Attachments.Count == 0)
+        {
+            return;
+        }
+
+        var actor = new ActorPose(pose, Vector2.Zero, 1);
+        foreach (var attachment in model.Attachments)
+        {
+            if (attachment.Instance.Hidden)
             {
-                throw new InvalidDataException("Slot attachments currently require image materials.");
+                continue;
             }
 
-            var frame = PartAttachment2D.FrameOf(part, model, pose);
-            AddImage(part, frame, ColorExtensions.FromVector4(slot.Color), slot.Slot.Blend, -i * .001f);
+            AddAttachment(attachment, attachment.Placement(actor.SocketPlacement(attachment.Socket)));
+        }
+    }
+
+    /// <summary>One instance's payload at a placement (actor-local or world), for drawing and for previewing an asset on a wearer.</summary>
+    public void AddAttachment(ResolvedAttachment attachment, LayeredFrame2D placement)
+    {
+        var (world, frame) = attachment.Lookups(placement);
+        Add(attachment.Asset.Ink, attachment.Asset.LineWidth, attachment.Parts, world, null, null, frame, world, frame);
+        if (attachment.Solids.Count > 0)
+        {
+            var start = Mesh.Count;
+            var lifted = PropPlacement3D.Extend(placement);
+            PropDrawing.Add(Mesh, attachment.Solids, attachment.Asset.Ink, attachment.Asset.LineWidth, point => lifted.TransformPoint(point.XYZ));
+            if (Mesh.Count > start)
+            {
+                Batches.Add(new(start, Mesh.Count - start));
+            }
         }
     }
 
@@ -120,11 +161,21 @@ public sealed class PuppetDrawing
         }
     }
 
-    /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
+    /// <summary>Plain primitives from parts and a world-position lookup, replacing the drawing. The only drawing path for both prototype and authored models.</summary>
     public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         Clear();
-        var ink = ColorExtensions.FromHexRgb(inkColor);
+        Add(inkColor, lineWidth, parts, world, expression, facePose, bone, rest, restBone);
+    }
+
+    /// <summary>
+    /// Appends parts over a world-position lookup. <paramref name="tint"/> multiplies every fill and stroke (a slot's color);
+    /// <paramref name="blend"/> and <paramref name="imageDepth"/> apply to image parts, which a slot orders by depth.
+    /// </summary>
+    public void Add(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null,
+        Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Color4b? tint = null, string blend = "normal", float? imageDepth = null)
+    {
+        var ink = Tinted(ColorExtensions.FromHexRgb(inkColor), tint);
         foreach (var part in parts)
         {
             if (part.Hidden)
@@ -134,19 +185,19 @@ public sealed class PuppetDrawing
 
             if (part.Material?.Texture is not null)
             {
-                AddImage(part, PartAttachment2D.FrameOf(part, world, bone), Color4b.White, "normal", null);
+                AddImage(part, PartAttachment2D.FrameOf(part, world, bone), tint ?? Color4b.White, blend, imageDepth);
                 continue;
             }
             var start = Mesh.Count;
             var material = part.RenderMaterial;
             var outline = material.Outline;
             var outlineWidth = outline?.Width ?? lineWidth;
-            var outlineColor = outline?.Color is { } color ? ColorExtensions.FromHexRgb(color) : ink;
+            var outlineColor = outline?.Color is { } color ? Tinted(ColorExtensions.FromHexRgb(color), tint) : ink;
             var face = expression?.Invoke(part) ?? part.Face;
             if (part.Geometry is ICurve2D)
             {
                 var path = PartContours2D.Contour(part, world, bone, rest, restBone);
-                var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink;
+                var strokeColor = material.Fill is { } fill ? Tinted(ColorExtensions.FromHexRgb(fill), tint) : ink;
                 if (part.Geometry is RoundedPolylineCurve2D)
                 {
                     // One ribbon with shared cross-sections: no seams at the fillets and fewer triangles than per-segment lines.
@@ -190,7 +241,7 @@ public sealed class PuppetDrawing
             var frame = PartAttachment2D.FrameOf(part, world, bone);
             if (material.Fill is { } shapeFill)
             {
-                var fillColor = ColorExtensions.FromHexRgb(shapeFill);
+                var fillColor = Tinted(ColorExtensions.FromHexRgb(shapeFill), tint);
                 if (triangles is not null)
                 {
                     foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
@@ -222,6 +273,9 @@ public sealed class PuppetDrawing
             }
         }
     }
+
+    private static Color4b Tinted(Color4b color, Color4b? tint) => tint is not { } t ? color
+        : new((byte)(color.R * t.R / 255), (byte)(color.G * t.G / 255), (byte)(color.B * t.B / 255), (byte)(color.A * t.A / 255));
 
     private void AddImage(PuppetPart part, LayeredFrame2D frame, Color4b color, string blend, float? depth)
     {

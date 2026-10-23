@@ -141,8 +141,9 @@ public sealed class ResolvedModel
             }
 
             var sockets = model.Sockets.ToDictionary(s => s.Id, StringComparer.Ordinal);
-            foreach (var instance in model.Attachments)
+            foreach (var instance in layout.Attachments)
             {
+                // Bound placement and fit first (parameter bindings), then the wearer's explicit override wins.
                 attachments.Add(ResolvedAttachment.Resolve(instance.With(variant?.Attachments.GetValueOrDefault(instance.Id)), partOf, sockets, owner));
             }
         }

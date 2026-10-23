@@ -25,20 +25,24 @@ public sealed record PropertyRef
 {
     public string? Control { get; set; }
     public string? Part { get; set; }
+    /// <summary>A library part instance on the character (P5b): its placement and leaf fit are bindable too.</summary>
+    public string? Attachment { get; set; }
     public string Property { get; set; } = "";
 
-    [JsonIgnore] public string Owner => Control ?? Part ?? "";
-    [JsonIgnore] public string Key => (Control is not null ? "control:" : "part:") + Owner + "." + Property;
-    public override string ToString() => $"{(Control is not null ? "control" : "part")} '{Owner}' {Property}";
+    [JsonIgnore] public string Owner => Control ?? Part ?? Attachment ?? "";
+    [JsonIgnore] public string OwnerKind => Control is not null ? "control" : Part is not null ? "part" : "attachment";
+    [JsonIgnore] public string Key => OwnerKind + ":" + Owner + "." + Property;
+    public override string ToString() => $"{OwnerKind} '{Owner}' {Property}";
 
     public static PropertyRef OfControl(string control, string property) => new() { Control = control, Property = property };
     public static PropertyRef OfPart(string part, string property) => new() { Part = part, Property = property };
+    public static PropertyRef OfAttachment(string attachment, string property) => new() { Attachment = attachment, Property = property };
 
     public void Validate(string field)
     {
-        if ((Control is null) == (Part is null))
+        if (new[] { Control, Part, Attachment }.Count(o => o is not null) != 1)
         {
-            throw new InvalidDataException($"{field}: name exactly one of control or part.");
+            throw new InvalidDataException($"{field}: name exactly one of control, part or attachment.");
         }
 
         if (string.IsNullOrWhiteSpace(Property))

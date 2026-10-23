@@ -13,6 +13,9 @@ public static class RigProperties
     public const string LinkT = "link.t", LinkOffsetX = "link.offsetX", LinkOffsetY = "link.offsetY";
     public const string ScaleX = "scaleX", ScaleY = "scaleY", OffsetX = "offsetX", OffsetY = "offsetY";
     public static readonly IReadOnlyList<string> Part = [ScaleX, ScaleY, OffsetX, OffsetY];
+    /// <summary>An attachment instance's placement on its socket and its leaf fit (P5b); never inherited by anything.</summary>
+    public const string X = "x", Y = "y", Angle = "angle", Scale = "scale", Layer = "layer", FitX = "fitX", FitY = "fitY";
+    public static readonly IReadOnlyList<string> Attachment = [X, Y, Angle, Scale, Layer, FitX, FitY];
 
     /// <summary>The properties a control exposes by its declared kind and link: an affine node exposes none (adapter until P11).</summary>
     public static IReadOnlyList<string> ForControl(ModelControl control) => control.Node switch
@@ -54,18 +57,21 @@ public static class RigProperties
 /// </summary>
 internal sealed class RigLayout
 {
-    private RigLayout(Dictionary<string, RigSetup> setups, Dictionary<string, float> lengths, Dictionary<string, RigLink?> links, List<PuppetPart> parts)
+    private RigLayout(Dictionary<string, RigSetup> setups, Dictionary<string, float> lengths, Dictionary<string, RigLink?> links, List<PuppetPart> parts, List<PartInstance> attachments)
     {
         Setups = setups;
         Lengths = lengths;
         Links = links;
         Parts = parts;
+        Attachments = attachments;
     }
 
     public Dictionary<string, RigSetup> Setups { get; }
     public Dictionary<string, float> Lengths { get; }
     public Dictionary<string, RigLink?> Links { get; }
     public List<PuppetPart> Parts { get; }
+    /// <summary>The attachment instances with bound placement and fit written; a wearer's override is applied after.</summary>
+    public List<PartInstance> Attachments { get; }
     /// <summary>Controls whose setup a binding or override changed. An untouched point control keeps its authored rest bit for bit.</summary>
     public HashSet<string> Moved { get; } = new(StringComparer.Ordinal);
 
@@ -73,10 +79,27 @@ internal sealed class RigLayout
         model.Controls.ToDictionary(c => c.Id, c => baseNodes[c.Id].Setup with { }, StringComparer.Ordinal),
         model.Controls.ToDictionary(c => c.Id, c => baseNodes[c.Id].Length, StringComparer.Ordinal),
         model.Controls.ToDictionary(c => c.Id, c => baseNodes[c.Id].Link is { } link ? link with { } : null, StringComparer.Ordinal),
-        model.Parts.ConvertAll(p => p with { }));
+        model.Parts.ConvertAll(p => p with { }),
+        model.Attachments.ConvertAll(a => a with { }));
 
     public float Get(PropertyRef property)
     {
+        if (property.Attachment is { } attachment)
+        {
+            var a = Attachments[AttachmentIndex(attachment)];
+            return property.Property switch
+            {
+                RigProperties.X => a.X,
+                RigProperties.Y => a.Y,
+                RigProperties.Angle => a.Angle,
+                RigProperties.Scale => a.Scale,
+                RigProperties.Layer => a.Layer,
+                RigProperties.FitX => a.FitX,
+                RigProperties.FitY => a.FitY,
+                _ => throw Unknown(property),
+            };
+        }
+
         if (property.Part is { } part)
         {
             var p = Parts[PartIndex(part)];
@@ -117,6 +140,24 @@ internal sealed class RigLayout
             return;
         }
 
+        if (property.Attachment is { } attachment)
+        {
+            var index = AttachmentIndex(attachment);
+            Attachments[index] = property.Property switch
+            {
+                RigProperties.X => Attachments[index] with { X = value },
+                RigProperties.Y => Attachments[index] with { Y = value },
+                RigProperties.Angle => Attachments[index] with { Angle = value },
+                RigProperties.Scale => Attachments[index] with { Scale = value },
+                RigProperties.Layer => Attachments[index] with { Layer = value },
+                RigProperties.FitX => Attachments[index] with { FitX = value },
+                RigProperties.FitY => Attachments[index] with { FitY = value },
+                _ => throw Unknown(property),
+            };
+            Attachments[index].Validate($"{property}");
+            return;
+        }
+
         if (property.Part is { } part)
         {
             var index = PartIndex(part);
@@ -153,6 +194,12 @@ internal sealed class RigLayout
     {
         var index = Parts.FindIndex(p => p.Id == part);
         return index >= 0 ? index : throw new InvalidDataException($"No part '{part}'.");
+    }
+
+    private int AttachmentIndex(string attachment)
+    {
+        var index = Attachments.FindIndex(a => a.Id == attachment);
+        return index >= 0 ? index : throw new InvalidDataException($"No attachment '{attachment}'.");
     }
 
     private static InvalidDataException Unknown(PropertyRef property) => new($"{property}: no such property.");
@@ -196,6 +243,7 @@ public sealed class ParameterCatalog
         var catalog = new ParameterCatalog(model);
         var controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
         var parts = model.Parts.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
+        var attachments = model.Attachments.Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
         foreach (var parameter in model.Parameters)
         {
             if (parameter is null)
@@ -213,10 +261,10 @@ public sealed class ParameterCatalog
             {
                 var binding = parameter.Bindings[i];
                 var field = $"{owner} parameter '{parameter.Id}' binding {i + 1}";
-                Check(binding.Target, field + " target", controls, parts);
+                Check(binding.Target, field + " target", controls, parts, attachments);
                 if (binding.Reference is { } reference)
                 {
-                    Check(reference, field + " reference", controls, parts);
+                    Check(reference, field + " reference", controls, parts, attachments);
                 }
 
                 var entry = new Entry(parameter, binding);
@@ -255,8 +303,23 @@ public sealed class ParameterCatalog
         return catalog;
     }
 
-    private static void Check(PropertyRef property, string field, Dictionary<string, ModelControl> controls, HashSet<string> parts)
+    private static void Check(PropertyRef property, string field, Dictionary<string, ModelControl> controls, HashSet<string> parts, HashSet<string> attachments)
     {
+        if (property.Attachment is { } attachment)
+        {
+            if (!attachments.Contains(attachment))
+            {
+                throw new InvalidDataException($"{field}: no attachment '{attachment}'.");
+            }
+
+            if (!RigProperties.Attachment.Contains(property.Property, StringComparer.Ordinal))
+            {
+                throw new InvalidDataException($"{field}: no attachment property '{property.Property}' (one of {string.Join(", ", RigProperties.Attachment)}).");
+            }
+
+            return;
+        }
+
         if (property.Part is { } part)
         {
             if (!parts.Contains(part))
@@ -363,6 +426,7 @@ public sealed class ParameterCatalog
 
     public (ModelParameter Parameter, ParameterBinding Binding)? BindingOfControl(string control, string property) => BindingOf(PropertyRef.OfControl(control, property));
     public (ModelParameter Parameter, ParameterBinding Binding)? BindingOfPart(string part, string property) => BindingOf(PropertyRef.OfPart(part, property));
+    public (ModelParameter Parameter, ParameterBinding Binding)? BindingOfAttachment(string attachment, string property) => BindingOf(PropertyRef.OfAttachment(attachment, property));
 
     /// <summary>Every binding, with its parameter, in evaluation order.</summary>
     public IEnumerable<(ModelParameter Parameter, ParameterBinding Binding)> Bindings => _order.Select(e => (e.Parameter, e.Binding));
