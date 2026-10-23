@@ -6,14 +6,23 @@ namespace App2d.Tests.Authored;
 
 public sealed class ResolvedModelTests
 {
-    private static ModelVariant LongArm() => new()
+    /// <summary>A longer arm as typed overrides: the elbow and hand pinned through their parent-local setups, the torso narrowed and recolored.</summary>
+    private static ModelVariant LongArm()
     {
-        Id = "long-arm",
-        Name = "Long arm",
-        Base = "creature",
-        Rest = { ["elbow"] = new(.6f, 1.2f), ["hand"] = new(1.2f, 1.5f) },
-        Parts = { ["torso"] = new() { ScaleX = .9f, Material = new() { Fill = "#aa3300" } } },
-    };
+        var variant = new ModelVariant
+        {
+            Id = "long-arm",
+            Name = "Long arm",
+            Base = "creature",
+            Overrides =
+            [
+                PropertyOverride.Of(PropertyRef.OfPart("torso", RigProperties.ScaleX), .9f),
+                PropertyOverride.Of(PropertyRef.OfPart("torso", RigProperties.Material), new RenderMaterialDefinition2D { Fill = "#aa3300" }),
+            ],
+        };
+        VariantConversion.PinRest(TestModels.Creature(), variant, new Dictionary<string, PuppetPoint> { ["elbow"] = new(.6f, 1.2f), ["hand"] = new(1.2f, 1.5f) });
+        return variant;
+    }
 
     [Fact]
     public void VariantOverridesApplyWithoutEditingTheBase()
@@ -58,8 +67,8 @@ public sealed class ResolvedModelTests
 
     public static TheoryData<string, string> Rejections => new()
     {
-        { "wrong-base", "references base 'hound'" }, { "unknown-control", "rest.tail" },
-        { "unknown-part", "parts.wing" }, { "zero-bone", "long-arm" }, { "bad-fill", "fill" },
+        { "wrong-base", "references base 'hound'" }, { "unknown-control", "no control 'tail'" },
+        { "unknown-part", "no part 'wing'" }, { "zero-bone", "long-arm" }, { "bad-fill", "fill" },
     };
 
     private static readonly string[] expected = ["hip", "shoulder"];
@@ -74,22 +83,18 @@ public sealed class ResolvedModelTests
                 variant.Base = "hound";
                 break;
             case "unknown-control":
-                variant.Rest["tail"] = new(1, 1);
+                variant.Overrides.Add(PropertyOverride.Of(PropertyRef.OfControl("tail", RigProperties.LocalX), 1));
                 break;
             case "unknown-part":
-                variant.Parts["wing"] = new()
-                {
-                    ScaleX = 1
-                };
+                variant.Overrides.Add(PropertyOverride.Of(PropertyRef.OfPart("wing", RigProperties.ScaleX), 1));
                 break;
             case "zero-bone":
-                variant.Rest["elbow"] = new(0, 1.5f);
+                // The elbow on top of the shoulder: a zero-length first segment.
+                variant.Overrides.Add(PropertyOverride.Of(PropertyRef.OfControl("elbow", RigProperties.LocalX), 0));
+                variant.Overrides.Add(PropertyOverride.Of(PropertyRef.OfControl("elbow", RigProperties.LocalY), 0));
                 break;
             case "bad-fill":
-                variant.Parts["torso"].Material = new()
-                {
-                    Fill = "red"
-                };
+                variant.Overrides.Add(PropertyOverride.Of(PropertyRef.OfPart("torso", RigProperties.Material), new RenderMaterialDefinition2D { Fill = "red" }));
                 break;
         }
         var error = Assert.Throws<InvalidDataException>(() => ResolvedModel.From(TestModels.Creature(), variant));
@@ -102,6 +107,6 @@ public sealed class ResolvedModelTests
         var json = LongArm().ToJson();
         Assert.Equal(json, ModelVariant.FromJson(json).ToJson());
         Assert.Contains("\"base\": \"creature\"", json);
-        Assert.Throws<JsonException>(() => ModelVariant.FromJson(json.Replace("\"parts\":", "\"prats\":")));
+        Assert.Throws<JsonException>(() => ModelVariant.FromJson(json.Replace("\"overrides\":", "\"overrdies\":")));
     }
 }

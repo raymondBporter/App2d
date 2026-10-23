@@ -198,7 +198,8 @@ public sealed class EditorSessionTests : IDisposable
         session.DragControl("head", head + new Vector3(0, .1f, 0));
         session.EndDrag();
         Assert.False(basis.Dirty);
-        Assert.Equal(head.Y + .1f, session.SubjectVariant!.Asset.Rest["head"].Y, 4);
+        Assert.Equal(head.Y + .1f, session.Evaluate("tall-thin")!.Model.Rest["head"].Y, 4);
+        Assert.True(session.SubjectVariant!.Asset.HasOverride(PropertyRef.OfControl("head", RigProperties.LocalY)));
         Assert.False(session.Edit(session.SubjectModel, () => { }));
     }
 

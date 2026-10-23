@@ -7,17 +7,28 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>A base model with one variant's overrides applied, compiled once and shared by every actor that uses it.</summary>
 public sealed class ResolvedModel
 {
+    private readonly Func<string, PartAsset?>? _partOf;
+    private readonly RigLayout _layout;
+    private readonly RigLayout _authored;
+    private readonly Dictionary<string, PropertyOverride> _overrides;
+
     private ResolvedModel(CharacterModel model, ModelVariant? variant, IReadOnlyList<ModelControl> order, Dictionary<string, RigNode> nodes, List<PuppetPart> parts,
-        ParameterCatalog parameters, Dictionary<string, float> parameterValues, List<ResolvedAttachment> attachments)
+        ParameterCatalog parameters, Dictionary<string, float> parameterValues, List<ResolvedAttachment> attachments, Dictionary<string, string> roleClips,
+        RigLayout layout, RigLayout authored, Dictionary<string, PropertyOverride> overrides, Func<string, PartAsset?>? partOf)
     {
         Base = model;
         Variant = variant;
         Parts = parts;
         Attachments = attachments;
+        RoleClips = roleClips;
         Order = order;
         Nodes = nodes;
         Parameters = parameters;
         ParameterValues = parameterValues;
+        _layout = layout;
+        _authored = authored;
+        _overrides = overrides;
+        _partOf = partOf;
         Controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
         IkConstraints = [.. model.IkChains];
         Chains = IkConstraints.ToDictionary(c => c.Id, StringComparer.Ordinal);
@@ -49,6 +60,8 @@ public sealed class ResolvedModel
     public ParameterCatalog Parameters { get; }
     /// <summary>The parameter values this resolution used: the declared defaults with the variant's values over them.</summary>
     public IReadOnlyDictionary<string, float> ParameterValues { get; }
+    /// <summary>The variant's animation-role overrides: role to clip ID, applied over the base's motion set when an entity compiles.</summary>
+    public IReadOnlyDictionary<string, string> RoleClips { get; }
 
     /// <summary>A control's rest placement: its rest frame at its absolute rest layer.</summary>
     public LayeredFrame2D RestPlacement(string control) => new(new Frame2D(RestTransforms[control]), Rest[control].Z);
@@ -67,6 +80,25 @@ public sealed class ResolvedModel
     public IReadOnlyList<ModelChain> IkConstraints { get; }
     public IReadOnlyDictionary<string, IReadOnlyList<string>> Children { get; }
 
+    // ---- Provenance (plan section 3.10) -----------------------------------------------------------------------------
+
+    /// <summary>Where a property's resolved value came from: the base, a parameter binding, or this variant's override or clear.</summary>
+    public PropertySource Provenance(PropertyRef property) =>
+        _overrides.TryGetValue(property.Key, out var change) ? change.Clear ? PropertySource.Cleared : PropertySource.Override
+        : Parameters.BindingOf(property) is not null ? PropertySource.ParameterBinding
+        : PropertySource.Base;
+
+    /// <summary>The variant's override of a property, if any.</summary>
+    public PropertyOverride? Override(PropertyRef property) => _overrides.GetValueOrDefault(property.Key);
+    /// <summary>Whether a variant override masks a parameter binding on the same property.</summary>
+    public bool Masks(PropertyRef property) => _overrides.ContainsKey(property.Key) && Parameters.BindingOf(property) is not null;
+    /// <summary>A number property's final resolved value.</summary>
+    public float Number(PropertyRef property) => _layout.Get(property);
+    /// <summary>A number property's authored value before any binding or override.</summary>
+    public float AuthoredNumber(PropertyRef property) => _authored.Get(property);
+    /// <summary>The same base resolved with another variant, through the same part library.</summary>
+    public ResolvedModel With(ModelVariant? variant) => From(Base, variant, _partOf);
+
     /// <summary>The top of the rest pose's visible shapes above the feet: the height a drawn size is fitted to.</summary>
     public float DrawnHeight()
     {
@@ -79,8 +111,9 @@ public sealed class ResolvedModel
 
     /// <summary>
     /// Resolution order (plan section 3.7): the authored rig and resource defaults; the variant's parameter values over the
-    /// declared defaults; the parameter bindings onto the exposed properties; explicit overrides (a variant's rest positions
-    /// and part overrides) over bound values; then the derived positions, frames, fitting and measures.
+    /// declared defaults; the parameter bindings onto the exposed properties; the variant's explicit typed overrides over
+    /// bound values (a set pins the value, a clear pins the authored or empty value); then the derived positions, frames,
+    /// fitting, attachments and measures.
     /// </summary>
     public static ResolvedModel From(CharacterModel model, ModelVariant? variant = null, Func<string, PartAsset?>? partOf = null)
     {
@@ -88,9 +121,10 @@ public sealed class ResolvedModel
         variant?.Validate();
         var order = RigGraph.Order(model);
         var parameters = ParameterCatalog.Compile(model);
-        var layout = RigLayout.From(model, RigGraph.Compile(model, order, null, new Dictionary<string, Vector3>(StringComparer.Ordinal)));
+        var baseNodes = RigGraph.Compile(model, order, null);
+        var layout = RigLayout.From(model, baseNodes);
+        var authored = RigLayout.From(model, baseNodes);
         var owner = variant is null ? $"Model '{model.Id}'" : $"Variant '{variant.Id}'";
-        var pins = new Dictionary<string, Vector3>(StringComparer.Ordinal);
         if (variant is not null && variant.Base != model.Id)
         {
             throw new InvalidDataException($"{owner} references base '{variant.Base}', not '{model.Id}'.");
@@ -98,40 +132,28 @@ public sealed class ResolvedModel
 
         var values = parameters.Values(variant?.Parameters, owner);
         parameters.Apply(layout, values);
+        var overrides = new Dictionary<string, PropertyOverride>(StringComparer.Ordinal);
+        var roleClips = new Dictionary<string, string>(StringComparer.Ordinal);
         if (variant is not null)
         {
-            foreach (var (id, point) in variant.Rest)
+            foreach (var change in variant.Overrides)
             {
-                var control = model.Controls.FirstOrDefault(c => c.Id == id) ?? throw new InvalidDataException($"{owner} rest.{id}: the base has no such control.");
-                if (control.Node == RigNodeKinds.Bone)
+                var field = $"{owner} overrides";
+                var declaration = RigProperties.Declaration(change.Target, model, field);
+                change.Check(declaration, field);
+                overrides[change.Key] = change;
+                if (change.Target.Role is { } role)
                 {
-                    // A bone node's rest is derived; freezing a character-frame position over it would reintroduce the
-                    // absolute-rest override P6's typed property overrides replace.
-                    throw new InvalidDataException($"{owner} rest.{id}: '{id}' is a bone node; its length and local setup are not variant-overridable until P6 typed overrides.");
+                    roleClips[role] = change.Selection!;
                 }
-
-                pins[id] = point.XYZ;
-            }
-            foreach (var (id, change) in variant.Parts)
-            {
-                var index = layout.Parts.FindIndex(p => p.Id == id);
-                if (index < 0)
+                else
                 {
-                    throw new InvalidDataException($"{owner} parts.{id}: the base has no such part.");
-                }
-
-                layout.Parts[index] = Override(layout.Parts[index], change);
-            }
-            foreach (var id in variant.Attachments.Keys)
-            {
-                if (model.Attachments.All(a => a.Id != id))
-                {
-                    throw new InvalidDataException($"{owner} attachments.{id}: the base has no such attachment.");
+                    layout.Apply(change, declaration, authored);
                 }
             }
         }
         // Attachment instances resolve against the library: the asset by ID, the socket on this wearer, the variant's
-        // override on this instance alone. Nothing copies the asset into the wearer.
+        // overrides on this instance alone. Nothing copies the asset into the wearer.
         var attachments = new List<ResolvedAttachment>();
         if (model.Attachments.Count > 0)
         {
@@ -143,14 +165,14 @@ public sealed class ResolvedModel
             var sockets = model.Sockets.ToDictionary(s => s.Id, StringComparer.Ordinal);
             foreach (var instance in layout.Attachments)
             {
-                // Bound placement and fit first (parameter bindings), then the wearer's explicit override wins.
-                attachments.Add(ResolvedAttachment.Resolve(instance.With(variant?.Attachments.GetValueOrDefault(instance.Id)), partOf, sockets, owner));
+                // Bound placement and fit first (parameter bindings), then the wearer's explicit overrides already won in the layout.
+                attachments.Add(ResolvedAttachment.Resolve(instance, partOf, sockets, owner));
             }
         }
         Dictionary<string, RigNode> nodes;
         try
         {
-            nodes = RigGraph.Compile(model, order, layout, pins);
+            nodes = RigGraph.Compile(model, order, layout);
         }
         catch (InvalidDataException ex) when (variant is not null)
         {
@@ -166,21 +188,6 @@ public sealed class ResolvedModel
         {
             parts[i] = parts[i] with { Material = parts[i].RenderMaterial.Resolve(model.Materials) };
         }
-        return new(model, variant, order, nodes, parts, parameters, values, attachments);
-    }
-
-    public static PuppetPart Override(PuppetPart part, PartOverride change)
-    {
-        return part with
-        {
-            ScaleX = change.ScaleX ?? part.ScaleX,
-            ScaleY = change.ScaleY ?? part.ScaleY,
-            OffsetX = change.OffsetX ?? part.OffsetX,
-            OffsetY = change.OffsetY ?? part.OffsetY,
-            Material = part.RenderMaterial.WithOverride(change.Material),
-            Face = change.Face ?? part.Face,
-            FaceX = change.FaceX ?? part.FaceX,
-            Hidden = change.Hidden ?? part.Hidden,
-        };
+        return new(model, variant, order, nodes, parts, parameters, values, attachments, roleClips, layout, authored, overrides, partOf);
     }
 }

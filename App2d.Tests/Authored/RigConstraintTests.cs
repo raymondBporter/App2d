@@ -276,8 +276,11 @@ public sealed class RigConstraintTests
     [Fact]
     public void BoneVariantOffsetsCannotSilentlyChangeTheDeclaredLengths()
     {
-        var variant = new ModelVariant { Id = "bad-offset", Name = "Offset", Base = "machine", Rest = { ["hinge"] = new(1, .2f, .1f) } };
-        Assert.Contains("+X tip", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Machine(), variant)).Message);
+        // A legacy affine node exposes no overridable setup at all; a point bone's joint cannot leave the +X tip.
+        var affine = new ModelVariant { Id = "bad-offset", Name = "Offset", Base = "machine", Overrides = [PropertyOverride.Of(PropertyRef.OfControl("hinge", RigProperties.LocalY), .2f)] };
+        Assert.Contains("legacy affine", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Machine(), affine)).Message);
+        var point = new ModelVariant { Id = "bad-offset", Name = "Offset", Base = "machine" };
+        Assert.Contains("+X tip", Assert.Throws<InvalidDataException>(() => VariantConversion.PinRest(Machine(affine: false), point, new Dictionary<string, PuppetPoint> { ["hinge"] = new(1, .2f, .1f) })).Message);
     }
 
     [Theory, InlineData(true), InlineData(false)]

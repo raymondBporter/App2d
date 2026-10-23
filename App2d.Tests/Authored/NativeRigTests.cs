@@ -186,11 +186,15 @@ public sealed class NativeRigTests
     public void VariantsAndFlatteningPreserveAffineSetupAndPoseEditing()
     {
         var (Model, Animations) = Scene();
-        var variant = new ModelVariant { Id = "moved-wheel", Name = "Moved wheel", Base = "wheel", Rest = new() { ["wheel-root"] = new(2, 3) } };
+        // The affine adapter exposes no variant-overridable setup (P6a): moving the wheel root on a variant is refused by name.
+        var moved = new ModelVariant { Id = "moved-wheel", Name = "Moved wheel", Base = "wheel", Overrides = [PropertyOverride.Of(PropertyRef.OfControl("wheel-root", RigProperties.LocalX), 2)] };
+        Assert.Contains("legacy affine", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Model, moved)).Message);
+        var variant = new ModelVariant { Id = "moved-wheel", Name = "Moved wheel", Base = "wheel", Overrides = [PropertyOverride.Of(PropertyRef.OfPart(Model.Parts[0].Id, RigProperties.OffsetX), .1f)] };
         var model = ResolvedModel.From(Model, variant);
         var rest = PoseEvaluator.Rest(model);
-        TestModels.Near(new(2, 3, 0), rest.World("wheel-root"));
+        Assert.Equal(.1f, model.Parts[0].OffsetX);
         var flat = ResolvedModel.From(ModelAuthoring.Flatten(model, "flat-wheel", "Flat wheel"));
+        Assert.Equal(.1f, flat.Parts[0].OffsetX);
         foreach (var bone in model.Order)
         {
             TestModels.Near(rest.World(bone.Id), PoseEvaluator.Rest(flat).World(bone.Id));
@@ -224,9 +228,11 @@ public sealed class NativeRigTests
         var moved = ResolvedModel.From(source.Model);
         MatrixNear(oldFrame, moved.RestTransforms["spoke-tip"]);
         TestModels.Near(initial.Rest["spoke-tip"], moved.Rest["spoke-tip"]);
+        // A variant cannot move a legacy affine node (P6a: the adapter exposes no setup); the refusal names it and writes nothing.
         var variant = new ModelVariant { Id = "moved-wheel", Name = "Moved", Base = "wheel" };
         source = Scene();
-        ModelAuthoring.MoveRest(ResolvedModel.From(source.Model), variant, "wheel-root", new(3, 4, 0), children: false);
+        Assert.Contains("legacy affine", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(ResolvedModel.From(source.Model), variant, "wheel-root", new(3, 4, 0), children: false)).Message);
+        Assert.Empty(variant.Overrides);
         TestModels.Near(initial.Rest["spoke-tip"], PoseEvaluator.Rest(ResolvedModel.From(source.Model, variant)).World("spoke-tip"));
     }
 

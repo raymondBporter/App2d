@@ -56,6 +56,19 @@ public static class ModelAuthoring
             }
         }
         model.Parts = [.. resolved.Parts.Select(p => p with { })];
+        // The variant's attachment overrides (swaps, placement, fit, materials) become the new base's instances; the assets stay references.
+        model.Attachments = [.. resolved.Attachments.Select(a => a.Instance with { })];
+        // Its animation-role overrides become the motion sets' assignments.
+        foreach (var set in model.MotionSets)
+        {
+            foreach (var (role, clip) in resolved.RoleClips)
+            {
+                if (set.Roles.ContainsKey(role))
+                {
+                    set.Roles[role] = clip;
+                }
+            }
+        }
         model.Validate();
         return model;
     }
@@ -193,44 +206,84 @@ public static class ModelAuthoring
         }
     }
 
-    /// <summary>Writes one wearer's override of an instance (asset swap, placement, fit, material, hidden); an empty override is removed so the base value shows through.</summary>
-    public static void EditAttachmentOverride(ModelVariant variant, CharacterModel basis, string id, Action<AttachmentOverride> change)
+    /// <summary>
+    /// Edits one wearer's view of an attachment instance: the fields <paramref name="change"/> alters on the resolved instance
+    /// become typed overrides of this variant (asset swap, placement, fit, mirror, material, hidden); untouched fields keep
+    /// inheriting. A material edit merges into the existing material override.
+    /// </summary>
+    public static void EditAttachmentOverride(ModelVariant variant, ResolvedModel resolved, string id, Action<PartInstance> change)
     {
-        if (basis.Attachments.All(a => a.Id != id))
+        var current = resolved.Attachment(id)?.Instance ?? throw new InvalidDataException($"'{resolved.Id}' has no attachment '{id}'.");
+        var edited = current with { };
+        change(edited);
+        var changes = new List<PropertyOverride>();
+        PropertyRef Target(string property) => PropertyRef.OfAttachment(id, property);
+        if (edited.Asset != current.Asset) changes.Add(PropertyOverride.Of(Target(RigProperties.Asset), edited.Asset));
+        if (edited.X != current.X) changes.Add(PropertyOverride.Of(Target(RigProperties.X), edited.X));
+        if (edited.Y != current.Y) changes.Add(PropertyOverride.Of(Target(RigProperties.Y), edited.Y));
+        if (edited.Angle != current.Angle) changes.Add(PropertyOverride.Of(Target(RigProperties.Angle), edited.Angle));
+        if (edited.Scale != current.Scale) changes.Add(PropertyOverride.Of(Target(RigProperties.Scale), edited.Scale));
+        if (edited.Mirror != current.Mirror) changes.Add(PropertyOverride.Of(Target(RigProperties.Mirror), edited.Mirror));
+        if (edited.Layer != current.Layer) changes.Add(PropertyOverride.Of(Target(RigProperties.Layer), edited.Layer));
+        if (edited.FitX != current.FitX) changes.Add(PropertyOverride.Of(Target(RigProperties.FitX), edited.FitX));
+        if (edited.FitY != current.FitY) changes.Add(PropertyOverride.Of(Target(RigProperties.FitY), edited.FitY));
+        if (edited.Hidden != current.Hidden) changes.Add(PropertyOverride.Of(Target(RigProperties.Hidden), edited.Hidden));
+        if (!Equals(edited.Material, current.Material))
         {
-            throw new InvalidDataException($"Base '{basis.Id}' has no attachment '{id}'.");
+            var target = Target(RigProperties.Material);
+            if (edited.Material is null)
+            {
+                changes.Add(PropertyOverride.Cleared(target));
+            }
+            else
+            {
+                var existing = variant.Override(target)?.Material;
+                changes.Add(PropertyOverride.Of(target, existing is null ? edited.Material : existing.WithOverride(edited.Material)));
+            }
+        }
+        SetOverrides(variant, resolved.Base, changes);
+    }
+
+    /// <summary>
+    /// Sets one explicit override on a variant, checked against the base's property registry (the owner exists, the property
+    /// is exposed, the value matches its kind, range and vocabulary); the variant is restored when the check fails.
+    /// </summary>
+    public static void SetOverride(ModelVariant variant, CharacterModel basis, PropertyOverride change) => SetOverrides(variant, basis, [change]);
+
+    private static void SetOverrides(ModelVariant variant, CharacterModel basis, IReadOnlyList<PropertyOverride> changes)
+    {
+        if (changes.Count == 0)
+        {
+            return;
         }
 
-        var previous = variant.Attachments.GetValueOrDefault(id);
-        var current = previous is null ? new AttachmentOverride() : previous with { };
-        change(current);
-        if (current.IsEmpty)
-        {
-            variant.Attachments.Remove(id);
-        }
-        else
-        {
-            variant.Attachments[id] = current;
-        }
-
+        var before = variant.Overrides.ConvertAll(o => o with { });
         try
         {
+            foreach (var change in changes)
+            {
+                var field = $"Variant '{variant.Id}' overrides";
+                change.Validate(field);
+                change.Check(RigProperties.Declaration(change.Target, basis, field), field);
+                variant.Set(change);
+            }
             variant.Validate();
         }
         catch
         {
-            if (previous is null)
-            {
-                variant.Attachments.Remove(id);
-            }
-            else
-            {
-                variant.Attachments[id] = previous;
-            }
-
+            variant.Overrides = before;
             throw;
         }
     }
+
+    /// <summary>Removes a variant's override so the property inherits again; nothing is written in its place.</summary>
+    public static bool ResetOverride(ModelVariant variant, PropertyRef target) => variant.Reset(target);
+
+    /// <summary>Removes every override on one owner (a control, part, attachment or role).</summary>
+    public static int ResetOverrides(ModelVariant variant, string ownerKind, string owner) => variant.Overrides.RemoveAll(o => o.Target.OwnerKind == ownerKind && o.Target.Owner == owner);
+
+    /// <summary>Explicitly clears a property on a variant: the authored value before any binding for a number, the empty value otherwise.</summary>
+    public static void ClearProperty(ModelVariant variant, CharacterModel basis, PropertyRef target) => SetOverride(variant, basis, PropertyOverride.Cleared(target));
 
     public static string UniqueId(string basis, IEnumerable<string> taken)
     {
@@ -841,125 +894,186 @@ public static class ModelAuthoring
     }
 
     /// <summary>
-    /// Moves a control of a variant: writes rest overrides from its resolved positions, so unmoved controls keep following the base.
+    /// Moves a control of a variant to a character-frame rest position by overriding its parent-local setup (<c>local.x</c>,
+    /// <c>local.y</c>, <c>local.layer</c>; only the components that change), never by freezing an absolute position. With
+    /// <paramref name="children"/> the subtree follows through the hierarchy and no descendant is touched; without, every
+    /// unbound child gets its own local setup override so it stays in place, and a bound child follows its parent as it
+    /// must. A bound origin and a legacy affine node are refused with the reason.
     /// </summary>
     public static void MoveRest(ResolvedModel resolved, ModelVariant variant, string id, Vector3 position, bool children)
     {
-        if (resolved.Controls[id].Node == RigNodeKinds.Bone)
+        var node = resolved.Nodes.GetValueOrDefault(id) ?? throw new InvalidOperationException($"'{resolved.Id}' has no control '{id}'.");
+        if (node.Kind == RigNodeKinds.Affine)
         {
-            throw new InvalidOperationException($"'{id}' is a bone node; a variant cannot override its setup until P6 typed overrides. Edit the base model.");
+            throw new InvalidOperationException($"'{id}' is a legacy affine node; the adapter exposes no variant-overridable setup until P11. Edit the base model.");
         }
 
-        var delta = position - resolved.Rest[id];
-        var moved = children ? Subtree(resolved.Base.Controls, id) : [resolved.Controls[id]];
-        // A bone descendant follows its parent through the hierarchy; a variant has no override that could hold it in place.
-        if (!children && resolved.Base.Controls.FirstOrDefault(c => c.Parent == id && c.Node == RigNodeKinds.Bone) is { } bound)
+        if (node.Link is { } link)
         {
-            throw new InvalidOperationException($"Moving '{id}' alone would carry its bone child '{bound.Id}', which a variant cannot pin; move it with its children or edit the base model.");
+            throw new InvalidOperationException($"'{id}' is bound to '{node.Parent}' at t = {link.T:0.##}; override the parent's length or the link instead of its origin.");
         }
 
-        foreach (var control in moved.Where(c => c.Node != RigNodeKinds.Bone))
+        var parent = node.Parent is null ? null : resolved.Nodes[node.Parent];
+        var local = LocalTranslation(parent, new(position.X, position.Y));
+        var changes = new List<PropertyOverride>();
+        void Move(string control, RigSetup setup, Vector2 translation, float layer)
         {
-            variant.Rest[control.Id] = PuppetPoint.From(resolved.Rest[control.Id] + delta);
+            if (translation.X != setup.X) changes.Add(PropertyOverride.Of(PropertyRef.OfControl(control, RigProperties.LocalX), translation.X));
+            if (translation.Y != setup.Y) changes.Add(PropertyOverride.Of(PropertyRef.OfControl(control, RigProperties.LocalY), translation.Y));
+            if (layer != setup.Layer) changes.Add(PropertyOverride.Of(PropertyRef.OfControl(control, RigProperties.LocalLayer), layer));
         }
-
-        if (!children && resolved.Controls[id].Transform is not null)
+        Move(id, node.Setup, local, position.Z - (parent?.RestLayer ?? 0));
+        if (!children)
         {
-            foreach (var child in Subtree(resolved.Base.Controls, id).Where(c => c.Id != id && c.Node != RigNodeKinds.Bone))
+            // The moved node's new frame, from its new translation beneath the unchanged parent: unbound children re-express
+            // their setup against it so their character rest stays; bound children have no independent position.
+            var moved = node with { Setup = node.Setup with { X = local.X, Y = local.Y, Layer = position.Z - (parent?.RestLayer ?? 0) } };
+            var frame = parent is null ? LayeredFrame2D.Local(moved.Setup.ScaleVector, moved.Setup.Rotation, moved.Setup.Translation, 0).Frame.Matrix
+                : parent.Kind == RigNodeKinds.Affine
+                    ? Matrix3x2.CreateRotation(moved.RestAngle) * Matrix3x2.CreateTranslation(position.X, position.Y)
+                    : node.Kind == RigNodeKinds.Point
+                        ? Matrix3x2.CreateRotation(moved.RestAngle) * Matrix3x2.CreateTranslation(position.X, position.Y)
+                        : LayeredFrame2D.Local(moved.Setup.ScaleVector, moved.Setup.Rotation, moved.Setup.Translation, 0).Frame.Matrix * parent.RestFrame;
+            var movedNode = moved with { RestFrame = frame, RestLayer = position.Z };
+            foreach (var child in resolved.Base.Controls.Where(c => c.Parent == id && c.Node != RigNodeKinds.Affine))
             {
-                variant.Rest[child.Id] = PuppetPoint.From(resolved.Rest[child.Id]);
+                var childNode = resolved.Nodes[child.Id];
+                if (childNode.Link is not null)
+                {
+                    continue;
+                }
+
+                var keep = childNode.Rest;
+                Move(child.Id, childNode.Setup, LocalTranslation(movedNode, new(keep.X, keep.Y)), keep.Z - position.Z);
             }
         }
+        SetOverrides(variant, resolved.Base, changes);
     }
 
-    /// <summary>Stores edited part fields as explicit variant overrides, preserving its other overrides.</summary>
-    public static void EditPartOverride(ModelVariant variant, PuppetPart resolved, Action<PuppetPart> change)
+    /// <summary>A character-frame position in a parent node's local axes, by the compiler's rule for that parent kind.</summary>
+    private static Vector2 LocalTranslation(RigNode? parent, Vector2 position)
     {
-        var edited = resolved with
+        if (parent is null)
         {
-        };
+            return position;
+        }
+
+        if (parent.Kind == RigNodeKinds.Affine)
+        {
+            // The legacy affine adapter carries point children by rotation only; its scale and shear stay on its own frame.
+            return Rotation2D.Apply(position - new Vector2(parent.RestFrame.M31, parent.RestFrame.M32), -parent.RestAngle);
+        }
+
+        if (!new Frame2D(parent.RestFrame).TryToLocal(position, out var local))
+        {
+            throw new InvalidOperationException($"Cannot place a node beneath the collapsed parent '{parent.Id}'.");
+        }
+
+        return local;
+    }
+
+    /// <summary>Overrides a variant bone node's length; a point control's legacy length is not a variant property.</summary>
+    public static void ResizeBone(ResolvedModel resolved, ModelVariant variant, string id, float length)
+    {
+        var node = resolved.Nodes.GetValueOrDefault(id) ?? throw new InvalidOperationException($"'{resolved.Id}' has no control '{id}'.");
+        if (node.Kind != RigNodeKinds.Bone)
+        {
+            throw new InvalidOperationException($"'{id}' is a {node.Kind} control; only a bone node's length is a variant property. Convert the run to a bone chain on the base model.");
+        }
+
+        new Limit(.01f, 100).Check(length, "bone length");
+        SetOverride(variant, resolved.Base, PropertyOverride.Of(PropertyRef.OfControl(id, RigProperties.Length), length));
+    }
+
+    /// <summary>
+    /// Turns and resizes a variant's bone so its tip lands on a character-frame position: overrides <c>local.rotation</c>
+    /// (when the direction changes) and <c>length</c>. Bound and unbound bone nodes alike; a point or affine node is refused.
+    /// </summary>
+    public static void MoveBoneTip(ResolvedModel resolved, ModelVariant variant, string id, Vector2 position)
+    {
+        var node = resolved.Nodes.GetValueOrDefault(id) ?? throw new InvalidOperationException($"'{resolved.Id}' has no control '{id}'.");
+        if (node.Kind != RigNodeKinds.Bone)
+        {
+            throw new InvalidOperationException($"'{id}' is a {node.Kind} control; a variant can only drag a bone node's tip. Convert the run to a bone chain on the base model.");
+        }
+
+        var origin = new Vector2(node.Rest.X, node.Rest.Y);
+        var delta = position - origin;
+        if (delta.LengthSquared() < .0001f)
+        {
+            return;
+        }
+
+        var parent = node.Parent is null ? null : resolved.Nodes[node.Parent];
+        var angle = MathF.Atan2(delta.Y, delta.X);
+        var rotation = node.CharacterOriented ? angle : (parent?.Handedness ?? 1) * (angle - (parent?.RestAngle ?? 0));
+        // The frame's X axis carries the inherited uniform scale, so the tip lands exactly.
+        var unit = Vector2.TransformNormal(Vector2.UnitX, node.RestFrame).Length();
+        if (unit <= 1e-6f)
+        {
+            throw new InvalidOperationException($"'{id}' has a collapsed frame; its tip cannot be placed.");
+        }
+
+        var changes = new List<PropertyOverride>();
+        if (MathF.Abs(rotation - node.Setup.Rotation) > 1e-6f)
+        {
+            changes.Add(PropertyOverride.Of(PropertyRef.OfControl(id, RigProperties.LocalRotation), rotation));
+        }
+
+        changes.Add(PropertyOverride.Of(PropertyRef.OfControl(id, RigProperties.Length), delta.Length() / unit));
+        SetOverrides(variant, resolved.Base, changes);
+    }
+
+    /// <summary>
+    /// Edits one variant's view of a part: the fields <paramref name="change"/> alters on the resolved part become typed
+    /// overrides of this variant; untouched fields keep inheriting. A material edit merges the changed members into the
+    /// existing material override, so a fill override survives a later outline edit.
+    /// </summary>
+    public static void EditPartOverride(ModelVariant variant, CharacterModel basis, PuppetPart resolved, Action<PuppetPart> change)
+    {
+        var edited = resolved with { };
         change(edited);
-        var o = variant.Parts.GetValueOrDefault(resolved.Id) ?? new();
-        if (edited.ScaleX != resolved.ScaleX)
+        var changes = new List<PropertyOverride>();
+        PropertyRef Target(string property) => PropertyRef.OfPart(resolved.Id, property);
+        if (edited.ScaleX != resolved.ScaleX) changes.Add(PropertyOverride.Of(Target(RigProperties.ScaleX), edited.ScaleX));
+        if (edited.ScaleY != resolved.ScaleY) changes.Add(PropertyOverride.Of(Target(RigProperties.ScaleY), edited.ScaleY));
+        if (edited.OffsetX != resolved.OffsetX) changes.Add(PropertyOverride.Of(Target(RigProperties.OffsetX), edited.OffsetX));
+        if (edited.OffsetY != resolved.OffsetY) changes.Add(PropertyOverride.Of(Target(RigProperties.OffsetY), edited.OffsetY));
+        if (edited.Face != resolved.Face) changes.Add(PropertyOverride.Of(Target(RigProperties.Face), edited.Face));
+        if (edited.FaceX != resolved.FaceX) changes.Add(PropertyOverride.Of(Target(RigProperties.FaceX), edited.FaceX));
+        if (edited.Hidden != resolved.Hidden) changes.Add(PropertyOverride.Of(Target(RigProperties.Hidden), edited.Hidden));
+        var was = resolved.RenderMaterial;
+        var now = edited.RenderMaterial;
+        RenderMaterialDefinition2D? material = variant.Override(Target(RigProperties.Material))?.Material;
+        if (now.Asset != was.Asset)
         {
-            o.ScaleX = edited.ScaleX;
+            // Selecting another shared material restarts the override from the edited material as a whole.
+            material = now;
         }
-
-        if (edited.ScaleY != resolved.ScaleY)
+        else
         {
-            o.ScaleY = edited.ScaleY;
-        }
-
-        if (edited.OffsetX != resolved.OffsetX)
-        {
-            o.OffsetX = edited.OffsetX;
-        }
-
-        if (edited.OffsetY != resolved.OffsetY)
-        {
-            o.OffsetY = edited.OffsetY;
-        }
-
-        if (edited.RenderMaterial.Fill != resolved.RenderMaterial.Fill)
-        {
-            o.Material = (o.Material ?? new RenderMaterialDefinition2D()) with
+            if (now.Fill != was.Fill) material = (material ?? new()) with { Fill = now.Fill };
+            if (now.StrokeWidth != was.StrokeWidth) material = (material ?? new()) with { StrokeWidth = now.StrokeWidth };
+            if (now.Texture != was.Texture) material = (material ?? new()) with { Texture = now.Texture };
+            if (now.Tint != was.Tint) material = (material ?? new()) with { Tint = now.Tint };
+            if (now.Outline?.Width != was.Outline?.Width)
             {
-                Fill = edited.RenderMaterial.Fill
-            };
-        }
+                material = (material ?? new()) with { Outline = (material?.Outline ?? new RenderOutlineDefinition2D()) with { Width = now.Outline?.Width } };
+            }
 
-        if (edited.RenderMaterial.StrokeWidth != resolved.RenderMaterial.StrokeWidth)
-        {
-            o.Material = (o.Material ?? new RenderMaterialDefinition2D()) with { StrokeWidth = edited.RenderMaterial.StrokeWidth };
-        }
-
-        if (edited.RenderMaterial.Outline?.Width != resolved.RenderMaterial.Outline?.Width)
-        {
-            var material = o.Material ?? new RenderMaterialDefinition2D();
-            o.Material = material with
+            if (now.Outline?.Color != was.Outline?.Color)
             {
-                Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with
-                {
-                    Width = edited.RenderMaterial.Outline?.Width
-                }
-            };
+                material = (material ?? new()) with { Outline = (material?.Outline ?? new RenderOutlineDefinition2D()) with { Color = now.Outline?.Color } };
+            }
+
+            if (!Equals(now.Paint, was.Paint)) material = (material ?? new()) with { Paint = now.Paint };
         }
-        if (edited.RenderMaterial.Outline?.Color != resolved.RenderMaterial.Outline?.Color)
+        if (material is not null && !Equals(material, variant.Override(Target(RigProperties.Material))?.Material))
         {
-            var material = o.Material ?? new RenderMaterialDefinition2D();
-            o.Material = material with
-            {
-                Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with
-                {
-                    Color = edited.RenderMaterial.Outline?.Color
-                }
-            };
-        }
-        if (edited.RenderMaterial.Asset != resolved.RenderMaterial.Asset)
-        {
-            o.Material = edited.RenderMaterial;
-        }
-        else if (edited.RenderMaterial.Paint != resolved.RenderMaterial.Paint)
-        {
-            o.Material = (o.Material ?? new RenderMaterialDefinition2D()) with { Paint = edited.RenderMaterial.Paint };
+            changes.Add(PropertyOverride.Of(Target(RigProperties.Material), material));
         }
 
-        if (edited.Face != resolved.Face)
-        {
-            o.Face = edited.Face;
-        }
-
-        if (edited.FaceX != resolved.FaceX)
-        {
-            o.FaceX = edited.FaceX;
-        }
-
-        if (edited.Hidden != resolved.Hidden)
-        {
-            o.Hidden = edited.Hidden;
-        }
-
-        variant.Parts[resolved.Id] = o;
+        SetOverrides(variant, basis, changes);
     }
 
     /// <summary>Turns and resizes a rest bone to put its tip at a model-space position.</summary>

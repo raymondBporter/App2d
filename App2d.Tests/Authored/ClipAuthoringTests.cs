@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 
@@ -58,13 +59,12 @@ public sealed class ClipAuthoringTests
     [Fact]
     public void AKeyAuthoredOnOneBuildIsStoredInReferenceUnits()
     {
-        var longLegs = ResolvedModel.From(TestModels.Creature(), new ModelVariant
+        var stretched = new ModelVariant { Id = "long", Name = "Long", Base = "creature" };
+        VariantConversion.PinRest(TestModels.Creature(), stretched, new Dictionary<string, PuppetPoint>
         {
-            Id = "long",
-            Name = "Long",
-            Base = "creature",
-            Rest = { ["body"] = new(0, 1.5f), ["hip"] = new(0, 1.5f), ["knee"] = new(.15f, .75f), ["shoulder"] = new(0, 2), ["elbow"] = new(.4f, 1.8f), ["hand"] = new(.8f, 2) },
+            ["body"] = new(0, 1.5f), ["hip"] = new(0, 1.5f), ["knee"] = new(.15f, .75f), ["shoulder"] = new(0, 2), ["elbow"] = new(.4f, 1.8f), ["hand"] = new(.8f, 2),
         });
+        var longLegs = ResolvedModel.From(TestModels.Creature(), stretched);
         var clip = TestModels.Clip(Model);
         var ratio = longLegs.Measure("leg") / Model.Measure("leg");
         ClipAuthoring.Pose(longLegs, clip, PoseEvaluator.Sample(longLegs, clip, 0), 0, "body", longLegs.Rest["body"] + new Vector3(0, .15f, 0));

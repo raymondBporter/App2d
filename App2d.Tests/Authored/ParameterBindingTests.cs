@@ -227,17 +227,25 @@ public sealed class ParameterBindingTests
             new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfPart("disc", RigProperties.ScaleX) },
             new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfControl("post", RigProperties.LocalY) });
         var variant = Values("crank", ("reach", 1));
-        variant.Rest["post"] = new(-.5f, 2);
-        variant.Parts["disc"] = new() { ScaleX = .2f };
+        ModelAuthoring.MoveRest(ResolvedModel.From(model, variant), variant, "post", new(-.5f, 2, 0), true);
+        variant.Set(PropertyOverride.Of(PropertyRef.OfPart("disc", RigProperties.ScaleX), .2f));
         var resolved = ResolvedModel.From(model, variant);
-        Assert.Equal(2, resolved.Rest["post"].Y);
+        Assert.Equal(2, resolved.Rest["post"].Y, 5);
         Assert.Equal(.2f, resolved.Parts.Single(p => p.Id == "disc").ScaleX);
+        Assert.True(resolved.Masks(PropertyRef.OfControl("post", RigProperties.LocalY)));
+        Assert.Equal(PropertySource.Override, resolved.Provenance(PropertyRef.OfPart("disc", RigProperties.ScaleX)));
         // The bound value is still in force where no override names the property.
         Assert.Equal(1, resolved.Nodes["hub"].Length);
+        Assert.Equal(PropertySource.ParameterBinding, resolved.Provenance(PropertyRef.OfControl("hub", RigProperties.Length)));
+        // A clear pins the authored value, bypassing the binding, and stays live.
+        variant.Set(PropertyOverride.Cleared(PropertyRef.OfPart("disc", RigProperties.ScaleX)));
+        Assert.Equal(.5f, ResolvedModel.From(model, variant).Parts.Single(p => p.Id == "disc").ScaleX);
+        Assert.Equal(PropertySource.Cleared, ResolvedModel.From(model, variant).Provenance(PropertyRef.OfPart("disc", RigProperties.ScaleX)));
         var person = Catalog.Models["person"];
         var tall = PersonBuild.TallThin.Apply(person, "tall", "Tall");
-        tall.Rest["head"] = new(0, 3);
-        Assert.Equal(3, ResolvedModel.From(person, tall).Rest["head"].Y);
+        var resolvedTall = ResolvedModel.From(person, tall);
+        ModelAuthoring.MoveRest(resolvedTall, tall, "head", new(0, 3, resolvedTall.Rest["head"].Z), true);
+        Assert.Equal(3, ResolvedModel.From(person, tall).Rest["head"].Y, 5);
     }
 
     [Theory]

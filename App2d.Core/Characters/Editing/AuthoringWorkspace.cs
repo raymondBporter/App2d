@@ -361,9 +361,16 @@ public sealed class AuthoringWorkspace
                 break;
             case AssetDocument<ModelVariant> variant:
                 uses.Add(new(variant.Asset.Base, "base"));
-                foreach (var (instance, change) in variant.Asset.Attachments.Where(a => a.Value.Asset is not null).OrderBy(a => a.Key, StringComparer.Ordinal))
+                foreach (var change in variant.Asset.Overrides.Where(o => o.Selection is not null).OrderBy(o => o.Key, StringComparer.Ordinal))
                 {
-                    uses.Add(new(change.Asset!, $"attachment {instance} (override)"));
+                    if (change.Target.Attachment is { } instance && change.Target.Property == RigProperties.Asset)
+                    {
+                        uses.Add(new(change.Selection!, $"attachment {instance} (override)"));
+                    }
+                    else if (change.Target.Role is { } role)
+                    {
+                        uses.Add(new(change.Selection!, $"role {role} (override)"));
+                    }
                 }
 
                 break;
@@ -448,9 +455,9 @@ public sealed class AuthoringWorkspace
 
             foreach (var variant in Variants.Where(v => v.Asset.Base == model.Id))
             {
-                var overrides = variant.Asset.Attachments;
+                string? Swap(string instance) => variant.Asset.Override(PropertyRef.OfAttachment(instance, RigProperties.Asset))?.Selection;
                 // The variant wears the part when its base does and it does not swap that instance away, or when it swaps one in.
-                if (overrides.Values.Any(o => o.Asset == partId) || model.Asset.Attachments.Any(a => a.Asset == partId && overrides.GetValueOrDefault(a.Id)?.Asset is null))
+                if (model.Asset.Attachments.Any(a => Swap(a.Id) == partId || a.Asset == partId && Swap(a.Id) is null))
                 {
                     wearers.Add(variant.Id);
                 }
@@ -487,6 +494,20 @@ public sealed class AuthoringWorkspace
                 if (Resolve(variant.Id, out var error) is null)
                 {
                     problems.Add(error!);
+                    break;
+                }
+
+                // An animation-role override must name a clip that exists and plays on this variant.
+                foreach (var change in variant.Asset.Overrides.Where(o => o.Target.Role is not null && o.Selection is not null))
+                {
+                    if (Clip(change.Selection) is null)
+                    {
+                        problems.Add($"Variant '{variant.Id}' role '{change.Target.Role}': no animation '{change.Selection}'.");
+                    }
+                    else if (!CanPlay(change.Selection!, variant.Id, out var why))
+                    {
+                        problems.Add($"Variant '{variant.Id}' role '{change.Target.Role}': {why}");
+                    }
                 }
 
                 break;

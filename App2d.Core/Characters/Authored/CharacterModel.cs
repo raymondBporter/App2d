@@ -113,12 +113,56 @@ public sealed record ControlGroup
     public List<string> Targets { get; set; } = [];
 }
 
-/// <summary>A named appearance an author applies to a variant: part overrides it writes, never a live parent.</summary>
+/// <summary>
+/// One part's appearance in a look: the material, default expression, face offset and visibility a look writes onto a
+/// variant as typed overrides (<see cref="RigProperties.Material"/>, <see cref="RigProperties.Face"/>, <see cref="RigProperties.FaceX"/>,
+/// <see cref="RigProperties.Hidden"/>). Null leaves the variant's value alone. Never sizes: a look restyles, it does not refit.
+/// </summary>
+public sealed record LookAppearance
+{
+    public RenderMaterialDefinition2D? Material { get; set; }
+    /// <summary>Default expression; "none" removes the face.</summary>
+    public string? Face { get; set; }
+    public float? FaceX { get; set; }
+    public bool? Hidden { get; set; }
+    [JsonIgnore]
+    public bool IsEmpty => Material is null && Face is null && FaceX is null && Hidden is null;
+
+    public static void Check(LookAppearance? part, string field)
+    {
+        if (part is null)
+        {
+            throw new InvalidDataException($"{field}: null look part.");
+        }
+
+        part.Material?.Validate(field + ".material");
+        if (part.Face is not null && part.Face != "none" && !FaceExpressions.Contains(part.Face))
+        {
+            throw new InvalidDataException($"{field}.face: unknown expression '{part.Face}'.");
+        }
+
+        if (part.FaceX is { } faceX)
+        {
+            new Limit(-1, 1).Check(faceX, field + ".faceX");
+        }
+    }
+
+    /// <summary>The typed overrides this appearance writes on a part.</summary>
+    public IEnumerable<PropertyOverride> Overrides(string part)
+    {
+        if (Material is not null) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.Material), Material);
+        if (Face is not null) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.Face), Face);
+        if (FaceX is { } faceX) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.FaceX), faceX);
+        if (Hidden is { } hidden) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.Hidden), hidden);
+    }
+}
+
+/// <summary>A named appearance an author applies to a variant: part appearance overrides it writes, never a live parent.</summary>
 public sealed record LookPreset
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
-    public Dictionary<string, PartOverride> Parts { get; set; } = [];
+    public Dictionary<string, LookAppearance> Parts { get; set; } = [];
 }
 
 /// <summary>A reusable character structure. Controls without a parent hang from the locomotion frame.</summary>
@@ -406,7 +450,7 @@ public sealed class CharacterModel
             foreach (var (part, change) in look.Parts)
             {
                 Require(parts.Contains(part), $"{owner} look '{look.Id}': no part '{part}'.");
-                PartOverride.Check(change, $"{owner} look '{look.Id}' parts.{part}");
+                LookAppearance.Check(change, $"{owner} look '{look.Id}' parts.{part}");
                 change.Material?.Resolve(Materials);
             }
         }

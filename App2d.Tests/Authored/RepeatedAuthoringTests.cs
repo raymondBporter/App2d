@@ -254,16 +254,16 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.NewVariant("ranger", "Ranger", "person", "tall-thin"));
         Ok(session, session.ApplyLook("ember"));
         var variant = session.SubjectVariant!;
-        Assert.Equal("#eab596", variant.Asset.Parts["body"].Material?.Fill);
+        Assert.Equal("#eab596", variant.Asset.Override(PropertyRef.OfPart("body", RigProperties.Material))?.Material?.Fill);
         Assert.Equal("determined", session.Assets.Resolve("ranger")!.Parts.Single(p => p.Id == "head").Face);
         var person = session.Assets.Model("person")!;
         Assert.False(person.Dirty);
 
-        Ok(session, session.Edit(variant, () => variant.Asset.Parts["body"].Material = new() { Fill = "#88aa66" }));
+        Ok(session, session.Edit(variant, () => variant.Asset.Set(PropertyOverride.Of(PropertyRef.OfPart("body", RigProperties.Material), new RenderMaterialDefinition2D { Fill = "#88aa66" }))));
         Ok(session, session.SaveLook("fern", "Fern"));
         Assert.True(person.Dirty);
         Assert.Equal("#88aa66", person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Material?.Fill);
-        Assert.Null(person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].ScaleX); // looks carry appearance, never sizes
+        Assert.Null(person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Face); // looks carry appearance (material, face, visibility), never sizes
         Assert.Equal("#d8e9db", person.Asset.Parts.Single(p => p.Id == "body").RenderMaterial.Fill); // the base's own parts are untouched
     }
 

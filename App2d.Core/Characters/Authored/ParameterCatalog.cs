@@ -1,30 +1,100 @@
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>
-/// The exposed property names a binding or override may address (character-system migration, P4a). Control properties are
-/// the canonical node's dimension and layout: its bone length, its parent-local translation and layer offset, and its link's
-/// normalized position and offset along the parent bone. Part properties are the leaf geometry fit of plan section 3.4,
-/// never inherited by children. Names are stable IDs resolved once per model by <see cref="ParameterCatalog"/>.
+/// The exposed property registry (character-system migration, P4a/P6a): every property a binding or override may address,
+/// declared once with its kind, units, range or vocabulary. Control properties are the canonical node's dimension and setup:
+/// its bone length, its parent-local translation, rotation and layer offset, and its link's normalized position and offset
+/// along the parent bone. Part properties are the leaf geometry fit of plan section 3.4 (never inherited by children) plus
+/// its material, face and visibility. Attachment properties are an instance's placement, fit, asset selection, mirror,
+/// material and visibility. A role property binds an animation role to a clip. Names are stable IDs resolved once per model
+/// by <see cref="ParameterCatalog"/> and <see cref="ResolvedModel"/>; a new property registers here and nowhere else.
 /// </summary>
 public static class RigProperties
 {
     public const string Length = "length";
-    public const string LocalX = "local.x", LocalY = "local.y", LocalLayer = "local.layer";
+    public const string LocalX = "local.x", LocalY = "local.y", LocalRotation = "local.rotation", LocalLayer = "local.layer";
     public const string LinkT = "link.t", LinkOffsetX = "link.offsetX", LinkOffsetY = "link.offsetY";
     public const string ScaleX = "scaleX", ScaleY = "scaleY", OffsetX = "offsetX", OffsetY = "offsetY";
-    public static readonly IReadOnlyList<string> Part = [ScaleX, ScaleY, OffsetX, OffsetY];
+    public const string Material = "material", Face = "face", FaceX = "faceX", Hidden = "hidden";
     /// <summary>An attachment instance's placement on its socket and its leaf fit (P5b); never inherited by anything.</summary>
     public const string X = "x", Y = "y", Angle = "angle", Scale = "scale", Layer = "layer", FitX = "fitX", FitY = "fitY";
-    public static readonly IReadOnlyList<string> Attachment = [X, Y, Angle, Scale, Layer, FitX, FitY];
+    public const string Asset = "asset", Mirror = "mirror";
+    /// <summary>An animation role's clip (P6a): the wearer's motion-set role on this variant.</summary>
+    public const string Clip = "clip";
+    /// <summary>Declared ahead of P4b so an inspector can show the row as unsupported with its reason instead of hiding it.</summary>
+    public const string Limits = "limits";
+
+    private static readonly Limit Lengths = new(0, 100), Translations = new(-10000, 10000), Rotations = new(-1000, 1000), Layers = new(-32, 32);
+    private static readonly Limit LinkPositions = new(-10, 10), LinkOffsets = new(-100, 100), Fits = new(-100, 100), PartOffsets = new(-100, 100), FaceOffsets = new(-1, 1);
+    private static readonly Limit Placements = new(-100, 100), Sizes = new(.001f, 100), AttachmentLayers = new(-16, 16);
+    private static readonly PropertyDeclaration LengthDeclaration = new(Length, PropertyKinds.Number, ParameterUnits.Length, Lengths, Help: "Bone length along local +X; bound children follow the tip.");
+    private static readonly PropertyDeclaration LocalXDeclaration = new(LocalX, PropertyKinds.Number, ParameterUnits.Length, Translations, Help: "Origin in the parent's local axes.");
+    private static readonly PropertyDeclaration LocalYDeclaration = new(LocalY, PropertyKinds.Number, ParameterUnits.Length, Translations, Help: "Origin in the parent's local axes.");
+    private static readonly PropertyDeclaration LocalRotationDeclaration = new(LocalRotation, PropertyKinds.Number, ParameterUnits.Radians, Rotations, Help: "Rest rotation in the parent's frame.");
+    private static readonly PropertyDeclaration LocalLayerDeclaration = new(LocalLayer, PropertyKinds.Number, ParameterUnits.Layer, Layers, Help: "Drawing-layer offset from the parent.");
+    private static readonly PropertyDeclaration LinkTDeclaration = new(LinkT, PropertyKinds.Number, ParameterUnits.Normalized, LinkPositions, Help: "Position along the parent bone (0 origin, 1 tip).");
+    private static readonly PropertyDeclaration LinkOffsetXDeclaration = new(LinkOffsetX, PropertyKinds.Number, ParameterUnits.Length, LinkOffsets, Help: "Offset from the bound position in the parent's axes.");
+    private static readonly PropertyDeclaration LinkOffsetYDeclaration = new(LinkOffsetY, PropertyKinds.Number, ParameterUnits.Length, LinkOffsets, Help: "Offset from the bound position in the parent's axes.");
+
+    /// <summary>The part properties: the leaf fit (bindable) and its appearance.</summary>
+    public static readonly IReadOnlyList<PropertyDeclaration> PartDeclarations =
+    [
+        new(ScaleX, PropertyKinds.Number, ParameterUnits.Factor, Help: "Leaf artwork fit; nothing inherits it."),
+        new(ScaleY, PropertyKinds.Number, ParameterUnits.Factor),
+        new(OffsetX, PropertyKinds.Number, ParameterUnits.Length, PartOffsets),
+        new(OffsetY, PropertyKinds.Number, ParameterUnits.Length, PartOffsets),
+        new(Material, PropertyKinds.Material, Help: "Fill, outline, paint or a shared material over the base part's.") { Clearable = false },
+        new(Face, PropertyKinds.Selection, Options: [.. FaceExpressions.Names, "none"], Help: "Default expression; clear removes the face.") { Cleared = "none" },
+        new(FaceX, PropertyKinds.Number, ParameterUnits.Length, FaceOffsets),
+        new(Hidden, PropertyKinds.Flag),
+    ];
+
+    /// <summary>The attachment-instance properties: placement and fit (bindable), the asset selection, mirror, material and visibility.</summary>
+    public static readonly IReadOnlyList<PropertyDeclaration> AttachmentDeclarations =
+    [
+        new(X, PropertyKinds.Number, ParameterUnits.Length, Placements, Help: "Offset of the asset's origin in the socket's axes."),
+        new(Y, PropertyKinds.Number, ParameterUnits.Length, Placements),
+        new(Angle, PropertyKinds.Number, ParameterUnits.Radians, Rotations),
+        new(Scale, PropertyKinds.Number, ParameterUnits.Factor, Sizes),
+        new(Layer, PropertyKinds.Number, ParameterUnits.Layer, AttachmentLayers),
+        new(FitX, PropertyKinds.Number, ParameterUnits.Factor, Fits),
+        new(FitY, PropertyKinds.Number, ParameterUnits.Factor, Fits),
+        new(Asset, PropertyKinds.Selection, References: "part", Help: "Which library part this instance shows on this wearer.") { Clearable = false },
+        new(Mirror, PropertyKinds.Flag),
+        new(Material, PropertyKinds.Material, Help: "Inline override over every piece; a fill, a shared material of the asset, a tint. Clear shows the asset's own materials."),
+        new(Hidden, PropertyKinds.Flag),
+    ];
+
+    /// <summary>The animation-role properties: the clip a role plays on this wearer.</summary>
+    public static readonly IReadOnlyList<PropertyDeclaration> RoleDeclarations =
+    [
+        new(Clip, PropertyKinds.Selection, References: "animation", Help: "The clip this role plays on this variant, over the base's motion set.") { Clearable = false },
+    ];
+
+    /// <summary>The bindable part property names.</summary>
+    public static readonly IReadOnlyList<string> Part = [.. PartDeclarations.Where(d => d.Bindable).Select(d => d.Name)];
+    /// <summary>The bindable attachment property names.</summary>
+    public static readonly IReadOnlyList<string> Attachment = [.. AttachmentDeclarations.Where(d => d.Bindable).Select(d => d.Name)];
 
     /// <summary>The properties a control exposes by its declared kind and link: an affine node exposes none (adapter until P11).</summary>
-    public static IReadOnlyList<string> ForControl(ModelControl control) => control.Node switch
+    public static IReadOnlyList<PropertyDeclaration> Declarations(ModelControl control) => control.Node switch
     {
         RigNodeKinds.Affine => [],
-        RigNodeKinds.Bone when control.Link is not null => [Length, LocalLayer, LinkT, LinkOffsetX, LinkOffsetY],
-        RigNodeKinds.Bone => [Length, LocalX, LocalY, LocalLayer],
-        _ => [LocalX, LocalY, LocalLayer],
+        RigNodeKinds.Bone when control.Link is not null => [LengthDeclaration, LocalRotationDeclaration, LocalLayerDeclaration, LinkTDeclaration, LinkOffsetXDeclaration, LinkOffsetYDeclaration],
+        RigNodeKinds.Bone => [LengthDeclaration, LocalXDeclaration, LocalYDeclaration, LocalRotationDeclaration, LocalLayerDeclaration],
+        _ => [LocalXDeclaration, LocalYDeclaration, LocalRotationDeclaration, LocalLayerDeclaration],
     };
+
+    /// <summary>The bindable control property names.</summary>
+    public static IReadOnlyList<string> ForControl(ModelControl control) => [.. Declarations(control).Where(d => d.Bindable).Select(d => d.Name)];
+
+    /// <summary>
+    /// Properties the plan names for a control that no pass has implemented yet, with the reason: an inspector shows the row
+    /// as unsupported instead of hiding it or offering a handle that silently does nothing.
+    /// </summary>
+    public static IReadOnlyList<(string Name, string Reason)> Unsupported(ModelControl control) => control.Node == RigNodeKinds.Affine
+        ? [(Limits, "a legacy affine node; the adapter exposes nothing until P11")]
+        : [(Limits, "joint limits arrive with the limit-aware solve of P4b; a variant cannot override them yet")];
 
     /// <summary>Why a property is not exposed on a control, or null when it is.</summary>
     public static string? Refusal(ModelControl control, string property)
@@ -34,7 +104,7 @@ public static class RigProperties
             return $"'{control.Id}' is a legacy affine node; the adapter exposes no bindable properties.";
         }
 
-        if (ForControl(control).Contains(property, StringComparer.Ordinal))
+        if (Declarations(control).Any(d => d.Name == property))
         {
             return null;
         }
@@ -44,15 +114,53 @@ public static class RigProperties
             Length => $"'{control.Id}' is a point control; only a bone node exposes a length.",
             LocalX or LocalY => $"'{control.Id}' is bound to its parent bone; bind its link instead of a local translation.",
             LinkT or LinkOffsetX or LinkOffsetY => $"'{control.Id}' has no link; bind its local translation instead.",
-            _ => $"no control property '{property}' (one of {string.Join(", ", ForControl(control))}).",
+            Limits => Unsupported(control)[0].Reason,
+            _ => $"no control property '{property}' (one of {string.Join(", ", Declarations(control).Select(d => d.Name))}).",
         };
+    }
+
+    /// <summary>Resolves a property reference against a model to its declaration, or throws naming what is missing.</summary>
+    public static PropertyDeclaration Declaration(PropertyRef property, CharacterModel model, string field)
+    {
+        if (property.Role is { } role)
+        {
+            if (model.MotionSets.Count == 0 || !model.MotionSets.Any(s => s.Roles.ContainsKey(role)))
+            {
+                throw new InvalidDataException($"{field}: no motion set of '{model.Id}' assigns role '{role}'.");
+            }
+
+            return RoleDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no role property '{property.Property}' (one of {string.Join(", ", RoleDeclarations.Select(d => d.Name))}).");
+        }
+
+        if (property.Attachment is { } attachment)
+        {
+            if (model.Attachments.All(a => a.Id != attachment))
+            {
+                throw new InvalidDataException($"{field}: no attachment '{attachment}'.");
+            }
+
+            return AttachmentDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no attachment property '{property.Property}' (one of {string.Join(", ", AttachmentDeclarations.Select(d => d.Name))}).");
+        }
+
+        if (property.Part is { } part)
+        {
+            if (model.Parts.All(p => p.Id != part))
+            {
+                throw new InvalidDataException($"{field}: no part '{part}'.");
+            }
+
+            return PartDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no part property '{property.Property}' (one of {string.Join(", ", PartDeclarations.Select(d => d.Name))}).");
+        }
+
+        var control = model.Controls.FirstOrDefault(c => c.Id == property.Control) ?? throw new InvalidDataException($"{field}: no control '{property.Control}'.");
+        return Declarations(control).FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: {Refusal(control, property.Property)}");
     }
 }
 
 /// <summary>
 /// The resolution state between the authored rig and the final compile: every node's parent-local setup, length and link
-/// (point controls' setups derived from their authored rest), and the parts. Parameter bindings and explicit overrides write
-/// here in the order of plan section 3.7; <see cref="RigGraph.Compile(CharacterModel, IReadOnlyList{ModelControl}, RigLayout, IReadOnlyDictionary{string, System.Numerics.Vector3})"/>
+/// (point controls' setups derived from their authored rest), the parts and the attachment instances. Parameter bindings and
+/// explicit overrides write here in the order of plan section 3.7; <see cref="RigGraph.Compile(CharacterModel, IReadOnlyList{ModelControl}, RigLayout)"/>
 /// then derives positions and frames from the final values.
 /// </summary>
 internal sealed class RigLayout
@@ -70,7 +178,7 @@ internal sealed class RigLayout
     public Dictionary<string, float> Lengths { get; }
     public Dictionary<string, RigLink?> Links { get; }
     public List<PuppetPart> Parts { get; }
-    /// <summary>The attachment instances with bound placement and fit written; a wearer's override is applied after.</summary>
+    /// <summary>The attachment instances with bound placement and fit, then the wearer's overrides, written.</summary>
     public List<PartInstance> Attachments { get; }
     /// <summary>Controls whose setup a binding or override changed. An untouched point control keeps its authored rest bit for bit.</summary>
     public HashSet<string> Moved { get; } = new(StringComparer.Ordinal);
@@ -109,16 +217,18 @@ internal sealed class RigLayout
                 RigProperties.ScaleY => p.ScaleY,
                 RigProperties.OffsetX => p.OffsetX,
                 RigProperties.OffsetY => p.OffsetY,
+                RigProperties.FaceX => p.FaceX,
                 _ => throw Unknown(property),
             };
         }
 
-        var id = property.Control!;
+        var id = property.Control ?? throw Unknown(property);
         return property.Property switch
         {
             RigProperties.Length => Lengths[id],
             RigProperties.LocalX => Setups[id].X,
             RigProperties.LocalY => Setups[id].Y,
+            RigProperties.LocalRotation => Setups[id].Rotation,
             RigProperties.LocalLayer => Setups[id].Layer,
             RigProperties.LinkT => Links[id]!.T,
             RigProperties.LinkOffsetX => Links[id]!.OffsetX,
@@ -167,12 +277,13 @@ internal sealed class RigLayout
                 RigProperties.ScaleY => Parts[index] with { ScaleY = value },
                 RigProperties.OffsetX => Parts[index] with { OffsetX = value },
                 RigProperties.OffsetY => Parts[index] with { OffsetY = value },
+                RigProperties.FaceX => Parts[index] with { FaceX = value },
                 _ => throw Unknown(property),
             };
             return;
         }
 
-        var id = property.Control!;
+        var id = property.Control ?? throw Unknown(property);
         switch (property.Property)
         {
             case RigProperties.Length:
@@ -181,6 +292,7 @@ internal sealed class RigLayout
                 break;
             case RigProperties.LocalX: Setups[id].X = value; break;
             case RigProperties.LocalY: Setups[id].Y = value; break;
+            case RigProperties.LocalRotation: Setups[id].Rotation = value; break;
             case RigProperties.LocalLayer: Setups[id].Layer = value; break;
             case RigProperties.LinkT: Links[id]!.T = value; break;
             case RigProperties.LinkOffsetX: Links[id]!.OffsetX = value; break;
@@ -188,6 +300,52 @@ internal sealed class RigLayout
             default: throw Unknown(property);
         }
         Moved.Add(id);
+    }
+
+    /// <summary>
+    /// Writes one explicit override after the bindings (plan section 3.7 step 3): a number pins the value (a clear pins the
+    /// authored value read from <paramref name="authored"/>, bypassing the binding); a flag, selection or material replaces
+    /// the base's, a clear restoring the property's empty value.
+    /// </summary>
+    public void Apply(PropertyOverride change, PropertyDeclaration declaration, RigLayout authored)
+    {
+        var target = change.Target;
+        if (declaration.Kind == PropertyKinds.Number)
+        {
+            Set(target, change.Clear ? authored.Get(target) : change.Value!.Value);
+            return;
+        }
+
+        if (target.Part is { } part)
+        {
+            var index = PartIndex(part);
+            var current = Parts[index];
+            Parts[index] = declaration.Name switch
+            {
+                RigProperties.Material => current with { Material = current.RenderMaterial.WithOverride(change.Material) },
+                RigProperties.Face => current with { Face = change.Clear ? declaration.Cleared! : change.Selection! },
+                RigProperties.Hidden => current with { Hidden = !change.Clear && change.Flag!.Value },
+                _ => throw Unknown(target),
+            };
+            return;
+        }
+
+        if (target.Attachment is { } attachment)
+        {
+            var index = AttachmentIndex(attachment);
+            var current = Attachments[index];
+            Attachments[index] = declaration.Name switch
+            {
+                RigProperties.Asset => current with { Asset = change.Selection! },
+                RigProperties.Mirror => current with { Mirror = !change.Clear && change.Flag!.Value },
+                RigProperties.Material => current with { Material = change.Clear ? null : current.Material is null ? change.Material : current.Material.WithOverride(change.Material) },
+                RigProperties.Hidden => current with { Hidden = !change.Clear && change.Flag!.Value },
+                _ => throw Unknown(target),
+            };
+            return;
+        }
+
+        throw Unknown(target);
     }
 
     private int PartIndex(string part)
@@ -241,9 +399,6 @@ public sealed class ParameterCatalog
         }
 
         var catalog = new ParameterCatalog(model);
-        var controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
-        var parts = model.Parts.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
-        var attachments = model.Attachments.Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
         foreach (var parameter in model.Parameters)
         {
             if (parameter is null)
@@ -261,10 +416,10 @@ public sealed class ParameterCatalog
             {
                 var binding = parameter.Bindings[i];
                 var field = $"{owner} parameter '{parameter.Id}' binding {i + 1}";
-                Check(binding.Target, field + " target", controls, parts, attachments);
+                Check(binding.Target, field + " target", model);
                 if (binding.Reference is { } reference)
                 {
-                    Check(reference, field + " reference", controls, parts, attachments);
+                    Check(reference, field + " reference", model);
                 }
 
                 var entry = new Entry(parameter, binding);
@@ -303,46 +458,18 @@ public sealed class ParameterCatalog
         return catalog;
     }
 
-    private static void Check(PropertyRef property, string field, Dictionary<string, ModelControl> controls, HashSet<string> parts, HashSet<string> attachments)
+    /// <summary>A binding's target or reference must be a declared, bindable (number) property of an existing owner.</summary>
+    private static void Check(PropertyRef property, string field, CharacterModel model)
     {
-        if (property.Attachment is { } attachment)
+        if (property.Role is not null)
         {
-            if (!attachments.Contains(attachment))
-            {
-                throw new InvalidDataException($"{field}: no attachment '{attachment}'.");
-            }
-
-            if (!RigProperties.Attachment.Contains(property.Property, StringComparer.Ordinal))
-            {
-                throw new InvalidDataException($"{field}: no attachment property '{property.Property}' (one of {string.Join(", ", RigProperties.Attachment)}).");
-            }
-
-            return;
+            throw new InvalidDataException($"{field}: an animation role is not bindable; override its clip on a variant instead.");
         }
 
-        if (property.Part is { } part)
+        var declaration = RigProperties.Declaration(property, model, field);
+        if (!declaration.Bindable)
         {
-            if (!parts.Contains(part))
-            {
-                throw new InvalidDataException($"{field}: no part '{part}'.");
-            }
-
-            if (!RigProperties.Part.Contains(property.Property, StringComparer.Ordinal))
-            {
-                throw new InvalidDataException($"{field}: no part property '{property.Property}' (one of {string.Join(", ", RigProperties.Part)}).");
-            }
-
-            return;
-        }
-
-        if (!controls.TryGetValue(property.Control!, out var control))
-        {
-            throw new InvalidDataException($"{field}: no control '{property.Control}'.");
-        }
-
-        if (RigProperties.Refusal(control, property.Property) is { } refusal)
-        {
-            throw new InvalidDataException($"{field}: {refusal}");
+            throw new InvalidDataException($"{field}: '{declaration.Name}' is a {declaration.Kind}; only number properties are bindable.");
         }
     }
 

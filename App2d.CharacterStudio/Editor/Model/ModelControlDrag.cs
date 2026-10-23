@@ -80,12 +80,9 @@ internal sealed class ModelControlDrag(EditorSession session)
             });
             return;
         }
-        if (session.SubjectModel is not { } document)
-        {
-            return;
-        }
 
-        var id = _dragging;
-        session.Change(document, () => ModelAuthoring.MoveBoneTip(document.Asset, id, new(target.X, target.Y)));
+        // The base turns and resizes its authored bone; a variant overrides the node's length and rotation. A node whose
+        // tip cannot be dragged is refused with its reason in the status line (P6c), never a handle that silently returns.
+        session.DragBoneTip(_dragging, new(target.X, target.Y));
     }
 }

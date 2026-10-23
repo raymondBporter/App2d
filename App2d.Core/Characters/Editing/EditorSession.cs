@@ -476,6 +476,41 @@ public sealed class EditorSession
     }
 
     /// <summary>
+    /// Drags a bone's tip to a world position in Model: on the base it turns and resizes the authored bone; on a variant it
+    /// overrides the node's length and local rotation (P6c). A node that is not a bone node is refused with the reason in the
+    /// message, never silently ignored.
+    /// </summary>
+    public void DragBoneTip(string control, Vector2 world)
+    {
+        if (!_dragging)
+        {
+            BeginDrag();
+        }
+
+        Attempt(() =>
+        {
+            if (Mode != Workspace.Model)
+            {
+                throw new InvalidOperationException("Bone tips are dragged in Model; in Animate drag the child control or key a rotation.");
+            }
+
+            if (SubjectVariant is { } variant)
+            {
+                var resolved = Assets.Resolve(variant.Id) ?? throw new InvalidDataException("The variant does not resolve; repair it first.");
+                variant.Change(() => ModelAuthoring.MoveBoneTip(resolved, variant.Asset, control, world));
+            }
+            else if (SubjectModel is { } model)
+            {
+                model.Change(() => ModelAuthoring.MoveBoneTip(model.Asset, control, world));
+            }
+            else
+            {
+                throw new InvalidOperationException("Open a model or variant to edit its rig.");
+            }
+        });
+    }
+
+    /// <summary>
     /// Moves a control to a world position. In Model it changes rest geometry: the base's, or the variant's overrides. In
     /// Animate it poses the clip at the current time, keyed when autokey is on and held as an unkeyed pose otherwise.
     /// </summary>

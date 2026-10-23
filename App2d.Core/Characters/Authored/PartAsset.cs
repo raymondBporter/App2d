@@ -297,64 +297,6 @@ public sealed record PartInstance
 
         Material?.Validate(field + " material");
     }
-
-    /// <summary>This instance with a wearer's override applied; null members inherit.</summary>
-    public PartInstance With(AttachmentOverride? change) => change is null ? this : this with
-    {
-        Asset = change.Asset ?? Asset,
-        X = change.X ?? X,
-        Y = change.Y ?? Y,
-        Angle = change.Angle ?? Angle,
-        Scale = change.Scale ?? Scale,
-        Mirror = change.Mirror ?? Mirror,
-        Layer = change.Layer ?? Layer,
-        FitX = change.FitX ?? FitX,
-        FitY = change.FitY ?? FitY,
-        Material = Material is null ? change.Material : Material.WithOverride(change.Material),
-        Hidden = change.Hidden ?? Hidden,
-    };
-}
-
-/// <summary>A variant's override of one attachment instance, by instance ID. Null keeps the base's value; a set value never edits the base or the shared asset.</summary>
-public sealed record AttachmentOverride
-{
-    /// <summary>Replaces the library asset on this wearer alone.</summary>
-    public string? Asset { get; set; }
-    public float? X { get; set; }
-    public float? Y { get; set; }
-    public float? Angle { get; set; }
-    public float? Scale { get; set; }
-    public bool? Mirror { get; set; }
-    public float? Layer { get; set; }
-    public float? FitX { get; set; }
-    public float? FitY { get; set; }
-    public RenderMaterialDefinition2D? Material { get; set; }
-    public bool? Hidden { get; set; }
-
-    [JsonIgnore]
-    public bool IsEmpty => Asset is null && X is null && Y is null && Angle is null && Scale is null && Mirror is null && Layer is null && FitX is null && FitY is null && Material is null && Hidden is null;
-
-    public void Validate(string field)
-    {
-        if (Asset is not null)
-        {
-            AuthoredAsset.RequireId(Asset, field + " asset");
-        }
-
-        if (X is { } x) new Limit(-100, 100).Check(x, field + " x");
-        if (Y is { } y) new Limit(-100, 100).Check(y, field + " y");
-        if (Angle is { } angle) new Limit(-1000, 1000).Check(angle, field + " angle");
-        if (Scale is { } scale) new Limit(.001f, 100).Check(scale, field + " scale");
-        if (Layer is { } layer) new Limit(-16, 16).Check(layer, field + " layer");
-        if (FitX is { } fitX) new Limit(-100, 100).Check(fitX, field + " fitX");
-        if (FitY is { } fitY) new Limit(-100, 100).Check(fitY, field + " fitY");
-        if (FitX == 0 || FitY == 0)
-        {
-            throw new InvalidDataException($"{field}: a zero fit collapses the artwork.");
-        }
-
-        Material?.Validate(field + " material");
-    }
 }
 
 /// <summary>

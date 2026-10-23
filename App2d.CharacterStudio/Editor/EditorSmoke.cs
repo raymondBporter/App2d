@@ -588,7 +588,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var right = person.Asset.Attachments[1].Id;
                 s.Open("tall-thin");
                 var tall = s.SubjectVariant!;
-                Check(s.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, person.Asset, right, o => o.Asset = "boot")), s);
+                Check(s.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, s.Assets.Resolve("tall-thin")!, right, i => i.Asset = "boot")), s);
                 Record(s.Assets.Resolve("tall-thin")!.Attachment(right)!.Asset.Id == "boot" && s.Assets.Resolve("person")!.Attachment(right)!.Asset.Id == "mitt" && s.Assets.Resolve("short-broad")!.Attachment(right)!.Asset.Id == "mitt",
                     "swapping the right instance on tall-thin leaves the base and short-broad wearing the mitt");
                 Record(s.Assets.UsedBy("mitt").Any(r => r.Id == "person") && s.Assets.Wearers("mitt").Contains("short-broad") && s.Assets.UsedBy("boot").Any(r => r.Id == "tall-thin"),

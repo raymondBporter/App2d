@@ -123,9 +123,10 @@ public sealed class PartAssetTests : IDisposable
         ModelAuthoring.AddAttachment(person, "glove", Humanoid.LeftHandSocket, library, "left-glove");
         var tall = PersonBuild.TallThin.Apply(person, "tall", "Tall");
         var broad = PersonBuild.ShortBroad.Apply(person, "broad", "Broad");
-        ModelAuthoring.EditAttachmentOverride(tall, person, "left-glove", o => { o.Asset = "mitten"; o.FitY = 2; o.Material = new() { Fill = "#ff0000" }; });
+        ModelAuthoring.EditAttachmentOverride(tall, ResolvedModel.From(person, tall, library), "left-glove", i => { i.Asset = "mitten"; i.FitY = 2; i.Material = new() { Fill = "#ff0000" }; });
         Assert.Equal(ModelVariant.CurrentVersion, ModelVariant.FromJson(tall.ToJson()).Version);
-        Assert.Equal("mitten", ModelVariant.FromJson(tall.ToJson()).Attachments["left-glove"].Asset);
+        Assert.Equal("mitten", ModelVariant.FromJson(tall.ToJson()).Override(PropertyRef.OfAttachment("left-glove", RigProperties.Asset))?.Selection);
+        Assert.Equal(3, tall.Overrides.Count);
         var onTall = ResolvedModel.From(person, tall, library).Attachments.Single();
         var onBroad = ResolvedModel.From(person, broad, library).Attachments.Single();
         var onBase = ResolvedModel.From(person, null, library).Attachments.Single();
@@ -139,13 +140,22 @@ public sealed class PartAssetTests : IDisposable
         Assert.Equal("glove", person.Attachments[0].Asset);
         Assert.Null(mitten.Parts[0].Material!.Fill);
         // Clearing the override restores inheritance without writing the base value into the variant.
-        ModelAuthoring.EditAttachmentOverride(tall, person, "left-glove", o => { o.Asset = null; o.FitY = null; o.Material = null; });
-        Assert.Empty(tall.Attachments);
-        var unknown = new ModelVariant { Id = "odd", Name = "Odd", Base = "person", Attachments = { ["hat"] = new() { Hidden = true } } };
-        Assert.Contains("attachments.hat", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(person, unknown, library)).Message);
-        // A version-4 variant file reads unchanged at the current version.
-        var legacy = broad.ToJson().Replace($"\"version\": {ModelVariant.CurrentVersion}", "\"version\": 4");
-        Assert.Equal(ModelVariant.CurrentVersion, ModelVariant.FromJson(legacy).Version);
+        foreach (var property in new[] { RigProperties.Asset, RigProperties.FitY, RigProperties.Material })
+        {
+            ModelAuthoring.ResetOverride(tall, PropertyRef.OfAttachment("left-glove", property));
+        }
+
+        Assert.Empty(tall.Overrides);
+        Assert.Same(glove, ResolvedModel.From(person, tall, library).Attachments.Single().Asset);
+        var unknown = new ModelVariant { Id = "odd", Name = "Odd", Base = "person", Overrides = [PropertyOverride.Of(PropertyRef.OfAttachment("hat", RigProperties.Hidden), true)] };
+        Assert.Contains("no attachment 'hat'", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(person, unknown, library)).Message);
+        // A version-5 variant file (per-field attachment overrides) reads through the legacy reader as typed overrides.
+        const string legacy = """{"format":"app2d-variant","version":5,"id":"legacy","name":"Legacy","base":"person","build":{},"rest":{},"parts":{},"attachments":{"left-glove":{"asset":"mitten","fitY":2}}}""";
+        var read = ModelVariant.FromJson(legacy);
+        Assert.Equal(ModelVariant.CurrentVersion, read.Version);
+        Assert.Equal("mitten", read.Override(PropertyRef.OfAttachment("left-glove", RigProperties.Asset))?.Selection);
+        Assert.Equal(2, read.Override(PropertyRef.OfAttachment("left-glove", RigProperties.FitY))?.Value);
+        Assert.Same(mitten, ResolvedModel.From(person, read, library).Attachments.Single().Asset);
     }
 
     [Fact]
@@ -189,7 +199,7 @@ public sealed class PartAssetTests : IDisposable
         Assert.True(session.Edit(part, () => { }), session.Message);
         var mitten = Glove("mitten", "#222222");
         var mittenDocument = workspace.Create(mitten);
-        Assert.True(session.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, person.Asset, "left-glove", o => o.Asset = "mitten")), session.Message);
+        Assert.True(session.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, workspace.Resolve("tall-thin")!, "left-glove", i => i.Asset = "mitten")), session.Message);
         Assert.Same(mitten, workspace.Resolve("tall-thin")!.Attachments[0].Asset);
         Assert.Equal("glove", workspace.Resolve("short-broad")!.Attachments[0].Asset.Id);
         Assert.Contains(workspace.UsedBy("mitten"), r => r.Id == "tall-thin");
@@ -211,7 +221,7 @@ public sealed class PartAssetTests : IDisposable
 
         // Removing the base instance leaves the variant's override dangling, reported on the variant by name.
         Assert.True(session.Edit(person, () => ModelAuthoring.RemoveAttachment(person.Asset, "left-glove")), session.Message);
-        Assert.Contains(workspace.Problems(tall), p => p.Contains("attachments.left-glove"));
+        Assert.Contains(workspace.Problems(tall), p => p.Contains("no attachment 'left-glove'"));
         session.Undo();
         Assert.Empty(workspace.Problems(tall));
     }

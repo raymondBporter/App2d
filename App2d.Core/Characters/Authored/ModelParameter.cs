@@ -27,22 +27,28 @@ public sealed record PropertyRef
     public string? Part { get; set; }
     /// <summary>A library part instance on the character (P5b): its placement and leaf fit are bindable too.</summary>
     public string? Attachment { get; set; }
+    /// <summary>An animation role of the base's motion sets (P6a): a variant overrides the clip it plays. Not bindable.</summary>
+    public string? Role { get; set; }
     public string Property { get; set; } = "";
 
-    [JsonIgnore] public string Owner => Control ?? Part ?? Attachment ?? "";
-    [JsonIgnore] public string OwnerKind => Control is not null ? "control" : Part is not null ? "part" : "attachment";
+    [JsonIgnore] public string Owner => Control ?? Part ?? Attachment ?? Role ?? "";
+    [JsonIgnore] public string OwnerKind => Control is not null ? ControlKind : Part is not null ? PartKind : Attachment is not null ? AttachmentKind : RoleKind;
     [JsonIgnore] public string Key => OwnerKind + ":" + Owner + "." + Property;
+    public const string ControlKind = "control", PartKind = "part", AttachmentKind = "attachment", RoleKind = "role";
     public override string ToString() => $"{OwnerKind} '{Owner}' {Property}";
 
     public static PropertyRef OfControl(string control, string property) => new() { Control = control, Property = property };
     public static PropertyRef OfPart(string part, string property) => new() { Part = part, Property = property };
     public static PropertyRef OfAttachment(string attachment, string property) => new() { Attachment = attachment, Property = property };
+    public static PropertyRef OfRole(string role) => new() { Role = role, Property = RigProperties.Clip };
+    /// <summary>A reference of the same owner kind and ID to another property.</summary>
+    public PropertyRef Sibling(string property) => this with { Property = property };
 
     public void Validate(string field)
     {
-        if (new[] { Control, Part, Attachment }.Count(o => o is not null) != 1)
+        if (new[] { Control, Part, Attachment, Role }.Count(o => o is not null) != 1)
         {
-            throw new InvalidDataException($"{field}: name exactly one of control, part or attachment.");
+            throw new InvalidDataException($"{field}: name exactly one of control, part, attachment or role.");
         }
 
         if (string.IsNullOrWhiteSpace(Property))

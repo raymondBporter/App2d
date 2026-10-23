@@ -176,7 +176,7 @@ public sealed class PartAttachmentDrawingTests
         person.Attachments[0].Material = null;
         var inherited = ResolvedModel.From(person, null, Library(mixed)).Attachments[0];
         Assert.Equal("#c9a27a", inherited.Parts[0].RenderMaterial.Fill);
-        var variant = new ModelVariant { Id = "red", Name = "Red", Base = "person", Attachments = { ["glove"] = new() { Material = new() { Asset = "leather", Fill = "#00ff00" } } } };
+        var variant = new ModelVariant { Id = "red", Name = "Red", Base = "person", Overrides = [PropertyOverride.Of(PropertyRef.OfAttachment("glove", RigProperties.Material), new RenderMaterialDefinition2D { Asset = "leather", Fill = "#00ff00" })] };
         var onVariant = ResolvedModel.From(person, variant, Library(mixed)).Attachments[0];
         Assert.Equal("#00ff00", onVariant.Parts[0].RenderMaterial.Fill);
         Assert.Equal("#c9a27a", ResolvedModel.From(person, null, Library(mixed)).Attachments[0].Parts[0].RenderMaterial.Fill);
@@ -213,7 +213,7 @@ public sealed class PartAttachmentDrawingTests
         Assert.Equal(2, resolved.Attachments[0].Instance.Layer);
         Assert.Equal("glove-size", resolved.Parameters.BindingOfAttachment("glove", RigProperties.FitX)!.Value.Parameter.Id);
         Assert.Equal(1, ResolvedModel.From(person, null, Library(mixed)).Attachments[0].Instance.FitX);
-        big.Attachments["glove"] = new() { FitX = .5f };
+        big.Set(PropertyOverride.Of(PropertyRef.OfAttachment("glove", RigProperties.FitX), .5f));
         var overridden = ResolvedModel.From(person, big, Library(mixed));
         Assert.Equal(.5f, overridden.Attachments[0].Instance.FitX);
         Assert.Equal(2, overridden.Attachments[0].Instance.FitY);

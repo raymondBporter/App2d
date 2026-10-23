@@ -127,6 +127,12 @@ public sealed class ResolvedEntity
             roles[role] = new(role, Clip(clip, $"{owner} motion set '{set.Id}' role '{role}'"), $"set:{set.Id}");
         }
 
+        // A variant's animation-role overrides (P6a) sit between the base's motion set and the entity's own assignments.
+        foreach (var (role, clip) in model.RoleClips)
+        {
+            roles[role] = new(role, Clip(clip, $"{owner} variant '{model.Id}' role '{role}'"), $"variant:{model.Id}");
+        }
+
         foreach (var (role, clip) in asset.Roles)
         {
             roles[role] = new(role, Clip(clip, $"{owner} roles.{role}"), "entity");

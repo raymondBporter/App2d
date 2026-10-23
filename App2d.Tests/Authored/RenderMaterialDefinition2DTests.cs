@@ -23,15 +23,15 @@ public sealed class RenderMaterialDefinition2DTests
         var part = ResolvedModel.From(model).Parts.Single(p => p.Id == "upper-arm");
         Assert.Equal(.12f, part.RenderMaterial.StrokeWidth);
         var variant = new ModelVariant { Id = "thick", Name = "Thick", Base = model.Id };
-        ModelAuthoring.EditPartOverride(variant, part, p => p.Material = p.RenderMaterial with { StrokeWidth = .3f });
-        Assert.False(variant.Parts[part.Id].IsEmpty);
+        ModelAuthoring.EditPartOverride(variant, model, part, p => p.Material = p.RenderMaterial with { StrokeWidth = .3f });
+        Assert.Single(variant.Overrides);
         var restored = ModelVariant.FromJson(variant.ToJson());
         var changed = ResolvedModel.From(model, restored).Parts.Single(p => p.Id == part.Id);
         Assert.Equal(.3f, changed.RenderMaterial.StrokeWidth);
         Assert.Equal(part.Geometry, changed.Geometry);
         Assert.Equal(part.ScaleX, changed.ScaleX);
         Assert.Equal(part.ScaleY, changed.ScaleY);
-        restored.Parts[part.Id].Material = new() { StrokeWidth = null };
+        ModelAuthoring.ResetOverride(restored, PropertyRef.OfPart(part.Id, RigProperties.Material));
         Assert.Equal(.12f, ResolvedModel.From(model, restored).Parts.Single(p => p.Id == part.Id).RenderMaterial.StrokeWidth);
     }
 
@@ -77,10 +77,10 @@ public sealed class RenderMaterialDefinition2DTests
         var body = resolved.Parts.Single(p => p.Id == "body");
         Assert.Same(model.Materials["spotted-hide"].Paint, body.RenderMaterial.Paint);
         Assert.NotNull(body.RenderMaterial.Outline);
-        Assert.Null(variant.Parts["body"].Material!.Paint);
+        Assert.Null(variant.Override(PropertyRef.OfPart("body", RigProperties.Material))!.Material!.Paint);
         Assert.DoesNotContain("\"points\"", variant.ToJson());
         var inline = ModelVariant.FromJson(variant.ToJson());
-        inline.Parts["body"].Material = body.RenderMaterial with { Asset = null };
+        inline.Set(PropertyOverride.Of(PropertyRef.OfPart("body", RigProperties.Material), body.RenderMaterial with { Asset = null }));
         var expanded = ResolvedModel.From(model, inline);
         var clip = MotionClip.FromJson(File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "animations", "person-death.json")));
         foreach (var time in new[] { 0, .6f })
@@ -98,13 +98,13 @@ public sealed class RenderMaterialDefinition2DTests
     {
         var model = CharacterModel.Load(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
         var variant = new ModelVariant { Id = "surface-test", Name = "Surface test", Base = model.Id };
-        ModelAuthoring.EditPartOverride(variant, ResolvedModel.From(model).Parts.Single(p => p.Id == "body"),
+        ModelAuthoring.EditPartOverride(variant, model, ResolvedModel.From(model).Parts.Single(p => p.Id == "body"),
             p => p.Material = new() { Asset = "spotted-hide" });
         var body = ResolvedModel.From(model, variant).Parts.Single(p => p.Id == "body");
-        ModelAuthoring.EditPartOverride(variant, body, p => p.Material = p.RenderMaterial with { Fill = "#123456", Paint = [] });
+        ModelAuthoring.EditPartOverride(variant, model, body, p => p.Material = p.RenderMaterial with { Fill = "#123456", Paint = [] });
         variant = ModelVariant.FromJson(variant.ToJson());
         body = ResolvedModel.From(model, variant).Parts.Single(p => p.Id == "body");
-        Assert.Equal("spotted-hide", variant.Parts["body"].Material!.Asset);
+        Assert.Equal("spotted-hide", variant.Override(PropertyRef.OfPart("body", RigProperties.Material))!.Material!.Asset);
         Assert.Equal("#123456", body.RenderMaterial.Fill);
         Assert.Empty(body.RenderMaterial.Paint!);
         Assert.NotEmpty(model.Materials["spotted-hide"].Paint!);
@@ -152,12 +152,13 @@ public sealed class RenderMaterialDefinition2DTests
         Assert.Contains(ColorExtensions.FromHexRgb("#123456"), colors);
         Assert.Contains(ColorExtensions.FromHexRgb("#abcdef"), colors);
 
-        var changed = ResolvedModel.Override(part, new PartOverride { Material = new() { Fill = "#654321" } });
+        // A variant's material override merges over the part's material member by member (the same merge resolution applies).
+        var changed = part with { Material = part.RenderMaterial.WithOverride(new() { Fill = "#654321" }) };
         Assert.Equal("#123456", part.Material!.Fill);
         Assert.Equal("#654321", changed.Material!.Fill);
         Assert.Equal("#abcdef", changed.Material.Outline!.Color);
 
-        var recolored = ResolvedModel.Override(part, new PartOverride { Material = new() { Outline = new() { Color = "#ff8800" } } });
+        var recolored = part with { Material = part.RenderMaterial.WithOverride(new() { Outline = new() { Color = "#ff8800" } }) };
         Assert.Equal("#abcdef", part.RenderMaterial.Outline?.Color);
         Assert.Equal("#ff8800", recolored.RenderMaterial.Outline?.Color);
     }

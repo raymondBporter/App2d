@@ -164,16 +164,15 @@ internal static class RigGraph
     }
 
     /// <summary>Compiles from the authored controls alone: no variant, no parameter values, no overrides.</summary>
-    public static Dictionary<string, RigNode> Compile(CharacterModel model) => Compile(model, Order(model), null, new Dictionary<string, Vector3>(StringComparer.Ordinal));
+    public static Dictionary<string, RigNode> Compile(CharacterModel model) => Compile(model, Order(model), null);
 
     /// <summary>
     /// Compiles every control in <paramref name="order"/> from its final setup, length and link: the <paramref name="layout"/>
-    /// after parameter bindings and explicit overrides wrote it, or the authored values when it is null. <paramref name="pins"/>
-    /// are explicit character-frame rest overrides of point and affine nodes (a variant's <c>rest</c>): a pinned node's local
-    /// translation is re-derived beneath its parent's final frame. A point control nobody moved keeps its authored rest bit for
-    /// bit; one whose setup changed, or whose ancestor's did, derives its rest from the setup like a bone node.
+    /// after parameter bindings and explicit overrides wrote it, or the authored values when it is null. A point control nobody
+    /// moved keeps its authored rest bit for bit; one whose setup changed, or whose ancestor's did, derives its rest from the
+    /// setup like a bone node. There is no absolute-position pin: a variant moves a node through its setup overrides (P6a).
     /// </summary>
-    public static Dictionary<string, RigNode> Compile(CharacterModel model, IReadOnlyList<ModelControl> order, RigLayout? layout, IReadOnlyDictionary<string, Vector3> pins)
+    public static Dictionary<string, RigNode> Compile(CharacterModel model, IReadOnlyList<ModelControl> order, RigLayout? layout)
     {
         var nodes = new Dictionary<string, RigNode>(StringComparer.Ordinal);
         var derived = new HashSet<string>(StringComparer.Ordinal);
@@ -197,18 +196,7 @@ internal static class RigGraph
                 {
                     var affine = control.Transform!;
                     float layer;
-                    if (pins.TryGetValue(control.Id, out var pin))
-                    {
-                        if (!Matrix3x2.Invert(parentFrame, out var inverse))
-                        {
-                            throw new InvalidDataException($"Cannot move '{control.Id}' beneath a collapsed parent.");
-                        }
-
-                        var local = Vector2.Transform(new(pin.X, pin.Y), inverse);
-                        affine = affine with { X = local.X, Y = local.Y };
-                        layer = pin.Z - parentLayer;
-                    }
-                    else if (layout is not null)
+                    if (layout is not null)
                     {
                         var setup = layout.Setups[control.Id];
                         affine = affine with { X = setup.X, Y = setup.Y };
@@ -225,11 +213,6 @@ internal static class RigGraph
                 }
                 case RigNodeKinds.Bone:
                 {
-                    if (pins.ContainsKey(control.Id))
-                    {
-                        throw new InvalidDataException($"'{control.Id}' is a bone node; its rest is derived from its setup, length and link and cannot be pinned.");
-                    }
-
                     var setup = layout?.Setups[control.Id] ?? control.Local ?? new RigSetup();
                     var link = layout is null ? control.Link : layout.Links[control.Id];
                     var length = layout?.Lengths[control.Id] ?? control.Length;
@@ -257,15 +240,9 @@ internal static class RigGraph
                 {
                     // A point control's character-frame rest is authoritative unless a binding or override moved it or an
                     // ancestor; the local similarity is what reproduces it on the parent.
-                    var pinned = pins.TryGetValue(control.Id, out var pin);
-                    if (pinned)
+                    if (!moved || layout is null)
                     {
-                        derived.Add(control.Id);
-                    }
-
-                    if (pinned || !moved || layout is null)
-                    {
-                        var r = pinned ? pin : control.Rest.XYZ;
+                        var r = control.Rest.XYZ;
                         var frame = Matrix3x2.CreateRotation(control.RestAngle) * Matrix3x2.CreateTranslation(r.X, r.Y);
                         Vector2 translation;
                         if (parent is null)

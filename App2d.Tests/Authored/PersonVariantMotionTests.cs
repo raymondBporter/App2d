@@ -140,7 +140,8 @@ public sealed class PersonVariantMotionTests
         // Straighten the left leg and ask it to plant below its reach; the right-leg reference measure stays unchanged.
         var hip = Person.Controls.Single(c => c.Id == "left-hip").Rest.XYZ;
         var foot = Person.Controls.Single(c => c.Id == "left-foot").Rest.XYZ;
-        var variant = new ModelVariant { Id = "stiff-left", Name = "Stiff left", Base = "person", Rest = { ["left-knee"] = PuppetPoint.From(Vector3.Lerp(hip, foot, .5f)) } };
+        var variant = new ModelVariant { Id = "stiff-left", Name = "Stiff left", Base = "person" };
+        VariantConversion.PinRest(Person, variant, new Dictionary<string, PuppetPoint> { ["left-knee"] = PuppetPoint.From(Vector3.Lerp(hip, foot, .5f)) });
         var model = ResolvedModel.From(Person, variant);
         var clip = Clip("walk");
         clip.Validate(model);

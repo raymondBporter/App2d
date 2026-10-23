@@ -85,8 +85,10 @@ public sealed class RigConversionTests
         Assert.Equal(standard.Nodes["left-shoulder"].Rotation, tall.Nodes["left-shoulder"].Rotation, 4);
         // The same arms value on the mirrored right arm, still a point chain, scales the same way.
         Assert.Equal(ratio, tall.Length("right-shoulder", "right-elbow") / standard.Length("right-shoulder", "right-elbow"), 4);
-        var frozen = new ModelVariant { Id = "frozen", Name = "Frozen", Base = "person", Rest = { ["left-elbow"] = new(0, 1) } };
-        Assert.Contains("bone node", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(person, frozen)).Message);
+        // A tip-bound node's origin is not a variant property: it moves through the parent's length or its link (P6a).
+        var frozen = new ModelVariant { Id = "frozen", Name = "Frozen", Base = "person" };
+        Assert.Contains("bound to", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(standard, frozen, "left-elbow", new(0, 1, 0), true)).Message);
+        Assert.Empty(frozen.Overrides);
     }
 
     [Fact]

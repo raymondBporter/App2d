@@ -156,16 +156,30 @@ public sealed class BoneEditingTests
     }
 
     [Fact]
-    public void VariantsRefuseBoneSetupOverridesWithAReason()
+    public void VariantsOverrideBoneSetupsThroughTypedOverrides()
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var person = catalog.Resolve("person");
         var variant = new ModelVariant { Id = "v", Name = "V", Base = "person" };
-        Assert.Contains("bone node", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(person, variant, "left-shoulder", Vector3.Zero, true)).Message);
-        Assert.Contains("bone child", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + Vector3.UnitY, false)).Message);
-        // Moving the chest with its children needs no bone override: the arm follows through the hierarchy.
+        // An unbound bone node moves through its local setup; a tip-bound one is refused with the link named.
+        ModelAuthoring.MoveRest(person, variant, "left-shoulder", person.Rest["left-shoulder"] + new Vector3(.05f, 0, 0), true);
+        Assert.True(variant.HasOverride(PropertyRef.OfControl("left-shoulder", RigProperties.LocalX)));
+        Assert.False(variant.HasOverride(PropertyRef.OfControl("left-shoulder", RigProperties.LocalY)));
+        TestModels.Near(person.Rest["left-hand"] + new Vector3(.05f, 0, 0), ResolvedModel.From(person.Base, variant).Rest["left-hand"], 1e-5f);
+        Assert.Contains("bound to", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(person, variant, "left-elbow", Vector3.Zero, true)).Message);
+        variant.Overrides.Clear();
+        // Moving the chest alone re-expresses its unbound children (the bone shoulder and the point controls) so they stay put.
+        ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + Vector3.UnitY * .1f, false);
+        var kept = ResolvedModel.From(person.Base, variant);
+        foreach (var child in person.Base.Controls.Where(c => c.Parent == "chest"))
+        {
+            TestModels.Near(person.Rest[child.Id], kept.Rest[child.Id], 1e-5f, child.Id);
+        }
+        TestModels.Near(person.Rest["chest"] + Vector3.UnitY * .1f, kept.Rest["chest"], 1e-5f);
+        variant.Overrides.Clear();
+        // Moving the chest with its children needs no child override: the arm follows through the hierarchy.
         ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + new Vector3(0, .1f, 0), true);
-        Assert.DoesNotContain("left-shoulder", variant.Rest.Keys);
+        Assert.Single(variant.Overrides);
         var lifted = ResolvedModel.From(person.Base, variant);
         TestModels.Near(person.Rest["left-hand"] + new Vector3(0, .1f, 0), lifted.Rest["left-hand"], 1e-5f);
         // Flattening a variant writes the fitted bone setup, not a frozen rest.

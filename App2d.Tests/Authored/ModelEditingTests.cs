@@ -14,11 +14,13 @@ public sealed class ModelEditingTests
         var part = ResolvedModel.From(model, variant).Parts.First(p => p.Id == "torso");
         var before = model.ToJson();
 
-        ModelAuthoring.EditPartOverride(variant, part, edited => edited.ScaleX = .6f);
+        ModelAuthoring.EditPartOverride(variant, model, part, edited => edited.ScaleX = .6f);
 
         Assert.Equal(before, model.ToJson());
-        Assert.Null(variant.Parts[part.Id].ScaleY);
-        Assert.Null(variant.Parts[part.Id].Material);
+        Assert.Single(variant.Overrides);
+        Assert.Equal(.6f, variant.Override(PropertyRef.OfPart(part.Id, RigProperties.ScaleX))?.Value);
+        Assert.False(variant.HasOverride(PropertyRef.OfPart(part.Id, RigProperties.ScaleY)));
+        Assert.False(variant.HasOverride(PropertyRef.OfPart(part.Id, RigProperties.Material)));
         model.Parts.First(p => p.Id == part.Id).Material = new()
         {
             Fill = "#123456",
@@ -42,11 +44,15 @@ public sealed class ModelEditingTests
             Id = "custom",
             Name = "Custom",
             Base = model.Id,
-            Parts = { ["torso"] = new() { Hidden = true, Material = new() { Fill = "#654321" } } }
+            Overrides =
+            [
+                PropertyOverride.Of(PropertyRef.OfPart("torso", RigProperties.Hidden), true),
+                PropertyOverride.Of(PropertyRef.OfPart("torso", RigProperties.Material), new RenderMaterialDefinition2D { Fill = "#654321" }),
+            ],
         };
         PuppetPart Part() => ResolvedModel.From(model, variant).Parts.First(p => p.Id == "torso");
 
-        ModelAuthoring.EditPartOverride(variant, Part(), edited =>
+        ModelAuthoring.EditPartOverride(variant, model, Part(), edited =>
             edited.Material = edited.RenderMaterial with
             {
                 Outline = edited.RenderMaterial.Outline! with
@@ -54,16 +60,18 @@ public sealed class ModelEditingTests
                     Width = .09f
                 }
             });
-        ModelAuthoring.EditPartOverride(variant, Part(), edited => edited.OffsetX = .2f);
+        ModelAuthoring.EditPartOverride(variant, model, Part(), edited => edited.OffsetX = .2f);
 
-        var stored = variant.Parts["torso"];
-        Assert.True(stored.Hidden);
-        Assert.Equal("#654321", stored.Material!.Fill);
-        Assert.Equal(.09f, stored.Material.Outline!.Width);
-        Assert.Null(stored.Material.Outline.Color);
-        Assert.Null(stored.ScaleX);
-        Assert.Null(stored.ScaleY);
-        Assert.Null(stored.OffsetY);
+        PropertyOverride? Stored(string property) => variant.Override(PropertyRef.OfPart("torso", property));
+        Assert.True(Stored(RigProperties.Hidden)?.Flag);
+        var material = Stored(RigProperties.Material)!.Material!;
+        Assert.Equal("#654321", material.Fill);
+        Assert.Equal(.09f, material.Outline!.Width);
+        Assert.Null(material.Outline.Color);
+        Assert.Null(Stored(RigProperties.ScaleX));
+        Assert.Null(Stored(RigProperties.ScaleY));
+        Assert.Null(Stored(RigProperties.OffsetY));
+        Assert.Equal(3, variant.Overrides.Count); // hidden, one merged material, offsetX
         Assert.Equal(.2f, Part().OffsetX);
         Assert.Equal("#fff8e7", model.Parts.First(p => p.Id == "torso").RenderMaterial.Fill);
     }

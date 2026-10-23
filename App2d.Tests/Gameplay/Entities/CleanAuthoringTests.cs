@@ -1,4 +1,5 @@
 using App2d.CharacterSeeds.Diagnostics;
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Geometry.Curves;
@@ -118,7 +119,7 @@ public sealed class CleanAuthoringTests : IDisposable
         // Variant and entity. The GreenDinosaur placement spawns whatever entity is called stalker-pest.
         Assert.True(s.NewVariant("red-beetle", "Red beetle", "beetle"), s.Message);
         var variant = s.SubjectVariant!;
-        Assert.True(s.Edit(variant, () => variant.Asset.Parts[shellPart] = new() { Material = new() { Fill = "#c9563c" } }), s.Message);
+        Assert.True(s.Edit(variant, () => variant.Asset.Set(PropertyOverride.Of(PropertyRef.OfPart(shellPart, RigProperties.Material), new RenderMaterialDefinition2D { Fill = "#c9563c" }))), s.Message);
         Assert.True(s.NewEntity("stalker-pest", "Red beetle pest", "red-beetle", EntityAuthoring.Guard), s.Message);
         var entity = s.EntityDocument!;
         Assert.True(s.Edit(entity, () =>

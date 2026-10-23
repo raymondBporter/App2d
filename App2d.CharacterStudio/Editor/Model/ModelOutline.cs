@@ -305,7 +305,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
 
         if (Variant is not null)
         {
-            Ui.Help("Structure belongs to the base. Variant drags write rest overrides.");
+            Ui.Help("Structure belongs to the base. Variant drags write parent-local setup, length and rotation overrides.");
         }
     }
 }

@@ -63,13 +63,7 @@ public sealed record PersonBuild
 
         if (bodyFill is not null)
         {
-            variant.Parts[Humanoid.Body] = new()
-            {
-                Material = new()
-                {
-                    Fill = bodyFill
-                }
-            };
+            variant.Set(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Body, RigProperties.Material), new RenderMaterialDefinition2D { Fill = bodyFill }));
         }
 
         variant.Validate();

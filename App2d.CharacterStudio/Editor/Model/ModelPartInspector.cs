@@ -13,7 +13,12 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
 {
     private CharacterModel? Structure => session.SubjectModel?.Asset ?? session.Assets.Model(session.SubjectVariant?.Asset.Base)?.Asset;
 
-    public void Draw(PuppetPart part, PartOverride? overrides, Action<Action<PuppetPart>> change, Action<Action<PartOverride>>? reset = null)
+    /// <summary>
+    /// Draws a part's fields. On a base model (<paramref name="overrides"/> null) every field edits the part through
+    /// <paramref name="change"/>; on a variant each field is labelled with its provenance, a marked label resets that
+    /// property's override, and edits go through the same callback, which the variant turns into typed overrides.
+    /// </summary>
+    public void Draw(PuppetPart part, PartOverrideView? overrides, Action<Action<PuppetPart>> change)
     {
         var structure = Structure;
         var materialAsset = part.RenderMaterial.Asset;
@@ -28,7 +33,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
             {
                 if (selected != defaultMaterial) change(p => p.Material = new() { Asset = selected });
                 else if (overrides is null) change(p => p.Material = part.RenderMaterial with { Asset = null });
-                else if (overrides.Material is not null) reset!(o => o.Material = null);
+                else if (overrides.Material is not null) overrides.StripMaterial(m => m with { Asset = null });
                 return;
             }
             if (materialAsset is null && ImGui.SmallButton("Share material"))
@@ -40,7 +45,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 return;
             }
         }
-        bool Marked(string label, bool overridden, Action<PartOverride> clear)
+        bool Marked(string label, bool overridden, Action clear)
         {
             if (overrides is null)
             {
@@ -49,14 +54,23 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
             }
             if (Ui.OverrideLabel(label, overridden))
             {
-                reset!(clear);
+                clear();
                 return true;
             }
             return false;
         }
-        void Float(string label, float value, float min, float max, bool overridden, Action<PuppetPart, float> set, Action<PartOverride> clear)
+        bool Property(string label, string property)
         {
-            if (Marked(label, overridden, clear))
+            if (Marked(label, overrides?.Has(property) == true, () => overrides!.Reset(property)))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        void Float(string label, string property, float value, float min, float max, Action<PuppetPart, float> set)
+        {
+            if (Property(label, property))
             {
                 return;
             }
@@ -66,25 +80,37 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
             {
                 change(p => set(p, value));
             }
+
+            if (overrides is not null)
+            {
+                overrides.Note(property);
+            }
+            else
+            {
+                ParameterInspector.BoundNote(session.Assets.Resolve(session.SubjectId), PropertyRef.OfPart(part.Id, property));
+            }
         }
         if (overrides is null && part.Geometry is IShape2D shape && shape is not SimplePolygon2D)
         {
             ShapeInspector.Draw(shape, geometry => change(p => p.Geometry = geometry));
         }
-        var resolved = session.Assets.Resolve(session.SubjectId);
-        Float("Scale X", part.ScaleX, -4, 4, overrides?.ScaleX is not null, (p, v) => p.ScaleX = v, o => o.ScaleX = null);
-        ParameterInspector.BoundNote(resolved, PropertyRef.OfPart(part.Id, RigProperties.ScaleX));
-        Float("Scale Y", part.ScaleY, -4, 4, overrides?.ScaleY is not null, (p, v) => p.ScaleY = v, o => o.ScaleY = null);
-        ParameterInspector.BoundNote(resolved, PropertyRef.OfPart(part.Id, RigProperties.ScaleY));
-        Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
-        ParameterInspector.BoundNote(resolved, PropertyRef.OfPart(part.Id, RigProperties.OffsetX));
-        Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
-        ParameterInspector.BoundNote(resolved, PropertyRef.OfPart(part.Id, RigProperties.OffsetY));
+        Float("Scale X", RigProperties.ScaleX, part.ScaleX, -4, 4, (p, v) => p.ScaleX = v);
+        Float("Scale Y", RigProperties.ScaleY, part.ScaleY, -4, 4, (p, v) => p.ScaleY = v);
+        Float("Offset X", RigProperties.OffsetX, part.OffsetX, -2, 2, (p, v) => p.OffsetX = v);
+        Float("Offset Y", RigProperties.OffsetY, part.OffsetY, -2, 2, (p, v) => p.OffsetY = v);
+        var materialOverridden = overrides?.Material;
         if (part.Geometry is ICurve2D)
         {
-            Float("Stroke width", part.RenderMaterial.StrokeWidth ?? Structure?.LineWidth ?? .045f, .005f, 2, overrides?.Material?.StrokeWidth is not null,
-                (p, v) => p.Material = p.RenderMaterial with { StrokeWidth = v },
-                o => o.Material = o.Material is null ? null : o.Material with { StrokeWidth = null });
+            if (!Marked("Stroke width", materialOverridden?.StrokeWidth is not null, () => overrides!.StripMaterial(m => m with { StrokeWidth = null })))
+            {
+                var width = part.RenderMaterial.StrokeWidth ?? Structure?.LineWidth ?? .045f;
+                ImGui.SetNextItemWidth(-1);
+                if (ImGui.SliderFloat("##stroke-width", ref width, .005f, 2, "%.3f"))
+                {
+                    change(p => p.Material = p.RenderMaterial with { StrokeWidth = width });
+                }
+            }
+
             if (overrides is null && structure is not null)
                 ModelCurveInspector.Draw(part, [.. structure.Controls.Select(c => c.Id)], change);
         }
@@ -92,7 +118,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         {
             cutout.Inspector(part, change);
         }
-        if (!Marked("Fill", overrides?.Material?.Fill is not null, o => o.Material = o.Material is null ? null : o.Material with { Fill = null }))
+        if (!Marked("Fill", materialOverridden?.Fill is not null, () => overrides!.StripMaterial(m => m with { Fill = null })))
         {
             var fill = part.RenderMaterial.Fill ?? (part.Geometry is ICurve2D ? Structure?.Ink ?? "#222b32" : "#fff8e7");
             if (Ui.ColorHex("##fill", ref fill))
@@ -100,17 +126,17 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 change(p => p.Material = p.RenderMaterial with { Fill = fill });
             }
         }
-        Float("Outline width", part.RenderMaterial.Outline?.Width ?? .045f, 0, .15f, overrides?.Material?.Outline?.Width is not null,
-            (p, v) => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = v } },
-            o => o.Material = o.Material is null ? null : o.Material with
+        if (!Marked("Outline width", materialOverridden?.Outline?.Width is not null, () => overrides!.StripMaterial(m => m with { Outline = m.Outline is null ? null : m.Outline with { Width = null } })))
+        {
+            var outlineWidth = part.RenderMaterial.Outline?.Width ?? .045f;
+            ImGui.SetNextItemWidth(-1);
+            if (ImGui.SliderFloat("##outline-width", ref outlineWidth, 0, .15f, "%.3f"))
             {
-                Outline = o.Material.Outline?.Color is { } color ? new RenderOutlineDefinition2D { Color = color } : null
-            });
-        if (part.RenderMaterial.Outline is not null && !Marked("Outline color", overrides?.Material?.Outline?.Color is not null,
-            o => o.Material = o.Material is null ? null : o.Material with
-            {
-                Outline = o.Material.Outline?.Width is { } width ? new RenderOutlineDefinition2D { Width = width } : null
-            }))
+                change(p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = outlineWidth } });
+            }
+        }
+        if (part.RenderMaterial.Outline is not null && !Marked("Outline color", materialOverridden?.Outline?.Color is not null,
+            () => overrides!.StripMaterial(m => m with { Outline = m.Outline is null ? null : m.Outline with { Color = null } })))
         {
             var outlineColor = part.RenderMaterial.Outline?.Color ?? Structure?.Ink ?? "#222b32";
             if (Ui.ColorHex("##outline-color", ref outlineColor))
@@ -123,9 +149,14 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 change(p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new()) with { Color = null } });
             }
         }
+        if (overrides is not null)
+        {
+            overrides.Note(RigProperties.Material);
+        }
+
         if (part.Geometry is IShape2D)
         {
-            if (!Marked("Surface paint", overrides?.Material?.Paint is not null, o => o.Material = o.Material! with { Paint = null }) && ImGui.CollapsingHeader("Edit surface paint"))
+            if (!Marked("Surface paint", materialOverridden?.Paint is not null, () => overrides!.StripMaterial(m => m with { Paint = null })) && ImGui.CollapsingHeader("Edit surface paint"))
             {
                 Ui.Help(sharedPaint ? $"Editing shared material '{materialAsset}'. Paint changes reach every user; fill remains a local override." : "Paint belongs to this material and follows the body's shape and motion.");
                 void Paint(Action<List<PartPaint>> edit)
@@ -183,7 +214,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                     ImGui.PopID();
                 }
             }
-            if (!Marked("Default expression", overrides?.Face is not null, o => o.Face = null))
+            if (!Property("Default expression", RigProperties.Face))
             {
                 ImGui.SetNextItemWidth(-1);
                 if (ImGui.BeginCombo("##face", part.Face))
@@ -198,10 +229,12 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
 
                     ImGui.EndCombo();
                 }
+
+                overrides?.Note(RigProperties.Face);
             }
             if (part.Face != "none")
             {
-                Float("Face offset", part.FaceX, -.4f, .4f, overrides?.FaceX is not null, (p, v) => p.FaceX = v, o => o.FaceX = null);
+                Float("Face offset", RigProperties.FaceX, part.FaceX, -.4f, .4f, (p, v) => p.FaceX = v);
             }
         }
         if (overrides is null)
@@ -214,13 +247,15 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
 
             Ui.Help("Offsets the shape from its attached control's layer.");
         }
-        if (!Marked("Visibility", overrides?.Hidden is not null, o => o.Hidden = null))
+        if (!Property("Visibility", RigProperties.Hidden))
         {
             var hidden = part.Hidden;
             if (ImGui.Checkbox("Hidden", ref hidden))
             {
                 change(p => p.Hidden = hidden);
             }
+
+            overrides?.Note(RigProperties.Hidden);
         }
     }
 }

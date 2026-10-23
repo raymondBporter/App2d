@@ -122,39 +122,44 @@ internal sealed class AttachmentInspector(EditorSession session)
         Ui.Help("Fit stretches this instance's artwork only; nothing inherits it. A variant overrides any of these per instance without editing this character or the shared part.");
     }
 
-    public void DrawVariant(AssetDocument<ModelVariant> document, CharacterModel basis, string id)
+    /// <summary>A variant's override of one instance: every field labelled with its provenance, a marked label resets that property, and edits become typed overrides (P6c).</summary>
+    public void DrawVariant(AssetDocument<ModelVariant> document, ResolvedModel resolved, string id)
     {
+        var basis = resolved.Base;
         var instance = basis.Attachments.FirstOrDefault(a => a.Id == id);
-        if (instance is null)
+        var shown = resolved.Attachment(id)?.Instance;
+        if (instance is null || shown is null)
         {
             return;
         }
 
-        var change = document.Asset.Attachments.GetValueOrDefault(id);
-        var shown = instance.With(change);
         Ui.Header($"Attachment {id}");
         ImGui.TextDisabled($"Override on this variant; the base '{basis.Id}' owns the instance (asset '{instance.Asset}' on '{instance.Socket}').");
-        void Set(Action<AttachmentOverride> set, bool discrete = false)
+        PropertyRef Target(string property) => PropertyRef.OfAttachment(id, property);
+        bool Overridden(string property) => document.Asset.HasOverride(Target(property));
+        void Reset(string property) => session.Edit(document, () => ModelAuthoring.ResetOverride(document.Asset, Target(property)));
+        void Set(Action<PartInstance> set, bool discrete = false)
         {
             if (discrete)
             {
-                session.Edit(document, () => ModelAuthoring.EditAttachmentOverride(document.Asset, basis, id, set));
+                session.Edit(document, () => ModelAuthoring.EditAttachmentOverride(document.Asset, resolved, id, set));
             }
             else
             {
-                session.Change(document, () => ModelAuthoring.EditAttachmentOverride(document.Asset, basis, id, set));
+                session.Change(document, () => ModelAuthoring.EditAttachmentOverride(document.Asset, resolved, id, set));
             }
         }
         var assets = session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
-        if (Ui.OverrideLabel("Library part", change?.Asset is not null))
+        if (Ui.OverrideLabel("Library part", Overridden(RigProperties.Asset)))
         {
-            Set(o => o.Asset = null, true);
+            Reset(RigProperties.Asset);
         }
         else if (Ui.Combo("##attachment-asset", shown.Asset, assets, a => session.Assets.Part(a)?.Name is { } n ? $"{n} ({a})" : a) is { } asset)
         {
-            Set(o => o.Asset = asset == instance.Asset ? null : asset, true);
+            Set(i => i.Asset = asset, true);
         }
 
+        VariantModelInspector.SourceNote(resolved, Target(RigProperties.Asset));
         ImGui.SameLine();
         if (ImGui.SmallButton("Edit shared part"))
         {
@@ -173,66 +178,76 @@ internal sealed class AttachmentInspector(EditorSession session)
             session.Selection.Select(attachment: id);
         }
 
-        void Float(string label, float value, float? overridden, Action<AttachmentOverride, float?> write, float speed, float min, float max)
+        void Float(string label, string property, float value, Action<PartInstance, float> write, float speed, float min, float max)
         {
-            if (Ui.OverrideLabel(label, overridden is not null))
+            if (Ui.OverrideLabel(label, Overridden(property)))
             {
-                Set(o => write(o, null), true);
+                Reset(property);
                 return;
             }
 
             var v = value;
+            ImGui.SetNextItemWidth(-1);
             if (Ui.Drag("##" + label, ref v, speed, min, max))
             {
-                Set(o => write(o, v));
+                Set(i => write(i, v));
             }
+
+            VariantModelInspector.SourceNote(resolved, Target(property));
         }
-        Float("Offset X", shown.X, change?.X, (o, v) => o.X = v, .005f, -100, 100);
-        Float("Offset Y", shown.Y, change?.Y, (o, v) => o.Y = v, .005f, -100, 100);
-        Float("Angle (radians)", shown.Angle, change?.Angle, (o, v) => o.Angle = v, .01f, -1000, 1000);
-        Float("Size", shown.Scale, change?.Scale, (o, v) => o.Scale = v, .01f, .001f, 100);
-        Float("Layer offset", shown.Layer, change?.Layer, (o, v) => o.Layer = v, .005f, -16, 16);
-        Float("Fit X", shown.FitX, change?.FitX, (o, v) => o.FitX = v, .01f, -100, 100);
-        Float("Fit Y", shown.FitY, change?.FitY, (o, v) => o.FitY = v, .01f, -100, 100);
-        if (Ui.OverrideLabel("Mirror", change?.Mirror is not null))
+        Float("Offset X", RigProperties.X, shown.X, (i, v) => i.X = v, .005f, -100, 100);
+        Float("Offset Y", RigProperties.Y, shown.Y, (i, v) => i.Y = v, .005f, -100, 100);
+        Float("Angle (radians)", RigProperties.Angle, shown.Angle, (i, v) => i.Angle = v, .01f, -1000, 1000);
+        Float("Size", RigProperties.Scale, shown.Scale, (i, v) => i.Scale = v, .01f, .001f, 100);
+        Float("Layer offset", RigProperties.Layer, shown.Layer, (i, v) => i.Layer = v, .005f, -16, 16);
+        Float("Fit X", RigProperties.FitX, shown.FitX, (i, v) => i.FitX = v, .01f, -100, 100);
+        Float("Fit Y", RigProperties.FitY, shown.FitY, (i, v) => i.FitY = v, .01f, -100, 100);
+        if (Ui.OverrideLabel("Mirror", Overridden(RigProperties.Mirror)))
         {
-            Set(o => o.Mirror = null, true);
+            Reset(RigProperties.Mirror);
         }
         else
         {
             var mirror = shown.Mirror;
             if (ImGui.Checkbox("##attachment-mirror", ref mirror))
             {
-                Set(o => o.Mirror = mirror, true);
+                Set(i => i.Mirror = mirror, true);
             }
         }
 
-        if (Ui.OverrideLabel("Fill", change?.Material?.Fill is not null))
+        var materialOverride = document.Asset.Override(Target(RigProperties.Material));
+        if (Ui.OverrideLabel("Fill", materialOverride is not null))
         {
-            Set(o => o.Material = o.Material is null ? null : o.Material with { Fill = null }, true);
+            Reset(RigProperties.Material);
         }
         else
         {
             var color = shown.Material?.Fill ?? "#b97549";
             if (Ui.ColorHex("##attachment-fill", ref color))
             {
-                Set(o => o.Material = (o.Material ?? new()) with { Fill = color });
+                Set(i => i.Material = (i.Material ?? new()) with { Fill = color });
+            }
+
+            if (shown.Material is not null && ImGui.SmallButton("Clear to the asset's materials"))
+            {
+                Set(i => i.Material = null, true);
             }
         }
 
-        if (Ui.OverrideLabel("Hidden", change?.Hidden is not null))
+        VariantModelInspector.SourceNote(resolved, Target(RigProperties.Material));
+        if (Ui.OverrideLabel("Hidden", Overridden(RigProperties.Hidden)))
         {
-            Set(o => o.Hidden = null, true);
+            Reset(RigProperties.Hidden);
         }
         else
         {
             var hidden = shown.Hidden;
             if (ImGui.Checkbox("##attachment-hidden", ref hidden))
             {
-                Set(o => o.Hidden = hidden, true);
+                Set(i => i.Hidden = hidden, true);
             }
         }
 
-        Ui.Help("Click a marked label to clear that override and follow the base again. Swapping the part here never edits the base or another variant.");
+        Ui.Help("Click a marked label to reset that override and follow the base again. Swapping the part here never edits the base or another variant.");
     }
 }

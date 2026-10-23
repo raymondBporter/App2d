@@ -11,7 +11,7 @@ public sealed class AppearanceAndBuildTests
     public void BuildValuesResolveThroughTheRuleAndFollowBaseEdits()
     {
         var variant = PersonBuild.TallThin.Apply(Person, "tall", "Tall");
-        Assert.Empty(variant.Rest);
+        Assert.Empty(variant.Overrides);
         var tall = ResolvedModel.From(Person, variant);
         Assert.True(tall.Rest["head"].Y > ResolvedModel.From(Person).Rest["head"].Y + .2f);
         // A base edit to an unoverridden value reaches the variant through its build.
@@ -28,8 +28,10 @@ public sealed class AppearanceAndBuildTests
     public void ExplicitRestOverridesWinOverTheBuild()
     {
         var variant = PersonBuild.TallThin.Apply(Person, "tall", "Tall");
-        variant.Rest["head"] = new(0, 3);
-        Assert.Equal(3, ResolvedModel.From(Person, variant).Rest["head"].Y);
+        var tall = ResolvedModel.From(Person, variant);
+        ModelAuthoring.MoveRest(tall, variant, "head", new(0, 3, tall.Rest["head"].Z), children: true);
+        Assert.Equal(3, ResolvedModel.From(Person, variant).Rest["head"].Y, 5);
+        Assert.Equal(PropertySource.Override, ResolvedModel.From(Person, variant).Provenance(PropertyRef.OfControl("head", RigProperties.LocalY)));
     }
 
     [Fact]
@@ -115,7 +117,7 @@ public sealed class AppearanceAndBuildTests
     public void AHiddenPartKeepsItsControlsAndDrawsNoFace()
     {
         var head = Person.Parts.Single(p => p.Face != "none").Id;
-        var headless = new ModelVariant { Id = "headless", Name = "Headless", Base = "person", Parts = { [head] = new() { Hidden = true } } };
+        var headless = new ModelVariant { Id = "headless", Name = "Headless", Base = "person", Overrides = [PropertyOverride.Of(PropertyRef.OfPart(head, RigProperties.Hidden), true)] };
         var model = ResolvedModel.From(Person, headless);
         var pose = PoseEvaluator.Rest(model);
         Assert.Contains("head", pose.Points.Keys);

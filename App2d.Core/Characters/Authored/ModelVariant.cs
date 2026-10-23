@@ -3,138 +3,76 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters.Authored;
 
-/// <summary>A part value a variant replaces. Null keeps the base value, which then follows base edits.</summary>
-public sealed record PartOverride
-{
-    public float? ScaleX { get; set; }
-    public float? ScaleY { get; set; }
-    public float? OffsetX { get; set; }
-    public float? OffsetY { get; set; }
-    public RenderMaterialDefinition2D? Material { get; set; }
-    /// <summary>Default expression; "none" removes the face.</summary>
-    public string? Face { get; set; }
-    public float? FaceX { get; set; }
-    public bool? Hidden { get; set; }
-    [JsonIgnore]
-    public bool IsEmpty => ScaleX is null && ScaleY is null && OffsetX is null && OffsetY is null &&
-        Material?.Asset is null && Material?.Paint is null && Material?.Fill is null && Material?.StrokeWidth is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&
-        Material?.Texture is null && Material?.Tint is null &&
-        Face is null && FaceX is null && Hidden is null;
-
-    /// <summary>Range and vocabulary checks shared by variants and look presets.</summary>
-    public static void Check(PartOverride? part, string field)
-    {
-        if (part is null)
-        {
-            throw new InvalidDataException($"{field}: null override.");
-        }
-
-        if (part.ScaleX is { } scaleX && !float.IsFinite(scaleX))
-        {
-            throw new InvalidDataException(field + ".scaleX must be finite.");
-        }
-
-        if (part.ScaleY is { } scaleY && !float.IsFinite(scaleY))
-        {
-            throw new InvalidDataException(field + ".scaleY must be finite.");
-        }
-
-        if (part.OffsetX is { } x)
-        {
-            new Limit(-100, 100).Check(x, field + ".offsetX");
-        }
-
-        if (part.OffsetY is { } y)
-        {
-            new Limit(-100, 100).Check(y, field + ".offsetY");
-        }
-
-        part.Material?.Validate(field + ".material");
-        if (part.Face is not null && part.Face != "none" && !FaceExpressions.Contains(part.Face))
-        {
-            throw new InvalidDataException($"{field}.face: unknown expression '{part.Face}'.");
-        }
-
-        if (part.FaceX is { } faceX)
-        {
-            new Limit(-1, 1).Check(faceX, field + ".faceX");
-        }
-    }
-
-    /// <summary>This override with <paramref name="over"/>'s set fields written on top.</summary>
-    public PartOverride Merge(PartOverride over) => new()
-    {
-        ScaleX = over.ScaleX ?? ScaleX,
-        ScaleY = over.ScaleY ?? ScaleY,
-        OffsetX = over.OffsetX ?? OffsetX,
-        OffsetY = over.OffsetY ?? OffsetY,
-        Material = Material is null ? over.Material : Material.WithOverride(over.Material),
-        Face = over.Face ?? Face,
-        FaceX = over.FaceX ?? FaceX,
-        Hidden = over.Hidden ?? Hidden,
-    };
-}
-
-/// <summary>Explicit overrides of one base model. Never structural: no controls, parents or chains.</summary>
+/// <summary>
+/// Explicit overrides of one base model (plan section 3.7): one live base reference, values for its declared parameters, and
+/// typed overrides of its exposed properties addressed by stable IDs. Never structural: no controls, parents or chains. One
+/// inheritance level: a variant's base is always a model, never another variant.
+/// </summary>
 public sealed class ModelVariant
 {
     public const string FormatId = "app2d-variant";
-    /// <summary>Version 5 adds <see cref="Attachments"/> overrides (P5a); a version-4 file has none and reads unchanged.</summary>
-    public const int CurrentVersion = 5;
-    public const int LegacyVersion = 4;
+    /// <summary>
+    /// Version 6 (P6a): one typed <see cref="Overrides"/> list replaces the per-field <c>rest</c>, <c>parts</c> and
+    /// <c>attachments</c> dictionaries of versions 4 and 5, which read through <see cref="LegacyVariantReader"/>.
+    /// </summary>
+    public const int CurrentVersion = 6;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Base { get; set; } = "";
     /// <summary>
-    /// Values for the base's declared parameters by ID, applied before the explicit overrides below; a missing value keeps
-    /// the declared default. The file member is still <c>build</c>: its meaning (values of the base's exposed proportion
+    /// Values for the base's declared parameters by ID, applied before the explicit overrides; a missing value keeps the
+    /// declared default. The file member is still <c>build</c>: its meaning (values of the base's exposed proportion
     /// parameters) has not changed since the code build rule became declared bindings in P4a.
     /// </summary>
     [JsonPropertyName("build")]
     public Dictionary<string, float> Parameters { get; set; } = [];
-    /// <summary>Model-space rest positions replacing the built base's, by control ID.</summary>
-    public Dictionary<string, PuppetPoint> Rest { get; set; } = [];
-    public Dictionary<string, PartOverride> Parts { get; set; } = [];
-    /// <summary>Overrides of the base's attachment instances by instance ID: swap the asset, hide, re-place or refit it on this wearer alone.</summary>
-    public Dictionary<string, AttachmentOverride> Attachments { get; set; } = [];
+    /// <summary>
+    /// Explicit overrides of the base's exposed properties (<see cref="RigProperties"/>): bone lengths and setups, part
+    /// fitting, materials, faces and visibility, attachment selection and placement, animation-role clips. One entry per
+    /// property; absent inherits.
+    /// </summary>
+    public List<PropertyOverride> Overrides { get; set; } = [];
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static ModelVariant FromJson(string json)
     {
-        var variant = AuthoredAsset.Parse<ModelVariant>(ReadLegacy(json), "variant");
+        var variant = AuthoredAsset.Parse<ModelVariant>(LegacyVariantReader.Read(json), "variant");
         variant.Validate();
         return variant;
     }
 
-    /// <summary>A version-4 file carries no attachment overrides; it is read at the current version without any other change. The file on disk is not rewritten.</summary>
-    internal static string ReadLegacy(string json)
-    {
-        System.Text.Json.Nodes.JsonObject? root;
-        try
-        {
-            root = System.Text.Json.Nodes.JsonNode.Parse(json) as System.Text.Json.Nodes.JsonObject;
-        }
-        catch (JsonException)
-        {
-            return json;
-        }
-
-        var key = root?.FirstOrDefault(p => string.Equals(p.Key, "version", StringComparison.OrdinalIgnoreCase)).Key;
-        if (root is null || key is null || root[key] is not System.Text.Json.Nodes.JsonValue value || !value.TryGetValue(out int version) || version != LegacyVersion)
-        {
-            return json;
-        }
-
-        root[key] = CurrentVersion;
-        return root.ToJsonString();
-    }
     public void Save(string path)
     {
         Validate();
         AuthoredAsset.Write(path, ToJson());
     }
+
+    // ---- Override access by stable target ------------------------------------------------------------------------------
+
+    public PropertyOverride? Override(PropertyRef target) => Overrides.FirstOrDefault(o => o.Target.Key == target.Key);
+    public bool HasOverride(PropertyRef target) => Override(target) is not null;
+    /// <summary>Every override on one owner (a control, part, attachment or role), in file order.</summary>
+    public IEnumerable<PropertyOverride> OverridesOf(string ownerKind, string owner) => Overrides.Where(o => o.Target.OwnerKind == ownerKind && o.Target.Owner == owner);
+
+    /// <summary>Sets (or replaces) the override of one property. The entry's structure is validated; its meaning is checked against the base when the variant resolves.</summary>
+    public void Set(PropertyOverride change)
+    {
+        change.Validate($"Variant '{Id}' overrides");
+        var index = Overrides.FindIndex(o => o.Target.Key == change.Target.Key);
+        if (index < 0)
+        {
+            Overrides.Add(change);
+        }
+        else
+        {
+            Overrides[index] = change;
+        }
+    }
+
+    /// <summary>Removes the override of one property so it inherits again. Nothing is written in its place.</summary>
+    public bool Reset(PropertyRef target) => Overrides.RemoveAll(o => o.Target.Key == target.Key) > 0;
 
     public void Validate()
     {
@@ -151,20 +89,9 @@ public sealed class ModelVariant
             throw new InvalidDataException($"{owner}: a name is required.");
         }
 
-        if (Parameters is null || Rest is null || Parts is null || Attachments is null)
+        if (Parameters is null || Overrides is null)
         {
             throw new InvalidDataException($"{owner}: collections cannot be null.");
-        }
-
-        foreach (var (id, change) in Attachments)
-        {
-            AuthoredAsset.RequireId(id, $"{owner} attachments key");
-            if (change is null)
-            {
-                throw new InvalidDataException($"{owner} attachments.{id}: null override.");
-            }
-
-            change.Validate($"{owner} attachments.{id}");
         }
 
         foreach (var (id, value) in Parameters)
@@ -172,14 +99,15 @@ public sealed class ModelVariant
             new Limit(.01f, 100).Check(value, $"{owner} build.{id}");
         }
 
-        foreach (var (id, point) in Rest)
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < Overrides.Count; i++)
         {
-            point.Check($"{owner} rest.{id}");
-        }
-
-        foreach (var (id, part) in Parts)
-        {
-            PartOverride.Check(part, $"{owner} parts.{id}");
+            var change = Overrides[i] ?? throw new InvalidDataException($"{owner} overrides: null entry {i + 1}.");
+            change.Validate($"{owner} overrides");
+            if (!keys.Add(change.Key))
+            {
+                throw new InvalidDataException($"{owner} overrides: {change.Target} is overridden twice; a property has one override.");
+            }
         }
     }
 }

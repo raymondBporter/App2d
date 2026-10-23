@@ -156,32 +156,52 @@ public static class EntityAuthoring
 
     // ---- Looks ---------------------------------------------------------------------------------------------------
 
-    /// <summary>Writes a look's part overrides onto a variant, field by field; fields the look does not set are kept.</summary>
+    /// <summary>Writes a look's part appearance onto a variant as typed overrides, property by property; properties the look does not set are kept. A look's material merges over an existing material override.</summary>
     public static void ApplyLook(CharacterModel model, ModelVariant variant, string lookId)
     {
         var look = model.Looks.FirstOrDefault(l => l.Id == lookId) ?? throw new InvalidDataException($"'{model.Id}' has no look '{lookId}'.");
         foreach (var (part, change) in look.Parts)
         {
-            variant.Parts[part] = (variant.Parts.GetValueOrDefault(part) ?? new()).Merge(change);
+            foreach (var entry in change.Overrides(part))
+            {
+                if (entry.Material is { } material && variant.Override(entry.Target) is { Material: { } existing })
+                {
+                    variant.Set(entry with { Material = existing.WithOverride(material) });
+                }
+                else
+                {
+                    variant.Set(entry);
+                }
+            }
         }
 
         variant.Validate();
     }
 
     /// <summary>
-    /// Records a variant's appearance overrides (fill, face, face offset, visibility; never sizes) as a look on its base, replacing
-    /// a look with the same ID. This edits the base model, which the caller must present as a base edit.
+    /// Records a variant's appearance overrides (material, face, face offset, visibility; never sizes) as a look on its base,
+    /// replacing a look with the same ID. This edits the base model, which the caller must present as a base edit.
     /// </summary>
     public static LookPreset SaveLook(CharacterModel model, ModelVariant variant, string id, string name)
     {
         AuthoredAsset.RequireId(id, "look id");
-        var parts = new Dictionary<string, PartOverride>(StringComparer.Ordinal);
-        foreach (var (part, change) in variant.Parts)
+        var parts = new Dictionary<string, LookAppearance>(StringComparer.Ordinal);
+        foreach (var group in variant.Overrides.Where(o => o.Target.Part is not null && !o.Clear).GroupBy(o => o.Target.Part!))
         {
-            var look = new PartOverride { Material = change.Material, Face = change.Face, FaceX = change.FaceX, Hidden = change.Hidden };
+            var look = new LookAppearance();
+            foreach (var change in group)
+            {
+                switch (change.Target.Property)
+                {
+                    case RigProperties.Material: look.Material = change.Material; break;
+                    case RigProperties.Face: look.Face = change.Selection; break;
+                    case RigProperties.FaceX: look.FaceX = change.Value; break;
+                    case RigProperties.Hidden: look.Hidden = change.Flag; break;
+                }
+            }
             if (!look.IsEmpty)
             {
-                parts[part] = look;
+                parts[group.Key] = look;
             }
         }
         if (parts.Count == 0)
