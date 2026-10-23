@@ -1,5 +1,6 @@
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -51,8 +52,7 @@ internal static class BoneFrameIk
 
     private static float Segment(ModelChain chain, ModelControl bone, Matrix3x2 frame, Matrix3x2 child)
     {
-        var x = new Vector2(frame.M11, frame.M12);
-        var y = new Vector2(frame.M21, frame.M22);
+        var (x, y, _) = frame.GetRows();
         var size = x.LengthSquared();
         var length = bone.Length * MathF.Sqrt(size);
         if (!float.IsFinite(length) || length < .01f || !float.IsFinite(y.LengthSquared())
@@ -61,8 +61,8 @@ internal static class BoneFrameIk
             throw new InvalidDataException($"Bone constraint '{chain.Id}': '{bone.Id}' needs a uniform, unsheared frame and a world segment of at least 0.01; collapsed or nonuniform animated scales are unsupported.");
         }
 
-        var tip = new Vector2(frame.M31, frame.M32) + x * bone.Length;
-        var actual = new Vector2(child.M31, child.M32);
+        var tip = Vector2.Transform(new(bone.Length, 0), frame);
+        var actual = child.Translation;
         if (!actual.IsFinite() || Vector2.Distance(tip, actual) > MathF.Max(1e-5f, length * 1e-4f))
         {
             throw new InvalidDataException($"Bone constraint '{chain.Id}': the child of '{bone.Id}' must sit at its +X tip (length {bone.Length}); move the child or change the bone length.");

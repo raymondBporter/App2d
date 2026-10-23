@@ -6,6 +6,21 @@ namespace App2d.Tests.Mathematics;
 public sealed class Vector2dTests
 {
     [Fact]
+    public void TransformUsesRowVectorsAndIncludesTranslation()
+    {
+        var matrix = new Matrix3x2(2, 3, 5, 7, 11, 13);
+        Assert.Equal(new Vector2d(140, 197), Vector2d.Transform(new(17, 19), matrix));
+    }
+
+    [Fact]
+    public void TransformPreservesCancellationAndSmallOffsetsAtLargeCoordinates()
+    {
+        var point = new Vector2d(16_777_216, 16_777_215);
+        var matrix = new Matrix3x2(16_777_214, 1, -16_777_215, 0, 0, 1);
+        Assert.Equal(new Vector2d(-1, 16_777_217), Vector2d.Transform(point, matrix));
+    }
+
+    [Fact]
     public void WideningBeforeArithmeticPreservesDifferencesThatFloatsLose()
     {
         var first = new Vector2(16777216, 3);

@@ -54,6 +54,11 @@ public readonly record struct Vector2d(double X, double Y)
     public static double DistanceSquared(Vector2d a, Vector2d b) => (a - b).LengthSquared();
     public static double Distance(Vector2d a, Vector2d b) => (a - b).Length();
 
+    /// <summary>Transforms a point using Matrix3x2's row-vector convention, with double-precision arithmetic.</summary>
+    public static Vector2d Transform(Vector2d point, Matrix3x2 matrix) => new(
+        point.X * matrix.M11 + point.Y * matrix.M21 + matrix.M31,
+        point.X * matrix.M12 + point.Y * matrix.M22 + matrix.M32);
+
     /// <summary>Rounds each coordinate to a float. Values outside the float range become infinities.</summary>
     public Vector2 ToVector2() => new((float)X, (float)Y);
 }

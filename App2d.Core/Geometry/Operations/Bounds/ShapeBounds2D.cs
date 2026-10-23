@@ -3,6 +3,7 @@ using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
@@ -133,12 +134,10 @@ public static class ShapeBounds2D
 
     private static Rect2D TransformedEllipse(Vector2 center, Vector2 radii, Matrix3x2 transform)
     {
-        var xAxis = new Vector2d(transform.M11, transform.M21);
-        var yAxis = new Vector2d(transform.M12, transform.M22);
-        var wideCenter = center.ToVector2d();
-        var position = new Vector2d(wideCenter.Dot(xAxis) + transform.M31, wideCenter.Dot(yAxis) + transform.M32);
-        var extentX = new Vector2d(radii.X * xAxis.X, radii.Y * xAxis.Y).Length();
-        var extentY = new Vector2d(radii.X * yAxis.X, radii.Y * yAxis.Y).Length();
+        var (xColumn, yColumn) = transform.GetColumns();
+        var position = Vector2d.Transform(center.ToVector2d(), transform);
+        var extentX = new Vector2d((double)radii.X * xColumn.X, (double)radii.Y * xColumn.Y).Length();
+        var extentY = new Vector2d((double)radii.X * yColumn.X, (double)radii.Y * yColumn.Y).Length();
         return new(new(Lower(position.X - extentX), Lower(position.Y - extentY)),
             new(Upper(position.X + extentX), Upper(position.Y + extentY)));
     }

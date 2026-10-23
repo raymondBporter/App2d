@@ -1,5 +1,7 @@
 # Character Studio
 
+The proposed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.
+
 The studio is the character editor: one window, one viewport and one document workflow over the authored assets in
 `Assets/Characters/authored`, which the game plays. Its design and history are in
 [Character editor replacement](character-editor-replacement.md).

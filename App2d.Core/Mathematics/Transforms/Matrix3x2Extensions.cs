@@ -4,6 +4,14 @@ namespace App2d.Core.Mathematics.Transforms;
 
 public static class Matrix3x2Extensions
 {
+    /// <summary>The three rows: transformed local X and Y axes, followed by translation (row-vector convention).</summary>
+    public static (Vector2 X, Vector2 Y, Vector2 Translation) GetRows(this Matrix3x2 matrix) =>
+        (new(matrix.M11, matrix.M12), new(matrix.M21, matrix.M22), matrix.Translation);
+
+    /// <summary>The two full columns, including translation in each vector's Z component.</summary>
+    public static (Vector3 X, Vector3 Y) GetColumns(this Matrix3x2 matrix) =>
+        (new(matrix.M11, matrix.M21, matrix.M31), new(matrix.M12, matrix.M22, matrix.M32));
+
     /// <summary>True when every matrix entry is finite. Singular matrices are allowed.</summary>
     public static bool IsFinite(this Matrix3x2 matrix) =>
         float.IsFinite(matrix.M11) && float.IsFinite(matrix.M12) && float.IsFinite(matrix.M21) &&
