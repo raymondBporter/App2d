@@ -6,7 +6,7 @@ public static class Matrix3x2Extensions
 {
     /// <summary>The three rows: transformed local X and Y axes, followed by translation (row-vector convention).</summary>
     public static (Vector2 X, Vector2 Y, Vector2 Translation) GetRows(this Matrix3x2 matrix) =>
-        (new(matrix.M11, matrix.M12), new(matrix.M21, matrix.M22), matrix.Translation);
+        (matrix.X, matrix.Y, matrix.Z);
 
     /// <summary>The two full columns, including translation in each vector's Z component.</summary>
     public static (Vector3 X, Vector3 Y) GetColumns(this Matrix3x2 matrix) =>

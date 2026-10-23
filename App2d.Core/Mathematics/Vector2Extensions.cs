@@ -10,6 +10,12 @@ public static class Vector2Extensions
 
     extension(Vector2 value)
     {
+        /// <summary>Unit vector at a finite angle in radians, counter-clockwise from +X in Y-up space.</summary>
+        public static Vector2 FromAngle(float angleRadians) => Polar2D.Direction(angleRadians);
+
+        /// <summary>Vector from a finite, nonnegative radius and a finite angle in radians.</summary>
+        public static Vector2 FromPolar(float radius, float angleRadians) => Polar2D.ToCartesian(radius, angleRadians);
+
         /// <summary>Widens both coordinates before double-precision arithmetic, including subtraction.</summary>
         public Vector2d ToVector2d() => new(value);
 

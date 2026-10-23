@@ -20,7 +20,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
     private readonly Dictionary<string, (RigIkTarget Target, int Index)> _targets = new(StringComparer.Ordinal);
     // A target exactly at the root has no direction. Retain the FK axis so reflection and repeated pins are stable.
     private readonly Dictionary<string, Vector2> _foldDirections = model.IkConstraints.Where(c => c.Solver == ModelChain.BoneSolver)
-        .ToDictionary(c => c.Id, c => new Vector2(pose.Bones[c.Root].M11, pose.Bones[c.Root].M12), StringComparer.Ordinal);
+        .ToDictionary(c => c.Id, c => pose.Bones[c.Root].X, StringComparer.Ordinal);
 
     public void Apply(RigIkTarget target)
     {

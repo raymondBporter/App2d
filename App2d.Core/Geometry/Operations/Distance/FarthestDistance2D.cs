@@ -51,13 +51,12 @@ public static class FarthestDistance2D
         var best = 0d;
         Support Sample(double angle)
         {
-            var (sin, cos) = Math.SinCos(angle);
-            var direction = new Vector2((float)cos, (float)sin);
-            var a = first.GetSupportPoint(direction);
-            var b = second.GetSupportPoint(-direction);
+            var direction = Vector2d.FromAngle(angle);
+            var a = first.GetSupportPoint(direction.ToVector2());
+            var b = second.GetSupportPoint((-direction).ToVector2());
             var delta = a.ToVector2d() - b.ToVector2d();
             best = Math.Max(best, delta.Length());
-            return new(angle, delta.Dot(new(cos, sin)));
+            return new(angle, delta.Dot(direction));
         }
 
         var intervals = new PriorityQueue<(Support Start, Support End), double>();

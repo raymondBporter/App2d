@@ -30,6 +30,13 @@ public readonly record struct Vector2d(double X, double Y)
 
     public static Vector2d Zero => default;
 
+    /// <summary>Unit vector at an angle in radians, counter-clockwise from +X in Y-up space.</summary>
+    public static Vector2d FromAngle(double angleRadians)
+    {
+        var (sin, cos) = Math.SinCos(angleRadians);
+        return new(cos, sin);
+    }
+
     public static Vector2d operator +(Vector2d a, Vector2d b) => new(a.X + b.X, a.Y + b.Y);
     public static Vector2d operator -(Vector2d a, Vector2d b) => new(a.X - b.X, a.Y - b.Y);
     public static Vector2d operator -(Vector2d value) => new(-value.X, -value.Y);

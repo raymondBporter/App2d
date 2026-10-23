@@ -545,8 +545,8 @@ internal static partial class PlayerMoves
         for (var step = 1; step <= 5; step++)
         {
             var a = float.DegreesToRadians(-90 + 22.5f * step);
-            var (sin, cos) = MathF.SinCos(a);
-            b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(.64f * cos, .64f * sin).RightHand(-.64f * cos, .64f * sin), ClipEase.Linear);
+            var hand = Vector2.FromPolar(.64f, a);
+            b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(hand.X, hand.Y).RightHand(-hand.X, hand.Y), ClipEase.Linear);
         }
         return b
             .Key(T(0), k => k.Hips(StanceX, StanceY).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground), ClipEase.Linear)

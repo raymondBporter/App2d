@@ -1,6 +1,7 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core.Audio;
+using App2d.Core.Mathematics;
 using App2d.Presentation.Audio;
 using App2d.Rendering;
 using System.Numerics;
@@ -82,7 +83,7 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D<SoundEffect2D> sounds
             for (var i = 0; i < 6; i++)
             {
                 var angle = _clock * 4 + i * MathF.Tau / 6;
-                var offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius;
+                var offset = Vector2.FromPolar(radius, angle);
                 renderer.DrawWorldCircle(Center + offset, 1.5f, new Color4b(179, 245, 255), 2f);
             }
         }

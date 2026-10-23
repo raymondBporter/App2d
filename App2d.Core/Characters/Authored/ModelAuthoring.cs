@@ -3,6 +3,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -477,7 +478,7 @@ public static class ModelAuthoring
                 throw new InvalidOperationException("Cannot rotate a bone through a collapsed parent transform.");
             }
 
-            var axis = Vector2.TransformNormal(new(MathF.Cos(angle), MathF.Sin(angle)), inverse);
+            var axis = Vector2.TransformNormal(Vector2.FromAngle(angle), inverse);
             affine.Rotation = MathF.Atan2(axis.Y, axis.X) - affine.ShearX - (affine.ScaleX < 0 ? MathF.PI : 0);
             SyncAffineRest(model);
             return;
