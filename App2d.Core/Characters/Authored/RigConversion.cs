@@ -171,6 +171,11 @@ public static class RigConversion
                 throw new InvalidOperationException($"'{id}' still carries a linked child; convert the children with it.");
             }
 
+            if (control.Limit is not null)
+            {
+                throw new InvalidOperationException($"'{id}' declares joint limits, which a point control cannot hold; remove them first.");
+            }
+
             // A parameter that scaled this bone's length now scales its tip-bound child's offset (P4a); a link binding has no point form.
             foreach (var property in new[] { RigProperties.LinkT, RigProperties.LinkOffsetX, RigProperties.LinkOffsetY })
             {

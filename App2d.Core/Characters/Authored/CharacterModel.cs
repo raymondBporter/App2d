@@ -25,6 +25,8 @@ public sealed record ModelControl
     public RigSetup? Local { get; set; }
     /// <summary>Binds a bone node's origin to a position along its parent bone instead of <see cref="Local"/>'s translation.</summary>
     public RigLink? Link { get; set; }
+    /// <summary>Optional angular joint limits of a bone node (P4b): bounds on its parent-local rotation. A point or affine node has none.</summary>
+    public RigLimit? Limit { get; set; }
     /// <summary>Character-frame rest of a point or affine node. Derived, and so omitted, for a bone node.</summary>
     public PuppetPoint Rest { get; set; }
     /// <summary>Character-frame XY direction of a point node's frame in rest, in radians. Derived for a bone node.</summary>
@@ -277,16 +279,19 @@ public sealed class CharacterModel
                     control.Link?.Validate(field + " link");
                     Require(control.Link is null || control.Parent is not null, $"{field}: a link needs a parent bone.");
                     Require(control.Link is null || control.Local is null || control.Local.X == 0 && control.Local.Y == 0, $"{field}: a linked origin cannot also author a local translation.");
+                    control.Limit?.Validate(field + " limit");
+                    Require(control.Limit is null || control.Limit.Contains(control.Local?.Rotation ?? 0), $"{field}: its rest rotation lies outside its joint limits; widen the limits or turn the rest.");
                     break;
                 case RigNodeKinds.Affine:
                     Require(control.Transform is not null, $"{field}: an affine node needs its transform.");
-                    Require(control.Local is null && control.Link is null, $"{field}: an affine node authors only its transform.");
+                    Require(control.Local is null && control.Link is null && control.Limit is null, $"{field}: an affine node authors only its transform.");
                     control.Rest.Check(field + " rest");
                     control.Transform.Validate($"{owner} bone '{control.Id}'");
                     new Limit(-1000, 1000).Check(control.RestAngle, field + " restAngle");
                     break;
                 default:
                     Require(control.Transform is null && control.Local is null && control.Link is null, $"{field}: a point control authors only rest and restAngle; declare node 'bone' or 'affine' for a local setup.");
+                    Require(control.Limit is null, $"{field}: joint limits belong to bone nodes; convert the run to a bone chain first.");
                     control.Rest.Check(field + " rest");
                     new Limit(-1000, 1000).Check(control.RestAngle, field + " restAngle");
                     break;
@@ -340,6 +345,9 @@ public sealed class CharacterModel
                     $"{owner}: chain '{chain.Id}' uses affine bone frames; choose a bone constraint instead of point IK.");
                 Require(TipBound(controls[chain.Root], controls[chain.Joint]) && TipBound(controls[chain.Joint], controls[chain.End]) && controls[chain.End].Length == 0,
                     $"{owner}: chain '{chain.Id}' declares bone lengths its point solver would ignore; bind each joint to its parent's tip or choose a bone constraint.");
+                // The point solver moves positions without turning frames, so a limit on its solved joint or end would bound nothing it does.
+                Require(controls[chain.Joint].Limit is null && controls[chain.End].Limit is null,
+                    $"{owner}: chain '{chain.Id}' uses the point solver, which moves '{chain.Joint}' and '{chain.End}' without turning their frames; joint limits need a bone constraint.");
             }
             else
             {

@@ -27,13 +27,13 @@ internal static class AnimationCurveEditor
 
             var key = track.Keys[index];
             var next = track.Keys[index + 1];
-            var count = channel.Kind == MotionClip.RotateKind ? 1 : channel.Kind is MotionClip.ScaleKind or MotionClip.ShearKind ? 2 : 3;
+            var count = channel.Kind is MotionClip.RotateKind or MotionClip.BendKind ? 1 : channel.Kind is MotionClip.ScaleKind or MotionClip.ShearKind ? 2 : 3;
             for (var axis = 0; axis < count; axis++)
             {
                 var component = axis;
                 var curve = axis == 0 ? key.Curve : axis == 1 ? key.CurveY : key.CurveZ;
                 float Value(ClipKey k) => channel.Kind == MotionClip.RotateKind ? k.Angle : component == 0 ? k.Value.X : component == 1 ? k.Value.Y : k.Value.Z;
-                Draw($"{channel.Kind} {(channel.Kind == MotionClip.RotateKind ? "angle" : "XYZ"[axis])} curve",
+                Draw($"{channel.Kind} {(channel.Kind == MotionClip.RotateKind ? "angle" : channel.Kind == MotionClip.BendKind ? "bend" : "XYZ"[axis])} curve",
                     curve, key.Ease, Value(key), Value(next), changed =>
                         session.Change(document, () => ClipAuthoring.SetCurve(document.Asset, channel, time, component, changed)));
             }

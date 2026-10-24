@@ -3,6 +3,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Constraints;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
@@ -704,6 +705,81 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                     "the brute variant's face override restyles the payload with its provenance");
                 s.Undo();
                 Record(Part(Humanoid.Head).Face is { Expression: "relaxed" }, "the expression edit undoes");
+            }),
+            ("44-joint-limits", shell =>
+            {
+                // P4b: joint limits on bone nodes, the limit-aware solve with an honest residual, the normalized bend and a variant's limit override.
+                var s = shell.Session; s.Compare.Clear();
+                Check(s.NewModel("limb", "Limited limb", "empty"), s);
+                var limb = s.SubjectModel!;
+                Check(s.Edit(limb, () =>
+                {
+                    var m = limb.Asset;
+                    ModelAuthoring.AddControl(m, null, new(0, 1.2f, 0), "shoulder");
+                    var upper = ModelAuthoring.AddBone(m, "shoulder", "upper");
+                    upper.Local = new() { Rotation = -MathF.PI / 2 };
+                    upper.Length = .5f;
+                    var fore = ModelAuthoring.AddBone(m, "upper", "fore");
+                    fore.Local = new() { Rotation = .3f };
+                    fore.Length = .4f;
+                    ModelAuthoring.AddBone(m, "fore", "hand");
+                    var tail = ModelAuthoring.AddBone(m, "shoulder", "tail");
+                    tail.Local = new() { Rotation = MathF.PI / 2 };
+                    tail.Length = .3f;
+                    m.Validate();
+                    ModelAuthoring.AddPartToBone(m, RoundedRectangle2D.Builder.FromSize(.5f, .08f, .02f), "upper");
+                    ModelAuthoring.AddPartToBone(m, RoundedRectangle2D.Builder.FromSize(.4f, .07f, .02f), "fore");
+                    ModelAuthoring.AddPartToBone(m, RoundedRectangle2D.Builder.FromSize(.3f, .06f, .02f), "tail");
+                    // Bend -1 puts the elbow on the side where its local rotation is positive, the side its limits allow.
+                    ModelAuthoring.AddBoneIk(m, "hand").Bend = -1;
+                    ModelAuthoring.SetLimit(m, "fore", new() { Min = 0, Max = 2.4f });
+                    ModelAuthoring.SetLimit(m, "tail", new() { Min = 0, Max = MathF.PI });
+                }), s);
+                ModelControl Node(string id) => limb.Asset.Controls.Single(c => c.Id == id);
+                var chain = limb.Asset.IkChains.Single().Id;
+                Record(RigProperties.Declarations(Node("fore")).Any(d => d.Name == RigProperties.LimitMax) && RigProperties.Unsupported(Node("upper")).Single().Reason.Contains("no joint limits declared"),
+                    "the limited elbow exposes limit.min/max; the unlimited upper arm says why it exposes none");
+                Record(!s.Edit(limb, () => ModelAuthoring.SetLimit(limb.Asset, "shoulder", RigLimit.Starter)) && Node("shoulder").Limit is null, "joint limits on a point control are refused: " + s.Message);
+                Check(s.NewClip("limb-reach", "Limb reach"), s);
+                var clip = s.ClipDocument!;
+                var resolved = s.Assets.Resolve("limb")!;
+                var shoulder = resolved.Rest["upper"];
+                Vector3 Target(float x, float y) => shoulder + new Vector3(x, y, 0) - resolved.Rest["hand"];
+                Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, chain), 0, Target(.05f, -.1f))), s);
+                s.Seek(0);
+                var pose = s.Evaluate("limb")!.Pose;
+                var result = pose.Chains.Single();
+                Record(result.Limited && !result.Reached && result.Residual > .02f && pose.Limits["fore"].State == ConstraintLimitState1D.Upper,
+                    $"a target that needs the elbow folded past its upper limit is held at the bound and reported unreached by {result.Residual:F3}");
+                Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, chain), 0, Target(.25f, -.6f))), s);
+                result = s.Evaluate("limb")!.Pose.Chains.Single();
+                Record(result.Reached && !result.Limited, "a target inside the elbow's range is reached exactly");
+                Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.BendKind, "tail"), 0, new(1, 0, 0))), s);
+                pose = s.Evaluate("limb")!.Pose;
+                Record(MathF.Abs(pose.Angles["tail"] - MathF.PI) < 1e-4f && pose.Limits["tail"].State == ConstraintLimitState1D.Upper, "a normalized bend of 1 lands exactly on the tail's upper limit");
+                var before = clip.Serialize();
+                Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.RotateKind, "tail"), 0, default, .2f)), s);
+                Record(s.Assets.Problems(clip).Any(p => p.Contains("not both")), "keying an angle on the node the bend owns is reported: " + string.Join("; ", s.Assets.Problems(clip)));
+                s.Undo();
+                Record(before == clip.Serialize() && s.Assets.Problems(clip).Count == 0, "the conflicting angle key undoes");
+                s.SaveAll();
+                var reopened = AuthoredCatalog.Load(s.Assets.Root);
+                Record(reopened.Errors.Count == 0 && reopened.Models["limb"].Controls.Single(c => c.Id == "fore").Limit is { Min: 0, Max: 2.4f } && reopened.Animations["limb-reach"].Tracks.Any(t => t.Kind == MotionClip.BendKind),
+                    "joint limits and the bend track save and reopen");
+                Check(s.NewVariant("limb-stiff", "Stiff limb", "limb"), s);
+                var stiff = s.SubjectVariant!;
+                var limitMax = PropertyRef.OfControl("fore", RigProperties.LimitMax);
+                Check(s.Edit(stiff, () => ModelAuthoring.SetOverride(stiff.Asset, limb.Asset, PropertyOverride.Of(limitMax, 1f))), s);
+                Record(s.Assets.Resolve("limb-stiff")!.Nodes["fore"].Limit!.Max == 1 && s.Assets.Resolve("limb-stiff")!.Provenance(limitMax) == PropertySource.Override && s.Assets.Resolve("limb")!.Nodes["fore"].Limit!.Max == 2.4f,
+                    "a variant overrides the elbow's upper limit with provenance while the base keeps its range");
+                Record(!s.Edit(stiff, () => ModelAuthoring.SetOverride(stiff.Asset, limb.Asset, PropertyOverride.Of(PropertyRef.OfControl("upper", RigProperties.LimitMin), -1f))), "overriding a limit the base never declared is refused: " + s.Message);
+                s.Undo();
+                Record(!stiff.Asset.HasOverride(limitMax), "the limit override undoes");
+                s.Open("limb");
+                s.SetMode(Workspace.Model);
+                s.EditRig = true;
+                s.Selection.Select(control: "fore");
+                shell.Viewport.Fit(s.Evaluate("limb"));
             }),
         ];
         return workspace;

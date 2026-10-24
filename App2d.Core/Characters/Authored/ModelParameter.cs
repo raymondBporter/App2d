@@ -243,7 +243,7 @@ public static class ChannelSemantics
         new(ArtworkFit, ParameterUnits.Factor, false, "scale and shear tracks on legacy affine nodes (adapter until P11)"),
         new(MaterialValue, ParameterUnits.Factor, false, "slot color timelines"),
         new(AttachmentSelection, ParameterUnits.Factor, true, "face keys, slot attachment keys and draw-order keys (held)"),
-        new(NormalizedParameter, ParameterUnits.Normalized, false, "declared; first channels arrive with angular limits (P4b)"),
+        new(NormalizedParameter, ParameterUnits.Normalized, false, "bend tracks: 0..1 mapped through the bone node's declared joint limits (P4b)"),
         new(EnabledState, ParameterUnits.Factor, true, "declared; first channels arrive with attached colliders (P8b)"),
     ];
 
@@ -253,6 +253,7 @@ public static class ChannelSemantics
         MotionClip.TranslateKind => LocalTranslation,
         MotionClip.RotateKind or MotionClip.OrientKind => Angle,
         MotionClip.TargetKind => IkTarget,
+        MotionClip.BendKind => NormalizedParameter,
         MotionClip.ScaleKind => nodeKind == RigNodeKinds.Affine ? ArtworkFit : UniformPoseScale,
         MotionClip.ShearKind => ArtworkFit,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown track kind."),

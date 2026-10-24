@@ -21,7 +21,9 @@ public static class RigProperties
     public const string Asset = "asset", Mirror = "mirror";
     /// <summary>An animation role's clip (P6a): the wearer's motion-set role on this variant.</summary>
     public const string Clip = "clip";
-    /// <summary>Declared ahead of P4b so an inspector can show the row as unsupported with its reason instead of hiding it.</summary>
+    /// <summary>A bone node's angular joint limits (P4b): bounds on its parent-local rotation, exposed only while the node declares a limit.</summary>
+    public const string LimitMin = "limit.min", LimitMax = "limit.max";
+    /// <summary>The limits group, named in an inspector's unsupported row with the reason a node exposes none.</summary>
     public const string Limits = "limits";
 
     private static readonly Limit Lengths = new(0, 100), Translations = new(-10000, 10000), Rotations = new(-1000, 1000), Layers = new(-32, 32);
@@ -35,6 +37,10 @@ public static class RigProperties
     private static readonly PropertyDeclaration LinkTDeclaration = new(LinkT, PropertyKinds.Number, ParameterUnits.Normalized, LinkPositions, Help: "Position along the parent bone (0 origin, 1 tip).");
     private static readonly PropertyDeclaration LinkOffsetXDeclaration = new(LinkOffsetX, PropertyKinds.Number, ParameterUnits.Length, LinkOffsets, Help: "Offset from the bound position in the parent's axes.");
     private static readonly PropertyDeclaration LinkOffsetYDeclaration = new(LinkOffsetY, PropertyKinds.Number, ParameterUnits.Length, LinkOffsets, Help: "Offset from the bound position in the parent's axes.");
+    private static readonly PropertyDeclaration LimitMinDeclaration = new(LimitMin, PropertyKinds.Number, ParameterUnits.Radians, RigLimit.Range, Help: "Lower bound of the parent-local rotation; a normalized bend of 0 lands here.");
+    private static readonly PropertyDeclaration LimitMaxDeclaration = new(LimitMax, PropertyKinds.Number, ParameterUnits.Radians, RigLimit.Range, Help: "Upper bound of the parent-local rotation; a normalized bend of 1 lands here.");
+    /// <summary>The joint-limit properties, exposed on a bone node that declares a limit.</summary>
+    public static readonly IReadOnlyList<string> LimitProperties = [LimitMin, LimitMax];
 
     /// <summary>The part properties: the leaf fit (bindable) and its appearance.</summary>
     public static readonly IReadOnlyList<PropertyDeclaration> PartDeclarations =
@@ -113,24 +119,34 @@ public static class RigProperties
     public static readonly IReadOnlyList<string> Attachment = [.. AttachmentDeclarations.Where(d => d.Bindable).Select(d => d.Name)];
 
     /// <summary>The properties a control exposes by its declared kind and link: an affine node exposes none (adapter until P11).</summary>
-    public static IReadOnlyList<PropertyDeclaration> Declarations(ModelControl control) => control.Node switch
+    public static IReadOnlyList<PropertyDeclaration> Declarations(ModelControl control)
     {
-        RigNodeKinds.Affine => [],
-        RigNodeKinds.Bone when control.Link is not null => [LengthDeclaration, LocalRotationDeclaration, LocalLayerDeclaration, LinkTDeclaration, LinkOffsetXDeclaration, LinkOffsetYDeclaration],
-        RigNodeKinds.Bone => [LengthDeclaration, LocalXDeclaration, LocalYDeclaration, LocalRotationDeclaration, LocalLayerDeclaration],
-        _ => [LocalXDeclaration, LocalYDeclaration, LocalRotationDeclaration, LocalLayerDeclaration],
-    };
+        IReadOnlyList<PropertyDeclaration> declarations = control.Node switch
+        {
+            RigNodeKinds.Affine => [],
+            RigNodeKinds.Bone when control.Link is not null => [LengthDeclaration, LocalRotationDeclaration, LocalLayerDeclaration, LinkTDeclaration, LinkOffsetXDeclaration, LinkOffsetYDeclaration],
+            RigNodeKinds.Bone => [LengthDeclaration, LocalXDeclaration, LocalYDeclaration, LocalRotationDeclaration, LocalLayerDeclaration],
+            _ => [LocalXDeclaration, LocalYDeclaration, LocalRotationDeclaration, LocalLayerDeclaration],
+        };
+        // Joint limits are a feature of the node that declares them (P4b); a node without a limit exposes no limit property.
+        return control.Node == RigNodeKinds.Bone && control.Limit is not null ? [.. declarations, LimitMinDeclaration, LimitMaxDeclaration] : declarations;
+    }
 
     /// <summary>The bindable control property names.</summary>
     public static IReadOnlyList<string> ForControl(ModelControl control) => [.. Declarations(control).Where(d => d.Bindable).Select(d => d.Name)];
 
     /// <summary>
-    /// Properties the plan names for a control that no pass has implemented yet, with the reason: an inspector shows the row
-    /// as unsupported instead of hiding it or offering a handle that silently does nothing.
+    /// Property groups a control does not expose, with the reason: an inspector shows the row as unsupported instead of
+    /// hiding it or offering a handle that silently does nothing. Joint limits (P4b) are exposed only by a bone node that
+    /// declares them on the base model.
     /// </summary>
-    public static IReadOnlyList<(string Name, string Reason)> Unsupported(ModelControl control) => control.Node == RigNodeKinds.Affine
-        ? [(Limits, "a legacy affine node; the adapter exposes nothing until P11")]
-        : [(Limits, "joint limits arrive with the limit-aware solve of P4b; a variant cannot override them yet")];
+    public static IReadOnlyList<(string Name, string Reason)> Unsupported(ModelControl control) => control.Node switch
+    {
+        RigNodeKinds.Affine => [(Limits, "a legacy affine node; the adapter exposes nothing until P11")],
+        RigNodeKinds.Bone when control.Limit is null => [(Limits, "no joint limits declared on this bone node; add them on the base model to override or bind them")],
+        RigNodeKinds.Bone => [],
+        _ => [(Limits, "a point control has no joint limits; convert the run to a bone chain on the base model")],
+    };
 
     /// <summary>Why a property is not exposed on a control, or null when it is.</summary>
     public static string? Refusal(ModelControl control, string property)
@@ -150,7 +166,7 @@ public static class RigProperties
             Length => $"'{control.Id}' is a point control; only a bone node exposes a length.",
             LocalX or LocalY => $"'{control.Id}' is bound to its parent bone; bind its link instead of a local translation.",
             LinkT or LinkOffsetX or LinkOffsetY => $"'{control.Id}' has no link; bind its local translation instead.",
-            Limits => Unsupported(control)[0].Reason,
+            Limits or LimitMin or LimitMax => $"'{control.Id}': {Unsupported(control).FirstOrDefault(u => u.Name == Limits).Reason ?? "no joint limits"}.",
             _ => $"no control property '{property}' (one of {string.Join(", ", Declarations(control).Select(d => d.Name))}).",
         };
     }
@@ -198,11 +214,12 @@ public static class RigProperties
 /// </summary>
 internal sealed class RigLayout
 {
-    private RigLayout(Dictionary<string, RigSetup> setups, Dictionary<string, float> lengths, Dictionary<string, RigLink?> links, List<PuppetPart> parts, List<PartInstance> attachments)
+    private RigLayout(Dictionary<string, RigSetup> setups, Dictionary<string, float> lengths, Dictionary<string, RigLink?> links, Dictionary<string, RigLimit?> limits, List<PuppetPart> parts, List<PartInstance> attachments)
     {
         Setups = setups;
         Lengths = lengths;
         Links = links;
+        Limits = limits;
         Parts = parts;
         Attachments = attachments;
     }
@@ -210,6 +227,8 @@ internal sealed class RigLayout
     public Dictionary<string, RigSetup> Setups { get; }
     public Dictionary<string, float> Lengths { get; }
     public Dictionary<string, RigLink?> Links { get; }
+    /// <summary>Each bone node's joint limits (null where none are declared), written by limit bindings and overrides.</summary>
+    public Dictionary<string, RigLimit?> Limits { get; }
     public List<PuppetPart> Parts { get; }
     /// <summary>The attachment instances with bound placement and fit, then the wearer's overrides, written.</summary>
     public List<PartInstance> Attachments { get; }
@@ -220,6 +239,7 @@ internal sealed class RigLayout
         model.Controls.ToDictionary(c => c.Id, c => baseNodes[c.Id].Setup with { }, StringComparer.Ordinal),
         model.Controls.ToDictionary(c => c.Id, c => baseNodes[c.Id].Length, StringComparer.Ordinal),
         model.Controls.ToDictionary(c => c.Id, c => baseNodes[c.Id].Link is { } link ? link with { } : null, StringComparer.Ordinal),
+        model.Controls.ToDictionary(c => c.Id, c => baseNodes[c.Id].Limit is { } limit ? limit with { } : null, StringComparer.Ordinal),
         model.Parts.ConvertAll(p => p with { }),
         model.Attachments.ConvertAll(a => a with { }));
 
@@ -266,9 +286,15 @@ internal sealed class RigLayout
             RigProperties.LinkT => Links[id]!.T,
             RigProperties.LinkOffsetX => Links[id]!.OffsetX,
             RigProperties.LinkOffsetY => Links[id]!.OffsetY,
+            RigProperties.LimitMin => Limit(id, property).Min,
+            RigProperties.LimitMax => Limit(id, property).Max,
             _ => throw Unknown(property),
         };
     }
+
+    /// <summary>The joint limits a limit property writes to; a node without declared limits exposes none.</summary>
+    private RigLimit Limit(string id, PropertyRef property) =>
+        Limits[id] ?? throw new InvalidDataException($"{property}: '{id}' declares no joint limits; add them on the base model.");
 
     public void Set(PropertyRef property, float value)
     {
@@ -330,6 +356,9 @@ internal sealed class RigLayout
             case RigProperties.LinkT: Links[id]!.T = value; break;
             case RigProperties.LinkOffsetX: Links[id]!.OffsetX = value; break;
             case RigProperties.LinkOffsetY: Links[id]!.OffsetY = value; break;
+            // A limit bounds the rotation without moving the rest: the node stays where it was.
+            case RigProperties.LimitMin: Limit(id, property).Min = value; return;
+            case RigProperties.LimitMax: Limit(id, property).Max = value; return;
             default: throw Unknown(property);
         }
         Moved.Add(id);

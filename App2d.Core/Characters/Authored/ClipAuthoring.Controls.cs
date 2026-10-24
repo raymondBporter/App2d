@@ -23,9 +23,13 @@ public static partial class ClipAuthoring
             return [channel, new(MotionClip.ScaleKind, control)];
         }
 
-        // A canonical node has a uniform pose scale; shear is the legacy affine adapter's artwork-fit channel.
-        return model.Controls[control].Node == RigNodeKinds.Affine
+        // A canonical node has a uniform pose scale; shear is the legacy affine adapter's artwork-fit channel; a bone node
+        // with declared joint limits also offers the normalized bend (P4b), which owns the rotation in a clip that keys it.
+        var spec = model.Controls[control];
+        return spec.Node == RigNodeKinds.Affine
             ? [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.ShearKind, control)]
+            : spec.Limit is not null
+            ? [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.BendKind, control)]
             : [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control)];
     }
 

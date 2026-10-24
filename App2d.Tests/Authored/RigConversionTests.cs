@@ -128,7 +128,10 @@ public sealed class RigConversionTests
         var crank = TestModels.LinkageCrank(model);
         var rest = PoseEvaluator.Rest(model);
         var turned = PoseEvaluator.Sample(model, crank, .125, true);
-        Assert.True(turned.Chains.Single().Reached);
+        // P4b: the pin at 1/8 turn is 5.6e-3 past full reach; the rigid solve reports that gap instead of claiming the target.
+        Assert.False(turned.Chains.Single().Reached);
+        Assert.InRange(turned.Chains.Single().Residual, .005f, .006f);
+        Assert.True(PoseEvaluator.Sample(model, crank, 0, true).Chains.Single().Reached);
         TestModels.Near(turned.World("crank-pin"), turned.World("rod-end"), 2e-2f, "the rod follows the pin");
         // Rigid frames: the piston and elbow frames point along their segments after the solve, and the point adapter would not have turned them.
         var piston = XY(turned.World("rod-elbow")) - XY(turned.World("piston"));

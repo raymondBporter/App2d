@@ -26,7 +26,7 @@ internal static class LegacyPointConstraint
         MoveDescendants(chain.End, end - pose.Points[chain.End], null);
         pose.Translate(chain.Joint, joint);
         pose.Translate(chain.End, end);
-        return new(chain.Id, Vector2.Distance(solved.End, XY(target)), solved.ReachesTarget);
+        return ChainResult.Of(chain.Id, Vector2.Distance(solved.End, XY(target)));
 
         void MoveDescendants(string id, Vector3 delta, string? except)
         {

@@ -44,6 +44,7 @@ public static class ModelAuthoring
                 control.Local = node.Setup with { };
                 control.Length = node.Length;
                 control.Link = node.Link is { } link ? link with { } : null;
+                control.Limit = node.Limit is { } limit ? limit with { } : null;
                 continue;
             }
 
@@ -329,6 +330,31 @@ public static class ModelAuthoring
     /// a length, else a local offset along the parent's +X. Its own local +X axis points toward its tip. Beneath a legacy
     /// affine node it adds an affine child so that rig stays editable by its adapter.
     /// </summary>
+    /// <summary>
+    /// Declares, changes or removes a bone node's angular joint limits (P4b). Null removes them. Validation refuses a point
+    /// or affine node, a rest rotation outside the range and a node solved by a point constraint, each by name.
+    /// </summary>
+    public static void SetLimit(CharacterModel model, string id, RigLimit? limit)
+    {
+        var control = Control(model, id);
+        if (limit is not null && control.Node != RigNodeKinds.Bone)
+        {
+            throw new InvalidOperationException($"'{id}' is a {control.Node} node; joint limits belong to bone nodes. Convert the run to a bone chain first.");
+        }
+
+        var before = control.Limit;
+        control.Limit = limit is null ? null : limit with { };
+        try
+        {
+            model.Validate();
+        }
+        catch (InvalidDataException)
+        {
+            control.Limit = before;
+            throw;
+        }
+    }
+
     public static ModelControl AddBone(CharacterModel model, string? parent, string? id = null)
     {
         var basis = parent is null ? null : Control(model, parent);

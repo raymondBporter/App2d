@@ -1,5 +1,6 @@
 using App2d.Core.Animation;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Constraints;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
@@ -7,7 +8,18 @@ using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
-public sealed record ChainResult(string Chain, float Residual, bool Reached);
+/// <summary>
+/// One constraint's outcome. <see cref="Reached"/> is residual-based (P4b): the end lies within <see cref="ReachTolerance"/> of
+/// the target; a solve that clamped to full reach, a minimum fold or a joint limit reports the gap it left instead of claiming
+/// the target. <see cref="Limited"/> says a joint limit shaped the pose.
+/// </summary>
+public sealed record ChainResult(string Chain, float Residual, bool Reached, bool Limited = false)
+{
+    /// <summary>The position tolerance of the reference set: authored chains reach to ~3e-8, so anything above this is a real gap.</summary>
+    public const float ReachTolerance = 1e-4f;
+
+    public static ChainResult Of(string chain, float residual, bool limited = false) => new(chain, residual, residual <= ReachTolerance, limited);
+}
 public sealed record ContactResult(string Chain, Vector3 Target, float Residual);
 
 /// <summary>
@@ -61,6 +73,8 @@ public sealed class EvaluatedPose
     public Vector3 Locomotion { get; set; }
     public List<ChainResult> Chains { get; } = [];
     public List<ContactResult> Contacts { get; } = [];
+    /// <summary>Each limited bone node's joint-limit state at this sample: the requested local rotation, the held one and whether a bound was active.</summary>
+    public Dictionary<string, ConstraintLimitEvaluation1D> Limits { get; } = new(StringComparer.Ordinal);
     public Vector3 World(string id) => _points[id];
 
     /// <summary>A control's evaluated placement: its bone frame at its drawing layer. Artwork, sockets and handles attach to this.</summary>
@@ -157,6 +171,21 @@ public static class PoseEvaluator
         float LayerAngle(bool fromOverlay, string target) => Read(fromOverlay, MotionClip.RotateKind, target) is { Track: { } track, Time: var at }
             ? Interpolate(track, at).Angle * (input.ReverseHorizontalMotion ? -1 : 1) : 0;
         float Angle(string target) => !Masked(target) ? LayerAngle(false, target) : LayerAngle(false, target) + (LayerAngle(true, target) - LayerAngle(false, target)) * weight;
+        // The normalized bend channel: 0..1 through the node's limits, absolute (it owns the rotation), never reversed or
+        // scaled by a measure; before a setup-before-first track's first key the node keeps its setup rotation (null).
+        float? LayerNormalized(bool fromOverlay, string target) => Read(fromOverlay, MotionClip.BendKind, target) is { Track: { } track, Time: var at }
+            && !(track.SetupBeforeFirst && track.Keys.Count > 0 && at < track.Keys[0].Time) ? Interpolate(track.Keys, at).Value.X : null;
+        float? BendOf(string target)
+        {
+            var baseBend = LayerNormalized(false, target);
+            if (!Masked(target))
+            {
+                return baseBend;
+            }
+
+            var overlayBend = LayerNormalized(true, target);
+            return weight >= 1 ? overlayBend : baseBend is { } a && overlayBend is { } b ? a + (b - a) * weight : overlayBend ?? baseBend;
+        }
 
         var locomotion = LayeredFrame2D.FromMatrix(Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y));
         foreach (var control in model.Order)
@@ -182,6 +211,20 @@ public static class PoseEvaluator
             }
             var origin = node.Origin(parent?.Length ?? 0) + translate.XY;
             var rotation = node.Rotation + rotate;
+            if (node.Limit is { } limit)
+            {
+                // Joint limits (P4b): a bend maps through the range; an angle channel keeps its authored value and is
+                // held at the bound, with the state recorded so nothing clamps silently. The bound value is the local
+                // rotation, so reflection and facing never invert the convention.
+                if (BendOf(control.Id) is { } bend)
+                {
+                    rotation = limit.FromNormalized(bend);
+                }
+
+                var state = limit.Evaluate(rotation);
+                pose.Limits[control.Id] = state;
+                rotation = state.Target;
+            }
             // The uniform pose scale channel (ChannelSemantics.UniformPoseScale): one multiplier on the node's similarity,
             // carried by its children and their link positions; the bone's length stays a dimension.
             var scale = node.ScaleVector * (1 + Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit).X);

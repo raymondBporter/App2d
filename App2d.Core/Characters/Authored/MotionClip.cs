@@ -134,7 +134,13 @@ public sealed class MotionClip
     /// <summary>Socket-local Euler angles in radians: X twist, Y tilt, Z turn. Unwrapped angles preserve authored full turns.</summary>
     public const string OrientKind = "orient";
     public const string ScaleKind = "scale", ShearKind = "shear";
-    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, ShearKind];
+    /// <summary>
+    /// A normalized bend (<see cref="ChannelSemantics.NormalizedParameter"/>, P4b): key x in 0..1 maps through the target bone
+    /// node's declared joint limits onto its parent-local rotation, exactly at both ends. It owns the node's rotation in the
+    /// clip, so a rotate track on the same node is refused; changing the limits changes this performance by design.
+    /// </summary>
+    public const string BendKind = "bend";
+    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, ShearKind, BendKind];
     public string Format { get; set; } = FormatId;
     public const int CurrentVersion = 3;
     public int Version { get; set; } = CurrentVersion;
@@ -410,8 +416,16 @@ public sealed class MotionClip
             {
                 Require(model.Controls.TryGetValue(track.Target, out var control), $"{field}: unknown control.");
                 Require(!solved.Contains(track.Target), $"{field}: this control is solved by IK; key its chain's target instead.");
-                Require(track.Kind != RotateKind || !model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
-                if (track.Kind is ScaleKind or ShearKind)
+                Require(track.Kind is not (RotateKind or BendKind) || !model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
+                if (track.Kind == BendKind)
+                {
+                    // The normalized bend channel: its owner is the node's declared limit, and it owns the rotation in this clip.
+                    Require(control.Node == RigNodeKinds.Bone && control.Limit is not null, $"{field}: a normalized bend needs a bone node with declared joint limits; key its rotation as an angle instead.");
+                    Require(!Tracks.Any(t => t.Kind == RotateKind && t.Target == track.Target), $"{field}: the node's rotation is also keyed as an angle; a clip keys a bend or an angle on one node, not both.");
+                    Require(track.Keys.All(k => k.Value.X is >= 0 and <= 1 && k.Value.Y == 0 && k.Value.Z == 0), $"{field}: bend keys use x in 0..1 only.");
+                    Require(track.Scale is null or CharacterModel.Unit, $"{field}: a normalized bend has no measurement scale.");
+                }
+                else if (track.Kind is ScaleKind or ShearKind)
                 {
                     // Declared semantics (ChannelSemantics): on a canonical node a scale track is one uniform pose multiplier,
                     // so its keys must agree in x and y; shear is artwork fit on the legacy affine adapter only.

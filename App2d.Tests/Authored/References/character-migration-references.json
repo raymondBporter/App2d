@@ -18675,7 +18675,7 @@
         {
           "chain": "rod",
           "residual": 0.005556215,
-          "reached": true
+          "reached": false
         }
       ],
       "contacts": [],
@@ -19233,7 +19233,7 @@
         {
           "chain": "rod",
           "residual": 0.0055561154,
-          "reached": true
+          "reached": false
         }
       ],
       "contacts": [],
@@ -19419,7 +19419,7 @@
         {
           "chain": "rod",
           "residual": 0.0009999275,
-          "reached": true
+          "reached": false
         }
       ],
       "contacts": [],

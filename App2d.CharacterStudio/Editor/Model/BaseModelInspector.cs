@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Constraints;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Mathematics.Transforms;
@@ -251,6 +252,46 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
     }
 
     /// <summary>
+    /// A bone node's angular joint limits (P4b): declared, edited in degrees or removed here; the rows appear only while the
+    /// node carries a limit, and the active state of the previewed pose is shown so a held rotation is never silent.
+    /// </summary>
+    private void JointLimits(AssetDocument<CharacterModel> document, ModelControl control, string id, ResolvedModel? resolved)
+    {
+        Ui.Header("Joint limits");
+        if (control.Limit is not { } limit)
+        {
+            if (ImGui.SmallButton("Add joint limits (±90°)"))
+            {
+                session.Edit(document, () => ModelAuthoring.SetLimit(document.Asset, id, RigLimit.Starter));
+            }
+
+            Ui.Help("Bounds on this node's parent-local rotation. Angle channels are held at the bounds; a normalized bend channel maps 0..1 through them; the IK solve stays inside them and reports the gap it leaves.");
+            return;
+        }
+
+        var range = new Vector2(float.RadiansToDegrees(limit.Min), float.RadiansToDegrees(limit.Max));
+        if (Ui.Drag2("Min / max (degrees)", ref range, .5f, -720, 720))
+        {
+            session.Change(document, () => ModelAuthoring.SetLimit(document.Asset, id, new() { Min = float.DegreesToRadians(range.X), Max = float.DegreesToRadians(range.Y) }));
+        }
+
+        ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LimitMin));
+        ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LimitMax));
+        ImGui.TextDisabled($"  rest rotation {float.RadiansToDegrees(control.Local?.Rotation ?? 0):0.#}° is at {limit.ToNormalized(control.Local?.Rotation ?? 0):0.##} of the range");
+        if (session.Evaluate(session.SubjectId)?.Pose.Limits.TryGetValue(id, out var state) == true)
+        {
+            ImGui.TextDisabled(state.State == ConstraintLimitState1D.Inactive
+                ? $"  preview: inside the limits ({float.RadiansToDegrees(state.Coordinate):0.#}°)"
+                : $"  preview: held at the {state.State.ToString().ToLowerInvariant()} bound, {float.RadiansToDegrees(MathF.Abs(state.Error)):0.#}° short of the requested rotation");
+        }
+
+        if (ImGui.SmallButton("Remove joint limits"))
+        {
+            session.Edit(document, () => ModelAuthoring.SetLimit(document.Asset, id, null));
+        }
+    }
+
+    /// <summary>
     /// The selected control's setup, by its declared node kind: a point control's character-frame rest; a bone node's origin
     /// (derived, moved through its local setup or fixed by its link), local similarity, length, link and direction; the legacy
     /// affine adapter's channels. Every field says where the value lives, and an edit a kind cannot take is refused with its reason.
@@ -308,6 +349,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                 ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.Length));
 
                 Ui.Help(control.Length > 0 ? "Children bound along this bone follow its length; their frames keep their own scale." : "Zero length: an ordinary control, still a handle, socket or target.");
+                JointLimits(document, control, id, resolved);
                 Ui.Header("Local setup");
                 var local = control.Local ?? new RigSetup();
                 void Local(Action<RigSetup> set) => session.Change(document, () =>

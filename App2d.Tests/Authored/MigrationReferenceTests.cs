@@ -226,11 +226,19 @@ public sealed class MigrationReferenceTests
         Assert.Contains(false, reached);
         Assert.True(reached[0], "the pin at rest is within the rod's reach");
         Assert.False(reached[4], "the pin on the far side of the hub is beyond full reach");
+        // P4b: reached is residual-based. At 1/8 and 7/8 turn the target sits 5.6e-3 past full reach; the solver used to clamp
+        // and still report reached (baseline 7.2), now it reports the gap with the same residual.
+        Assert.False(reached[1], "a target 5.6e-3 past full reach is not reached");
+        Assert.False(reached[7], "a target 5.6e-3 past full reach is not reached");
+        Assert.Equal(.0055562f, PoseEvaluator.Sample(Linkage, crank, 1 / 8.0, true).Chains.Single().Residual, 5);
         var pin = PoseEvaluator.Sample(Linkage, crank, .5, true);
         TestModels.Near(new(-.4f, 1, 0), pin.World("crank-pin"), 1e-4f, "half a turn carries the pin to the far side");
-        // The point solver keeps a 1e-3 minimum root-to-end distance for a degenerate target; that is current behavior, not a goal.
+        // The point solver keeps a 1e-3 minimum root-to-end distance for a degenerate target; the fold is preserved and, since
+        // P4b, reported as a 1e-3 gap rather than as reached.
         var zero = PoseEvaluator.Sample(Linkage, FixtureClips["linkage-reach"], 0);
         TestModels.Near(zero.World("piston"), zero.World("rod-end"), 2e-3f, "a zero-length target folds the rod onto its root");
+        Assert.Equal(.001f, zero.Chains.Single().Residual, 4);
+        Assert.False(zero.Chains.Single().Reached);
     }
 
     private static string ReferencePath()

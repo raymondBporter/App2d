@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Constraints;
 using ImGuiNET;
 using System.Numerics;
 
@@ -35,18 +36,58 @@ internal sealed class AnimationControlInspector(EditorSession session)
         if (channel.Value.Kind == MotionClip.TranslateKind)
         {
             var boneIk = model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == control);
-            if (!boneIk)
+            var limit = model.Nodes[control].Limit;
+            if (boneIk)
             {
-                var rotate = new Channel(MotionClip.RotateKind, control);
-                var degrees = float.RadiansToDegrees(ClipAuthoring.Value(clip, rotate, time).Angle);
-                if (Ui.Drag("Rotation (degrees, turns children)", ref degrees, .5f, -720, 720))
-                {
-                    session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, float.DegreesToRadians(degrees)));
-                }
+                Ui.Help("Rotation is solved by the IK target." + (limit is null ? "" : " The joint limits hold the solve; an out-of-reach target reports its gap below."));
             }
             else
             {
-                Ui.Help("Rotation is solved by the IK target.");
+                // One owner per node per clip: the normalized bend (through the declared limits) or the ordinary angle channel.
+                var rotate = new Channel(MotionClip.RotateKind, control);
+                var bend = new Channel(MotionClip.BendKind, control);
+                var bendTrack = limit is null ? null : ClipAuthoring.Track(clip, bend);
+                var rotateTrack = ClipAuthoring.Track(clip, rotate);
+                if (limit is not null && rotateTrack is null)
+                {
+                    var t = ClipAuthoring.Value(clip, bend, time).Value.X;
+                    if (Ui.Slider($"Normalized bend (0 = {float.RadiansToDegrees(limit.Min):0.#}°, 1 = {float.RadiansToDegrees(limit.Max):0.#}°)", ref t, 0, 1))
+                    {
+                        session.Change(document, () => ClipAuthoring.SetKey(document.Asset, bend, time, new(Math.Clamp(t, 0, 1), 0, 0)));
+                    }
+
+                    ImGui.TextDisabled($"  normalized-parameter channel through the node's joint limits; {(bendTrack is null ? "not keyed yet: the setup rotation holds" : $"{bendTrack.Keys.Count} keys")}. Changing the limits changes this performance.");
+                }
+
+                if (bendTrack is null)
+                {
+                    var degrees = float.RadiansToDegrees(ClipAuthoring.Value(clip, rotate, time).Angle);
+                    if (Ui.Drag("Rotation (degrees, turns children)", ref degrees, .5f, -720, 720))
+                    {
+                        session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, float.DegreesToRadians(degrees)));
+                    }
+
+                    if (limit is not null)
+                    {
+                        ImGui.TextDisabled($"  angle channel: authored degrees, held between {float.RadiansToDegrees(limit.Min):0.#}° and {float.RadiansToDegrees(limit.Max):0.#}° of parent-local rotation.");
+                    }
+                }
+                else
+                {
+                    ImGui.TextDisabled("  the angle channel is owned by the bend in this clip; delete the bend keys to key angles.");
+                }
+
+                if (primary.Pose.Limits.TryGetValue(control, out var state))
+                {
+                    if (state.State == ConstraintLimitState1D.Inactive)
+                    {
+                        ImGui.TextDisabled($"  within limits at {float.RadiansToDegrees(state.Coordinate):0.#}° parent-local.");
+                    }
+                    else
+                    {
+                        Ui.Problem($"Held at the {state.State.ToString().ToLowerInvariant()} limit, {float.RadiansToDegrees(MathF.Abs(state.Error)):0.#}° short of the requested rotation.");
+                    }
+                }
             }
 
             var affine = model.Controls[control].Node == RigNodeKinds.Affine;
