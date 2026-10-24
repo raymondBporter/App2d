@@ -214,29 +214,8 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                     ImGui.PopID();
                 }
             }
-            if (!Property("Default expression", RigProperties.Face))
-            {
-                ImGui.SetNextItemWidth(-1);
-                if (ImGui.BeginCombo("##face", part.Face))
-                {
-                    foreach (var face in FaceExpressions.Names.Prepend("none"))
-                    {
-                        if (ImGui.Selectable(face, face == part.Face))
-                        {
-                            change(p => p.Face = face);
-                        }
-                    }
-
-                    ImGui.EndCombo();
-                }
-
-                overrides?.Note(RigProperties.Face);
-            }
-            if (part.Face != "none")
-            {
-                Float("Face offset", RigProperties.FaceX, part.FaceX, -.4f, .4f, (p, v) => p.FaceX = v);
-            }
         }
+        Face(part, overrides, change, Property, Float);
         if (overrides is null)
         {
             var layer = new CharacterLayer2D(part.Depth);
@@ -256,6 +235,52 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
             }
 
             overrides?.Note(RigProperties.Hidden);
+        }
+    }
+
+    /// <summary>
+    /// The face payload's fields appear only while the part carries one; a base part adds or removes the payload as one edit,
+    /// a variant overrides its expression and offset with provenance and cannot add or remove it.
+    /// </summary>
+    private static void Face(PuppetPart part, PartOverrideView? overrides, Action<Action<PuppetPart>> change, Func<string, string, bool> property, Action<string, string, float, float, float, Action<PuppetPart, float>> number)
+    {
+        if (part.Face is not { } face)
+        {
+            if (overrides is null && FaceAppearance.Supports(part.Geometry) && ImGui.SmallButton("Add face"))
+            {
+                change(p => p.Face = FaceAppearance.Starter);
+            }
+
+            return;
+        }
+
+        if (!property("Default expression", RigProperties.Face))
+        {
+            ImGui.SetNextItemWidth(-1);
+            if (ImGui.BeginCombo("##face", face.Expression))
+            {
+                foreach (var expression in FaceExpressions.Names.Prepend(FaceAppearance.None))
+                {
+                    if (ImGui.Selectable(expression, expression == face.Expression))
+                    {
+                        change(p => p.Face = p.Face! with { Expression = expression });
+                    }
+                }
+
+                ImGui.EndCombo();
+            }
+
+            overrides?.Note(RigProperties.Face);
+        }
+        number("Face offset", RigProperties.FaceX, face.OffsetX, -.4f, .4f, (p, v) => p.Face = p.Face! with { OffsetX = v });
+        if (overrides is null)
+        {
+            if (ImGui.SmallButton("Remove face"))
+            {
+                change(p => p.Face = null);
+            }
+
+            Ui.Help("The procedural face draws its expression over this shape. Clips and variants keep their own expression; removing the payload reports any clip still animating it.");
         }
     }
 }

@@ -245,12 +245,12 @@ public static class PoseEvaluator
         var overlayFace = overlay is not null && weight >= .5f;
         foreach (var part in model.Parts)
         {
-            if (part.Hidden || part.Face == "none")
+            if (part.Hidden || part.Face is not { } face)
             {
                 continue;
             }
 
-            pose.Expressions[part.Id] = input.Expression ?? (overlayFace ? FaceAt(overlay!.Clip, part.Id, overlayTime) : null) ?? FaceAt(clip, part.Id, time) ?? part.Face;
+            pose.Expressions[part.Id] = face.Evaluate(input.Expression, (overlayFace ? FaceAt(overlay!.Clip, part.Id, overlayTime) : null) ?? FaceAt(clip, part.Id, time));
         }
         return pose;
     }

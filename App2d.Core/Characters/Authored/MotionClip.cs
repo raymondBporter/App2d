@@ -435,7 +435,8 @@ public sealed class MotionClip
         }
         foreach (var face in Faces)
         {
-            Require(model.Parts.Any(p => p.Id == face.Part && p.Geometry is App2d.Core.Geometry.Shapes.IShape2D), $"{owner} face track '{face.Part}': the model has no such shape part.");
+            // The face payload owns the track's target: only a part carrying one can be animated by it.
+            Require(model.Parts.Any(p => p.Id == face.Part && p.Face is not null), $"{owner} face track '{face.Part}': the model has no part with a face by that ID.");
         }
     }
 }

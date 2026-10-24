@@ -165,7 +165,7 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
             return;
         }
 
-        var parts = primary.Model.Parts.Where(p => p.Geometry is Core.Geometry.Shapes.IShape2D && p.Face != "none").ToArray();
+        var parts = primary.Model.Parts.Where(p => p.Face is not null).ToArray();
         if (parts.Length == 0)
         {
             return;
@@ -179,7 +179,7 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
             var here = track?.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
             var shown = PoseEvaluator.FaceAt(document.Asset, part.Id, time);
             ImGui.PushID(part.Id);
-            if (Ui.Combo($"{part.Id}: {(here is not null ? "keyed here" : shown is null ? "model default" : "held from earlier key")}", here?.Expression ?? shown ?? part.Face,
+            if (Ui.Combo($"{part.Id}: {(here is not null ? "keyed here" : shown is null ? "model default" : "held from earlier key")}", here?.Expression ?? shown ?? part.Face!.Expression,
                 FaceExpressions.Names) is { } expression)
             {
                 session.Edit(document, () => ClipAuthoring.SetFace(document.Asset, part.Id, time, expression));

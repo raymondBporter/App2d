@@ -25,7 +25,7 @@ public static class RigProperties
     public const string Limits = "limits";
 
     private static readonly Limit Lengths = new(0, 100), Translations = new(-10000, 10000), Rotations = new(-1000, 1000), Layers = new(-32, 32);
-    private static readonly Limit LinkPositions = new(-10, 10), LinkOffsets = new(-100, 100), Fits = new(-100, 100), PartOffsets = new(-100, 100), FaceOffsets = new(-1, 1);
+    private static readonly Limit LinkPositions = new(-10, 10), LinkOffsets = new(-100, 100), Fits = new(-100, 100), PartOffsets = new(-100, 100);
     private static readonly Limit Placements = new(-100, 100), Sizes = new(.001f, 100), AttachmentLayers = new(-16, 16);
     private static readonly PropertyDeclaration LengthDeclaration = new(Length, PropertyKinds.Number, ParameterUnits.Length, Lengths, Help: "Bone length along local +X; bound children follow the tip.");
     private static readonly PropertyDeclaration LocalXDeclaration = new(LocalX, PropertyKinds.Number, ParameterUnits.Length, Translations, Help: "Origin in the parent's local axes.");
@@ -44,10 +44,20 @@ public static class RigProperties
         new(OffsetX, PropertyKinds.Number, ParameterUnits.Length, PartOffsets),
         new(OffsetY, PropertyKinds.Number, ParameterUnits.Length, PartOffsets),
         new(Material, PropertyKinds.Material, Help: "Fill, outline, paint or a shared material over the base part's.") { Clearable = false },
-        new(Face, PropertyKinds.Selection, Options: [.. FaceExpressions.Names, "none"], Help: "Default expression; clear removes the face.") { Cleared = "none" },
-        new(FaceX, PropertyKinds.Number, ParameterUnits.Length, FaceOffsets),
+        new(Face, PropertyKinds.Selection, Options: [.. FaceExpressions.Names, FaceAppearance.None], Help: "Default expression of the part's face payload; clear hides the face.") { Cleared = FaceAppearance.None },
+        new(FaceX, PropertyKinds.Number, ParameterUnits.Length, FaceAppearance.OffsetLimit, Help: "Offset of the face payload's features along the part frame's X axis."),
         new(Hidden, PropertyKinds.Flag),
     ];
+
+    /// <summary>The part properties that belong to the face payload: exposed only while the part carries one.</summary>
+    public static readonly IReadOnlyList<string> FaceProperties = [Face, FaceX];
+
+    /// <summary>Why a declared part property is not exposed on this part, or null when it is: a feature's properties need its payload.</summary>
+    public static string? Refusal(PuppetPart part, string property) =>
+        FaceProperties.Contains(property) && part.Face is null ? $"part '{part.Id}' has no face; add a face to the base part before overriding or binding '{property}'." : null;
+
+    /// <summary>The part properties this part exposes: its fit, material and visibility, plus a feature's properties while it carries the payload.</summary>
+    public static IEnumerable<PropertyDeclaration> Declarations(PuppetPart part) => PartDeclarations.Where(d => Refusal(part, d.Name) is null);
 
     /// <summary>The attachment-instance properties: placement and fit (bindable), the asset selection, mirror, material and visibility.</summary>
     public static readonly IReadOnlyList<PropertyDeclaration> AttachmentDeclarations =
@@ -144,12 +154,9 @@ public static class RigProperties
 
         if (property.Part is { } part)
         {
-            if (model.Parts.All(p => p.Id != part))
-            {
-                throw new InvalidDataException($"{field}: no part '{part}'.");
-            }
-
-            return PartDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no part property '{property.Property}' (one of {string.Join(", ", PartDeclarations.Select(d => d.Name))}).");
+            var owner = model.Parts.FirstOrDefault(p => p.Id == part) ?? throw new InvalidDataException($"{field}: no part '{part}'.");
+            var declaration = PartDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no part property '{property.Property}' (one of {string.Join(", ", PartDeclarations.Select(d => d.Name))}).");
+            return Refusal(owner, declaration.Name) is { } refusal ? throw new InvalidDataException($"{field}: {refusal}") : declaration;
         }
 
         var control = model.Controls.FirstOrDefault(c => c.Id == property.Control) ?? throw new InvalidDataException($"{field}: no control '{property.Control}'.");
@@ -217,7 +224,7 @@ internal sealed class RigLayout
                 RigProperties.ScaleY => p.ScaleY,
                 RigProperties.OffsetX => p.OffsetX,
                 RigProperties.OffsetY => p.OffsetY,
-                RigProperties.FaceX => p.FaceX,
+                RigProperties.FaceX => Face(p, property).OffsetX,
                 _ => throw Unknown(property),
             };
         }
@@ -277,7 +284,7 @@ internal sealed class RigLayout
                 RigProperties.ScaleY => Parts[index] with { ScaleY = value },
                 RigProperties.OffsetX => Parts[index] with { OffsetX = value },
                 RigProperties.OffsetY => Parts[index] with { OffsetY = value },
-                RigProperties.FaceX => Parts[index] with { FaceX = value },
+                RigProperties.FaceX => Parts[index] with { Face = Face(Parts[index], property) with { OffsetX = value } },
                 _ => throw Unknown(property),
             };
             return;
@@ -323,7 +330,7 @@ internal sealed class RigLayout
             Parts[index] = declaration.Name switch
             {
                 RigProperties.Material => current with { Material = current.RenderMaterial.WithOverride(change.Material) },
-                RigProperties.Face => current with { Face = change.Clear ? declaration.Cleared! : change.Selection! },
+                RigProperties.Face => current with { Face = Face(current, target) with { Expression = change.Clear ? declaration.Cleared! : change.Selection! } },
                 RigProperties.Hidden => current with { Hidden = !change.Clear && change.Flag!.Value },
                 _ => throw Unknown(target),
             };
@@ -353,6 +360,10 @@ internal sealed class RigLayout
         var index = Parts.FindIndex(p => p.Id == part);
         return index >= 0 ? index : throw new InvalidDataException($"No part '{part}'.");
     }
+
+    /// <summary>The face payload a face property writes to; a part without one exposes no face property.</summary>
+    private static FaceAppearance Face(PuppetPart part, PropertyRef property) =>
+        part.Face ?? throw new InvalidDataException($"{property}: {RigProperties.Refusal(part, property.Property)}");
 
     private int AttachmentIndex(string attachment)
     {

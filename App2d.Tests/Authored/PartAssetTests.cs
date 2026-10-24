@@ -65,7 +65,7 @@ public sealed class PartAssetTests : IDisposable
         dangling.Parts[1].B = "thumb";
         Assert.Contains("thumb", Assert.Throws<InvalidDataException>(dangling.Validate).Message);
         var faced = Glove();
-        faced.Parts[0].Face = "relaxed";
+        faced.Parts[0].Face = new() { Expression = "relaxed" };
         Assert.Contains("face part", Assert.Throws<InvalidDataException>(faced.Validate).Message);
         var empty = new PartAsset { Id = "nothing", Name = "Nothing" };
         Assert.Contains("at least one", Assert.Throws<InvalidDataException>(empty.Validate).Message);

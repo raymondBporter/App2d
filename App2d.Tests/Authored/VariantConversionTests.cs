@@ -23,8 +23,8 @@ public sealed class VariantConversionTests : IDisposable
 
     private string Authored => Path.Combine(_root, "authored");
     private static readonly string[] Family = ["tall-thin", "short-broad", "cinder", "brute"];
-    private static (string Id, float ScaleX, float ScaleY, float OffsetX, float OffsetY, string Face, float FaceX, bool Hidden, string Material) Appearance(PuppetPart p) =>
-        (p.Id, p.ScaleX, p.ScaleY, p.OffsetX, p.OffsetY, p.Face, p.FaceX, p.Hidden, System.Text.Json.JsonSerializer.Serialize(p.RenderMaterial, AuthoredJson.Options));
+    private static (string Id, float ScaleX, float ScaleY, float OffsetX, float OffsetY, string? Face, float? FaceX, bool Hidden, string Material) Appearance(PuppetPart p) =>
+        (p.Id, p.ScaleX, p.ScaleY, p.OffsetX, p.OffsetY, p.Face?.Expression, p.Face?.OffsetX, p.Hidden, System.Text.Json.JsonSerializer.Serialize(p.RenderMaterial, AuthoredJson.Options));
 
     /// <summary>A version-4 file of the shipped shape, with rest pins, for the conversion to prove the pin path.</summary>
     private static string LegacyWithPins(string id) =>
@@ -130,7 +130,7 @@ public sealed class VariantConversionTests : IDisposable
         TestModels.Near(built.Rest[Humanoid.Hips], resolved.Rest[Humanoid.Hips], 1e-5f);
         TestModels.Near(built.Rest[Humanoid.LeftFoot], resolved.Rest[Humanoid.LeftFoot], 1e-5f);
         TestModels.Near(built.Rest[Humanoid.LeftShoulder] + (resolved.Rest[Humanoid.Chest] - built.Rest[Humanoid.Chest]), resolved.Rest[Humanoid.LeftShoulder], 1e-5f);
-        Assert.Equal("smug", resolved.Parts.Single(p => p.Id == Humanoid.Head).Face);
+        Assert.Equal("smug", resolved.Parts.Single(p => p.Id == Humanoid.Head).Face!.Expression);
         Assert.Equal(1.1f, resolved.Parts.Single(p => p.Id == Humanoid.Body).ScaleY);
         Assert.True(converted.HasOverride(PropertyRef.OfControl(Humanoid.Chest, RigProperties.LocalY)));
         Assert.True(converted.HasOverride(PropertyRef.OfControl(Humanoid.RightKnee, RigProperties.LocalLayer)));

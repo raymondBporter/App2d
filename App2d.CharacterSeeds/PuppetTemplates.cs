@@ -99,7 +99,7 @@ public static class PuppetTemplates
             A = Humanoid.Head,
             ScaleX = .58f,
             ScaleY = .58f,
-            Face = "relaxed",
+            Face = new() { Expression = "relaxed" },
             Depth = -.12f
         });
         foreach (var part in puppet.Parts)
@@ -145,7 +145,7 @@ public static class PuppetTemplates
         puppet.Parts.Single(p => p.Id == Humanoid.Body).ScaleX = .36f;
         var head = puppet.Parts.Single(p => p.Id == Humanoid.Head);
         head.ScaleX = .56f;
-        head.FaceX = .065f;
+        head.Face = head.Face! with { OffsetX = .065f };
         var motion = puppet.Motions[0];
         motion.Name = "Walk right";
         motion.Duration = 1.2f;
@@ -208,7 +208,7 @@ public static class PuppetTemplates
     {
         var puppet = StepStudy();
         puppet.Name = "Run loop study";
-        puppet.Parts.Single(p => p.Id == Humanoid.Head).Face = "determined";
+        puppet.Parts.Single(p => p.Id == Humanoid.Head).Face = new() { Expression = "determined" };
         var motion = puppet.Motions[0];
         motion.Name = "Run right";
         motion.Duration = .72f;

@@ -38,7 +38,7 @@ object Export(PuppetDefinition definition)
         parts = definition.Parts,
         ink = definition.Ink,
         lineWidth = definition.LineWidth,
-        face = FaceExpressions.Get(definition.Parts.Single(p => p.Id == "head").Face)
+        face = FaceExpressions.Get(definition.Parts.Single(p => p.Id == "head").Face!.Expression)
     };
 }
 var json = JsonSerializer.Serialize(new { walk = Export(PuppetTemplates.StepStudy()), run = Export(PuppetTemplates.RunStudy()) }, JsonSerializerOptions.Web);

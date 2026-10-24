@@ -102,6 +102,10 @@ internal static class EditorSurfaceSmoke
                 session.Undo();
             }
             session.EditRig = false;
+            // P2b: the head's face payload rows on the base part inspector.
+            session.Open("person");
+            session.Selection.Select(part: Humanoid.Head);
+            Capture("model-face-payload");
             if (assets.Part("boot") is { } boot)
             {
                 // P5c: a library part on a wearer (preview before attaching), then the instance on the base model.

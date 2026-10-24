@@ -170,13 +170,14 @@ public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
     /// <summary>
-    /// Version 9 adds <see cref="Attachments"/>, instances of library part assets (P5a); version 8 declared exposed
-    /// <see cref="Parameters"/> with their bindings and <see cref="Presets"/> in place of the retired code build rule (P4a);
-    /// version 7 declared each control's node kind, authored bone nodes as parent-local setups and kept one constraint list
-    /// (P3a); version 6 moved a curve's wave into the typed <c>wave</c> modifier (P2a). Older files read through
-    /// <see cref="LegacyModelReader"/>.
+    /// Version 10 carries a part's procedural face as the typed <c>face</c> payload (<see cref="FaceAppearance"/>, P2b) in
+    /// place of the loose expression string and <c>faceX</c>; version 9 added <see cref="Attachments"/>, instances of
+    /// library part assets (P5a); version 8 declared exposed <see cref="Parameters"/> with their bindings and
+    /// <see cref="Presets"/> in place of the retired code build rule (P4a); version 7 declared each control's node kind,
+    /// authored bone nodes as parent-local setups and kept one constraint list (P3a); version 6 moved a curve's wave into
+    /// the typed <c>wave</c> modifier (P2a). Older files read through <see cref="LegacyModelReader"/>.
     /// </summary>
-    public const int CurrentVersion = 9;
+    public const int CurrentVersion = 10;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";

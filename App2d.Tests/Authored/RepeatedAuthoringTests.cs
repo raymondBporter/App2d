@@ -255,7 +255,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.ApplyLook("ember"));
         var variant = session.SubjectVariant!;
         Assert.Equal("#eab596", variant.Asset.Override(PropertyRef.OfPart("body", RigProperties.Material))?.Material?.Fill);
-        Assert.Equal("determined", session.Assets.Resolve("ranger")!.Parts.Single(p => p.Id == "head").Face);
+        Assert.Equal("determined", session.Assets.Resolve("ranger")!.Parts.Single(p => p.Id == "head").Face!.Expression);
         var person = session.Assets.Model("person")!;
         Assert.False(person.Dirty);
 

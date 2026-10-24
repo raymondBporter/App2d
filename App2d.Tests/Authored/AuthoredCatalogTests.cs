@@ -46,7 +46,7 @@ public sealed class AuthoredCatalogTests
         { "models/person.json", "\"frame\": \"[^\"]*\"", "\"frame\": null" },
         { "models/person.json", "\"path\": \\[\\s*\"[^\"]*\"", "\"path\": [ null" },
         { "models/person.json", "\"a\": \"[^\"]*\"", "\"a\": null" },
-        { "models/person.json", "\"face\": \"[^\"]*\"", "\"face\": null" },
+        { "models/person.json", "\"face\": \\{\\s*\"offsetX\": [0-9.]+", "\"face\": { \"offsetX\": null" },
         { "animations/person-walk.json", "\"scale\": \"leg\"", "\"scale\": null" },
         { "animations/person-walk.json", "\"target\": \"[^\"]*\"", "\"target\": null" },
         { "animations/person-walk.json", "\"chain\": \"[^\"]*\"", "\"chain\": null" },

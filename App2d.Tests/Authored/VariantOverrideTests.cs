@@ -97,7 +97,7 @@ public sealed class VariantOverrideTests : IDisposable
         // A cleared length is the authored one: the arms binding is bypassed, so it equals the standard person's.
         Assert.Equal(ResolvedModel.From(person).Nodes[Humanoid.LeftShoulder].Length, resolved.Nodes[Humanoid.LeftShoulder].Length);
         Assert.Equal(resolved.AuthoredNumber(PropertyRef.OfControl(Humanoid.LeftShoulder, RigProperties.Length)), resolved.Nodes[Humanoid.LeftShoulder].Length);
-        Assert.Equal("angry", resolved.Parts.Single(p => p.Id == Humanoid.Head).Face);
+        Assert.Equal("angry", resolved.Parts.Single(p => p.Id == Humanoid.Head).Face!.Expression);
         Assert.Equal("#d9e2ef", resolved.Parts.Single(p => p.Id == Humanoid.Body).RenderMaterial.Fill);
         Assert.Equal("person-heavy-walk", resolved.RoleClips["walk"]);
 
@@ -144,7 +144,7 @@ public sealed class VariantOverrideTests : IDisposable
         Assert.Equal("angry", read.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face))!.Selection);
         Assert.Equal(.1f, read.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.FaceX))!.Value);
         Assert.False(read.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.Hidden))!.Flag);
-        Assert.Equal("angry", ResolvedModel.From(person, read).Parts.Single(p => p.Id == Humanoid.Head).Face);
+        Assert.Equal("angry", ResolvedModel.From(person, read).Parts.Single(p => p.Id == Humanoid.Head).Face!.Expression);
         Assert.Null(LegacyVariantReader.LegacyVersion(read.ToJson()));
 
         // A rest pin needs the base: the reader refuses it by name, the conversion converts it to setup overrides.

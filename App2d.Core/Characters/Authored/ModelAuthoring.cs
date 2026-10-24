@@ -585,6 +585,8 @@ public static class ModelAuthoring
         if (geometry is ICurve2D)
         {
             part.Frame = null;
+            // The face payload belongs to shape parts; a curve carries none.
+            part.Face = null;
         }
         else
         {
@@ -1039,8 +1041,17 @@ public static class ModelAuthoring
         if (edited.ScaleY != resolved.ScaleY) changes.Add(PropertyOverride.Of(Target(RigProperties.ScaleY), edited.ScaleY));
         if (edited.OffsetX != resolved.OffsetX) changes.Add(PropertyOverride.Of(Target(RigProperties.OffsetX), edited.OffsetX));
         if (edited.OffsetY != resolved.OffsetY) changes.Add(PropertyOverride.Of(Target(RigProperties.OffsetY), edited.OffsetY));
-        if (edited.Face != resolved.Face) changes.Add(PropertyOverride.Of(Target(RigProperties.Face), edited.Face));
-        if (edited.FaceX != resolved.FaceX) changes.Add(PropertyOverride.Of(Target(RigProperties.FaceX), edited.FaceX));
+        if (edited.Face is null != resolved.Face is null)
+        {
+            throw new InvalidOperationException($"Part '{resolved.Id}': a variant cannot add or remove a face; the base part owns the payload.");
+        }
+
+        if (edited.Face is { } face && resolved.Face is { } before)
+        {
+            if (face.Expression != before.Expression) changes.Add(PropertyOverride.Of(Target(RigProperties.Face), face.Expression));
+            if (face.OffsetX != before.OffsetX) changes.Add(PropertyOverride.Of(Target(RigProperties.FaceX), face.OffsetX));
+        }
+
         if (edited.Hidden != resolved.Hidden) changes.Add(PropertyOverride.Of(Target(RigProperties.Hidden), edited.Hidden));
         var was = resolved.RenderMaterial;
         var now = edited.RenderMaterial;

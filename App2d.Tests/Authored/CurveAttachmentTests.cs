@@ -154,7 +154,7 @@ public sealed class CurveAttachmentTests
         var resolved = ResolvedModel.From(saved);
         var clip = MotionClip.FromJson(catalog.Animations["curve-face-smile"].ToJson());
         clip.Validate(resolved);
-        Assert.All(saved.Parts, p => Assert.Equal("none", p.Face));
+        Assert.All(saved.Parts, p => Assert.Null(p.Face));
         Assert.Empty(clip.Faces);
         Assert.All(clip.Tracks, t => Assert.Equal(MotionClip.TranslateKind, t.Kind));
         var mouth = saved.Parts.Single(p => p.Id == "mouth");

@@ -132,7 +132,6 @@ public sealed class RenderMaterialDefinition2DTests
         var part = new PuppetPart
         {
             A = "root",
-            Face = "none",
             ScaleX = 1,
             ScaleY = 1,
             Geometry = Rectangle2D.Builder.FromSize(Vector2.One),

@@ -20,14 +20,20 @@ namespace App2d.Core.Characters.Authored;
 /// version 8; one naming a rule is refused, since nothing in Core knows a humanoid's proportions any more. The only shipped
 /// user, <c>models/person.json</c>, was converted explicitly.</item>
 /// <item>Version 8 (P5a) had no <c>attachments</c>; a file without them reads unchanged at version 9.</item>
+/// <item>Versions 5 to 9 (P2b) kept a part's procedural face as two loose fields, the expression string <c>face</c>
+/// (<c>none</c> for no face) and the offset <c>faceX</c>; a part with an expression gets the typed
+/// <see cref="FaceAppearance"/> payload under <c>face</c> (<c>expression</c>, <c>offsetX</c>), a part without one gets no
+/// face member at all. A version-9 part whose <c>face</c> is already an object is left alone.</item>
 /// </list>
-/// Deletion condition: no model file below version 9 remains in the authored tree, the seeds or the tests (the P11
-/// conversion reports list the converted bundles; six of the seven shipped models are still at version 5).
+/// Deletion condition: no model file below version 10 remains in the authored tree, the seeds or the tests (the P11
+/// conversion reports list the converted bundles; six of the seven shipped models are still at version 5 and
+/// <c>models/person.json</c> at version 8).
 /// </summary>
 internal static class LegacyModelReader
 {
-    public const int WaveFieldsVersion = 5, ChainsVersion = 6, BuildRuleVersion = 7, ParametersVersion = 8;
+    public const int WaveFieldsVersion = 5, ChainsVersion = 6, BuildRuleVersion = 7, ParametersVersion = 8, FaceFieldsVersion = 9;
     private const string Amplitude = "waveAmplitude", Cycles = "waveCycles", PhaseControl = "wavePhaseControl", Wave = "wave";
+    private const string Face = "face", FaceX = "faceX";
 
     /// <summary>Returns the model JSON at the current version, or the input unchanged when it is not an older model.</summary>
     public static string Read(string json)
@@ -42,7 +48,7 @@ internal static class LegacyModelReader
             return json;
         }
 
-        if (root is null || Find(root, "version") is not (var versionName, JsonValue version) || !version.TryGetValue(out int number) || number is < WaveFieldsVersion or > ParametersVersion)
+        if (root is null || Find(root, "version") is not (var versionName, JsonValue version) || !version.TryGetValue(out int number) || number is < WaveFieldsVersion or > FaceFieldsVersion)
         {
             return json;
         }
@@ -53,29 +59,33 @@ internal static class LegacyModelReader
             throw new InvalidDataException($"Model file at version {number} names the code build rule '{rule}', retired in P4a: declare the proportions as parameters with bindings (the Person seeds write them; models/person.json carries the converted declarations).");
         }
 
-        if (number is BuildRuleVersion or ParametersVersion)
+        var parts = Find(root, "parts") is (_, JsonArray list) ? list.OfType<JsonObject>().ToArray() : [];
+        if (number <= WaveFieldsVersion)
         {
-            return root.ToJsonString();
-        }
-
-        if (number == WaveFieldsVersion && Find(root, "parts") is (_, JsonArray parts))
-        {
-            foreach (var part in parts.OfType<JsonObject>())
+            foreach (var part in parts)
             {
                 ConvertWave(part);
             }
         }
 
-        ConvertChains(root);
-        if (Find(root, "controls") is (_, JsonArray controls))
+        if (number <= ChainsVersion)
         {
-            foreach (var control in controls.OfType<JsonObject>())
+            ConvertChains(root);
+            if (Find(root, "controls") is (_, JsonArray controls))
             {
-                if (Find(control, "transform") is not null && Find(control, "node") is null)
+                foreach (var control in controls.OfType<JsonObject>())
                 {
-                    control["node"] = RigNodeKinds.Affine;
+                    if (Find(control, "transform") is not null && Find(control, "node") is null)
+                    {
+                        control["node"] = RigNodeKinds.Affine;
+                    }
                 }
             }
+        }
+
+        foreach (var part in parts)
+        {
+            ConvertFace(part);
         }
 
         return root.ToJsonString();
@@ -145,6 +155,42 @@ internal static class LegacyModelReader
         }
 
         part[Wave] = wave;
+    }
+
+    /// <summary>The loose expression string and offset become the typed payload; "none" or no expression means no face member.</summary>
+    private static void ConvertFace(JsonObject part)
+    {
+        if (Find(part, Face) is not (var key, var expression))
+        {
+            Take(part, FaceX);
+            return;
+        }
+
+        if (expression is JsonObject)
+        {
+            return;
+        }
+
+        // A hand-edited null stays an error against the file, as the strict parser reported it before.
+        if (expression is null)
+        {
+            throw new InvalidDataException($"Model part '{Find(part, "id")?.Node}': {key} is null.");
+        }
+
+        part.Remove(key);
+        var offset = Take(part, FaceX);
+        if (expression is not JsonValue word || !word.TryGetValue(out string? name) || name is null or FaceAppearance.None)
+        {
+            return;
+        }
+
+        var face = new JsonObject { ["expression"] = name };
+        if (offset is not null)
+        {
+            face["offsetX"] = offset;
+        }
+
+        part[Face] = face;
     }
 
     // The strict parser matches member names case-insensitively, so the reader does too.

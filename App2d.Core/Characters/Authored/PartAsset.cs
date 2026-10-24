@@ -175,7 +175,7 @@ public sealed class PartAsset
             AuthoredAsset.RequireId(part.Id, $"{owner} drawing part id");
             Require(ids.Add(part.Id), $"{owner}: duplicate drawing part '{part.Id}'.");
             Require(part.Frame is null, $"{owner} part '{part.Id}': a library part's pieces attach to its locations, not to a wearer's bone.");
-            Require(part.Face == "none", $"{owner} part '{part.Id}': faces belong to a face part asset (P7b), not a static library part.");
+            Require(part.Face is null, $"{owner} part '{part.Id}': faces belong to a face part asset (P7b), not a static library part.");
             try
             {
                 part.Validate(locations.Contains);

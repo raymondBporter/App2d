@@ -193,7 +193,6 @@ public sealed class PuppetDrawing
             var outline = material.Outline;
             var outlineWidth = outline?.Width ?? lineWidth;
             var outlineColor = outline?.Color is { } color ? Tinted(ColorExtensions.FromHexRgb(color), tint) : ink;
-            var face = expression?.Invoke(part) ?? part.Face;
             if (part.Geometry is ICurve2D)
             {
                 var path = PartContours2D.Contour(part, world, bone, rest, restBone);
@@ -260,12 +259,15 @@ public sealed class PuppetDrawing
                 Mesh.Polygon(contour, null, outlineColor, outlineWidth);
             }
 
-            if (face != "none")
+            // The face payload draws its features for the pose's evaluated expression (or the part's default when the
+            // caller supplies none); a gameplay-blended pose replaces the expression's features, never a hidden face.
+            if (part.Face is { } face)
             {
-                var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
-                FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),
-                p => frame.At(bounds.Center + new Vector2(p.X * bounds.Width, -p.Y * bounds.Height))
-                    + new Vector3(frame.XAxis * (part.FaceX / MathF.Max(frame.XAxis.Length(), 1e-10f)), -.002f), lineWidth * .6f, ink);
+                var shown = expression?.Invoke(part) ?? face.Expression;
+                if (FaceAppearance.Shows(shown))
+                {
+                    face.Draw(Mesh, facePose ?? FaceExpressions.Get(shown), frame, ShapeBounds2D.Calculate((IShape2D)part.Geometry!), lineWidth, ink);
+                }
             }
             if (Mesh.Count > start)
             {

@@ -671,6 +671,40 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Select(control: "left-elbow");
                 shell.Viewport.Fit(s.Evaluate("tall-thin"));
             }),
+            ("43-face-payload", shell =>
+            {
+                // P2b: the procedural face is an optional payload of the part that renders it.
+                var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = false;
+                s.Selection.Select(part: Humanoid.Head); shell.Viewport.Fit(s.Evaluate("person"));
+                var doc = s.SubjectModel!;
+                PuppetPart Part(string id) => doc.Asset.Parts.Single(p => p.Id == id);
+                Record(Part(Humanoid.Head).Face is { Expression: "relaxed", OffsetX: .065f } && doc.Asset.Parts.All(p => p.Id == Humanoid.Head || p.Face is null),
+                    "only the head carries a face payload after reading the version-8 file");
+                var before = doc.Serialize();
+                Check(s.Edit(doc, () => Part(Humanoid.Body).Face = FaceAppearance.Starter), s);
+                Record(Part(Humanoid.Body).Face is not null && s.Evaluate("person")!.Pose.Expressions[Humanoid.Body] == "relaxed", "a shape part gains a face payload and the pose evaluates its expression");
+                s.Undo();
+                Record(before == doc.Serialize() && Part(Humanoid.Body).Face is null, "adding the face undoes exactly");
+                var hit = s.Assets.Clip("person-hit")!;
+                Check(s.Edit(doc, () => Part(Humanoid.Head).Face = null), s);
+                Record(s.Assets.Problems(hit).Any(p => p.Contains("face track")) && !s.Evaluate("person")!.Pose.Expressions.ContainsKey(Humanoid.Head),
+                    "removing the head's face reports the clip still animating it instead of dropping the track: " + string.Join("; ", s.Assets.Problems(hit)));
+                s.Undo();
+                Record(Part(Humanoid.Head).Face is { Expression: "relaxed" } && s.Assets.Problems(hit).Count == 0, "removing the face undoes and the clip resolves again");
+                Check(s.Edit(doc, () => Part(Humanoid.Head).Face = Part(Humanoid.Head).Face! with { Expression = "focused" }), s);
+                s.SaveAll();
+                var saved = File.ReadAllText(doc.Path!);
+                var reopened = AuthoredCatalog.Load(s.Assets.Root);
+                Record(reopened.Errors.Count == 0 && reopened.Models["person"].Parts.Single(p => p.Id == Humanoid.Head).Face is { Expression: "focused", OffsetX: .065f }
+                    && saved.Contains("\"face\": {") && !saved.Contains("faceX") && saved.Contains($"\"version\": {CharacterModel.CurrentVersion}"),
+                    "the face saves as the typed payload at version " + CharacterModel.CurrentVersion + " and reopens");
+                var brute = s.Assets.Resolve("brute")!;
+                Record(brute.Parts.Single(p => p.Id == Humanoid.Head).Face is { Expression: "angry", OffsetX: .065f } && brute.Provenance(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face)) == PropertySource.Override
+                    && brute.Provenance(PropertyRef.OfPart(Humanoid.Head, RigProperties.FaceX)) == PropertySource.Base,
+                    "the brute variant's face override restyles the payload with its provenance");
+                s.Undo();
+                Record(Part(Humanoid.Head).Face is { Expression: "relaxed" }, "the expression edit undoes");
+            }),
         ];
         return workspace;
     }
@@ -763,7 +797,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         Check(s.Save(model), s);
         s.EditRig = true;
         s.Selection.Control = "knee-1";
-        Record(!model.Asset.Parts.Any(p => p.Face != "none") && model.Asset.IkChains.Count() == 3, "tripod has three IK legs and no head or face");
+        Record(!model.Asset.Parts.Any(p => p.Face is not null) && model.Asset.IkChains.Count() == 3, "tripod has three IK legs and no head or face");
     }
 
     private static void AnimateTripod(EditorSession s)

@@ -51,20 +51,20 @@ public sealed class AppearanceAndBuildTests
     public void ExpressionFallsBackFromGameplayToClipToModelDefault()
     {
         var model = ResolvedModel.From(Person);
-        var face = model.Parts.Single(p => p.Face != "none");
+        var face = model.Parts.Single(p => p.Face is not null);
         var clip = new MotionClip { Id = "blink", Name = "Blink", Model = "person", Duration = 1, Faces = [new() { Part = face.Id, Keys = [new() { Time = .5f, Expression = "blink" }] }] };
         clip.Validate(model);
         Assert.Equal("blink", PoseEvaluator.Sample(model, clip, .1).Expressions[face.Id]);
         Assert.Equal("blink", PoseEvaluator.Sample(model, clip, .7).Expressions[face.Id]);
         Assert.Equal("hurt", PoseEvaluator.Sample(model, clip, .7, input: new("hurt")).Expressions[face.Id]);
-        Assert.Equal(face.Face, PoseEvaluator.Rest(model).Expressions[face.Id]);
+        Assert.Equal(face.Face!.Expression, PoseEvaluator.Rest(model).Expressions[face.Id]);
     }
 
     [Fact]
     public void AClipCanHideTheFaceForABackView()
     {
         var model = ResolvedModel.From(Person);
-        var face = model.Parts.Single(p => p.Face != "none");
+        var face = model.Parts.Single(p => p.Face is not null);
         var clip = new MotionClip { Id = "climb", Name = "Climb", Model = "person", Duration = 1, Faces = [new() { Part = face.Id, Keys = [new() { Expression = "none" }] }] };
         clip.Validate(model);
         Assert.Equal("none", PoseEvaluator.Sample(model, clip, .5).Expressions[face.Id]);
@@ -116,7 +116,7 @@ public sealed class AppearanceAndBuildTests
     [Fact]
     public void AHiddenPartKeepsItsControlsAndDrawsNoFace()
     {
-        var head = Person.Parts.Single(p => p.Face != "none").Id;
+        var head = Person.Parts.Single(p => p.Face is not null).Id;
         var headless = new ModelVariant { Id = "headless", Name = "Headless", Base = "person", Overrides = [PropertyOverride.Of(PropertyRef.OfPart(head, RigProperties.Hidden), true)] };
         var model = ResolvedModel.From(Person, headless);
         var pose = PoseEvaluator.Rest(model);

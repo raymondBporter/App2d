@@ -144,8 +144,8 @@ public sealed record PuppetPart
     public CurveWave? Wave { get; set; }
     /// <summary>Base sampling density for rounded paths; exact fillet boundaries are added by the curve library.</summary>
     public int CurveSections { get; set; } = 20;
-    public string Face { get; set; } = "none";
-    public float FaceX { get; set; }
+    /// <summary>Optional procedural face of a shape part. Parts without one have no face fields; the payload owns its vocabulary, offset and drawing.</summary>
+    public FaceAppearance? Face { get; set; }
 
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
     public bool Hidden { get; set; }
@@ -267,12 +267,15 @@ public sealed record PuppetPart
                 }
             }
         }
-        if (Face != "none" && !FaceExpressions.Contains(Face))
+        if (Face is not null)
         {
-            throw new InvalidDataException("Unknown part expression: " + Face);
-        }
+            if (!FaceAppearance.Supports(Geometry))
+            {
+                throw new InvalidDataException("A face requires a shape part.");
+            }
 
-        new Limit(-1, 1).Check(FaceX, "part.faceX");
+            Face.Validate(isControl, "part.face");
+        }
     }
 }
 
@@ -304,7 +307,8 @@ public sealed record PuppetMotion
 public sealed class PuppetDefinition
 {
     public const string FormatId = "app2d-puppet";
-    public const int CurrentVersion = 3;
+    /// <summary>Version 4 (P2b) carries a part's face as the typed <c>face</c> payload; version 3 kept a loose expression string and <c>faceX</c>. No shipped puppet file exists, so there is no reader for 3.</summary>
+    public const int CurrentVersion = 4;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Name { get; set; } = "New character";
