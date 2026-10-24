@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
@@ -12,7 +13,7 @@ namespace App2d.Core.Characters.Geometry;
 /// shared part type carries no wave fields; the modifier owns its limits, its control references and its evaluation, which
 /// <see cref="PartCurves2D"/> applies while sampling the curve.
 /// </summary>
-public sealed record CurveWave
+public sealed record CurveWave : IPartPayload
 {
     public static readonly Limit AmplitudeLimit = new(-1, 1);
     public static readonly Limit CyclesLimit = new(.1f, 16);
@@ -32,6 +33,12 @@ public sealed record CurveWave
 
     /// <summary>The samples a deformed curve needs so every bump is drawn.</summary>
     [JsonIgnore] public int Samples => Math.Max(33, (int)MathF.Ceiling(Cycles * 16) + 1);
+
+    [JsonIgnore] public string Name => "wave";
+    [JsonIgnore] public string Requirement => "a linked curve";
+
+    /// <summary>A wave deforms a curve sampled between its endpoints; shapes and images carry none.</summary>
+    public bool Fits(IGeometryValue2D? geometry) => geometry is ICurve2D;
 
     /// <summary>Whether deleting this control would leave the modifier dangling; the owning authoring commands refuse that.</summary>
     public bool References(string controlId) => PhaseControl == controlId;

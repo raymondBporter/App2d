@@ -59,6 +59,32 @@ public static class RigProperties
     /// <summary>The part properties this part exposes: its fit, material and visibility, plus a feature's properties while it carries the payload.</summary>
     public static IEnumerable<PropertyDeclaration> Declarations(PuppetPart part) => PartDeclarations.Where(d => Refusal(part, d.Name) is null);
 
+    /// <summary>
+    /// The typed overrides that take a part from <paramref name="was"/> to <paramref name="now"/> (every registered part
+    /// property but the material, which merges separately): the registry reads each property once here, so a part-edit
+    /// command carries no feature field. A payload cannot be added or removed this way; the base part owns it.
+    /// </summary>
+    public static IEnumerable<PropertyOverride> PartChanges(PuppetPart was, PuppetPart now)
+    {
+        PropertyRef Target(string property) => PropertyRef.OfPart(was.Id, property);
+        if (now.ScaleX != was.ScaleX) yield return PropertyOverride.Of(Target(ScaleX), now.ScaleX);
+        if (now.ScaleY != was.ScaleY) yield return PropertyOverride.Of(Target(ScaleY), now.ScaleY);
+        if (now.OffsetX != was.OffsetX) yield return PropertyOverride.Of(Target(OffsetX), now.OffsetX);
+        if (now.OffsetY != was.OffsetY) yield return PropertyOverride.Of(Target(OffsetY), now.OffsetY);
+        if (now.Face is null != was.Face is null)
+        {
+            throw new InvalidOperationException($"Part '{was.Id}': a variant cannot add or remove a face; the base part owns the payload.");
+        }
+
+        if (now.Face is { } face && was.Face is { } before)
+        {
+            if (face.Expression != before.Expression) yield return PropertyOverride.Of(Target(Face), face.Expression);
+            if (face.OffsetX != before.OffsetX) yield return PropertyOverride.Of(Target(FaceX), face.OffsetX);
+        }
+
+        if (now.Hidden != was.Hidden) yield return PropertyOverride.Of(Target(Hidden), now.Hidden);
+    }
+
     /// <summary>The attachment-instance properties: placement and fit (bindable), the asset selection, mirror, material and visibility.</summary>
     public static readonly IReadOnlyList<PropertyDeclaration> AttachmentDeclarations =
     [

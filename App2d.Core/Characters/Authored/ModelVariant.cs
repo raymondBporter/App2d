@@ -38,7 +38,7 @@ public sealed class ModelVariant
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static ModelVariant FromJson(string json)
     {
-        var variant = AuthoredAsset.Parse<ModelVariant>(LegacyVariantReader.Read(json), "variant");
+        var variant = AuthoredAsset.Parse<ModelVariant>(LegacySourceFields.ReadVariant(json), "variant");
         variant.Validate();
         return variant;
     }

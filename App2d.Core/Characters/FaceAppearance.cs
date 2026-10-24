@@ -17,7 +17,7 @@ namespace App2d.Core.Characters;
 /// evaluation (<see cref="Evaluate"/>) and its drawing (<see cref="Draw"/>). The vocabulary and this procedural style
 /// retire in P7/P11, when faces become animated parts with profile bindings; until then the Person head keeps its look.
 /// </summary>
-public sealed record FaceAppearance
+public sealed record FaceAppearance : IPartPayload
 {
     /// <summary>The expression that draws nothing: a clip's back view, or a variant clearing the face.</summary>
     public const string None = "none";
@@ -33,6 +33,10 @@ public sealed record FaceAppearance
 
     /// <summary>Whether a geometry can carry a face: the features are laid out over a shape's bounds, so curves cannot.</summary>
     public static bool Supports(IGeometryValue2D? geometry) => geometry is IShape2D;
+
+    [JsonIgnore] public string Name => "face";
+    [JsonIgnore] public string Requirement => "a shape part";
+    public bool Fits(IGeometryValue2D? geometry) => Supports(geometry);
 
     /// <summary>Whether an evaluated expression draws anything.</summary>
     public static bool Shows(string expression) => expression != None;

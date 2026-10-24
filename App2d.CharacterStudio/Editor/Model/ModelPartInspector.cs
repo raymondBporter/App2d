@@ -8,7 +8,10 @@ using ImGuiNET;
 
 namespace App2d.CharacterStudio.Editor.Model;
 
-/// <summary>Shape and appearance fields shared by base parts and variant overrides.</summary>
+/// <summary>
+/// The fit, material, layer and visibility fields shared by base parts and variant overrides. Feature inspectors (curve handles
+/// and wave, cutout silhouette, face payload) are called unconditionally and decide their own applicability (P2c).
+/// </summary>
 internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEditor cutout)
 {
     private CharacterModel? Structure => session.SubjectModel?.Asset ?? session.Assets.Model(session.SubjectVariant?.Asset.Base)?.Asset;
@@ -111,11 +114,11 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 }
             }
 
-            if (overrides is null && structure is not null)
-                ModelCurveInspector.Draw(part, [.. structure.Controls.Select(c => c.Id)], change);
         }
-        else if (overrides is null)
+        if (overrides is null && structure is not null)
         {
+            // Base-only feature inspectors, each checking the part's geometry itself: curve handles and the wave payload, the cutout silhouette.
+            ModelCurveInspector.Draw(part, [.. structure.Controls.Select(c => c.Id)], change);
             cutout.Inspector(part, change);
         }
         if (!Marked("Fill", materialOverridden?.Fill is not null, () => overrides!.StripMaterial(m => m with { Fill = null })))
@@ -215,7 +218,8 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 }
             }
         }
-        Face(part, overrides, change, Property, Float);
+        // Feature inspectors decide their own applicability (plan section 3.10): a part shows a feature's rows only when its payload or geometry has it.
+        ModelFaceInspector.Draw(part, overrides, change, Property, Float);
         if (overrides is null)
         {
             var layer = new CharacterLayer2D(part.Depth);
@@ -235,52 +239,6 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
             }
 
             overrides?.Note(RigProperties.Hidden);
-        }
-    }
-
-    /// <summary>
-    /// The face payload's fields appear only while the part carries one; a base part adds or removes the payload as one edit,
-    /// a variant overrides its expression and offset with provenance and cannot add or remove it.
-    /// </summary>
-    private static void Face(PuppetPart part, PartOverrideView? overrides, Action<Action<PuppetPart>> change, Func<string, string, bool> property, Action<string, string, float, float, float, Action<PuppetPart, float>> number)
-    {
-        if (part.Face is not { } face)
-        {
-            if (overrides is null && FaceAppearance.Supports(part.Geometry) && ImGui.SmallButton("Add face"))
-            {
-                change(p => p.Face = FaceAppearance.Starter);
-            }
-
-            return;
-        }
-
-        if (!property("Default expression", RigProperties.Face))
-        {
-            ImGui.SetNextItemWidth(-1);
-            if (ImGui.BeginCombo("##face", face.Expression))
-            {
-                foreach (var expression in FaceExpressions.Names.Prepend(FaceAppearance.None))
-                {
-                    if (ImGui.Selectable(expression, expression == face.Expression))
-                    {
-                        change(p => p.Face = p.Face! with { Expression = expression });
-                    }
-                }
-
-                ImGui.EndCombo();
-            }
-
-            overrides?.Note(RigProperties.Face);
-        }
-        number("Face offset", RigProperties.FaceX, face.OffsetX, -.4f, .4f, (p, v) => p.Face = p.Face! with { OffsetX = v });
-        if (overrides is null)
-        {
-            if (ImGui.SmallButton("Remove face"))
-            {
-                change(p => p.Face = null);
-            }
-
-            Ui.Help("The procedural face draws its expression over this shape. Clips and variants keep their own expression; removing the payload reports any clip still animating it.");
         }
     }
 }

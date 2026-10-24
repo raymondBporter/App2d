@@ -380,14 +380,13 @@ public static class ModelAuthoring
             throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
         }
 
-        if (model.Parts.FirstOrDefault(p => p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true) is { } bound)
+        // A part's bindings and feature payloads answer for their own control references (P2c); the command names the owner.
+        foreach (var part in model.Parts)
         {
-            throw new InvalidOperationException($"{owner}: part '{bound.Id}' uses '{id}'; detach its points first.");
-        }
-
-        if (model.Parts.FirstOrDefault(p => p.Wave?.References(id) == true) is { } wave)
-        {
-            throw new InvalidOperationException($"{owner}: part '{wave.Id}' uses '{id}'; detach its wave control first.");
+            if (part.Dependency(id) is { } dependency)
+            {
+                throw new InvalidOperationException($"{owner}: part '{part.Id}' uses '{id}' as a {dependency}; detach it first.");
+            }
         }
 
         if (model.Slots.FirstOrDefault(s => s.Bone == id) is { } slot)
@@ -395,7 +394,7 @@ public static class ModelAuthoring
             throw new InvalidOperationException($"{owner}: slot '{slot.Id}' uses '{id}'. Move or remove the slot first.");
         }
 
-        var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
+        var parts = model.Parts.Where(p => p.AttachedTo(id)).ToList();
         model.Parts.RemoveAll(parts.Contains);
         model.Controls.RemoveAll(c => c.Id == id);
         foreach (var group in model.Groups)
@@ -585,15 +584,11 @@ public static class ModelAuthoring
         if (geometry is ICurve2D)
         {
             part.Frame = null;
-            // The face payload belongs to shape parts; a curve carries none.
-            part.Face = null;
         }
-        else
-        {
-            // The wave modifier belongs to linked curves; a shape carries none.
-            part.Wave = null;
-        }
+
         part.Geometry = geometry;
+        // Each feature payload decides whether the new geometry can carry it; the command knows no wave or face rule.
+        part.DropUnsupportedPayloads();
         if (part.Geometry is IShape2D && part.Material is { Fill: null, Outline: null })
         {
             part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
@@ -1035,24 +1030,9 @@ public static class ModelAuthoring
     {
         var edited = resolved with { };
         change(edited);
-        var changes = new List<PropertyOverride>();
+        // The property registry diffs the typed part properties (fit, face, visibility); this command knows no feature field.
+        var changes = RigProperties.PartChanges(resolved, edited).ToList();
         PropertyRef Target(string property) => PropertyRef.OfPart(resolved.Id, property);
-        if (edited.ScaleX != resolved.ScaleX) changes.Add(PropertyOverride.Of(Target(RigProperties.ScaleX), edited.ScaleX));
-        if (edited.ScaleY != resolved.ScaleY) changes.Add(PropertyOverride.Of(Target(RigProperties.ScaleY), edited.ScaleY));
-        if (edited.OffsetX != resolved.OffsetX) changes.Add(PropertyOverride.Of(Target(RigProperties.OffsetX), edited.OffsetX));
-        if (edited.OffsetY != resolved.OffsetY) changes.Add(PropertyOverride.Of(Target(RigProperties.OffsetY), edited.OffsetY));
-        if (edited.Face is null != resolved.Face is null)
-        {
-            throw new InvalidOperationException($"Part '{resolved.Id}': a variant cannot add or remove a face; the base part owns the payload.");
-        }
-
-        if (edited.Face is { } face && resolved.Face is { } before)
-        {
-            if (face.Expression != before.Expression) changes.Add(PropertyOverride.Of(Target(RigProperties.Face), face.Expression));
-            if (face.OffsetX != before.OffsetX) changes.Add(PropertyOverride.Of(Target(RigProperties.FaceX), face.OffsetX));
-        }
-
-        if (edited.Hidden != resolved.Hidden) changes.Add(PropertyOverride.Of(Target(RigProperties.Hidden), edited.Hidden));
         var was = resolved.RenderMaterial;
         var now = edited.RenderMaterial;
         RenderMaterialDefinition2D? material = variant.Override(Target(RigProperties.Material))?.Material;

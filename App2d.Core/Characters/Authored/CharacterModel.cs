@@ -215,7 +215,7 @@ public sealed class CharacterModel
     public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(LegacyModelReader.Read(json), "model");
+    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(LegacySourceFields.ReadModel(json), "model");
     public static CharacterModel FromJson(string json)
     {
         var model = FromDraftJson(json);

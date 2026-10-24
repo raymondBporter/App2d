@@ -116,6 +116,25 @@ public sealed record PartPointBinding
     public string? Toward { get; set; }
 }
 
+/// <summary>
+/// An optional feature payload a part may carry (character-system migration, P2c): the wave of a linked curve, the face of
+/// a shape. Each payload owns what the common part must not know: which geometry can carry it, which controls it references
+/// and how it validates. Common authoring asks the payloads through <see cref="PuppetPart.Payloads"/> and never a field of one.
+/// </summary>
+public interface IPartPayload
+{
+    /// <summary>The payload's name in messages and JSON ("wave", "face").</summary>
+    string Name { get; }
+    /// <summary>What a part needs to carry this payload, for the refusal message ("a linked curve", "a shape part").</summary>
+    string Requirement { get; }
+    /// <summary>Whether a geometry can carry this payload.</summary>
+    bool Fits(IGeometryValue2D? geometry);
+    /// <summary>Whether deleting this control would leave the payload dangling; the owning authoring commands refuse that.</summary>
+    bool References(string controlId);
+    /// <summary>The payload's own limits and control references, checked with the part that owns it.</summary>
+    void Validate(Func<string, bool> isControl, string field);
+}
+
 /// <summary>Curve endpoints follow controls. Shapes attach to A; B optionally points their local +Y axis.</summary>
 public sealed record PuppetPart
 {
@@ -152,6 +171,35 @@ public sealed record PuppetPart
 
     [JsonIgnore]
     public RenderMaterialDefinition2D RenderMaterial => Material ?? throw new InvalidDataException($"Part '{Id}' needs a material.");
+
+    /// <summary>The feature payloads this part carries; the only place the optional payload slots are enumerated.</summary>
+    [JsonIgnore]
+    public IEnumerable<IPartPayload> Payloads
+    {
+        get
+        {
+            if (Wave is not null) yield return Wave;
+            if (Face is not null) yield return Face;
+        }
+    }
+
+    /// <summary>Whether this part is attached to the control (its endpoints or bone frame); deleting the control removes such parts.</summary>
+    public bool AttachedTo(string controlId) => A == controlId || B == controlId || Frame == controlId;
+
+    /// <summary>
+    /// Why deleting a control would leave this part dangling, or null: a point binding or a payload's own reference. The owning
+    /// feature answers; the common part knows no wave or face field.
+    /// </summary>
+    public string? Dependency(string controlId) =>
+        Bindings?.Any(b => b.Control == controlId || b.Toward == controlId) == true ? "point binding"
+        : Payloads.FirstOrDefault(p => p.References(controlId)) is { } payload ? payload.Name + " reference" : null;
+
+    /// <summary>Drops the payloads the current geometry cannot carry, after a geometry switch; each payload decides for itself.</summary>
+    public void DropUnsupportedPayloads()
+    {
+        if (Wave?.Fits(Geometry) == false) Wave = null;
+        if (Face?.Fits(Geometry) == false) Face = null;
+    }
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
@@ -210,14 +258,14 @@ public sealed record PuppetPart
             throw new InvalidDataException("A linked curve cannot use a bone frame.");
         }
 
-        if (Wave is not null)
+        foreach (var payload in Payloads)
         {
-            if (!linkedCurve)
+            if (!payload.Fits(Geometry))
             {
-                throw new InvalidDataException("A wave modifier requires a linked curve.");
+                throw new InvalidDataException($"A {payload.Name} payload requires {payload.Requirement}.");
             }
 
-            Wave.Validate(isControl, "part.wave");
+            payload.Validate(isControl, "part." + payload.Name);
         }
 
         new Limit(-1000, 1000).Check(Angle, "part.angle");
@@ -266,15 +314,6 @@ public sealed record PuppetPart
                     throw new InvalidDataException("An attachment must point toward a different control.");
                 }
             }
-        }
-        if (Face is not null)
-        {
-            if (!FaceAppearance.Supports(Geometry))
-            {
-                throw new InvalidDataException("A face requires a shape part.");
-            }
-
-            Face.Validate(isControl, "part.face");
         }
     }
 }
@@ -460,7 +499,7 @@ public sealed class PuppetDefinition
         Controls.RemoveAll(c => c.Id == id);
         Bones.RemoveAll(b => b.From == id || b.To == id);
         Chains.RemoveAll(c => c.Root == id || c.Joint == id || c.End == id);
-        Parts.RemoveAll(p => p.A == id || p.B == id || p.Wave?.References(id) == true || p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true);
+        Parts.RemoveAll(p => p.AttachedTo(id) || p.Dependency(id) is not null);
         foreach (var motion in Motions)
         {
             foreach (var key in motion.Keys)
