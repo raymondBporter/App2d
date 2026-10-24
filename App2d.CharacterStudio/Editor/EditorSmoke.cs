@@ -781,6 +781,48 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Select(control: "fore");
                 shell.Viewport.Fit(s.Evaluate("limb"));
             }),
+            ("45-proportion-extremes", shell =>
+            {
+                // P4c: a deliberately extreme build at the hard range plays the shared walk, run and attack keys; measure-scaled contacts and travel follow its leg measure.
+                var s = shell.Session; s.Compare.Clear();
+                Check(s.NewVariant("person-stilted", "Stilted person", "person"), s);
+                var stilted = s.SubjectVariant!;
+                Check(s.Edit(stilted, () => { foreach (var (id, value) in PersonBuild.Stilted.Values()) stilted.Asset.Parameters[id] = value; }), s);
+                var model = s.Assets.Resolve("person-stilted")!;
+                var standard = s.Assets.Resolve("person")!;
+                Record(model.ParameterValues["legs"] == 2 && model.ParameterValues["torso"] == .5f && MathF.Abs(model.Nodes["left-shoulder"].Length - 2 * standard.Nodes["left-shoulder"].Length) < 1e-5f
+                    && model.ParameterValues["legs"] > model.Parameters.ById["legs"].Range.SoftMax && model.ParameterValues["legs"] == model.Parameters.ById["legs"].Max,
+                    "the stilted build sits at the hard range beyond the slider's suggested span and resolves with doubled legs and arms");
+                var walk = s.Assets.Clip("person-walk")!.Asset;
+                var ratio = model.Measure(walk.Travel.Scale) / walk.Reference[walk.Travel.Scale];
+                var standardRatio = standard.Measure(walk.Travel.Scale) / walk.Reference[walk.Travel.Scale];
+                var misses = new List<string>();
+                foreach (var clipId in new[] { "person-walk", "person-run", "player-sword-side-cut", "person-hammer-slam" })
+                {
+                    var clip = s.Assets.Clip(clipId)!.Asset;
+                    for (var i = 0; i <= 24; i++)
+                    {
+                        var pose = PoseEvaluator.Sample(model, clip, i * clip.Duration / 24.0, repeat: true);
+                        misses.AddRange(pose.Chains.Where(c => !c.Reached).Select(c => $"{clipId}@{i * clip.Duration / 24.0:0.00} {c.Chain} short by {c.Residual:F3}"));
+                        if (clipId is "person-walk" or "person-run")
+                        {
+                            misses.AddRange(pose.Contacts.Where(c => c.Residual > 1e-4f).Select(c => $"{clipId} contact {c.Chain} residual {c.Residual:E1}"));
+                        }
+                    }
+                }
+                Record(misses.All(m => !m.StartsWith("person-walk") && !m.StartsWith("person-run")), "the shared walk and run plant and reach on the stilted build: " + (misses.Count == 0 ? "no chain runs short in any clip" : string.Join("; ", misses.Take(4))));
+                Record(MathF.Abs(PoseEvaluator.CycleTravel(model, walk).X - PoseEvaluator.CycleTravel(standard, walk).X * ratio / standardRatio) < 1e-4f && ratio / standardRatio > 1.3f,
+                    $"travel and planted targets scale by the leg measure ratio {ratio / standardRatio:F3} of the stilted build");
+                s.SaveAll();
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+                Record(reopened.Resolve("person-stilted")!.ParameterValues["legs"] == 2 && reopened.Problems(reopened.Variant("person-stilted")!).Count == 0, "the extreme build saves and reopens");
+                s.Open("person-walk");
+                s.SetSubject("person-stilted");
+                s.Compare.Add("person"); s.Compare.Add("short-broad");
+                s.Seek(.3f);
+                s.Selection.Select(control: "left-knee");
+                shell.Viewport.Fit(s.Scene().FirstOrDefault());
+            }),
         ];
         return workspace;
     }

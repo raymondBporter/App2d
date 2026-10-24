@@ -26,6 +26,17 @@ internal sealed class AnimationControlInspector(EditorSession session)
         var track = ClipAuthoring.Track(clip, channel.Value);
         var semantics = ChannelSemantics.Of(ChannelSemantics.OfTrack(channel.Value.Kind, model.Controls.GetValueOrDefault(channel.Value.Target)?.Node));
         ImGui.TextDisabled($"{channel.Value.Kind} channel on '{channel.Value.Target}' ({semantics.Semantics}, {semantics.Units}){(track is null ? ", not keyed yet" : $", {track.Keys.Count} keys")}");
+        // Measure provenance (P4c): which declared measure scales this channel's units, the value the clip was authored against and this build's.
+        var measure = track?.Scale ?? (channel.Value.Kind == MotionClip.TargetKind ? model.Chains[channel.Value.Target].Scale : model.Controls[channel.Value.Target].Scale);
+        if (measure != CharacterModel.Unit && clip.Reference.TryGetValue(measure, out var reference))
+        {
+            var current = model.Measure(measure);
+            ImGui.TextDisabled($"  units scale with measure '{measure}': authored against {reference:0.###}, this build {current:0.###} (x{current / reference:0.###}){(reference != current ? "; the same keys plant and reach at this build's scale" : "")}");
+        }
+        else if (measure == CharacterModel.Unit)
+        {
+            ImGui.TextDisabled("  units are authored lengths (no measure scaling).");
+        }
         var (value, _) = ClipAuthoring.Value(clip, channel.Value, time);
         var layered = LayeredPoint2D.From(value);
         if (CharacterUi.LayeredPoint("Delta from rest (reference units)", ref layered, layerIsOffset: true))

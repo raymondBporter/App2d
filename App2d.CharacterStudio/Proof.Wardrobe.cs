@@ -1,13 +1,68 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
+using Microsoft.Xna.Framework.Graphics;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;
 
 internal sealed partial class ProofRenders
 {
+    /// <summary>
+    /// P4c: the shared walk, run and attack keys on proportion extremes. Columns: the shipped tall-thin and short-broad
+    /// variants and the two seed builds at the hard range (stilted: legs and arms doubled, torso and head halved; squat: the
+    /// reverse), as in-memory variants of the shipped Person (the file is unchanged). Rows: walk, run, side cut and hammer
+    /// slam at three instants each; the report lists every chain that runs short with its residual, so nothing is claimed.
+    /// </summary>
+    private void RenderProportionExtremes(AuthoredCatalog catalog, RenderTarget2D target, PuppetDrawing drawing, int width, int height)
+    {
+        var person = catalog.Models["person"];
+        var subjects = new (string Name, ResolvedModel Model)[]
+        {
+            ("tall-thin", catalog.Resolve("tall-thin")),
+            ("short-broad", catalog.Resolve("short-broad")),
+            ("stilted", ResolvedModel.From(person, PersonBuild.Stilted.Apply(person, "stilted", "Stilted", "#cdd8c2"))),
+            ("squat", ResolvedModel.From(person, PersonBuild.Squat.Apply(person, "squat", "Squat", "#e4cfa8"))),
+        };
+        var rows = new (string Clip, float[] At)[]
+        {
+            ("person-walk", [.1f, .3f, .55f]),
+            ("person-run", [.05f, .2f, .35f]),
+            ("player-sword-side-cut", [.05f, .12f, .3f]),
+            ("person-hammer-slam", [.3f, .78f, 1.1f]),
+        };
+        var report = new List<string> { "Proportion extremes: columns tall-thin, short-broad, stilted (legs 2, torso .5, arms 2, width .6, head .5), squat (legs .5, torso 2, arms .5, width 1.6, head 2); rows walk, run, side cut, hammer slam at three instants. Chains that run short:" };
+        foreach (var (clipId, times) in rows)
+        {
+            var clip = catalog.Animations[clipId];
+            using (GraphicsDevice.UseRenderTarget(target, new Color4b(241, 236, 223)))
+            {
+                for (var column = 0; column < subjects.Length; column++)
+                {
+                    for (var i = 0; i < times.Length; i++)
+                    {
+                        var pose = PoseEvaluator.Sample(subjects[column].Model, clip, times[i], false, new() { InPlace = true });
+                        drawing.Build(subjects[column].Model, pose);
+                        _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(width, height, new(column * 370 + 70 + i * 115, 760), 150), Matrix.Identity);
+                        foreach (var chain in pose.Chains.Where(c => !c.Reached))
+                        {
+                            report.Add($"{clipId} @ {times[i]:0.00}s on {subjects[column].Name}: {chain.Chain} short by {chain.Residual:F3}{(chain.Limited ? " (held by a joint limit)" : "")}");
+                        }
+                    }
+                }
+            }
+            target.SavePng(Path.Combine(_smokePath, "proportions-" + clipId + ".png"));
+        }
+        foreach (var (name, model) in subjects)
+        {
+            report.Add($"{name}: leg measure {model.Measures["leg"]:F3}, left upper arm {model.Nodes["left-shoulder"].Length:F3}, drawn height {model.DrawnHeight():F3}");
+        }
+
+        File.WriteAllLines(Path.Combine(_smokePath, "proportions.txt"), report);
+    }
+
     private bool RenderWardrobeProof()
     {
         var catalog = ProofCatalog();
@@ -59,6 +114,7 @@ internal sealed partial class ProofRenders
         }
         File.WriteAllText(Path.Combine(_smokePath, "wardrobe.txt"),
             "Columns: hero, maul brute, cinder gunner. Each shows both facings, then both at 48 pixels/unit. Sheets: idle, run, attack, and climbing/back view (hero) or death recoil (enemies). Uses packaged assets and the shared depth-tested renderer.\n");
+        RenderProportionExtremes(catalog, target, drawing, width, height);
         var caveman = catalog.Entities["club-caveman"];
         var samples = new (string Clip, float At)[]
         {

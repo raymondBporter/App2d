@@ -20,6 +20,13 @@ public sealed record PersonBuild
 
     public static PersonBuild TallThin { get; } = new() { Legs = 1.2f, Torso = 1.12f, Arms = 1.15f, Width = .8f, Head = .92f };
     public static PersonBuild ShortBroad { get; } = new() { Legs = .82f, Torso = .9f, Arms = .88f, Width = 1.3f, Head = 1.1f };
+    /// <summary>
+    /// Deliberately extreme builds at the hard range's ends (P4c): every leg, torso and arm dimension doubled or halved while
+    /// the shared clips play. They are proof fixtures for the proportion gate, not shipped presets: `models/person.json`
+    /// stays unchanged (plan rule 3) until the Person bundle converts in P11, when these join its preset list.
+    /// </summary>
+    public static PersonBuild Stilted { get; } = new() { Legs = 2, Torso = .5f, Arms = 2, Width = .6f, Head = .5f };
+    public static PersonBuild Squat { get; } = new() { Legs = .5f, Torso = 2, Arms = .5f, Width = 1.6f, Head = 2 };
 
     public const string LegsId = "legs", TorsoId = "torso", ArmsId = "arms", WidthId = "width", HeadId = "head";
     public static readonly string[] Ids = [LegsId, TorsoId, ArmsId, WidthId, HeadId];

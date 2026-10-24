@@ -48,10 +48,12 @@ internal sealed class ParameterInspector(EditorSession session)
                 }
 
                 var value = parameter.Default;
-                if (Ui.Slider("Default", ref value, parameter.Range.SoftMin, parameter.Range.SoftMax))
+                if (Ui.Slider($"Default ({parameter.Units})", ref value, parameter.Range.SoftMin, parameter.Range.SoftMax))
                 {
                     session.Change(document, () => { Live().Default = value; document.Asset.Validate(); });
                 }
+
+                ImGui.TextDisabled($"  slider spans the suggested range {parameter.Range.SoftMin:0.##}..{parameter.Range.SoftMax:0.##}; a file may hold {parameter.Min:0.##}..{parameter.Max:0.##}; neither is a joint limit.");
 
                 var range = new System.Numerics.Vector2(parameter.Min, parameter.Max);
                 if (Ui.Drag2("Hard range (min / max)", ref range, .01f, -10000, 10000))

@@ -135,17 +135,25 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
             amount = overridden ? amount : parameter.Default;
             ImGui.SetNextItemWidth(-1);
             var format = parameter.Units == ParameterUnits.Factor ? "%.2fx" : $"%.3f {parameter.Units}";
-            if (ImGui.SliderFloat("##parameter-" + parameter.Id, ref amount, parameter.Range.SoftMin, parameter.Range.SoftMax, format, ImGuiSliderFlags.AlwaysClamp))
+            // The slider spans the suggested editor range; a value at the hard range (an extreme preset) is still shown and kept.
+            var low = MathF.Min(parameter.Range.SoftMin, amount);
+            var high = MathF.Max(parameter.Range.SoftMax, amount);
+            if (ImGui.SliderFloat("##parameter-" + parameter.Id, ref amount, low, high, format, ImGuiSliderFlags.AlwaysClamp))
             {
-                session.Change(document, () => document.Asset.Parameters[parameter.Id] = amount);
+                session.Change(document, () => document.Asset.Parameters[parameter.Id] = Math.Clamp(amount, parameter.Min, parameter.Max));
             }
 
+            // Provenance, units and ranges (P4c): where the value came from, what the slider spans and what a file may hold.
+            var preset = basis.Presets.FirstOrDefault(p => p.Values.TryGetValue(parameter.Id, out var v) ? v == amount : amount == parameter.Default && p.Values.Count == 0);
+            var source = !overridden ? "base default" : preset is not null ? $"this variant, matching preset '{preset.Name}'" : "this variant";
+            ImGui.TextDisabled($"  {parameter.Units}; from {source}; slider {parameter.Range.SoftMin:0.##}..{parameter.Range.SoftMax:0.##}, hard range {parameter.Min:0.##}..{parameter.Max:0.##}"
+                + (amount < parameter.Range.SoftMin || amount > parameter.Range.SoftMax ? " (outside the suggested span)" : ""));
             if (parameter.Bindings.Count > 0)
             {
                 ImGui.TextDisabled("  drives " + string.Join(", ", parameter.Bindings.Select(b => b.Target.ToString())));
             }
         }
-        Ui.Help("Parameter values drive the base's bound lengths, layout, fitting and link positions; an explicit override below wins over a bound value.");
+        Ui.Help("Parameter values drive the base's bound lengths, layout, fitting and link positions; an explicit override below wins over a bound value. The slider span is an editing suggestion; the hard range is what a file may hold; neither is a joint limit.");
     }
 
     private void Control(AssetDocument<ModelVariant> document, CharacterModel basis, ResolvedModel resolved, RigNode node)
