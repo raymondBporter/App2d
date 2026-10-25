@@ -26,7 +26,7 @@ public sealed class ColliderAttachmentTests
     private static string Error(EntityAsset asset) => Assert.Throws<InvalidDataException>(() => Compile(asset)).Message;
 
     /// <summary>The spear guard with explicit version-3 hurt colliders instead of the legacy layout: a head box in the screen frame and a hips-to-chest capsule that stretches with the span.</summary>
-    private static EntityAsset GuardWithHurtColliders()
+    internal static EntityAsset GuardWithHurtColliders()
     {
         var guard = StarterContent.SpearGuardEntity();
         guard.Version = EntityAsset.CurrentVersion;

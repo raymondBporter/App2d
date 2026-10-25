@@ -150,7 +150,14 @@ public sealed class CollisionSystem2D
         return ContactProvider.TryGetContact(query, collider.WorldObject, out contact);
     }
 
-    public int QueryBounds(Rect2D bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null)
+    /// <summary>
+    /// Enabled colliders whose bounds meet <paramref name="bounds"/>. The filter is the query-side half of the pair rule:
+    /// the collider's layer must be in <paramref name="layerMask"/>, and, when the caller declares its own
+    /// <paramref name="queryLayer"/>, the collider's mask must accept that layer too, which makes a declared query filter
+    /// exactly as <see cref="CollectContacts"/>'s default pair filter does (<see cref="Collider2D.CanCollideWith"/>). An
+    /// undeclared query (the default) stays one-sided, as the terrain probes always were, and finds colliders whose own mask is empty.
+    /// </summary>
+    public int QueryBounds(Rect2D bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null, uint? queryLayer = null)
     {
         ArgGuard.ThrowIfNull(results);
         if (excluded is not null)
@@ -167,6 +174,7 @@ public sealed class CollisionSystem2D
             var collider = results[index];
             if (!collider.IsEnabled || ReferenceEquals(collider, excluded) ||
                 (collider.CollisionLayer & layerMask) == 0u ||
+                (queryLayer is { } layer && (collider.CollisionMask & layer) == 0u) ||
                 (!includeSensors && collider.IsSensor))
             {
                 results.RemoveAt(index);
@@ -176,12 +184,13 @@ public sealed class CollisionSystem2D
         return results.Count;
     }
 
-    public int Overlap(SpatialObject2D query, List<CollisionOverlap2D> overlaps, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null)
+    /// <summary>Narrow-phase contacts of a placed shape against the colliders <see cref="QueryBounds"/> accepts, with the same filter.</summary>
+    public int Overlap(SpatialObject2D query, List<CollisionOverlap2D> overlaps, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null, uint? queryLayer = null)
     {
         ArgGuard.ThrowIfNull(query);
         ArgGuard.ThrowIfNull(overlaps);
         overlaps.Clear();
-        QueryBounds(query.WorldBounds, _queryCandidates, layerMask, includeSensors, excluded);
+        QueryBounds(query.WorldBounds, _queryCandidates, layerMask, includeSensors, excluded, queryLayer);
 
         foreach (var collider in _queryCandidates)
         {
