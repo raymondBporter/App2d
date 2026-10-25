@@ -1,5 +1,6 @@
 using App2d.Contracts.Combat;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Spatial;
@@ -12,6 +13,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 {
     private readonly CollisionSystem2D _collision = ArgGuard.RequireNotNull(collision);
     private readonly List<CollisionOverlap2D> _overlaps = [];
+    private readonly HashSet<EntityId2D> _visited = [];
 
     public CombatantRegistry2D Combatants { get; } = ArgGuard.RequireNotNull(combatants);
     public int DefeatedEnemies { get; private set; }
@@ -125,22 +127,34 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 
     private ICombatant2D? GetCombatant(Collider2D collider) => Combatants.Find(collider.EntityId);
 
+    /// <summary>
+    /// The combatants an attack shape reaches, each once: plain bodies and registered hurt/guard colliders through the
+    /// ordinary broad phase (deduplicated by target entity, never per hurt collider), then the legacy authored-hurt scan for
+    /// combatants whose hurt geometry is not registered yet (their heads and long bodies extend past the terrain collider).
+    /// </summary>
     private IEnumerable<ICombatant2D> Candidates(SpatialObject2D hitbox, uint targetLayer)
     {
+        _visited.Clear();
         foreach (var overlap in _overlaps)
         {
-            if (GetCombatant(overlap.Collider) is { } c && c is not IAuthoredHurt2D)
+            var attached = overlap.Collider.UserData as AttachedCollider;
+            if (attached is not null && attached.Use is not (ColliderUses.Hurt or ColliderUses.Guard))
+            {
+                continue;
+            }
+
+            if (GetCombatant(overlap.Collider) is { } c && (attached is not null || c is not IAuthoredHurt2D) && _visited.Add(c.Id))
             {
                 yield return c;
             }
         }
-        // Hurt geometry can extend past the terrain collider (heads, long bodies).
         foreach (var id in Combatants.Ids)
         {
-            if (Combatants.Find(id) is ICombatant2D c && (c.Body.CollisionLayer & targetLayer) != 0 &&
-                c is IAuthoredHurt2D hurt && (hurt.OverlapsHurt(hitbox.WorldBounds) ||
+            if (!_visited.Contains(id) && Combatants.Find(id) is ICombatant2D c && (c.Body.CollisionLayer & targetLayer) != 0 &&
+                c is IAuthoredHurt2D { HurtRegistered: false } hurt && (hurt.OverlapsHurt(hitbox.WorldBounds) ||
                     c is ICombatGuard2D guard && guard.OverlapsGuard(hitbox.WorldBounds)))
             {
+                _visited.Add(id);
                 yield return c;
             }
         }

@@ -36,9 +36,9 @@ public sealed class AuthoredHero2D
         _halfHeight = colliderSize.Y / 2;
         for (var swing = Attack; swing is not null && !_shapes.ContainsKey(swing.Id); swing = swing.Next is { } next ? entity.Actions[next] : null)
         {
-            if (swing.Hits is not [{ Window: { Socket: null, Prop: null } } hit])
+            if (swing.Hits is not [{ Collider.Binding: ColliderBindings.Actor } hit])
             {
-                throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window, fixed to the actor (no socket or prop): the player's sword hit is a box on the player.");
+                throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window whose collider is fixed to the actor (no socket, prop or control): the player's sword hit is a box on the player.");
             }
 
             _shapes[swing.Id] = ShapeTransforms2D.Scaled(hit.Shape, WorldUnitsPerModelUnit);
@@ -61,7 +61,7 @@ public sealed class AuthoredHero2D
     {
         var swing = Swing(id);
         var hit = swing.Hits[0];
-        var centre = ToWorld(new(hit.Window.OffsetX, hit.Window.OffsetY));
+        var centre = ToWorld(new(hit.Collider.Definition.OffsetX, hit.Collider.Definition.OffsetY));
         return new(swing.Clip.Duration, hit.Start, hit.Finish, swing.Clip.Duration, centre.X, centre.Y)
         {
             Shape = _shapes[swing.Id]

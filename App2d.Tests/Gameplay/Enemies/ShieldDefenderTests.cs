@@ -35,12 +35,8 @@ public sealed class ShieldDefenderTests
         registry.Register(player);
         return (enemy, player, new CombatSystem2D(physics.CollisionSystem, registry));
     }
-    private static Rect2D Shell(AuthoredEntityEnemy2D enemy)
-    {
-        var g = enemy.Entity.Asset.Guard!;
-        var region = EntityCollision.Attack(enemy.Entity, enemy.Pose, new(new HitWindow { Prop = g.Prop, Shape = g.Shape }, 0, 1));
-        return region.Scaled(GameWorldUnits2D.WorldUnitsPerAuthoredUnit).Bounds;
-    }
+    private static Rect2D Shell(AuthoredEntityEnemy2D enemy) =>
+        enemy.Entity.GuardCollider!.Region(enemy.Pose, GameWorldUnits2D.WorldUnitsPerAuthoredUnit).Bounds;
     private static SpatialObject2D Box(Vector2 position, float size = 4)
     {
         var box = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(size)));

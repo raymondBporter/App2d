@@ -244,7 +244,7 @@ public static class ChannelSemantics
         new(MaterialValue, ParameterUnits.Factor, false, "slot color timelines"),
         new(AttachmentSelection, ParameterUnits.Factor, true, "play keys on animated part instances (P7a), face keys, slot attachment keys and draw-order keys (held)"),
         new(NormalizedParameter, ParameterUnits.Normalized, false, "bend tracks: 0..1 mapped through the bone node's declared joint limits (P4b)"),
-        new(EnabledState, ParameterUnits.Factor, true, "show tracks on drawing parts (P7a, held); collider activation arrives with P8b"),
+        new(EnabledState, ParameterUnits.Factor, true, "show tracks on drawing parts (P7a, held); an action's activation windows enable its attack colliders over half-open intervals, crossed-in-one-step included (P8b)"),
     ];
 
     /// <summary>The semantics of a control, chain or socket track by its kind and the node it targets.</summary>

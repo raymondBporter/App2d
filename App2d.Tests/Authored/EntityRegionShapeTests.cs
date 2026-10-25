@@ -82,7 +82,7 @@ public sealed class EntityRegionShapeTests
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, attack.Clip, hit.Start), new(3, 0), facing);
         var region = EntityCollision.Attack(entity, pose, hit);
         var capsule = Assert.IsType<Capsule2D>(region.Shape);
-        var frame = EntityCollision.Anchor(entity, pose, hit.Window);
+        var frame = EntityCollision.Anchor(entity, pose, hit);
         var worldAxis = region.Pose.TransformPoint(capsule.End) - region.Pose.TransformPoint(capsule.Start);
         Assert.True(Vector2.Dot(worldAxis, frame.XAxis.XY) > 0);
         Assert.Equal(.6f, worldAxis.Length(), 3);

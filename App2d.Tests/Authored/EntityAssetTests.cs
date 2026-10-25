@@ -15,7 +15,9 @@ public sealed class EntityAssetTests
         foreach (var path in paths)
         {
             var entity = EntityAsset.FromJson(File.ReadAllText(path));
-            Assert.Equal(EntityAsset.CurrentVersion, entity.Version);
+            // Version 2 reads unchanged (its meaning is a subset of 3); a file is written at 3 only once it declares colliders.
+            Assert.InRange(entity.Version, EntityAsset.LegacyVersion, EntityAsset.CurrentVersion);
+            Assert.True(entity.Version == EntityAsset.CurrentVersion || !entity.UsesColliders, $"{path} carries colliders at version {entity.Version}");
             Assert.IsType<IConvexShape2D>(entity.Movement.Shape.Validated(), exactMatch: false);
         }
     }
@@ -23,7 +25,7 @@ public sealed class EntityAssetTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
-    [InlineData(3)]
+    [InlineData(4)]
     public void UnsupportedVersionsAreRejected(int version)
     {
         var json = $$"""{"format":"app2d-entity","version":{{version}}}""";

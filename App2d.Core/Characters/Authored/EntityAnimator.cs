@@ -212,7 +212,7 @@ public sealed class EntityAnimator
 
         foreach (var hit in action.Hits)
         {
-            if (PreviousActionTime < hit.Finish && ActionTime >= hit.Start)
+            if (hit.Active(PreviousActionTime, ActionTime))
             {
                 yield return hit;
             }

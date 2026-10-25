@@ -16,15 +16,20 @@ public sealed record ActionTime
 }
 
 /// <summary>
-/// An attack region active over [Start, Finish). Its <see cref="Shape"/> lives in the anchor frame: the origin is a socket
-/// or prop point pushed <see cref="Along"/> the anchor's axis, +X runs along that axis and the frame follows the actor's
-/// facing. Without an anchor it is fixed to the actor at OffsetX/OffsetY from the feet with +X toward facing.
+/// An attack's activation window: the half-open interval [Start, Finish) over which the attack collider it names is enabled
+/// (the <see cref="ChannelSemantics.EnabledState"/> channel of the entity's timeline), plus the gameplay facts the contact
+/// carries until P9 (damage, sound). <see cref="Collider"/> names one of the entity's attack colliders. Without it the window
+/// still carries its legacy inline geometry, which resolution registers as an attack collider of the same name: the
+/// <see cref="Shape"/> in the anchor frame, the origin a socket or prop point pushed <see cref="Along"/> the anchor's axis,
+/// or, with neither, fixed to the actor at OffsetX/OffsetY from the feet with +X toward facing.
 /// </summary>
 public sealed record HitWindow
 {
     public string Id { get; set; } = "hit";
     public ActionTime Start { get; set; } = new();
     public ActionTime Finish { get; set; } = new() { At = 1 };
+    /// <summary>The attack collider this window enables (entity version 3). When set, the inline anchor and shape below are unused.</summary>
+    public string? Collider { get; set; }
     public string? Socket { get; set; }
     public string? Prop { get; set; }
     public string Point { get; set; } = PropAsset.TipPoint;
@@ -153,9 +158,14 @@ public sealed record EquipmentBinding
     public string Socket { get; set; } = "";
 }
 
-/// <summary>Pose-derived front protection; an action's guard-open event exposes it through recovery.</summary>
+/// <summary>
+/// Front protection; an action's guard-open event exposes it through recovery. <see cref="Collider"/> names one of the
+/// entity's guard colliders (entity version 3); without it the legacy <see cref="Prop"/> and <see cref="Shape"/> are
+/// registered as the guard collider "guard".
+/// </summary>
 public sealed record GuardDef
 {
+    public string? Collider { get; set; }
     public string Prop { get; set; } = "";
     /// <summary>The shield region in the prop's anchor frame.</summary>
     public IShape2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.9f, 1.4f);
@@ -163,13 +173,17 @@ public sealed record GuardDef
 
 /// <summary>
 /// What a character does in the game. References a model or variant and one of its base's motion sets; owns the
-/// controller, explicit actions, movement and hurt geometry, equipment and events. No entity inheritance.
+/// controller, explicit actions, movement geometry, attached colliders (or the legacy hurt layout selection), equipment and
+/// events. No entity inheritance. Version 3 adds <see cref="Colliders"/> and the collider references on windows and the
+/// guard; a version-2 file reads unchanged and is written back at its own version until a collider is declared.
 /// </summary>
 public sealed class EntityAsset
 {
     public const string FormatId = "app2d-entity";
     public string Format { get; set; } = FormatId;
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
+    /// <summary>The oldest version that still reads unchanged: its meaning is a subset of the current one.</summary>
+    public const int LegacyVersion = 2;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
@@ -183,9 +197,15 @@ public sealed class EntityAsset
     /// <summary>Divides knockback: a heavy entity barely moves when hit.</summary>
     public float Mass { get; set; } = 1;
     public MovementDef Movement { get; set; } = new();
+    /// <summary>The legacy hurt layout selection: pose-derived boxes until the entity's hurt geometry is converted to colliders.</summary>
     public HurtSelection Hurt { get; set; } = new();
+    /// <summary>The attached colliders (version 3): hurt, attack, guard and trigger geometry with stable IDs, shared shapes and placement bindings.</summary>
+    public List<ColliderDef> Colliders { get; set; } = [];
     public List<EquipmentBinding> Equipment { get; set; } = [];
     public List<EntityActionDef> Actions { get; set; } = [];
+
+    /// <summary>Whether the file declares anything a version-2 reader could not carry.</summary>
+    public bool UsesColliders => Colliders.Count > 0 || Guard?.Collider is not null || Actions.Any(a => a?.Hits.Any(h => h?.Collider is not null) == true);
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static EntityAsset FromJson(string json)
@@ -233,13 +253,14 @@ public sealed class EntityAsset
     public void Validate()
     {
         var owner = $"Entity '{Id}'";
-        Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
+        Require(Format == FormatId && Version is >= LegacyVersion and <= CurrentVersion, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "entity id");
         AuthoredAsset.RequireId(Model, $"{owner} model");
         AuthoredAsset.RequireId(MotionSet, $"{owner} motionSet");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
-        Require(Roles is not null && Controller is not null && Movement is not null && Hurt?.Regions is not null && Equipment is not null && Actions is not null,
+        Require(Roles is not null && Controller is not null && Movement is not null && Hurt?.Regions is not null && Colliders is not null && Equipment is not null && Actions is not null,
             $"{owner}: collections cannot be null.");
+        Require(Version >= 3 || !UsesColliders, $"{owner}: attached colliders need entity version 3; a version-{Version} file cannot carry them.");
         foreach (var (role, clip) in Roles)
         {
             AuthoredAsset.RequireId(role, $"{owner} roles");
@@ -292,11 +313,36 @@ public sealed class EntityAsset
             AuthoredAsset.RequireId(binding.Socket, $"{owner} equipment '{binding.Prop}' socket");
             Require(props.Add(binding.Prop), $"{owner}: prop '{binding.Prop}' is equipped twice.");
         }
+        var colliders = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var collider in Colliders)
+        {
+            Require(collider is not null, $"{owner}: null collider.");
+            var field = $"{owner} collider '{collider.Id}'";
+            collider.Validate(field, props);
+            Require(colliders.Add(collider.Id), $"{owner}: duplicate collider '{collider.Id}'.");
+            CheckShape(collider.Shape, field + " shape");
+        }
+        Require(Hurt.Layout is null || Colliders.All(c => c.Use != ColliderUses.Hurt), $"{owner}: hurt geometry is either the legacy layout '{Hurt.Layout}' or hurt colliders, not both.");
+        string? ColliderOf(string? id, string use, string field)
+        {
+            if (id is null)
+            {
+                return null;
+            }
+
+            var named = Colliders.FirstOrDefault(c => c?.Id == id);
+            Require(named is not null, $"{field}: no collider '{id}'.");
+            Require(named.Use == use, $"{field}: collider '{id}' is a {named.Use} collider, not {use}.");
+            return id;
+        }
         var actions = new HashSet<string>(StringComparer.Ordinal);
         if (Guard is { } guard)
         {
-            Require(props.Contains(guard.Prop), $"{owner}: guard prop '{guard.Prop}' must be equipped.");
-            CheckShape(guard.Shape, $"{owner} guard.shape", 10);
+            if (ColliderOf(guard.Collider, ColliderUses.Guard, $"{owner} guard.collider") is null)
+            {
+                Require(props.Contains(guard.Prop), $"{owner}: guard prop '{guard.Prop}' must be equipped.");
+                CheckShape(guard.Shape, $"{owner} guard.shape", 10);
+            }
         }
         var chained = Actions.Where(a => a?.Next is not null).Select(a => a.Next).ToHashSet(StringComparer.Ordinal);
         foreach (var action in Actions)
@@ -352,18 +398,21 @@ public sealed class EntityAsset
                 Require(hit?.Start is not null && hit.Finish is not null, $"{field}: incomplete hit window.");
                 AuthoredAsset.RequireId(hit.Id, field + " hit id");
                 Require(hits.Add(hit.Id), $"{field}: duplicate hit window '{hit.Id}'.");
-                Require(hit.Socket is null || hit.Prop is null, $"{field} hit '{hit.Id}': anchor to a socket or a prop, not both (neither fixes it to the actor).");
-                if (hit.Prop is not null)
-                {
-                    Require(props.Contains(hit.Prop), $"{field} hit '{hit.Id}': prop '{hit.Prop}' is not equipped.");
-                    EntityVocabulary.Require(hit.Point, PropAsset.PointNames, $"{field} hit '{hit.Id}' point");
-                }
                 CheckTime(hit.Start, $"{field} hit '{hit.Id}' start");
                 CheckTime(hit.Finish, $"{field} hit '{hit.Id}' finish");
-                new Limit(-100, 100).Check(hit.Along, $"{field} hit '{hit.Id}' along");
-                new Limit(-100, 100).Check(hit.OffsetX, $"{field} hit '{hit.Id}' offsetX");
-                new Limit(-100, 100).Check(hit.OffsetY, $"{field} hit '{hit.Id}' offsetY");
-                CheckShape(hit.Shape, $"{field} hit '{hit.Id}' shape");
+                if (ColliderOf(hit.Collider, ColliderUses.Attack, $"{field} hit '{hit.Id}' collider") is null)
+                {
+                    Require(hit.Socket is null || hit.Prop is null, $"{field} hit '{hit.Id}': anchor to a socket or a prop, not both (neither fixes it to the actor).");
+                    if (hit.Prop is not null)
+                    {
+                        Require(props.Contains(hit.Prop), $"{field} hit '{hit.Id}': prop '{hit.Prop}' is not equipped.");
+                        EntityVocabulary.Require(hit.Point, PropAsset.PointNames, $"{field} hit '{hit.Id}' point");
+                    }
+                    new Limit(-100, 100).Check(hit.Along, $"{field} hit '{hit.Id}' along");
+                    new Limit(-100, 100).Check(hit.OffsetX, $"{field} hit '{hit.Id}' offsetX");
+                    new Limit(-100, 100).Check(hit.OffsetY, $"{field} hit '{hit.Id}' offsetY");
+                    CheckShape(hit.Shape, $"{field} hit '{hit.Id}' shape");
+                }
                 new Limit(0, 10000).Check(hit.Damage, $"{field} hit '{hit.Id}' damage");
                 if (hit.Sound is not null)
                 {

@@ -22,14 +22,19 @@ namespace App2d.Gameplay.Enemies;
 /// An enemy compiled from an authored entity, in the terrain and streaming simulation. Its
 /// <see cref="EntityAnimator"/> produces the one final pose per tick: hurt and attack regions are derived from it here,
 /// and the presentation draws that same pose from <see cref="EnemyState2D.AuthoredPose"/> rather than re-sampling.
-/// Movement belongs to the physics body; gait phase follows the ground distance the body actually covered. An action's
-/// "fire" event launches its projectile from the equipped prop's muzzle, unless terrain crosses the barrel; bolts sweep in
-/// small steps so thin walls stop them, and their current values are included in enemy observations.
+/// Movement belongs to the physics body; gait phase follows the ground distance the body actually covered. The entity's
+/// attached colliders (hurt, attack, guard, trigger) are registered once in the world's collision system with this enemy's
+/// id and layer and synchronized from the final pose at the end of every <see cref="SyncAfterPhysics"/> (and on the damage
+/// tick), so physics movement never leaves them stale before the enemy's own attacks resolve; the player's melee query of
+/// the same step reads them as the previous sync left them, exactly as the legacy hurt scan read the previous pose. An
+/// action's "fire" event launches its projectile from the equipped prop's muzzle, unless terrain crosses the barrel; bolts
+/// sweep in small steps so thin walls stop them, and their current values are included in enemy observations.
 /// </summary>
 public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IAuthoredHurt2D, ICombatGuard2D
 {
     private const float Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit, HurtSeconds = .45f;
     private readonly EntityAnimator _animator;
+    private readonly ActorColliders _colliders;
     private readonly HitLedger _ledger = new();
     private readonly Dictionary<EntityId2D, int> _hitHistory = [];
     private readonly List<EnemyEvent2D> _events = [];
@@ -71,9 +76,13 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         Body.Restitution = 0;
         Body.GravityScale = _flight is null ? 1 : 0;
         Health = new(entity.Asset.Health);
+        _colliders = new(entity, physics.CollisionSystem, id, enemyLayer, Scale);
         _rootBefore = Root;
         Evaluate(0, true);
     }
+
+    /// <summary>The registered attached colliders, as the collision system holds them (world units).</summary>
+    public ActorColliders Colliders => _colliders;
 
     public ResolvedEntity Entity { get; }
     public EntityId2D Id { get; }
@@ -93,10 +102,15 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _enabled = isEnabled;
         Body.IsCollider = isEnabled && IsAlive;
         Body.MotionType = Body.IsCollider ? BodyMotionType2D.Dynamic : BodyMotionType2D.Static;
+        _colliders.SetActive(isEnabled);
         if (!isEnabled)
         {
             Body.LinearVelocity = Vector2.Zero;
             _bolts.Clear();
+        }
+        else
+        {
+            SyncColliders();
         }
     }
 
@@ -322,6 +336,26 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         {
             _animator.Lift();
         }
+
+        SyncColliders();
+    }
+
+    /// <summary>The pose/collider synchronization point: the registered colliders follow the final pose the animator just produced.</summary>
+    private void SyncColliders() => _colliders.Sync(Pose, _animator.ActiveHits(), IsAlive, GuardUp);
+
+    /// <summary>Whether the shield is up: alive, not staggered and the action has not passed its guard-open event.</summary>
+    private bool GuardUp
+    {
+        get
+        {
+            if (!IsAlive || _reaction.Staggered || Entity.GuardCollider is null)
+            {
+                return false;
+            }
+
+            var open = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == "guard-open");
+            return open is null || _animator.ActionTime < open.Seconds;
+        }
     }
 
     private bool CanStandOn(RigidBody2D other) => other.MotionType != BodyMotionType2D.Dynamic && !other.IsSensor && _physics.CanCollide(Body, other);
@@ -435,7 +469,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
         foreach (var hit in _animator.ActiveHits())
         {
-            var region = ToWorld(EntityCollision.Attack(Entity, Pose, hit));
+            var region = _colliders.Find(hit.Collider.Id)!.Region;
             if (!region.Overlaps(player.WorldObject) || !_ledger.TryHit(_animator.ActionSequence, hit.Window.Id, 0))
             {
                 continue;
@@ -447,6 +481,8 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return !player.IsAlive;
     }
 
+    public bool HurtRegistered => Entity.HurtRegistered;
+
     public bool OverlapsHurt(Rect2D hit) => HurtContact(hit) is not null;
 
     public Vector2? HurtContact(Rect2D hit)
@@ -454,6 +490,11 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         if (!_enabled || !IsAlive)
         {
             return null;
+        }
+
+        if (HurtRegistered)
+        {
+            return _colliders.HurtContact(hit);
         }
 
         Vector2? closest = null;
@@ -488,7 +529,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
         foreach (var hit in _animator.ActiveHits())
         {
-            yield return ToWorld(EntityCollision.Attack(Entity, Pose, hit)).ToSpatialObject();
+            yield return _colliders.Find(hit.Collider.Id)!.Object;
         }
     }
 
@@ -503,22 +544,16 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return true;
     }
 
+    /// <summary>The registered guard collider's bounds while it is enabled (up), as the last synchronization left it.</summary>
     private Rect2D? GuardBounds()
     {
-        if (!_enabled || !IsAlive || _reaction.Staggered || Entity.Asset.Guard is not { } guard)
+        if (!_enabled || Entity.GuardCollider is not { } guard)
         {
             return null;
         }
 
-        var open = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == "guard-open");
-        if (open is not null && _animator.ActionTime >= open.Seconds)
-        {
-            return null;
-        }
-
-        var shield = ToWorld(EntityCollision.Attack(Entity, Pose,
-            new ResolvedHit(new HitWindow { Prop = guard.Prop, Shape = guard.Shape }, 0, 1)));
-        return shield.Bounds;
+        var shield = _colliders.Find(guard.Id)!;
+        return shield.Enabled ? shield.Bounds : null;
     }
 
     public bool OverlapsGuard(Rect2D attackBounds) => GuardBounds() is { } bounds && bounds.Intersects(attackBounds);

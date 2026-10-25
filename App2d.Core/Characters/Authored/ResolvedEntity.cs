@@ -11,11 +11,20 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>An effective role assignment and where it came from: the entity's own override, or its selected motion set.</summary>
 public sealed record RoleClip(string Role, MotionClip Clip, string Source);
 
-/// <summary>A hit window with marker times in seconds and its shape built once, ready to be placed every frame.</summary>
-public sealed record ResolvedHit(HitWindow Window, float Start, float Finish)
+/// <summary>
+/// An activation window with marker times in seconds and the attack collider it enables over [Start, Finish). The window's
+/// id is the hit group: one attack instance damages each target once per window, however many hurt colliders it crosses.
+/// </summary>
+public sealed record ResolvedHit(HitWindow Window, float Start, float Finish, ResolvedCollider Collider)
 {
-    /// <summary>The window's convex shape in its anchor frame.</summary>
-    public IConvexShape2D Shape { get; } = (IConvexShape2D)Window.Shape.Validated();
+    /// <summary>The collider's convex shape in its anchor frame.</summary>
+    public IConvexShape2D Shape => Collider.Shape;
+
+    /// <summary>
+    /// Whether the window is active at any moment of a step from <paramref name="previous"/> to <paramref name="now"/>: the
+    /// half-open interval is honoured even when the whole of it lies inside the step, so a short window is never lost.
+    /// </summary>
+    public bool Active(double previous, double now) => previous < Finish && now >= Start;
 }
 public sealed record ResolvedEvent(ActionEvent Event, float Seconds);
 /// <summary>An enabled action. <see cref="Mask"/>, when set, names the targets it owns over locomotion.</summary>
@@ -80,10 +89,21 @@ public sealed class ResolvedEntity
     public IReadOnlyDictionary<string, ResolvedAction> Actions { get; private set; } = new Dictionary<string, ResolvedAction>();
     public IReadOnlyList<ResolvedEquipment> Equipment { get; private set; } = [];
     public IReadOnlyDictionary<string, ModelSocket> Sockets { get; private set; } = new Dictionary<string, ModelSocket>();
+    /// <summary>The legacy hurt layout's regions (pose-derived boxes); empty once the entity's hurt geometry is attached colliders.</summary>
     public IReadOnlyList<HurtShape> Hurt { get; private set; } = [];
+    /// <summary>
+    /// Every attached collider the entity declares or its legacy fields imply, each with a stable ID: explicit entries first,
+    /// then one attack collider per legacy hit window with inline geometry and the legacy guard. Actors register these once.
+    /// </summary>
+    public IReadOnlyList<ResolvedCollider> Colliders { get; private set; } = [];
+    /// <summary>The guard collider, when the entity has a guard.</summary>
+    public ResolvedCollider? GuardCollider { get; private set; }
+    /// <summary>Whether hurt geometry is attached colliders (found by the ordinary broad phase) rather than the legacy layout scan.</summary>
+    public bool HurtRegistered => Colliders.Any(c => c.Use == ColliderUses.Hurt);
 
     public bool Enabled(string action) => Actions.ContainsKey(action);
     public MotionClip? Clip(string role) => Roles.TryGetValue(role, out var assigned) ? assigned.Clip : null;
+    public ResolvedCollider? Collider(string id) => Colliders.FirstOrDefault(c => c.Id == id);
 
     /// <summary>
     /// Compiles an entity against its assets. Every missing reference, unsupported action, incompatible clip and missing
@@ -175,6 +195,62 @@ public sealed class ResolvedEntity
         }
         entity.Equipment = equipment;
 
+        // Attached colliders: the explicit entries, then the legacy inline geometry of windows and the guard as colliders of
+        // their own, so every actor registers one set and every query runs over it (P8a). A legacy window keeps its own id
+        // when no other window of the entity shares it, otherwise "{action}-{window}".
+        var colliders = new List<ResolvedCollider>();
+        foreach (var definition in asset.Colliders)
+        {
+            colliders.Add(ResolvedCollider.Resolve(definition, "collider", $"{owner} collider '{definition.Id}'", model, entity.Sockets, equipment));
+        }
+        var windowIds = asset.Actions.SelectMany(a => a.Hits).Where(h => h.Collider is null).Select(h => h.Id).ToLookup(id => id, StringComparer.Ordinal);
+        ResolvedCollider Synthesize(ColliderDef definition, string source, string field)
+        {
+            if (colliders.Any(c => c.Id == definition.Id))
+            {
+                throw new InvalidDataException($"{field}: its inline geometry would register as collider '{definition.Id}', which the entity already declares; name that collider instead.");
+            }
+
+            var resolved = ResolvedCollider.Resolve(definition, source, field, model, entity.Sockets, equipment);
+            colliders.Add(resolved);
+            return resolved;
+        }
+        var windowColliders = new Dictionary<(string Action, string Window), ResolvedCollider>();
+        foreach (var action in asset.Actions)
+        {
+            var field = $"{owner} action '{action.Id}'";
+            foreach (var hit in action.Hits)
+            {
+                if (hit.Collider is { } named)
+                {
+                    windowColliders[(action.Id, hit.Id)] = colliders.FirstOrDefault(c => c.Id == named && c.Use == ColliderUses.Attack)
+                        ?? throw new InvalidDataException($"{field} hit '{hit.Id}': no attack collider '{named}'.");
+                    continue;
+                }
+
+                windowColliders[(action.Id, hit.Id)] = Synthesize(new ColliderDef
+                {
+                    Id = windowIds[hit.Id].Count() == 1 ? hit.Id : $"{action.Id}-{hit.Id}",
+                    Use = ColliderUses.Attack,
+                    Shape = hit.Shape,
+                    Socket = hit.Socket,
+                    Prop = hit.Prop,
+                    Point = hit.Point,
+                    Along = hit.Along,
+                    OffsetX = hit.OffsetX,
+                    OffsetY = hit.OffsetY,
+                    Enabled = true,
+                }, "window", $"{field} hit '{hit.Id}'");
+            }
+        }
+        if (asset.Guard is { } guard)
+        {
+            entity.GuardCollider = guard.Collider is { } named
+                ? colliders.First(c => c.Id == named)
+                : Synthesize(new ColliderDef { Id = ColliderUses.Guard, Use = ColliderUses.Guard, Shape = guard.Shape, Prop = guard.Prop, Point = PropAsset.GripPoint }, "guard", $"{owner} guard");
+        }
+        entity.Colliders = colliders;
+
         var actions = new Dictionary<string, ResolvedAction>(StringComparer.Ordinal);
         foreach (var action in asset.Actions)
         {
@@ -196,16 +272,6 @@ public sealed class ResolvedEntity
             var hits = new List<ResolvedHit>();
             foreach (var hit in action.Hits)
             {
-                if (hit.Socket is not null && !entity.Sockets.ContainsKey(hit.Socket))
-                {
-                    throw new InvalidDataException($"{field} hit '{hit.Id}': '{model.Base.Id}' has no socket '{hit.Socket}'.");
-                }
-
-                if (hit.Prop is not null && equipment.First(e => e.Prop.Id == hit.Prop).Prop.Point(hit.Point) is null)
-                {
-                    throw new InvalidDataException($"{field} hit '{hit.Id}': prop '{hit.Prop}' has no '{hit.Point}' point.");
-                }
-
                 var start = Seconds(hit.Start, $"hit '{hit.Id}' start");
                 var finish = Seconds(hit.Finish, $"hit '{hit.Id}' finish");
                 if (finish <= start)
@@ -213,7 +279,7 @@ public sealed class ResolvedEntity
                     throw new InvalidDataException($"{field} hit '{hit.Id}': finish must follow start.");
                 }
 
-                hits.Add(new(hit, start, finish));
+                hits.Add(new(hit, start, finish, windowColliders[(action.Id, hit.Id)]));
             }
             var events = action.Events.Select(e => new ResolvedEvent(e, Seconds(e.At, $"event '{e.Id}'"))).OrderBy(e => e.Seconds).ToList();
             if (action.Id == EntityControllers.Jump && !events.Any(e => e.Event.Id == EntityControllers.Launch))
@@ -376,7 +442,11 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
         PropPlacement3D.Lift(SocketPlacement(socket), Local.SocketAngles.GetValueOrDefault(socket.Id));
 }
 
-/// <summary>Movement, hurt and attack regions from one placed final pose. Graphics-free.</summary>
+/// <summary>
+/// Movement, hurt and attack regions from one placed final pose, as values: the attack and registered-hurt regions are the
+/// same placement the actors' registered colliders use (<see cref="ResolvedCollider.Place"/>); the legacy hurt layout is the
+/// pose-derived box scan until its entities convert. Graphics-free.
+/// </summary>
 public static class EntityCollision
 {
     /// <summary>Radius, in authored units, given to hurt regions whose controls enclose no area.</summary>
@@ -384,10 +454,19 @@ public static class EntityCollision
 
     /// <summary>The movement shape placed at the feet, mirrored to the facing.</summary>
     public static EntityRegion Movement(ResolvedEntity entity, Vector2 position, int facing) =>
-        new("movement", entity.MovementShape, Similarity2D.FromAxis(position, new(facing, 0), mirror: facing < 0));
+        new(ColliderUses.Movement, entity.MovementShape, Similarity2D.FromAxis(position, new(facing, 0), mirror: facing < 0));
 
+    /// <summary>
+    /// The hurt regions at a pose: the entity's hurt colliders placed, or, for an entity still on the legacy layout, the
+    /// control bounding box of each layout region inflated by its pad (a hairline capsule when degenerate).
+    /// </summary>
     public static List<EntityRegion> Hurt(ResolvedEntity entity, ActorPose pose)
     {
+        if (entity.HurtRegistered)
+        {
+            return entity.Colliders.Where(c => c.Use == ColliderUses.Hurt && c.DefaultEnabled).Select(c => c.Region(pose)).ToList();
+        }
+
         var regions = new List<EntityRegion>(entity.Hurt.Count);
         foreach (var shape in entity.Hurt)
         {
@@ -401,25 +480,10 @@ public static class EntityCollision
     }
 
     /// <summary>
-    /// The frame a hit window is anchored to: a socket, an equipped prop's named point with the prop's orientation, or with
-    /// neither the actor itself (its offset from the feet, the axis along its facing).
+    /// The 3D frame an attack collider is anchored to: a socket, an equipped prop's named point with the prop's orientation,
+    /// or with neither the actor itself (its offset from the feet, the axis along its facing).
     /// </summary>
-    public static Frame3D Anchor(ResolvedEntity entity, ActorPose pose, HitWindow hit)
-    {
-        if (hit.Socket is null && hit.Prop is null)
-        {
-            return pose.Placement3D.WithOrigin(pose.Place(new(hit.OffsetX, hit.OffsetY, 0)));
-        }
-
-        if (hit.Socket is not null)
-        {
-            return pose.Socket(entity.Sockets[hit.Socket]);
-        }
-
-        var equipment = entity.Equipment.First(e => e.Prop.Id == hit.Prop);
-        var frame = pose.Socket(equipment.Socket);
-        return frame.WithOrigin(PropPlacement3D.PropPoint(frame, equipment.Prop, equipment.Prop.Point(hit.Point)!.Value));
-    }
+    public static Frame3D Anchor(ResolvedEntity entity, ActorPose pose, ResolvedHit hit) => hit.Collider.Anchor(pose);
 
     /// <summary>Where a shot leaves: the first equipped prop with a muzzle, and its unit axis in world XY (facing included).</summary>
     public static (Vector3 Point, Vector2 Axis) Muzzle(ResolvedEntity entity, ActorPose pose)
@@ -431,14 +495,10 @@ public static class EntityCollision
     }
 
     /// <summary>
-    /// The hit window's shape placed in its anchor frame: origin pushed along the anchor's axis, +X along that axis (the
-    /// facing when the axis is foreshortened away), and +Y toward the frame's across direction so mirroring keeps up in the up direction.
+    /// The window's attack collider placed for the pose, named by the window (the hit group): the one collider placement,
+    /// origin pushed along the anchor's axis, +X along that axis (the facing when the axis is foreshortened away) and +Y
+    /// toward the frame's across direction so mirroring keeps up in the up direction.
     /// </summary>
-    public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit)
-    {
-        var frame = Anchor(entity, pose, hit.Window);
-        var axis = PropPlacement3D.ProjectAxis(frame, pose.Facing);
-        var mirror = new Vector2d(axis).Cross(new(frame.YAxis.XY)) < 0d;
-        return new(hit.Window.Id, hit.Shape, Similarity2D.FromAxis(frame.TransformPoint(new(hit.Window.Along, 0, 0)).XY, axis, mirror));
-    }
+    public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit) =>
+        new(hit.Window.Id, hit.Shape, hit.Collider.Place(pose));
 }
