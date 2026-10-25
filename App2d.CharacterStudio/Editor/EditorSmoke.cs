@@ -574,7 +574,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // wearer, found through uses / used by, undone in order and saved with its wearers.
                 var s = shell.Session;
                 var library = s.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
-                Record(library.SequenceEqual(["boot", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot and sandal as library parts");
+                Record(library.SequenceEqual(["boot", "face-curve", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot, the converted curve face (P7b) and sandal as library parts");
                 s.Open("person");
                 Check(s.NewPart("mitt", "Mitt", "hair-short"), s);
                 var mitt = s.PartDocument!;
@@ -873,6 +873,68 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Pin("tall-thin");
                 s.Seek(.4f);
                 s.Selection.Select(control: "tail/tip");
+                shell.Viewport.Fit(s.Scene().FirstOrDefault());
+            }),
+            ("47-curve-face-part", shell =>
+            {
+                // P7b: the converted curve face (parts/face-curve.json) instanced on the walking Person: it blinks on the actor's
+                // clock while the walk selects a smile, swaps to a second face asset, follows the head parameter through a
+                // bound layout fit, and the game-face request reaches it; the curve-face model and clips stay as they were.
+                var s = shell.Session; s.Compare.Clear();
+                var face = s.Assets.Part("face-curve");
+                Record(face is { Asset.IsAnimated: true, Asset.Clips.Count: 9, Asset.Layers.Count: 2 } && s.Assets.Model("curve-face")!.Asset.Controls.Count(c => c.Node == RigNodeKinds.Affine) == 2,
+                    "the parts folder loads the converted curve face with its nine clips and two layers; the curve-face model keeps its affine eyes");
+                s.Open("person");
+                var personDocument = s.Assets.Model("person")!;
+                Check(s.AttachPart("face-curve", Humanoid.HeadSocket), s);
+                var faceId = personDocument.Asset.Attachments.Last(a => a.Asset == "face-curve").Id;
+                Check(s.Edit(personDocument, () =>
+                {
+                    var instance = personDocument.Asset.Attachments.First(a => a.Id == faceId);
+                    instance.Scale = .55f;
+                    instance.X = .065f;
+                    ModelAuthoring.AddBinding(personDocument.Asset, "head", new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(faceId, RigProperties.FitX) });
+                    ModelAuthoring.AddBinding(personDocument.Asset, "head", new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(faceId, RigProperties.FitY) });
+                }), s);
+                var walk = s.Assets.Clip("person-walk")!;
+                Check(s.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, faceId, 0, "smile")), s);
+                s.Open("person-walk");
+                s.Seek(.9f);
+                var subject = s.Evaluate("person")!;
+                var evaluated = subject.Pose.Attachments[faceId];
+                var rig = subject.Model.Attachment(faceId)!.Rig!;
+                var smile = PoseEvaluator.Sample(rig, face!.Asset.Clip("curve-face-smile")!, .9, repeat: true);
+                var blink = PoseEvaluator.Sample(rig, face.Asset.Clip("curve-face-blink")!, .9, repeat: true);
+                Record(evaluated.Expression == "smile" && Vector3.Distance(smile.Points["mouth-bend"], evaluated.Pose.Points["mouth-bend"]) < 1e-5f
+                    && Vector3.Distance(blink.Points["left-eye-upper-bend"], evaluated.Pose.Points["left-eye-upper-bend"]) < 1e-5f && !subject.Pose.Chains.Any(c => !c.Reached),
+                    "at 0.9 s the walking Person smiles (selected by the walk) while the blink layer runs its own clock and the legs reach their contacts");
+                s.Seek(1.0f);
+                Record(s.Evaluate("person")!.Pose.Attachments[faceId].Pose.Fits.TryGetValue("left-pupil", out var fit) && fit.Y == 0, "at the blink's closed instant the pupils collapse through their fit channel, with no rig scale anywhere");
+                var head = subject.Model.ParameterValues["head"];
+                var wide = s.Assets.Resolve("short-broad")!;
+                var narrowSpan = evaluated.World("right-eye").X - evaluated.World("left-eye").X;
+                var wideFace = s.Evaluate("short-broad")!.Pose.Attachments[faceId];
+                Record(MathF.Abs((wideFace.World("right-eye").X - wideFace.World("left-eye").X) / narrowSpan - wide.ParameterValues["head"] / head) < 1e-3f,
+                    $"short-broad's head parameter ({wide.ParameterValues["head"]:0.##}) widens the eye spacing by the same factor through the bound layout fit");
+                Check(s.DuplicatePart("face-curve", "face-curve-red", "Red curve face"), s);
+                var red = s.PartDocument!;
+                Check(s.Edit(red, () => { red.Asset.Ink = "#8b0000"; red.Asset.Validate(); }), s);
+                s.Open("person");
+                Check(s.Edit(personDocument, () => ModelAuthoring.SetAttachmentAsset(personDocument.Asset, faceId, "face-curve-red", s.Assets.PartOf)), s);
+                Record(s.Assets.Resolve("person")!.Attachment(faceId)!.Asset.Ink == "#8b0000" && s.Assets.Part("face-curve")!.Asset.Ink == "#222b32", "swapping the instance to the duplicated face asset changes what the Person wears and leaves the shared asset alone");
+                s.Undo();
+                s.Open("person-walk");
+                s.Expression = "surprised";
+                Record(s.Evaluate("person")!.Pose.Attachments[faceId].Expression == "surprised", "a game-face request the asset binds wins over the walk's smile");
+                s.Expression = null;
+                s.SaveAll();
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+                Record(reopened.Resolve("person")!.Attachment(faceId) is { IsAnimated: true } && reopened.Clip("person-walk")!.Asset.Plays.Any(p => p.Instance == faceId)
+                    && reopened.Model("curve-face")!.Asset.Version == CharacterModel.CurrentVersion && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
+                    "the face instance, its bindings and the walk's selection save and reopen; nothing needs repair");
+                s.Pin("short-broad");
+                s.Seek(.95f);
+                s.Selection.Select(attachment: faceId);
                 shell.Viewport.Fit(s.Scene().FirstOrDefault());
             }),
         ];

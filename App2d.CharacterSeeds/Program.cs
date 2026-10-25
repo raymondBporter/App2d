@@ -5,7 +5,7 @@ namespace App2d.CharacterSeeds;
 /// <summary>Runs the rendering smokes and studies against the game's real assets and simulation. This project references the game; the game does not reference it.</summary>
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --convert-variants authored-root base-id output-directory variant-id...]";
+    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --convert-variants authored-root base-id output-directory variant-id... | --convert-face authored-root model-id control-id output-directory part-id]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -63,6 +63,16 @@ internal static class Program
                 }
                 Console.WriteLine($"Report: {Path.Combine(output, "variant-conversion-report.md")}");
                 return results.All(r => r.Differences.Count == 0) ? 0 : 2;
+            case ["--convert-face", var authoredRoot, var modelId, var control, var output, var partId]:
+                // P7b: the face beneath one control of a model becomes a reusable animated face part, on a scratch tree with a report.
+                var face = App2d.Core.Characters.Authored.FaceConversion.Convert(authoredRoot, modelId, control, FaceConversionPlans.For(modelId, partId), output);
+                Console.WriteLine($"{face.PartId}: {face.Status}");
+                foreach (var difference in face.Differences)
+                {
+                    Console.WriteLine("  DIFFERENCE: " + difference);
+                }
+                Console.WriteLine($"Report: {Path.Combine(output, "face-conversion-report.md")}");
+                return face.Converted || face.Status.StartsWith("unchanged", StringComparison.Ordinal) || face.Status.StartsWith("kept", StringComparison.Ordinal) ? 0 : 2;
             default:
                 Console.Error.WriteLine(Usage);
                 return 1;

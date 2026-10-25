@@ -1,0 +1,3509 @@
+{
+  "format": "app2d-part",
+  "version": 1,
+  "id": "face-curve",
+  "name": "Curve face",
+  "usage": "face",
+  "payload": "animated",
+  "fitting": "layout",
+  "lineWidth": 0.025,
+  "materials": {},
+  "locations": [],
+  "parts": [
+    {
+      "id": "mouth",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": 0,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.025
+      },
+      "a": "mouth-left",
+      "b": "mouth-right",
+      "depth": -0.012,
+      "bindings": [
+        {
+          "control": "mouth-left"
+        },
+        {
+          "point": 1,
+          "control": "mouth-bend"
+        },
+        {
+          "point": 2,
+          "control": "mouth-right"
+        }
+      ]
+    },
+    {
+      "id": "mouth-upper",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": 0,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.025
+      },
+      "a": "mouth-left",
+      "b": "mouth-right",
+      "depth": -0.012,
+      "bindings": [
+        {
+          "control": "mouth-left"
+        },
+        {
+          "point": 1,
+          "control": "mouth-upper-bend"
+        },
+        {
+          "point": 2,
+          "control": "mouth-right"
+        }
+      ]
+    },
+    {
+      "id": "left-pupil",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "left-eye",
+      "frame": "left-eye",
+      "scaleX": 0.027,
+      "scaleY": 0.06,
+      "depth": -0.016
+    },
+    {
+      "id": "left-eye-upper",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": -0.5,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.014
+      },
+      "a": "left-eye-upper-left",
+      "b": "left-eye-upper-right",
+      "depth": -0.012,
+      "bindings": [
+        {
+          "control": "left-eye-upper-left"
+        },
+        {
+          "point": 1,
+          "control": "left-eye-upper-bend"
+        },
+        {
+          "point": 2,
+          "control": "left-eye-upper-right"
+        }
+      ]
+    },
+    {
+      "id": "left-eye-lower",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.014
+      },
+      "a": "left-eye-lower-left",
+      "b": "left-eye-lower-right",
+      "depth": -0.012,
+      "bindings": [
+        {
+          "control": "left-eye-lower-left"
+        },
+        {
+          "point": 1,
+          "control": "left-eye-lower-bend"
+        },
+        {
+          "point": 2,
+          "control": "left-eye-lower-right"
+        }
+      ]
+    },
+    {
+      "id": "left-brow",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": -0.181818,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.021
+      },
+      "a": "left-brow-left",
+      "b": "left-brow-right",
+      "depth": -0.012,
+      "bindings": [
+        {
+          "control": "left-brow-left"
+        },
+        {
+          "point": 1,
+          "control": "left-brow-bend"
+        },
+        {
+          "point": 2,
+          "control": "left-brow-right"
+        }
+      ]
+    },
+    {
+      "id": "right-pupil",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "right-eye",
+      "frame": "right-eye",
+      "scaleX": 0.027,
+      "scaleY": 0.06,
+      "depth": -0.016
+    },
+    {
+      "id": "right-eye-upper",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": -0.5,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.014
+      },
+      "a": "right-eye-upper-left",
+      "b": "right-eye-upper-right",
+      "depth": -0.012,
+      "bindings": [
+        {
+          "control": "right-eye-upper-left"
+        },
+        {
+          "point": 1,
+          "control": "right-eye-upper-bend"
+        },
+        {
+          "point": 2,
+          "control": "right-eye-upper-right"
+        }
+      ]
+    },
+    {
+      "id": "right-eye-lower",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.014
+      },
+      "a": "right-eye-lower-left",
+      "b": "right-eye-lower-right",
+      "depth": -0.012,
+      "bindings": [
+        {
+          "control": "right-eye-lower-left"
+        },
+        {
+          "point": 1,
+          "control": "right-eye-lower-bend"
+        },
+        {
+          "point": 2,
+          "control": "right-eye-lower-right"
+        }
+      ]
+    },
+    {
+      "id": "right-brow",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": -0.181818,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.021
+      },
+      "a": "right-brow-left",
+      "b": "right-brow-right",
+      "depth": -0.012,
+      "bindings": [
+        {
+          "control": "right-brow-left"
+        },
+        {
+          "point": 1,
+          "control": "right-brow-bend"
+        },
+        {
+          "point": 2,
+          "control": "right-brow-right"
+        }
+      ]
+    },
+    {
+      "id": "hair",
+      "geometry": {
+        "kind": "cubic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control1": {
+          "x": -0.46,
+          "y": 0.08
+        },
+        "control2": {
+          "x": -0.46,
+          "y": 0.92
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#4b2f2b",
+        "strokeWidth": 0.065
+      },
+      "a": "hair-left",
+      "b": "hair-right",
+      "depth": -0.008,
+      "wave": {
+        "amplitude": 0.045,
+        "cycles": 5,
+        "phaseControl": "hair-wave"
+      }
+    }
+  ],
+  "solids": [],
+  "controls": [
+    {
+      "id": "mouth-left",
+      "name": null,
+      "rest": {
+        "x": -0.23,
+        "y": -0.19999999,
+        "z": 0
+      }
+    },
+    {
+      "id": "mouth-bend",
+      "name": null,
+      "rest": {
+        "x": 0,
+        "y": -0.19999999,
+        "z": 0
+      }
+    },
+    {
+      "id": "mouth-right",
+      "name": null,
+      "rest": {
+        "x": 0.23,
+        "y": -0.19999999,
+        "z": 0
+      }
+    },
+    {
+      "id": "mouth-upper-bend",
+      "parent": "mouth-bend",
+      "name": null,
+      "rest": {
+        "x": 0,
+        "y": -0.19999999,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-eye",
+      "name": null,
+      "rest": {
+        "x": -0.18,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-eye-upper-left",
+      "name": null,
+      "rest": {
+        "x": -0.26,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-eye-upper-bend",
+      "name": null,
+      "rest": {
+        "x": -0.18,
+        "y": 0.21000004,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-eye-upper-right",
+      "name": null,
+      "rest": {
+        "x": -0.1,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-eye-lower-left",
+      "name": null,
+      "rest": {
+        "x": -0.26,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-eye-lower-bend",
+      "name": null,
+      "rest": {
+        "x": -0.18,
+        "y": 0.049999952,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-eye-lower-right",
+      "name": null,
+      "rest": {
+        "x": -0.1,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-brow-left",
+      "name": null,
+      "rest": {
+        "x": -0.29,
+        "y": 0.30999994,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-brow-bend",
+      "name": null,
+      "rest": {
+        "x": -0.18,
+        "y": 0.35000002,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-brow-right",
+      "name": null,
+      "rest": {
+        "x": -0.07,
+        "y": 0.30999994,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-eye",
+      "name": null,
+      "rest": {
+        "x": 0.18,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-eye-upper-left",
+      "name": null,
+      "rest": {
+        "x": 0.1,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-eye-upper-bend",
+      "name": null,
+      "rest": {
+        "x": 0.18,
+        "y": 0.21000004,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-eye-upper-right",
+      "name": null,
+      "rest": {
+        "x": 0.26,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-eye-lower-left",
+      "name": null,
+      "rest": {
+        "x": 0.1,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-eye-lower-bend",
+      "name": null,
+      "rest": {
+        "x": 0.18,
+        "y": 0.049999952,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-eye-lower-right",
+      "name": null,
+      "rest": {
+        "x": 0.26,
+        "y": 0.13,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-brow-left",
+      "name": null,
+      "rest": {
+        "x": 0.07,
+        "y": 0.30999994,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-brow-bend",
+      "name": null,
+      "rest": {
+        "x": 0.18,
+        "y": 0.35000002,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-brow-right",
+      "name": null,
+      "rest": {
+        "x": 0.29,
+        "y": 0.30999994,
+        "z": 0
+      }
+    },
+    {
+      "id": "hair-left",
+      "name": null,
+      "rest": {
+        "x": -0.42,
+        "y": 0.25,
+        "z": 0
+      }
+    },
+    {
+      "id": "hair-right",
+      "name": null,
+      "rest": {
+        "x": 0.42,
+        "y": 0.25,
+        "z": 0
+      }
+    },
+    {
+      "id": "hair-wave",
+      "name": null,
+      "rest": {
+        "x": -0.42,
+        "y": 0.25,
+        "z": 0
+      }
+    }
+  ],
+  "constraints": [],
+  "groups": [
+    {
+      "id": "face",
+      "targets": [
+        "mouth-left",
+        "mouth-bend",
+        "mouth-right",
+        "mouth-upper-bend",
+        "left-eye",
+        "left-eye-upper-left",
+        "left-eye-upper-bend",
+        "left-eye-upper-right",
+        "left-eye-lower-left",
+        "left-eye-lower-bend",
+        "left-eye-lower-right",
+        "left-brow-left",
+        "left-brow-bend",
+        "left-brow-right",
+        "right-eye",
+        "right-eye-upper-left",
+        "right-eye-upper-bend",
+        "right-eye-upper-right",
+        "right-eye-lower-left",
+        "right-eye-lower-bend",
+        "right-eye-lower-right",
+        "right-brow-left",
+        "right-brow-bend",
+        "right-brow-right"
+      ]
+    },
+    {
+      "id": "hair",
+      "targets": [
+        "hair-wave"
+      ]
+    },
+    {
+      "id": "eyes",
+      "targets": [
+        "left-eye-upper-bend",
+        "left-eye-lower-bend",
+        "right-eye-upper-bend",
+        "right-eye-lower-bend",
+        "left-pupil",
+        "right-pupil"
+      ]
+    }
+  ],
+  "exposed": [
+    "mouth-left",
+    "mouth-bend",
+    "mouth-right",
+    "mouth-upper-bend",
+    "left-eye",
+    "left-eye-upper-left",
+    "left-eye-upper-bend",
+    "left-eye-upper-right",
+    "left-eye-lower-left",
+    "left-eye-lower-bend",
+    "left-eye-lower-right",
+    "left-brow-left",
+    "left-brow-bend",
+    "left-brow-right",
+    "right-eye",
+    "right-eye-upper-left",
+    "right-eye-upper-bend",
+    "right-eye-upper-right",
+    "right-eye-lower-left",
+    "right-eye-lower-bend",
+    "right-eye-lower-right",
+    "right-brow-left",
+    "right-brow-bend",
+    "right-brow-right",
+    "hair-left",
+    "hair-right",
+    "hair-wave",
+    "mouth",
+    "mouth-upper",
+    "left-pupil",
+    "left-eye-upper",
+    "left-eye-lower",
+    "left-brow",
+    "right-pupil",
+    "right-eye-upper",
+    "right-eye-lower",
+    "right-brow",
+    "hair"
+  ],
+  "layers": [
+    {
+      "id": "expression",
+      "clip": null
+    },
+    {
+      "id": "blink",
+      "mask": "eyes",
+      "clock": "local",
+      "clip": "curve-face-blink"
+    }
+  ],
+  "clips": [
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-angry",
+      "name": "Angry",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-brow-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-blink",
+      "name": "Blink",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-pupil",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-pupil",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-crossed-eyes",
+      "name": "Crossed Eyes",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-eye-upper-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-upper-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-pupil",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": -1,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-upper-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-upper-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-lower-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-lower-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-pupil",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": -1,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-expressions",
+      "name": "Expressions \u2014 play me",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 8,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "mouth-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.15,
+              "y": -0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 3,
+              "y": -0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.15,
+              "y": -0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 4,
+              "y": 0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.15,
+              "y": 0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "y": 0.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "y": 0.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": -0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": -0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": -0.025,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.15,
+              "x": -0.025,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "x": 0.035,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "x": 0.035,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "x": 0.12,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "x": 0.12,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": 0.025,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.15,
+              "x": 0.025,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "x": -0.035,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "x": -0.035,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "x": -0.12,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "x": -0.12,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.15,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 3,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.15,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.15,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 3,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.15,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-pupil",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.15,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 3,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.15,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "x": -1,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "x": -1,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.15,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.15,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-pupil",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.15,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "x": -1,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "x": -1,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 2.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 3,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.15,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 3.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 4,
+              "y": -0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.15,
+              "y": -0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 3.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 4,
+              "y": 0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.15,
+              "y": 0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "y": -0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "y": -0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 3.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 4,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.15,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "y": 0.085,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "y": 0.085,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 3.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 4,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.15,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "y": 0.085,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "y": 0.085,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 3.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 4,
+              "y": 0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.15,
+              "y": 0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "y": -0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "y": -0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 3.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 4,
+              "y": -0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.15,
+              "y": -0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 4.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 5,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.15,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 5.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 6,
+              "y": 0.6,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.15,
+              "y": 0.6,
+              "ease": "smooth"
+            },
+            {
+              "time": 6.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-upper-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-upper-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-upper-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-upper-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-lower-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-lower-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 6.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 7,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.15,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 7.45,
+              "ease": "smooth"
+            },
+            {
+              "time": 8,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "hair-wave",
+          "keys": [
+            {},
+            {
+              "time": 8,
+              "x": 1.344
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-hair-wave",
+      "name": "Hair wave",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 1.5,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hair-wave",
+          "keys": [
+            {},
+            {
+              "time": 1.5,
+              "x": 0.168
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-smile",
+      "name": "Smile",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 3,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "mouth-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.5,
+              "y": -0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 3,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.5,
+              "x": -0.025,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 3,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.5,
+              "x": 0.025,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 3,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-surprised",
+      "name": "Surprised",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "mouth-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": 0.12,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": -0.12,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.6,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-wink",
+      "name": "Wink",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-eye-upper-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-eye-lower-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-pupil",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": -1,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.94,
+              "y": -0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.06,
+              "y": -0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 3,
+      "id": "curve-face-worried",
+      "name": "Worried",
+      "model": "face-curve",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-brow-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.085,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.085,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-bend",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": 0.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-left",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": 0.035,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "target": "mouth-right",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": -0.035,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "faces": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    }
+  ],
+  "expressions": {
+    "smile": {
+      "clip": "curve-face-smile",
+      "mutes": []
+    },
+    "blink": {
+      "layer": "blink",
+      "clip": "curve-face-blink",
+      "mutes": []
+    },
+    "wink": {
+      "clip": "curve-face-wink",
+      "mutes": []
+    },
+    "angry": {
+      "clip": "curve-face-angry",
+      "mutes": []
+    },
+    "worried": {
+      "clip": "curve-face-worried",
+      "mutes": []
+    },
+    "surprised": {
+      "clip": "curve-face-surprised",
+      "mutes": []
+    },
+    "crossed-eyes": {
+      "clip": "curve-face-crossed-eyes",
+      "mutes": []
+    },
+    "hair-wave": {
+      "clip": "curve-face-hair-wave",
+      "mutes": []
+    },
+    "expressions": {
+      "clip": "curve-face-expressions",
+      "mutes": []
+    },
+    "neutral": {
+      "clip": "curve-face-smile",
+      "time": 0,
+      "mutes": []
+    }
+  },
+  "expression": "neutral"
+}

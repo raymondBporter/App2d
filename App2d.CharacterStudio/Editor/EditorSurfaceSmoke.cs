@@ -183,6 +183,38 @@ internal static class EditorSurfaceSmoke
                 Capture("model-animated-attachment");
                 session.Undo();
             }
+            // P7b: the converted curve face on the three Person builds, smiling in the walk while the blink layer runs.
+            if (assets.Part("face-curve") is { } face && session.AttachPart("face-curve", Humanoid.HeadSocket))
+            {
+                var person = assets.Model("person")!;
+                var faceId = person.Asset.Attachments.Last(a => a.Asset == "face-curve").Id;
+                session.Edit(person, () =>
+                {
+                    var instance = person.Asset.Attachments.First(a => a.Id == faceId);
+                    instance.Scale = .55f;
+                    instance.X = .065f;
+                    ModelAuthoring.AddBinding(person.Asset, "head", new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(faceId, RigProperties.FitX) });
+                    ModelAuthoring.AddBinding(person.Asset, "head", new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(faceId, RigProperties.FitY) });
+                });
+                var walk = assets.Clip("person-walk")!;
+                session.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, faceId, 0, "smile"));
+                session.Open("person-walk");
+                session.Pin("tall-thin");
+                session.Pin("short-broad");
+                foreach (var (name, at) in new[] { ("face-part-walk-smile", .9f), ("face-part-walk-blink", 1f) })
+                {
+                    session.Seek(at);
+                    session.Selection.Select(attachment: faceId);
+                    shell.Viewport.Fit(session.Scene().FirstOrDefault());
+                    Capture(name);
+                }
+
+                session.Open(face.Id);
+                Capture("appearance-face-part");
+                session.Undo();
+                session.Open("person");
+                session.Undo();
+            }
         }
         Console.WriteLine("Animation settings, controls, weapon and slot inspectors, model views and curve facial studies rendered at two sizes and scales.");
     }
