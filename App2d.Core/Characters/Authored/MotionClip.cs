@@ -81,20 +81,6 @@ public sealed record ClipMarker
     public float Time { get; set; }
 }
 
-/// <summary>An expression held from this time until the next key; "none" draws no face.</summary>
-public sealed record ClipFaceKey
-{
-    public float Time { get; set; }
-    public string Expression { get; set; } = "relaxed";
-}
-
-/// <summary>Appearance channel for one face-bearing part. Never baked into limb keys; gameplay can override it.</summary>
-public sealed record ClipFaceTrack
-{
-    public string Part { get; set; } = "";
-    public List<ClipFaceKey> Keys { get; set; } = [];
-}
-
 /// <summary>A held expression on an animated part instance from this time until the next key; <see cref="PartAsset.None"/> hides the instance.</summary>
 public sealed record ClipPlayKey
 {
@@ -168,7 +154,8 @@ public sealed class MotionClip
     /// <summary>The kinds that target a drawing part rather than a control, chain or socket.</summary>
     public static readonly IReadOnlyList<string> PartKinds = [FitKind, ShowKind];
     public string Format { get; set; } = FormatId;
-    public const int CurrentVersion = 3;
+    /// <summary>Version 4 (P7c) carries no <c>faces</c> tracks: a face is an animated part instance selected through <see cref="Plays"/>. Version-3 files without face tracks read unchanged through <see cref="LegacyClipReader"/>.</summary>
+    public const int CurrentVersion = 4;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
@@ -183,8 +170,7 @@ public sealed class MotionClip
     public List<ClipTrack> Tracks { get; set; } = [];
     public List<ClipContact> Contacts { get; set; } = [];
     public List<ClipMarker> Markers { get; set; } = [];
-    public List<ClipFaceTrack> Faces { get; set; } = [];
-    /// <summary>Expression selections on the wearer's animated part instances (P7a).</summary>
+    /// <summary>Expression selections on the wearer's animated part instances (P7a); since P7c the one face channel.</summary>
     public List<ClipPlayTrack> Plays { get; set; } = [];
     public List<SlotAttachmentTrack2D> Attachments { get; set; } = [];
     public List<SlotColorTrack2D> Colors { get; set; } = [];
@@ -196,7 +182,7 @@ public sealed class MotionClip
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static MotionClip FromJson(string json)
     {
-        var clip = AuthoredAsset.Parse<MotionClip>(json, "clip");
+        var clip = AuthoredAsset.Parse<MotionClip>(LegacySourceFields.ReadClip(json), "clip");
         clip.Validate();
         return clip;
     }
@@ -223,7 +209,7 @@ public sealed class MotionClip
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
         new Limit(.05f, 60).Check(Duration, $"{owner} duration");
-        Require(Reference is not null && Travel?.Keys is not null && Tracks is not null && Contacts is not null && Markers is not null && Faces is not null && Plays is not null, $"{owner}: collections cannot be null.");
+        Require(Reference is not null && Travel?.Keys is not null && Tracks is not null && Contacts is not null && Markers is not null && Plays is not null, $"{owner}: collections cannot be null.");
         Require(Travel.Scale is not null, $"{owner} travel: a scale is required.");
         Source?.Validate(owner);
         if (Attachments is null || Colors is null || DrawOrder is null || Events is null)
@@ -355,22 +341,6 @@ public sealed class MotionClip
             AuthoredAsset.RequireId(marker.Id, $"{owner} marker id");
             Require(markers.Add(marker.Id), $"{owner}: duplicate marker '{marker.Id}'.");
             new Limit(0, Duration).Check(marker.Time, $"{owner} marker '{marker.Id}' time");
-        }
-        var faceParts = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var face in Faces)
-        {
-            Require(face?.Keys is not null && face.Part is not null, $"{owner}: incomplete face track.");
-            Require(faceParts.Add(face.Part), $"{owner}: duplicate face track for '{face.Part}'.");
-            var previous = -1f;
-            foreach (var key in face.Keys)
-            {
-                Require(key is not null, $"{owner} face '{face.Part}': null key.");
-                new Limit(0, Duration).Check(key.Time, $"{owner} face '{face.Part}' key time");
-                Require(key.Time > previous, $"{owner} face '{face.Part}': key times must be strictly increasing.");
-                previous = key.Time;
-                // "none" hides the face for the key's span, as in a back view.
-                Require(key.Expression == "none" || FaceExpressions.Contains(key.Expression), $"{owner} face '{face.Part}': unknown expression '{key.Expression}'.");
-            }
         }
         foreach (var group in Contacts.GroupBy(c => c.Chain))
         {
@@ -527,11 +497,6 @@ public sealed class MotionClip
             Require(model.Chains.TryGetValue(contact.Chain, out var chain), $"{field}: unknown chain.");
             Require(chain.Frame == CharacterModel.Locomotion, $"{field}: contacts need a chain keyed in the locomotion frame.");
             Require(chain.Scale == Travel.Scale, $"{field}: the chain's scale '{chain.Scale}' must match the travel scale '{Travel.Scale}'.");
-        }
-        foreach (var face in Faces)
-        {
-            // The face payload owns the track's target: only a part carrying one can be animated by it.
-            Require(model.Parts.Any(p => p.Id == face.Part && p.Face is not null), $"{owner} face track '{face.Part}': the model has no part with a face by that ID.");
         }
     }
 

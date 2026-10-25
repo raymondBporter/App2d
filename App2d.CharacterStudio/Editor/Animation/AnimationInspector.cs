@@ -5,7 +5,7 @@ using ImGuiNET;
 
 namespace App2d.CharacterStudio.Editor.Animation;
 
-/// <summary>Animation settings, keying, selected control or slot, faces, and markers from top to bottom.</summary>
+/// <summary>Animation settings, keying, selected control, part instance or slot, and markers from top to bottom.</summary>
 internal sealed class AnimationInspector(EditorSession session, AnimationViewport viewport, AnimationWeaponEditor weapons)
 {
     private readonly AnimationControlInspector _controls = new(session);
@@ -46,7 +46,6 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
                 _slots.Draw(document, primary, slot);
             }
         }
-        Faces(document, primary);
         Markers(document);
 
         foreach (var problem in session.Assets.Problems(document))
@@ -182,43 +181,6 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
         {
             viewport.Onion = onion;
         }
-    }
-
-    private void Faces(AssetDocument<MotionClip> document, Subject? primary)
-    {
-        if (primary is null)
-        {
-            return;
-        }
-
-        var parts = primary.Model.Parts.Where(p => p.Face is not null).ToArray();
-        if (parts.Length == 0)
-        {
-            return;
-        }
-
-        Ui.Header("Face");
-        var time = session.Transport.Time;
-        foreach (var part in parts)
-        {
-            var track = document.Asset.Faces.FirstOrDefault(f => f.Part == part.Id);
-            var here = track?.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
-            var shown = PoseEvaluator.FaceAt(document.Asset, part.Id, time);
-            ImGui.PushID(part.Id);
-            if (Ui.Combo($"{part.Id}: {(here is not null ? "keyed here" : shown is null ? "model default" : "held from earlier key")}", here?.Expression ?? shown ?? part.Face!.Expression,
-                FaceExpressions.Names) is { } expression)
-            {
-                session.Edit(document, () => ClipAuthoring.SetFace(document.Asset, part.Id, time, expression));
-            }
-
-            if (here is not null && ImGui.SmallButton("Remove face key"))
-            {
-                session.Edit(document, () => ClipAuthoring.SetFace(document.Asset, part.Id, time, null));
-            }
-
-            ImGui.PopID();
-        }
-        Ui.Help("A gameplay expression (viewport toolbar) overrides these; limb keys never carry face data.");
     }
 
     private void Markers(AssetDocument<MotionClip> document)

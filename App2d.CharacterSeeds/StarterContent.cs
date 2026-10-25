@@ -46,9 +46,10 @@ public static class StarterContent
         model.Looks =
         [
             new() { Id = "sage", Name = "Sage", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#d8e9db" } } } },
-            new() { Id = "slate", Name = "Slate", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#b8c4d6" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#efe6da" }, Face = "focused" } } },
-            new() { Id = "ember", Name = "Ember", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#eab596" } }, [Humanoid.Head] = new() { Face = "determined" } } },
-            new() { Id = "night", Name = "Night", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#7d879a" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#e2d6c6" }, Face = "smug" } } },
+            // The looks' face words (slate focused, ember determined, night smug) join as instance expressions when the face is attached (PersonTemplate.AttachFace).
+            new() { Id = "slate", Name = "Slate", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#b8c4d6" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#efe6da" } } } },
+            new() { Id = "ember", Name = "Ember", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#eab596" } } } },
+            new() { Id = "night", Name = "Night", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#7d879a" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#e2d6c6" } } } },
         ];
         model.HurtLayouts =
         [
@@ -82,7 +83,7 @@ public static class StarterContent
             Directory.CreateDirectory(directory);
             AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
         }
-        var resolved = ResolvedModel.From(person);
+        var resolved = ResolvedModel.From(person, null, PersonTemplate.PartOf);
         var clips = new[] { PersonIdle(resolved), PersonThrust(resolved), PersonJump(resolved), PersonHit(resolved), PersonDeath(resolved) };
         foreach (var clip in clips)
         {
@@ -134,7 +135,7 @@ public static class StarterContent
             marker.Time *= Slow;
         }
 
-        foreach (var key in clip.Faces.SelectMany(f => f.Keys))
+        foreach (var key in clip.Plays.SelectMany(p => p.Keys))
         {
             key.Time *= Slow;
         }
@@ -234,7 +235,7 @@ public static class StarterContent
                 K(0, -0.05f, 0.06f, ClipEase.Linear), K(1 / 60f, -0.12f, 0.16f, ClipEase.Linear), K(0.05f, -0.12f, 0.16f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
         ];
         clip.Contacts = [Plant(Humanoid.LeftLeg, 0, .3f), Plant(Humanoid.RightLeg, 0, .3f)];
-        clip.Faces = [new() { Part = Humanoid.Head, Keys = [new() { Time = 0, Expression = "hurt" }] }];
+        clip.Plays = [new() { Instance = PersonTemplate.FaceInstance, Keys = [new() { Time = 0, Expression = "hurt" }] }];
         return clip;
     }
 
@@ -259,7 +260,7 @@ public static class StarterContent
         ];
         clip.Contacts = [Plant(Humanoid.LeftLeg, 0, 1.1f), Plant(Humanoid.RightLeg, 0, 1.1f)];
         clip.Markers = [new() { Id = "impact", Time = .75f }];
-        clip.Faces = [new() { Part = Humanoid.Head, Keys = [new() { Time = 0, Expression = "hurt" }, new() { Time = .75f, Expression = "knocked-out" }] }];
+        clip.Plays = [new() { Instance = PersonTemplate.FaceInstance, Keys = [new() { Time = 0, Expression = "hurt" }, new() { Time = .75f, Expression = "knocked-out" }] }];
         return clip;
     }
 
@@ -279,7 +280,7 @@ public static class StarterContent
         ];
         clip.Contacts = [Plant(Humanoid.LeftLeg, 0, .9f), Plant(Humanoid.RightLeg, 0, .9f)];
         clip.Markers = [new() { Id = "windup", Time = .05f }, new() { Id = "strike", Time = .4f }, new() { Id = "recover", Time = .58f }];
-        clip.Faces = [new() { Part = Humanoid.Head, Keys = [new() { Time = 0, Expression = "focused" }, new() { Time = .36f, Expression = "determined" }, new() { Time = .7f, Expression = "focused" }] }];
+        clip.Plays = [new() { Instance = PersonTemplate.FaceInstance, Keys = [new() { Time = 0, Expression = "focused" }, new() { Time = .36f, Expression = "determined" }, new() { Time = .7f, Expression = "focused" }] }];
         return clip;
     }
 

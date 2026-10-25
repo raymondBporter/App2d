@@ -20,18 +20,17 @@ namespace App2d.Core.Characters.Authored;
 /// version 8; one naming a rule is refused, since nothing in Core knows a humanoid's proportions any more. The only shipped
 /// user, <c>models/person.json</c>, was converted explicitly.</item>
 /// <item>Version 8 (P5a) had no <c>attachments</c>; a file without them reads unchanged at version 9.</item>
-/// <item>Versions 5 to 9 (P2b) kept a part's procedural face as two loose fields, the expression string <c>face</c>
-/// (<c>none</c> for no face) and the offset <c>faceX</c>; a part with an expression gets the typed
-/// <see cref="FaceAppearance"/> payload under <c>face</c> (<c>expression</c>, <c>offsetX</c>), a part without one gets no
-/// face member at all. A version-9 part whose <c>face</c> is already an object is left alone.</item>
+/// <item>Versions 5 to 10 could carry a part's procedural face (the loose <c>face</c> word with <c>faceX</c> up to
+/// version 9, the typed payload object at 10). Since P7c a face is an animated library part instanced on a socket, so a
+/// part with a face is refused by name: the bundle converts explicitly (<see cref="FaceConversion.ConvertPayload"/>;
+/// <c>models/person.json</c> was converted that way). A part whose <c>face</c> is <c>none</c>, or absent, reads as a plain part.</item>
 /// </list>
-/// Deletion condition: no model file below version 10 remains in the authored tree, the seeds or the tests (the P11
-/// conversion reports list the converted bundles; six of the seven shipped models are still at version 5 and
-/// <c>models/person.json</c> at version 8).
+/// Deletion condition: no model file below version 11 remains in the authored tree, the seeds or the tests (the P11
+/// conversion reports list the converted bundles; six of the seven shipped models are still at version 5).
 /// </summary>
 internal static class LegacyModelReader
 {
-    public const int WaveFieldsVersion = 5, ChainsVersion = 6, BuildRuleVersion = 7, ParametersVersion = 8, FaceFieldsVersion = 9;
+    public const int WaveFieldsVersion = 5, ChainsVersion = 6, BuildRuleVersion = 7, ParametersVersion = 8, FaceFieldsVersion = 9, FacePayloadVersion = 10;
     private const string Amplitude = "waveAmplitude", Cycles = "waveCycles", PhaseControl = "wavePhaseControl", Wave = "wave";
     private const string Face = "face", FaceX = "faceX";
 
@@ -48,7 +47,7 @@ internal static class LegacyModelReader
             return json;
         }
 
-        if (root is null || Find(root, "version") is not (var versionName, JsonValue version) || !version.TryGetValue(out int number) || number is < WaveFieldsVersion or > FaceFieldsVersion)
+        if (root is null || Find(root, "version") is not (var versionName, JsonValue version) || !version.TryGetValue(out int number) || number is < WaveFieldsVersion or > FacePayloadVersion)
         {
             return json;
         }
@@ -85,7 +84,7 @@ internal static class LegacyModelReader
 
         foreach (var part in parts)
         {
-            ConvertFace(part);
+            RefuseFace(part, number);
         }
 
         return root.ToJsonString();
@@ -157,40 +156,29 @@ internal static class LegacyModelReader
         part[Wave] = wave;
     }
 
-    /// <summary>The loose expression string and offset become the typed payload; "none" or no expression means no face member.</summary>
-    private static void ConvertFace(JsonObject part)
+    /// <summary>A part with a procedural face (a word other than "none", or the payload object) is refused: the bundle converts the face to a part instance. "none" or no face reads as a plain part.</summary>
+    private static void RefuseFace(JsonObject part, int number)
     {
-        if (Find(part, Face) is not (var key, var expression))
-        {
-            Take(part, FaceX);
-            return;
-        }
-
-        if (expression is JsonObject)
-        {
-            return;
-        }
-
-        // A hand-edited null stays an error against the file, as the strict parser reported it before.
-        if (expression is null)
-        {
-            throw new InvalidDataException($"Model part '{Find(part, "id")?.Node}': {key} is null.");
-        }
-
-        part.Remove(key);
+        var id = Find(part, "id")?.Node?.ToString() ?? "?";
+        var found = Find(part, Face);
         var offset = Take(part, FaceX);
-        if (expression is not JsonValue word || !word.TryGetValue(out string? name) || name is null or FaceAppearance.None)
+        if (found is not (var key, var expression))
         {
+            if (offset is not null)
+            {
+                throw new InvalidDataException($"Model file at version {number}, part '{id}': {FaceX} without a face; the procedural face retired in P7c, convert the bundle with FaceConversion.ConvertPayload (`--convert-face-payload`).");
+            }
+
             return;
         }
 
-        var face = new JsonObject { ["expression"] = name };
-        if (offset is not null)
+        if (expression is JsonValue word && word.TryGetValue(out string? name) && name == "none" && offset is null)
         {
-            face["offsetX"] = offset;
+            part.Remove(key);
+            return;
         }
 
-        part[Face] = face;
+        throw new InvalidDataException($"Model file at version {number}, part '{id}' carries a procedural face ({Face}), retired in P7c: a face is an animated library part instanced on a socket. Convert the bundle with FaceConversion.ConvertPayload (`--convert-face-payload`), which models/person.json went through.");
     }
 
     // The strict parser matches member names case-insensitively, so the reader does too.

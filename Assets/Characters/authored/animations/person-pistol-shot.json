@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "person-pistol-shot",
   "name": "Pistol shot",
   "model": "person",
@@ -339,9 +339,9 @@
       "time": 0.6
     }
   ],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "focused"

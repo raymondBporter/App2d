@@ -151,7 +151,7 @@ public sealed class EvaluatedPose
     public IReadOnlyDictionary<string, Matrix3x2> Bones => _bones;
     public List<EvaluatedSlot2D> Slots { get; } = [];
     public Dictionary<string, Vector3> SocketAngles { get; } = new(StringComparer.Ordinal);
-    /// <summary>The expression each visible face-bearing part and each animated part instance shows: gameplay input, then the clip's channel, then the default.</summary>
+    /// <summary>The expression each animated part instance shows (P7a/P7c): a gameplay request, then the clip's selection channel, then the instance's and the asset's default.</summary>
     public Dictionary<string, string> Expressions { get; } = new(StringComparer.Ordinal);
     /// <summary>The locomotion frame's origin at this sample.</summary>
     public Vector3 Locomotion { get; set; }
@@ -505,24 +505,6 @@ public static class PoseEvaluator
 
             return Read1(null);
         }
-        foreach (var part in model.Parts)
-        {
-            if (part.Hidden || part.Face is not { } face)
-            {
-                continue;
-            }
-
-            string? animated = null;
-            for (var i = layers.Length - 1; i >= 0 && animated is null; i--)
-            {
-                if (layers[i].Weight >= .5f)
-                {
-                    animated = FaceAt(layers[i].Clip, part.Id, layers[i].Time);
-                }
-            }
-
-            pose.Expressions[part.Id] = face.Evaluate(input.Expression, animated ?? FaceAt(clip, part.Id, time));
-        }
         if (model.Attachments.Count > 0)
         {
             EvaluateAttachments(model, pose, clip, time, seconds, input, layers);
@@ -687,18 +669,6 @@ public static class PoseEvaluator
         var (end, _) = Interpolate(keys, clip.Duration);
         var (start, _) = Interpolate(keys, 0);
         return new Vector2(end.X - start.X, end.Y - start.Y) * ratio;
-    }
-
-    /// <summary>The clip's expression for a part at a time: the last key at or before it, else the first key. Null without a track.</summary>
-    public static string? FaceAt(MotionClip clip, string part, float time)
-    {
-        var track = clip.Faces.FirstOrDefault(f => f.Part == part);
-        if (track is null || track.Keys.Count == 0)
-        {
-            return null;
-        }
-
-        return (track.Keys.LastOrDefault(k => k.Time <= time) ?? track.Keys[0]).Expression;
     }
 
     /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>

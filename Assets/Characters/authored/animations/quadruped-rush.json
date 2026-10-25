@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "quadruped-rush",
   "name": "Quadruped \u00B7 rush",
   "model": "quadruped",
@@ -624,7 +624,7 @@
     }
   ],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

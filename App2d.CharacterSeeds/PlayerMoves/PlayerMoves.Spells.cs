@@ -31,7 +31,7 @@ internal static partial class PlayerMoves
             control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
         }
 
-        var model = ResolvedModel.From(reference);
+        var model = ResolvedModel.From(reference, null, PersonTemplate.PartOf);
         foreach (var clip in new[] { GunCharge(model), HealGather(model) })
         {
             clip.Save(Path.Combine(root, "animations", clip.Id + ".json"));

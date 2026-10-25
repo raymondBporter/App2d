@@ -210,7 +210,7 @@ internal sealed partial class ProofRenders
                 Start = c.Start + n * legs.Duration, Finish = MathF.Min(duration, c.Finish + n * legs.Duration), Target = c.Target with { X = c.Target.X + n * stride },
             }))],
             Markers = [],
-            Faces = arms.Faces,
+            Plays = arms.Plays,
         };
     }
 

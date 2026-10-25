@@ -28,7 +28,7 @@ public sealed class LibraryPartEditingTests : IDisposable
     public void TheShippedLibraryLoadsAndANewPartOpensInAppearanceWithAPreviewOnTheWearer()
     {
         var session = Session();
-        Assert.Equal(["boot", "face-curve", "sandal"], session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal));
+        Assert.Equal(["boot", "face-curve", "face-person", "sandal"], session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal));
         session.Open("person");
         Assert.True(session.NewPart("badge", "Badge"), session.Message);
         Assert.Equal(Workspace.Appearance, session.Mode);
@@ -62,25 +62,26 @@ public sealed class LibraryPartEditingTests : IDisposable
         Assert.Equal("tall-thin", session.SubjectId);
         Assert.True(session.AttachPart("boot", Humanoid.LeftFootSocket), session.Message);
         Assert.Contains("base 'person'", session.Message);
+        // The Person already wears its face instance (P7c); the boot is the second instance.
         var person = session.Assets.Model("person")!;
-        Assert.Single(person.Asset.Attachments);
-        Assert.Equal(person.Asset.Attachments[0].Id, session.Selection.Attachment);
+        Assert.Equal(2, person.Asset.Attachments.Count);
+        Assert.Equal(person.Asset.Attachments[^1].Id, session.Selection.Attachment);
         Assert.True(person.Dirty);
         Assert.False(session.Assets.Variant("tall-thin")!.Dirty);
         Assert.Null(session.PreviewAttachmentOn(session.Assets.Resolve("tall-thin")!));
-        Assert.Single(session.Assets.Resolve("short-broad")!.Attachments);
+        Assert.Equal(2, session.Assets.Resolve("short-broad")!.Attachments.Count);
         Assert.True(session.AttachPart("boot", Humanoid.RightFootSocket, mirror: true), session.Message);
-        Assert.Equal(2, person.Asset.Attachments.Count);
-        Assert.True(person.Asset.Attachments[1].Mirror);
+        Assert.Equal(3, person.Asset.Attachments.Count);
+        Assert.True(person.Asset.Attachments[^1].Mirror);
         // Undo from the part editor reverts the attach on the base, newest first.
         Assert.True(session.CanUndo);
         session.Undo();
-        Assert.Single(person.Asset.Attachments);
+        Assert.Equal(2, person.Asset.Attachments.Count);
         session.Undo();
-        Assert.Empty(person.Asset.Attachments);
+        Assert.Single(person.Asset.Attachments);
         Assert.False(session.AttachPart("boot", "nowhere"));
         Assert.Contains("no socket 'nowhere'", session.Message);
-        Assert.Empty(person.Asset.Attachments);
+        Assert.Single(person.Asset.Attachments);
     }
 
     [Fact]

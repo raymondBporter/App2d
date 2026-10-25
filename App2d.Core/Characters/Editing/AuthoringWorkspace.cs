@@ -489,6 +489,13 @@ public sealed class AuthoringWorkspace
         {
             case AssetDocument<CharacterModel> model:
                 Try(model.Asset.Validate);
+                // The base resolves through the part library too: an instance whose asset or default word is unbound is a
+                // problem of the wearer, reported by name (P7c), not a silent gap until a variant or clip trips over it.
+                if (problems.Count == 0 && Resolve(model.Id, out var unresolved) is null)
+                {
+                    problems.Add(unresolved!);
+                }
+
                 break;
             case AssetDocument<ModelVariant> variant:
                 if (Resolve(variant.Id, out var error) is null)
@@ -564,7 +571,7 @@ public sealed class AuthoringWorkspace
                 {
                     var from = model.Asset.StructureRevision;
                     model.Edit(() => model.Asset.StructureRevision++);
-                    var resolved = ResolvedModel.From(model.Asset);
+                    var resolved = ResolvedModel.From(model.Asset, null, PartOf);
                     foreach (var clip in Dependents(model.Id).Clips.Where(c => c.Asset.StructureRevision == from))
                     {
                         try

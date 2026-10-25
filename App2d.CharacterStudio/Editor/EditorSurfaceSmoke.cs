@@ -102,10 +102,10 @@ internal static class EditorSurfaceSmoke
                 session.Undo();
             }
             session.EditRig = false;
-            // P2b: the head's face payload rows on the base part inspector.
+            // P7c: the Person's face instance on the base model's attachment inspector.
             session.Open("person");
-            session.Selection.Select(part: Humanoid.Head);
-            Capture("model-face-payload");
+            session.Selection.Select(attachment: PersonTemplate.FaceInstance);
+            Capture("model-face-instance");
             if (assets.Part("boot") is { } boot)
             {
                 // P5c: a library part on a wearer (preview before attaching), then the instance on the base model.
@@ -183,19 +183,14 @@ internal static class EditorSurfaceSmoke
                 Capture("model-animated-attachment");
                 session.Undo();
             }
-            // P7b: the converted curve face on the three Person builds, smiling in the walk while the blink layer runs.
-            if (assets.Part("face-curve") is { } face && session.AttachPart("face-curve", Humanoid.HeadSocket))
+            // P7b/P7c: the Person's face instance swapped to the converted curve face on the three builds, smiling in the walk while the blink layer runs.
+            if (assets.Part("face-curve") is { } face && assets.Model("person") is { } person && session.Edit(person, () =>
             {
-                var person = assets.Model("person")!;
-                var faceId = person.Asset.Attachments.Last(a => a.Asset == "face-curve").Id;
-                session.Edit(person, () =>
-                {
-                    var instance = person.Asset.Attachments.First(a => a.Id == faceId);
-                    instance.Scale = .55f;
-                    instance.X = .065f;
-                    ModelAuthoring.AddBinding(person.Asset, "head", new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(faceId, RigProperties.FitX) });
-                    ModelAuthoring.AddBinding(person.Asset, "head", new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(faceId, RigProperties.FitY) });
-                });
+                person.Asset.Attachments.First(a => a.Id == PersonTemplate.FaceInstance).Expression = null;
+                ModelAuthoring.SetAttachmentAsset(person.Asset, PersonTemplate.FaceInstance, "face-curve", assets.PartOf);
+            }))
+            {
+                var faceId = PersonTemplate.FaceInstance;
                 var walk = assets.Clip("person-walk")!;
                 session.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, faceId, 0, "smile"));
                 session.Open("person-walk");

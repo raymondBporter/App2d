@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "person-idle",
   "name": "Idle",
   "model": "person",
@@ -102,7 +102,7 @@
     }
   ],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

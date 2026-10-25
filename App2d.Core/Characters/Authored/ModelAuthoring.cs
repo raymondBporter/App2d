@@ -307,7 +307,7 @@ public static class ModelAuthoring
         var control = new ModelControl { Id = id ?? UniqueId(parent is null ? "control" : parent + "-child", Names(model)), Parent = parent, Rest = PuppetPoint.From(rest) };
         if (parent is not null && Control(model, parent).Transform is not null)
         {
-            var frame = ResolvedModel.From(model).RestTransforms[parent];
+            var frame = ResolvedModel.Rig(model).RestTransforms[parent];
             if (!Matrix3x2.Invert(frame, out var inverse))
             {
                 throw new InvalidOperationException("Cannot add a bone beneath a collapsed parent transform.");
@@ -472,7 +472,7 @@ public static class ModelAuthoring
         }
         if (control.Transform is not null)
         {
-            var resolved = ResolvedModel.From(model);
+            var resolved = ResolvedModel.Rig(model);
             var frame = parent is null ? Matrix3x2.Identity : resolved.RestTransforms[parent];
             if (!Matrix3x2.Invert(frame, out var inverse))
             {
@@ -750,7 +750,7 @@ public static class ModelAuthoring
         }
         if (moving.Transform is not null)
         {
-            var resolved = ResolvedModel.From(model);
+            var resolved = ResolvedModel.Rig(model);
             var deltaAffine = position - resolved.Rest[id];
             var movedIds = (children ? Subtree(model.Controls, id) : [Control(model, id)]).Select(c => c.Id).ToHashSet();
             var frames = new Dictionary<string, Matrix3x2>();
@@ -850,7 +850,7 @@ public static class ModelAuthoring
         }
         if (bone.Transform is { } affine)
         {
-            var resolved = ResolvedModel.From(model);
+            var resolved = ResolvedModel.Rig(model);
             var parent = bone.Parent is null ? Matrix3x2.Identity : resolved.RestTransforms[bone.Parent];
             if (!Matrix3x2.Invert(parent, out var inverse))
             {
@@ -898,7 +898,7 @@ public static class ModelAuthoring
             model.Validate();
             return;
         }
-        var resolved = ResolvedModel.From(model);
+        var resolved = ResolvedModel.Rig(model);
         var delta = new Vector3(Vector2.TransformNormal(new(length - bone.Length, 0), resolved.RestTransforms[id]), 0);
         bone.Length = length;
         foreach (var child in next)
@@ -1097,7 +1097,7 @@ public static class ModelAuthoring
     /// <summary>Turns and resizes a rest bone to put its tip at a model-space position.</summary>
     public static void MoveBoneTip(CharacterModel model, string id, Vector2 position)
     {
-        var origin = ResolvedModel.From(model).Rest[id];
+        var origin = ResolvedModel.Rig(model).Rest[id];
         var delta = position - new Vector2(origin.X, origin.Y);
         if (delta.LengthSquared() < .0001f)
         {
@@ -1136,7 +1136,7 @@ public static class ModelAuthoring
 
     public static void SyncAffineRest(CharacterModel model)
     {
-        var resolved = ResolvedModel.From(model);
+        var resolved = ResolvedModel.Rig(model);
         foreach (var control in model.Controls.Where(c => c.Transform is not null))
         {
             control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);

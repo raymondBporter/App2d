@@ -23,8 +23,8 @@ internal sealed partial class ProofRenders
         {
             ("tall-thin", catalog.Resolve("tall-thin")),
             ("short-broad", catalog.Resolve("short-broad")),
-            ("stilted", ResolvedModel.From(person, PersonBuild.Stilted.Apply(person, "stilted", "Stilted", "#cdd8c2"))),
-            ("squat", ResolvedModel.From(person, PersonBuild.Squat.Apply(person, "squat", "Squat", "#e4cfa8"))),
+            ("stilted", ResolvedModel.From(person, PersonBuild.Stilted.Apply(person, "stilted", "Stilted", "#cdd8c2"), catalog.Parts.GetValueOrDefault)),
+            ("squat", ResolvedModel.From(person, PersonBuild.Squat.Apply(person, "squat", "Squat", "#e4cfa8"), catalog.Parts.GetValueOrDefault)),
         };
         var rows = new (string Clip, float[] At)[]
         {

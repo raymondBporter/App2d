@@ -116,19 +116,16 @@ public sealed record ControlGroup
 }
 
 /// <summary>
-/// One part's appearance in a look: the material, default expression, face offset and visibility a look writes onto a
-/// variant as typed overrides (<see cref="RigProperties.Material"/>, <see cref="RigProperties.Face"/>, <see cref="RigProperties.FaceX"/>,
-/// <see cref="RigProperties.Hidden"/>). Null leaves the variant's value alone. Never sizes: a look restyles, it does not refit.
+/// One part's appearance in a look: the material and visibility a look writes onto a variant as typed overrides
+/// (<see cref="RigProperties.Material"/>, <see cref="RigProperties.Hidden"/>). Null leaves the variant's value alone. Never
+/// sizes: a look restyles, it does not refit. A look's expressions sit on its animated instances (<see cref="LookPreset.Expressions"/>).
 /// </summary>
 public sealed record LookAppearance
 {
     public RenderMaterialDefinition2D? Material { get; set; }
-    /// <summary>Default expression; "none" removes the face.</summary>
-    public string? Face { get; set; }
-    public float? FaceX { get; set; }
     public bool? Hidden { get; set; }
     [JsonIgnore]
-    public bool IsEmpty => Material is null && Face is null && FaceX is null && Hidden is null;
+    public bool IsEmpty => Material is null && Hidden is null;
 
     public static void Check(LookAppearance? part, string field)
     {
@@ -138,33 +135,24 @@ public sealed record LookAppearance
         }
 
         part.Material?.Validate(field + ".material");
-        if (part.Face is not null && part.Face != "none" && !FaceExpressions.Contains(part.Face))
-        {
-            throw new InvalidDataException($"{field}.face: unknown expression '{part.Face}'.");
-        }
-
-        if (part.FaceX is { } faceX)
-        {
-            new Limit(-1, 1).Check(faceX, field + ".faceX");
-        }
     }
 
     /// <summary>The typed overrides this appearance writes on a part.</summary>
     public IEnumerable<PropertyOverride> Overrides(string part)
     {
         if (Material is not null) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.Material), Material);
-        if (Face is not null) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.Face), Face);
-        if (FaceX is { } faceX) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.FaceX), faceX);
         if (Hidden is { } hidden) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.Hidden), hidden);
     }
 }
 
-/// <summary>A named appearance an author applies to a variant: part appearance overrides it writes, never a live parent.</summary>
+/// <summary>A named appearance an author applies to a variant: part appearance overrides and instance expressions it writes, never a live parent.</summary>
 public sealed record LookPreset
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public Dictionary<string, LookAppearance> Parts { get; set; } = [];
+    /// <summary>The default expression each animated instance shows in this look (P7c): the attachment property <see cref="RigProperties.Expression"/>.</summary>
+    public Dictionary<string, string> Expressions { get; set; } = [];
 }
 
 /// <summary>A reusable character structure. Controls without a parent hang from the locomotion frame.</summary>
@@ -172,14 +160,15 @@ public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
     /// <summary>
-    /// Version 10 carries a part's procedural face as the typed <c>face</c> payload (<see cref="FaceAppearance"/>, P2b) in
-    /// place of the loose expression string and <c>faceX</c>; version 9 added <see cref="Attachments"/>, instances of
+    /// Version 11 carries no face on a part (P7c: a face is an animated library part instanced on a socket, selected by
+    /// expression word); version 10 carried the procedural face as the typed <c>face</c> payload (P2b) in place of the loose
+    /// expression string and <c>faceX</c>; version 9 added <see cref="Attachments"/>, instances of
     /// library part assets (P5a); version 8 declared exposed <see cref="Parameters"/> with their bindings and
     /// <see cref="Presets"/> in place of the retired code build rule (P4a); version 7 declared each control's node kind,
     /// authored bone nodes as parent-local setups and kept one constraint list (P3a); version 6 moved a curve's wave into
     /// the typed <c>wave</c> modifier (P2a). Older files read through <see cref="LegacyModelReader"/>.
     /// </summary>
-    public const int CurrentVersion = 10;
+    public const int CurrentVersion = 11;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -454,7 +443,7 @@ public sealed class CharacterModel
         var looks = new HashSet<string>(StringComparer.Ordinal);
         foreach (var look in Looks)
         {
-            Require(look?.Parts is not null, $"{owner}: incomplete look.");
+            Require(look?.Parts is not null && look.Expressions is not null, $"{owner}: incomplete look.");
             AuthoredAsset.RequireId(look.Id, $"{owner} look id");
             Require(looks.Add(look.Id), $"{owner}: duplicate look '{look.Id}'.");
             Require(!string.IsNullOrWhiteSpace(look.Name), $"{owner} look '{look.Id}': a name is required.");
@@ -463,6 +452,11 @@ public sealed class CharacterModel
                 Require(parts.Contains(part), $"{owner} look '{look.Id}': no part '{part}'.");
                 LookAppearance.Check(change, $"{owner} look '{look.Id}' parts.{part}");
                 change.Material?.Resolve(Materials);
+            }
+            foreach (var (instance, expression) in look.Expressions)
+            {
+                Require(attachments.Contains(instance), $"{owner} look '{look.Id}': no attachment '{instance}'.");
+                AuthoredAsset.RequireId(expression, $"{owner} look '{look.Id}' expressions.{instance}");
             }
         }
         CheckGeometry(this, nodes.ToDictionary(n => n.Key, n => n.Value.Rest, StringComparer.Ordinal), owner);

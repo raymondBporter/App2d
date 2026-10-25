@@ -115,7 +115,17 @@ public sealed class ResolvedModel
     /// bound values (a set pins the value, a clear pins the authored or empty value); then the derived positions, frames,
     /// fitting, attachments and measures.
     /// </summary>
-    public static ResolvedModel From(CharacterModel model, ModelVariant? variant = null, Func<string, PartAsset?>? partOf = null)
+    public static ResolvedModel From(CharacterModel model, ModelVariant? variant = null, Func<string, PartAsset?>? partOf = null) => Resolve(model, variant, partOf, rigOnly: false);
+
+    /// <summary>
+    /// The rig alone: rest geometry, frames, parameters and overrides, with the wearer's attachment instances left
+    /// unresolved (<see cref="Attachments"/> is empty). For geometry edits, retargeting and rest comparisons that never
+    /// draw or validate instances; anything that draws, validates clips with plays or builds an entity resolves through
+    /// <see cref="From"/> with the part library.
+    /// </summary>
+    public static ResolvedModel Rig(CharacterModel model, ModelVariant? variant = null) => Resolve(model, variant, null, rigOnly: true);
+
+    private static ResolvedModel Resolve(CharacterModel model, ModelVariant? variant, Func<string, PartAsset?>? partOf, bool rigOnly)
     {
         model.Validate();
         variant?.Validate();
@@ -155,7 +165,7 @@ public sealed class ResolvedModel
         // Attachment instances resolve against the library: the asset by ID, the socket on this wearer, the variant's
         // overrides on this instance alone. Nothing copies the asset into the wearer.
         var attachments = new List<ResolvedAttachment>();
-        if (model.Attachments.Count > 0)
+        if (model.Attachments.Count > 0 && !rigOnly)
         {
             if (partOf is null)
             {

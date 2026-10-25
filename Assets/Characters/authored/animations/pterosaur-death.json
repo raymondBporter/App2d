@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "pterosaur-death",
   "name": "Pterosaur / death",
   "model": "pterosaur",
@@ -89,7 +89,7 @@
   ],
   "contacts": [],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

@@ -1,29 +1,26 @@
 using App2d.Contracts.Persons;
-using App2d.Core.Characters;
 
 namespace App2d.Presentation.Persons;
 
-/// <summary>Presentation-only reactions, independent of body animation resets.</summary>
+/// <summary>
+/// Presentation-only reactions, independent of body animation resets: the semantic expression the Person asks its face for
+/// (P7c). The face itself is the animated library part instanced on the model; its asset binds each word to a pose, blinks on
+/// its own layer and hides for a back view through the clip's selection channel, so nothing here draws or blends features.
+/// </summary>
 public sealed class PersonFace2D
 {
-    private double _clock;
     private float _hit, _landing, _celebrate, _fall;
-    private FacePose _pose = FaceExpressions.Get("relaxed");
     public string Expression { get; private set; } = "relaxed";
-    public FacePose Pose { get; private set; } = FaceExpressions.Get("relaxed");
     public void Hit() => _hit = .38f;
     public void Land() => _landing = .3f;
     public void Celebrate() => _celebrate = 1.8f;
     public void Reset()
     {
-        _clock = 0;
         _hit = _landing = _celebrate = _fall = 0;
         Expression = "relaxed";
-        Pose = _pose = FaceExpressions.Get(Expression);
     }
     public void Update(PersonState2D state, float dt)
     {
-        _clock += dt;
         _hit = MathF.Max(0, _hit - dt);
         _landing = MathF.Max(0, _landing - dt);
         _celebrate = MathF.Max(0, _celebrate - dt);
@@ -39,8 +36,5 @@ public sealed class PersonFace2D
             : state.HitPoints <= state.MaximumHitPoints * .3f ? "worried"
             : state.IsClimbingLadder || MathF.Abs(state.LinearVelocity.X) > 5 ? "focused"
             : "relaxed";
-        var target = FaceExpressions.Get(Expression);
-        _pose = !state.IsAlive || _hit > 0 ? target : FacePose.Blend(_pose, target, 1 - MathF.Exp(-18 * dt));
-        Pose = Expression is "relaxed" or "focused" or "worried" ? FaceExpressions.Blink(_pose, _clock) : _pose;
     }
 }

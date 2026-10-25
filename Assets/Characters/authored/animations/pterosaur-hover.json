@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "pterosaur-hover",
   "name": "Pterosaur \u00B7 hover",
   "model": "pterosaur",
@@ -106,7 +106,7 @@
   ],
   "contacts": [],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

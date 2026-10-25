@@ -14,7 +14,7 @@ public sealed class HumanoidFootwearTests
         foreach (var model in new[] { CharacterModel.Load(Path.Combine(TestModels.AuthoredRoot, "models", "person.json")), PersonTemplate.Model() })
         {
             model.Materials["skin"] = model.Materials["skin"] with { Fill = "#123456" };
-            var resolved = ResolvedModel.From(model);
+            var resolved = ResolvedModel.From(model, null, PersonTemplate.PartOf);
             foreach (var id in new[] { Humanoid.Head, Humanoid.LeftHand, Humanoid.RightHand, Humanoid.LeftFoot, Humanoid.RightFoot })
                 Assert.Equal("#123456", resolved.Parts.Single(p => p.Id == id).RenderMaterial.Fill);
         }
@@ -36,7 +36,7 @@ public sealed class HumanoidFootwearTests
             var regenerated = CharacterModel.Load(Path.Combine(root, "models", "person.json"));
             Assert.Equal("#123456", regenerated.Materials["artist-surface"].Fill);
             Assert.Contains("skin", regenerated.Materials.Keys);
-            ResolvedModel.From(regenerated);
+            ResolvedModel.From(regenerated, null, PersonTemplate.PartOf);
         }
         finally
         {

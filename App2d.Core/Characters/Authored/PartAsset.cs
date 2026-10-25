@@ -328,7 +328,6 @@ public sealed class PartAsset
             AuthoredAsset.RequireId(part.Id, $"{owner} drawing part id");
             Require(ids.Add(part.Id), $"{owner}: duplicate drawing part '{part.Id}'.");
             Require(IsAnimated || part.Frame is null, $"{owner} part '{part.Id}': a static library part's pieces attach to its locations, not to a bone.");
-            Require(part.Face is null, $"{owner} part '{part.Id}': a procedural face does not belong to a library part; animate the features as ordinary geometry.");
             if (!IsAnimated)
             {
                 try

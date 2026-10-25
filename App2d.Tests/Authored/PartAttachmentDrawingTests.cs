@@ -15,6 +15,7 @@ public sealed class PartAttachmentDrawingTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
 
+    /// <summary>The shipped Person, which already wears its face instance first (P7c); the tests' own instances come after it.</summary>
     private static CharacterModel Person() => CharacterModel.FromJson(Catalog.Models["person"].ToJson());
 
     /// <summary>A shape on the origin, a curve to a cuff location, an image on the cuff and one solid: all four payload kinds.</summary>
@@ -43,7 +44,7 @@ public sealed class PartAttachmentDrawingTests
         person.Attachments.Add(instance);
         var resolved = ResolvedModel.From(person, null, asset is null ? Library() : Library(asset));
         var pose = PoseEvaluator.Rest(resolved);
-        var attachment = resolved.Attachments.Single();
+        var attachment = resolved.Attachments[^1];
         return (attachment, attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket)), pose);
     }
 
@@ -51,7 +52,7 @@ public sealed class PartAttachmentDrawingTests
     public void TheBootPartOnTheLeftFootDrawsExactlyWhereTheBootPropDoes()
     {
         var person = Person();
-        var plain = ResolvedModel.From(person);
+        var plain = ResolvedModel.From(person, null, Library());
         person.Attachments.Add(new() { Id = "left-boot", Asset = "boot", Socket = Humanoid.LeftFootSocket });
         var booted = ResolvedModel.From(person, null, Library());
         var pose = PoseEvaluator.Rest(booted);
@@ -80,8 +81,8 @@ public sealed class PartAttachmentDrawingTests
         var resolved = ResolvedModel.From(person, null, Library());
         var pose = PoseEvaluator.Sample(resolved, Catalog.Animations["person-walk"], .3);
         var actor = new ActorPose(pose, Vector2.Zero, 1);
-        var left = resolved.Attachments[0];
-        var right = resolved.Attachments[1];
+        var left = resolved.Attachments[^2];
+        var right = resolved.Attachments[^1];
         Assert.Same(left.Asset, right.Asset);
         var leftSocket = actor.SocketPlacement(left.Socket);
         var rightSocket = actor.SocketPlacement(right.Socket);
@@ -92,7 +93,7 @@ public sealed class PartAttachmentDrawingTests
         }
         var drawing = new PuppetDrawing();
         drawing.Build(resolved, pose);
-        Assert.True(drawing.Mesh.Count > new Func<int>(() => { var d = new PuppetDrawing(); d.Build(ResolvedModel.From(Person()), pose); return d.Mesh.Count; })());
+        Assert.True(drawing.Mesh.Count > new Func<int>(() => { var d = new PuppetDrawing(); d.Build(ResolvedModel.From(Person(), null, Library()), pose); return d.Mesh.Count; })());
         // Picking finds each instance at its own foot.
         Assert.Equal(0, PartPicking2D.Distance(left, pose, leftSocket.Origin), 3);
         Assert.Equal(0, PartPicking2D.Distance(right, pose, rightSocket.Origin), 3);
@@ -168,21 +169,21 @@ public sealed class PartAttachmentDrawingTests
         var mixed = Mixed();
         var person = Person();
         person.Attachments.Add(new() { Id = "glove", Asset = "mixed", Socket = Humanoid.LeftHandSocket, Material = new() { Fill = "#ff0000" } });
-        var over = ResolvedModel.From(person, null, Library(mixed)).Attachments[0];
+        var over = ResolvedModel.From(person, null, Library(mixed)).Attachments[^1];
         Assert.Equal("#ff0000", over.Parts[0].RenderMaterial.Fill);
         Assert.Equal("#ff0000", over.Solids[0].RenderMaterial.Fill);
         Assert.NotNull(over.Parts[0].RenderMaterial.Outline);
         Assert.Equal("leather", mixed.Parts[0].Material!.Asset);
-        person.Attachments[0].Material = null;
-        var inherited = ResolvedModel.From(person, null, Library(mixed)).Attachments[0];
+        person.Attachments[^1].Material = null;
+        var inherited = ResolvedModel.From(person, null, Library(mixed)).Attachments[^1];
         Assert.Equal("#c9a27a", inherited.Parts[0].RenderMaterial.Fill);
         var variant = new ModelVariant { Id = "red", Name = "Red", Base = "person", Overrides = [PropertyOverride.Of(PropertyRef.OfAttachment("glove", RigProperties.Material), new RenderMaterialDefinition2D { Asset = "leather", Fill = "#00ff00" })] };
-        var onVariant = ResolvedModel.From(person, variant, Library(mixed)).Attachments[0];
+        var onVariant = ResolvedModel.From(person, variant, Library(mixed)).Attachments[^1];
         Assert.Equal("#00ff00", onVariant.Parts[0].RenderMaterial.Fill);
-        Assert.Equal("#c9a27a", ResolvedModel.From(person, null, Library(mixed)).Attachments[0].Parts[0].RenderMaterial.Fill);
+        Assert.Equal("#c9a27a", ResolvedModel.From(person, null, Library(mixed)).Attachments[^1].Parts[0].RenderMaterial.Fill);
         var shown = new PuppetDrawing();
         shown.Build(ResolvedModel.From(person, null, Library(mixed)), PoseEvaluator.Rest(ResolvedModel.From(person, null, Library(mixed))));
-        person.Attachments[0].Hidden = true;
+        person.Attachments[^1].Hidden = true;
         var hidden = new PuppetDrawing();
         hidden.Build(ResolvedModel.From(person, null, Library(mixed)), PoseEvaluator.Rest(ResolvedModel.From(person, null, Library(mixed))));
         Assert.True(hidden.Mesh.Count < shown.Mesh.Count);
@@ -208,15 +209,15 @@ public sealed class PartAttachmentDrawingTests
         person.Validate();
         var big = new ModelVariant { Id = "big", Name = "Big", Base = "person", Parameters = { ["glove-size"] = 2 } };
         var resolved = ResolvedModel.From(person, big, Library(mixed));
-        Assert.Equal(2, resolved.Attachments[0].Instance.FitX);
-        Assert.Equal(2, resolved.Attachments[0].Instance.FitY);
-        Assert.Equal(2, resolved.Attachments[0].Instance.Layer);
+        Assert.Equal(2, resolved.Attachments[^1].Instance.FitX);
+        Assert.Equal(2, resolved.Attachments[^1].Instance.FitY);
+        Assert.Equal(2, resolved.Attachments[^1].Instance.Layer);
         Assert.Equal("glove-size", resolved.Parameters.BindingOfAttachment("glove", RigProperties.FitX)!.Value.Parameter.Id);
-        Assert.Equal(1, ResolvedModel.From(person, null, Library(mixed)).Attachments[0].Instance.FitX);
+        Assert.Equal(1, ResolvedModel.From(person, null, Library(mixed)).Attachments[^1].Instance.FitX);
         big.Set(PropertyOverride.Of(PropertyRef.OfAttachment("glove", RigProperties.FitX), .5f));
         var overridden = ResolvedModel.From(person, big, Library(mixed));
-        Assert.Equal(.5f, overridden.Attachments[0].Instance.FitX);
-        Assert.Equal(2, overridden.Attachments[0].Instance.FitY);
+        Assert.Equal(.5f, overridden.Attachments[^1].Instance.FitX);
+        Assert.Equal(2, overridden.Attachments[^1].Instance.FitY);
         person.Parameters[^1].Bindings.Add(new() { Target = PropertyRef.OfAttachment("hat", RigProperties.FitX) });
         Assert.Contains("no attachment 'hat'", Assert.Throws<InvalidDataException>(person.Validate).Message);
         person.Parameters[^1].Bindings[^1] = new() { Target = PropertyRef.OfAttachment("glove", "girth") };

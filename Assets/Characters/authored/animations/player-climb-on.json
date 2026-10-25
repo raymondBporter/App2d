@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-climb-on",
   "name": "Turn onto ladder",
   "model": "person",
@@ -479,14 +479,15 @@
       "time": 0.09
     }
   ],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
-        {},
         {
-          "time": 0.06,
-          "expression": "none"
+          "expression": "relaxed"
+        },
+        {
+          "time": 0.06
         }
       ]
     }

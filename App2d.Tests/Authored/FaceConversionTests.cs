@@ -104,7 +104,20 @@ public sealed class FaceConversionTests : IDisposable
         }
 
         other.Validate();
+        // The shipped Person wears the baked face (P7c); this test wears the curve face in its place, so the shipped instance,
+        // its fit bindings and the looks' words go first.
         var person = CharacterModel.FromJson(catalog.Models["person"].ToJson());
+        person.Attachments.RemoveAll(a => a.Id == "face");
+        foreach (var parameter in person.Parameters)
+        {
+            parameter.Bindings.RemoveAll(b => b.Target.Attachment == "face");
+        }
+
+        foreach (var look in person.Looks)
+        {
+            look.Expressions.Remove("face");
+        }
+
         Func<string, PartAsset?> library = id => id == face.Id ? face : id == other.Id ? other : null;
         var instance = ModelAuthoring.AddAttachment(person, PartId, Humanoid.HeadSocket, library, "face");
         instance.Scale = .55f;

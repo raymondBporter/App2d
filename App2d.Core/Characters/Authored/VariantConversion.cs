@@ -62,7 +62,7 @@ public static class VariantConversion
     /// Converts the named variants of one base from the authored tree at <paramref name="root"/> into <paramref name="output"/>.
     /// Nothing under <paramref name="root"/> is written.
     /// </summary>
-    public static IReadOnlyList<Result> ConvertFamily(string root, string baseId, IReadOnlyList<string> variantIds, string output, float tolerance = 1e-4f)
+    public static IReadOnlyList<Result> ConvertFamily(string root, string baseId, IReadOnlyList<string> variantIds, string output, float tolerance = 1e-4f, IReadOnlyDictionary<string, string>? faceInstances = null)
     {
         var catalog = AuthoredCatalog.Load(root);
         var model = catalog.Models.GetValueOrDefault(baseId) ?? throw new InvalidDataException($"No base model '{baseId}' under '{root}'.");
@@ -82,7 +82,7 @@ public static class VariantConversion
             var target = Path.Combine(output, "variants", id + ".json");
             try
             {
-                results.Add(Convert(id, source, json, target, model, partOf, tolerance));
+                results.Add(Convert(id, source, json, target, model, partOf, tolerance, faceInstances));
             }
             catch (Exception ex) when (ex is InvalidDataException or JsonException or InvalidOperationException)
             {
@@ -93,7 +93,7 @@ public static class VariantConversion
         return results;
     }
 
-    private static Result Convert(string id, string source, string json, string target, CharacterModel model, Func<string, PartAsset?> partOf, float tolerance)
+    private static Result Convert(string id, string source, string json, string target, CharacterModel model, Func<string, PartAsset?> partOf, float tolerance, IReadOnlyDictionary<string, string>? faceInstances)
     {
         if (LegacyVariantReader.LegacyVersion(json) is not { } version)
         {
@@ -105,7 +105,7 @@ public static class VariantConversion
         var restKey = legacyRoot.FirstOrDefault(p => string.Equals(p.Key, "rest", StringComparison.OrdinalIgnoreCase)).Key;
         var rest = restKey is null ? new Dictionary<string, PuppetPoint>(StringComparer.Ordinal)
             : JsonSerializer.Deserialize<Dictionary<string, PuppetPoint>>(legacyRoot[restKey]!.ToJsonString(), AuthoredJson.Options) ?? [];
-        var (converted, report) = LegacyVariantReader.Convert(json, rest);
+        var (converted, report) = LegacyVariantReader.Convert(json, rest, faceInstances);
         var variant = ModelVariant.FromJson(converted);
         if (variant.Base != model.Id)
         {

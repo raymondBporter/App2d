@@ -255,7 +255,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.ApplyLook("ember"));
         var variant = session.SubjectVariant!;
         Assert.Equal("#eab596", variant.Asset.Override(PropertyRef.OfPart("body", RigProperties.Material))?.Material?.Fill);
-        Assert.Equal("determined", session.Assets.Resolve("ranger")!.Parts.Single(p => p.Id == "head").Face!.Expression);
+        Assert.Equal("determined", PoseEvaluator.Rest(session.Assets.Resolve("ranger")!).Expressions[PersonTemplate.FaceInstance]);
         var person = session.Assets.Model("person")!;
         Assert.False(person.Dirty);
 
@@ -263,7 +263,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.SaveLook("fern", "Fern"));
         Assert.True(person.Dirty);
         Assert.Equal("#88aa66", person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Material?.Fill);
-        Assert.Null(person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Face); // looks carry appearance (material, face, visibility), never sizes
+        Assert.Equal("determined", person.Asset.Looks.Single(l => l.Id == "fern").Expressions[PersonTemplate.FaceInstance]); // looks carry appearance (material, expression, visibility), never sizes
         Assert.Equal("#d8e9db", person.Asset.Parts.Single(p => p.Id == "body").RenderMaterial.Fill); // the base's own parts are untouched
     }
 
@@ -388,7 +388,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
             var variant = build.Apply(person, $"person-{i:00}", $"Person {i:00}");
             EntityAuthoring.ApplyLook(person, variant, looks[i % looks.Length]);
             variant.Save(Path.Combine(_root, "variants", variant.Id + ".json"));
-            var entity = EntityAuthoring.New(EntityAuthoring.Stationary, $"villager-{i:00}", $"Villager {i:00}", ResolvedModel.From(person, variant));
+            var entity = EntityAuthoring.New(EntityAuthoring.Stationary, $"villager-{i:00}", $"Villager {i:00}", ResolvedModel.From(person, variant, PersonTemplate.PartOf));
             entity.MotionSet = sets[i % sets.Length];
             entity.Save(Path.Combine(_root, "entities", entity.Id + ".json"));
         }

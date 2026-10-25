@@ -454,7 +454,7 @@ public static partial class ClipAuthoring
         }
     }
 
-    /// <summary>Changes the duration, scaling every key, contact, marker and face time with it.</summary>
+    /// <summary>Changes the duration, scaling every key, contact, marker and selection time with it.</summary>
     public static void Retime(MotionClip clip, float duration)
     {
         new Limit(.05f, 60).Check(duration, "duration");
@@ -473,11 +473,6 @@ public static partial class ClipAuthoring
         foreach (var marker in clip.Markers)
         {
             marker.Time = Scale(marker.Time);
-        }
-
-        foreach (var key in clip.Faces.SelectMany(f => f.Keys))
-        {
-            key.Time = Scale(key.Time);
         }
 
         foreach (var key in clip.Plays.SelectMany(p => p.Keys))
@@ -598,13 +593,6 @@ public static partial class ClipAuthoring
         copy.Contacts = [.. copy.Contacts.Where(c => c.Finish > from + SameTime && c.Start < to - SameTime)
             .Select(c => new ClipContact { Chain = c.Chain, Start = MathF.Max(0, c.Start - from), Finish = MathF.Min(copy.Duration, c.Finish - from), Target = c.Target })];
         copy.Markers = [.. copy.Markers.Where(m => m.Time >= from - SameTime && m.Time <= to + SameTime).Select(m => new ClipMarker { Id = m.Id, Time = Math.Clamp(m.Time - from, 0, copy.Duration) })];
-        foreach (var face in copy.Faces)
-        {
-            var showing = face.Keys.LastOrDefault(k => k.Time <= from + SameTime);
-            face.Keys = [.. (showing is null ? [] : new[] { new ClipFaceKey { Time = 0, Expression = showing.Expression } })
-                .Concat(face.Keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime).Select(k => new ClipFaceKey { Time = k.Time - from, Expression = k.Expression }))];
-        }
-        copy.Faces.RemoveAll(f => f.Keys.Count == 0);
         foreach (var play in copy.Plays)
         {
             var showing = play.Keys.LastOrDefault(k => k.Time <= from + SameTime);
@@ -695,32 +683,6 @@ public static partial class ClipAuthoring
 
         marker.Time = Math.Clamp(time, 0, clip.Duration);
         clip.Markers.Sort((a, b) => a.Time.CompareTo(b.Time));
-    }
-
-    /// <summary>Holds <paramref name="expression"/> on a part from <paramref name="time"/>; null removes the key there.</summary>
-    public static void SetFace(MotionClip clip, string part, float time, string? expression)
-    {
-        var track = clip.Faces.FirstOrDefault(f => f.Part == part);
-        if (expression is null)
-        {
-            track?.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
-            clip.Faces.RemoveAll(f => f.Keys.Count == 0);
-            return;
-        }
-        if (!FaceExpressions.Contains(expression))
-        {
-            throw new InvalidDataException($"Unknown expression '{expression}'.");
-        }
-
-        if (track is null)
-        {
-            clip.Faces.Add(track = new()
-            {
-                Part = part
-            });
-        }
-
-        Put(track.Keys, new ClipFaceKey { Time = time, Expression = expression }, k => k.Time);
     }
 
     /// <summary>Holds <paramref name="expression"/> on an animated part instance from <paramref name="time"/> (P7a); null removes the key there. The asset's bindings are checked when the clip validates against the model.</summary>

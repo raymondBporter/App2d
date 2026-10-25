@@ -153,16 +153,18 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
             _hold.Clear();
         }
         var facing = s.Facing < 0 ? -1 : 1;
-        var pose = _hold.Evaluate(Director.Moves.Model, frame.Clip, Math.Max(0, frame.Seconds), frame.Repeat, Feet(s) / _worldUnitsPerModelUnit, facing, new()
+        // The face is an animated part instance on the model (P7c): the presentation's expression word is a request its asset
+        // binds, the clip's back-view selection hides it, and its blink layer runs on this presentation's own clock.
+        var pose = _hold.Evaluate(Director.Moves.Model, frame.Clip, Math.Max(0, frame.Seconds), frame.Repeat, Feet(s) / _worldUnitsPerModelUnit, facing, new(_face.Expression)
         {
-            Overlay = frame.Overlay
+            Overlay = frame.Overlay,
+            Clock = _clock,
         }, frame.Planted);
         Pose = pose;
         var model = Director.Moves.Model;
         var sockets = model.Base.Sockets;
         _shader.Pose = pose.Local;
         _shader.Facing = facing;
-        _shader.Face = _face.Pose;
         var seconds = (float)Math.Min(frame.PropSeconds, frame.PropClip.Duration);
         _shader.Props = [.. PersonLoadout.Dressed(frame.PropClip, seconds, frame.Gear, Director.Moves.Hero).Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
         RecordSwoosh(frame, seconds, pose.Local);

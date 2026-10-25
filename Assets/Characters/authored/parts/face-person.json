@@ -1,0 +1,4452 @@
+{
+  "format": "app2d-part",
+  "version": 1,
+  "id": "face-person",
+  "name": "Person face",
+  "usage": "face",
+  "payload": "animated",
+  "lineWidth": 0.027000003,
+  "materials": {},
+  "locations": [],
+  "parts": [
+    {
+      "id": "left-pupil",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.045,
+          "y": 0.065
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "left-eye",
+      "frame": "left-eye"
+    },
+    {
+      "id": "left-white",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.03465,
+          "y": 0.054599997
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#ffffff"
+      },
+      "a": "left-eye",
+      "frame": "left-eye",
+      "depth": -0.002
+    },
+    {
+      "id": "left-dot",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.035,
+          "y": 0.035
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "left-gaze",
+      "frame": "left-gaze",
+      "depth": -0.004
+    },
+    {
+      "id": "left-lid",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": 0,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.027000003
+      },
+      "a": "left-lid-a",
+      "b": "left-lid-b",
+      "bindings": [
+        {
+          "control": "left-lid-a"
+        },
+        {
+          "point": 1,
+          "control": "left-lid-bend"
+        },
+        {
+          "point": 2,
+          "control": "left-lid-b"
+        }
+      ]
+    },
+    {
+      "id": "left-cross",
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": -0.06788225,
+            "y": 0.0523259
+          },
+          {
+            "x": -0.0523259,
+            "y": 0.06788225
+          },
+          {
+            "x": -1.7391999E-10,
+            "y": 0.0155563485
+          },
+          {
+            "x": 0.0523259,
+            "y": 0.06788225
+          },
+          {
+            "x": 0.06788225,
+            "y": 0.0523259
+          },
+          {
+            "x": 0.0155563485,
+            "y": -1.7391999E-10
+          },
+          {
+            "x": 0.06788225,
+            "y": -0.0523259
+          },
+          {
+            "x": 0.0523259,
+            "y": -0.06788225
+          },
+          {
+            "x": 1.7391999E-10,
+            "y": -0.0155563485
+          },
+          {
+            "x": -0.0523259,
+            "y": -0.06788225
+          },
+          {
+            "x": -0.06788225,
+            "y": -0.0523259
+          },
+          {
+            "x": -0.0155563485,
+            "y": 1.7391999E-10
+          }
+        ]
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "left-eye",
+      "frame": "left-eye"
+    },
+    {
+      "id": "left-brow",
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.032400005
+      },
+      "a": "left-brow-a",
+      "b": "left-brow-b"
+    },
+    {
+      "id": "right-pupil",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.045,
+          "y": 0.065
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "right-eye",
+      "frame": "right-eye"
+    },
+    {
+      "id": "right-white",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.03465,
+          "y": 0.054599997
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#ffffff"
+      },
+      "a": "right-eye",
+      "frame": "right-eye",
+      "depth": -0.002
+    },
+    {
+      "id": "right-dot",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.035,
+          "y": 0.035
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "right-gaze",
+      "frame": "right-gaze",
+      "depth": -0.004
+    },
+    {
+      "id": "right-lid",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": 0,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.027000003
+      },
+      "a": "right-lid-a",
+      "b": "right-lid-b",
+      "bindings": [
+        {
+          "control": "right-lid-a"
+        },
+        {
+          "point": 1,
+          "control": "right-lid-bend"
+        },
+        {
+          "point": 2,
+          "control": "right-lid-b"
+        }
+      ]
+    },
+    {
+      "id": "right-cross",
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": -0.06788225,
+            "y": 0.0523259
+          },
+          {
+            "x": -0.0523259,
+            "y": 0.06788225
+          },
+          {
+            "x": -1.7391999E-10,
+            "y": 0.0155563485
+          },
+          {
+            "x": 0.0523259,
+            "y": 0.06788225
+          },
+          {
+            "x": 0.06788225,
+            "y": 0.0523259
+          },
+          {
+            "x": 0.0155563485,
+            "y": -1.7391999E-10
+          },
+          {
+            "x": 0.06788225,
+            "y": -0.0523259
+          },
+          {
+            "x": 0.0523259,
+            "y": -0.06788225
+          },
+          {
+            "x": 1.7391999E-10,
+            "y": -0.0155563485
+          },
+          {
+            "x": -0.0523259,
+            "y": -0.06788225
+          },
+          {
+            "x": -0.06788225,
+            "y": -0.0523259
+          },
+          {
+            "x": -0.0155563485,
+            "y": 1.7391999E-10
+          }
+        ]
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "right-eye",
+      "frame": "right-eye"
+    },
+    {
+      "id": "right-brow",
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.032400005
+      },
+      "a": "right-brow-a",
+      "b": "right-brow-b"
+    },
+    {
+      "id": "mouth",
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "control": {
+          "x": 0,
+          "y": 0.5
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {
+        "fill": "#222b32",
+        "strokeWidth": 0.031050002
+      },
+      "a": "mouth-left",
+      "b": "mouth-right",
+      "bindings": [
+        {
+          "control": "mouth-left"
+        },
+        {
+          "point": 1,
+          "control": "mouth-bend"
+        },
+        {
+          "point": 2,
+          "control": "mouth-right"
+        }
+      ]
+    },
+    {
+      "id": "mouth-open",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.2,
+          "y": 0.1
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "fill": "#222b32"
+      },
+      "a": "mouth-oval",
+      "frame": "mouth-oval"
+    }
+  ],
+  "solids": [],
+  "controls": [
+    {
+      "id": "left-brow-a",
+      "name": null,
+      "rest": {
+        "x": -0.2069,
+        "y": 0.29,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-brow-b",
+      "name": null,
+      "rest": {
+        "x": -0.2031,
+        "y": 0.29,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-eye",
+      "name": null,
+      "rest": {
+        "x": -0.205,
+        "y": 0.12,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-gaze",
+      "name": null,
+      "rest": {
+        "x": -0.205,
+        "y": 0.12,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-lid-a",
+      "name": null,
+      "rest": {
+        "x": -0.285,
+        "y": 0.12,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-lid-b",
+      "name": null,
+      "rest": {
+        "x": -0.125,
+        "y": 0.12,
+        "z": 0
+      }
+    },
+    {
+      "id": "left-lid-bend",
+      "name": null,
+      "rest": {
+        "x": -0.205,
+        "y": 0.074999996,
+        "z": 0
+      }
+    },
+    {
+      "id": "mouth-bend",
+      "name": null,
+      "rest": {
+        "x": 0,
+        "y": -0.2475,
+        "z": 0
+      }
+    },
+    {
+      "id": "mouth-left",
+      "name": null,
+      "rest": {
+        "x": -0.2,
+        "y": -0.2,
+        "z": 0
+      }
+    },
+    {
+      "id": "mouth-oval",
+      "name": null,
+      "rest": {
+        "x": 0,
+        "y": -0.21,
+        "z": 0
+      }
+    },
+    {
+      "id": "mouth-right",
+      "name": null,
+      "rest": {
+        "x": 0.2,
+        "y": -0.2,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-brow-a",
+      "name": null,
+      "rest": {
+        "x": 0.2031,
+        "y": 0.29,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-brow-b",
+      "name": null,
+      "rest": {
+        "x": 0.2069,
+        "y": 0.29,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-eye",
+      "name": null,
+      "rest": {
+        "x": 0.205,
+        "y": 0.12,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-gaze",
+      "name": null,
+      "rest": {
+        "x": 0.205,
+        "y": 0.12,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-lid-a",
+      "name": null,
+      "rest": {
+        "x": 0.125,
+        "y": 0.12,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-lid-b",
+      "name": null,
+      "rest": {
+        "x": 0.285,
+        "y": 0.12,
+        "z": 0
+      }
+    },
+    {
+      "id": "right-lid-bend",
+      "name": null,
+      "rest": {
+        "x": 0.205,
+        "y": 0.074999996,
+        "z": 0
+      }
+    }
+  ],
+  "constraints": [],
+  "groups": [
+    {
+      "id": "eyes",
+      "targets": [
+        "left-pupil",
+        "right-pupil"
+      ]
+    }
+  ],
+  "exposed": [
+    "left-brow-a",
+    "left-brow-b",
+    "left-eye",
+    "left-gaze",
+    "left-lid-a",
+    "left-lid-b",
+    "left-lid-bend",
+    "mouth-bend",
+    "mouth-left",
+    "mouth-oval",
+    "mouth-right",
+    "right-brow-a",
+    "right-brow-b",
+    "right-eye",
+    "right-gaze",
+    "right-lid-a",
+    "right-lid-b",
+    "right-lid-bend",
+    "left-pupil",
+    "left-white",
+    "left-dot",
+    "left-lid",
+    "left-cross",
+    "left-brow",
+    "right-pupil",
+    "right-white",
+    "right-dot",
+    "right-lid",
+    "right-cross",
+    "right-brow",
+    "mouth",
+    "mouth-open"
+  ],
+  "layers": [
+    {
+      "id": "expression",
+      "clip": null
+    },
+    {
+      "id": "blink",
+      "mask": "eyes",
+      "clock": "local",
+      "clip": "face-person-blink"
+    }
+  ],
+  "clips": [
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "face-person-expressions",
+      "name": "Expressions",
+      "model": "face-person",
+      "structureRevision": 1,
+      "duration": 17,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-eye",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "x": 0.010000005,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": 0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "x": 0.012500003,
+              "y": 0.017500006,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": -0.012500003,
+              "y": 0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "left-gaze",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "x": 0.016000003,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": 0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "x": 0.019999996,
+              "y": 0.017500006,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": -0.019999996,
+              "y": 0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "left-lid-a",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": 0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": 0.017500006,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": 0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "left-lid-bend",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "y": 0.13500002,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": 0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": 0.1525,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": 0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "y": 0.13500002,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "left-lid-b",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": 0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": 0.017500006,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": 0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-a",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": -0.09310001,
+              "y": 0.065,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": -0.09310001,
+              "y": -0.033500016,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": -0.09310001,
+              "y": 0.025250018,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": 0.018000007,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": 0.03150001,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": -0.09310001,
+              "y": 0.044999987,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": -0.09310001,
+              "y": 0.065,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "left-brow-b",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": 0.0931,
+              "y": -0.065,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": 0.0931,
+              "y": 0.057500005,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 0.0931,
+              "y": 0.07075,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": 0.018000007,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": 0.03150001,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": 0.0931,
+              "y": 0.044999987,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": 0.0931,
+              "y": -0.065,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "right-eye",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "x": 0.010000005,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": -0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "x": 0.012500003,
+              "y": -0.017499998,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": -0.012500003,
+              "y": -0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "right-gaze",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "x": 0.016000003,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": -0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "x": 0.019999996,
+              "y": -0.017499998,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": -0.019999996,
+              "y": -0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "right-lid-a",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": -0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": -0.017499998,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": -0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "right-lid-bend",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "y": 0.13500002,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": -0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": 0.1175,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": -0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "y": 0.13500002,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "right-lid-b",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": -0.009999998,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": -0.017499998,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": -0.024999999,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-a",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": -0.0931,
+              "y": -0.065,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": -0.0931,
+              "y": 0.057500005,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": -0.0931,
+              "y": 0.07075,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": -0.018000007,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": -0.03150001,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": -0.0931,
+              "y": -0.045,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": -0.0931,
+              "y": -0.065,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "right-brow-b",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": 0.09310001,
+              "y": 0.065,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": 0.09310001,
+              "y": -0.033500016,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 0.09310001,
+              "y": 0.025250018,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": -0.018000007,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": -0.03150001,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": 0.09310001,
+              "y": -0.045,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": 0.09310001,
+              "y": 0.065,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "mouth-left",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "x": 0.030000001,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": 0.049999997,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 0.089999996,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": -0.02000001,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "x": -0.02000001,
+              "y": -0.013999999,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "x": -0.02000001,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": -0.024499997,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": 0.08,
+              "y": -0.034999996,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "x": -0.040000007,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "x": 0.060000002,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "x": 0.07000001,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "mouth-bend",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "y": -0.12349999,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "y": 0.0475,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "y": 0.0475,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "y": 0.171,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "y": 0.171,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "y": 0.0475,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "y": 0.0475,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "y": 0.0475,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "y": 0.11399999,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": -0.104499996,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": 0.0855,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "y": -0.14249998,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "y": 0.1235,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "y": 0.0475,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "y": 0.171,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "mouth-right",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "x": -0.030000001,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": -0.049999997,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": -0.089999996,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 0.02000001,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "x": 0.02000001,
+              "y": 0.013999999,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "x": 0.02000001,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": 0.024499997,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": -0.08,
+              "y": 0.034999996,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "x": 0.040000007,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "x": -0.060000002,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "x": -0.07000001,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "target": "mouth-oval",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-pupil",
+          "keys": [
+            {
+              "y": -0.19999999,
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "y": -0.45,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "y": -0.7,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "y": -0.3,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 0.95555544,
+              "y": 1.1807692,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 0.95555544,
+              "y": 1.6653845,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "y": -0.65,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": -0.605,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": -0.35000002,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "y": -0.7,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "y": -0.3,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "left-pupil",
+          "keys": [
+            {
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": 1,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-white",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 0.95555544,
+              "y": 1.1807692,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 0.95555544,
+              "y": 1.6653845,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "left-white",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-dot",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": -0.25925928,
+              "y": -0.25925928,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": -0.39393938,
+              "y": -0.39393938,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "left-dot",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-lid",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "left-lid",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-cross",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "left-cross",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "left-brow",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "left-brow",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": 1,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-pupil",
+          "keys": [
+            {
+              "y": -0.19999999,
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "y": -0.45,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "y": -0.7,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "y": -0.3,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 0.95555544,
+              "y": 1.1807692,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 0.95555544,
+              "y": 1.6653845,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "y": -0.65,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "y": -0.39499998,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "y": -0.049999952,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "y": -0.7,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "y": -0.3,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "right-pupil",
+          "keys": [
+            {
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": 1,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-white",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 0.95555544,
+              "y": 1.1807692,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 0.95555544,
+              "y": 1.6653845,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "right-white",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-dot",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": -0.25925928,
+              "y": -0.25925928,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": -0.39393938,
+              "y": -0.39393938,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "right-dot",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-lid",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "right-lid",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-cross",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "right-cross",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-brow",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "right-brow",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": 1,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "mouth",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "mouth",
+          "keys": [
+            {
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "x": 1,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "mouth-open",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": -0.45,
+              "y": 0.029999971,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 0.100000024,
+              "y": 0.54999995,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "x": 0.100000024,
+              "y": -0.425,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "x": 0.20000005,
+              "y": 0.28999996,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "x": -0.35000002,
+              "y": -0.35999995,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        },
+        {
+          "kind": "show",
+          "target": "mouth-open",
+          "keys": [
+            {
+              "ease": "step"
+            },
+            {
+              "time": 1,
+              "ease": "step"
+            },
+            {
+              "time": 2,
+              "ease": "step"
+            },
+            {
+              "time": 3,
+              "ease": "step"
+            },
+            {
+              "time": 4,
+              "ease": "step"
+            },
+            {
+              "time": 5,
+              "ease": "step"
+            },
+            {
+              "time": 6,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 7,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 8,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 9,
+              "ease": "step"
+            },
+            {
+              "time": 10,
+              "ease": "step"
+            },
+            {
+              "time": 11,
+              "ease": "step"
+            },
+            {
+              "time": 12,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 13,
+              "ease": "step"
+            },
+            {
+              "time": 14,
+              "ease": "step"
+            },
+            {
+              "time": 15,
+              "x": 1,
+              "ease": "step"
+            },
+            {
+              "time": 16,
+              "ease": "step"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "face-person-blink",
+      "name": "Blink",
+      "model": "face-person",
+      "structureRevision": 1,
+      "duration": 3.7,
+      "loop": true,
+      "reference": {},
+      "travel": {
+        "keys": []
+      },
+      "tracks": [
+        {
+          "kind": "fit",
+          "target": "left-pupil",
+          "keys": [
+            {
+              "y": -0.2
+            },
+            {
+              "time": 3.54,
+              "y": -0.2
+            },
+            {
+              "time": 3.62,
+              "y": -1
+            },
+            {
+              "time": 3.7,
+              "y": -0.2
+            }
+          ]
+        },
+        {
+          "kind": "fit",
+          "target": "right-pupil",
+          "keys": [
+            {
+              "y": -0.2
+            },
+            {
+              "time": 3.54,
+              "y": -0.2
+            },
+            {
+              "time": 3.62,
+              "y": -1
+            },
+            {
+              "time": 3.7,
+              "y": -0.2
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    }
+  ],
+  "expressions": {
+    "relaxed": {
+      "clip": "face-person-expressions",
+      "time": 0,
+      "mutes": []
+    },
+    "happy": {
+      "clip": "face-person-expressions",
+      "time": 1,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "focused": {
+      "clip": "face-person-expressions",
+      "time": 2,
+      "mutes": []
+    },
+    "determined": {
+      "clip": "face-person-expressions",
+      "time": 3,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "angry": {
+      "clip": "face-person-expressions",
+      "time": 4,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "worried": {
+      "clip": "face-person-expressions",
+      "time": 5,
+      "mutes": []
+    },
+    "surprised": {
+      "clip": "face-person-expressions",
+      "time": 6,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "panic": {
+      "clip": "face-person-expressions",
+      "time": 7,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "hurt": {
+      "clip": "face-person-expressions",
+      "time": 8,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "strained": {
+      "clip": "face-person-expressions",
+      "time": 9,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "smug": {
+      "clip": "face-person-expressions",
+      "time": 10,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "confused": {
+      "clip": "face-person-expressions",
+      "time": 11,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "delighted": {
+      "clip": "face-person-expressions",
+      "time": 12,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "tired": {
+      "clip": "face-person-expressions",
+      "time": 13,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "blink": {
+      "clip": "face-person-expressions",
+      "time": 14,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "knocked-out": {
+      "clip": "face-person-expressions",
+      "time": 15,
+      "mutes": [
+        "blink"
+      ]
+    },
+    "grumpy": {
+      "clip": "face-person-expressions",
+      "time": 16,
+      "mutes": [
+        "blink"
+      ]
+    }
+  },
+  "expression": "relaxed"
+}

@@ -1,19 +1,21 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "curve-face-blink",
   "name": "Blink",
   "model": "curve-face",
   "structureRevision": 2,
   "duration": 2,
   "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
   "tracks": [
     {
-      "kind": "translate",
       "target": "left-eye-upper-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -41,11 +43,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-eye-lower-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -77,7 +77,6 @@
       "target": "left-eye",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -105,11 +104,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-eye-upper-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -137,11 +134,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-eye-lower-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -173,7 +168,6 @@
       "target": "right-eye",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -200,5 +194,12 @@
         }
       ]
     }
-  ]
+  ],
+  "contacts": [],
+  "markers": [],
+  "plays": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

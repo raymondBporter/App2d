@@ -5,7 +5,7 @@ namespace App2d.Core.Characters.Authored;
 /// declared once with its kind, units, range or vocabulary. Control properties are the canonical node's dimension and setup:
 /// its bone length, its parent-local translation, rotation and layer offset, and its link's normalized position and offset
 /// along the parent bone. Part properties are the leaf geometry fit of plan section 3.4 (never inherited by children) plus
-/// its material, face and visibility. Attachment properties are an instance's placement, fit, asset selection, mirror,
+/// its material and visibility. Attachment properties are an instance's placement, fit, asset selection, mirror,
 /// material and visibility. A role property binds an animation role to a clip. Names are stable IDs resolved once per model
 /// by <see cref="ParameterCatalog"/> and <see cref="ResolvedModel"/>; a new property registers here and nowhere else.
 /// </summary>
@@ -15,7 +15,7 @@ public static class RigProperties
     public const string LocalX = "local.x", LocalY = "local.y", LocalRotation = "local.rotation", LocalLayer = "local.layer";
     public const string LinkT = "link.t", LinkOffsetX = "link.offsetX", LinkOffsetY = "link.offsetY";
     public const string ScaleX = "scaleX", ScaleY = "scaleY", OffsetX = "offsetX", OffsetY = "offsetY";
-    public const string Material = "material", Face = "face", FaceX = "faceX", Hidden = "hidden";
+    public const string Material = "material", Hidden = "hidden";
     /// <summary>An attachment instance's placement on its socket and its leaf fit (P5b); never inherited by anything.</summary>
     public const string X = "x", Y = "y", Angle = "angle", Scale = "scale", Layer = "layer", FitX = "fitX", FitY = "fitY";
     public const string Asset = "asset", Mirror = "mirror";
@@ -52,25 +52,16 @@ public static class RigProperties
         new(OffsetX, PropertyKinds.Number, ParameterUnits.Length, PartOffsets),
         new(OffsetY, PropertyKinds.Number, ParameterUnits.Length, PartOffsets),
         new(Material, PropertyKinds.Material, Help: "Fill, outline, paint or a shared material over the base part's.") { Clearable = false },
-        new(Face, PropertyKinds.Selection, Options: [.. FaceExpressions.Names, FaceAppearance.None], Help: "Default expression of the part's face payload; clear hides the face.") { Cleared = FaceAppearance.None },
-        new(FaceX, PropertyKinds.Number, ParameterUnits.Length, FaceAppearance.OffsetLimit, Help: "Offset of the face payload's features along the part frame's X axis."),
         new(Hidden, PropertyKinds.Flag),
     ];
 
-    /// <summary>The part properties that belong to the face payload: exposed only while the part carries one.</summary>
-    public static readonly IReadOnlyList<string> FaceProperties = [Face, FaceX];
-
-    /// <summary>Why a declared part property is not exposed on this part, or null when it is: a feature's properties need its payload.</summary>
-    public static string? Refusal(PuppetPart part, string property) =>
-        FaceProperties.Contains(property) && part.Face is null ? $"part '{part.Id}' has no face; add a face to the base part before overriding or binding '{property}'." : null;
-
-    /// <summary>The part properties this part exposes: its fit, material and visibility, plus a feature's properties while it carries the payload.</summary>
-    public static IEnumerable<PropertyDeclaration> Declarations(PuppetPart part) => PartDeclarations.Where(d => Refusal(part, d.Name) is null);
+    /// <summary>The part properties a part exposes: its fit, material and visibility (a feature payload's own properties, like the wave's, are edited on the payload).</summary>
+    public static IEnumerable<PropertyDeclaration> Declarations(PuppetPart part) => PartDeclarations;
 
     /// <summary>
     /// The typed overrides that take a part from <paramref name="was"/> to <paramref name="now"/> (every registered part
     /// property but the material, which merges separately): the registry reads each property once here, so a part-edit
-    /// command carries no feature field. A payload cannot be added or removed this way; the base part owns it.
+    /// command carries no feature field.
     /// </summary>
     public static IEnumerable<PropertyOverride> PartChanges(PuppetPart was, PuppetPart now)
     {
@@ -79,17 +70,6 @@ public static class RigProperties
         if (now.ScaleY != was.ScaleY) yield return PropertyOverride.Of(Target(ScaleY), now.ScaleY);
         if (now.OffsetX != was.OffsetX) yield return PropertyOverride.Of(Target(OffsetX), now.OffsetX);
         if (now.OffsetY != was.OffsetY) yield return PropertyOverride.Of(Target(OffsetY), now.OffsetY);
-        if (now.Face is null != was.Face is null)
-        {
-            throw new InvalidOperationException($"Part '{was.Id}': a variant cannot add or remove a face; the base part owns the payload.");
-        }
-
-        if (now.Face is { } face && was.Face is { } before)
-        {
-            if (face.Expression != before.Expression) yield return PropertyOverride.Of(Target(Face), face.Expression);
-            if (face.OffsetX != before.OffsetX) yield return PropertyOverride.Of(Target(FaceX), face.OffsetX);
-        }
-
         if (now.Hidden != was.Hidden) yield return PropertyOverride.Of(Target(Hidden), now.Hidden);
     }
 
@@ -200,8 +180,8 @@ public static class RigProperties
         if (property.Part is { } part)
         {
             var owner = model.Parts.FirstOrDefault(p => p.Id == part) ?? throw new InvalidDataException($"{field}: no part '{part}'.");
-            var declaration = PartDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no part property '{property.Property}' (one of {string.Join(", ", PartDeclarations.Select(d => d.Name))}).");
-            return Refusal(owner, declaration.Name) is { } refusal ? throw new InvalidDataException($"{field}: {refusal}") : declaration;
+            _ = owner;
+            return PartDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no part property '{property.Property}' (one of {string.Join(", ", PartDeclarations.Select(d => d.Name))}).");
         }
 
         var control = model.Controls.FirstOrDefault(c => c.Id == property.Control) ?? throw new InvalidDataException($"{field}: no control '{property.Control}'.");
@@ -273,7 +253,6 @@ internal sealed class RigLayout
                 RigProperties.ScaleY => p.ScaleY,
                 RigProperties.OffsetX => p.OffsetX,
                 RigProperties.OffsetY => p.OffsetY,
-                RigProperties.FaceX => Face(p, property).OffsetX,
                 _ => throw Unknown(property),
             };
         }
@@ -339,7 +318,6 @@ internal sealed class RigLayout
                 RigProperties.ScaleY => Parts[index] with { ScaleY = value },
                 RigProperties.OffsetX => Parts[index] with { OffsetX = value },
                 RigProperties.OffsetY => Parts[index] with { OffsetY = value },
-                RigProperties.FaceX => Parts[index] with { Face = Face(Parts[index], property) with { OffsetX = value } },
                 _ => throw Unknown(property),
             };
             return;
@@ -388,7 +366,6 @@ internal sealed class RigLayout
             Parts[index] = declaration.Name switch
             {
                 RigProperties.Material => current with { Material = current.RenderMaterial.WithOverride(change.Material) },
-                RigProperties.Face => current with { Face = Face(current, target) with { Expression = change.Clear ? declaration.Cleared! : change.Selection! } },
                 RigProperties.Hidden => current with { Hidden = !change.Clear && change.Flag!.Value },
                 _ => throw Unknown(target),
             };
@@ -419,10 +396,6 @@ internal sealed class RigLayout
         var index = Parts.FindIndex(p => p.Id == part);
         return index >= 0 ? index : throw new InvalidDataException($"No part '{part}'.");
     }
-
-    /// <summary>The face payload a face property writes to; a part without one exposes no face property.</summary>
-    private static FaceAppearance Face(PuppetPart part, PropertyRef property) =>
-        part.Face ?? throw new InvalidDataException($"{property}: {RigProperties.Refusal(part, property.Property)}");
 
     private int AttachmentIndex(string attachment)
     {

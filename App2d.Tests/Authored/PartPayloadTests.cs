@@ -54,7 +54,6 @@ public sealed class PartPayloadTests
         Assert.Empty(ModelAuthoring.RemoveControl(model, "ripple"));
         model.Controls.Add(new() { Id = "tail", Parent = Humanoid.Hips });
         var tuft = ModelAuthoring.AddPart(model, new Ellipse2D { Center = Vector2.Zero, Radii = new(.1f, .1f) }.Validated(), "tail");
-        tuft.Face = FaceAppearance.Starter;
         model.Validate();
         var removed = ModelAuthoring.RemoveControl(model, "tail");
         Assert.Equal([tuft.Id], removed.Select(p => p.Id));
@@ -65,8 +64,6 @@ public sealed class PartPayloadTests
     public void ThePrototypePuppetRemovesDependentPartsThroughTheSameAnswers()
     {
         var puppet = PuppetTemplates.StickFigure();
-        var head = puppet.Parts.Single(p => p.Id == Humanoid.Head);
-        Assert.NotNull(head.Face);
         puppet.RemoveControl(Humanoid.Head);
         Assert.DoesNotContain(puppet.Parts, p => p.Id == Humanoid.Head);
         puppet.Validate();
@@ -77,7 +74,7 @@ public sealed class PartPayloadTests
     {
         var model = Person;
         var head = model.Parts.Single(p => p.Id == Humanoid.Head);
-        Assert.Equal(["face"], head.Payloads.Select(p => p.Name));
+        Assert.Empty(head.Payloads);
         ModelAuthoring.SetPartGeometry(model, Humanoid.Head, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated());
         Assert.Empty(head.Payloads);
         head.Wave = CurveWave.Starter;
@@ -85,9 +82,6 @@ public sealed class PartPayloadTests
         Assert.Equal(["wave"], head.Payloads.Select(p => p.Name));
         ModelAuthoring.SetPartGeometry(model, Humanoid.Head, new Ellipse2D { Center = Vector2.Zero, Radii = new(.3f, .3f) }.Validated());
         Assert.Empty(head.Payloads);
-        head.Face = FaceAppearance.Starter;
-        head.DropUnsupportedPayloads();
-        Assert.Equal(["face"], head.Payloads.Select(p => p.Name));
 
         // A payload on the wrong geometry is refused by the payload contract, naming the requirement.
         head.Wave = CurveWave.Starter;
@@ -99,40 +93,43 @@ public sealed class PartPayloadTests
     {
         var model = Person;
         var head = model.Parts.Single(p => p.Id == Humanoid.Head);
-        var edited = head with { ScaleX = 2, Hidden = true, Face = head.Face! with { OffsetX = -.1f } };
+        var edited = head with { ScaleX = 2, Hidden = true, OffsetX = -.1f };
         var changes = RigProperties.PartChanges(head, edited).ToList();
-        Assert.Equal([RigProperties.ScaleX, RigProperties.FaceX, RigProperties.Hidden], changes.Select(c => c.Target.Property));
+        Assert.Equal([RigProperties.ScaleX, RigProperties.OffsetX, RigProperties.Hidden], changes.Select(c => c.Target.Property));
         Assert.All(changes, c => Assert.Equal(Humanoid.Head, c.Target.Part));
         Assert.Equal(-.1f, changes[1].Value);
         Assert.Empty(RigProperties.PartChanges(head, head with { }));
-        Assert.Contains("owns the payload", Assert.Throws<InvalidOperationException>(() => RigProperties.PartChanges(head, head with { Face = null }).ToList()).Message);
 
         var variant = new ModelVariant { Id = "v", Name = "V", Base = model.Id };
-        ModelAuthoring.EditPartOverride(variant, model, head, p => { p.ScaleY = 1.5f; p.Face = p.Face! with { Expression = "angry" }; });
+        ModelAuthoring.EditPartOverride(variant, model, head, p => { p.ScaleY = 1.5f; p.Hidden = true; });
         Assert.Equal(1.5f, variant.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.ScaleY))!.Value);
-        Assert.Equal("angry", variant.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face))!.Selection);
+        Assert.True(variant.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.Hidden))!.Flag);
         Assert.Equal(2, variant.Overrides.Count);
     }
 
     [Fact]
     public void TheLegacySourceFieldsSitBehindOneBoundaryWhoseRemainingInputsAreListed()
     {
-        Assert.All(LegacySourceFields.Entries, e => Assert.Contains(e.Reader, new[] { "LegacyModelReader", "LegacyVariantReader" }));
+        Assert.All(LegacySourceFields.Entries, e => Assert.Contains(e.Reader, new[] { "LegacyModelReader", "LegacyVariantReader", "LegacyClipReader" }));
         Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("waveAmplitude") && e.Replacement.Contains("CurveWave"));
-        Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("faceX") && e.Replacement.Contains("FaceAppearance"));
+        Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("faceX") && e.Replacement.Contains("refused"));
+        Assert.Contains(LegacySourceFields.Entries, e => e.Asset == "clip" && e.Fields.Contains("faces") && e.Replacement.Contains("plays"));
         Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("chains"));
         Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("build"));
         Assert.Contains(LegacySourceFields.Entries, e => e.Asset == "variant" && e.Fields.Contains("parts"));
-        Assert.Contains("version 10", LegacySourceFields.DeletionCondition);
+        Assert.Contains("version 11", LegacySourceFields.DeletionCondition);
+        Assert.Contains("version 4", LegacySourceFields.DeletionCondition);
 
-        // The conversion report the deletion condition waits on: exactly these shipped files still read through the boundary.
+        // The conversion report the deletion condition waits on: exactly these shipped files still read through the boundary
+        // (P7c converted person.json, the three remaining version-4 variants, the 28 face-track clips and, with `--convert-clips`,
+        // the other 63 version-3 clips, whose only change is the version and the empty face list; the six version-5 models read unchanged).
         var remaining = LegacySourceFields.Remaining(TestModels.AuthoredRoot);
         Assert.Equal(
         [
-            ("model", "models/baby-triceratops-rig.json", 5), ("model", "models/curve-face.json", 5), ("model", "models/person.json", 8),
+            ("model", "models/baby-triceratops-rig.json", 5), ("model", "models/curve-face.json", 5),
             ("model", "models/pterosaur.json", 5), ("model", "models/quadruped.json", 5), ("model", "models/stalker.json", 5), ("model", "models/triceratops.json", 5),
-            ("variant", "variants/club-caveman-build.json", 4), ("variant", "variants/rock-thrower-build.json", 4), ("variant", "variants/shield-defender-build.json", 4),
-        ], remaining.Select(f => (f.Kind, f.Path, f.Version)));
+        ], remaining.Where(f => f.Kind != "clip").Select(f => (f.Kind, f.Path, f.Version)));
+        Assert.DoesNotContain(remaining, f => f.Kind == "clip");
 
         // The boundary is what the parsers call: a current file passes through untouched, a legacy one comes out current.
         var person = Person.ToJson();
@@ -141,8 +138,10 @@ public sealed class PartPayloadTests
         Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", LegacySourceFields.ReadModel(legacy).Replace(" ", "").Replace($"\"version\":{CharacterModel.CurrentVersion}", $"\"version\": {CharacterModel.CurrentVersion}"));
         var variant = new ModelVariant { Id = "v", Name = "V", Base = "person" }.ToJson();
         Assert.Equal(variant, LegacySourceFields.ReadVariant(variant));
+        // The last version-4 variants converted with the face bundle (P7c); no variant or clip file reads through the boundary any more.
         var old = File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "variants", "club-caveman-build.json"));
         Assert.Equal(ModelVariant.CurrentVersion, ModelVariant.FromJson(old).Version);
-        Assert.Contains("\"version\": 4", old);
+        Assert.Contains($"\"version\": {ModelVariant.CurrentVersion}", old);
+        Assert.All(LegacySourceFields.Remaining(TestModels.AuthoredRoot), f => Assert.Equal("model", f.Kind));
     }
 }

@@ -64,11 +64,6 @@ internal sealed class AnimationTimeline(EditorSession session)
         ContactRows(draw, document, primary.Model, origin.X, ref y, X);
         PointRow(draw, "Markers", clip.Markers.Select(m => (m.Time, m.Id)), origin.X, y, X, StudioTheme.TimelineMarker.PackedValue);
         y += RowHeight * scale;
-        foreach (var face in clip.Faces)
-        {
-            PointRow(draw, "Face " + face.Part, face.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, StudioTheme.TimelineFaceKey.PackedValue);
-            y += RowHeight * scale;
-        }
         foreach (var play in clip.Plays)
         {
             PointRow(draw, "Part " + play.Instance, play.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, StudioTheme.TimelineFaceKey.PackedValue);

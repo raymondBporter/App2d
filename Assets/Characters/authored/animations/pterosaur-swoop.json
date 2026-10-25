@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "pterosaur-swoop",
   "name": "Pterosaur / committed dive and low pass",
   "model": "pterosaur",
@@ -353,7 +353,7 @@
       "time": 2.45
     }
   ],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

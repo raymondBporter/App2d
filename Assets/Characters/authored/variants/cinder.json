@@ -33,13 +33,6 @@
     },
     {
       "target": {
-        "part": "head",
-        "property": "face"
-      },
-      "selection": "smug"
-    },
-    {
-      "target": {
         "part": "left-hand",
         "property": "material"
       },
@@ -73,6 +66,13 @@
       "material": {
         "fill": "#f3dcc6"
       }
+    },
+    {
+      "target": {
+        "attachment": "face",
+        "property": "expression"
+      },
+      "selection": "smug"
     }
   ]
 }

@@ -492,7 +492,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Record(before == doc.Serialize(), "every bone edit undoes exactly");
                 Check(s.Edit(doc, () => ModelAuthoring.ConvertToBoneChain(doc.Asset, ["right-shoulder", "right-elbow", "right-hand"])), s);
                 var converted = s.Assets.Resolve("person")!;
-                var reference = ResolvedModel.From(CharacterModel.FromJson(before));
+                var reference = ResolvedModel.Rig(CharacterModel.FromJson(before));
                 Record(converted.Order.All(c => Vector3.Distance(converted.Rest[c.Id], reference.Rest[c.Id]) < 1e-4f) && Control("right-elbow").Link is { IsTip: true }, "converting the right arm to a bone chain keeps every rest position");
                 s.Undo();
                 Record(before == doc.Serialize() && Control("right-shoulder").Node == RigNodeKinds.Point, "the conversion undoes");
@@ -505,8 +505,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = true;
                 var doc = s.SubjectModel!;
                 var person = s.Assets.Resolve("person")!;
-                Record(doc.Asset.Version == CharacterModel.CurrentVersion && doc.Asset.Parameters.Select(p => p.Id).SequenceEqual(["legs", "torso", "arms", "width", "head"]) && doc.Asset.Parameters.Sum(p => p.Bindings.Count) == 44 && doc.Asset.Presets.Count == 3,
-                    $"the Person declares its five proportion parameters with 44 bindings and 3 presets at version {CharacterModel.CurrentVersion}");
+                Record(doc.Asset.Version == CharacterModel.CurrentVersion && doc.Asset.Parameters.Select(p => p.Id).SequenceEqual(["legs", "torso", "arms", "width", "head"]) && doc.Asset.Parameters.Sum(p => p.Bindings.Count) == 46 && doc.Asset.Presets.Count == 3,
+                    $"the Person declares its five proportion parameters with 46 bindings (44 plus the face instance's two fit bindings, P7c) and 3 presets at version {CharacterModel.CurrentVersion} ({doc.Asset.Parameters.Sum(p => p.Bindings.Count)} bindings)");
                 Record(person.Parameters.BindingOfControl("left-shoulder", RigProperties.Length)?.Parameter.Id == "arms" && person.Parameters.BindingOfPart("body", RigProperties.ScaleX)?.Parameter.Id == "width" && person.Parameters.BindingOfControl("hips", RigProperties.LocalY)?.Binding.About == .025f,
                     "the upper-arm length, body width and ground-anchored hip height read their bindings");
                 s.Open("tall-thin");
@@ -574,7 +574,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // wearer, found through uses / used by, undone in order and saved with its wearers.
                 var s = shell.Session;
                 var library = s.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
-                Record(library.SequenceEqual(["boot", "face-curve", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot, the converted curve face (P7b) and sandal as library parts");
+                Record(library.SequenceEqual(["boot", "face-curve", "face-person", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot, the converted curve face (P7b), the baked Person face (P7c) and sandal as library parts");
                 s.Open("person");
                 Check(s.NewPart("mitt", "Mitt", "hair-short"), s);
                 var mitt = s.PartDocument!;
@@ -584,9 +584,9 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Check(s.AttachPart("mitt", Humanoid.LeftHandSocket), s);
                 Check(s.AttachPart("mitt", Humanoid.RightHandSocket, mirror: true), s);
                 var person = s.Assets.Model("person")!;
-                Record(person.Asset.Attachments.Count == 2 && person.Asset.Attachments.All(a => a.Asset == "mitt") && person.Asset.Attachments[1].Mirror && s.PreviewAttachmentOn(s.Assets.Resolve("person")!) is null,
+                Record(person.Asset.Attachments.Count == 3 && person.Asset.Attachments.Skip(1).All(a => a.Asset == "mitt") && person.Asset.Attachments[^1].Mirror && s.PreviewAttachmentOn(s.Assets.Resolve("person")!) is null,
                     "one asset occupies both hands as two instances (the right one mirrored) and the preview instance withdraws");
-                var right = person.Asset.Attachments[1].Id;
+                var right = person.Asset.Attachments[^1].Id;
                 s.Open("tall-thin");
                 var tall = s.SubjectVariant!;
                 Check(s.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, s.Assets.Resolve("tall-thin")!, right, i => i.Asset = "boot")), s);
@@ -597,7 +597,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var fillBefore = s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill;
                 s.Open("mitt");
                 Check(s.Edit(mitt, () => { var solid = mitt.Asset.Solids[0]; solid.Material = solid.RenderMaterial with { Fill = "#13579b" }; mitt.Asset.Validate(); }), s);
-                Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill == "#13579b" && s.Assets.Resolve("person")!.Attachments[0].Solids[0].RenderMaterial.Fill == "#13579b",
+                Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill == "#13579b" && s.Assets.Resolve("person")!.Attachments[^2].Solids[0].RenderMaterial.Fill == "#13579b",
                     "one shared edit reaches every wearer's preview without copying the asset");
                 s.Undo();
                 Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill == fillBefore && mitt.CanRedo, "the shared edit undoes in order from the part editor");
@@ -605,15 +605,15 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.SaveAll();
                 Record(!s.MessageIsError && File.Exists(Path.Combine(s.Assets.Root, "parts", "mitt.json")), "save all writes the part before the characters that wear it: " + s.Message);
                 var reopened = AuthoringWorkspace.Open(s.Assets.Root);
-                Record(reopened.LoadErrors.Count == 0 && reopened.Resolve("person")!.Attachments.Count == 2 && reopened.Resolve("tall-thin")!.Attachment(right)!.Asset.Id == "boot"
-                    && reopened.Resolve("person")!.Attachments[0].Solids[0].RenderMaterial.Fill == "#13579b" && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
+                Record(reopened.LoadErrors.Count == 0 && reopened.Resolve("person")!.Attachments.Count == 3 && reopened.Resolve("tall-thin")!.Attachment(right)!.Asset.Id == "boot"
+                    && reopened.Resolve("person")!.Attachments[^2].Solids[0].RenderMaterial.Fill == "#13579b" && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
                     "the part, its instances and the variant's swap reopen together");
                 s.Open("person");
                 s.Selection.Select(attachment: right);
                 Check(s.Edit(person, () => ModelAuthoring.RemoveAttachment(person.Asset, right)), s);
                 Record(s.Assets.Problems(tall).Any(p => p.Contains(right)), "removing an instance the variant overrides reports the dangling override by name instead of dropping it");
                 s.Undo();
-                Record(person.Asset.Attachments.Count == 2 && s.Assets.Problems(tall).Count == 0, "undo restores the instance and the variant resolves again");
+                Record(person.Asset.Attachments.Count == 3 && s.Assets.Problems(tall).Count == 0, "undo restores the instance and the variant resolves again");
                 s.Selection.Select(attachment: right);
                 shell.Viewport.Fit(s.Evaluate("person"));
             }),
@@ -626,7 +626,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var s = shell.Session; s.Open("tall-thin"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = true;
                 var tall = s.SubjectVariant!;
                 var person = s.Assets.Model("person")!;
-                var right = person.Asset.Attachments[1].Id;
+                var right = person.Asset.Attachments[^1].Id;
                 ResolvedModel Tall() => s.Assets.Resolve("tall-thin")!;
                 Record(tall.Asset.Version == ModelVariant.CurrentVersion && tall.Asset.Overrides.Count == 2 && tall.Asset.Override(PropertyRef.OfAttachment(right, RigProperties.Asset))?.Selection == "boot",
                     $"tall-thin reads at variant version {ModelVariant.CurrentVersion} with its body material and glove swap as typed overrides");
@@ -662,7 +662,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Record(s.SubjectVariant?.Asset.Base == "person" && s.Assets.Resolve("tall-twin")!.RoleClips["walk"] == "person-heavy-walk", "duplicating makes a sibling of the same base with the same overrides");
                 Check(s.MakeIndependent("tall-thin", "tall-flat", "Tall flat"), s);
                 var flat = s.Assets.Resolve("tall-flat")!;
-                Record(s.SubjectModel?.Id == "tall-flat" && flat.Base.Parameters.Count == 0 && flat.Base.MotionSets[0].Roles["walk"] == "person-heavy-walk" && flat.Base.Attachments[1].Asset == "boot"
+                Record(s.SubjectModel?.Id == "tall-flat" && flat.Base.Parameters.Count == 0 && flat.Base.MotionSets[0].Roles["walk"] == "person-heavy-walk" && flat.Base.Attachments[^1].Asset == "boot"
                     && Tall().Order.All(c => Vector3.Distance(Tall().Rest[c.Id], flat.Rest[c.Id]) < 1e-5f),
                     "making the variant independent flattens its resolved recipe: lengths, the swapped glove and the role binding become authored");
                 s.Open("tall-thin");
@@ -672,39 +672,37 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Select(control: "left-elbow");
                 shell.Viewport.Fit(s.Evaluate("tall-thin"));
             }),
-            ("43-face-payload", shell =>
+            ("43-face-instance", shell =>
             {
-                // P2b: the procedural face is an optional payload of the part that renders it.
+                // P7c: the Person's face is the baked face part (parts/face-person.json) instanced on the head socket; the head
+                // part carries no payload, the clips select expressions, variants and looks override the instance's, a
+                // gameplay request wins, and the climb's back view hides it through the ordinary selection channel.
                 var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = false;
-                s.Selection.Select(part: Humanoid.Head); shell.Viewport.Fit(s.Evaluate("person"));
-                var doc = s.SubjectModel!;
-                PuppetPart Part(string id) => doc.Asset.Parts.Single(p => p.Id == id);
-                Record(Part(Humanoid.Head).Face is { Expression: "relaxed", OffsetX: .065f } && doc.Asset.Parts.All(p => p.Id == Humanoid.Head || p.Face is null),
-                    "only the head carries a face payload after reading the version-8 file");
-                var before = doc.Serialize();
-                Check(s.Edit(doc, () => Part(Humanoid.Body).Face = FaceAppearance.Starter), s);
-                Record(Part(Humanoid.Body).Face is not null && s.Evaluate("person")!.Pose.Expressions[Humanoid.Body] == "relaxed", "a shape part gains a face payload and the pose evaluates its expression");
-                s.Undo();
-                Record(before == doc.Serialize() && Part(Humanoid.Body).Face is null, "adding the face undoes exactly");
-                var hit = s.Assets.Clip("person-hit")!;
-                Check(s.Edit(doc, () => Part(Humanoid.Head).Face = null), s);
-                Record(s.Assets.Problems(hit).Any(p => p.Contains("face track")) && !s.Evaluate("person")!.Pose.Expressions.ContainsKey(Humanoid.Head),
-                    "removing the head's face reports the clip still animating it instead of dropping the track: " + string.Join("; ", s.Assets.Problems(hit)));
-                s.Undo();
-                Record(Part(Humanoid.Head).Face is { Expression: "relaxed" } && s.Assets.Problems(hit).Count == 0, "removing the face undoes and the clip resolves again");
-                Check(s.Edit(doc, () => Part(Humanoid.Head).Face = Part(Humanoid.Head).Face! with { Expression = "focused" }), s);
-                s.SaveAll();
-                var saved = File.ReadAllText(doc.Path!);
-                var reopened = AuthoredCatalog.Load(s.Assets.Root);
-                Record(reopened.Errors.Count == 0 && reopened.Models["person"].Parts.Single(p => p.Id == Humanoid.Head).Face is { Expression: "focused", OffsetX: .065f }
-                    && saved.Contains("\"face\": {") && !saved.Contains("faceX") && saved.Contains($"\"version\": {CharacterModel.CurrentVersion}"),
-                    "the face saves as the typed payload at version " + CharacterModel.CurrentVersion + " and reopens");
+                s.Selection.Select(attachment: PersonTemplate.FaceInstance); shell.Viewport.Fit(s.Evaluate("person"));
+                var person = s.Assets.Resolve("person")!;
+                var face = person.Attachment(PersonTemplate.FaceInstance);
+                Record(face is { IsAnimated: true, Asset.Id: ProceduralFace.AssetId, Socket.Id: Humanoid.HeadSocket } && face.Asset.Expressions.Count == ProceduralFace.Names.Count
+                    && person.Parameters.BindingOfAttachment(PersonTemplate.FaceInstance, RigProperties.FitX)?.Parameter.Id == "head" && s.SubjectModel!.Asset.Version == CharacterModel.CurrentVersion,
+                    $"the Person wears the baked face part on its head socket, its fit bound to the head parameter, at model version {CharacterModel.CurrentVersion}");
+                Record(PoseEvaluator.Rest(person).Expressions[PersonTemplate.FaceInstance] == "relaxed", "at rest the instance shows its default expression");
+                s.Open("person-hit"); s.Seek(.1f);
+                Record(s.Evaluate("person")!.Pose.Expressions[PersonTemplate.FaceInstance] == "hurt" && s.Assets.Clip("person-hit")!.Asset.Plays.Single().Instance == PersonTemplate.FaceInstance,
+                    "the hit clip's converted selection key makes the face hurt");
+                s.Open("player-climb"); s.Seek(.4f);
+                Record(s.Evaluate("person")!.Pose.Attachments[PersonTemplate.FaceInstance].Hidden, "the climb's back view hides the face through the selection channel ('none')");
+                s.Expression = "surprised";
+                Record(s.Evaluate("person")!.Pose.Expressions[PersonTemplate.FaceInstance] == "surprised", "a gameplay request the asset binds wins over the clip");
+                s.Expression = null;
                 var brute = s.Assets.Resolve("brute")!;
-                Record(brute.Parts.Single(p => p.Id == Humanoid.Head).Face is { Expression: "angry", OffsetX: .065f } && brute.Provenance(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face)) == PropertySource.Override
-                    && brute.Provenance(PropertyRef.OfPart(Humanoid.Head, RigProperties.FaceX)) == PropertySource.Base,
-                    "the brute variant's face override restyles the payload with its provenance");
-                s.Undo();
-                Record(Part(Humanoid.Head).Face is { Expression: "relaxed" }, "the expression edit undoes");
+                Record(brute.Provenance(PropertyRef.OfAttachment(PersonTemplate.FaceInstance, RigProperties.Expression)) == PropertySource.Override && PoseEvaluator.Rest(brute).Expressions[PersonTemplate.FaceInstance] == "angry",
+                    "the brute variant's converted face override is the instance's expression with Override provenance");
+                var ember = s.SubjectModel!.Asset.Looks.First(l => l.Id == "ember");
+                Record(ember.Expressions[PersonTemplate.FaceInstance] == "determined", "the ember look carries its face word as the instance's expression");
+                var saved = File.ReadAllText(s.SubjectModel!.Path!);
+                Record(!saved.Contains("\"face\": {") && !saved.Contains("faceX") && saved.Contains("\"attachments\""), "the shipped model file carries no face payload or offset field, only the instance (and the looks' words on it)");
+                s.Open("person-walk"); s.Seek(.3f);
+                s.Selection.Select(attachment: PersonTemplate.FaceInstance);
+                shell.Viewport.Fit(s.Scene().FirstOrDefault());
             }),
             ("44-joint-limits", shell =>
             {
@@ -886,22 +884,42 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                     "the parts folder loads the converted curve face with its nine clips and two layers; the curve-face model keeps its affine eyes");
                 s.Open("person");
                 var personDocument = s.Assets.Model("person")!;
-                Check(s.AttachPart("face-curve", Humanoid.HeadSocket), s);
-                var faceId = personDocument.Asset.Attachments.Last(a => a.Asset == "face-curve").Id;
+                var faceId = PersonTemplate.FaceInstance;
+                // Swapping the Person's face instance to the curve face: its default word 'relaxed' and the looks' words are not ones the
+                // curve face binds, so the swap alone leaves the wearer reporting the unbound word by name; clearing the instance default
+                // and the looks' words in the same edit lets the asset's own default show.
+                Check(s.Edit(personDocument, () => ModelAuthoring.SetAttachmentAsset(personDocument.Asset, faceId, "face-curve", s.Assets.PartOf)), s);
+                var unbound = s.Assets.Problems(personDocument);
+                Record(unbound.Any(p => p.Contains("binds no expression 'relaxed'")), "swapping the face to an asset that does not bind the instance's default word is reported by name on the wearer: " + string.Join(" | ", unbound));
+                s.Undo();
+                Record(s.Assets.Problems(personDocument).Count == 0 && personDocument.Asset.Attachments.First(a => a.Id == faceId).Asset == ProceduralFace.AssetId, "undoing the swap restores the baked face without a problem");
                 Check(s.Edit(personDocument, () =>
                 {
-                    var instance = personDocument.Asset.Attachments.First(a => a.Id == faceId);
-                    instance.Scale = .55f;
-                    instance.X = .065f;
-                    ModelAuthoring.AddBinding(personDocument.Asset, "head", new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(faceId, RigProperties.FitX) });
-                    ModelAuthoring.AddBinding(personDocument.Asset, "head", new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(faceId, RigProperties.FitY) });
+                    personDocument.Asset.Attachments.First(a => a.Id == faceId).Expression = null;
+                    foreach (var look in personDocument.Asset.Looks)
+                    {
+                        look.Expressions.Remove(faceId);
+                    }
+
+                    ModelAuthoring.SetAttachmentAsset(personDocument.Asset, faceId, "face-curve", s.Assets.PartOf);
                 }), s);
+                // The variants that override the face's word with one the curve face does not bind report it by name; each is cleared on its own document.
+                var worded = s.Assets.Variants.Where(v => v.Asset.Base == "person" && v.Asset.Override(PropertyRef.OfAttachment(faceId, RigProperties.Expression)) is { Selection: { } word } && !face!.Asset.Binds(word)).ToList();
+                Record(worded.Count >= 4 && worded.All(v => s.Assets.Problems(v).Any(p => p.Contains("binds no expression"))),
+                    $"the {worded.Count} variants whose face word the curve face does not bind (four shipped 'smug' ones, brute's 'angry' is bound, and this smoke's own) report it by name: " + string.Join(" | ", worded.Select(v => v.Id)));
+                foreach (var variant in worded)
+                {
+                    Check(s.Edit(variant, () => variant.Asset.Overrides.RemoveAll(o => o.Target.Attachment == faceId && o.Target.Property == RigProperties.Expression)), s);
+                }
+
+                Record(worded.All(v => s.Assets.Problems(v).Count == 0), "clearing each variant's face word on its own document resolves them all again");
                 var walk = s.Assets.Clip("person-walk")!;
                 Check(s.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, faceId, 0, "smile")), s);
                 s.Open("person-walk");
                 s.Seek(.9f);
                 var subject = s.Evaluate("person")!;
                 var evaluated = subject.Pose.Attachments[faceId];
+                Record(evaluated.Attachment.Asset.Id == "face-curve", "the Person's face instance now wears the curve face");
                 var rig = subject.Model.Attachment(faceId)!.Rig!;
                 var smile = PoseEvaluator.Sample(rig, face!.Asset.Clip("curve-face-smile")!, .9, repeat: true);
                 var blink = PoseEvaluator.Sample(rig, face.Asset.Clip("curve-face-blink")!, .9, repeat: true);
@@ -929,9 +947,14 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Expression = null;
                 s.SaveAll();
                 var reopened = AuthoringWorkspace.Open(s.Assets.Root);
-                Record(reopened.Resolve("person")!.Attachment(faceId) is { IsAnimated: true } && reopened.Clip("person-walk")!.Asset.Plays.Any(p => p.Instance == faceId)
-                    && reopened.Model("curve-face")!.Asset.Version == CharacterModel.CurrentVersion && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
-                    "the face instance, its bindings and the walk's selection save and reopen; nothing needs repair");
+                // The Person's converted clips select words of the baked face's vocabulary; with the curve face worn, every such key the new
+                // asset does not bind is reported by name on its clip (a vocabulary change is an authoring decision, never repaired silently).
+                var leftover = reopened.Documents.SelectMany(d => reopened.Problems(d).Select(p => (Document: d.Id, Problem: p))).ToList();
+                Record(reopened.Resolve("person")!.Attachment(faceId) is { IsAnimated: true, Asset.Id: "face-curve" } && reopened.Clip("person-walk")!.Asset.Plays.Any(p => p.Instance == faceId)
+                    && reopened.Model("curve-face")!.Asset.Version == CharacterModel.CurrentVersion && reopened.Problems(reopened.Model("person")!).Count == 0
+                    && leftover.Count > 0 && leftover.All(l => l.Problem.Contains("play track 'face'") && l.Problem.Contains("binds no expression")),
+                    $"the face instance, its bindings and the walk's selection save and reopen; the only problems are the {leftover.Count} converted clips whose selection words the curve face does not bind, each reported by name on its clip: "
+                    + string.Join(", ", leftover.Select(l => l.Document).Distinct()));
                 s.Pin("short-broad");
                 s.Seek(.95f);
                 s.Selection.Select(attachment: faceId);
@@ -1029,7 +1052,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         Check(s.Save(model), s);
         s.EditRig = true;
         s.Selection.Control = "knee-1";
-        Record(!model.Asset.Parts.Any(p => p.Face is not null) && model.Asset.IkChains.Count() == 3, "tripod has three IK legs and no head or face");
+        Record(model.Asset.Attachments.Count == 0 && model.Asset.IkChains.Count() == 3, "tripod has three IK legs and no head or face");
     }
 
     private static void AnimateTripod(EditorSession s)

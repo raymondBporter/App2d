@@ -97,15 +97,17 @@ public sealed class BoneEditingTests
         TestModels.Near(before.Rest["child"] + new Vector3(.5f, .5f, 0), after.Rest["child"], 1e-5f, "bound child follows");
 
         // A point parent with a bone child: the bone child re-expresses its local setup to stay.
-        var person = CharacterModel.FromJson(AuthoredCatalog.Load(TestModels.AuthoredRoot).Models["person"].ToJson());
-        var rest = ResolvedModel.From(person);
+        var shipped = AuthoredCatalog.Load(TestModels.AuthoredRoot);
+        var person = CharacterModel.FromJson(shipped.Models["person"].ToJson());
+        Func<string, PartAsset?> parts = shipped.Parts.GetValueOrDefault;
+        var rest = ResolvedModel.From(person, null, parts);
         ModelAuthoring.MoveRest(person, "chest", rest.Rest["chest"] + new Vector3(0, .2f, 0), children: false);
-        var lifted = ResolvedModel.From(person);
+        var lifted = ResolvedModel.From(person, null, parts);
         TestModels.Near(rest.Rest["left-shoulder"], lifted.Rest["left-shoulder"], 1e-5f);
         TestModels.Near(rest.Rest["left-hand"], lifted.Rest["left-hand"], 1e-5f);
         TestModels.Near(rest.Rest["right-shoulder"], lifted.Rest["right-shoulder"], 1e-5f);
         ModelAuthoring.MoveRest(person, "chest", rest.Rest["chest"], children: true);
-        var back = ResolvedModel.From(person);
+        var back = ResolvedModel.From(person, null, parts);
         TestModels.Near(rest.Rest["left-hand"] - new Vector3(0, .2f, 0), back.Rest["left-hand"], 1e-5f, "with children the arm moves with the chest");
     }
 
@@ -165,12 +167,12 @@ public sealed class BoneEditingTests
         ModelAuthoring.MoveRest(person, variant, "left-shoulder", person.Rest["left-shoulder"] + new Vector3(.05f, 0, 0), true);
         Assert.True(variant.HasOverride(PropertyRef.OfControl("left-shoulder", RigProperties.LocalX)));
         Assert.False(variant.HasOverride(PropertyRef.OfControl("left-shoulder", RigProperties.LocalY)));
-        TestModels.Near(person.Rest["left-hand"] + new Vector3(.05f, 0, 0), ResolvedModel.From(person.Base, variant).Rest["left-hand"], 1e-5f);
+        TestModels.Near(person.Rest["left-hand"] + new Vector3(.05f, 0, 0), ResolvedModel.From(person.Base, variant, catalog.Parts.GetValueOrDefault).Rest["left-hand"], 1e-5f);
         Assert.Contains("bound to", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(person, variant, "left-elbow", Vector3.Zero, true)).Message);
         variant.Overrides.Clear();
         // Moving the chest alone re-expresses its unbound children (the bone shoulder and the point controls) so they stay put.
         ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + Vector3.UnitY * .1f, false);
-        var kept = ResolvedModel.From(person.Base, variant);
+        var kept = ResolvedModel.From(person.Base, variant, catalog.Parts.GetValueOrDefault);
         foreach (var child in person.Base.Controls.Where(c => c.Parent == "chest"))
         {
             TestModels.Near(person.Rest[child.Id], kept.Rest[child.Id], 1e-5f, child.Id);
@@ -180,10 +182,10 @@ public sealed class BoneEditingTests
         // Moving the chest with its children needs no child override: the arm follows through the hierarchy.
         ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + new Vector3(0, .1f, 0), true);
         Assert.Single(variant.Overrides);
-        var lifted = ResolvedModel.From(person.Base, variant);
+        var lifted = ResolvedModel.From(person.Base, variant, catalog.Parts.GetValueOrDefault);
         TestModels.Near(person.Rest["left-hand"] + new Vector3(0, .1f, 0), lifted.Rest["left-hand"], 1e-5f);
         // Flattening a variant writes the fitted bone setup, not a frozen rest.
-        var tall = ResolvedModel.From(person.Base, catalog.Variants["tall-thin"]);
+        var tall = ResolvedModel.From(person.Base, catalog.Variants["tall-thin"], catalog.Parts.GetValueOrDefault);
         var flat = ModelAuthoring.Flatten(tall, "flat-tall", "Flat tall");
         var shoulder = flat.Controls.Single(c => c.Id == "left-shoulder");
         Assert.Equal(RigNodeKinds.Bone, shoulder.Node);
@@ -191,7 +193,7 @@ public sealed class BoneEditingTests
         Assert.Equal(default, shoulder.Rest);
         foreach (var control in tall.Order)
         {
-            TestModels.Near(tall.Rest[control.Id], ResolvedModel.From(flat).Rest[control.Id], 1e-5f, control.Id);
+            TestModels.Near(tall.Rest[control.Id], ResolvedModel.Rig(flat).Rest[control.Id], 1e-5f, control.Id);
         }
     }
 

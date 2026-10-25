@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "triceratops-run",
   "name": "Triceratops \u00B7 run",
   "model": "triceratops",
@@ -619,7 +619,7 @@
     }
   ],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

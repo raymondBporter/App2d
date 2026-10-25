@@ -8,8 +8,48 @@ public static class PersonTemplate
 {
     public const string Id = "person";
     public const float LegLength = .8f;
+    /// <summary>The Person's face instance (P7c): the baked procedural face part on the head socket.</summary>
+    public const string FaceInstance = "face";
+    private static PartAsset? _face;
 
-    public static CharacterModel Model(string id = Id, string name = "Person")
+    /// <summary>The Person face part the procedural generator bakes, as the shipped `parts/face-person.json` carries it.</summary>
+    public static PartAsset Face => _face ??= ProceduralFace.Bake();
+
+    /// <summary>The seed part library: the face. The shipped tree's library is the catalog's.</summary>
+    public static PartAsset? PartOf(string id) => id == ProceduralFace.AssetId ? Face : null;
+
+    /// <summary>
+    /// Instances the face on a Person model exactly as the P7c conversion placed it: on the head socket at the old payload
+    /// offset, fitted by the head part's authored scale (bound to the head parameter like the part), just in front of it.
+    /// </summary>
+    public static PartInstance AttachFace(CharacterModel model)
+    {
+        var head = model.Parts.First(p => p.Id == Humanoid.Head);
+        var instance = ModelAuthoring.AddAttachment(model, ProceduralFace.AssetId, Humanoid.HeadSocket, PartOf, FaceInstance);
+        instance.X = .065f;
+        instance.FitX = head.ScaleX;
+        instance.FitY = head.ScaleY;
+        instance.Layer = head.Depth - .002f;
+        foreach (var parameter in model.Parameters)
+        {
+            foreach (var binding in parameter.Bindings.Where(b => b.Target.Part == Humanoid.Head && b.Target.Property is RigProperties.ScaleX or RigProperties.ScaleY).ToArray())
+            {
+                parameter.Bindings.Add(binding with { Target = PropertyRef.OfAttachment(FaceInstance, binding.Target.Property == RigProperties.ScaleX ? RigProperties.FitX : RigProperties.FitY) });
+            }
+        }
+        foreach (var (look, word) in new[] { ("slate", "focused"), ("ember", "determined"), ("night", "smug") })
+        {
+            if (model.Looks.FirstOrDefault(l => l.Id == look) is { } preset)
+            {
+                preset.Expressions[FaceInstance] = word;
+            }
+        }
+        model.Validate();
+        return instance;
+    }
+
+    /// <summary>The Person model; with <paramref name="face"/> it also wears the face part (resolve it with <see cref="PartOf"/>).</summary>
+    public static CharacterModel Model(string id = Id, string name = "Person", bool face = false)
     {
         var model = StudyReference();
         var built = ResolvedModel.From(model, new PersonBuild { Legs = LegLength }.Apply(model, "style", "Style"));
@@ -30,6 +70,11 @@ public static class PersonTemplate
         RigConversion.ToBoneChain(model, BoneChain);
         PersonBuild.Declare(model);
         model.Validate();
+        if (face)
+        {
+            AttachFace(model);
+        }
+
         return model;
     }
 
@@ -105,7 +150,7 @@ public static class PersonTemplate
     /// <summary>Writes the Person model, its converted walk and run (and the heavy walk derived from it), the two reviewed builds and the starter entity content as authored assets.</summary>
     public static void WriteStudies(string authoredRoot)
     {
-        var model = Model();
+        var model = Model(face: true);
         var modelPath = Path.Combine(authoredRoot, "models", model.Id + ".json");
         if (File.Exists(modelPath))
         {
@@ -121,6 +166,7 @@ public static class PersonTemplate
             Directory.CreateDirectory(directory);
             AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
         }
+        Write("parts", Face.Id, Face.ToJson());
         Write("models", model.Id, model.ToJson());
         var walkClip = PuppetMotionConverter.Convert(walk, walk.Motions[0], reference, "person-walk", "Walk", Humanoid.LegMeasure);
         Write("animations", "person-walk", walkClip.ToJson());

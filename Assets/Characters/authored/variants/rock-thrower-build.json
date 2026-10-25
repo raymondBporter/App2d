@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 4,
+  "version": 6,
   "id": "rock-thrower-build",
   "name": "Rock thrower",
   "base": "person",
@@ -11,39 +11,68 @@
     "width": 1.05,
     "head": 1.05
   },
-  "rest": {},
-  "parts": {
-    "body": {
-      "material": {
-        "fill": "#f3dcc6",
-        "paint": []
-      }
-    },
-    "head": {
-      "material": {
-        "fill": "#f3dcc6"
+  "overrides": [
+    {
+      "target": {
+        "part": "body",
+        "property": "material"
       },
-      "face": "smug"
+      "material": {
+        "paint": [],
+        "fill": "#f3dcc6"
+      }
     },
-    "left-hand": {
+    {
+      "target": {
+        "attachment": "face",
+        "property": "expression"
+      },
+      "selection": "smug"
+    },
+    {
+      "target": {
+        "part": "head",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "right-hand": {
+    {
+      "target": {
+        "part": "left-hand",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "left-foot": {
+    {
+      "target": {
+        "part": "right-hand",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "right-foot": {
+    {
+      "target": {
+        "part": "left-foot",
+        "property": "material"
+      },
+      "material": {
+        "fill": "#f3dcc6"
+      }
+    },
+    {
+      "target": {
+        "part": "right-foot",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     }
-  }
+  ]
 }

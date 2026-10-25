@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "stalker-death",
   "name": "Stalker death",
   "model": "stalker",
@@ -61,7 +61,7 @@
       "time": 0.6
     }
   ],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

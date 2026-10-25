@@ -1,19 +1,21 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "curve-face-smile",
   "name": "Smile",
   "model": "curve-face",
   "structureRevision": 2,
   "duration": 3,
   "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
   "tracks": [
     {
-      "kind": "translate",
       "target": "mouth-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -28,11 +30,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "mouth-left",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -48,11 +48,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "mouth-right",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -67,5 +65,12 @@
         }
       ]
     }
-  ]
+  ],
+  "contacts": [],
+  "markers": [],
+  "plays": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

@@ -70,8 +70,8 @@ public sealed class ParameterBindingTests
         Assert.Equal("legs", hips.Parameter.Id);
         Assert.Equal(person.Controls.Single(c => c.Id == "left-foot").Rest.Y, hips.Binding.About);
         Assert.Null(resolved.Parameters.BindingOfControl("chest", RigProperties.LocalX + "x"));
-        // The seed declares the same thing the file carries, and a default resolution leaves every authored rest untouched.
-        var seed = PersonTemplate.Model();
+        // The seed (with its face instance, P7c) declares the same thing the file carries, and a default resolution leaves every authored rest untouched.
+        var seed = PersonTemplate.Model(face: true);
         Assert.Equal(person.Parameters.Select(p => (p.Id, p.Bindings.Count)), seed.Parameters.Select(p => (p.Id, p.Bindings.Count)));
         foreach (var control in person.Controls.Where(c => c.Node == RigNodeKinds.Point))
         {
@@ -87,7 +87,7 @@ public sealed class ParameterBindingTests
         var person = Catalog.Models["person"];
         var variant = Catalog.Variants[id];
         var standard = Catalog.Resolve("person");
-        var actual = ResolvedModel.From(person, variant);
+        var actual = ResolvedModel.From(person, variant, Catalog.Parts.GetValueOrDefault);
         var (rest, parts) = LegacyPersonBuild(standard, PersonBuild.From(variant.Parameters));
         foreach (var control in person.Controls)
         {
@@ -121,7 +121,7 @@ public sealed class ParameterBindingTests
                 Width = random.NextSingle() * 1.4f + .5f,
                 Head = random.NextSingle() * 1.4f + .5f,
             };
-            var actual = ResolvedModel.From(person, build.Apply(person, "random", "Random"));
+            var actual = ResolvedModel.From(person, build.Apply(person, "random", "Random"), Catalog.Parts.GetValueOrDefault);
             var (rest, _) = LegacyPersonBuild(standard, build);
             foreach (var control in person.Controls)
             {
@@ -243,9 +243,9 @@ public sealed class ParameterBindingTests
         Assert.Equal(PropertySource.Cleared, ResolvedModel.From(model, variant).Provenance(PropertyRef.OfPart("disc", RigProperties.ScaleX)));
         var person = Catalog.Models["person"];
         var tall = PersonBuild.TallThin.Apply(person, "tall", "Tall");
-        var resolvedTall = ResolvedModel.From(person, tall);
+        var resolvedTall = ResolvedModel.From(person, tall, Catalog.Parts.GetValueOrDefault);
         ModelAuthoring.MoveRest(resolvedTall, tall, "head", new(0, 3, resolvedTall.Rest["head"].Z), true);
-        Assert.Equal(3, ResolvedModel.From(person, tall).Rest["head"].Y, 5);
+        Assert.Equal(3, ResolvedModel.From(person, tall, Catalog.Parts.GetValueOrDefault).Rest["head"].Y, 5);
     }
 
     [Theory]
@@ -307,9 +307,9 @@ public sealed class ParameterBindingTests
         Assert.Contains("\"about\": 0.025", json);
         Assert.DoesNotContain("\"build\"", json);
         Assert.Equal(json, CharacterModel.FromJson(json).ToJson());
-        // The file on disk stays at the version it was converted at (8, P4a) and reads unchanged at the current one.
+        // The file on disk is at the version it was last converted at (11, P7c) and reads unchanged at the current one.
         var file = File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
-        Assert.Contains("\"version\": 8", file);
+        Assert.Contains("\"version\": 11", file);
         Assert.Equal(json, CharacterModel.FromJson(file).ToJson());
 
         var crank = JsonNode.Parse(Crank().ToJson())!.AsObject();
@@ -359,8 +359,8 @@ public sealed class ParameterBindingTests
     public void FlatteningBakesTheParameterValuesAndDropsTheDeclarations()
     {
         var person = Catalog.Models["person"];
-        var tall = ResolvedModel.From(person, Catalog.Variants["tall-thin"]);
-        var flat = ResolvedModel.From(ModelAuthoring.Flatten(tall, "tall-base", "Tall base"));
+        var tall = ResolvedModel.From(person, Catalog.Variants["tall-thin"], Catalog.Parts.GetValueOrDefault);
+        var flat = ResolvedModel.From(ModelAuthoring.Flatten(tall, "tall-base", "Tall base"), null, Catalog.Parts.GetValueOrDefault);
         Assert.Empty(flat.Base.Parameters);
         Assert.Empty(flat.Base.Presets);
         foreach (var control in person.Controls)
@@ -395,7 +395,7 @@ public sealed class ParameterBindingTests
         var reopened = new EditorSession(AuthoringWorkspace.Open(root));
         var saved = reopened.Assets.Model("person")!.Asset;
         Assert.Equal(.12f, saved.Parameters.Single(p => p.Id == "hand-span").Default);
-        Assert.Equal("hand-span", ResolvedModel.From(saved).Parameters.BindingOfControl("left-hand", RigProperties.Length)!.Value.Parameter.Id);
+        Assert.Equal("hand-span", ResolvedModel.Rig(saved).Parameters.BindingOfControl("left-hand", RigProperties.Length)!.Value.Parameter.Id);
         Assert.Empty(reopened.Assets.Problems(reopened.Assets.Model("person")!));
         Directory.Delete(root, true);
         while (document.CanUndo)

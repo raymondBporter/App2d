@@ -275,7 +275,8 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Material?.Fill, p.Value.Face, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")));
+                ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Material?.Fill, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")
+                    .Concat(look.Expressions.Select(e => $"{e.Key}: {e.Value}"))));
             }
 
             ImGui.SameLine();
@@ -292,7 +293,7 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
                 _lookName = "";
             }
         }
-        Ui.Help("Applying a look writes materials and faces as this variant's overrides. Saving one edits the base, which then needs saving.");
+        Ui.Help("Applying a look writes materials and instance expressions as this variant's overrides. Saving one edits the base, which then needs saving.");
     }
 
     private void Overrides(AssetDocument<ModelVariant> document, ResolvedModel? resolved)

@@ -25,7 +25,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     private readonly List<(float Time, float Wrist, string Ease)> _grips = [];
     private readonly List<ClipContact> _contacts = [];
     private readonly List<ClipMarker> _markers = [];
-    private readonly List<ClipFaceKey> _faces = [];
+    private readonly List<ClipPlayKey> _faces = [];
     private readonly List<ClipKey> _travel = [];
     private readonly List<(string Chain, float Time, int Bend)> _bends = [];
 
@@ -134,7 +134,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
 
         if (_faces.Count > 0)
         {
-            clip.Faces = [new() { Part = Humanoid.Head, Keys = [.. _faces.OrderBy(f => f.Time)] }];
+            clip.Plays = [new() { Instance = PersonTemplate.FaceInstance, Keys = [.. _faces.OrderBy(f => f.Time)] }];
         }
 
         void Emit() => clip.Tracks = [.. _tracks.Select(t => new ClipTrack { Kind = t.Key.Kind, Target = t.Key.Target, Keys = [.. t.Value.Values] })];

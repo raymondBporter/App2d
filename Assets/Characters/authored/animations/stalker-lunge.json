@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "stalker-lunge",
   "name": "Stalker lunge",
   "model": "stalker",
@@ -72,7 +72,7 @@
       "time": 0.5
     }
   ],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

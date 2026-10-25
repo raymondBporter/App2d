@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-climb-off",
   "name": "Turn off ladder",
   "model": "person",
@@ -480,15 +480,14 @@
       "time": 0.21000001
     }
   ],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
+        {},
         {
-          "expression": "none"
-        },
-        {
-          "time": 0.24000001
+          "time": 0.24000001,
+          "expression": "relaxed"
         }
       ]
     }

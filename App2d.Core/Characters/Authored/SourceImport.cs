@@ -234,7 +234,7 @@ public static class LibraryImport
 
     public static MotionClip Convert(PointLibrary library, string clipId, CharacterModel model, IReadOnlyDictionary<string, List<string>> points, string id, string name, string? restClip = null)
     {
-        var resolved = ResolvedModel.From(model);
+        var resolved = ResolvedModel.Rig(model);
         if (model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
         {
             throw new InvalidDataException("Point-library retargeting cannot infer bone-frame rotations. Import a point rig or author the bone constraint's target in Animate.");

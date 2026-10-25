@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "triceratops-walk",
   "name": "Triceratops \u00B7 walk",
   "model": "triceratops",
@@ -619,7 +619,7 @@
     }
   ],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

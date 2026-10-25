@@ -30,19 +30,17 @@ public sealed class PuppetDrawing
 
     public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World, rest: id => definition.Controls.First(c => c.Id == id).Rest.XYZ);
     /// <summary>
-    /// Faces come from the pose's evaluated expressions, never from the parts' stored defaults. <paramref name="face"/>, when
-    /// given, replaces the drawn expression with a gameplay-blended face on every part that shows one; a clip that hides the
-    /// face ("none", for a back view) still hides it. Slot attachments and library part instances draw through the same
-    /// per-part path as the model's own parts (P5b): any payload kind, one placement.
+    /// The model's parts over the evaluated pose, then its slot attachments and library part instances through the same
+    /// per-part path (P5b): any payload kind, one placement. A face is an animated instance like any other (P7c).
     /// </summary>
-    public void Build(ResolvedModel model, EvaluatedPose pose, FacePose? face = null)
+    public void Build(ResolvedModel model, EvaluatedPose pose)
     {
         Clear();
         TextureRoot = model.TextureRoot;
         var managed = model.Base.Skins.SelectMany(s => s.Attachments.Values).SelectMany(a => a.Values).ToHashSet(StringComparer.Ordinal);
         // The pose's part channels (P7a): a show track hides a part for its span, a fit track multiplies its leaf scale.
         Add(model.Base.Ink, model.Base.LineWidth, model.Parts.Where(p => !managed.Contains(p.Id) && pose.Visible(p)).Select(pose.Fitted), pose.World,
-            part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, pose.Placement, id => model.Rest[id], model.RestPlacement);
+            pose.Placement, id => model.Rest[id], model.RestPlacement);
         for (var i = 0; i < pose.Slots.Count; i++)
         {
             var slot = pose.Slots[i];
@@ -53,7 +51,7 @@ public sealed class PuppetDrawing
 
             // A slot's attachment is an ordinary part with the slot's color and blend: an image keeps the slot order as its
             // depth, geometry draws at its own layer through the shared path.
-            Add(model.Base.Ink, model.Base.LineWidth, [part], pose.World, null, null, pose.Placement, id => model.Rest[id], model.RestPlacement,
+            Add(model.Base.Ink, model.Base.LineWidth, [part], pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement,
                 ColorExtensions.FromVector4(slot.Color), slot.Slot.Blend, -i * .001f);
         }
         AddAttachments(model, pose);
@@ -99,7 +97,7 @@ public sealed class PuppetDrawing
         }
 
         var attachment = evaluated.Attachment;
-        Add(attachment.Asset.Ink, attachment.Asset.LineWidth, evaluated.DrawnParts(), evaluated.World, null, null, evaluated.Frame, evaluated.Rest, evaluated.RestFrame);
+        Add(attachment.Asset.Ink, attachment.Asset.LineWidth, evaluated.DrawnParts(), evaluated.World, evaluated.Frame, evaluated.Rest, evaluated.RestFrame);
         AddSolids(attachment, evaluated.Placement);
     }
 
@@ -113,7 +111,7 @@ public sealed class PuppetDrawing
         }
 
         var (world, frame) = attachment.Lookups(placement);
-        Add(attachment.Asset.Ink, attachment.Asset.LineWidth, attachment.Parts, world, null, null, frame, world, frame);
+        Add(attachment.Asset.Ink, attachment.Asset.LineWidth, attachment.Parts, world, frame, world, frame);
         AddSolids(attachment, placement);
     }
 
@@ -194,17 +192,17 @@ public sealed class PuppetDrawing
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup, replacing the drawing. The only drawing path for both prototype and authored models.</summary>
-    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
+    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         Clear();
-        Add(inkColor, lineWidth, parts, world, expression, facePose, bone, rest, restBone);
+        Add(inkColor, lineWidth, parts, world, bone, rest, restBone);
     }
 
     /// <summary>
     /// Appends parts over a world-position lookup. <paramref name="tint"/> multiplies every fill and stroke (a slot's color);
     /// <paramref name="blend"/> and <paramref name="imageDepth"/> apply to image parts, which a slot orders by depth.
     /// </summary>
-    public void Add(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null,
+    public void Add(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world,
         Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Color4b? tint = null, string blend = "normal", float? imageDepth = null)
     {
         var ink = Tinted(ColorExtensions.FromHexRgb(inkColor), tint);
@@ -291,16 +289,6 @@ public sealed class PuppetDrawing
                 Mesh.Polygon(contour, null, outlineColor, outlineWidth);
             }
 
-            // The face payload draws its features for the pose's evaluated expression (or the part's default when the
-            // caller supplies none); a gameplay-blended pose replaces the expression's features, never a hidden face.
-            if (part.Face is { } face)
-            {
-                var shown = expression?.Invoke(part) ?? face.Expression;
-                if (FaceAppearance.Shows(shown))
-                {
-                    face.Draw(Mesh, facePose ?? FaceExpressions.Get(shown), frame, ShapeBounds2D.Calculate((IShape2D)part.Geometry!), lineWidth, ink);
-                }
-            }
             if (Mesh.Count > start)
             {
                 Batches.Add(new(start, Mesh.Count - start));

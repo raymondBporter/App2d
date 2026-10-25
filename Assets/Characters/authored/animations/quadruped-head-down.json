@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "quadruped-head-down",
   "name": "Quadruped \u00B7 head-down",
   "model": "quadruped",
@@ -56,7 +56,7 @@
     }
   ],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

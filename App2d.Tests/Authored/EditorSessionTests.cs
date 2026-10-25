@@ -227,7 +227,7 @@ public sealed class EditorSessionTests : IDisposable
             shell.ScaleY = .35f;
         }));
         Assert.Equal(3, model.Asset.IkChains.Count());
-        Assert.DoesNotContain(model.Asset.Parts, p => p.Face is not null);
+        Assert.Empty(model.Asset.Attachments);
         Ok(session, session.Save(model));
 
         Ok(session, session.NewClip("tripod-walk", "Tripod walk", 1));

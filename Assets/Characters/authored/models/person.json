@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 8,
+  "version": 11,
   "id": "person",
   "name": "Person",
   "structureRevision": 1,
@@ -360,6 +360,20 @@
           "target": {
             "part": "head",
             "property": "scaleY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "attachment": "face",
+            "property": "fitX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "attachment": "face",
+            "property": "fitY"
           }
         }
       ]
@@ -977,9 +991,7 @@
       "a": "head",
       "scaleX": 0.56,
       "scaleY": 0.58,
-      "depth": -0.12,
-      "face": "relaxed",
-      "faceX": 0.065
+      "depth": -0.12
     },
     {
       "id": "left-hand",
@@ -1289,6 +1301,18 @@
       "toward": "right-knee"
     }
   ],
+  "attachments": [
+    {
+      "id": "face",
+      "asset": "face-person",
+      "socket": "head-art",
+      "x": 0.065,
+      "layer": -0.121999994,
+      "fitX": 0.56,
+      "fitY": 0.58,
+      "expression": "relaxed"
+    }
+  ],
   "motionSets": [
     {
       "id": "standard",
@@ -1393,7 +1417,8 @@
             "fill": "#d8e9db"
           }
         }
-      }
+      },
+      "expressions": {}
     },
     {
       "id": "slate",
@@ -1407,9 +1432,11 @@
         "head": {
           "material": {
             "fill": "#efe6da"
-          },
-          "face": "focused"
+          }
         }
+      },
+      "expressions": {
+        "face": "focused"
       }
     },
     {
@@ -1422,9 +1449,11 @@
           }
         },
         "head": {
-          "material": {},
-          "face": "determined"
+          "material": {}
         }
+      },
+      "expressions": {
+        "face": "determined"
       }
     },
     {
@@ -1439,9 +1468,11 @@
         "head": {
           "material": {
             "fill": "#e2d6c6"
-          },
-          "face": "smug"
+          }
         }
+      },
+      "expressions": {
+        "face": "smug"
       }
     }
   ]

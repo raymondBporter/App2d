@@ -61,8 +61,7 @@ internal sealed partial class ProofRenders
                                 parts.Add(part with { A = controls[i - 1], B = controls[i], Bindings = null, Geometry = GeometryJson2D.CreateDefault(CurveKinds2D.Line) });
                             }
                         }
-                        drawing.Build(model.Base.Ink, model.Base.LineWidth, parts, pose.World,
-                            p => pose.Expressions.GetValueOrDefault(p.Id, "none"), bone: pose.Placement, rest: id => model.Rest[id]);
+                        drawing.Build(model.Base.Ink, model.Base.LineWidth, parts, pose.World, bone: pose.Placement, rest: id => model.Rest[id]);
                     }
                     if (tile == 3)
                     {

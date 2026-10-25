@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "person-hit",
   "name": "Hit recoil",
   "model": "person",
@@ -157,9 +157,9 @@
     }
   ],
   "markers": [],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "hurt"

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "club-caveman-slam",
   "name": "Club caveman / overhead slam",
   "model": "person",
@@ -423,9 +423,9 @@
       "time": 0.95
     }
   ],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "focused"

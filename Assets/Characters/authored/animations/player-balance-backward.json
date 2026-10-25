@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-balance-backward",
   "name": "Balance, edge behind",
   "model": "person",
@@ -316,9 +316,9 @@
     }
   ],
   "markers": [],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "worried"

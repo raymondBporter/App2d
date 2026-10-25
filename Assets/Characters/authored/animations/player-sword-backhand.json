@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-sword-backhand",
   "name": "Sword backhand",
   "model": "person",
@@ -565,7 +565,7 @@
       "time": 0.21666664
     }
   ],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

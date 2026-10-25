@@ -13,7 +13,7 @@ public sealed class ProportionExtremesTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
     private static CharacterModel Person => Catalog.Models["person"];
-    private static ResolvedModel Build(PersonBuild build, string id) => ResolvedModel.From(Person, build.Apply(Person, id, id));
+    private static ResolvedModel Build(PersonBuild build, string id) => ResolvedModel.From(Person, build.Apply(Person, id, id), Catalog.Parts.GetValueOrDefault);
     private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
 
     public static TheoryData<string, string> Cases => new()

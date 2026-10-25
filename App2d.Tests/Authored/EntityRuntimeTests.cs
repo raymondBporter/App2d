@@ -377,8 +377,8 @@ public sealed class EntityRuntimeTests
                 Assert.Equal(plain.Pose.World(control), hurt.Pose.World(control));
             }
         }
-        Assert.Equal("hurt", hurt.Pose.Local.Expressions["head"]);
-        Assert.Equal("relaxed", plain.Pose.Local.Expressions["head"]);
+        Assert.Equal("hurt", hurt.Pose.Local.Expressions[PersonTemplate.FaceInstance]);
+        Assert.Equal("relaxed", plain.Pose.Local.Expressions[PersonTemplate.FaceInstance]);
     }
 
     [Fact]

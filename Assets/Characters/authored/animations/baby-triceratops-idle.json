@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "baby-triceratops-idle",
   "name": "Baby triceratops / idle",
   "model": "baby-triceratops-rig",
@@ -73,7 +73,7 @@
     }
   ],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-gun-charge",
   "name": "Spell shot: gather",
   "model": "person",
@@ -136,9 +136,9 @@
   ],
   "contacts": [],
   "markers": [],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "focused"

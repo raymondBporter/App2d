@@ -68,9 +68,6 @@ public sealed class PartAssetTests : IDisposable
         var dangling = Glove();
         dangling.Parts[1].B = "thumb";
         Assert.Contains("thumb", Assert.Throws<InvalidDataException>(dangling.Validate).Message);
-        var faced = Glove();
-        faced.Parts[0].Face = new() { Expression = "relaxed" };
-        Assert.Contains("procedural face", Assert.Throws<InvalidDataException>(faced.Validate).Message);
         var empty = new PartAsset { Id = "nothing", Name = "Nothing" };
         Assert.Contains("at least one", Assert.Throws<InvalidDataException>(empty.Validate).Message);
         var originLocation = Glove();
@@ -179,24 +176,25 @@ public sealed class PartAssetTests : IDisposable
         var person = workspace.Model("person")!;
         Assert.True(session.Edit(person, () => ModelAuthoring.AddAttachment(person.Asset, "glove", Humanoid.LeftHandSocket, workspace.PartOf, "left-glove")), session.Message);
         Assert.True(session.Edit(person, () => ModelAuthoring.AddAttachment(person.Asset, "glove", Humanoid.RightHandSocket, workspace.PartOf, "right-glove", mirror: true)), session.Message);
-        Assert.Equal(["glove", "glove"], workspace.Uses("person").Where(u => u.Relation.StartsWith("attachment", StringComparison.Ordinal)).Select(u => u.Id));
+        Assert.Equal(["face-person", "glove", "glove"], workspace.Uses("person").Where(u => u.Relation.StartsWith("attachment", StringComparison.Ordinal)).Select(u => u.Id));
         Assert.Contains(workspace.UsedBy("glove"), r => r.Id == "person");
         Assert.Equal(new[] { "person", "tall-thin", "short-broad", "brute", "cinder", "club-caveman-build", "rock-thrower-build", "shield-defender-build" }.Order(), workspace.Wearers("glove").Order());
         var hero = workspace.CompileEntity("hero")!;
-        Assert.Equal(2, hero.Model.Attachments.Count);
+        // The face instance (P7c) comes first on every wearer; the gloves follow it.
+        Assert.Equal(3, hero.Model.Attachments.Count);
 
         // Editing the shared part refreshes every dependent resolution without anyone copying it.
         var before = workspace.Resolve("tall-thin")!;
-        Assert.Equal("#c9a27a", before.Attachments[0].Parts[0].RenderMaterial.Fill);
+        Assert.Equal("#c9a27a", before.Attachments[1].Parts[0].RenderMaterial.Fill);
         var part = workspace.Part("glove")!;
         Assert.True(session.Edit(part, () => part.Asset.Materials["leather"] = part.Asset.Materials["leather"] with { Fill = "#123456" }), session.Message);
         Assert.NotSame(before, workspace.Resolve("tall-thin"));
-        Assert.Equal("#123456", workspace.Resolve("tall-thin")!.Attachments[0].Parts[0].RenderMaterial.Fill);
-        Assert.Equal("#123456", workspace.Resolve("person")!.Attachments[1].Parts[0].RenderMaterial.Fill);
-        Assert.Equal("#123456", workspace.CompileEntity("hero")!.Model.Attachments[0].Parts[0].RenderMaterial.Fill);
+        Assert.Equal("#123456", workspace.Resolve("tall-thin")!.Attachments[1].Parts[0].RenderMaterial.Fill);
+        Assert.Equal("#123456", workspace.Resolve("person")!.Attachments[2].Parts[0].RenderMaterial.Fill);
+        Assert.Equal("#123456", workspace.CompileEntity("hero")!.Model.Attachments[1].Parts[0].RenderMaterial.Fill);
         Assert.False(person.Dirty is false);
         session.Undo();
-        Assert.Equal("#c9a27a", workspace.Resolve("tall-thin")!.Attachments[0].Parts[0].RenderMaterial.Fill);
+        Assert.Equal("#c9a27a", workspace.Resolve("tall-thin")!.Attachments[1].Parts[0].RenderMaterial.Fill);
 
         // A variant swap is an override on that wearer; the base and the other variants keep the glove.
         var tall = workspace.Variant("tall-thin")!;
@@ -204,8 +202,8 @@ public sealed class PartAssetTests : IDisposable
         var mitten = Glove("mitten", "#222222");
         var mittenDocument = workspace.Create(mitten);
         Assert.True(session.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, workspace.Resolve("tall-thin")!, "left-glove", i => i.Asset = "mitten")), session.Message);
-        Assert.Same(mitten, workspace.Resolve("tall-thin")!.Attachments[0].Asset);
-        Assert.Equal("glove", workspace.Resolve("short-broad")!.Attachments[0].Asset.Id);
+        Assert.Same(mitten, workspace.Resolve("tall-thin")!.Attachments[1].Asset);
+        Assert.Equal("glove", workspace.Resolve("short-broad")!.Attachments[1].Asset.Id);
         Assert.Contains(workspace.UsedBy("mitten"), r => r.Id == "tall-thin");
         Assert.Contains("tall-thin", workspace.Wearers("mitten"));
         Assert.DoesNotContain("tall-thin", workspace.Wearers("glove").Where(w => w == "tall-thin" && workspace.Resolve("tall-thin")!.Attachments.All(a => a.Asset.Id != "glove")));
@@ -216,8 +214,8 @@ public sealed class PartAssetTests : IDisposable
         Assert.True(File.Exists(Path.Combine(_root, "parts", "mitten.json")));
         var reopened = AuthoringWorkspace.Open(_root);
         Assert.Empty(reopened.LoadErrors);
-        Assert.Equal(2, reopened.Resolve("person")!.Attachments.Count);
-        Assert.Equal("mitten", reopened.Resolve("tall-thin")!.Attachments[0].Asset.Id);
+        Assert.Equal(3, reopened.Resolve("person")!.Attachments.Count);
+        Assert.Equal("mitten", reopened.Resolve("tall-thin")!.Attachments[1].Asset.Id);
         Assert.Empty(reopened.Problems(reopened.Part("glove")!));
         Assert.Empty(reopened.Problems(reopened.Model("person")!));
         Assert.Empty(reopened.Problems(reopened.Variant("tall-thin")!));
@@ -234,16 +232,16 @@ public sealed class PartAssetTests : IDisposable
     public void ATemplateInstanceKeepsItsAttachmentsAsReferencesToTheSharedLibrary()
     {
         var glove = Glove();
-        var person = PersonTemplate.Model();
-        ModelAuthoring.AddAttachment(person, "glove", Humanoid.LeftHandSocket, Library(glove), "left-glove");
+        var person = PersonTemplate.Model(face: true);
+        ModelAuthoring.AddAttachment(person, "glove", Humanoid.LeftHandSocket, Library(glove, PersonTemplate.Face), "left-glove");
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var template = new ModelTemplate { Id = "gloved", Name = "Gloved", Model = "person", Animations = person.MotionSets.SelectMany(s => s.Roles.Values).Distinct().ToDictionary(c => c["person-".Length..], c => c) };
-        var bundle = template.Instantiate("gloved-person", "Gloved person", id => id == "person" ? person : null, catalog.Animations.GetValueOrDefault, Library(glove));
-        Assert.Single(bundle.Model.Attachments);
-        Assert.Equal("glove", bundle.Model.Attachments[0].Asset);
+        var bundle = template.Instantiate("gloved-person", "Gloved person", id => id == "person" ? person : null, catalog.Animations.GetValueOrDefault, Library(glove, PersonTemplate.Face));
+        Assert.Equal(2, bundle.Model.Attachments.Count);
+        Assert.Equal("glove", bundle.Model.Attachments[^1].Asset);
         Assert.Contains("needs the part library", Assert.Throws<InvalidDataException>(() => template.Instantiate("other", "Other", id => id == "person" ? person : null, catalog.Animations.GetValueOrDefault)).Message);
-        var flat = ModelAuthoring.Flatten(ResolvedModel.From(person, null, Library(glove)), "flat", "Flat");
-        Assert.Single(flat.Attachments);
+        var flat = ModelAuthoring.Flatten(ResolvedModel.From(person, null, Library(glove, PersonTemplate.Face)), "flat", "Flat");
+        Assert.Equal(2, flat.Attachments.Count);
     }
 
     [Fact]

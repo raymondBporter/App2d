@@ -71,7 +71,7 @@ internal static partial class PlayerMoves
             WeaponMotion(clip);
             if (before != clip.ToJson())
             {
-                clip.Validate(ResolvedModel.From(model));
+                clip.Validate(ResolvedModel.From(model, null, PersonTemplate.PartOf));
                 clip.Save(file);
             }
         }

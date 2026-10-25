@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-sword-down-attack",
   "name": "Sword downward stab",
   "model": "person",
@@ -301,9 +301,9 @@
       "time": 0.083
     }
   ],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "determined"

@@ -220,7 +220,7 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   the prop), duplicates one and lists its wearers from the right-click menu. A part's own outline points are edited as
   coordinates in this pass; viewport dragging of library-part outlines arrives with the P7 cutout tools.
 - **Animate**: clips compatible with the subject's base. Dragging keys the channel it drives (autokey), contacts,
-  markers, face keys, easing and onion skin. **Compare** pins two more builds at the same phase and world scale.
+  markers, part expression keys, easing and onion skin. **Compare** pins two more builds at the same phase and world scale.
 - **Entity**: model and motion set with per-role overrides, controller, movement box, hurt regions, equipment and the
   selected action's clip, mask, blend, hit windows and events.
 - **Test** plays the arena from a snapshot of the current drafts.
@@ -265,7 +265,7 @@ studies; `--write-player-moves <authored-dir>` regenerates the player move set.
 body keys and entity settings. It is a regeneration command and overwrites edits to those weapon assets/tracks.
 
 The game has two more: `dotnet run --project App2d.CharacterSeeds -- --render-smoke <dir>` draws authored entities through the game
-presentation, and `-- --face-smoke <dir>` draws every expression on the Person.
+presentation, and `-- --face-smoke <dir>` draws every expression the baked Person face part binds.
 
 ## Code
 
@@ -273,7 +273,7 @@ presentation, and `-- --face-smoke <dir>` draws every expression on the Person.
 | --- | --- |
 | `App2d.Core/Characters/Authored` | Schema, resolution, pose evaluation, entity runtime and conversions. No graphics. |
 | `App2d.Core/Characters/Editing` | Documents, workspace, transport and the editor session. No ImGui. |
-| `App2d.Rendering/Characters` | `PuppetDrawing`, faces and depth-tested submission. |
+| `App2d.Rendering/Characters` | `PuppetDrawing`, attached part instances (faces among them) and depth-tested submission. |
 | `App2d.CharacterStudio/Editor` | The ImGui shell and workspace views. |
 | `App2d.CharacterStudio/Proof.*.cs` | The headless proof renders. |
 

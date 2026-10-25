@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-gun-shot",
   "name": "Gun shot (upper body)",
   "model": "person",
@@ -156,9 +156,9 @@
       "id": "fire"
     }
   ],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "determined"

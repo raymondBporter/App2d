@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "baby-triceratops-charge",
   "name": "Baby triceratops / charge",
   "model": "baby-triceratops-rig",
@@ -1234,7 +1234,7 @@
       "time": 2.15
     }
   ],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

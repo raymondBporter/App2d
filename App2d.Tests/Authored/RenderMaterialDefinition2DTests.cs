@@ -14,6 +14,8 @@ namespace App2d.Tests.Authored;
 
 public sealed class RenderMaterialDefinition2DTests
 {
+    private static readonly Func<string, PartAsset?> Parts = AuthoredCatalog.Load(TestModels.AuthoredRoot).Parts.GetValueOrDefault;
+
     [Fact]
     public void StrokeWidthInheritsFromNamedMaterialAndSurvivesVariantEditing()
     {
@@ -73,7 +75,7 @@ public sealed class RenderMaterialDefinition2DTests
     {
         var model = CharacterModel.Load(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
         var variant = ModelVariant.FromJson(File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "variants", id + ".json")));
-        var resolved = ResolvedModel.From(model, variant);
+        var resolved = ResolvedModel.From(model, variant, Parts);
         var body = resolved.Parts.Single(p => p.Id == "body");
         Assert.Same(model.Materials["spotted-hide"].Paint, body.RenderMaterial.Paint);
         Assert.NotNull(body.RenderMaterial.Outline);
@@ -81,7 +83,7 @@ public sealed class RenderMaterialDefinition2DTests
         Assert.DoesNotContain("\"points\"", variant.ToJson());
         var inline = ModelVariant.FromJson(variant.ToJson());
         inline.Set(PropertyOverride.Of(PropertyRef.OfPart("body", RigProperties.Material), body.RenderMaterial with { Asset = null }));
-        var expanded = ResolvedModel.From(model, inline);
+        var expanded = ResolvedModel.From(model, inline, Parts);
         var clip = MotionClip.FromJson(File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "animations", "person-death.json")));
         foreach (var time in new[] { 0, .6f })
         {
@@ -98,12 +100,12 @@ public sealed class RenderMaterialDefinition2DTests
     {
         var model = CharacterModel.Load(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
         var variant = new ModelVariant { Id = "surface-test", Name = "Surface test", Base = model.Id };
-        ModelAuthoring.EditPartOverride(variant, model, ResolvedModel.From(model).Parts.Single(p => p.Id == "body"),
+        ModelAuthoring.EditPartOverride(variant, model, ResolvedModel.From(model, null, Parts).Parts.Single(p => p.Id == "body"),
             p => p.Material = new() { Asset = "spotted-hide" });
-        var body = ResolvedModel.From(model, variant).Parts.Single(p => p.Id == "body");
+        var body = ResolvedModel.From(model, variant, Parts).Parts.Single(p => p.Id == "body");
         ModelAuthoring.EditPartOverride(variant, model, body, p => p.Material = p.RenderMaterial with { Fill = "#123456", Paint = [] });
         variant = ModelVariant.FromJson(variant.ToJson());
-        body = ResolvedModel.From(model, variant).Parts.Single(p => p.Id == "body");
+        body = ResolvedModel.From(model, variant, Parts).Parts.Single(p => p.Id == "body");
         Assert.Equal("spotted-hide", variant.Override(PropertyRef.OfPart("body", RigProperties.Material))!.Material!.Asset);
         Assert.Equal("#123456", body.RenderMaterial.Fill);
         Assert.Empty(body.RenderMaterial.Paint!);

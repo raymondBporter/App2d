@@ -33,13 +33,6 @@
     },
     {
       "target": {
-        "part": "head",
-        "property": "face"
-      },
-      "selection": "angry"
-    },
-    {
-      "target": {
         "part": "left-hand",
         "property": "material"
       },
@@ -73,6 +66,13 @@
       "material": {
         "fill": "#ead6c1"
       }
+    },
+    {
+      "target": {
+        "attachment": "face",
+        "property": "expression"
+      },
+      "selection": "angry"
     }
   ]
 }

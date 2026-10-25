@@ -187,7 +187,7 @@ public sealed class AuthoredArenaTests
         }
         Assert.False(arena.Actors[1].Alive);
         arena.Step(default); // the face input reaches the pose on the next evaluation
-        Assert.Equal("knocked-out", arena.Actors[1].Pose.Local.Expressions["head"]);
+        Assert.Equal("knocked-out", arena.Actors[1].Pose.Local.Expressions["face"]); // the face instance (P7c), not the head part
         Assert.True(interrupted || arena.Hits.Count(h => h.Target == 1) >= 3);
     }
 

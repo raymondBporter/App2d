@@ -21,7 +21,7 @@ public sealed partial class Renderer2D
 
         _characterRenderer ??= new(_device);
         _authoredDrawing ??= new();
-        _authoredDrawing.Build(shader.Model, pose, shader.Face);
+        _authoredDrawing.Build(shader.Model, pose);
         var local = new ActorPose(pose, System.Numerics.Vector2.Zero, 1);
         foreach (var (prop, socket) in shader.Props)
         {

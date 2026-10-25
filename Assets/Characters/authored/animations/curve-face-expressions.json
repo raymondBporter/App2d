@@ -1,19 +1,21 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "curve-face-expressions",
-  "name": "Expressions — play me",
+  "name": "Expressions \u2014 play me",
   "model": "curve-face",
   "structureRevision": 2,
   "duration": 8,
   "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
   "tracks": [
     {
-      "kind": "translate",
       "target": "mouth-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -113,11 +115,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "mouth-left",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -183,11 +183,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "mouth-right",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -253,11 +251,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-eye-upper-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -339,11 +335,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-eye-lower-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -429,7 +423,6 @@
       "target": "left-eye",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -495,11 +488,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-eye-upper-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -563,11 +554,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-eye-lower-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -635,7 +624,6 @@
       "target": "right-eye",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -683,11 +671,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-brow-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -769,11 +755,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-brow-left",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -837,11 +821,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-brow-right",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -905,11 +887,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-brow-left",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -973,11 +953,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-brow-right",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1041,11 +1019,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-brow-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1109,11 +1085,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "mouth-upper-bend",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1141,11 +1115,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-eye-upper-left",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1173,11 +1145,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-eye-upper-right",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1205,11 +1175,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-eye-lower-left",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1237,11 +1205,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "left-eye-lower-right",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1269,11 +1235,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-eye-upper-left",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1301,11 +1265,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-eye-upper-right",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1333,11 +1295,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-eye-lower-left",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1365,11 +1325,9 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "right-eye-lower-right",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
@@ -1397,19 +1355,21 @@
       ]
     },
     {
-      "kind": "translate",
       "target": "hair-wave",
       "keys": [
-        {
-          "time": 0,
-          "ease": "linear"
-        },
+        {},
         {
           "time": 8,
-          "x": 1.344,
-          "ease": "linear"
+          "x": 1.344
         }
       ]
     }
-  ]
+  ],
+  "contacts": [],
+  "markers": [],
+  "plays": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

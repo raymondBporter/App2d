@@ -37,17 +37,17 @@ public sealed class RigConversionTests
         var report = RigConversion.ToPointControls(points, ["left-shoulder", "left-elbow", "left-hand"]);
         // Three controls, and the arms parameter's two length bindings re-expressed as the elbow's and hand's local offsets.
         Assert.Equal(5, report.Count);
-        Assert.Equal("arms", ResolvedModel.From(points).Parameters.BindingOfControl("left-elbow", RigProperties.LocalX)!.Value.Parameter.Id);
+        Assert.Equal("arms", ResolvedModel.Rig(points).Parameters.BindingOfControl("left-elbow", RigProperties.LocalX)!.Value.Parameter.Id);
         var back = CharacterModel.FromJson(points.ToJson());
         RigConversion.ToBoneChain(back, ["left-shoulder", "left-elbow", "left-hand"]);
         Assert.Equal(person.ToJson(), back.ToJson());
 
         var bones = Catalog.Resolve("person");
-        var legacy = ResolvedModel.From(points);
+        var legacy = ResolvedModel.From(points, null, Catalog.Parts.GetValueOrDefault);
         foreach (var variant in new ModelVariant?[] { null, Catalog.Variants["tall-thin"], Catalog.Variants["brute"] })
         {
-            var a = variant is null ? bones : ResolvedModel.From(person, variant);
-            var b = variant is null ? legacy : ResolvedModel.From(points, variant);
+            var a = variant is null ? bones : ResolvedModel.From(person, variant, Catalog.Parts.GetValueOrDefault);
+            var b = variant is null ? legacy : ResolvedModel.From(points, variant, Catalog.Parts.GetValueOrDefault);
             foreach (var (clipId, seconds) in new[] { ("person-walk", .3f), ("person-run", .2f), ("player-sword-side-cut", .06f), ("player-climb", .4f), ("person-hammer-slam", .5f) })
             {
                 var clip = Catalog.Animations[clipId];
@@ -76,7 +76,7 @@ public sealed class RigConversionTests
     public void ThePersonArmsParameterScalesTheBoneChainsLengths()
     {
         var person = Catalog.Models["person"];
-        var tall = ResolvedModel.From(person, Catalog.Variants["tall-thin"]);
+        var tall = ResolvedModel.From(person, Catalog.Variants["tall-thin"], Catalog.Parts.GetValueOrDefault);
         var standard = Catalog.Resolve("person");
         var ratio = tall.Nodes["left-shoulder"].Length / standard.Nodes["left-shoulder"].Length;
         Assert.Equal(PersonBuild.TallThin.Arms, ratio, 4);

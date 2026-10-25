@@ -123,7 +123,7 @@ internal static partial class PlayerMoves
             control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
         }
 
-        var model = ResolvedModel.From(reference);
+        var model = ResolvedModel.From(reference, null, PersonTemplate.PartOf);
         foreach (var prop in Props())
         {
             prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
@@ -136,18 +136,18 @@ internal static partial class PlayerMoves
         }
 
         Directory.CreateDirectory(Path.Combine(authoredRoot, "entities"));
-        var hero = Hero(ResolvedModel.From(person), clips);
+        var hero = Hero(ResolvedModel.From(person, null, PersonTemplate.PartOf), clips);
         hero.Save(Path.Combine(authoredRoot, "entities", hero.Id + ".json"));
         // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
         WeaponMotion(PistolShot(model)).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
         var cinder = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "cinder.json")));
-        var gunner = CinderGunner(ResolvedModel.From(person, cinder));
+        var gunner = CinderGunner(ResolvedModel.From(person, cinder, PersonTemplate.PartOf));
         gunner.Save(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"));
         // The maul: a broad brute on the Heavy set with a one-handed hammer and a slow overhead slam.
         HammerProp().Save(Path.Combine(authoredRoot, "props", "hammer.json"));
         WeaponMotion(HammerSlam(model)).Save(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"));
         var brute = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "brute.json")));
-        var maul = MaulBrute(ResolvedModel.From(person, brute));
+        var maul = MaulBrute(ResolvedModel.From(person, brute, PersonTemplate.PartOf));
         maul.Save(Path.Combine(authoredRoot, "entities", maul.Id + ".json"));
         PersonWardrobe.Write(authoredRoot);
     }

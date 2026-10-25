@@ -48,26 +48,28 @@ public sealed class AppearanceAndBuildTests
     }
 
     [Fact]
-    public void ExpressionFallsBackFromGameplayToClipToModelDefault()
+    public void ExpressionFallsBackFromGameplayToClipToInstanceDefault()
     {
-        var model = ResolvedModel.From(Person);
-        var face = model.Parts.Single(p => p.Face is not null);
-        var clip = new MotionClip { Id = "blink", Name = "Blink", Model = "person", Duration = 1, Faces = [new() { Part = face.Id, Keys = [new() { Time = .5f, Expression = "blink" }] }] };
+        // The face is the baked part instanced on the head socket (P7c); the clip's selection channel and a gameplay request address it by instance.
+        var model = ResolvedModel.From(PersonTemplate.Model(face: true), null, PersonTemplate.PartOf);
+        var face = PersonTemplate.FaceInstance;
+        var clip = new MotionClip { Id = "blink", Name = "Blink", Model = "person", Duration = 1, Plays = [new() { Instance = face, Keys = [new() { Time = .5f, Expression = "blink" }] }] };
         clip.Validate(model);
-        Assert.Equal("blink", PoseEvaluator.Sample(model, clip, .1).Expressions[face.Id]);
-        Assert.Equal("blink", PoseEvaluator.Sample(model, clip, .7).Expressions[face.Id]);
-        Assert.Equal("hurt", PoseEvaluator.Sample(model, clip, .7, input: new("hurt")).Expressions[face.Id]);
-        Assert.Equal(face.Face!.Expression, PoseEvaluator.Rest(model).Expressions[face.Id]);
+        Assert.Equal("blink", PoseEvaluator.Sample(model, clip, .1).Expressions[face]);
+        Assert.Equal("blink", PoseEvaluator.Sample(model, clip, .7).Expressions[face]);
+        Assert.Equal("hurt", PoseEvaluator.Sample(model, clip, .7, input: new("hurt")).Expressions[face]);
+        Assert.Equal("relaxed", PoseEvaluator.Rest(model).Expressions[face]);
     }
 
     [Fact]
     public void AClipCanHideTheFaceForABackView()
     {
-        var model = ResolvedModel.From(Person);
-        var face = model.Parts.Single(p => p.Face is not null);
-        var clip = new MotionClip { Id = "climb", Name = "Climb", Model = "person", Duration = 1, Faces = [new() { Part = face.Id, Keys = [new() { Expression = "none" }] }] };
+        var model = ResolvedModel.From(PersonTemplate.Model(face: true), null, PersonTemplate.PartOf);
+        var clip = new MotionClip { Id = "climb", Name = "Climb", Model = "person", Duration = 1, Plays = [new() { Instance = PersonTemplate.FaceInstance, Keys = [new() { Expression = PartAsset.None }] }] };
         clip.Validate(model);
-        Assert.Equal("none", PoseEvaluator.Sample(model, clip, .5).Expressions[face.Id]);
+        var pose = PoseEvaluator.Sample(model, clip, .5);
+        Assert.Equal(PartAsset.None, pose.Expressions[PersonTemplate.FaceInstance]);
+        Assert.True(pose.Attachments[PersonTemplate.FaceInstance].Hidden);
     }
 
     [Fact]
@@ -116,7 +118,7 @@ public sealed class AppearanceAndBuildTests
     [Fact]
     public void AHiddenPartKeepsItsControlsAndDrawsNoFace()
     {
-        var head = Person.Parts.Single(p => p.Face is not null).Id;
+        var head = "head";
         var headless = new ModelVariant { Id = "headless", Name = "Headless", Base = "person", Overrides = [PropertyOverride.Of(PropertyRef.OfPart(head, RigProperties.Hidden), true)] };
         var model = ResolvedModel.From(Person, headless);
         var pose = PoseEvaluator.Rest(model);
@@ -144,7 +146,7 @@ public sealed class AppearanceAndBuildTests
         clip.Markers = [new() { Id = "late", Time = 3 }];
         Assert.Throws<InvalidDataException>(clip.Validate);
         clip.Markers = [];
-        clip.Faces = [new() { Part = "head", Keys = [new() { Expression = "grinning" }] }];
-        Assert.Contains("grinning", Assert.Throws<InvalidDataException>(clip.Validate).Message);
+        clip.Plays = [new() { Instance = "face", Keys = [new() { Expression = "Grinning!" }] }];
+        Assert.Contains("expression", Assert.Throws<InvalidDataException>(clip.Validate).Message);
     }
 }

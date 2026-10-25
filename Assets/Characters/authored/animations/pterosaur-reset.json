@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "pterosaur-reset",
   "name": "Pterosaur \u00B7 reset",
   "model": "pterosaur",
@@ -102,7 +102,7 @@
   ],
   "contacts": [],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "baby-triceratops-run",
   "name": "Baby triceratops / run",
   "model": "baby-triceratops-rig",
@@ -619,7 +619,7 @@
     }
   ],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

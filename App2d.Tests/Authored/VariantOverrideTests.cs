@@ -79,7 +79,6 @@ public sealed class VariantOverrideTests : IDisposable
         var person = PersonTemplate.Model();
         var variant = PersonBuild.TallThin.Apply(person, "tall", "Tall", "#d9e2ef");
         variant.Set(PropertyOverride.Of(Forearm, .4f));
-        variant.Set(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face), "angry"));
         variant.Set(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.Hidden), false));
         variant.Set(PropertyOverride.Cleared(PropertyRef.OfControl(Humanoid.LeftShoulder, RigProperties.Length)));
         variant.Set(PropertyOverride.Of(PropertyRef.OfRole("walk"), "person-heavy-walk"));
@@ -90,14 +89,13 @@ public sealed class VariantOverrideTests : IDisposable
         Assert.DoesNotContain("\"parts\"", json);
         var read = ModelVariant.FromJson(json);
         Assert.Equal(json, read.ToJson());
-        Assert.Equal(6, read.Overrides.Count);
+        Assert.Equal(5, read.Overrides.Count);
         Assert.True(read.Override(PropertyRef.OfControl(Humanoid.LeftShoulder, RigProperties.Length))!.Clear);
         var resolved = ResolvedModel.From(person, read);
         Assert.Equal(.4f, resolved.Nodes[Humanoid.LeftElbow].Length);
         // A cleared length is the authored one: the arms binding is bypassed, so it equals the standard person's.
         Assert.Equal(ResolvedModel.From(person).Nodes[Humanoid.LeftShoulder].Length, resolved.Nodes[Humanoid.LeftShoulder].Length);
         Assert.Equal(resolved.AuthoredNumber(PropertyRef.OfControl(Humanoid.LeftShoulder, RigProperties.Length)), resolved.Nodes[Humanoid.LeftShoulder].Length);
-        Assert.Equal("angry", resolved.Parts.Single(p => p.Id == Humanoid.Head).Face!.Expression);
         Assert.Equal("#d9e2ef", resolved.Parts.Single(p => p.Id == Humanoid.Body).RenderMaterial.Fill);
         Assert.Equal("person-heavy-walk", resolved.RoleClips["walk"]);
 
@@ -110,17 +108,17 @@ public sealed class VariantOverrideTests : IDisposable
         Assert.Contains("only a bone node exposes a length", Refusal(PropertyOverride.Of(PropertyRef.OfControl(Humanoid.RightElbow, RigProperties.Length), 1)));
         Assert.Contains("bind its link", Refusal(PropertyOverride.Of(PropertyRef.OfControl(Humanoid.LeftElbow, RigProperties.LocalX), 1)));
         Assert.Contains("takes a number", Refusal(PropertyOverride.Of(Forearm, "long")));
-        Assert.Contains("takes a selection", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face), 2)));
-        Assert.Contains("unknown face 'grumpy'", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face), "grumpy")));
+        Assert.Contains("takes a flag", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.Hidden), 2)));
+        Assert.Contains("no part property 'face'", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, "face"), "grumpy")));
         Assert.Contains("no part property 'girth'", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, "girth"), 2)));
         Assert.Contains("cannot be cleared", Refusal(PropertyOverride.Cleared(PropertyRef.OfPart(Humanoid.Head, RigProperties.Material))));
         Assert.Contains("assigns role 'fly'", Refusal(PropertyOverride.Of(PropertyRef.OfRole("fly"), "person-walk")));
-        Assert.Contains("between", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.FaceX), 5)));
+        Assert.Contains("between", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.OffsetX), 500)));
         Assert.Contains("exactly one of value", Assert.Throws<InvalidDataException>(() => variant.Set(new() { Target = Forearm, Value = 1, Flag = true })).Message);
         var twice = new ModelVariant { Id = "twice", Name = "Twice", Base = person.Id, Overrides = [PropertyOverride.Of(Forearm, 1), PropertyOverride.Of(Forearm, 2)] };
         Assert.Contains("overridden twice", Assert.Throws<InvalidDataException>(twice.Validate).Message);
         // A binding cannot target a non-number property or a role.
-        person.Parameters[0].Bindings.Add(new() { Target = PropertyRef.OfPart(Humanoid.Head, RigProperties.Face) });
+        person.Parameters[0].Bindings.Add(new() { Target = PropertyRef.OfPart(Humanoid.Head, RigProperties.Material) });
         Assert.Contains("only number properties are bindable", Assert.Throws<InvalidDataException>(person.Validate).Message);
         person.Parameters[0].Bindings[^1] = new() { Target = PropertyRef.OfRole("walk") };
         Assert.Contains("not bindable", Assert.Throws<InvalidDataException>(person.Validate).Message);
@@ -132,20 +130,24 @@ public sealed class VariantOverrideTests : IDisposable
         var person = PersonTemplate.Model();
         const string legacy = """
             {"format":"app2d-variant","version":4,"id":"old","name":"Old","base":"person","build":{"legs":1.2},"rest":{},
-             "parts":{"body":{"material":{"fill":"#d9e2ef"},"scaleX":1.2},"head":{"face":"angry","faceX":0.1,"hidden":false}}}
+             "parts":{"body":{"material":{"fill":"#d9e2ef"},"scaleX":1.2},"head":{"hidden":false}}}
             """;
         Assert.Equal(4, LegacyVariantReader.LegacyVersion(legacy));
         var read = ModelVariant.FromJson(legacy);
         Assert.Equal(ModelVariant.CurrentVersion, read.Version);
         Assert.Equal(1.2f, read.Parameters["legs"]);
-        Assert.Equal(5, read.Overrides.Count);
+        Assert.Equal(3, read.Overrides.Count);
         Assert.Equal("#d9e2ef", read.Override(PropertyRef.OfPart(Humanoid.Body, RigProperties.Material))!.Material!.Fill);
         Assert.Equal(1.2f, read.Override(PropertyRef.OfPart(Humanoid.Body, RigProperties.ScaleX))!.Value);
-        Assert.Equal("angry", read.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face))!.Selection);
-        Assert.Equal(.1f, read.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.FaceX))!.Value);
         Assert.False(read.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.Hidden))!.Flag);
-        Assert.Equal("angry", ResolvedModel.From(person, read).Parts.Single(p => p.Id == Humanoid.Head).Face!.Expression);
+        Assert.False(ResolvedModel.From(person, read).Parts.Single(p => p.Id == Humanoid.Head).Hidden);
         Assert.Null(LegacyVariantReader.LegacyVersion(read.ToJson()));
+        // A legacy face word on a part (the retired payload, P7c) maps to its face instance only through the bundle conversion; the reader refuses it by name.
+        var faced = legacy.Replace("\"hidden\":false", "\"face\":\"angry\",\"hidden\":false");
+        Assert.Contains("convert the bundle", Assert.Throws<InvalidDataException>(() => ModelVariant.FromJson(faced)).Message);
+        var (mapped, lines) = LegacyVariantReader.Convert(faced, null, new Dictionary<string, string> { [Humanoid.Head] = PersonTemplate.FaceInstance });
+        Assert.Equal("angry", ModelVariant.FromJson(mapped).Override(PropertyRef.OfAttachment(PersonTemplate.FaceInstance, RigProperties.Expression))!.Selection);
+        Assert.Contains(lines, l => l.Contains("face 'angry' -> attachment 'face' expression"));
 
         // A rest pin needs the base: the reader refuses it by name, the conversion converts it to setup overrides.
         var pinned = legacy.Replace("\"rest\":{}", "\"rest\":{\"head\":{\"x\":0,\"y\":3}}");
@@ -256,18 +258,18 @@ public sealed class VariantOverrideTests : IDisposable
     [Fact]
     public void LooksWriteTypedOverridesAndMergeOverAnExistingMaterial()
     {
-        var person = PersonTemplate.Model();
+        var person = PersonTemplate.Model(face: true);
         var variant = PersonBuild.TallThin.Apply(person, "tall", "Tall", "#d9e2ef");
-        ModelAuthoring.EditPartOverride(variant, person, ResolvedModel.From(person, variant).Parts.Single(p => p.Id == Humanoid.Body),
+        ModelAuthoring.EditPartOverride(variant, person, ResolvedModel.From(person, variant, PersonTemplate.PartOf).Parts.Single(p => p.Id == Humanoid.Body),
             p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new()) with { Width = .09f } });
         EntityAuthoring.ApplyLook(person, variant, "ember");
         var body = variant.Override(PropertyRef.OfPart(Humanoid.Body, RigProperties.Material))!.Material!;
         Assert.Equal("#eab596", body.Fill);
         Assert.Equal(.09f, body.Outline!.Width);
-        Assert.Equal("determined", variant.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.Face))!.Selection);
+        Assert.Equal("determined", variant.Override(PropertyRef.OfAttachment(PersonTemplate.FaceInstance, RigProperties.Expression))!.Selection);
         var look = EntityAuthoring.SaveLook(person, variant, "mine", "Mine");
         Assert.Equal("#eab596", look.Parts[Humanoid.Body].Material!.Fill);
-        Assert.Equal("determined", look.Parts[Humanoid.Head].Face);
+        Assert.Equal("determined", look.Expressions[PersonTemplate.FaceInstance]);
         Assert.DoesNotContain(look.Parts.Keys, part => part == Humanoid.LeftHand);
     }
 }

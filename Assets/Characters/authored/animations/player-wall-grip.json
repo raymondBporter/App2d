@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-wall-grip",
   "name": "Wall grip",
   "model": "person",
@@ -215,9 +215,9 @@
   ],
   "contacts": [],
   "markers": [],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "strained"

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "baby-triceratops-head-down",
   "name": "Baby triceratops / head-down",
   "model": "baby-triceratops-rig",
@@ -56,7 +56,7 @@
     }
   ],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

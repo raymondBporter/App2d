@@ -218,8 +218,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 }
             }
         }
-        // Feature inspectors decide their own applicability (plan section 3.10): a part shows a feature's rows only when its payload or geometry has it.
-        ModelFaceInspector.Draw(part, overrides, change, Property, Float);
+        // Feature inspectors decide their own applicability (plan section 3.10): a part shows a feature's rows only when its payload or geometry has it (a face is a library part instance since P7c).
         if (overrides is null)
         {
             var layer = new CharacterLayer2D(part.Depth);

@@ -117,8 +117,9 @@ public sealed record PartPointBinding
 }
 
 /// <summary>
-/// An optional feature payload a part may carry (character-system migration, P2c): the wave of a linked curve, the face of
-/// a shape. Each payload owns what the common part must not know: which geometry can carry it, which controls it references
+/// An optional feature payload a part may carry (character-system migration, P2c): the wave of a linked curve. (The
+/// procedural face payload of P2b retired in P7c: a face is an animated library part instanced on a socket.) Each payload
+/// owns what the common part must not know: which geometry can carry it, which controls it references
 /// and how it validates. Common authoring asks the payloads through <see cref="PuppetPart.Payloads"/> and never a field of one.
 /// </summary>
 public interface IPartPayload
@@ -163,8 +164,6 @@ public sealed record PuppetPart
     public CurveWave? Wave { get; set; }
     /// <summary>Base sampling density for rounded paths; exact fillet boundaries are added by the curve library.</summary>
     public int CurveSections { get; set; } = 20;
-    /// <summary>Optional procedural face of a shape part. Parts without one have no face fields; the payload owns its vocabulary, offset and drawing.</summary>
-    public FaceAppearance? Face { get; set; }
 
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
     public bool Hidden { get; set; }
@@ -179,7 +178,6 @@ public sealed record PuppetPart
         get
         {
             if (Wave is not null) yield return Wave;
-            if (Face is not null) yield return Face;
         }
     }
 
@@ -198,7 +196,6 @@ public sealed record PuppetPart
     public void DropUnsupportedPayloads()
     {
         if (Wave?.Fits(Geometry) == false) Wave = null;
-        if (Face?.Fits(Geometry) == false) Face = null;
     }
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
@@ -346,8 +343,8 @@ public sealed record PuppetMotion
 public sealed class PuppetDefinition
 {
     public const string FormatId = "app2d-puppet";
-    /// <summary>Version 4 (P2b) carries a part's face as the typed <c>face</c> payload; version 3 kept a loose expression string and <c>faceX</c>. No shipped puppet file exists, so there is no reader for 3.</summary>
-    public const int CurrentVersion = 4;
+    /// <summary>Version 5 (P7c) carries no face on a part (a face is a library part instance); version 4 had the typed payload, version 3 a loose expression string. No shipped puppet file exists, so there is no reader for older versions.</summary>
+    public const int CurrentVersion = 5;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Name { get; set; } = "New character";

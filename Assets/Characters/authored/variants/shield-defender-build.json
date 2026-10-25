@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 4,
+  "version": 6,
   "id": "shield-defender-build",
   "name": "Shell-shield defender",
   "base": "person",
@@ -11,39 +11,68 @@
     "width": 1.05,
     "head": 1.05
   },
-  "rest": {},
-  "parts": {
-    "body": {
+  "overrides": [
+    {
+      "target": {
+        "part": "body",
+        "property": "material"
+      },
       "material": {
         "asset": "spotted-hide",
         "fill": "#d7a348"
       }
     },
-    "head": {
-      "material": {
-        "fill": "#f3dcc6"
+    {
+      "target": {
+        "attachment": "face",
+        "property": "expression"
       },
-      "face": "smug"
+      "selection": "smug"
     },
-    "left-hand": {
+    {
+      "target": {
+        "part": "head",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "right-hand": {
+    {
+      "target": {
+        "part": "left-hand",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "left-foot": {
+    {
+      "target": {
+        "part": "right-hand",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "right-foot": {
+    {
+      "target": {
+        "part": "left-foot",
+        "property": "material"
+      },
+      "material": {
+        "fill": "#f3dcc6"
+      }
+    },
+    {
+      "target": {
+        "part": "right-foot",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     }
-  }
+  ]
 }

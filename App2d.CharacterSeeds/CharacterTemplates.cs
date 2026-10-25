@@ -11,7 +11,7 @@ public static class CharacterTemplates
     public static IReadOnlyList<CharacterTemplate> All { get; } =
     [
         new("empty", "Empty", "Start with an empty rig and add controls and artwork.", ModelAuthoring.Empty, _ => []),
-        new("person", "Person", "Independent person base with the shared human build controls.", PersonTemplate.Model, _ => []),
+        new("person", "Person", "Independent person base with the shared human build controls.", (id, name) => PersonTemplate.Model(id, name), _ => []),
         new("quadruped", "Quadruped", "Four planted IK legs, head and tail; eight editable motion studies.", (id, name) => QuadrupedTemplate.Model(id, name), QuadrupedTemplate.Clips, "idle"),
         new("triceratops", "Triceratops", "Quadruped rig with a cutout frill, horns, painted spots and eight motion studies.", (id, name) => QuadrupedTemplate.Model(id, name, true), QuadrupedTemplate.Clips, "idle"),
         new("pterosaur", "Pterosaur", "Articulated wings with attached membrane points, a jaw, and six flight pose studies.", PterosaurTemplate.Model, PterosaurTemplate.Clips, "hover"),

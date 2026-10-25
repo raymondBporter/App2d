@@ -315,14 +315,14 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         ImGui.SetNextItemWidth(150 * Ui.Scale);
         if (ImGui.BeginCombo("##expression", Session.Expression is null ? "Game face: none" : "Game face: " + Session.Expression))
         {
-            if (ImGui.Selectable("none (clip, then model default)", Session.Expression is null))
+            if (ImGui.Selectable("none (clip, then instance default)", Session.Expression is null))
             {
                 Session.Expression = null;
             }
 
-            // The procedural vocabulary (until P7c) and every word the subject's animated part instances bind (P7a).
+            // Every word the subject's animated part instances bind (P7a/P7c); there is no fixed vocabulary any more.
             var bound = Session.Scene().SelectMany(s => s.Model.Attachments.Where(a => a.IsAnimated).SelectMany(a => a.Asset.Expressions.Keys.Append(PartAsset.None)));
-            foreach (var face in FaceExpressions.Names.Concat(bound).Distinct(StringComparer.Ordinal))
+            foreach (var face in bound.Distinct(StringComparer.Ordinal))
             {
                 if (ImGui.Selectable(face, Session.Expression == face))
                 {

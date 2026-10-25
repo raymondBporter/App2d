@@ -72,7 +72,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -330,7 +330,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -588,7 +588,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -846,7 +846,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -1104,7 +1104,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -1362,7 +1362,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -1614,7 +1614,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -1865,7 +1865,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -2123,7 +2123,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -2381,7 +2381,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -2639,7 +2639,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -2897,7 +2897,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -3155,7 +3155,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -3407,7 +3407,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -3658,7 +3658,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -3916,7 +3916,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -4174,7 +4174,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -4432,7 +4432,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -4690,7 +4690,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -4948,7 +4948,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -5200,7 +5200,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -5464,7 +5464,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -5794,7 +5794,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -6124,7 +6124,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -6454,7 +6454,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -6784,7 +6784,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -7114,7 +7114,7 @@
         }
       ],
       "expressions": {
-        "head": "focused"
+        "face": "focused"
       },
       "sockets": {
         "right-grip": {
@@ -7429,7 +7429,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -7744,7 +7744,7 @@
         }
       ],
       "expressions": {
-        "head": "relaxed"
+        "face": "relaxed"
       },
       "sockets": {
         "right-grip": {
@@ -8048,7 +8048,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "determined"
+        "face": "determined"
       },
       "sockets": {
         "right-grip": {
@@ -8357,7 +8357,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "determined"
+        "face": "determined"
       },
       "sockets": {
         "right-grip": {
@@ -8666,7 +8666,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "none"
+        "face": "none"
       },
       "sockets": {
         "right-grip": {
@@ -8970,7 +8970,7 @@
       ],
       "contacts": [],
       "expressions": {
-        "head": "none"
+        "face": "none"
       },
       "sockets": {
         "right-grip": {
@@ -9285,7 +9285,7 @@
         }
       ],
       "expressions": {
-        "head": "hurt"
+        "face": "hurt"
       },
       "sockets": {
         "right-grip": {
@@ -9605,7 +9605,7 @@
         }
       ],
       "expressions": {
-        "head": "determined"
+        "face": "determined"
       },
       "sockets": {
         "right-grip": {
@@ -9937,7 +9937,7 @@
         }
       ],
       "expressions": {
-        "head": "smug"
+        "face": "smug"
       },
       "sockets": {
         "right-grip": {
@@ -10269,7 +10269,7 @@
         }
       ],
       "expressions": {
-        "head": "angry"
+        "face": "angry"
       },
       "sockets": {
         "right-grip": {
@@ -10611,7 +10611,7 @@
         }
       ],
       "expressions": {
-        "head": "angry"
+        "face": "angry"
       },
       "sockets": {
         "right-grip": {
@@ -10948,7 +10948,7 @@
         }
       ],
       "expressions": {
-        "head": "angry"
+        "face": "angry"
       },
       "sockets": {
         "right-grip": {
@@ -11275,7 +11275,7 @@
         }
       ],
       "expressions": {
-        "head": "determined"
+        "face": "determined"
       },
       "sockets": {
         "right-grip": {

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "person-jump",
   "name": "Jump",
   "model": "person",
@@ -167,7 +167,7 @@
       "time": 0.5
     }
   ],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

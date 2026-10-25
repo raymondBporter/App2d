@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-sword-put-away-backhand",
   "name": "Sword put away after a backhand",
   "model": "person",
@@ -431,7 +431,7 @@
       "time": 0.40333343
     }
   ],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

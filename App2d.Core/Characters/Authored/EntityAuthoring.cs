@@ -174,12 +174,16 @@ public static class EntityAuthoring
                 }
             }
         }
+        foreach (var (instance, expression) in look.Expressions)
+        {
+            variant.Set(PropertyOverride.Of(PropertyRef.OfAttachment(instance, RigProperties.Expression), expression));
+        }
 
         variant.Validate();
     }
 
     /// <summary>
-    /// Records a variant's appearance overrides (material, face, face offset, visibility; never sizes) as a look on its base,
+    /// Records a variant's appearance overrides (material, visibility and instance expressions; never sizes) as a look on its base,
     /// replacing a look with the same ID. This edits the base model, which the caller must present as a base edit.
     /// </summary>
     public static LookPreset SaveLook(CharacterModel model, ModelVariant variant, string id, string name)
@@ -194,8 +198,6 @@ public static class EntityAuthoring
                 switch (change.Target.Property)
                 {
                     case RigProperties.Material: look.Material = change.Material; break;
-                    case RigProperties.Face: look.Face = change.Selection; break;
-                    case RigProperties.FaceX: look.FaceX = change.Value; break;
                     case RigProperties.Hidden: look.Hidden = change.Flag; break;
                 }
             }
@@ -204,12 +206,14 @@ public static class EntityAuthoring
                 parts[group.Key] = look;
             }
         }
-        if (parts.Count == 0)
+        var expressions = variant.Overrides.Where(o => o.Target.Attachment is not null && o.Target.Property == RigProperties.Expression && o.Selection is not null)
+            .ToDictionary(o => o.Target.Attachment!, o => o.Selection!, StringComparer.Ordinal);
+        if (parts.Count == 0 && expressions.Count == 0)
         {
-            throw new InvalidDataException($"Variant '{variant.Id}' overrides no colors, faces or visibility to save as a look.");
+            throw new InvalidDataException($"Variant '{variant.Id}' overrides no colors, expressions or visibility to save as a look.");
         }
 
-        var preset = new LookPreset { Id = id, Name = name, Parts = parts };
+        var preset = new LookPreset { Id = id, Name = name, Parts = parts, Expressions = expressions };
         model.Looks.RemoveAll(l => l.Id == id);
         model.Looks.Add(preset);
         model.Validate();

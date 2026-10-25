@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "player-land",
   "name": "Land",
   "model": "person",
@@ -191,15 +191,16 @@
       "id": "impact"
     }
   ],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "strained"
         },
         {
-          "time": 0.2
+          "time": 0.2,
+          "expression": "relaxed"
         }
       ]
     }

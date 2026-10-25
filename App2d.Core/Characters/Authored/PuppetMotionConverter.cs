@@ -10,7 +10,7 @@ public static class PuppetMotionConverter
 {
     public static MotionClip Convert(PuppetDefinition puppet, PuppetMotion motion, CharacterModel model, string id, string name, string travelScale)
     {
-        var resolved = ResolvedModel.From(model);
+        var resolved = ResolvedModel.Rig(model);
         if (model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
         {
             throw new InvalidDataException("Prototype point motion cannot infer bone-frame rotations. Convert onto a point rig or author the bone constraint's target in Animate.");

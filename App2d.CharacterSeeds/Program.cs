@@ -1,11 +1,12 @@
 using App2d.CharacterSeeds.Diagnostics;
+using App2d.Core.Characters.Authored;
 
 namespace App2d.CharacterSeeds;
 
 /// <summary>Runs the rendering smokes and studies against the game's real assets and simulation. This project references the game; the game does not reference it.</summary>
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --convert-variants authored-root base-id output-directory variant-id... | --convert-face authored-root model-id control-id output-directory part-id]";
+    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --convert-variants authored-root base-id output-directory variant-id... | --convert-face authored-root model-id control-id output-directory part-id | --bake-face authored-root | --convert-face-payload authored-root model-id part-id instance-id asset-id socket-id output-directory]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -73,6 +74,53 @@ internal static class Program
                 }
                 Console.WriteLine($"Report: {Path.Combine(output, "face-conversion-report.md")}");
                 return face.Converted || face.Status.StartsWith("unchanged", StringComparison.Ordinal) || face.Status.StartsWith("kept", StringComparison.Ordinal) ? 0 : 2;
+            case ["--bake-face", var authoredRoot]:
+                // P7c: the retained procedural generator writes the Person face part; regenerate when the vocabulary changes.
+                var baked = ProceduralFace.Bake();
+                var bakedPath = Path.Combine(authoredRoot, "parts", baked.Id + ".json");
+                baked.Save(bakedPath);
+                Console.WriteLine($"{baked.Id}: {baked.Controls.Count} controls, {baked.Parts.Count} pieces, {baked.Clips.Count} clips, {baked.Expressions.Count} expressions -> {bakedPath}");
+                return 0;
+            case ["--convert-clips", var authoredRoot]:
+                // P7c: every clip file below the current version whose legacy form carries nothing (no face tracks) rewrites at the
+                // current version through the legacy reader; a file with face tracks is refused and reported, not rewritten.
+                var rewritten = 0;
+                foreach (var path in Directory.EnumerateFiles(Path.Combine(authoredRoot, "animations"), "*.json").Order(StringComparer.Ordinal))
+                {
+                    var text = File.ReadAllText(path);
+                    if (!LegacySourceFields.Remaining(authoredRoot).Any(f => f.Kind == "clip" && Path.GetFullPath(Path.Combine(authoredRoot, f.Path)) == Path.GetFullPath(path)))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        var clip = MotionClip.FromJson(text);
+                        clip.Version = MotionClip.CurrentVersion;
+                        clip.Save(path);
+                        rewritten++;
+                        Console.WriteLine($"clip {clip.Id}: converted to version {MotionClip.CurrentVersion}");
+                    }
+                    catch (InvalidDataException ex)
+                    {
+                        Console.WriteLine($"clip {Path.GetFileNameWithoutExtension(path)}: refused ({ex.Message})");
+                    }
+                }
+                Console.WriteLine($"{rewritten} clip file(s) rewritten; {LegacySourceFields.Remaining(authoredRoot).Count(f => f.Kind == "clip")} clip file(s) still below version {MotionClip.CurrentVersion}.");
+                return 0;
+            case ["--convert-face-payload", var authoredRoot, var modelId, var partId, var instanceId, var assetId, var socketId, var output]:
+                // P7c: a model's procedural face payload, its clips' face tracks, its variants' face overrides and its looks' face words onto a face instance.
+                var payload = App2d.Core.Characters.Authored.FaceConversion.ConvertPayload(authoredRoot, modelId, partId, instanceId, assetId, socketId, output);
+                foreach (var file in payload.Files)
+                {
+                    Console.WriteLine($"{file.Kind} {file.Id}: {file.Status}");
+                }
+                foreach (var difference in payload.Differences)
+                {
+                    Console.WriteLine("  DIFFERENCE: " + difference);
+                }
+                Console.WriteLine($"Report: {payload.ReportPath}");
+                return payload.Converted ? 0 : 2;
             default:
                 Console.Error.WriteLine(Usage);
                 return 1;

@@ -7,13 +7,26 @@ public sealed class HumanProportionsTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
 
+    /// <summary>The variant without its face-instance overrides (P7c), for the face-less study reference.</summary>
+    private static ModelVariant? RigOnly(ModelVariant? variant)
+    {
+        if (variant is null)
+        {
+            return null;
+        }
+
+        var copy = ModelVariant.FromJson(variant.ToJson());
+        copy.Overrides.RemoveAll(o => o.Target.Attachment is not null);
+        return copy;
+    }
+
     [Theory, InlineData("person"), InlineData("tall-thin"), InlineData("short-broad"), InlineData("brute"), InlineData("cinder")]
     public void EveryHumanHasEightyPercentLegsAndKeepsItsUpperBody(string id)
     {
         var actual = Catalog.Resolve(id);
         var reference = PersonTemplate.StudyReference();
         reference.Materials = actual.Base.Materials;
-        var original = ResolvedModel.From(reference, actual.Variant);
+        var original = ResolvedModel.From(reference, RigOnly(actual.Variant));
         foreach (var side in new[] { "left", "right" })
         {
             Assert.Equal(original.Length(side + "-hip", side + "-knee") * .8f, actual.Length(side + "-hip", side + "-knee"), 5);
@@ -46,7 +59,7 @@ public sealed class HumanProportionsTests
             var model = Catalog.Resolve(id);
             var reference = PersonTemplate.StudyReference();
             reference.Materials = model.Base.Materials;
-            var original = ResolvedModel.From(reference, model.Variant);
+            var original = ResolvedModel.From(reference, RigOnly(model.Variant));
             Assert.Equal(PoseEvaluator.CycleTravel(original, clip).X * .8f, PoseEvaluator.CycleTravel(model, clip).X, 5);
             for (var i = 0; i <= 240; i++)
             {

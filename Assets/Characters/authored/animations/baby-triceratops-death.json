@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "baby-triceratops-death",
   "name": "Baby triceratops / death",
   "model": "baby-triceratops-rig",
@@ -53,7 +53,7 @@
   ],
   "contacts": [],
   "markers": [],
-  "faces": [],
+  "plays": [],
   "attachments": [],
   "colors": [],
   "drawOrder": [],

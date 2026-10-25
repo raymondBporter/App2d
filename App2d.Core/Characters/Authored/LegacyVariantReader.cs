@@ -11,9 +11,9 @@ namespace App2d.Core.Characters.Authored;
 /// written at version 6 only by an explicit conversion (<see cref="VariantConversion"/>) or by an author saving it.
 /// A legacy <c>rest</c> pin needs the base model to become a parent-local setup override, so the reader refuses it by name
 /// and the conversion handles it with the base.
-/// Remaining callers after P6b: <c>variants/club-caveman-build.json</c>, <c>rock-thrower-build.json</c> and
-/// <c>shield-defender-build.json</c> (version 4, outside the converted Person family) and the conversion's own input.
-/// Deletion condition: no variant file below version 6 remains in the authored tree, seeds or tests.
+/// Remaining callers after P7c: the conversions' own inputs (every shipped variant file is at version 6; the last three
+/// version-4 files converted with the Person face bundle). Deletion condition: no variant file below version 6 remains in
+/// the authored tree, seeds or tests.
 /// </summary>
 public static class LegacyVariantReader
 {
@@ -48,7 +48,7 @@ public static class LegacyVariantReader
     /// Converts legacy JSON to the current version, reporting every member it translated. A non-empty <c>rest</c> is
     /// refused here and converted by <see cref="VariantConversion"/> with the base.
     /// </summary>
-    public static (string Json, IReadOnlyList<string> Report) Convert(string json, IReadOnlyDictionary<string, PuppetPoint>? restPins = null)
+    public static (string Json, IReadOnlyList<string> Report) Convert(string json, IReadOnlyDictionary<string, PuppetPoint>? restPins = null, IReadOnlyDictionary<string, string>? faceInstances = null)
     {
         var root = JsonNode.Parse(json) as JsonObject ?? throw new InvalidDataException("Empty variant file.");
         var version = Version(root) ?? throw new InvalidDataException("A variant file needs a version.");
@@ -88,17 +88,39 @@ public static class LegacyVariantReader
 
             report.Add($"rest: {pinned.Length} pin(s) converted to parent-local setup overrides by the conversion ({string.Join(", ", pinned)})");
         }
+        // Face words become expression overrides after every part and attachment override, where the bundle's conversion
+        // (FaceConversion.ConvertPayload) appended them on the shipped files; the same legacy input reproduces the same file.
+        var faces = new List<JsonObject>();
         if (Member(root, "parts") is JsonObject parts)
         {
             foreach (var (part, node) in parts)
             {
                 var change = node as JsonObject ?? throw new InvalidDataException($"Variant '{id}' parts.{part}: null override.");
+                // A legacy face word on a part (P2b's payload) becomes the expression of the instance that now shows the
+                // face, which only the bundle's conversion knows; without that mapping the reader refuses it by name (P7c).
+                if (Key(change, "face") is { } faceKey)
+                {
+                    var word = change[faceKey]?.ToString() ?? throw new InvalidDataException($"Variant '{id}' parts.{part}.face is null.");
+                    if (faceInstances is null || !faceInstances.TryGetValue(part, out var instance))
+                    {
+                        throw new InvalidDataException($"Variant '{id}' parts.{part}.face = '{word}': the procedural face retired in P7c; convert the bundle with FaceConversion.ConvertPayload (`--convert-face-payload`), which maps the part's face to its face instance.");
+                    }
+
+                    change.Remove(faceKey);
+                    faces.Add(new JsonObject { ["target"] = new JsonObject { ["attachment"] = instance, ["property"] = RigProperties.Expression }, ["selection"] = word });
+                    report.Add($"part '{part}' face '{word}' -> attachment '{instance}' expression (selection)");
+                }
+
+                if (Key(change, "faceX") is { } offsetKey)
+                {
+                    throw new InvalidDataException($"Variant '{id}' parts.{part}.faceX: the face offset retired in P7c (an instance's x offset takes its place); remove it or convert the bundle.");
+                }
+
                 Translate(overrides, report, "part", part, change,
                 [
                     ("scaleX", RigProperties.ScaleX, PropertyKinds.Number), ("scaleY", RigProperties.ScaleY, PropertyKinds.Number),
                     ("offsetX", RigProperties.OffsetX, PropertyKinds.Number), ("offsetY", RigProperties.OffsetY, PropertyKinds.Number),
-                    ("material", RigProperties.Material, PropertyKinds.Material), ("face", RigProperties.Face, PropertyKinds.Selection),
-                    ("faceX", RigProperties.FaceX, PropertyKinds.Number), ("hidden", RigProperties.Hidden, PropertyKinds.Flag),
+                    ("material", RigProperties.Material, PropertyKinds.Material), ("hidden", RigProperties.Hidden, PropertyKinds.Flag),
                 ]);
             }
         }
@@ -116,6 +138,11 @@ public static class LegacyVariantReader
                 ]);
             }
         }
+        foreach (var face in faces)
+        {
+            overrides.Add(face);
+        }
+
         foreach (var member in new[] { "rest", "parts", "attachments" })
         {
             if (Key(root, member) is { } key)

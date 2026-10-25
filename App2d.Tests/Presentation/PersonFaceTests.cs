@@ -1,5 +1,4 @@
 using App2d.Contracts.Persons;
-using App2d.Core.Characters;
 using App2d.Presentation.Persons;
 using System.Numerics;
 
@@ -22,7 +21,6 @@ public sealed class PersonFaceTests
             HitPoints = 0
         }, 0);
         Assert.Equal("knocked-out", face.Expression);
-        Assert.True(face.Pose.CrossEyes);
         face.Reset();
         face.Update(Standing, .1f);
         Assert.Equal("relaxed", face.Expression);
@@ -72,7 +70,5 @@ public sealed class PersonFaceTests
         Assert.Equal("hurt", face.Expression);
         face.Update(injured, .4f);
         Assert.Equal("worried", face.Expression);
-        Assert.Equal(FaceExpressions.Get("relaxed").Eyes, FaceExpressions.Blink(FaceExpressions.Get("relaxed"), 1).Eyes);
-        Assert.InRange(FaceExpressions.Blink(FaceExpressions.Get("relaxed"), 3.62).Eyes, 0, .001f);
     }
 }

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 3,
+  "version": 4,
   "id": "person-death",
   "name": "Recoil and collapse",
   "model": "person",
@@ -222,9 +222,9 @@
       "time": 0.75
     }
   ],
-  "faces": [
+  "plays": [
     {
-      "part": "head",
+      "instance": "face",
       "keys": [
         {
           "expression": "hurt"
