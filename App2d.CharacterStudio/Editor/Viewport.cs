@@ -146,7 +146,16 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 // A library part being edited previews on the wearer at the chosen socket until it is attached for real.
                 if (session.PreviewAttachmentOn(subject.Model) is { } preview)
                 {
-                    _drawings[i].AddAttachment(preview, preview.Placement(new ActorPose(subject.Pose, Vector2.Zero, 1).SocketPlacement(preview.Socket)));
+                    var placement = preview.Placement(new ActorPose(subject.Pose, Vector2.Zero, 1).SocketPlacement(preview.Socket));
+                    if (preview.IsAnimated)
+                    {
+                        // An animated part previews its own clips on the transport clock (P7a) before it is attached.
+                        _drawings[i].AddAttachment(PoseEvaluator.Preview(preview, placement, session.Transport.Time, session.Expression is { } e && preview.Asset.Binds(e) ? e : null));
+                    }
+                    else
+                    {
+                        _drawings[i].AddAttachment(preview, placement);
+                    }
                 }
             }
         }

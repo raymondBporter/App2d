@@ -40,7 +40,8 @@ public sealed class PuppetDrawing
         Clear();
         TextureRoot = model.TextureRoot;
         var managed = model.Base.Skins.SelectMany(s => s.Attachments.Values).SelectMany(a => a.Values).ToHashSet(StringComparer.Ordinal);
-        Add(model.Base.Ink, model.Base.LineWidth, model.Parts.Where(p => !managed.Contains(p.Id)), pose.World,
+        // The pose's part channels (P7a): a show track hides a part for its span, a fit track multiplies its leaf scale.
+        Add(model.Base.Ink, model.Base.LineWidth, model.Parts.Where(p => !managed.Contains(p.Id) && pose.Visible(p)).Select(pose.Fitted), pose.World,
             part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, pose.Placement, id => model.Rest[id], model.RestPlacement);
         for (var i = 0; i < pose.Slots.Count; i++)
         {
@@ -78,15 +79,46 @@ public sealed class PuppetDrawing
                 continue;
             }
 
+            // An animated instance was evaluated with the pose (P7a): its pieces draw from its nested pose.
+            if (pose.Attachments.TryGetValue(attachment.Id, out var evaluated))
+            {
+                AddAttachment(evaluated);
+                continue;
+            }
+
             AddAttachment(attachment, attachment.Placement(actor.SocketPlacement(attachment.Socket)));
         }
+    }
+
+    /// <summary>An evaluated animated instance: its visible, fitted pieces over its nested pose carried by its placement, then its solids.</summary>
+    public void AddAttachment(EvaluatedAttachment evaluated)
+    {
+        if (evaluated.Hidden)
+        {
+            return;
+        }
+
+        var attachment = evaluated.Attachment;
+        Add(attachment.Asset.Ink, attachment.Asset.LineWidth, evaluated.DrawnParts(), evaluated.World, null, null, evaluated.Frame, evaluated.Rest, evaluated.RestFrame);
+        AddSolids(attachment, evaluated.Placement);
     }
 
     /// <summary>One instance's payload at a placement (actor-local or world), for drawing and for previewing an asset on a wearer.</summary>
     public void AddAttachment(ResolvedAttachment attachment, LayeredFrame2D placement)
     {
+        if (attachment.IsAnimated)
+        {
+            AddAttachment(PoseEvaluator.Preview(attachment, placement, 0));
+            return;
+        }
+
         var (world, frame) = attachment.Lookups(placement);
         Add(attachment.Asset.Ink, attachment.Asset.LineWidth, attachment.Parts, world, null, null, frame, world, frame);
+        AddSolids(attachment, placement);
+    }
+
+    private void AddSolids(ResolvedAttachment attachment, LayeredFrame2D placement)
+    {
         if (attachment.Solids.Count > 0)
         {
             var start = Mesh.Count;

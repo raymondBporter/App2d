@@ -444,7 +444,9 @@ public sealed class CharacterModel
             Require(groups.Add(group.Id), $"{owner}: duplicate group '{group.Id}'.");
             foreach (var target in group.Targets)
             {
-                Require(Known(target) || target is not null && chainIds.Contains(target), $"{owner} group '{group.Id}': '{target}' is not a control or chain.");
+                // An attachment instance in a group is owned whole: its selection channel and every namespaced track; a drawing
+                // part in a group is owned through its fit and show channels (P7a).
+                Require(Known(target) || target is not null && (chainIds.Contains(target) || attachments.Contains(target) || parts.Contains(target)), $"{owner} group '{group.Id}': '{target}' is not a control, chain, part or attachment instance.");
                 // A chain moves its joint and end; owning one of them without the chain would split it between two layers.
                 Require(!solved.Contains(target), $"{owner} group '{group.Id}': '{target}' is solved by IK; name its chain instead.");
             }

@@ -162,6 +162,27 @@ internal static class EditorSurfaceSmoke
             session.Open("curve-face");
             session.Selection.Select(part: "hair");
             Capture("curve-face-hair-inspector");
+            // P7a: an animated part (the tail) instanced on the Person, its exposed tip selected in the walk.
+            if (assets.Part(PartSeeds.TailId) is null)
+            {
+                assets.Create(PartSeeds.Tail());
+            }
+
+            session.Open("person");
+            if (assets.Model("person")!.Asset.Attachments.All(a => a.Asset != PartSeeds.TailId) && session.AttachPart(PartSeeds.TailId, Humanoid.BodySocket))
+            {
+                session.Open("person-walk");
+                session.Seek(.3f);
+                session.Selection.Select(control: "tail/tip");
+                shell.Viewport.Fit(session.Scene().FirstOrDefault());
+                Capture("animation-nested-part");
+                session.Selection.Select(attachment: PartSeeds.TailId);
+                Capture("animation-part-expression");
+                session.Open("person");
+                session.Selection.Select(attachment: assets.Model("person")!.Asset.Attachments.First(a => a.Asset == PartSeeds.TailId).Id);
+                Capture("model-animated-attachment");
+                session.Undo();
+            }
         }
         Console.WriteLine("Animation settings, controls, weapon and slot inspectors, model views and curve facial studies rendered at two sizes and scales.");
     }

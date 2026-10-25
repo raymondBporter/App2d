@@ -823,6 +823,58 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Select(control: "left-knee");
                 shell.Viewport.Fit(s.Scene().FirstOrDefault());
             }),
+            ("46-animated-part-instance", shell =>
+            {
+                // P7a: an animated library part (the tail, not a face) instanced on the Person with its own rig, layers and
+                // clocks; the walk keys its exposed tip through a namespaced channel, selects an expression, a gameplay
+                // request hides it, an unexposed target is refused by name, and everything undoes, saves and reopens.
+                var s = shell.Session; s.Compare.Clear();
+                var tailDocument = s.Assets.Create(PartSeeds.Tail());
+                s.Open("person");
+                Check(s.AttachPart(PartSeeds.TailId, Humanoid.BodySocket), s);
+                var person = s.Assets.Resolve("person")!;
+                var tail = person.Attachment(PartSeeds.TailId);
+                Record(tail is { IsAnimated: true, Socket.Id: Humanoid.BodySocket } && tail.Rig!.Order.Count == 3, "the tail attaches to the body socket as an animated instance carrying its own three-control rig");
+                s.Open("person-walk");
+                s.Seek(.3f);
+                var subject = s.Evaluate("person")!;
+                var evaluated = subject.Pose.Attachments[PartSeeds.TailId];
+                var wag = PoseEvaluator.Sample(tail!.Rig!, tail.Asset.Clips[0], .3, repeat: true);
+                Record(evaluated.Expression == "wag" && MathF.Abs(evaluated.Pose.Angles["root"] - wag.Angles["root"]) < 1e-5f && !evaluated.Hidden,
+                    $"at 0.3 s of the walk the tail wags on the shared clock (root {float.RadiansToDegrees(evaluated.Pose.Angles["root"]):0.#} degrees)");
+                var walk = s.ClipDocument!;
+                var tipBefore = evaluated.World("tip");
+                s.Selection.Select(control: "tail/tip");
+                s.BeginDrag();
+                s.DragControl("tail/tip", tipBefore + new Vector3(.08f, .03f, 0));
+                s.EndDrag();
+                var tipAfter = s.Evaluate("person")!.Pose.Attachments[PartSeeds.TailId].World("tip");
+                Record(walk.Asset.Tracks.Any(t => t.Target == "tail/tip" && t.Kind == MotionClip.TranslateKind) && Vector3.Distance(tipAfter, tipBefore + new Vector3(.08f, .03f, 0)) < 1e-3f,
+                    "dragging the exposed tip keys the walk's namespaced 'tail/tip' channel and the tip lands where it was dragged");
+                Check(s.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, PartSeeds.TailId, .3f, "flick")), s);
+                var flicked = s.Evaluate("person")!.Pose.Attachments[PartSeeds.TailId];
+                Record(flicked.Expression == "flick" && MathF.Abs(flicked.Pose.Angles["root"] - wag.Angles["root"]) < 1e-5f, "an expression key selects the flick on its tip-only layer while the wag goes on beneath");
+                s.Expression = "tucked";
+                Record(s.Evaluate("person")!.Pose.Attachments[PartSeeds.TailId].Hidden, "the game-face request 'tucked' hides the tail through the asset's binding");
+                s.Expression = null;
+                Check(s.Edit(walk, () => ClipAuthoring.SetKey(walk.Asset, new(MotionClip.TranslateKind, "tail/root"), 0, Vector3.UnitX)), s);
+                var problems = s.Assets.Problems(walk);
+                Record(problems.Any(p => p.Contains("does not expose 'root'") && p.Contains("path: person > attachments > tail > part tail > exposed")), "keying the unexposed root is reported by name with the reference path: " + string.Join("; ", problems));
+                s.Undo();
+                Record(s.Assets.Problems(walk).Count == 0 && walk.Asset.Plays.Count == 1, "undo removes the refused key and keeps the expression key");
+                s.SaveAll();
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+                var reopenedTail = reopened.Part(PartSeeds.TailId)?.Asset;
+                var reopenedWalk = reopened.Clip("person-walk")!.Asset;
+                Record(reopenedTail is { IsAnimated: true, Clips.Count: 2, Layers.Count: 2 } && reopened.Resolve("person")!.Attachment(PartSeeds.TailId) is { IsAnimated: true }
+                    && reopenedWalk.Tracks.Any(t => t.Target == "tail/tip") && reopenedWalk.Plays.Single().Keys.Single().Expression == "flick" && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
+                    "the tail part, the instance and the walk's nested keys save and reopen without problems");
+                s.Open("person-walk");
+                s.Pin("tall-thin");
+                s.Seek(.4f);
+                s.Selection.Select(control: "tail/tip");
+                shell.Viewport.Fit(s.Scene().FirstOrDefault());
+            }),
         ];
         return workspace;
     }

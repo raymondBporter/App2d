@@ -320,7 +320,9 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
                 Session.Expression = null;
             }
 
-            foreach (var face in FaceExpressions.Names)
+            // The procedural vocabulary (until P7c) and every word the subject's animated part instances bind (P7a).
+            var bound = Session.Scene().SelectMany(s => s.Model.Attachments.Where(a => a.IsAnimated).SelectMany(a => a.Asset.Expressions.Keys.Append(PartAsset.None)));
+            foreach (var face in FaceExpressions.Names.Concat(bound).Distinct(StringComparer.Ordinal))
             {
                 if (ImGui.Selectable(face, Session.Expression == face))
                 {

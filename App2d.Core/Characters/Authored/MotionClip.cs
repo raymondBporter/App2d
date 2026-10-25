@@ -95,6 +95,23 @@ public sealed record ClipFaceTrack
     public List<ClipFaceKey> Keys { get; set; } = [];
 }
 
+/// <summary>A held expression on an animated part instance from this time until the next key; <see cref="PartAsset.None"/> hides the instance.</summary>
+public sealed record ClipPlayKey
+{
+    public float Time { get; set; }
+    public string Expression { get; set; } = PartAsset.None;
+}
+
+/// <summary>
+/// The selection channel of one animated part instance (P7a; <see cref="ChannelSemantics.AttachmentSelection"/>, held): which
+/// expression the wearer's clip asks the instance's asset for. The asset's binding says what plays; a gameplay request wins.
+/// </summary>
+public sealed record ClipPlayTrack
+{
+    public string Instance { get; set; } = "";
+    public List<ClipPlayKey> Keys { get; set; } = [];
+}
+
 /// <summary>
 /// translate: a control's parent-local offset delta. rotate: a control's XY rotation, inherited by its children.
 /// target: an IK chain's end-target delta in the chain's frame. Deltas are from rest, in reference units.
@@ -140,7 +157,16 @@ public sealed class MotionClip
     /// clip, so a rotate track on the same node is refused; changing the limits changes this performance by design.
     /// </summary>
     public const string BendKind = "bend";
-    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, ShearKind, BendKind];
+    /// <summary>
+    /// An explicit artwork fit on a drawing part (<see cref="ChannelSemantics.ArtworkFit"/>, P7a): key x and y multiply the
+    /// part's leaf scale (<c>1 + value</c>), squashing a pupil without any rig scale. Nothing inherits it.
+    /// </summary>
+    public const string FitKind = "fit";
+    /// <summary>A drawing part's visibility (<see cref="ChannelSemantics.EnabledState"/>, held): key x 1 shows, 0 hides, from the key until the next.</summary>
+    public const string ShowKind = "show";
+    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, ShearKind, BendKind, FitKind, ShowKind];
+    /// <summary>The kinds that target a drawing part rather than a control, chain or socket.</summary>
+    public static readonly IReadOnlyList<string> PartKinds = [FitKind, ShowKind];
     public string Format { get; set; } = FormatId;
     public const int CurrentVersion = 3;
     public int Version { get; set; } = CurrentVersion;
@@ -158,6 +184,8 @@ public sealed class MotionClip
     public List<ClipContact> Contacts { get; set; } = [];
     public List<ClipMarker> Markers { get; set; } = [];
     public List<ClipFaceTrack> Faces { get; set; } = [];
+    /// <summary>Expression selections on the wearer's animated part instances (P7a).</summary>
+    public List<ClipPlayTrack> Plays { get; set; } = [];
     public List<SlotAttachmentTrack2D> Attachments { get; set; } = [];
     public List<SlotColorTrack2D> Colors { get; set; } = [];
     public List<DrawOrderKey2D> DrawOrder { get; set; } = [];
@@ -195,7 +223,7 @@ public sealed class MotionClip
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
         new Limit(.05f, 60).Check(Duration, $"{owner} duration");
-        Require(Reference is not null && Travel?.Keys is not null && Tracks is not null && Contacts is not null && Markers is not null && Faces is not null, $"{owner}: collections cannot be null.");
+        Require(Reference is not null && Travel?.Keys is not null && Tracks is not null && Contacts is not null && Markers is not null && Faces is not null && Plays is not null, $"{owner}: collections cannot be null.");
         Require(Travel.Scale is not null, $"{owner} travel: a scale is required.");
         Source?.Validate(owner);
         if (Attachments is null || Colors is null || DrawOrder is null || Events is null)
@@ -289,6 +317,27 @@ public sealed class MotionClip
             var rotate = track.Kind == RotateKind;
             CheckKeys(track.Keys, $"{owner} {track.Kind} track '{track.Target}'",
                 rotate ? k => k.Value.X == 0 && k.Value.Y == 0 && k.Value.Z == 0 : k => k.Angle == 0, rotate ? "rotate keys use angle only" : "keys use x, y and z only");
+            if (track.Kind == ShowKind)
+            {
+                Require(track.Keys.All(k => k.Value.X is 0 or 1 && k.Value.Y == 0 && k.Value.Z == 0), $"{owner} show track '{track.Target}': keys use x 0 (hidden) or 1 (shown) only.");
+            }
+
+            Require(track.Kind is not (FitKind or ShowKind) || track.Scale is null or CharacterModel.Unit, $"{owner} {track.Kind} track '{track.Target}': a part channel has no measurement scale.");
+        }
+        var played = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var play in Plays)
+        {
+            Require(play?.Keys is not null && play.Instance is not null, $"{owner}: incomplete play track.");
+            Require(played.Add(play.Instance), $"{owner}: duplicate play track for '{play.Instance}'.");
+            var previous = -1f;
+            foreach (var key in play.Keys)
+            {
+                Require(key is not null, $"{owner} play '{play.Instance}': null key.");
+                new Limit(0, Duration).Check(key.Time, $"{owner} play '{play.Instance}' key time");
+                Require(key.Time > previous, $"{owner} play '{play.Instance}': key times must be strictly increasing.");
+                previous = key.Time;
+                AuthoredAsset.RequireId(key.Expression, $"{owner} play '{play.Instance}' expression");
+            }
         }
         foreach (var contact in Contacts)
         {
@@ -369,7 +418,6 @@ public sealed class MotionClip
         var basis = model.Base;
         Require(Model == basis.Id, $"{owner} is for model '{Model}', not '{basis.Id}'.");
         Require(!exactRevision || StructureRevision == basis.StructureRevision, $"{owner} was authored against structure revision {StructureRevision} of '{Model}'; the model is at revision {basis.StructureRevision}.");
-        var solved = model.Chains.Values.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
         void Scale(string scale, string field)
         {
             if (scale == CharacterModel.Unit)
@@ -402,26 +450,49 @@ public sealed class MotionClip
         foreach (var track in Tracks)
         {
             var field = $"{owner} {track.Kind} track '{track.Target}'";
-            if (track.Kind == OrientKind)
+            if (track.Target.Contains(PartAsset.Namespace))
             {
-                Require(basis.Sockets.Any(s => s.Id == track.Target), $"{field}: unknown socket.");
+                // A namespaced target reaches into an animated part instance (P7a): the instance must be the wearer's, its
+                // asset animated, and the target one it exposes; the key's kind must fit what the asset's rig offers.
+                var (instance, target) = Split(track.Target);
+                var attachment = model.Attachment(instance) ?? throw new InvalidDataException($"{field}: the model has no attachment '{instance}' (path: {Model} > attachments > {instance}).");
+                Require(attachment.Rig is not null, $"{field}: attachment '{instance}' wears the static part '{attachment.Asset.Id}', which exposes no animated targets (path: {Model} > attachments > {instance} > part {attachment.Asset.Id}).");
+                Require(attachment.Asset.Exposes(target), $"{field}: part '{attachment.Asset.Id}' does not expose '{target}' (exposed: {string.Join(", ", attachment.Asset.Exposed)}; path: {Model} > attachments > {instance} > part {attachment.Asset.Id} > exposed).");
+                Require(track.Scale is null or CharacterModel.Unit, $"{field}: a nested target is keyed in the part's own units; it has no measurement scale.");
+                Require(track.Kind is not (OrientKind or TargetKind), $"{field}: a wearer keys a nested part's controls and pieces, not its sockets or chains.");
+                CheckTarget(attachment.Rig, track with { Target = target }, $"{field} (in part '{attachment.Asset.Id}')", track.Target);
+                continue;
+            }
+
+            CheckTarget(model, track, field, track.Target);
+        }
+        void CheckTarget(ResolvedModel rig, ClipTrack track, string field, string fullTarget)
+        {
+            var solved = rig.Chains.Values.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
+            if (track.Kind is FitKind or ShowKind)
+            {
+                Require(rig.Parts.Any(p => p.Id == track.Target), $"{field}: unknown part.");
+            }
+            else if (track.Kind == OrientKind)
+            {
+                Require(rig.Base.Sockets.Any(s => s.Id == track.Target), $"{field}: unknown socket.");
                 Require(track.Scale is null or CharacterModel.Unit, $"{field}: orientation cannot scale with a measurement.");
             }
             else if (track.Kind == TargetKind)
             {
-                Require(model.Chains.TryGetValue(track.Target, out var chain), $"{field}: unknown chain.");
+                Require(rig.Chains.TryGetValue(track.Target, out var chain), $"{field}: unknown chain.");
                 Scale(track.Scale ?? chain.Scale, field);
             }
             else
             {
-                Require(model.Controls.TryGetValue(track.Target, out var control), $"{field}: unknown control.");
+                Require(rig.Controls.TryGetValue(track.Target, out var control), $"{field}: unknown control.");
                 Require(!solved.Contains(track.Target), $"{field}: this control is solved by IK; key its chain's target instead.");
-                Require(track.Kind is not (RotateKind or BendKind) || !model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
+                Require(track.Kind is not (RotateKind or BendKind) || !rig.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
                 if (track.Kind == BendKind)
                 {
                     // The normalized bend channel: its owner is the node's declared limit, and it owns the rotation in this clip.
                     Require(control.Node == RigNodeKinds.Bone && control.Limit is not null, $"{field}: a normalized bend needs a bone node with declared joint limits; key its rotation as an angle instead.");
-                    Require(!Tracks.Any(t => t.Kind == RotateKind && t.Target == track.Target), $"{field}: the node's rotation is also keyed as an angle; a clip keys a bend or an angle on one node, not both.");
+                    Require(!Tracks.Any(t => t.Kind == RotateKind && t.Target == fullTarget), $"{field}: the node's rotation is also keyed as an angle; a clip keys a bend or an angle on one node, not both.");
                     Require(track.Keys.All(k => k.Value.X is >= 0 and <= 1 && k.Value.Y == 0 && k.Value.Z == 0), $"{field}: bend keys use x in 0..1 only.");
                     Require(track.Scale is null or CharacterModel.Unit, $"{field}: a normalized bend has no measurement scale.");
                 }
@@ -440,6 +511,16 @@ public sealed class MotionClip
                 }
             }
         }
+        foreach (var play in Plays)
+        {
+            var field = $"{owner} play track '{play.Instance}'";
+            var attachment = model.Attachment(play.Instance) ?? throw new InvalidDataException($"{field}: the model has no attachment '{play.Instance}' (path: {Model} > attachments > {play.Instance}).");
+            Require(attachment.IsAnimated, $"{field}: attachment '{play.Instance}' wears the static part '{attachment.Asset.Id}', which plays nothing.");
+            foreach (var key in play.Keys)
+            {
+                Require(attachment.Asset.Binds(key.Expression), $"{field}: part '{attachment.Asset.Id}' binds no expression '{key.Expression}' (one of {string.Join(", ", attachment.Asset.Expressions.Keys.Append(PartAsset.None))}; path: {Model} > attachments > {play.Instance} > part {attachment.Asset.Id} > expressions).");
+            }
+        }
         foreach (var contact in Contacts)
         {
             var field = $"{owner} contact on '{contact.Chain}'";
@@ -452,5 +533,33 @@ public sealed class MotionClip
             // The face payload owns the track's target: only a part carrying one can be animated by it.
             Require(model.Parts.Any(p => p.Id == face.Part && p.Face is not null), $"{owner} face track '{face.Part}': the model has no part with a face by that ID.");
         }
+    }
+
+    /// <summary>Splits a namespaced target (<c>instance/target</c>) into the instance and the target inside its asset.</summary>
+    public static (string Instance, string Target) Split(string target)
+    {
+        var at = target.IndexOf(PartAsset.Namespace);
+        if (at <= 0 || at == target.Length - 1 || target.IndexOf(PartAsset.Namespace, at + 1) >= 0)
+        {
+            throw new InvalidDataException($"'{target}' is not an instance/target name.");
+        }
+
+        return (target[..at], target[(at + 1)..]);
+    }
+
+    /// <summary>The instance a namespaced target belongs to, or null for the wearer's own target.</summary>
+    public static string? InstanceOf(string target) => target.Contains(PartAsset.Namespace) ? Split(target).Instance : null;
+
+    /// <summary>The expression a play track selects for an instance at a time: the last key at or before it, else the first key. Null without a track.</summary>
+    public (string Expression, float Since)? PlayAt(string instance, float time)
+    {
+        var track = Plays.FirstOrDefault(p => p.Instance == instance);
+        if (track is null || track.Keys.Count == 0)
+        {
+            return null;
+        }
+
+        var key = track.Keys.LastOrDefault(k => k.Time <= time) ?? track.Keys[0];
+        return (key.Expression, key.Time);
     }
 }

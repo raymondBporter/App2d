@@ -15,9 +15,13 @@ public static class PartContours2D
 
     public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, bone: null, rest: rest);
 
-    /// <summary>A part's outline in an evaluated pose of a resolved model.</summary>
+    /// <summary>A part's outline in an evaluated pose of a resolved model, with the pose's animated artwork fit applied (P7a).</summary>
     public static List<Vector3> Contour(PuppetPart part, ResolvedModel model, EvaluatedPose pose) =>
-        Contour(part, pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement);
+        Contour(pose.Fitted(part), pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement);
+
+    /// <summary>A piece's outline inside an evaluated animated instance, in the wearer's frame.</summary>
+    public static List<Vector3> Contour(PuppetPart part, EvaluatedAttachment attachment) =>
+        Contour(attachment.Pose.Fitted(part), attachment.World, attachment.Frame, attachment.Rest, attachment.RestFrame);
 
     /// <summary>A shape's closed outline or a curve's sampled open stroke.</summary>
     public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)

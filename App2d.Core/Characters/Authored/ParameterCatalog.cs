@@ -19,6 +19,8 @@ public static class RigProperties
     /// <summary>An attachment instance's placement on its socket and its leaf fit (P5b); never inherited by anything.</summary>
     public const string X = "x", Y = "y", Angle = "angle", Scale = "scale", Layer = "layer", FitX = "fitX", FitY = "fitY";
     public const string Asset = "asset", Mirror = "mirror";
+    /// <summary>An animated part instance's default expression (P7a): one of the words its asset binds, or none.</summary>
+    public const string Expression = "expression";
     /// <summary>An animation role's clip (P6a): the wearer's motion-set role on this variant.</summary>
     public const string Clip = "clip";
     /// <summary>A bone node's angular joint limits (P4b): bounds on its parent-local rotation, exposed only while the node declares a limit.</summary>
@@ -105,6 +107,7 @@ public static class RigProperties
         new(Mirror, PropertyKinds.Flag),
         new(Material, PropertyKinds.Material, Help: "Inline override over every piece; a fill, a shared material of the asset, a tint. Clear shows the asset's own materials."),
         new(Hidden, PropertyKinds.Flag),
+        new(Expression, PropertyKinds.Selection, References: "expression", Help: "The expression this instance shows by default (one the asset binds, or none to hide it); clear follows the asset's default.") { Cleared = "" },
     ];
 
     /// <summary>The animation-role properties: the clip a role plays on this wearer.</summary>
@@ -402,6 +405,7 @@ internal sealed class RigLayout
                 RigProperties.Mirror => current with { Mirror = !change.Clear && change.Flag!.Value },
                 RigProperties.Material => current with { Material = change.Clear ? null : current.Material is null ? change.Material : current.Material.WithOverride(change.Material) },
                 RigProperties.Hidden => current with { Hidden = !change.Clear && change.Flag!.Value },
+                RigProperties.Expression => current with { Expression = change.Clear ? null : change.Selection },
                 _ => throw Unknown(target),
             };
             return;

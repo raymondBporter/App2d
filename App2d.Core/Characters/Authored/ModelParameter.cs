@@ -240,11 +240,11 @@ public static class ChannelSemantics
         new(Angle, ParameterUnits.Radians, false, "rotate tracks (accumulated, unwrapped) and socket orient tracks (twist, tilt, turn)"),
         new(IkTarget, ParameterUnits.Length, false, "target tracks in the chain's frame and scale"),
         new(UniformPoseScale, ParameterUnits.Factor, false, "scale tracks on canonical nodes (one multiplier, length stays a dimension)"),
-        new(ArtworkFit, ParameterUnits.Factor, false, "scale and shear tracks on legacy affine nodes (adapter until P11)"),
+        new(ArtworkFit, ParameterUnits.Factor, false, "fit tracks on drawing parts (P7a: explicit leaf fit multipliers, nothing inherits them) and scale/shear tracks on legacy affine nodes (adapter until P11)"),
         new(MaterialValue, ParameterUnits.Factor, false, "slot color timelines"),
-        new(AttachmentSelection, ParameterUnits.Factor, true, "face keys, slot attachment keys and draw-order keys (held)"),
+        new(AttachmentSelection, ParameterUnits.Factor, true, "play keys on animated part instances (P7a), face keys, slot attachment keys and draw-order keys (held)"),
         new(NormalizedParameter, ParameterUnits.Normalized, false, "bend tracks: 0..1 mapped through the bone node's declared joint limits (P4b)"),
-        new(EnabledState, ParameterUnits.Factor, true, "declared; first channels arrive with attached colliders (P8b)"),
+        new(EnabledState, ParameterUnits.Factor, true, "show tracks on drawing parts (P7a, held); collider activation arrives with P8b"),
     ];
 
     /// <summary>The semantics of a control, chain or socket track by its kind and the node it targets.</summary>
@@ -255,7 +255,8 @@ public static class ChannelSemantics
         MotionClip.TargetKind => IkTarget,
         MotionClip.BendKind => NormalizedParameter,
         MotionClip.ScaleKind => nodeKind == RigNodeKinds.Affine ? ArtworkFit : UniformPoseScale,
-        MotionClip.ShearKind => ArtworkFit,
+        MotionClip.ShearKind or MotionClip.FitKind => ArtworkFit,
+        MotionClip.ShowKind => EnabledState,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown track kind."),
     };
 

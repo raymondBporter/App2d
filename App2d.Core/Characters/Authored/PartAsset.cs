@@ -7,20 +7,100 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters.Authored;
 
-/// <summary>What a part asset's payload is (plan section 3.6). The boundary is declared here; only the static payload is instanced yet.</summary>
+/// <summary>What a part asset's payload is (plan section 3.6).</summary>
 public static class PartPayloads
 {
     /// <summary>Geometry, images and meshes placed rigidly on the attachment frame, fitted per instance.</summary>
     public const string Static = "static";
-    /// <summary>A payload with its own rig, clock and channels. Declared so files can say what they are; instancing arrives with P7a and is refused until then.</summary>
+    /// <summary>
+    /// A payload with its own small rig, clips, layers and clocks (P7a): its pieces hang on its controls, the wearer animates
+    /// its exposed targets through namespaced tracks (<c>instance/target</c>) and selects what it plays through expression
+    /// bindings. The instance's evaluated pose joins the wearer's runtime graph (<see cref="EvaluatedPose.Attachments"/>).
+    /// </summary>
     public const string Animated = "animated";
     public static readonly string[] All = [Static, Animated];
+}
+
+/// <summary>How an instance's leaf fit reaches a composite asset (plan section 3.4), declared per asset.</summary>
+public static class PartFittings
+{
+    /// <summary>The fit stretches the whole artwork and rig as one leaf deformation on the instance placement (the P5 behavior).</summary>
+    public const string Stretch = "stretch";
+    /// <summary>The fit repositions the asset's controls and locations (layout); each piece keeps its own size and the rig its similarity poses.</summary>
+    public const string Layout = "layout";
+    public static readonly string[] All = [Stretch, Layout];
+}
+
+/// <summary>Who owns an animated part layer's clock (plan section 3.8).</summary>
+public static class PartClocks
+{
+    /// <summary>The wearer's clip time: the layer runs in phase with whatever the wearer plays.</summary>
+    public const string Shared = "shared";
+    /// <summary>The wearer's clip time mapped through the layer's rate and offset.</summary>
+    public const string Mapped = "mapped";
+    /// <summary>The actor's own continuous clock (<see cref="PoseInput.Clock"/>), independent of what the wearer plays or restarts.</summary>
+    public const string Local = "local";
+    public static readonly string[] All = [Shared, Mapped, Local];
+}
+
+/// <summary>
+/// One animation layer of an animated part: which of the asset's targets it owns (a control group, or everything for the
+/// first layer), which clock drives it and which clip it plays by default. An expression binding may put another clip on it.
+/// The first layer is the base; every later layer is masked over it.
+/// </summary>
+public sealed record PartLayer
+{
+    public string Id { get; set; } = "";
+    /// <summary>A control group of the asset's rig naming the targets this layer owns; null owns everything (base layer only).</summary>
+    public string? Mask { get; set; }
+    /// <summary>One of <see cref="PartClocks"/>.</summary>
+    public string Clock { get; set; } = PartClocks.Shared;
+    public float Rate { get; set; } = 1;
+    public float Offset { get; set; }
+    /// <summary>The clip this layer plays when no expression puts another on it; null leaves the layer at rest.</summary>
+    public string? Clip { get; set; }
+
+    public void Validate(string field)
+    {
+        AuthoredAsset.RequireId(Id, field + " id");
+        if (!PartClocks.All.Contains(Clock, StringComparer.Ordinal))
+        {
+            throw new InvalidDataException($"{field}: unknown clock '{Clock}' (one of {string.Join(", ", PartClocks.All)}).");
+        }
+
+        new Limit(-100, 100).Check(Rate, field + " rate");
+        new Limit(-3600, 3600).Check(Offset, field + " offset");
+    }
+
+    /// <summary>This layer's clip time from the wearer's clip seconds and the actor's clock.</summary>
+    public double Time(double wearerSeconds, double actorClock) => Clock switch
+    {
+        PartClocks.Mapped => Offset + Rate * wearerSeconds,
+        PartClocks.Local => Offset + actorClock,
+        _ => wearerSeconds,
+    };
+}
+
+/// <summary>
+/// One semantic expression the asset binds (plan section 3.8): the name gameplay, a wearer's clip or an instance asks for,
+/// and what the asset does for it. A clip plays on a layer from the moment the expression is selected, or holds one time
+/// of it as a pose; the binding may hide the whole instance or mute other layers (a knocked-out face stops blinking).
+/// </summary>
+public sealed record PartExpression
+{
+    /// <summary>The layer the clip plays on; null is the base layer.</summary>
+    public string? Layer { get; set; }
+    public string? Clip { get; set; }
+    /// <summary>Holds this time of the clip instead of playing it: a pose.</summary>
+    public float? Time { get; set; }
+    public bool Hidden { get; set; }
+    public List<string> Mutes { get; set; } = [];
 }
 
 /// <summary>
 /// A named frame inside a part asset's local space that the payload attaches to. <c>origin</c> is implicit: the frame the
 /// instance places on the wearer's socket. Other locations let a payload hang several pieces off one asset and give later
-/// passes named points for sockets and colliders.
+/// passes named points for sockets and colliders. In an animated asset a location may ride on a rig control.
 /// </summary>
 public sealed record PartLocation
 {
@@ -32,6 +112,8 @@ public sealed record PartLocation
     public float Angle { get; set; }
     /// <summary>Drawing-layer offset from the asset's origin.</summary>
     public float Layer { get; set; }
+    /// <summary>Animated assets: the rig control whose evaluated placement carries this location (the offset is in its axes).</summary>
+    public string? Control { get; set; }
 
     [JsonIgnore] public Vector2 Position => new(X, Y);
 
@@ -56,11 +138,18 @@ public sealed record PartLocation
 /// through a <see cref="PartInstance"/> (asset ID, attachment location, instance ID), so one glove asset can sit on both
 /// hands as two instances with independent placement, fitting and overrides. The same asset is never copied into a wearer;
 /// editing it reaches every dependent preview through the workspace's reference graph.
+/// An animated asset (P7a) also owns a small rig (<see cref="Controls"/>, <see cref="Constraints"/>, <see cref="Groups"/>),
+/// its own <see cref="Clips"/>, the <see cref="Layers"/> they play on with their clocks, the targets it <see cref="Exposed"/>
+/// to the wearer's clips and the <see cref="Expressions"/> it binds for gameplay; its pieces hang on its controls.
 /// </summary>
 public sealed class PartAsset
 {
     public const string FormatId = "app2d-part";
     public const int CurrentVersion = 1;
+    /// <summary>The expression word that hides an animated instance for its span: a back view, a cleared face.</summary>
+    public const string None = "none";
+    /// <summary>Separates an instance ID from a target inside it in a wearer's clip (<c>face/left-brow</c>).</summary>
+    public const char Namespace = '/';
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -69,15 +158,36 @@ public sealed class PartAsset
     public string Usage { get; set; } = "part";
     /// <summary>One of <see cref="PartPayloads"/>.</summary>
     public string Payload { get; set; } = PartPayloads.Static;
+    /// <summary>One of <see cref="PartFittings"/>: what an instance's leaf fit does to this composite asset.</summary>
+    public string Fitting { get; set; } = PartFittings.Stretch;
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .045f;
     /// <summary>Shared surfaces the payload selects through <c>material.asset</c>, like a model's.</summary>
     public Dictionary<string, RenderMaterialDefinition2D> Materials { get; set; } = [];
     public List<PartLocation> Locations { get; set; } = [];
-    /// <summary>Shapes, curves and images: ordinary drawing parts whose <c>a</c>/<c>b</c> name the asset's locations (<c>origin</c> or one of <see cref="Locations"/>).</summary>
+    /// <summary>Shapes, curves and images: ordinary drawing parts whose <c>a</c>/<c>b</c> name the asset's locations (static) or its rig controls (animated).</summary>
     public List<PuppetPart> Parts { get; set; } = [];
     /// <summary>Solid meshes in the asset's local space (X along, Y across, Z thickness), lifted by the one planar-to-3D bridge.</summary>
     public List<PropSolid> Solids { get; set; } = [];
+
+    // ---- Animated payload (P7a) ---------------------------------------------------------------------------------------
+
+    /// <summary>The local rig: ordinary controls whose roots hang from the asset's origin.</summary>
+    public List<ModelControl> Controls { get; set; } = [];
+    public List<RigConstraint> Constraints { get; set; } = [];
+    /// <summary>Control groups: layer masks and what a wearer's masked action may own.</summary>
+    public List<ControlGroup> Groups { get; set; } = [];
+    /// <summary>Rig controls and pieces a wearer's clip may key through <c>instance/target</c> tracks.</summary>
+    public List<string> Exposed { get; set; } = [];
+    public List<PartLayer> Layers { get; set; } = [];
+    /// <summary>The asset's own clips, authored against its rig (<see cref="MotionClip.Model"/> is the asset ID).</summary>
+    public List<MotionClip> Clips { get; set; } = [];
+    /// <summary>The expression bindings, by the semantic name a wearer or gameplay asks for.</summary>
+    public Dictionary<string, PartExpression> Expressions { get; set; } = [];
+    /// <summary>The expression an instance shows when neither gameplay, the wearer's clip nor the instance names one.</summary>
+    public string? Expression { get; set; }
+
+    [JsonIgnore] public bool IsAnimated => Payload == PartPayloads.Animated;
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     internal static PartAsset FromDraftJson(string json) => AuthoredAsset.Parse<PartAsset>(json, "part");
@@ -118,7 +228,7 @@ public sealed class PartAsset
 
     public bool IsLocation(string? id) => id == PartLocation.Origin || id is not null && Locations.Any(l => l.Id == id);
 
-    /// <summary>A location's frame in the asset's local space: identity for the origin.</summary>
+    /// <summary>A location's frame in the asset's local space: identity for the origin (a control-carried location's frame is in the control's axes).</summary>
     public LayeredFrame2D LocationFrame(string id)
     {
         if (id == PartLocation.Origin)
@@ -128,6 +238,46 @@ public sealed class PartAsset
 
         var location = Locations.FirstOrDefault(l => l.Id == id) ?? throw new KeyNotFoundException($"Part '{Id}' has no location '{id}'.");
         return LayeredFrame2D.Local(Vector2.One, location.Angle, location.Position, location.Layer);
+    }
+
+    /// <summary>Whether a wearer may key this target (a rig control or a piece) through a namespaced track.</summary>
+    public bool Exposes(string target) => IsAnimated && Exposed.Contains(target, StringComparer.Ordinal);
+
+    /// <summary>The base layer: the first declared one.</summary>
+    [JsonIgnore] public PartLayer? BaseLayer => Layers.Count > 0 ? Layers[0] : null;
+
+    public MotionClip? Clip(string? id) => id is null ? null : Clips.FirstOrDefault(c => c.Id == id);
+
+    /// <summary>The binding of an expression word, null for <see cref="None"/> or an unbound word.</summary>
+    public PartExpression? Binding(string? expression) => expression is null ? null : Expressions.GetValueOrDefault(expression);
+
+    /// <summary>Whether an expression word is meaningful on this asset: a binding or the hiding word.</summary>
+    public bool Binds(string expression) => expression == None || Expressions.ContainsKey(expression);
+
+    /// <summary>
+    /// The animated payload's rig as a model the shared evaluator compiles: the asset's controls, constraints, groups and
+    /// pieces (with <paramref name="parts"/> standing in for the pieces when an instance's materials are resolved over them).
+    /// A static asset has no rig.
+    /// </summary>
+    public CharacterModel RigModel(IReadOnlyList<PuppetPart>? parts = null)
+    {
+        if (!IsAnimated)
+        {
+            throw new InvalidOperationException($"Part '{Id}' is static; it has no rig.");
+        }
+
+        return new()
+        {
+            Id = Id,
+            Name = Name,
+            Ink = Ink,
+            LineWidth = LineWidth,
+            Controls = Controls,
+            Constraints = Constraints,
+            Groups = Groups,
+            Materials = Materials,
+            Parts = [.. parts ?? Parts],
+        };
     }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message)
@@ -148,11 +298,13 @@ public sealed class PartAsset
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         AuthoredAsset.RequireId(Usage, owner + " usage");
         Require(PartPayloads.All.Contains(Payload, StringComparer.Ordinal), $"{owner}: unknown payload '{Payload}'.");
-        // The animated payload boundary is declared; its rig, clock and channel instancing is P7a.
-        Require(Payload == PartPayloads.Static, $"{owner}: an animated payload cannot be instanced yet; nested part rigs, clocks and channels arrive with P7a. Declare the payload static.");
+        Require(PartFittings.All.Contains(Fitting, StringComparer.Ordinal), $"{owner}: unknown fitting '{Fitting}' (one of {string.Join(", ", PartFittings.All)}).");
         Limit.Color(Ink, owner + " ink");
         new Limit(.001f, 1).Check(LineWidth, owner + " lineWidth");
         Require(Materials is not null && Locations is not null && Parts is not null && Solids is not null, $"{owner}: collections cannot be null.");
+        Require(Controls is not null && Constraints is not null && Groups is not null && Exposed is not null && Layers is not null && Clips is not null && Expressions is not null, $"{owner}: collections cannot be null.");
+        Require(IsAnimated || Controls.Count == 0 && Constraints.Count == 0 && Groups.Count == 0 && Exposed.Count == 0 && Layers.Count == 0 && Clips.Count == 0 && Expressions.Count == 0 && Expression is null,
+            $"{owner}: a static payload carries no rig, layers, clips, exposed targets or expressions; declare the payload animated.");
         foreach (var (id, material) in Materials)
         {
             AuthoredAsset.RequireId(id, $"{owner} material id");
@@ -165,6 +317,7 @@ public sealed class PartAsset
             Require(location is not null, $"{owner}: null location.");
             location.Validate($"{owner} location");
             Require(locations.Add(location.Id), $"{owner}: duplicate location '{location.Id}'.");
+            Require(location.Control is null || IsAnimated && Controls.Any(c => c.Id == location.Control), $"{owner} location '{location.Id}': no rig control '{location.Control}' to ride on.");
         }
         Require(Parts.Count + Solids.Count > 0, $"{owner}: a part needs at least one shape, curve, image or solid.");
         Require(Parts.Count <= 256 && Solids.Count <= 128, $"{owner}: capacity exceeded.");
@@ -174,16 +327,20 @@ public sealed class PartAsset
             Require(part is not null, $"{owner}: null drawing part.");
             AuthoredAsset.RequireId(part.Id, $"{owner} drawing part id");
             Require(ids.Add(part.Id), $"{owner}: duplicate drawing part '{part.Id}'.");
-            Require(part.Frame is null, $"{owner} part '{part.Id}': a library part's pieces attach to its locations, not to a wearer's bone.");
-            Require(part.Face is null, $"{owner} part '{part.Id}': faces belong to a face part asset (P7b), not a static library part.");
-            try
+            Require(IsAnimated || part.Frame is null, $"{owner} part '{part.Id}': a static library part's pieces attach to its locations, not to a bone.");
+            Require(part.Face is null, $"{owner} part '{part.Id}': a procedural face does not belong to a library part; animate the features as ordinary geometry.");
+            if (!IsAnimated)
             {
-                part.Validate(locations.Contains);
+                try
+                {
+                    part.Validate(locations.Contains);
+                }
+                catch (InvalidDataException ex)
+                {
+                    throw new InvalidDataException($"{owner} part '{part.Id}': {ex.Message}", ex);
+                }
             }
-            catch (InvalidDataException ex)
-            {
-                throw new InvalidDataException($"{owner} part '{part.Id}': {ex.Message}", ex);
-            }
+
             part.RenderMaterial.Resolve(Materials);
         }
         for (var i = 0; i < Solids.Count; i++)
@@ -206,6 +363,84 @@ public sealed class PartAsset
             Require(solid.Vertices.Count >= 3 && solid.Triangles.Count >= 3 && solid.Triangles.Count % 3 == 0, $"{field}: a solid needs indexed triangles (an outline is extruded on load).");
             Require(solid.Triangles.All(t => t >= 0 && t < solid.Vertices.Count), $"{field}: triangle index outside vertices.");
         }
+        if (IsAnimated)
+        {
+            ValidateAnimated(owner);
+        }
+    }
+
+    /// <summary>The animated payload: its rig compiles like a model, its clips play on that rig, and every layer, exposure and binding names something that exists.</summary>
+    private void ValidateAnimated(string owner)
+    {
+        Require(Controls.Count > 0, $"{owner}: an animated payload needs at least one rig control for its pieces to hang on.");
+        ResolvedModel rig;
+        try
+        {
+            rig = ResolvedModel.From(RigModel());
+        }
+        catch (InvalidDataException ex)
+        {
+            throw new InvalidDataException($"{owner} rig: {ex.Message}", ex);
+        }
+
+        var controls = Controls.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
+        var pieces = Parts.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
+        foreach (var target in Exposed)
+        {
+            Require(target is not null && (controls.Contains(target) || pieces.Contains(target)), $"{owner} exposed: '{target}' is neither a rig control nor a piece.");
+            Require(!target.Contains(Namespace), $"{owner} exposed: '{target}' may not contain '{Namespace}'.");
+        }
+        Require(Exposed.Distinct(StringComparer.Ordinal).Count() == Exposed.Count, $"{owner}: duplicate exposed target.");
+        var clips = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var clip in Clips)
+        {
+            Require(clip is not null, $"{owner}: null clip.");
+            Require(clips.Add(clip.Id), $"{owner}: duplicate clip '{clip.Id}'.");
+            Require(clip.Model == Id, $"{owner} clip '{clip.Id}': authored for '{clip.Model}', not this part.");
+            try
+            {
+                clip.Validate(rig);
+            }
+            catch (InvalidDataException ex)
+            {
+                throw new InvalidDataException($"{owner} clip '{clip.Id}': {ex.Message}", ex);
+            }
+            Require(clip.Plays.Count == 0 && clip.Tracks.All(t => !t.Target.Contains(Namespace)), $"{owner} clip '{clip.Id}': a part's own clip animates its rig alone; nested parts inside a part are not supported.");
+        }
+        Require(Layers.Count > 0, $"{owner}: an animated payload declares at least one layer (the base), each with its clock.");
+        var layers = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < Layers.Count; i++)
+        {
+            var layer = Layers[i];
+            Require(layer is not null, $"{owner}: null layer.");
+            layer.Validate($"{owner} layer");
+            Require(layers.Add(layer.Id), $"{owner}: duplicate layer '{layer.Id}'.");
+            Require(i > 0 || layer.Mask is null, $"{owner} layer '{layer.Id}': the base layer owns every target; a mask belongs to a later layer.");
+            Require(i == 0 || layer.Mask is not null, $"{owner} layer '{layer.Id}': a layer over the base needs a mask naming the targets it owns.");
+            Require(layer.Mask is null || Groups.Any(g => g.Id == layer.Mask), $"{owner} layer '{layer.Id}': no control group '{layer.Mask}' to mask with.");
+            Require(layer.Clip is null || clips.Contains(layer.Clip), $"{owner} layer '{layer.Id}': no clip '{layer.Clip}'.");
+        }
+        foreach (var (name, binding) in Expressions)
+        {
+            var field = $"{owner} expression '{name}'";
+            AuthoredAsset.RequireId(name, $"{owner} expression");
+            Require(name != None, $"{owner}: '{None}' is the hiding word and cannot be bound.");
+            Require(binding is not null, $"{field}: null binding.");
+            Require(binding.Mutes is not null, $"{field}: mutes cannot be null.");
+            Require(binding.Layer is null || layers.Contains(binding.Layer), $"{field}: no layer '{binding.Layer}'.");
+            Require(binding.Clip is null || clips.Contains(binding.Clip), $"{field}: no clip '{binding.Clip}'.");
+            Require(binding.Time is null || binding.Clip is not null, $"{field}: a pose time needs a clip.");
+            if (binding.Time is { } time)
+            {
+                new Limit(0, Clip(binding.Clip)!.Duration).Check(time, field + " time");
+            }
+
+            foreach (var mute in binding.Mutes)
+            {
+                Require(mute is not null && layers.Contains(mute), $"{field}: no layer '{mute}' to mute.");
+            }
+        }
+        Require(Expression is null || Binds(Expression), $"{owner}: the default expression '{Expression}' is not bound.");
     }
 
     /// <summary>A static part holding one prop's solids, for converting hair, clothing and footwear props into library parts.</summary>
@@ -257,25 +492,28 @@ public sealed record PartInstance
     public bool Mirror { get; set; }
     /// <summary>Drawing-layer offset from the socket.</summary>
     public float Layer { get; set; }
-    /// <summary>Leaf geometry fit (plan section 3.4): stretches this instance's artwork; nothing inherits it.</summary>
+    /// <summary>Leaf geometry fit (plan section 3.4): stretches this instance's artwork, or repositions its layout, as the asset declares; nothing inherits it.</summary>
     public float FitX { get; set; } = 1;
     public float FitY { get; set; } = 1;
     /// <summary>Inline material override over every piece of the payload (a fill, a shared material of the asset, a tint); null inherits.</summary>
     public RenderMaterialDefinition2D? Material { get; set; }
     public bool Hidden { get; set; }
+    /// <summary>Animated assets: the expression this instance shows by default, over the asset's own default (P7a).</summary>
+    public string? Expression { get; set; }
 
     /// <summary>
     /// The instance's placement on its socket: fit and size, then rotation, then offset, then the layer; a mirrored instance
     /// is reflected in the socket's axes afterwards, so the mirror image lands where the socket's other side would.
     /// </summary>
     [JsonIgnore]
-    public LayeredFrame2D Local
+    public LayeredFrame2D Local => Placement(stretch: true);
+
+    /// <summary>The placement with the fit in the frame (<see cref="PartFittings.Stretch"/>) or left to the asset's layout (<see cref="PartFittings.Layout"/>).</summary>
+    public LayeredFrame2D Placement(bool stretch)
     {
-        get
-        {
-            var local = LayeredFrame2D.Local(new(FitX * Scale, FitY * Scale), Angle, new(X, Y), Layer);
-            return Mirror ? local.Then(LayeredFrame2D.Local(new(-1, 1), 0, Vector2.Zero, 0)) : local;
-        }
+        var fit = stretch ? new Vector2(FitX, FitY) : Vector2.One;
+        var local = LayeredFrame2D.Local(fit * Scale, Angle, new(X, Y), Layer);
+        return Mirror ? local.Then(LayeredFrame2D.Local(new(-1, 1), 0, Vector2.Zero, 0)) : local;
     }
 
     public void Validate(string field)
@@ -295,28 +533,47 @@ public sealed record PartInstance
             throw new InvalidDataException($"{field}: a zero fit collapses the artwork.");
         }
 
+        if (Expression is not null)
+        {
+            AuthoredAsset.RequireId(Expression, field + " expression");
+        }
+
         Material?.Validate(field + " material");
     }
 }
 
 /// <summary>
 /// An attachment instance resolved for one wearer: the merged instance, its asset, the socket it hangs from, and the payload
-/// with materials resolved against the asset's shared materials and the instance's override. The placement is derived per
-/// pose from the socket's evaluated placement; nothing here is a copy of the asset.
+/// with materials resolved against the asset's shared materials and the instance's override. An animated asset's rig is
+/// compiled here too (<see cref="Rig"/>), over the resolved pieces. The placement is derived per pose from the socket's
+/// evaluated placement; nothing here is a copy of the asset.
 /// </summary>
-public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, ModelSocket Socket, IReadOnlyList<PuppetPart> Parts, IReadOnlyList<PropSolid> Solids)
+public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, ModelSocket Socket, IReadOnlyList<PuppetPart> Parts, IReadOnlyList<PropSolid> Solids, ResolvedModel? Rig = null)
 {
     public string Id => Instance.Id;
+    public bool IsAnimated => Rig is not null;
+    /// <summary>Whether the instance's fit stretches the artwork in the placement (else it repositions the asset's layout).</summary>
+    public bool Stretches => Asset.Fitting == PartFittings.Stretch;
+    /// <summary>The fit the asset's layout repositions by: the instance fit under the layout policy, none under stretch.</summary>
+    public Vector2 LayoutFit => Stretches ? Vector2.One : new(Instance.FitX, Instance.FitY);
 
     /// <summary>The instance's placement in the frame its socket placement is given in (actor-local or world).</summary>
-    public LayeredFrame2D Placement(LayeredFrame2D socketPlacement) => Instance.Local.Then(socketPlacement);
+    public LayeredFrame2D Placement(LayeredFrame2D socketPlacement) => Instance.Placement(Stretches).Then(socketPlacement);
 
-    /// <summary>A payload location's placement for a given instance placement: what the payload's pieces attach to.</summary>
-    public LayeredFrame2D LocationPlacement(string location, LayeredFrame2D placement) => Asset.LocationFrame(location).Then(placement);
+    /// <summary>A payload location's placement for a given instance placement: what a static payload's pieces attach to.</summary>
+    public LayeredFrame2D LocationPlacement(string location, LayeredFrame2D placement)
+    {
+        var fit = LayoutFit;
+        var frame = Asset.LocationFrame(location);
+        return fit == Vector2.One ? frame.Then(placement) : frame.WithOrigin(new(frame.Origin.X * fit.X, frame.Origin.Y * fit.Y, frame.Origin.Z)).Then(placement);
+    }
 
-    /// <summary>The payload's drawing inputs for an instance placement: each location's origin and frame, as the shared part drawing expects.</summary>
+    /// <summary>The static payload's drawing inputs for an instance placement: each location's origin and frame, as the shared part drawing expects.</summary>
     public (Func<string, Vector3> World, Func<string, LayeredFrame2D> Frame) Lookups(LayeredFrame2D placement) =>
         (location => LocationPlacement(location, placement).Origin, location => LocationPlacement(location, placement));
+
+    /// <summary>The expression this instance shows before any clip or request: its own, else the asset's default.</summary>
+    public string? DefaultExpression => Instance.Expression ?? Asset.Expression;
 
     /// <summary>Resolves an instance for a wearer: the asset must exist and the socket must be the wearer's.</summary>
     public static ResolvedAttachment Resolve(PartInstance instance, Func<string, PartAsset?> partOf, IReadOnlyDictionary<string, ModelSocket> sockets, string owner)
@@ -329,6 +586,24 @@ public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, 
 
         var parts = asset.Parts.ConvertAll(p => p with { Material = p.RenderMaterial.WithOverride(instance.Material).Resolve(asset.Materials) });
         var solids = asset.Solids.ConvertAll(s => s with { Material = s.RenderMaterial.WithOverride(instance.Material).Resolve(asset.Materials) });
-        return new(instance, asset, socket, parts, solids);
+        ResolvedModel? rig = null;
+        if (asset.IsAnimated)
+        {
+            try
+            {
+                rig = ResolvedModel.From(asset.RigModel(parts));
+            }
+            catch (InvalidDataException ex)
+            {
+                throw new InvalidDataException($"{owner} attachment '{instance.Id}' (part '{asset.Id}'): {ex.Message}", ex);
+            }
+        }
+
+        if (instance.Expression is { } expression && !asset.Binds(expression))
+        {
+            throw new InvalidDataException($"{owner} attachment '{instance.Id}': part '{asset.Id}' binds no expression '{expression}'" + (asset.IsAnimated ? $" (one of {string.Join(", ", asset.Expressions.Keys.Append(PartAsset.None))})." : "; a static part shows no expression."));
+        }
+
+        return new(instance, asset, socket, parts, solids, rig);
     }
 }

@@ -110,6 +110,18 @@ internal sealed class AttachmentInspector(EditorSession session)
             session.Edit(document, () => { Live().Hidden = hidden; document.Asset.Validate(); });
         }
 
+        if (session.Assets.PartOf(instance.Asset) is { IsAnimated: true } animated)
+        {
+            // An animated part (P7a): which bound expression this instance shows before any clip or gameplay request.
+            var words = animated.Expressions.Keys.Append(PartAsset.None).Prepend("").ToArray();
+            if (Ui.Combo("Default expression", instance.Expression ?? "", words, w => w.Length == 0 ? $"asset default ({animated.Expression ?? "nothing"})" : w) is { } expression)
+            {
+                session.Edit(document, () => { Live().Expression = expression.Length == 0 ? null : expression; document.Asset.Validate(); });
+            }
+
+            Animated(animated);
+        }
+
         if (ImGui.Button("Remove instance"))
         {
             session.Edit(document, () =>
@@ -120,6 +132,19 @@ internal sealed class AttachmentInspector(EditorSession session)
         }
 
         Ui.Help("Fit stretches this instance's artwork only; nothing inherits it. A variant overrides any of these per instance without editing this character or the shared part.");
+    }
+
+    /// <summary>What an animated asset brings to the instance (P7a): its layers with their clocks, the targets a clip may key and the words it binds.</summary>
+    private static void Animated(PartAsset asset)
+    {
+        ImGui.TextDisabled($"Animated part: {asset.Controls.Count} control(s), {asset.Clips.Count} clip(s), fitting '{asset.Fitting}'.");
+        foreach (var layer in asset.Layers)
+        {
+            ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}, plays {(layer.Clip ?? "nothing")} by default");
+        }
+
+        ImGui.TextDisabled($"  exposed to the wearer's clips: {(asset.Exposed.Count == 0 ? "nothing" : string.Join(", ", asset.Exposed))}");
+        ImGui.TextDisabled($"  expressions: {(asset.Expressions.Count == 0 ? "none" : string.Join(", ", asset.Expressions.Keys))}");
     }
 
     /// <summary>A variant's override of one instance: every field labelled with its provenance, a marked label resets that property, and edits become typed overrides (P6c).</summary>
@@ -246,6 +271,25 @@ internal sealed class AttachmentInspector(EditorSession session)
             {
                 Set(i => i.Hidden = hidden, true);
             }
+        }
+
+        if (resolved.Attachment(id)?.Asset is { IsAnimated: true } animated)
+        {
+            if (Ui.OverrideLabel("Default expression", Overridden(RigProperties.Expression)))
+            {
+                Reset(RigProperties.Expression);
+            }
+            else
+            {
+                var words = animated.Expressions.Keys.Append(PartAsset.None).Prepend("").ToArray();
+                if (Ui.Combo("##attachment-expression", shown.Expression ?? "", words, w => w.Length == 0 ? $"asset default ({animated.Expression ?? "nothing"})" : w) is { } expression)
+                {
+                    Set(i => i.Expression = expression.Length == 0 ? null : expression, true);
+                }
+            }
+
+            VariantModelInspector.SourceNote(resolved, Target(RigProperties.Expression));
+            Animated(animated);
         }
 
         Ui.Help("Click a marked label to reset that override and follow the base again. Swapping the part here never edits the base or another variant.");

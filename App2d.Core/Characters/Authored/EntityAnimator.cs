@@ -44,6 +44,8 @@ public sealed class EntityAnimator
     /// <summary>Increments on every action start; hit deduplication keys on it.</summary>
     public int ActionSequence { get; private set; }
     public int Facing { get; private set; } = 1;
+    /// <summary>The actor's own continuous clock: every step adds to it and nothing restarts it, so part layers on a local clock (a blink) never jump with a role change.</summary>
+    public double Clock { get; private set; }
     public ActorPose Pose { get; private set; }
     public IReadOnlyDictionary<string, Vector3> Anchors => _hold.Anchors;
     public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
@@ -135,6 +137,7 @@ public sealed class EntityAnimator
         }
 
         Facing = facing;
+        Clock += dt;
         if (Current is { } action)
         {
             PreviousActionTime = ActionTime;
@@ -191,11 +194,12 @@ public sealed class EntityAnimator
                 new(expression)
                 {
                     Overlay = overlay,
-                    ReverseHorizontalMotion = _reverseRoleMotion
+                    ReverseHorizontalMotion = _reverseRoleMotion,
+                    Clock = Clock,
                 });
             return;
         }
-        Pose = _hold.Evaluate(Entity.Model, action.Clip, ActionTime, false, position, Facing, new(expression));
+        Pose = _hold.Evaluate(Entity.Model, action.Clip, ActionTime, false, position, Facing, new(expression) { Clock = Clock });
     }
 
     /// <summary>Hit windows active at any moment of the latest step, including one that opened and closed inside it.</summary>

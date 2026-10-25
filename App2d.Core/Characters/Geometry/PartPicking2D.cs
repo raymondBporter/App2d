@@ -17,9 +17,26 @@ public static class PartPicking2D
 {
     public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, bone: null, rest: rest);
 
-    /// <summary>The picking score of a part in an evaluated pose of a resolved model.</summary>
+    /// <summary>The picking score of a part in an evaluated pose of a resolved model, with the pose's animated artwork fit applied.</summary>
     public static float Distance(PuppetPart part, ResolvedModel model, EvaluatedPose pose, Vector3 point) =>
-        Distance(part, pose.World, point, pose.Placement, id => model.Rest[id], model.RestPlacement, model.Base.LineWidth);
+        Distance(pose.Fitted(part), pose.World, point, pose.Placement, id => model.Rest[id], model.RestPlacement, model.Base.LineWidth);
+
+    /// <summary>The picking score of an evaluated animated instance (P7a): the best of its visible pieces in their nested pose.</summary>
+    public static float Distance(EvaluatedAttachment attachment, Vector3 point)
+    {
+        if (attachment.Hidden)
+        {
+            return float.PositiveInfinity;
+        }
+
+        var best = float.PositiveInfinity;
+        foreach (var part in attachment.DrawnParts())
+        {
+            best = MathF.Min(best, Distance(part, attachment.World, point, attachment.Frame, attachment.Rest, attachment.RestFrame, attachment.Attachment.Asset.LineWidth));
+        }
+
+        return best;
+    }
 
     /// <summary>
     /// The picking score of a library part instance at a placement (P5b): the best of its payload pieces through the same
@@ -61,9 +78,10 @@ public static class PartPicking2D
         return best;
     }
 
-    /// <summary>The picking score of an instance in an evaluated pose: its placement on the socket's evaluated placement.</summary>
+    /// <summary>The picking score of an instance in an evaluated pose: its placement on the socket's evaluated placement, or its evaluated nested pose when animated.</summary>
     public static float Distance(ResolvedAttachment attachment, EvaluatedPose pose, Vector3 point) =>
-        Distance(attachment, attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket)), point);
+        pose.Attachments.TryGetValue(attachment.Id, out var evaluated) ? Distance(evaluated, point)
+        : Distance(attachment, attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket)), point);
 
     /// <summary>
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance

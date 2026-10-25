@@ -229,6 +229,7 @@ public static class ModelAuthoring
         if (edited.FitX != current.FitX) changes.Add(PropertyOverride.Of(Target(RigProperties.FitX), edited.FitX));
         if (edited.FitY != current.FitY) changes.Add(PropertyOverride.Of(Target(RigProperties.FitY), edited.FitY));
         if (edited.Hidden != current.Hidden) changes.Add(PropertyOverride.Of(Target(RigProperties.Hidden), edited.Hidden));
+        if (edited.Expression != current.Expression) changes.Add(edited.Expression is null ? PropertyOverride.Cleared(Target(RigProperties.Expression)) : PropertyOverride.Of(Target(RigProperties.Expression), edited.Expression));
         if (!Equals(edited.Material, current.Material))
         {
             var target = Target(RigProperties.Material);

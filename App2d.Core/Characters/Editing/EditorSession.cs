@@ -376,9 +376,10 @@ public sealed class EditorSession
         }
 
         var clip = ClipFor(subjectId);
-        var input = new PoseInput(Expression) { Skin = model.Base.Skins.Any(s => s.Id == Skin) ? Skin : null };
+        var seconds = clip is not null && Transport.Playing ? Transport.Seconds(clip) : Transport.Time;
+        var input = new PoseInput(Expression) { Skin = model.Base.Skins.Any(s => s.Id == Skin) ? Skin : null, Clock = seconds };
         var pose = clip is null ? PoseEvaluator.Rest(model, input)
-            : PoseEvaluator.Sample(model, clip, Transport.Playing ? Transport.Seconds(clip) : Transport.Time, repeat: Transport.Repeats(clip), input);
+            : PoseEvaluator.Sample(model, clip, seconds, repeat: Transport.Repeats(clip), input);
         return new(subjectId, model, pose, clip);
     }
 
@@ -418,19 +419,20 @@ public sealed class EditorSession
         {
             var clip = entity.Clip(PreviewRole);
             local = PoseEvaluator.Sample(entity.Model, clip, clip is not null && Transport.Playing ? Transport.Seconds(clip) : time,
-                repeat: clip is not null && Transport.Repeats(clip), new(Expression));
+                repeat: clip is not null && Transport.Repeats(clip), new(Expression) { Clock = time });
         }
         else if (action.Mask is { } mask)
         {
             weight = action.Weight(time);
             local = PoseEvaluator.Sample(entity.Model, entity.Clip(PreviewRole), time, repeat: true, new(Expression)
             {
-                Overlay = new(action.Clip, time, mask, weight)
+                Overlay = new(action.Clip, time, mask, weight),
+                Clock = time,
             });
         }
         else
         {
-            local = PoseEvaluator.Sample(entity.Model, action.Clip, time, input: new(Expression));
+            local = PoseEvaluator.Sample(entity.Model, action.Clip, time, input: new(Expression) { Clock = time });
         }
 
         var pose = new ActorPose(local, Vector2.Zero, 1);
@@ -865,6 +867,12 @@ public sealed class EditorSession
         var copy = PartAsset.FromJson(part.Asset.ToJson());
         copy.Id = id;
         copy.Name = name;
+        // An animated part's clips are authored against the part itself; the copy's clips are the copy's.
+        foreach (var clip in copy.Clips)
+        {
+            clip.Model = id;
+        }
+
         copy.Validate();
         Assets.Create(copy);
         Open(id);

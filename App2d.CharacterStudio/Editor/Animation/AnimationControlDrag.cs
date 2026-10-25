@@ -2,6 +2,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
+using Vector3 = System.Numerics.Vector3;
 
 namespace App2d.CharacterStudio.Editor.Animation;
 
@@ -16,10 +17,13 @@ internal sealed class AnimationControlDrag(EditorSession session, Viewport viewp
     {
         var model = subject.Model;
         var pose = subject.Pose;
+        Vector3 World(string id) => ClipAuthoring.Nested(model, id) is { } nested ? pose.Attachments[nested.Attachment.Id].World(nested.Target) : pose.World(id);
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            _dragging = model.Order.Select(c => c.Id).Where(id => ClipAuthoring.ChannelFor(model, id) is not null)
-                .OrderBy(id => Vector2.Distance(frame.Screen(pose.World(id)), ViewportFrame.Mouse)).FirstOrDefault(id => Vector2.Distance(frame.Screen(pose.World(id)), ViewportFrame.Mouse) < 12 * Ui.Scale);
+            // The wearer's own controls, then the exposed controls of its animated instances (P7a) by their namespaced names.
+            var candidates = model.Order.Select(c => c.Id).Where(id => ClipAuthoring.ChannelFor(model, id) is not null)
+                .Concat(pose.Attachments.Values.Where(e => !e.Hidden).SelectMany(e => e.Rig.Order.Where(c => e.Attachment.Asset.Exposes(c.Id) && ClipAuthoring.ChannelFor(e.Rig, c.Id) is { Kind: not MotionClip.TargetKind }).Select(c => e.Qualify(c.Id))));
+            _dragging = candidates.OrderBy(id => Vector2.Distance(frame.Screen(World(id)), ViewportFrame.Mouse)).FirstOrDefault(id => Vector2.Distance(frame.Screen(World(id)), ViewportFrame.Mouse) < 12 * Ui.Scale);
             if (_dragging is not null)
             {
                 session.Selection.Select(control: _dragging);
@@ -46,7 +50,7 @@ internal sealed class AnimationControlDrag(EditorSession session, Viewport viewp
         // The first frame after the click has paused playback; measure the grab offset in that paused pose.
         if (!_grabbed)
         {
-            _grab = pose.World(_dragging) - frame.World(ViewportFrame.Mouse);
+            _grab = World(_dragging) - frame.World(ViewportFrame.Mouse);
             _grabbed = true;
             return;
         }
@@ -58,7 +62,7 @@ internal sealed class AnimationControlDrag(EditorSession session, Viewport viewp
         var target = frame.World(ViewportFrame.Mouse) + _grab;
         session.DragControl(_dragging, target with
         {
-            Z = pose.World(_dragging).Z
+            Z = World(_dragging).Z
         });
     }
 }

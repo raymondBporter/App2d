@@ -50,9 +50,35 @@ public static partial class ClipAuthoring
         return copy;
     }
 
-    /// <summary>The channel a control is posed through: its chain's target for an IK end, none for an IK joint, else its translation.</summary>
+    /// <summary>
+    /// A namespaced control (<c>instance/control</c>, P7a) resolved to the animated instance it lives in and the control's
+    /// name inside that asset's rig; null for the wearer's own control.
+    /// </summary>
+    public static (ResolvedAttachment Attachment, string Target)? Nested(ResolvedModel model, string control)
+    {
+        if (!control.Contains(PartAsset.Namespace))
+        {
+            return null;
+        }
+
+        var (instance, target) = MotionClip.Split(control);
+        var attachment = model.Attachment(instance) ?? throw new InvalidOperationException($"'{model.Id}' has no attachment '{instance}'.");
+        if (attachment.Rig is null)
+        {
+            throw new InvalidOperationException($"Attachment '{instance}' wears the static part '{attachment.Asset.Id}'; it has no animated targets.");
+        }
+
+        return (attachment, target);
+    }
+
+    /// <summary>The channel a control is posed through: its chain's target for an IK end, none for an IK joint, else its translation. A nested control's channel is namespaced.</summary>
     public static Channel? ChannelFor(ResolvedModel model, string control)
     {
+        if (Nested(model, control) is { } nested)
+        {
+            return ChannelFor(nested.Attachment.Rig!, nested.Target) is { } inner ? inner with { Target = nested.Attachment.Id + PartAsset.Namespace + inner.Target } : null;
+        }
+
         foreach (var chain in model.Chains.Values)
         {
             if (chain.End == control)
@@ -65,6 +91,12 @@ public static partial class ClipAuthoring
                 return null;
             }
         }
+        // A drawing part is animated through its fit (P7a); its visibility rides along in ChannelsForControl.
+        if (!model.Controls.ContainsKey(control) && model.Parts.Any(p => p.Id == control))
+        {
+            return new(MotionClip.FitKind, control);
+        }
+
         return new(MotionClip.TranslateKind, control);
     }
 
@@ -106,11 +138,32 @@ public static partial class ClipAuthoring
     /// </summary>
     public static Channel? Pose(ResolvedModel model, MotionClip clip, EvaluatedPose pose, float time, string control, Vector3 world)
     {
-        var channel = ChannelFor(model, control) ?? throw new InvalidOperationException(
-            $"'{control}' is solved by IK; drag the chain's end or flip its bend.");
-        if (channel.Kind == MotionClip.TargetKind)
+        if (Nested(model, control) is { } nested)
         {
-            var chain = model.Chains[channel.Target];
+            // A nested control (P7a): the desired position goes into the instance's space (its placement and layout fit
+            // inverted), the inverse runs on the part's rig and nested pose, and the key lands on the namespaced channel.
+            if (!pose.Attachments.TryGetValue(nested.Attachment.Id, out var evaluated))
+            {
+                throw new InvalidOperationException($"Attachment '{nested.Attachment.Id}' was not evaluated in this pose.");
+            }
+
+            if (!evaluated.Placement.TryToLocal(world, out var local))
+            {
+                throw new InvalidOperationException("Cannot pose a nested control through a collapsed instance placement.");
+            }
+
+            var fit = evaluated.LayoutFit;
+            var inner = Delta(nested.Attachment.Rig!, clip, evaluated.Pose, nested.Target, new(local.X / fit.X, local.Y / fit.Y, local.Z), nested: true);
+            var channel = inner.Channel with { Target = nested.Attachment.Id + PartAsset.Namespace + inner.Channel.Target };
+            SetKey(clip, channel, time, inner.Value);
+            return channel;
+        }
+
+        var own = ChannelFor(model, control) ?? throw new InvalidOperationException(
+            $"'{control}' is solved by IK; drag the chain's end or flip its bend.");
+        if (own.Kind == MotionClip.TargetKind)
+        {
+            var chain = model.Chains[own.Target];
             if (ActiveContact(clip, chain.Id, time) is { } contact)
             {
                 var origin = TravelAt(model, clip, 0);
@@ -119,13 +172,31 @@ public static partial class ClipAuthoring
                 contact.Target = new(local.X / ratio, local.Y / ratio, local.Z);
                 return null;
             }
-            var offset = RigConstraintEvaluator.TargetDelta(model, pose, chain, world);
-            var scale = Ratio(model, clip, Track(clip, channel)?.Scale ?? chain.Scale);
-            SetKey(clip, channel, time, new(offset.X / scale, offset.Y / scale, offset.Z));
-            return channel;
         }
-        // The inverse of the evaluator's frame graph: the desired origin in the carrier's local axes, less the node's setup
-        // origin, in reference units; its layer offset less the node's. Uniform scale and reflection of the carrier divide out.
+
+        var delta = Delta(model, clip, pose, control, world, nested: false);
+        SetKey(clip, delta.Channel, time, delta.Value);
+        return delta.Channel;
+    }
+
+    /// <summary>
+    /// The key that puts a control at a world position in this pose: the inverse of the evaluator. A chain's end becomes a
+    /// target delta in the chain's frame; any other control becomes the desired origin in the carrier's local axes, less the
+    /// node's setup origin, in reference units, its layer offset less the node's. Uniform scale and reflection of the carrier
+    /// divide out. A nested rig (P7a) is keyed in its own units.
+    /// </summary>
+    private static (Channel Channel, Vector3 Value) Delta(ResolvedModel model, MotionClip clip, EvaluatedPose pose, string control, Vector3 world, bool nested)
+    {
+        var channel = ChannelFor(model, control) ?? throw new InvalidOperationException(
+            $"'{control}' is solved by IK; drag the chain's end or flip its bend.");
+        if (channel.Kind == MotionClip.TargetKind)
+        {
+            var chain = model.Chains[channel.Target];
+            var offset = RigConstraintEvaluator.TargetDelta(model, pose, chain, world);
+            var scale = nested ? 1 : Ratio(model, clip, Track(clip, channel)?.Scale ?? chain.Scale);
+            return (channel, new(offset.X / scale, offset.Y / scale, offset.Z));
+        }
+
         var spec = model.Controls[control];
         var node = model.Nodes[control];
         if (!Carrier(model, pose, node).TryToLocal(world, out var inCarrier))
@@ -135,9 +206,8 @@ public static partial class ClipAuthoring
 
         var parentLength = node.Parent is null ? 0 : model.Nodes[node.Parent].Length;
         var setupOrigin = node.Kind == RigNodeKinds.Affine ? new Vector2(node.Affine!.X, node.Affine.Y) : node.Origin(parentLength);
-        var units = Ratio(model, clip, Track(clip, channel)?.Scale ?? spec.Scale);
-        SetKey(clip, channel, time, new((inCarrier.X - setupOrigin.X) / units, (inCarrier.Y - setupOrigin.Y) / units, inCarrier.Z - node.Layer));
-        return channel;
+        var units = nested ? 1 : Ratio(model, clip, Track(clip, channel)?.Scale ?? spec.Scale);
+        return (channel, new((inCarrier.X - setupOrigin.X) / units, (inCarrier.Y - setupOrigin.Y) / units, inCarrier.Z - node.Layer));
     }
 
     /// <summary>The placement a node's local setup composes onto in this pose: the evaluator's carrier rule.</summary>
@@ -410,6 +480,11 @@ public static partial class ClipAuthoring
             key.Time = Scale(key.Time);
         }
 
+        foreach (var key in clip.Plays.SelectMany(p => p.Keys))
+        {
+            key.Time = Scale(key.Time);
+        }
+
         foreach (var key in clip.Attachments.SelectMany(t => t.Keys))
         {
             key.Time = Scale(key.Time);
@@ -530,6 +605,13 @@ public static partial class ClipAuthoring
                 .Concat(face.Keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime).Select(k => new ClipFaceKey { Time = k.Time - from, Expression = k.Expression }))];
         }
         copy.Faces.RemoveAll(f => f.Keys.Count == 0);
+        foreach (var play in copy.Plays)
+        {
+            var showing = play.Keys.LastOrDefault(k => k.Time <= from + SameTime);
+            play.Keys = [.. (showing is null ? [] : new[] { new ClipPlayKey { Time = 0, Expression = showing.Expression } })
+                .Concat(play.Keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime).Select(k => new ClipPlayKey { Time = k.Time - from, Expression = k.Expression }))];
+        }
+        copy.Plays.RemoveAll(p => p.Keys.Count == 0);
         foreach (var track in copy.Attachments)
         {
             var showing = track.Keys.LastOrDefault(k => k.Time <= from);
@@ -639,6 +721,29 @@ public static partial class ClipAuthoring
         }
 
         Put(track.Keys, new ClipFaceKey { Time = time, Expression = expression }, k => k.Time);
+    }
+
+    /// <summary>Holds <paramref name="expression"/> on an animated part instance from <paramref name="time"/> (P7a); null removes the key there. The asset's bindings are checked when the clip validates against the model.</summary>
+    public static void SetPlay(MotionClip clip, string instance, float time, string? expression)
+    {
+        var track = clip.Plays.FirstOrDefault(p => p.Instance == instance);
+        if (expression is null)
+        {
+            track?.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+            clip.Plays.RemoveAll(p => p.Keys.Count == 0);
+            return;
+        }
+
+        AuthoredAsset.RequireId(expression, "expression");
+        if (track is null)
+        {
+            clip.Plays.Add(track = new()
+            {
+                Instance = instance
+            });
+        }
+
+        Put(track.Keys, new ClipPlayKey { Time = time, Expression = expression }, k => k.Time);
     }
 
     private static IEnumerable<ClipTrack> Tracks(MotionClip clip, IReadOnlyCollection<Channel>? channels) =>

@@ -358,6 +358,11 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             session.ShowRest = rest;
         }
 
+        if (asset.IsAnimated)
+        {
+            AnimatedPayload(doc);
+        }
+
         _partPiece = Math.Clamp(_partPiece, 0, Math.Max(0, asset.Parts.Count + asset.Solids.Count - 1));
         if (_partPiece < asset.Parts.Count)
         {
@@ -379,6 +384,58 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         }
 
         References.Draw(session, doc.Id);
+    }
+
+    /// <summary>
+    /// An animated payload's own section (P7a): its rig, clips, layers and expression bindings as the asset declares them,
+    /// the fitting policy, and which controls and pieces a wearer's clip may key (exposure toggles edit the shared asset).
+    /// </summary>
+    private void AnimatedPayload(AssetDocument<PartAsset> doc)
+    {
+        var asset = doc.Asset;
+        Ui.Header("Animated payload");
+        ImGui.TextDisabled($"Rig: {asset.Controls.Count} control(s), {asset.Constraints.Count} constraint(s), {asset.Groups.Count} group(s). Clips: {string.Join(", ", asset.Clips.Select(c => $"{c.Id} ({c.Duration:0.##} s{(c.Loop ? ", loops" : "")})"))}.");
+        if (Ui.Combo("Fitting", asset.Fitting, PartFittings.All, f => f == PartFittings.Stretch ? "stretch: the fit deforms the whole artwork" : "layout: the fit repositions the controls") is { } fitting)
+        {
+            session.Edit(doc, () => { doc.Asset.Fitting = fitting; doc.Asset.Validate(); });
+        }
+
+        foreach (var layer in asset.Layers)
+        {
+            ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}{(layer.Clock == PartClocks.Mapped ? $" (x{layer.Rate:0.##} + {layer.Offset:0.##} s)" : "")}, plays {(layer.Clip ?? "nothing")} by default");
+        }
+
+        var words = asset.Expressions.Keys.Append(PartAsset.None).Prepend("").ToArray();
+        if (Ui.Combo("Default expression", asset.Expression ?? "", words, w => w.Length == 0 ? "nothing (rest and the layers' default clips)" : w) is { } expression)
+        {
+            session.Edit(doc, () => { doc.Asset.Expression = expression.Length == 0 ? null : expression; doc.Asset.Validate(); });
+        }
+
+        foreach (var (name, binding) in asset.Expressions)
+        {
+            ImGui.TextDisabled($"  '{name}': {(binding.Hidden ? "hides the instance" : binding.Clip is null ? "rests the " + (binding.Layer ?? asset.BaseLayer?.Id) + " layer" : $"{(binding.Time is { } t ? $"holds {binding.Clip} at {t:0.##} s" : "plays " + binding.Clip)} on '{binding.Layer ?? asset.BaseLayer?.Id}'")}{(binding.Mutes.Count > 0 ? ", mutes " + string.Join(", ", binding.Mutes) : "")}");
+        }
+
+        ImGui.TextDisabled("Exposed to a wearer's clips (namespaced tracks):");
+        foreach (var target in asset.Controls.Select(c => c.Id).Concat(asset.Parts.Select(p => p.Id)))
+        {
+            var exposed = asset.Exposed.Contains(target, StringComparer.Ordinal);
+            if (ImGui.Checkbox($"{target}{(asset.Parts.Any(p => p.Id == target) ? " (piece)" : "")}##expose", ref exposed))
+            {
+                session.Edit(doc, () =>
+                {
+                    doc.Asset.Exposed.RemoveAll(e => e == target);
+                    if (exposed)
+                    {
+                        doc.Asset.Exposed.Add(target);
+                    }
+
+                    doc.Asset.Validate();
+                }, $"{(exposed ? "Exposed" : "Unexposed")} '{target}'; clips keying it on a wearer are checked when they validate.");
+            }
+        }
+
+        Ui.Help("The rig, clips and bindings are authored as data (conversion or seeds); a wearer's clip selects expressions and keys the exposed targets through Animate.");
     }
 
     private void PartPiece(AssetDocument<PartAsset> doc, int index)

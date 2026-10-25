@@ -89,6 +89,34 @@ internal sealed class AnimationViewport(EditorSession session, Viewport viewport
                 draw.AddText(p + new Vector2(9, -18) * Ui.Scale, StudioTheme.ControlLabel.PackedValue, control.Id);
             }
         }
+        // Animated part instances (P7a): their rig links and exposed controls, keyed through namespaced channels.
+        foreach (var evaluated in pose.Attachments.Values.Where(e => !e.Hidden))
+        {
+            foreach (var control in evaluated.Rig.Order.Where(c => c.Parent is not null))
+            {
+                draw.AddLine(frame.Screen(evaluated.World(control.Parent!)), frame.Screen(evaluated.World(control.Id)), StudioTheme.AnimationBoneLink.PackedValue, 1);
+            }
+
+            foreach (var control in evaluated.Rig.Order)
+            {
+                var id = evaluated.Qualify(control.Id);
+                var p = frame.Screen(evaluated.World(control.Id));
+                var selected = session.Selection.Control == id;
+                if (!evaluated.Attachment.Asset.Exposes(control.Id))
+                {
+                    draw.AddCircle(p, 2.5f * Ui.Scale, StudioTheme.InactiveControl.PackedValue, 10, 1);
+                    continue;
+                }
+
+                var radius = (selected ? 5 : 3.5f) * Ui.Scale;
+                draw.AddCircleFilled(p, radius, selected ? StudioTheme.Selection.PackedValue : StudioTheme.ControlFill.PackedValue);
+                draw.AddCircle(p, radius, StudioTheme.ControlOutline.PackedValue, 12, 1);
+                if (selected)
+                {
+                    draw.AddText(p + new Vector2(9, -18) * Ui.Scale, StudioTheme.ControlLabel.PackedValue, id);
+                }
+            }
+        }
         draw.AddText(frame.Origin + new Vector2(10, 8) * Ui.Scale, session.AutoKey ? StudioTheme.AutoKey.PackedValue : StudioTheme.MutedText.PackedValue, session.AutoKey ? "AUTOKEY" : "autokey off");
 
         _controls.Draw(frame, subject);

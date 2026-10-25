@@ -47,7 +47,7 @@ internal sealed class AnimationTimeline(EditorSession session)
             rows.Add(("Weapon rotation", new[] { new Channel(MotionClip.OrientKind, session.PreviewSocket) }));
         }
 
-        if (session.Selection.Control is { } control && primary.Model.Controls.ContainsKey(control) && ClipAuthoring.ChannelsForControl(primary.Model, control) is { Count: > 0 } selected)
+        if (session.Selection.Control is { } control && AnimationInspector.Keyable(primary.Model, control) && ClipAuthoring.ChannelsForControl(primary.Model, control) is { Count: > 0 } selected)
         {
             rows.Add((control, selected));
         }
@@ -67,6 +67,11 @@ internal sealed class AnimationTimeline(EditorSession session)
         foreach (var face in clip.Faces)
         {
             PointRow(draw, "Face " + face.Part, face.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, StudioTheme.TimelineFaceKey.PackedValue);
+            y += RowHeight * scale;
+        }
+        foreach (var play in clip.Plays)
+        {
+            PointRow(draw, "Part " + play.Instance, play.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, StudioTheme.TimelineFaceKey.PackedValue);
             y += RowHeight * scale;
         }
         foreach (var slot in clip.Attachments)

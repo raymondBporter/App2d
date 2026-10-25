@@ -32,9 +32,13 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
 
         if (primary is not null)
         {
-            if (session.Selection.Control is { } control && primary.Model.Controls.ContainsKey(control))
+            if (session.Selection.Control is { } control && Keyable(primary.Model, control))
             {
                 _controls.Draw(document, primary, control);
+            }
+            else if (session.Selection.Attachment is { } instance)
+            {
+                _controls.DrawPart(document, primary, instance);
             }
 
             if (session.Selection.Slot is { } slot)
@@ -51,6 +55,28 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
         }
 
         References.Draw(session, document.Id);
+    }
+
+    /// <summary>Whether the selected name is something this clip can key on the subject: a control, a part, or a nested target of an animated instance.</summary>
+    internal static bool Keyable(ResolvedModel model, string control)
+    {
+        if (model.Controls.ContainsKey(control) || model.Parts.Any(p => p.Id == control))
+        {
+            return true;
+        }
+
+        try
+        {
+            return ClipAuthoring.Nested(model, control) is { } nested && (nested.Attachment.Rig!.Controls.ContainsKey(nested.Target) || nested.Attachment.Parts.Any(p => p.Id == nested.Target));
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+        catch (InvalidDataException)
+        {
+            return false;
+        }
     }
 
     private void AnimationFields(AssetDocument<MotionClip> document)

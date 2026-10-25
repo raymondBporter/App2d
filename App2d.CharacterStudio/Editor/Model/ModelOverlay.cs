@@ -57,11 +57,19 @@ internal static class ModelOverlay
     public static void DrawAttachment(ViewportFrame frame, ResolvedAttachment attachment, EvaluatedPose pose)
     {
         var placement = attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket));
-        var (world, local) = attachment.Lookups(placement);
         var color = StudioTheme.Selection.PackedValue;
-        foreach (var part in attachment.Parts.Where(p => !p.Hidden))
+        // An animated instance (P7a) outlines its pieces over its evaluated nested pose; a static one over its locations.
+        pose.Attachments.TryGetValue(attachment.Id, out var evaluated);
+        if (evaluated is { Hidden: true })
         {
-            var outline = PartContours2D.Contour(part, world, local, world, local).Select(p => frame.Screen(p)).ToArray();
+            return;
+        }
+
+        var (world, local) = attachment.Lookups(placement);
+        var pieces = evaluated is null ? attachment.Parts.Where(p => !p.Hidden).ToList() : [.. evaluated.DrawnParts()];
+        foreach (var part in pieces)
+        {
+            var outline = (evaluated is null ? PartContours2D.Contour(part, world, local, world, local) : PartContours2D.Contour(part, evaluated)).Select(p => frame.Screen(p)).ToArray();
             for (var i = 1; i < outline.Length; i++)
             {
                 frame.Draw.AddLine(outline[i - 1], outline[i], color, 2);

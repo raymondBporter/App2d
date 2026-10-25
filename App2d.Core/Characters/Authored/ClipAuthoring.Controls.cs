@@ -8,9 +8,21 @@ public static partial class ClipAuthoring
     /// <summary>The channels edited together when posing or selecting a control's keys.</summary>
     public static IReadOnlyCollection<Channel> ChannelsForControl(ResolvedModel model, string control)
     {
+        if (Nested(model, control) is { } nested)
+        {
+            // A nested control's channels are the part rig's, namespaced; a wearer keys no IK target or socket inside a part.
+            var prefix = nested.Attachment.Id + PartAsset.Namespace;
+            return [.. ChannelsForControl(nested.Attachment.Rig!, nested.Target).Where(c => c.Kind != MotionClip.TargetKind).Select(c => c with { Target = prefix + c.Target })];
+        }
+
         if (ChannelFor(model, control) is not { } channel)
         {
             return [];
+        }
+
+        if (channel.Kind == MotionClip.FitKind)
+        {
+            return [channel, new(MotionClip.ShowKind, control)];
         }
 
         if (channel.Kind != MotionClip.TranslateKind)

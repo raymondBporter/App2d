@@ -58,15 +58,19 @@ public sealed class PartAssetTests : IDisposable
         Assert.True(read.IsLocation("origin") && read.IsLocation("cuff") && !read.IsLocation("thumb"));
         TestModels.Near(new(0, .12f, -.01f), read.LocationFrame("cuff").Origin);
 
+        // An animated payload needs a rig for its pieces (P7a); a static one carries no rig.
         var animated = Glove();
         animated.Payload = PartPayloads.Animated;
-        Assert.Contains("P7a", Assert.Throws<InvalidDataException>(animated.Validate).Message);
+        Assert.Contains("at least one rig control", Assert.Throws<InvalidDataException>(animated.Validate).Message);
+        var rigged = Glove();
+        rigged.Layers.Add(new() { Id = "base" });
+        Assert.Contains("a static payload carries no rig", Assert.Throws<InvalidDataException>(rigged.Validate).Message);
         var dangling = Glove();
         dangling.Parts[1].B = "thumb";
         Assert.Contains("thumb", Assert.Throws<InvalidDataException>(dangling.Validate).Message);
         var faced = Glove();
         faced.Parts[0].Face = new() { Expression = "relaxed" };
-        Assert.Contains("face part", Assert.Throws<InvalidDataException>(faced.Validate).Message);
+        Assert.Contains("procedural face", Assert.Throws<InvalidDataException>(faced.Validate).Message);
         var empty = new PartAsset { Id = "nothing", Name = "Nothing" };
         Assert.Contains("at least one", Assert.Throws<InvalidDataException>(empty.Validate).Message);
         var originLocation = Glove();
