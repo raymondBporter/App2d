@@ -77,7 +77,6 @@ internal sealed class EditorApp : Game
         var sources = SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(_authoredRoot))!);
         _shell = new(new EditorSession(assets, sources)
         {
-            SeedModel = CharacterTemplates.Instantiate,
             SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
         }, new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui);
         if (_smokePath is null)

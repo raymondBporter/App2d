@@ -1087,6 +1087,39 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Open("spear-guard");
                 shell.EntityInspector.ScrollTo = "Behaviors";
             }),
+            ("50-template-contracts", shell =>
+            {
+                // P10a: the anatomy templates are published resources; Studio creates from them and from the empty rig only. The
+                // quadruped's published contract holds on the shipped model, a creation starts from a published preset, and a
+                // contract that does not hold is reported with its reference path instead of creating a broken bundle.
+                var s = shell.Session; s.Compare.Clear();
+                var published = s.Assets.ModelTemplates.Values.Where(t => t.Publishes).Select(t => t.Id).Order(StringComparer.Ordinal).ToArray();
+                // The Person's contract is checked against the smoke's own edited Person (earlier steps swap its face), so it is reported, not required here.
+                var contracts = s.Assets.ModelTemplates.Values.ToDictionary(t => t.Id, t => s.Assets.TemplateProblems(t));
+                Record(published.SequenceEqual(["person", "pterosaur", "quadruped", "triceratops"]) && contracts.Where(c => c.Key != "person").All(c => c.Value.Count == 0),
+                    "the Person, quadruped, triceratops and pterosaur templates publish their contracts (slots, dimensions, presets, library) and every creature contract holds on its shipped model (" + string.Join(", ", published) + "); the edited Person reports: " + (contracts["person"].Count == 0 ? "nothing" : string.Join(" | ", contracts["person"])));
+                var quadruped = s.Assets.ModelTemplates["quadruped"];
+                Record(quadruped.Slots.Select(x => x.Id + ":" + x.Usage).SequenceEqual(["head-art:headgear", "body-art:saddle"]) && quadruped.Dimensions.SequenceEqual(["legs", "body", "head"]) && quadruped.Library.Masks.SequenceEqual(["head", "legs"]) && quadruped.Library.Mappings["leg"] == "legs",
+                    "the quadruped template publishes two part slots, three dimensions with three presets, two masks and the leg and body measure mappings");
+                Check(s.NewModel("long-quadruped", "Long-legged quadruped", "quadruped", "long-legged"), s);
+                var created = s.Assets.Resolve("long-quadruped")!;
+                var shipped = s.Assets.Resolve("quadruped")!;
+                Record(created.Base.Parameters.Single(p => p.Id == "legs").Default == 1.35f && created.Rest["body"].Y > shipped.Rest["body"].Y + .2f && created.Base.Presets.Count == 3 && s.Assets.Clips.Count(c => c.Asset.Model == "long-quadruped") == 8,
+                    $"creating from the quadruped template with the long-legged preset writes its values as the new model's defaults (body at {created.Rest["body"].Y:0.##} over {shipped.Rest["body"].Y:0.##}) and copies the presets and eight clips");
+                Record(s.Assets.ModelTemplates["quadruped"].ContractProblems(created.Base, s.Assets.PartOf).Count == 0, "the published contract holds on the created copy (roles remapped to its own clips)");
+                Record(!s.NewModel("giant-quadruped", "Giant", "quadruped", "giant") && s.Message!.Contains("publishes no preset 'giant'"), "a preset the template does not publish is refused by name: " + s.Message);
+                Record(!s.NewModel("centipede", "Centipede", "centipede") && s.Message!.Contains("one of empty, curve-face, person, pterosaur, quadruped, stalker, triceratops"), "an unknown template lists the resources; no anatomy is named in code: " + s.Message);
+                var broken = ModelTemplate.FromJson(quadruped.ToJson());
+                broken.Slots.Add(new() { Id = "horn-art", Usage = "horn" });
+                broken.Dimensions.Add("neck");
+                var problems = s.Assets.TemplateProblems(broken);
+                Record(problems.Count == 2 && problems[0].StartsWith("templates > quadruped > slots > horn-art:", StringComparison.Ordinal) && problems[1].StartsWith("templates > quadruped > dimensions > neck:", StringComparison.Ordinal),
+                    "a contract that does not hold is reported with its reference paths: " + string.Join(" | ", problems));
+                s.Open("long-quadruped");
+                s.SetMode(Workspace.Model);
+                s.Seek(.3f);
+                shell.Viewport.Fit(s.Scene().FirstOrDefault());
+            }),
         ];
         return workspace;
     }

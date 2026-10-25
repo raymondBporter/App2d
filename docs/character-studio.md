@@ -7,10 +7,13 @@ The studio is the character editor: one window, one viewport and one document wo
 [Character editor replacement](character-editor-replacement.md).
 
 The reusable resource boundaries and staged migration are described in [Character resources and migration](character-resources.md).
-Model templates now come from `Assets/Characters/authored/templates/*.json`. The New menu discovers their names and copies
+Model templates come from `Assets/Characters/authored/templates/*.json` and from nowhere else. The New menu discovers their names and copies
 the referenced model and animations into independent drafts. Add a recipe and its source assets, then reopen Studio;
-no C# menu entry is needed. Person includes seven starter clips, Quadruped and Triceratops eight each, and Stalker five.
-Use **Save all** to save the created bundle. Existing model, clip and entity files are unaffected by template creation.
+no C# menu entry is needed. Person includes seven starter clips, Quadruped and Triceratops eight each, Pterosaur nine and Stalker five.
+A published template (version 2) shows its contract in the create dialog: the part slots with their usage and default, the
+dimensions with a **Start from preset** choice (the preset's values become the new model's parameter defaults), and the
+default animation library (roles, masks, measure mappings); a contract that does not hold on the source model is listed with
+its reference paths and the creation is refused. Use **Save all** to save the created bundle. Existing model, clip and entity files are unaffected by template creation.
 
 For a small curve animation example, choose **New → Model: Curve face template** and press Play on **Expressions — play me**. Its separate clips show smile, blink, wink, angry, worried, surprised and crossed eyes; Hair wave shows moving bumps along a curve's normal. In Model, select a curve part and use **Edit curve handles** or **Normal wave**. In Animate, the named controls use the same translation and scale keys as the rest of the rig. Create a fresh template instance to get all nine clips and the added controls.
 
@@ -122,8 +125,8 @@ explicitly regenerates the two starter models and their clips, overwriting edits
 
 ## Pterosaur and attached cutout points
 
-**New > Model: Pterosaur template** creates a winged starter and six unsaved pose clips: hover, fold, dive, brake,
-low-recovery and reset. **Save all** keeps the bundle. The shipped `pterosaur` model is also in the browser.
+**New > Model: Pterosaur template** creates a winged starter and nine unsaved clips: hover, fold, dive, brake,
+low-recovery, reset, swoop, hit and death. **Save all** keeps the bundle. The shipped `pterosaur` model is also in the browser.
 Both membranes use normal shoulder/bend/tip controls; the lower beak uses a jaw control. In Animate, pose these controls
 with the ordinary handles and rotation channels. The fold clip has `screech` and `commit` markers for later action bindings.
 Flight paths, target commitment, hit windows and the low-pass gameplay guarantee belong to Entity/controller work.

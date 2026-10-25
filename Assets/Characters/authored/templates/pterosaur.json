@@ -1,0 +1,59 @@
+{
+  "format": "app2d-model-template",
+  "version": 2,
+  "id": "pterosaur",
+  "name": "Pterosaur",
+  "description": "Articulated wings with attached membrane points, a jaw, and the flight pose studies.",
+  "model": "pterosaur",
+  "animations": {
+    "hover": "pterosaur-hover",
+    "fold": "pterosaur-fold",
+    "dive": "pterosaur-dive",
+    "brake": "pterosaur-brake",
+    "low-recovery": "pterosaur-low-recovery",
+    "reset": "pterosaur-reset",
+    "swoop": "pterosaur-swoop",
+    "hit": "pterosaur-hit",
+    "death": "pterosaur-death"
+  },
+  "previewAnimation": "hover",
+  "slots": [
+    {
+      "id": "head-art",
+      "usage": "headgear"
+    },
+    {
+      "id": "body-art",
+      "usage": "saddle"
+    }
+  ],
+  "dimensions": [
+    "wings",
+    "body",
+    "head"
+  ],
+  "presets": [
+    "standard",
+    "broad-winged",
+    "compact"
+  ],
+  "library": {
+    "roles": {
+      "idle": "hover",
+      "hover": "hover",
+      "fold": "fold",
+      "dive": "dive",
+      "brake": "brake",
+      "low-recovery": "low-recovery",
+      "reset": "reset"
+    },
+    "masks": [
+      "wings",
+      "head"
+    ],
+    "mappings": {
+      "wing": "wings",
+      "body": "body"
+    }
+  }
+}

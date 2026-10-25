@@ -108,6 +108,23 @@ internal static class Program
                 }
                 Console.WriteLine($"{rewritten} clip file(s) rewritten; {LegacySourceFields.Remaining(authoredRoot).Count(f => f.Kind == "clip")} clip file(s) still below version {MotionClip.CurrentVersion}.");
                 return 0;
+            case ["--publish-templates", var authoredRoot, var output]:
+                // P10a: the Person, quadruped, triceratops and pterosaur templates as version-2 resources with their models'
+                // declared dimensions, on a scratch tree with a report each; the caller moves what it accepts into the tree.
+                var published = TemplateResources.Publish(authoredRoot, output);
+                foreach (var result in published)
+                {
+                    Console.WriteLine($"template {result.TemplateId} ({result.ModelId}): {result.Status}");
+                    foreach (var line in result.Report)
+                    {
+                        Console.WriteLine("  " + line);
+                    }
+                    foreach (var difference in result.Differences)
+                    {
+                        Console.WriteLine("  DIFFERENCE: " + difference);
+                    }
+                }
+                return published.All(r => r.Published) ? 0 : 2;
             case ["--convert-colliders", var authoredRoot, var output, .. var entityIds] when entityIds.Length > 0:
                 // P8c: entities' legacy hit-window geometry, guard and hurt layout to explicit attached colliders at entity version 3, on a scratch tree with a report each.
                 var exit = 0;

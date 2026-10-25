@@ -78,8 +78,7 @@ public sealed record PlacedCollider(ResolvedCollider Collider, EntityRegion Regi
 /// </summary>
 public sealed class EditorSession
 {
-    /// <summary>Optional seed factories for workspaces without source assets. Authored resources take priority.</summary>
-    public Func<string, string, string, ModelTemplateInstance>? SeedModel { get; init; }
+    /// <summary>Optional seed factory for appearances in workspaces without source assets. Authored resources take priority.</summary>
     public Func<string, PropAsset?>? SeedAppearance { get; init; }
     private MotionClip? _pending;
     private (string Clip, int Version, float Time) _pendingFor;
@@ -963,13 +962,17 @@ public sealed class EditorSession
         });
     }, $"Equipped '{propId}' on '{entityId}'. Save all to keep the appearance and its binding.");
 
-    /// <summary>A blank model or an independent bundle from a JSON template. All references and destination IDs are checked before adding drafts.</summary>
-    public bool NewModel(string id, string name, string template) => Attempt(() =>
+    /// <summary>
+    /// A blank model or an independent bundle from a template resource (P10a: the only two ways a model starts; no anatomy is
+    /// named in code), optionally from one of the template's published presets. All references and destination IDs are
+    /// checked before adding drafts.
+    /// </summary>
+    public bool NewModel(string id, string name, string template, string? preset = null) => Attempt(() =>
     {
         var bundle = template == "empty" ? new ModelTemplateInstance(ModelAuthoring.Empty(id, name), [], null)
             : Assets.ModelTemplates.TryGetValue(template, out var recipe)
-                ? recipe.Instantiate(id, name, source => Assets.Model(source)?.Asset, source => Assets.Clip(source)?.Asset, source => Assets.Part(source)?.Asset)
-                : SeedModel?.Invoke(template, id, name) ?? throw new InvalidDataException($"Unknown model template '{template}'.");
+                ? recipe.Instantiate(id, name, source => Assets.Model(source)?.Asset, source => Assets.Clip(source)?.Asset, source => Assets.Part(source)?.Asset, preset)
+                : throw new InvalidDataException($"Unknown model template '{template}' (one of empty, {string.Join(", ", Assets.ModelTemplates.Keys.Order(StringComparer.Ordinal))}).");
         foreach (var destination in bundle.Animations.Select(c => c.Id).Prepend(bundle.Model.Id))
         {
             if (Assets.Exists(destination))

@@ -203,16 +203,15 @@ public sealed class CutoutAttachmentTests
             Directory.CreateDirectory(root);
             var session = new EditorSession(AuthoringWorkspace.Open(root))
             {
-                SeedModel = CharacterTemplates.Instantiate,
                 SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
             };
-            foreach (var template in CharacterTemplates.All)
+            // The seed generators round-trip through the document path like every template resource does (P10a: Studio starts from resources only).
+            foreach (var (id, model) in new (string, CharacterModel)[] { ("test-empty", ModelAuthoring.Empty("test-empty", "Empty")), ("test-person", PersonTemplate.Model("test-person", "Person")), ("test-quadruped", QuadrupedTemplate.Model("test-quadruped", "Quadruped")), ("test-triceratops", QuadrupedTemplate.Model("test-triceratops", "Triceratops", true)), ("test-pterosaur", PterosaurTemplate.Model("test-pterosaur", "Pterosaur")) })
             {
-                var id = "test-" + template.Id;
-                Assert.True(session.NewModel(id, template.Name, template.Id), session.Message);
-                var model = session.Assets.Model(id)!.Asset;
                 Assert.Equal(model.ToJson(), CharacterModel.FromJson(model.ToJson()).ToJson());
+                _ = id;
             }
+            Assert.True(session.NewModel("test-blank", "Blank", "empty"), session.Message);
             Assert.True(session.NewAppearance("test-hair", "Hair", "hair"), session.Message);
             Assert.NotEmpty(session.AppearanceDocument!.Asset.Solids);
             session.SaveAll();

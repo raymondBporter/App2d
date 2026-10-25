@@ -9,15 +9,17 @@ namespace App2d.Tests.Authored;
 public sealed class ModelTemplateTests : IDisposable
 {
     [Fact]
-    public void AuthoredResourcesTakePriorityOverSeedFactories()
+    public void AuthoredResourcesAreTheOnlyModelStartersAndTakePriorityOverSeedAppearances()
     {
         var session = new EditorSession(AuthoringWorkspace.Open(TestModels.AuthoredRoot))
         {
-            SeedModel = (_, _, _) => throw new InvalidOperationException("Should use the authored model template."),
             SeedAppearance = _ => throw new InvalidOperationException("Should use the authored appearance.")
         };
         Assert.True(session.NewModel("resource-person", "Resource person", "person"), session.Message);
         Assert.True(session.NewAppearance("resource-hair", "Resource hair", "hair"), session.Message);
+        // No anatomy is named in code (P10a): an unknown template is refused with the resources listed.
+        Assert.False(session.NewModel("creature", "Creature", "centipede"));
+        Assert.Contains("one of empty, curve-face, person, pterosaur, quadruped, stalker, triceratops", session.Message);
     }
 
     private readonly string _root = Path.Combine(Path.GetTempPath(), "model-templates-" + Guid.NewGuid().ToString("N"));
@@ -35,6 +37,7 @@ public sealed class ModelTemplateTests : IDisposable
     [InlineData("quadruped", 8)]
     [InlineData("triceratops", 8)]
     [InlineData("stalker", 5)]
+    [InlineData("pterosaur", 9)]
     public void ShippedTemplatesPreserveSourcePosesAndRemapEveryMotionSet(string templateId, int clipCount)
     {
         var assets = AuthoringWorkspace.Open(TestModels.AuthoredRoot);
@@ -180,7 +183,7 @@ public sealed class ModelTemplateTests : IDisposable
     }
 
     [Theory]
-    [InlineData("\"version\": 2")]
+    [InlineData("\"version\": 3")]
     [InlineData("\"animations\": null")]
     [InlineData("\"animations\": {\"a\": \"clip\", \"b\": \"clip\"}")]
     [InlineData("\"previewAnimation\": \"missing\"")]

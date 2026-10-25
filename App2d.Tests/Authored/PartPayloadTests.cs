@@ -122,12 +122,11 @@ public sealed class PartPayloadTests
 
         // The conversion report the deletion condition waits on: exactly these shipped files still read through the boundary
         // (P7c converted person.json, the three remaining version-4 variants, the 28 face-track clips and, with `--convert-clips`,
-        // the other 63 version-3 clips, whose only change is the version and the empty face list; the six version-5 models read unchanged).
+        // the other 63 version-3 clips, whose only change is the version and the empty face list; P10a published quadruped, triceratops and pterosaur at 11; the three version-5 models read unchanged).
         var remaining = LegacySourceFields.Remaining(TestModels.AuthoredRoot);
         Assert.Equal(
         [
-            ("model", "models/baby-triceratops-rig.json", 5), ("model", "models/curve-face.json", 5),
-            ("model", "models/pterosaur.json", 5), ("model", "models/quadruped.json", 5), ("model", "models/stalker.json", 5), ("model", "models/triceratops.json", 5),
+            ("model", "models/baby-triceratops-rig.json", 5), ("model", "models/curve-face.json", 5), ("model", "models/stalker.json", 5),
         ], remaining.Where(f => f.Kind != "clip").Select(f => (f.Kind, f.Path, f.Version)));
         Assert.DoesNotContain(remaining, f => f.Kind == "clip");
 

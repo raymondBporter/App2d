@@ -37,7 +37,6 @@ internal static class EditorSurfaceSmoke
         var sources = SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(authoredRoot))!);
         var session = new EditorSession(assets, sources)
         {
-            SeedModel = CharacterTemplates.Instantiate,
             SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
         };
         var slotClip = CreateSlotPreview(assets);

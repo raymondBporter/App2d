@@ -12,6 +12,11 @@ namespace App2d.CharacterSeeds;
 /// <summary>A flying starter built entirely from ordinary controls, cutouts, point attachments and motion clips.</summary>
 public static class PterosaurTemplate
 {
+    public const string WingsId = "wings", BodyId = "body", HeadId = "head";
+    public const string WingMeasure = "wing", BodyMeasure = "body";
+    /// <summary>The shipped flier's clips: the six seed studies plus the swoop, hit and death authored in Studio.</summary>
+    public static readonly string[] ClipIds = ["hover", "fold", "dive", "brake", "low-recovery", "reset", "swoop", "hit", "death"];
+
     public static CharacterModel Model(string id = "pterosaur", string name = "Pterosaur")
     {
         var model = new CharacterModel { Id = id, Name = name, Ink = "#302632", LineWidth = .028f };
@@ -94,8 +99,52 @@ public static class PterosaurTemplate
         model.Groups = [new() { Id = "wings", Targets = ["near-shoulder", "near-bend", "near-tip", "far-shoulder", "far-bend", "far-tip"] }];
         model.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .16f }] }];
         model.MotionSets = [new() { Id = "standard", Name = "Flying", Roles = new() { ["idle"] = id + "-hover", ["hover"] = id + "-hover", ["fold"] = id + "-fold", ["dive"] = id + "-dive", ["brake"] = id + "-brake", ["low-recovery"] = id + "-low-recovery", ["reset"] = id + "-reset" } }];
+        Dimensions(model);
         model.Validate();
         return model;
+    }
+
+    /// <summary>
+    /// The flier's exposed dimensions as data (P10a), declared on a seed or on the shipped model alike: wing span (the bend
+    /// and tip of each wing in their parents' frames; the membranes follow their bound points), body length (the head, the
+    /// shoulders and legs along the body with the body and tail shapes) and head size (the jaw hinge and every piece on the
+    /// head or jaw). Presets, the measures the template maps them to and a head group. Nothing moves at the defaults.
+    /// </summary>
+    public static void Dimensions(CharacterModel model)
+    {
+        ParameterBinding Scale(PropertyRef target) => new() { Kind = BindingKinds.Scale, Target = target };
+        ParameterBinding Control(string control, string property) => Scale(PropertyRef.OfControl(control, property));
+        ParameterBinding Part(string part, string property) => Scale(PropertyRef.OfPart(part, property));
+        ModelParameter Parameter(string id, string name, (float Min, float Max) soft, IEnumerable<ParameterBinding> bindings) => new()
+        {
+            Id = id, Name = name, Units = ParameterUnits.Factor, Default = 1, Min = .5f, Max = 2, SoftMin = soft.Min, SoftMax = soft.Max, Bindings = [.. bindings],
+        };
+        var sides = new[] { "near", "far" };
+        model.Parameters.RemoveAll(p => p.Id is WingsId or BodyId or HeadId);
+        model.Parameters.AddRange(
+        [
+            Parameter(WingsId, "Wing span", (.7f, 1.5f),
+                sides.SelectMany(side => new[] { Control(side + "-bend", RigProperties.LocalX), Control(side + "-bend", RigProperties.LocalY), Control(side + "-tip", RigProperties.LocalX), Control(side + "-tip", RigProperties.LocalY) })),
+            Parameter(BodyId, "Body length", (.8f, 1.3f),
+                sides.SelectMany(side => new[] { Control(side + "-shoulder", RigProperties.LocalX), Control(side + "-leg", RigProperties.LocalX) })
+                    .Concat([Control("head", RigProperties.LocalX), Part("body", RigProperties.ScaleX), Part("body", RigProperties.OffsetX), Part("tail", RigProperties.ScaleX), Part("tail", RigProperties.OffsetX)])),
+            Parameter(HeadId, "Head size", (.7f, 1.4f),
+                model.Parts.Where(p => p.A is "head" or "jaw").SelectMany(p => new[] { Part(p.Id, RigProperties.ScaleX), Part(p.Id, RigProperties.ScaleY), Part(p.Id, RigProperties.OffsetX), Part(p.Id, RigProperties.OffsetY) })
+                    .Concat([Control("jaw", RigProperties.LocalX), Control("jaw", RigProperties.LocalY)])),
+        ]);
+        model.Presets.RemoveAll(p => p.Id is "standard" or "broad-winged" or "compact");
+        model.Presets.AddRange(
+        [
+            new() { Id = "standard", Name = "Standard", Values = new() { [WingsId] = 1, [BodyId] = 1, [HeadId] = 1 } },
+            new() { Id = "broad-winged", Name = "Broad-winged", Values = new() { [WingsId] = 1.3f, [BodyId] = 1, [HeadId] = 1 } },
+            new() { Id = "compact", Name = "Compact", Values = new() { [WingsId] = .8f, [BodyId] = .9f, [HeadId] = 1.1f } },
+        ]);
+        model.Measures.RemoveAll(x => x.Id is WingMeasure or BodyMeasure);
+        model.Measures.AddRange([new() { Id = WingMeasure, Path = ["near-shoulder", "near-bend", "near-tip"] }, new() { Id = BodyMeasure, Path = ["body", "head"] }]);
+        if (model.Groups.All(g => g.Id != "head"))
+        {
+            model.Groups.Add(new() { Id = "head", Targets = ["head", "head-up", "jaw", "jaw-up"] });
+        }
     }
 
     public static IReadOnlyList<MotionClip> Clips(CharacterModel model)

@@ -1,6 +1,6 @@
 {
   "format": "app2d-model-template",
-  "version": 1,
+  "version": 2,
   "id": "triceratops",
   "name": "Triceratops",
   "description": "A four-legged rig with editable frill, horns, cutout artwork and eight starter animations.",
@@ -15,5 +15,45 @@
     "brake": "triceratops-brake",
     "recover": "triceratops-recover"
   },
-  "previewAnimation": "idle"
+  "previewAnimation": "idle",
+  "slots": [
+    {
+      "id": "head-art",
+      "usage": "headgear"
+    },
+    {
+      "id": "body-art",
+      "usage": "saddle"
+    }
+  ],
+  "dimensions": [
+    "legs",
+    "body",
+    "head"
+  ],
+  "presets": [
+    "standard",
+    "long-legged",
+    "stocky"
+  ],
+  "library": {
+    "roles": {
+      "idle": "idle",
+      "walk": "walk",
+      "run": "run",
+      "scrape": "scrape",
+      "head-down": "head-down",
+      "rush": "rush",
+      "brake": "brake",
+      "recover": "recover"
+    },
+    "masks": [
+      "head",
+      "legs"
+    ],
+    "mappings": {
+      "leg": "legs",
+      "body": "body"
+    }
+  }
 }

@@ -17,11 +17,11 @@ internal sealed partial class AssetBrowser(EditorSession session)
 {
     private enum Create
     {
-        None, Model, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip,
+        None, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip,
         Part, PartFromProp, DuplicatePart
     }
-    private string _modelTemplate = "empty";
     private string _appearanceTemplate = "hair";
+    private string _templatePreset = "";
     private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Parts", "Sources"];
     private string _search = "", _filter = "All";
     private Create _create;
@@ -61,15 +61,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
                 Start(Create.PartFromProp, session.Assets.Props.First(p => p.Asset.Usage != "prop").Id, "New part");
             }
 
-            foreach (var template in CharacterTemplates.All)
-            {
-                if (ImGui.MenuItem("Model: " + template.Name + " template"))
-                {
-                    _modelTemplate = template.Id;
-                    Start(Create.Model, "", "New " + template.Name.ToLowerInvariant());
-                }
-            }
-
             if (ImGui.MenuItem("Model: empty"))
             {
                 Start(Create.EmptyModel, "", "New model");
@@ -79,6 +70,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
             {
                 if (ImGui.MenuItem($"Model: {template.Name} template##{template.Id}"))
                 {
+                    _templatePreset = "";
                     Start(Create.TemplateModel, template.Id, "New " + template.Name);
                 }
             }
@@ -517,7 +509,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
             Create.Part => "New library part",
             Create.PartFromProp => "Library part from " + _source,
             Create.DuplicatePart => "Duplicate library part " + _source,
-            Create.Model => "New model from " + CharacterTemplates.Get(_modelTemplate).Name,
             Create.EmptyModel => "New model from Empty",
             Create.TemplateModel => "New model from " + session.Assets.ModelTemplates[_source].Name,
             Create.Variant => "New variant",
@@ -544,9 +535,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
         switch (_create)
         {
-            case Create.Model:
-                Ui.Help(CharacterTemplates.Get(_modelTemplate).Description + " Save all keeps the model and any starter animations together.");
-                break;
             case Create.TemplateModel:
                 var recipe = session.Assets.ModelTemplates[_source];
                 if (recipe.Description.Length > 0)
@@ -555,6 +543,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
                 }
 
                 Ui.Help($"Copies {recipe.Model} and {recipe.Animations.Count} animation(s) into independent drafts. Save all to keep the bundle.");
+                DrawContract(recipe);
                 break;
             case Create.Appearance:
                 if (Ui.Combo("Starting shape", _appearanceTemplate, AppearanceAuthoring.Templates) is { } artTemplate)
@@ -650,6 +639,65 @@ internal sealed partial class AssetBrowser(EditorSession session)
         ImGui.EndPopup();
     }
 
+    /// <summary>
+    /// What a published template (P10a) promises, read from the resource: the part slots with their usage and default, the
+    /// dimensions with the preset the new model starts from, and the default animation library (roles, masks, mappings).
+    /// A contract that does not hold on the source model is shown with its reference paths and the creation is refused.
+    /// </summary>
+    private void DrawContract(ModelTemplate recipe)
+    {
+        if (!recipe.Publishes)
+        {
+            ImGui.TextDisabled("A version-1 recipe: it publishes no slots, dimensions or library.");
+            return;
+        }
+
+        var problems = session.Assets.TemplateProblems(recipe);
+        foreach (var problem in problems)
+        {
+            Ui.Problem(problem);
+        }
+
+        if (recipe.Slots.Count > 0)
+        {
+            ImGui.TextDisabled("Part slots");
+            foreach (var slot in recipe.Slots)
+            {
+                ImGui.BulletText($"{slot.Id}: {slot.Usage}{(slot.Required ? ", required" : "")}{(slot.Default is { } fallback ? ", wears " + fallback : ", empty")}");
+            }
+        }
+
+        if (recipe.Dimensions.Count > 0)
+        {
+            ImGui.TextDisabled("Dimensions: " + string.Join(", ", recipe.Dimensions));
+            var presets = recipe.Presets.Prepend("").ToArray();
+            if (Ui.Combo("Start from preset", _templatePreset, presets, p => p.Length == 0 ? "model defaults" : p) is { } preset)
+            {
+                _templatePreset = preset;
+            }
+            Ui.Help("A preset's values become the new model's parameter defaults; the preset list itself is copied as published.");
+        }
+
+        if (recipe.Library.Roles.Count > 0 || recipe.Library.Masks.Count > 0 || recipe.Library.Mappings.Count > 0)
+        {
+            ImGui.TextDisabled("Animation library");
+            if (recipe.Library.Roles.Count > 0)
+            {
+                ImGui.BulletText("Roles: " + string.Join(", ", recipe.Library.Roles.Select(r => r.Key == r.Value ? r.Key : $"{r.Key} = {r.Value}")));
+            }
+
+            if (recipe.Library.Masks.Count > 0)
+            {
+                ImGui.BulletText("Masks: " + string.Join(", ", recipe.Library.Masks));
+            }
+
+            if (recipe.Library.Mappings.Count > 0)
+            {
+                ImGui.BulletText("Measures: " + string.Join(", ", recipe.Library.Mappings.Select(m => $"{m.Key} scales with {m.Value}")));
+            }
+        }
+    }
+
     private bool Commit() => _create switch
     {
         Create.Appearance => session.NewAppearance(_id, _name, _appearanceTemplate),
@@ -657,9 +705,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
         Create.Part => session.NewPart(_id, _name),
         Create.PartFromProp => session.NewPart(_id, _name, _source),
         Create.DuplicatePart => session.DuplicatePart(_source, _id, _name),
-        Create.Model => session.NewModel(_id, _name, _modelTemplate),
         Create.EmptyModel => session.NewModel(_id, _name, "empty"),
-        Create.TemplateModel => session.NewModel(_id, _name, _source),
+        Create.TemplateModel => session.NewModel(_id, _name, _source, _templatePreset.Length == 0 ? null : _templatePreset),
         Create.Variant => session.NewVariant(_id, _name, _source, _preset.Length == 0 ? null : _preset),
         Create.DuplicateVariant => session.DuplicateVariant(_source, _id, _name),
         Create.Independent => session.MakeIndependent(_source, _id, _name),

@@ -50,6 +50,11 @@ public sealed class AuthoringWorkspace
     /// <summary>JSON recipes for creating independent models and animation bundles from this workspace's resources.</summary>
     public IReadOnlyDictionary<string, ModelTemplate> ModelTemplates { get; private set; } = new Dictionary<string, ModelTemplate>();
 
+    /// <summary>A published template's contract checked against the drafts it names (P10a), each problem with its reference path.</summary>
+    public IReadOnlyList<string> TemplateProblems(ModelTemplate template) => Model(template.Model) is { } model
+        ? template.ContractProblems(model.Asset, PartOf)
+        : [$"templates > {template.Id}: no model '{template.Model}'."];
+
     public static AuthoringWorkspace Open(string root)
     {
         var workspace = new AuthoringWorkspace(root);

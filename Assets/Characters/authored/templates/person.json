@@ -1,6 +1,6 @@
 {
   "format": "app2d-model-template",
-  "version": 1,
+  "version": 2,
   "id": "person",
   "name": "Person",
   "description": "A human rig with editable proportions, appearance, IK limbs and seven starter animations.",
@@ -14,5 +14,64 @@
     "death": "person-death",
     "heavy-walk": "person-heavy-walk"
   },
-  "previewAnimation": "idle"
+  "previewAnimation": "idle",
+  "slots": [
+    {
+      "id": "head-art",
+      "usage": "face",
+      "required": true,
+      "default": "face-person"
+    },
+    {
+      "id": "body-art",
+      "usage": "clothing"
+    },
+    {
+      "id": "left-hand-art",
+      "usage": "hand"
+    },
+    {
+      "id": "right-hand-art",
+      "usage": "hand"
+    },
+    {
+      "id": "left-foot-art",
+      "usage": "shoe"
+    },
+    {
+      "id": "right-foot-art",
+      "usage": "shoe"
+    }
+  ],
+  "dimensions": [
+    "legs",
+    "torso",
+    "arms",
+    "width",
+    "head"
+  ],
+  "presets": [
+    "standard",
+    "tall-thin",
+    "short-broad"
+  ],
+  "library": {
+    "roles": {
+      "idle": "idle",
+      "walk": "walk",
+      "run": "run",
+      "jump": "jump",
+      "hit": "hit",
+      "death": "death"
+    },
+    "masks": [
+      "upper",
+      "lower"
+    ],
+    "mappings": {
+      "leg": "legs",
+      "arm": "arms",
+      "torso": "torso"
+    }
+  }
 }

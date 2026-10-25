@@ -1,11 +1,373 @@
 {
   "format": "app2d-model",
-  "version": 5,
+  "version": 11,
   "id": "pterosaur",
   "name": "Pterosaur",
   "structureRevision": 1,
   "ink": "#302632",
   "lineWidth": 0.028,
+  "parameters": [
+    {
+      "id": "wings",
+      "name": "Wing span",
+      "min": 0.5,
+      "max": 2,
+      "softMin": 0.7,
+      "softMax": 1.5,
+      "bindings": [
+        {
+          "kind": "scale",
+          "target": {
+            "control": "near-bend",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "near-bend",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "near-tip",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "near-tip",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "far-bend",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "far-bend",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "far-tip",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "far-tip",
+            "property": "local.y"
+          }
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "name": "Body length",
+      "min": 0.5,
+      "max": 2,
+      "softMin": 0.8,
+      "softMax": 1.3,
+      "bindings": [
+        {
+          "kind": "scale",
+          "target": {
+            "control": "near-shoulder",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "near-leg",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "far-shoulder",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "far-leg",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "head",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "body",
+            "property": "scaleX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "body",
+            "property": "offsetX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "tail",
+            "property": "scaleX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "tail",
+            "property": "offsetX"
+          }
+        }
+      ]
+    },
+    {
+      "id": "head",
+      "name": "Head size",
+      "min": 0.5,
+      "max": 2,
+      "softMin": 0.7,
+      "softMax": 1.4,
+      "bindings": [
+        {
+          "kind": "scale",
+          "target": {
+            "part": "crest",
+            "property": "scaleX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "crest",
+            "property": "scaleY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "crest",
+            "property": "offsetX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "crest",
+            "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "head",
+            "property": "scaleX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "head",
+            "property": "scaleY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "head",
+            "property": "offsetX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "head",
+            "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "beak",
+            "property": "scaleX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "beak",
+            "property": "scaleY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "beak",
+            "property": "offsetX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "beak",
+            "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "lower-beak",
+            "property": "scaleX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "lower-beak",
+            "property": "scaleY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "lower-beak",
+            "property": "offsetX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "lower-beak",
+            "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "eye",
+            "property": "scaleX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "eye",
+            "property": "scaleY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "eye",
+            "property": "offsetX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "eye",
+            "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "brow",
+            "property": "scaleX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "brow",
+            "property": "scaleY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "brow",
+            "property": "offsetX"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "part": "brow",
+            "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "jaw",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "jaw",
+            "property": "local.y"
+          }
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "id": "standard",
+      "name": "Standard",
+      "values": {
+        "wings": 1,
+        "body": 1,
+        "head": 1
+      }
+    },
+    {
+      "id": "broad-winged",
+      "name": "Broad-winged",
+      "values": {
+        "wings": 1.3,
+        "body": 1,
+        "head": 1
+      }
+    },
+    {
+      "id": "compact",
+      "name": "Compact",
+      "values": {
+        "wings": 0.8,
+        "body": 0.9,
+        "head": 1.1
+      }
+    }
+  ],
   "controls": [
     {
       "id": "body",
@@ -227,9 +589,24 @@
       }
     }
   ],
-  "chains": [],
   "constraints": [],
-  "measures": [],
+  "measures": [
+    {
+      "id": "wing",
+      "path": [
+        "near-shoulder",
+        "near-bend",
+        "near-tip"
+      ]
+    },
+    {
+      "id": "body",
+      "path": [
+        "body",
+        "head"
+      ]
+    }
+  ],
   "parts": [
     {
       "id": "far-wing",
@@ -263,8 +640,6 @@
         ]
       },
       "material": {
-        "fill": "#9e5f7e",
-        "outline": {},
         "paint": [
           {
             "material": {
@@ -289,7 +664,9 @@
               }
             ]
           }
-        ]
+        ],
+        "fill": "#9e5f7e",
+        "outline": {}
       },
       "a": "body",
       "b": "body-up",
@@ -338,8 +715,8 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {},
-        "strokeWidth": 0.025
+        "strokeWidth": 0.025,
+        "outline": {}
       },
       "a": "far-leg",
       "b": "far-foot",
@@ -360,8 +737,8 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {},
-        "strokeWidth": 0.021
+        "strokeWidth": 0.021,
+        "outline": {}
       },
       "a": "far-foot",
       "b": "far-toe-0",
@@ -382,8 +759,8 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {},
-        "strokeWidth": 0.021
+        "strokeWidth": 0.021,
+        "outline": {}
       },
       "a": "far-foot",
       "b": "far-toe-1",
@@ -404,8 +781,8 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {},
-        "strokeWidth": 0.021
+        "strokeWidth": 0.021,
+        "outline": {}
       },
       "a": "far-foot",
       "b": "far-toe-2",
@@ -443,8 +820,6 @@
         ]
       },
       "material": {
-        "fill": "#b56e8b",
-        "outline": {},
         "paint": [
           {
             "material": {
@@ -469,7 +844,9 @@
               }
             ]
           }
-        ]
+        ],
+        "fill": "#b56e8b",
+        "outline": {}
       },
       "a": "body",
       "b": "body-up",
@@ -518,8 +895,8 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {},
-        "strokeWidth": 0.025
+        "strokeWidth": 0.025,
+        "outline": {}
       },
       "a": "near-leg",
       "b": "near-foot",
@@ -540,8 +917,8 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {},
-        "strokeWidth": 0.021
+        "strokeWidth": 0.021,
+        "outline": {}
       },
       "a": "near-foot",
       "b": "near-toe-0",
@@ -562,8 +939,8 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {},
-        "strokeWidth": 0.021
+        "strokeWidth": 0.021,
+        "outline": {}
       },
       "a": "near-foot",
       "b": "near-toe-1",
@@ -584,8 +961,8 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {},
-        "strokeWidth": 0.021
+        "strokeWidth": 0.021,
+        "outline": {}
       },
       "a": "near-foot",
       "b": "near-toe-2",
@@ -616,11 +993,11 @@
       },
       "a": "body",
       "b": "body-up",
+      "scaleX": 0.3,
+      "scaleY": 0.15,
       "offsetX": -0.27,
       "offsetY": -0.05,
-      "depth": -0.04,
-      "scaleX": 0.3,
-      "scaleY": 0.15
+      "depth": -0.04
     },
     {
       "id": "body",
@@ -633,7 +1010,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#805473",
@@ -641,10 +1019,10 @@
       },
       "a": "body",
       "b": "body-up",
-      "offsetY": -0.01,
-      "depth": -0.07,
       "scaleX": 0.45,
-      "scaleY": 0.38
+      "scaleY": 0.38,
+      "offsetY": -0.01,
+      "depth": -0.07
     },
     {
       "id": "crest",
@@ -671,11 +1049,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.18,
+      "scaleY": 0.3,
       "offsetX": -0.075,
       "offsetY": 0.19,
-      "depth": -0.15,
-      "scaleX": 0.18,
-      "scaleY": 0.3
+      "depth": -0.15
     },
     {
       "id": "head",
@@ -688,7 +1066,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#ba829d",
@@ -696,11 +1075,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.33,
+      "scaleY": 0.29,
       "offsetX": 0.015,
       "offsetY": 0.015,
-      "depth": -0.16,
-      "scaleX": 0.33,
-      "scaleY": 0.29
+      "depth": -0.16
     },
     {
       "id": "beak",
@@ -727,11 +1106,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.35,
+      "scaleY": 0.23,
       "offsetX": 0.3,
       "offsetY": -0.015,
-      "depth": -0.17,
-      "scaleX": 0.35,
-      "scaleY": 0.23
+      "depth": -0.17
     },
     {
       "id": "lower-beak",
@@ -758,11 +1137,11 @@
       },
       "a": "jaw",
       "b": "jaw-up",
+      "scaleX": 0.26,
+      "scaleY": 0.075,
       "offsetX": 0.1,
       "offsetY": -0.025,
-      "depth": -0.18,
-      "scaleX": 0.26,
-      "scaleY": 0.075
+      "depth": -0.18
     },
     {
       "id": "eye",
@@ -775,18 +1154,19 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#302632"
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.048,
+      "scaleY": 0.069,
       "offsetX": 0.079,
       "offsetY": 0.019,
-      "depth": -0.19,
-      "scaleX": 0.048,
-      "scaleY": 0.069
+      "depth": -0.19
     },
     {
       "id": "brow",
@@ -816,13 +1196,14 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.1,
+      "scaleY": 0.035,
       "offsetX": 0.075,
       "offsetY": 0.092,
-      "depth": -0.19,
-      "scaleX": 0.1,
-      "scaleY": 0.035
+      "depth": -0.19
     }
   ],
+  "materials": {},
   "slots": [],
   "skins": [],
   "sockets": [
@@ -837,6 +1218,7 @@
       "toward": "body-up"
     }
   ],
+  "attachments": [],
   "motionSets": [
     {
       "id": "standard",
@@ -877,6 +1259,15 @@
         "far-shoulder",
         "far-bend",
         "far-tip"
+      ]
+    },
+    {
+      "id": "head",
+      "targets": [
+        "head",
+        "head-up",
+        "jaw",
+        "jaw-up"
       ]
     }
   ],

@@ -11,6 +11,10 @@ namespace App2d.CharacterSeeds;
 /// <summary>Four planted IK feet and independently posed head/tail, with editable cutout artwork.</summary>
 public static class QuadrupedTemplate
 {
+    public const string LegsId = "legs", BodyId = "body", HeadId = "head";
+    public const string LegMeasure = "leg", BodyMeasure = "body";
+    public static readonly string[] Roles = ["idle", "walk", "run", "scrape", "head-down", "rush", "brake", "recover"];
+
     public static CharacterModel Model(string id = "quadruped", string name = "Quadruped", bool triceratops = false)
     {
         var m = new CharacterModel { Id = id, Name = name, Ink = "#242a29", LineWidth = .045f };
@@ -113,8 +117,51 @@ public static class QuadrupedTemplate
                 ["rush"] = id + "-rush",
                 ["brake"] = id + "-brake",
                 ["recover"] = id + "-recover" } }];
+        Dimensions(m);
         m.Validate();
         return m;
+    }
+
+    /// <summary>
+    /// The quadruped's exposed dimensions as data (P10a), declared on a seed or on the shipped model alike: leg length
+    /// (the body's height and every joint's and foot's local offset, with the leg shapes), body length (the head, tail and
+    /// leg roots along the body with the body shape) and head size (every piece on the head). Presets, the measures the
+    /// template maps them to and a body group. Nothing moves at the defaults.
+    /// </summary>
+    public static void Dimensions(CharacterModel m)
+    {
+        ParameterBinding Scale(PropertyRef target) => new() { Kind = BindingKinds.Scale, Target = target };
+        ParameterBinding Control(string control, string property) => Scale(PropertyRef.OfControl(control, property));
+        ParameterBinding Part(string part, string property) => Scale(PropertyRef.OfPart(part, property));
+        ModelParameter Parameter(string id, string name, (float Min, float Max) soft, IEnumerable<ParameterBinding> bindings) => new()
+        {
+            Id = id, Name = name, Units = ParameterUnits.Factor, Default = 1, Min = .5f, Max = 2, SoftMin = soft.Min, SoftMax = soft.Max, Bindings = [.. bindings],
+        };
+        var legs = new[] { "far-hind", "far-front", "near-hind", "near-front" };
+        m.Parameters.RemoveAll(p => p.Id is LegsId or BodyId or HeadId);
+        m.Parameters.AddRange(
+        [
+            Parameter(LegsId, "Leg length", (.7f, 1.5f),
+                legs.SelectMany(leg => new[] { Control(leg + "-joint", RigProperties.LocalY), Control(leg + "-foot", RigProperties.LocalY), Part(leg + "-upper", RigProperties.ScaleY), Part(leg + "-upper", RigProperties.OffsetY), Part(leg + "-lower", RigProperties.ScaleY), Part(leg + "-lower", RigProperties.OffsetY) })
+                    .Prepend(Control("body", RigProperties.LocalY))),
+            Parameter(BodyId, "Body length", (.8f, 1.3f),
+                legs.Select(leg => Control(leg + "-root", RigProperties.LocalX)).Concat([Control("head", RigProperties.LocalX), Control("tail", RigProperties.LocalX), Part("body", RigProperties.ScaleX), Part("body", RigProperties.OffsetX)])),
+            Parameter(HeadId, "Head size", (.7f, 1.4f),
+                m.Parts.Where(p => p.A == "head").SelectMany(p => new[] { Part(p.Id, RigProperties.ScaleX), Part(p.Id, RigProperties.ScaleY), Part(p.Id, RigProperties.OffsetX), Part(p.Id, RigProperties.OffsetY) })),
+        ]);
+        m.Presets.RemoveAll(p => p.Id is "standard" or "long-legged" or "stocky");
+        m.Presets.AddRange(
+        [
+            new() { Id = "standard", Name = "Standard", Values = new() { [LegsId] = 1, [BodyId] = 1, [HeadId] = 1 } },
+            new() { Id = "long-legged", Name = "Long-legged", Values = new() { [LegsId] = 1.35f, [BodyId] = .95f, [HeadId] = 1 } },
+            new() { Id = "stocky", Name = "Stocky", Values = new() { [LegsId] = .75f, [BodyId] = 1.15f, [HeadId] = 1.15f } },
+        ]);
+        m.Measures.RemoveAll(x => x.Id is LegMeasure or BodyMeasure);
+        m.Measures.AddRange([new() { Id = LegMeasure, Path = ["near-front-root", "near-front-joint", "near-front-foot"] }, new() { Id = BodyMeasure, Path = ["tail", "body", "head"] }]);
+        if (m.Groups.All(g => g.Id != "body"))
+        {
+            m.Groups.Add(new() { Id = "body", Targets = ["body", "body-up", "tail", "tail-up"] });
+        }
     }
 
     private static PartPaint Spot(float x, float y, float rx, float ry) => new()
