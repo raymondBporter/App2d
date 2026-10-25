@@ -960,6 +960,98 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Select(attachment: faceId);
                 shell.Viewport.Fit(s.Scene().FirstOrDefault());
             }),
+            ("48-collider-attachments", shell =>
+            {
+                // P8c: the converted spear guard's colliders are editable and shown as views of what the game registers; an
+                // unconverted entity converts explicitly as one undo step, keeping every attack placement; the Test arena's
+                // overlays read the registered colliders and the guard's reach trigger reports its contacts.
+                var s = shell.Session; s.Compare.Clear();
+                // Step 47 saved the Person wearing the curve face, which leaves the converted Person clips' selection words unbound and no
+                // Person entity compiling; this walk needs compiling entities, so the Person wears the baked face again first.
+                if (s.Assets.Model("person") is { } personDoc && personDoc.Asset.Attachments.FirstOrDefault(a => a.Id == PersonTemplate.FaceInstance) is { } worn && worn.Asset != ProceduralFace.AssetId)
+                {
+                    Check(s.Edit(personDoc, () =>
+                    {
+                        ModelAuthoring.SetAttachmentAsset(personDoc.Asset, PersonTemplate.FaceInstance, ProceduralFace.AssetId, s.Assets.PartOf);
+                        personDoc.Asset.Attachments.First(a => a.Id == PersonTemplate.FaceInstance).Expression = "relaxed";
+                    }), s);
+                }
+                // Step 47 also keyed the curve face's 'smile' on the walk, a word the baked face does not bind.
+                if (s.Assets.Clip("person-walk") is { } walkDoc && walkDoc.Asset.Plays.Any(p => p.Instance == PersonTemplate.FaceInstance && p.Keys.Any(k => k.Expression == "smile")))
+                {
+                    Check(s.Edit(walkDoc, () => ClipAuthoring.SetPlay(walkDoc.Asset, PersonTemplate.FaceInstance, walkDoc.Asset.Plays.First(p => p.Instance == PersonTemplate.FaceInstance).Keys.First(k => k.Expression == "smile").Time, null)), s);
+                }
+                s.Open("spear-guard");
+                var guard = s.EntityDocument!;
+                Record(s.Entity is not null, "the converted spear guard compiles in the workspace: " + (s.EntityError ?? "ok"));
+                Record(guard.Asset.Version == EntityAsset.CurrentVersion && guard.Asset.Hurt.Layout is null
+                    && guard.Asset.Colliders.Select(c => c.Id).SequenceEqual(["spear-tip", "body", "head", "legs", "reach"]) && guard.Asset.Actions[0].Hits[0].Collider == "spear-tip",
+                    "the converted spear guard declares its attack, hurt and trigger colliders at entity version 3 and its window names the attack collider");
+                s.PreviewActionOf("attack");
+                var strike = s.Entity!.Actions["attack"].Hits[0];
+                s.Seek(strike.Start + .02f);
+                var preview = s.EvaluateEntity()!;
+                var spear = preview.Colliders.First(c => c.Id == "spear-tip");
+                var reach = preview.Colliders.First(c => c.Id == "reach");
+                Record(spear.Enabled && reach.Enabled && preview.Colliders.Count(c => c.Use == ColliderUses.Hurt && c.Enabled) == 3 && preview.LegacyHurt.Count == 0
+                    && spear.Region.Pose == preview.Attacks.Single().Region.Pose,
+                    "inside the window the preview shows the enabled attack collider (the window's region), three hurt colliders and the trigger, and no legacy box");
+                s.Seek(strike.Finish + .1f);
+                Record(!s.EvaluateEntity()!.Colliders.First(c => c.Id == "spear-tip").Enabled, "after the window closes the attack collider is shown disabled");
+                s.Selection.Collider = "reach";
+                var radius = ((Circle2D)guard.Asset.Colliders.First(c => c.Id == "reach").Shape).Radius;
+                Check(s.Edit(guard, () => guard.Asset.Colliders.First(c => c.Id == "reach").Shape = Circle2D.Builder.Create(radius + .2f)), s);
+                Record(((Circle2D)s.Entity!.Collider("reach")!.Shape).Radius > radius + .19f, "editing the trigger's shape re-resolves the entity");
+                s.Undo();
+                Record(((Circle2D)s.Entity!.Collider("reach")!.Shape).Radius == radius, "and undoes exactly");
+                Check(s.Edit(guard, () => guard.Asset.Colliders.First(c => c.Id == "head").Shape = Capsule2D.Builder.Create(new(0, -.2f), new(0, .2f), .3f)), s);
+                Record(s.EvaluateEntity()!.Colliders.First(c => c.Id == "head").Region.Shape is Capsule2D, "a hurt collider takes any convex shape: the head as a capsule, shown as registered");
+                s.Undo();
+                Check(s.AddCollider(new() { Id = "shin", Use = ColliderUses.Hurt, Control = Humanoid.LeftKnee, Toward = Humanoid.LeftFoot, Stretch = true, Shape = Capsule2D.Builder.Create(Vector2.Zero, new(0, .39f), .06f) }), s);
+                Record(s.Entity!.Collider("shin") is { Binding: ColliderBindings.Control, RestSpan: > .3f } && s.EvaluateEntity()!.Colliders.Any(c => c.Id == "shin" && c.Enabled),
+                    "a stretched capsule along the shin is added, resolved against the rig and shown");
+                Record(!s.RemoveCollider("spear-tip") && s.Message.Contains("re-point the window first"), "removing the collider a window names is refused by name");
+                s.Undo();
+                // An unconverted entity: the maul brute converts explicitly, its hammer window keeps its placement, one undo restores the layout.
+                s.Open("maul-brute");
+                var brute = s.EntityDocument!;
+                var slam = s.Entity!.Actions["attack"];
+                var pose = new ActorPose(PoseEvaluator.Sample(s.Entity.Model, slam.Clip, slam.Hits[0].Start), Vector2.Zero, -1);
+                var before = EntityCollision.Attack(s.Entity, pose, slam.Hits[0]);
+                var legacyHurt = EntityCollision.Hurt(s.Entity, new(PoseEvaluator.Rest(s.Entity.Model), Vector2.Zero, 1));
+                Check(s.ConvertColliders(), s);
+                var after = EntityCollision.Attack(s.Entity!, pose, s.Entity!.Actions["attack"].Hits[0]);
+                var convertedHurt = EntityCollision.Hurt(s.Entity, new(PoseEvaluator.Rest(s.Entity.Model), Vector2.Zero, 1));
+                Record(brute.Asset.Version == EntityAsset.CurrentVersion && brute.Asset.Colliders.Count == 4 && after.Pose == before.Pose
+                    && legacyHurt.Zip(convertedHurt).All(p => p.First.Id == p.Second.Id && Vector2.Distance(p.First.Bounds.Min, p.Second.Bounds.Min) < 1e-4f && Vector2.Distance(p.First.Bounds.Max, p.Second.Bounds.Max) < 1e-4f),
+                    "converting the maul brute keeps the tilted hammer window's left-facing placement exactly and reproduces its three hurt boxes at rest");
+                s.Undo();
+                Record(brute.Asset.Version == EntityAsset.LegacyVersion && brute.Asset.Colliders.Count == 0 && brute.Asset.Hurt.Layout == "standard", "one undo restores the legacy layout and version");
+                // Test mode: the arena registers every actor's colliders once and the overlays read them; the reach trigger reports the player.
+                shell.LiveTest = false;
+                shell.Test.Roster.Clear();
+                shell.Test.Roster.AddRange(["player", "spear-guard"]);
+                shell.Test.Start();
+                var arena = shell.Test.Arena!;
+                arena.Teleport(0, new(0, 0));
+                arena.Teleport(1, new(2.05f, 0));
+                var registered = arena.Collision.Colliders.Count;
+                for (var i = 0; i < 60; i++)
+                {
+                    shell.Test.Advance(1 / 120f, default);
+                }
+                shell.Test.Paused = true;
+                var frames = ArenaActorFrame.Capture(arena);
+                Record(registered == 11 && arena.Collision.Colliders.Count == 11 && frames[1].Colliders.Count(c => c.Use == ColliderUses.Hurt) == 3 && frames[1].Colliders.Any(c => c.Use == ColliderUses.Trigger)
+                    && arena.Hits.Count == 1 && arena.Hits[0].Tick == 48 && arena.Triggers.Count > 0 && arena.Triggers[0].Entered,
+                    $"the Test arena registers 11 colliders for the pair once, lands the thrust at tick 48 as the reference records and the guard's reach trigger reports entering the player (first at tick {arena.Triggers.FirstOrDefault().Tick})");
+                shell.Test.Stop();
+                s.Open("spear-guard");
+                s.PreviewActionOf("attack");
+                s.Seek(strike.Start + .02f);
+                s.Selection.Collider = "reach";
+                shell.Viewport.Fit(s.Scene().FirstOrDefault());
+            }),
         ];
         return workspace;
     }

@@ -221,9 +221,17 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   coordinates in this pass; viewport dragging of library-part outlines arrives with the P7 cutout tools.
 - **Animate**: clips compatible with the subject's base. Dragging keys the channel it drives (autokey), contacts,
   markers, part expression keys, easing and onion skin. **Compare** pins two more builds at the same phase and world scale.
-- **Entity**: model and motion set with per-role overrides, controller, movement box, hurt regions, equipment and the
-  selected action's clip, mask, blend, hit windows and events.
-- **Test** plays the arena from a snapshot of the current drafts.
+- **Entity**: model and motion set with per-role overrides, controller, movement box, hurt regions (the legacy layout
+  with **Convert to colliders**), **Colliders** (P8c: the entity's attached hurt, attack, guard and trigger colliders;
+  add one with an id and a use, select it to edit its use, binding (the actor, a control with frame/toward/stretch/offset/
+  angle, a socket or an equipped prop point, along the axis), default enabled state and shape; colliders implied by a
+  legacy window or guard are listed read-only until converted; removing one a window names is refused by name), **Guard**
+  (on or off, its guard collider or the legacy prop shape), equipment and the selected action's clip, mask, blend,
+  activation windows (each names its attack collider; the legacy inline geometry fields show only while a window has no
+  collider) and events. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
+  red attack (filled while its window is open, faint otherwise), green guard, orange trigger, the selected one thicker
+  and labelled; the timeline labels each window with its collider.
+- **Test** plays the arena from a snapshot of the current drafts; its overlays read the arena's registered colliders.
 
 Every asset is a document with its own undo. **Save** writes the open document; **Save all** writes each dirty one in
 turn and is not atomic. The browser's context menus create variants, animations and entities, duplicate them, open

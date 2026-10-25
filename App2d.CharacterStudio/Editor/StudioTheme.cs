@@ -53,6 +53,10 @@ internal static class StudioTheme
     public static readonly Color4b AttackFill = new(235, 60, 50, 90);
     public static readonly Color4b AttackOutline = new(220, 40, 30);
     public static readonly Color4b AttackLabel = new(200, 40, 30);
+    public static readonly Color4b AttackDisabled = new(220, 120, 110, 160);
+    public static readonly Color4b GuardRegion = new(40, 150, 90);
+    public static readonly Color4b TriggerRegion = new(230, 150, 30);
+    public static readonly Color4b ColliderSelected = new(255, 255, 255);
     public static readonly Color4b WeaponTip = new(240, 200, 40);
     public static readonly Color4b LayerMaskText = new(70, 80, 90);
     public static readonly Color4b ActionTrackBackground = new(222, 225, 214);

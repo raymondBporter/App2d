@@ -5,6 +5,7 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -205,6 +206,7 @@ public sealed class EntityAsset
     public List<EntityActionDef> Actions { get; set; } = [];
 
     /// <summary>Whether the file declares anything a version-2 reader could not carry.</summary>
+    [JsonIgnore]
     public bool UsesColliders => Colliders.Count > 0 || Guard?.Collider is not null || Actions.Any(a => a?.Hits.Any(h => h?.Collider is not null) == true);
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);

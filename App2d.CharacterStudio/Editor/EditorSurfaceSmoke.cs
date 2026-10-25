@@ -210,6 +210,38 @@ internal static class EditorSurfaceSmoke
                 session.Open("person");
                 session.Undo();
             }
+            // P8c: the converted spear guard's colliders in the Entity inspector, and the overlay of the registered colliders inside the thrust window.
+            if (assets.Entity("spear-guard") is { Asset.Colliders.Count: > 0 })
+            {
+                // The face walk above may leave the Person wearing the curve face (its converted clips then report unbound words and no Person entity compiles): wear the baked face for the entity frames.
+                if (assets.Model("person") is { } personDoc && personDoc.Asset.Attachments.FirstOrDefault(a => a.Id == PersonTemplate.FaceInstance) is { } worn && worn.Asset != ProceduralFace.AssetId)
+                {
+                    session.Edit(personDoc, () =>
+                    {
+                        ModelAuthoring.SetAttachmentAsset(personDoc.Asset, PersonTemplate.FaceInstance, ProceduralFace.AssetId, assets.PartOf);
+                        personDoc.Asset.Attachments.First(a => a.Id == PersonTemplate.FaceInstance).Expression = "relaxed";
+                    });
+                }
+                if (assets.Clip("person-walk") is { } walkDoc && walkDoc.Asset.Plays.Any(p => p.Instance == PersonTemplate.FaceInstance && p.Keys.Any(k => k.Expression == "smile")))
+                {
+                    session.Edit(walkDoc, () => ClipAuthoring.SetPlay(walkDoc.Asset, PersonTemplate.FaceInstance, walkDoc.Asset.Plays.First(p => p.Instance == PersonTemplate.FaceInstance).Keys.First(k => k.Expression == "smile").Time, null));
+                }
+                session.Open("spear-guard");
+                session.Selection.Collider = "reach";
+                Capture("entity-colliders");
+                session.PreviewActionOf("attack");
+                if (session.Entity is null)
+                {
+                    Console.WriteLine("entity-collider-overlay skipped: " + session.EntityError);
+                    return;
+                }
+
+                var thrust = session.Entity.Actions["attack"].Hits[0];
+                session.Seek(thrust.Start + .02f);
+                session.Selection.Collider = "spear-tip";
+                shell.Viewport.Fit(session.Scene().FirstOrDefault());
+                Capture("entity-collider-overlay");
+            }
         }
         Console.WriteLine("Animation settings, controls, weapon and slot inspectors, model views and curve facial studies rendered at two sizes and scales.");
     }

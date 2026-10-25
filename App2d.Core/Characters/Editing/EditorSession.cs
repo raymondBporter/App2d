@@ -27,6 +27,8 @@ public sealed class Selection
     /// <summary>Entity workspace: the action, and the hit window inside it, being edited.</summary>
     public string? Action { get; set; }
     public string? Hit { get; set; }
+    /// <summary>Entity workspace: the attached collider being edited.</summary>
+    public string? Collider { get; set; }
     /// <summary>Selects one workspace target and clears the previous selection.</summary>
     public void Select(string? control = null, string? part = null, string? chain = null, string? slot = null, string? attachment = null)
     {
@@ -40,7 +42,7 @@ public sealed class Selection
 
     public void Clear()
     {
-        Control = Part = Chain = Slot = Action = Hit = Attachment = null;
+        Control = Part = Chain = Slot = Action = Hit = Attachment = Collider = null;
         Key = null;
     }
 }
@@ -53,7 +55,21 @@ public sealed record Subject(string Id, ResolvedModel Model, EvaluatedPose Pose,
 /// game would build them. <see cref="Action"/> is the previewed action; <see cref="Weight"/> its masked layer's weight.
 /// </summary>
 public sealed record EntityPreview(ResolvedEntity Entity, ActorPose Pose, float Time, ResolvedAction? Action, float Weight,
-    EntityRegion Movement, IReadOnlyList<EntityRegion> Hurt, IReadOnlyList<(ResolvedHit Hit, EntityRegion Region)> Attacks);
+    EntityRegion Movement, IReadOnlyList<EntityRegion> Hurt, IReadOnlyList<(ResolvedHit Hit, EntityRegion Region)> Attacks, IReadOnlyList<PlacedCollider> Colliders)
+{
+    /// <summary>The legacy hurt layout's boxes, when the entity still uses one; its registered hurt is among <see cref="Colliders"/>.</summary>
+    public IReadOnlyList<EntityRegion> LegacyHurt => Entity.HurtRegistered ? [] : Hurt;
+}
+
+/// <summary>
+/// One of the entity's attached colliders placed for the preview pose, as the runtime would register it: the same
+/// placement function, with the enabled state the activation windows, alive state and default give it at that time.
+/// </summary>
+public sealed record PlacedCollider(ResolvedCollider Collider, EntityRegion Region, bool Enabled)
+{
+    public string Id => Collider.Id;
+    public string Use => Collider.Use;
+}
 
 /// <summary>
 /// One editing session over a workspace: the open subject and clip, the active workspace, the transport, selection and
@@ -436,9 +452,11 @@ public sealed class EditorSession
         }
 
         var pose = new ActorPose(local, Vector2.Zero, 1);
-        var attacks = action is null ? [] : action.Hits.Where(h => time >= h.Start && time < h.Finish).Select(h => (h, EntityCollision.Attack(entity, pose, h))).ToList();
+        var active = action is null ? [] : action.Hits.Where(h => time >= h.Start && time < h.Finish).ToList();
+        var attacks = active.Select(h => (h, EntityCollision.Attack(entity, pose, h))).ToList();
         var movement = EntityCollision.Movement(entity, new(local.Locomotion.X, 0), 1);
-        return new(entity, pose, time, action, weight, movement, EntityCollision.Hurt(entity, pose), attacks);
+        var colliders = entity.Colliders.Select(c => new PlacedCollider(c, c.Region(pose), c.DefaultEnabled && (c.Use != ColliderUses.Attack || active.Any(h => ReferenceEquals(h.Collider, c))))).ToList();
+        return new(entity, pose, time, action, weight, movement, EntityCollision.Hurt(entity, pose), attacks, colliders);
     }
 
     public void Tick(float seconds)
@@ -1062,6 +1080,81 @@ public sealed class EditorSession
 
             document.Asset.Roles[role] = clipId;
         }, clipId is null ? $"Role '{role}' follows the motion set again." : $"Role '{role}' overridden with '{clipId}'.");
+    }
+
+    /// <summary>
+    /// Converts the open entity's legacy hit-window geometry, guard and hurt layout into explicit attached colliders at
+    /// entity version 3 (P8c), as one undo step with the conversion's report; nothing is rewritten on an ordinary save.
+    /// </summary>
+    public bool ConvertColliders()
+    {
+        var document = EntityDocument;
+        IReadOnlyList<string> report = [];
+        var applied = Edit(document, () =>
+        {
+            var model = Assets.Resolve(document!.Asset.Model, out var error) ?? throw new InvalidDataException(error);
+            var (converted, lines) = ColliderConversion.Convert(document.Asset, model);
+            report = lines;
+            var asset = document.Asset;
+            asset.Version = converted.Version;
+            asset.Colliders = converted.Colliders;
+            asset.Actions = converted.Actions;
+            asset.Guard = converted.Guard;
+            asset.Hurt = converted.Hurt;
+            asset.Validate();
+        });
+        if (applied)
+        {
+            Report(string.Join(" ", report));
+        }
+
+        return applied;
+    }
+
+    /// <summary>Adds an attached collider to the open entity; the definition is validated against the model, sockets and equipment.</summary>
+    public bool AddCollider(ColliderDef definition)
+    {
+        var document = EntityDocument;
+        return Edit(document, () =>
+        {
+            ArgumentNullException.ThrowIfNull(definition);
+            var asset = document!.Asset;
+            if (asset.Colliders.Any(c => c.Id == definition.Id))
+            {
+                throw new InvalidDataException($"Entity '{asset.Id}' already has a collider '{definition.Id}'.");
+            }
+
+            asset.Version = EntityAsset.CurrentVersion;
+            asset.Colliders.Add(definition);
+            asset.Validate();
+            // Compile against the drafts now (the cached compile is keyed on the revision the edit has not bumped yet), so a dangling binding refuses the edit by name.
+            ResolvedEntity.Compile(asset, model => Assets.Resolve(model, out var problem) ?? throw new InvalidDataException(problem), clip => Assets.Clip(clip)?.Asset, prop => Assets.Prop(prop)?.Asset);
+        }, $"Added {definition.Use} collider '{definition.Id}'.");
+    }
+
+    /// <summary>Removes an attached collider; a window or guard that names it is refused by name.</summary>
+    public bool RemoveCollider(string id)
+    {
+        var document = EntityDocument;
+        return Edit(document, () =>
+        {
+            var asset = document!.Asset;
+            var window = asset.Actions.SelectMany(a => a.Hits.Select(h => (Action: a, Hit: h))).FirstOrDefault(p => p.Hit.Collider == id);
+            if (window.Hit is not null)
+            {
+                throw new InvalidDataException($"Collider '{id}' is the geometry of hit window '{window.Hit.Id}' of action '{window.Action.Id}'; re-point the window first.");
+            }
+
+            if (asset.Guard?.Collider == id)
+            {
+                throw new InvalidDataException($"Collider '{id}' is the guard; clear the guard's collider first.");
+            }
+
+            if (asset.Colliders.RemoveAll(c => c.Id == id) == 0)
+            {
+                throw new InvalidDataException($"No collider '{id}'.");
+            }
+        }, $"Removed collider '{id}'.");
     }
 
     /// <summary>Sets the entity's movement box around its model's rest pose. Explicit: animation never changes it.</summary>

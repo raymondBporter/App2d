@@ -247,7 +247,7 @@ public sealed class ResolvedEntity
         {
             entity.GuardCollider = guard.Collider is { } named
                 ? colliders.First(c => c.Id == named)
-                : Synthesize(new ColliderDef { Id = ColliderUses.Guard, Use = ColliderUses.Guard, Shape = guard.Shape, Prop = guard.Prop, Point = PropAsset.GripPoint }, "guard", $"{owner} guard");
+                : Synthesize(new ColliderDef { Id = ColliderUses.Guard, Use = ColliderUses.Guard, Shape = guard.Shape, Prop = guard.Prop }, "guard", $"{owner} guard"); // at the prop's tip, as the legacy guard window was
         }
         entity.Colliders = colliders;
 

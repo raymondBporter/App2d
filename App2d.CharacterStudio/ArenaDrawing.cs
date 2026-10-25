@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Editor;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
@@ -7,20 +8,28 @@ using System.Numerics;
 
 namespace App2d.CharacterStudio;
 
-/// <summary>One actor as the arena left it after a step: its final pose and every region derived from that pose.</summary>
+/// <summary>A registered collider as the arena's collision system holds it after a step: its use, placed region and enabled state.</summary>
+internal sealed record ArenaColliderFrame(string Id, string Use, EntityRegion Region, bool Enabled);
+
+/// <summary>
+/// One actor as the arena left it after a step: its final pose and the actual registered colliders read from the collision
+/// system (<see cref="Colliders"/>), plus the legacy hurt boxes of an entity whose hurt is not registered yet.
+/// </summary>
 internal sealed record ArenaActorFrame(ResolvedEntity Entity, ActorPose Pose, EntityRegion Movement, IReadOnlyList<EntityRegion> Hurt,
-    IReadOnlyList<EntityRegion> Attacks, IReadOnlyDictionary<string, Vector3> Anchors, bool Alive)
+    IReadOnlyList<EntityRegion> Attacks, IReadOnlyDictionary<string, Vector3> Anchors, bool Alive, IReadOnlyList<ArenaColliderFrame> Colliders)
 {
     /// <summary>Every actor, with the bolts in flight shown as attack regions of the actor that fired them.</summary>
     public static IReadOnlyList<ArenaActorFrame> Capture(AuthoredArena arena) => [.. arena.Actors.Select(a => new ArenaActorFrame(
-        a.Entity, a.Pose, a.Movement, a.Hurt,
+        a.Entity, a.Pose, a.Movement, a.Colliders.HasHurt ? [] : a.Hurt,
         [.. a.Attacks.Select(x => x.Region), .. arena.Bolts.Where(b => b.Owner == a.Index).Select(b => new EntityRegion("bolt", b.Shape, Similarity2D.FromTranslation(b.Position)))],
-        a.Animator.Anchors.ToDictionary(), a.Alive))];
+        a.Animator.Anchors.ToDictionary(), a.Alive,
+        [.. a.Colliders.All.Where(c => c.Use != ColliderUses.Movement && c.Use != ColliderUses.Attack).Select(c => new ArenaColliderFrame(c.Id, c.Use, c.Region, c.Enabled))]))];
 }
 
 /// <summary>
-/// Draws arena actors from their final poses, with collision overlays: movement boxes grey, hurt regions blue, active attack
-/// regions red, prop tips yellow and held contact anchors green. Shared by the entity smoke and the editor's Test mode.
+/// Draws arena actors from their final poses, with collision overlays read from the registered colliders: movement boxes
+/// grey, hurt colliders blue, enabled attack colliders red, the guard green while up, triggers orange while enabled (dim
+/// when not), prop tips yellow and held contact anchors green. Shared by the entity smoke and the editor's Test mode.
 /// </summary>
 internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 {
@@ -74,7 +83,18 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 
             foreach (var region in actor.Hurt)
             {
-                Outline(region, new Color4b(60, 120, 220), 2);
+                Outline(region, StudioTheme.HurtRegion, 2);
+            }
+
+            foreach (var collider in actor.Colliders)
+            {
+                var color = collider.Use switch
+                {
+                    ColliderUses.Hurt => StudioTheme.HurtRegion,
+                    ColliderUses.Guard => StudioTheme.GuardRegion,
+                    _ => StudioTheme.TriggerRegion,
+                };
+                Outline(collider.Region, collider.Enabled ? color : new Color4b(color, 70), collider.Enabled ? 2 : 1);
             }
 
             foreach (var region in actor.Attacks)

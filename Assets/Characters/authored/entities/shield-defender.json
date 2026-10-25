@@ -1,12 +1,12 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 3,
   "id": "shield-defender",
   "name": "Shell-shield defender",
   "model": "shield-defender-build",
   "motionSet": "standard",
   "guard": {
-    "prop": "scavenged-shell"
+    "collider": "guard"
   },
   "roles": {
     "walk": "shield-defender-walk",
@@ -26,20 +26,111 @@
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.1765,
-        "y": 0
+      "center": {
+        "x": 0,
+        "y": 1.005
       },
-      "max": {
-        "x": 0.1765,
+      "size": {
+        "x": 0.353,
         "y": 2.01
-      }
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "standard",
     "regions": {}
   },
+  "colliders": [
+    {
+      "id": "shell-bash",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.9,
+          "y": 1.4
+        },
+        "angleRadians": 0
+      },
+      "prop": "scavenged-shell"
+    },
+    {
+      "id": "guard",
+      "use": "guard",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.9,
+          "y": 1.4
+        },
+        "angleRadians": 0
+      },
+      "prop": "scavenged-shell"
+    },
+    {
+      "id": "body",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.469,
+          "y": 0.8975
+        },
+        "angleRadians": 0
+      },
+      "control": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.02273,
+      "offsetY": 0.30875
+    },
+    {
+      "id": "head",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "control": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.3308,
+          "y": 0.842
+        },
+        "angleRadians": 0
+      },
+      "control": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.0954,
+      "offsetY": -0.351
+    }
+  ],
   "equipment": [
     {
       "prop": "scavenged-shell",
@@ -71,18 +162,7 @@
           "finish": {
             "marker": "recover"
           },
-          "prop": "scavenged-shell",
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.45,
-              "y": -0.7
-            },
-            "max": {
-              "x": 0.45,
-              "y": 0.7
-            }
-          },
+          "collider": "shell-bash",
           "damage": 2,
           "sound": "hit"
         }

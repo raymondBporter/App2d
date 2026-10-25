@@ -75,7 +75,8 @@ public sealed class EntityRegionShapeTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var asset = EntityAsset.FromJson(catalog.Entities["spear-guard"].Asset.ToJson());
         var window = asset.Actions.SelectMany(action => action.Hits).First();
-        window.Shape = new Capsule2D { Start = new(-.3f, 0), End = new(.3f, 0), Radius = .1f }.Validated();
+        // The converted spear guard's window names its attack collider (P8c); the shape lives on that collider.
+        asset.Colliders.First(c => c.Id == window.Collider).Shape = new Capsule2D { Start = new(-.3f, 0), End = new(.3f, 0), Radius = .1f }.Validated();
         var entity = ResolvedEntity.Compile(asset, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
         var attack = entity.Actions["attack"];
         var hit = attack.Hits.First(h => h.Window.Id == window.Id);

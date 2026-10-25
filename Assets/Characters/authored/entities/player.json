@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 3,
   "id": "player",
   "name": "Player",
   "model": "person",
@@ -18,24 +18,95 @@
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.275,
-        "y": 0
+      "center": {
+        "x": 0,
+        "y": 0.8525
       },
-      "max": {
-        "x": 0.275,
+      "size": {
+        "x": 0.55,
         "y": 1.705
-      }
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "standard",
-    "regions": {
-      "legs": {
-        "pad": 0.05
-      }
-    }
+    "regions": {}
   },
+  "colliders": [
+    {
+      "id": "spear-tip",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.42,
+          "y": 0.26
+        },
+        "angleRadians": 0
+      },
+      "prop": "spear",
+      "along": -0.14
+    },
+    {
+      "id": "body",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.46,
+          "y": 0.93
+        },
+        "angleRadians": 0
+      },
+      "control": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.02165,
+      "offsetY": 0.325
+    },
+    {
+      "id": "head",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "control": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.292,
+          "y": 0.88
+        },
+        "angleRadians": 0
+      },
+      "control": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.096,
+      "offsetY": -0.39
+    }
+  ],
   "equipment": [
     {
       "prop": "spear",
@@ -55,19 +126,7 @@
           "finish": {
             "marker": "recover"
           },
-          "prop": "spear",
-          "along": -0.14,
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.21,
-              "y": -0.13
-            },
-            "max": {
-              "x": 0.21,
-              "y": 0.13
-            }
-          }
+          "collider": "spear-tip"
         }
       ],
       "events": [

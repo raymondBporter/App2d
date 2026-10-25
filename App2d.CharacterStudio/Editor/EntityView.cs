@@ -9,16 +9,18 @@ using System.Numerics;
 namespace App2d.CharacterStudio.Editor;
 
 /// <summary>
-/// What a character does in the game: its model, motion set and role overrides, controller, movement and hurt geometry,
-/// equipment and actions. Selecting an action previews it and brings its timing and hit windows into focus; the viewport
-/// shows the collision the game would build from the same final pose. Every change is an entity edit: models, clips and
-/// sets are opened, never edited from here.
+/// What a character does in the game: its model, motion set and role overrides, controller, movement geometry, attached
+/// colliders (hurt, attack, guard, trigger; or the legacy hurt layout until converted), equipment and actions. Selecting an
+/// action previews it and brings its activation windows into focus; the viewport shows the colliders the game registers,
+/// placed from the same final pose. Every change is an entity edit: models, clips and sets are opened, never edited from here.
 /// </summary>
 internal sealed class EntityView(EditorSession session) : IWorkspaceView
 {
     private string _newProp = "";
     private string _newSocket = "";
     private string _newEvent = "hit";
+    private string _newCollider = "";
+    private string _newColliderUse = ColliderUses.Hurt;
 
     public Workspace Mode => Workspace.Entity;
     public float TimelineHeight => 150;
@@ -166,6 +168,8 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         Controller(document);
         Movement(document);
         Hurt(document);
+        Colliders(document);
+        Guard(document);
         Equipment(document);
         References.Draw(session, asset.Id);
     }
@@ -311,7 +315,15 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         var layout = basis.HurtLayouts.FirstOrDefault(l => l.Id == hurt.Layout);
         if (layout is null)
         {
-            Ui.Help(basis.HurtLayouts.Count == 0 ? $"'{basis.Name}' has no hurt layouts." : "No hurt regions: this entity cannot be hit.");
+            if (document.Asset.Colliders.Any(c => c.Use == ColliderUses.Hurt))
+            {
+                Ui.Help("Hurt geometry is this entity's hurt colliders (below); the model's layout is not used.");
+            }
+            else
+            {
+                Ui.Help(basis.HurtLayouts.Count == 0 ? $"'{basis.Name}' has no hurt layouts." : "No hurt geometry: this entity cannot be hit. Choose a layout or add hurt colliders below.");
+            }
+
             return;
         }
         foreach (var region in layout.Regions)
@@ -345,7 +357,301 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             }
             ImGui.PopID();
         }
-        Ui.Help($"Geometry comes from '{basis.Name}''s layout and the final pose; changes here are this entity's overrides.");
+        Ui.Help($"Legacy layout: each region is the box around its controls in the final pose; changes here are this entity's overrides.");
+        if (ImGui.SmallButton("Convert to colliders"))
+        {
+            session.ConvertColliders();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Explicit conversion (P8c): each region becomes a hurt collider holding its rest-pose box, bound to its anchor control; hit windows and the guard get their colliders too. One undo step; the file is written at entity version 3 on the next save.");
+        }
+    }
+
+    // ---- Colliders -----------------------------------------------------------------------------------------------
+
+    private static ColliderDef ColliderOf(AssetDocument<EntityAsset> document, string id) => document.Asset.Colliders.First(c => c.Id == id);
+
+    private void Colliders(AssetDocument<EntityAsset> document)
+    {
+        var asset = document.Asset;
+        var basis = Base;
+        Ui.Header("Colliders");
+        Ui.Help("Attached collision geometry the game registers once per actor: shared convex shapes on a placement binding, with a stable id and a use. Attack colliders are enabled by their action's windows; hurt, guard and trigger colliders by their default.");
+        var resolved = session.Entity;
+        foreach (var collider in asset.Colliders)
+        {
+            var summary = $"{collider.Id}  {collider.Use}  {BindingSummary(collider)}";
+            if (ImGui.Selectable(summary, session.Selection.Collider == collider.Id))
+            {
+                session.Selection.Collider = collider.Id;
+            }
+        }
+        if (resolved is not null)
+        {
+            foreach (var implied in resolved.Colliders.Where(c => c.Source != "collider"))
+            {
+                ImGui.TextDisabled($"{implied.Id}  {implied.Use}  {BindingSummary(implied.Definition)}  (from the legacy {implied.Source}; convert to edit)");
+            }
+        }
+        ImGui.SetNextItemWidth(90 * Ui.Scale);
+        ImGui.InputText("##collider", ref _newCollider, 64);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(80 * Ui.Scale);
+        if (ImGui.BeginCombo("##use", _newColliderUse))
+        {
+            foreach (var use in ColliderUses.All)
+            {
+                if (ImGui.Selectable(use, use == _newColliderUse))
+                {
+                    _newColliderUse = use;
+                }
+            }
+
+            ImGui.EndCombo();
+        }
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Add collider"))
+        {
+            var id = _newCollider.Length == 0 ? ModelAuthoring.UniqueId(_newColliderUse, asset.Colliders.Select(c => c.Id)) : _newCollider;
+            var prop = asset.Equipment.FirstOrDefault()?.Prop;
+            var control = basis?.Controls.FirstOrDefault()?.Id;
+            var definition = _newColliderUse is ColliderUses.Attack or ColliderUses.Guard && prop is not null
+                ? new ColliderDef { Id = id, Use = _newColliderUse, Prop = prop }
+                : control is not null ? new ColliderDef { Id = id, Use = _newColliderUse, Control = control, Frame = CharacterModel.Locomotion }
+                : new ColliderDef { Id = id, Use = _newColliderUse, OffsetY = .5f };
+            if (session.AddCollider(definition))
+            {
+                session.Selection.Collider = id;
+                _newCollider = "";
+            }
+        }
+        if (session.Selection.Collider is { } selected && asset.Colliders.Any(c => c.Id == selected))
+        {
+            ColliderFields(document, selected);
+        }
+    }
+
+    private static string BindingSummary(ColliderDef collider) => collider.Binding switch
+    {
+        ColliderBindings.Prop => $"on prop {collider.Prop} {collider.Point}{(collider.Along != 0 ? $" along {collider.Along:0.###}" : "")}",
+        ColliderBindings.Socket => $"on socket {collider.Socket}{(collider.Along != 0 ? $" along {collider.Along:0.###}" : "")}",
+        ColliderBindings.Control => $"on {collider.Control}{(collider.Frame is { } frame ? $" in the {frame} frame" : "")}{(collider.Toward is { } toward ? $" toward {toward}{(collider.Stretch ? ", stretched" : "")}" : "")}",
+        _ => $"on the actor at ({collider.OffsetX:0.###}, {collider.OffsetY:0.###})",
+    };
+
+    private void ColliderFields(AssetDocument<EntityAsset> document, string id)
+    {
+        ColliderDef Collider() => ColliderOf(document, id);
+        var collider = Collider();
+        var basis = Base;
+        ImGui.Separator();
+        ImGui.TextColored(UiTheme.Accent, $"Collider {id}");
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Remove"))
+        {
+            if (session.RemoveCollider(id))
+            {
+                session.Selection.Collider = null;
+            }
+
+            return;
+        }
+        if (Ui.Combo("Use", collider.Use, ColliderUses.All) is { } use)
+        {
+            session.Edit(document, () => Collider().Use = use);
+        }
+
+        var props = document.Asset.Equipment.Select(e => "prop:" + e.Prop);
+        var sockets = basis?.Sockets.Select(s => "socket:" + s.Id) ?? [];
+        var controls = basis?.Controls.Select(c => "control:" + c.Id) ?? [];
+        var binding = collider.Binding switch
+        {
+            ColliderBindings.Prop => "prop:" + collider.Prop,
+            ColliderBindings.Socket => "socket:" + collider.Socket,
+            ColliderBindings.Control => "control:" + collider.Control,
+            _ => "actor:",
+        };
+        if (Ui.Combo("Bound to", binding, props.Concat(sockets).Concat(controls).Prepend("actor:"), a => a == "actor:" ? "the actor" : a) is { } chosen)
+        {
+            session.Edit(document, () =>
+            {
+                var c = Collider();
+                var (kind, value) = (chosen[..chosen.IndexOf(':')], chosen[(chosen.IndexOf(':') + 1)..]);
+                c.Prop = kind == "prop" ? value : null;
+                c.Socket = kind == "socket" ? value : null;
+                c.Control = kind == "control" ? value : null;
+                if (kind != "control")
+                {
+                    c.Frame = c.Toward = null;
+                    c.Stretch = false;
+                    c.Angle = 0;
+                }
+                else
+                {
+                    c.Along = 0;
+                    c.Frame ??= CharacterModel.Locomotion;
+                }
+            });
+        }
+
+        switch (collider.Binding)
+        {
+            case ColliderBindings.Prop:
+                if (Ui.Combo("Prop point", collider.Point, PropAsset.PointNames) is { } point)
+                {
+                    session.Edit(document, () => Collider().Point = point);
+                }
+
+                AlongField(document, Collider);
+                break;
+            case ColliderBindings.Socket:
+                AlongField(document, Collider);
+                break;
+            case ColliderBindings.Control:
+            {
+                const string Own = "(the control's own)";
+                var frames = (basis?.Controls.Select(c => c.Id) ?? []).Prepend(CharacterModel.Locomotion).Prepend(Own);
+                if (Ui.Combo("Frame", collider.Frame ?? Own, frames, f => f == CharacterModel.Locomotion ? "locomotion (screen axes)" : f) is { } frame)
+                {
+                    session.Edit(document, () => Collider().Frame = frame == Own ? null : frame);
+                }
+
+                const string None = "(none)";
+                if (Ui.Combo("Toward (+Y)", collider.Toward ?? None, (basis?.Controls.Select(c => c.Id) ?? []).Prepend(None)) is { } toward)
+                {
+                    session.Edit(document, () =>
+                    {
+                        var c = Collider();
+                        c.Toward = toward == None ? null : toward;
+                        c.Stretch = c.Stretch && c.Toward is not null;
+                    });
+                }
+
+                if (collider.Toward is not null)
+                {
+                    var stretch = collider.Stretch;
+                    if (ImGui.Checkbox("Stretch with the span", ref stretch))
+                    {
+                        session.Edit(document, () => Collider().Stretch = stretch);
+                    }
+                }
+                var offset = new Vector2(collider.OffsetX, collider.OffsetY);
+                if (Ui.Drag2("Offset in the frame", ref offset))
+                {
+                    session.Change(document, () =>
+                    {
+                        var c = Collider();
+                        c.OffsetX = offset.X;
+                        c.OffsetY = offset.Y;
+                    });
+                }
+
+                var degrees = float.RadiansToDegrees(collider.Angle);
+                if (Ui.Drag("Angle (deg)", ref degrees, .5f, -360, 360))
+                {
+                    session.Change(document, () => Collider().Angle = float.DegreesToRadians(degrees));
+                }
+
+                break;
+            }
+            default:
+            {
+                var offset = new Vector2(collider.OffsetX, collider.OffsetY);
+                if (Ui.Drag2("Centre ahead / above the feet", ref offset))
+                {
+                    session.Change(document, () =>
+                    {
+                        var c = Collider();
+                        c.OffsetX = offset.X;
+                        c.OffsetY = offset.Y;
+                    });
+                }
+
+                break;
+            }
+        }
+        var enabled = collider.Enabled;
+        if (ImGui.Checkbox(collider.Use == ColliderUses.Attack ? "Can be enabled by windows" : "Enabled", ref enabled))
+        {
+            session.Edit(document, () => Collider().Enabled = enabled);
+        }
+
+        ShapeFields(document, collider.Shape, shape => Collider().Shape = shape);
+        Ui.Help(collider.Binding == ColliderBindings.Control
+            ? "The shape sits in the control's planar frame (socket rules); the drawing layer never reaches collision."
+            : "The shape sits in the anchor frame: +X along the projected axis, following facing.");
+        var windows = document.Asset.Actions.SelectMany(a => a.Hits.Where(h => h.Collider == id).Select(h => $"{a.Id}/{h.Id}")).ToList();
+        if (windows.Count > 0)
+        {
+            ImGui.TextDisabled("Enabled by: " + string.Join(", ", windows));
+        }
+    }
+
+    private void AlongField(AssetDocument<EntityAsset> document, Func<ColliderDef> collider)
+    {
+        var along = collider().Along;
+        if (Ui.Drag("Along the anchor's axis", ref along))
+        {
+            session.Change(document, () => collider().Along = along);
+        }
+    }
+
+    private void Guard(AssetDocument<EntityAsset> document)
+    {
+        var asset = document.Asset;
+        Ui.Header("Guard");
+        var hasGuard = asset.Guard is not null;
+        if (ImGui.Checkbox("Blocks front strikes", ref hasGuard))
+        {
+            session.Edit(document, () =>
+            {
+                if (!hasGuard)
+                {
+                    document.Asset.Guard = null;
+                    return;
+                }
+
+                var guard = document.Asset.Colliders.FirstOrDefault(c => c.Use == ColliderUses.Guard)?.Id;
+                var prop = document.Asset.Equipment.FirstOrDefault()?.Prop ?? throw new InvalidDataException("A guard needs an equipped prop or a guard collider.");
+                document.Asset.Guard = guard is not null ? new() { Collider = guard } : new() { Prop = prop };
+            });
+        }
+
+        if (asset.Guard is not { } def)
+        {
+            return;
+        }
+
+        var guards = asset.Colliders.Where(c => c.Use == ColliderUses.Guard).Select(c => c.Id).ToList();
+        const string Legacy = "(legacy prop shape)";
+        if (Ui.Combo("Collider", def.Collider ?? Legacy, guards.Prepend(Legacy)) is { } chosen)
+        {
+            session.Edit(document, () =>
+            {
+                var g = document.Asset.Guard!;
+                g.Collider = chosen == Legacy ? null : chosen;
+                if (g.Collider is null && g.Prop.Length == 0)
+                {
+                    g.Prop = document.Asset.Equipment.FirstOrDefault()?.Prop ?? "";
+                }
+            });
+        }
+
+        if (def.Collider is { } named)
+        {
+            ImGui.TextDisabled($"Guard geometry is collider '{named}'; edit it under Colliders.");
+            return;
+        }
+
+        if (Ui.Combo("Prop", def.Prop, asset.Equipment.Select(e => e.Prop)) is { } prop)
+        {
+            session.Edit(document, () => document.Asset.Guard!.Prop = prop);
+        }
+
+        ShapeFields(document, def.Shape, shape => document.Asset.Guard!.Shape = shape);
+        Ui.Help("Legacy guard geometry on the prop's tip; Convert to colliders (under Hurt regions) makes it the guard collider.");
     }
 
     private static void Override(AssetDocument<EntityAsset> document, string region, Action<HurtOverride> change)
@@ -659,6 +965,33 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
         TimeField("Opens", hit.Start, resolved?.Clip, time => Hit().Start = time, document);
         TimeField("Closes", hit.Finish, resolved?.Clip, time => Hit().Finish = time, document);
+        Ui.Help("The window is the activation interval [opens, closes) of its attack collider: enabled for every step that crosses any of it.");
+        var attackColliders = document.Asset.Colliders.Where(c => c.Use == ColliderUses.Attack).Select(c => c.Id).ToList();
+        const string Inline = "(legacy inline geometry)";
+        if (Ui.Combo("Collider", hit.Collider ?? Inline, attackColliders.Prepend(Inline)) is { } chosenCollider)
+        {
+            session.Edit(document, () => Hit().Collider = chosenCollider == Inline ? null : chosenCollider);
+        }
+
+        if (hit.Collider is { } colliderId)
+        {
+            ImGui.TextDisabled($"Geometry is collider '{colliderId}'" + (document.Asset.Colliders.FirstOrDefault(c => c.Id == colliderId) is { } named ? $": {BindingSummary(named)}" : ""));
+            if (ImGui.SmallButton("Edit collider"))
+            {
+                session.Selection.Collider = colliderId;
+            }
+
+            var damageOnly = hit.Damage;
+            ImGui.TextUnformatted("Damage");
+            ImGui.SetNextItemWidth(-1);
+            if (ImGui.DragInt("##damage", ref damageOnly, .1f, 0, 10000))
+            {
+                session.Change(document, () => Hit().Damage = Math.Clamp(damageOnly, 0, 10000));
+            }
+
+            return;
+        }
+
         var props = document.Asset.Equipment.Select(e => "prop:" + e.Prop);
         var sockets = basis?.Sockets.Select(s => "socket:" + s.Id) ?? [];
         var anchor = hit.Prop is not null ? "prop:" + hit.Prop : hit.Socket is not null ? "socket:" + hit.Socket : "actor:";
@@ -699,7 +1032,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             }
         }
         ShapeFields(document, hit.Shape, shape => Hit().Shape = shape);
-        Ui.Help("The shape sits in the anchor frame: +X along the anchor's axis, following facing.");
+        Ui.Help("Legacy inline geometry: the shape sits in the anchor frame, +X along the anchor's axis, following facing. It registers as attack collider '" + (resolved?.Hits.FirstOrDefault(h => h.Window.Id == hitId)?.Collider.Id ?? hitId) + "'; Convert to colliders (under Hurt regions) makes that explicit.");
         var damage = hit.Damage;
         ImGui.TextUnformatted("Damage");
         ImGui.SetNextItemWidth(-1);
@@ -771,21 +1104,47 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             }
         }
         Outline(preview.Movement, StudioTheme.MovementRegion.PackedValue, 1.5f);
-        foreach (var region in preview.Hurt)
+        foreach (var region in preview.LegacyHurt)
         {
             Outline(region, StudioTheme.HurtRegion.PackedValue, 2);
         }
 
-        foreach (var (hit, region) in preview.Attacks)
+        // Read-only views of the colliders the game registers, placed by the same function at this preview pose.
+        foreach (var placed in preview.Colliders)
         {
-            var points = region.Outline().Select(Screen).ToArray();
-            for (var i = 1; i < points.Length - 1; i++)
+            var selected = session.Selection.Collider == placed.Id;
+            var points = placed.Region.Outline().Select(Screen).ToArray();
+            switch (placed.Use)
             {
-                draw.AddTriangleFilled(points[0], points[i], points[i + 1], StudioTheme.AttackFill.PackedValue);
-            }
+                case ColliderUses.Attack when placed.Enabled:
+                    for (var i = 1; i < points.Length - 1; i++)
+                    {
+                        draw.AddTriangleFilled(points[0], points[i], points[i + 1], StudioTheme.AttackFill.PackedValue);
+                    }
 
-            Outline(region, StudioTheme.AttackOutline.PackedValue, 2.5f);
-            draw.AddText(points[2] + new Vector2(4, -16), StudioTheme.AttackLabel.PackedValue, hit.Window.Id);
+                    Outline(placed.Region, StudioTheme.AttackOutline.PackedValue, selected ? 4 : 2.5f);
+                    draw.AddText(points[2] + new Vector2(4, -16), StudioTheme.AttackLabel.PackedValue, placed.Id);
+                    break;
+                case ColliderUses.Attack:
+                    Outline(placed.Region, StudioTheme.AttackDisabled.PackedValue, selected ? 3 : 1);
+                    break;
+                default:
+                {
+                    var color = placed.Use switch
+                    {
+                        ColliderUses.Hurt => StudioTheme.HurtRegion,
+                        ColliderUses.Guard => StudioTheme.GuardRegion,
+                        _ => StudioTheme.TriggerRegion,
+                    };
+                    Outline(placed.Region, (placed.Enabled ? color : new Color4b(color, 80)).PackedValue, selected ? 4 : 2);
+                    if (selected)
+                    {
+                        draw.AddText(points[0] + new Vector2(4, 4), color.PackedValue, placed.Id);
+                    }
+
+                    break;
+                }
+            }
         }
         foreach (var equipment in preview.Entity.Equipment)
         {
@@ -799,7 +1158,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
 
         if (frame.Hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
         {
-            session.Report("Collision overlays: grey movement box, blue hurt regions, red active hits, yellow prop tips.");
+            session.Report("Collision overlays: grey movement box, blue hurt colliders, red enabled attack colliders (faint when their windows are closed), green guard, orange triggers, yellow prop tips.");
         }
     }
 
@@ -877,6 +1236,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 foreach (var hit in hits)
                 {
                     draw.AddRectFilled(new(X(hit.Start), start.Y), new(X(hit.Finish), start.Y + height), StudioTheme.AttackWindow.PackedValue);
+                    draw.AddText(new(X(hit.Start) + 3, start.Y + 5 * Ui.Scale), StudioTheme.AttackLabel.PackedValue, hit.Window.Id == hit.Collider.Id ? hit.Window.Id : $"{hit.Window.Id} > {hit.Collider.Id}");
                 }
 
                 draw.AddText(start + new Vector2(4, 5 * Ui.Scale), StudioTheme.AnticipationText.PackedValue, "anticipation");

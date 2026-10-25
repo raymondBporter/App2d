@@ -47,7 +47,8 @@ public sealed class ColliderAttachmentTests
         foreach (var entity in Catalog.Entities.Values)
         {
             var windows = entity.Actions.Values.SelectMany(a => a.Hits).ToList();
-            Assert.Equal(windows.Count + (entity.Asset.Guard is null ? 0 : 1) + entity.Asset.Colliders.Count, entity.Colliders.Count);
+            var implied = windows.Count(h => h.Window.Collider is null) + (entity.Asset.Guard is { Collider: null } ? 1 : 0);
+            Assert.Equal(implied + entity.Asset.Colliders.Count, entity.Colliders.Count);
             Assert.Equal(entity.Colliders.Count, entity.Colliders.Select(c => c.Id).Distinct(StringComparer.Ordinal).Count());
             foreach (var hit in windows)
             {
@@ -57,16 +58,24 @@ public sealed class ColliderAttachmentTests
                 Assert.Same(hit.Collider.Shape, hit.Shape);
             }
             Assert.Equal(entity.Asset.Guard is not null, entity.GuardCollider is not null);
-            Assert.False(entity.HurtRegistered, $"{entity.Id} still uses its legacy hurt layout until converted");
+            Assert.Equal(entity.Asset.Colliders.Any(c => c.Use == ColliderUses.Hurt), entity.HurtRegistered);
+            Assert.Equal(entity.Asset.Hurt.Layout is null, entity.HurtRegistered || entity.Hurt.Count == 0);
         }
+        // P8c converted the player, the spear guard and the shield defender; every other entity still implies its colliders from the legacy fields.
+        Assert.Equal(["player", "shield-defender", "spear-guard"], Catalog.Entities.Values.Where(e => e.HurtRegistered).Select(e => e.Id).Order(StringComparer.Ordinal));
         // A window id shared by several actions is qualified by the action; a unique one keeps its own name.
         var hero = Catalog.Entities["hero"];
         Assert.Equal(["attack-blade", "follow-up-blade", "forehand-blade"], hero.Colliders.Select(c => c.Id).Order(StringComparer.Ordinal));
         Assert.All(hero.Colliders, c => Assert.Equal("window", c.Source));
-        Assert.Equal("spear-tip", Assert.Single(Catalog.Entities["spear-guard"].Colliders).Id);
+        Assert.Equal(["spear-tip", "body", "head", "legs", "reach"], Catalog.Entities["spear-guard"].Colliders.Select(c => c.Id));
+        Assert.All(Catalog.Entities["spear-guard"].Colliders, c => Assert.Equal("collider", c.Source));
         var defender = Catalog.Entities["shield-defender"];
         Assert.Equal(ColliderUses.Guard, defender.GuardCollider!.Id);
-        Assert.Equal(("guard", ColliderBindings.Prop, "scavenged-shell"), (defender.GuardCollider.Source, defender.GuardCollider.Binding, defender.GuardCollider.Equipment!.Prop.Id));
+        Assert.Equal(("collider", ColliderBindings.Prop, "scavenged-shell", PropAsset.TipPoint), (defender.GuardCollider.Source, defender.GuardCollider.Binding, defender.GuardCollider.Equipment!.Prop.Id, defender.GuardCollider.Definition.Point));
+        // An unconverted guard would register at the prop's tip too, as the legacy guard window did.
+        var brute = EntityAsset.FromJson(Catalog.Entities["maul-brute"].Asset.ToJson());
+        brute.Guard = new() { Prop = "hammer" };
+        Assert.Equal(("guard", PropAsset.TipPoint), (Compile(brute).GuardCollider!.Source, Compile(brute).GuardCollider!.Definition.Point));
     }
 
     [Theory, InlineData(1), InlineData(-1)]
@@ -229,13 +238,14 @@ public sealed class ColliderAttachmentTests
     [Fact]
     public void TheArenaRegistersOneColliderSetPerActorAndQueriesThroughTheBroadPhase()
     {
-        // guard-thrust/right: the player (movement + spear-tip) and the spear guard (movement + spear-tip), nothing re-registered while they fight.
+        // guard-thrust/right: the converted player (movement, spear-tip, body, head, legs) and spear guard (the same plus the reach trigger), nothing re-registered while they fight.
         var arena = new AuthoredArena([Catalog.Entities["player"], Catalog.Entities["spear-guard"]]);
         arena.Teleport(0, new(0, 0));
         arena.Teleport(1, new(2.05f, 0));
         var registered = arena.Collision.Colliders.ToArray();
-        Assert.Equal(4, registered.Length);
+        Assert.Equal(11, registered.Length);
         var candidates = new List<int>();
+        var idle = new List<int>();
         var enabledAttacks = 0;
         for (var step = 0; step < 360; step++)
         {
@@ -248,13 +258,17 @@ public sealed class ColliderAttachmentTests
             }
             else
             {
-                Assert.Equal(0, arena.LastQueryCandidates);
+                idle.Add(arena.LastQueryCandidates); // only the reach trigger's query runs while no window is active
             }
             Assert.All(arena.Actors, a => Assert.Equal(a.Attacks.Count(), a.Colliders.OfUse(ColliderUses.Attack).Count(c => c.Enabled)));
         }
         Assert.Equal([48L, 289L], arena.Hits.Select(h => h.Tick));
         Assert.True(enabledAttacks > 0);
-        Assert.Equal((2, 2), (candidates.Min(), candidates.Max())); // the two movement colliders of the pair; the attacker's own are filtered after the count
+        // Measured (P8c): 9 broad-phase candidates per active attack query (every collider of the pair whose bounds meet the
+        // spear tip's, before the use and owner filters), 2..6 for the idle reach-trigger query, 5 trigger enter/exit facts.
+        Assert.Equal((9, 9), (candidates.Min(), candidates.Max()));
+        Assert.InRange(idle.Max(), 1, 11);
+        Assert.Equal(5, arena.Triggers.Count);
     }
 
     [Fact]

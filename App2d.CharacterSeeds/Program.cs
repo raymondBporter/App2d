@@ -6,7 +6,7 @@ namespace App2d.CharacterSeeds;
 /// <summary>Runs the rendering smokes and studies against the game's real assets and simulation. This project references the game; the game does not reference it.</summary>
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --convert-variants authored-root base-id output-directory variant-id... | --convert-face authored-root model-id control-id output-directory part-id | --bake-face authored-root | --convert-face-payload authored-root model-id part-id instance-id asset-id socket-id output-directory]";
+    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --convert-variants authored-root base-id output-directory variant-id... | --convert-face authored-root model-id control-id output-directory part-id | --bake-face authored-root | --convert-face-payload authored-root model-id part-id instance-id asset-id socket-id output-directory | --convert-colliders authored-root output-directory entity-id...]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -108,6 +108,24 @@ internal static class Program
                 }
                 Console.WriteLine($"{rewritten} clip file(s) rewritten; {LegacySourceFields.Remaining(authoredRoot).Count(f => f.Kind == "clip")} clip file(s) still below version {MotionClip.CurrentVersion}.");
                 return 0;
+            case ["--convert-colliders", var authoredRoot, var output, .. var entityIds] when entityIds.Length > 0:
+                // P8c: entities' legacy hit-window geometry, guard and hurt layout to explicit attached colliders at entity version 3, on a scratch tree with a report each.
+                var exit = 0;
+                foreach (var entityId in entityIds)
+                {
+                    var conversion = App2d.Core.Characters.Authored.ColliderConversion.ConvertFile(authoredRoot, entityId, output);
+                    Console.WriteLine($"{conversion.EntityId}: {conversion.Status}");
+                    foreach (var line in conversion.Report)
+                    {
+                        Console.WriteLine("  " + line);
+                    }
+                    foreach (var difference in conversion.Differences)
+                    {
+                        Console.WriteLine("  DIFFERENCE: " + difference);
+                    }
+                    exit = conversion.Converted || conversion.Status.StartsWith("unchanged", StringComparison.Ordinal) ? exit : 2;
+                }
+                return exit;
             case ["--convert-face-payload", var authoredRoot, var modelId, var partId, var instanceId, var assetId, var socketId, var output]:
                 // P7c: a model's procedural face payload, its clips' face tracks, its variants' face overrides and its looks' face words onto a face instance.
                 var payload = App2d.Core.Characters.Authored.FaceConversion.ConvertPayload(authoredRoot, modelId, partId, instanceId, assetId, socketId, output);
