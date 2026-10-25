@@ -441,6 +441,28 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
     /// </summary>
     private LayeredFrame2D SocketCarrier(ModelSocket socket)
     {
+        if (ResolvedModel.NestedSocket(socket) is { } nested)
+        {
+            // A socket on a module instance's control (P10c): the instance's evaluated frames, in the wearer's frame.
+            if (!Local.Attachments.TryGetValue(nested.Instance, out var instance))
+            {
+                throw new InvalidOperationException($"Socket '{socket.Id}' sits on '{socket.Control}', but attachment '{nested.Instance}' was not evaluated in this pose.");
+            }
+
+            Vector3 World(string control) => instance.World(control);
+            float AngleOf(string control) { var frame = instance.Frame(control); return MathF.Atan2(frame.XAxis.Y, frame.XAxis.X); }
+            var nestedAngle = socket.Frame == CharacterModel.Locomotion ? 0 : AngleOf(socket.Frame is { } f ? MotionClip.Split(f).Target : nested.Control);
+            if (socket.Toward is { } nestedToward)
+            {
+                var direction = World(MotionClip.Split(nestedToward).Target) - World(nested.Control);
+                if (direction.X * direction.X + direction.Y * direction.Y > 1e-10f)
+                {
+                    nestedAngle = MathF.Atan2(-direction.X, direction.Y);
+                }
+            }
+            return LayeredFrame2D.FromRotation(nestedAngle, World(nested.Control));
+        }
+
         var angle = socket.Frame == CharacterModel.Locomotion ? 0 : Local.Angles[socket.Frame ?? socket.Control];
         if (socket.Toward is { } toward)
         {

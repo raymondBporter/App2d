@@ -70,6 +70,12 @@ public sealed class ResolvedModel
     /// <summary>Library part instances resolved for this wearer, in the base's order, with the variant's overrides applied.</summary>
     public IReadOnlyList<ResolvedAttachment> Attachments { get; }
     public ResolvedAttachment? Attachment(string? id) => Attachments.FirstOrDefault(a => a.Id == id);
+    /// <summary>The attachments in the order they evaluate (P10c): an instance mounted on another instance's control after that instance.</summary>
+    public IReadOnlyList<ResolvedAttachment> EvaluationOrder { get; private set; } = [];
+    /// <summary>The instance whose clips own the wearer's root motion, or null (P10c).</summary>
+    public ResolvedAttachment? MotionOwner => Attachment(Base.MotionOwner);
+    /// <summary>The instance a socket sits on when its control is a nested one (<c>instance/control</c>), else null.</summary>
+    public static (string Instance, string Control)? NestedSocket(ModelSocket socket) => socket.Control.Contains(PartAsset.Namespace) && MotionClip.Split(socket.Control) is var (instance, control) ? (instance, control) : null;
     public IReadOnlyDictionary<string, float> Measures { get; }
 
     /// <summary>Controls ordered so every parent precedes its children.</summary>
@@ -130,6 +136,7 @@ public sealed class ResolvedModel
         model.Validate();
         variant?.Validate();
         var order = RigGraph.Order(model);
+        List<ResolvedAttachment> evaluationOrder = [];
         var parameters = ParameterCatalog.Compile(model);
         var baseNodes = RigGraph.Compile(model, order, null);
         var layout = RigLayout.From(model, baseNodes);
@@ -179,6 +186,7 @@ public sealed class ResolvedModel
                 attachments.Add(ResolvedAttachment.Resolve(instance, partOf, sockets, owner));
             }
         }
+        evaluationOrder = AttachmentOrder(model, attachments, owner);
         Dictionary<string, RigNode> nodes;
         try
         {
@@ -198,6 +206,71 @@ public sealed class ResolvedModel
         {
             parts[i] = parts[i] with { Material = parts[i].RenderMaterial.Resolve(model.Materials) };
         }
-        return new(model, variant, order, nodes, parts, parameters, values, attachments, roleClips, layout, authored, overrides, partOf);
+        var resolved = new ResolvedModel(model, variant, order, nodes, parts, parameters, values, attachments, roleClips, layout, authored, overrides, partOf) { EvaluationOrder = evaluationOrder };
+        return resolved;
+    }
+
+    /// <summary>
+    /// The attachments in evaluation order (P10c): an instance whose socket sits on another instance's control follows that
+    /// instance; the nested control must exist on an animated instance; a cycle is refused with the path through it.
+    /// </summary>
+    private static List<ResolvedAttachment> AttachmentOrder(CharacterModel model, List<ResolvedAttachment> attachments, string owner)
+    {
+        var byId = attachments.ToDictionary(a => a.Id, StringComparer.Ordinal);
+        var dependency = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var attachment in attachments)
+        {
+            if (NestedSocket(attachment.Socket) is not { } nested)
+            {
+                continue;
+            }
+
+            var carrier = byId.GetValueOrDefault(nested.Instance) ?? throw new InvalidDataException($"{owner} socket '{attachment.Socket.Id}': no attachment '{nested.Instance}' to sit on (path: {model.Id} > sockets > {attachment.Socket.Id} > control).");
+            if (carrier.Rig is null)
+            {
+                throw new InvalidDataException($"{owner} socket '{attachment.Socket.Id}': attachment '{nested.Instance}' wears the static part '{carrier.Asset.Id}', which has no control '{nested.Control}' (path: {model.Id} > sockets > {attachment.Socket.Id} > control).");
+            }
+
+            foreach (var control in new[] { nested.Control, NestedSocket(new() { Control = attachment.Socket.Frame ?? "" })?.Control, NestedSocket(new() { Control = attachment.Socket.Toward ?? "" })?.Control }.OfType<string>())
+            {
+                if (!carrier.Rig.Controls.ContainsKey(control))
+                {
+                    throw new InvalidDataException($"{owner} socket '{attachment.Socket.Id}': part '{carrier.Asset.Id}' has no control '{control}' (path: {model.Id} > sockets > {attachment.Socket.Id} > control > attachments > {nested.Instance} > part {carrier.Asset.Id} > controls).");
+                }
+            }
+            dependency[attachment.Id] = nested.Instance;
+        }
+        var ordered = new List<ResolvedAttachment>();
+        var done = new HashSet<string>(StringComparer.Ordinal);
+        void Visit(ResolvedAttachment attachment, List<string> path)
+        {
+            if (done.Contains(attachment.Id))
+            {
+                return;
+            }
+
+            if (path.Contains(attachment.Id))
+            {
+                throw new InvalidDataException($"{owner}: attachment instances mount on each other in a cycle: {string.Join(" > ", path.Append(attachment.Id))} (path: {model.Id} > attachments > {path[0]} > socket {byId[path[0]].Socket.Id}).");
+            }
+
+            if (dependency.TryGetValue(attachment.Id, out var carrier))
+            {
+                Visit(byId[carrier], [.. path, attachment.Id]);
+            }
+
+            done.Add(attachment.Id);
+            ordered.Add(attachment);
+        }
+        foreach (var attachment in attachments)
+        {
+            Visit(attachment, []);
+        }
+        if (model.MotionOwner is { } ownerId && byId.GetValueOrDefault(ownerId) is { } mover && mover.Rig is null)
+        {
+            throw new InvalidDataException($"{owner}: the root-motion owner '{ownerId}' wears the static part '{mover.Asset.Id}', which carries no motion (path: {model.Id} > motionOwner).");
+        }
+
+        return ordered;
     }
 }

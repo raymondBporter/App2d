@@ -1096,8 +1096,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var published = s.Assets.ModelTemplates.Values.Where(t => t.Publishes).Select(t => t.Id).Order(StringComparer.Ordinal).ToArray();
                 // The Person's contract is checked against the smoke's own edited Person (earlier steps swap its face), so it is reported, not required here.
                 var contracts = s.Assets.ModelTemplates.Values.ToDictionary(t => t.Id, t => s.Assets.TemplateProblems(t));
-                Record(published.SequenceEqual(["person", "pterosaur", "quadruped", "triceratops"]) && contracts.Where(c => c.Key != "person").All(c => c.Value.Count == 0),
-                    "the Person, quadruped, triceratops and pterosaur templates publish their contracts (slots, dimensions, presets, library) and every creature contract holds on its shipped model (" + string.Join(", ", published) + "); the edited Person reports: " + (contracts["person"].Count == 0 ? "nothing" : string.Join(" | ", contracts["person"])));
+                Record(published.SequenceEqual(["centaur", "person", "pterosaur", "quadruped", "triceratops"]) && contracts.Where(c => c.Key != "person").All(c => c.Value.Count == 0),
+                    "the Person, quadruped, triceratops, pterosaur and centaur templates publish their contracts (slots, dimensions, presets, library) and every creature contract holds on its shipped model (" + string.Join(", ", published) + "); the edited Person reports: " + (contracts["person"].Count == 0 ? "nothing" : string.Join(" | ", contracts["person"])));
                 var quadruped = s.Assets.ModelTemplates["quadruped"];
                 Record(quadruped.Slots.Select(x => x.Id + ":" + x.Usage).SequenceEqual(["head-art:headgear", "body-art:saddle"]) && quadruped.Dimensions.SequenceEqual(["legs", "body", "head"]) && quadruped.Library.Masks.SequenceEqual(["head", "legs"]) && quadruped.Library.Mappings["leg"] == "legs",
                     "the quadruped template publishes two part slots, three dimensions with three presets, two masks and the leg and body measure mappings");
@@ -1108,7 +1108,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                     $"creating from the quadruped template with the long-legged preset writes its values as the new model's defaults (body at {created.Rest["body"].Y:0.##} over {shipped.Rest["body"].Y:0.##}) and copies the presets and eight clips");
                 Record(s.Assets.ModelTemplates["quadruped"].ContractProblems(created.Base, s.Assets.PartOf).Count == 0, "the published contract holds on the created copy (roles remapped to its own clips)");
                 Record(!s.NewModel("giant-quadruped", "Giant", "quadruped", "giant") && s.Message!.Contains("publishes no preset 'giant'"), "a preset the template does not publish is refused by name: " + s.Message);
-                Record(!s.NewModel("centipede", "Centipede", "centipede") && s.Message!.Contains("one of empty, curve-face, person, pterosaur, quadruped, stalker, triceratops"), "an unknown template lists the resources; no anatomy is named in code: " + s.Message);
+                Record(!s.NewModel("centipede", "Centipede", "centipede") && s.Message!.Contains("one of empty, centaur, curve-face, person, pterosaur, quadruped, stalker, triceratops"), "an unknown template lists the resources; no anatomy is named in code: " + s.Message);
                 var broken = ModelTemplate.FromJson(quadruped.ToJson());
                 broken.Slots.Add(new() { Id = "horn-art", Usage = "horn" });
                 broken.Dimensions.Add("neck");
@@ -1172,6 +1172,42 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.SetMode(Workspace.Animate);
                 s.Selection.Select(attachment: "b");
                 shell.Viewport.Fit(s.Evaluate("rider-stand"));
+            }),
+            ("52-centaur-study", shell =>
+            {
+                // P10c: the centaur study is resources over the shipped modules (models/centaur.json, five clips, templates/centaur.json):
+                // the lower body owns the root motion, the saddle socket sits on lower/body so the torso follows the gait, and the
+                // upper body acts on its own; the outline, inspector and timeline say who mounts where and who owns the motion.
+                var s = shell.Session; s.Compare.Clear();
+                var centaur = s.Assets.Resolve(CentaurStudy.Id)!;
+                Record(centaur.Base.Controls.Count == 1 && centaur.Attachments.Select(a => a.Id).SequenceEqual([CentaurStudy.Lower, CentaurStudy.Upper]) && centaur.MotionOwner?.Id == CentaurStudy.Lower && centaur.EvaluationOrder.Select(a => a.Id).SequenceEqual([CentaurStudy.Lower, CentaurStudy.Upper]),
+                    "the centaur resolves from resources: one root control, the quadruped lower body and the Person upper body as instances, the lower body owning the root motion and evaluated first");
+                s.Open(CentaurStudy.Id);
+                s.SetClip("centaur-walk");
+                s.Seek(.55f);
+                var pose = s.Evaluate(CentaurStudy.Id)!.Pose;
+                var lower = pose.Attachments[CentaurStudy.Lower];
+                var upper = pose.Attachments[CentaurStudy.Upper];
+                var saddle = lower.Frame("body").At(new System.Numerics.Vector3(.42f, .98f, 0));
+                Record(lower.Pose.Chains.All(c => c.Reached) && lower.Pose.Contacts.Count >= 2 && lower.Pose.Contacts.All(c => c.Residual < 1e-4f) && System.Numerics.Vector2.Distance(new(saddle.X, saddle.Y), new(upper.World(Humanoid.Chest).X, upper.World(Humanoid.Chest).Y)) < 1e-4f,
+                    "at 0.55 s of the walk the lower body's legs reach with the planted feet holding, and the chest sits on the saddle socket carried by lower/body");
+                var walkClip = s.Assets.Clip("centaur-walk")!.Asset;
+                var gait = s.Assets.Part(ModulePlans.QuadrupedLower)!.Asset.Clip("quadruped-walk")!;
+                Record(MathF.Abs(PoseEvaluator.CycleTravel(centaur, walkClip).X - PoseEvaluator.CycleTravel(lower.Rig, gait).X) < 1e-5f && walkClip.Travel.Keys.Count == 0, "the centaur walk's stride is the quadruped gait's, carried by the owning module; the wearer clip itself has no travel");
+                s.SetClip("centaur-slam");
+                s.Seek(.55f);
+                var slammed = s.Evaluate(CentaurStudy.Id)!.Pose;
+                Record(slammed.Attachments[CentaurStudy.Lower].Expression == "walk" && slammed.Attachments[CentaurStudy.Upper].Expression == "hammer-slam", "the slam keeps the walk beneath and plays the hammer slam on the upper body alone");
+                var travelling = ClipAuthoring.New(centaur, "centaur-drift", "Drift", 1, true);
+                travelling.Travel.Keys = [new(), new() { Time = 1, Value = new(1, 0, 0) }];
+                string? refusal = null;
+                try { travelling.Validate(centaur); } catch (InvalidDataException ex) { refusal = ex.Message; }
+                Record(refusal is not null && refusal.Contains("root motion is owned by attachment 'lower' (path: centaur > motionOwner)"), "a wearer clip that travels while the lower body owns the motion is refused with the path: " + refusal);
+                s.SetClip("centaur-walk");
+                s.Seek(.55f);
+                s.SetMode(Workspace.Animate);
+                s.Selection.Select(attachment: CentaurStudy.Upper);
+                shell.Viewport.Fit(s.Evaluate(CentaurStudy.Id));
             }),
         ];
         return workspace;

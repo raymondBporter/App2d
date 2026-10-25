@@ -222,6 +222,7 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   (`[L]`), filters them with **Parts**, creates one from a shape or from a hair/clothing prop (New menu or right-click
   the prop), duplicates one and lists its wearers from the right-click menu. A part's own outline points are edited as
   coordinates in this pass; viewport dragging of library-part outlines arrives with the P7 cutout tools.
+- **Model → base model → Root motion** (P10c): which instance's clips carry the model's travel (**Owner**; "this model's clips" otherwise). The attachment inspector shows each instance's **Connection** (the socket and the wearer control or the other instance's control it sits on, and the usage the socket takes) and **Owns the root motion**. In Animate, the outline's Parts rows say where each instance mounts, whether it owns the root motion and whether this clip keys it; the timeline marks the owner's play row with "(root motion)". **New → Model: Centaur template** creates the composed study.
 - **Model → attachment instance of a rig module** (P10b): the inspector lists the module's inputs with this instance's values
   (drag to set, **Part default** to clear; a bound input shows its parameter) and the part's contract (connection, inputs,
   points, targets, chains, words). The Animate outline lists each instance's exposed targets as `instance/target` rows.

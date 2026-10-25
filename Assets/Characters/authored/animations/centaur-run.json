@@ -1,0 +1,39 @@
+{
+  "format": "app2d-clip",
+  "version": 4,
+  "id": "centaur-run",
+  "name": "Centaur run",
+  "model": "centaur",
+  "structureRevision": 1,
+  "duration": 0.65,
+  "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [],
+  "contacts": [],
+  "markers": [],
+  "plays": [
+    {
+      "instance": "lower",
+      "keys": [
+        {
+          "expression": "run"
+        }
+      ]
+    },
+    {
+      "instance": "upper",
+      "keys": [
+        {
+          "expression": "run"
+        }
+      ]
+    }
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
+}

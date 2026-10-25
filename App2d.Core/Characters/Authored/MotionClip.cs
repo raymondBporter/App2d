@@ -399,6 +399,11 @@ public sealed class MotionClip
             Require(Reference.ContainsKey(scale), $"{field}: no reference measurement for '{scale}'.");
         }
         Scale(Travel.Scale, $"{owner} travel");
+        if (basis.MotionOwner is { } mover)
+        {
+            Require(Travel.Keys.Count == 0, $"{owner} travel: root motion is owned by attachment '{mover}' (path: {Model} > motionOwner); this clip may not travel itself. Select the owner's gait through its play track instead.");
+            Require(Contacts.Count == 0, $"{owner} contacts: root motion is owned by attachment '{mover}' (path: {Model} > motionOwner); the wearer's chains cannot plant against travel it does not own.");
+        }
         foreach (var track in Attachments)
         {
             Require(basis.Slots.Any(s => s.Id == track.Slot), $"{owner}: unknown slot '{track.Slot}'.");

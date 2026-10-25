@@ -125,6 +125,11 @@ internal static class Program
                     }
                 }
                 return published.All(r => r.Published) ? 0 : 2;
+            case ["--write-centaur", var authoredRoot]:
+                // P10c: the centaur study composed from the shipped modules: its model, clips and template.
+                CentaurStudy.Write(authoredRoot);
+                Console.WriteLine($"centaur study written under {authoredRoot}");
+                return 0;
             case ["--extract-modules", var authoredRoot, var output]:
                 // P10b: the Person's upper and lower body and the quadruped's lower body and head as rig modules, on a scratch tree with a report each.
                 var extracted = ModulePlans.Extract(authoredRoot, output);

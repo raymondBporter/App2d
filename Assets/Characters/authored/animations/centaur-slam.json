@@ -1,0 +1,39 @@
+{
+  "format": "app2d-clip",
+  "version": 4,
+  "id": "centaur-slam",
+  "name": "Centaur slam",
+  "model": "centaur",
+  "structureRevision": 1,
+  "duration": 1.2,
+  "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [],
+  "contacts": [],
+  "markers": [],
+  "plays": [
+    {
+      "instance": "lower",
+      "keys": [
+        {
+          "expression": "walk"
+        }
+      ]
+    },
+    {
+      "instance": "upper",
+      "keys": [
+        {
+          "expression": "hammer-slam"
+        }
+      ]
+    }
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
+}

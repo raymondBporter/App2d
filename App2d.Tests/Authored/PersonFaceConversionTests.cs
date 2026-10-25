@@ -47,7 +47,7 @@ public sealed class PersonFaceConversionTests : IDisposable
         // No face field survives in any shipped file: the model, the 28 converted clips (now at version 4, plays on the instance) and the variants.
         var modelJson = File.ReadAllText(Catalog.PathOf("person"));
         Assert.DoesNotContain("faceX", modelJson);
-        var played = Catalog.Animations.Values.Where(c => c.Plays.Count > 0).ToList();
+        var played = Catalog.Animations.Values.Where(c => c.Model == "person" && c.Plays.Count > 0).ToList();
         Assert.Equal(28, played.Count);
         Assert.All(played, c => Assert.Equal([PersonTemplate.FaceInstance], c.Plays.Select(p => p.Instance)));
         Assert.All(played, c => Assert.Equal(MotionClip.CurrentVersion, c.Version));

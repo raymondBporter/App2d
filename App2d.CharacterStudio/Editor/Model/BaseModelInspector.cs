@@ -599,6 +599,19 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
     private void MotionSets(AssetDocument<CharacterModel> document)
     {
         var model = document.Asset;
+        if (model.Attachments.Count > 0)
+        {
+            // P10c: which instance's clips carry the wearer's root motion (none: the wearer's own clips do).
+            Ui.Header("Root motion");
+            var owners = model.Attachments.Select(a => a.Id).Prepend("").ToArray();
+            if (Ui.Combo("Owner", model.MotionOwner ?? "", owners, o => o.Length == 0 ? "this model's clips" : o) is { } chosen)
+            {
+                session.Edit(document, () => { model.MotionOwner = chosen.Length == 0 ? null : chosen; model.Validate(); });
+            }
+
+            Ui.Help("One owner at most. An owning instance must mount on this model's own control; its selected clip's travel becomes the pose's locomotion.");
+        }
+
         Ui.Header("Motion sets");
         var clips = session.Assets.ClipsFor(model.Id).OrderBy(c => c.Name).ToArray();
         foreach (var set in model.MotionSets.ToArray())

@@ -66,7 +66,7 @@ internal sealed class AnimationTimeline(EditorSession session)
         y += RowHeight * scale;
         foreach (var play in clip.Plays)
         {
-            PointRow(draw, "Part " + play.Instance, play.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, StudioTheme.TimelineFaceKey.PackedValue);
+            PointRow(draw, "Part " + play.Instance + (primary.Model.MotionOwner?.Id == play.Instance ? " (root motion)" : ""), play.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, StudioTheme.TimelineFaceKey.PackedValue);
             y += RowHeight * scale;
         }
         foreach (var slot in clip.Attachments)

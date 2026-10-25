@@ -200,6 +200,12 @@ public sealed class CharacterModel
     public List<ModelSocket> Sockets { get; set; } = [];
     /// <summary>Instances of library parts on this character's sockets (P5a), each with a stable instance ID that variants address.</summary>
     public List<PartInstance> Attachments { get; set; } = [];
+    /// <summary>
+    /// The attachment instance whose clips own the wearer's root motion (P10c: a centaur's lower body): its travel becomes
+    /// the pose's locomotion through its socket's rest frame, and the wearer's own clips may neither travel nor plant.
+    /// Null: the wearer's clips own it, as always.
+    /// </summary>
+    public string? MotionOwner { get; set; }
     public List<MotionSet> MotionSets { get; set; } = [];
     public List<HurtLayout> HurtLayouts { get; set; } = [];
     public List<ControlGroup> Groups { get; set; } = [];
@@ -304,6 +310,10 @@ public sealed class CharacterModel
 
         // Hand-edited files may hold a null where an ID belongs; treat it as unknown rather than letting a lookup throw.
         bool Known(string? id) => id is not null && controls.ContainsKey(id);
+        // A socket may sit on a module instance's control (P10c), named instance/control; the control itself is checked when the instance resolves.
+        var instanceIds = Attachments?.Where(a => a?.Id is not null).Select(a => a.Id).ToHashSet(StringComparer.Ordinal) ?? [];
+        string? InstanceOf(string? id) => id is not null && id.Contains(PartAsset.Namespace) ? MotionClip.Split(id).Instance : null;
+        bool KnownOrNested(string? id) => Known(id) || InstanceOf(id) is { } instance && instanceIds.Contains(instance);
         var scales = new HashSet<string>(StringComparer.Ordinal) { Unit };
         foreach (var measure in Measures)
         {
@@ -380,8 +390,18 @@ public sealed class CharacterModel
             Require(socket is not null, $"{owner}: null socket.");
             AuthoredAsset.RequireId(socket.Id, $"{owner} socket id");
             Require(sockets.Add(socket.Id), $"{owner}: duplicate socket '{socket.Id}'.");
-            Require(Known(socket.Control) && (socket.Frame is null or Locomotion || Known(socket.Frame)), $"{owner}: socket '{socket.Id}' references an unknown control.");
-            Require(socket.Toward is null || Known(socket.Toward) && socket.Toward != socket.Control, $"{owner}: socket '{socket.Id}' needs a different known toward control.");
+            Require(KnownOrNested(socket.Control) && (socket.Frame is null or Locomotion || KnownOrNested(socket.Frame)), $"{owner}: socket '{socket.Id}' references an unknown control{(InstanceOf(socket.Control) is { } missing && !instanceIds.Contains(missing) ? $" (no attachment '{missing}' for '{socket.Control}'; path: {Id} > sockets > {socket.Id} > control)" : "")}.");
+            Require(socket.Toward is null || KnownOrNested(socket.Toward) && socket.Toward != socket.Control, $"{owner}: socket '{socket.Id}' needs a different known toward control.");
+            if (InstanceOf(socket.Control) is { } nested)
+            {
+                Require(socket.Frame is null or Locomotion || InstanceOf(socket.Frame) == nested, $"{owner}: socket '{socket.Id}' on '{socket.Control}' may frame on the same instance's control or the locomotion frame only (path: {Id} > sockets > {socket.Id} > frame).");
+                Require(socket.Toward is null || InstanceOf(socket.Toward) == nested, $"{owner}: socket '{socket.Id}' on '{socket.Control}' may point toward the same instance's control only (path: {Id} > sockets > {socket.Id} > toward).");
+            }
+            else
+            {
+                Require(socket.Frame is null or Locomotion || Known(socket.Frame), $"{owner}: socket '{socket.Id}' frames on a nested control while sitting on the wearer's own (path: {Id} > sockets > {socket.Id} > frame).");
+                Require(socket.Toward is null || Known(socket.Toward), $"{owner}: socket '{socket.Id}' points toward a nested control while sitting on the wearer's own (path: {Id} > sockets > {socket.Id} > toward).");
+            }
             new Limit(-100, 100).Check(socket.OffsetX, $"{owner} socket '{socket.Id}' offsetX");
             new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
             new Limit(-100, 100).Check(socket.OffsetZ, $"{owner} socket '{socket.Id}' offsetZ");
@@ -400,6 +420,12 @@ public sealed class CharacterModel
             Require(attachments.Add(instance.Id), $"{owner}: duplicate attachment '{instance.Id}'.");
             Require(!parts.Contains(instance.Id), $"{owner}: attachment '{instance.Id}' shares its id with a drawing part.");
             Require(sockets.Contains(instance.Socket), $"{owner} attachment '{instance.Id}': no socket '{instance.Socket}'.");
+        }
+        if (MotionOwner is not null)
+        {
+            Require(attachments.Contains(MotionOwner), $"{owner}: the root-motion owner '{MotionOwner}' is not an attachment instance (path: {Id} > motionOwner).");
+            var mount = Attachments.First(a => a.Id == MotionOwner);
+            Require(InstanceOf(Sockets.First(s => s.Id == mount.Socket).Control) is null, $"{owner}: the root-motion owner '{MotionOwner}' must mount on one of the wearer's own controls, not on another instance (path: {Id} > motionOwner).");
         }
         var sets = new HashSet<string>(StringComparer.Ordinal);
         foreach (var set in MotionSets)

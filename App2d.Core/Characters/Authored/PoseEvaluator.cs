@@ -257,6 +257,13 @@ public static class PoseEvaluator
         var cycleTravel = (Travel(clip.Duration) - Travel(0)) * (float)cycles;
         var cycleOrigin = new Vector3(Travel(0) + cycleTravel, 0);
         var pose = new EvaluatedPose { Locomotion = new(Travel(time) + cycleTravel, 0) };
+        var layers = input.Layers().Select(l => new Layer(l)).ToArray();
+        if (model.MotionOwner is { } mover)
+        {
+            // The owning module's travel, through its socket's rest frame (P10c); the wearer's own clip carries none.
+            pose.Locomotion = new(OwnerTravel(model, mover, clip, time, seconds, repeat, input, layers), 0);
+            cycleOrigin = pose.Locomotion;
+        }
         if (input.InPlace)
         {
             cycleOrigin -= pose.Locomotion;
@@ -272,7 +279,6 @@ public static class PoseEvaluator
                 tracks[(track.Kind, track.Target)] = track;
             }
         }
-        var layers = input.Layers().Select(l => new Layer(l)).ToArray();
         // A channel read from one layer: its track, the time to read it at and the clip whose reference units it uses.
         (ClipTrack? Track, float Time, MotionClip Clip) Read(Layer? layer, string kind, string target) => layer is null
             ? (tracks.GetValueOrDefault((kind, target)), time, clip)
@@ -525,7 +531,8 @@ public static class PoseEvaluator
     private static void EvaluateAttachments(ResolvedModel model, EvaluatedPose pose, MotionClip clip, float time, double seconds, PoseInput input, Layer[] layers)
     {
         var actor = new ActorPose(pose, Vector2.Zero, 1);
-        foreach (var attachment in model.Attachments)
+        // Dependency order (P10c): an instance mounted on another instance's control reads that instance's evaluated frames.
+        foreach (var attachment in model.EvaluationOrder)
         {
             if (!attachment.IsAnimated)
             {
@@ -533,36 +540,7 @@ public static class PoseEvaluator
             }
 
             var placement = attachment.Placement(actor.SocketPlacement(attachment.Socket));
-            // The selection: an explicit gameplay play, a semantic request the asset binds, the topmost owning layer's
-            // selection channel from half weight, the base clip's, then the instance's own default.
-            string? expression = null;
-            double? since = null;
-            double? owned = null;
-            if (input.Plays?.FirstOrDefault(p => p.Instance == attachment.Id) is { Instance: not null } play)
-            {
-                expression = play.Expression;
-                owned = play.Seconds;
-            }
-            else if (input.Expression is { } requested && attachment.Asset.Binds(requested))
-            {
-                expression = requested;
-            }
-            else
-            {
-                for (var i = layers.Length - 1; i >= 0 && expression is null; i--)
-                {
-                    if (layers[i].Masks(attachment.Id) && layers[i].Weight >= .5f && layers[i].Clip.PlayAt(attachment.Id, layers[i].Time) is { } selected)
-                    {
-                        (expression, since) = selected;
-                    }
-                }
-
-                if (expression is null && clip.PlayAt(attachment.Id, time) is { } held)
-                {
-                    (expression, since) = held;
-                }
-                expression ??= attachment.DefaultExpression;
-            }
+            var (expression, since, owned) = Select(attachment, clip, time, input, layers);
             var binding = attachment.Asset.Binding(expression);
             var hidden = attachment.Instance.Hidden || expression == PartAsset.None || binding?.Hidden == true;
             pose.Attachments[attachment.Id] = EvaluateAttachment(attachment, placement, expression, binding, hidden, time, seconds, since, owned, input, clip, layers);
@@ -571,6 +549,113 @@ public static class PoseEvaluator
                 pose.Expressions[attachment.Id] = expression;
             }
         }
+    }
+
+    /// <summary>
+    /// The selection for one instance: an explicit gameplay play, a semantic request the asset binds, the topmost owning
+    /// layer's selection channel from half weight, the base clip's, then the instance's own default.
+    /// </summary>
+    private static (string? Expression, double? Since, double? Owned) Select(ResolvedAttachment attachment, MotionClip clip, float time, PoseInput input, Layer[] layers)
+    {
+        if (input.Plays?.FirstOrDefault(p => p.Instance == attachment.Id) is { Instance: not null } play)
+        {
+            return (play.Expression, null, play.Seconds);
+        }
+
+        if (input.Expression is { } requested && attachment.Asset.Binds(requested))
+        {
+            return (requested, null, null);
+        }
+
+        string? expression = null;
+        double? since = null;
+        for (var i = layers.Length - 1; i >= 0 && expression is null; i--)
+        {
+            if (layers[i].Masks(attachment.Id) && layers[i].Weight >= .5f && layers[i].Clip.PlayAt(attachment.Id, layers[i].Time) is { } selected)
+            {
+                (expression, since) = selected;
+            }
+        }
+
+        if (expression is null && clip.PlayAt(attachment.Id, time) is { } held)
+        {
+            (expression, since) = held;
+        }
+
+        return (expression ?? attachment.DefaultExpression, since, null);
+    }
+
+    /// <summary>The base-layer clip and its seconds for a selection, as <see cref="EvaluateAttachment"/> plays them.</summary>
+    private static (MotionClip? Clip, double Seconds) BasePlay(ResolvedAttachment attachment, string? expression, double? since, double? owned, float time, double seconds, PoseInput input)
+    {
+        var asset = attachment.Asset;
+        var binding = asset.Binding(expression);
+        var layer = asset.BaseLayer!;
+        var expressionLayer = binding?.Layer ?? layer.Id;
+        if (binding is not null && binding.Clip is not null && layer.Id == expressionLayer)
+        {
+            var at = binding.Time ?? owned ?? (since is { } key ? Math.Max(0, time - key) * (layer.Clock == PartClocks.Mapped ? layer.Rate : 1) : Math.Max(0, layer.Time(seconds, input.Clock)));
+            return (asset.Clip(binding.Clip), at);
+        }
+
+        if (binding?.Mutes.Contains(layer.Id) == true || layer.Clip is null)
+        {
+            return (null, 0);
+        }
+
+        return (asset.Clip(layer.Clip), Math.Max(0, layer.Time(seconds, input.Clock)));
+    }
+
+    /// <summary>
+    /// The root travel the owning module's base clip has accumulated, in the wearer's frame (P10c): the module clip's travel
+    /// (with its cycles) turned by the instance's placement on its socket at rest. The wearer's rig is still at rest when
+    /// this is read, which is why the owner must mount on one of the wearer's own controls.
+    /// </summary>
+    private static Vector2 OwnerTravel(ResolvedModel model, ResolvedAttachment mover, MotionClip clip, float time, double seconds, bool repeat, PoseInput input, Layer[] layers)
+    {
+        var (expression, since, owned) = Select(mover, clip, time, input, layers);
+        var (gait, at) = BasePlay(mover, expression, since, owned, time, seconds, input);
+        if (gait is null)
+        {
+            return Vector2.Zero;
+        }
+
+        var travel = TravelOf(mover.Rig!, gait, at, repeat: true);
+        if (since is { } key && owned is null)
+        {
+            // A gait selected by the wearer clip's key restarts at that key every wearer cycle; the travel of the completed
+            // cycles accumulates, so an actor keeps walking instead of snapping back each loop.
+            var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
+            if (cycles > 0)
+            {
+                travel += TravelOf(mover.Rig!, gait, Math.Max(0, clip.Duration - key), repeat: true) * (float)cycles;
+            }
+        }
+
+        return OwnerFrame(model, mover).Direction(travel);
+    }
+
+    /// <summary>The owner's placement on its socket at the wearer's rest, whose axes carry the module's travel into the wearer's frame.</summary>
+    private static LayeredFrame2D OwnerFrame(ResolvedModel model, ResolvedAttachment mover)
+    {
+        var socket = mover.Socket;
+        var angle = socket.Frame == CharacterModel.Locomotion ? 0 : model.Nodes[socket.Frame ?? socket.Control].RestAngle;
+        var carrier = LayeredFrame2D.FromRotation(angle, model.Rest[socket.Control]);
+        return mover.Placement(LayeredFrame2D.Local(Vector2.One, socket.Angle, new(socket.OffsetX, socket.OffsetY), socket.OffsetZ).Then(carrier));
+    }
+
+    /// <summary>A clip's root travel at a time on a model, cycles included, as the pose's locomotion reads it.</summary>
+    public static Vector2 TravelOf(ResolvedModel model, MotionClip clip, double seconds, bool repeat)
+    {
+        var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
+        var time = (float)(cycles > 0 ? seconds % clip.Duration : Math.Min(seconds, clip.Duration));
+        var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
+        Vector2 Travel(float t)
+        {
+            var (value, _) = Interpolate(clip.Travel.Keys, t);
+            return new Vector2(value.X, value.Y) * ratio;
+        }
+        return Travel(time) + (Travel(clip.Duration) - Travel(0)) * (float)cycles;
     }
 
     private static EvaluatedAttachment EvaluateAttachment(ResolvedAttachment attachment, LayeredFrame2D placement, string? expression, PartExpression? binding, bool hidden,
@@ -660,6 +745,14 @@ public static class PoseEvaluator
     /// <summary>The locomotion frame's travel over one cycle on this model: the stride gameplay matches against ground distance.</summary>
     public static Vector2 CycleTravel(ResolvedModel model, MotionClip clip)
     {
+        if (model.MotionOwner is { } mover)
+        {
+            // The owning module's gait selected at the clip's start carries the travel; one module clip cycle is the stride.
+            var (expression, _, _) = Select(mover, clip, 0, default, []);
+            var gait = mover.Asset.Binding(expression) is { Clip: { } id } binding && (binding.Layer ?? mover.Asset.BaseLayer!.Id) == mover.Asset.BaseLayer!.Id ? mover.Asset.Clip(id) : mover.Asset.Clip(mover.Asset.BaseLayer!.Clip);
+            return gait is null ? Vector2.Zero : OwnerFrame(model, mover).Direction(CycleTravel(mover.Rig!, gait));
+        }
+
         var keys = clip.Travel.Keys;
         if (keys.Count == 0)
         {

@@ -1,0 +1,51 @@
+{
+  "format": "app2d-model-template",
+  "version": 2,
+  "id": "centaur",
+  "name": "Centaur",
+  "description": "A composed study: the quadruped lower body owns the gait, the Person upper body rides its back and acts on its own.",
+  "model": "centaur",
+  "animations": {
+    "idle": "centaur-idle",
+    "walk": "centaur-walk",
+    "run": "centaur-run",
+    "slam": "centaur-slam",
+    "swing": "centaur-swing"
+  },
+  "previewAnimation": "walk",
+  "slots": [
+    {
+      "id": "mount",
+      "usage": "lower-body",
+      "required": true,
+      "default": "quadruped-lower"
+    },
+    {
+      "id": "saddle",
+      "usage": "upper-body",
+      "required": true,
+      "default": "person-upper"
+    }
+  ],
+  "dimensions": [
+    "legs",
+    "arms"
+  ],
+  "presets": [
+    "standard",
+    "tall"
+  ],
+  "library": {
+    "roles": {
+      "idle": "idle",
+      "walk": "walk",
+      "run": "run",
+      "slam": "slam"
+    },
+    "masks": [
+      "upper-body",
+      "lower-body"
+    ],
+    "mappings": {}
+  }
+}

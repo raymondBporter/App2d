@@ -51,7 +51,11 @@ internal sealed class AnimationOutline(EditorSession session, AnimationWeaponEdi
                     ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
                 }
 
-                if (ImGui.Selectable($"{attachment.Id}  (expression)", session.Selection.Attachment == attachment.Id && session.Selection.Control is null))
+                // P10c: where the instance mounts (a wearer control or another instance's control), whether it owns the root motion, and who keys it in this clip.
+                var mount = ResolvedModel.NestedSocket(attachment.Socket) is { } nested ? $"on {nested.Instance}/{nested.Control}" : $"on {attachment.Socket.Control}";
+                var owner = primary.Model.MotionOwner?.Id == attachment.Id ? ", root motion" : "";
+                var keyedBy = clip.Asset.Plays.Any(p => p.Instance == attachment.Id) ? "this clip" : clip.Asset.Tracks.Any(t => MotionClip.InstanceOf(t.Target) == attachment.Id) ? "this clip's keys" : "its default";
+                if (ImGui.Selectable($"{attachment.Id}  ({mount}{owner}; {keyedBy})", session.Selection.Attachment == attachment.Id && session.Selection.Control is null))
                 {
                     session.Selection.Select(attachment: attachment.Id);
                     session.EditWeapon = false;

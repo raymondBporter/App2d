@@ -1,0 +1,29 @@
+{
+  "format": "app2d-clip",
+  "version": 4,
+  "id": "centaur-swing",
+  "name": "Centaur swing",
+  "model": "centaur",
+  "structureRevision": 1,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [],
+  "contacts": [],
+  "markers": [],
+  "plays": [
+    {
+      "instance": "upper",
+      "keys": [
+        {
+          "expression": "player-sword-side-cut"
+        }
+      ]
+    }
+  ],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
+}

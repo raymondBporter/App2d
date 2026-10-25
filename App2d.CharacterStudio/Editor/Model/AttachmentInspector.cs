@@ -48,6 +48,24 @@ internal sealed class AttachmentInspector(EditorSession session)
             session.Edit(document, () => { Live().Socket = socket; document.Asset.Validate(); });
         }
 
+        // P10c: the connection (a socket on the wearer's control or on another instance's control) and root-motion ownership.
+        if (document.Asset.Sockets.FirstOrDefault(s => s.Id == instance.Socket) is { } mountSocket)
+        {
+            var where = ResolvedModel.NestedSocket(mountSocket) is { } nested ? $"attachment '{nested.Instance}' control '{nested.Control}' (evaluated after that instance)" : $"control '{mountSocket.Control}'";
+            ImGui.TextDisabled($"Connection: socket '{mountSocket.Id}' on {where}{(mountSocket.Usage is { } usage ? $", takes '{usage}'" : "")}.");
+        }
+
+        var owns = document.Asset.MotionOwner == id;
+        if (ImGui.Checkbox("Owns the root motion", ref owns))
+        {
+            session.Edit(document, () => { document.Asset.MotionOwner = owns ? id : null; document.Asset.Validate(); });
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(owns ? "This instance's clips carry the wearer's travel; the wearer's own clips may neither travel nor plant." : document.Asset.MotionOwner is { } other ? $"'{other}' owns the root motion; one instance at most." : "The wearer's own clips carry the travel.");
+        }
+
         var offset = new Vector2(instance.X, instance.Y);
         if (Ui.Drag2("Offset in socket axes", ref offset, .005f, -100, 100))
         {
