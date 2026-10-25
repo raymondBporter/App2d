@@ -34,10 +34,21 @@ public sealed class BeamwrightContent
         H = 7,
         Sandbox = true,
         Tip = "Unlimited parts. Build a path into every photocell, or just experiment with light.",
-        Sources = [new() { X = 0, Y = 3 }, new() { X = 0, Y = 6, Color = "B" }],
-        Targets = [new() { X = 10, Y = 0, Need = 30 }, new() { X = 10, Y = 6, Need = 30 },
-            new() { X = 5, Y = 0, Need = 5, Color = "R", Radius = .36f }],
-        Mirage = [new() { X = 6, Y = 5, W = 4, H = 2, K = .5f }]
+        Sources =
+        [
+            new() { X = 0, Y = 3 },
+            new() { X = 0, Y = 6, Color = "B" }
+        ],
+        Targets =
+        [
+            new() { X = 10, Y = 0, Need = 30 },
+            new() { X = 10, Y = 6, Need = 30 },
+            new() { X = 5, Y = 0, Need = 5, Color = "R", Radius = .36f }
+        ],
+        Mirage =
+        [
+            new() { X = 6, Y = 5, W = 4, H = 2, K = .5f }
+        ]
     };
 }
 

@@ -83,8 +83,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     public LevelContent2D Content => _frame.Content;
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain) => _world.SetVisibleTerrain(terrain);
     public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);
-    public void DrawGrass(Renderer2D renderer, VegetationLayer2D layer) =>
-        _world.DrawGrass(renderer, _camera.VisibleWorldBounds, layer);
+    public void DrawGrass(Renderer2D renderer, VegetationLayer2D layer) => _world.DrawGrass(renderer, _camera.VisibleWorldBounds, layer);
     public bool ShowTraversalDebug { get; set; }
     public BallisticsDebug2D Ballistics { get; }
     public SpatialSoundEffectSink2D<SoundEffect2D> WorldSounds { get; }
@@ -141,8 +140,7 @@ internal sealed class SideScrollerClient2D : IDisposable
             {
                 case CombatDamageOccurred2D combat when combat.Damage.Faction != CombatFaction2D.Player &&
                     (!combat.Damage.WasKilled || combat.Damage.Faction == CombatFaction2D.Enemy):
-                    WorldSounds.PlayAt(combat.Damage.WasKilled ? SoundEffect2D.EnemyDeath : SoundEffect2D.EnemyHurt,
-                        combat.Damage.Position);
+                    WorldSounds.PlayAt(combat.Damage.WasKilled ? SoundEffect2D.EnemyDeath : SoundEffect2D.EnemyHurt, combat.Damage.Position);
                     break;
                 case JumpStarted2D when isMine:
                     EndJumpSound();
@@ -153,13 +151,17 @@ internal sealed class SideScrollerClient2D : IDisposable
                     break;
                 case Landed2D landed when isMine:
                     EndJumpSound();
-                    _sounds.Play(landed.ImpactSpeed >= _traversal.HardLandingSpeed
-                        ? SoundEffect2D.PlayerLandHard : SoundEffect2D.PlayerLandSoft);
-                    if (landed.ImpactSpeed >= _traversal.HardLandingSpeed)
+                    var isHardImpact = landed.ImpactSpeed >= _traversal.HardLandingSpeed;
+                    if (isHardImpact)
                     {
+                        _sounds.Play(SoundEffect2D.PlayerLandHard);
                         _presentation.PlayLanding();
                         var impact = _traversal.HardLandingIntensity(landed.ImpactSpeed);
                         _cameraController.Shake(float.Lerp(1f, 1.75f, impact), stabilizeVerticalFollow: true);
+                    }
+                    else
+                    {
+                        _sounds.Play(SoundEffect2D.PlayerLandHard);
                     }
                     break;
                 case Footstep2D when isMine:

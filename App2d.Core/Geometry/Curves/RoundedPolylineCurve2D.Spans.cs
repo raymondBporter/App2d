@@ -22,8 +22,11 @@ public readonly partial record struct RoundedPolylineCurve2D
         if (Length <= 1e-8f)
         {
             for (var i = 0; i < Points.Length - 1; i++)
+            {
                 spans.Add(new(i / (double)(Points.Length - 1), (i + 1d) / (Points.Length - 1),
                     [Points[i].ToVector2d(), Points[i + 1].ToVector2d()]));
+            }
+
             return [.. spans];
         }
         for (var i = 0; i < Points.Length - 1; i++)

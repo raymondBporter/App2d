@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Rendering;
@@ -19,6 +20,5 @@ public sealed class LinearGradientShader(Color4b startColor, Color4b endColor) :
 {
     public Color4b BaseColor => Color4b.White;
     public Color4b GetVertexColor(Vector2 position, Rect2D bounds) =>
-        Color4b.Lerp(startColor, endColor,
-            bounds.Size.Y > 0f ? Math.Clamp((bounds.Max.Y - position.Y) / bounds.Size.Y, 0f, 1f) : 0f);
+        Color4b.Lerp(startColor, endColor, bounds.Size.Y > 0f ? Clamping.Clamp01((bounds.Max.Y - position.Y) / bounds.Size.Y) : 0f);
 }

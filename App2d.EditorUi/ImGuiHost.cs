@@ -101,6 +101,8 @@ public sealed class ImGuiHost : IDisposable
     }
 
     public nint Register(Texture2D texture) => _renderer.Register(texture);
+    /// <summary>Registers caller-owned pixels with nearest sampling for pixel-accurate viewports.</summary>
+    public nint Register(Texture2D texture, bool pointSample) => _renderer.Register(texture, pointSample);
     public void Unregister(nint id) => _renderer.Unregister(id);
 
     public void Begin(float seconds)

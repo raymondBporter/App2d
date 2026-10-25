@@ -15,6 +15,11 @@ retained character generators and the rendering smokes and studies, run with
 does not reference it. `tools/ClothLab` is a small cape study.
 Everything targets `net10.0-windows10.0.19041.0`.
 
+`App2d.ImageLab` is a small raster workbench: load an image, preview parameterized
+transforms, apply them to an undo/redo stack, and save the current step as PNG.
+Run `dotnet run --project App2d.ImageLab`. See [Image Lab](App2d.ImageLab/README.md)
+for the transforms and a few starting pipelines.
+
 `App2d.Beamwright` is the native Windows optics puzzle game port. Run it with
 `dotnet run --project App2d.Beamwright`. It reuses Core's host, input, renderer,
 affine poses, filled shapes, and raycasts, and includes all 36 original campaign

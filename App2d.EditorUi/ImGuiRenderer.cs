@@ -8,6 +8,7 @@ namespace App2d.EditorUi;
 /// <summary>Renders ImGui draw lists through an existing MonoGame graphics device. It owns no window or frame loop.</summary>
 internal sealed class ImGuiRenderer : IDisposable
 {
+    private readonly record struct GuiTexture(Texture2D Texture, SamplerState Sampler);
     [StructLayout(LayoutKind.Sequential)]
     private struct GuiVertex : IVertexType
     {
@@ -23,7 +24,7 @@ internal sealed class ImGuiRenderer : IDisposable
     private readonly GraphicsDevice _device;
     private readonly BasicEffect _effect;
     private readonly RasterizerState _rasterizer = new() { CullMode = CullMode.None, ScissorTestEnable = true };
-    private readonly Dictionary<nint, Texture2D> _textures = [];
+    private readonly Dictionary<nint, GuiTexture> _textures = [];
     private Texture2D? _font;
     private nint _fontId;
     private GuiVertex[] _vertices = new GuiVertex[8192];
@@ -57,10 +58,10 @@ internal sealed class ImGuiRenderer : IDisposable
         io.Fonts.SetTexID(_fontId);
         io.Fonts.ClearTexData();
     }
-    public nint Register(Texture2D texture)
+    public nint Register(Texture2D texture, bool pointSample = false)
     {
         var id = (nint)_nextTexture++;
-        _textures.Add(id, texture);
+        _textures.Add(id, new(texture, pointSample ? SamplerState.PointClamp : SamplerState.LinearClamp));
         return id;
     }
     public void Unregister(nint id) => _textures.Remove(id);
@@ -134,11 +135,12 @@ internal sealed class ImGuiRenderer : IDisposable
                     }
 
                     _device.ScissorRectangle = new(left, top, right - left, bottom - top);
-                    _effect.Texture = _textures[command.TextureId];
+                    var texture = _textures[command.TextureId];
+                    _effect.Texture = texture.Texture;
                     foreach (var pass in _effect.CurrentTechnique.Passes)
                     {
                         pass.Apply();
-                        _device.SamplerStates[0] = SamplerState.LinearClamp;
+                        _device.SamplerStates[0] = texture.Sampler;
                         _device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, _vertices, (int)command.VtxOffset, list.VtxBuffer.Size - (int)command.VtxOffset,
                             _indices, (int)command.IdxOffset, (int)command.ElemCount / 3, GuiVertex.Declaration);
                     }

@@ -196,7 +196,11 @@ public sealed partial class BeamwrightGame2D(BenchSession? session = null) : Gam
         _top = 139 + (availableHeight - _cell * Session.Level.H) / 2;
         _benchToWorld = Matrix3x2.CreateScale(_cell, -_cell) * Matrix3x2.CreateTranslation(_left, -_top);
         _buttons.Clear();
-        if (_showLevels) { LayoutPicker(width, height); return; }
+        if (_showLevels)
+        {
+            LayoutPicker(width, height);
+            return;
+        }
 
         AddButton(new(width - 238, 24, width - 134, 62), "Levels [L]", OpenLevelPicker);
         AddButton(new(width - 124, 24, width - 20, 62), "Free bench", () => Load(-1), active: Session.Level.Sandbox);
@@ -208,7 +212,9 @@ public sealed partial class BeamwrightGame2D(BenchSession? session = null) : Gam
         {
             var part = parts[row + _rackOffset];
             var y = 176 + row * 49;
-            AddButton(new(16, y, _sidebarWidth - 16, y + 42), part.Name,
+            AddButton(
+                new(16, y, _sidebarWidth - 16, y + 42),
+                part.Name,
                 () =>
                 {
                     _armed = _armed == part.Type ? null : part.Type;
@@ -216,7 +222,9 @@ public sealed partial class BeamwrightGame2D(BenchSession? session = null) : Gam
                     _pressPosition = _pointer;
                     _dragging = false;
                     _selected = -1;
-                }, Session.Available(part.Type) > 0, _armed == part.Type);
+                },
+                Session.Available(part.Type) > 0,
+                _armed == part.Type);
         }
         var footer = height - 162;
         AddButton(new(16, footer, _sidebarWidth - 16, footer + 34), "Undo [Ctrl+Z]", () => { Session.Undo(); ClearSelection(); }, Session.CanUndo);
@@ -241,8 +249,7 @@ public sealed partial class BeamwrightGame2D(BenchSession? session = null) : Gam
             var y = top + 80 + i % 12 * rowHeight;
             var level = Session.Content.Levels[i];
             var label = $"{i + 1:00}  {level.Name}";
-            AddButton(new(x, y, x + columnWidth - 10, y + rowHeight - 5), label,
-                () => Load(index), active: Session.LevelIndex == i);
+            AddButton(new(x, y, x + columnWidth - 10, y + rowHeight - 5), label, () => Load(index), active: Session.LevelIndex == i);
         }
     }
 

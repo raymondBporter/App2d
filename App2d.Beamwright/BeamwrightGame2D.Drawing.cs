@@ -40,16 +40,29 @@ public sealed partial class BeamwrightGame2D
     private void DrawBoard(Renderer2D renderer)
     {
         var level = Session.Level;
-        for (var x = 0; x <= level.W; x++) Line(renderer, new(x, 0), new(x, level.H), new(47, 55, 64));
-        for (var y = 0; y <= level.H; y++) Line(renderer, new(0, y), new(level.W, y), new(47, 55, 64));
+        for (var x = 0; x <= level.W; x++)
+        {
+            Line(renderer, new(x, 0), new(x, level.H), new(47, 55, 64));
+        }
+        for (var y = 0; y <= level.H; y++)
+        {
+            Line(renderer, new(0, y), new(level.W, y), new(47, 55, 64));
+        }
         for (var x = 0; x < level.W; x++)
         {
             for (var y = 0; y < level.H; y++)
+            {
                 renderer.DrawWorldCircle(World(new(x + .5f, y + .5f)), Math.Max(1.5f, _cell * .027f), new(17, 23, 29), 3);
+            }
         }
-
-        for (var x = 0; x < level.W; x++) Text(renderer, (x + 1).ToString(), _left + (x + .5f) * _cell - 5, _top - 20, Dim);
-        for (var y = 0; y < level.H; y++) Text(renderer, ((char)('A' + y)).ToString(), _left - 27, _top + (y + .5f) * _cell + 5, Dim);
+        for (var x = 0; x < level.W; x++)
+        {
+            Text(renderer, (x + 1).ToString(), _left + (x + .5f) * _cell - 5, _top - 20, Dim);
+        }
+        for (var y = 0; y < level.H; y++)
+        {
+            Text(renderer, ((char)('A' + y)).ToString(), _left - 27, _top + (y + .5f) * _cell + 5, Dim);
+        }
         foreach (var wall in level.Walls)
         {
             var x = _left + wall[0] * _cell + 3;

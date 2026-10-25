@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.Intrinsics;
 
 namespace App2d.Core.Mathematics;
 
@@ -42,7 +43,12 @@ public readonly record struct Vector2d(double X, double Y)
     public static Vector2d operator -(Vector2d value) => new(-value.X, -value.Y);
     public static Vector2d operator *(Vector2d value, double scale) => new(value.X * scale, value.Y * scale);
     public static Vector2d operator *(double scale, Vector2d value) => value * scale;
-    public static Vector2d operator /(Vector2d value, double scale) => new(value.X / scale, value.Y / scale);
+    public static Vector2d operator /(Vector2d value, double scale)
+    {
+        // One packed divide; constructing from components lets the JIT keep the other operators scalar.
+        var quotient = Vector128.Create(value.X, value.Y) / Vector128.Create(scale);
+        return new(quotient.GetElement(0), quotient.GetElement(1));
+    }
 
     public double LengthSquared() => Dot(this);
     public double Length() => Math.Sqrt(LengthSquared());

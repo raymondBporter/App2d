@@ -16,6 +16,10 @@ gui.Render();
 
 `ImGuiHost` owns its context, platform adapter and UI GPU resources. Dispose it before its graphics device or input control. Dispose and recreate it when the device is replaced. Textures registered with `Register` remain caller-owned; unregister them before disposing them. Input adapters buffer text/window events until their receiving context is current.
 
+Texture registrations use linear sampling by default. `Register(texture, pointSample: true)`
+opts an individual viewport image into nearest sampling; fonts and other registered
+textures retain their own sampling. Image Lab uses this for enlarged raster pixels.
+
 The view code describes screen structure. `Root` fills the drawing surface; `Sidebar` places a fixed tool window at the right edge; `Panel` supplies a child region and optional header; `Row` places its child callbacks horizontally; `Section` supplies a title and an ID scope. Panel sizes use device pixels; multiply authored sizes by `Ui.Scale` for the current monitor and user preference. Zero size fills the remaining space.
 
 ```csharp

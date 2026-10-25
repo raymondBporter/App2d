@@ -66,9 +66,9 @@ internal sealed class OpticalScene
     public OpticalScene(BeamwrightContent content, BenchLevel level, IReadOnlyList<PartPlacement> placed)
     {
         _level = level;
-        for (var i = 0; i < level.Fixed.Length; i++) 
+        for (var i = 0; i < level.Fixed.Length; i++)
             AddPart(content, level.Fixed[i], "f" + i);
-        for (var i = 0; i < placed.Count; i++) 
+        for (var i = 0; i < placed.Count; i++)
             AddPart(content, placed[i], "p" + i);
         var ports = _bodies.SelectMany(b => b.Ports).ToArray();
         foreach (var port in ports)
@@ -116,7 +116,7 @@ internal sealed class OpticalScene
     {
         var part = content.Part(placement.Type);
         var frame = Frame2D.FromRotationDegrees(placement.Angle, placement.Center);
-        
+
         var ports = part.Ports.Select(index =>
         {
             var a = part.Pts[index];
