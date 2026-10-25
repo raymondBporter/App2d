@@ -477,7 +477,10 @@ public sealed class MotionClip
                 }
                 else
                 {
-                    Scale(track.Scale ?? control.Scale, field);
+                    if (fullTarget == track.Target)
+                    {
+                        Scale(track.Scale ?? control.Scale, field);
+                    }
                 }
             }
         }

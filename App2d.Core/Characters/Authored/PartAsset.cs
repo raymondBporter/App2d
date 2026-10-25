@@ -179,6 +179,13 @@ public sealed class PartAsset
     public List<ControlGroup> Groups { get; set; } = [];
     /// <summary>Rig controls and pieces a wearer's clip may key through <c>instance/target</c> tracks.</summary>
     public List<string> Exposed { get; set; } = [];
+    /// <summary>The module contract's dimension inputs (P10b): parameters of the local rig a wearer's instance sets through <see cref="PartInstance.Inputs"/>.</summary>
+    public List<ModelParameter> Parameters { get; set; } = [];
+    public List<ParameterPreset> Presets { get; set; } = [];
+    /// <summary>Measures of the local rig the module's clips scale channels by.</summary>
+    public List<ModelMeasure> Measures { get; set; } = [];
+    /// <summary>The rig control the payload's origin coincides with: the module's connection frame on the wearer's socket (null for a part without a declared connection).</summary>
+    public string? Connection { get; set; }
     public List<PartLayer> Layers { get; set; } = [];
     /// <summary>The asset's own clips, authored against its rig (<see cref="MotionClip.Model"/> is the asset ID).</summary>
     public List<MotionClip> Clips { get; set; } = [];
@@ -276,8 +283,32 @@ public sealed class PartAsset
             Constraints = Constraints,
             Groups = Groups,
             Materials = Materials,
+            Parameters = Parameters,
+            Presets = Presets,
+            Measures = Measures,
             Parts = [.. parts ?? Parts],
         };
+    }
+
+    /// <summary>
+    /// The module contract (plan section 3.6, P10b): the connection frame, the dimension inputs with their ranges, the named
+    /// points and the exposed animation targets, as one summary per line for inspectors and reports.
+    /// </summary>
+    public IReadOnlyList<string> Contract()
+    {
+        var lines = new List<string>
+        {
+            $"connection: {(Connection is null ? "the origin" : $"control '{Connection}' at the origin")} on a socket{(Usage == "part" ? "" : $" taking '{Usage}'")}",
+            $"inputs: {(Parameters.Count == 0 ? "none" : string.Join(", ", Parameters.Select(p => $"{p.Id} ({p.Units} {p.Default:0.###} in {p.Min:0.###}..{p.Max:0.###})")))}",
+            $"points: {(Locations.Count == 0 ? "the origin only" : string.Join(", ", Locations.Select(l => l.Control is null ? l.Id : $"{l.Id} on {l.Control}")))}",
+            $"targets: {(Exposed.Count == 0 ? "none" : string.Join(", ", Exposed))}",
+        };
+        if (IsAnimated)
+        {
+            lines.Add($"chains: {(Constraints.Count == 0 ? "none" : string.Join(", ", Constraints.Select(c => c.Id)))}; expressions: {(Expressions.Count == 0 ? "none" : string.Join(", ", Expressions.Keys))}");
+        }
+
+        return lines;
     }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message)
@@ -303,8 +334,11 @@ public sealed class PartAsset
         new Limit(.001f, 1).Check(LineWidth, owner + " lineWidth");
         Require(Materials is not null && Locations is not null && Parts is not null && Solids is not null, $"{owner}: collections cannot be null.");
         Require(Controls is not null && Constraints is not null && Groups is not null && Exposed is not null && Layers is not null && Clips is not null && Expressions is not null, $"{owner}: collections cannot be null.");
+        Require(Parameters is not null && Presets is not null && Measures is not null, $"{owner}: collections cannot be null.");
         Require(IsAnimated || Controls.Count == 0 && Constraints.Count == 0 && Groups.Count == 0 && Exposed.Count == 0 && Layers.Count == 0 && Clips.Count == 0 && Expressions.Count == 0 && Expression is null,
             $"{owner}: a static payload carries no rig, layers, clips, exposed targets or expressions; declare the payload animated.");
+        Require(IsAnimated || Parameters.Count == 0 && Presets.Count == 0 && Measures.Count == 0 && Connection is null,
+            $"{owner}: a static payload declares no inputs, presets, measures or connection control; declare the payload animated.");
         foreach (var (id, material) in Materials)
         {
             AuthoredAsset.RequireId(id, $"{owner} material id");
@@ -384,6 +418,9 @@ public sealed class PartAsset
 
         var controls = Controls.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
         var pieces = Parts.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
+        Require(Connection is null || controls.Contains(Connection), $"{owner}: the connection control '{Connection}' is not a rig control.");
+        Require(Connection is null || Controls.First(c => c.Id == Connection).Parent is null && Controls.First(c => c.Id == Connection).Rest.XYZ == System.Numerics.Vector3.Zero,
+            $"{owner}: the connection control '{Connection}' must be a rig root at the origin (the payload's origin is what lands on the wearer's socket).");
         foreach (var target in Exposed)
         {
             Require(target is not null && (controls.Contains(target) || pieces.Contains(target)), $"{owner} exposed: '{target}' is neither a rig control nor a piece.");
@@ -499,6 +536,8 @@ public sealed record PartInstance
     public bool Hidden { get; set; }
     /// <summary>Animated assets: the expression this instance shows by default, over the asset's own default (P7a).</summary>
     public string? Expression { get; set; }
+    /// <summary>The module's dimension inputs this instance sets (P10b): parameter id → value, each exposed as the attachment property <c>input.&lt;id&gt;</c>.</summary>
+    public Dictionary<string, float> Inputs { get; set; } = [];
 
     /// <summary>
     /// The instance's placement on its socket: fit and size, then rotation, then offset, then the layer; a mirrored instance
@@ -535,6 +574,17 @@ public sealed record PartInstance
         if (Expression is not null)
         {
             AuthoredAsset.RequireId(Expression, field + " expression");
+        }
+
+        if (Inputs is null)
+        {
+            throw new InvalidDataException($"{field}: inputs cannot be null.");
+        }
+
+        foreach (var (input, value) in Inputs)
+        {
+            AuthoredAsset.RequireId(input, field + " input");
+            new Limit(-10000, 10000).Check(value, $"{field} input '{input}'");
         }
 
         Material?.Validate(field + " material");
@@ -583,6 +633,20 @@ public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, 
             throw new InvalidDataException($"{owner} attachment '{instance.Id}': the wearer has no socket '{instance.Socket}'.");
         }
 
+        // The slot contract (P10b): a socket that declares a usage takes only parts of that usage; a reference path names the binding.
+        if (socket.Usage is { } usage && asset.Usage != usage)
+        {
+            throw new InvalidDataException($"{owner} attachment '{instance.Id}': socket '{socket.Id}' takes '{usage}', part '{asset.Id}' is a '{asset.Usage}' (path: {owner} > attachments > {instance.Id} > socket {socket.Id} > usage).");
+        }
+
+        foreach (var input in instance.Inputs.Keys)
+        {
+            if (asset.Parameters.All(p => p.Id != input))
+            {
+                throw new InvalidDataException($"{owner} attachment '{instance.Id}': part '{asset.Id}' declares no input '{input}'{(asset.Parameters.Count == 0 ? "" : $" (one of {string.Join(", ", asset.Parameters.Select(p => p.Id))})")} (path: {owner} > attachments > {instance.Id} > inputs > {input}).");
+            }
+        }
+
         var parts = asset.Parts.ConvertAll(p => p with { Material = p.RenderMaterial.WithOverride(instance.Material).Resolve(asset.Materials) });
         var solids = asset.Solids.ConvertAll(s => s with { Material = s.RenderMaterial.WithOverride(instance.Material).Resolve(asset.Materials) });
         ResolvedModel? rig = null;
@@ -590,7 +654,9 @@ public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, 
         {
             try
             {
-                rig = ResolvedModel.From(asset.RigModel(parts));
+                // The instance's inputs are the module rig's parameter values (plan section 3.7 step 2: module selections and parameters before bindings).
+                var inputs = instance.Inputs.Count == 0 ? null : new ModelVariant { Id = instance.Id, Name = instance.Id, Base = asset.Id, Parameters = new(instance.Inputs, StringComparer.Ordinal) };
+                rig = ResolvedModel.From(asset.RigModel(parts), inputs);
             }
             catch (InvalidDataException ex)
             {

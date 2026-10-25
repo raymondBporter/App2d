@@ -28,7 +28,7 @@ public sealed class LibraryPartEditingTests : IDisposable
     public void TheShippedLibraryLoadsAndANewPartOpensInAppearanceWithAPreviewOnTheWearer()
     {
         var session = Session();
-        Assert.Equal(["boot", "face-curve", "face-person", "sandal"], session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal));
+        Assert.Equal(["boot", "face-curve", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"], session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal));
         session.Open("person");
         Assert.True(session.NewPart("badge", "Badge"), session.Message);
         Assert.Equal(Workspace.Appearance, session.Mode);

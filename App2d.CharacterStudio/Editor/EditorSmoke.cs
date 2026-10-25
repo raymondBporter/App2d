@@ -574,7 +574,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // wearer, found through uses / used by, undone in order and saved with its wearers.
                 var s = shell.Session;
                 var library = s.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
-                Record(library.SequenceEqual(["boot", "face-curve", "face-person", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot, the converted curve face (P7b), the baked Person face (P7c) and sandal as library parts");
+                Record(library.SequenceEqual(["boot", "face-curve", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot, the converted curve face (P7b), the baked Person face (P7c), the four rig modules (P10b) and sandal as library parts");
                 s.Open("person");
                 Check(s.NewPart("mitt", "Mitt", "hair-short"), s);
                 var mitt = s.PartDocument!;
@@ -1119,6 +1119,59 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.SetMode(Workspace.Model);
                 s.Seek(.3f);
                 shell.Viewport.Fit(s.Scene().FirstOrDefault());
+            }),
+            ("51-module-instances", shell =>
+            {
+                // P10b: the Person's upper body extracted as a rig module (parts/person-upper.json) worn twice on a stand through the
+                // P7 instancing mechanism: each instance keeps its own namespaced targets beside the wearer's, one instance sets the
+                // module's arms input, a socket usage refuses the wrong module by name, and the inspector shows the contract.
+                var s = shell.Session; s.Compare.Clear();
+                var upper = s.Assets.Part(ModulePlans.PersonUpper)!.Asset;
+                var lower = s.Assets.Part(ModulePlans.QuadrupedLower)!.Asset;
+                Record(upper is { IsAnimated: true, Connection: Humanoid.Chest, Usage: ModulePlans.UpperBody } && upper.Parameters.Select(p => p.Id).SequenceEqual(["torso", "arms", "width", "head"]) && upper.Clips.Count == 41 && lower.Locations.Single().Id == ModulePlans.Withers && lower.Clip("quadruped-walk")!.Contacts.Count == 6,
+                    "the parts folder loads the Person upper body (connection chest, inputs torso/arms/width/head, 41 clips) and the quadruped lower body (the withers point, the walk's six contacts and its travel) as rig modules");
+                var stand = new CharacterModel { Id = "rider-stand", Name = "Rider stand" };
+                stand.Controls.Add(new() { Id = "root", Rest = new(0, 1, 0) });
+                stand.Controls.Add(new() { Id = "head", Parent = "root", Rest = new(0, 1.3f, 0) });
+                stand.Parts.Add(new() { Id = "beam", A = "root", B = "head", Geometry = App2d.Core.Shapes.Ellipse2D.Builder.Create(new(.05f, .15f)), Material = new() { Fill = "#888888" } });
+                stand.Sockets.Add(new() { Id = "left-seat", Control = "root", OffsetX = -.6f, Frame = CharacterModel.Locomotion, Usage = ModulePlans.UpperBody });
+                stand.Sockets.Add(new() { Id = "right-seat", Control = "root", OffsetX = .6f, Frame = CharacterModel.Locomotion, Usage = ModulePlans.UpperBody });
+                stand.Attachments.Add(new() { Id = "a", Asset = ModulePlans.PersonUpper, Socket = "left-seat" });
+                stand.Attachments.Add(new() { Id = "b", Asset = ModulePlans.PersonUpper, Socket = "right-seat", Inputs = { ["arms"] = 1.5f } });
+                stand.Validate();
+                var standDocument = s.Assets.Create(stand);
+                s.Open("rider-stand");
+                Check(s.NewClip("rider-wave", "Rider wave", 1, true), s);
+                var wave = s.ClipDocument!;
+                Check(s.Edit(wave, () =>
+                {
+                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "head"), 0, System.Numerics.Vector3.Zero, .2f);
+                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "a/head"), 0, System.Numerics.Vector3.Zero, -.5f);
+                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.TranslateKind, "b/head"), 0, new(0, .1f, 0), 0);
+                    ClipAuthoring.SetPlay(wave.Asset, "a", 0, "walk");
+                    ClipAuthoring.SetPlay(wave.Asset, "b", 0, "hit");
+                }), s);
+                s.Seek(.3f);
+                var pose = s.Evaluate("rider-stand")!.Pose;
+                var a = pose.Attachments["a"];
+                var b = pose.Attachments["b"];
+                Record(MathF.Abs(pose.Angles["head"] - .2f) < 1e-5f && MathF.Abs(a.Pose.Angles["head"] + .5f) < 1e-5f && MathF.Abs(b.Pose.Angles["head"]) < 1e-5f && b.Pose.Points["head"].Y - b.Rig.Rest["head"].Y > .09f && (a.Expression, b.Expression) == ("walk", "hit"),
+                    "the wearer's head, a/head and b/head are three targets keyed apart; a walks while b takes the hit, and b's lifted head never reaches a");
+                var reachA = System.Numerics.Vector3.Distance(a.Rig.Rest["left-hand"], a.Rig.Rest["left-shoulder"]);
+                var reachB = System.Numerics.Vector3.Distance(b.Rig.Rest["left-hand"], b.Rig.Rest["left-shoulder"]);
+                Record(MathF.Abs(reachB / reachA - 1.5f) < 1e-3f && b.Rig.ParameterValues["arms"] == 1.5f, $"b's arms input (1.5) lengthens its own rig's arms through the module's bindings ({reachB / reachA:0.###} of a's); a keeps the part's default");
+                Check(s.Edit(standDocument, () => standDocument.Asset.Attachments.First(x => x.Id == "a").Inputs["head"] = 1.3f), s);
+                Record(s.Evaluate("rider-stand")!.Pose.Attachments["a"].Rig.ParameterValues["head"] == 1.3f, "setting a's head input re-resolves that instance's rig alone");
+                s.Undo();
+                var wrong = CharacterModel.FromJson(stand.ToJson());
+                wrong.Attachments.Add(new() { Id = "legs", Asset = ModulePlans.QuadrupedLower, Socket = "left-seat" });
+                string? refusal = null;
+                try { ResolvedModel.From(wrong, null, s.Assets.PartOf); } catch (InvalidDataException ex) { refusal = ex.Message; }
+                Record(refusal is not null && refusal.Contains("socket 'left-seat' takes 'upper-body', part 'quadruped-lower' is a 'lower-body' (path: Model 'rider-stand' > attachments > legs > socket left-seat > usage)"),
+                    "a lower body on a socket that takes upper bodies is refused with the reference path: " + refusal);
+                s.SetMode(Workspace.Animate);
+                s.Selection.Select(attachment: "b");
+                shell.Viewport.Fit(s.Evaluate("rider-stand"));
             }),
         ];
         return workspace;

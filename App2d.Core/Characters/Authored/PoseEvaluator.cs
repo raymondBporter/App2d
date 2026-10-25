@@ -287,7 +287,8 @@ public static class PoseEvaluator
 
             var (value, _) = Interpolate(track, at);
             var scale = track.Scale ?? defaultScale;
-            var ratio = scale == CharacterModel.Unit ? 1 : model.Measure(scale) / source.Reference[scale];
+            // A wearer's namespaced layer keys a nested part in the part's own units (P7a/P10b): no measure scales it.
+            var ratio = scale == CharacterModel.Unit || layer?.Source.Namespace is not null ? 1 : model.Measure(scale) / source.Reference[scale];
             var delta = new Vector3(value.X * ratio, value.Y * ratio, value.Z);
             if (!input.ReverseHorizontalMotion || kind is MotionClip.ScaleKind or MotionClip.FitKind or MotionClip.ShowKind)
             {

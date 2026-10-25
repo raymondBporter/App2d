@@ -125,6 +125,22 @@ internal static class Program
                     }
                 }
                 return published.All(r => r.Published) ? 0 : 2;
+            case ["--extract-modules", var authoredRoot, var output]:
+                // P10b: the Person's upper and lower body and the quadruped's lower body and head as rig modules, on a scratch tree with a report each.
+                var extracted = ModulePlans.Extract(authoredRoot, output);
+                foreach (var result in extracted)
+                {
+                    Console.WriteLine($"module {result.PartId}: {result.Status}");
+                    foreach (var line in result.Report)
+                    {
+                        Console.WriteLine("  " + line);
+                    }
+                    foreach (var difference in result.Differences)
+                    {
+                        Console.WriteLine("  DIFFERENCE: " + difference);
+                    }
+                }
+                return extracted.All(r => r.Converted) ? 0 : 2;
             case ["--convert-colliders", var authoredRoot, var output, .. var entityIds] when entityIds.Length > 0:
                 // P8c: entities' legacy hit-window geometry, guard and hurt layout to explicit attached colliders at entity version 3, on a scratch tree with a report each.
                 var exit = 0;

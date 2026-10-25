@@ -222,6 +222,9 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   (`[L]`), filters them with **Parts**, creates one from a shape or from a hair/clothing prop (New menu or right-click
   the prop), duplicates one and lists its wearers from the right-click menu. A part's own outline points are edited as
   coordinates in this pass; viewport dragging of library-part outlines arrives with the P7 cutout tools.
+- **Model → attachment instance of a rig module** (P10b): the inspector lists the module's inputs with this instance's values
+  (drag to set, **Part default** to clear; a bound input shows its parameter) and the part's contract (connection, inputs,
+  points, targets, chains, words). The Animate outline lists each instance's exposed targets as `instance/target` rows.
 - **Animate**: clips compatible with the subject's base. Dragging keys the channel it drives (autokey), contacts,
   markers, part expression keys, easing and onion skin. **Compare** pins two more builds at the same phase and world scale.
 - **Entity**: model and motion set with per-role overrides, controller, movement box, hurt regions (the legacy layout

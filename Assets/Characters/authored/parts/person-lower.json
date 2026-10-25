@@ -1,0 +1,6928 @@
+{
+  "format": "app2d-part",
+  "version": 1,
+  "id": "person-lower",
+  "name": "Person lower body",
+  "usage": "lower-body",
+  "payload": "animated",
+  "materials": {
+    "spotted-hide": {
+      "paint": [
+        {
+          "material": {
+            "fill": "#f3dcc6"
+          },
+          "points": [
+            {
+              "x": -0.35,
+              "y": 0.65
+            },
+            {
+              "x": 0.8,
+              "y": 0.65
+            },
+            {
+              "x": 0.8,
+              "y": -0.04
+            }
+          ]
+        },
+        {
+          "material": {
+            "fill": "#765033"
+          },
+          "points": [
+            {
+              "x": -0.16499999,
+              "y": 0.2
+            },
+            {
+              "x": -0.19700336,
+              "y": 0.24300073
+            },
+            {
+              "x": -0.26891428,
+              "y": 0.25362104
+            },
+            {
+              "x": -0.32658234,
+              "y": 0.22386362
+            },
+            {
+              "x": -0.32658234,
+              "y": 0.1761364
+            },
+            {
+              "x": -0.26891425,
+              "y": 0.14637896
+            },
+            {
+              "x": -0.19700338,
+              "y": 0.15699926
+            }
+          ]
+        },
+        {
+          "material": {
+            "fill": "#765033"
+          },
+          "points": [
+            {
+              "x": 0.28,
+              "y": -0.07
+            },
+            {
+              "x": 0.24234898,
+              "y": -0.019180954
+            },
+            {
+              "x": 0.15774791,
+              "y": -0.0066296905
+            },
+            {
+              "x": 0.08990312,
+              "y": -0.041797556
+            },
+            {
+              "x": 0.08990312,
+              "y": -0.098202445
+            },
+            {
+              "x": 0.15774795,
+              "y": -0.13337031
+            },
+            {
+              "x": 0.24234897,
+              "y": -0.120819055
+            }
+          ]
+        },
+        {
+          "material": {
+            "fill": "#765033"
+          },
+          "points": [
+            {
+              "x": -0.16,
+              "y": -0.3
+            },
+            {
+              "x": -0.18635571,
+              "y": -0.2648176
+            },
+            {
+              "x": -0.24557647,
+              "y": -0.25612825
+            },
+            {
+              "x": -0.2930678,
+              "y": -0.28047523
+            },
+            {
+              "x": -0.2930678,
+              "y": -0.3195248
+            },
+            {
+              "x": -0.24557644,
+              "y": -0.34387177
+            },
+            {
+              "x": -0.18635572,
+              "y": -0.33518243
+            }
+          ]
+        }
+      ],
+      "fill": "#b97549",
+      "outline": {}
+    },
+    "skin": {
+      "fill": "#fff8e7",
+      "outline": {}
+    }
+  },
+  "locations": [],
+  "parts": [
+    {
+      "id": "left-leg",
+      "geometry": {
+        "kind": "rounded-polyline",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 0,
+            "y": 0.5
+          },
+          {
+            "x": 0,
+            "y": 1
+          }
+        ],
+        "softness": 1
+      },
+      "material": {
+        "strokeWidth": 0.045
+      },
+      "a": "left-hip",
+      "b": "left-foot",
+      "bindings": [
+        {
+          "control": "left-hip"
+        },
+        {
+          "point": 1,
+          "control": "left-knee"
+        },
+        {
+          "point": 2,
+          "control": "left-foot"
+        }
+      ]
+    },
+    {
+      "id": "right-leg",
+      "geometry": {
+        "kind": "rounded-polyline",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 0,
+            "y": 0.5
+          },
+          {
+            "x": 0,
+            "y": 1
+          }
+        ],
+        "softness": 1
+      },
+      "material": {
+        "strokeWidth": 0.045
+      },
+      "a": "right-hip",
+      "b": "right-foot",
+      "bindings": [
+        {
+          "control": "right-hip"
+        },
+        {
+          "point": 1,
+          "control": "right-knee"
+        },
+        {
+          "point": 2,
+          "control": "right-foot"
+        }
+      ]
+    },
+    {
+      "id": "left-foot",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0.044,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.088,
+          "y": 0.024
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "left-foot",
+      "b": "left-knee",
+      "depth": -0.004
+    },
+    {
+      "id": "right-foot",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0.044,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.088,
+          "y": 0.024
+        },
+        "angleRadians": 0
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "right-foot",
+      "b": "right-knee",
+      "depth": -0.004
+    }
+  ],
+  "solids": [],
+  "controls": [
+    {
+      "id": "hips",
+      "name": null,
+      "scale": "leg"
+    },
+    {
+      "id": "left-hip",
+      "parent": "hips",
+      "name": null,
+      "rest": {
+        "x": -0.06,
+        "y": 0,
+        "z": -0.103923045
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "left-knee",
+      "parent": "left-hip",
+      "name": null,
+      "rest": {
+        "x": 0.012000006,
+        "y": -0.39200002,
+        "z": -0.103923045
+      }
+    },
+    {
+      "id": "left-foot",
+      "parent": "left-knee",
+      "name": null,
+      "rest": {
+        "x": -0.06,
+        "y": -0.78000003,
+        "z": -0.103923045
+      }
+    },
+    {
+      "id": "right-hip",
+      "parent": "hips",
+      "name": null,
+      "rest": {
+        "x": 0.06,
+        "y": 0,
+        "z": 0.103923045
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "right-knee",
+      "parent": "right-hip",
+      "name": null,
+      "rest": {
+        "x": 0.132,
+        "y": -0.39200002,
+        "z": 0.103923045
+      }
+    },
+    {
+      "id": "right-foot",
+      "parent": "right-knee",
+      "name": null,
+      "rest": {
+        "x": 0.06,
+        "y": -0.78000003,
+        "z": 0.103923045
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "kind": "two-bone-ik",
+      "root": "left-hip",
+      "joint": "left-knee",
+      "end": "left-foot",
+      "scale": "leg",
+      "id": "left-leg"
+    },
+    {
+      "kind": "two-bone-ik",
+      "root": "right-hip",
+      "joint": "right-knee",
+      "end": "right-foot",
+      "scale": "leg",
+      "id": "right-leg"
+    }
+  ],
+  "groups": [
+    {
+      "id": "lower",
+      "targets": [
+        "hips",
+        "left-hip",
+        "left-leg",
+        "right-hip",
+        "right-leg"
+      ]
+    }
+  ],
+  "exposed": [
+    "hips",
+    "left-hip",
+    "left-knee",
+    "left-foot",
+    "right-hip",
+    "right-knee",
+    "right-foot",
+    "left-leg",
+    "right-leg"
+  ],
+  "parameters": [
+    {
+      "id": "legs",
+      "name": "Leg length",
+      "min": 0.5,
+      "max": 2,
+      "softMin": 0.7,
+      "softMax": 1.4,
+      "bindings": [
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-hip",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-hip",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-knee",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-knee",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-knee",
+            "property": "local.layer"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-foot",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-foot",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-foot",
+            "property": "local.layer"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-knee",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-knee",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-knee",
+            "property": "local.layer"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-foot",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-foot",
+            "property": "local.y"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-foot",
+            "property": "local.layer"
+          }
+        }
+      ]
+    },
+    {
+      "id": "width",
+      "name": "Width",
+      "min": 0.5,
+      "max": 2,
+      "softMin": 0.6,
+      "softMax": 1.6,
+      "bindings": [
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-hip",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "left-hip",
+            "property": "local.layer"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-hip",
+            "property": "local.x"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "right-hip",
+            "property": "local.layer"
+          }
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "id": "tall-thin",
+      "name": "Tall / thin",
+      "values": {
+        "legs": 1.2,
+        "width": 0.8
+      }
+    },
+    {
+      "id": "short-broad",
+      "name": "Short / broad",
+      "values": {
+        "legs": 0.82,
+        "width": 1.3
+      }
+    }
+  ],
+  "measures": [
+    {
+      "id": "leg",
+      "path": [
+        "right-hip",
+        "right-knee",
+        "right-foot"
+      ]
+    }
+  ],
+  "connection": "hips",
+  "layers": [
+    {
+      "id": "motion",
+      "clip": null
+    }
+  ],
+  "clips": [
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "club-caveman-slam",
+      "name": "Club caveman / overhead slam",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.8,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.55,
+              "x": -0.06,
+              "y": -0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.7,
+              "x": -0.06,
+              "y": -0.02
+            },
+            {
+              "time": 0.78,
+              "x": 0.08,
+              "y": -0.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.95,
+              "x": 0.08,
+              "y": -0.24,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.35,
+              "x": 0.08,
+              "y": -0.24,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.8,
+              "x": -0.01,
+              "y": -0.04,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.7
+            },
+            {
+              "time": 0.78,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.95,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.35,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.8,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1.8,
+          "target": {
+            "x": -0.14,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1.8,
+          "target": {
+            "x": 0.14,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "windup",
+          "time": 0.1
+        },
+        {
+          "id": "strike",
+          "time": 0.78
+        },
+        {
+          "id": "recover",
+          "time": 0.95
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-death",
+      "name": "Recoil and collapse",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.1,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.045,
+              "y": -0.025
+            },
+            {
+              "time": 0.016666668,
+              "x": -0.13,
+              "y": -0.06
+            },
+            {
+              "time": 0.075,
+              "x": -0.16,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "x": -0.2,
+              "y": -0.2,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.75,
+              "x": -0.28,
+              "y": -0.81,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.1,
+              "x": -0.3,
+              "y": -0.79,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "angle": 0.16
+            },
+            {
+              "time": 0.016666668,
+              "angle": 0.34
+            },
+            {
+              "time": 0.075,
+              "angle": 0.37,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "angle": 0.53,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.75,
+              "angle": 1.42,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.1,
+              "angle": 1.45,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1.1
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1.1
+        }
+      ],
+      "markers": [
+        {
+          "id": "impact",
+          "time": 0.75
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-hammer-slam",
+      "name": "Hammer slam",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.5,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.55,
+              "x": -0.06,
+              "y": -0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.7,
+              "x": -0.06,
+              "y": -0.02
+            },
+            {
+              "time": 0.78,
+              "x": 0.08,
+              "y": -0.22,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.95,
+              "x": 0.08,
+              "y": -0.24,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.5,
+              "x": -0.01,
+              "y": -0.04,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.55,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.7
+            },
+            {
+              "time": 0.78,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.95,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.5,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1.5,
+          "target": {
+            "x": -0.14,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1.5,
+          "target": {
+            "x": 0.14,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "windup",
+          "time": 0.1
+        },
+        {
+          "id": "strike",
+          "time": 0.78
+        },
+        {
+          "id": "recover",
+          "time": 0.95
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-heavy-walk",
+      "name": "Heavy walk",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.5600001,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": [
+          {},
+          {
+            "time": 0.097500004,
+            "x": 0.03125
+          },
+          {
+            "time": 0.19500001,
+            "x": 0.0625
+          },
+          {
+            "time": 0.2925,
+            "x": 0.09375
+          },
+          {
+            "time": 0.39000002,
+            "x": 0.125
+          },
+          {
+            "time": 0.48749998,
+            "x": 0.15625
+          },
+          {
+            "time": 0.585,
+            "x": 0.1875
+          },
+          {
+            "time": 0.6825,
+            "x": 0.21875
+          },
+          {
+            "time": 0.78000003,
+            "x": 0.25
+          },
+          {
+            "time": 0.8775,
+            "x": 0.28125
+          },
+          {
+            "time": 0.97499996,
+            "x": 0.3125
+          },
+          {
+            "time": 1.0725,
+            "x": 0.34375
+          },
+          {
+            "time": 1.17,
+            "x": 0.375
+          },
+          {
+            "time": 1.2675,
+            "x": 0.40625
+          },
+          {
+            "time": 1.365,
+            "x": 0.4375
+          },
+          {
+            "time": 1.4625,
+            "x": 0.46875
+          },
+          {
+            "time": 1.5600001,
+            "x": 0.5
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": -0.085164666
+            },
+            {
+              "time": 0.097500004,
+              "y": -0.07672942
+            },
+            {
+              "time": 0.19500001,
+              "y": -0.05636475
+            },
+            {
+              "time": 0.2925,
+              "y": -0.03600008
+            },
+            {
+              "time": 0.39000002,
+              "y": -0.027564645
+            },
+            {
+              "time": 0.48749998,
+              "y": -0.03600008
+            },
+            {
+              "time": 0.585,
+              "y": -0.05636475
+            },
+            {
+              "time": 0.6825,
+              "y": -0.07672942
+            },
+            {
+              "time": 0.78000003,
+              "y": -0.085164666
+            },
+            {
+              "time": 0.8775,
+              "y": -0.07672942
+            },
+            {
+              "time": 0.97499996,
+              "y": -0.05636465
+            },
+            {
+              "time": 1.0725,
+              "y": -0.03600008
+            },
+            {
+              "time": 1.17,
+              "y": -0.027564645
+            },
+            {
+              "time": 1.2675,
+              "y": -0.03600008
+            },
+            {
+              "time": 1.365,
+              "y": -0.05636475
+            },
+            {
+              "time": 1.4625,
+              "y": -0.07672942
+            },
+            {
+              "time": 1.5600001,
+              "y": -0.085164666
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.125
+            },
+            {
+              "time": 0.097500004,
+              "x": -0.13476562,
+              "y": 0.017573593
+            },
+            {
+              "time": 0.19500001,
+              "x": -0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 0.2925,
+              "x": -0.06054688,
+              "y": 0.1024264
+            },
+            {
+              "time": 0.39000002,
+              "x": -3.7252903E-09,
+              "y": 0.12
+            },
+            {
+              "time": 0.48749998,
+              "x": 0.06054687,
+              "y": 0.1024264
+            },
+            {
+              "time": 0.585,
+              "x": 0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 0.6825,
+              "x": 0.13476562,
+              "y": 0.017573578
+            },
+            {
+              "time": 0.78000003,
+              "x": 0.125
+            },
+            {
+              "time": 0.8775,
+              "x": 0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.97499996,
+              "x": 0.062499996,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 1.0725,
+              "x": 0.031249996
+            },
+            {
+              "time": 1.17,
+              "x": -3.7252903E-09
+            },
+            {
+              "time": 1.2675,
+              "x": -0.031250004
+            },
+            {
+              "time": 1.365,
+              "x": -0.0625,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 1.4625,
+              "x": -0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 1.5600001,
+              "x": -0.125
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.125
+            },
+            {
+              "time": 0.097500004,
+              "x": 0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.19500001,
+              "x": 0.0625,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.2925,
+              "x": 0.031250004
+            },
+            {
+              "time": 0.39000002,
+              "x": 3.7252903E-09
+            },
+            {
+              "time": 0.48749998,
+              "x": -0.031249996
+            },
+            {
+              "time": 0.585,
+              "x": -0.062499996,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.6825,
+              "x": -0.09375,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.78000003,
+              "x": -0.125
+            },
+            {
+              "time": 0.8775,
+              "x": -0.13476562,
+              "y": 0.017573593
+            },
+            {
+              "time": 0.97499996,
+              "x": -0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 1.0725,
+              "x": -0.06054687,
+              "y": 0.1024264
+            },
+            {
+              "time": 1.17,
+              "x": 3.7252903E-09,
+              "y": 0.12
+            },
+            {
+              "time": 1.2675,
+              "x": 0.06054688,
+              "y": 0.1024264
+            },
+            {
+              "time": 1.365,
+              "x": 0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 1.4625,
+              "x": 0.13476562,
+              "y": 0.017573578
+            },
+            {
+              "time": 1.5600001,
+              "x": 0.125
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "right-leg",
+          "finish": 0.78000003,
+          "target": {
+            "x": 0.125,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "left-leg",
+          "start": 0.78000003,
+          "finish": 1.5600001,
+          "target": {
+            "x": 0.375,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-hit",
+      "name": "Hit recoil",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.3,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.045,
+              "y": -0.025
+            },
+            {
+              "time": 0.016666668,
+              "x": -0.1,
+              "y": -0.055
+            },
+            {
+              "time": 0.05,
+              "x": -0.1,
+              "y": -0.055,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.17,
+              "x": -0.03,
+              "y": -0.015,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.3
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "angle": 0.16
+            },
+            {
+              "time": 0.016666668,
+              "angle": 0.32
+            },
+            {
+              "time": 0.05,
+              "angle": 0.32,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.17,
+              "angle": 0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.3
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.3
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.3
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-idle",
+      "name": "Idle",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 2
+        },
+        {
+          "chain": "right-leg",
+          "finish": 2
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-jump",
+      "name": "Jump",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.9,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.14,
+              "y": -0.14,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.24,
+              "y": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.9,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.2,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.36,
+              "x": 0.12,
+              "y": 0.32,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.9,
+              "x": 0.06,
+              "y": 0.08,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.2,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.36,
+              "x": -0.04,
+              "y": 0.24,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.9,
+              "x": 0.02,
+              "y": 0.06,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.2
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.2
+        }
+      ],
+      "markers": [
+        {
+          "id": "launch",
+          "time": 0.2
+        },
+        {
+          "id": "apex",
+          "time": 0.5
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-pistol-shot",
+      "name": "Pistol shot",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.1,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.35,
+              "x": -0.02,
+              "y": -0.03,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "x": -0.02,
+              "y": -0.035
+            },
+            {
+              "time": 0.85,
+              "x": -0.02,
+              "y": -0.03,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.1,
+              "x": -0.01,
+              "y": -0.04,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.35,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6
+            },
+            {
+              "time": 0.85,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.1,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1.1,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1.1,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "fire",
+          "time": 0.6
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-run",
+      "name": "Run",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.72,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": [
+          {},
+          {
+            "time": 0.020000001,
+            "x": 0.044444446
+          },
+          {
+            "time": 0.040000003,
+            "x": 0.08888889
+          },
+          {
+            "time": 0.060000002,
+            "x": 0.13333334
+          },
+          {
+            "time": 0.080000006,
+            "x": 0.17777778
+          },
+          {
+            "time": 0.10000001,
+            "x": 0.22222224
+          },
+          {
+            "time": 0.120000005,
+            "x": 0.26666668
+          },
+          {
+            "time": 0.14,
+            "x": 0.31111112
+          },
+          {
+            "time": 0.16000001,
+            "x": 0.35555556
+          },
+          {
+            "time": 0.18,
+            "x": 0.4
+          },
+          {
+            "time": 0.20000002,
+            "x": 0.44444448
+          },
+          {
+            "time": 0.22000001,
+            "x": 0.4888889
+          },
+          {
+            "time": 0.24000001,
+            "x": 0.53333336
+          },
+          {
+            "time": 0.26000002,
+            "x": 0.5777778
+          },
+          {
+            "time": 0.28,
+            "x": 0.62222224
+          },
+          {
+            "time": 0.3,
+            "x": 0.6666667
+          },
+          {
+            "time": 0.32000002,
+            "x": 0.7111111
+          },
+          {
+            "time": 0.34,
+            "x": 0.75555557
+          },
+          {
+            "time": 0.36,
+            "x": 0.8
+          },
+          {
+            "time": 0.38000003,
+            "x": 0.84444445
+          },
+          {
+            "time": 0.40000004,
+            "x": 0.88888896
+          },
+          {
+            "time": 0.42000002,
+            "x": 0.93333334
+          },
+          {
+            "time": 0.44000003,
+            "x": 0.9777778
+          },
+          {
+            "time": 0.46,
+            "x": 1.0222223
+          },
+          {
+            "time": 0.48000002,
+            "x": 1.0666667
+          },
+          {
+            "time": 0.5,
+            "x": 1.111111
+          },
+          {
+            "time": 0.52000004,
+            "x": 1.1555556
+          },
+          {
+            "time": 0.54,
+            "x": 1.2
+          },
+          {
+            "time": 0.56,
+            "x": 1.2444445
+          },
+          {
+            "time": 0.58000004,
+            "x": 1.2888889
+          },
+          {
+            "time": 0.6,
+            "x": 1.3333334
+          },
+          {
+            "time": 0.62,
+            "x": 1.3777778
+          },
+          {
+            "time": 0.64000005,
+            "x": 1.4222223
+          },
+          {
+            "time": 0.66,
+            "x": 1.4666667
+          },
+          {
+            "time": 0.68,
+            "x": 1.5111111
+          },
+          {
+            "time": 0.70000005,
+            "x": 1.5555556
+          },
+          {
+            "time": 0.72,
+            "x": 1.6
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": -0.055000007
+            },
+            {
+              "time": 0.020000001,
+              "y": -0.07255435
+            },
+            {
+              "time": 0.040000003,
+              "y": -0.09366912
+            },
+            {
+              "time": 0.060000002,
+              "y": -0.112688124
+            },
+            {
+              "time": 0.080000006,
+              "y": -0.12395543
+            },
+            {
+              "time": 0.10000001,
+              "y": -0.124358
+            },
+            {
+              "time": 0.120000005,
+              "y": -0.119366705
+            },
+            {
+              "time": 0.14,
+              "y": -0.110646725
+            },
+            {
+              "time": 0.16000001,
+              "y": -0.09941721
+            },
+            {
+              "time": 0.18,
+              "y": -0.086897016
+            },
+            {
+              "time": 0.20000002,
+              "y": -0.074305415
+            },
+            {
+              "time": 0.22000001,
+              "y": -0.06262207
+            },
+            {
+              "time": 0.24000001,
+              "y": -0.046587348
+            },
+            {
+              "time": 0.26000002,
+              "y": -0.028899193
+            },
+            {
+              "time": 0.28,
+              "y": -0.0167225
+            },
+            {
+              "time": 0.3,
+              "y": -0.016226888
+            },
+            {
+              "time": 0.32000002,
+              "y": -0.02550757
+            },
+            {
+              "time": 0.34,
+              "y": -0.03993225
+            },
+            {
+              "time": 0.36,
+              "y": -0.055000007
+            },
+            {
+              "time": 0.38000003,
+              "y": -0.07255441
+            },
+            {
+              "time": 0.40000004,
+              "y": -0.09366912
+            },
+            {
+              "time": 0.42000002,
+              "y": -0.112688184
+            },
+            {
+              "time": 0.44000003,
+              "y": -0.12395543
+            },
+            {
+              "time": 0.46,
+              "y": -0.124358
+            },
+            {
+              "time": 0.48000002,
+              "y": -0.119366705
+            },
+            {
+              "time": 0.5,
+              "y": -0.110646725
+            },
+            {
+              "time": 0.52000004,
+              "y": -0.09941721
+            },
+            {
+              "time": 0.54,
+              "y": -0.086897016
+            },
+            {
+              "time": 0.56,
+              "y": -0.074305415
+            },
+            {
+              "time": 0.58000004,
+              "y": -0.06262207
+            },
+            {
+              "time": 0.6,
+              "y": -0.046587348
+            },
+            {
+              "time": 0.62,
+              "y": -0.028899193
+            },
+            {
+              "time": 0.64000005,
+              "y": -0.0167225
+            },
+            {
+              "time": 0.66,
+              "y": -0.016226888
+            },
+            {
+              "time": 0.68,
+              "y": -0.02550751
+            },
+            {
+              "time": 0.70000005,
+              "y": -0.03993225
+            },
+            {
+              "time": 0.72,
+              "y": -0.055000007
+            }
+          ]
+        },
+        {
+          "target": "left-hip",
+          "keys": [
+            {
+              "x": -0.026285183
+            },
+            {
+              "time": 0.020000001,
+              "x": -0.023089137
+            },
+            {
+              "time": 0.040000003,
+              "x": -0.019421507
+            },
+            {
+              "time": 0.060000002,
+              "x": -0.015287105
+            },
+            {
+              "time": 0.080000006,
+              "x": -0.010924075
+            },
+            {
+              "time": 0.10000001,
+              "x": -0.0065705664
+            },
+            {
+              "time": 0.120000005,
+              "x": -0.0021794178
+            },
+            {
+              "time": 0.14,
+              "x": 0.0023827218
+            },
+            {
+              "time": 0.16000001,
+              "x": 0.0069377087
+            },
+            {
+              "time": 0.18,
+              "x": 0.011306938
+            },
+            {
+              "time": 0.20000002,
+              "x": 0.015626546
+            },
+            {
+              "time": 0.22000001,
+              "x": 0.02046683
+            },
+            {
+              "time": 0.24000001,
+              "x": 0.024933215
+            },
+            {
+              "time": 0.26000002,
+              "x": 0.028013524
+            },
+            {
+              "time": 0.28,
+              "x": 0.02869862
+            },
+            {
+              "time": 0.3,
+              "x": 0.026639815
+            },
+            {
+              "time": 0.32000002,
+              "x": 0.022816297
+            },
+            {
+              "time": 0.34,
+              "x": 0.0183593
+            },
+            {
+              "time": 0.36,
+              "x": 0.014400002
+            },
+            {
+              "time": 0.38000003,
+              "x": 0.010844465
+            },
+            {
+              "time": 0.40000004,
+              "x": 0.0072888695
+            },
+            {
+              "time": 0.42000002,
+              "x": 0.0037333332
+            },
+            {
+              "time": 0.44000003,
+              "x": 0.00017779693
+            },
+            {
+              "time": 0.46,
+              "x": -0.0033777393
+            },
+            {
+              "time": 0.48000002,
+              "x": -0.006933335
+            },
+            {
+              "time": 0.5,
+              "x": -0.010488931
+            },
+            {
+              "time": 0.52000004,
+              "x": -0.014044467
+            },
+            {
+              "time": 0.54,
+              "x": -0.017600004
+            },
+            {
+              "time": 0.56,
+              "x": -0.02115554
+            },
+            {
+              "time": 0.58000004,
+              "x": -0.024640623
+            },
+            {
+              "time": 0.6,
+              "x": -0.028148118
+            },
+            {
+              "time": 0.62,
+              "x": -0.03140873
+            },
+            {
+              "time": 0.64000005,
+              "x": -0.033393685
+            },
+            {
+              "time": 0.66,
+              "x": -0.0333218
+            },
+            {
+              "time": 0.68,
+              "x": -0.0317995
+            },
+            {
+              "time": 0.70000005,
+              "x": -0.029315058
+            },
+            {
+              "time": 0.72,
+              "x": -0.026285235
+            }
+          ]
+        },
+        {
+          "target": "right-hip",
+          "keys": [
+            {
+              "x": 0.014400002
+            },
+            {
+              "time": 0.020000001,
+              "x": 0.010844443
+            },
+            {
+              "time": 0.040000003,
+              "x": 0.0072888993
+            },
+            {
+              "time": 0.060000002,
+              "x": 0.0037333257
+            },
+            {
+              "time": 0.080000006,
+              "x": 0.00017777458
+            },
+            {
+              "time": 0.10000001,
+              "x": -0.0033777617
+            },
+            {
+              "time": 0.120000005,
+              "x": -0.0069333278
+            },
+            {
+              "time": 0.14,
+              "x": -0.010488894
+            },
+            {
+              "time": 0.16000001,
+              "x": -0.01404443
+            },
+            {
+              "time": 0.18,
+              "x": -0.017599996
+            },
+            {
+              "time": 0.20000002,
+              "x": -0.021155562
+            },
+            {
+              "time": 0.22000001,
+              "x": -0.024640586
+            },
+            {
+              "time": 0.24000001,
+              "x": -0.02814817
+            },
+            {
+              "time": 0.26000002,
+              "x": -0.031408783
+            },
+            {
+              "time": 0.28,
+              "x": -0.033393677
+            },
+            {
+              "time": 0.3,
+              "x": -0.033321794
+            },
+            {
+              "time": 0.32000002,
+              "x": -0.031799432
+            },
+            {
+              "time": 0.34,
+              "x": -0.029314991
+            },
+            {
+              "time": 0.36,
+              "x": -0.026285168
+            },
+            {
+              "time": 0.38000003,
+              "x": -0.023089167
+            },
+            {
+              "time": 0.40000004,
+              "x": -0.019421514
+            },
+            {
+              "time": 0.42000002,
+              "x": -0.015287098
+            },
+            {
+              "time": 0.44000003,
+              "x": -0.010924097
+            },
+            {
+              "time": 0.46,
+              "x": -0.0065705143
+            },
+            {
+              "time": 0.48000002,
+              "x": -0.00217944
+            },
+            {
+              "time": 0.5,
+              "x": 0.0023826994
+            },
+            {
+              "time": 0.52000004,
+              "x": 0.0069376864
+            },
+            {
+              "time": 0.54,
+              "x": 0.011306945
+            },
+            {
+              "time": 0.56,
+              "x": 0.015626613
+            },
+            {
+              "time": 0.58000004,
+              "x": 0.020466868
+            },
+            {
+              "time": 0.6,
+              "x": 0.024933163
+            },
+            {
+              "time": 0.62,
+              "x": 0.028013531
+            },
+            {
+              "time": 0.64000005,
+              "x": 0.028698627
+            },
+            {
+              "time": 0.66,
+              "x": 0.026639763
+            },
+            {
+              "time": 0.68,
+              "x": 0.022816245
+            },
+            {
+              "time": 0.70000005,
+              "x": 0.018359248
+            },
+            {
+              "time": 0.72,
+              "x": 0.014399949
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.3285648,
+              "y": 0.4198022
+            },
+            {
+              "time": 0.020000001,
+              "x": -0.28861424,
+              "y": 0.45920393
+            },
+            {
+              "time": 0.040000003,
+              "x": -0.24276882,
+              "y": 0.48412082
+            },
+            {
+              "time": 0.060000002,
+              "x": -0.19108883,
+              "y": 0.49802324
+            },
+            {
+              "time": 0.080000006,
+              "x": -0.13655093,
+              "y": 0.5027719
+            },
+            {
+              "time": 0.10000001,
+              "x": -0.0821321,
+              "y": 0.50022715
+            },
+            {
+              "time": 0.120000005,
+              "x": -0.027242724,
+              "y": 0.49016455
+            },
+            {
+              "time": 0.14,
+              "x": 0.0297839,
+              "y": 0.47153208
+            },
+            {
+              "time": 0.16000001,
+              "x": 0.08672136,
+              "y": 0.44544247
+            },
+            {
+              "time": 0.18,
+              "x": 0.14133683,
+              "y": 0.41301212
+            },
+            {
+              "time": 0.20000002,
+              "x": 0.19533205,
+              "y": 0.37348366
+            },
+            {
+              "time": 0.22000001,
+              "x": 0.25583544,
+              "y": 0.3234595
+            },
+            {
+              "time": 0.24000001,
+              "x": 0.31166506,
+              "y": 0.26819608
+            },
+            {
+              "time": 0.26000002,
+              "x": 0.35016918,
+              "y": 0.21364722
+            },
+            {
+              "time": 0.28,
+              "x": 0.35873294,
+              "y": 0.16539653
+            },
+            {
+              "time": 0.3,
+              "x": 0.3329975,
+              "y": 0.12205296
+            },
+            {
+              "time": 0.32000002,
+              "x": 0.28520346,
+              "y": 0.08103127
+            },
+            {
+              "time": 0.34,
+              "x": 0.22949094,
+              "y": 0.040843092
+            },
+            {
+              "time": 0.36,
+              "x": 0.18,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.38000003,
+              "x": 0.1355555,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.40000004,
+              "x": 0.091111064,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.42000002,
+              "x": 0.046666797,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.44000003,
+              "x": 0.002222117,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.46,
+              "x": -0.042222146,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.48000002,
+              "x": -0.08666676,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.5,
+              "x": -0.13111109,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.52000004,
+              "x": -0.17555553,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.54,
+              "x": -0.21999997,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.56,
+              "x": -0.26444447,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.58000004,
+              "x": -0.30800754,
+              "y": 0.006142458
+            },
+            {
+              "time": 0.6,
+              "x": -0.3518517,
+              "y": 0.051514976
+            },
+            {
+              "time": 0.62,
+              "x": -0.39260978,
+              "y": 0.11232007
+            },
+            {
+              "time": 0.64000005,
+              "x": -0.41742104,
+              "y": 0.17628118
+            },
+            {
+              "time": 0.66,
+              "x": -0.41652238,
+              "y": 0.23591536
+            },
+            {
+              "time": 0.68,
+              "x": -0.3974933,
+              "y": 0.30056202
+            },
+            {
+              "time": 0.70000005,
+              "x": -0.3664376,
+              "y": 0.36445123
+            },
+            {
+              "time": 0.72,
+              "x": -0.32856482,
+              "y": 0.4198022
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.18,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.020000001,
+              "x": 0.13555557,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.040000003,
+              "x": 0.09111112,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.060000002,
+              "x": 0.04666667,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.080000006,
+              "x": 0.0022222288,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.10000001,
+              "x": -0.042222228,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.120000005,
+              "x": -0.08666667,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.14,
+              "x": -0.13111112,
+              "y": 5.5879354E-09
+            },
+            {
+              "time": 0.16000001,
+              "x": -0.17555556,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.18,
+              "x": -0.22,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.20000002,
+              "x": -0.26444447,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.22000001,
+              "x": -0.30800754,
+              "y": 0.006142428
+            },
+            {
+              "time": 0.24000001,
+              "x": -0.35185185,
+              "y": 0.051515155
+            },
+            {
+              "time": 0.26000002,
+              "x": -0.39260972,
+              "y": 0.11231994
+            },
+            {
+              "time": 0.28,
+              "x": -0.4174211,
+              "y": 0.17628133
+            },
+            {
+              "time": 0.3,
+              "x": -0.4165224,
+              "y": 0.23591515
+            },
+            {
+              "time": 0.32000002,
+              "x": -0.3974932,
+              "y": 0.3005621
+            },
+            {
+              "time": 0.34,
+              "x": -0.36643755,
+              "y": 0.36445123
+            },
+            {
+              "time": 0.36,
+              "x": -0.32856476,
+              "y": 0.4198022
+            },
+            {
+              "time": 0.38000003,
+              "x": -0.28861427,
+              "y": 0.459204
+            },
+            {
+              "time": 0.40000004,
+              "x": -0.24276882,
+              "y": 0.48412082
+            },
+            {
+              "time": 0.42000002,
+              "x": -0.1910888,
+              "y": 0.49802324
+            },
+            {
+              "time": 0.44000003,
+              "x": -0.1365509,
+              "y": 0.5027719
+            },
+            {
+              "time": 0.46,
+              "x": -0.08213216,
+              "y": 0.50022715
+            },
+            {
+              "time": 0.48000002,
+              "x": -0.027242716,
+              "y": 0.49016455
+            },
+            {
+              "time": 0.5,
+              "x": 0.029783908,
+              "y": 0.47153208
+            },
+            {
+              "time": 0.52000004,
+              "x": 0.08672136,
+              "y": 0.44544247
+            },
+            {
+              "time": 0.54,
+              "x": 0.14133686,
+              "y": 0.41301212
+            },
+            {
+              "time": 0.56,
+              "x": 0.19533211,
+              "y": 0.37348366
+            },
+            {
+              "time": 0.58000004,
+              "x": 0.25583547,
+              "y": 0.3234595
+            },
+            {
+              "time": 0.6,
+              "x": 0.31166488,
+              "y": 0.2681962
+            },
+            {
+              "time": 0.62,
+              "x": 0.35016924,
+              "y": 0.21364722
+            },
+            {
+              "time": 0.64000005,
+              "x": 0.35873288,
+              "y": 0.16539653
+            },
+            {
+              "time": 0.66,
+              "x": 0.3329975,
+              "y": 0.12205287
+            },
+            {
+              "time": 0.68,
+              "x": 0.28520352,
+              "y": 0.08103127
+            },
+            {
+              "time": 0.70000005,
+              "x": 0.22949094,
+              "y": 0.040843092
+            },
+            {
+              "time": 0.72,
+              "x": 0.18,
+              "y": -1.8626451E-09
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "right-leg",
+          "finish": 0.21600002,
+          "target": {
+            "x": 0.18,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "left-leg",
+          "start": 0.36,
+          "finish": 0.57600003,
+          "target": {
+            "x": 0.98,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-thrust",
+      "name": "Spear thrust",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.9,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.32,
+              "x": -0.04,
+              "y": -0.03,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.42,
+              "x": 0.09,
+              "y": -0.05
+            },
+            {
+              "time": 0.58,
+              "x": 0.09,
+              "y": -0.05,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.9,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.9
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.9
+        }
+      ],
+      "markers": [
+        {
+          "id": "windup",
+          "time": 0.05
+        },
+        {
+          "id": "strike",
+          "time": 0.4
+        },
+        {
+          "id": "recover",
+          "time": 0.58
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "person-walk",
+      "name": "Walk",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.2,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": [
+          {},
+          {
+            "time": 0.075,
+            "x": 0.03125
+          },
+          {
+            "time": 0.15,
+            "x": 0.0625
+          },
+          {
+            "time": 0.22500001,
+            "x": 0.09375
+          },
+          {
+            "time": 0.3,
+            "x": 0.125
+          },
+          {
+            "time": 0.375,
+            "x": 0.15625
+          },
+          {
+            "time": 0.45000002,
+            "x": 0.1875
+          },
+          {
+            "time": 0.52500004,
+            "x": 0.21875
+          },
+          {
+            "time": 0.6,
+            "x": 0.25
+          },
+          {
+            "time": 0.675,
+            "x": 0.28125
+          },
+          {
+            "time": 0.75,
+            "x": 0.3125
+          },
+          {
+            "time": 0.82500005,
+            "x": 0.34375
+          },
+          {
+            "time": 0.90000004,
+            "x": 0.375
+          },
+          {
+            "time": 0.975,
+            "x": 0.40625
+          },
+          {
+            "time": 1.0500001,
+            "x": 0.4375
+          },
+          {
+            "time": 1.125,
+            "x": 0.46875
+          },
+          {
+            "time": 1.2,
+            "x": 0.5
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": -0.024999976
+            },
+            {
+              "time": 0.075,
+              "y": -0.019727945
+            },
+            {
+              "time": 0.15,
+              "y": -0.007000029
+            },
+            {
+              "time": 0.22500001,
+              "y": 0.005727887
+            },
+            {
+              "time": 0.3,
+              "y": 0.011000037
+            },
+            {
+              "time": 0.375,
+              "y": 0.005727887
+            },
+            {
+              "time": 0.45000002,
+              "y": -0.007000029
+            },
+            {
+              "time": 0.52500004,
+              "y": -0.019727945
+            },
+            {
+              "time": 0.6,
+              "y": -0.024999976
+            },
+            {
+              "time": 0.675,
+              "y": -0.019727945
+            },
+            {
+              "time": 0.75,
+              "y": -0.0069999695
+            },
+            {
+              "time": 0.82500005,
+              "y": 0.005727887
+            },
+            {
+              "time": 0.90000004,
+              "y": 0.011000037
+            },
+            {
+              "time": 0.975,
+              "y": 0.005727887
+            },
+            {
+              "time": 1.0500001,
+              "y": -0.007000029
+            },
+            {
+              "time": 1.125,
+              "y": -0.019727945
+            },
+            {
+              "time": 1.2,
+              "y": -0.024999976
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.125
+            },
+            {
+              "time": 0.075,
+              "x": -0.13476562,
+              "y": 0.017573593
+            },
+            {
+              "time": 0.15,
+              "x": -0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 0.22500001,
+              "x": -0.06054688,
+              "y": 0.1024264
+            },
+            {
+              "time": 0.3,
+              "x": -3.7252903E-09,
+              "y": 0.12
+            },
+            {
+              "time": 0.375,
+              "x": 0.06054687,
+              "y": 0.1024264
+            },
+            {
+              "time": 0.45000002,
+              "x": 0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 0.52500004,
+              "x": 0.13476562,
+              "y": 0.017573578
+            },
+            {
+              "time": 0.6,
+              "x": 0.125
+            },
+            {
+              "time": 0.675,
+              "x": 0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.75,
+              "x": 0.062499996,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.82500005,
+              "x": 0.031249996
+            },
+            {
+              "time": 0.90000004,
+              "x": -3.7252903E-09
+            },
+            {
+              "time": 0.975,
+              "x": -0.031250004
+            },
+            {
+              "time": 1.0500001,
+              "x": -0.0625,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 1.125,
+              "x": -0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 1.2,
+              "x": -0.125
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.125
+            },
+            {
+              "time": 0.075,
+              "x": 0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.15,
+              "x": 0.0625,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.22500001,
+              "x": 0.031250004
+            },
+            {
+              "time": 0.3,
+              "x": 3.7252903E-09
+            },
+            {
+              "time": 0.375,
+              "x": -0.031249996
+            },
+            {
+              "time": 0.45000002,
+              "x": -0.062499996,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.52500004,
+              "x": -0.09375,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.6,
+              "x": -0.125
+            },
+            {
+              "time": 0.675,
+              "x": -0.13476562,
+              "y": 0.017573593
+            },
+            {
+              "time": 0.75,
+              "x": -0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 0.82500005,
+              "x": -0.06054687,
+              "y": 0.1024264
+            },
+            {
+              "time": 0.90000004,
+              "x": 3.7252903E-09,
+              "y": 0.12
+            },
+            {
+              "time": 0.975,
+              "x": 0.06054688,
+              "y": 0.1024264
+            },
+            {
+              "time": 1.0500001,
+              "x": 0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 1.125,
+              "x": 0.13476562,
+              "y": 0.017573578
+            },
+            {
+              "time": 1.2,
+              "x": 0.125
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "right-leg",
+          "finish": 0.6,
+          "target": {
+            "x": 0.125,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "left-leg",
+          "start": 0.6,
+          "finish": 1.2,
+          "target": {
+            "x": 0.375,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-balance-backward",
+      "name": "Balance, edge behind",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": 0.05,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "x": 0.07,
+              "y": -0.05,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": 0.05,
+              "y": -0.04,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1,
+          "target": {
+            "x": 0.02,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1,
+          "target": {
+            "x": 0.040000003,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-balance-forward",
+      "name": "Balance, edge ahead",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.06,
+              "y": -0.03,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "x": -0.08,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": -0.06,
+              "y": -0.03,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1,
+          "target": {
+            "x": -0.02,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-celebrate",
+      "name": "Celebrate",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.4,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16,
+              "x": -0.01,
+              "y": -0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.4,
+              "y": 0.12
+            },
+            {
+              "time": 0.62,
+              "x": -0.01,
+              "y": -0.12,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.86,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.4,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.4
+            },
+            {
+              "time": 0.62,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.86,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.4,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.065,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16,
+              "x": -0.065,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.4,
+              "x": -0.06,
+              "y": 0.155
+            },
+            {
+              "time": 0.62,
+              "x": -0.065,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.065,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16,
+              "x": 0.065,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.4,
+              "x": 0.040000003,
+              "y": 0.21499999
+            },
+            {
+              "time": 0.62,
+              "x": 0.065,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.3,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.3,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "left-leg",
+          "start": 0.62,
+          "finish": 1.4,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "start": 0.62,
+          "finish": 1.4,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-climb",
+      "name": "Climb",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.8,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-hip",
+          "keys": [
+            {
+              "x": 0.17999999,
+              "z": 0.05392305
+            },
+            {
+              "time": 0.8,
+              "x": 0.17999999,
+              "z": 0.05392305
+            }
+          ]
+        },
+        {
+          "target": "right-hip",
+          "keys": [
+            {
+              "x": -0.17999999,
+              "z": -0.15392305
+            },
+            {
+              "time": 0.8,
+              "x": -0.17999999,
+              "z": -0.15392305
+            }
+          ]
+        },
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": -0.1
+            },
+            {
+              "time": 0.2,
+              "y": -0.08
+            },
+            {
+              "time": 0.4,
+              "y": -0.1
+            },
+            {
+              "time": 0.6,
+              "y": -0.08
+            },
+            {
+              "time": 0.8,
+              "y": -0.1
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {},
+            {
+              "time": 0.2
+            },
+            {
+              "time": 0.4
+            },
+            {
+              "time": 0.6
+            },
+            {
+              "time": 0.8
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": 0.16,
+              "y": 0.025
+            },
+            {
+              "time": 0.2,
+              "x": 0.22,
+              "y": 0.355
+            },
+            {
+              "time": 0.4,
+              "x": 0.16,
+              "y": 0.57500005
+            },
+            {
+              "time": 0.6,
+              "x": 0.16,
+              "y": 0.3
+            },
+            {
+              "time": 0.8,
+              "x": 0.16,
+              "y": 0.025
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": -0.16,
+              "y": 0.57500005,
+              "bend": -1
+            },
+            {
+              "time": 0.2,
+              "x": -0.16,
+              "y": 0.3
+            },
+            {
+              "time": 0.4,
+              "x": -0.16,
+              "y": 0.025
+            },
+            {
+              "time": 0.6,
+              "x": -0.22,
+              "y": 0.355
+            },
+            {
+              "time": 0.8,
+              "x": -0.16,
+              "y": 0.57500005
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [
+        {
+          "id": "view-back"
+        },
+        {
+          "id": "rung-right"
+        },
+        {
+          "id": "rung-left",
+          "time": 0.4
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-climb-off",
+      "name": "Turn off ladder",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.3,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-hip",
+          "keys": [
+            {
+              "x": 0.17999999,
+              "z": 0.05392305
+            },
+            {
+              "time": 0.15000002,
+              "x": 0.17999999,
+              "z": 0.05392305
+            },
+            {
+              "time": 0.18,
+              "x": 0.16962546,
+              "z": 0.00844799
+            },
+            {
+              "time": 0.21000001,
+              "x": 0.14029568,
+              "z": -0.011921002
+            },
+            {
+              "time": 0.24000001,
+              "x": 0.09708204,
+              "z": -0.016870394
+            },
+            {
+              "time": 0.27,
+              "x": 0.04745659,
+              "z": -0.01541958
+            },
+            {
+              "time": 0.3,
+              "x": 3.7252903E-09,
+              "z": -7.450581E-09
+            }
+          ]
+        },
+        {
+          "target": "right-hip",
+          "keys": [
+            {
+              "x": -0.17999999,
+              "z": -0.15392305
+            },
+            {
+              "time": 0.15000002,
+              "x": -0.17999999,
+              "z": -0.15392305
+            },
+            {
+              "time": 0.18,
+              "x": -0.16962546,
+              "z": -0.10178132
+            },
+            {
+              "time": 0.21000001,
+              "x": -0.14029568,
+              "z": -0.04141234
+            },
+            {
+              "time": 0.24000001,
+              "x": -0.09708204,
+              "z": 0.0035370593
+            },
+            {
+              "time": 0.27,
+              "x": -0.04745659,
+              "z": 0.01541958
+            },
+            {
+              "time": 0.3,
+              "x": -3.7252903E-09,
+              "z": 7.450581E-09
+            }
+          ]
+        },
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": -0.1
+            },
+            {
+              "time": 0.08000001,
+              "y": -0.07
+            },
+            {
+              "time": 0.15,
+              "y": -0.03
+            },
+            {
+              "time": 0.21000001,
+              "y": 0.01
+            },
+            {
+              "time": 0.3,
+              "x": -0.01,
+              "y": 0.012
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {},
+            {
+              "time": 0.08000001
+            },
+            {
+              "time": 0.15
+            },
+            {
+              "time": 0.21000001
+            },
+            {
+              "time": 0.3
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": 0.16,
+              "y": 0.025
+            },
+            {
+              "time": 0.08000001,
+              "x": 0.16,
+              "y": 0.004999999
+            },
+            {
+              "time": 0.15,
+              "x": 0.16
+            },
+            {
+              "time": 0.21000001,
+              "x": 0.14
+            },
+            {
+              "time": 0.3,
+              "x": -0.065
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": -0.16,
+              "y": 0.57500005,
+              "bend": -1
+            },
+            {
+              "time": 0.08000001,
+              "x": -0.16,
+              "y": 0.275
+            },
+            {
+              "time": 0.15,
+              "x": -0.16
+            },
+            {
+              "time": 0.21000001,
+              "x": -0.14,
+              "bend": 1
+            },
+            {
+              "time": 0.3,
+              "x": 0.065
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [
+        {
+          "id": "view-back"
+        },
+        {
+          "id": "view-profile",
+          "time": 0.21000001
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-climb-on",
+      "name": "Turn onto ladder",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.3,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "left-hip",
+          "keys": [
+            {
+              "x": 3.7252903E-09,
+              "z": -7.450581E-09
+            },
+            {
+              "time": 0.03,
+              "x": 0.04745659,
+              "z": -0.01541958
+            },
+            {
+              "time": 0.06,
+              "x": 0.09708204,
+              "z": -0.016870394
+            },
+            {
+              "time": 0.089999996,
+              "x": 0.14029568,
+              "z": -0.011921002
+            },
+            {
+              "time": 0.12,
+              "x": 0.16962546,
+              "z": 0.00844799
+            },
+            {
+              "time": 0.14999999,
+              "x": 0.17999999,
+              "z": 0.05392305
+            },
+            {
+              "time": 0.3,
+              "x": 0.17999999,
+              "z": 0.05392305
+            }
+          ]
+        },
+        {
+          "target": "right-hip",
+          "keys": [
+            {
+              "x": -3.7252903E-09,
+              "z": 7.450581E-09
+            },
+            {
+              "time": 0.03,
+              "x": -0.04745659,
+              "z": 0.01541958
+            },
+            {
+              "time": 0.06,
+              "x": -0.09708204,
+              "z": 0.0035370593
+            },
+            {
+              "time": 0.089999996,
+              "x": -0.14029568,
+              "z": -0.04141234
+            },
+            {
+              "time": 0.12,
+              "x": -0.16962546,
+              "z": -0.10178132
+            },
+            {
+              "time": 0.14999999,
+              "x": -0.17999999,
+              "z": -0.15392305
+            },
+            {
+              "time": 0.3,
+              "x": -0.17999999,
+              "z": -0.15392305
+            }
+          ]
+        },
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": 0.012
+            },
+            {
+              "time": 0.09,
+              "y": 0.01
+            },
+            {
+              "time": 0.15,
+              "y": -0.03
+            },
+            {
+              "time": 0.22,
+              "y": -0.07
+            },
+            {
+              "time": 0.3,
+              "y": -0.1
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {},
+            {
+              "time": 0.09
+            },
+            {
+              "time": 0.15
+            },
+            {
+              "time": 0.22
+            },
+            {
+              "time": 0.3
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.065
+            },
+            {
+              "time": 0.09,
+              "x": 0.14
+            },
+            {
+              "time": 0.15,
+              "x": 0.16
+            },
+            {
+              "time": 0.22,
+              "x": 0.16,
+              "y": 0.004999999
+            },
+            {
+              "time": 0.3,
+              "x": 0.16,
+              "y": 0.025
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.065,
+              "bend": 1
+            },
+            {
+              "time": 0.09,
+              "x": -0.14,
+              "bend": -1
+            },
+            {
+              "time": 0.15,
+              "x": -0.16
+            },
+            {
+              "time": 0.22,
+              "x": -0.16,
+              "y": 0.275
+            },
+            {
+              "time": 0.3,
+              "x": -0.16,
+              "y": 0.57500005
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [
+        {
+          "id": "view-profile"
+        },
+        {
+          "id": "view-back",
+          "time": 0.09
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-dash",
+      "name": "Dash",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.28,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": 0.02,
+              "y": -0.1,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.04,
+              "x": 0.06,
+              "y": -0.26,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16,
+              "x": 0.07,
+              "y": -0.25,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.28,
+              "x": 0.02,
+              "y": -0.07,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.28,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.19,
+              "y": 0.034999996,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.04,
+              "x": -0.5,
+              "y": 0.095,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16,
+              "x": -0.48000002,
+              "y": 0.075,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.28,
+              "x": -0.14,
+              "y": 0.014999999,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.09,
+              "y": 0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.04,
+              "x": 0.24000001,
+              "y": 0.034999996,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16,
+              "x": 0.25,
+              "y": 0.034999996,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.28,
+              "x": 0.09,
+              "y": 0.004999999,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [
+        {
+          "id": "dash-end",
+          "time": 0.16
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-death",
+      "name": "Death",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.6,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.07,
+              "x": -0.08,
+              "y": -0.06
+            },
+            {
+              "time": 0.34,
+              "x": -0.24,
+              "y": -0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.68,
+              "x": -0.46,
+              "y": -0.56
+            },
+            {
+              "time": 0.92,
+              "x": -0.6,
+              "y": -0.83
+            },
+            {
+              "time": 1.06,
+              "x": -0.6,
+              "y": -0.76,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.3,
+              "x": -0.6,
+              "y": -0.83,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.6,
+              "x": -0.6,
+              "y": -0.83,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.07
+            },
+            {
+              "time": 0.34,
+              "angle": 0.12,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.68,
+              "angle": 0.85
+            },
+            {
+              "time": 0.92,
+              "angle": 1.45
+            },
+            {
+              "time": 1.06,
+              "angle": 1.38,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.3,
+              "angle": 1.5,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.6,
+              "angle": 1.5,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.065,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.07,
+              "x": -0.065
+            },
+            {
+              "time": 0.34,
+              "x": -0.32,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.68,
+              "x": -0.040000003,
+              "y": 0.014999999
+            },
+            {
+              "time": 0.92,
+              "x": 0.32,
+              "y": 0.055
+            },
+            {
+              "time": 1.06,
+              "x": 0.34,
+              "y": 0.075,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.3,
+              "x": 0.36,
+              "y": 0.014999999,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.6,
+              "x": 0.36,
+              "y": 0.014999999,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.065,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.07,
+              "x": 0.065
+            },
+            {
+              "time": 0.34,
+              "x": -0.04,
+              "y": 0.034999996,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.68,
+              "x": 0.16,
+              "y": 0.175
+            },
+            {
+              "time": 0.92,
+              "x": 0.27,
+              "y": 0.115
+            },
+            {
+              "time": 1.06,
+              "x": 0.28,
+              "y": 0.145,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.3,
+              "x": 0.3,
+              "y": 0.045,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.6,
+              "x": 0.3,
+              "y": 0.045,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [
+        {
+          "id": "impact",
+          "time": 0.92
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-fall",
+      "name": "Fall",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.6,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": 0.02,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.3,
+              "y": 0.03,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "y": 0.02,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.06,
+              "y": 0.095,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.3,
+              "x": -0.040000003,
+              "y": 0.145,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "x": -0.06,
+              "y": 0.095,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.09,
+              "y": 0.23499998,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.3,
+              "x": 0.06999999,
+              "y": 0.18499999,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "x": 0.09,
+              "y": 0.23499998,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-gun-aim",
+      "name": "Gun aim",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.02,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "x": -0.02,
+              "y": 0.0039999997,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "x": -0.02,
+              "y": 0.012,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 2,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 2,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-gun-wall-shot",
+      "name": "Gun wall shot",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.3,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.1,
+              "y": -0.2
+            },
+            {
+              "time": 0.3,
+              "x": -0.1,
+              "y": -0.2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {},
+            {
+              "time": 0.3,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.24000001,
+              "y": 0.355
+            },
+            {
+              "time": 0.3,
+              "x": -0.24000001,
+              "y": 0.355,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": -0.24000001,
+              "y": 0.034999996
+            },
+            {
+              "time": 0.3,
+              "x": -0.24000001,
+              "y": 0.034999996,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [
+        {
+          "id": "fire"
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-heal-gather",
+      "name": "Heal: gather",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "y": -0.027999999,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.058,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-hit",
+      "name": "Hit",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.35,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.05,
+              "x": -0.07,
+              "y": -0.06
+            },
+            {
+              "time": 0.18,
+              "x": -0.05,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.35,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.05
+            },
+            {
+              "time": 0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.35,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.35,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.35,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-idle",
+      "name": "Idle",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 2.4,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.2,
+              "x": -0.01,
+              "y": 0.0039999997,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.4,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1.2,
+              "ease": "smooth"
+            },
+            {
+              "time": 2.4,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 2.4,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 2.4,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-jump",
+      "name": "Jump",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.5,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": 0.02,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.08,
+              "y": 0.02
+            },
+            {
+              "time": 0.3,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "y": 0.05,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.08
+            },
+            {
+              "time": 0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.14,
+              "y": 0.034999996,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.08,
+              "x": -0.08,
+              "y": -0.005000001
+            },
+            {
+              "time": 0.3,
+              "x": -0.120000005,
+              "y": 0.435,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "x": -0.09,
+              "y": 0.355,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "y": 0.004999999,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.08,
+              "x": -0.04,
+              "y": 0.075
+            },
+            {
+              "time": 0.3,
+              "x": 0.06,
+              "y": 0.49499997,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.5,
+              "x": 0.040000003,
+              "y": 0.415,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [
+        {
+          "id": "launch"
+        },
+        {
+          "id": "apex",
+          "time": 0.3
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-land",
+      "name": "Land",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.36,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.02,
+              "y": -0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.09,
+              "x": -0.02,
+              "y": -0.24,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.36,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.09,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.36,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.36,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.36,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "impact"
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-sword-backhand",
+      "name": "Sword backhand",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.25,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": 0.06,
+              "y": -0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.0333333,
+              "x": 0.02,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.099999964,
+              "x": 0.02,
+              "y": -0.08
+            },
+            {
+              "time": 0.116666615,
+              "y": -0.08
+            },
+            {
+              "time": 0.13333333,
+              "x": 0.06,
+              "y": -0.13
+            },
+            {
+              "time": 0.16666669,
+              "x": 0.05,
+              "y": -0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.23333335,
+              "x": 0.04,
+              "y": -0.14,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "x": 0.04,
+              "y": -0.14,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.0333333,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.099999964
+            },
+            {
+              "time": 0.116666615
+            },
+            {
+              "time": 0.13333333
+            },
+            {
+              "time": 0.16666669,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.23333335,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.25,
+          "target": {
+            "x": -0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.25,
+          "target": {
+            "x": 0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "sword-draw"
+        },
+        {
+          "id": "swoosh",
+          "time": 0.116666615
+        },
+        {
+          "id": "strike",
+          "time": 0.13333333
+        },
+        {
+          "id": "swoosh-end",
+          "time": 0.14999998
+        },
+        {
+          "id": "recover",
+          "time": 0.21666664
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-sword-down-attack",
+      "name": "Sword downward stab",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.25,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": 0.04
+            },
+            {
+              "time": 0.04,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.18,
+              "y": 0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "y": 0.05,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {},
+            {
+              "time": 0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.18,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.08,
+              "y": 0.335
+            },
+            {
+              "time": 0.04,
+              "x": -0.120000005,
+              "y": 0.49499997,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.18,
+              "x": -0.120000005,
+              "y": 0.51500005,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "x": -0.09,
+              "y": 0.39499998,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.040000003,
+              "y": 0.39499998
+            },
+            {
+              "time": 0.04,
+              "x": 0.02,
+              "y": 0.535,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.18,
+              "x": 0.02,
+              "y": 0.555,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "x": 0.040000003,
+              "y": 0.435,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [
+        {
+          "id": "sword-draw"
+        },
+        {
+          "id": "strike",
+          "time": 0.02
+        },
+        {
+          "id": "recover",
+          "time": 0.083
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-sword-forehand",
+      "name": "Sword forehand",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.25,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": 0.04,
+              "y": -0.14,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.0333333,
+              "x": -0.02,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.08333331,
+              "x": -0.02,
+              "y": -0.06
+            },
+            {
+              "time": 0.099999964,
+              "x": -0.02,
+              "y": -0.06
+            },
+            {
+              "time": 0.116666675,
+              "x": 0.01,
+              "y": -0.08
+            },
+            {
+              "time": 0.13333333,
+              "x": 0.06,
+              "y": -0.11
+            },
+            {
+              "time": 0.16666669,
+              "x": 0.06,
+              "y": -0.17,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.23333335,
+              "x": 0.06,
+              "y": -0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "x": 0.06,
+              "y": -0.16,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.0333333,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.08333331
+            },
+            {
+              "time": 0.099999964
+            },
+            {
+              "time": 0.116666675
+            },
+            {
+              "time": 0.13333333
+            },
+            {
+              "time": 0.16666669,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.23333335,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.25,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.25,
+          "target": {
+            "x": -0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.25,
+          "target": {
+            "x": 0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "sword-draw"
+        },
+        {
+          "id": "swoosh",
+          "time": 0.099999964
+        },
+        {
+          "id": "strike",
+          "time": 0.13333333
+        },
+        {
+          "id": "swoosh-end",
+          "time": 0.14999998
+        },
+        {
+          "id": "recover",
+          "time": 0.21666664
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-sword-put-away",
+      "name": "Sword put away",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.4833333,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": 0.06,
+              "y": -0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.18333334,
+              "x": 0.06,
+              "y": -0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.26333332,
+              "x": 0.01,
+              "y": -0.05
+            },
+            {
+              "time": 0.33333337,
+              "x": -0.01,
+              "y": 0.012
+            },
+            {
+              "time": 0.4033333,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.4833333,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.18333334,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.26333332
+            },
+            {
+              "time": 0.33333337
+            },
+            {
+              "time": 0.4033333,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.4833333,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.4833333,
+          "target": {
+            "x": -0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.4833333,
+          "target": {
+            "x": 0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "sword-sheathe",
+          "time": 0.4033333
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-sword-put-away-backhand",
+      "name": "Sword put away after a backhand",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.48333335,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": 0.04,
+              "y": -0.14,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.1833334,
+              "x": 0.04,
+              "y": -0.14,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.26333344,
+              "x": 0.01,
+              "y": -0.05
+            },
+            {
+              "time": 0.33333337,
+              "x": -0.01,
+              "y": 0.012
+            },
+            {
+              "time": 0.40333343,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.48333335,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.1833334,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.26333344
+            },
+            {
+              "time": 0.33333337
+            },
+            {
+              "time": 0.40333343,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.48333335,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.48333335,
+          "target": {
+            "x": -0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.48333335,
+          "target": {
+            "x": 0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "sword-sheathe",
+          "time": 0.40333343
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-sword-sheathe",
+      "name": "Sword sheathe",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.42,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": 0.03,
+              "y": -0.07,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.12,
+              "x": 0.01,
+              "y": -0.05
+            },
+            {
+              "time": 0.22,
+              "x": -0.01,
+              "y": 0.012
+            },
+            {
+              "time": 0.3,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.42,
+              "x": -0.01,
+              "y": 0.012,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.12
+            },
+            {
+              "time": 0.22
+            },
+            {
+              "time": 0.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.42,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.42,
+          "target": {
+            "x": -0.065,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.42,
+          "target": {
+            "x": 0.065,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "sword-sheathe",
+          "time": 0.3
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-sword-side-cut",
+      "name": "Sword draw and side cut",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 0.16666669,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.03,
+              "y": -0.04
+            },
+            {
+              "time": 0.01666668,
+              "x": -0.03,
+              "y": -0.05
+            },
+            {
+              "time": 0.03333333,
+              "x": -0.02,
+              "y": -0.06
+            },
+            {
+              "time": 0.050000012,
+              "x": 0.06,
+              "y": -0.11
+            },
+            {
+              "time": 0.08333334,
+              "x": 0.06,
+              "y": -0.17,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.15000004,
+              "x": 0.06,
+              "y": -0.16,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16666669,
+              "x": 0.06,
+              "y": -0.16,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {},
+            {
+              "time": 0.01666668
+            },
+            {
+              "time": 0.03333333
+            },
+            {
+              "time": 0.050000012
+            },
+            {
+              "time": 0.08333334,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.15000004,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.16666669,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 0.16666669,
+          "target": {
+            "x": -0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 0.16666669,
+          "target": {
+            "x": 0.099999994,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "sword-draw",
+          "time": 0.01666668
+        },
+        {
+          "id": "swoosh",
+          "time": 0.03333333
+        },
+        {
+          "id": "strike",
+          "time": 0.050000012
+        },
+        {
+          "id": "swoosh-end",
+          "time": 0.06666669
+        },
+        {
+          "id": "recover",
+          "time": 0.13333336
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "player-wall-grip",
+      "name": "Wall grip",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.2,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.08,
+              "y": -0.1,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "x": -0.08,
+              "y": -0.115,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.2,
+              "x": -0.08,
+              "y": -0.1,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.2,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.34,
+              "y": 0.034999996,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "x": -0.34,
+              "y": 0.025,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.2,
+              "x": -0.34,
+              "y": 0.034999996,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": -0.06,
+              "y": 0.175,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.6,
+              "x": -0.04,
+              "y": 0.155,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.2,
+              "x": -0.06,
+              "y": 0.175,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "rock-thrower-throw",
+      "name": "Rock thrower / search lift aim release",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.85,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "x": -0.01,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.05
+            },
+            {
+              "time": 1.14,
+              "x": 0.08,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.3,
+              "x": 0.08,
+              "y": -0.08,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.85,
+              "x": -0.01,
+              "y": -0.04,
+              "ease": "smooth"
+            }
+          ]
+        },
+        {
+          "kind": "rotate",
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.8,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.05
+            },
+            {
+              "time": 1.14,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.3,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.85,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1.85,
+          "target": {
+            "x": -0.14,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1.85,
+          "target": {
+            "x": 0.14,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [
+        {
+          "id": "search",
+          "time": 0.15
+        },
+        {
+          "id": "lift",
+          "time": 0.55
+        },
+        {
+          "id": "aim",
+          "time": 0.8
+        },
+        {
+          "id": "release",
+          "time": 1.14
+        },
+        {
+          "id": "recover",
+          "time": 1.3
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "shield-defender-bash",
+      "name": "Shell defender / pullback bash recovery",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.4,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 0.45,
+              "x": -0.035,
+              "y": -0.04,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.55,
+              "x": 0.06,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 0.7,
+              "x": 0.06,
+              "y": -0.06,
+              "ease": "smooth"
+            },
+            {
+              "time": 1.4,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 1.4
+        },
+        {
+          "chain": "right-leg",
+          "finish": 1.4
+        }
+      ],
+      "markers": [
+        {
+          "id": "pullback",
+          "time": 0.2
+        },
+        {
+          "id": "strike",
+          "time": 0.55
+        },
+        {
+          "id": "recover",
+          "time": 0.7
+        }
+      ],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "shield-defender-idle",
+      "name": "Shell defender / idle",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 2,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": []
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "ease": "smooth"
+            },
+            {
+              "time": 1,
+              "y": -0.012,
+              "ease": "smooth"
+            },
+            {
+              "time": 2,
+              "ease": "smooth"
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "left-leg",
+          "finish": 2
+        },
+        {
+          "chain": "right-leg",
+          "finish": 2
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    },
+    {
+      "format": "app2d-clip",
+      "version": 4,
+      "id": "shield-defender-walk",
+      "name": "Shell defender / walk",
+      "model": "person-lower",
+      "structureRevision": 1,
+      "duration": 1.2,
+      "loop": true,
+      "reference": {
+        "leg": 0.9914766
+      },
+      "travel": {
+        "scale": "leg",
+        "keys": [
+          {},
+          {
+            "time": 0.075,
+            "x": 0.03125
+          },
+          {
+            "time": 0.15,
+            "x": 0.0625
+          },
+          {
+            "time": 0.22500001,
+            "x": 0.09375
+          },
+          {
+            "time": 0.3,
+            "x": 0.125
+          },
+          {
+            "time": 0.375,
+            "x": 0.15625
+          },
+          {
+            "time": 0.45000002,
+            "x": 0.1875
+          },
+          {
+            "time": 0.52500004,
+            "x": 0.21875
+          },
+          {
+            "time": 0.6,
+            "x": 0.25
+          },
+          {
+            "time": 0.675,
+            "x": 0.28125
+          },
+          {
+            "time": 0.75,
+            "x": 0.3125
+          },
+          {
+            "time": 0.82500005,
+            "x": 0.34375
+          },
+          {
+            "time": 0.90000004,
+            "x": 0.375
+          },
+          {
+            "time": 0.975,
+            "x": 0.40625
+          },
+          {
+            "time": 1.0500001,
+            "x": 0.4375
+          },
+          {
+            "time": 1.125,
+            "x": 0.46875
+          },
+          {
+            "time": 1.2,
+            "x": 0.5
+          }
+        ]
+      },
+      "tracks": [
+        {
+          "target": "hips",
+          "keys": [
+            {
+              "y": -0.024999976
+            },
+            {
+              "time": 0.075,
+              "y": -0.019727945
+            },
+            {
+              "time": 0.15,
+              "y": -0.007000029
+            },
+            {
+              "time": 0.22500001,
+              "y": 0.005727887
+            },
+            {
+              "time": 0.3,
+              "y": 0.011000037
+            },
+            {
+              "time": 0.375,
+              "y": 0.005727887
+            },
+            {
+              "time": 0.45000002,
+              "y": -0.007000029
+            },
+            {
+              "time": 0.52500004,
+              "y": -0.019727945
+            },
+            {
+              "time": 0.6,
+              "y": -0.024999976
+            },
+            {
+              "time": 0.675,
+              "y": -0.019727945
+            },
+            {
+              "time": 0.75,
+              "y": -0.0069999695
+            },
+            {
+              "time": 0.82500005,
+              "y": 0.005727887
+            },
+            {
+              "time": 0.90000004,
+              "y": 0.011000037
+            },
+            {
+              "time": 0.975,
+              "y": 0.005727887
+            },
+            {
+              "time": 1.0500001,
+              "y": -0.007000029
+            },
+            {
+              "time": 1.125,
+              "y": -0.019727945
+            },
+            {
+              "time": 1.2,
+              "y": -0.024999976
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "left-leg",
+          "keys": [
+            {
+              "x": -0.125
+            },
+            {
+              "time": 0.075,
+              "x": -0.13476562,
+              "y": 0.017573593
+            },
+            {
+              "time": 0.15,
+              "x": -0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 0.22500001,
+              "x": -0.06054688,
+              "y": 0.1024264
+            },
+            {
+              "time": 0.3,
+              "x": -3.7252903E-09,
+              "y": 0.12
+            },
+            {
+              "time": 0.375,
+              "x": 0.06054687,
+              "y": 0.1024264
+            },
+            {
+              "time": 0.45000002,
+              "x": 0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 0.52500004,
+              "x": 0.13476562,
+              "y": 0.017573578
+            },
+            {
+              "time": 0.6,
+              "x": 0.125
+            },
+            {
+              "time": 0.675,
+              "x": 0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.75,
+              "x": 0.062499996,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.82500005,
+              "x": 0.031249996
+            },
+            {
+              "time": 0.90000004,
+              "x": -3.7252903E-09
+            },
+            {
+              "time": 0.975,
+              "x": -0.031250004
+            },
+            {
+              "time": 1.0500001,
+              "x": -0.0625,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 1.125,
+              "x": -0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 1.2,
+              "x": -0.125
+            }
+          ]
+        },
+        {
+          "kind": "target",
+          "target": "right-leg",
+          "keys": [
+            {
+              "x": 0.125
+            },
+            {
+              "time": 0.075,
+              "x": 0.09375,
+              "y": -1.8626451E-09
+            },
+            {
+              "time": 0.15,
+              "x": 0.0625,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.22500001,
+              "x": 0.031250004
+            },
+            {
+              "time": 0.3,
+              "x": 3.7252903E-09
+            },
+            {
+              "time": 0.375,
+              "x": -0.031249996
+            },
+            {
+              "time": 0.45000002,
+              "x": -0.062499996,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.52500004,
+              "x": -0.09375,
+              "y": 1.8626451E-09
+            },
+            {
+              "time": 0.6,
+              "x": -0.125
+            },
+            {
+              "time": 0.675,
+              "x": -0.13476562,
+              "y": 0.017573593
+            },
+            {
+              "time": 0.75,
+              "x": -0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 0.82500005,
+              "x": -0.06054687,
+              "y": 0.1024264
+            },
+            {
+              "time": 0.90000004,
+              "x": 3.7252903E-09,
+              "y": 0.12
+            },
+            {
+              "time": 0.975,
+              "x": 0.06054688,
+              "y": 0.1024264
+            },
+            {
+              "time": 1.0500001,
+              "x": 0.109375,
+              "y": 0.059999995
+            },
+            {
+              "time": 1.125,
+              "x": 0.13476562,
+              "y": 0.017573578
+            },
+            {
+              "time": 1.2,
+              "x": 0.125
+            }
+          ]
+        }
+      ],
+      "contacts": [
+        {
+          "chain": "right-leg",
+          "finish": 0.6,
+          "target": {
+            "x": 0.125,
+            "y": 0,
+            "z": 0
+          }
+        },
+        {
+          "chain": "left-leg",
+          "start": 0.6,
+          "finish": 1.2,
+          "target": {
+            "x": 0.375,
+            "y": 0,
+            "z": 0
+          }
+        }
+      ],
+      "markers": [],
+      "plays": [],
+      "attachments": [],
+      "colors": [],
+      "drawOrder": [],
+      "events": []
+    }
+  ],
+  "expressions": {
+    "club-caveman-slam": {
+      "clip": "club-caveman-slam",
+      "mutes": []
+    },
+    "death": {
+      "clip": "person-death",
+      "mutes": []
+    },
+    "hammer-slam": {
+      "clip": "person-hammer-slam",
+      "mutes": []
+    },
+    "heavy-walk": {
+      "clip": "person-heavy-walk",
+      "mutes": []
+    },
+    "hit": {
+      "clip": "person-hit",
+      "mutes": []
+    },
+    "idle": {
+      "clip": "person-idle",
+      "mutes": []
+    },
+    "jump": {
+      "clip": "person-jump",
+      "mutes": []
+    },
+    "pistol-shot": {
+      "clip": "person-pistol-shot",
+      "mutes": []
+    },
+    "run": {
+      "clip": "person-run",
+      "mutes": []
+    },
+    "thrust": {
+      "clip": "person-thrust",
+      "mutes": []
+    },
+    "walk": {
+      "clip": "person-walk",
+      "mutes": []
+    },
+    "player-balance-backward": {
+      "clip": "player-balance-backward",
+      "mutes": []
+    },
+    "player-balance-forward": {
+      "clip": "player-balance-forward",
+      "mutes": []
+    },
+    "player-celebrate": {
+      "clip": "player-celebrate",
+      "mutes": []
+    },
+    "player-climb": {
+      "clip": "player-climb",
+      "mutes": []
+    },
+    "player-climb-off": {
+      "clip": "player-climb-off",
+      "mutes": []
+    },
+    "player-climb-on": {
+      "clip": "player-climb-on",
+      "mutes": []
+    },
+    "player-dash": {
+      "clip": "player-dash",
+      "mutes": []
+    },
+    "player-death": {
+      "clip": "player-death",
+      "mutes": []
+    },
+    "player-fall": {
+      "clip": "player-fall",
+      "mutes": []
+    },
+    "player-gun-aim": {
+      "clip": "player-gun-aim",
+      "mutes": []
+    },
+    "player-gun-wall-shot": {
+      "clip": "player-gun-wall-shot",
+      "mutes": []
+    },
+    "player-heal-gather": {
+      "clip": "player-heal-gather",
+      "mutes": []
+    },
+    "player-hit": {
+      "clip": "player-hit",
+      "mutes": []
+    },
+    "player-idle": {
+      "clip": "player-idle",
+      "mutes": []
+    },
+    "player-jump": {
+      "clip": "player-jump",
+      "mutes": []
+    },
+    "player-land": {
+      "clip": "player-land",
+      "mutes": []
+    },
+    "player-sword-backhand": {
+      "clip": "player-sword-backhand",
+      "mutes": []
+    },
+    "player-sword-down-attack": {
+      "clip": "player-sword-down-attack",
+      "mutes": []
+    },
+    "player-sword-forehand": {
+      "clip": "player-sword-forehand",
+      "mutes": []
+    },
+    "player-sword-put-away": {
+      "clip": "player-sword-put-away",
+      "mutes": []
+    },
+    "player-sword-put-away-backhand": {
+      "clip": "player-sword-put-away-backhand",
+      "mutes": []
+    },
+    "player-sword-sheathe": {
+      "clip": "player-sword-sheathe",
+      "mutes": []
+    },
+    "player-sword-side-cut": {
+      "clip": "player-sword-side-cut",
+      "mutes": []
+    },
+    "player-wall-grip": {
+      "clip": "player-wall-grip",
+      "mutes": []
+    },
+    "rock-thrower-throw": {
+      "clip": "rock-thrower-throw",
+      "mutes": []
+    },
+    "shield-defender-bash": {
+      "clip": "shield-defender-bash",
+      "mutes": []
+    },
+    "shield-defender-idle": {
+      "clip": "shield-defender-idle",
+      "mutes": []
+    },
+    "shield-defender-walk": {
+      "clip": "shield-defender-walk",
+      "mutes": []
+    }
+  },
+  "expression": "idle"
+}

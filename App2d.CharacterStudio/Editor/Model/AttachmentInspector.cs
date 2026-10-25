@@ -119,6 +119,7 @@ internal sealed class AttachmentInspector(EditorSession session)
                 session.Edit(document, () => { Live().Expression = expression.Length == 0 ? null : expression; document.Asset.Validate(); });
             }
 
+            Inputs(document, id, instance, animated);
             Animated(animated);
         }
 
@@ -134,9 +135,55 @@ internal sealed class AttachmentInspector(EditorSession session)
         Ui.Help("Fit stretches this instance's artwork only; nothing inherits it. A variant overrides any of these per instance without editing this character or the shared part.");
     }
 
+    /// <summary>
+    /// The module's dimension inputs on this instance (P10b): each parameter the part declares, with this instance's value
+    /// (bindable as the attachment property input.&lt;id&gt;, so a wearer parameter or a variant override may drive it) or the
+    /// part's default when the instance sets none.
+    /// </summary>
+    private void Inputs(AssetDocument<CharacterModel> document, string id, PartInstance instance, PartAsset asset)
+    {
+        if (asset.Parameters.Count == 0)
+        {
+            return;
+        }
+
+        ImGui.TextDisabled("Module inputs (this instance's values; the part declares each range)");
+        PartInstance Live() => document.Asset.Attachments.First(a => a.Id == id);
+        foreach (var parameter in asset.Parameters)
+        {
+            var set = instance.Inputs.TryGetValue(parameter.Id, out var current);
+            var value = set ? current : parameter.Default;
+            ImGui.SetNextItemWidth(160 * Ui.Scale);
+            if (Ui.Drag($"{parameter.Label} ({parameter.Units})##input-{parameter.Id}", ref value, .005f, parameter.Min, parameter.Max))
+            {
+                session.Change(document, () => { Live().Inputs[parameter.Id] = value; document.Asset.Validate(); });
+            }
+
+            if (set)
+            {
+                ImGui.SameLine();
+                if (ImGui.SmallButton($"Part default##reset-input-{parameter.Id}"))
+                {
+                    session.Edit(document, () => { Live().Inputs.Remove(parameter.Id); document.Asset.Validate(); });
+                }
+
+                ParameterInspector.BoundNote(Resolved, PropertyRef.OfAttachment(id, RigProperties.Input + parameter.Id));
+            }
+            else if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Shows the part's default; dragging sets this instance's own value.");
+            }
+        }
+    }
+
     /// <summary>What an animated asset brings to the instance (P7a): its layers with their clocks, the targets a clip may key and the words it binds.</summary>
     private static void Animated(PartAsset asset)
     {
+        foreach (var line in asset.Contract())
+        {
+            ImGui.TextDisabled("  " + line);
+        }
+
         ImGui.TextDisabled($"Animated part: {asset.Controls.Count} control(s), {asset.Clips.Count} clip(s), fitting '{asset.Fitting}'.");
         foreach (var layer in asset.Layers)
         {

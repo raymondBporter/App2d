@@ -80,6 +80,8 @@ public sealed record ModelSocket
     public float OffsetY { get; set; }
     public float OffsetZ { get; set; }
     public float Angle { get; set; }
+    /// <summary>The slot contract (P10b): the <see cref="PartAsset.Usage"/> of the parts this socket takes; null takes any.</summary>
+    public string? Usage { get; set; }
 }
 
 /// <summary>Role-to-animation assignments, such as idle → person-idle. Sets may share clips; there is no set inheritance.</summary>
@@ -384,6 +386,10 @@ public sealed class CharacterModel
             new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
             new Limit(-100, 100).Check(socket.OffsetZ, $"{owner} socket '{socket.Id}' offsetZ");
             new Limit(-10, 10).Check(socket.Angle, $"{owner} socket '{socket.Id}' angle");
+            if (socket.Usage is not null)
+            {
+                AuthoredAsset.RequireId(socket.Usage, $"{owner} socket '{socket.Id}' usage");
+            }
         }
         var attachments = new HashSet<string>(StringComparer.Ordinal);
         Require(Attachments.Count <= 256, $"{owner}: capacity exceeded.");

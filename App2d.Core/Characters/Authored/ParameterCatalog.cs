@@ -21,6 +21,12 @@ public static class RigProperties
     public const string Asset = "asset", Mirror = "mirror";
     /// <summary>An animated part instance's default expression (P7a): one of the words its asset binds, or none.</summary>
     public const string Expression = "expression";
+    /// <summary>The prefix of an instance's module inputs (P10b): <c>input.&lt;parameter&gt;</c>, declared per instance by the inputs it sets.</summary>
+    public const string Input = "input.";
+    private static readonly Limit Inputs = new(-10000, 10000);
+
+    /// <summary>The declaration of one instance input: a bindable number whose range is the module parameter's own (checked at resolution).</summary>
+    public static PropertyDeclaration InputDeclaration(string input) => new(Input + input, PropertyKinds.Number, ParameterUnits.Factor, Inputs, Help: $"The module's '{input}' input on this instance; the part declares its range.");
     /// <summary>An animation role's clip (P6a): the wearer's motion-set role on this variant.</summary>
     public const string Clip = "clip";
     /// <summary>A bone node's angular joint limits (P4b): bounds on its parent-local rotation, exposed only while the node declares a limit.</summary>
@@ -169,12 +175,16 @@ public static class RigProperties
 
         if (property.Attachment is { } attachment)
         {
-            if (model.Attachments.All(a => a.Id != attachment))
+            var instance = model.Attachments.FirstOrDefault(a => a.Id == attachment) ?? throw new InvalidDataException($"{field}: no attachment '{attachment}'.");
+            if (property.Property.StartsWith(Input, StringComparison.Ordinal))
             {
-                throw new InvalidDataException($"{field}: no attachment '{attachment}'.");
+                // An input exists on the instance that sets it (P10b); the part's own declaration is checked when the instance resolves.
+                var input = property.Property[Input.Length..];
+                return instance.Inputs.ContainsKey(input) ? InputDeclaration(input)
+                    : throw new InvalidDataException($"{field}: attachment '{attachment}' sets no input '{input}'{(instance.Inputs.Count == 0 ? "" : $" (one of {string.Join(", ", instance.Inputs.Keys)})")}; declare it on the instance first (path: {model.Id} > attachments > {attachment} > inputs).");
             }
 
-            return AttachmentDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no attachment property '{property.Property}' (one of {string.Join(", ", AttachmentDeclarations.Select(d => d.Name))}).");
+            return AttachmentDeclarations.FirstOrDefault(d => d.Name == property.Property) ?? throw new InvalidDataException($"{field}: no attachment property '{property.Property}' (one of {string.Join(", ", AttachmentDeclarations.Select(d => d.Name).Append(Input + "<input>"))}).");
         }
 
         if (property.Part is { } part)
@@ -231,6 +241,11 @@ internal sealed class RigLayout
         if (property.Attachment is { } attachment)
         {
             var a = Attachments[AttachmentIndex(attachment)];
+            if (property.Property.StartsWith(RigProperties.Input, StringComparison.Ordinal))
+            {
+                return a.Inputs.TryGetValue(property.Property[RigProperties.Input.Length..], out var input) ? input : throw Unknown(property);
+            }
+
             return property.Property switch
             {
                 RigProperties.X => a.X,
@@ -294,6 +309,20 @@ internal sealed class RigLayout
         if (property.Attachment is { } attachment)
         {
             var index = AttachmentIndex(attachment);
+            if (property.Property.StartsWith(RigProperties.Input, StringComparison.Ordinal))
+            {
+                var inputs = new Dictionary<string, float>(Attachments[index].Inputs, StringComparer.Ordinal);
+                var input = property.Property[RigProperties.Input.Length..];
+                if (!inputs.ContainsKey(input))
+                {
+                    throw Unknown(property);
+                }
+
+                inputs[input] = value;
+                Attachments[index] = Attachments[index] with { Inputs = inputs };
+                return;
+            }
+
             Attachments[index] = property.Property switch
             {
                 RigProperties.X => Attachments[index] with { X = value },
