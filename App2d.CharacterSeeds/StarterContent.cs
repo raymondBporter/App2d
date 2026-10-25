@@ -425,6 +425,13 @@ public static class StarterContent
         Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
     };
 
+    /// <summary>P9a: the typed behaviors of a starter entity: its health and one default strike per hit group.</summary>
+    private static EntityBehaviors Behaviors(int health, params string[] groups) => new()
+    {
+        Damage = new() { Health = health },
+        Strikes = groups.ToDictionary(g => g, _ => new StrikeDef(), StringComparer.Ordinal),
+    };
+
     public static EntityAsset SpearGuardEntity() => new()
     {
         Id = SpearGuard,
@@ -438,7 +445,7 @@ public static class StarterContent
             Range = 2.1f,
             Cooldown = 1.1f
         },
-        Health = 3,
+        Behaviors = Behaviors(3, "spear-tip"),
         Movement = new()
         {
             Shape = MovementDef.Box(.5f, 1.866f)
@@ -466,7 +473,7 @@ public static class StarterContent
             Range = 1.6f,
             Cooldown = .2f
         },
-        Health = 5,
+        Behaviors = Behaviors(5, "spear-tip"),
         Movement = new()
         {
             Shape = MovementDef.Box(.55f, 1.705f)
@@ -499,7 +506,7 @@ public static class StarterContent
             Range = 1.05f,
             Cooldown = 1.4f
         },
-        Health = 2,
+        Behaviors = Behaviors(2, "sting"),
         Movement = new()
         {
             Shape = MovementDef.Box(1, 1.1f)

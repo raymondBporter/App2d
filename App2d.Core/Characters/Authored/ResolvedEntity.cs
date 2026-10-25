@@ -12,11 +12,13 @@ namespace App2d.Core.Characters.Authored;
 public sealed record RoleClip(string Role, MotionClip Clip, string Source);
 
 /// <summary>
-/// An activation window with marker times in seconds and the attack collider it enables over [Start, Finish). The window's
-/// id is the hit group: one attack instance damages each target once per window, however many hurt colliders it crosses.
+/// An activation window with marker times in seconds, the attack collider it enables over [Start, Finish) and the strike
+/// an accepted contact applies. The window's id is the hit group: one attack instance damages each target once per window,
+/// however many hurt colliders it crosses.
 /// </summary>
-public sealed record ResolvedHit(HitWindow Window, float Start, float Finish, ResolvedCollider Collider)
+public sealed record ResolvedHit(HitWindow Window, float Start, float Finish, ResolvedCollider Collider, StrikeDef Strike)
 {
+    public string Group => Window.Id;
     /// <summary>The collider's convex shape in its anchor frame.</summary>
     public IConvexShape2D Shape => Collider.Shape;
 
@@ -32,6 +34,8 @@ public sealed record ResolvedAction(string Id, MotionClip Clip, string Source, I
 {
     public IReadOnlySet<string>? Mask { get; init; }
     public ProjectileDef? Projectile { get; init; }
+    /// <summary>The strike the projectile applies (hit group = the action id); null without a projectile.</summary>
+    public StrikeDef? ProjectileStrike { get; init; }
     public float BlendIn { get; init; }
     public float BlendOut { get; init; }
     /// <summary>The action a further press chains to (see <see cref="EntityActionDef.Next"/>).</summary>
@@ -98,6 +102,12 @@ public sealed class ResolvedEntity
     public IReadOnlyList<ResolvedCollider> Colliders { get; private set; } = [];
     /// <summary>The guard collider, when the entity has a guard.</summary>
     public ResolvedCollider? GuardCollider { get; private set; }
+    /// <summary>Receiving damage: the typed behavior, or the legacy health and mass with the former constants.</summary>
+    public ReceiveDamageDef Damage { get; private set; } = new();
+    /// <summary>Guarding, when the entity guards: the typed behavior or the game's former defaults.</summary>
+    public GuardBehaviorDef? GuardBehavior { get; private set; }
+    /// <summary>Custom authored properties by name (empty before version 4).</summary>
+    public IReadOnlyDictionary<string, string> Properties { get; private set; } = new Dictionary<string, string>();
     /// <summary>Whether hurt geometry is attached colliders (found by the ordinary broad phase) rather than the legacy layout scan.</summary>
     public bool HurtRegistered => Colliders.Any(c => c.Use == ColliderUses.Hurt);
 
@@ -124,6 +134,25 @@ public sealed class ResolvedEntity
             throw new InvalidDataException($"{owner} model: no model or variant '{asset.Model}'.");
         }
         var entity = new ResolvedEntity(asset, model, controller);
+        // P9a: typed behaviors, or the legacy fields read into the same typed values. Every strike key must name a hit group.
+        var behaviors = asset.Behaviors;
+        entity.Damage = behaviors?.Damage ?? new ReceiveDamageDef { Health = asset.Health, Mass = asset.Mass };
+        entity.GuardBehavior = asset.Guard is null ? null : behaviors?.Guard ?? new GuardBehaviorDef();
+        entity.Properties = behaviors?.Properties ?? new Dictionary<string, string>();
+        if (behaviors is not null)
+        {
+            var groups = asset.Actions.SelectMany(a => a.Hits.Select(h => h.Id)).Concat(asset.Actions.Where(a => a.Projectile is not null).Select(a => a.Id)).ToHashSet(StringComparer.Ordinal);
+            foreach (var group in behaviors.Strikes.Keys)
+            {
+                if (!groups.Contains(group))
+                {
+                    throw new InvalidDataException($"{owner} behaviors.strikes.{group}: no hit window or projectile action of that name.");
+                }
+            }
+        }
+        // A typed entity's hit group without an entry strikes with the defaults (one damage, the default impact); an entry for no group is reported above.
+        StrikeDef StrikeOf(string group, int legacyDamage, string? legacySound) =>
+            behaviors is null ? new StrikeDef { Damage = legacyDamage, Sound = legacySound } : behaviors.Strikes.GetValueOrDefault(group) ?? new StrikeDef();
 
         MotionClip Clip(string id, string field)
         {
@@ -279,7 +308,7 @@ public sealed class ResolvedEntity
                     throw new InvalidDataException($"{field} hit '{hit.Id}': finish must follow start.");
                 }
 
-                hits.Add(new(hit, start, finish, windowColliders[(action.Id, hit.Id)]));
+                hits.Add(new(hit, start, finish, windowColliders[(action.Id, hit.Id)], StrikeOf(hit.Id, hit.Damage, hit.Sound)));
             }
             var events = action.Events.Select(e => new ResolvedEvent(e, Seconds(e.At, $"event '{e.Id}'"))).OrderBy(e => e.Seconds).ToList();
             if (action.Id == EntityControllers.Jump && !events.Any(e => e.Event.Id == EntityControllers.Launch))
@@ -320,6 +349,7 @@ public sealed class ResolvedEntity
                 BlendIn = action.BlendIn,
                 BlendOut = action.BlendOut,
                 Projectile = action.Projectile,
+                ProjectileStrike = action.Projectile is { } projectile ? StrikeOf(action.Id, projectile.Damage, null) : null,
                 Next = action.Next,
                 Recovery = recovery
             };

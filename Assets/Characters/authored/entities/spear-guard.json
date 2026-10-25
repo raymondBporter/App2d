@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 3,
+  "version": 4,
   "id": "spear-guard",
   "name": "Spear guard",
   "model": "tall-thin",
@@ -10,6 +10,12 @@
     "walkSpeed": 0.9,
     "range": 2.1,
     "cooldown": 1.1
+  },
+  "behaviors": {
+    "strikes": {
+      "spear-tip": {}
+    },
+    "properties": {}
   },
   "movement": {
     "shape": {

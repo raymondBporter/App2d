@@ -88,6 +88,7 @@ public sealed class EntityRuntimeTests
         post.Id = "post";
         post.Controller.Kind = EntityControllers.Stationary;
         post.Actions.Clear();
+        post.Behaviors!.Strikes.Clear(); // a strike for no hit group is reported at resolution (P9a)
         post.MotionSet = "deliberate";
         post.Roles = [];
         Assert.Empty(Compile(post).Actions); // a stationary object needs neither walk nor attack

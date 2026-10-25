@@ -34,7 +34,7 @@ public static class ArenaLayers
 /// </summary>
 public sealed class AuthoredArena
 {
-    public const float StepSeconds = 1 / 120f, Gravity = 20, HalfWidth = 12, HurtSeconds = .45f;
+    public const float StepSeconds = 1 / 120f, Gravity = 20, HalfWidth = 12;
 
     public sealed class Actor
     {
@@ -45,7 +45,7 @@ public sealed class AuthoredArena
             Animator = new(entity);
             Position = position;
             Facing = facing;
-            Health = entity.Asset.Health;
+            Health = entity.Damage.Health;
             Id = EntityId2D.Create();
             Colliders = new(entity, collision, Id, ArenaLayers.Of(index), movement: true);
             Animator.Step(0, position, facing, EntityControllers.Idle, 0, false, []);
@@ -182,8 +182,8 @@ public sealed class AuthoredArena
                         continue;
                     }
 
-                    Hits.Add(new(Tick, attacker.Index, index, hit.Window.Id, hit.Window.Damage));
-                    Damage(Actors[index], hit.Window.Damage);
+                    Hits.Add(new(Tick, attacker.Index, index, hit.Group, hit.Strike.Damage));
+                    Damage(Actors[index], hit.Strike.Damage);
                 }
             }
         }
@@ -413,7 +413,7 @@ public sealed class AuthoredArena
             if (e is { Kind: AnimationEvent.EventKind, Id: EntityControllers.Fire } && animator.Current?.Projectile is { } shot)
             {
                 var (muzzle, axis) = EntityCollision.Muzzle(actor.Entity, actor.Pose);
-                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, (IConvexShape2D)shot.Shape.Validated(), shot.Lifetime, shot.Damage));
+                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, (IConvexShape2D)shot.Shape.Validated(), shot.Lifetime, animator.Current.ProjectileStrike!.Damage));
             }
         }
         if (animator.ActionComplete && animator.Action != EntityControllers.Jump)
@@ -425,7 +425,7 @@ public sealed class AuthoredArena
     private static void Damage(Actor target, int damage)
     {
         target.Health = Math.Max(0, target.Health - damage);
-        target.HurtTime = HurtSeconds;
+        target.HurtTime = target.Entity.Damage.HurtSeconds;
         // A hit interrupts the target's action and staggers it; contacts are released and re-captured from the next pose.
         if (target.Alive)
         {

@@ -39,8 +39,9 @@ public sealed record HitWindow
     public float OffsetY { get; set; }
     /// <summary>The region in the anchor frame; any convex shape definition.</summary>
     public IShape2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.3f, .3f);
+    /// <summary>Legacy (versions 2 and 3): the strike's damage. Since version 4 it lives in <c>behaviors.strikes</c> under the window's id.</summary>
     public int Damage { get; set; } = 1;
-    /// <summary>Played where the hit lands; null plays the game's default impact.</summary>
+    /// <summary>Legacy (versions 2 and 3): the strike's sound. Since version 4 it lives in <c>behaviors.strikes</c>.</summary>
     public string? Sound { get; set; }
 }
 
@@ -53,6 +54,7 @@ public sealed record ProjectileDef
     public float Speed { get; set; } = 8;
     /// <summary>The bolt's shape around its position; its bounds size the bolt in flight.</summary>
     public IShape2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.16f, .08f);
+    /// <summary>Legacy (versions 2 and 3): the bolt's damage. Since version 4 it lives in <c>behaviors.strikes</c> under the action's id.</summary>
     public int Damage { get; set; } = 1;
     public float Lifetime { get; set; } = 3;
     /// <summary>Downward acceleration in model units/s²; zero preserves straight shots.</summary>
@@ -174,15 +176,19 @@ public sealed record GuardDef
 
 /// <summary>
 /// What a character does in the game. References a model or variant and one of its base's motion sets; owns the
-/// controller, explicit actions, movement geometry, attached colliders (or the legacy hurt layout selection), equipment and
-/// events. No entity inheritance. Version 3 adds <see cref="Colliders"/> and the collider references on windows and the
-/// guard; a version-2 file reads unchanged and is written back at its own version until a collider is declared.
+/// controller, explicit actions, movement geometry, attached colliders (or the legacy hurt layout selection), typed
+/// behaviors, equipment and events. No entity inheritance. Version 3 adds <see cref="Colliders"/> and the collider
+/// references on windows and the guard; version 4 moves health, mass, window damage/sound and projectile damage into
+/// <see cref="Behaviors"/>. A version-2 or -3 file reads unchanged and is written back at its own version until it declares
+/// what the newer version carries.
 /// </summary>
 public sealed class EntityAsset
 {
     public const string FormatId = "app2d-entity";
     public string Format { get; set; } = FormatId;
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
+    /// <summary>The version that introduced attached colliders.</summary>
+    public const int ColliderVersion = 3;
     /// <summary>The oldest version that still reads unchanged: its meaning is a subset of the current one.</summary>
     public const int LegacyVersion = 2;
     public int Version { get; set; } = CurrentVersion;
@@ -194,9 +200,12 @@ public sealed class EntityAsset
     /// <summary>Role assignments that win over the selected motion set.</summary>
     public Dictionary<string, string> Roles { get; set; } = [];
     public ControllerConfig Controller { get; set; } = new();
+    /// <summary>Legacy (versions 2 and 3): the health pool. Since version 4 it is <c>behaviors.damage.health</c>.</summary>
     public int Health { get; set; } = 3;
-    /// <summary>Divides knockback: a heavy entity barely moves when hit.</summary>
+    /// <summary>Legacy (versions 2 and 3): divides knockback. Since version 4 it is <c>behaviors.damage.mass</c>.</summary>
     public float Mass { get; set; } = 1;
+    /// <summary>The typed gameplay behaviors (version 4): strikes per hit group, receiving damage, guarding, custom properties.</summary>
+    public EntityBehaviors? Behaviors { get; set; }
     public MovementDef Movement { get; set; } = new();
     /// <summary>The legacy hurt layout selection: pose-derived boxes until the entity's hurt geometry is converted to colliders.</summary>
     public HurtSelection Hurt { get; set; } = new();
@@ -208,6 +217,10 @@ public sealed class EntityAsset
     /// <summary>Whether the file declares anything a version-2 reader could not carry.</summary>
     [JsonIgnore]
     public bool UsesColliders => Colliders.Count > 0 || Guard?.Collider is not null || Actions.Any(a => a?.Hits.Any(h => h?.Collider is not null) == true);
+
+    /// <summary>The smallest version that can carry what the file declares.</summary>
+    [JsonIgnore]
+    public int RequiredVersion => Behaviors is not null ? CurrentVersion : UsesColliders ? ColliderVersion : LegacyVersion;
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static EntityAsset FromJson(string json)
@@ -262,7 +275,10 @@ public sealed class EntityAsset
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(Roles is not null && Controller is not null && Movement is not null && Hurt?.Regions is not null && Colliders is not null && Equipment is not null && Actions is not null,
             $"{owner}: collections cannot be null.");
-        Require(Version >= 3 || !UsesColliders, $"{owner}: attached colliders need entity version 3; a version-{Version} file cannot carry them.");
+        Require(Version >= ColliderVersion || !UsesColliders, $"{owner}: attached colliders need entity version {ColliderVersion}; a version-{Version} file cannot carry them.");
+        Require(Version >= CurrentVersion || Behaviors is null, $"{owner}: behaviors need entity version {CurrentVersion}; a version-{Version} file cannot carry them.");
+        Require(Version < CurrentVersion || Behaviors is not null, $"{owner}: a version-{CurrentVersion} entity declares its behaviors.");
+        Behaviors?.Validate(owner);
         foreach (var (role, clip) in Roles)
         {
             AuthoredAsset.RequireId(role, $"{owner} roles");
@@ -291,8 +307,16 @@ public sealed class EntityAsset
             new Limit(.1f, 30).Check(flight.DiveSpeed, $"{owner} flight.diveSpeed");
             new Limit(0, 10).Check(flight.LowSpeed, $"{owner} flight.lowSpeed");
         }
-        new Limit(1, 10000).Check(Health, $"{owner} health");
-        new Limit(.1f, 100).Check(Mass, $"{owner} mass");
+        if (Behaviors is null)
+        {
+            new Limit(1, 10000).Check(Health, $"{owner} health");
+            new Limit(.1f, 100).Check(Mass, $"{owner} mass");
+        }
+        else
+        {
+            var blank = new EntityAsset();
+            Require(Health == blank.Health && Mass == blank.Mass, $"{owner}: health and mass belong to behaviors.damage at version {CurrentVersion}.");
+        }
         CheckShape(Movement.Shape, $"{owner} movement.shape");
         if (Hurt.Layout is not null)
         {
@@ -389,7 +413,14 @@ public sealed class EntityAsset
             {
                 new Limit(.1f, 200).Check(shot.Speed, field + " projectile.speed");
                 CheckShape(shot.Shape, field + " projectile.shape", 10);
-                new Limit(0, 10000).Check(shot.Damage, field + " projectile.damage");
+                if (Behaviors is null)
+                {
+                    new Limit(0, 10000).Check(shot.Damage, field + " projectile.damage");
+                }
+                else
+                {
+                    Require(shot.Damage == new ProjectileDef().Damage, $"{field} projectile: damage belongs to behaviors.strikes.{action.Id} at version {CurrentVersion}.");
+                }
                 new Limit(.05f, 30).Check(shot.Lifetime, field + " projectile.lifetime");
                 new Limit(0, 200).Check(shot.Gravity, field + " projectile.gravity");
                 new Limit(0, 10).Check(shot.FlightSeconds, field + " projectile.flightSeconds");
@@ -415,10 +446,18 @@ public sealed class EntityAsset
                     new Limit(-100, 100).Check(hit.OffsetY, $"{field} hit '{hit.Id}' offsetY");
                     CheckShape(hit.Shape, $"{field} hit '{hit.Id}' shape");
                 }
-                new Limit(0, 10000).Check(hit.Damage, $"{field} hit '{hit.Id}' damage");
-                if (hit.Sound is not null)
+                if (Behaviors is null)
                 {
-                    AuthoredAsset.RequireId(hit.Sound, $"{field} hit '{hit.Id}' sound");
+                    new Limit(0, 10000).Check(hit.Damage, $"{field} hit '{hit.Id}' damage");
+                    if (hit.Sound is not null)
+                    {
+                        AuthoredAsset.RequireId(hit.Sound, $"{field} hit '{hit.Id}' sound");
+                    }
+                }
+                else
+                {
+                    var blankWindow = new HitWindow();
+                    Require(hit.Damage == blankWindow.Damage && hit.Sound == blankWindow.Sound, $"{field} hit '{hit.Id}': damage and sound belong to behaviors.strikes.{hit.Id} at version {CurrentVersion}.");
                 }
             }
             foreach (var cue in action.Events)

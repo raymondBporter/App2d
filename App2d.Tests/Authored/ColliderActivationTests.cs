@@ -126,10 +126,11 @@ public sealed class ColliderActivationTests
         Assert.Equal(2, strikes);
         Assert.Equal(strikes, arena.Hits.Count);
         Assert.All(arena.Hits, h => Assert.Equal("spear-tip", h.Window));
-        Assert.Equal(target.Asset.Health - strikes, arena.Player.Health);
+        Assert.Equal(target.Damage.Health - strikes, arena.Player.Health);
         // Two pulses on one explicit collider are two hit groups: each lands once per thrust.
         var pulsed = StarterContent.SpearGuardEntity();
         pulsed.Version = EntityAsset.CurrentVersion;
+        pulsed.Behaviors!.Strikes.Remove("spear-tip"); // the renamed windows strike with the typed defaults
         pulsed.Colliders = [new() { Id = "point", Use = ColliderUses.Attack, Prop = StarterContent.Spear, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) }];
         var window = pulsed.Actions[0].Hits[0];
         pulsed.Actions[0].Hits =
@@ -145,7 +146,7 @@ public sealed class ColliderActivationTests
 
         Assert.Equal(2, pulses.Events.Count(e => e.Actor == 1 && e.Event.Id == "strike"));
         Assert.Equal(["first", "second", "first", "second"], pulses.Hits.Select(h => h.Window));
-        Assert.Equal(target.Asset.Health - 4, pulses.Player.Health);
+        Assert.Equal(target.Damage.Health - 4, pulses.Player.Health);
     }
 
     [Fact]

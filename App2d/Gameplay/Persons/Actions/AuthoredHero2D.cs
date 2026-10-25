@@ -51,7 +51,7 @@ public sealed class AuthoredHero2D
     public float WorldUnitsPerModelUnit { get; }
 
     public IShape2D Shape(string? swing = null) => _shapes[Swing(swing).Id];
-    public int Damage(string? swing = null) => Swing(swing).Hits[0].Window.Damage;
+    public int Damage(string? swing = null) => Swing(swing).Hits[0].Strike.Damage;
 
     /// <summary>
     /// A swing's timing and its fixed box, centred where the entity puts it (mirrored by facing when placed). A press any
@@ -85,8 +85,8 @@ public sealed class AuthoredHero2D
     }
 
     /// <summary>The player's bolt from the shoot action's projectile, in world units.</summary>
-    internal GunPersonWeapon2D.Shot? Shot => Entity.Actions.GetValueOrDefault(EntityControllers.Shoot)?.Projectile is { } p
-        ? new(ShapeBounds2D.Calculate(p.Shape.Validated()).Size * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, p.Damage) : null;
+    internal GunPersonWeapon2D.Shot? Shot => Entity.Actions.GetValueOrDefault(EntityControllers.Shoot) is { Projectile: { } p, ProjectileStrike: { } strike }
+        ? new(ShapeBounds2D.Calculate(p.Shape.Validated()).Size * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, strike.Damage) : null;
 
     /// <summary>Where a shot leaves the pistol: the muzzle at the shoot (or wall-shot) action's fire event.</summary>
     public Vector2 Muzzle(float facing, bool wallGrip)

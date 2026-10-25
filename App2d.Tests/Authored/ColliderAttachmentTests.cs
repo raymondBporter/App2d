@@ -289,6 +289,7 @@ public sealed class ColliderAttachmentTests
         downgraded.Version = EntityAsset.LegacyVersion;
         Assert.Contains("need entity version 3", Assert.Throws<InvalidDataException>(downgraded.Validate).Message);
         var legacy = StarterContent.SpearGuardEntity();
+        legacy.Behaviors = null;
         legacy.Version = EntityAsset.LegacyVersion;
         legacy.Validate();
         Assert.False(legacy.UsesColliders);

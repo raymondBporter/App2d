@@ -87,7 +87,7 @@ public sealed class SideScrollerGame : Game2D
                 .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
                 .Select(ThingTypeRegistry2D.ToRuntime)])
         {
-            PlayerMaximumHealth = hero.Asset.Health,
+            PlayerMaximumHealth = hero.Damage.Health,
             Spells = System.Text.Json.JsonSerializer.Deserialize<SpellTuning2D>(
                 File.ReadAllText(Path.Combine(AssetPaths.Current.Runtime, "gameplay", "player-spells.json")),
                 SpellJsonOptions)

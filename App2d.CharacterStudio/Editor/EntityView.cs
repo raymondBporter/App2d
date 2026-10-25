@@ -156,12 +156,22 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             session.Edit(document, () => document.Asset.Controller.Kind = kind);
         }
 
-        var health = asset.Health;
+        var health = asset.Behaviors?.Damage.Health ?? asset.Health;
         ImGui.TextUnformatted("Health");
         ImGui.SetNextItemWidth(-1);
         if (ImGui.DragInt("##health", ref health, .2f, 1, 10000))
         {
-            session.Change(document, () => document.Asset.Health = Math.Clamp(health, 1, 10000));
+            session.Change(document, () =>
+            {
+                if (document.Asset.Behaviors is { } behaviors)
+                {
+                    behaviors.Damage.Health = Math.Clamp(health, 1, 10000);
+                }
+                else
+                {
+                    document.Asset.Health = Math.Clamp(health, 1, 10000);
+                }
+            });
         }
 
         Motion(document);
@@ -905,7 +915,11 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             {
                 session.Report("Equip a prop or add a socket to the base first: a hit window needs an anchor.", true);
             }
-            else if (session.Edit(document, () => Def(document, id).Hits.Add(new() { Id = hitId, Prop = prop, Socket = socket, Start = new() { At = .4f }, Finish = new() { At = .6f } })))
+            else if (session.Edit(document, () =>
+            {
+                Def(document, id).Hits.Add(new() { Id = hitId, Prop = prop, Socket = socket, Start = new() { At = .4f }, Finish = new() { At = .6f } });
+                document.Asset.Behaviors?.Strikes.TryAdd(hitId, new());
+            }))
             {
                 session.Selection.Hit = hitId;
             }
@@ -959,7 +973,15 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         ImGui.SameLine();
         if (ImGui.SmallButton("Remove hit"))
         {
-            session.Edit(document, () => Def(document, actionId).Hits.RemoveAll(h => h.Id == hitId));
+            session.Edit(document, () =>
+            {
+                Def(document, actionId).Hits.RemoveAll(h => h.Id == hitId);
+                // The strike goes with the last window of its hit group.
+                if (document.Asset.Actions.All(a => a.Hits.All(h => h.Id != hitId)))
+                {
+                    document.Asset.Behaviors?.Strikes.Remove(hitId);
+                }
+            });
             session.Selection.Hit = null;
             return;
         }
@@ -981,14 +1003,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 session.Selection.Collider = colliderId;
             }
 
-            var damageOnly = hit.Damage;
-            ImGui.TextUnformatted("Damage");
-            ImGui.SetNextItemWidth(-1);
-            if (ImGui.DragInt("##damage", ref damageOnly, .1f, 0, 10000))
-            {
-                session.Change(document, () => Hit().Damage = Math.Clamp(damageOnly, 0, 10000));
-            }
-
+            DamageField(document, hitId, Hit);
             return;
         }
 
@@ -1033,12 +1048,29 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
         ShapeFields(document, hit.Shape, shape => Hit().Shape = shape);
         Ui.Help("Legacy inline geometry: the shape sits in the anchor frame, +X along the anchor's axis, following facing. It registers as attack collider '" + (resolved?.Hits.FirstOrDefault(h => h.Window.Id == hitId)?.Collider.Id ?? hitId) + "'; Convert to colliders (under Hurt regions) makes that explicit.");
-        var damage = hit.Damage;
-        ImGui.TextUnformatted("Damage");
+        DamageField(document, hitId, Hit);
+    }
+
+    /// <summary>The window's strike damage: the typed strike of its hit group at version 4, the legacy window field before.</summary>
+    private void DamageField(AssetDocument<EntityAsset> document, string hitId, Func<HitWindow> hit)
+    {
+        var strike = document.Asset.Behaviors?.Strikes.GetValueOrDefault(hitId);
+        var damage = strike?.Damage ?? hit().Damage;
+        ImGui.TextUnformatted(strike is null ? "Damage" : $"Damage (strike '{hitId}')");
         ImGui.SetNextItemWidth(-1);
         if (ImGui.DragInt("##damage", ref damage, .1f, 0, 10000))
         {
-            session.Change(document, () => Hit().Damage = Math.Clamp(damage, 0, 10000));
+            session.Change(document, () =>
+            {
+                if (document.Asset.Behaviors is { } behaviors)
+                {
+                    behaviors.Strikes[hitId].Damage = Math.Clamp(damage, 0, 10000);
+                }
+                else
+                {
+                    hit().Damage = Math.Clamp(damage, 0, 10000);
+                }
+            });
         }
     }
 

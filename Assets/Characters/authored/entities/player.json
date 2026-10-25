@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 3,
+  "version": 4,
   "id": "player",
   "name": "Player",
   "model": "person",
@@ -14,7 +14,15 @@
     "range": 1.6,
     "cooldown": 0.2
   },
-  "health": 5,
+  "behaviors": {
+    "strikes": {
+      "spear-tip": {}
+    },
+    "damage": {
+      "health": 5
+    },
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",

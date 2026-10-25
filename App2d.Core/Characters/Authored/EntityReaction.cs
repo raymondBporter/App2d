@@ -17,7 +17,7 @@ public sealed class EntityReaction
     {
         animator.EndAction();
         var clip = animator.Entity.Clip(EntityControllers.Hit);
-        Stagger = clip?.Duration ?? DefaultStaggerSeconds;
+        Stagger = clip?.Duration ?? animator.Entity.Damage.StaggerSeconds;
         if (clip is not null)
         {
             animator.Play(EntityControllers.Hit, incomingDirection * animator.Facing > 0);

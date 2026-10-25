@@ -32,7 +32,7 @@ namespace App2d.Gameplay.Enemies;
 /// </summary>
 public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IAuthoredHurt2D, ICombatGuard2D
 {
-    private const float Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit, HurtSeconds = .45f;
+    private const float Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
     private readonly EntityAnimator _animator;
     private readonly ActorColliders _colliders;
     private readonly HitLedger _ledger = new();
@@ -75,7 +75,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         Body.CollisionMask = worldLayer;
         Body.Restitution = 0;
         Body.GravityScale = _flight is null ? 1 : 0;
-        Health = new(entity.Asset.Health);
+        Health = new(entity.Damage.Health);
         _colliders = new(entity, physics.CollisionSystem, id, enemyLayer, Scale);
         _rootBefore = Root;
         Evaluate(0, true);
@@ -353,7 +353,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
                 return false;
             }
 
-            var open = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == "guard-open");
+            var open = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == Entity.GuardBehavior!.OpenEvent);
             return open is null || _animator.ActionTime < open.Seconds;
         }
     }
@@ -406,7 +406,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
         var flying = _bolts.ToArray();
         _bolts.Clear();
-        var damage = Entity.Actions.Values.FirstOrDefault(a => a.Projectile is not null)?.Projectile?.Damage ?? 0;
+        var damage = Entity.Actions.Values.FirstOrDefault(a => a.Projectile is not null)?.ProjectileStrike?.Damage ?? 0;
         foreach (var bolt in flying)
         {
             var lifetime = bolt.Lifetime - _dt;
@@ -475,8 +475,8 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
                 continue;
             }
 
-            player.TryTakeDamageFromX(hit.Window.Damage, WorldObject.Transform.Position.X);
-            _events.Add(new EntityCue2D(Id, player.Position, hit.Window.Sound ?? "hit"));
+            player.TryTakeDamageFromX(hit.Strike.Damage, WorldObject.Transform.Position.X);
+            _events.Add(new EntityCue2D(Id, player.Position, hit.Strike.Sound ?? "hit"));
         }
         return !player.IsAlive;
     }
@@ -581,7 +581,10 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
         var bounds = GuardBounds()!.Value;
         var point = (Vector2.Max(bounds.Min, attackBounds.Min) + Vector2.Min(bounds.Max, attackBounds.Max)) / 2;
-        _events.Add(new EntityCue2D(Id, point, "shield-block"));
+        if (Entity.GuardBehavior?.BlockSound is { } blockSound)
+        {
+            _events.Add(new EntityCue2D(Id, point, blockSound));
+        }
         return true;
     }
 
@@ -592,7 +595,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             return false;
         }
 
-        _hurt = HurtSeconds;
+        _hurt = Entity.Damage.HurtSeconds;
         // A hit interrupts an attack and staggers; contacts are released and re-captured from the next pose.
         if (IsAlive)
         {
@@ -604,7 +607,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
         // Publish the reaction pose on the damage tick; collision and rendering continue to share it.
         Evaluate(0, false);
-        Body.LinearVelocity = IsAlive ? knockback / Entity.Asset.Mass : Vector2.Zero;
+        Body.LinearVelocity = IsAlive ? knockback / Entity.Damage.Mass : Vector2.Zero;
         if (!IsAlive)
         {
             Body.IsCollider = false;

@@ -127,7 +127,7 @@ public sealed class AuthoredArenaTests
             Assert.InRange(hit.Tick, strike.Tick, recover.Tick);
         }
         Assert.Equal(attacks.Count, arena.Events.Count(e => e.Actor == 1 && e.Event.Sound == "swing"));
-        Assert.Equal(Catalog.Entities["player"].Asset.Health - hits.Count, arena.Player.Health);
+        Assert.Equal(Catalog.Entities["player"].Damage.Health - hits.Count, arena.Player.Health);
         Assert.True(guard.Animator.ActionSequence >= attacks.Count);
     }
 

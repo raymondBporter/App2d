@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 3,
+  "version": 4,
   "id": "shield-defender",
   "name": "Shell-shield defender",
   "model": "shield-defender-build",
@@ -21,8 +21,20 @@
     "respectTerrain": true,
     "verticalRange": 0.75
   },
-  "health": 8,
-  "mass": 1.5,
+  "behaviors": {
+    "strikes": {
+      "shell-bash": {
+        "damage": 2,
+        "sound": "hit"
+      }
+    },
+    "damage": {
+      "health": 8,
+      "mass": 1.5
+    },
+    "guard": {},
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",
@@ -162,9 +174,7 @@
           "finish": {
             "marker": "recover"
           },
-          "collider": "shell-bash",
-          "damage": 2,
-          "sound": "hit"
+          "collider": "shell-bash"
         }
       ],
       "events": [

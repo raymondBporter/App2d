@@ -1124,7 +1124,7 @@ public sealed class EditorSession
                 throw new InvalidDataException($"Entity '{asset.Id}' already has a collider '{definition.Id}'.");
             }
 
-            asset.Version = EntityAsset.CurrentVersion;
+            asset.Version = Math.Max(asset.Version, EntityAsset.ColliderVersion);
             asset.Colliders.Add(definition);
             asset.Validate();
             // Compile against the drafts now (the cached compile is keyed on the revision the edit has not bumped yet), so a dangling binding refuses the edit by name.

@@ -25,7 +25,7 @@ public sealed class EntityAssetTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
-    [InlineData(4)]
+    [InlineData(5)]
     public void UnsupportedVersionsAreRejected(int version)
     {
         var json = $$"""{"format":"app2d-entity","version":{{version}}}""";

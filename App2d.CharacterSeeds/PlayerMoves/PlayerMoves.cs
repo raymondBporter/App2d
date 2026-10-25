@@ -185,8 +185,11 @@ internal static partial class PlayerMoves
             Range = 1.3f,
             Cooldown = 1
         },
-        Health = 22,
-        Mass = 3,
+        Behaviors = new()
+        {
+            Damage = new() { Health = 22, Mass = 3 },
+            Strikes = new(StringComparer.Ordinal) { ["hammer-head"] = new() { Damage = 5, Sound = "heavy" } },
+        },
         Movement = EntityAuthoring.FitMovement(model),
         Hurt = new()
         {
@@ -213,8 +216,6 @@ internal static partial class PlayerMoves
                         Id = "hammer-head",
                         Prop = "hammer",
                         Shape = Rectangle2D.Builder.FromSize(1.2f, 1f),
-                        Damage = 5,
-                        Sound = "heavy",
                         Start = new()
                         {
                             Marker = "strike"
@@ -272,7 +273,11 @@ internal static partial class PlayerMoves
             Range = 4.5f,
             Cooldown = 1
         },
-        Health = 7,
+        Behaviors = new()
+        {
+            Damage = new() { Health = 7 },
+            Strikes = new(StringComparer.Ordinal) { [EntityControllers.Attack] = new() { Damage = 2 } },
+        },
         Movement = EntityAuthoring.FitMovement(model),
         Hurt = new()
         {
@@ -305,7 +310,6 @@ internal static partial class PlayerMoves
                 {
                     Speed = 8,
                     Shape = Rectangle2D.Builder.FromSize(.3f, .12f),
-                    Damage = 2,
                     Lifetime = 3
                 },
             },
@@ -317,7 +321,6 @@ internal static partial class PlayerMoves
     {
         Speed = 31,
         Shape = Rectangle2D.Builder.FromSize(.75f, .25f),
-        Damage = 2,
         Lifetime = 1.5f
     };
 
@@ -349,7 +352,16 @@ internal static partial class PlayerMoves
             Range = 1.2f,
             Cooldown = 0
         },
-        Health = 30,
+        Behaviors = new()
+        {
+            Damage = new() { Health = 30 },
+            Strikes = new(StringComparer.Ordinal)
+            {
+                ["blade"] = new() { Damage = 2, Impact = ImpactKinds.Sword },
+                [EntityControllers.Shoot] = new() { Damage = 2 },
+                [EntityControllers.WallShot] = new() { Damage = 2 },
+            },
+        },
         Movement = new()
         {
             Shape = MovementDef.Box(.55f, 1.705f)
@@ -403,7 +415,7 @@ internal static partial class PlayerMoves
             Clip = clip,
             Next = next,
             Recovery = recovery,
-            Hits = [new() { Id = "blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Shape = Rectangle2D.Builder.FromSize(R(max.X - min.X), R(max.Y - min.Y)), Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
+            Hits = [new() { Id = "blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Shape = Rectangle2D.Builder.FromSize(R(max.X - min.X), R(max.Y - min.Y)), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
             Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
         };
     }

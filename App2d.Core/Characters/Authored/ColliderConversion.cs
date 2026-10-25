@@ -135,7 +135,7 @@ public static class ColliderConversion
             return (entity, report);
         }
 
-        entity.Version = EntityAsset.CurrentVersion;
+        entity.Version = Math.Max(entity.Version, EntityAsset.ColliderVersion);
         entity.Validate();
         return (entity, report);
     }
@@ -179,7 +179,7 @@ public static class ColliderConversion
         return result;
     }
 
-    private static string Write(string target, string fresh, List<string> report)
+    internal static string Write(string target, string fresh, List<string> report)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(target)!);
         if (File.Exists(target))

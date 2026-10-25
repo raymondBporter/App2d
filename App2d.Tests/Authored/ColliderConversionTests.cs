@@ -81,6 +81,9 @@ public sealed class ColliderConversionTests
         var defender = Catalog.Entities["shield-defender"];
         var seedLike = EntityAsset.FromJson(defender.Asset.ToJson());
         seedLike.Version = EntityAsset.LegacyVersion;
+        seedLike.Behaviors = null;
+        seedLike.Health = 8;
+        seedLike.Mass = 1.5f;
         seedLike.Colliders.Clear();
         seedLike.Guard = new() { Prop = "scavenged-shell", Shape = Rectangle2D.Builder.FromSize(.9f, 1.4f) };
         seedLike.Hurt = new() { Layout = "standard" };
@@ -88,6 +91,8 @@ public sealed class ColliderConversionTests
         bash.Collider = null;
         bash.Prop = "scavenged-shell";
         bash.Shape = Rectangle2D.Builder.FromSize(.9f, 1.4f);
+        bash.Damage = 2;
+        bash.Sound = "hit";
         var legacyDefender = Compile(seedLike);
         var idle = new ActorPose(PoseEvaluator.Sample(legacyDefender.Model, legacyDefender.Clip("idle"), .5, true), Vector2.Zero, -1);
         Assert.Equal(legacyDefender.GuardCollider!.Region(idle).Pose, defender.GuardCollider!.Region(idle).Pose);
@@ -109,7 +114,7 @@ public sealed class ColliderConversionTests
             Assert.Contains(first.Report, line => line.StartsWith("verified", StringComparison.Ordinal));
             Assert.Contains(first.Report, line => line.StartsWith("hurt at rest reproduced exactly", StringComparison.Ordinal));
             var converted = EntityAsset.FromJson(File.ReadAllText(first.Output!));
-            Assert.Equal(EntityAsset.CurrentVersion, converted.Version);
+            Assert.Equal(EntityAsset.ColliderVersion, converted.Version); // colliders alone need version 3; behaviors (P9a) are a separate conversion
             Assert.Equal(["hammer-head", "body", "head", "legs"], converted.Colliders.Select(c => c.Id));
             var compiled = Compile(converted);
             Assert.True(compiled.HurtRegistered);
@@ -154,7 +159,7 @@ public sealed class ColliderConversionTests
         var pose = new ActorPose(PoseEvaluator.Sample(session.Entity.Model, strike.Clip, strike.Hits[0].Start), Vector2.Zero, 1);
         var before = EntityCollision.Attack(session.Entity, pose, strike.Hits[0]);
         Assert.True(session.ConvertColliders(), session.Message);
-        Assert.Equal(EntityAsset.CurrentVersion, document.Asset.Version);
+        Assert.Equal(EntityAsset.ColliderVersion, document.Asset.Version);
         Assert.Equal(["hammer-head", "body", "head", "legs"], document.Asset.Colliders.Select(c => c.Id));
         var after = EntityCollision.Attack(session.Entity!, pose, session.Entity!.Actions["attack"].Hits[0]);
         Assert.Equal(before.Pose, after.Pose);
@@ -178,7 +183,7 @@ public sealed class ColliderConversionTests
         Assert.True(session.ConvertColliders());
         Assert.True(session.Save(document), session.Message);
         var reopened = App2d.Core.Characters.Editing.AuthoringWorkspace.Open(session.Assets.Root);
-        Assert.Equal(EntityAsset.CurrentVersion, reopened.Entity("maul-brute")!.Asset.Version);
+        Assert.Equal(EntityAsset.ColliderVersion, reopened.Entity("maul-brute")!.Asset.Version);
         Assert.True(reopened.CompileEntity("maul-brute")!.HurtRegistered);
         }
         finally

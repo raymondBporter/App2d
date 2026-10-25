@@ -195,7 +195,7 @@ public sealed class AuthoredEntityEnemyTests
         var hit = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(2, 2));
         hit.Transform.Position = center;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
-        Assert.Equal(guard.Entity.Asset.Health - 1, guard.Health.Current);
+        Assert.Equal(guard.Entity.Damage.Health - 1, guard.Health.Current);
         Assert.False(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
     }
 

@@ -49,6 +49,8 @@ public static class EntityAuthoring
             MotionSet = model.Base.MotionSets.FirstOrDefault()?.Id ?? "standard",
             Movement = FitMovement(model),
             Hurt = new() { Layout = model.Base.HurtLayouts.FirstOrDefault()?.Id },
+            // P9a: a new entity declares its behaviors (version 4); its windows get a strike each as they are added.
+            Behaviors = new(),
         };
         switch (template)
         {

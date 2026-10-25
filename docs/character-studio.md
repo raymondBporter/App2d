@@ -228,7 +228,9 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   legacy window or guard are listed read-only until converted; removing one a window names is refused by name), **Guard**
   (on or off, its guard collider or the legacy prop shape), equipment and the selected action's clip, mask, blend,
   activation windows (each names its attack collider; the legacy inline geometry fields show only while a window has no
-  collider) and events. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
+  collider) and events. On a version-4 entity the **Health** and a window's **Damage** fields edit the typed behaviors
+  (P9a: `behaviors.damage.health`, `behaviors.strikes.<window>`); adding a window adds its strike, removing the last
+  window of a hit group removes it. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
   red attack (filled while its window is open, faint otherwise), green guard, orange trigger, the selected one thicker
   and labelled; the timeline labels each window with its collider.
 - **Test** plays the arena from a snapshot of the current drafts; its overlays read the arena's registered colliders.

@@ -207,7 +207,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
         {
             Ui.Header(actor.Entity.Name);
             var animator = actor.Animator;
-            ImGui.TextUnformatted($"Health {actor.Health}/{actor.Entity.Asset.Health}   {(actor.Grounded ? "grounded" : "airborne")}");
+            ImGui.TextUnformatted($"Health {actor.Health}/{actor.Entity.Damage.Health}   {(actor.Grounded ? "grounded" : "airborne")}");
             ImGui.TextUnformatted(animator.Action is { } action ? $"Action {action} {animator.ActionTime:F2}s ({actor.Entity.Actions[action].Source})"
                 : $"Role {animator.Role} ({actor.Entity.Roles[animator.Role].Clip.Id}, {actor.Entity.Roles[animator.Role].Source})");
             ImGui.TextDisabled($"{actor.Entity.Controller.Id}: {string.Join(", ", actor.Entity.Actions.Keys)}");
