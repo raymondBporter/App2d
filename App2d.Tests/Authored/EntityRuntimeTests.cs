@@ -386,10 +386,13 @@ public sealed class EntityRuntimeTests
     public void HitLedgerDamagesEachTargetOncePerAttack()
     {
         var ledger = new HitLedger();
-        Assert.True(ledger.TryHit(1, "spear-tip", 7));
-        Assert.False(ledger.TryHit(1, "spear-tip", 7));
-        Assert.True(ledger.TryHit(1, "spear-tip", 8));
-        Assert.True(ledger.TryHit(2, "spear-tip", 7)); // the next attack may hit again
+        var seven = new Core.EntityId2D(7);
+        var eight = new Core.EntityId2D(8);
+        Assert.True(ledger.TryHit(1, "spear-tip", seven));
+        Assert.False(ledger.TryHit(1, "spear-tip", seven));
+        Assert.True(ledger.TryHit(1, "spear-tip", eight));
+        Assert.True(ledger.TryHit(1, "spear-butt", seven)); // another hit group of the same attack instance is its own pulse
+        Assert.True(ledger.TryHit(2, "spear-tip", seven)); // the next attack may hit again
     }
 
     [Fact]

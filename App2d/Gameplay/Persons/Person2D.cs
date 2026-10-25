@@ -26,7 +26,7 @@ public sealed class Person2D : ICombatant2D
     private const float DefaultDamageKnockbackY = 170f;
 
     private readonly PersonLocomotion2D _motor;
-    private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
+    private readonly Dictionary<(EntityId2D Source, string Group), int> _lastAttackIds = [];
     private IPersonActionSet2D? _actions;
     private PersonCommand2D _previousCommand;
     private float _footstepSeconds;
@@ -244,16 +244,17 @@ public sealed class Person2D : ICombatant2D
         WorldObject.Transform.Scale = new Vector2(Facing, scale.Y);
     }
 
-    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
+    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId, string? hitGroup = null)
     {
         ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
-        if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) &&
+        var key = (attackSourceId, hitGroup ?? "");
+        if (_lastAttackIds.TryGetValue(key, out var lastAttackId) &&
             lastAttackId == attackId)
         {
             return false;
         }
 
-        _lastAttackIds[attackSourceId] = attackId;
+        _lastAttackIds[key] = attackId;
         return true;
     }
 

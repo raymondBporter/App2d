@@ -1,3 +1,4 @@
+using App2d.Contracts.Combat;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
@@ -52,6 +53,10 @@ public sealed class AuthoredHero2D
 
     public IShape2D Shape(string? swing = null) => _shapes[Swing(swing).Id];
     public int Damage(string? swing = null) => Swing(swing).Hits[0].Strike.Damage;
+    /// <summary>The hit group a swing's contacts deduplicate on.</summary>
+    public string HitGroup(string? swing = null) => Swing(swing).Hits[0].Group;
+    /// <summary>The impact kind the swing's strike names, as the game's presentation knows it.</summary>
+    public CombatImpactKind2D Impact(string? swing = null) => Swing(swing).Hits[0].Strike.Impact == ImpactKinds.Sword ? CombatImpactKind2D.Sword : CombatImpactKind2D.Generic;
 
     /// <summary>
     /// A swing's timing and its fixed box, centred where the entity puts it (mirrored by facing when placed). A press any

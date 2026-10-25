@@ -98,11 +98,12 @@ internal abstract class MeleePersonWeapon2D(
                 _attack.AttackId,
                 ownerFaction,
                 targetLayer,
-                damage,
+                authored?.Damage(_swing) ?? damage,
                 _ => new Vector2(_attackDirection * knockback.X, knockback.Y),
-                impactKind: CombatImpactKind2D.Sword,
+                impactKind: authored?.Impact(_swing) ?? CombatImpactKind2D.Sword,
                 impactDirection: knockback.X == 0 ? new Vector2(0, MathF.Sign(knockback.Y)) : new Vector2(_attackDirection, 0),
-                attackerId: _ownerBody.EntityId))
+                attackerId: _ownerBody.EntityId,
+                hitGroup: authored?.HitGroup(_swing)))
         {
             OnHit();
         }

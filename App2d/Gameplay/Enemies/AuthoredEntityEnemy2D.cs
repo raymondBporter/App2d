@@ -36,11 +36,12 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private readonly EntityAnimator _animator;
     private readonly ActorColliders _colliders;
     private readonly HitLedger _ledger = new();
-    private readonly Dictionary<EntityId2D, int> _hitHistory = [];
+    private readonly Dictionary<(EntityId2D Source, string Group), int> _hitHistory = [];
     private readonly List<EnemyEvent2D> _events = [];
     private readonly List<AnimationEvent> _scratch = [];
     private readonly List<EntityBoltState2D> _bolts = [];
     private readonly List<CollisionOverlap2D> _overlaps = [];
+    private readonly List<AcceptedContact> _contacts = [];
     private readonly CollisionSystem2D _collision;
     private readonly PhysicsWorld2D _physics;
     private readonly uint _worldLayer;
@@ -467,16 +468,16 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             return !player.IsAlive;
         }
 
-        foreach (var hit in _animator.ActiveHits())
+        // The shared resolution against the player's body collider: once per attack instance and hit group; the player's own
+        // reception (invulnerability, dashing, knockback from the attacker's side) decides whether the contact is accepted.
+        CombatContacts.Resolve(_colliders, _animator.ActionSequence, _animator.ActiveHits(), player.Body.CollisionLayer, _ledger,
+            (_, collider) => collider.EntityId == player.Id && player.IsAlive ? (player.Id, false) : null, _contacts, _overlaps);
+        foreach (var contact in _contacts)
         {
-            var region = _colliders.Find(hit.Collider.Id)!.Region;
-            if (!region.Overlaps(player.WorldObject) || !_ledger.TryHit(_animator.ActionSequence, hit.Window.Id, 0))
+            if (player.TryTakeDamageFromX(contact.Strike.Damage, WorldObject.Transform.Position.X))
             {
-                continue;
+                _events.Add(new EntityCue2D(Id, contact.Position, contact.Strike.Sound ?? "hit"));
             }
-
-            player.TryTakeDamageFromX(hit.Strike.Damage, WorldObject.Transform.Position.X);
-            _events.Add(new EntityCue2D(Id, player.Position, hit.Strike.Sound ?? "hit"));
         }
         return !player.IsAlive;
     }
@@ -533,14 +534,15 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
     }
 
-    public bool TryRegisterHit(EntityId2D source, int attack)
+    public bool TryRegisterHit(EntityId2D source, int attack, string? hitGroup = null)
     {
-        if (_hitHistory.GetValueOrDefault(source, -1) == attack)
+        var key = (source, hitGroup ?? "");
+        if (_hitHistory.GetValueOrDefault(key, -1) == attack)
         {
             return false;
         }
 
-        _hitHistory[source] = attack;
+        _hitHistory[key] = attack;
         return true;
     }
 

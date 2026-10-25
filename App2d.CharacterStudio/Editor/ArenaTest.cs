@@ -22,7 +22,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
     private RenderTarget2D? _target;
     private nint _targetId;
     private double _accumulator;
-    private int _logged;
+    private int _logged, _hitsLogged, _blocksLogged;
 
     public bool Active { get; private set; }
     public bool Paused { get; set; }
@@ -41,7 +41,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
         Problems = [.. problems, .. missing];
         Arena = chosen.Count > 0 ? new AuthoredArena(chosen) : null;
         _log.Clear();
-        _logged = 0;
+        _logged = _hitsLogged = _blocksLogged = 0;
         _accumulator = 0;
         Active = true;
         Paused = false;
@@ -85,6 +85,20 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
             }
         }
 
+        // Accepted contacts are the only source of impact facts: a hit with its strike, or a block with the guard's sound.
+        foreach (var hit in Arena.Hits.Skip(_hitsLogged))
+        {
+            var strike = Arena.Actors[hit.Attacker].Entity.Actions.Values.SelectMany(a => a.Hits).FirstOrDefault(h => h.Group == hit.Window)?.Strike;
+            _log.Add($"{hit.Tick,6}  {Arena.Actors[hit.Attacker].Entity.Name} hits {Arena.Actors[hit.Target].Entity.Name}: {hit.Window} for {hit.Damage}{(strike?.Sound is { } sound ? $" (sound {sound})" : "")}");
+        }
+
+        _hitsLogged = Arena.Hits.Count;
+        foreach (var block in Arena.Blocks.Skip(_blocksLogged))
+        {
+            _log.Add($"{block.Tick,6}  {Arena.Actors[block.Target].Entity.Name} blocks {Arena.Actors[block.Attacker].Entity.Name}'s {block.Window}{(block.Sound is { } sound ? $" (sound {sound})" : "")}");
+        }
+
+        _blocksLogged = Arena.Blocks.Count;
         _logged = Arena.Events.Count;
         if (_log.Count > 200)
         {
@@ -220,7 +234,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
         Ui.Header("Events");
         if (Arena is not null)
         {
-            ImGui.TextDisabled($"Tick {Arena.Tick}   hits {Arena.Hits.Count}");
+            ImGui.TextDisabled($"Tick {Arena.Tick}   hits {Arena.Hits.Count}   blocks {Arena.Blocks.Count}   trigger contacts {Arena.Triggers.Count}");
         }
 
         for (var i = _log.Count - 1; i >= 0 && i >= _log.Count - 40; i--)

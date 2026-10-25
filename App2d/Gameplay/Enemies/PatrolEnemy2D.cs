@@ -10,7 +10,7 @@ namespace App2d.Gameplay.Enemies;
 
 public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 {
-    private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
+    private readonly Dictionary<(EntityId2D Source, string Group), int> _lastAttackIds = [];
     private float _direction = 1f;
     private float _stunSeconds;
 
@@ -61,16 +61,17 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
         }
     }
 
-    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
+    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId, string? hitGroup = null)
     {
         ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
-        if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) &&
+        var key = (attackSourceId, hitGroup ?? "");
+        if (_lastAttackIds.TryGetValue(key, out var lastAttackId) &&
             lastAttackId == attackId)
         {
             return false;
         }
 
-        _lastAttackIds[attackSourceId] = attackId;
+        _lastAttackIds[key] = attackId;
         return true;
     }
 

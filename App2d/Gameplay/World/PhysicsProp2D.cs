@@ -17,7 +17,7 @@ namespace App2d.Gameplay.World;
 internal sealed class PhysicsProp2D : IEnemyActor2D, ICombatant2D
 {
     private bool _simulationEnabled = true;
-    private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
+    private readonly Dictionary<(EntityId2D Source, string Group), int> _lastAttackIds = [];
 
     public PhysicsProp2D(EntityId2D id, PhysicsPropAsset asset, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint propLayer)
     {
@@ -75,15 +75,16 @@ internal sealed class PhysicsProp2D : IEnemyActor2D, ICombatant2D
     {
     }
 
-    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
+    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId, string? hitGroup = null)
     {
         ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
-        if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) && lastAttackId == attackId)
+        var key = (attackSourceId, hitGroup ?? "");
+        if (_lastAttackIds.TryGetValue(key, out var lastAttackId) && lastAttackId == attackId)
         {
             return false;
         }
 
-        _lastAttackIds[attackSourceId] = attackId;
+        _lastAttackIds[key] = attackId;
         return true;
     }
 

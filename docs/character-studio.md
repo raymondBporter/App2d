@@ -233,7 +233,9 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   window of a hit group removes it. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
   red attack (filled while its window is open, faint otherwise), green guard, orange trigger, the selected one thicker
   and labelled; the timeline labels each window with its collider.
-- **Test** plays the arena from a snapshot of the current drafts; its overlays read the arena's registered colliders.
+- **Test** plays the arena from a snapshot of the current drafts; its overlays read the arena's registered colliders and
+  its event log lists every accepted contact (a hit with its strike and sound, a block with the guard's sound) beside
+  the animation events, with the hit, block and trigger-contact counts.
 
 Every asset is a document with its own undo. **Save** writes the open document; **Save all** writes each dirty one in
 turn and is not atomic. The browser's context menus create variants, animations and entities, duplicate them, open

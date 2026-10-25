@@ -15,6 +15,7 @@ public interface ICombatant2D
     CombatFaction2D Faction { get; }
     bool IsAlive { get; }
 
-    bool TryRegisterHit(EntityId2D attackSourceId, int attackId);
+    /// <summary>Whether this attack instance's hit group has not struck this combatant yet: one accepted contact per source, instance and group.</summary>
+    bool TryRegisterHit(EntityId2D attackSourceId, int attackId, string? hitGroup = null);
     bool TakeDamage(int damage, Vector2 knockback);
 }

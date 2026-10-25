@@ -1,5 +1,6 @@
 using App2d.Core.Collision;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Spatial;
@@ -11,6 +12,8 @@ namespace App2d.Core.Characters.Authored;
 public readonly record struct ArenaInput(float Move = 0, bool Run = false, bool Jump = false, bool Attack = false);
 public readonly record struct ArenaEvent(long Tick, int Actor, AnimationEvent Event, Vector2 Position);
 public readonly record struct ArenaHit(long Tick, int Attacker, int Target, string Window, int Damage);
+/// <summary>An accepted contact the target's guard took instead of its hurt geometry: no damage, the guard's block sound.</summary>
+public readonly record struct ArenaBlock(long Tick, int Attacker, int Target, string Window, string? Sound);
 /// <summary>A trigger collider's contact with another actor's movement collider: once when they start to overlap and once when they stop.</summary>
 public readonly record struct ArenaTrigger(long Tick, int Actor, string Collider, int Other, bool Entered);
 /// <summary>A projectile in flight, in model units.</summary>
@@ -78,16 +81,19 @@ public sealed class AuthoredArena
         /// <summary>The attack colliders enabled by the windows active in the latest step, as registered.</summary>
         public IEnumerable<(ResolvedHit Hit, EntityRegion Region)> Attacks => Animator.ActiveHits().Select(h => (h, Colliders.Find(h.Collider.Id)!.Region));
 
+        /// <summary>Whether the guard is up: alive, not staggered and the action has not passed the guard's open event.</summary>
+        public bool GuardUp => Alive && !Reaction.Staggered && Entity.GuardBehavior is { } guard && !(Animator.Current?.Events.FirstOrDefault(e => e.Event.Id == guard.OpenEvent) is { } open && Animator.ActionTime >= open.Seconds);
+
         /// <summary>The pose/collider synchronization point for this actor: after its animator stepped, before any query.</summary>
-        internal void Sync() => Colliders.Sync(Pose, Animator.ActiveHits(), Alive);
+        internal void Sync() => Colliders.Sync(Pose, Animator.ActiveHits(), Alive, GuardUp);
     }
 
     private readonly List<AnimationEvent> _scratch = [];
     private readonly List<AttachedCollider> _found = [];
     private readonly List<CollisionOverlap2D> _overlaps = [];
+    private readonly List<AcceptedContact> _contacts = [];
     private readonly Dictionary<EntityId2D, Actor> _byId = [];
     private readonly HashSet<(int Actor, string Collider, int Other)> _inside = [];
-    private readonly SortedSet<int> _targets = [];
 
     public AuthoredArena(IEnumerable<ResolvedEntity> entities)
     {
@@ -108,6 +114,7 @@ public sealed class AuthoredArena
     public CollisionSystem2D Collision { get; } = new() { CellSize = 2 };
     public List<ArenaEvent> Events { get; } = [];
     public List<ArenaHit> Hits { get; } = [];
+    public List<ArenaBlock> Blocks { get; } = [];
     public List<ArenaTrigger> Triggers { get; } = [];
     public List<ArenaBolt> Bolts { get; } = [];
     /// <summary>Broad-phase candidates the latest step's attack, bolt and trigger queries visited, before the use and owner filters.</summary>
@@ -151,65 +158,70 @@ public sealed class AuthoredArena
                 continue;
             }
 
-            foreach (var hit in attacker.Animator.ActiveHits())
+            // The shared resolution: registered hurt and guard colliders through the broad phase (the opponents' layer mask does
+            // the ally filtering, the owner is skipped, a front guard blocks), the legacy layout scan only for targets whose
+            // hurt is not registered yet, each target once per attack instance and hit group.
+            CombatContacts.Resolve(attacker.Colliders, attacker.Animator.ActionSequence, attacker.Animator.ActiveHits(), ArenaLayers.OpponentsOf(attacker.Index), attacker.Ledger,
+                (attack, collider) => TargetOf(attacker.Position.X, collider), _contacts, _overlaps, (hit, attack, extra) =>
+                {
+                    LastQueryCandidates += Collision.LastBoundsQueryCandidateCount;
+                    var region = attack.Region;
+                    foreach (var target in Actors)
+                    {
+                        if (target != attacker && target.Alive && !target.Colliders.HasHurt && target.Index == 0 != (attacker.Index == 0)
+                            && target.Hurt.FirstOrDefault(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero)) is { } legacy)
+                        {
+                            extra.Add((target.Id, LegacyContact(region.Bounds, legacy.Bounds)));
+                        }
+                    }
+                });
+            foreach (var contact in _contacts.OrderBy(c => _byId[c.Target].Index))
             {
-                var collider = attacker.Colliders.Find(hit.Collider.Id)!;
-                // Registered hurt geometry through the broad phase (the window's layer mask excludes allies, the owner itself is
-                // skipped), then the legacy layout scan for targets whose hurt is not registered yet; each target once.
-                ColliderQueries.Overlap(collider, ColliderUses.Hurt, _found, _overlaps, ArenaLayers.OpponentsOf(attacker.Index));
-                LastQueryCandidates += Collision.LastBoundsQueryCandidateCount;
-                _targets.Clear();
-                foreach (var found in _found)
+                var target = _byId[contact.Target];
+                if (contact.Blocked)
                 {
-                    if (_byId.TryGetValue(found.Owner, out var hurt) && hurt.Alive)
-                    {
-                        _targets.Add(hurt.Index);
-                    }
+                    Blocks.Add(new(Tick, attacker.Index, target.Index, contact.Group, target.Entity.GuardBehavior?.BlockSound));
+                    continue;
                 }
-                var region = collider.Region;
-                foreach (var target in Actors)
-                {
-                    if (target != attacker && target.Alive && !target.Colliders.HasHurt && target.Index == 0 != (attacker.Index == 0)
-                        && target.Hurt.Any(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero)))
-                    {
-                        _targets.Add(target.Index);
-                    }
-                }
-                foreach (var index in _targets)
-                {
-                    if (!attacker.Ledger.TryHit(attacker.Animator.ActionSequence, hit.Window.Id, index))
-                    {
-                        continue;
-                    }
 
-                    Hits.Add(new(Tick, attacker.Index, index, hit.Group, hit.Strike.Damage));
-                    Damage(Actors[index], hit.Strike.Damage);
-                }
+                Hits.Add(new(Tick, attacker.Index, target.Index, contact.Group, contact.Strike.Damage));
+                Damage(target, contact.Strike.Damage);
             }
         }
         StepBolts();
         StepTriggers();
     }
 
-    /// <summary>The first opposing actor whose hurt geometry a placed shape meets: registered colliders through the broad phase, or the legacy boxes.</summary>
-    private Actor? HurtTarget(int owner, SpatialObject2D probe, EntityRegion region)
+    /// <summary>A live opponent's hurt collider, or its enabled guard when the attacker stands in front of it; nothing for anything else.</summary>
+    private (EntityId2D Target, bool Guard)? TargetOf(float attackerX, Collider2D collider)
     {
-        ColliderQueries.Overlap(Collision, probe, EntityId2D.None, ColliderUses.Hurt, _found, _overlaps, ArenaLayers.OpponentsOf(owner));
-        LastQueryCandidates += Collision.LastBoundsQueryCandidateCount;
-        Actor? target = null;
-        foreach (var found in _found)
+        if (collider.UserData is not AttachedCollider attached || !_byId.TryGetValue(attached.Owner, out var target) || !target.Alive)
         {
-            if (_byId.TryGetValue(found.Owner, out var hurt) && hurt.Alive && (target is null || hurt.Index < target.Index))
-            {
-                target = hurt;
-            }
+            return null;
         }
+
+        return attached.Use switch
+        {
+            ColliderUses.Hurt => (target.Id, false),
+            ColliderUses.Guard when CombatContacts.FromFront(attackerX, target.Position.X, target.Facing) => (target.Id, true),
+            _ => null,
+        };
+    }
+
+    private static Vector2 LegacyContact(Rect2D attack, Rect2D hurt) => (Vector2.Max(attack.Min, hurt.Min) + Vector2.Min(attack.Max, hurt.Max)) / 2;
+
+    /// <summary>The first opposing actor whose hurt geometry (or front guard) a placed shape meets: registered colliders through the broad phase, or the legacy boxes.</summary>
+    private (Actor Target, bool Blocked)? HurtTarget(int owner, SpatialObject2D probe, EntityRegion region)
+    {
+        var found = CombatContacts.Probe(Collision, probe, ArenaLayers.OpponentsOf(owner), ArenaLayers.Of(owner), c => TargetOf(Actors[owner].Position.X, c), _overlaps, id => _byId[id].Index);
+        LastQueryCandidates += Collision.LastBoundsQueryCandidateCount;
+        (Actor Target, bool Blocked)? target = found is { } f ? (_byId[f.Target], f.Blocked) : null;
         foreach (var actor in Actors)
         {
-            if (actor.Alive && !actor.Colliders.HasHurt && actor.Index == 0 != (owner == 0) && (target is null || actor.Index < target.Index)
+            if (actor.Alive && !actor.Colliders.HasHurt && actor.Index == 0 != (owner == 0) && (target is null || actor.Index < target.Value.Target.Index)
                 && actor.Hurt.Any(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero)))
             {
-                target = actor;
+                target = (actor, false);
             }
         }
         return target;
@@ -230,10 +242,14 @@ public sealed class AuthoredArena
             var probe = new SpatialObject2D(bolt.Shape);
             probe.Transform.Position = bolt.Position;
             var target = HurtTarget(bolt.Owner, probe, box);
-            if (target is not null)
+            if (target is { Blocked: true } blocked)
             {
-                Hits.Add(new(Tick, bolt.Owner, target.Index, "bolt", bolt.Damage));
-                Damage(target, bolt.Damage);
+                Blocks.Add(new(Tick, bolt.Owner, blocked.Target.Index, "bolt", blocked.Target.Entity.GuardBehavior?.BlockSound));
+            }
+            else if (target is { } struck)
+            {
+                Hits.Add(new(Tick, bolt.Owner, struck.Target.Index, "bolt", bolt.Damage));
+                Damage(struck.Target, bolt.Damage);
             }
             if (target is not null || bolt.Lifetime <= 0 || bolt.Position.Y < 0 || MathF.Abs(bolt.Position.X) > HalfWidth + 2)
             {

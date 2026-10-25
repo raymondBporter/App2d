@@ -338,14 +338,3 @@ public sealed class ContactHold
         };
     }
 }
-
-/// <summary>Per-action hit deduplication: one attack instance damages each target at most once per window.</summary>
-public sealed class HitLedger
-{
-    private readonly HashSet<(int Sequence, string Window, int Target)> _hits = [];
-    public bool TryHit(int sequence, string window, int target)
-    {
-        _hits.RemoveWhere(h => h.Sequence != sequence);
-        return _hits.Add((sequence, window, target));
-    }
-}
