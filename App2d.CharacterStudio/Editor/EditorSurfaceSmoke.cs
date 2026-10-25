@@ -241,6 +241,12 @@ internal static class EditorSurfaceSmoke
                 session.Selection.Collider = "spear-tip";
                 shell.Viewport.Fit(session.Scene().FirstOrDefault());
                 Capture("entity-collider-overlay");
+                // P9c: the typed behavior inspector on the version-4 shield defender (strike, receiving damage, guard, properties).
+                session.Open("shield-defender");
+                session.Selection.Collider = null;
+                shell.EntityInspector.ScrollTo = "Behaviors";
+                Capture("entity-behaviors");
+                shell.EntityInspector.ScrollTo = null;
             }
         }
         Console.WriteLine("Animation settings, controls, weapon and slot inspectors, model views and curve facial studies rendered at two sizes and scales.");

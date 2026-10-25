@@ -14,6 +14,7 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, EntityAsset> _entityAssets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PhysicsPropAsset> _physicsProps = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, GameProfile> _profiles = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PartAsset> _parts = new(StringComparer.Ordinal);
     private string _textureRoot = Environment.CurrentDirectory;
     /// <summary>Library parts (P5a), loaded before the models that instance them.</summary>
@@ -26,6 +27,8 @@ public sealed class AuthoredCatalog
     public IReadOnlyDictionary<string, EntityAsset> EntityAssets => _entityAssets;
     public IReadOnlyDictionary<string, ResolvedEntity> Entities => _entities;
     public IReadOnlyDictionary<string, PhysicsPropAsset> PhysicsProps => _physicsProps;
+    /// <summary>Game profiles (P9c): the player's entity, role clips, gear and the world placement spawns, checked against the catalog.</summary>
+    public IReadOnlyDictionary<string, GameProfile> Profiles => _profiles;
     public List<string> Errors { get; } = [];
     /// <summary>The file an asset was loaded from.</summary>
     public string PathOf(string id) => _paths[id];
@@ -65,6 +68,12 @@ public sealed class AuthoredCatalog
         foreach (var entity in catalog._entityAssets.Values)
         {
             catalog.Check(entity.Id, () => catalog._entities[entity.Id] = ResolvedEntity.Compile(entity, catalog.Resolve, catalog._animations.GetValueOrDefault, catalog._props.GetValueOrDefault));
+        }
+
+        catalog.Scan(root, "profiles", GameProfile.FromJson, catalog._profiles, p => p.Id);
+        foreach (var profile in catalog._profiles.Values)
+        {
+            catalog.Check(profile.Id, () => profile.Check(catalog));
         }
 
         return catalog;

@@ -41,7 +41,7 @@ internal static class AuthoredRenderingSmoke2D
         var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var moves = PersonMoves.From(authored);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
-        var hero = new Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities[Gameplay.Persons.Actions.AuthoredHero2D.EntityId], traversal.PlayerColliderSize);
+        var hero = new Gameplay.Persons.Actions.AuthoredHero2D(moves.Hero, traversal.PlayerColliderSize);
         var standing = new Contracts.Persons.PersonState2D { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true };
         // Each sword case stops just past its strike, where the hit box is live.
         var cut = hero.Attack;

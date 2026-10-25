@@ -39,7 +39,7 @@ internal static class SpellRenderingSmoke2D
         var person = new Person2D(ids.Allocate(), collision, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player, 30);
         var registry = new CombatantRegistry2D();
         registry.Register(person);
-        var hero = new AuthoredHero2D(catalog.Entities[AuthoredHero2D.EntityId], metrics.PlayerColliderSize);
+        var hero = new AuthoredHero2D(moves.Hero, metrics.PlayerColliderSize);
         var arsenal = new PersonArsenal2D(ids, person.Body, metrics.GunMuzzleOffset, collision, 1, 4,
             CombatFaction2D.Player, new CombatSystem2D(collision, registry), hero: hero,
             muzzle: facing => hero.Muzzle(facing, person.IsWallGripping), health: person.Health);

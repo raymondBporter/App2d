@@ -166,7 +166,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         _shader.Pose = pose.Local;
         _shader.Facing = facing;
         var seconds = (float)Math.Min(frame.PropSeconds, frame.PropClip.Duration);
-        _shader.Props = [.. PersonLoadout.Dressed(frame.PropClip, seconds, frame.Gear, Director.Moves.Hero).Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
+        _shader.Props = [.. PersonLoadout.Dressed(frame.PropClip, seconds, frame.Gear, Director.Moves.Hero, Director.Moves.Gear).Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
         RecordSwoosh(frame, seconds, pose.Local);
         _visual.Transform.Position = Feet(s);
         _visual.IsVisible = _enabled && Visible();
@@ -185,7 +185,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
             _swoosh.Record((float)_clock, default, default, false);
             return;
         }
-        var sword = moves.Props[PersonLoadout.Sword];
+        var sword = moves.Props[moves.Gear.Sword];
         var socket = moves.Model.Base.Sockets.First(k => k.Id == Humanoid.SwordSocket);
         if (!_backhands.TryGetValue(clip, out var backhand))
         {

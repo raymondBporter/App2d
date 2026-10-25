@@ -158,8 +158,11 @@ public sealed class AuthoredEntityEnemyTests
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
         var definition = new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)), new(2, kind, null, true, new(0, 42))]);
+        // Without an authored catalog no profile binds the kind, so the error names the kind and the profile.
         var error = Assert.Throws<InvalidDataException>(() => { using var game = SideScrollerSimulation2D.Create(definition); });
-        Assert.Contains(entityId, error.Message);
+        Assert.Contains(kind.ToString(), error.Message);
+        Assert.Contains("profile", error.Message);
+        Assert.NotNull(entityId);
     }
 
     [Fact]

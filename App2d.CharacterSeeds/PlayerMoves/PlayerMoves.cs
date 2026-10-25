@@ -129,6 +129,9 @@ internal static partial class PlayerMoves
             prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
         }
 
+        Directory.CreateDirectory(Path.Combine(authoredRoot, "profiles"));
+        Profile().Save(Path.Combine(authoredRoot, "profiles", GameProfile.GameId + ".json"));
+
         var clips = Clips(model).Select(WeaponMotion).ToDictionary(c => c.Id);
         foreach (var clip in clips.Values)
         {
@@ -314,6 +317,52 @@ internal static partial class PlayerMoves
                 },
             },
         ],
+    };
+
+    /// <summary>
+    /// The player profile (P9c): the hero entity, the Person model, every director role bound to its clip, the shipped gear
+    /// and which authored entity each world placement kind spawns. The game and the Person presentation read this, not a switch.
+    /// </summary>
+    public static GameProfile Profile() => new()
+    {
+        Roles = new(StringComparer.Ordinal)
+        {
+            [PersonRoles.Idle] = "player-idle",
+            [PersonRoles.Walk] = "person-walk",
+            [PersonRoles.Run] = "person-run",
+            [PersonRoles.Jump] = "player-jump",
+            [PersonRoles.Fall] = "player-fall",
+            [PersonRoles.Land] = "player-land",
+            [PersonRoles.Dash] = "player-dash",
+            [PersonRoles.ClimbOn] = "player-climb-on",
+            [PersonRoles.Climb] = "player-climb",
+            [PersonRoles.ClimbOff] = "player-climb-off",
+            [PersonRoles.WallGrip] = "player-wall-grip",
+            [PersonRoles.BalanceForward] = "player-balance-forward",
+            [PersonRoles.BalanceBackward] = "player-balance-backward",
+            [PersonRoles.Hit] = "player-hit",
+            [PersonRoles.Death] = "player-death",
+            [PersonRoles.Celebrate] = "player-celebrate",
+            [PersonRoles.Sheathe] = "player-sword-sheathe",
+            [PersonRoles.DownAttack] = "player-sword-down-attack",
+            [PersonRoles.GunAim] = "player-gun-aim",
+            [PersonRoles.GunShot] = "player-gun-shot",
+            [PersonRoles.GunWallShot] = "player-gun-wall-shot",
+            [PersonRoles.GunCharge] = "player-gun-charge",
+            [PersonRoles.HealGather] = "player-heal-gather",
+        },
+        Spawns = new(StringComparer.Ordinal)
+        {
+            ["Shieldback"] = "spear-guard",
+            ["GreenDinosaur"] = "stalker-pest",
+            ["Rival"] = "cinder-gunner",
+            ["BoilerBrute"] = "maul-brute",
+            ["ClubCaveman"] = "club-caveman",
+            ["RockThrower"] = "rock-thrower",
+            ["BabyTriceratops"] = "baby-triceratops",
+            ["ShieldDefender"] = "shield-defender",
+            ["Pterosaur"] = "flying-pterosaur",
+        },
     };
 
     /// <summary>The player's bolt: 30 x 10 px at 1250 px/s for 1.5 s at the player's drawn scale (about 40 px per unit).</summary>

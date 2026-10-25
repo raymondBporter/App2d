@@ -230,7 +230,10 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   activation windows (each names its attack collider; the legacy inline geometry fields show only while a window has no
   collider) and events. On a version-4 entity the **Health** and a window's **Damage** fields edit the typed behaviors
   (P9a: `behaviors.damage.health`, `behaviors.strikes.<window>`); adding a window adds its strike, removing the last
-  window of a hit group removes it. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
+  window of a hit group removes it. The **Behaviors** section (P9c) is the typed inspector: receiving damage (health,
+  mass, hurt and stagger seconds), one strike per hit group (damage, sound, impact; add one for a group striking with
+  the defaults, remove one), the guard's open event and block sound, and custom properties (add, edit, remove), each
+  field with its schema range and help; a legacy entity shows its legacy values and **Convert to behaviors**. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
   red attack (filled while its window is open, faint otherwise), green guard, orange trigger, the selected one thicker
   and labelled; the timeline labels each window with its collider.
 - **Test** plays the arena from a snapshot of the current drafts; its overlays read the arena's registered colliders and

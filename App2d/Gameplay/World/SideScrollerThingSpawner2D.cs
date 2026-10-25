@@ -39,19 +39,8 @@ internal sealed class SideScrollerThingSpawner2D(
                 continue;
             }
 
-            var entityId = thing.Kind switch
-            {
-                WorldThingKind2D.Shieldback => "spear-guard",
-                WorldThingKind2D.GreenDinosaur => "stalker-pest",
-                WorldThingKind2D.Rival => "cinder-gunner",
-                WorldThingKind2D.BoilerBrute => "maul-brute",
-                WorldThingKind2D.ClubCaveman => "club-caveman",
-                WorldThingKind2D.RockThrower => "rock-thrower",
-                WorldThingKind2D.BabyTriceratops => "baby-triceratops",
-                WorldThingKind2D.ShieldDefender => "shield-defender",
-                WorldThingKind2D.Pterosaur => "flying-pterosaur",
-                _ => null
-            };
+            // P9c: the placement kind -> authored entity binding is the player profile's `spawns` data, not a switch.
+            var entityId = authored?.Profiles.GetValueOrDefault(GameProfile.GameId)?.Spawns.GetValueOrDefault(thing.Kind.ToString());
             if (entityId is not null && authored?.Entities.GetValueOrDefault(entityId) is { } entity)
             {
                 Register(new AuthoredEntityEnemy2D(ids.Allocate(), entity, physics, thing.Position, worldLayer, enemyLayer));
@@ -66,7 +55,9 @@ internal sealed class SideScrollerThingSpawner2D(
                 case WorldThingKind2D.BabyTriceratops:
                 case WorldThingKind2D.Pterosaur:
                 case WorldThingKind2D.ShieldDefender:
-                    throw new InvalidDataException($"{thing.Kind} requires its authored entity '{entityId}'.");
+                    throw new InvalidDataException(entityId is null
+                        ? $"{thing.Kind} requires an authored entity bound by the spawns of the 'game' profile (profiles/game.json); none is loaded."
+                        : $"{thing.Kind} requires its authored entity '{entityId}', which is missing or does not compile.");
                 case WorldThingKind2D.Shieldback:
                     Register(CreateShieldback(thing.Position));
                     break;

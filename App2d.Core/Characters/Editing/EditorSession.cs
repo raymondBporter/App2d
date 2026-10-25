@@ -1111,6 +1111,34 @@ public sealed class EditorSession
         return applied;
     }
 
+    /// <summary>
+    /// Moves the open entity's legacy combat fields (health, mass, window damage and sound, projectile damage) into typed
+    /// behaviors at entity version 4 (P9a), as one undo step with the conversion's report.
+    /// </summary>
+    public bool ConvertBehaviors()
+    {
+        var document = EntityDocument;
+        IReadOnlyList<string> report = [];
+        var applied = Edit(document, () =>
+        {
+            var (converted, lines) = BehaviorConversion.Convert(document!.Asset);
+            report = lines;
+            var asset = document.Asset;
+            asset.Version = converted.Version;
+            asset.Behaviors = converted.Behaviors;
+            asset.Health = converted.Health;
+            asset.Mass = converted.Mass;
+            asset.Actions = converted.Actions;
+            asset.Validate();
+        });
+        if (applied)
+        {
+            Report(string.Join(" ", report));
+        }
+
+        return applied;
+    }
+
     /// <summary>Adds an attached collider to the open entity; the definition is validated against the model, sockets and equipment.</summary>
     public bool AddCollider(ColliderDef definition)
     {

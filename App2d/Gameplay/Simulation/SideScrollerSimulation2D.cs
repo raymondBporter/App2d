@@ -1,6 +1,7 @@
 using App2d.Contracts.Combat;
 using App2d.Contracts.Simulation;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Physics;
 using App2d.Core.Validation;
@@ -89,7 +90,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
         var combat = new CombatSystem2D(collision, combatants);
         level.CreateAuthoredWorldThings(combat, definition.AuthoredCharacters);
         // The player's sword timing, hit box and muzzle come from its authored entity, posed exactly as it is drawn.
-        var hero = definition.AuthoredCharacters?.Entities.GetValueOrDefault(AuthoredHero2D.EntityId) is { } heroEntity ? new AuthoredHero2D(heroEntity, traversal.PlayerColliderSize) : null;
+        var hero = definition.AuthoredCharacters is { } authored && authored.Profiles.GetValueOrDefault(GameProfile.GameId) is { } profile && authored.Entities.GetValueOrDefault(profile.Entity) is { } heroEntity ? new AuthoredHero2D(heroEntity, traversal.PlayerColliderSize) : null;
         Func<float, Vector2>? muzzle = hero is null ? null : facing => hero.Muzzle(facing, player.IsWallGripping);
         var arsenal = new PersonArsenal2D(ids, player.Body, traversal.GunMuzzleOffset, collision,
             SideScrollerLayers2D.World, SideScrollerLayers2D.Enemy, CombatFaction2D.Player, combat,

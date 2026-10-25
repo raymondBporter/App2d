@@ -10,6 +10,25 @@ public enum PersonGear
     None, Sword, Gun
 }
 
+/// <summary>The props a Person's loadout places, by role (P9c): the profile binds them; the defaults are the shipped props.</summary>
+public sealed record PersonGearIds
+{
+    public string Sword { get; set; } = PersonLoadout.Sword;
+    public string Pistol { get; set; } = PersonLoadout.Pistol;
+    public string Hair { get; set; } = PersonLoadout.ShortHair;
+    public string HairBack { get; set; } = PersonLoadout.ShortHairBack;
+
+    public static PersonGearIds Default { get; } = new();
+
+    public void Validate(string owner)
+    {
+        AuthoredAsset.RequireId(Sword, owner + " gear.sword");
+        AuthoredAsset.RequireId(Pistol, owner + " gear.pistol");
+        AuthoredAsset.RequireId(Hair, owner + " gear.hair");
+        AuthoredAsset.RequireId(HairBack, owner + " gear.hairBack");
+    }
+}
+
 /// <summary>
 /// The player move set's prop rules, shared by the game and the move review. There is no scabbard: the sword rides the
 /// back socket, except between a clip's "sword-draw" and "sword-sheathe" markers (from the start of a clip
@@ -92,28 +111,30 @@ public static class PersonLoadout
         return yaw < 0;
     }
 
-    /// <summary>The props worn at this moment of <paramref name="clip"/>, each with the model socket it sits on.</summary>
-    public static IEnumerable<(string Prop, string Socket)> Worn(MotionClip clip, float seconds, PersonGear gear)
+    /// <summary>The props worn at this moment of <paramref name="clip"/>, each with the model socket it sits on; <paramref name="ids"/> names the props (the profile's, or the shipped defaults).</summary>
+    public static IEnumerable<(string Prop, string Socket)> Worn(MotionClip clip, float seconds, PersonGear gear, PersonGearIds? ids = null)
     {
         if (gear == PersonGear.None)
         {
             yield break;
         }
 
+        ids ??= PersonGearIds.Default;
         var back = SeenFromBehind(clip, seconds) ? BackViewSocket : BackSocket;
-        yield return (Sword, gear == PersonGear.Sword && SwordInHand(clip, seconds) ? SwordSocket : back);
+        yield return (ids.Sword, gear == PersonGear.Sword && SwordInHand(clip, seconds) ? SwordSocket : back);
         if (gear == PersonGear.Gun)
         {
-            yield return (Pistol, GunSocket);
+            yield return (ids.Pistol, GunSocket);
         }
     }
 
     /// <summary>Player appearance plus the carried weapons. Hair stays on even when unarmed.</summary>
-    public static IEnumerable<(string Prop, string Socket)> Dressed(MotionClip clip, float seconds, PersonGear gear, ResolvedEntity? wearer = null)
+    public static IEnumerable<(string Prop, string Socket)> Dressed(MotionClip clip, float seconds, PersonGear gear, ResolvedEntity? wearer = null, PersonGearIds? ids = null)
     {
+        ids ??= PersonGearIds.Default;
         if (wearer is null)
         {
-            yield return (SeenFromBehind(clip, seconds) ? ShortHairBack : ShortHair, HeadSocket);
+            yield return (SeenFromBehind(clip, seconds) ? ids.HairBack : ids.Hair, HeadSocket);
         }
         else
         {
@@ -123,7 +144,7 @@ public static class PersonLoadout
             }
         }
 
-        foreach (var item in Worn(clip, seconds, gear))
+        foreach (var item in Worn(clip, seconds, gear, ids))
         {
             yield return item;
         }

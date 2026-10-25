@@ -7,87 +7,77 @@ using System.Numerics;
 
 namespace App2d.Presentation.Persons;
 
-/// <summary>The authored Person and the player move set, resolved once. Missing clips or props are an error naming them.</summary>
+/// <summary>
+/// The authored Person and the player move set, resolved once from the player profile (P9c): each semantic role
+/// (<see cref="PersonRoles"/>) bound to the clip the profile names, the hero entity's action clips by id, the gear props by
+/// role. Missing clips or props are an error naming them. The role constants here are the roles, not clip ids.
+/// </summary>
 public sealed class PersonMoves
 {
-    public const string GunCharge = "player-gun-charge";
-    public const string HealGather = "player-heal-gather";
-    public const string Idle = "player-idle";
-    public const string Walk = "person-walk";
-    public const string Run = "person-run";
-    public const string Jump = "player-jump";
-    public const string Fall = "player-fall";
-    public const string Land = "player-land";
-    public const string Dash = "player-dash";
-    public const string ClimbOn = "player-climb-on";
-    public const string Climb = "player-climb";
-    public const string ClimbOff = "player-climb-off";
-    public const string WallGrip = "player-wall-grip";
-    public const string BalanceForward = "player-balance-forward";
-    public const string BalanceBackward = "player-balance-backward";
-    public const string Hit = "player-hit";
-    public const string Death = "player-death";
-    public const string Celebrate = "player-celebrate";
-    public const string Sheathe = "player-sword-sheathe";
-    public const string DownAttack = "player-sword-down-attack";
-    public const string HeroId = "hero";
-    public const string GunAim = "player-gun-aim";
-    public const string GunShot = "player-gun-shot";
-    public const string GunWallShot = "player-gun-wall-shot";
-    public static readonly IReadOnlyList<string> All =
-    [
-        Idle,
-        Walk,
-        Run,
-        Jump,
-        Fall,
-        Land,
-        Dash,
-        ClimbOn,
-        Climb,
-        ClimbOff,
-        WallGrip,
-        BalanceForward,
-        BalanceBackward,
-        Hit,
-        Death,
-        Celebrate,
-        Sheathe,
-        DownAttack,
-        GunAim,
-        GunShot,
-        GunWallShot,
-        GunCharge,
-        HealGather
-    ];
+    public const string GunCharge = PersonRoles.GunCharge;
+    public const string HealGather = PersonRoles.HealGather;
+    public const string Idle = PersonRoles.Idle;
+    public const string Walk = PersonRoles.Walk;
+    public const string Run = PersonRoles.Run;
+    public const string Jump = PersonRoles.Jump;
+    public const string Fall = PersonRoles.Fall;
+    public const string Land = PersonRoles.Land;
+    public const string Dash = PersonRoles.Dash;
+    public const string ClimbOn = PersonRoles.ClimbOn;
+    public const string Climb = PersonRoles.Climb;
+    public const string ClimbOff = PersonRoles.ClimbOff;
+    public const string WallGrip = PersonRoles.WallGrip;
+    public const string BalanceForward = PersonRoles.BalanceForward;
+    public const string BalanceBackward = PersonRoles.BalanceBackward;
+    public const string Hit = PersonRoles.Hit;
+    public const string Death = PersonRoles.Death;
+    public const string Celebrate = PersonRoles.Celebrate;
+    public const string Sheathe = PersonRoles.Sheathe;
+    public const string DownAttack = PersonRoles.DownAttack;
+    public const string GunAim = PersonRoles.GunAim;
+    public const string GunShot = PersonRoles.GunShot;
+    public const string GunWallShot = PersonRoles.GunWallShot;
+    public static IReadOnlyList<string> All => PersonRoles.All;
 
-    private PersonMoves(ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, PropAsset> props)
+    private PersonMoves(GameProfile profile, ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, PropAsset> props)
     {
+        Profile = profile;
         Model = model;
         Hero = hero;
         Clips = clips;
         Props = props;
     }
 
+    /// <summary>The profile the bindings came from.</summary>
+    public GameProfile Profile { get; }
+    /// <summary>The gear props by role.</summary>
+    public PersonGearIds Gear => Profile.Gear;
     public ResolvedModel Model { get; }
     /// <summary>The player's authored entity: its sword swings, and the recovery clip after each, are its actions' clips.</summary>
     public ResolvedEntity Hero { get; }
     /// <summary>The action a sword swing plays: the one gameplay named, or the attack.</summary>
     public ResolvedAction Swing(string? action) => Hero.Actions[action ?? EntityControllers.Attack];
+    /// <summary>Clips by role, and the hero's action and recovery clips by id.</summary>
     public IReadOnlyDictionary<string, MotionClip> Clips { get; }
     public IReadOnlyDictionary<string, PropAsset> Props { get; }
     public MotionClip this[string id] => Clips[id];
 
-    /// <summary>The authored Person model id, as written by the seed template.</summary>
-    public const string ModelId = "person";
-
-    public static PersonMoves From(AuthoredCatalog catalog, string model = ModelId)
+    /// <summary>The move set the catalog's player profile binds. Every role, the hero entity and every gear prop must resolve, by name.</summary>
+    public static PersonMoves From(AuthoredCatalog catalog, string profileId = GameProfile.GameId)
     {
+        var profile = catalog.Profiles.GetValueOrDefault(profileId)
+            ?? throw new InvalidDataException($"The player move set needs the authored profile '{profileId}' (profiles/{profileId}.json), which is missing or does not check.");
+        if (!profile.HasPlayer)
+        {
+            throw new InvalidDataException($"The player move set needs profile '{profileId}' to bind a player entity and model.");
+        }
+
+        var model = profile.Model;
         var resolved = catalog.Resolve(model);
         var missing = All
-            .Where(id => !catalog.Animations.ContainsKey(id))
-            .Concat(new[] { PersonLoadout.Sword, PersonLoadout.Pistol }
-            .Where(id => !catalog.Props.ContainsKey(id)))
+            .Where(role => !profile.Roles.TryGetValue(role, out var clip) || !catalog.Animations.ContainsKey(clip))
+            .Select(role => $"role {role}")
+            .Concat(new[] { profile.Gear.Sword, profile.Gear.Pistol, profile.Gear.Hair, profile.Gear.HairBack }.Where(id => !catalog.Props.ContainsKey(id)).Select(id => $"prop {id}"))
             .ToList();
 
         if (missing.Count > 0)
@@ -95,12 +85,12 @@ public sealed class PersonMoves
             throw new InvalidDataException($"The player move set is incomplete; missing: {string.Join(", ", missing)}.");
         }
 
-        var hero = catalog.Entities.GetValueOrDefault(HeroId)
-            ?? throw new InvalidDataException($"The player move set needs the authored '{HeroId}' entity, which is missing or does not compile.");
+        var hero = catalog.Entities.GetValueOrDefault(profile.Entity)
+            ?? throw new InvalidDataException($"The player move set needs the authored '{profile.Entity}' entity, which is missing or does not compile.");
 
-        var clips = All.ToDictionary(id => id, id =>
+        var clips = All.ToDictionary(role => role, role =>
         {
-            var clip = catalog.Animations[id];
+            var clip = catalog.Animations[profile.Roles[role]];
             clip.Validate(resolved);
             return clip;
         }, StringComparer.Ordinal);
@@ -121,7 +111,7 @@ public sealed class PersonMoves
             }
         }
 
-        return new(resolved, hero, clips, catalog.Props.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
+        return new(profile, resolved, hero, clips, catalog.Props.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
     }
 }
 

@@ -21,9 +21,13 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
     private string _newEvent = "hit";
     private string _newCollider = "";
     private string _newColliderUse = ColliderUses.Hurt;
+    private string _newPropertyKey = "";
+    private string _newPropertyValue = "";
 
     public Workspace Mode => Workspace.Entity;
     public float TimelineHeight => 150;
+    /// <summary>The inspector section header to keep at the top of the inspector while set ("Behaviors"); the smokes frame a section with it.</summary>
+    public string? ScrollTo { get; set; }
 
     private AssetDocument<EntityAsset>? Document => session.EntityDocument;
     private string? BaseId => Document is { } document ? session.Assets.BaseOf(document.Asset.Model) : null;
@@ -176,12 +180,173 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
 
         Motion(document);
         Controller(document);
+        Behaviors(document);
         Movement(document);
         Hurt(document);
         Colliders(document);
         Guard(document);
         Equipment(document);
         References.Draw(session, asset.Id);
+    }
+
+    // ---- Behaviors (P9c) -----------------------------------------------------------------------------------------
+
+    private static BehaviorField Field(IReadOnlyList<BehaviorField> fields, string name) => fields.First(f => f.Name == name);
+
+    /// <summary>An integer behavior field with its schema range and help.</summary>
+    private void IntegerField(AssetDocument<EntityAsset> document, BehaviorField field, int value, Action<int> set)
+    {
+        ImGui.TextUnformatted(field.Label);
+        ImGui.SetNextItemWidth(-1);
+        if (ImGui.DragInt("##" + field.Name, ref value, .2f, (int)field.Min, (int)field.Max))
+        {
+            session.Change(document, () => set(Math.Clamp(value, (int)field.Min, (int)field.Max)));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(field.Help);
+        }
+    }
+
+    /// <summary>A factor or seconds behavior field with its schema range and help.</summary>
+    private void NumberField(AssetDocument<EntityAsset> document, BehaviorField field, float value, Action<float> set)
+    {
+        if (Ui.Drag(field.Name.EndsWith(field.Kind, StringComparison.OrdinalIgnoreCase) ? field.Label : $"{field.Label} ({field.Kind})", ref value, field.Kind == BehaviorSchema.Seconds ? .005f : .01f, field.Min, field.Max))
+        {
+            session.Change(document, () => set(Math.Clamp(value, field.Min, field.Max)));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(field.Help);
+        }
+    }
+
+    /// <summary>A sound asset reference (empty for none) with its help.</summary>
+    private void SoundField(AssetDocument<EntityAsset> document, BehaviorField field, string? value, Action<string?> set)
+    {
+        var text = value ?? "";
+        if (Ui.Text(field.Label + " (empty for none)", ref text, 64))
+        {
+            session.Change(document, () => set(text.Length == 0 ? null : text));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(field.Help);
+        }
+    }
+
+    /// <summary>The typed gameplay behaviors of a version-4 entity, each field from <see cref="BehaviorSchema"/>; a legacy entity converts explicitly.</summary>
+    private void Behaviors(AssetDocument<EntityAsset> document)
+    {
+        var asset = document.Asset;
+        Ui.Header("Behaviors");
+        if (ScrollTo == "Behaviors")
+        {
+            ImGui.SetScrollHereY(0f);
+        }
+        if (asset.Behaviors is not { } behaviors)
+        {
+            Ui.Help($"Legacy combat fields (entity version {asset.Version}): health {asset.Health}, mass {asset.Mass:0.##}, each window's damage and sound, each projectile's damage. Convert them to typed behaviors to edit them here.");
+            if (ImGui.SmallButton("Convert to behaviors"))
+            {
+                session.ConvertBehaviors();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Explicit conversion (P9a): one undo step; the file is written at entity version 4 on the next save, with the same values.");
+            }
+
+            return;
+        }
+        ImGui.TextColored(UiTheme.Accent, "Receiving damage");
+        var damage = behaviors.Damage;
+        IntegerField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.Health)), damage.Health, v => document.Asset.Behaviors!.Damage.Health = v);
+        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.Mass)), damage.Mass, v => document.Asset.Behaviors!.Damage.Mass = v);
+        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.HurtSeconds)), damage.HurtSeconds, v => document.Asset.Behaviors!.Damage.HurtSeconds = v);
+        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.StaggerSeconds)), damage.StaggerSeconds, v => document.Asset.Behaviors!.Damage.StaggerSeconds = v);
+        ImGui.TextColored(UiTheme.Accent, "Strikes (one per hit group)");
+        var groups = asset.Actions.SelectMany(a => a.Hits.Select(h => h.Id)).Concat(asset.Actions.Where(a => a.Projectile is not null).Select(a => a.Id)).Distinct(StringComparer.Ordinal).ToList();
+        foreach (var (group, strike) in behaviors.Strikes.ToArray())
+        {
+            ImGui.PushID("strike-" + group);
+            ImGui.TextUnformatted(group + (groups.Contains(group) ? "" : "  (no window or projectile of this name)"));
+            ImGui.SameLine();
+            if (ImGui.SmallButton("Remove"))
+            {
+                session.Edit(document, () => document.Asset.Behaviors!.Strikes.Remove(group), $"Strike '{group}' removed; the group strikes with the defaults.");
+                ImGui.PopID();
+                continue;
+            }
+            IntegerField(document, Field(BehaviorSchema.Strike, nameof(StrikeDef.Damage)), strike.Damage, v => document.Asset.Behaviors!.Strikes[group].Damage = v);
+            SoundField(document, Field(BehaviorSchema.Strike, nameof(StrikeDef.Sound)), strike.Sound, v => document.Asset.Behaviors!.Strikes[group].Sound = v);
+            if (Ui.Combo(nameof(StrikeDef.Impact), strike.Impact, ImpactKinds.All) is { } impact)
+            {
+                session.Edit(document, () => document.Asset.Behaviors!.Strikes[group].Impact = impact);
+            }
+
+            ImGui.PopID();
+        }
+        var unlisted = groups.Where(g => !behaviors.Strikes.ContainsKey(g)).ToList();
+        if (unlisted.Count > 0)
+        {
+            ImGui.TextDisabled("Striking with the defaults: " + string.Join(", ", unlisted));
+            if (Ui.Combo("Add strike for", "(choose a hit group)", unlisted.Prepend("(choose a hit group)")) is { } chosen && chosen != "(choose a hit group)")
+            {
+                session.Edit(document, () => document.Asset.Behaviors!.Strikes[chosen] = new());
+            }
+        }
+        if (asset.Guard is not null)
+        {
+            ImGui.TextColored(UiTheme.Accent, "Guarding");
+            var guard = behaviors.Guard ?? new GuardBehaviorDef();
+            var events = asset.Actions.SelectMany(a => a.Events.Select(e => e.Id)).Distinct(StringComparer.Ordinal).ToList();
+            var openEvent = guard.OpenEvent;
+            if (Ui.Combo(nameof(GuardBehaviorDef.OpenEvent), openEvent, events.Contains(openEvent) ? events : events.Prepend(openEvent)) is { } open)
+            {
+                session.Edit(document, () => (document.Asset.Behaviors!.Guard ??= new()).OpenEvent = open);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(Field(BehaviorSchema.Guard, nameof(GuardBehaviorDef.OpenEvent)).Help);
+            }
+
+            SoundField(document, Field(BehaviorSchema.Guard, nameof(GuardBehaviorDef.BlockSound)), guard.BlockSound, v => (document.Asset.Behaviors!.Guard ??= new()).BlockSound = v);
+        }
+        ImGui.TextColored(UiTheme.Accent, "Custom properties");
+        foreach (var (key, value) in behaviors.Properties.ToArray())
+        {
+            ImGui.PushID("property-" + key);
+            var text = value;
+            if (Ui.Text(key, ref text, 200))
+            {
+                session.Change(document, () => document.Asset.Behaviors!.Properties[key] = text);
+            }
+
+            ImGui.SameLine();
+            if (ImGui.SmallButton("Remove"))
+            {
+                session.Edit(document, () => document.Asset.Behaviors!.Properties.Remove(key));
+            }
+
+            ImGui.PopID();
+        }
+        ImGui.SetNextItemWidth(100 * Ui.Scale);
+        ImGui.InputText("##property-key", ref _newPropertyKey, 64);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(120 * Ui.Scale);
+        ImGui.InputText("##property-value", ref _newPropertyValue, 200);
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Add property") && session.Edit(document, () => document.Asset.Behaviors!.Properties[_newPropertyKey] = _newPropertyValue))
+        {
+            _newPropertyKey = _newPropertyValue = "";
+        }
+
+        Ui.Help("Typed behaviors (P9a): strikes are damage on contact per hit group, receiving damage is the health pool and reaction timing, the guard its open event and block sound; custom properties are text gameplay reads by name.");
     }
 
     private void Motion(AssetDocument<EntityAsset> document)

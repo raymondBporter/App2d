@@ -41,6 +41,8 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     /// <summary>False while a smoke run drives the arena itself.</summary>
     public bool LiveTest { get; set; } = true;
     private IWorkspaceView View => _views.First(v => v.Mode == Session.Mode);
+    /// <summary>The Entity workspace's view, for the smokes to frame an inspector section.</summary>
+    public EntityView EntityInspector => _views.OfType<EntityView>().First();
 
     public void Draw()
     {

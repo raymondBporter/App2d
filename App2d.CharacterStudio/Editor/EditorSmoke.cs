@@ -1022,7 +1022,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Check(s.ConvertColliders(), s);
                 var after = EntityCollision.Attack(s.Entity!, pose, s.Entity!.Actions["attack"].Hits[0]);
                 var convertedHurt = EntityCollision.Hurt(s.Entity, new(PoseEvaluator.Rest(s.Entity.Model), Vector2.Zero, 1));
-                Record(brute.Asset.Version == EntityAsset.CurrentVersion && brute.Asset.Colliders.Count == 4 && after.Pose == before.Pose
+                Record(brute.Asset.Version == EntityAsset.ColliderVersion && brute.Asset.Colliders.Count == 4 && after.Pose == before.Pose
                     && legacyHurt.Zip(convertedHurt).All(p => p.First.Id == p.Second.Id && Vector2.Distance(p.First.Bounds.Min, p.Second.Bounds.Min) < 1e-4f && Vector2.Distance(p.First.Bounds.Max, p.Second.Bounds.Max) < 1e-4f),
                     "converting the maul brute keeps the tilted hammer window's left-facing placement exactly and reproduces its three hurt boxes at rest");
                 s.Undo();
@@ -1051,6 +1051,41 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Seek(strike.Start + .02f);
                 s.Selection.Collider = "reach";
                 shell.Viewport.Fit(s.Scene().FirstOrDefault());
+            }),
+            ("49-behavior-inspectors", shell =>
+            {
+                // P9a/P9c: the converted spear guard's typed behaviors are edited through the schema fields; the legacy maul brute converts
+                // explicitly as one undo step; the game profile binds the player's roles and the placement spawns as data.
+                var s = shell.Session; s.Compare.Clear();
+                s.Open("spear-guard");
+                var guard = s.EntityDocument!;
+                Record(guard.Asset.Version == EntityAsset.CurrentVersion && guard.Asset.Behaviors is { } b && b.Strikes.ContainsKey("spear-tip") && b.Damage.Health == 3,
+                    "the converted spear guard declares its strike and receiving-damage behaviors at entity version 4");
+                Check(s.Edit(guard, () => guard.Asset.Behaviors!.Strikes["spear-tip"].Damage = 2), s);
+                Record(s.Entity!.Actions["attack"].Hits[0].Strike.Damage == 2, "a strike's damage edit re-resolves the window's strike");
+                s.Undo();
+                Record(s.Entity!.Actions["attack"].Hits[0].Strike.Damage == 1, "and undoes exactly");
+                Check(s.Edit(guard, () => guard.Asset.Behaviors!.Properties["patrol-note"] = "holds the gate"), s);
+                Record(s.Entity!.Properties["patrol-note"] == "holds the gate", "a custom property reaches the resolved entity by name");
+                s.Undo();
+                // A strike for no hit group is a resolution problem reported on the entity by name (the inspector only offers real groups).
+                Check(s.Edit(guard, () => guard.Asset.Behaviors!.Strikes["spear-butt"] = new()), s);
+                Record(s.Entity is null && s.EntityError?.Contains("behaviors.strikes.spear-butt: no hit window or projectile action") == true, "a strike for no hit group is reported on the entity by name: " + s.EntityError);
+                s.Undo();
+                Record(s.Entity is not null, "and undoing it restores the compiling entity");
+                s.Open("maul-brute");
+                var brute = s.EntityDocument!;
+                var before = s.Entity!.Actions["attack"].Hits[0].Strike;
+                Check(s.ConvertBehaviors(), s);
+                Record(brute.Asset.Version == EntityAsset.CurrentVersion && brute.Asset.Behaviors!.Strikes["hammer-head"] == before && brute.Asset.Behaviors.Damage.Health == 22 && brute.Asset.Actions[0].Hits[0].Damage == new HitWindow().Damage,
+                    "converting the maul brute moves damage 5 / heavy and health 22 into typed behaviors and clears the window's fields");
+                s.Undo();
+                Record(brute.Asset.Behaviors is null && brute.Asset.Version == EntityAsset.LegacyVersion && brute.Asset.Actions[0].Hits[0].Damage == 5, "one undo restores the legacy fields and version");
+                var profile = AuthoredCatalog.Load(s.Assets.Root).Profiles.GetValueOrDefault(GameProfile.GameId);
+                Record(profile is { HasPlayer: true, Entity: "hero" } && profile.Roles[PersonRoles.GunShot] == "player-gun-shot" && profile.Spawns["BoilerBrute"] == "maul-brute",
+                    "the game profile binds the hero entity, the gun-shot role and the brute placement as data");
+                s.Open("spear-guard");
+                shell.EntityInspector.ScrollTo = "Behaviors";
             }),
         ];
         return workspace;

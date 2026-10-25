@@ -119,7 +119,11 @@ public sealed record EntityBehaviors
 }
 
 /// <summary>Editor metadata for one typed behavior field: where it lives, its kind and range, and what it means.</summary>
-public sealed record BehaviorField(string Owner, string Name, string Kind, float Min, float Max, string Help);
+public sealed record BehaviorField(string Owner, string Name, string Kind, float Min, float Max, string Help)
+{
+    /// <summary>The field's words for an inspector: "HurtSeconds" reads "Hurt seconds".</summary>
+    public string Label => string.Concat(Name.Select((c, i) => i > 0 && char.IsUpper(c) ? " " + char.ToLowerInvariant(c) : c.ToString()));
+}
 
 /// <summary>The typed behavior fields Studio offers, one entry per known property (no reflection, no string parsing).</summary>
 public static class BehaviorSchema

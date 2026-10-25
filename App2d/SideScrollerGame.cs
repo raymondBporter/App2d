@@ -55,8 +55,10 @@ public sealed class SideScrollerGame : Game2D
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
         var textures = _resources.GetLoad<TextureCache2D>("textures/runtime", "presentation");
         _resources.Register("audio/sfx", () => new SoundEffectBank2D<SoundEffect2D>(AssetPaths.Current.SoundEffects, SoundEffectCues2D.Cues), AssetPaths.Current.SoundEffects);
-        var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
-            ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
+        var profile = _authored.Profiles.GetValueOrDefault(Core.Characters.Authored.GameProfile.GameId)
+            ?? throw new InvalidDataException("The authored 'game' profile (profiles/game.json), which binds the game's player, is missing or does not check.");
+        var hero = _authored.Entities.GetValueOrDefault(profile.Entity)
+            ?? throw new InvalidDataException($"The authored '{profile.Entity}' entity, the game's player, is missing.");
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
 
         var movement = ShapeBounds2D.Calculate(hero.MovementShape);

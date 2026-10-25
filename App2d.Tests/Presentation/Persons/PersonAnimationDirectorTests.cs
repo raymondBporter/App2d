@@ -24,14 +24,14 @@ public sealed class PersonAnimationDirectorTests
         };
         var charging = d.Step(state);
         Assert.Equal(PersonGear.Gun, charging.Gear);
-        Assert.Equal(PersonMoves.GunCharge, charging.Overlay!.Clip.Id);
+        Assert.Equal(Moves[PersonMoves.GunCharge].Id, charging.Overlay!.Clip.Id);
         Assert.Equal(.6, charging.Overlay.Seconds, 5);
         var firing = d.Step(Standing with
         {
             Action = new(PlayerAttackKind2D.Shot, .03f, .2f)
         });
         Assert.Equal(PersonGear.Gun, firing.Gear);
-        Assert.Equal(PersonMoves.GunShot, firing.Overlay!.Clip.Id);
+        Assert.Equal(Moves[PersonMoves.GunShot].Id, firing.Overlay!.Clip.Id);
         var healing = d.Step(Standing with
         {
             Spells = state.Spells with
@@ -296,7 +296,7 @@ public sealed class PersonAnimationDirectorTests
             Action = new(PlayerAttackKind2D.Shot, .05f, .2f)
         });
         Assert.Equal(PersonMoves.Walk, walking.Key);
-        Assert.Equal(PersonMoves.GunShot, walking.Overlay!.Clip.Id);
+        Assert.Equal(Moves[PersonMoves.GunShot].Id, walking.Overlay!.Clip.Id);
         Assert.Same(PersonLoadout.UpperBody, walking.Overlay.Targets);
         var wall = d.Step(Standing with
         {
@@ -305,7 +305,7 @@ public sealed class PersonAnimationDirectorTests
             Action = new(PlayerAttackKind2D.Shot, .05f, .2f)
         });
         Assert.Equal(PersonMoves.GunWallShot, wall.Key);
-        Assert.Equal(PersonMoves.GunAim, d.Step(Standing with
+        Assert.Equal(Moves[PersonMoves.GunAim].Id, d.Step(Standing with
         {
             IsGrounded = false,
             LinearVelocity = new(0, -3)
