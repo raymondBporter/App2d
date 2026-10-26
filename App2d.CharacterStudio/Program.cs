@@ -6,7 +6,7 @@ namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --smoke-rounded-paths output-directory]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory [--force] | --write-player-moves authored-directory [--force] | --write-weapons authored-directory [--force] | --write-wardrobe authored-directory [--force] | --replace-wardrobe-art authored-directory | --smoke-rounded-paths output-directory]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -23,33 +23,25 @@ internal static class Program
                     }
 
                     return 0;
-                case ["--write-pterosaur", var flyingRoot]:
-                    PterosaurTemplate.Write(Path.GetFullPath(flyingRoot));
-                    return 0;
+                case ["--write-pterosaur", var flyingRoot, .. var flyingFlags] when Flags(flyingFlags):
+                    return Report(report => PterosaurTemplate.Write(Path.GetFullPath(flyingRoot), report), flyingFlags);
                 case ["--smoke-editor-surface", var surfaceOutput]:
                     Editor.EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput));
                     return 0;
-                case ["--write-quadrupeds", var quadRoot]:
-                    QuadrupedTemplate.Write(Path.GetFullPath(quadRoot));
-                    return 0;
-                case ["--convert-studies", var output]:
-                    PersonTemplate.WriteStudies(Path.GetFullPath(output));
-                    return 0;
-                case ["--write-player-moves", var moves]:
-                    PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves));
-                    return 0;
-                case ["--write-spells", var spells]:
-                    PlayerMoves.PlayerMoves.WriteSpells(Path.GetFullPath(spells));
-                    return 0;
-                case ["--write-weapons", var root]:
-                    PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root));
-                    return 0;
-                case ["--write-wardrobe", var root]:
-                    PersonWardrobe.Write(Path.GetFullPath(root));
-                    return 0;
+                case ["--write-quadrupeds", var quadRoot, .. var quadFlags] when Flags(quadFlags):
+                    return Report(report => QuadrupedTemplate.Write(Path.GetFullPath(quadRoot), report), quadFlags);
+                case ["--convert-studies", var output, .. var studyFlags] when Flags(studyFlags):
+                    return Report(report => PersonTemplate.WriteStudies(Path.GetFullPath(output), report), studyFlags);
+                case ["--write-player-moves", var moves, .. var moveFlags] when Flags(moveFlags):
+                    return Report(report => PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves), report), moveFlags);
+                case ["--write-spells", var spells, .. var spellFlags] when Flags(spellFlags):
+                    return Report(report => PlayerMoves.PlayerMoves.WriteSpells(Path.GetFullPath(spells), report), spellFlags);
+                case ["--write-weapons", var root, .. var weaponFlags] when Flags(weaponFlags):
+                    return Report(report => PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root), report), weaponFlags);
+                case ["--write-wardrobe", var root, .. var wardrobeFlags] when Flags(wardrobeFlags):
+                    return Report(report => PersonWardrobe.Write(Path.GetFullPath(root), report: report), wardrobeFlags);
                 case ["--replace-wardrobe-art", var root]:
-                    PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true);
-                    return 0;
+                    return Report(report => PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true, report: report), ["--force"]);
                 case [] or ["--editor"] or ["--smoke-editor", _]:
                     {
                         using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
@@ -89,6 +81,23 @@ internal static class Program
 
             return 1;
         }
+    }
+
+    /// <summary>A write command's optional trailing flag: nothing, or --force to replace editor-owned files (P11b).</summary>
+    private static bool Flags(string[] flags) => flags is [] or ["--force"];
+
+    /// <summary>Runs a seed writer under the writing policy and prints what it touched.</summary>
+    private static int Report(Action<SeedReport> write, string[] flags)
+    {
+        var report = new SeedReport(flags.Length == 1);
+        write(report);
+        foreach (var line in report.Lines)
+        {
+            Console.WriteLine(line);
+        }
+
+        Console.WriteLine(report.ToString() + (report.Count(SeedReport.Kept) > 0 ? " (kept files are editor-owned; pass --force to replace them)" : ""));
+        return 0;
     }
 
     /// <summary>

@@ -271,8 +271,9 @@ public static class PersonWardrobe
     }
 
     /// <summary>Seeds missing wardrobe art and updates its bindings. Existing art belongs to the editor unless replacement is explicit.</summary>
-    public static void Write(string root, bool replaceExistingProps = false)
+    public static void Write(string root, bool replaceExistingProps = false, SeedReport? report = null)
     {
+        report ??= new(replaceExistingProps);
         var modelPath = Path.Combine(root, "models", "person.json");
         var model = CharacterModel.Load(modelPath);
         AddBodyParts(model);
@@ -281,13 +282,13 @@ public static class PersonWardrobe
             model.Sockets.RemoveAll(s => s.Id == socket.Id);
             model.Sockets.Add(socket);
         }
-        model.Save(modelPath);
+        report.Write(modelPath, model.ToJson());
         foreach (var prop in Props())
         {
             var path = Path.Combine(root, "props", prop.Id + ".json");
             if (replaceExistingProps || !File.Exists(path))
             {
-                prop.Save(path);
+                report.Write(path, prop.ToJson());
             }
         }
         foreach (var id in new[] { "hero", "maul-brute", "cinder-gunner" })
@@ -302,7 +303,7 @@ public static class PersonWardrobe
                 entity.Equipment.RemoveAll(e => e.Prop == item.Prop);
                 entity.Equipment.Add(item);
             }
-            entity.Save(path);
+            report.Write(path, entity.ToJson());
         }
     }
 }

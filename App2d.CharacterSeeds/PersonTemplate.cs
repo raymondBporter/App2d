@@ -79,9 +79,20 @@ public static class PersonTemplate
     {
         var model = StudyReference();
         var built = ResolvedModel.From(model, new PersonBuild { Legs = LegLength }.Apply(model, "style", "Style"));
+        // The study's legs baked at the template's length: a point control takes its built rest, a bone node its built setup and length.
         foreach (var control in model.Controls)
         {
-            control.Rest = PuppetPoint.From(built.Rest[control.Id]);
+            var node = built.Nodes[control.Id];
+            if (control.Node == RigNodeKinds.Bone)
+            {
+                control.Local = node.Setup with { };
+                control.Length = node.Length;
+                control.Link = node.Link is { } link ? link with { } : null;
+            }
+            else
+            {
+                control.Rest = PuppetPoint.From(built.Rest[control.Id]);
+            }
         }
 
         // Keep authored material references; the resolved drawing also contains inherited colors.
@@ -89,13 +100,10 @@ public static class PersonTemplate
             model.Parts[i] = built.Parts[i] with { Material = model.Parts[i].Material };
         model.Id = id;
         model.Name = name;
-        // P11a: every limb is a canonical bone constraint (the shipped model file carries the same conversion): the shoulders
-        // stay the authored pivots framing the grips, the upper arms are solved bones, the legs solve from the hips. The
-        // proportion parameters are declared afterwards on that structure.
+        // The proportion parameters are declared on the baked structure (the limbs are bone constraints since the study reference is canonical, P11b).
         model.Parameters = [];
         model.Presets = [];
-        ConvertLimbs(model);
-        PersonBuild.Declare(model);
+        Declare(model);
         model.Validate();
         if (face)
         {
@@ -182,15 +190,18 @@ public static class PersonTemplate
             }
         }
         PersonWardrobe.AddBodyParts(model);
-        // P4a: the proportions are declared parameters with bindings, not a Core rule.
+        // P11a/P11b: the limbs are canonical bone constraints (the shoulders as pivots, the upper arms as solved bones, the hips as
+        // leg roots) before the proportions are declared as parameters with bindings (P4a), not a Core rule.
+        ConvertLimbs(model);
         PersonBuild.Declare(model);
         model.Validate();
         return model;
     }
 
     /// <summary>Writes the Person model, its converted walk and run (and the heavy walk derived from it), the two reviewed builds and the starter entity content as authored assets.</summary>
-    public static void WriteStudies(string authoredRoot)
+    public static void WriteStudies(string authoredRoot, SeedReport? report = null)
     {
+        report ??= new();
         var model = Model(face: true);
         var modelPath = Path.Combine(authoredRoot, "models", model.Id + ".json");
         if (File.Exists(modelPath))
@@ -201,12 +212,7 @@ public static class PersonTemplate
         var reference = StudyReference();
         var walk = PuppetTemplates.StepStudy();
         var run = PuppetTemplates.RunStudy();
-        void Write(string folder, string id, string json)
-        {
-            var directory = Path.Combine(authoredRoot, folder);
-            Directory.CreateDirectory(directory);
-            AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
-        }
+        void Write(string folder, string id, string json) => report.Write(Path.Combine(authoredRoot, folder, id + ".json"), json);
         Write("parts", Face.Id, Face.ToJson());
         Write("models", model.Id, model.ToJson());
         var walkClip = PuppetMotionConverter.Convert(walk, walk.Motions[0], reference, "person-walk", "Walk", Humanoid.LegMeasure);
@@ -215,6 +221,6 @@ public static class PersonTemplate
         Write("animations", "person-run", PuppetMotionConverter.Convert(run, run.Motions[0], reference, "person-run", "Run", Humanoid.LegMeasure).ToJson());
         Write("variants", "tall-thin", PersonBuild.TallThin.Apply(model, "tall-thin", "Tall and thin", "#d9e2ef").ToJson());
         Write("variants", "short-broad", PersonBuild.ShortBroad.Apply(model, "short-broad", "Short and broad", "#efdcc9").ToJson());
-        StarterContent.Write(authoredRoot, model);
+        StarterContent.Write(authoredRoot, model, report);
     }
 }

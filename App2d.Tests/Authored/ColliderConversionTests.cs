@@ -18,8 +18,9 @@ public sealed class ColliderConversionTests
     [Fact]
     public void ConvertingTheSeedSpearGuardReproducesTheShippedFileExceptForItsAuthoredTrigger()
     {
-        var seed = StarterContent.SpearGuardEntity();
-        var model = Catalog.Resolve(seed.Model);
+        // P11b: the seed declares its colliders; the conversion is exercised on its version-2 form.
+        var model = Catalog.Resolve(StarterContent.SpearGuardEntity().Model);
+        var seed = LegacyEntities.Strip(StarterContent.SpearGuardEntity(), model.Base, keepBehaviors: true);
         var (converted, report) = ColliderConversion.Convert(seed, model);
         Assert.Equal(EntityAsset.CurrentVersion, converted.Version);
         Assert.Null(converted.Hurt.Layout);
@@ -45,8 +46,13 @@ public sealed class ColliderConversionTests
     {
         foreach (var (id, seed) in new[] { ("player", StarterContent.PlayerEntity()), ("spear-guard", StarterContent.SpearGuardEntity()) })
         {
-            var legacy = Compile(seed);
             var shipped = Catalog.Entities[id];
+            var stripped = LegacyEntities.Strip(seed, shipped.Model.Base);
+            if (id == "player")
+            {
+                stripped.Hurt.Regions["legs"] = new() { Pad = .05f }; // the player's tighter legs box, as the P8c file carried it
+            }
+            var legacy = Compile(stripped);
             Assert.True(shipped.HurtRegistered);
             Assert.False(legacy.HurtRegistered);
             foreach (var facing in new[] { 1, -1 })

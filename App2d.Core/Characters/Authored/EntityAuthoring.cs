@@ -36,7 +36,7 @@ public static class EntityAuthoring
 
     /// <summary>
     /// A new entity on <paramref name="model"/> (a model or variant, resolved) with a template's gameplay defaults: the base's
-    /// first motion set and hurt layout, and a movement box fitted to the rest pose. References it cannot fill stay visible
+    /// first motion set, one hurt box over the rest pose, and a movement box fitted to it. References it cannot fill stay visible
     /// as compile problems for the author to repair, rather than being invented.
     /// </summary>
     public static EntityAsset New(string template, string id, string name, ResolvedModel model)
@@ -48,7 +48,8 @@ public static class EntityAuthoring
             Model = model.Id,
             MotionSet = model.Base.MotionSets.FirstOrDefault()?.Id ?? "standard",
             Movement = FitMovement(model),
-            Hurt = new() { Layout = model.Base.HurtLayouts.FirstOrDefault()?.Id },
+            // P11b: a new entity starts with one hurt box over its whole rest pose (edit or split it in the Colliders section).
+            Colliders = [ColliderAuthoring.HurtBox(model, "body", [.. model.Order.Select(c => c.Id)], .1f)],
             // P9a: a new entity declares its behaviors (version 4); its windows get a strike each as they are added.
             Behaviors = new(),
         };

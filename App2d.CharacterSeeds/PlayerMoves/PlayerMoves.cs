@@ -103,8 +103,9 @@ internal static partial class PlayerMoves
     ];
 
     /// <summary>Adds the move set's sockets to the Person model, then writes props and clips beside it.</summary>
-    public static void Write(string authoredRoot)
+    public static void Write(string authoredRoot, SeedReport? report = null)
     {
+        report ??= new();
         var modelPath = Path.Combine(authoredRoot, "models", "person.json");
         var person = CharacterModel.FromJson(File.ReadAllText(modelPath));
         foreach (var socket in Sockets())
@@ -112,48 +113,45 @@ internal static partial class PlayerMoves
             person.Sockets.RemoveAll(s => s.Id == socket.Id);
             person.Sockets.Add(socket);
         }
-        person.Save(modelPath);
-        // These absolute pose studies were authored at the original proportions. Keep their
-        // reference measures so playback retargets the legs, including after regeneration.
-        var reference = CharacterModel.FromJson(person.ToJson());
-        var study = PersonTemplate.StudyReference();
-        RigConversion.ToPointControls(reference, [.. reference.Controls.Where(c => c.Node == RigNodeKinds.Bone).Select(c => c.Id)]);
-        foreach (var control in reference.Controls)
-        {
-            control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
-        }
-
-        var model = ResolvedModel.From(reference, null, PersonTemplate.PartOf);
+        report.Write(modelPath, person.ToJson());
+        var model = StudyProportions(person);
         foreach (var prop in Props())
         {
-            prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
+            report.Write(Path.Combine(authoredRoot, "props", prop.Id + ".json"), prop.ToJson());
         }
 
-        Directory.CreateDirectory(Path.Combine(authoredRoot, "profiles"));
-        Profile().Save(Path.Combine(authoredRoot, "profiles", GameProfile.GameId + ".json"));
+        report.Write(Path.Combine(authoredRoot, "profiles", GameProfile.GameId + ".json"), Profile().ToJson());
 
         var clips = Clips(model).Select(WeaponMotion).ToDictionary(c => c.Id);
         foreach (var clip in clips.Values)
         {
-            clip.Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
+            report.Write(Path.Combine(authoredRoot, "animations", clip.Id + ".json"), clip.ToJson());
         }
 
-        Directory.CreateDirectory(Path.Combine(authoredRoot, "entities"));
         var hero = Hero(ResolvedModel.From(person, null, PersonTemplate.PartOf), clips);
-        hero.Save(Path.Combine(authoredRoot, "entities", hero.Id + ".json"));
+        report.Write(Path.Combine(authoredRoot, "entities", hero.Id + ".json"), hero.ToJson());
         // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
-        WeaponMotion(PistolShot(model)).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
+        report.Write(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"), WeaponMotion(PistolShot(model)).ToJson());
         var cinder = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "cinder.json")));
         var gunner = CinderGunner(ResolvedModel.From(person, cinder, PersonTemplate.PartOf));
-        gunner.Save(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"));
+        report.Write(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"), gunner.ToJson());
         // The maul: a broad brute on the Heavy set with a one-handed hammer and a slow overhead slam.
-        HammerProp().Save(Path.Combine(authoredRoot, "props", "hammer.json"));
-        WeaponMotion(HammerSlam(model)).Save(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"));
+        report.Write(Path.Combine(authoredRoot, "props", "hammer.json"), HammerProp().ToJson());
+        report.Write(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"), WeaponMotion(HammerSlam(model)).ToJson());
         var brute = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "brute.json")));
         var maul = MaulBrute(ResolvedModel.From(person, brute, PersonTemplate.PartOf));
-        maul.Save(Path.Combine(authoredRoot, "entities", maul.Id + ".json"));
-        PersonWardrobe.Write(authoredRoot);
+        report.Write(Path.Combine(authoredRoot, "entities", maul.Id + ".json"), maul.ToJson());
+        PersonWardrobe.Write(authoredRoot, report: report);
     }
+
+    /// <summary>
+    /// The Person at the prototype study's proportions, on which these absolute pose studies were authored: the shipped Person
+    /// baked the study's legs at <see cref="PersonTemplate.LegLength"/>, so the inverse legs value restores them, and the clips'
+    /// reference measures then retarget the legs on every build, including after regeneration (P11b: the canonical rig itself,
+    /// no point-control rebuild).
+    /// </summary>
+    internal static ResolvedModel StudyProportions(CharacterModel person) =>
+        ResolvedModel.From(person, new PersonBuild { Legs = 1 / PersonTemplate.LegLength }.Apply(person, "study", "Study proportions"), PersonTemplate.PartOf);
 
     /// <summary>A short-hafted war hammer: grip at the origin, haft along +X, the head's centre is its tip.</summary>
     public static PropAsset HammerProp() => HammerArt();
@@ -194,10 +192,7 @@ internal static partial class PlayerMoves
             Strikes = new(StringComparer.Ordinal) { ["hammer-head"] = new() { Damage = 5, Sound = "heavy" } },
         },
         Movement = EntityAuthoring.FitMovement(model),
-        Hurt = new()
-        {
-            Layout = "standard"
-        },
+        Colliders = [new() { Id = "hammer-head", Use = ColliderUses.Attack, Prop = "hammer", Shape = Rectangle2D.Builder.FromSize(1.2f, 1f) }, .. StarterContent.PersonHurt(model)],
         Equipment =
         [
             new EquipmentBinding()
@@ -217,8 +212,7 @@ internal static partial class PlayerMoves
                     new HitWindow()
                     {
                         Id = "hammer-head",
-                        Prop = "hammer",
-                        Shape = Rectangle2D.Builder.FromSize(1.2f, 1f),
+                        Collider = "hammer-head",
                         Start = new()
                         {
                             Marker = "strike"
@@ -282,10 +276,7 @@ internal static partial class PlayerMoves
             Strikes = new(StringComparer.Ordinal) { [EntityControllers.Attack] = new() { Damage = 2 } },
         },
         Movement = EntityAuthoring.FitMovement(model),
-        Hurt = new()
-        {
-            Layout = "standard"
-        },
+        Colliders = [.. StarterContent.PersonHurt(model)],
         Equipment =
         [
             new()
@@ -415,10 +406,8 @@ internal static partial class PlayerMoves
         {
             Shape = MovementDef.Box(.55f, 1.705f)
         },
-        Hurt = new()
-        {
-            Layout = "standard"
-        },
+        // Each swing's blade box is its own attack collider, fixed to the player; the hurt boxes are the Person's.
+        Colliders = [.. new[] { (EntityControllers.Attack, "player-sword-side-cut"), (EntityControllers.FollowUp, "player-sword-backhand"), (Forehand, "player-sword-forehand") }.Select(s => BladeCollider(model, clips, s.Item1, s.Item2)), .. StarterContent.PersonHurt(model)],
         Equipment =
         [
             new()
@@ -449,7 +438,18 @@ internal static partial class PlayerMoves
     /// One sword swing of the combo: its clip, the swing a further press plays, the clip that puts the sword away after it,
     /// and its hit, a rectangle fixed to the player that bounds what the blade sweeps in front of the body.
     /// </summary>
-    private static EntityActionDef Swing(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips, string id, string clip, string next, string recovery)
+    private static EntityActionDef Swing(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips, string id, string clip, string next, string recovery) => new()
+    {
+        Id = id,
+        Clip = clip,
+        Next = next,
+        Recovery = recovery,
+        Hits = [new() { Id = "blade", Collider = id + "-blade", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
+        Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
+    };
+
+    /// <summary>A swing's attack collider: the rectangle, fixed to the player, that bounds what the blade sweeps in front of the body between the strike and the recovery.</summary>
+    private static ColliderDef BladeCollider(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips, string action, string clip)
     {
         var swing = clips[clip];
         float At(string marker) => swing.Markers.Single(m => m.Id == marker).Time;
@@ -458,15 +458,7 @@ internal static partial class PlayerMoves
         var (min, max) = SwingLab.HitRectangle(model, swing, At(PersonLoadout.SwooshMarker), At("strike"), At("recover"), t => SwingLab.Blade(model, swing, t, sword, socket))
             ?? throw new InvalidOperationException($"'{clip}': the blade never gets in front of the player.");
         static float R(float v) => MathF.Round(v, 3);
-        return new()
-        {
-            Id = id,
-            Clip = clip,
-            Next = next,
-            Recovery = recovery,
-            Hits = [new() { Id = "blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Shape = Rectangle2D.Builder.FromSize(R(max.X - min.X), R(max.Y - min.Y)), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
-            Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
-        };
+        return new() { Id = action + "-blade", Use = ColliderUses.Attack, OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Shape = Rectangle2D.Builder.FromSize(R(max.X - min.X), R(max.Y - min.Y)) };
     }
 
     private static MoveBuilder New(ResolvedModel m, string id, string name, float duration, bool loop) => new(m, id, name, duration, loop);

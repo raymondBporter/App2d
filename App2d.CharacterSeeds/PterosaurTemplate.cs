@@ -97,7 +97,6 @@ public static class PterosaurTemplate
         };
         model.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
         model.Groups = [new() { Id = "wings", Targets = ["near-shoulder", "near-bend", "near-tip", "far-shoulder", "far-bend", "far-tip"] }];
-        model.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .16f }] }];
         model.MotionSets = [new() { Id = "standard", Name = "Flying", Roles = new() { ["idle"] = id + "-hover", ["hover"] = id + "-hover", ["fold"] = id + "-fold", ["dive"] = id + "-dive", ["brake"] = id + "-brake", ["low-recovery"] = id + "-low-recovery", ["reset"] = id + "-reset" } }];
         Dimensions(model);
         model.Validate();
@@ -209,15 +208,14 @@ public static class PterosaurTemplate
         return clips;
     }
 
-    public static void Write(string root)
+    public static void Write(string root, SeedReport? report = null)
     {
+        report ??= new();
         var model = Model();
-        Directory.CreateDirectory(Path.Combine(root, "models"));
-        model.Save(Path.Combine(root, "models", model.Id + ".json"));
-        Directory.CreateDirectory(Path.Combine(root, "animations"));
+        report.Write(Path.Combine(root, "models", model.Id + ".json"), model.ToJson());
         foreach (var clip in Clips(model))
         {
-            clip.Save(Path.Combine(root, "animations", clip.Id + ".json"));
+            report.Write(Path.Combine(root, "animations", clip.Id + ".json"), clip.ToJson());
         }
     }
 }

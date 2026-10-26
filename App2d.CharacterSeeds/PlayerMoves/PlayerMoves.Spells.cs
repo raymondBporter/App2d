@@ -20,21 +20,14 @@ internal static partial class PlayerMoves
         .Plant(Humanoid.LeftLeg, 0, 1, Back).Plant(Humanoid.RightLeg, 0, 1, Front)
         .Face(0, "focused").Build();
 
-    public static void WriteSpells(string root)
+    public static void WriteSpells(string root, SeedReport? report = null)
     {
+        report ??= new();
         var person = CharacterModel.FromJson(File.ReadAllText(Path.Combine(root, "models", "person.json")));
-        var reference = CharacterModel.FromJson(person.ToJson());
-        var study = PersonTemplate.StudyReference();
-        RigConversion.ToPointControls(reference, [.. reference.Controls.Where(c => c.Node == RigNodeKinds.Bone).Select(c => c.Id)]);
-        foreach (var control in reference.Controls)
-        {
-            control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
-        }
-
-        var model = ResolvedModel.From(reference, null, PersonTemplate.PartOf);
+        var model = StudyProportions(person);
         foreach (var clip in new[] { GunCharge(model), HealGather(model) })
         {
-            clip.Save(Path.Combine(root, "animations", clip.Id + ".json"));
+            report.Write(Path.Combine(root, "animations", clip.Id + ".json"), clip.ToJson());
         }
     }
 }

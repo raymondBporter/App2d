@@ -59,7 +59,7 @@ public sealed class ParameterBindingTests
         Assert.Equal(CharacterModel.CurrentVersion, person.Version);
         Assert.Equal(PersonBuild.Ids, person.Parameters.Select(p => p.Id));
         Assert.All(person.Parameters, p => Assert.Equal(ParameterUnits.Factor, p.Units));
-        Assert.Equal(["standard", "tall-thin", "short-broad"], person.Presets.Select(p => p.Id));
+        Assert.Equal(["standard", "tall-thin", "short-broad", "stilted", "squat"], person.Presets.Select(p => p.Id));
         Assert.Equal(PersonBuild.TallThin.Values(), person.Presets[1].Values);
         var resolved = Catalog.Resolve("person");
         Assert.Equal("arms", resolved.Parameters.BindingOfControl(Humanoid.LeftUpperArmBone, RigProperties.Length)!.Value.Parameter.Id);

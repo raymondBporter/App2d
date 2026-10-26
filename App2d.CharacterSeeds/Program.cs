@@ -125,10 +125,15 @@ internal static class Program
                     }
                 }
                 return published.All(r => r.Published) ? 0 : 2;
-            case ["--write-centaur", var authoredRoot]:
-                // P10c: the centaur study composed from the shipped modules: its model, clips and template.
-                CentaurStudy.Write(authoredRoot);
-                Console.WriteLine($"centaur study written under {authoredRoot}");
+            case ["--write-centaur", var authoredRoot, .. var centaurFlags] when centaurFlags is [] or ["--force"]:
+                // P10c: the centaur study composed from the shipped modules: its model, clips and template (P11b: editor-owned files are kept unless forced).
+                var centaurReport = new SeedReport(centaurFlags.Length == 1);
+                CentaurStudy.Write(authoredRoot, centaurReport);
+                foreach (var line in centaurReport.Lines)
+                {
+                    Console.WriteLine(line);
+                }
+                Console.WriteLine($"centaur study under {authoredRoot}: {centaurReport}");
                 return 0;
             case ["--extract-modules", var authoredRoot, var output]:
                 // P10b: the Person's upper and lower body and the quadruped's lower body and head as rig modules, on a scratch tree with a report each.

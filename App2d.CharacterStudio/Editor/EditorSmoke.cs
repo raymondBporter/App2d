@@ -504,8 +504,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = true;
                 var doc = s.SubjectModel!;
                 var person = s.Assets.Resolve("person")!;
-                Record(doc.Asset.Version == CharacterModel.CurrentVersion && doc.Asset.Parameters.Select(p => p.Id).SequenceEqual(["legs", "torso", "arms", "width", "head"]) && doc.Asset.Parameters.Sum(p => p.Bindings.Count) == 34 && doc.Asset.Presets.Count == 3,
-                    $"the Person declares its five proportion parameters with 34 bindings (the limbs' eight bone lengths since P11a, plus the face instance's two fit bindings, P7c) and 3 presets at version {CharacterModel.CurrentVersion} ({doc.Asset.Parameters.Sum(p => p.Bindings.Count)} bindings)");
+                Record(doc.Asset.Version == CharacterModel.CurrentVersion && doc.Asset.Parameters.Select(p => p.Id).SequenceEqual(["legs", "torso", "arms", "width", "head"]) && doc.Asset.Parameters.Sum(p => p.Bindings.Count) == 34 && doc.Asset.Presets.Count == 5,
+                    $"the Person declares its five proportion parameters with 34 bindings (the limbs' eight bone lengths since P11a, plus the face instance's two fit bindings, P7c) and 5 presets (the P4c proof builds declared since P11b) at version {CharacterModel.CurrentVersion} ({doc.Asset.Parameters.Sum(p => p.Bindings.Count)} bindings)");
                 Record(person.Parameters.BindingOfControl(Humanoid.LeftUpperArmBone, RigProperties.Length)?.Parameter.Id == "arms" && person.Parameters.BindingOfPart("body", RigProperties.ScaleX)?.Parameter.Id == "width" && MathF.Abs((person.Parameters.BindingOfControl("hips", RigProperties.LocalY)?.Binding.About ?? 0) - .025f) < 1e-5f,
                     "the upper-arm length, body width and ground-anchored hip height read their bindings");
                 s.Open("tall-thin");

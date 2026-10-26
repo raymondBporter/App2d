@@ -92,20 +92,18 @@ public static class CentaurStudy
     };
 
     /// <summary>Explicit regeneration into an authored root whose parts folder holds the modules.</summary>
-    public static void Write(string root)
+    public static void Write(string root, SeedReport? report = null)
     {
+        report ??= new();
         var catalog = AuthoredCatalog.Load(root);
         var model = Model();
         var resolved = ResolvedModel.From(model, null, catalog.Parts.GetValueOrDefault);
-        Directory.CreateDirectory(Path.Combine(root, "models"));
-        Directory.CreateDirectory(Path.Combine(root, "animations"));
-        Directory.CreateDirectory(Path.Combine(root, "templates"));
-        model.Save(Path.Combine(root, "models", model.Id + ".json"));
+        report.Write(Path.Combine(root, "models", model.Id + ".json"), model.ToJson());
         foreach (var clip in Clips(resolved))
         {
-            clip.Save(Path.Combine(root, "animations", clip.Id + ".json"));
+            report.Write(Path.Combine(root, "animations", clip.Id + ".json"), clip.ToJson());
         }
 
-        Template().Save(Path.Combine(root, "templates", Id + ".json"));
+        report.Write(Path.Combine(root, "templates", Id + ".json"), Template().ToJson());
     }
 }

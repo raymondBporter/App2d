@@ -31,13 +31,19 @@ public sealed class ColliderAttachmentTests
         var guard = StarterContent.SpearGuardEntity();
         guard.Version = EntityAsset.CurrentVersion;
         guard.Hurt = new();
-        guard.Colliders =
+        // The seed's own hurt boxes give way to these; its spear-tip attack collider stays.
+        guard.Colliders.RemoveAll(c => c.Use == ColliderUses.Hurt);
+        guard.Colliders.AddRange(
         [
             new() { Id = "head", Use = ColliderUses.Hurt, Control = Humanoid.Head, Frame = CharacterModel.Locomotion, Shape = Rectangle2D.Builder.FromSize(.6f, .6f) },
             new() { Id = "torso", Use = ColliderUses.Hurt, Control = Humanoid.Hips, Toward = Humanoid.Chest, Stretch = true, Shape = Capsule2D.Builder.Create(Vector2.Zero, new(0, .5f), .2f) },
             new() { Id = "legs", Use = ColliderUses.Hurt, Control = Humanoid.LeftHip, Frame = CharacterModel.Locomotion, OffsetY = -.4f, Shape = Rectangle2D.Builder.FromSize(.5f, .9f) },
             new() { Id = "reach", Use = ColliderUses.Trigger, Prop = StarterContent.Spear, Point = PropAsset.TipPoint, Shape = Circle2D.Builder.Create(.5f) },
-        ];
+        ]);
+        // The attack collider last, as the P8a-era fixture listed its implied window collider after the explicit ones.
+        var tip = guard.Colliders.First(c => c.Use == ColliderUses.Attack);
+        guard.Colliders.Remove(tip);
+        guard.Colliders.Add(tip);
         return guard;
     }
 
@@ -283,15 +289,12 @@ public sealed class ColliderAttachmentTests
         Assert.Equal(ColliderBindings.Prop, compiled.Collider("reach")!.Binding);
         // Round trip at version 3; the same declarations at version 2 are refused.
         var restored = EntityAsset.FromJson(guard.ToJson());
-        Assert.Equal(4, restored.Colliders.Count);
+        Assert.Equal(5, restored.Colliders.Count); // the fixture's four plus the seed's declared spear-tip (P11b)
         Assert.True(restored.UsesColliders);
         var downgraded = EntityAsset.FromJson(guard.ToJson());
         downgraded.Version = EntityAsset.LegacyVersion;
         Assert.Contains("need entity version 3", Assert.Throws<InvalidDataException>(downgraded.Validate).Message);
-        var legacy = StarterContent.SpearGuardEntity();
-        legacy.Behaviors = null;
-        legacy.Version = EntityAsset.LegacyVersion;
-        legacy.Validate();
+        var legacy = LegacyEntities.Strip(StarterContent.SpearGuardEntity(), Catalog.Entities["spear-guard"].Model.Base);
         Assert.False(legacy.UsesColliders);
         // A window names an attack collider; the legacy inline geometry is then unused.
         var named = GuardWithHurtColliders();
@@ -300,7 +303,7 @@ public sealed class ColliderAttachmentTests
         named.Actions[0].Hits[0].Prop = null;
         var pointed = Compile(named);
         Assert.Same(pointed.Collider("point"), pointed.Actions["attack"].Hits[0].Collider);
-        Assert.Equal(5, pointed.Colliders.Count);
+        Assert.Equal(6, pointed.Colliders.Count);
         // Refusals by name.
         string Refused(Action<EntityAsset> change)
         {
@@ -329,6 +332,6 @@ public sealed class ColliderAttachmentTests
         Assert.Contains("no collider 'blade'", Refused(e => e.Actions[0].Hits[0].Collider = "blade"));
         Assert.Contains("is a hurt collider, not attack", Refused(e => e.Actions[0].Hits[0].Collider = "head"));
         Assert.Contains("use", Refused(e => e.Colliders[0].Use = "poke"));
-        Assert.Contains("would register as collider 'spear-tip'", Refused(e => e.Colliders.Add(new() { Id = "spear-tip", Use = ColliderUses.Trigger, Control = Humanoid.Head })));
+        Assert.Contains("duplicate collider 'spear-tip'", Refused(e => e.Colliders.Add(new() { Id = "spear-tip", Use = ColliderUses.Trigger, Control = Humanoid.Head }))); // the seed's declared attack collider (P11b)
     }
 }

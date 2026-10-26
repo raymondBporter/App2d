@@ -141,7 +141,7 @@ public sealed class EntityRuntimeTests
         entity = StarterContent.SpearGuardEntity();
         entity.MotionSet = "hulking";
         Assert.Contains("has no motion set 'hulking'", Error(entity));
-        entity = StarterContent.SpearGuardEntity();
+        entity = LegacyEntities.Strip(StarterContent.SpearGuardEntity(), Catalog.Entities["spear-guard"].Model.Base);
         entity.Hurt.Regions["tail"] = new()
         {
             Disabled = true
@@ -158,7 +158,8 @@ public sealed class EntityRuntimeTests
     [Fact]
     public void HurtLayoutOverridesDisableAndPadIndividualRegions()
     {
-        var entity = StarterContent.SpearGuardEntity();
+        // The legacy layout route (P11b: the seeds declare colliders; the layout is exercised on the guard's version-2 form).
+        var entity = LegacyEntities.Strip(StarterContent.SpearGuardEntity(), Catalog.Entities["spear-guard"].Model.Base);
         entity.Hurt.Regions["head"] = new()
         {
             Disabled = true

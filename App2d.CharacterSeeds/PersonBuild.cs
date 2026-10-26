@@ -22,8 +22,7 @@ public sealed record PersonBuild
     public static PersonBuild ShortBroad { get; } = new() { Legs = .82f, Torso = .9f, Arms = .88f, Width = 1.3f, Head = 1.1f };
     /// <summary>
     /// Deliberately extreme builds at the hard range's ends (P4c): every leg, torso and arm dimension doubled or halved while
-    /// the shared clips play. They are proof fixtures for the proportion gate, not shipped presets: `models/person.json`
-    /// stays unchanged (plan rule 3) until the Person bundle converts in P11, when these join its preset list.
+    /// the shared clips play. Proof fixtures for the proportion gate; since P11b they are declared presets of the Person too.
     /// </summary>
     public static PersonBuild Stilted { get; } = new() { Legs = 2, Torso = .5f, Arms = 2, Width = .6f, Head = .5f };
     public static PersonBuild Squat { get; } = new() { Legs = .5f, Torso = 2, Arms = .5f, Width = 1.6f, Head = 2 };
@@ -60,11 +59,19 @@ public sealed record PersonBuild
         }
 
         var variant = new ModelVariant { Id = id, Name = name, Base = person.Id };
-        foreach (var (value, amount) in Values())
+        // A build the model declares as a preset applies through the preset (P11b); any other writes its values.
+        if (person.Presets.FirstOrDefault(p => p.Values.Count == Ids.Length && Ids.All(i => p.Values.TryGetValue(i, out var v) && v == Values()[i])) is { } preset)
         {
-            if (amount != 1)
+            ModelAuthoring.ApplyPreset(person, variant, preset.Id);
+        }
+        else
+        {
+            foreach (var (value, amount) in Values())
             {
-                variant.Parameters[value] = amount;
+                if (amount != 1)
+                {
+                    variant.Parameters[value] = amount;
+                }
             }
         }
 
@@ -152,6 +159,9 @@ public sealed record PersonBuild
             new() { Id = "standard", Name = "Standard", Values = [] },
             new() { Id = "tall-thin", Name = "Tall / thin", Values = TallThin.Values() },
             new() { Id = "short-broad", Name = "Short / broad", Values = ShortBroad.Values() },
+            // The P4c proof builds at the hard range's ends, declared on the model since P11b.
+            new() { Id = "stilted", Name = "Stilted", Values = Stilted.Values() },
+            new() { Id = "squat", Name = "Squat", Values = Squat.Values() },
         ];
     }
 }

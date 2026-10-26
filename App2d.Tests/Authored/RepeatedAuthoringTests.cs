@@ -313,7 +313,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         session.Seek(strike.Start + .01f);
         var preview = session.EvaluateEntity()!;
         Assert.Single(preview.Attacks);
-        Assert.Equal(3, preview.Hurt.Count);
+        Assert.Single(preview.Hurt); // the template's whole-body hurt box (P11b)
         Assert.Single(session.Scene());
         Assert.NotNull(session.Scene()[0].Entity);
 

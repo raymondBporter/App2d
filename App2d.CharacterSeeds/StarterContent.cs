@@ -51,18 +51,24 @@ public static class StarterContent
             new() { Id = "ember", Name = "Ember", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#eab596" } } } },
             new() { Id = "night", Name = "Night", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#7d879a" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#e2d6c6" } } } },
         ];
-        model.HurtLayouts =
-        [
-            new()
-            {
-                Id = "standard", Regions =
-                [
-                    new() { Id = Humanoid.Body, Controls = [Humanoid.Hips, Humanoid.Chest, Humanoid.LeftShoulder, Humanoid.RightShoulder], Pad = .14f },
-                    new() { Id = Humanoid.Head, Controls = [Humanoid.Head], Pad = .3f },
-                    new() { Id = "legs", Controls = [Humanoid.LeftHip, Humanoid.RightHip, Humanoid.LeftKnee, Humanoid.RightKnee, Humanoid.LeftFoot, Humanoid.RightFoot], Pad = .07f },
-                ],
-            },
-        ];
+    }
+
+    /// <summary>
+    /// The Person's hurt colliders (P8c, declared by the seeds since P11b): a body box over the hips, chest and shoulders, a head
+    /// box and a legs box, each holding the rest-pose bounds of its controls on the entity's own build, following its anchor control.
+    /// </summary>
+    public static IEnumerable<ColliderDef> PersonHurt(ResolvedModel model, float legsPad = .07f) =>
+    [
+        ColliderAuthoring.HurtBox(model, Humanoid.Body, [Humanoid.Hips, Humanoid.Chest, Humanoid.LeftShoulder, Humanoid.RightShoulder], .14f),
+        ColliderAuthoring.HurtBox(model, Humanoid.Head, [Humanoid.Head], .3f),
+        ColliderAuthoring.HurtBox(model, "legs", [Humanoid.LeftHip, Humanoid.RightHip, Humanoid.LeftKnee, Humanoid.RightKnee, Humanoid.LeftFoot, Humanoid.RightFoot], legsPad),
+    ];
+
+    /// <summary>The resolved tall-thin build the spear guard stands on, from the seeds alone.</summary>
+    private static ResolvedModel TallThin()
+    {
+        var person = PersonTemplate.Model(face: true);
+        return ResolvedModel.From(person, PersonBuild.TallThin.Apply(person, "tall-thin", "Tall and thin", "#d9e2ef"), PersonTemplate.PartOf);
     }
 
     public const string PersonHitClip = "person-hit", PersonDeathClip = "person-death";
@@ -75,14 +81,10 @@ public static class StarterContent
         return roles;
     }
 
-    public static void Write(string authoredRoot, CharacterModel person)
+    public static void Write(string authoredRoot, CharacterModel person, SeedReport? report = null)
     {
-        void Save(string folder, string id, string json)
-        {
-            var directory = Path.Combine(authoredRoot, folder);
-            Directory.CreateDirectory(directory);
-            AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
-        }
+        report ??= new();
+        void Save(string folder, string id, string json) => report.Write(Path.Combine(authoredRoot, folder, id + ".json"), json);
         var resolved = ResolvedModel.From(person, null, PersonTemplate.PartOf);
         var clips = new[] { PersonIdle(resolved), PersonThrust(resolved), PersonJump(resolved), PersonHit(resolved), PersonDeath(resolved) };
         foreach (var clip in clips)
@@ -356,7 +358,6 @@ public static class StarterContent
         shell.Depth = -.05f;
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
-        model.HurtLayouts = [new() { Id = "standard", Regions = [new() { Id = "shell", Controls = ["body", "hip-0", "hip-2"], Pad = .2f }, new() { Id = "legs", Controls = ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], Pad = .05f }] }];
         // P11a: the three legs are canonical bone constraints, as the shipped stalker file carries them.
         foreach (var chain in model.IkChains.ToArray())
         {
@@ -426,9 +427,12 @@ public static class StarterContent
     {
         Id = EntityControllers.Attack,
         Clip = "person-thrust",
-        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) }],
+        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Collider = "spear-tip" }],
         Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
     };
+
+    /// <summary>The spear's attack collider: a box just behind the tip, enabled by the thrust's window.</summary>
+    private static ColliderDef SpearTip() => new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) };
 
     /// <summary>P9a: the typed behaviors of a starter entity: its health and one default strike per hit group.</summary>
     private static EntityBehaviors Behaviors(int health, params string[] groups) => new()
@@ -455,10 +459,7 @@ public static class StarterContent
         {
             Shape = MovementDef.Box(.5f, 1.866f)
         },
-        Hurt = new()
-        {
-            Layout = "standard"
-        },
+        Colliders = [SpearTip(), .. PersonHurt(TallThin())],
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust()],
     };
@@ -483,17 +484,8 @@ public static class StarterContent
         {
             Shape = MovementDef.Box(.55f, 1.705f)
         },
-        Hurt = new()
-        {
-            Layout = "standard",
-            Regions = new()
-            {
-                ["legs"] = new()
-                {
-                    Pad = .05f
-                }
-            }
-        },
+        // The player's legs box is tighter than the guards' (pad .05).
+        Colliders = [SpearTip(), .. PersonHurt(ResolvedModel.From(PersonTemplate.Model(face: true), null, PersonTemplate.PartOf), .05f)],
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust(), new() { Id = EntityControllers.Jump, Role = "jump", Events = [new() { Id = EntityControllers.Launch, At = new() { Marker = "launch" } }] }],
     };
@@ -516,16 +508,18 @@ public static class StarterContent
         {
             Shape = MovementDef.Box(1, 1.1f)
         },
-        Hurt = new()
-        {
-            Layout = "standard"
-        },
+        Colliders =
+        [
+            new() { Id = "sting", Use = ColliderUses.Attack, Socket = "stinger", Shape = Rectangle2D.Builder.FromSize(.3f, .3f) },
+            ColliderAuthoring.HurtBox(ResolvedModel.From(StalkerModel()), "shell", ["body", "hip-0", "hip-2"], .2f),
+            ColliderAuthoring.HurtBox(ResolvedModel.From(StalkerModel()), "legs", ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], .05f),
+        ],
         Actions =
         [
             new()
             {
                 Id = EntityControllers.Attack, Clip = "stalker-lunge",
-                Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Socket = "stinger", Shape = Rectangle2D.Builder.FromSize(.3f, .3f) }],
+                Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Collider = "sting" }],
                 Events = [new() { Id = "bite", At = new() { Marker = "strike" }, Sound = "bite" }],
             },
         ],

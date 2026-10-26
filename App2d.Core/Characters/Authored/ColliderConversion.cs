@@ -104,27 +104,9 @@ public static class ColliderConversion
                 }
 
                 var pad = change?.Pad ?? region.Pad;
-                var inRegion = region.Controls.ToHashSet(StringComparer.Ordinal);
-                var anchor = region.Controls.First(c => model.Controls[c].Parent is not { } parent || !inRegion.Contains(parent));
-                var anchorRest = rest.Points[anchor].XY;
-                var bounds = Rect2D.FromPoints(region.Controls.Select(c => rest.Points[c].XY)).InflatedBy(pad);
-                var definition = new ColliderDef { Id = region.Id, Use = ColliderUses.Hurt, Control = anchor, Frame = CharacterModel.Locomotion };
-                string shape;
-                if (bounds.Width > 0 && bounds.Height > 0)
-                {
-                    definition.Shape = Rectangle2D.Builder.FromSize(new Vector2(MathF.Round(bounds.Width, 5), MathF.Round(bounds.Height, 5)));
-                    var offset = bounds.Center - anchorRest;
-                    definition.OffsetX = MathF.Round(offset.X, 5);
-                    definition.OffsetY = MathF.Round(offset.Y, 5);
-                    shape = $"box {bounds.Width:0.###} x {bounds.Height:0.###} at offset ({definition.OffsetX:0.###}, {definition.OffsetY:0.###})";
-                }
-                else
-                {
-                    definition.Shape = Capsule2D.Builder.Create(bounds.Min - anchorRest, bounds.Max - anchorRest, EntityCollision.DegenerateHurtRadius);
-                    shape = $"hairline capsule from ({bounds.Min.X - anchorRest.X:0.###}, {bounds.Min.Y - anchorRest.Y:0.###}) to ({bounds.Max.X - anchorRest.X:0.###}, {bounds.Max.Y - anchorRest.Y:0.###})";
-                }
+                var definition = ColliderAuthoring.HurtBox(model, region.Id, region.Controls, pad);
                 entity.Colliders.Add(definition);
-                report.Add($"hurt region '{region.Id}' ({string.Join(", ", region.Controls)}; pad {pad:0.###}{(change?.Pad is not null ? " from this entity's override" : "")}) -> hurt collider '{region.Id}' bound to '{anchor}' in the locomotion frame: {shape}; the rest-pose region is reproduced exactly and the box now follows '{anchor}' instead of every control");
+                report.Add($"hurt region '{region.Id}' ({string.Join(", ", region.Controls)}; pad {pad:0.###}{(change?.Pad is not null ? " from this entity's override" : "")}) -> hurt collider '{region.Id}' bound to '{definition.Control}' in the locomotion frame: {ColliderAuthoring.Describe(definition)}; the rest-pose region is reproduced exactly and the box now follows '{definition.Control}' instead of every control");
                 changed = true;
             }
             entity.Hurt = new();

@@ -9,7 +9,7 @@ namespace App2d.Tests.Authored;
 /// </summary>
 internal static class LegacyEntities
 {
-    public static EntityAsset Strip(EntityAsset typed, CharacterModel model)
+    public static EntityAsset Strip(EntityAsset typed, CharacterModel model, bool keepBehaviors = false)
     {
         var entity = EntityAsset.FromJson(typed.ToJson());
         var colliders = entity.Colliders.ToDictionary(c => c.Id, StringComparer.Ordinal);
@@ -55,14 +55,14 @@ internal static class LegacyEntities
         }
 
         entity.Colliders.Clear();
-        if (entity.Behaviors is { } behaviors)
+        if (entity.Behaviors is { } behaviors && !keepBehaviors)
         {
             entity.Health = behaviors.Damage.Health;
             entity.Mass = behaviors.Damage.Mass;
             entity.Behaviors = null;
         }
 
-        entity.Version = EntityAsset.LegacyVersion;
+        entity.Version = keepBehaviors ? EntityAsset.CurrentVersion : EntityAsset.LegacyVersion;
         entity.Validate();
         return entity;
     }

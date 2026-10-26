@@ -102,7 +102,6 @@ public static class QuadrupedTemplate
         SetOutlineWidth(Cutout("mouth", "head", .23f, .08f, .35f, -.17f, -.31f, m.Ink, new(-.5f, -.3f), new(-.1f, .5f), new(.5f, -.35f), new(.44f, -.5f), new(-.1f, .10f), new(-.42f, -.5f)), 0);
         m.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
         m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.IkChains.Select(c => c.Id)] }];
-        m.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .35f }] }];
         m.MotionSets = [new()
         {
             Id = "standard",
@@ -307,17 +306,16 @@ public static class QuadrupedTemplate
     }
 
     /// <summary>Explicit regeneration; use the editor to save subsequent artwork and animation edits.</summary>
-    public static void Write(string root)
+    public static void Write(string root, SeedReport? report = null)
     {
+        report ??= new();
         foreach (var dinosaur in new[] { false, true })
         {
             var m = Model(dinosaur ? "triceratops" : "quadruped", dinosaur ? "Triceratops" : "Quadruped", dinosaur);
-            Directory.CreateDirectory(Path.Combine(root, "models"));
-            m.Save(Path.Combine(root, "models", m.Id + ".json"));
-            Directory.CreateDirectory(Path.Combine(root, "animations"));
+            report.Write(Path.Combine(root, "models", m.Id + ".json"), m.ToJson());
             foreach (var c in Clips(m))
             {
-                c.Save(Path.Combine(root, "animations", c.Id + ".json"));
+                report.Write(Path.Combine(root, "animations", c.Id + ".json"), c.ToJson());
             }
         }
     }

@@ -45,8 +45,9 @@ internal static partial class PlayerMoves
     }
 
     /// <summary>Only upgrades the weapon assets and their orientation tracks; leaves body keys and entity settings intact.</summary>
-    public static void WriteWeapons(string root)
+    public static void WriteWeapons(string root, SeedReport? report = null)
     {
+        report ??= new();
         var path = Path.Combine(root, "models", "person.json");
         var model = CharacterModel.FromJson(File.ReadAllText(path));
 
@@ -58,10 +59,10 @@ internal static partial class PlayerMoves
             }
         }
 
-        model.Save(path);
+        report.Write(path, model.ToJson());
         foreach (var prop in Props().Append(HammerProp()).Append(StarterContent.SpearProp()))
         {
-            prop.Save(Path.Combine(root, "props", prop.Id + ".json"));
+            report.Write(Path.Combine(root, "props", prop.Id + ".json"), prop.ToJson());
         }
 
         foreach (var file in Directory.EnumerateFiles(Path.Combine(root, "animations"), "*.json"))
@@ -72,7 +73,7 @@ internal static partial class PlayerMoves
             if (before != clip.ToJson())
             {
                 clip.Validate(ResolvedModel.From(model, null, PersonTemplate.PartOf));
-                clip.Save(file);
+                report.Write(file, clip.ToJson());
             }
         }
     }

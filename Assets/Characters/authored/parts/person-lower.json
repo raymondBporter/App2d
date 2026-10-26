@@ -497,6 +497,22 @@
         "legs": 0.82,
         "width": 1.3
       }
+    },
+    {
+      "id": "stilted",
+      "name": "Stilted",
+      "values": {
+        "legs": 2,
+        "width": 0.6
+      }
+    },
+    {
+      "id": "squat",
+      "name": "Squat",
+      "values": {
+        "legs": 0.5,
+        "width": 1.6
+      }
     }
   ],
   "measures": [

@@ -108,12 +108,13 @@ public sealed class ColliderActivationTests
         var player = StarterContent.PlayerEntity();
         player.Version = EntityAsset.CurrentVersion;
         player.Hurt = new();
-        player.Colliders =
+        player.Colliders.RemoveAll(c => c.Use == ColliderUses.Hurt);
+        player.Colliders.AddRange(
         [
             new() { Id = "torso-a", Use = ColliderUses.Hurt, Control = Humanoid.Hips, Frame = CharacterModel.Locomotion, OffsetY = .5f, Shape = Rectangle2D.Builder.FromSize(.6f, 1.2f) },
             new() { Id = "torso-b", Use = ColliderUses.Hurt, Control = Humanoid.Chest, Frame = CharacterModel.Locomotion, Shape = Rectangle2D.Builder.FromSize(.7f, .8f) },
             new() { Id = "head", Use = ColliderUses.Hurt, Control = Humanoid.Head, Frame = CharacterModel.Locomotion, Shape = Circle2D.Builder.Create(.45f) },
-        ];
+        ]);
         var target = Compile(player);
         Assert.True(target.HurtRegistered);
         var arena = GuardThrust(target, Catalog.Entities["spear-guard"]);
@@ -131,7 +132,8 @@ public sealed class ColliderActivationTests
         var pulsed = StarterContent.SpearGuardEntity();
         pulsed.Version = EntityAsset.CurrentVersion;
         pulsed.Behaviors!.Strikes.Remove("spear-tip"); // the renamed windows strike with the typed defaults
-        pulsed.Colliders = [new() { Id = "point", Use = ColliderUses.Attack, Prop = StarterContent.Spear, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) }];
+        pulsed.Colliders.RemoveAll(c => c.Use == ColliderUses.Attack);
+        pulsed.Colliders.Add(new() { Id = "point", Use = ColliderUses.Attack, Prop = StarterContent.Spear, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) });
         var window = pulsed.Actions[0].Hits[0];
         pulsed.Actions[0].Hits =
         [
