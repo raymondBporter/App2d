@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 4,
   "id": "baby-triceratops",
   "name": "Baby triceratops",
   "model": "baby-triceratops-rig",
@@ -16,25 +16,74 @@
     "chargeStartSeconds": 1,
     "chargeEndSeconds": 1.85
   },
-  "health": 8,
-  "mass": 1.5,
+  "behaviors": {
+    "strikes": {
+      "horns": {
+        "damage": 3,
+        "sound": "hit"
+      }
+    },
+    "damage": {
+      "health": 8,
+      "mass": 1.5
+    },
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.9,
-        "y": 0
+      "center": {
+        "x": -0.099999994,
+        "y": 0.475
       },
-      "max": {
-        "x": 0.7,
+      "size": {
+        "x": 1.5999999,
         "y": 0.95
-      }
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "body",
     "regions": {}
   },
+  "colliders": [
+    {
+      "id": "horns",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.75,
+          "y": 0.65
+        },
+        "angleRadians": 0
+      },
+      "socket": "head-art"
+    },
+    {
+      "id": "body",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.169,
+          "y": 0.532
+        },
+        "angleRadians": 0
+      },
+      "control": "body",
+      "frame": "locomotion",
+      "offsetX": 0.3395,
+      "offsetY": -0.021
+    }
+  ],
   "equipment": [],
   "actions": [
     {
@@ -49,20 +98,7 @@
           "finish": {
             "marker": "brake"
           },
-          "socket": "head-art",
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.375,
-              "y": -0.325
-            },
-            "max": {
-              "x": 0.375,
-              "y": 0.325
-            }
-          },
-          "damage": 3,
-          "sound": "hit"
+          "collider": "horns"
         }
       ],
       "events": [

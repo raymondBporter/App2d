@@ -4,7 +4,7 @@
   "id": "curve-face-crossed-eyes",
   "name": "Crossed Eyes",
   "model": "curve-face",
-  "structureRevision": 2,
+  "structureRevision": 3,
   "duration": 2,
   "loop": true,
   "reference": {},
@@ -106,25 +106,6 @@
         {
           "time": 1,
           "y": -0.06,
-          "ease": "smooth"
-        },
-        {
-          "time": 2,
-          "ease": "smooth"
-        }
-      ]
-    },
-    {
-      "kind": "scale",
-      "target": "left-eye",
-      "keys": [
-        {
-          "ease": "smooth"
-        },
-        {
-          "time": 1,
-          "x": -1,
-          "y": -1,
           "ease": "smooth"
         },
         {
@@ -236,8 +217,27 @@
       ]
     },
     {
-      "kind": "scale",
-      "target": "right-eye",
+      "kind": "fit",
+      "target": "left-pupil",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": -1,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "fit",
+      "target": "right-pupil",
       "keys": [
         {
           "ease": "smooth"

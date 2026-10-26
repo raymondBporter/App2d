@@ -29,8 +29,8 @@ public sealed class EntityBehaviorTests
     [Fact]
     public void LegacyAndTypedEntitiesResolveToTheSameTypedBehaviors()
     {
-        // The shipped maul brute is still version 2: its window damage, sound, health and mass read into the typed values.
-        var brute = Catalog.Entities["maul-brute"];
+        // The maul brute in its version-2 form (P11a converted the shipped file): its window damage, sound, health and mass read into the typed values.
+        var brute = Compile(LegacyEntities.Strip(Catalog.Entities["maul-brute"].Asset, Catalog.Entities["maul-brute"].Model.Base));
         Assert.Null(brute.Asset.Behaviors);
         var slam = brute.Actions["attack"].Hits[0];
         Assert.Equal(new StrikeDef { Damage = 5, Sound = "heavy" }, slam.Strike);
@@ -96,7 +96,7 @@ public sealed class EntityBehaviorTests
     [Fact]
     public void TheConversionMovesLegacyCombatFieldsIntoBehaviorsAndIsRerunnable()
     {
-        var brute = Catalog.Entities["maul-brute"].Asset;
+        var brute = LegacyEntities.Strip(Catalog.Entities["maul-brute"].Asset, Catalog.Entities["maul-brute"].Model.Base);
         var (converted, report) = BehaviorConversion.Convert(brute);
         Assert.Equal(EntityAsset.CurrentVersion, converted.Version);
         Assert.Equal(new ReceiveDamageDef { Health = 22, Mass = 3 }, converted.Behaviors!.Damage);
@@ -111,7 +111,7 @@ public sealed class EntityBehaviorTests
         Assert.Equal(converted.ToJson(), again.ToJson());
         Assert.Equal("nothing to convert: the entity already declares its behaviors", Assert.Single(note));
         // The hero's three windows share the hit group 'blade' with one strike; a projectile strike takes its action's name.
-        var hero = Catalog.Entities["hero"].Asset;
+        var hero = LegacyEntities.Strip(Catalog.Entities["hero"].Asset, Catalog.Entities["hero"].Model.Base);
         var (heroConverted, _) = BehaviorConversion.Convert(hero);
         Assert.Equal(["blade", "shoot", "wall-shot"], heroConverted.Behaviors!.Strikes.Keys.Order(StringComparer.Ordinal));
         Assert.Equal(2, heroConverted.Behaviors.Strikes["shoot"].Damage);
@@ -121,21 +121,25 @@ public sealed class EntityBehaviorTests
         Assert.Contains("a hit group has one strike", Assert.Throws<InvalidDataException>(() => BehaviorConversion.Convert(conflicting)).Message);
         // On a scratch tree: written once, unchanged on a rerun, the source untouched.
         var output = Path.Combine(Path.GetTempPath(), "app2d-behavior-conversion", Guid.NewGuid().ToString("N"));
+        var source = LegacyEntities.ScratchTree(Catalog, "club-caveman");
         try
         {
-            var first = BehaviorConversion.ConvertFile(TestModels.AuthoredRoot, "club-caveman", output);
+            var first = BehaviorConversion.ConvertFile(source, "club-caveman", output);
             Assert.Equal("written", first.Status);
             Assert.Contains(first.Report, line => line.StartsWith("verified", StringComparison.Ordinal));
             Assert.True(File.Exists(Path.Combine(output, "behavior-conversion-club-caveman.md")));
             Assert.Equal(EntityAsset.CurrentVersion, EntityAsset.FromJson(File.ReadAllText(first.Output!)).Version);
-            Assert.StartsWith("unchanged", BehaviorConversion.ConvertFile(TestModels.AuthoredRoot, "club-caveman", output).Status);
-            Assert.Equal(EntityAsset.LegacyVersion, Catalog.Entities["club-caveman"].Asset.Version);
+            Assert.StartsWith("unchanged", BehaviorConversion.ConvertFile(source, "club-caveman", output).Status);
+            Assert.Equal(EntityAsset.LegacyVersion, EntityAsset.FromJson(File.ReadAllText(Path.Combine(source, "entities", "club-caveman.json"))).Version);
         }
         finally
         {
-            if (Directory.Exists(output))
+            foreach (var directory in new[] { output, source })
             {
-                Directory.Delete(output, true);
+                if (Directory.Exists(directory))
+                {
+                    Directory.Delete(directory, true);
+                }
             }
         }
     }

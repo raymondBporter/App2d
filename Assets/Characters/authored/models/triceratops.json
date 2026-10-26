@@ -3,7 +3,7 @@
   "version": 11,
   "id": "triceratops",
   "name": "Triceratops",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "ink": "#242a29",
   "parameters": [
     {
@@ -24,15 +24,15 @@
         {
           "kind": "scale",
           "target": {
+            "control": "far-hind-root",
+            "property": "length"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
             "control": "far-hind-joint",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "far-hind-foot",
-            "property": "local.y"
+            "property": "length"
           }
         },
         {
@@ -61,20 +61,20 @@
           "target": {
             "part": "far-hind-lower",
             "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "far-front-root",
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
             "control": "far-front-joint",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "far-front-foot",
-            "property": "local.y"
+            "property": "length"
           }
         },
         {
@@ -103,20 +103,20 @@
           "target": {
             "part": "far-front-lower",
             "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "near-hind-root",
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
             "control": "near-hind-joint",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "near-hind-foot",
-            "property": "local.y"
+            "property": "length"
           }
         },
         {
@@ -145,20 +145,20 @@
           "target": {
             "part": "near-hind-lower",
             "property": "offsetY"
+          }
+        },
+        {
+          "kind": "scale",
+          "target": {
+            "control": "near-front-root",
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
             "control": "near-front-joint",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "near-front-foot",
-            "property": "local.y"
+            "property": "length"
           }
         },
         {
@@ -585,126 +585,143 @@
       "id": "far-hind-root",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": -0.72,
-        "y": 0.84,
-        "z": 0.16
-      }
+      "node": "bone",
+      "local": {
+        "x": -0.47000003,
+        "y": -0.08000004,
+        "rotation": -1.1722739,
+        "layer": 0.16
+      },
+      "length": 0.4123105
     },
     {
       "id": "far-hind-joint",
       "parent": "far-hind-root",
       "name": null,
-      "rest": {
-        "x": -0.56000006,
-        "y": 0.46,
-        "z": 0.16
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.7694137
+      },
+      "link": {},
+      "length": 0.38626415
     },
     {
       "id": "far-hind-foot",
       "parent": "far-hind-joint",
       "name": null,
-      "rest": {
-        "x": -0.70000005,
-        "y": 0.1,
-        "z": 0.16
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "far-front-root",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": 0.38,
-        "y": 0.84,
-        "z": 0.16
-      }
+      "node": "bone",
+      "local": {
+        "x": 0.63,
+        "y": -0.08000004,
+        "rotation": -1.8766752,
+        "layer": 0.16
+      },
+      "length": 0.39849713
     },
     {
       "id": "far-front-joint",
       "parent": "far-front-root",
       "name": null,
-      "rest": {
-        "x": 0.26,
-        "y": 0.46,
-        "z": 0.16
-      }
+      "node": "bone",
+      "local": {
+        "rotation": 0.6767702
+      },
+      "link": {},
+      "length": 0.38626418
     },
     {
       "id": "far-front-foot",
       "parent": "far-front-joint",
       "name": null,
-      "rest": {
-        "x": 0.4,
-        "y": 0.1,
-        "z": 0.16
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "near-hind-root",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": -0.95,
-        "y": 0.84,
-        "z": -0.12
-      }
+      "node": "bone",
+      "local": {
+        "x": -0.7,
+        "y": -0.08000004,
+        "rotation": -1.1722738,
+        "layer": -0.12
+      },
+      "length": 0.41231054
     },
     {
       "id": "near-hind-joint",
       "parent": "near-hind-root",
       "name": null,
-      "rest": {
-        "x": -0.78999996,
-        "y": 0.46,
-        "z": -0.12
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.76941395
+      },
+      "link": {},
+      "length": 0.38626418
     },
     {
       "id": "near-hind-foot",
       "parent": "near-hind-joint",
       "name": null,
-      "rest": {
-        "x": -0.93,
-        "y": 0.1,
-        "z": -0.12
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "near-front-root",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": 0.15,
-        "y": 0.84,
-        "z": -0.12
-      }
+      "node": "bone",
+      "local": {
+        "x": 0.4,
+        "y": -0.08000004,
+        "rotation": -1.8766752,
+        "layer": -0.12
+      },
+      "length": 0.39849713
     },
     {
       "id": "near-front-joint",
       "parent": "near-front-root",
       "name": null,
-      "rest": {
-        "x": 0.030000009,
-        "y": 0.46,
-        "z": -0.12
-      }
+      "node": "bone",
+      "local": {
+        "rotation": 0.6767702
+      },
+      "link": {},
+      "length": 0.38626415
     },
     {
       "id": "near-front-foot",
       "parent": "near-front-joint",
       "name": null,
-      "rest": {
-        "x": 0.17,
-        "y": 0.1,
-        "z": -0.12
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     }
   ],
   "constraints": [
     {
       "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "far-hind-root",
       "joint": "far-hind-joint",
       "end": "far-hind-foot",
@@ -713,6 +730,7 @@
     },
     {
       "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "far-front-root",
       "joint": "far-front-joint",
       "end": "far-front-foot",
@@ -720,6 +738,7 @@
     },
     {
       "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "near-hind-root",
       "joint": "near-hind-joint",
       "end": "near-hind-foot",
@@ -728,6 +747,7 @@
     },
     {
       "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "near-front-root",
       "joint": "near-front-joint",
       "end": "near-front-foot",

@@ -30,13 +30,7 @@ public static class PersonTemplate
         instance.FitX = head.ScaleX;
         instance.FitY = head.ScaleY;
         instance.Layer = head.Depth - .002f;
-        foreach (var parameter in model.Parameters)
-        {
-            foreach (var binding in parameter.Bindings.Where(b => b.Target.Part == Humanoid.Head && b.Target.Property is RigProperties.ScaleX or RigProperties.ScaleY).ToArray())
-            {
-                parameter.Bindings.Add(binding with { Target = PropertyRef.OfAttachment(FaceInstance, binding.Target.Property == RigProperties.ScaleX ? RigProperties.FitX : RigProperties.FitY) });
-            }
-        }
+        BindFace(model);
         foreach (var (look, word) in new[] { ("slate", "focused"), ("ember", "determined"), ("night", "smug") })
         {
             if (model.Looks.FirstOrDefault(l => l.Id == look) is { } preset)
@@ -46,6 +40,38 @@ public static class PersonTemplate
         }
         model.Validate();
         return instance;
+    }
+
+    /// <summary>The face instance's fit follows the head part's fit bindings (P7c): the same parameter drives both.</summary>
+    private static void BindFace(CharacterModel model)
+    {
+        if (model.Attachments.All(a => a.Id != FaceInstance))
+        {
+            return;
+        }
+
+        foreach (var parameter in model.Parameters)
+        {
+            foreach (var binding in parameter.Bindings.Where(b => b.Target.Part == Humanoid.Head && b.Target.Property is RigProperties.ScaleX or RigProperties.ScaleY).ToArray())
+            {
+                var fit = binding.Target.Property == RigProperties.ScaleX ? RigProperties.FitX : RigProperties.FitY;
+                if (parameter.Bindings.All(b => b.Target.Attachment != FaceInstance || b.Target.Property != fit))
+                {
+                    parameter.Bindings.Add(binding with { Target = PropertyRef.OfAttachment(FaceInstance, fit) });
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// The one writer of the Person's proportion declarations (P4a, P11b): the five parameters with their bindings on the
+    /// canonical limbs, the presets, and the face instance's fit bound like the head part. Template publication applies it to
+    /// the shipped model, so the file carries exactly what the seed declares.
+    /// </summary>
+    public static void Declare(CharacterModel model)
+    {
+        PersonBuild.Declare(model);
+        BindFace(model);
     }
 
     /// <summary>The Person model; with <paramref name="face"/> it also wears the face part (resolve it with <see cref="PartOf"/>).</summary>
@@ -63,11 +89,12 @@ public static class PersonTemplate
             model.Parts[i] = built.Parts[i] with { Material = model.Parts[i].Material };
         model.Id = id;
         model.Name = name;
-        // P3b: the left arm is the Person's canonical bone chain (the shipped model file carries the same conversion). The
-        // proportion parameters are declared again afterwards, since the arm's bindings move from local offsets to lengths.
+        // P11a: every limb is a canonical bone constraint (the shipped model file carries the same conversion): the shoulders
+        // stay the authored pivots framing the grips, the upper arms are solved bones, the legs solve from the hips. The
+        // proportion parameters are declared afterwards on that structure.
         model.Parameters = [];
         model.Presets = [];
-        RigConversion.ToBoneChain(model, BoneChain);
+        ConvertLimbs(model);
         PersonBuild.Declare(model);
         model.Validate();
         if (face)
@@ -78,8 +105,22 @@ public static class PersonTemplate
         return model;
     }
 
-    /// <summary>The run of Person controls authored as canonical bone nodes since P3b; the other limbs stay point controls until their bundles convert.</summary>
-    public static readonly string[] BoneChain = [Humanoid.LeftShoulder, Humanoid.LeftElbow, Humanoid.LeftHand];
+    /// <summary>The solved bone that each arm constraint roots on beneath its shoulder pivot (P11a).</summary>
+    public static string? UpperArmBone(ModelChain chain) => chain.Id switch
+    {
+        Humanoid.LeftArm => Humanoid.LeftUpperArmBone,
+        Humanoid.RightArm => Humanoid.RightUpperArmBone,
+        _ => null,
+    };
+
+    /// <summary>Converts a point-rigged Person's four limbs onto the bone solver exactly as the P11a bundle conversion did.</summary>
+    public static void ConvertLimbs(CharacterModel model)
+    {
+        foreach (var chain in model.IkChains.Where(c => c.Solver == ModelChain.PointSolver).ToArray())
+        {
+            RigConversion.ToBoneConstraint(model, chain.Id, [], UpperArmBone(chain));
+        }
+    }
 
     /// <summary>The original prototype proportions used to convert its absolute animation keys. Playback retargets these clips to the current model through their reference measures.</summary>
     public static CharacterModel StudyReference()

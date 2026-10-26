@@ -4,7 +4,7 @@
   "id": "player-climb",
   "name": "Climb",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.8,
   "loop": true,
   "reference": {

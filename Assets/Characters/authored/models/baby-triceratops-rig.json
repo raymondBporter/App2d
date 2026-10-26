@@ -1,10 +1,12 @@
 {
   "format": "app2d-model",
-  "version": 5,
+  "version": 11,
   "id": "baby-triceratops-rig",
   "name": "Baby triceratops",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "ink": "#242a29",
+  "parameters": [],
+  "presets": [],
   "controls": [
     {
       "id": "body",
@@ -69,125 +71,143 @@
       "id": "far-hind-root",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": -0.504,
-        "y": 0.588,
-        "z": 0.112
-      }
+      "node": "bone",
+      "local": {
+        "x": -0.329,
+        "y": -0.055999994,
+        "rotation": -1.172274,
+        "layer": 0.112
+      },
+      "length": 0.28861737
     },
     {
       "id": "far-hind-joint",
       "parent": "far-hind-root",
       "name": null,
-      "rest": {
-        "x": -0.39200005,
-        "y": 0.322,
-        "z": 0.112
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.7694136
+      },
+      "link": {},
+      "length": 0.27038494
     },
     {
       "id": "far-hind-foot",
       "parent": "far-hind-joint",
       "name": null,
-      "rest": {
-        "x": -0.49000004,
-        "y": 0.07,
-        "z": 0.112
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "far-front-root",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": 0.266,
-        "y": 0.588,
-        "z": 0.112
-      }
+      "node": "bone",
+      "local": {
+        "x": 0.44099998,
+        "y": -0.055999994,
+        "rotation": -1.8766752,
+        "layer": 0.112
+      },
+      "length": 0.27894804
     },
     {
       "id": "far-front-joint",
       "parent": "far-front-root",
       "name": null,
-      "rest": {
-        "x": 0.182,
-        "y": 0.322,
-        "z": 0.112
-      }
+      "node": "bone",
+      "local": {
+        "rotation": 0.6767701
+      },
+      "link": {},
+      "length": 0.2703849
     },
     {
       "id": "far-front-foot",
       "parent": "far-front-joint",
       "name": null,
-      "rest": {
-        "x": 0.28,
-        "y": 0.07,
-        "z": 0.112
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "near-hind-root",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": -0.665,
-        "y": 0.588,
-        "z": -0.084
-      }
+      "node": "bone",
+      "local": {
+        "x": -0.49,
+        "y": -0.055999994,
+        "rotation": -1.1722738,
+        "layer": -0.084
+      },
+      "length": 0.28861743
     },
     {
       "id": "near-hind-joint",
       "parent": "near-hind-root",
       "name": null,
-      "rest": {
-        "x": -0.553,
-        "y": 0.322,
-        "z": -0.084
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.76941407
+      },
+      "link": {},
+      "length": 0.27038494
     },
     {
       "id": "near-hind-foot",
       "parent": "near-hind-joint",
       "name": null,
-      "rest": {
-        "x": -0.651,
-        "y": 0.07,
-        "z": -0.084
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "near-front-root",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": 0.105,
-        "y": 0.588,
-        "z": -0.084
-      }
+      "node": "bone",
+      "local": {
+        "x": 0.28,
+        "y": -0.055999994,
+        "rotation": -1.8766751,
+        "layer": -0.084
+      },
+      "length": 0.27894804
     },
     {
       "id": "near-front-joint",
       "parent": "near-front-root",
       "name": null,
-      "rest": {
-        "x": 0.021000007,
-        "y": 0.322,
-        "z": -0.084
-      }
+      "node": "bone",
+      "local": {
+        "rotation": 0.6767702
+      },
+      "link": {},
+      "length": 0.2703849
     },
     {
       "id": "near-front-foot",
       "parent": "near-front-joint",
       "name": null,
-      "rest": {
-        "x": 0.119,
-        "y": 0.07,
-        "z": -0.084
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     }
   ],
-  "chains": [
+  "constraints": [
     {
+      "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "far-hind-root",
       "joint": "far-hind-joint",
       "end": "far-hind-foot",
@@ -195,12 +215,16 @@
       "id": "far-hind"
     },
     {
+      "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "far-front-root",
       "joint": "far-front-joint",
       "end": "far-front-foot",
       "id": "far-front"
     },
     {
+      "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "near-hind-root",
       "joint": "near-hind-joint",
       "end": "near-hind-foot",
@@ -208,13 +232,14 @@
       "id": "near-hind"
     },
     {
+      "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "near-front-root",
       "joint": "near-front-joint",
       "end": "near-front-foot",
       "id": "near-front"
     }
   ],
-  "constraints": [],
   "measures": [],
   "parts": [
     {
@@ -250,11 +275,11 @@
       },
       "a": "tail",
       "b": "tail-up",
+      "scaleX": 0.595,
+      "scaleY": 0.364,
       "offsetX": -0.245,
       "offsetY": 0.021,
-      "depth": 0.014,
-      "scaleX": 0.595,
-      "scaleY": 0.364
+      "depth": 0.014
     },
     {
       "id": "far-hind-upper",
@@ -267,7 +292,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#527f78",
@@ -275,9 +301,9 @@
       },
       "a": "far-hind-root",
       "b": "far-hind-joint",
-      "offsetY": 0.14430869,
       "scaleX": 0.175,
-      "scaleY": 0.4216174
+      "scaleY": 0.4216174,
+      "offsetY": 0.14430869
     },
     {
       "id": "far-hind-lower",
@@ -290,7 +316,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#527f78",
@@ -298,10 +325,10 @@
       },
       "a": "far-hind-joint",
       "b": "far-hind-foot",
-      "offsetY": 0.13519245,
-      "depth": -0.0035,
       "scaleX": 0.161,
-      "scaleY": 0.37538493
+      "scaleY": 0.37538493,
+      "offsetY": 0.13519245,
+      "depth": -0.0035
     },
     {
       "id": "far-hind-paw",
@@ -339,11 +366,11 @@
         "outline": {}
       },
       "a": "far-hind-foot",
+      "scaleX": 0.252,
+      "scaleY": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105,
-      "scaleX": 0.252,
-      "scaleY": 0.154
+      "depth": -0.0105
     },
     {
       "id": "far-hind-toe-0",
@@ -356,7 +383,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -365,11 +393,11 @@
         }
       },
       "a": "far-hind-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "far-hind-toe-1",
@@ -382,7 +410,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -391,11 +420,11 @@
         }
       },
       "a": "far-hind-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "far-hind-toe-2",
@@ -408,7 +437,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -417,11 +447,11 @@
         }
       },
       "a": "far-hind-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "far-front-upper",
@@ -434,7 +464,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#527f78",
@@ -442,9 +473,9 @@
       },
       "a": "far-front-root",
       "b": "far-front-joint",
-      "offsetY": 0.139474,
       "scaleX": 0.175,
-      "scaleY": 0.41194803
+      "scaleY": 0.41194803,
+      "offsetY": 0.139474
     },
     {
       "id": "far-front-lower",
@@ -457,7 +488,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#527f78",
@@ -465,10 +497,10 @@
       },
       "a": "far-front-joint",
       "b": "far-front-foot",
-      "offsetY": 0.13519247,
-      "depth": -0.0035,
       "scaleX": 0.161,
-      "scaleY": 0.37538493
+      "scaleY": 0.37538493,
+      "offsetY": 0.13519247,
+      "depth": -0.0035
     },
     {
       "id": "far-front-paw",
@@ -506,11 +538,11 @@
         "outline": {}
       },
       "a": "far-front-foot",
+      "scaleX": 0.252,
+      "scaleY": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105,
-      "scaleX": 0.252,
-      "scaleY": 0.154
+      "depth": -0.0105
     },
     {
       "id": "far-front-toe-0",
@@ -523,7 +555,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -532,11 +565,11 @@
         }
       },
       "a": "far-front-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "far-front-toe-1",
@@ -549,7 +582,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -558,11 +592,11 @@
         }
       },
       "a": "far-front-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "far-front-toe-2",
@@ -575,7 +609,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -584,11 +619,11 @@
         }
       },
       "a": "far-front-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "near-hind-upper",
@@ -601,7 +636,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#79bdb0",
@@ -609,9 +645,9 @@
       },
       "a": "near-hind-root",
       "b": "near-hind-joint",
-      "offsetY": 0.14430869,
       "scaleX": 0.175,
-      "scaleY": 0.4216174
+      "scaleY": 0.4216174,
+      "offsetY": 0.14430869
     },
     {
       "id": "near-hind-lower",
@@ -624,7 +660,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#79bdb0",
@@ -632,10 +669,10 @@
       },
       "a": "near-hind-joint",
       "b": "near-hind-foot",
-      "offsetY": 0.13519247,
-      "depth": -0.0035,
       "scaleX": 0.161,
-      "scaleY": 0.37538493
+      "scaleY": 0.37538493,
+      "offsetY": 0.13519247,
+      "depth": -0.0035
     },
     {
       "id": "near-hind-paw",
@@ -673,11 +710,11 @@
         "outline": {}
       },
       "a": "near-hind-foot",
+      "scaleX": 0.252,
+      "scaleY": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105,
-      "scaleX": 0.252,
-      "scaleY": 0.154
+      "depth": -0.0105
     },
     {
       "id": "near-hind-toe-0",
@@ -690,7 +727,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -699,11 +737,11 @@
         }
       },
       "a": "near-hind-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "near-hind-toe-1",
@@ -716,7 +754,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -725,11 +764,11 @@
         }
       },
       "a": "near-hind-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "near-hind-toe-2",
@@ -742,7 +781,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -751,11 +791,11 @@
         }
       },
       "a": "near-hind-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "near-front-upper",
@@ -768,7 +808,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#79bdb0",
@@ -776,9 +817,9 @@
       },
       "a": "near-front-root",
       "b": "near-front-joint",
-      "offsetY": 0.139474,
       "scaleX": 0.175,
-      "scaleY": 0.41194803
+      "scaleY": 0.41194803,
+      "offsetY": 0.139474
     },
     {
       "id": "near-front-lower",
@@ -791,7 +832,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#79bdb0",
@@ -799,10 +841,10 @@
       },
       "a": "near-front-joint",
       "b": "near-front-foot",
-      "offsetY": 0.13519245,
-      "depth": -0.0035,
       "scaleX": 0.161,
-      "scaleY": 0.37538493
+      "scaleY": 0.37538493,
+      "offsetY": 0.13519245,
+      "depth": -0.0035
     },
     {
       "id": "near-front-paw",
@@ -840,11 +882,11 @@
         "outline": {}
       },
       "a": "near-front-foot",
+      "scaleX": 0.252,
+      "scaleY": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105,
-      "scaleX": 0.252,
-      "scaleY": 0.154
+      "depth": -0.0105
     },
     {
       "id": "near-front-toe-0",
@@ -857,7 +899,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -866,11 +909,11 @@
         }
       },
       "a": "near-front-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "near-front-toe-1",
@@ -883,7 +926,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -892,11 +936,11 @@
         }
       },
       "a": "near-front-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "near-front-toe-2",
@@ -909,7 +953,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#f6e4bb",
@@ -918,11 +963,11 @@
         }
       },
       "a": "near-front-foot",
+      "scaleX": 0.0315,
+      "scaleY": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175,
-      "scaleX": 0.0315,
-      "scaleY": 0.0455
+      "depth": -0.0175
     },
     {
       "id": "body",
@@ -935,11 +980,10 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
-        "fill": "#79bdb0",
-        "outline": {},
         "paint": [
           {
             "material": {
@@ -1051,14 +1095,16 @@
               }
             ]
           }
-        ]
+        ],
+        "fill": "#79bdb0",
+        "outline": {}
       },
       "a": "body",
       "b": "body-up",
-      "offsetX": -0.035,
-      "offsetY": 0.028,
       "scaleX": 1.344,
-      "scaleY": 0.63
+      "scaleY": 0.63,
+      "offsetX": -0.035,
+      "offsetY": 0.028
     },
     {
       "id": "head",
@@ -1105,11 +1151,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.679,
+      "scaleY": 0.476,
       "offsetX": 0.084,
       "offsetY": -0.014,
-      "depth": -0.168,
-      "scaleX": 0.679,
-      "scaleY": 0.476
+      "depth": -0.168
     },
     {
       "id": "frill",
@@ -1180,11 +1226,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.616,
+      "scaleY": 0.966,
       "offsetX": -0.154,
       "offsetY": 0.245,
-      "depth": -0.182,
-      "scaleX": 0.616,
-      "scaleY": 0.966
+      "depth": -0.182
     },
     {
       "id": "far-brow-horn",
@@ -1211,11 +1257,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.1736,
+      "scaleY": 0.2016,
       "offsetX": 0.175,
       "offsetY": 0.329,
-      "depth": -0.1785,
-      "scaleX": 0.1736,
-      "scaleY": 0.2016
+      "depth": -0.1785
     },
     {
       "id": "near-brow-horn",
@@ -1246,11 +1292,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.2016,
+      "scaleY": 0.2072,
       "offsetX": 0.035,
       "offsetY": 0.336,
-      "depth": -0.203,
-      "scaleX": 0.2016,
-      "scaleY": 0.2072
+      "depth": -0.203
     },
     {
       "id": "nose-horn",
@@ -1277,11 +1323,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.1232,
+      "scaleY": 0.14,
       "offsetX": 0.378,
       "offsetY": 0.14,
-      "depth": -0.203,
-      "scaleX": 0.1232,
-      "scaleY": 0.14
+      "depth": -0.203
     },
     {
       "id": "eye",
@@ -1294,7 +1340,8 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#242a29",
@@ -1304,11 +1351,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.0756,
+      "scaleY": 0.1008,
       "offsetX": 0.238,
       "offsetY": 0.007,
-      "depth": -0.217,
-      "scaleX": 0.0756,
-      "scaleY": 0.1008
+      "depth": -0.217
     },
     {
       "id": "brow",
@@ -1341,11 +1388,11 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.112,
+      "scaleY": 0.063,
       "offsetX": 0.231,
       "offsetY": 0.077,
-      "depth": -0.217,
-      "scaleX": 0.112,
-      "scaleY": 0.063
+      "depth": -0.217
     },
     {
       "id": "mouth",
@@ -1386,13 +1433,14 @@
       },
       "a": "head",
       "b": "head-up",
+      "scaleX": 0.161,
+      "scaleY": 0.056,
       "offsetX": 0.245,
       "offsetY": -0.119,
-      "depth": -0.217,
-      "scaleX": 0.161,
-      "scaleY": 0.056
+      "depth": -0.217
     }
   ],
+  "materials": {},
   "slots": [],
   "skins": [],
   "sockets": [
@@ -1407,6 +1455,7 @@
       "toward": "body-up"
     }
   ],
+  "attachments": [],
   "motionSets": [
     {
       "id": "standard",

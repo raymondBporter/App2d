@@ -4,7 +4,7 @@
   "id": "quadruped-walk",
   "name": "Quadruped \u00B7 walk",
   "model": "quadruped",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.2,
   "loop": true,
   "reference": {},

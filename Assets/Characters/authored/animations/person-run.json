@@ -4,7 +4,7 @@
   "id": "person-run",
   "name": "Run",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.72,
   "loop": true,
   "reference": {

@@ -463,20 +463,22 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var doc = s.SubjectModel!;
                 ModelControl Control(string id) => doc.Asset.Controls.Single(c => c.Id == id);
                 Vector3 Rest(string id) => s.Assets.Resolve("person")!.Rest[id];
-                Record(Control("left-shoulder").Node == RigNodeKinds.Bone && Control("left-elbow").Link is { IsTip: true } && Control("left-hand").Link is { IsTip: true } && doc.Asset.Version == CharacterModel.CurrentVersion,
-                    "the Person left arm reads as a bone chain at version " + CharacterModel.CurrentVersion);
+                // P11a: every limb is a bone-solver constraint; the shoulder is the authored pivot, the upper arm the solved bone beneath it.
+                Record(Control("left-shoulder").Node == RigNodeKinds.Point && Control(Humanoid.LeftUpperArmBone).Node == RigNodeKinds.Bone && Control("left-elbow").Link is { IsTip: true }
+                    && Control("left-hand").Link?.Orientation == RigLinkOrientations.Character && doc.Asset.IkChains.All(c => c.Solver == ModelChain.BoneSolver) && doc.Asset.Version == CharacterModel.CurrentVersion,
+                    "the Person's limbs read as bone constraints beneath their pivots at version " + CharacterModel.CurrentVersion);
                 var before = doc.Serialize();
                 var hand = Rest("left-hand");
                 var elbow = Rest("left-elbow");
-                Check(s.Edit(doc, () => ModelAuthoring.ResizeBone(doc.Asset, "left-shoulder", Control("left-shoulder").Length + .2f)), s);
+                Check(s.Edit(doc, () => ModelAuthoring.ResizeBone(doc.Asset, Humanoid.LeftUpperArmBone, Control(Humanoid.LeftUpperArmBone).Length + .2f)), s);
                 var stretched = Rest("left-elbow") - elbow;
                 Record(MathF.Abs(stretched.Length() - .2f) < 1e-4f && Vector3.Distance(Rest("left-hand") - hand, stretched) < 1e-4f, "lengthening the upper arm moves the bound elbow and hand by the same 0.2 without stretching");
-                Check(s.Edit(doc, () => ModelAuthoring.RotateRestBone(doc.Asset, "left-shoulder", -MathF.PI / 2)), s);
+                Check(s.Edit(doc, () => ModelAuthoring.RotateRestBone(doc.Asset, Humanoid.LeftUpperArmBone, -MathF.PI / 2)), s);
                 Record(MathF.Abs(Rest("left-elbow").X - Rest("left-shoulder").X) < 1e-4f && Rest("left-elbow").Y < Rest("left-shoulder").Y, "turning the upper arm straight down carries the elbow with it");
                 s.BeginDrag();
                 s.DragControl("left-elbow", Rest("left-elbow") + new Vector3(.3f, 0, 0));
                 s.EndDrag();
-                Record(s.MessageIsError && s.Message.Contains("bound to 'left-shoulder'"), "dragging the bound elbow is refused with its reason: " + s.Message);
+                Record(s.MessageIsError && s.Message.Contains("bound to '" + Humanoid.LeftUpperArmBone + "'"), "dragging the bound elbow is refused with its reason: " + s.Message);
                 var shoulder = Rest("left-shoulder");
                 var reach = Rest("left-hand") - shoulder;
                 s.BeginDrag();
@@ -490,12 +492,9 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 }
 
                 Record(before == doc.Serialize(), "every bone edit undoes exactly");
-                Check(s.Edit(doc, () => ModelAuthoring.ConvertToBoneChain(doc.Asset, ["right-shoulder", "right-elbow", "right-hand"])), s);
-                var converted = s.Assets.Resolve("person")!;
-                var reference = ResolvedModel.Rig(CharacterModel.FromJson(before));
-                Record(converted.Order.All(c => Vector3.Distance(converted.Rest[c.Id], reference.Rest[c.Id]) < 1e-4f) && Control("right-elbow").Link is { IsTip: true }, "converting the right arm to a bone chain keeps every rest position");
-                s.Undo();
-                Record(before == doc.Serialize() && Control("right-shoulder").Node == RigNodeKinds.Point, "the conversion undoes");
+                // The pivot keeps the grips' frame and the clips' turns: the sword socket frames on the right shoulder, not on the solved bone.
+                Record(doc.Asset.Sockets.Single(k => k.Id == Humanoid.SwordSocket).Frame == Humanoid.RightShoulder && doc.Asset.IkChains.Single(c => c.Id == Humanoid.RightArm).Frame == Humanoid.RightShoulder,
+                    "the sword socket and the right arm's target keep the shoulder pivot as their frame");
                 s.Selection.Select(control: "left-shoulder");
             }),
             ("40-parameter-bindings", shell =>
@@ -505,9 +504,9 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = true;
                 var doc = s.SubjectModel!;
                 var person = s.Assets.Resolve("person")!;
-                Record(doc.Asset.Version == CharacterModel.CurrentVersion && doc.Asset.Parameters.Select(p => p.Id).SequenceEqual(["legs", "torso", "arms", "width", "head"]) && doc.Asset.Parameters.Sum(p => p.Bindings.Count) == 46 && doc.Asset.Presets.Count == 3,
-                    $"the Person declares its five proportion parameters with 46 bindings (44 plus the face instance's two fit bindings, P7c) and 3 presets at version {CharacterModel.CurrentVersion} ({doc.Asset.Parameters.Sum(p => p.Bindings.Count)} bindings)");
-                Record(person.Parameters.BindingOfControl("left-shoulder", RigProperties.Length)?.Parameter.Id == "arms" && person.Parameters.BindingOfPart("body", RigProperties.ScaleX)?.Parameter.Id == "width" && person.Parameters.BindingOfControl("hips", RigProperties.LocalY)?.Binding.About == .025f,
+                Record(doc.Asset.Version == CharacterModel.CurrentVersion && doc.Asset.Parameters.Select(p => p.Id).SequenceEqual(["legs", "torso", "arms", "width", "head"]) && doc.Asset.Parameters.Sum(p => p.Bindings.Count) == 34 && doc.Asset.Presets.Count == 3,
+                    $"the Person declares its five proportion parameters with 34 bindings (the limbs' eight bone lengths since P11a, plus the face instance's two fit bindings, P7c) and 3 presets at version {CharacterModel.CurrentVersion} ({doc.Asset.Parameters.Sum(p => p.Bindings.Count)} bindings)");
+                Record(person.Parameters.BindingOfControl(Humanoid.LeftUpperArmBone, RigProperties.Length)?.Parameter.Id == "arms" && person.Parameters.BindingOfPart("body", RigProperties.ScaleX)?.Parameter.Id == "width" && MathF.Abs((person.Parameters.BindingOfControl("hips", RigProperties.LocalY)?.Binding.About ?? 0) - .025f) < 1e-5f,
                     "the upper-arm length, body width and ground-anchored hip height read their bindings");
                 s.Open("tall-thin");
                 var variant = s.SubjectVariant!;
@@ -523,7 +522,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Open("person");
                 doc = s.SubjectModel!;
                 var baseBefore = doc.Serialize();
-                Record(!s.Edit(doc, () => ModelAuthoring.AddBinding(doc.Asset, "arms", new() { Target = PropertyRef.OfControl("left-shoulder", RigProperties.Length) })) && s.Message.Contains("one binding"),
+                Record(!s.Edit(doc, () => ModelAuthoring.AddBinding(doc.Asset, "arms", new() { Target = PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.Length) })) && s.Message.Contains("one binding"),
                     "a second binding on a bound property is refused: " + s.Message);
                 Check(s.Edit(doc, () => ModelAuthoring.AddParameter(doc.Asset, "hand-span", "Hand span", ParameterUnits.Length, 0, 0, 1)), s);
                 Check(s.Edit(doc, () => ModelAuthoring.AddBinding(doc.Asset, "hand-span", new() { Kind = BindingKinds.Set, Target = PropertyRef.OfControl("left-hand", RigProperties.Length) })), s);
@@ -643,13 +642,13 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Record(person.Serialize() == baseBefore && !person.Dirty && s.Assets.Resolve("short-broad")!.Nodes["left-elbow"].Length == broadBefore && s.Assets.Resolve("short-broad")!.Attachment(right)!.Asset.Id == "mitt",
                     "the longer forearm and the swapped glove leave the base and short-broad unchanged");
                 s.BeginDrag();
-                s.DragBoneTip("right-elbow", new Vector2(0, 0));
+                s.DragBoneTip("right-shoulder", new Vector2(0, 0));
                 s.EndDrag();
-                Record(s.MessageIsError && s.Message.Contains("only drag a bone node") && !tall.Asset.HasOverride(PropertyRef.OfControl("right-elbow", RigProperties.Length)),
-                    "dragging a point control's legacy tip on the variant is refused with its reason, not ignored: " + s.Message);
-                var shoulder = Tall().Nodes["left-shoulder"].Length;
-                Check(s.Edit(person, () => ModelAuthoring.ResizeBone(person.Asset, "left-shoulder", person.Asset.Controls.Single(c => c.Id == "left-shoulder").Length + .1f)), s);
-                Record(MathF.Abs(Tall().Nodes["left-shoulder"].Length - shoulder - .1f * tall.Asset.Parameters["arms"]) < 1e-4f && MathF.Abs(Tall().Nodes["left-elbow"].Length - forearm - .2f) < 1e-3f,
+                Record(s.MessageIsError && s.Message.Contains("only drag a bone node") && !tall.Asset.HasOverride(PropertyRef.OfControl("right-shoulder", RigProperties.Length)),
+                    "dragging the shoulder pivot's tip on the variant (a point control) is refused with its reason, not ignored: " + s.Message);
+                var shoulder = Tall().Nodes[Humanoid.LeftUpperArmBone].Length;
+                Check(s.Edit(person, () => ModelAuthoring.ResizeBone(person.Asset, Humanoid.LeftUpperArmBone, person.Asset.Controls.Single(c => c.Id == Humanoid.LeftUpperArmBone).Length + .1f)), s);
+                Record(MathF.Abs(Tall().Nodes[Humanoid.LeftUpperArmBone].Length - shoulder - .1f * tall.Asset.Parameters["arms"]) < 1e-4f && MathF.Abs(Tall().Nodes["left-elbow"].Length - forearm - .2f) < 1e-3f,
                     "an unoverridden base edit (the upper arm's length) propagates through the arms binding while the forearm override holds");
                 s.Undo();
                 Check(s.Edit(tall, () => ModelAuthoring.ResetOverride(tall.Asset, PropertyRef.OfControl("left-elbow", RigProperties.Length))), s);
@@ -880,8 +879,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // bound layout fit, and the game-face request reaches it; the curve-face model and clips stay as they were.
                 var s = shell.Session; s.Compare.Clear();
                 var face = s.Assets.Part("face-curve");
-                Record(face is { Asset.IsAnimated: true, Asset.Clips.Count: 9, Asset.Layers.Count: 2 } && s.Assets.Model("curve-face")!.Asset.Controls.Count(c => c.Node == RigNodeKinds.Affine) == 2,
-                    "the parts folder loads the converted curve face with its nine clips and two layers; the curve-face model keeps its affine eyes");
+                Record(face is { Asset.IsAnimated: true, Asset.Clips.Count: 9, Asset.Layers.Count: 2 } && s.Assets.Model("curve-face")!.Asset.Controls.All(c => c.Node == RigNodeKinds.Point),
+                    "the parts folder loads the converted curve face with its nine clips and two layers; the curve-face model's eyes are point controls since P11a");
                 s.Open("person");
                 var personDocument = s.Assets.Model("person")!;
                 var faceId = PersonTemplate.FaceInstance;
@@ -1012,21 +1011,11 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                     "a stretched capsule along the shin is added, resolved against the rig and shown");
                 Record(!s.RemoveCollider("spear-tip") && s.Message.Contains("re-point the window first"), "removing the collider a window names is refused by name");
                 s.Undo();
-                // An unconverted entity: the maul brute converts explicitly, its hammer window keeps its placement, one undo restores the layout.
+                // P11a converted every shipped entity: the maul brute's tilted hammer registers as an attack collider with its three hurt boxes.
                 s.Open("maul-brute");
                 var brute = s.EntityDocument!;
-                var slam = s.Entity!.Actions["attack"];
-                var pose = new ActorPose(PoseEvaluator.Sample(s.Entity.Model, slam.Clip, slam.Hits[0].Start), Vector2.Zero, -1);
-                var before = EntityCollision.Attack(s.Entity, pose, slam.Hits[0]);
-                var legacyHurt = EntityCollision.Hurt(s.Entity, new(PoseEvaluator.Rest(s.Entity.Model), Vector2.Zero, 1));
-                Check(s.ConvertColliders(), s);
-                var after = EntityCollision.Attack(s.Entity!, pose, s.Entity!.Actions["attack"].Hits[0]);
-                var convertedHurt = EntityCollision.Hurt(s.Entity, new(PoseEvaluator.Rest(s.Entity.Model), Vector2.Zero, 1));
-                Record(brute.Asset.Version == EntityAsset.ColliderVersion && brute.Asset.Colliders.Count == 4 && after.Pose == before.Pose
-                    && legacyHurt.Zip(convertedHurt).All(p => p.First.Id == p.Second.Id && Vector2.Distance(p.First.Bounds.Min, p.Second.Bounds.Min) < 1e-4f && Vector2.Distance(p.First.Bounds.Max, p.Second.Bounds.Max) < 1e-4f),
-                    "converting the maul brute keeps the tilted hammer window's left-facing placement exactly and reproduces its three hurt boxes at rest");
-                s.Undo();
-                Record(brute.Asset.Version == EntityAsset.LegacyVersion && brute.Asset.Colliders.Count == 0 && brute.Asset.Hurt.Layout == "standard", "one undo restores the legacy layout and version");
+                Record(brute.Asset.Version == EntityAsset.CurrentVersion && brute.Asset.Colliders.Select(c => c.Id).SequenceEqual(["hammer-head", "body", "head", "legs"]) && s.Entity!.HurtRegistered,
+                    "the maul brute declares its hammer-head attack collider and three hurt colliders at version " + EntityAsset.CurrentVersion);
                 // Test mode: the arena registers every actor's colliders once and the overlays read them; the reach trigger reports the player.
                 shell.LiveTest = false;
                 shell.Test.Roster.Clear();
@@ -1075,12 +1064,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Record(s.Entity is not null, "and undoing it restores the compiling entity");
                 s.Open("maul-brute");
                 var brute = s.EntityDocument!;
-                var before = s.Entity!.Actions["attack"].Hits[0].Strike;
-                Check(s.ConvertBehaviors(), s);
-                Record(brute.Asset.Version == EntityAsset.CurrentVersion && brute.Asset.Behaviors!.Strikes["hammer-head"] == before && brute.Asset.Behaviors.Damage.Health == 22 && brute.Asset.Actions[0].Hits[0].Damage == new HitWindow().Damage,
-                    "converting the maul brute moves damage 5 / heavy and health 22 into typed behaviors and clears the window's fields");
-                s.Undo();
-                Record(brute.Asset.Behaviors is null && brute.Asset.Version == EntityAsset.LegacyVersion && brute.Asset.Actions[0].Hits[0].Damage == 5, "one undo restores the legacy fields and version");
+                Record(brute.Asset.Behaviors is { } typed && typed.Strikes["hammer-head"] == new StrikeDef { Damage = 5, Sound = "heavy" } && typed.Damage.Health == 22 && brute.Asset.Actions[0].Hits[0].Damage == new HitWindow().Damage,
+                    "the maul brute's strike (damage 5 / heavy) and health 22 are typed behaviors since P11a; its window carries no combat fields");
                 var profile = AuthoredCatalog.Load(s.Assets.Root).Profiles.GetValueOrDefault(GameProfile.GameId);
                 Record(profile is { HasPlayer: true, Entity: "hero" } && profile.Roles[PersonRoles.GunShot] == "player-gun-shot" && profile.Spawns["BoilerBrute"] == "maul-brute",
                     "the game profile binds the hero entity, the gun-shot role and the brute placement as data");

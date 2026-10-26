@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 4,
   "id": "hero",
   "name": "Hero",
   "model": "person",
@@ -19,24 +19,152 @@
     "range": 1.2,
     "cooldown": 0
   },
-  "health": 30,
+  "behaviors": {
+    "strikes": {
+      "blade": {
+        "damage": 2,
+        "impact": "sword"
+      },
+      "shoot": {
+        "damage": 2
+      },
+      "wall-shot": {
+        "damage": 2
+      }
+    },
+    "damage": {
+      "health": 30
+    },
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.275,
-        "y": 0
+      "center": {
+        "x": 0,
+        "y": 0.8525
       },
-      "max": {
-        "x": 0.275,
+      "size": {
+        "x": 0.55,
         "y": 1.705
-      }
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "standard",
     "regions": {}
   },
+  "colliders": [
+    {
+      "id": "attack-blade",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.274,
+          "y": 0.667
+        },
+        "angleRadians": 0
+      },
+      "offsetX": 1.143,
+      "offsetY": 0.874
+    },
+    {
+      "id": "follow-up-blade",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.342,
+          "y": 0.559
+        },
+        "angleRadians": 0
+      },
+      "offsetX": 0.937,
+      "offsetY": 0.946
+    },
+    {
+      "id": "forehand-blade",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.524,
+          "y": 0.667
+        },
+        "angleRadians": 0
+      },
+      "offsetX": 1.018,
+      "offsetY": 0.874
+    },
+    {
+      "id": "body",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.46,
+          "y": 0.93
+        },
+        "angleRadians": 0
+      },
+      "control": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.02165,
+      "offsetY": 0.325
+    },
+    {
+      "id": "head",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "control": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.332,
+          "y": 0.92
+        },
+        "angleRadians": 0
+      },
+      "control": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.096,
+      "offsetY": -0.39
+    }
+  ],
   "equipment": [
     {
       "prop": "sword",
@@ -64,20 +192,7 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 1.143,
-          "offsetY": 0.874,
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.637,
-              "y": -0.3335
-            },
-            "max": {
-              "x": 0.637,
-              "y": 0.3335
-            }
-          },
-          "damage": 2
+          "collider": "attack-blade"
         }
       ],
       "events": [
@@ -104,20 +219,7 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 0.937,
-          "offsetY": 0.946,
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.671,
-              "y": -0.2795
-            },
-            "max": {
-              "x": 0.671,
-              "y": 0.2795
-            }
-          },
-          "damage": 2
+          "collider": "follow-up-blade"
         }
       ],
       "events": [
@@ -144,20 +246,7 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 1.018,
-          "offsetY": 0.874,
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.762,
-              "y": -0.3335
-            },
-            "max": {
-              "x": 0.762,
-              "y": 0.3335
-            }
-          },
-          "damage": 2
+          "collider": "forehand-blade"
         }
       ],
       "events": [
@@ -179,16 +268,16 @@
         "speed": 31,
         "shape": {
           "kind": "rectangle",
-          "min": {
-            "x": -0.375,
-            "y": -0.125
+          "center": {
+            "x": 0,
+            "y": 0
           },
-          "max": {
-            "x": 0.375,
-            "y": 0.125
-          }
+          "size": {
+            "x": 0.75,
+            "y": 0.25
+          },
+          "angleRadians": 0
         },
-        "damage": 2,
         "lifetime": 1.5
       },
       "hits": [],
@@ -209,16 +298,16 @@
         "speed": 31,
         "shape": {
           "kind": "rectangle",
-          "min": {
-            "x": -0.375,
-            "y": -0.125
+          "center": {
+            "x": 0,
+            "y": 0
           },
-          "max": {
-            "x": 0.375,
-            "y": 0.125
-          }
+          "size": {
+            "x": 0.75,
+            "y": 0.25
+          },
+          "angleRadians": 0
         },
-        "damage": 2,
         "lifetime": 1.5
       },
       "hits": [],

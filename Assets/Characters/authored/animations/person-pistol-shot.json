@@ -4,7 +4,7 @@
   "id": "person-pistol-shot",
   "name": "Pistol shot",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.1,
   "reference": {
     "leg": 0.9914766,

@@ -4,7 +4,7 @@
   "id": "player-gun-charge",
   "name": "Spell shot: gather",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "reference": {
     "leg": 0.9914766,
     "arm": 0.6544882,

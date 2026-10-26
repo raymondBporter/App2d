@@ -281,68 +281,75 @@
       "id": "left-hip",
       "parent": "hips",
       "name": null,
-      "rest": {
+      "node": "bone",
+      "local": {
         "x": -0.06,
-        "y": 0,
-        "z": -0.103923045
+        "rotation": -1.3891475,
+        "layer": -0.103923045
       },
+      "length": 0.39855742,
       "scale": "leg"
     },
     {
       "id": "left-knee",
       "parent": "left-hip",
       "name": null,
-      "rest": {
-        "x": 0.012000006,
-        "y": -0.39200002,
-        "z": -0.103923045
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.36512876
+      },
+      "link": {},
+      "length": 0.39462385
     },
     {
       "id": "left-foot",
       "parent": "left-knee",
       "name": null,
-      "rest": {
-        "x": -0.06,
-        "y": -0.78000003,
-        "z": -0.103923045
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "right-hip",
       "parent": "hips",
       "name": null,
-      "rest": {
+      "node": "bone",
+      "local": {
         "x": 0.06,
-        "y": 0,
-        "z": 0.103923045
+        "rotation": -1.3891475,
+        "layer": 0.103923045
       },
+      "length": 0.39855742,
       "scale": "leg"
     },
     {
       "id": "right-knee",
       "parent": "right-hip",
       "name": null,
-      "rest": {
-        "x": 0.132,
-        "y": -0.39200002,
-        "z": 0.103923045
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.36512876
+      },
+      "link": {},
+      "length": 0.39462385
     },
     {
       "id": "right-foot",
       "parent": "right-knee",
       "name": null,
-      "rest": {
-        "x": 0.06,
-        "y": -0.78000003,
-        "z": 0.103923045
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     }
   ],
   "constraints": [
     {
       "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "left-hip",
       "joint": "left-knee",
       "end": "left-foot",
@@ -351,6 +358,7 @@
     },
     {
       "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "right-hip",
       "joint": "right-knee",
       "end": "right-foot",
@@ -407,85 +415,29 @@
         {
           "kind": "scale",
           "target": {
-            "control": "left-knee",
-            "property": "local.x"
+            "control": "left-hip",
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
             "control": "left-knee",
-            "property": "local.y"
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
-            "control": "left-knee",
-            "property": "local.layer"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "left-foot",
-            "property": "local.x"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "left-foot",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "left-foot",
-            "property": "local.layer"
+            "control": "right-hip",
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
             "control": "right-knee",
-            "property": "local.x"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-knee",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-knee",
-            "property": "local.layer"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-foot",
-            "property": "local.x"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-foot",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-foot",
-            "property": "local.layer"
+            "property": "length"
           }
         }
       ]

@@ -52,14 +52,14 @@ public sealed class VariantOverrideTests : IDisposable
         Assert.Equal(ResolvedModel.From(person, broad, library).Nodes[Humanoid.LeftElbow].Length, ResolvedModel.From(person, PersonBuild.ShortBroad.Apply(person, "b2", "B2"), library).Nodes[Humanoid.LeftElbow].Length);
         Assert.Equal(PropertySource.Override, tallAfter.Provenance(Forearm));
         Assert.True(tallAfter.Masks(Forearm), "the length override masks the arms binding");
-        Assert.Equal(PropertySource.ParameterBinding, tallAfter.Provenance(PropertyRef.OfControl(Humanoid.LeftShoulder, RigProperties.Length)));
+        Assert.Equal(PropertySource.ParameterBinding, tallAfter.Provenance(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.Length)));
         Assert.Equal(PropertySource.Base, tallAfter.Provenance(PropertyRef.OfControl(Humanoid.Chest, RigProperties.LocalRotation)));
 
         // An unoverridden base edit propagates: the upper arm's authored length.
-        var shoulder = person.Controls.Single(c => c.Id == Humanoid.LeftShoulder);
+        var shoulder = person.Controls.Single(c => c.Id == Humanoid.LeftUpperArmBone);
         shoulder.Length += .1f;
         var propagated = ResolvedModel.From(person, tall, library);
-        Assert.Equal(tallAfter.Nodes[Humanoid.LeftShoulder].Length + .1f * PersonBuild.TallThin.Arms, propagated.Nodes[Humanoid.LeftShoulder].Length, 4);
+        Assert.Equal(tallAfter.Nodes[Humanoid.LeftUpperArmBone].Length + .1f * PersonBuild.TallThin.Arms, propagated.Nodes[Humanoid.LeftUpperArmBone].Length, 4);
         Assert.Equal(forearmBefore + .2f, propagated.Nodes[Humanoid.LeftElbow].Length, 5);
 
         // Reset removes the leaf override; nothing is written in its place and the binding is in force again.
@@ -80,7 +80,7 @@ public sealed class VariantOverrideTests : IDisposable
         var variant = PersonBuild.TallThin.Apply(person, "tall", "Tall", "#d9e2ef");
         variant.Set(PropertyOverride.Of(Forearm, .4f));
         variant.Set(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.Hidden), false));
-        variant.Set(PropertyOverride.Cleared(PropertyRef.OfControl(Humanoid.LeftShoulder, RigProperties.Length)));
+        variant.Set(PropertyOverride.Cleared(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.Length)));
         variant.Set(PropertyOverride.Of(PropertyRef.OfRole("walk"), "person-heavy-walk"));
         var json = variant.ToJson();
         Assert.Contains($"\"version\": {ModelVariant.CurrentVersion}", json);
@@ -90,12 +90,12 @@ public sealed class VariantOverrideTests : IDisposable
         var read = ModelVariant.FromJson(json);
         Assert.Equal(json, read.ToJson());
         Assert.Equal(5, read.Overrides.Count);
-        Assert.True(read.Override(PropertyRef.OfControl(Humanoid.LeftShoulder, RigProperties.Length))!.Clear);
+        Assert.True(read.Override(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.Length))!.Clear);
         var resolved = ResolvedModel.From(person, read);
         Assert.Equal(.4f, resolved.Nodes[Humanoid.LeftElbow].Length);
         // A cleared length is the authored one: the arms binding is bypassed, so it equals the standard person's.
-        Assert.Equal(ResolvedModel.From(person).Nodes[Humanoid.LeftShoulder].Length, resolved.Nodes[Humanoid.LeftShoulder].Length);
-        Assert.Equal(resolved.AuthoredNumber(PropertyRef.OfControl(Humanoid.LeftShoulder, RigProperties.Length)), resolved.Nodes[Humanoid.LeftShoulder].Length);
+        Assert.Equal(ResolvedModel.From(person).Nodes[Humanoid.LeftUpperArmBone].Length, resolved.Nodes[Humanoid.LeftUpperArmBone].Length);
+        Assert.Equal(resolved.AuthoredNumber(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.Length)), resolved.Nodes[Humanoid.LeftUpperArmBone].Length);
         Assert.Equal("#d9e2ef", resolved.Parts.Single(p => p.Id == Humanoid.Body).RenderMaterial.Fill);
         Assert.Equal("person-heavy-walk", resolved.RoleClips["walk"]);
 
@@ -105,7 +105,7 @@ public sealed class VariantOverrideTests : IDisposable
             return Assert.Throws<InvalidDataException>(() => ResolvedModel.From(person, odd)).Message;
         }
         Assert.Contains("no control 'tail'", Refusal(PropertyOverride.Of(PropertyRef.OfControl("tail", RigProperties.LocalX), 1)));
-        Assert.Contains("only a bone node exposes a length", Refusal(PropertyOverride.Of(PropertyRef.OfControl(Humanoid.RightElbow, RigProperties.Length), 1)));
+        Assert.Contains("only a bone node exposes a length", Refusal(PropertyOverride.Of(PropertyRef.OfControl(Humanoid.RightShoulder, RigProperties.Length), 1)));
         Assert.Contains("bind its link", Refusal(PropertyOverride.Of(PropertyRef.OfControl(Humanoid.LeftElbow, RigProperties.LocalX), 1)));
         Assert.Contains("takes a number", Refusal(PropertyOverride.Of(Forearm, "long")));
         Assert.Contains("takes a flag", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.Hidden), 2)));
@@ -197,7 +197,7 @@ public sealed class VariantOverrideTests : IDisposable
         var dragged = ResolvedModel.From(person, variant);
         TestModels.Near(new(target, resolved.Rest[Humanoid.LeftHand].Z), dragged.Rest[Humanoid.LeftHand], 1e-4f);
         Assert.True(variant.HasOverride(PropertyRef.OfControl(Humanoid.LeftElbow, RigProperties.LocalRotation)));
-        Assert.Contains("only drag a bone node", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveBoneTip(resolved, variant, Humanoid.RightElbow, target)).Message);
+        Assert.Contains("only drag a bone node", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveBoneTip(resolved, variant, Humanoid.RightShoulder, target)).Message);
         Assert.Contains("legacy", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(ResolvedModel.From(TestModels.Wheel().Model), new() { Id = "w", Name = "W", Base = "wheel" }, "wheel-root", Vector3.Zero, true)).Message);
     }
 

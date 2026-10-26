@@ -117,6 +117,11 @@ public static class QuadrupedTemplate
                 ["rush"] = id + "-rush",
                 ["brake"] = id + "-brake",
                 ["recover"] = id + "-recover" } }];
+        // P11a: the legs are canonical bone constraints (the shipped files carry the same conversion); the paws keep the character axes.
+        foreach (var chain in m.IkChains.ToArray())
+        {
+            RigConversion.ToBoneConstraint(m, chain.Id, []);
+        }
         Dimensions(m);
         m.Validate();
         return m;
@@ -141,8 +146,12 @@ public static class QuadrupedTemplate
         m.Parameters.RemoveAll(p => p.Id is LegsId or BodyId or HeadId);
         m.Parameters.AddRange(
         [
+            // P11a: a leg on the bone solver scales its two bones' lengths (direction kept); a point run scaled the joints' height.
             Parameter(LegsId, "Leg length", (.7f, 1.5f),
-                legs.SelectMany(leg => new[] { Control(leg + "-joint", RigProperties.LocalY), Control(leg + "-foot", RigProperties.LocalY), Part(leg + "-upper", RigProperties.ScaleY), Part(leg + "-upper", RigProperties.OffsetY), Part(leg + "-lower", RigProperties.ScaleY), Part(leg + "-lower", RigProperties.OffsetY) })
+                legs.SelectMany(leg => (m.IkChains.FirstOrDefault(c => c.Id == leg) is { Solver: ModelChain.BoneSolver } chain
+                        ? new[] { Control(chain.Root, RigProperties.Length), Control(chain.Joint, RigProperties.Length) }
+                        : [Control(leg + "-joint", RigProperties.LocalY), Control(leg + "-foot", RigProperties.LocalY)])
+                    .Concat([Part(leg + "-upper", RigProperties.ScaleY), Part(leg + "-upper", RigProperties.OffsetY), Part(leg + "-lower", RigProperties.ScaleY), Part(leg + "-lower", RigProperties.OffsetY)]))
                     .Prepend(Control("body", RigProperties.LocalY))),
             Parameter(BodyId, "Body length", (.8f, 1.3f),
                 legs.Select(leg => Control(leg + "-root", RigProperties.LocalX)).Concat([Control("head", RigProperties.LocalX), Control("tail", RigProperties.LocalX), Part("body", RigProperties.ScaleX), Part("body", RigProperties.OffsetX)])),

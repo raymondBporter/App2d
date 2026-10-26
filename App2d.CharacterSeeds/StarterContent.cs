@@ -357,6 +357,11 @@ public static class StarterContent
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
         model.HurtLayouts = [new() { Id = "standard", Regions = [new() { Id = "shell", Controls = ["body", "hip-0", "hip-2"], Pad = .2f }, new() { Id = "legs", Controls = ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], Pad = .05f }] }];
+        // P11a: the three legs are canonical bone constraints, as the shipped stalker file carries them.
+        foreach (var chain in model.IkChains.ToArray())
+        {
+            RigConversion.ToBoneConstraint(model, chain.Id, []);
+        }
         model.Validate();
         return model;
     }

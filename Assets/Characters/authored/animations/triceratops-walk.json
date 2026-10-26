@@ -4,7 +4,7 @@
   "id": "triceratops-walk",
   "name": "Triceratops \u00B7 walk",
   "model": "triceratops",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.2,
   "loop": true,
   "reference": {},

@@ -20,6 +20,9 @@ public static class Humanoid
     public const string RightHip = "right-hip";
     public const string RightKnee = "right-knee";
     public const string RightFoot = "right-foot";
+    /// <summary>The solved upper-arm bones (P11a): the shoulders stay the authored pivots that frame the grips and carry the clips' turns.</summary>
+    public const string LeftUpperArmBone = "left-upper-arm";
+    public const string RightUpperArmBone = "right-upper-arm";
 
     // Drawing parts between controls.
     public const string Neck = Chest + "-" + Head;

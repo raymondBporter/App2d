@@ -1,9 +1,11 @@
 {
   "format": "app2d-model",
-  "version": 5,
+  "version": 11,
   "id": "stalker",
   "name": "Stalker",
-  "structureRevision": 1,
+  "structureRevision": 2,
+  "parameters": [],
+  "presets": [],
   "controls": [
     {
       "id": "body",
@@ -19,93 +21,110 @@
       "id": "hip-0",
       "parent": "body",
       "name": null,
-      "rest": {
+      "node": "bone",
+      "local": {
         "x": -0.35,
-        "y": 0.8,
-        "z": -0.1
+        "y": -0.099999964,
+        "rotation": -1.2120256,
+        "layer": -0.1
       },
+      "length": 0.4272002,
       "scale": "leg"
     },
     {
       "id": "knee-0",
       "parent": "hip-0",
       "name": null,
-      "rest": {
-        "x": -0.19999999,
-        "y": 0.4,
-        "z": -0.1
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.71754134
+      },
+      "link": {},
+      "length": 0.4272002
     },
     {
       "id": "foot-0",
       "parent": "knee-0",
       "name": null,
-      "rest": {
-        "x": -0.35,
-        "y": 0,
-        "z": -0.1
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "hip-1",
       "parent": "body",
       "name": null,
-      "rest": {
-        "x": 0,
-        "y": 0.8,
-        "z": 0
+      "node": "bone",
+      "local": {
+        "y": -0.099999964,
+        "rotation": -1.2120256
       },
+      "length": 0.4272002,
       "scale": "leg"
     },
     {
       "id": "knee-1",
       "parent": "hip-1",
       "name": null,
-      "rest": {
-        "x": 0.15,
-        "y": 0.4,
-        "z": 0
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.71754134
+      },
+      "link": {},
+      "length": 0.4272002
     },
     {
       "id": "foot-1",
       "parent": "knee-1",
-      "name": null
+      "name": null,
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
+      }
     },
     {
       "id": "hip-2",
       "parent": "body",
       "name": null,
-      "rest": {
+      "node": "bone",
+      "local": {
         "x": 0.35,
-        "y": 0.8,
-        "z": 0.1
+        "y": -0.099999964,
+        "rotation": -1.2120256,
+        "layer": 0.1
       },
+      "length": 0.4272002,
       "scale": "leg"
     },
     {
       "id": "knee-2",
       "parent": "hip-2",
       "name": null,
-      "rest": {
-        "x": 0.5,
-        "y": 0.4,
-        "z": 0.1
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.71754134
+      },
+      "link": {},
+      "length": 0.4272002
     },
     {
       "id": "foot-2",
       "parent": "knee-2",
       "name": null,
-      "rest": {
-        "x": 0.35,
-        "y": 0,
-        "z": 0.1
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     }
   ],
-  "chains": [
+  "constraints": [
     {
+      "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "hip-0",
       "joint": "knee-0",
       "end": "foot-0",
@@ -113,6 +132,8 @@
       "id": "foot-0-chain"
     },
     {
+      "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "hip-1",
       "joint": "knee-1",
       "end": "foot-1",
@@ -120,6 +141,8 @@
       "id": "foot-1-chain"
     },
     {
+      "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "hip-2",
       "joint": "knee-2",
       "end": "foot-2",
@@ -127,7 +150,6 @@
       "id": "foot-2-chain"
     }
   ],
-  "constraints": [],
   "measures": [
     {
       "id": "leg",
@@ -264,18 +286,20 @@
         "radii": {
           "x": 0.5,
           "y": 0.5
-        }
+        },
+        "angleRadians": 0
       },
       "material": {
         "fill": "#c9e0b8",
         "outline": {}
       },
       "a": "body",
-      "depth": -0.05,
       "scaleX": 0.95,
-      "scaleY": 0.38
+      "scaleY": 0.38,
+      "depth": -0.05
     }
   ],
+  "materials": {},
   "slots": [],
   "skins": [],
   "sockets": [
@@ -286,6 +310,7 @@
       "offsetY": -0.02
     }
   ],
+  "attachments": [],
   "motionSets": [
     {
       "id": "standard",

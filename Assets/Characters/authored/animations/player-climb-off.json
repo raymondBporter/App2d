@@ -4,7 +4,7 @@
   "id": "player-climb-off",
   "name": "Turn off ladder",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.3,
   "reference": {
     "leg": 0.9914766,

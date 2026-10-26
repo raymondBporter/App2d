@@ -1,4 +1,5 @@
 using App2d.CharacterSeeds;
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
@@ -17,32 +18,76 @@ public sealed class RigConversionTests
     private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
 
     [Fact]
-    public void TheShippedPersonLeftArmIsABoneChainAndConvertsBackWithoutMovingAnything()
+    public void TheShippedPersonLimbsAreBoneConstraintsWithTheShouldersAsPivots()
     {
+        // P11a: every limb is a bone-solver constraint. The shoulders stay point pivots (they frame the grips and carry the
+        // clips' turns); the solved upper arms hang beneath them; the hips are the leg roots; every end keeps the character axes.
         var person = Catalog.Models["person"];
         Assert.Equal(CharacterModel.CurrentVersion, person.Version);
-        var shoulder = person.Controls.Single(c => c.Id == "left-shoulder");
-        var elbow = person.Controls.Single(c => c.Id == "left-elbow");
-        var hand = person.Controls.Single(c => c.Id == "left-hand");
-        Assert.Equal(RigNodeKinds.Bone, shoulder.Node);
-        Assert.Null(shoulder.Link);
-        Assert.True(shoulder.Length > .3f);
-        Assert.True(elbow.Link is { IsTip: true } && hand.Link is { IsTip: true });
-        Assert.Equal(0, hand.Length);
-        Assert.All(person.Controls.Where(c => !c.Id.StartsWith("left-", StringComparison.Ordinal) || c.Id.EndsWith("hip") || c.Id.EndsWith("knee") || c.Id.EndsWith("foot")), c => Assert.Equal(RigNodeKinds.Point, c.Node));
-        // Every chain stays on the declared point solver: the position-only adapter, listed in LegacyPointConstraint.
-        Assert.All(person.IkChains, c => Assert.Equal(ModelChain.PointSolver, c.Solver));
+        Assert.All(person.IkChains, c => Assert.Equal(ModelChain.BoneSolver, c.Solver));
+        Assert.Equal([Humanoid.LeftUpperArmBone, Humanoid.LeftHip, Humanoid.RightUpperArmBone, Humanoid.RightHip], person.IkChains.Select(c => c.Root));
+        Assert.Equal([Humanoid.LeftShoulder, CharacterModel.Locomotion, Humanoid.RightShoulder, CharacterModel.Locomotion], person.IkChains.Select(c => c.Frame));
+        foreach (var shoulder in new[] { Humanoid.LeftShoulder, Humanoid.RightShoulder })
+        {
+            Assert.Equal(RigNodeKinds.Point, person.Controls.Single(c => c.Id == shoulder).Node);
+        }
+        foreach (var chain in person.IkChains)
+        {
+            var rootNode = person.Controls.Single(c => c.Id == chain.Root);
+            var joint = person.Controls.Single(c => c.Id == chain.Joint);
+            var end = person.Controls.Single(c => c.Id == chain.End);
+            Assert.Equal(RigNodeKinds.Bone, rootNode.Node);
+            Assert.Null(rootNode.Link);
+            Assert.True(rootNode.Length > .3f && joint.Length > .3f);
+            Assert.True(joint.Link is { IsTip: true });
+            Assert.Equal(RigLinkOrientations.Character, end.Link?.Orientation);
+            Assert.Equal(0, end.Length);
+        }
+        var resolved = Catalog.Resolve("person");
+        var rest = PoseEvaluator.Rest(resolved);
+        // The pivot and its bone share an origin; the end keeps the character axes at rest and under the walk.
+        TestModels.Near(rest.Points[Humanoid.LeftShoulder], rest.Points[Humanoid.LeftUpperArmBone], 1e-6f);
+        var walking = PoseEvaluator.Sample(resolved, Catalog.Animations["person-walk"], .3);
+        Assert.Equal(0, walking.Angles[Humanoid.LeftHand], 5);
+        Assert.Equal(0, walking.Angles[Humanoid.LeftFoot], 5);
+        Assert.NotEqual(0, walking.Angles[Humanoid.LeftUpperArmBone]);
+        Assert.All(walking.Chains, c => Assert.True(c.Reached));
+    }
 
+    [Fact]
+    public void ConvertingAPointRunToBoneNodesAndBackReproducesItsFile()
+    {
+        var person = Catalog.Models["person"];
         var points = CharacterModel.FromJson(person.ToJson());
-        var report = RigConversion.ToPointControls(points, ["left-shoulder", "left-elbow", "left-hand"]);
+        // The point form of the run needs the point solver (a bone constraint needs lengths); the bone form restores it.
+        points.IkChains.Single(c => c.Id == Humanoid.LeftArm).Solver = ModelChain.PointSolver;
+        var report = RigConversion.ToPointControls(points, [Humanoid.LeftUpperArmBone, Humanoid.LeftElbow, Humanoid.LeftHand]);
         // Three controls, and the arms parameter's two length bindings re-expressed as the elbow's and hand's local offsets.
         Assert.Equal(5, report.Count);
-        Assert.Equal("arms", ResolvedModel.Rig(points).Parameters.BindingOfControl("left-elbow", RigProperties.LocalX)!.Value.Parameter.Id);
+        Assert.Equal("arms", ResolvedModel.Rig(points).Parameters.BindingOfControl(Humanoid.LeftElbow, RigProperties.LocalX)!.Value.Parameter.Id);
         var back = CharacterModel.FromJson(points.ToJson());
-        RigConversion.ToBoneChain(back, ["left-shoulder", "left-elbow", "left-hand"]);
+        RigConversion.ToBoneChain(back, [Humanoid.LeftUpperArmBone, Humanoid.LeftElbow, Humanoid.LeftHand]);
+        back.Controls.Single(c => c.Id == Humanoid.LeftHand).Link!.Orientation = RigLinkOrientations.Character;
+        back.Controls.Single(c => c.Id == Humanoid.LeftHand).Local!.Rotation = 0;
+        back.IkChains.Single(c => c.Id == Humanoid.LeftArm).Solver = ModelChain.BoneSolver;
+        back.Validate();
         Assert.Equal(person.ToJson(), back.ToJson());
+        Assert.Empty(ResolvedModel.From(points, null, Catalog.Parts.GetValueOrDefault).Rest.Where(r => Vector3.Distance(r.Value, Catalog.Resolve("person").Rest[r.Key]) > 1e-5f));
+    }
 
+    [Fact]
+    public void ThePointAndBoneSolversAgreeOnPositionsSocketsAndContactsAcrossTheClips()
+    {
+        var person = Catalog.Models["person"];
         var bones = Catalog.Resolve("person");
+        // The same rig on the retired point adapter's semantics: point controls solved by the position-only constraint.
+        var points = CharacterModel.FromJson(person.ToJson());
+        foreach (var chain in points.IkChains)
+        {
+            chain.Solver = ModelChain.PointSolver;
+            RigConversion.ToPointControls(points, [chain.Root, chain.Joint, chain.End]);
+        }
+        points.Validate();
         var legacy = ResolvedModel.From(points, null, Catalog.Parts.GetValueOrDefault);
         foreach (var variant in new ModelVariant?[] { null, Catalog.Variants["tall-thin"], Catalog.Variants["brute"] })
         {
@@ -62,12 +107,13 @@ public sealed class RigConversionTests
                     var sa = new ActorPose(pa, Vector2.Zero, 1).Socket(socket);
                     var sb = new ActorPose(pb, Vector2.Zero, 1).Socket(socket);
                     Assert.InRange(Vector3.Distance(sa.Origin, sb.Origin), 0, 1e-5f);
-                    Assert.InRange(Vector3.Distance(sa.XAxis, sb.XAxis), 0, 1e-5f);
+                    // A socket pointing at a joint turns by the point adapter's full-reach inset over the segment (baseline 7.2, P11a).
+                    Assert.InRange(Vector3.Distance(sa.XAxis, sb.XAxis), 0, 1e-2f);
                 }
                 Assert.Equal(pa.Chains.Select(c => (c.Chain, c.Reached)), pb.Chains.Select(c => (c.Chain, c.Reached)));
-                // The converted frames point along the limb; the hand, with no next bone, keeps the character axes.
-                Assert.Equal(pa.Angles["left-hand"], pb.Angles["left-hand"], 5);
-                Assert.NotEqual(pa.Angles["left-shoulder"], pb.Angles["left-shoulder"]);
+                // The solved frames point along the limb; the pivot keeps the authored turn on both.
+                Assert.Equal(pa.Angles[Humanoid.RightShoulder], pb.Angles[Humanoid.RightShoulder], 5);
+                Assert.NotEqual(pa.Angles[Humanoid.LeftElbow], pb.Angles[Humanoid.LeftElbow]);
             }
         }
     }
@@ -78,12 +124,12 @@ public sealed class RigConversionTests
         var person = Catalog.Models["person"];
         var tall = ResolvedModel.From(person, Catalog.Variants["tall-thin"], Catalog.Parts.GetValueOrDefault);
         var standard = Catalog.Resolve("person");
-        var ratio = tall.Nodes["left-shoulder"].Length / standard.Nodes["left-shoulder"].Length;
+        var ratio = tall.Nodes[Humanoid.LeftUpperArmBone].Length / standard.Nodes[Humanoid.LeftUpperArmBone].Length;
         Assert.Equal(PersonBuild.TallThin.Arms, ratio, 4);
         Assert.Equal(PersonBuild.TallThin.Arms, tall.Nodes["left-elbow"].Length / standard.Nodes["left-elbow"].Length, 4);
-        Assert.Equal(tall.Length("left-shoulder", "left-elbow"), tall.Nodes["left-shoulder"].Length, 5);
-        Assert.Equal(standard.Nodes["left-shoulder"].Rotation, tall.Nodes["left-shoulder"].Rotation, 4);
-        // The same arms value on the mirrored right arm, still a point chain, scales the same way.
+        Assert.Equal(tall.Length("left-shoulder", "left-elbow"), tall.Nodes[Humanoid.LeftUpperArmBone].Length, 5);
+        Assert.Equal(standard.Nodes[Humanoid.LeftUpperArmBone].Rotation, tall.Nodes[Humanoid.LeftUpperArmBone].Rotation, 4);
+        // The same arms value on the mirrored right arm scales the same way.
         Assert.Equal(ratio, tall.Length("right-shoulder", "right-elbow") / standard.Length("right-shoulder", "right-elbow"), 4);
         // A tip-bound node's origin is not a variant property: it moves through the parent's length or its link (P6a).
         var frozen = new ModelVariant { Id = "frozen", Name = "Frozen", Base = "person" };

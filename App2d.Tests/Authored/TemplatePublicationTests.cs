@@ -60,7 +60,7 @@ public sealed class TemplatePublicationTests : IDisposable
             Assert.Equal(3, model.Presets.Count);
             Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "models", id + ".json")));
         }
-        Assert.Equal(["models/baby-triceratops-rig.json", "models/curve-face.json", "models/stalker.json"], LegacySourceFields.Remaining(TestModels.AuthoredRoot).Select(f => f.Path));
+        Assert.Empty(LegacySourceFields.Remaining(TestModels.AuthoredRoot));
     }
 
     [Fact]
@@ -76,7 +76,8 @@ public sealed class TemplatePublicationTests : IDisposable
             Assert.Contains(result.Report, line => line.Contains("clip(s) validate and sample identically"));
         }
         // The scratch tree is the published one, so the declaration re-declares the same dimensions and the presets resolve as shipped.
-        Assert.Contains(results.Single(r => r.TemplateId == "quadruped").Report, line => line.StartsWith("preset 'long-legged' resolves: leg 1.033", StringComparison.Ordinal));
+        // P11a: the legs dimension scales each leg bone's length (direction kept), so the long-legged preset reaches a little farther than when it lifted the joints' height alone (1.033).
+        Assert.Contains(results.Single(r => r.TemplateId == "quadruped").Report, line => line.StartsWith("preset 'long-legged' resolves: leg 1.059", StringComparison.Ordinal));
         // The source tree is untouched.
         foreach (var file in Directory.EnumerateFiles(TestModels.AuthoredRoot, "*.json", SearchOption.AllDirectories))
         {

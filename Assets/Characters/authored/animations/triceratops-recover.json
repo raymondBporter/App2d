@@ -4,7 +4,7 @@
   "id": "triceratops-recover",
   "name": "Triceratops \u00B7 recover",
   "model": "triceratops",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.2,
   "reference": {},
   "travel": {

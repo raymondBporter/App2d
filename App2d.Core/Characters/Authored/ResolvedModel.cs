@@ -40,7 +40,7 @@ public sealed class ResolvedModel
         // carries only its offset from its parent (a root keeps its rest Z). Summing offsets down the tree reproduces
         // every authored value without double counting (character-migration-baseline.md, section 7.4).
         LayerOffsets = order.ToDictionary(c => c.Id, c => nodes[c.Id].Layer, StringComparer.Ordinal);
-        BoneFrameIk.ValidateFrames(Controls, Chains.Values, RestTransforms);
+        BoneFrameIk.ValidateFrames(Nodes, Chains.Values);
         Measures = model.Measures.ToDictionary(m => m.Id, m => m.Path.Zip(m.Path.Skip(1)).Sum(p => Length(p.First, p.Second)), StringComparer.Ordinal);
     }
 

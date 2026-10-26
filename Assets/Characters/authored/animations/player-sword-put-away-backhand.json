@@ -4,7 +4,7 @@
   "id": "player-sword-put-away-backhand",
   "name": "Sword put away after a backhand",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.48333335,
   "reference": {
     "leg": 0.9914766,

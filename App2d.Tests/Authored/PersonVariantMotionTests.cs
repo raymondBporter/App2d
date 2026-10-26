@@ -138,10 +138,15 @@ public sealed class PersonVariantMotionTests
     public void AnUnreachableBuildKeepsLimbLengthsAndReportsTheShortfall()
     {
         // Straighten the left leg and ask it to plant below its reach; the right-leg reference measure stays unchanged.
-        var hip = Person.Controls.Single(c => c.Id == "left-hip").Rest.XYZ;
-        var foot = Person.Controls.Single(c => c.Id == "left-foot").Rest.XYZ;
+        var hip = ResolvedModel.Rig(Person).Rest["left-hip"];
+        var foot = ResolvedModel.Rig(Person).Rest["left-foot"];
         var variant = new ModelVariant { Id = "stiff-left", Name = "Stiff left", Base = "person" };
-        VariantConversion.PinRest(Person, variant, new Dictionary<string, PuppetPoint> { ["left-knee"] = PuppetPoint.From(Vector3.Lerp(hip, foot, .5f)) });
+        // P11a: the leg is a bone constraint; a straight leg is the thigh turned onto the foot with the knee at the midpoint.
+        var half = Vector2.Distance(new(hip.X, hip.Y), new(foot.X, foot.Y)) / 2;
+        variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-hip", RigProperties.LocalRotation), MathF.Atan2(foot.Y - hip.Y, foot.X - hip.X)));
+        variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-hip", RigProperties.Length), half));
+        variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-knee", RigProperties.LocalRotation), 0));
+        variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-knee", RigProperties.Length), half));
         var model = ResolvedModel.From(Person, variant);
         var clip = Clip("walk");
         clip.Validate(model);

@@ -4,7 +4,7 @@
   "id": "quadruped-rush",
   "name": "Quadruped \u00B7 rush",
   "model": "quadruped",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.48,
   "loop": true,
   "reference": {},

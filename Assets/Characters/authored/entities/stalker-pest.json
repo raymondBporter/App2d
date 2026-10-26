@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 4,
   "id": "stalker-pest",
   "name": "Stalker pest",
   "model": "stalker",
@@ -11,24 +11,76 @@
     "range": 1.05,
     "cooldown": 1.4
   },
-  "health": 2,
+  "behaviors": {
+    "strikes": {
+      "sting": {}
+    },
+    "damage": {
+      "health": 2
+    },
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.5,
-        "y": 0
+      "center": {
+        "x": 0,
+        "y": 0.55
       },
-      "max": {
-        "x": 0.5,
+      "size": {
+        "x": 1,
         "y": 1.1
-      }
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "standard",
     "regions": {}
   },
+  "colliders": [
+    {
+      "id": "sting",
+      "use": "attack",
+      "socket": "stinger"
+    },
+    {
+      "id": "shell",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.1,
+          "y": 0.5
+        },
+        "angleRadians": 0
+      },
+      "control": "body",
+      "frame": "locomotion",
+      "offsetY": -0.05
+    },
+    {
+      "id": "legs",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.95,
+          "y": 0.5
+        },
+        "angleRadians": 0
+      },
+      "control": "knee-0",
+      "frame": "locomotion",
+      "offsetX": 0.275,
+      "offsetY": -0.2
+    }
+  ],
   "equipment": [],
   "actions": [
     {
@@ -43,7 +95,7 @@
           "finish": {
             "marker": "recover"
           },
-          "socket": "stinger"
+          "collider": "sting"
         }
       ],
       "events": [

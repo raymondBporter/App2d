@@ -30,7 +30,7 @@ public sealed class EntityRuntimeTests
             foreach (var t in new[] { hit.Start, hit.Finish - .01f })
             {
                 var box = EntityCollision.Attack(hero, new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
-                TestModels.Near(new Vector3(3 + hit.Window.OffsetX * facing, hit.Window.OffsetY, 0), new Vector3(box.Bounds.Center, 0), 1e-4f, $"box centre at {t}, facing {facing}");
+                TestModels.Near(new Vector3(3 + hit.Collider.Definition.OffsetX * facing, hit.Collider.Definition.OffsetY, 0), new Vector3(box.Bounds.Center, 0), 1e-4f, $"box centre at {t}, facing {facing}");
             }
         }
         // attack -> follow-up -> forehand -> follow-up: the traversal controller supports the first two, the chain the third.

@@ -164,9 +164,9 @@ public sealed class BoneEditingTests
         var person = catalog.Resolve("person");
         var variant = new ModelVariant { Id = "v", Name = "V", Base = "person" };
         // An unbound bone node moves through its local setup; a tip-bound one is refused with the link named.
-        ModelAuthoring.MoveRest(person, variant, "left-shoulder", person.Rest["left-shoulder"] + new Vector3(.05f, 0, 0), true);
-        Assert.True(variant.HasOverride(PropertyRef.OfControl("left-shoulder", RigProperties.LocalX)));
-        Assert.False(variant.HasOverride(PropertyRef.OfControl("left-shoulder", RigProperties.LocalY)));
+        ModelAuthoring.MoveRest(person, variant, Humanoid.LeftUpperArmBone, person.Rest[Humanoid.LeftUpperArmBone] + new Vector3(.05f, 0, 0), true);
+        Assert.True(variant.HasOverride(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.LocalX)));
+        Assert.False(variant.HasOverride(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.LocalY)));
         TestModels.Near(person.Rest["left-hand"] + new Vector3(.05f, 0, 0), ResolvedModel.From(person.Base, variant, catalog.Parts.GetValueOrDefault).Rest["left-hand"], 1e-5f);
         Assert.Contains("bound to", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(person, variant, "left-elbow", Vector3.Zero, true)).Message);
         variant.Overrides.Clear();
@@ -187,9 +187,9 @@ public sealed class BoneEditingTests
         // Flattening a variant writes the fitted bone setup, not a frozen rest.
         var tall = ResolvedModel.From(person.Base, catalog.Variants["tall-thin"], catalog.Parts.GetValueOrDefault);
         var flat = ModelAuthoring.Flatten(tall, "flat-tall", "Flat tall");
-        var shoulder = flat.Controls.Single(c => c.Id == "left-shoulder");
+        var shoulder = flat.Controls.Single(c => c.Id == Humanoid.LeftUpperArmBone);
         Assert.Equal(RigNodeKinds.Bone, shoulder.Node);
-        Assert.Equal(tall.Nodes["left-shoulder"].Length, shoulder.Length, 5);
+        Assert.Equal(tall.Nodes[Humanoid.LeftUpperArmBone].Length, shoulder.Length, 5);
         Assert.Equal(default, shoulder.Rest);
         foreach (var control in tall.Order)
         {

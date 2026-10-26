@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 4,
   "id": "club-caveman",
   "name": "Club caveman",
   "model": "club-caveman-build",
@@ -17,24 +17,109 @@
     "respectTerrain": true,
     "verticalRange": 0.75
   },
-  "health": 9,
+  "behaviors": {
+    "strikes": {
+      "club-head": {
+        "damage": 3,
+        "sound": "heavy"
+      }
+    },
+    "damage": {
+      "health": 9
+    },
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.1765,
-        "y": 0
+      "center": {
+        "x": 0,
+        "y": 1.005
       },
-      "max": {
-        "x": 0.1765,
+      "size": {
+        "x": 0.353,
         "y": 2.01
-      }
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "standard",
     "regions": {}
   },
+  "colliders": [
+    {
+      "id": "club-head",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.7,
+          "y": 0.65
+        },
+        "angleRadians": 0
+      },
+      "prop": "wooden-club"
+    },
+    {
+      "id": "body",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.469,
+          "y": 0.8975
+        },
+        "angleRadians": 0
+      },
+      "control": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.02273,
+      "offsetY": 0.30875
+    },
+    {
+      "id": "head",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "control": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.3308,
+          "y": 0.842
+        },
+        "angleRadians": 0
+      },
+      "control": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.0954,
+      "offsetY": -0.351
+    }
+  ],
   "equipment": [
     {
       "prop": "wooden-club",
@@ -66,20 +151,7 @@
           "finish": {
             "marker": "recover"
           },
-          "prop": "wooden-club",
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.35,
-              "y": -0.325
-            },
-            "max": {
-              "x": 0.35,
-              "y": 0.325
-            }
-          },
-          "damage": 3,
-          "sound": "heavy"
+          "collider": "club-head"
         }
       ],
       "events": [

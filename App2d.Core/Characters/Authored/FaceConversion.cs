@@ -223,7 +223,8 @@ public static class FaceConversion
             var tracks = new List<ClipTrack>();
             foreach (var track in copy.Tracks)
             {
-                if (track.Kind == MotionClip.OrientKind || !ids.Contains(track.Target) && !(track.Kind == MotionClip.TargetKind && asset.Constraints.Any(c => c.Id == track.Target)))
+                var carriedPiece = track.Kind is MotionClip.FitKind or MotionClip.ShowKind && asset.Parts.Any(p => p.Id == track.Target);
+                if (track.Kind == MotionClip.OrientKind || !ids.Contains(track.Target) && !carriedPiece && !(track.Kind == MotionClip.TargetKind && asset.Constraints.Any(c => c.Id == track.Target)))
                 {
                     throw new InvalidDataException($"Clip '{clip.Id}' {track.Kind} track '{track.Target}' targets something outside the face; the conversion covers tracks on the converted controls only.");
                 }

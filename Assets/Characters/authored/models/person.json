@@ -3,7 +3,7 @@
   "version": 11,
   "id": "person",
   "name": "Person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "parameters": [
     {
       "id": "legs",
@@ -19,7 +19,7 @@
             "control": "hips",
             "property": "local.y"
           },
-          "about": 0.025
+          "about": 0.025000006
         },
         {
           "kind": "scale",
@@ -38,85 +38,29 @@
         {
           "kind": "scale",
           "target": {
-            "control": "left-knee",
-            "property": "local.x"
+            "control": "left-hip",
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
             "control": "left-knee",
-            "property": "local.y"
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
-            "control": "left-knee",
-            "property": "local.layer"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "left-foot",
-            "property": "local.x"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "left-foot",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "left-foot",
-            "property": "local.layer"
+            "control": "right-hip",
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
             "control": "right-knee",
-            "property": "local.x"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-knee",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-knee",
-            "property": "local.layer"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-foot",
-            "property": "local.x"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-foot",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-foot",
-            "property": "local.layer"
+            "property": "length"
           }
         }
       ]
@@ -212,7 +156,7 @@
         {
           "kind": "scale",
           "target": {
-            "control": "left-shoulder",
+            "control": "left-upper-arm",
             "property": "length"
           }
         },
@@ -226,43 +170,15 @@
         {
           "kind": "scale",
           "target": {
-            "control": "right-elbow",
-            "property": "local.x"
+            "control": "right-upper-arm",
+            "property": "length"
           }
         },
         {
           "kind": "scale",
           "target": {
             "control": "right-elbow",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-elbow",
-            "property": "local.layer"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-hand",
-            "property": "local.x"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-hand",
-            "property": "local.y"
-          }
-        },
-        {
-          "kind": "scale",
-          "target": {
-            "control": "right-hand",
-            "property": "local.layer"
+            "property": "length"
           }
         }
       ]
@@ -445,19 +361,26 @@
       "id": "left-shoulder",
       "parent": "chest",
       "name": null,
-      "node": "bone",
-      "local": {
+      "rest": {
         "x": -0.11165064,
-        "y": -0.07999992,
-        "rotation": -1.4157996,
-        "layer": -0.14338458
+        "y": 1.375,
+        "z": -0.14338458
       },
-      "length": 0.32388276,
       "scale": "torso"
     },
     {
-      "id": "left-elbow",
+      "id": "left-upper-arm",
       "parent": "left-shoulder",
+      "name": null,
+      "node": "bone",
+      "local": {
+        "rotation": -1.4157996
+      },
+      "length": 0.32388276
+    },
+    {
+      "id": "left-elbow",
+      "parent": "left-upper-arm",
       "name": null,
       "node": "bone",
       "local": {
@@ -471,40 +394,43 @@
       "parent": "left-elbow",
       "name": null,
       "node": "bone",
-      "local": {
-        "rotation": 1.6313283
-      },
-      "link": {}
+      "local": {},
+      "link": {
+        "orientation": "character"
+      }
     },
     {
       "id": "left-hip",
       "parent": "hips",
       "name": null,
-      "rest": {
+      "node": "bone",
+      "local": {
         "x": -0.06,
-        "y": 0.805,
-        "z": -0.103923045
+        "rotation": -1.3891475,
+        "layer": -0.103923045
       },
+      "length": 0.39855742,
       "scale": "leg"
     },
     {
       "id": "left-knee",
       "parent": "left-hip",
       "name": null,
-      "rest": {
-        "x": 0.012000006,
-        "y": 0.413,
-        "z": -0.103923045
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.36512876
+      },
+      "link": {},
+      "length": 0.39462385
     },
     {
       "id": "left-foot",
       "parent": "left-knee",
       "name": null,
-      "rest": {
-        "x": -0.06,
-        "y": 0.025,
-        "z": -0.103923045
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
@@ -519,61 +445,76 @@
       "scale": "torso"
     },
     {
-      "id": "right-elbow",
+      "id": "right-upper-arm",
       "parent": "right-shoulder",
       "name": null,
-      "rest": {
-        "x": 0.11834937,
-        "y": 1.055,
-        "z": 0.16838458
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -1.4157996
+      },
+      "length": 0.32388276
+    },
+    {
+      "id": "right-elbow",
+      "parent": "right-upper-arm",
+      "name": null,
+      "node": "bone",
+      "local": {
+        "rotation": -0.21552873
+      },
+      "link": {},
+      "length": 0.3306055
     },
     {
       "id": "right-hand",
       "parent": "right-elbow",
       "name": null,
-      "rest": {
-        "x": 0.09834937,
-        "y": 0.72499996,
-        "z": 0.16838458
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     },
     {
       "id": "right-hip",
       "parent": "hips",
       "name": null,
-      "rest": {
+      "node": "bone",
+      "local": {
         "x": 0.06,
-        "y": 0.805,
-        "z": 0.103923045
+        "rotation": -1.3891475,
+        "layer": 0.103923045
       },
+      "length": 0.39855742,
       "scale": "leg"
     },
     {
       "id": "right-knee",
       "parent": "right-hip",
       "name": null,
-      "rest": {
-        "x": 0.132,
-        "y": 0.413,
-        "z": 0.103923045
-      }
+      "node": "bone",
+      "local": {
+        "rotation": -0.36512876
+      },
+      "link": {},
+      "length": 0.39462385
     },
     {
       "id": "right-foot",
       "parent": "right-knee",
       "name": null,
-      "rest": {
-        "x": 0.06,
-        "y": 0.025,
-        "z": 0.103923045
+      "node": "bone",
+      "local": {},
+      "link": {
+        "orientation": "character"
       }
     }
   ],
   "constraints": [
     {
       "kind": "two-bone-ik",
-      "root": "left-shoulder",
+      "solver": "bone",
+      "root": "left-upper-arm",
       "joint": "left-elbow",
       "end": "left-hand",
       "bend": -1,
@@ -583,6 +524,7 @@
     },
     {
       "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "left-hip",
       "joint": "left-knee",
       "end": "left-foot",
@@ -591,7 +533,8 @@
     },
     {
       "kind": "two-bone-ik",
-      "root": "right-shoulder",
+      "solver": "bone",
+      "root": "right-upper-arm",
       "joint": "right-elbow",
       "end": "right-hand",
       "bend": -1,
@@ -601,6 +544,7 @@
     },
     {
       "kind": "two-bone-ik",
+      "solver": "bone",
       "root": "right-hip",
       "joint": "right-knee",
       "end": "right-foot",
@@ -1392,8 +1336,10 @@
         "head",
         "left-arm",
         "left-shoulder",
+        "left-upper-arm",
         "right-arm",
-        "right-shoulder"
+        "right-shoulder",
+        "right-upper-arm"
       ]
     },
     {

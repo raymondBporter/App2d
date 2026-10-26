@@ -340,7 +340,8 @@ public sealed class CurveAttachmentTests
         var clip = MotionClip.FromJson(catalog.Animations["curve-face-" + role].ToJson());
         clip.Validate(model);
         Assert.Empty(clip.Plays);
-        Assert.All(clip.Tracks, t => Assert.True(t.Kind is MotionClip.TranslateKind or MotionClip.ScaleKind));
+        // P11a: the eyes are point controls; their squash is the pupils' declared artwork fit.
+        Assert.All(clip.Tracks, t => Assert.True(t.Kind is MotionClip.TranslateKind or MotionClip.FitKind));
         var rest = PoseEvaluator.Rest(model);
         var posed = PoseEvaluator.Sample(model, clip, at);
         var end = PoseEvaluator.Sample(model, clip, clip.Duration);

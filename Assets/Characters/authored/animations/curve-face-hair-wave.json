@@ -4,7 +4,7 @@
   "id": "curve-face-hair-wave",
   "name": "Hair wave",
   "model": "curve-face",
-  "structureRevision": 2,
+  "structureRevision": 3,
   "duration": 1.5,
   "loop": true,
   "reference": {},

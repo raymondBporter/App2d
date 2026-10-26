@@ -4,7 +4,7 @@
   "id": "quadruped-idle",
   "name": "Quadruped \u00B7 idle",
   "model": "quadruped",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 2,
   "loop": true,
   "reference": {},

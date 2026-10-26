@@ -50,7 +50,8 @@ public sealed class RepeatedAuthoringTests : IDisposable
         var walk = catalog.Animations["person-walk"];
         var thrust = catalog.Animations["person-thrust"];
         var upper = person.Base.Groups.Single(g => g.Id == Humanoid.UpperGroup).Targets.ToHashSet();
-        Assert.Equal(PersonLoadout.UpperBody.Order(), upper.Order());
+        // P11a: the solved upper-arm bones joined the mask beside their shoulder pivots.
+        Assert.Equal(PersonLoadout.UpperBody.Append(Humanoid.LeftUpperArmBone).Append(Humanoid.RightUpperArmBone).Order(), upper.Order());
         EvaluatedPose At(float weight) => PoseEvaluator.Sample(person, walk, .45, input: new()
         {
             Overlay = new(thrust, .5, upper, weight)

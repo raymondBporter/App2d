@@ -4,7 +4,7 @@
   "id": "triceratops-scrape",
   "name": "Triceratops \u00B7 scrape",
   "model": "triceratops",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.1,
   "loop": true,
   "reference": {},

@@ -4,7 +4,7 @@
   "id": "rock-thrower-throw",
   "name": "Rock thrower / search lift aim release",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.85,
   "reference": {
     "leg": 0.9914766,

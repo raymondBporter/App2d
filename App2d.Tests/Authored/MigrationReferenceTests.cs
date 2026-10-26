@@ -5,6 +5,7 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
@@ -200,11 +201,7 @@ public sealed class MigrationReferenceTests
         };
         if (Environment.GetEnvironmentVariable("APP2D_WRITE_REFERENCES") is { Length: > 0 })
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            // Scalar arrays (points, bounds, axes) on one line each: the file stays diffable without a line per component.
-            var text = Regex.Replace(JsonSerializer.Serialize(fresh, Json), @"\[\s+((?:-?[\d.Ee+-]+|true|false)(?:,\s+(?:-?[\d.Ee+-]+|true|false))*)\s+\]",
-                m => "[" + Regex.Replace(m.Groups[1].Value, @",\s+", ", ") + "]");
-            File.WriteAllText(path, text.Replace("\r\n", "\n").Replace("\n", "\r\n"));
+            WriteReferences(path, JsonSerializer.Serialize(fresh, Json));
             return;
         }
 
@@ -214,7 +211,22 @@ public sealed class MigrationReferenceTests
         var differences = new List<string>();
         Compare(expected.RootElement.GetProperty("cases"), actual.RootElement.GetProperty("cases"), "cases", differences);
         Compare(expected.RootElement.GetProperty("combat"), actual.RootElement.GetProperty("combat"), "combat", differences);
-        Assert.True(differences.Count == 0, $"{differences.Count} reference difference(s):{Environment.NewLine}{string.Join(Environment.NewLine, differences.Take(40))}");
+        if (differences.Count > 0 && Environment.GetEnvironmentVariable("APP2D_SPLICE_REFERENCES") is { Length: > 0 })
+        {
+            // Splice: only the values the comparison listed take their fresh value; everything else keeps its recorded text, so
+            // an approved difference lands in the file without last-digit float noise elsewhere (record it in the baseline first).
+            var changed = differences.Select(d => d[..d.IndexOf(": ", StringComparison.Ordinal)]).ToHashSet(StringComparer.Ordinal);
+            var merged = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+            foreach (var section in new[] { "cases", "combat" })
+            {
+                merged[section] = Splice(merged[section], actual.RootElement.GetProperty(section), section, changed);
+            }
+
+            WriteReferences(path, merged.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            return;
+        }
+
+        Assert.True(differences.Count == 0, $"{differences.Count} reference difference(s):{Environment.NewLine}{string.Join(Environment.NewLine, differences.Take(Environment.GetEnvironmentVariable("APP2D_REFERENCE_DIFFERENCES") is { Length: > 0 } ? int.MaxValue : 40))}");
     }
 
     [Fact]
@@ -239,6 +251,54 @@ public sealed class MigrationReferenceTests
         TestModels.Near(zero.World("piston"), zero.World("rod-end"), 2e-3f, "a zero-length target folds the rod onto its root");
         Assert.Equal(.001f, zero.Chains.Single().Residual, 4);
         Assert.False(zero.Chains.Single().Reached);
+    }
+
+    private static void WriteReferences(string path, string json)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        // Scalar arrays (points, bounds, axes) on one line each: the file stays diffable without a line per component.
+        var text = Regex.Replace(json, @"\[\s+((?:-?[\d.Ee+-]+|true|false)(?:,\s+(?:-?[\d.Ee+-]+|true|false))*)\s+\]",
+            m => "[" + Regex.Replace(m.Groups[1].Value, @",\s+", ", ") + "]");
+        File.WriteAllText(path, text.Replace("\r\n", "\n").Replace("\n", "\r\n"));
+    }
+
+    /// <summary>The recorded node with the fresh values at the listed paths (new members added, missing ones removed, resized arrays taken whole).</summary>
+    private static JsonNode? Splice(JsonNode? recorded, JsonElement fresh, string path, HashSet<string> changed)
+    {
+        if (changed.Contains(path) || recorded is null)
+        {
+            return JsonNode.Parse(fresh.GetRawText());
+        }
+
+        switch (fresh.ValueKind)
+        {
+            case JsonValueKind.Object when recorded is JsonObject recordedObject:
+                var result = new JsonObject();
+                foreach (var property in fresh.EnumerateObject())
+                {
+                    result[property.Name] = recordedObject.TryGetPropertyValue(property.Name, out var existing)
+                        ? Splice(existing, property.Value, $"{path}/{property.Name}", changed)
+                        : JsonNode.Parse(property.Value.GetRawText());
+                }
+
+                return result;
+            case JsonValueKind.Array when recorded is JsonArray recordedArray:
+                var items = fresh.EnumerateArray().ToList();
+                if (items.Count != recordedArray.Count)
+                {
+                    return JsonNode.Parse(fresh.GetRawText());
+                }
+
+                var array = new JsonArray();
+                for (var i = 0; i < items.Count; i++)
+                {
+                    array.Add(Splice(recordedArray[i]?.DeepClone(), items[i], $"{path}[{i}]", changed));
+                }
+
+                return array;
+            default:
+                return recorded.DeepClone();
+        }
     }
 
     private static string ReferencePath()

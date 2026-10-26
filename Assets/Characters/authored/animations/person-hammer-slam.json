@@ -4,7 +4,7 @@
   "id": "person-hammer-slam",
   "name": "Hammer slam",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.5,
   "reference": {
     "leg": 0.9914766,

@@ -4,7 +4,7 @@
   "id": "stalker-death",
   "name": "Stalker death",
   "model": "stalker",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.9,
   "reference": {
     "leg": 0.8544004

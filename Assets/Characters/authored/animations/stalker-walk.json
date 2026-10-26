@@ -4,7 +4,7 @@
   "id": "stalker-walk",
   "name": "Stalker walk",
   "model": "stalker",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "loop": true,
   "reference": {
     "leg": 0.8544004

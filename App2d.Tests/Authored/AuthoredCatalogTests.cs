@@ -33,10 +33,10 @@ public sealed class AuthoredCatalogTests
         Assert.Equal(["baby-triceratops", "cinder-gunner", "club-caveman", "flying-pterosaur", "hero", "maul-brute", "player", "rock-thrower", "shield-defender", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
         Assert.Equal(["dumbbell"], catalog.PhysicsProps.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
-        // The compatibility contract is visible in every file, even at its default value.
+        // The compatibility contract is visible in every file (the P11a limb conversion raised the Person's structure to 2).
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })
         {
-            Assert.Contains("\"structureRevision\": 1", File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, file)));
+            Assert.Contains("\"structureRevision\": 2", File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, file)));
         }
     }
 

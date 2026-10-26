@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
@@ -117,6 +118,19 @@ public static class RigConversion
                 continue;
             }
 
+            if ((x is null) != (y is null) && PlainScale((x ?? y)!.Value.Binding))
+            {
+                // One component of the offset was scaled (P10a bound the quadruped legs' y only); a bone length scales the
+                // whole segment and keeps its direction. Declared here, reported, and exact at the default value.
+                var (parameter, bound) = (x ?? y)!.Value;
+                var missing = x is null ? RigProperties.LocalX : RigProperties.LocalY;
+                var added = bound with { Target = PropertyRef.OfControl(child.Id, missing) };
+                parameter.Bindings.Insert(parameter.Bindings.IndexOf(bound) + 1, added);
+                report.Add($"{child.Id}: parameter '{parameter.Id}' scaled only its {bound.Target.Property}; the whole offset now scales as a length of '{parent.Id}' (direction kept; identical at the default)");
+                x = (parameter, x is null ? added : bound);
+                y = (parameter, y is null ? added : bound);
+            }
+
             if (x is null || y is null || x.Value.Parameter != y.Value.Parameter || !PlainScale(x.Value.Binding) || !PlainScale(y.Value.Binding))
             {
                 throw new InvalidOperationException($"'{child.Id}': its local translation bindings cannot become a length of '{parent.Id}'; bind local.x and local.y to one parameter with a plain scale, or remove them first.");
@@ -148,6 +162,153 @@ public static class RigConversion
 
     /// <summary>A multiplier of the authored value about zero: the one binding form a length and a local offset share.</summary>
     private static bool PlainScale(ParameterBinding binding) => binding.Kind == BindingKinds.Scale && binding.Reference is null && binding.About == 0;
+
+    /// <summary>One point-solved constraint converted onto the bone solver: the solved root, the pivot that kept the root's authored frame (null when none was needed) and the report.</summary>
+    public sealed record ConstraintConversion(string Chain, string Root, string? Pivot, IReadOnlyList<string> Report);
+
+    /// <summary>
+    /// Converts a point-solved two-bone constraint onto the canonical bone solver (plan rule 7; P11a): the semantic
+    /// conversion of the legacy point adapter, not a rename. The run becomes bone nodes (<see cref="ToBoneChain"/>) and the
+    /// constraint turns their frames. What the point solver never turned keeps its meaning explicitly: the end node binds to
+    /// the joint's tip with the <see cref="RigLinkOrientations.Character"/> policy, so its artwork, sockets and children keep
+    /// the character axes as authored; and when anything reads the root's own frame beyond the constraint (the constraint's
+    /// target frame, a socket framed on it, a part or child hanging from it, or a clip keying its rotation), the root stays
+    /// as that authored pivot and the solved upper segment becomes a new bone node at its position, so authored turns,
+    /// socket frames and target keys mean exactly what they did. Target keys of a constraint framed on a bone with a rest
+    /// rotation are re-expressed in that frame's rest axes. The caller verifies the result against the source and saves it.
+    /// </summary>
+    public static ConstraintConversion ToBoneConstraint(CharacterModel model, string chainId, IReadOnlyList<MotionClip> clips, string? boneId = null)
+    {
+        var chain = model.IkChains.FirstOrDefault(c => c.Id == chainId) ?? throw new InvalidOperationException($"Model '{model.Id}' has no constraint '{chainId}'.");
+        if (chain.Solver == ModelChain.BoneSolver)
+        {
+            throw new InvalidOperationException($"Constraint '{chainId}' already uses the bone solver.");
+        }
+
+        var byId = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
+        var root = byId[chain.Root];
+        var joint = byId[chain.Joint];
+        var end = byId[chain.End];
+        var report = new List<string>();
+        foreach (var control in new[] { root, joint, end })
+        {
+            if (control.Node == RigNodeKinds.Affine)
+            {
+                throw new InvalidOperationException($"Constraint '{chainId}': '{control.Id}' is a legacy affine node; convert it first.");
+            }
+        }
+
+        var bones = new[] { root, joint, end }.Where(c => c.Node == RigNodeKinds.Bone).Select(c => c.Id).ToList();
+        if (bones.Count > 0)
+        {
+            // P3b left bone nodes on the point solver; back to point controls so one path builds the constraint.
+            report.AddRange(ToPointControls(model, bones).Select(line => "(point form) " + line));
+        }
+
+        var readers = new List<string>();
+        if (chain.Frame == chain.Root)
+        {
+            readers.Add("its target frame");
+        }
+
+        foreach (var other in model.IkChains.Where(c => c != chain && c.Frame == chain.Root))
+        {
+            readers.Add($"constraint '{other.Id}' framed on it");
+        }
+
+        foreach (var socket in model.Sockets)
+        {
+            if (socket.Frame == chain.Root)
+            {
+                readers.Add($"socket '{socket.Id}' framed on it");
+            }
+            else if (socket.Control == chain.Root && socket.Frame is null && socket.Toward is null)
+            {
+                readers.Add($"socket '{socket.Id}' on it");
+            }
+        }
+
+        foreach (var part in model.Parts.Where(p => p.Frame == chain.Root || p.A == chain.Root && p.B is null))
+        {
+            readers.Add($"part '{part.Id}' on it");
+        }
+
+        foreach (var child in model.Controls.Where(c => c.Parent == chain.Root && c.Id != chain.Joint))
+        {
+            readers.Add($"child '{child.Id}'");
+        }
+
+        foreach (var clip in clips)
+        {
+            foreach (var track in clip.Tracks.Where(t => t.Target == chain.Root && t.Kind is MotionClip.RotateKind or MotionClip.BendKind or MotionClip.ScaleKind))
+            {
+                readers.Add($"clip '{clip.Id}' keys its {track.Kind}");
+            }
+        }
+
+        string bone;
+        if (readers.Count > 0)
+        {
+            bone = boneId ?? chain.Root + "-bone";
+            if (byId.ContainsKey(bone) || model.Parts.Any(p => p.Id == bone) || model.Attachments.Any(a => a.Id == bone) || model.IkChains.Any(c => c.Id == bone))
+            {
+                throw new InvalidOperationException($"Constraint '{chainId}': the bone id '{bone}' is already taken.");
+            }
+
+            var node = new ModelControl { Id = bone, Parent = root.Id, Rest = root.Rest };
+            model.Controls.Insert(model.Controls.IndexOf(root) + 1, node);
+            joint.Parent = bone;
+            foreach (var group in model.Groups.Where(g => g.Targets.Contains(chain.Root)))
+            {
+                group.Targets.Insert(group.Targets.IndexOf(chain.Root) + 1, bone);
+                report.Add($"group '{group.Id}': '{bone}' joins beside '{chain.Root}'");
+            }
+
+            report.Add($"'{chain.Root}' keeps its authored frame as the pivot ({string.Join(", ", readers.Distinct())}); the solved upper segment is the new bone node '{bone}' at its position");
+            chain.Root = bone;
+        }
+        else
+        {
+            bone = chain.Root;
+        }
+
+        report.AddRange(ToBoneChain(model, [bone, joint.Id, end.Id]));
+        // The point solver never turned the end: it keeps the character's axes while its origin rides the joint's tip.
+        end.Link!.Orientation = RigLinkOrientations.Character;
+        end.Local!.Rotation = 0;
+        report.Add($"{end.Id}: keeps the character axes (link orientation '{RigLinkOrientations.Character}'), as the point solver left it");
+        chain.Solver = ModelChain.BoneSolver;
+        if (chain.Frame != CharacterModel.Locomotion)
+        {
+            var restAngle = RigGraph.Compile(model)[chain.Frame].RestAngle;
+            if (MathF.Abs(restAngle) > 1e-6f)
+            {
+                // A point constraint keyed its target in the character axes turned by the frame's rotation since rest; a bone
+                // constraint keys it in the frame's own axes, so the keys turn back by the frame's rest rotation.
+                foreach (var clip in clips)
+                {
+                    foreach (var track in clip.Tracks.Where(t => t.Kind == MotionClip.TargetKind && t.Target == chain.Id))
+                    {
+                        if (track.Keys.Any(k => k.Curve is not null || k.CurveY is not null))
+                        {
+                            throw new InvalidOperationException($"Clip '{clip.Id}': the target keys of '{chain.Id}' carry easing curves that cannot be turned into the frame's rest axes; re-express them first.");
+                        }
+
+                        foreach (var key in track.Keys)
+                        {
+                            key.Value = Rotation2D.ApplyXY(key.Value, -restAngle);
+                        }
+
+                        report.Add($"clip '{clip.Id}': {track.Keys.Count} target key(s) of '{chain.Id}' turned by {-restAngle:0.####} into the rest axes of '{chain.Frame}'");
+                    }
+                }
+            }
+        }
+
+        model.Validate();
+        report.Add($"constraint '{chain.Id}': bone solver on {bone} > {joint.Id} > {end.Id}, frame {chain.Frame}");
+        return new(chain.Id, bone, readers.Count > 0 ? root.Id : null, report);
+    }
 
     /// <summary>
     /// The inverse of <see cref="ToBoneChain"/>: the given bone nodes become point controls whose character-frame rest is
@@ -186,7 +347,7 @@ public static class RigConversion
             }
             if (Binding(model, id, RigProperties.Length) is { } length)
             {
-                var tip = model.Controls.FirstOrDefault(c => c.Parent == id && c.Node == RigNodeKinds.Bone && c.Link is { IsTip: true } && controls.Contains(c.Id));
+                var tip = model.Controls.FirstOrDefault(c => c.Parent == id && c.Node == RigNodeKinds.Bone && c.Link is { T: 1, OffsetX: 0, OffsetY: 0 } && controls.Contains(c.Id));
                 if (tip is null || !PlainScale(length.Binding))
                 {
                     throw new InvalidOperationException($"'{id}': parameter '{length.Parameter.Id}' binds its length, which only a plain scale with a converted tip-bound child can carry as a point offset; remove the binding first.");

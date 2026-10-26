@@ -4,7 +4,7 @@
   "id": "baby-triceratops-recover",
   "name": "Baby triceratops / recover",
   "model": "baby-triceratops-rig",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.2,
   "reference": {},
   "travel": {

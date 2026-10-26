@@ -97,10 +97,10 @@ public static class TemplateResources
         },
     };
 
-    /// <summary>Every published template with the declaration its model needs (null when the shipped model already declares its dimensions).</summary>
+    /// <summary>Every published template with the declaration its model needs: the seeds are the one writer of each anatomy's dimensions.</summary>
     public static IReadOnlyList<(ModelTemplate Template, Action<CharacterModel>? Declare)> All =>
     [
-        (Person(), null),
+        (Person(), PersonTemplate.Declare),
         (Quadruped(false), QuadrupedTemplate.Dimensions),
         (Quadruped(true), QuadrupedTemplate.Dimensions),
         (Pterosaur(), PterosaurTemplate.Dimensions),

@@ -373,7 +373,7 @@ public sealed class CharacterModel
             Require(chain.Frame == Locomotion || !SelfAndAncestors(chain.Frame).Any(id => writes.Any(w => w.Id == id)), $"{owner}: chain '{chain.Id}' frame '{chain.Frame}' must not be moved by IK.");
         }
         var nodes = RigGraph.Compile(this);
-        BoneFrameIk.ValidateFrames(controls, IkChains, nodes.ToDictionary(n => n.Key, n => n.Value.RestFrame, StringComparer.Ordinal));
+        BoneFrameIk.ValidateFrames(nodes, IkChains);
 
         var parts = new HashSet<string>(StringComparer.Ordinal);
         foreach (var part in Parts)

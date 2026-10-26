@@ -4,7 +4,7 @@
   "id": "curve-face-expressions",
   "name": "Expressions \u2014 play me",
   "model": "curve-face",
-  "structureRevision": 2,
+  "structureRevision": 3,
   "duration": 8,
   "loop": true,
   "reference": {},
@@ -419,75 +419,6 @@
       ]
     },
     {
-      "kind": "scale",
-      "target": "left-eye",
-      "keys": [
-        {
-          "ease": "smooth"
-        },
-        {
-          "time": 1.55,
-          "ease": "smooth"
-        },
-        {
-          "time": 2,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 2.15,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 2.45,
-          "ease": "smooth"
-        },
-        {
-          "time": 2.55,
-          "ease": "smooth"
-        },
-        {
-          "time": 3,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 3.15,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 3.45,
-          "ease": "smooth"
-        },
-        {
-          "time": 6.55,
-          "ease": "smooth"
-        },
-        {
-          "time": 7,
-          "x": -1,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 7.15,
-          "x": -1,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 7.45,
-          "ease": "smooth"
-        },
-        {
-          "time": 8,
-          "ease": "smooth"
-        }
-      ]
-    },
-    {
       "target": "right-eye-upper-bend",
       "keys": [
         {
@@ -607,57 +538,6 @@
         {
           "time": 7.15,
           "y": 0.08,
-          "ease": "smooth"
-        },
-        {
-          "time": 7.45,
-          "ease": "smooth"
-        },
-        {
-          "time": 8,
-          "ease": "smooth"
-        }
-      ]
-    },
-    {
-      "kind": "scale",
-      "target": "right-eye",
-      "keys": [
-        {
-          "ease": "smooth"
-        },
-        {
-          "time": 1.55,
-          "ease": "smooth"
-        },
-        {
-          "time": 2,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 2.15,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 2.45,
-          "ease": "smooth"
-        },
-        {
-          "time": 6.55,
-          "ease": "smooth"
-        },
-        {
-          "time": 7,
-          "x": -1,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 7.15,
-          "x": -1,
-          "y": -1,
           "ease": "smooth"
         },
         {
@@ -1361,6 +1241,126 @@
         {
           "time": 8,
           "x": 1.344
+        }
+      ]
+    },
+    {
+      "kind": "fit",
+      "target": "left-pupil",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1.55,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 2.15,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 2.45,
+          "ease": "smooth"
+        },
+        {
+          "time": 2.55,
+          "ease": "smooth"
+        },
+        {
+          "time": 3,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 3.15,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 3.45,
+          "ease": "smooth"
+        },
+        {
+          "time": 6.55,
+          "ease": "smooth"
+        },
+        {
+          "time": 7,
+          "x": -1,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 7.15,
+          "x": -1,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 7.45,
+          "ease": "smooth"
+        },
+        {
+          "time": 8,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "fit",
+      "target": "right-pupil",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1.55,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 2.15,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 2.45,
+          "ease": "smooth"
+        },
+        {
+          "time": 6.55,
+          "ease": "smooth"
+        },
+        {
+          "time": 7,
+          "x": -1,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 7.15,
+          "x": -1,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 7.45,
+          "ease": "smooth"
+        },
+        {
+          "time": 8,
+          "ease": "smooth"
         }
       ]
     }

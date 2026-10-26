@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 4,
   "id": "flying-pterosaur",
   "name": "Pterosaur",
   "model": "pterosaur",
@@ -9,37 +9,82 @@
     "hit": "pterosaur-hit",
     "death": "pterosaur-death"
   },
-  "health": 4,
-  "mass": 0.8,
+  "controller": {
+    "kind": "flying",
+    "flight": {},
+    "range": 3.2,
+    "cooldown": 0.8
+  },
+  "behaviors": {
+    "strikes": {
+      "beak": {
+        "damage": 2,
+        "sound": "hit"
+      }
+    },
+    "damage": {
+      "health": 4,
+      "mass": 0.8
+    },
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.425,
-        "y": 0.4
+      "center": {
+        "x": 0,
+        "y": 0.7
       },
-      "max": {
-        "x": 0.425,
-        "y": 1.0
-      }
+      "size": {
+        "x": 0.85,
+        "y": 0.6
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "body",
     "regions": {}
   },
-  "equipment": [],
-  "controller": {
-    "kind": "flying",
-    "range": 3.2,
-    "cooldown": 0.8,
-    "flight": {
-      "hoverHeight": 3.2,
-      "speed": 3,
-      "diveSpeed": 10,
-      "lowSpeed": 0.8
+  "colliders": [
+    {
+      "id": "beak",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.65,
+          "y": 0.5
+        },
+        "angleRadians": 0
+      },
+      "socket": "head-art",
+      "offsetX": 0.15
+    },
+    {
+      "id": "body",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.62,
+          "y": 0.37
+        },
+        "angleRadians": 0
+      },
+      "control": "body",
+      "frame": "locomotion",
+      "offsetX": 0.15,
+      "offsetY": 0.025
     }
-  },
+  ],
+  "equipment": [],
   "actions": [
     {
       "id": "attack",
@@ -47,27 +92,13 @@
       "hits": [
         {
           "id": "beak",
-          "socket": "head-art",
-          "offsetX": 0.15,
-          "damage": 2,
-          "sound": "hit",
           "start": {
             "marker": "rush"
           },
           "finish": {
             "marker": "brake"
           },
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.325,
-              "y": -0.25
-            },
-            "max": {
-              "x": 0.325,
-              "y": 0.25
-            }
-          }
+          "collider": "beak"
         }
       ],
       "events": [

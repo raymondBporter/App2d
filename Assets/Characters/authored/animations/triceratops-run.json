@@ -4,7 +4,7 @@
   "id": "triceratops-run",
   "name": "Triceratops \u00B7 run",
   "model": "triceratops",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.65,
   "loop": true,
   "reference": {},

@@ -4,7 +4,7 @@
   "id": "stalker-lunge",
   "name": "Stalker lunge",
   "model": "stalker",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.8,
   "reference": {
     "leg": 0.8544004

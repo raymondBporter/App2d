@@ -4,7 +4,7 @@
   "id": "curve-face-wink",
   "name": "Wink",
   "model": "curve-face",
-  "structureRevision": 2,
+  "structureRevision": 3,
   "duration": 2,
   "loop": true,
   "reference": {},
@@ -73,37 +73,6 @@
       ]
     },
     {
-      "kind": "scale",
-      "target": "left-eye",
-      "keys": [
-        {
-          "ease": "smooth"
-        },
-        {
-          "time": 0.8,
-          "ease": "smooth"
-        },
-        {
-          "time": 0.94,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 1.06,
-          "y": -1,
-          "ease": "smooth"
-        },
-        {
-          "time": 1.22,
-          "ease": "smooth"
-        },
-        {
-          "time": 2,
-          "ease": "smooth"
-        }
-      ]
-    },
-    {
       "target": "left-brow-bend",
       "keys": [
         {
@@ -151,6 +120,37 @@
         {
           "time": 1.06,
           "y": -0.18,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "fit",
+      "target": "left-pupil",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.8,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.94,
+          "y": -1,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.06,
+          "y": -1,
           "ease": "smooth"
         },
         {

@@ -102,10 +102,11 @@ public sealed class ColliderConversionTests
     public void ConvertFileWritesAScratchTreeWithAReportAndIsRerunnable()
     {
         var output = Path.Combine(Path.GetTempPath(), "app2d-collider-conversion", Guid.NewGuid().ToString("N"));
+        // P11a converted the shipped maul brute; the conversion is exercised on its version-2 form in a scratch tree, twice.
+        var source = LegacyEntities.ScratchTree(Catalog, "maul-brute");
         try
         {
-            // The maul brute is still legacy in the authored tree: convert it on a scratch tree, twice.
-            var first = ColliderConversion.ConvertFile(TestModels.AuthoredRoot, "maul-brute", output);
+            var first = ColliderConversion.ConvertFile(source, "maul-brute", output);
             Assert.True(first.Converted, string.Join("; ", first.Differences));
             Assert.Equal("written", first.Status);
             Assert.True(File.Exists(first.Output));
@@ -118,20 +119,23 @@ public sealed class ColliderConversionTests
             Assert.Equal(["hammer-head", "body", "head", "legs"], converted.Colliders.Select(c => c.Id));
             var compiled = Compile(converted);
             Assert.True(compiled.HurtRegistered);
-            var second = ColliderConversion.ConvertFile(TestModels.AuthoredRoot, "maul-brute", output);
+            var second = ColliderConversion.ConvertFile(source, "maul-brute", output);
             Assert.StartsWith("unchanged", second.Status);
             File.WriteAllText(first.Output!, File.ReadAllText(first.Output!).Replace("\"name\": \"Maul brute\"", "\"name\": \"Maul brute (edited)\""));
-            var third = ColliderConversion.ConvertFile(TestModels.AuthoredRoot, "maul-brute", output);
+            var third = ColliderConversion.ConvertFile(source, "maul-brute", output);
             Assert.StartsWith("kept", third.Status);
             Assert.Contains("(edited)", File.ReadAllText(first.Output!));
             // The source tree was never written.
-            Assert.Equal(EntityAsset.LegacyVersion, Catalog.Entities["maul-brute"].Asset.Version);
+            Assert.Equal(EntityAsset.LegacyVersion, EntityAsset.FromJson(File.ReadAllText(Path.Combine(source, "entities", "maul-brute.json"))).Version);
         }
         finally
         {
-            if (Directory.Exists(output))
+            foreach (var directory in new[] { output, source })
             {
-                Directory.Delete(output, true);
+                if (Directory.Exists(directory))
+                {
+                    Directory.Delete(directory, true);
+                }
             }
         }
     }
@@ -139,14 +143,8 @@ public sealed class ColliderConversionTests
     [Fact]
     public void TheSessionConvertsAsOneUndoStepAndEditsCollidersWithValidation()
     {
-        // A scratch copy of the authored tree, so the session's save never touches the shipped files.
-        var root = Path.Combine(Path.GetTempPath(), $"collider-session-{Guid.NewGuid():N}");
-        foreach (var file in Directory.EnumerateFiles(TestModels.AuthoredRoot, "*.json", SearchOption.AllDirectories))
-        {
-            var target = Path.Combine(root, Path.GetRelativePath(TestModels.AuthoredRoot, file));
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(file, target);
-        }
+        // A scratch copy of the authored tree with the maul brute in its version-2 form, so the session's save never touches the shipped files.
+        var root = LegacyEntities.ScratchTree(Catalog, "maul-brute");
         try
         {
             var workspace = App2d.Core.Characters.Editing.AuthoringWorkspace.Open(root);

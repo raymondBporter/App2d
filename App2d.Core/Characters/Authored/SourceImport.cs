@@ -235,11 +235,6 @@ public static class LibraryImport
     public static MotionClip Convert(PointLibrary library, string clipId, CharacterModel model, IReadOnlyDictionary<string, List<string>> points, string id, string name, string? restClip = null)
     {
         var resolved = ResolvedModel.Rig(model);
-        if (model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
-        {
-            throw new InvalidDataException("Point-library retargeting cannot infer bone-frame rotations. Import a point rig or author the bone constraint's target in Animate.");
-        }
-
         foreach (var control in points.Keys)
         {
             if (!resolved.Controls.ContainsKey(control))
@@ -256,6 +251,14 @@ public static class LibraryImport
         float Ratio(string scale) => ratios.TryGetValue(scale, out var ratio) ? ratio : overall;
 
         var solved = model.IkChains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
+        foreach (var chain in model.IkChains.Where(c => c.Solver == ModelChain.BoneSolver))
+        {
+            // A bone constraint turns its root; the solved bone beneath a pivot (P11a) sits at its parent's origin and gets no channel.
+            if (resolved.Controls[chain.Root].Parent is { } parent && Vector2.Distance(new(resolved.Rest[chain.Root].X, resolved.Rest[chain.Root].Y), new(resolved.Rest[parent].X, resolved.Rest[parent].Y)) < 1e-6f)
+            {
+                solved.Add(chain.Root);
+            }
+        }
         var duration = (float)source.Clip.Duration;
         var clip = new MotionClip
         {

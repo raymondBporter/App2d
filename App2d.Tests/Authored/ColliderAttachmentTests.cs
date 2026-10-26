@@ -61,12 +61,12 @@ public sealed class ColliderAttachmentTests
             Assert.Equal(entity.Asset.Colliders.Any(c => c.Use == ColliderUses.Hurt), entity.HurtRegistered);
             Assert.Equal(entity.Asset.Hurt.Layout is null, entity.HurtRegistered || entity.Hurt.Count == 0);
         }
-        // P8c converted the player, the spear guard and the shield defender; every other entity still implies its colliders from the legacy fields.
-        Assert.Equal(["player", "shield-defender", "spear-guard"], Catalog.Entities.Values.Where(e => e.HurtRegistered).Select(e => e.Id).Order(StringComparer.Ordinal));
-        // A window id shared by several actions is qualified by the action; a unique one keeps its own name.
+        // P8c converted the player, the spear guard and the shield defender; P11a the other eight: every shipped entity registers its hurt.
+        Assert.All(Catalog.Entities.Values, e => Assert.True(e.HurtRegistered, e.Id));
+        // A window id shared by several actions was qualified by the action when the P11a conversion declared the hero's colliders; a unique one keeps its own name.
         var hero = Catalog.Entities["hero"];
-        Assert.Equal(["attack-blade", "follow-up-blade", "forehand-blade"], hero.Colliders.Select(c => c.Id).Order(StringComparer.Ordinal));
-        Assert.All(hero.Colliders, c => Assert.Equal("window", c.Source));
+        Assert.Equal(["attack-blade", "body", "follow-up-blade", "forehand-blade", "head", "legs"], hero.Colliders.Select(c => c.Id).Order(StringComparer.Ordinal));
+        Assert.All(hero.Colliders, c => Assert.Equal("collider", c.Source));
         Assert.Equal(["spear-tip", "body", "head", "legs", "reach"], Catalog.Entities["spear-guard"].Colliders.Select(c => c.Id));
         Assert.All(Catalog.Entities["spear-guard"].Colliders, c => Assert.Equal("collider", c.Source));
         var defender = Catalog.Entities["shield-defender"];

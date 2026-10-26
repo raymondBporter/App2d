@@ -4,7 +4,7 @@
   "id": "quadruped-recover",
   "name": "Quadruped \u00B7 recover",
   "model": "quadruped",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 1.2,
   "reference": {},
   "travel": {

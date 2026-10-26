@@ -88,14 +88,23 @@ public sealed record PersonBuild
     public static void Declare(CharacterModel model)
     {
         var controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
-        var ground = controls[Humanoid.LeftFoot].Rest.Y;
+        // The ground line is the left foot's authored rest, derived through the leg bones alone (a tip-bound bone node authors no
+        // rest of its own, P11a): resolved without any declared parameter, so re-declaring a declared model is a fixed point.
+        var pristine = CharacterModel.FromJson(model.ToJson());
+        pristine.Parameters = [];
+        pristine.Presets = [];
+        var ground = ResolvedModel.Rig(pristine).Rest[Humanoid.LeftFoot].Y;
         ParameterBinding Scale(string control, string property, float about = 0) => new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfControl(control, property), About = about };
         ParameterBinding Fit(string part, string property) => new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfPart(part, property) };
         // A segment's size lives on its length when the limb is a bone chain and on its parent-local offset when it is a point run.
         IEnumerable<ParameterBinding> Segment(string control) => controls[control].Node == RigNodeKinds.Bone
             ? [Scale(control, RigProperties.Length)]
             : [Scale(control, RigProperties.LocalX), Scale(control, RigProperties.LocalY), Scale(control, RigProperties.LocalLayer)];
-        IEnumerable<ParameterBinding> Limb(string start, string joint, string end) => controls[start].Node == RigNodeKinds.Bone
+        // A limb on the bone solver scales its two solved bones' lengths (the root bone sits beneath the shoulder pivot of an
+        // arm, or is the hip itself); a point run scales each segment's parent-local offset.
+        IEnumerable<ParameterBinding> Limb(string start, string joint, string end) => model.IkChains.FirstOrDefault(c => c.End == end) is { Solver: ModelChain.BoneSolver } chain
+            ? [Scale(chain.Root, RigProperties.Length), Scale(chain.Joint, RigProperties.Length)]
+            : controls[start].Node == RigNodeKinds.Bone
             ? [Scale(start, RigProperties.Length), Scale(joint, RigProperties.Length)]
             : Segment(joint).Concat(Segment(end));
         ModelParameter Parameter(string id, string name, (float Min, float Max) soft, IEnumerable<ParameterBinding> bindings) => new()

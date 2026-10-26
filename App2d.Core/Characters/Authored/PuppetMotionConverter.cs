@@ -11,12 +11,19 @@ public static class PuppetMotionConverter
     public static MotionClip Convert(PuppetDefinition puppet, PuppetMotion motion, CharacterModel model, string id, string name, string travelScale)
     {
         var resolved = ResolvedModel.Rig(model);
-        if (model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
-        {
-            throw new InvalidDataException("Prototype point motion cannot infer bone-frame rotations. Convert onto a point rig or author the bone constraint's target in Animate.");
-        }
-
+        // A chain's joint and end are solved from the target; a bone constraint also turns its root, whose origin still
+        // follows its parent. A control the prototype never had (a solved bone inserted at a pivot, P11a) gets no channel
+        // and follows its parent; every other unsolved control keys its prototype position as before.
         var solved = model.IkChains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
+        foreach (var chain in model.IkChains.Where(c => c.Solver == ModelChain.BoneSolver))
+        {
+            // The solved bone beneath a pivot (P11a) sits at its parent's origin and takes its position from it: no channel.
+            var bone = resolved.Controls[chain.Root];
+            if (bone.Parent is { } parent && Vector2.Distance(new(resolved.Rest[chain.Root].X, resolved.Rest[chain.Root].Y), new(resolved.Rest[parent].X, resolved.Rest[parent].Y)) < 1e-6f)
+            {
+                solved.Add(chain.Root);
+            }
+        }
         foreach (var control in model.Controls.Where(c => !solved.Contains(c.Id)))
         {
             for (var parent = control.Parent; parent is not null; parent = resolved.Controls[parent].Parent)

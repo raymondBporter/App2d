@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 4,
   "id": "maul-brute",
   "name": "Maul brute",
   "model": "brute",
@@ -10,25 +10,110 @@
     "walkSpeed": 1.1,
     "range": 1.3
   },
-  "health": 22,
-  "mass": 3,
+  "behaviors": {
+    "strikes": {
+      "hammer-head": {
+        "damage": 5,
+        "sound": "heavy"
+      }
+    },
+    "damage": {
+      "health": 22,
+      "mass": 3
+    },
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.1595,
-        "y": 0
+      "center": {
+        "x": 0,
+        "y": 1.0615
       },
-      "max": {
-        "x": 0.1595,
+      "size": {
+        "x": 0.319,
         "y": 2.123
-      }
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "standard",
     "regions": {}
   },
+  "colliders": [
+    {
+      "id": "hammer-head",
+      "use": "attack",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.2,
+          "y": 1
+        },
+        "angleRadians": 0
+      },
+      "prop": "hammer"
+    },
+    {
+      "id": "body",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.541,
+          "y": 0.9625
+        },
+        "angleRadians": 0
+      },
+      "control": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.03139,
+      "offsetY": 0.34125
+    },
+    {
+      "id": "head",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "control": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.3824,
+          "y": 0.881
+        },
+        "angleRadians": 0
+      },
+      "control": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.1212,
+      "offsetY": -0.3705
+    }
+  ],
   "equipment": [
     {
       "prop": "hammer",
@@ -68,20 +153,7 @@
           "finish": {
             "marker": "recover"
           },
-          "prop": "hammer",
-          "shape": {
-            "kind": "rectangle",
-            "min": {
-              "x": -0.6,
-              "y": -0.5
-            },
-            "max": {
-              "x": 0.6,
-              "y": 0.5
-            }
-          },
-          "damage": 5,
-          "sound": "heavy"
+          "collider": "hammer-head"
         }
       ],
       "events": [

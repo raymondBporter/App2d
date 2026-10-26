@@ -62,20 +62,21 @@ public sealed class ParameterBindingTests
         Assert.Equal(["standard", "tall-thin", "short-broad"], person.Presets.Select(p => p.Id));
         Assert.Equal(PersonBuild.TallThin.Values(), person.Presets[1].Values);
         var resolved = Catalog.Resolve("person");
-        Assert.Equal("arms", resolved.Parameters.BindingOfControl("left-shoulder", RigProperties.Length)!.Value.Parameter.Id);
-        Assert.Equal("arms", resolved.Parameters.BindingOfControl("right-elbow", RigProperties.LocalY)!.Value.Parameter.Id);
+        Assert.Equal("arms", resolved.Parameters.BindingOfControl(Humanoid.LeftUpperArmBone, RigProperties.Length)!.Value.Parameter.Id);
+        Assert.Equal("arms", resolved.Parameters.BindingOfControl("right-elbow", RigProperties.Length)!.Value.Parameter.Id);
         Assert.Equal("width", resolved.Parameters.BindingOfPart("body", RigProperties.ScaleX)!.Value.Parameter.Id);
         Assert.Equal("head", resolved.Parameters.BindingOfPart("head", RigProperties.ScaleY)!.Value.Parameter.Id);
         var hips = resolved.Parameters.BindingOfControl("hips", RigProperties.LocalY)!.Value;
         Assert.Equal("legs", hips.Parameter.Id);
-        Assert.Equal(person.Controls.Single(c => c.Id == "left-foot").Rest.Y, hips.Binding.About);
+        Assert.Equal(resolved.Rest["left-foot"].Y, hips.Binding.About, 5);
         Assert.Null(resolved.Parameters.BindingOfControl("chest", RigProperties.LocalX + "x"));
         // The seed (with its face instance, P7c) declares the same thing the file carries, and a default resolution leaves every authored rest untouched.
         var seed = PersonTemplate.Model(face: true);
         Assert.Equal(person.Parameters.Select(p => (p.Id, p.Bindings.Count)), seed.Parameters.Select(p => (p.Id, p.Bindings.Count)));
+        // A point control nobody moved keeps its authored rest; the hips' ground-anchored binding writes them at the default (float roundoff).
         foreach (var control in person.Controls.Where(c => c.Node == RigNodeKinds.Point))
         {
-            Assert.Equal(control.Rest.XYZ, resolved.Rest[control.Id]);
+            TestModels.Near(control.Rest.XYZ, resolved.Rest[control.Id], 1e-6f, control.Id);
         }
     }
 
@@ -102,7 +103,7 @@ public sealed class ParameterBindingTests
             Assert.Equal(expected.ScaleY, got.ScaleY, 5);
             Assert.Equal(expected.OffsetY, got.OffsetY, 5);
         }
-        Assert.Equal(variant.Parameters.GetValueOrDefault("arms", 1), actual.Nodes["left-shoulder"].Length / standard.Nodes["left-shoulder"].Length, 4);
+        Assert.Equal(variant.Parameters.GetValueOrDefault("arms", 1), actual.Nodes[Humanoid.LeftUpperArmBone].Length / standard.Nodes[Humanoid.LeftUpperArmBone].Length, 4);
     }
 
     [Fact]
@@ -155,6 +156,8 @@ public sealed class ParameterBindingTests
             built[shoulderId] = built[Humanoid.Chest] + new Vector3(shoulder.X * b.Width, shoulder.Y * b.Torso, shoulder.Z * b.Width);
             built[elbow] = built[shoulderId] + (rest[elbow] - rest[shoulderId]) * b.Arms;
             built[hand] = built[elbow] + (rest[hand] - rest[elbow]) * b.Arms;
+            // P11a: the solved upper-arm bone sits at its shoulder pivot.
+            built[shoulderId == Humanoid.LeftShoulder ? Humanoid.LeftUpperArmBone : Humanoid.RightUpperArmBone] = built[shoulderId];
         }
         foreach (var (control, point) in built)
         {
@@ -369,7 +372,7 @@ public sealed class ParameterBindingTests
         }
 
         Assert.Equal(tall.Parts.Single(p => p.Id == "body").ScaleX, flat.Parts.Single(p => p.Id == "body").ScaleX, 5);
-        Assert.Equal(tall.Nodes["left-shoulder"].Length, flat.Nodes["left-shoulder"].Length, 5);
+        Assert.Equal(tall.Nodes[Humanoid.LeftUpperArmBone].Length, flat.Nodes[Humanoid.LeftUpperArmBone].Length, 5);
     }
 
     [Fact]
@@ -383,7 +386,7 @@ public sealed class ParameterBindingTests
         var document = session.SubjectModel!;
         var before = document.Serialize();
         // Every Person layout property is already bound by a proportion; the hand bone's (zero) length is free.
-        Assert.False(session.Edit(document, () => ModelAuthoring.AddBinding(document.Asset, "arms", new() { Target = PropertyRef.OfControl("right-hand", RigProperties.LocalX) })));
+        Assert.False(session.Edit(document, () => ModelAuthoring.AddBinding(document.Asset, "arms", new() { Target = PropertyRef.OfControl(Humanoid.Hips, RigProperties.LocalY) })));
         Assert.Contains("one binding", session.Message);
         Assert.True(session.Edit(document, () => ModelAuthoring.AddParameter(document.Asset, "hand-span", "Hand span", ParameterUnits.Length, 0, 0, 1)), session.Message);
         Assert.True(session.Edit(document, () => ModelAuthoring.AddBinding(document.Asset, "hand-span", new() { Kind = BindingKinds.Set, Target = PropertyRef.OfControl("left-hand", RigProperties.Length) })), session.Message);

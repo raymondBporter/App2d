@@ -4,7 +4,7 @@
   "id": "player-balance-forward",
   "name": "Balance, edge ahead",
   "model": "person",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "loop": true,
   "reference": {
     "leg": 0.9914766,

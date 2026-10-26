@@ -6,7 +6,7 @@ namespace App2d.CharacterSeeds;
 /// <summary>Runs the rendering smokes and studies against the game's real assets and simulation. This project references the game; the game does not reference it.</summary>
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --convert-variants authored-root base-id output-directory variant-id... | --convert-face authored-root model-id control-id output-directory part-id | --bake-face authored-root | --convert-face-payload authored-root model-id part-id instance-id asset-id socket-id output-directory | --convert-colliders authored-root output-directory entity-id... | --convert-behaviors authored-root output-directory entity-id...]";
+    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --convert-variants authored-root base-id output-directory variant-id... | --convert-face authored-root model-id control-id output-directory part-id | --bake-face authored-root | --convert-face-payload authored-root model-id part-id instance-id asset-id socket-id output-directory | --convert-colliders authored-root output-directory entity-id... | --convert-behaviors authored-root output-directory entity-id... | --convert-models authored-root output-directory model-id...]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -178,6 +178,29 @@ internal static class Program
                     behaviorsExit = behaviors.Converted ? behaviorsExit : 2;
                 }
                 return behaviorsExit;
+            case ["--convert-models", var authoredRoot, var output, .. var modelIds] when modelIds.Length > 0:
+                // P11a: a model bundle onto the canonical rig (point constraints to the bone solver, translation-only affine
+                // nodes to point controls with fit tracks, the current version), on a scratch tree with a report each.
+                var modelsExit = 0;
+                foreach (var modelId in modelIds)
+                {
+                    var conversion = ModelConversion.Convert(authoredRoot, modelId, output, ModelConversionPlans.Naming(modelId));
+                    Console.WriteLine($"{conversion.ModelId}: {conversion.Status}");
+                    foreach (var line in conversion.Report)
+                    {
+                        Console.WriteLine("  " + line);
+                    }
+                    foreach (var file in conversion.Files)
+                    {
+                        Console.WriteLine($"  {file.Kind} {file.Id}: {file.Status}");
+                    }
+                    foreach (var difference in conversion.Differences)
+                    {
+                        Console.WriteLine("  DIFFERENCE: " + difference);
+                    }
+                    modelsExit = conversion.Converted || conversion.Status.StartsWith("unchanged", StringComparison.Ordinal) || conversion.Status.StartsWith("kept", StringComparison.Ordinal) ? modelsExit : 2;
+                }
+                return modelsExit;
             case ["--convert-face-payload", var authoredRoot, var modelId, var partId, var instanceId, var assetId, var socketId, var output]:
                 // P7c: a model's procedural face payload, its clips' face tracks, its variants' face overrides and its looks' face words onto a face instance.
                 var payload = App2d.Core.Characters.Authored.FaceConversion.ConvertPayload(authoredRoot, modelId, partId, instanceId, assetId, socketId, output);

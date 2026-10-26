@@ -16,20 +16,21 @@ namespace App2d.Core.Characters.Authored;
 /// </summary>
 internal static class BoneFrameIk
 {
-    internal static void ValidateFrames(IReadOnlyDictionary<string, ModelControl> controls, IEnumerable<ModelChain> chains, IReadOnlyDictionary<string, Matrix3x2> frames)
+    /// <summary>Checks every bone constraint's segments on the resolved nodes: a bound or scaled length is the node's, not the authored control's.</summary>
+    internal static void ValidateFrames(IReadOnlyDictionary<string, RigNode> nodes, IEnumerable<ModelChain> chains)
     {
         foreach (var c in chains.Where(c => c.Solver == ModelChain.BoneSolver))
         {
-            Segment(c, controls[c.Root], frames[c.Root], frames[c.Joint]);
-            Segment(c, controls[c.Joint], frames[c.Joint], frames[c.End]);
-            if (c.Frame != CharacterModel.Locomotion && !Matrix3x2.Invert(frames[c.Frame], out _))
+            Segment(c, nodes[c.Root], nodes[c.Root].RestFrame, nodes[c.Joint].RestFrame);
+            Segment(c, nodes[c.Joint], nodes[c.Joint].RestFrame, nodes[c.End].RestFrame);
+            if (c.Frame != CharacterModel.Locomotion && !Matrix3x2.Invert(nodes[c.Frame].RestFrame, out _))
             {
                 throw new InvalidDataException($"Bone constraint '{c.Id}': target frame '{c.Frame}' is collapsed.");
             }
         }
     }
 
-    private static float Segment(ModelChain chain, ModelControl bone, Matrix3x2 frame, Matrix3x2 child)
+    private static float Segment(ModelChain chain, RigNode bone, Matrix3x2 frame, Matrix3x2 child)
     {
         var (x, y, _) = frame.GetRows();
         var size = x.LengthSquared();
@@ -54,8 +55,8 @@ internal static class BoneFrameIk
     {
         var root = pose.Bones[chain.Root];
         var joint = pose.Bones[chain.Joint];
-        var first = Segment(chain, model.Controls[chain.Root], root, joint);
-        var second = Segment(chain, model.Controls[chain.Joint], joint, pose.Bones[chain.End]);
+        var first = Segment(chain, model.Nodes[chain.Root], root, joint);
+        var second = Segment(chain, model.Nodes[chain.Joint], joint, pose.Bones[chain.End]);
         var rootOrigin = new Vector2(root.M31, root.M32);
         var goal = new Vector2(target.X, target.Y);
 
@@ -78,17 +79,25 @@ internal static class BoneFrameIk
         {
             var origin = pose.Points[id];
             var depth = at.Z - origin.Z;
-            var delta = Matrix3x2.CreateTranslation(-origin.X, -origin.Y) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(at.X, at.Y);
-            void Apply(string bone)
+            Apply(id, Matrix3x2.CreateTranslation(-origin.X, -origin.Y) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(at.X, at.Y));
+            void Apply(string bone, Matrix3x2 delta)
             {
+                // A character-oriented node rides its parent's origin and keeps the character axes: the solve carries it
+                // and its subtree by translation only, so its artwork, sockets and children keep their authored turn.
+                var oriented = model.Nodes[bone].CharacterOriented;
+                if (oriented)
+                {
+                    var was = new Vector2(pose.Points[bone].X, pose.Points[bone].Y);
+                    delta = Matrix3x2.CreateTranslation(Vector2.Transform(was, delta) - was);
+                }
+
                 var frame = pose.Bones[bone] * delta;
-                pose.Place(bone, frame, pose.Points[bone].Z + depth, Angle(frame));
+                pose.Place(bone, frame, pose.Points[bone].Z + depth, oriented ? pose.Angles[bone] : Angle(frame));
                 foreach (var child in model.Children[bone])
                 {
-                    Apply(child);
+                    Apply(child, delta);
                 }
             }
-            Apply(id);
         }
     }
 

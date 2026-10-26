@@ -4,7 +4,7 @@
   "id": "curve-face-worried",
   "name": "Worried",
   "model": "curve-face",
-  "structureRevision": 2,
+  "structureRevision": 3,
   "duration": 2,
   "loop": true,
   "reference": {},

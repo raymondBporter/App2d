@@ -4,7 +4,7 @@
   "id": "stalker-hit",
   "name": "Stalker hit",
   "model": "stalker",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 0.3,
   "reference": {
     "leg": 0.8544004

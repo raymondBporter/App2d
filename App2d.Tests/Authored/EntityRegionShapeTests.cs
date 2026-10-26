@@ -51,7 +51,9 @@ public sealed class EntityRegionShapeTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var asset = EntityAsset.FromJson(catalog.Entities["hero"].Asset.ToJson());
         var window = asset.Actions.SelectMany(action => action.Hits).First();
-        window.Shape = new Circle2D { Center = new(0, 0), Radius = .2f }.Validated();
+        // P11a: a window's geometry is its attack collider's shape.
+        var collider = asset.Colliders.Single(c => c.Id == window.Collider);
+        collider.Shape = new Circle2D { Center = new(0, 0), Radius = .2f }.Validated();
         var restored = EntityAsset.FromJson(asset.ToJson());
         var entity = ResolvedEntity.Compile(restored, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
         var hit = entity.Actions.Values.SelectMany(action => action.Hits).First(h => h.Window.Id == window.Id);
@@ -59,10 +61,10 @@ public sealed class EntityRegionShapeTests
         Assert.IsType<Circle2D>(EntityCollision.Attack(entity, pose, hit).Shape);
 
 #pragma warning disable APP2D001 // A deliberately invalid shape; asset validation must reject it.
-        window.Shape = new Circle2D { Center = new(0, 0), Radius = 0 };
+        collider.Shape = new Circle2D { Center = new(0, 0), Radius = 0 };
 #pragma warning restore APP2D001
         Assert.Contains("shape", Assert.Throws<InvalidDataException>(asset.Validate).Message);
-        window.Shape = new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated();
+        collider.Shape = new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated();
         Assert.Contains("convex", Assert.Throws<InvalidDataException>(asset.Validate).Message);
         Assert.Throws<JsonException>(() => EntityAsset.FromJson(restored.ToJson().Replace("\"kind\": \"circle\"", "\"kind\": \"blob\"")));
     }

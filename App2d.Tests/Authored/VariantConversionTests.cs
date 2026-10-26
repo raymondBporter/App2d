@@ -31,7 +31,7 @@ public sealed class VariantConversionTests : IDisposable
     private static string LegacyWithPins(string id) =>
         "{\"format\":\"app2d-variant\",\"version\":4,\"id\":\"" + id + "\",\"name\":\"Pinned\",\"base\":\"person\"," +
         "\"build\":{\"legs\":1.1,\"arms\":1.05}," +
-        "\"rest\":{\"chest\":{\"x\":0.02,\"y\":1.3,\"z\":0.0},\"head\":{\"x\":0.05,\"y\":1.62,\"z\":0.0},\"right-knee\":{\"x\":0.13,\"y\":0.5,\"z\":-0.1}}," +
+        "\"rest\":{\"chest\":{\"x\":0.02,\"y\":1.3,\"z\":0.0},\"head\":{\"x\":0.05,\"y\":1.62,\"z\":0.0},\"right-hip\":{\"x\":0.08,\"y\":0.82,\"z\":0.12}}," +
         "\"parts\":{\"body\":{\"material\":{\"fill\":\"#abcdef\"},\"scaleY\":1.1},\"head\":{\"hidden\":false}}}";
 
     /// <summary>The version-4 file a shipped (converted) family variant came from: the same values in the legacy per-field dictionaries.</summary>
@@ -136,7 +136,7 @@ public sealed class VariantConversionTests : IDisposable
         var resolved = ResolvedModel.From(person, converted, catalog.Parts.GetValueOrDefault);
         TestModels.Near(new(.02f, 1.3f, 0), resolved.Rest[Humanoid.Chest], 1e-5f);
         TestModels.Near(new(.05f, 1.62f, 0), resolved.Rest[Humanoid.Head], 1e-5f);
-        TestModels.Near(new(.13f, .5f, -.1f), resolved.Rest[Humanoid.RightKnee], 1e-5f);
+        TestModels.Near(new(.08f, .82f, .12f), resolved.Rest[Humanoid.RightHip], 1e-5f);
         // Unpinned controls outside the pinned subtrees keep the parameter-built positions; the shoulders ride on the pinned chest.
         var unpinned = new ModelVariant { Id = "unpinned", Name = "Unpinned", Base = "person", Parameters = { ["legs"] = 1.1f, ["arms"] = 1.05f } };
         var built = ResolvedModel.From(person, unpinned, catalog.Parts.GetValueOrDefault);
@@ -146,7 +146,7 @@ public sealed class VariantConversionTests : IDisposable
         Assert.False(resolved.Parts.Single(p => p.Id == Humanoid.Head).Hidden);
         Assert.Equal(1.1f, resolved.Parts.Single(p => p.Id == Humanoid.Body).ScaleY);
         Assert.True(converted.HasOverride(PropertyRef.OfControl(Humanoid.Chest, RigProperties.LocalY)));
-        Assert.True(converted.HasOverride(PropertyRef.OfControl(Humanoid.RightKnee, RigProperties.LocalLayer)));
+        Assert.True(converted.HasOverride(PropertyRef.OfControl(Humanoid.RightHip, RigProperties.LocalLayer)));
         Assert.DoesNotContain("\"rest\"", File.ReadAllText(Path.Combine(Output, "variants", "pinned.json")));
     }
 

@@ -4,7 +4,7 @@
   "id": "baby-triceratops-idle",
   "name": "Baby triceratops / idle",
   "model": "baby-triceratops-rig",
-  "structureRevision": 1,
+  "structureRevision": 2,
   "duration": 2,
   "loop": true,
   "reference": {},

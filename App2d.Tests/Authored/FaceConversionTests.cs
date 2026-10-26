@@ -51,12 +51,11 @@ public sealed class FaceConversionTests : IDisposable
         Assert.Equal(9, shipped.Clips.Count);
         Assert.Equal(["expression", "blink"], shipped.Layers.Select(l => l.Id));
         Assert.Equal(PartClocks.Local, shipped.Layers[1].Clock);
-        Assert.Contains("clip 'curve-face-blink': scale track on 'left-eye' -> fit track(s) on 'left-pupil'", report);
-        Assert.Contains(report, line => line.StartsWith("control 'left-eye': legacy affine node (translation only) -> point control", StringComparison.Ordinal));
-        // The source model and its clips are the originals: still at version 5 with the affine eyes and scale tracks.
-        Assert.Contains("\"version\": 5", File.ReadAllText(catalog.PathOf("curve-face")));
-        Assert.Equal(2, catalog.Models["curve-face"].Controls.Count(c => c.Node == RigNodeKinds.Affine));
-        Assert.Contains(catalog.Animations["curve-face-blink"].Tracks, t => t.Kind == MotionClip.ScaleKind);
+        // P11a converted the model's eyes to point controls with fit tracks on the pupils, so the face conversion carries them as they are.
+        Assert.Contains(report, line => line.StartsWith("control 'left-eye': point control", StringComparison.Ordinal));
+        Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", File.ReadAllText(catalog.PathOf("curve-face")));
+        Assert.Equal(0, catalog.Models["curve-face"].Controls.Count(c => c.Node == RigNodeKinds.Affine));
+        Assert.Contains(catalog.Animations["curve-face-blink"].Tracks, t => t.Kind == MotionClip.FitKind && t.Target == "left-pupil");
         // Every converted clip reproduces the source model within the recorded tolerances at sampled instants.
         Assert.Empty(FaceConversion.Verify(catalog.Resolve("curve-face"), clips, "head", shipped, 1e-4f, 1e-3f));
     }

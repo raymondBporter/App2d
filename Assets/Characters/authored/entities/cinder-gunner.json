@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 2,
+  "version": 4,
   "id": "cinder-gunner",
   "name": "Cinder gunner",
   "model": "cinder",
@@ -10,24 +10,91 @@
     "walkSpeed": 1.4,
     "range": 4.5
   },
-  "health": 7,
+  "behaviors": {
+    "strikes": {
+      "attack": {
+        "damage": 2
+      }
+    },
+    "damage": {
+      "health": 7
+    },
+    "properties": {}
+  },
   "movement": {
     "shape": {
       "kind": "rectangle",
-      "min": {
-        "x": -0.1765,
-        "y": 0
+      "center": {
+        "x": 0,
+        "y": 1.005
       },
-      "max": {
-        "x": 0.1765,
+      "size": {
+        "x": 0.353,
         "y": 2.01
-      }
+      },
+      "angleRadians": 0
     }
   },
   "hurt": {
-    "layout": "standard",
     "regions": {}
   },
+  "colliders": [
+    {
+      "id": "body",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.469,
+          "y": 0.8975
+        },
+        "angleRadians": 0
+      },
+      "control": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.02273,
+      "offsetY": 0.30875
+    },
+    {
+      "id": "head",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "control": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.3308,
+          "y": 0.842
+        },
+        "angleRadians": 0
+      },
+      "control": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.0954,
+      "offsetY": -0.351
+    }
+  ],
   "equipment": [
     {
       "prop": "pistol",
@@ -61,16 +128,16 @@
       "projectile": {
         "shape": {
           "kind": "rectangle",
-          "min": {
-            "x": -0.15,
-            "y": -0.06
+          "center": {
+            "x": 0,
+            "y": 0
           },
-          "max": {
-            "x": 0.15,
-            "y": 0.06
-          }
-        },
-        "damage": 2
+          "size": {
+            "x": 0.3,
+            "y": 0.12
+          },
+          "angleRadians": 0
+        }
       },
       "hits": [],
       "events": [
