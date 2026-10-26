@@ -288,10 +288,11 @@ public sealed class RepeatedAuthoringTests : IDisposable
                 Prop = "spear",
                 Socket = "right-grip"
             });
+            document.Asset.Colliders.Add(new() { Id = "tip", Use = ColliderUses.Attack, Prop = "spear" });
             document.Asset.Actions[0].Hits.Add(new()
             {
                 Id = "tip",
-                Prop = "spear",
+                Collider = "tip",
                 Start = new()
                 {
                     Marker = "strike"
@@ -313,7 +314,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         session.Seek(strike.Start + .01f);
         var preview = session.EvaluateEntity()!;
         Assert.Single(preview.Attacks);
-        Assert.Single(preview.Hurt); // the template's whole-body hurt box (P11b)
+        Assert.Single(preview.Colliders.Where(c => c.Use == ColliderUses.Hurt)); // the template's whole-body hurt box (P11b)
         Assert.Single(session.Scene());
         Assert.NotNull(session.Scene()[0].Entity);
 

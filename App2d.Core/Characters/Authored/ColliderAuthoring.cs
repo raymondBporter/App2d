@@ -16,6 +16,9 @@ public static class ColliderAuthoring
     /// region's anchor control (its first control whose parent lies outside the region) in the screen frame, so the box follows
     /// that control and keeps its size (a hairline capsule when the box is degenerate). Sizes and offsets are rounded to five decimals.
     /// </summary>
+    /// <summary>Radius, in authored units, given to a hurt box whose controls enclose no area.</summary>
+    public const float DegenerateHurtRadius = .005f;
+
     public static ColliderDef HurtBox(ResolvedModel model, string id, IReadOnlyList<string> controls, float pad)
     {
         if (controls.Count == 0)
@@ -38,7 +41,7 @@ public static class ColliderAuthoring
         }
         else
         {
-            definition.Shape = Capsule2D.Builder.Create(bounds.Min - anchorRest, bounds.Max - anchorRest, EntityCollision.DegenerateHurtRadius);
+            definition.Shape = Capsule2D.Builder.Create(bounds.Min - anchorRest, bounds.Max - anchorRest, DegenerateHurtRadius);
         }
 
         return definition;

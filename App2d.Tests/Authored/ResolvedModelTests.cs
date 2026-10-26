@@ -20,7 +20,8 @@ public sealed class ResolvedModelTests
                 PropertyOverride.Of(PropertyRef.OfPart("torso", RigProperties.Material), new RenderMaterialDefinition2D { Fill = "#aa3300" }),
             ],
         };
-        VariantConversion.PinRest(TestModels.Creature(), variant, new Dictionary<string, PuppetPoint> { ["elbow"] = new(.6f, 1.2f), ["hand"] = new(1.2f, 1.5f) });
+        var stretched = TestModels.Stretched(TestModels.Creature(), variant.Id, variant.Name, ("elbow", new(.6f, 1.2f)), ("hand", new(1.2f, 1.5f)));
+        variant.Overrides.AddRange(stretched.Overrides);
         return variant;
     }
 
@@ -31,7 +32,7 @@ public sealed class ResolvedModelTests
         var resolved = ResolvedModel.From(model, LongArm());
         Assert.Equal("long-arm", resolved.Id);
         TestModels.Near(new(1.2f, 1.5f, 0), resolved.Rest["hand"]);
-        Assert.Equal(new PuppetPoint(.8f, 1.5f), model.Controls.Single(c => c.Id == "hand").Rest);
+        TestModels.Near(new(.8f, 1.5f, 0), ResolvedModel.From(model).Rest["hand"]); // the base is untouched
         var torso = resolved.Parts.Single(p => p.Id == "torso");
         Assert.Equal(.9f, torso.ScaleX);
         Assert.Equal("#aa3300", torso.RenderMaterial.Fill);
@@ -45,7 +46,7 @@ public sealed class ResolvedModelTests
     {
         var model = TestModels.Creature();
         var variant = LongArm();
-        model.Controls.Single(c => c.Id == "knee").Rest = new(.15f, .5f);
+        ModelAuthoring.MoveBoneTip(model, "hip", new(.15f, .5f)); // the base's knee moves through the hip bone's tip
         TestModels.Near(new(.15f, .5f, 0), ResolvedModel.From(model, variant).Rest["knee"]);
     }
 

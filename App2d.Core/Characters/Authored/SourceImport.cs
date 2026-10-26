@@ -110,6 +110,12 @@ public static partial class PuppetImport
             Parts = [.. puppet.Parts.Select(p => p with { Id = Unique(Slug(p.Id, "part"), partIds), A = ids[p.A], B = p.B is null ? null : ids[p.B] })],
             Source = new() { Kind = AssetSource.Puppet, File = sourcePath },
         };
+        // The prototype's position-only chains become bone constraints (P11c): the run turns into bone nodes, the end keeps the
+        // character axes, and a root that frames its own constraint (an arm) stays as the pivot of a new solved bone.
+        foreach (var chain in chains)
+        {
+            RigConversion.ToBoneConstraint(model, chain.Id, []);
+        }
         model.Validate();
 
         var converted = new PuppetDefinition
@@ -251,7 +257,7 @@ public static class LibraryImport
         float Ratio(string scale) => ratios.TryGetValue(scale, out var ratio) ? ratio : overall;
 
         var solved = model.IkChains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
-        foreach (var chain in model.IkChains.Where(c => c.Solver == ModelChain.BoneSolver))
+        foreach (var chain in model.IkChains)
         {
             // A bone constraint turns its root; the solved bone beneath a pivot (P11a) sits at its parent's origin and gets no channel.
             if (resolved.Controls[chain.Root].Parent is { } parent && Vector2.Distance(new(resolved.Rest[chain.Root].X, resolved.Rest[chain.Root].Y), new(resolved.Rest[parent].X, resolved.Rest[parent].Y)) < 1e-6f)

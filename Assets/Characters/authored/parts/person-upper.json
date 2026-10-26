@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 1,
+  "version": 2,
   "id": "person-upper",
   "name": "Person upper body",
   "usage": "upper-body",
@@ -588,7 +588,6 @@
   "constraints": [
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "left-upper-arm",
       "joint": "left-elbow",
       "end": "left-hand",
@@ -599,7 +598,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "right-upper-arm",
       "joint": "right-elbow",
       "end": "right-hand",

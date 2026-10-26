@@ -255,7 +255,6 @@ public sealed class ParameterBindingTests
     [InlineData("unknown-value", "has no such parameter")]
     [InlineData("out-of-range", "between 0.1 and 2")]
     [InlineData("bound-twice", "one binding")]
-    [InlineData("affine-target", "legacy affine")]
     [InlineData("length-on-point", "only a bone node exposes a length")]
     [InlineData("link-on-unlinked", "has no link")]
     [InlineData("translation-on-linked", "bind its link")]
@@ -277,10 +276,6 @@ public sealed class ParameterBindingTests
             case "unknown-value": variant.Parameters["span"] = 1; break;
             case "out-of-range": variant.Parameters["reach"] = 3; break;
             case "bound-twice": reach.Bindings.Add(new() { Target = PropertyRef.OfControl("hub", RigProperties.Length) }); break;
-            case "affine-target":
-                model.Controls.Add(new() { Id = "wheel", Parent = "frame", Node = RigNodeKinds.Affine, Transform = new() { X = 1 }, Rest = new(1, 1) });
-                reach.Bindings.Add(new() { Target = PropertyRef.OfControl("wheel", RigProperties.LocalX) });
-                break;
             case "length-on-point": reach.Bindings.Add(new() { Target = PropertyRef.OfControl("post", RigProperties.Length) }); break;
             case "link-on-unlinked": reach.Bindings.Add(new() { Target = PropertyRef.OfControl("hub", RigProperties.LinkT) }); break;
             case "translation-on-linked": reach.Bindings.Add(new() { Target = PropertyRef.OfControl("pin", RigProperties.LocalX) }); break;
@@ -310,20 +305,14 @@ public sealed class ParameterBindingTests
         Assert.Contains("\"about\": 0.025", json);
         Assert.DoesNotContain("\"build\"", json);
         Assert.Equal(json, CharacterModel.FromJson(json).ToJson());
-        // The file on disk is at the version it was last converted at (11, P7c) and reads unchanged at the current one.
+        // The file on disk is at the current version (12, P11c) and is what the asset writes.
         var file = File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
-        Assert.Contains("\"version\": 11", file);
-        Assert.Equal(json, CharacterModel.FromJson(file).ToJson());
-
+        Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", file);
+        Assert.Equal(json, file);
+        // A code proportion rule ('build' on a model) is a retired member: refused by name with the legacy readers gone (P11c).
         var crank = JsonNode.Parse(Crank().ToJson())!.AsObject();
-        crank.Remove("parameters");
-        crank.Remove("presets");
-        crank["version"] = 7;
-        var read = CharacterModel.FromJson(crank.ToJsonString());
-        Assert.Equal(CharacterModel.CurrentVersion, read.Version);
-        Assert.Empty(read.Parameters);
         crank["build"] = "person";
-        Assert.Contains("retired in P4a", Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(crank.ToJsonString())).Message);
+        Assert.Contains("build", Assert.Throws<System.Text.Json.JsonException>(() => CharacterModel.FromJson(crank.ToJsonString())).Message);
         // A variant file keeps its 'build' member: the values of the base's declared parameters.
         var variant = Catalog.Variants["tall-thin"];
         Assert.Contains("\"build\"", variant.ToJson());
@@ -337,10 +326,10 @@ public sealed class ParameterBindingTests
         var clip = ClipAuthoring.New(model, "swell", "Swell");
         ClipAuthoring.SetKey(clip, new(MotionClip.ScaleKind, "hub"), 0, new(.5f, .5f, 0));
         clip.Validate(model);
-        Assert.Equal(ChannelSemantics.UniformPoseScale, ChannelSemantics.OfTrack(MotionClip.ScaleKind, RigNodeKinds.Bone));
-        Assert.Equal(ChannelSemantics.ArtworkFit, ChannelSemantics.OfTrack(MotionClip.ScaleKind, RigNodeKinds.Affine));
+        Assert.Equal(ChannelSemantics.UniformPoseScale, ChannelSemantics.OfTrack(MotionClip.ScaleKind));
+        Assert.Equal(ChannelSemantics.ArtworkFit, ChannelSemantics.OfTrack(MotionClip.FitKind));
         Assert.Contains(ClipAuthoring.ChannelsForControl(model, "hub"), c => c.Kind == MotionClip.ScaleKind);
-        Assert.DoesNotContain(ClipAuthoring.ChannelsForControl(model, "hub"), c => c.Kind == MotionClip.ShearKind);
+        Assert.DoesNotContain(ClipAuthoring.ChannelsForControl(model, "hub"), c => c.Kind == "shear");
         var pose = PoseEvaluator.Sample(model, clip, 0);
         var hub = XY(pose.World("hub"));
         Assert.Equal(.4f * 1.5f, Vector2.Distance(hub, XY(pose.World("pin"))), 4);
@@ -352,9 +341,11 @@ public sealed class ParameterBindingTests
         var skewed = ClipAuthoring.New(model, "skew", "Skew");
         ClipAuthoring.SetKey(skewed, new(MotionClip.ScaleKind, "hub"), 0, new(.5f, 0, 0));
         Assert.Contains("uniform pose scale", Assert.Throws<InvalidDataException>(() => skewed.Validate(model)).Message);
+        // Shear left the vocabulary with the affine adapter (P11c): a track of that kind is unknown by name.
         var sheared = ClipAuthoring.New(model, "shear", "Shear");
-        ClipAuthoring.SetKey(sheared, new(MotionClip.ShearKind, "hub"), 0, new(.2f, 0, 0));
-        Assert.Contains("legacy affine adapter", Assert.Throws<InvalidDataException>(() => sheared.Validate(model)).Message);
+        sheared.Tracks.Add(new() { Kind = "shear", Target = "hub", Keys = [new() { Value = new(.2f, 0, 0) }] });
+        Assert.Contains("kind", Assert.Throws<InvalidDataException>(() => sheared.Validate(model)).Message);
+        Assert.DoesNotContain("shear", MotionClip.TrackKinds);
         Assert.Equal(9, ChannelSemantics.All.Count);
     }
 

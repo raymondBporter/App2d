@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 4,
+  "version": 5,
   "id": "stalker-pest",
   "name": "Stalker pest",
   "model": "stalker",
@@ -33,9 +33,6 @@
       },
       "angleRadians": 0
     }
-  },
-  "hurt": {
-    "regions": {}
   },
   "colliders": [
     {

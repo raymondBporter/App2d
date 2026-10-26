@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 1,
+  "version": 2,
   "id": "person-lower",
   "name": "Person lower body",
   "usage": "lower-body",
@@ -349,7 +349,6 @@
   "constraints": [
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "left-hip",
       "joint": "left-knee",
       "end": "left-foot",
@@ -358,7 +357,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "right-hip",
       "joint": "right-knee",
       "end": "right-foot",

@@ -247,15 +247,15 @@ public static class ChannelSemantics
         new(EnabledState, ParameterUnits.Factor, true, "show tracks on drawing parts (P7a, held); an action's activation windows enable its attack colliders over half-open intervals, crossed-in-one-step included (P8b)"),
     ];
 
-    /// <summary>The semantics of a control, chain or socket track by its kind and the node it targets.</summary>
-    public static string OfTrack(string kind, string? nodeKind) => kind switch
+    /// <summary>The semantics of a control, chain, socket or part track by its kind.</summary>
+    public static string OfTrack(string kind) => kind switch
     {
         MotionClip.TranslateKind => LocalTranslation,
         MotionClip.RotateKind or MotionClip.OrientKind => Angle,
         MotionClip.TargetKind => IkTarget,
         MotionClip.BendKind => NormalizedParameter,
-        MotionClip.ScaleKind => nodeKind == RigNodeKinds.Affine ? ArtworkFit : UniformPoseScale,
-        MotionClip.ShearKind or MotionClip.FitKind => ArtworkFit,
+        MotionClip.ScaleKind => UniformPoseScale,
+        MotionClip.FitKind => ArtworkFit,
         MotionClip.ShowKind => EnabledState,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown track kind."),
     };

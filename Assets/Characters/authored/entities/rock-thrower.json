@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 4,
+  "version": 5,
   "id": "rock-thrower",
   "name": "Rock thrower",
   "model": "rock-thrower-build",
@@ -42,9 +42,6 @@
       },
       "angleRadians": 0
     }
-  },
-  "hurt": {
-    "regions": {}
   },
   "colliders": [
     {

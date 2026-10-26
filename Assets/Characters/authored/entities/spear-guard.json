@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 4,
+  "version": 5,
   "id": "spear-guard",
   "name": "Spear guard",
   "model": "tall-thin",
@@ -30,9 +30,6 @@
       },
       "angleRadians": 0
     }
-  },
-  "hurt": {
-    "regions": {}
   },
   "colliders": [
     {

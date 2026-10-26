@@ -47,7 +47,7 @@ public sealed class CleanAuthoringTests : IDisposable
                 ModelAuthoring.AddControl(m, "body", new(x, .5f, z), $"{leg}-hip");
                 ModelAuthoring.AddControl(m, $"{leg}-hip", new(x + .1f, .26f, z), $"{leg}-knee");
                 ModelAuthoring.AddControl(m, $"{leg}-knee", new(x, 0, z), $"{leg}-foot");
-                ModelAuthoring.AddChain(m, $"{leg}-foot");
+                ModelAuthoring.AddIkOverPoints(m, $"{leg}-foot");
                 ModelAuthoring.AddPart(m, Core.Geometry.GeometryValidation2D.Validated(new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }), $"{leg}-hip", $"{leg}-knee");
                 ModelAuthoring.AddPart(m, Core.Geometry.GeometryValidation2D.Validated(new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }), $"{leg}-knee", $"{leg}-foot");
             }
@@ -69,11 +69,6 @@ public sealed class CleanAuthoringTests : IDisposable
             {
                 Id = "mouth",
                 Control = "jaw"
-            });
-            m.HurtLayouts.Add(new()
-            {
-                Id = "body",
-                Regions = [new() { Id = "shell", Controls = ["body", "jaw", "front-hip", "back-hip"], Pad = .12f }]
             });
         }), s.Message);
         Assert.True(s.Save(model), s.Message);
@@ -125,11 +120,11 @@ public sealed class CleanAuthoringTests : IDisposable
         Assert.True(s.Edit(entity, () =>
         {
             entity.Asset.Controller.Range = .5f;
+            entity.Asset.Colliders.Add(new() { Id = "bite", Use = ColliderUses.Attack, Socket = "mouth", Shape = Rectangle2D.Builder.FromSize(.4f, .3f) });
             entity.Asset.Actions.Single().Hits.Add(new()
             {
                 Id = "bite",
-                Socket = "mouth",
-                Shape = Rectangle2D.Builder.FromSize(.4f, .3f),
+                Collider = "bite",
                 Start = new()
                 {
                     Marker = "strike"

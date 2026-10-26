@@ -7,7 +7,7 @@ using System.Numerics;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>
-/// The canonical two-bone IK constraint (<see cref="ModelChain.BoneSolver"/>): two rigid segments whose similarity frames
+/// The two-bone IK constraint (<see cref="ModelChain"/>): two rigid segments whose similarity frames
 /// turn with the solve, carrying their descendants and attachments. Uniform scale and reflection are supported; shear and
 /// collapse are rejected by name. Joint limits (P4b) make the solve limit-aware: the analytic pose is checked against each
 /// limited node's parent-local rotation and, when a bound is crossed, re-solved with that rotation held at the bound and the
@@ -19,7 +19,7 @@ internal static class BoneFrameIk
     /// <summary>Checks every bone constraint's segments on the resolved nodes: a bound or scaled length is the node's, not the authored control's.</summary>
     internal static void ValidateFrames(IReadOnlyDictionary<string, RigNode> nodes, IEnumerable<ModelChain> chains)
     {
-        foreach (var c in chains.Where(c => c.Solver == ModelChain.BoneSolver))
+        foreach (var c in chains)
         {
             Segment(c, nodes[c.Root], nodes[c.Root].RestFrame, nodes[c.Joint].RestFrame);
             Segment(c, nodes[c.Joint], nodes[c.Joint].RestFrame, nodes[c.End].RestFrame);

@@ -80,29 +80,12 @@ public sealed class ModelEditingTests
     [InlineData(1f, 1f)]
     [InlineData(2f, 2f)]
     [InlineData(-2f, 2f)]
-    [InlineData(2f, .5f)]
     public void BoneTipEditsRespectParentScaleAndReflection(float scaleX, float scaleY)
     {
-        // A uniform parent (with or without reflection) is a canonical bone; the nonuniform case stays on the legacy affine adapter.
+        // A uniform parent, with or without reflection, is a canonical bone (nonuniform parent scale left with the affine adapter in P11c).
         var model = ModelAuthoring.Empty("bones", "Bones");
         var parent = ModelAuthoring.AddBone(model, null, "root");
-        if (MathF.Abs(scaleX) == MathF.Abs(scaleY))
-        {
-            parent.Local = new() { X = 3, Y = -2, Rotation = .3f, Scale = MathF.Abs(scaleX), Reflect = scaleX * scaleY < 0 };
-        }
-        else
-        {
-            parent.Node = RigNodeKinds.Affine;
-            parent.Local = null;
-            parent.Transform = new()
-            {
-                X = 3,
-                Y = -2,
-                Rotation = .3f,
-                ScaleX = scaleX,
-                ScaleY = scaleY
-            };
-        }
+        parent.Local = new() { X = 3, Y = -2, Rotation = .3f, Scale = MathF.Abs(scaleX), Reflect = scaleX * scaleY < 0 };
         model.Validate();
         var child = ModelAuthoring.AddBone(model, parent.Id, "child");
         var origin = ResolvedModel.From(model).Rest[child.Id];

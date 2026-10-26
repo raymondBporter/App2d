@@ -165,10 +165,9 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
         {
             RigNodeKinds.Bone when node.Link is { } link => $"Bone node bound to '{node.Parent}' at t = {link.T:0.##}; drag its tip in the viewport to override length and rotation.",
             RigNodeKinds.Bone => "Bone node: drag its tip in the viewport to override length and rotation; its origin moves through the local setup.",
-            RigNodeKinds.Affine => "Legacy affine node: the adapter exposes no variant-overridable setup until P11. Edit the base model.",
             _ => "Point control: its rest moves through its parent-local setup overrides." + (declared.Length > 0 ? " Its legacy length is not a variant property; convert the run to a bone chain on the base." : ""),
         });
-        if (node.Kind != RigNodeKinds.Affine && node.Link is null)
+        if (node.Link is null)
         {
             var rest = LayeredPoint2D.From(resolved.Rest[id]);
             if (CharacterUi.LayeredPoint("Rest (character)", ref rest))

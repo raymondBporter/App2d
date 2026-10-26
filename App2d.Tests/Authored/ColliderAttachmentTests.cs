@@ -30,7 +30,6 @@ public sealed class ColliderAttachmentTests
     {
         var guard = StarterContent.SpearGuardEntity();
         guard.Version = EntityAsset.CurrentVersion;
-        guard.Hurt = new();
         // The seed's own hurt boxes give way to these; its spear-tip attack collider stays.
         guard.Colliders.RemoveAll(c => c.Use == ColliderUses.Hurt);
         guard.Colliders.AddRange(
@@ -48,13 +47,12 @@ public sealed class ColliderAttachmentTests
     }
 
     [Fact]
-    public void EveryLegacyWindowAndGuardRegistersAsAColliderWithAStableId()
+    public void EveryWindowAndGuardNamesADeclaredColliderWithAStableId()
     {
         foreach (var entity in Catalog.Entities.Values)
         {
             var windows = entity.Actions.Values.SelectMany(a => a.Hits).ToList();
-            var implied = windows.Count(h => h.Window.Collider is null) + (entity.Asset.Guard is { Collider: null } ? 1 : 0);
-            Assert.Equal(implied + entity.Asset.Colliders.Count, entity.Colliders.Count);
+            Assert.Equal(entity.Asset.Colliders.Count, entity.Colliders.Count);
             Assert.Equal(entity.Colliders.Count, entity.Colliders.Select(c => c.Id).Distinct(StringComparer.Ordinal).Count());
             foreach (var hit in windows)
             {
@@ -64,11 +62,9 @@ public sealed class ColliderAttachmentTests
                 Assert.Same(hit.Collider.Shape, hit.Shape);
             }
             Assert.Equal(entity.Asset.Guard is not null, entity.GuardCollider is not null);
-            Assert.Equal(entity.Asset.Colliders.Any(c => c.Use == ColliderUses.Hurt), entity.HurtRegistered);
-            Assert.Equal(entity.Asset.Hurt.Layout is null, entity.HurtRegistered || entity.Hurt.Count == 0);
         }
-        // P8c converted the player, the spear guard and the shield defender; P11a the other eight: every shipped entity registers its hurt.
-        Assert.All(Catalog.Entities.Values, e => Assert.True(e.HurtRegistered, e.Id));
+        // P8c converted the player, the spear guard and the shield defender; P11a the other eight: every shipped entity declares its hurt colliders.
+        Assert.All(Catalog.Entities.Values, e => Assert.Contains(e.Colliders, c => c.Use == ColliderUses.Hurt));
         // A window id shared by several actions was qualified by the action when the P11a conversion declared the hero's colliders; a unique one keeps its own name.
         var hero = Catalog.Entities["hero"];
         Assert.Equal(["attack-blade", "body", "follow-up-blade", "forehand-blade", "head", "legs"], hero.Colliders.Select(c => c.Id).Order(StringComparer.Ordinal));
@@ -78,10 +74,6 @@ public sealed class ColliderAttachmentTests
         var defender = Catalog.Entities["shield-defender"];
         Assert.Equal(ColliderUses.Guard, defender.GuardCollider!.Id);
         Assert.Equal(("collider", ColliderBindings.Prop, "scavenged-shell", PropAsset.TipPoint), (defender.GuardCollider.Source, defender.GuardCollider.Binding, defender.GuardCollider.Equipment!.Prop.Id, defender.GuardCollider.Definition.Point));
-        // An unconverted guard would register at the prop's tip too, as the legacy guard window did.
-        var brute = EntityAsset.FromJson(Catalog.Entities["maul-brute"].Asset.ToJson());
-        brute.Guard = new() { Prop = "hammer" };
-        Assert.Equal(("guard", PropAsset.TipPoint), (Compile(brute).GuardCollider!.Source, Compile(brute).GuardCollider!.Definition.Point));
     }
 
     [Theory, InlineData(1), InlineData(-1)]
@@ -282,25 +274,20 @@ public sealed class ColliderAttachmentTests
     {
         var guard = GuardWithHurtColliders();
         var compiled = Compile(guard);
-        Assert.True(compiled.HurtRegistered);
         Assert.Equal(["head", "torso", "legs", "reach", "spear-tip"], compiled.Colliders.Select(c => c.Id));
         Assert.Equal(("collider", ColliderBindings.Control, Humanoid.Hips), (compiled.Collider("torso")!.Source, compiled.Collider("torso")!.Binding, compiled.Collider("torso")!.Socket!.Control));
         Assert.True(compiled.Collider("torso")!.RestSpan > .3f);
         Assert.Equal(ColliderBindings.Prop, compiled.Collider("reach")!.Binding);
-        // Round trip at version 3; the same declarations at version 2 are refused.
+        // Round trip at the current version; an older version is refused.
         var restored = EntityAsset.FromJson(guard.ToJson());
         Assert.Equal(5, restored.Colliders.Count); // the fixture's four plus the seed's declared spear-tip (P11b)
-        Assert.True(restored.UsesColliders);
         var downgraded = EntityAsset.FromJson(guard.ToJson());
-        downgraded.Version = EntityAsset.LegacyVersion;
-        Assert.Contains("need entity version 3", Assert.Throws<InvalidDataException>(downgraded.Validate).Message);
-        var legacy = LegacyEntities.Strip(StarterContent.SpearGuardEntity(), Catalog.Entities["spear-guard"].Model.Base);
-        Assert.False(legacy.UsesColliders);
-        // A window names an attack collider; the legacy inline geometry is then unused.
+        downgraded.Version = 4;
+        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(downgraded.Validate).Message);
+        // A window names another attack collider; the first stays declared and registered.
         var named = GuardWithHurtColliders();
         named.Colliders.Add(new() { Id = "point", Use = ColliderUses.Attack, Prop = StarterContent.Spear, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) });
         named.Actions[0].Hits[0].Collider = "point";
-        named.Actions[0].Hits[0].Prop = null;
         var pointed = Compile(named);
         Assert.Same(pointed.Collider("point"), pointed.Actions["attack"].Hits[0].Collider);
         Assert.Equal(6, pointed.Colliders.Count);
@@ -328,7 +315,7 @@ public sealed class ColliderAttachmentTests
         Assert.Contains("has no 'muzzle' point", Refused(e => e.Colliders[3].Point = PropAsset.MuzzlePoint));
         Assert.Contains("stretch needs a toward control", Refused(e => { e.Colliders[0].Stretch = true; }));
         Assert.Contains("not several", Refused(e => e.Colliders[3].Control = Humanoid.Head));
-        Assert.Contains("either the legacy layout", Refused(e => e.Hurt.Layout = "standard"));
+        Assert.Contains("guard.collider", Refused(e => e.Guard = new()));
         Assert.Contains("no collider 'blade'", Refused(e => e.Actions[0].Hits[0].Collider = "blade"));
         Assert.Contains("is a hurt collider, not attack", Refused(e => e.Actions[0].Hits[0].Collider = "head"));
         Assert.Contains("use", Refused(e => e.Colliders[0].Use = "poke"));

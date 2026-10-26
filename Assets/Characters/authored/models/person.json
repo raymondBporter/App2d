@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 11,
+  "version": 12,
   "id": "person",
   "name": "Person",
   "structureRevision": 2,
@@ -535,7 +535,6 @@
   "constraints": [
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "left-upper-arm",
       "joint": "left-elbow",
       "end": "left-hand",
@@ -546,7 +545,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "left-hip",
       "joint": "left-knee",
       "end": "left-foot",
@@ -555,7 +553,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "right-upper-arm",
       "joint": "right-elbow",
       "end": "right-hand",
@@ -566,7 +563,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "right-hip",
       "joint": "right-knee",
       "end": "right-foot",
@@ -1312,42 +1308,6 @@
         "hit": "person-hit",
         "death": "person-death"
       }
-    }
-  ],
-  "hurtLayouts": [
-    {
-      "id": "standard",
-      "regions": [
-        {
-          "id": "body",
-          "controls": [
-            "hips",
-            "chest",
-            "left-shoulder",
-            "right-shoulder"
-          ],
-          "pad": 0.14
-        },
-        {
-          "id": "head",
-          "controls": [
-            "head"
-          ],
-          "pad": 0.3
-        },
-        {
-          "id": "legs",
-          "controls": [
-            "left-hip",
-            "right-hip",
-            "left-knee",
-            "right-knee",
-            "left-foot",
-            "right-foot"
-          ],
-          "pad": 0.07
-        }
-      ]
     }
   ],
   "groups": [

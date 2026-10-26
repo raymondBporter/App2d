@@ -23,7 +23,7 @@ namespace App2d.CharacterStudio.Editor;
 /// Phase five: an imported library walk converted onto Person and compared with its source points on two builds, and a
 /// <c>.puppet.json</c> converted into a model with its motion, both saved and reopened with their sources untouched.
 /// </summary>
-internal sealed class EditorSmoke(string output)
+internal sealed partial class EditorSmoke(string output, bool acceptance = false)
 {
     private const int SettleFrames = 4;
     private readonly List<string> _report = [];
@@ -337,11 +337,9 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                     ClipAuthoring.SetColorKey(document.Asset, slot.Id, SlotColorTrack2D.Rgba, 0, new(0, .3f, 1, 1));
                     ClipAuthoring.SetColorKey(document.Asset, slot.Id, SlotColorTrack2D.Rgba, 1, new(0, 1, .3f, .8f));
                     document.Asset.Colors[0].Keys[0].CurveR = new() { Control1 = new(1f / 3, 1), Control2 = new(2f / 3, 1), Absolute = true };
-                    document.Asset.Tracks.RemoveAll(t => t.Target == slot.Bone && t.Kind is MotionClip.ScaleKind or MotionClip.ShearKind);
-                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ScaleKind, slot.Bone), 0, new(.1f, .2f, 0));
-                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ScaleKind, slot.Bone), 1, new(.3f, -.1f, 0));
-                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ShearKind, slot.Bone), 0, new(.05f, -.1f, 0));
-                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ShearKind, slot.Bone), 1, new(-.15f, .1f, 0));
+                    document.Asset.Tracks.RemoveAll(t => t.Target == slot.Bone && t.Kind == MotionClip.ScaleKind);
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ScaleKind, slot.Bone), 0, new(.1f, .1f, 0));
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ScaleKind, slot.Bone), 1, new(.3f, .3f, 0));
                     document.Asset.Attachments.Add(new() { Slot = slot.Id, Keys = [new() { Time = .45f }, new() { Time = .8f, Attachment = slot.Attachment }] });
                     document.Asset.DrawOrder = [new() { Time = .2f, Slots = [.. model.Slots.Select(v => v.Id).Reverse()] }];
                 }), s);
@@ -363,7 +361,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var reopened = AuthoringWorkspace.Open(s.Assets.Root);
                 var clip = reopened.Clip("image-rig-motion")!.Asset;
                 Record(clip.Colors.Count == 1 && clip.Attachments.Count > 0 && clip.DrawOrder.Count > 0,                    "slot color, attachment, and draw order keys survive native save/reopen");
-                Record(clip.Tracks.Any(t => t.Kind == MotionClip.ScaleKind) && clip.Tracks.Any(t => t.Kind == MotionClip.ShearKind),                    "scale and shear keys survive native save/reopen");
+                Record(clip.Tracks.Any(t => t.Kind == MotionClip.ScaleKind), "uniform scale keys survive native save/reopen");
             }),
             ("34-bone-ik-rest", shell =>
             {
@@ -389,7 +387,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.EditRig = true;
                 s.Selection.Chain = "tool-chain";
                 shell.Viewport.Fit(s.Evaluate("linkage"));
-                Record(document.Asset.Constraints.Count == 1 && document.Asset.IkChains.Single().Solver == ModelChain.BoneSolver, "a machine rig declares bone IK as a typed constraint");
+                Record(document.Asset.Constraints.Count == 1, "a machine rig declares bone IK as a typed constraint");
             }),
             ("35-bone-ik-target", shell =>
             {
@@ -465,7 +463,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Vector3 Rest(string id) => s.Assets.Resolve("person")!.Rest[id];
                 // P11a: every limb is a bone-solver constraint; the shoulder is the authored pivot, the upper arm the solved bone beneath it.
                 Record(Control("left-shoulder").Node == RigNodeKinds.Point && Control(Humanoid.LeftUpperArmBone).Node == RigNodeKinds.Bone && Control("left-elbow").Link is { IsTip: true }
-                    && Control("left-hand").Link?.Orientation == RigLinkOrientations.Character && doc.Asset.IkChains.All(c => c.Solver == ModelChain.BoneSolver) && doc.Asset.Version == CharacterModel.CurrentVersion,
+                    && Control("left-hand").Link?.Orientation == RigLinkOrientations.Character && doc.Asset.Version == CharacterModel.CurrentVersion,
                     "the Person's limbs read as bone constraints beneath their pivots at version " + CharacterModel.CurrentVersion);
                 var before = doc.Serialize();
                 var hand = Rest("left-hand");
@@ -983,18 +981,18 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Open("spear-guard");
                 var guard = s.EntityDocument!;
                 Record(s.Entity is not null, "the converted spear guard compiles in the workspace: " + (s.EntityError ?? "ok"));
-                Record(guard.Asset.Version == EntityAsset.CurrentVersion && guard.Asset.Hurt.Layout is null
+                Record(guard.Asset.Version == EntityAsset.CurrentVersion
                     && guard.Asset.Colliders.Select(c => c.Id).SequenceEqual(["spear-tip", "body", "head", "legs", "reach"]) && guard.Asset.Actions[0].Hits[0].Collider == "spear-tip",
-                    "the converted spear guard declares its attack, hurt and trigger colliders at entity version 3 and its window names the attack collider");
+                    "the spear guard declares its attack, hurt and trigger colliders at entity version " + EntityAsset.CurrentVersion + " and its window names the attack collider");
                 s.PreviewActionOf("attack");
                 var strike = s.Entity!.Actions["attack"].Hits[0];
                 s.Seek(strike.Start + .02f);
                 var preview = s.EvaluateEntity()!;
                 var spear = preview.Colliders.First(c => c.Id == "spear-tip");
                 var reach = preview.Colliders.First(c => c.Id == "reach");
-                Record(spear.Enabled && reach.Enabled && preview.Colliders.Count(c => c.Use == ColliderUses.Hurt && c.Enabled) == 3 && preview.LegacyHurt.Count == 0
+                Record(spear.Enabled && reach.Enabled && preview.Colliders.Count(c => c.Use == ColliderUses.Hurt && c.Enabled) == 3
                     && spear.Region.Pose == preview.Attacks.Single().Region.Pose,
-                    "inside the window the preview shows the enabled attack collider (the window's region), three hurt colliders and the trigger, and no legacy box");
+                    "inside the window the preview shows the enabled attack collider (the window's region), three hurt colliders and the trigger");
                 s.Seek(strike.Finish + .1f);
                 Record(!s.EvaluateEntity()!.Colliders.First(c => c.Id == "spear-tip").Enabled, "after the window closes the attack collider is shown disabled");
                 s.Selection.Collider = "reach";
@@ -1014,7 +1012,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // P11a converted every shipped entity: the maul brute's tilted hammer registers as an attack collider with its three hurt boxes.
                 s.Open("maul-brute");
                 var brute = s.EntityDocument!;
-                Record(brute.Asset.Version == EntityAsset.CurrentVersion && brute.Asset.Colliders.Select(c => c.Id).SequenceEqual(["hammer-head", "body", "head", "legs"]) && s.Entity!.HurtRegistered,
+                Record(brute.Asset.Version == EntityAsset.CurrentVersion && brute.Asset.Colliders.Select(c => c.Id).SequenceEqual(["hammer-head", "body", "head", "legs"]) && s.Entity!.Colliders.Count(c => c.Use == ColliderUses.Hurt) == 3,
                     "the maul brute declares its hammer-head attack collider and three hurt colliders at version " + EntityAsset.CurrentVersion);
                 // Test mode: the arena registers every actor's colliders once and the overlays read them; the reach trigger reports the player.
                 shell.LiveTest = false;
@@ -1048,24 +1046,24 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var s = shell.Session; s.Compare.Clear();
                 s.Open("spear-guard");
                 var guard = s.EntityDocument!;
-                Record(guard.Asset.Version == EntityAsset.CurrentVersion && guard.Asset.Behaviors is { } b && b.Strikes.ContainsKey("spear-tip") && b.Damage.Health == 3,
-                    "the converted spear guard declares its strike and receiving-damage behaviors at entity version 4");
-                Check(s.Edit(guard, () => guard.Asset.Behaviors!.Strikes["spear-tip"].Damage = 2), s);
+                Record(guard.Asset.Version == EntityAsset.CurrentVersion && guard.Asset.Behaviors.Strikes.ContainsKey("spear-tip") && guard.Asset.Behaviors.Damage.Health == 3,
+                    "the spear guard declares its strike and receiving-damage behaviors at entity version " + EntityAsset.CurrentVersion);
+                Check(s.Edit(guard, () => guard.Asset.Behaviors.Strikes["spear-tip"].Damage = 2), s);
                 Record(s.Entity!.Actions["attack"].Hits[0].Strike.Damage == 2, "a strike's damage edit re-resolves the window's strike");
                 s.Undo();
                 Record(s.Entity!.Actions["attack"].Hits[0].Strike.Damage == 1, "and undoes exactly");
-                Check(s.Edit(guard, () => guard.Asset.Behaviors!.Properties["patrol-note"] = "holds the gate"), s);
+                Check(s.Edit(guard, () => guard.Asset.Behaviors.Properties["patrol-note"] = "holds the gate"), s);
                 Record(s.Entity!.Properties["patrol-note"] == "holds the gate", "a custom property reaches the resolved entity by name");
                 s.Undo();
                 // A strike for no hit group is a resolution problem reported on the entity by name (the inspector only offers real groups).
-                Check(s.Edit(guard, () => guard.Asset.Behaviors!.Strikes["spear-butt"] = new()), s);
+                Check(s.Edit(guard, () => guard.Asset.Behaviors.Strikes["spear-butt"] = new()), s);
                 Record(s.Entity is null && s.EntityError?.Contains("behaviors.strikes.spear-butt: no hit window or projectile action") == true, "a strike for no hit group is reported on the entity by name: " + s.EntityError);
                 s.Undo();
                 Record(s.Entity is not null, "and undoing it restores the compiling entity");
                 s.Open("maul-brute");
                 var brute = s.EntityDocument!;
-                Record(brute.Asset.Behaviors is { } typed && typed.Strikes["hammer-head"] == new StrikeDef { Damage = 5, Sound = "heavy" } && typed.Damage.Health == 22 && brute.Asset.Actions[0].Hits[0].Damage == new HitWindow().Damage,
-                    "the maul brute's strike (damage 5 / heavy) and health 22 are typed behaviors since P11a; its window carries no combat fields");
+                Record(brute.Asset.Behaviors.Strikes["hammer-head"] == new StrikeDef { Damage = 5, Sound = "heavy" } && brute.Asset.Behaviors.Damage.Health == 22,
+                    "the maul brute's strike (damage 5 / heavy) and health 22 are typed behaviors since P11a");
                 var profile = AuthoredCatalog.Load(s.Assets.Root).Profiles.GetValueOrDefault(GameProfile.GameId);
                 Record(profile is { HasPlayer: true, Entity: "hero" } && profile.Roles[PersonRoles.GunShot] == "player-gun-shot" && profile.Spawns["BoilerBrute"] == "maul-brute",
                     "the game profile binds the hero entity, the gun-shot role and the brute placement as data");
@@ -1195,6 +1193,11 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 shell.Viewport.Fit(s.Evaluate(CentaurStudy.Id));
             }),
         ];
+        if (acceptance)
+        {
+            _steps = AcceptanceSteps();
+        }
+
         return workspace;
     }
 
@@ -1217,11 +1220,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         Check(s.Edit(document, () =>
         {
             var model = document.Asset;
-            // The image rig is the native affine scenario (scale and shear channels), so its root is a legacy affine node.
-            var root = ModelAuthoring.AddBone(model, null, "root");
-            root.Node = RigNodeKinds.Affine;
-            root.Local = null;
-            root.Transform = new();
+            // The image rig: image slots on one bone node with a uniform pose scale channel (the native inherited affine channels retired in P11c).
+            ModelAuthoring.AddBone(model, null, "root");
             model.Validate();
             foreach (var (id, color, offset) in new[] { ("back", "#e3ac47", -.15f), ("front", "#57b0b2", .15f) })
             {
@@ -1265,7 +1265,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 ModelAuthoring.AddControl(model.Asset, "body", new(x, .8f, (i - 1) * .1f), $"hip-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"hip-{i}", new(x + .15f, .4f, (i - 1) * .1f), $"knee-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"knee-{i}", new(x, 0, (i - 1) * .1f), $"foot-{i}");
-                ModelAuthoring.AddChain(model.Asset, $"foot-{i}");
+                ModelAuthoring.AddIkOverPoints(model.Asset, $"foot-{i}");
                 ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"hip-{i}", $"knee-{i}");
                 ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
             }
@@ -1371,12 +1371,11 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
             attack.Mask = Humanoid.UpperGroup;
             attack.BlendIn = .08f;
             attack.BlendOut = .12f;
+            entity.Asset.Colliders.Add(new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = "spear", Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) });
             attack.Hits.Add(new()
             {
                 Id = "spear-tip",
-                Prop = "spear",
-                Along = -.14f,
-                Shape = Rectangle2D.Builder.FromSize(.42f, .26f),
+                Collider = "spear-tip",
                 Start = new()
                 {
                     Marker = "strike"
@@ -1498,7 +1497,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
 
         if (_step >= _steps.Length)
         {
-            File.WriteAllLines(Path.Combine(output, "editor-smoke.txt"), _report);
+            File.WriteAllLines(Path.Combine(output, acceptance ? "acceptance-smoke.txt" : "editor-smoke.txt"), _report);
             return false;
         }
         var (name, run) = _steps[_step++];

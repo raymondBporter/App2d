@@ -62,13 +62,14 @@ public sealed class BoneAuthoringTests
     }
 
     [Fact]
-    public void PointIkCannotSilentlyTreatExplicitBoneLengthsAsJointDistances()
+    public void AConstraintOverBoneNodesIsNotConvertedAsAPointRun()
     {
         var model = ModelAuthoring.Empty("bones", "Bones");
         var root = ModelAuthoring.AddBone(model, null, "root");
         var joint = ModelAuthoring.AddBone(model, root.Id, "joint");
         var end = ModelAuthoring.AddBone(model, joint.Id, "end");
-        Assert.Throws<InvalidDataException>(() => ModelAuthoring.AddChain(model, end.Id));
+        Assert.Contains("already runs over bone nodes", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.AddIkOverPoints(model, end.Id)).Message);
+        Assert.Equal("end-chain", ModelAuthoring.AddBoneIk(model, end.Id).Id);
     }
 
     private static void Near(Vector2 expected, Vector3 actual) =>

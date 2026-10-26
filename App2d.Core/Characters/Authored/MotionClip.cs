@@ -136,7 +136,7 @@ public sealed class MotionClip
     public const string FormatId = "app2d-clip", TranslateKind = "translate", RotateKind = "rotate", TargetKind = "target";
     /// <summary>Socket-local Euler angles in radians: X twist, Y tilt, Z turn. Unwrapped angles preserve authored full turns.</summary>
     public const string OrientKind = "orient";
-    public const string ScaleKind = "scale", ShearKind = "shear";
+    public const string ScaleKind = "scale";
     /// <summary>
     /// A normalized bend (<see cref="ChannelSemantics.NormalizedParameter"/>, P4b): key x in 0..1 maps through the target bone
     /// node's declared joint limits onto its parent-local rotation, exactly at both ends. It owns the node's rotation in the
@@ -150,7 +150,7 @@ public sealed class MotionClip
     public const string FitKind = "fit";
     /// <summary>A drawing part's visibility (<see cref="ChannelSemantics.EnabledState"/>, held): key x 1 shows, 0 hides, from the key until the next.</summary>
     public const string ShowKind = "show";
-    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, ShearKind, BendKind, FitKind, ShowKind];
+    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, BendKind, FitKind, ShowKind];
     /// <summary>The kinds that target a drawing part rather than a control, chain or socket.</summary>
     public static readonly IReadOnlyList<string> PartKinds = [FitKind, ShowKind];
     public string Format { get; set; } = FormatId;
@@ -182,7 +182,7 @@ public sealed class MotionClip
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static MotionClip FromJson(string json)
     {
-        var clip = AuthoredAsset.Parse<MotionClip>(LegacySourceFields.ReadClip(json), "clip");
+        var clip = AuthoredAsset.Parse<MotionClip>(json, "clip");
         clip.Validate();
         return clip;
     }
@@ -462,7 +462,7 @@ public sealed class MotionClip
             {
                 Require(rig.Controls.TryGetValue(track.Target, out var control), $"{field}: unknown control.");
                 Require(!solved.Contains(track.Target), $"{field}: this control is solved by IK; key its chain's target instead.");
-                Require(track.Kind is not (RotateKind or BendKind) || !rig.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
+                Require(track.Kind is not (RotateKind or BendKind) || !rig.Chains.Values.Any(c => c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
                 if (track.Kind == BendKind)
                 {
                     // The normalized bend channel: its owner is the node's declared limit, and it owns the rotation in this clip.
@@ -471,14 +471,12 @@ public sealed class MotionClip
                     Require(track.Keys.All(k => k.Value.X is >= 0 and <= 1 && k.Value.Y == 0 && k.Value.Z == 0), $"{field}: bend keys use x in 0..1 only.");
                     Require(track.Scale is null or CharacterModel.Unit, $"{field}: a normalized bend has no measurement scale.");
                 }
-                else if (track.Kind is ScaleKind or ShearKind)
+                else if (track.Kind == ScaleKind)
                 {
-                    // Declared semantics (ChannelSemantics): on a canonical node a scale track is one uniform pose multiplier,
-                    // so its keys must agree in x and y; shear is artwork fit on the legacy affine adapter only.
-                    Require(track.Kind == ScaleKind || control.Node == RigNodeKinds.Affine, $"{field}: a shear channel belongs to the legacy affine adapter; a canonical node is a similarity with a length.");
-                    Require(control.Node == RigNodeKinds.Affine || track.Keys.All(k => k.Value.X == k.Value.Y && k.Value.Z == 0),
-                        $"{field}: a canonical node's scale is a uniform pose scale; key equal x and y (nonuniform fitting belongs to artwork, not the rig).");
-                    Require(track.Scale is null or CharacterModel.Unit, $"{field}: scale and shear cannot use proportion measurements.");
+                    // Declared semantics (ChannelSemantics): a scale track is one uniform pose multiplier, so its keys must agree in x and y.
+                    Require(track.Keys.All(k => k.Value.X == k.Value.Y && k.Value.Z == 0),
+                        $"{field}: a node's scale is a uniform pose scale; key equal x and y (nonuniform fitting belongs to artwork, not the rig).");
+                    Require(track.Scale is null or CharacterModel.Unit, $"{field}: scale cannot use proportion measurements.");
                 }
                 else
                 {

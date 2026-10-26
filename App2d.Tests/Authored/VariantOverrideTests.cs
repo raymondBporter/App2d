@@ -125,42 +125,6 @@ public sealed class VariantOverrideTests : IDisposable
     }
 
     [Fact]
-    public void ALegacyFileReadsAsTypedOverridesAndRestPinsConvertWithTheBase()
-    {
-        var person = PersonTemplate.Model();
-        const string legacy = """
-            {"format":"app2d-variant","version":4,"id":"old","name":"Old","base":"person","build":{"legs":1.2},"rest":{},
-             "parts":{"body":{"material":{"fill":"#d9e2ef"},"scaleX":1.2},"head":{"hidden":false}}}
-            """;
-        Assert.Equal(4, LegacyVariantReader.LegacyVersion(legacy));
-        var read = ModelVariant.FromJson(legacy);
-        Assert.Equal(ModelVariant.CurrentVersion, read.Version);
-        Assert.Equal(1.2f, read.Parameters["legs"]);
-        Assert.Equal(3, read.Overrides.Count);
-        Assert.Equal("#d9e2ef", read.Override(PropertyRef.OfPart(Humanoid.Body, RigProperties.Material))!.Material!.Fill);
-        Assert.Equal(1.2f, read.Override(PropertyRef.OfPart(Humanoid.Body, RigProperties.ScaleX))!.Value);
-        Assert.False(read.Override(PropertyRef.OfPart(Humanoid.Head, RigProperties.Hidden))!.Flag);
-        Assert.False(ResolvedModel.From(person, read).Parts.Single(p => p.Id == Humanoid.Head).Hidden);
-        Assert.Null(LegacyVariantReader.LegacyVersion(read.ToJson()));
-        // A legacy face word on a part (the retired payload, P7c) maps to its face instance only through the bundle conversion; the reader refuses it by name.
-        var faced = legacy.Replace("\"hidden\":false", "\"face\":\"angry\",\"hidden\":false");
-        Assert.Contains("convert the bundle", Assert.Throws<InvalidDataException>(() => ModelVariant.FromJson(faced)).Message);
-        var (mapped, lines) = LegacyVariantReader.Convert(faced, null, new Dictionary<string, string> { [Humanoid.Head] = PersonTemplate.FaceInstance });
-        Assert.Equal("angry", ModelVariant.FromJson(mapped).Override(PropertyRef.OfAttachment(PersonTemplate.FaceInstance, RigProperties.Expression))!.Selection);
-        Assert.Contains(lines, l => l.Contains("face 'angry' -> attachment 'face' expression"));
-
-        // A rest pin needs the base: the reader refuses it by name, the conversion converts it to setup overrides.
-        var pinned = legacy.Replace("\"rest\":{}", "\"rest\":{\"head\":{\"x\":0,\"y\":3}}");
-        Assert.Contains("VariantConversion", Assert.Throws<InvalidDataException>(() => ModelVariant.FromJson(pinned)).Message);
-        var (converted, report) = LegacyVariantReader.Convert(pinned, new Dictionary<string, PuppetPoint> { ["head"] = new(0, 3) });
-        var variant = ModelVariant.FromJson(converted);
-        Assert.Contains(report, line => line.Contains("rest: 1 pin(s)"));
-        VariantConversion.PinRest(person, variant, new Dictionary<string, PuppetPoint> { ["head"] = new(0, 3) });
-        Assert.Equal(3, ResolvedModel.From(person, variant).Rest[Humanoid.Head].Y, 5);
-        Assert.True(variant.HasOverride(PropertyRef.OfControl(Humanoid.Head, RigProperties.LocalY)));
-    }
-
-    [Fact]
     public void MovingAControlWritesLocalSetupOverridesNeverFrozenAbsolutePositions()
     {
         var person = PersonTemplate.Model();
@@ -198,7 +162,6 @@ public sealed class VariantOverrideTests : IDisposable
         TestModels.Near(new(target, resolved.Rest[Humanoid.LeftHand].Z), dragged.Rest[Humanoid.LeftHand], 1e-4f);
         Assert.True(variant.HasOverride(PropertyRef.OfControl(Humanoid.LeftElbow, RigProperties.LocalRotation)));
         Assert.Contains("only drag a bone node", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveBoneTip(resolved, variant, Humanoid.RightShoulder, target)).Message);
-        Assert.Contains("legacy", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(ResolvedModel.From(TestModels.Wheel().Model), new() { Id = "w", Name = "W", Base = "wheel" }, "wheel-root", Vector3.Zero, true)).Message);
     }
 
     [Fact]

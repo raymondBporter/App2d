@@ -25,13 +25,7 @@ public static class RigNodeKinds
     /// position is derived, never authored.
     /// </summary>
     public const string Bone = "bone";
-    /// <summary>
-    /// Legacy affine adapter: a full parent-local <see cref="Affine2D"/> setup (nonuniform scale, shear) evaluated by
-    /// the explicit-bone path (<see cref="LegacyAffineRig"/>). Retained for the native wheel fixture and curve-face's
-    /// scaled eyes until P11; the canonical similarity rig does not express inherited nonuniform scale or shear.
-    /// </summary>
-    public const string Affine = "affine";
-    public static readonly string[] All = [Point, Bone, Affine];
+    public static readonly string[] All = [Point, Bone];
 }
 
 /// <summary>
@@ -182,7 +176,6 @@ public sealed record RigNode(
     RigSetup Setup,
     float Length,
     RigLink? Link,
-    Affine2D? Affine,
     Matrix3x2 RestFrame,
     float RestAngle,
     float RestLayer,
@@ -260,25 +253,6 @@ internal static class RigGraph
             RigNode node;
             switch (control.Node)
             {
-                case RigNodeKinds.Affine:
-                {
-                    var affine = control.Transform!;
-                    float layer;
-                    if (layout is not null)
-                    {
-                        var setup = layout.Setups[control.Id];
-                        affine = affine with { X = setup.X, Y = setup.Y };
-                        layer = setup.Layer;
-                    }
-                    else
-                    {
-                        layer = control.Rest.Z - parentLayer;
-                    }
-                    var frame = affine.Matrix * parentFrame;
-                    node = new(control.Id, control.Parent, control.Node, new() { X = affine.X, Y = affine.Y, Rotation = affine.Rotation, Layer = layer }, control.Length, null, affine, frame,
-                        control.RestAngle, parentLayer + layer, frame.GetDeterminant() < 0 ? -1 : 1);
-                    break;
-                }
                 case RigNodeKinds.Bone:
                 {
                     var setup = layout?.Setups[control.Id] ?? control.Local ?? new RigSetup();
@@ -307,7 +281,7 @@ internal static class RigGraph
                         angle = parentAngle + parentHand * setup.Rotation;
                         hand = parentHand * (setup.Reflect ? -1 : 1);
                     }
-                    node = new(control.Id, control.Parent, control.Node, setup, length, link, null, frame, angle, parentLayer + setup.Layer, hand, limit);
+                    node = new(control.Id, control.Parent, control.Node, setup, length, link, frame, angle, parentLayer + setup.Layer, hand, limit);
                     break;
                 }
                 default:
@@ -323,27 +297,20 @@ internal static class RigGraph
                         {
                             translation = new(r.X, r.Y);
                         }
-                        else if (parent.Kind == RigNodeKinds.Affine)
-                        {
-                            // The legacy affine adapter carries point children by rotation only; its scale and shear stay on its own frame.
-                            translation = Rotation2D.Apply(new Vector2(r.X, r.Y) - new Vector2(parentFrame.M31, parentFrame.M32), -parentAngle);
-                        }
                         else if (!new Frame2D(parentFrame).TryToLocal(new(r.X, r.Y), out translation))
                         {
                             throw new InvalidDataException($"Cannot place '{control.Id}' beneath a collapsed parent.");
                         }
                         var setup = new RigSetup { X = translation.X, Y = translation.Y, Rotation = parentHand * (control.RestAngle - parentAngle), Layer = r.Z - parentLayer };
-                        node = new(control.Id, control.Parent, RigNodeKinds.Point, setup, control.Length, null, null, frame, control.RestAngle, r.Z, parentHand);
+                        node = new(control.Id, control.Parent, RigNodeKinds.Point, setup, control.Length, null, frame, control.RestAngle, r.Z, parentHand);
                     }
                     else
                     {
                         var setup = layout.Setups[control.Id];
-                        var position = parent is null ? setup.Translation
-                            : parent.Kind == RigNodeKinds.Affine ? new Vector2(parentFrame.M31, parentFrame.M32) + Rotation2D.Apply(setup.Translation, parentAngle)
-                            : Vector2.Transform(setup.Translation, parentFrame);
+                        var position = parent is null ? setup.Translation : Vector2.Transform(setup.Translation, parentFrame);
                         var angle = parentAngle + parentHand * setup.Rotation;
                         var frame = Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation(position.X, position.Y);
-                        node = new(control.Id, control.Parent, RigNodeKinds.Point, setup, control.Length, null, null, frame, angle, parentLayer + setup.Layer, parentHand);
+                        node = new(control.Id, control.Parent, RigNodeKinds.Point, setup, control.Length, null, frame, angle, parentLayer + setup.Layer, parentHand);
                     }
                     break;
                 }

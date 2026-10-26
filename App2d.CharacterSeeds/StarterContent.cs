@@ -333,7 +333,7 @@ public static class StarterContent
             ModelAuthoring.AddControl(model, "body", new(x, .8f, z), $"hip-{i}");
             ModelAuthoring.AddControl(model, $"hip-{i}", new(x + .15f, .4f, z), $"knee-{i}");
             ModelAuthoring.AddControl(model, $"knee-{i}", new(x, 0, z), $"foot-{i}");
-            ModelAuthoring.AddChain(model, $"foot-{i}");
+            ModelAuthoring.AddIkOverPoints(model, $"foot-{i}");
             ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"hip-{i}", $"knee-{i}");
             ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
         }
@@ -358,11 +358,6 @@ public static class StarterContent
         shell.Depth = -.05f;
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
-        // P11a: the three legs are canonical bone constraints, as the shipped stalker file carries them.
-        foreach (var chain in model.IkChains.ToArray())
-        {
-            RigConversion.ToBoneConstraint(model, chain.Id, []);
-        }
         model.Validate();
         return model;
     }

@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 1,
+  "version": 2,
   "id": "quadruped-lower",
   "name": "Quadruped lower body",
   "usage": "lower-body",
@@ -1057,7 +1057,6 @@
   "constraints": [
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "far-hind-root",
       "joint": "far-hind-joint",
       "end": "far-hind-foot",
@@ -1066,7 +1065,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "far-front-root",
       "joint": "far-front-joint",
       "end": "far-front-foot",
@@ -1074,7 +1072,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "near-hind-root",
       "joint": "near-hind-joint",
       "end": "near-hind-foot",
@@ -1083,7 +1080,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "near-front-root",
       "joint": "near-front-joint",
       "end": "near-front-foot",

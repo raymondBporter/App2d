@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 1,
+  "version": 2,
   "id": "face-curve",
   "name": "Curve face",
   "usage": "face",

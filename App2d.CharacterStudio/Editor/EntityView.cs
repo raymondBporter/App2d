@@ -10,7 +10,7 @@ namespace App2d.CharacterStudio.Editor;
 
 /// <summary>
 /// What a character does in the game: its model, motion set and role overrides, controller, movement geometry, attached
-/// colliders (hurt, attack, guard, trigger; or the legacy hurt layout until converted), equipment and actions. Selecting an
+/// colliders (hurt, attack, guard, trigger), equipment and actions. Selecting an
 /// action previews it and brings its activation windows into focus; the viewport shows the colliders the game registers,
 /// placed from the same final pose. Every change is an entity edit: models, clips and sets are opened, never edited from here.
 /// </summary>
@@ -147,7 +147,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         var subjects = session.Assets.Models.Select(m => m.Id).Concat(session.Assets.Variants.Select(v => v.Id)).Order(StringComparer.Ordinal);
         if (Ui.Combo("Model or variant", asset.Model, subjects, id => session.Assets.Find(id)?.Name is { } n ? $"{n} ({id})" : id + " (missing)") is { } model)
         {
-            session.Edit(document, () => document.Asset.Model = model, $"'{asset.Id}' now uses '{model}'. Motion sets, sockets and hurt layouts come from its base.");
+            session.Edit(document, () => document.Asset.Model = model, $"'{asset.Id}' now uses '{model}'. Motion sets and sockets come from its base.");
         }
 
         if (Ui.Button("Open model", session.Assets.Find(asset.Model) is not null))
@@ -160,29 +160,18 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             session.Edit(document, () => document.Asset.Controller.Kind = kind);
         }
 
-        var health = asset.Behaviors?.Damage.Health ?? asset.Health;
+        var health = asset.Behaviors.Damage.Health;
         ImGui.TextUnformatted("Health");
         ImGui.SetNextItemWidth(-1);
         if (ImGui.DragInt("##health", ref health, .2f, 1, 10000))
         {
-            session.Change(document, () =>
-            {
-                if (document.Asset.Behaviors is { } behaviors)
-                {
-                    behaviors.Damage.Health = Math.Clamp(health, 1, 10000);
-                }
-                else
-                {
-                    document.Asset.Health = Math.Clamp(health, 1, 10000);
-                }
-            });
+            session.Change(document, () => document.Asset.Behaviors.Damage.Health = Math.Clamp(health, 1, 10000));
         }
 
         Motion(document);
         Controller(document);
         Behaviors(document);
         Movement(document);
-        Hurt(document);
         Colliders(document);
         Guard(document);
         Equipment(document);
@@ -247,27 +236,13 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         {
             ImGui.SetScrollHereY(0f);
         }
-        if (asset.Behaviors is not { } behaviors)
-        {
-            Ui.Help($"Legacy combat fields (entity version {asset.Version}): health {asset.Health}, mass {asset.Mass:0.##}, each window's damage and sound, each projectile's damage. Convert them to typed behaviors to edit them here.");
-            if (ImGui.SmallButton("Convert to behaviors"))
-            {
-                session.ConvertBehaviors();
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip("Explicit conversion (P9a): one undo step; the file is written at entity version 4 on the next save, with the same values.");
-            }
-
-            return;
-        }
+        var behaviors = asset.Behaviors;
         ImGui.TextColored(UiTheme.Accent, "Receiving damage");
         var damage = behaviors.Damage;
-        IntegerField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.Health)), damage.Health, v => document.Asset.Behaviors!.Damage.Health = v);
-        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.Mass)), damage.Mass, v => document.Asset.Behaviors!.Damage.Mass = v);
-        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.HurtSeconds)), damage.HurtSeconds, v => document.Asset.Behaviors!.Damage.HurtSeconds = v);
-        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.StaggerSeconds)), damage.StaggerSeconds, v => document.Asset.Behaviors!.Damage.StaggerSeconds = v);
+        IntegerField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.Health)), damage.Health, v => document.Asset.Behaviors.Damage.Health = v);
+        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.Mass)), damage.Mass, v => document.Asset.Behaviors.Damage.Mass = v);
+        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.HurtSeconds)), damage.HurtSeconds, v => document.Asset.Behaviors.Damage.HurtSeconds = v);
+        NumberField(document, Field(BehaviorSchema.Damage, nameof(ReceiveDamageDef.StaggerSeconds)), damage.StaggerSeconds, v => document.Asset.Behaviors.Damage.StaggerSeconds = v);
         ImGui.TextColored(UiTheme.Accent, "Strikes (one per hit group)");
         var groups = asset.Actions.SelectMany(a => a.Hits.Select(h => h.Id)).Concat(asset.Actions.Where(a => a.Projectile is not null).Select(a => a.Id)).Distinct(StringComparer.Ordinal).ToList();
         foreach (var (group, strike) in behaviors.Strikes.ToArray())
@@ -277,15 +252,15 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             ImGui.SameLine();
             if (ImGui.SmallButton("Remove"))
             {
-                session.Edit(document, () => document.Asset.Behaviors!.Strikes.Remove(group), $"Strike '{group}' removed; the group strikes with the defaults.");
+                session.Edit(document, () => document.Asset.Behaviors.Strikes.Remove(group), $"Strike '{group}' removed; the group strikes with the defaults.");
                 ImGui.PopID();
                 continue;
             }
-            IntegerField(document, Field(BehaviorSchema.Strike, nameof(StrikeDef.Damage)), strike.Damage, v => document.Asset.Behaviors!.Strikes[group].Damage = v);
-            SoundField(document, Field(BehaviorSchema.Strike, nameof(StrikeDef.Sound)), strike.Sound, v => document.Asset.Behaviors!.Strikes[group].Sound = v);
+            IntegerField(document, Field(BehaviorSchema.Strike, nameof(StrikeDef.Damage)), strike.Damage, v => document.Asset.Behaviors.Strikes[group].Damage = v);
+            SoundField(document, Field(BehaviorSchema.Strike, nameof(StrikeDef.Sound)), strike.Sound, v => document.Asset.Behaviors.Strikes[group].Sound = v);
             if (Ui.Combo(nameof(StrikeDef.Impact), strike.Impact, ImpactKinds.All) is { } impact)
             {
-                session.Edit(document, () => document.Asset.Behaviors!.Strikes[group].Impact = impact);
+                session.Edit(document, () => document.Asset.Behaviors.Strikes[group].Impact = impact);
             }
 
             ImGui.PopID();
@@ -296,7 +271,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             ImGui.TextDisabled("Striking with the defaults: " + string.Join(", ", unlisted));
             if (Ui.Combo("Add strike for", "(choose a hit group)", unlisted.Prepend("(choose a hit group)")) is { } chosen && chosen != "(choose a hit group)")
             {
-                session.Edit(document, () => document.Asset.Behaviors!.Strikes[chosen] = new());
+                session.Edit(document, () => document.Asset.Behaviors.Strikes[chosen] = new());
             }
         }
         if (asset.Guard is not null)
@@ -307,7 +282,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             var openEvent = guard.OpenEvent;
             if (Ui.Combo(nameof(GuardBehaviorDef.OpenEvent), openEvent, events.Contains(openEvent) ? events : events.Prepend(openEvent)) is { } open)
             {
-                session.Edit(document, () => (document.Asset.Behaviors!.Guard ??= new()).OpenEvent = open);
+                session.Edit(document, () => (document.Asset.Behaviors.Guard ??= new()).OpenEvent = open);
             }
 
             if (ImGui.IsItemHovered())
@@ -315,7 +290,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 ImGui.SetTooltip(Field(BehaviorSchema.Guard, nameof(GuardBehaviorDef.OpenEvent)).Help);
             }
 
-            SoundField(document, Field(BehaviorSchema.Guard, nameof(GuardBehaviorDef.BlockSound)), guard.BlockSound, v => (document.Asset.Behaviors!.Guard ??= new()).BlockSound = v);
+            SoundField(document, Field(BehaviorSchema.Guard, nameof(GuardBehaviorDef.BlockSound)), guard.BlockSound, v => (document.Asset.Behaviors.Guard ??= new()).BlockSound = v);
         }
         ImGui.TextColored(UiTheme.Accent, "Custom properties");
         foreach (var (key, value) in behaviors.Properties.ToArray())
@@ -324,13 +299,13 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             var text = value;
             if (Ui.Text(key, ref text, 200))
             {
-                session.Change(document, () => document.Asset.Behaviors!.Properties[key] = text);
+                session.Change(document, () => document.Asset.Behaviors.Properties[key] = text);
             }
 
             ImGui.SameLine();
             if (ImGui.SmallButton("Remove"))
             {
-                session.Edit(document, () => document.Asset.Behaviors!.Properties.Remove(key));
+                session.Edit(document, () => document.Asset.Behaviors.Properties.Remove(key));
             }
 
             ImGui.PopID();
@@ -341,7 +316,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         ImGui.SetNextItemWidth(120 * Ui.Scale);
         ImGui.InputText("##property-value", ref _newPropertyValue, 200);
         ImGui.SameLine();
-        if (ImGui.SmallButton("Add property") && session.Edit(document, () => document.Asset.Behaviors!.Properties[_newPropertyKey] = _newPropertyValue))
+        if (ImGui.SmallButton("Add property") && session.Edit(document, () => document.Asset.Behaviors.Properties[_newPropertyKey] = _newPropertyValue))
         {
             _newPropertyKey = _newPropertyValue = "";
         }
@@ -468,82 +443,6 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         Ui.Help("Stable and body-local: feet at the origin, +X toward facing. Animation never changes it. Fit only on request.");
     }
 
-    private void Hurt(AssetDocument<EntityAsset> document)
-    {
-        var hurt = document.Asset.Hurt;
-        var basis = Base;
-        Ui.Header("Hurt regions");
-        if (basis is null)
-        {
-            return;
-        }
-
-        if (Ui.Combo("Layout", hurt.Layout ?? "(none)", basis.HurtLayouts.Select(l => l.Id).Prepend("(none)")) is { } layoutId)
-        {
-            session.Edit(document, () =>
-            {
-                document.Asset.Hurt.Layout = layoutId == "(none)" ? null : layoutId;
-                document.Asset.Hurt.Regions.Clear();
-            });
-        }
-
-        var layout = basis.HurtLayouts.FirstOrDefault(l => l.Id == hurt.Layout);
-        if (layout is null)
-        {
-            if (document.Asset.Colliders.Any(c => c.Use == ColliderUses.Hurt))
-            {
-                Ui.Help("Hurt geometry is this entity's hurt colliders (below); the model's layout is not used.");
-            }
-            else
-            {
-                Ui.Help(basis.HurtLayouts.Count == 0 ? $"'{basis.Name}' has no hurt layouts." : "No hurt geometry: this entity cannot be hit. Choose a layout or add hurt colliders below.");
-            }
-
-            return;
-        }
-        foreach (var region in layout.Regions)
-        {
-            ImGui.PushID(region.Id);
-            var change = hurt.Regions.GetValueOrDefault(region.Id);
-            var enabled = change?.Disabled != true;
-            if (ImGui.Checkbox(region.Id, ref enabled))
-            {
-                session.Edit(document, () => Override(document, region.Id, o => o.Disabled = !enabled));
-            }
-
-            if (enabled)
-            {
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(-60 * Ui.Scale);
-                var pad = change?.Pad ?? region.Pad;
-                if (ImGui.SliderFloat("##pad", ref pad, 0, 1, "pad %.3f"))
-                {
-                    session.Change(document, () => Override(document, region.Id, o => o.Pad = pad));
-                }
-
-                if (change?.Pad is not null)
-                {
-                    ImGui.SameLine();
-                    if (ImGui.SmallButton("Reset"))
-                    {
-                        session.Edit(document, () => Override(document, region.Id, o => o.Pad = null));
-                    }
-                }
-            }
-            ImGui.PopID();
-        }
-        Ui.Help($"Legacy layout: each region is the box around its controls in the final pose; changes here are this entity's overrides.");
-        if (ImGui.SmallButton("Convert to colliders"))
-        {
-            session.ConvertColliders();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            ImGui.SetTooltip("Explicit conversion (P8c): each region becomes a hurt collider holding its rest-pose box, bound to its anchor control; hit windows and the guard get their colliders too. One undo step; the file is written at entity version 3 on the next save.");
-        }
-    }
-
     // ---- Colliders -----------------------------------------------------------------------------------------------
 
     private static ColliderDef ColliderOf(AssetDocument<EntityAsset> document, string id) => document.Asset.Colliders.First(c => c.Id == id);
@@ -561,13 +460,6 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             if (ImGui.Selectable(summary, session.Selection.Collider == collider.Id))
             {
                 session.Selection.Collider = collider.Id;
-            }
-        }
-        if (resolved is not null)
-        {
-            foreach (var implied in resolved.Colliders.Where(c => c.Source != "collider"))
-            {
-                ImGui.TextDisabled($"{implied.Id}  {implied.Use}  {BindingSummary(implied.Definition)}  (from the legacy {implied.Source}; convert to edit)");
             }
         }
         ImGui.SetNextItemWidth(90 * Ui.Scale);
@@ -788,9 +680,8 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                     return;
                 }
 
-                var guard = document.Asset.Colliders.FirstOrDefault(c => c.Use == ColliderUses.Guard)?.Id;
-                var prop = document.Asset.Equipment.FirstOrDefault()?.Prop ?? throw new InvalidDataException("A guard needs an equipped prop or a guard collider.");
-                document.Asset.Guard = guard is not null ? new() { Collider = guard } : new() { Prop = prop };
+                var guard = document.Asset.Colliders.FirstOrDefault(c => c.Use == ColliderUses.Guard)?.Id ?? throw new InvalidDataException("A guard needs a guard collider; add one under Colliders first.");
+                document.Asset.Guard = new() { Collider = guard };
             });
         }
 
@@ -800,48 +691,12 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
 
         var guards = asset.Colliders.Where(c => c.Use == ColliderUses.Guard).Select(c => c.Id).ToList();
-        const string Legacy = "(legacy prop shape)";
-        if (Ui.Combo("Collider", def.Collider ?? Legacy, guards.Prepend(Legacy)) is { } chosen)
+        if (Ui.Combo("Collider", def.Collider, guards) is { } chosen)
         {
-            session.Edit(document, () =>
-            {
-                var g = document.Asset.Guard!;
-                g.Collider = chosen == Legacy ? null : chosen;
-                if (g.Collider is null && g.Prop.Length == 0)
-                {
-                    g.Prop = document.Asset.Equipment.FirstOrDefault()?.Prop ?? "";
-                }
-            });
+            session.Edit(document, () => document.Asset.Guard!.Collider = chosen);
         }
 
-        if (def.Collider is { } named)
-        {
-            ImGui.TextDisabled($"Guard geometry is collider '{named}'; edit it under Colliders.");
-            return;
-        }
-
-        if (Ui.Combo("Prop", def.Prop, asset.Equipment.Select(e => e.Prop)) is { } prop)
-        {
-            session.Edit(document, () => document.Asset.Guard!.Prop = prop);
-        }
-
-        ShapeFields(document, def.Shape, shape => document.Asset.Guard!.Shape = shape);
-        Ui.Help("Legacy guard geometry on the prop's tip; Convert to colliders (under Hurt regions) makes it the guard collider.");
-    }
-
-    private static void Override(AssetDocument<EntityAsset> document, string region, Action<HurtOverride> change)
-    {
-        var regions = document.Asset.Hurt.Regions;
-        var o = regions.GetValueOrDefault(region) ?? new();
-        change(o);
-        if (!o.Disabled && o.Pad is null)
-        {
-            regions.Remove(region);
-        }
-        else
-        {
-            regions[region] = o;
-        }
+        ImGui.TextDisabled($"Guard geometry is collider '{def.Collider}'; edit it under Colliders.");
     }
 
     private void Equipment(AssetDocument<EntityAsset> document)
@@ -866,10 +721,10 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             ImGui.SameLine();
             if (ImGui.SmallButton("Remove"))
             {
-                var used = document.Asset.Actions.SelectMany(a => a.Hits).Any(h => h.Prop == binding.Prop);
+                var used = document.Asset.Colliders.Any(c => c.Prop == binding.Prop);
                 if (used)
                 {
-                    session.Report($"'{binding.Prop}' anchors a hit window; re-anchor it first.", true);
+                    session.Report($"'{binding.Prop}' anchors a collider; re-anchor it first.", true);
                 }
                 else
                 {
@@ -1065,7 +920,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         Ui.Header("Hit windows");
         foreach (var hit in action.Hits)
         {
-            if (ImGui.Selectable($"{hit.Id}  {Describe(hit.Start)} to {Describe(hit.Finish)}  dmg {hit.Damage}", session.Selection.Hit == hit.Id))
+            if (ImGui.Selectable($"{hit.Id}  {Describe(hit.Start)} to {Describe(hit.Finish)}  dmg {(document.Asset.Behaviors.Strikes.GetValueOrDefault(hit.Id) ?? new StrikeDef()).Damage}", session.Selection.Hit == hit.Id))
             {
                 session.Selection.Hit = hit.Id;
             }
@@ -1074,16 +929,15 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         if (ImGui.SmallButton("Add hit window"))
         {
             var hitId = ModelAuthoring.UniqueId("hit", action.Hits.Select(h => h.Id));
-            var prop = document.Asset.Equipment.FirstOrDefault()?.Prop;
-            var socket = prop is null ? basis?.Sockets.FirstOrDefault()?.Id : null;
-            if (prop is null && socket is null)
+            var attack = document.Asset.Colliders.FirstOrDefault(c => c.Use == ColliderUses.Attack)?.Id;
+            if (attack is null)
             {
-                session.Report("Equip a prop or add a socket to the base first: a hit window needs an anchor.", true);
+                session.Report("Add an attack collider first: a hit window enables one.", true);
             }
             else if (session.Edit(document, () =>
             {
-                Def(document, id).Hits.Add(new() { Id = hitId, Prop = prop, Socket = socket, Start = new() { At = .4f }, Finish = new() { At = .6f } });
-                document.Asset.Behaviors?.Strikes.TryAdd(hitId, new());
+                Def(document, id).Hits.Add(new() { Id = hitId, Collider = attack, Start = new() { At = .4f }, Finish = new() { At = .6f } });
+                document.Asset.Behaviors.Strikes.TryAdd(hitId, new());
             }))
             {
                 session.Selection.Hit = hitId;
@@ -1144,7 +998,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 // The strike goes with the last window of its hit group.
                 if (document.Asset.Actions.All(a => a.Hits.All(h => h.Id != hitId)))
                 {
-                    document.Asset.Behaviors?.Strikes.Remove(hitId);
+                    document.Asset.Behaviors.Strikes.Remove(hitId);
                 }
             });
             session.Selection.Hit = null;
@@ -1154,87 +1008,37 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         TimeField("Closes", hit.Finish, resolved?.Clip, time => Hit().Finish = time, document);
         Ui.Help("The window is the activation interval [opens, closes) of its attack collider: enabled for every step that crosses any of it.");
         var attackColliders = document.Asset.Colliders.Where(c => c.Use == ColliderUses.Attack).Select(c => c.Id).ToList();
-        const string Inline = "(legacy inline geometry)";
-        if (Ui.Combo("Collider", hit.Collider ?? Inline, attackColliders.Prepend(Inline)) is { } chosenCollider)
+        if (Ui.Combo("Collider", hit.Collider, attackColliders) is { } chosenCollider)
         {
-            session.Edit(document, () => Hit().Collider = chosenCollider == Inline ? null : chosenCollider);
+            session.Edit(document, () => Hit().Collider = chosenCollider);
         }
 
-        if (hit.Collider is { } colliderId)
+        ImGui.TextDisabled($"Geometry is collider '{hit.Collider}'" + (document.Asset.Colliders.FirstOrDefault(c => c.Id == hit.Collider) is { } named ? $": {BindingSummary(named)}" : ""));
+        if (ImGui.SmallButton("Edit collider"))
         {
-            ImGui.TextDisabled($"Geometry is collider '{colliderId}'" + (document.Asset.Colliders.FirstOrDefault(c => c.Id == colliderId) is { } named ? $": {BindingSummary(named)}" : ""));
-            if (ImGui.SmallButton("Edit collider"))
-            {
-                session.Selection.Collider = colliderId;
-            }
-
-            DamageField(document, hitId, Hit);
-            return;
+            session.Selection.Collider = hit.Collider;
         }
 
-        var props = document.Asset.Equipment.Select(e => "prop:" + e.Prop);
-        var sockets = basis?.Sockets.Select(s => "socket:" + s.Id) ?? [];
-        var anchor = hit.Prop is not null ? "prop:" + hit.Prop : hit.Socket is not null ? "socket:" + hit.Socket : "actor:";
-        if (Ui.Combo("Anchored to", anchor, props.Concat(sockets).Prepend("actor:"), a => a == "actor:" ? "the actor" : a) is { } chosen)
-        {
-            session.Edit(document, () =>
-            {
-                var h = Hit();
-                var (kind, value) = (chosen[..chosen.IndexOf(':')], chosen[(chosen.IndexOf(':') + 1)..]);
-                h.Prop = kind == "prop" ? value : null;
-                h.Socket = kind == "socket" ? value : null;
-            });
-        }
-
-        if (hit.Prop is not null && Ui.Combo("Prop point", hit.Point, PropAsset.PointNames) is { } point)
-        {
-            session.Edit(document, () => Hit().Point = point);
-        }
-
-        if (hit.Prop is null && hit.Socket is null)
-        {
-            var offset = new Vector2(hit.OffsetX, hit.OffsetY);
-            if (Ui.Drag2("Centre ahead / above the feet", ref offset, .005f, -100, 100))
-            {
-                session.Change(document, () =>
-                {
-                    Hit().OffsetX = offset.X;
-                    Hit().OffsetY = offset.Y;
-                });
-            }
-        }
-        else
-        {
-            var along = hit.Along;
-            if (Ui.Drag("Along the anchor's axis", ref along, .005f, -100, 100))
-            {
-                session.Change(document, () => Hit().Along = along);
-            }
-        }
-        ShapeFields(document, hit.Shape, shape => Hit().Shape = shape);
-        Ui.Help("Legacy inline geometry: the shape sits in the anchor frame, +X along the anchor's axis, following facing. It registers as attack collider '" + (resolved?.Hits.FirstOrDefault(h => h.Window.Id == hitId)?.Collider.Id ?? hitId) + "'; Convert to colliders (under Hurt regions) makes that explicit.");
-        DamageField(document, hitId, Hit);
+        DamageField(document, hitId);
     }
 
-    /// <summary>The window's strike damage: the typed strike of its hit group at version 4, the legacy window field before.</summary>
-    private void DamageField(AssetDocument<EntityAsset> document, string hitId, Func<HitWindow> hit)
+    /// <summary>The window's strike damage: the typed strike of its hit group (the defaults until one is declared).</summary>
+    private void DamageField(AssetDocument<EntityAsset> document, string hitId)
     {
-        var strike = document.Asset.Behaviors?.Strikes.GetValueOrDefault(hitId);
-        var damage = strike?.Damage ?? hit().Damage;
-        ImGui.TextUnformatted(strike is null ? "Damage" : $"Damage (strike '{hitId}')");
+        var damage = (document.Asset.Behaviors.Strikes.GetValueOrDefault(hitId) ?? new StrikeDef()).Damage;
+        ImGui.TextUnformatted($"Damage (strike '{hitId}')");
         ImGui.SetNextItemWidth(-1);
         if (ImGui.DragInt("##damage", ref damage, .1f, 0, 10000))
         {
             session.Change(document, () =>
             {
-                if (document.Asset.Behaviors is { } behaviors)
+                var strikes = document.Asset.Behaviors.Strikes;
+                if (!strikes.TryGetValue(hitId, out var strike))
                 {
-                    behaviors.Strikes[hitId].Damage = Math.Clamp(damage, 0, 10000);
+                    strikes[hitId] = strike = new();
                 }
-                else
-                {
-                    hit().Damage = Math.Clamp(damage, 0, 10000);
-                }
+
+                strike.Damage = Math.Clamp(damage, 0, 10000);
             });
         }
     }
@@ -1301,11 +1105,6 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             }
         }
         Outline(preview.Movement, StudioTheme.MovementRegion.PackedValue, 1.5f);
-        foreach (var region in preview.LegacyHurt)
-        {
-            Outline(region, StudioTheme.HurtRegion.PackedValue, 2);
-        }
-
         // Read-only views of the colliders the game registers, placed by the same function at this preview pose.
         foreach (var placed in preview.Colliders)
         {

@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 4,
+  "version": 5,
   "id": "player",
   "name": "Player",
   "model": "person",
@@ -36,9 +36,6 @@
       },
       "angleRadians": 0
     }
-  },
-  "hurt": {
-    "regions": {}
   },
   "colliders": [
     {

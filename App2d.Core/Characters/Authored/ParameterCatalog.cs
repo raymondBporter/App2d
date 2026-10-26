@@ -107,12 +107,11 @@ public static class RigProperties
     /// <summary>The bindable attachment property names.</summary>
     public static readonly IReadOnlyList<string> Attachment = [.. AttachmentDeclarations.Where(d => d.Bindable).Select(d => d.Name)];
 
-    /// <summary>The properties a control exposes by its declared kind and link: an affine node exposes none (adapter until P11).</summary>
+    /// <summary>The properties a control exposes by its declared kind and link.</summary>
     public static IReadOnlyList<PropertyDeclaration> Declarations(ModelControl control)
     {
         IReadOnlyList<PropertyDeclaration> declarations = control.Node switch
         {
-            RigNodeKinds.Affine => [],
             RigNodeKinds.Bone when control.Link is not null => [LengthDeclaration, LocalRotationDeclaration, LocalLayerDeclaration, LinkTDeclaration, LinkOffsetXDeclaration, LinkOffsetYDeclaration],
             RigNodeKinds.Bone => [LengthDeclaration, LocalXDeclaration, LocalYDeclaration, LocalRotationDeclaration, LocalLayerDeclaration],
             _ => [LocalXDeclaration, LocalYDeclaration, LocalRotationDeclaration, LocalLayerDeclaration],
@@ -131,7 +130,6 @@ public static class RigProperties
     /// </summary>
     public static IReadOnlyList<(string Name, string Reason)> Unsupported(ModelControl control) => control.Node switch
     {
-        RigNodeKinds.Affine => [(Limits, "a legacy affine node; the adapter exposes nothing until P11")],
         RigNodeKinds.Bone when control.Limit is null => [(Limits, "no joint limits declared on this bone node; add them on the base model to override or bind them")],
         RigNodeKinds.Bone => [],
         _ => [(Limits, "a point control has no joint limits; convert the run to a bone chain on the base model")],
@@ -140,11 +138,6 @@ public static class RigProperties
     /// <summary>Why a property is not exposed on a control, or null when it is.</summary>
     public static string? Refusal(ModelControl control, string property)
     {
-        if (control.Node == RigNodeKinds.Affine)
-        {
-            return $"'{control.Id}' is a legacy affine node; the adapter exposes no bindable properties.";
-        }
-
         if (Declarations(control).Any(d => d.Name == property))
         {
             return null;

@@ -6,7 +6,7 @@ namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory [--force] | --write-player-moves authored-directory [--force] | --write-weapons authored-directory [--force] | --write-wardrobe authored-directory [--force] | --replace-wardrobe-art authored-directory | --smoke-rounded-paths output-directory]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-acceptance output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory [--force] | --write-player-moves authored-directory [--force] | --write-weapons authored-directory [--force] | --write-wardrobe authored-directory [--force] | --replace-wardrobe-art authored-directory | --smoke-rounded-paths output-directory]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -42,6 +42,13 @@ internal static class Program
                     return Report(report => PersonWardrobe.Write(Path.GetFullPath(root), report: report), wardrobeFlags);
                 case ["--replace-wardrobe-art", var root]:
                     return Report(report => PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true, report: report), ["--force"]);
+                case ["--smoke-acceptance", var acceptanceOutput]:
+                    {
+                        // P11c: the migration plan's section 6 reference workflow on a scratch copy, a frame per step.
+                        using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(acceptanceOutput), acceptance: true);
+                        editor.Run();
+                        return 0;
+                    }
                 case [] or ["--editor"] or ["--smoke-editor", _]:
                     {
                         using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);

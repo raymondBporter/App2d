@@ -59,11 +59,8 @@ public sealed class ClipAuthoringTests
     [Fact]
     public void AKeyAuthoredOnOneBuildIsStoredInReferenceUnits()
     {
-        var stretched = new ModelVariant { Id = "long", Name = "Long", Base = "creature" };
-        VariantConversion.PinRest(TestModels.Creature(), stretched, new Dictionary<string, PuppetPoint>
-        {
-            ["body"] = new(0, 1.5f), ["hip"] = new(0, 1.5f), ["knee"] = new(.15f, .75f), ["shoulder"] = new(0, 2), ["elbow"] = new(.4f, 1.8f), ["hand"] = new(.8f, 2),
-        });
+        var stretched = TestModels.Stretched(TestModels.Creature(), "long", "Long",
+            ("body", new(0, 1.5f)), ("hip", new(0, 1.5f)), ("knee", new(.15f, .75f)), ("shoulder", new(0, 2)), ("elbow", new(.4f, 1.8f)), ("hand", new(.8f, 2)));
         var longLegs = ResolvedModel.From(TestModels.Creature(), stretched);
         var clip = TestModels.Clip(Model);
         var ratio = longLegs.Measure("leg") / Model.Measure("leg");

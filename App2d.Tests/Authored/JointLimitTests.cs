@@ -27,7 +27,7 @@ public sealed class JointLimitTests
             new() { Id = "hand", Parent = "fore", Node = RigNodeKinds.Bone, Link = new() },
         ],
         // Bend -1 puts the elbow on the side where its local rotation is positive, the side its limits below allow.
-        Constraints = ik ? [new ModelChain { Id = "reach", Solver = ModelChain.BoneSolver, Root = "upper", Joint = "fore", End = "hand", Bend = -1 }] : [],
+        Constraints = ik ? [new ModelChain { Id = "reach", Root = "upper", Joint = "fore", End = "hand", Bend = -1 }] : [],
         Parts = [new() { Id = "fore-art", A = "fore", Frame = "fore", OffsetX = .25f, Geometry = Rectangle2D.Builder.FromSize(.5f, .1f), Material = new() { Fill = "#cccccc", Outline = new() } }],
     };
 
@@ -79,7 +79,7 @@ public sealed class JointLimitTests
         Assert.Equal(limit.Min, limit.FromNormalized(0));
         Assert.Equal(limit.Max, limit.FromNormalized(1));
         Assert.Equal(limit.Max, limit.FromNormalized(1.2f));
-        Assert.Equal(ChannelSemantics.NormalizedParameter, ChannelSemantics.OfTrack(MotionClip.BendKind, RigNodeKinds.Bone));
+        Assert.Equal(ChannelSemantics.NormalizedParameter, ChannelSemantics.OfTrack(MotionClip.BendKind));
 
         // Narrowing the limits changes the normalized performance by design; an angle channel on another clip is unchanged.
         limited.Controls[2].Limit = new() { Min = 0, Max = 1 };
@@ -218,12 +218,12 @@ public sealed class JointLimitTests
         var linkage = ResolvedModel.From(TestModels.Linkage());
         var crank = TestModels.LinkageCrank(linkage);
         var eighth = PoseEvaluator.Sample(linkage, crank, 1 / 8.0, true).Chains.Single();
-        Assert.Equal(.0055562f, eighth.Residual, 5);
+        Assert.Equal(.0055427f, eighth.Residual, 5); // the rigid solve's gap (P11c; the point adapter's inset reported .0055562)
         Assert.False(eighth.Reached, "a target 5.6e-3 past full reach is not reached");
         Assert.True(PoseEvaluator.Sample(linkage, crank, 0, true).Chains.Single().Reached);
         var zero = PoseEvaluator.Sample(linkage, TestModels.LinkageReach(linkage), 0).Chains.Single();
-        Assert.Equal(.001f, zero.Residual, 4);
-        Assert.False(zero.Reached, "the point solver's minimum fold leaves a 1e-3 gap");
+        Assert.Equal(0, zero.Residual, 4);
+        Assert.True(zero.Reached, "the rigid solve folds the rod fully onto its root (P11c; the point adapter kept a 1e-3 minimum fold)");
         Assert.True(ChainResult.Of("x", ChainResult.ReachTolerance).Reached);
         Assert.False(ChainResult.Of("x", ChainResult.ReachTolerance * 2).Reached);
     }
@@ -269,9 +269,7 @@ public sealed class JointLimitTests
 
     [Theory]
     [InlineData("point")]
-    [InlineData("affine")]
     [InlineData("rest")]
-    [InlineData("point-solver")]
     [InlineData("inverted")]
     public void LimitsAreRefusedWhereTheyBoundNothing(string failure)
     {
@@ -281,22 +279,15 @@ public sealed class JointLimitTests
             case "point":
                 model.Controls.Add(new() { Id = "tag", Parent = "torso", Rest = new(0, 2), Limit = new() });
                 break;
-            case "affine":
-                model.Controls.Add(new() { Id = "tag", Parent = "torso", Node = RigNodeKinds.Affine, Transform = new(), Rest = new(0, 2), Limit = new() });
-                break;
             case "rest":
                 model.Controls[2].Limit = new() { Min = 1, Max = 2 }; // the rest rotation .4 lies below
-                break;
-            case "point-solver":
-                model = TestModels.Linkage();
-                model.Controls.Single(c => c.Id == "rod-elbow").Limit = new() { Min = -10, Max = 10 };
                 break;
             case "inverted":
                 model.Controls[2].Limit = new() { Min = 2, Max = 0 };
                 break;
         }
         var message = Assert.Throws<InvalidDataException>(model.Validate).Message;
-        Assert.Contains(failure switch { "point" => "belong to bone nodes", "affine" => "only its transform", "rest" => "outside its joint limits", "point-solver" => "need a bone constraint", _ => "must not exceed" }, message);
+        Assert.Contains(failure switch { "point" => "belong to bone nodes", "rest" => "outside its joint limits", _ => "must not exceed" }, message);
         if (failure == "point")
         {
             // The authoring command refuses by name and leaves the model valid.

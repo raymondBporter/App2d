@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 11,
+  "version": 12,
   "id": "pterosaur",
   "name": "Pterosaur",
   "structureRevision": 1,
@@ -1232,21 +1232,6 @@
         "low-recovery": "pterosaur-low-recovery",
         "reset": "pterosaur-reset"
       }
-    }
-  ],
-  "hurtLayouts": [
-    {
-      "id": "body",
-      "regions": [
-        {
-          "id": "body",
-          "controls": [
-            "body",
-            "head"
-          ],
-          "pad": 0.16
-        }
-      ]
     }
   ],
   "groups": [

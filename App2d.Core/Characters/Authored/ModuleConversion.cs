@@ -132,11 +132,6 @@ public static class ModuleConversion
         var mapping = new Dictionary<string, string>(StringComparer.Ordinal);
         var controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
         var anchor = controls.GetValueOrDefault(plan.Anchor) ?? throw new InvalidDataException($"Model '{model.Id}' has no control '{plan.Anchor}'.");
-        if (anchor.Node == RigNodeKinds.Affine)
-        {
-            throw new InvalidDataException($"Model '{model.Id}': '{plan.Anchor}' is a legacy affine node and cannot be a module's connection (report, do not approximate).");
-        }
-
         bool Beneath(string id, string ancestor)
         {
             for (var current = controls[id].Parent; current is not null; current = controls[current].Parent)
@@ -188,12 +183,8 @@ public static class ModuleConversion
             if (c.Id == plan.Anchor)
             {
                 // The anchor is the module's root at the origin: its placement is the wearer's socket, its rotation and children its own.
-                part = c with { Parent = null, Node = RigNodeKinds.Point, Transform = null, Link = null, Rest = new(0, 0, 0), RestAngle = 0 };
+                part = c with { Parent = null, Node = RigNodeKinds.Point, Link = null, Rest = new(0, 0, 0), RestAngle = 0 };
                 report.Add($"control '{c.Id}': the connection, a point root at the origin");
-            }
-            else if (c.Node == RigNodeKinds.Affine)
-            {
-                throw new InvalidDataException($"Control '{c.Id}' is a legacy affine node; the module conversion carries point and bone nodes only (report, do not approximate).");
             }
             else if (c.Node == RigNodeKinds.Bone)
             {

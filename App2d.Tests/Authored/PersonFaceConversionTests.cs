@@ -62,7 +62,6 @@ public sealed class PersonFaceConversionTests : IDisposable
         }
         Assert.Equal(["slate", "ember", "night"], person.Base.Looks.Where(l => l.Expressions.Count > 0).Select(l => l.Id));
         Assert.Equal("determined", person.Base.Looks.Single(l => l.Id == "ember").Expressions[PersonTemplate.FaceInstance]);
-        Assert.Empty(LegacySourceFields.Remaining(TestModels.AuthoredRoot).Where(f => f.Kind == "variant"));
         Assert.Equal(11, Catalog.Entities.Count);
     }
 
@@ -168,63 +167,5 @@ public sealed class PersonFaceConversionTests : IDisposable
         Assert.Equal("neutral", PoseEvaluator.Rest(curved).Expressions[PersonTemplate.FaceInstance]);
         Assert.Equal("smile", PoseEvaluator.Sample(curved, walk, .3, repeat: true, new("smile")).Expressions[PersonTemplate.FaceInstance]);
         Assert.Equal("relaxed", PoseEvaluator.Rest(hero.Model).Expressions[PersonTemplate.FaceInstance]);
-    }
-
-    [Fact]
-    public void TheConversionRunsOnAScratchTreeWithAReportRerunsUnchangedAndRefusesTheLegacyFieldsElsewhere()
-    {
-        // A small legacy bundle in the retired form: a version-10 model with the face payload on its head and a look word,
-        // a version-3 clip with a face track, a version-4 variant with a face word and a version-6 variant with the typed face override.
-        var authored = Path.Combine(_root, "authored");
-        Directory.CreateDirectory(Path.Combine(authored, "models"));
-        Directory.CreateDirectory(Path.Combine(authored, "animations"));
-        Directory.CreateDirectory(Path.Combine(authored, "variants"));
-        Directory.CreateDirectory(Path.Combine(authored, "parts"));
-        File.WriteAllText(Path.Combine(authored, "parts", ProceduralFace.AssetId + ".json"), PersonTemplate.Face.ToJson());
-        var model = JsonNode.Parse(PersonTemplate.Model().ToJson())!.AsObject();
-        model["version"] = 10;
-        var head = model["parts"]!.AsArray().OfType<JsonObject>().First(p => p["id"]!.ToString() == Humanoid.Head);
-        head["face"] = new JsonObject { ["expression"] = "focused", ["offsetX"] = .065f };
-        model["looks"]!.AsArray().OfType<JsonObject>().First(l => l["id"]!.ToString() == "ember")["parts"]![Humanoid.Head] = new JsonObject { ["face"] = "determined" };
-        File.WriteAllText(Path.Combine(authored, "models", "person.json"), model.ToJsonString());
-        var clip = JsonNode.Parse(ClipAuthoring.New(ResolvedModel.From(PersonTemplate.Model()), "wince", "Wince", loop: false).ToJson())!.AsObject();
-        clip["version"] = 3;
-        clip["faces"] = new JsonArray(new JsonObject { ["part"] = Humanoid.Head, ["keys"] = new JsonArray(new JsonObject { ["time"] = 0, ["expression"] = "hurt" }, new JsonObject { ["time"] = .5f, ["expression"] = "none" }) });
-        File.WriteAllText(Path.Combine(authored, "animations", "wince.json"), clip.ToJsonString());
-        File.WriteAllText(Path.Combine(authored, "variants", "old.json"), """{"format":"app2d-variant","version":4,"id":"old","name":"Old","base":"person","build":{"legs":1.1},"rest":{},"parts":{"head":{"face":"smug"}}}""");
-        var typed = new ModelVariant { Id = "typed", Name = "Typed", Base = "person", Overrides = [new() { Target = PropertyRef.OfPart(Humanoid.Head, "face"), Selection = "angry" }] };
-        File.WriteAllText(Path.Combine(authored, "variants", "typed.json"), typed.ToJson());
-        // The retired fields are refused by name everywhere but the conversion.
-        Assert.Contains("FaceConversion.ConvertPayload", Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(File.ReadAllText(Path.Combine(authored, "models", "person.json")))).Message);
-        Assert.Contains("retired in P7c", Assert.Throws<InvalidDataException>(() => MotionClip.FromJson(File.ReadAllText(Path.Combine(authored, "animations", "wince.json")))).Message);
-        Assert.Contains("convert the bundle", Assert.Throws<InvalidDataException>(() => ModelVariant.FromJson(File.ReadAllText(Path.Combine(authored, "variants", "old.json")))).Message);
-        var output = Path.Combine(_root, "scratch");
-        var result = FaceConversion.ConvertPayload(authored, "person", Humanoid.Head, PersonTemplate.FaceInstance, ProceduralFace.AssetId, Humanoid.HeadSocket, output);
-        Assert.True(result.Converted, string.Join("; ", result.Differences));
-        Assert.True(File.Exists(result.ReportPath));
-        Assert.Equal(["model", "clip", "variant", "variant"], result.Files.Select(f => f.Kind));
-        Assert.All(result.Files, f => Assert.StartsWith("converted", f.Status));
-        // The outputs: the model wears the face with the payload's offset and the look's word, the clip selects the words, both variants override the expression; the source is untouched.
-        var converted = CharacterModel.Load(Path.Combine(output, "models", "person.json"));
-        Assert.Equal(CharacterModel.CurrentVersion, converted.Version);
-        Assert.Equal((.065f, "focused"), (converted.Attachments.Single().X, converted.Attachments.Single().Expression));
-        Assert.Equal("determined", converted.Looks.Single(l => l.Id == "ember").Expressions[PersonTemplate.FaceInstance]);
-        var wince = MotionClip.FromJson(File.ReadAllText(Path.Combine(output, "animations", "wince.json")));
-        Assert.Equal(MotionClip.CurrentVersion, wince.Version);
-        Assert.Equal([("hurt", 0f), (PartAsset.None, .5f)], wince.Plays.Single().Keys.Select(k => (k.Expression, k.Time)));
-        Assert.Equal("smug", ModelVariant.FromJson(File.ReadAllText(Path.Combine(output, "variants", "old.json"))).Override(PropertyRef.OfAttachment(PersonTemplate.FaceInstance, RigProperties.Expression))!.Selection);
-        Assert.Equal("angry", ModelVariant.FromJson(File.ReadAllText(Path.Combine(output, "variants", "typed.json"))).Override(PropertyRef.OfAttachment(PersonTemplate.FaceInstance, RigProperties.Expression))!.Selection);
-        Assert.Contains("\"version\":10", File.ReadAllText(Path.Combine(authored, "models", "person.json")).Replace(" ", ""));
-        var again = FaceConversion.ConvertPayload(authored, "person", Humanoid.Head, PersonTemplate.FaceInstance, ProceduralFace.AssetId, Humanoid.HeadSocket, output);
-        Assert.All(again.Files, f => Assert.StartsWith("unchanged", f.Status));
-        var edited = CharacterModel.Load(Path.Combine(output, "models", "person.json"));
-        edited.Name = "Edited";
-        edited.Save(Path.Combine(output, "models", "person.json"));
-        var kept = FaceConversion.ConvertPayload(authored, "person", Humanoid.Head, PersonTemplate.FaceInstance, ProceduralFace.AssetId, Humanoid.HeadSocket, output);
-        Assert.StartsWith("kept", kept.Files.First(f => f.Kind == "model").Status);
-        // A version-3 clip without face tracks reads unchanged at version 4.
-        var plain = JsonNode.Parse(ClipAuthoring.New(ResolvedModel.From(PersonTemplate.Model()), "plain", "Plain").ToJson())!.AsObject();
-        plain["version"] = 3;
-        Assert.Equal(MotionClip.CurrentVersion, MotionClip.FromJson(plain.ToJsonString()).Version);
     }
 }

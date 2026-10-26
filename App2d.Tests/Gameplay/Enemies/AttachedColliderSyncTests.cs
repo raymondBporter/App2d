@@ -98,7 +98,6 @@ public sealed class AttachedColliderSyncTests
         var hit = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(60, 60));
         hit.Transform.Position = new(head.Bounds.Center.X, (head.Bounds.Center.Y + torso.Bounds.Max.Y) / 2);
         Assert.True(hit.WorldBounds.Intersects(head.Bounds) && hit.WorldBounds.Intersects(torso.Bounds));
-        Assert.True(enemy.HurtRegistered);
         Assert.True(enemy.OverlapsHurt(hit.WorldBounds));
         var health = enemy.Health.Current;
         var contact = enemy.Colliders.HurtContact(hit.WorldBounds); // read before the damage tick moves the pose

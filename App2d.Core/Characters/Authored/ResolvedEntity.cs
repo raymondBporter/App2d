@@ -93,23 +93,16 @@ public sealed class ResolvedEntity
     public IReadOnlyDictionary<string, ResolvedAction> Actions { get; private set; } = new Dictionary<string, ResolvedAction>();
     public IReadOnlyList<ResolvedEquipment> Equipment { get; private set; } = [];
     public IReadOnlyDictionary<string, ModelSocket> Sockets { get; private set; } = new Dictionary<string, ModelSocket>();
-    /// <summary>The legacy hurt layout's regions (pose-derived boxes); empty once the entity's hurt geometry is attached colliders.</summary>
-    public IReadOnlyList<HurtShape> Hurt { get; private set; } = [];
-    /// <summary>
-    /// Every attached collider the entity declares or its legacy fields imply, each with a stable ID: explicit entries first,
-    /// then one attack collider per legacy hit window with inline geometry and the legacy guard. Actors register these once.
-    /// </summary>
+    /// <summary>Every attached collider the entity declares, each with a stable ID, in declaration order. Actors register these once.</summary>
     public IReadOnlyList<ResolvedCollider> Colliders { get; private set; } = [];
     /// <summary>The guard collider, when the entity has a guard.</summary>
     public ResolvedCollider? GuardCollider { get; private set; }
-    /// <summary>Receiving damage: the typed behavior, or the legacy health and mass with the former constants.</summary>
+    /// <summary>Receiving damage: the typed behavior.</summary>
     public ReceiveDamageDef Damage { get; private set; } = new();
-    /// <summary>Guarding, when the entity guards: the typed behavior or the game's former defaults.</summary>
+    /// <summary>Guarding, when the entity guards: the typed behavior or its defaults.</summary>
     public GuardBehaviorDef? GuardBehavior { get; private set; }
-    /// <summary>Custom authored properties by name (empty before version 4).</summary>
+    /// <summary>Custom authored properties by name.</summary>
     public IReadOnlyDictionary<string, string> Properties { get; private set; } = new Dictionary<string, string>();
-    /// <summary>Whether hurt geometry is attached colliders (found by the ordinary broad phase) rather than the legacy layout scan.</summary>
-    public bool HurtRegistered => Colliders.Any(c => c.Use == ColliderUses.Hurt);
 
     public bool Enabled(string action) => Actions.ContainsKey(action);
     public MotionClip? Clip(string role) => Roles.TryGetValue(role, out var assigned) ? assigned.Clip : null;
@@ -134,25 +127,21 @@ public sealed class ResolvedEntity
             throw new InvalidDataException($"{owner} model: no model or variant '{asset.Model}'.");
         }
         var entity = new ResolvedEntity(asset, model, controller);
-        // P9a: typed behaviors, or the legacy fields read into the same typed values. Every strike key must name a hit group.
+        // P9a: typed behaviors. Every strike key must name a hit group.
         var behaviors = asset.Behaviors;
-        entity.Damage = behaviors?.Damage ?? new ReceiveDamageDef { Health = asset.Health, Mass = asset.Mass };
-        entity.GuardBehavior = asset.Guard is null ? null : behaviors?.Guard ?? new GuardBehaviorDef();
-        entity.Properties = behaviors?.Properties ?? new Dictionary<string, string>();
-        if (behaviors is not null)
+        entity.Damage = behaviors.Damage;
+        entity.GuardBehavior = asset.Guard is null ? null : behaviors.Guard ?? new GuardBehaviorDef();
+        entity.Properties = behaviors.Properties;
+        var groups = asset.Actions.SelectMany(a => a.Hits.Select(h => h.Id)).Concat(asset.Actions.Where(a => a.Projectile is not null).Select(a => a.Id)).ToHashSet(StringComparer.Ordinal);
+        foreach (var group in behaviors.Strikes.Keys)
         {
-            var groups = asset.Actions.SelectMany(a => a.Hits.Select(h => h.Id)).Concat(asset.Actions.Where(a => a.Projectile is not null).Select(a => a.Id)).ToHashSet(StringComparer.Ordinal);
-            foreach (var group in behaviors.Strikes.Keys)
+            if (!groups.Contains(group))
             {
-                if (!groups.Contains(group))
-                {
-                    throw new InvalidDataException($"{owner} behaviors.strikes.{group}: no hit window or projectile action of that name.");
-                }
+                throw new InvalidDataException($"{owner} behaviors.strikes.{group}: no hit window or projectile action of that name.");
             }
         }
-        // A typed entity's hit group without an entry strikes with the defaults (one damage, the default impact); an entry for no group is reported above.
-        StrikeDef StrikeOf(string group, int legacyDamage, string? legacySound) =>
-            behaviors is null ? new StrikeDef { Damage = legacyDamage, Sound = legacySound } : behaviors.Strikes.GetValueOrDefault(group) ?? new StrikeDef();
+        // A hit group without an entry strikes with the defaults (one damage, the default impact); an entry for no group is reported above.
+        StrikeDef StrikeOf(string group) => behaviors.Strikes.GetValueOrDefault(group) ?? new StrikeDef();
 
         MotionClip Clip(string id, string field)
         {
@@ -224,25 +213,11 @@ public sealed class ResolvedEntity
         }
         entity.Equipment = equipment;
 
-        // Attached colliders: the explicit entries, then the legacy inline geometry of windows and the guard as colliders of
-        // their own, so every actor registers one set and every query runs over it (P8a). A legacy window keeps its own id
-        // when no other window of the entity shares it, otherwise "{action}-{window}".
+        // Attached colliders: every actor registers this one set and every query runs over it (P8a).
         var colliders = new List<ResolvedCollider>();
         foreach (var definition in asset.Colliders)
         {
             colliders.Add(ResolvedCollider.Resolve(definition, "collider", $"{owner} collider '{definition.Id}'", model, entity.Sockets, equipment));
-        }
-        var windowIds = asset.Actions.SelectMany(a => a.Hits).Where(h => h.Collider is null).Select(h => h.Id).ToLookup(id => id, StringComparer.Ordinal);
-        ResolvedCollider Synthesize(ColliderDef definition, string source, string field)
-        {
-            if (colliders.Any(c => c.Id == definition.Id))
-            {
-                throw new InvalidDataException($"{field}: its inline geometry would register as collider '{definition.Id}', which the entity already declares; name that collider instead.");
-            }
-
-            var resolved = ResolvedCollider.Resolve(definition, source, field, model, entity.Sockets, equipment);
-            colliders.Add(resolved);
-            return resolved;
         }
         var windowColliders = new Dictionary<(string Action, string Window), ResolvedCollider>();
         foreach (var action in asset.Actions)
@@ -250,33 +225,13 @@ public sealed class ResolvedEntity
             var field = $"{owner} action '{action.Id}'";
             foreach (var hit in action.Hits)
             {
-                if (hit.Collider is { } named)
-                {
-                    windowColliders[(action.Id, hit.Id)] = colliders.FirstOrDefault(c => c.Id == named && c.Use == ColliderUses.Attack)
-                        ?? throw new InvalidDataException($"{field} hit '{hit.Id}': no attack collider '{named}'.");
-                    continue;
-                }
-
-                windowColliders[(action.Id, hit.Id)] = Synthesize(new ColliderDef
-                {
-                    Id = windowIds[hit.Id].Count() == 1 ? hit.Id : $"{action.Id}-{hit.Id}",
-                    Use = ColliderUses.Attack,
-                    Shape = hit.Shape,
-                    Socket = hit.Socket,
-                    Prop = hit.Prop,
-                    Point = hit.Point,
-                    Along = hit.Along,
-                    OffsetX = hit.OffsetX,
-                    OffsetY = hit.OffsetY,
-                    Enabled = true,
-                }, "window", $"{field} hit '{hit.Id}'");
+                windowColliders[(action.Id, hit.Id)] = colliders.FirstOrDefault(c => c.Id == hit.Collider && c.Use == ColliderUses.Attack)
+                    ?? throw new InvalidDataException($"{field} hit '{hit.Id}': no attack collider '{hit.Collider}'.");
             }
         }
         if (asset.Guard is { } guard)
         {
-            entity.GuardCollider = guard.Collider is { } named
-                ? colliders.First(c => c.Id == named)
-                : Synthesize(new ColliderDef { Id = ColliderUses.Guard, Use = ColliderUses.Guard, Shape = guard.Shape, Prop = guard.Prop }, "guard", $"{owner} guard"); // at the prop's tip, as the legacy guard window was
+            entity.GuardCollider = colliders.First(c => c.Id == guard.Collider);
         }
         entity.Colliders = colliders;
 
@@ -308,7 +263,7 @@ public sealed class ResolvedEntity
                     throw new InvalidDataException($"{field} hit '{hit.Id}': finish must follow start.");
                 }
 
-                hits.Add(new(hit, start, finish, windowColliders[(action.Id, hit.Id)], StrikeOf(hit.Id, hit.Damage, hit.Sound)));
+                hits.Add(new(hit, start, finish, windowColliders[(action.Id, hit.Id)], StrikeOf(hit.Id)));
             }
             var events = action.Events.Select(e => new ResolvedEvent(e, Seconds(e.At, $"event '{e.Id}'"))).OrderBy(e => e.Seconds).ToList();
             if (action.Id == EntityControllers.Jump && !events.Any(e => e.Event.Id == EntityControllers.Launch))
@@ -349,7 +304,7 @@ public sealed class ResolvedEntity
                 BlendIn = action.BlendIn,
                 BlendOut = action.BlendOut,
                 Projectile = action.Projectile,
-                ProjectileStrike = action.Projectile is { } projectile ? StrikeOf(action.Id, projectile.Damage, null) : null,
+                ProjectileStrike = action.Projectile is null ? null : StrikeOf(action.Id),
                 Next = action.Next,
                 Recovery = recovery
             };
@@ -375,40 +330,6 @@ public sealed class ResolvedEntity
             }
         }
         entity.Actions = actions;
-
-        var hurt = new List<HurtShape>();
-        if (asset.Hurt.Layout is { } layoutId)
-        {
-            var layout = model.Base.HurtLayouts.FirstOrDefault(l => l.Id == layoutId)
-                ?? throw new InvalidDataException($"{owner} hurt.layout: '{model.Base.Id}' has no hurt layout '{layoutId}'.");
-            foreach (var (id, _) in asset.Hurt.Regions)
-            {
-                if (!layout.Regions.Any(r => r.Id == id))
-                {
-                    throw new InvalidDataException($"{owner} hurt.regions.{id}: layout '{layoutId}' has no such region.");
-                }
-            }
-
-            foreach (var region in layout.Regions)
-            {
-                var change = asset.Hurt.Regions.GetValueOrDefault(region.Id);
-                if (change?.Disabled == true)
-                {
-                    continue;
-                }
-
-                hurt.Add(region with
-                {
-                    Pad = change?.Pad ?? region.Pad
-                });
-            }
-        }
-        else if (asset.Hurt.Regions.Count > 0)
-        {
-            throw new InvalidDataException($"{owner} hurt.regions: overrides need a layout.");
-        }
-
-        entity.Hurt = hurt;
         return entity;
     }
 }
@@ -495,41 +416,19 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
 }
 
 /// <summary>
-/// Movement, hurt and attack regions from one placed final pose, as values: the attack and registered-hurt regions are the
-/// same placement the actors' registered colliders use (<see cref="ResolvedCollider.Place"/>); the legacy hurt layout is the
-/// pose-derived box scan until its entities convert. Graphics-free.
+/// Movement, hurt and attack regions from one placed final pose, as values: the attack and hurt regions are the same
+/// placement the actors' registered colliders use (<see cref="ResolvedCollider.Place"/>). Graphics-free.
 /// </summary>
 public static class EntityCollision
 {
-    /// <summary>Radius, in authored units, given to hurt regions whose controls enclose no area.</summary>
-    public const float DegenerateHurtRadius = .005f;
 
     /// <summary>The movement shape placed at the feet, mirrored to the facing.</summary>
     public static EntityRegion Movement(ResolvedEntity entity, Vector2 position, int facing) =>
         new(ColliderUses.Movement, entity.MovementShape, Similarity2D.FromAxis(position, new(facing, 0), mirror: facing < 0));
 
-    /// <summary>
-    /// The hurt regions at a pose: the entity's hurt colliders placed, or, for an entity still on the legacy layout, the
-    /// control bounding box of each layout region inflated by its pad (a hairline capsule when degenerate).
-    /// </summary>
-    public static List<EntityRegion> Hurt(ResolvedEntity entity, ActorPose pose)
-    {
-        if (entity.HurtRegistered)
-        {
-            return entity.Colliders.Where(c => c.Use == ColliderUses.Hurt && c.DefaultEnabled).Select(c => c.Region(pose)).ToList();
-        }
-
-        var regions = new List<EntityRegion>(entity.Hurt.Count);
-        foreach (var shape in entity.Hurt)
-        {
-            var bounds = Rect2D.FromPoints(shape.Controls, pose, static (control, actor) => actor.World(control).XY).InflatedBy(shape.Pad);
-            // Controls on one line with no pad enclose no area: a hairline capsule keeps them hittable without a degenerate box.
-            regions.Add(bounds.Width > 0 && bounds.Height > 0
-                ? EntityRegion.Box(shape.Id, bounds.Center, bounds.Size)
-                : EntityRegion.Capsule(shape.Id, bounds.Min, bounds.Max, DegenerateHurtRadius));
-        }
-        return regions;
-    }
+    /// <summary>The hurt regions at a pose: the entity's enabled-by-default hurt colliders placed.</summary>
+    public static List<EntityRegion> Hurt(ResolvedEntity entity, ActorPose pose) =>
+        entity.Colliders.Where(c => c.Use == ColliderUses.Hurt && c.DefaultEnabled).Select(c => c.Region(pose)).ToList();
 
     /// <summary>
     /// The 3D frame an attack collider is anchored to: a socket, an equipped prop's named point with the prop's orientation,

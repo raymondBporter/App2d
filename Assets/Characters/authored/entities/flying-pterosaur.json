@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 4,
+  "version": 5,
   "id": "flying-pterosaur",
   "name": "Pterosaur",
   "model": "pterosaur",
@@ -41,9 +41,6 @@
       },
       "angleRadians": 0
     }
-  },
-  "hurt": {
-    "regions": {}
   },
   "colliders": [
     {

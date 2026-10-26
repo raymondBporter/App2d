@@ -205,7 +205,7 @@ public static partial class ClipAuthoring
         }
 
         var parentLength = node.Parent is null ? 0 : model.Nodes[node.Parent].Length;
-        var setupOrigin = node.Kind == RigNodeKinds.Affine ? new Vector2(node.Affine!.X, node.Affine.Y) : node.Origin(parentLength);
+        var setupOrigin = node.Origin(parentLength);
         var units = nested ? 1 : Ratio(model, clip, Track(clip, channel)?.Scale ?? spec.Scale);
         return (channel, new((inCarrier.X - setupOrigin.X) / units, (inCarrier.Y - setupOrigin.Y) / units, inCarrier.Z - node.Layer));
     }
@@ -218,10 +218,7 @@ public static partial class ClipAuthoring
             return Geometry.LayeredFrame2D.FromMatrix(Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y));
         }
 
-        var parent = model.Nodes[node.Parent];
-        return parent.Kind == RigNodeKinds.Affine && node.Kind != RigNodeKinds.Affine
-            ? Geometry.LayeredFrame2D.FromRotation(pose.Angles[parent.Id], pose.Points[parent.Id])
-            : pose.Placement(parent.Id);
+        return pose.Placement(node.Parent);
     }
 
     /// <summary>Adds <paramref name="radians"/> to a control's rotation at a time.</summary>

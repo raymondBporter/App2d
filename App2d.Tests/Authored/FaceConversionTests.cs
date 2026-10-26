@@ -43,7 +43,7 @@ public sealed class FaceConversionTests : IDisposable
         var (rebuilt, report) = FaceConversion.Build(catalog.Models["curve-face"], clips, "head", FaceConversionPlans.CurveFace(PartId));
         Assert.Equal(File.ReadAllText(catalog.PathOf(PartId)), rebuilt.ToJson());
         // Eye squash is an explicit artwork fit on the pupils (baseline 7.3), never a rig scale; the affine eyes are plain point controls.
-        Assert.DoesNotContain(shipped.Clips.SelectMany(c => c.Tracks), t => t.Kind is MotionClip.ScaleKind or MotionClip.ShearKind);
+        Assert.DoesNotContain(shipped.Clips.SelectMany(c => c.Tracks), t => t.Kind == MotionClip.ScaleKind);
         Assert.Equal(["left-pupil", "right-pupil"], shipped.Clip("curve-face-blink")!.Tracks.Where(t => t.Kind == MotionClip.FitKind).Select(t => t.Target).Order());
         Assert.All(shipped.Controls, c => Assert.Equal(RigNodeKinds.Point, c.Node));
         Assert.Equal(27, shipped.Controls.Count);
@@ -54,7 +54,6 @@ public sealed class FaceConversionTests : IDisposable
         // P11a converted the model's eyes to point controls with fit tracks on the pupils, so the face conversion carries them as they are.
         Assert.Contains(report, line => line.StartsWith("control 'left-eye': point control", StringComparison.Ordinal));
         Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", File.ReadAllText(catalog.PathOf("curve-face")));
-        Assert.Equal(0, catalog.Models["curve-face"].Controls.Count(c => c.Node == RigNodeKinds.Affine));
         Assert.Contains(catalog.Animations["curve-face-blink"].Tracks, t => t.Kind == MotionClip.FitKind && t.Target == "left-pupil");
         // Every converted clip reproduces the source model within the recorded tolerances at sampled instants.
         Assert.Empty(FaceConversion.Verify(catalog.Resolve("curve-face"), clips, "head", shipped, 1e-4f, 1e-3f));

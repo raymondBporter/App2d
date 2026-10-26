@@ -60,7 +60,6 @@ public sealed class TemplatePublicationTests : IDisposable
             Assert.Equal(3, model.Presets.Count);
             Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "models", id + ".json")));
         }
-        Assert.Empty(LegacySourceFields.Remaining(TestModels.AuthoredRoot));
     }
 
     [Fact]

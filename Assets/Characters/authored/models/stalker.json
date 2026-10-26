@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 11,
+  "version": 12,
   "id": "stalker",
   "name": "Stalker",
   "structureRevision": 2,
@@ -124,7 +124,6 @@
   "constraints": [
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "hip-0",
       "joint": "knee-0",
       "end": "foot-0",
@@ -133,7 +132,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "hip-1",
       "joint": "knee-1",
       "end": "foot-1",
@@ -142,7 +140,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "hip-2",
       "joint": "knee-2",
       "end": "foot-2",
@@ -321,34 +318,6 @@
         "hit": "stalker-hit",
         "death": "stalker-death"
       }
-    }
-  ],
-  "hurtLayouts": [
-    {
-      "id": "standard",
-      "regions": [
-        {
-          "id": "shell",
-          "controls": [
-            "body",
-            "hip-0",
-            "hip-2"
-          ],
-          "pad": 0.2
-        },
-        {
-          "id": "legs",
-          "controls": [
-            "knee-0",
-            "knee-1",
-            "knee-2",
-            "foot-0",
-            "foot-1",
-            "foot-2"
-          ],
-          "pad": 0.05
-        }
-      ]
     }
   ],
   "groups": [],

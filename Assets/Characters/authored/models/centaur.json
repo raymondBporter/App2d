@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 11,
+  "version": 12,
   "id": "centaur",
   "name": "Centaur study",
   "structureRevision": 1,
@@ -147,7 +147,6 @@
       }
     }
   ],
-  "hurtLayouts": [],
   "groups": [
     {
       "id": "upper-body",

@@ -147,7 +147,7 @@ public static class QuadrupedTemplate
         [
             // P11a: a leg on the bone solver scales its two bones' lengths (direction kept); a point run scaled the joints' height.
             Parameter(LegsId, "Leg length", (.7f, 1.5f),
-                legs.SelectMany(leg => (m.IkChains.FirstOrDefault(c => c.Id == leg) is { Solver: ModelChain.BoneSolver } chain
+                legs.SelectMany(leg => (m.IkChains.FirstOrDefault(c => c.Id == leg) is { } chain
                         ? new[] { Control(chain.Root, RigProperties.Length), Control(chain.Joint, RigProperties.Length) }
                         : [Control(leg + "-joint", RigProperties.LocalY), Control(leg + "-foot", RigProperties.LocalY)])
                     .Concat([Part(leg + "-upper", RigProperties.ScaleY), Part(leg + "-upper", RigProperties.OffsetY), Part(leg + "-lower", RigProperties.ScaleY), Part(leg + "-lower", RigProperties.OffsetY)]))

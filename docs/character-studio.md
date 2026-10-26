@@ -202,11 +202,11 @@ facings, including game-size views. Clothing follows the rig rigidly; this first
 
 In **Model → Edit rig**, **Add root bone** creates a bone with an origin, rest angle, and length; **Add child bone** starts at the selected bone's tip. Drag the origin to move it, drag the tip to change its rest angle and length, or edit those values in the inspector. Turn off **Edit rig** and use **Add shape to selected bone** to attach library geometry in that bone's local frame. The menu and **Geometry** field use the geometry library's own names: rectangle, rounded rectangle, capsule, polygons and curves. Curves connect two controls. Shapes and curves share the same fill and outline material fields. The shape's offset and angle remain editable. **Save** writes these as controls and parts in the ordinary model JSON; **Animate** uses a `rotate` track on an unconstrained bone control. Existing point-control models and their animations continue to use the same editor.
 
-To add bone IK, create a root, child and endpoint, select the endpoint and press **Make IK constraint**. The first two bones supply the segment lengths; the endpoint may itself have artwork and child bones. Bone children must meet their parent's +X tip. The new constraint appears under **IK constraints**, with a bend direction, target frame and reference measure. In **Animate**, drag the endpoint to key the constraint's target. Both segments turn, carrying attached shapes and descendants. The root still has translation and uniform-scale channels; its rotation belongs to IK. Existing point controls use the compatible point solver through the same UI.
+To add bone IK, create a root, child and endpoint, select the endpoint and press **Make IK constraint**. The first two bones supply the segment lengths; the endpoint may itself have artwork and child bones. Bone children must meet their parent's +X tip. The new constraint appears under **IK constraints**, with a bend direction, target frame and reference measure. In **Animate**, drag the endpoint to key the constraint's target. Both segments turn, carrying attached shapes and descendants. The root still has translation and uniform-scale channels; its rotation belongs to IK. On a run of point controls **Make IK constraint** converts the run to bone nodes as it makes the constraint (P11c); there is no position-only solver.
 
-Choose the **locomotion** target frame to use the existing **Plant** contact controls. Contacts pin any endpoint; they are not restricted to feet. A free control frame makes a bone target follow that frame's translation, rotation, scale and reflection. A constrained frame cannot drive another constraint. Bone length edits carry the connected IK joint to the new tip. Since P3c a control's inspector shows its declared node kind: a point control's character-frame rest, a bone node's derived origin, direction, length, local setup (rotation, uniform scale, reflect, layer offset) and link (position t along the parent, offset, orientation, bind/unbind), or the legacy affine setup; a bound origin refuses a drag with its reason, and **Convert to bone chain** turns a run of point controls into bone nodes without moving any rest position. Uniform scale and reflection are supported; collapsed, sheared or nonuniform segment frames produce a named diagnostic, including when encountered during animation. Floor/wall queries, self-collision and stateful physics remain later extensions. See [constraint resources and compatibility](character-resources.md#second-migration-typed-ik-and-contact-evaluation).
+Choose the **locomotion** target frame to use the existing **Plant** contact controls. Contacts pin any endpoint; they are not restricted to feet. A free control frame makes a bone target follow that frame's translation, rotation, scale and reflection. A constrained frame cannot drive another constraint. Bone length edits carry the connected IK joint to the new tip. Since P3c a control's inspector shows its declared node kind: a point control's character-frame rest, a bone node's derived origin, direction, length, local setup (rotation, uniform scale, reflect, layer offset) and link (position t along the parent, offset, orientation, bind/unbind); a bound origin refuses a drag with its reason, and **Convert to bone chain** turns a run of point controls into bone nodes without moving any rest position. Uniform scale and reflection are supported; collapsed, sheared or nonuniform segment frames produce a named diagnostic, including when encountered during animation. Floor/wall queries, self-collision and stateful physics remain later extensions. See [constraint resources and compatibility](character-resources.md#second-migration-typed-ik-and-contact-evaluation).
 
-- **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
+- **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, groups and looks on a base
   model, and its declared **Parameters** (P4a: units, default, ranges, bindings; add a parameter, bind a property of the
   selected control, part or attachment to it, remove either; a bound field says which parameter produces it), and its
   **Library parts** (P5c: the instances of shared part assets on its sockets; attach one from the library with a socket
@@ -228,19 +228,18 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   points, targets, chains, words). The Animate outline lists each instance's exposed targets as `instance/target` rows.
 - **Animate**: clips compatible with the subject's base. Dragging keys the channel it drives (autokey), contacts,
   markers, part expression keys, easing and onion skin. **Compare** pins two more builds at the same phase and world scale.
-- **Entity**: model and motion set with per-role overrides, controller, movement box, hurt regions (the legacy layout
-  with **Convert to colliders**), **Colliders** (P8c: the entity's attached hurt, attack, guard and trigger colliders;
-  add one with an id and a use, select it to edit its use, binding (the actor, a control with frame/toward/stretch/offset/
-  angle, a socket or an equipped prop point, along the axis), default enabled state and shape; colliders implied by a
-  legacy window or guard are listed read-only until converted; removing one a window names is refused by name), **Guard**
-  (on or off, its guard collider or the legacy prop shape), equipment and the selected action's clip, mask, blend,
-  activation windows (each names its attack collider; the legacy inline geometry fields show only while a window has no
-  collider) and events. On a version-4 entity the **Health** and a window's **Damage** fields edit the typed behaviors
-  (P9a: `behaviors.damage.health`, `behaviors.strikes.<window>`); adding a window adds its strike, removing the last
-  window of a hit group removes it. The **Behaviors** section (P9c) is the typed inspector: receiving damage (health,
-  mass, hurt and stagger seconds), one strike per hit group (damage, sound, impact; add one for a group striking with
-  the defaults, remove one), the guard's open event and block sound, and custom properties (add, edit, remove), each
-  field with its schema range and help; a legacy entity shows its legacy values and **Convert to behaviors**. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
+- **Entity**: model and motion set with per-role overrides, controller, movement box, **Colliders** (P8c: the entity's
+  attached hurt, attack, guard and trigger colliders; add one with an id and a use, select it to edit its use, binding (the
+  actor, a control with frame/toward/stretch/offset/angle, a socket or an equipped prop point, along the axis), default
+  enabled state and shape; removing one a window names is refused by name), **Guard** (on or off, naming one of the guard
+  colliders), equipment and the selected action's clip, mask, blend, activation windows (each names its attack collider;
+  adding a window needs an attack collider to enable) and events. **Health** and a window's **Damage** edit the typed
+  behaviors (`behaviors.damage.health`, `behaviors.strikes.<window>`); adding a window adds its strike, removing the
+  last window of a hit group removes it. The **Behaviors** section (P9c) is the typed inspector: receiving damage
+  (health, mass, hurt and stagger seconds), one strike per hit group (damage, sound, impact; add one for a group striking
+  with the defaults, remove one), the guard's open event and block sound, and custom properties (add, edit, remove), each
+  field with its schema range and help. Since P11c an entity file is version 5 and carries nothing else: no hurt layout,
+  no inline window or guard geometry, no loose combat fields, and no conversion commands. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
   red attack (filled while its window is open, faint otherwise), green guard, orange trigger, the selected one thicker
   and labelled; the timeline labels each window with its collider.
 - **Test** plays the arena from a snapshot of the current drafts; its overlays read the arena's registered colliders and

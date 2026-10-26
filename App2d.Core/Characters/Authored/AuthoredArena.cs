@@ -76,8 +76,8 @@ public sealed class AuthoredArena
         public string? Expression => !Alive ? "knocked-out" : HurtTime > 0 ? "hurt" : null;
         /// <summary>The movement collider as registered.</summary>
         public EntityRegion Movement => Colliders.Movement!.Region;
-        /// <summary>The hurt regions at the current pose: the registered hurt colliders, or the legacy layout's boxes for an unconverted entity.</summary>
-        public List<EntityRegion> Hurt => Colliders.HasHurt ? Colliders.Hurt.Select(h => h.Region).ToList() : EntityCollision.Hurt(Entity, Pose);
+        /// <summary>The hurt regions at the current pose, as registered.</summary>
+        public List<EntityRegion> Hurt => Colliders.Hurt.Select(h => h.Region).ToList();
         /// <summary>The attack colliders enabled by the windows active in the latest step, as registered.</summary>
         public IEnumerable<(ResolvedHit Hit, EntityRegion Region)> Attacks => Animator.ActiveHits().Select(h => (h, Colliders.Find(h.Collider.Id)!.Region));
 

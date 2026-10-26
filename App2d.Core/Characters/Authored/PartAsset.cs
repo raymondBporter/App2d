@@ -145,7 +145,7 @@ public sealed record PartLocation
 public sealed class PartAsset
 {
     public const string FormatId = "app2d-part";
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
     /// <summary>The expression word that hides an animated instance for its span: a back view, a cleared face.</summary>
     public const string None = "none";
     /// <summary>Separates an instance ID from a target inside it in a wearer's clip (<c>face/left-brow</c>).</summary>

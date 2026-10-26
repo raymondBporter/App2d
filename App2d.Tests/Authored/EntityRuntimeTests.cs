@@ -141,12 +141,6 @@ public sealed class EntityRuntimeTests
         entity = StarterContent.SpearGuardEntity();
         entity.MotionSet = "hulking";
         Assert.Contains("has no motion set 'hulking'", Error(entity));
-        entity = LegacyEntities.Strip(StarterContent.SpearGuardEntity(), Catalog.Entities["spear-guard"].Model.Base);
-        entity.Hurt.Regions["tail"] = new()
-        {
-            Disabled = true
-        };
-        Assert.Contains("hurt.regions.tail", Error(entity));
         entity = StarterContent.StalkerEntity();
         entity.Actions[0].Clip = "person-thrust";
         Assert.Contains("is for model 'person', not 'stalker'", Error(entity));
@@ -156,21 +150,14 @@ public sealed class EntityRuntimeTests
     }
 
     [Fact]
-    public void HurtLayoutOverridesDisableAndPadIndividualRegions()
+    public void AHurtColliderDisabledByDefaultLeavesTheHurtRegions()
     {
-        // The legacy layout route (P11b: the seeds declare colliders; the layout is exercised on the guard's version-2 form).
-        var entity = LegacyEntities.Strip(StarterContent.SpearGuardEntity(), Catalog.Entities["spear-guard"].Model.Base);
-        entity.Hurt.Regions["head"] = new()
-        {
-            Disabled = true
-        };
-        entity.Hurt.Regions["legs"] = new()
-        {
-            Pad = .3f
-        };
+        var entity = StarterContent.SpearGuardEntity();
+        entity.Colliders.Single(c => c.Id == "head").Enabled = false;
         var compiled = Compile(entity);
-        Assert.Equal(expected, compiled.Hurt.Select(r => r.Id));
-        Assert.Equal(.3f, compiled.Hurt.Single(r => r.Id == "legs").Pad);
+        var pose = new ActorPose(PoseEvaluator.Rest(compiled.Model), Vector2.Zero, 1);
+        Assert.Equal(["body", "legs"], EntityCollision.Hurt(compiled, pose).Select(r => r.Id));
+        Assert.Equal(["spear-tip", "body", "head", "legs"], compiled.Colliders.Select(c => c.Id));
     }
 
     private static List<AnimationEvent> Attack(EntityAnimator animator, int facing, Vector2 position, Func<EntityAnimator, bool>? until = null)

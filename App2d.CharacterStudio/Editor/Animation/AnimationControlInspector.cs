@@ -40,7 +40,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
         }
 
         var track = ClipAuthoring.Track(clip, channel.Value);
-        var semantics = ChannelSemantics.Of(ChannelSemantics.OfTrack(channel.Value.Kind, rig.Controls.GetValueOrDefault(local)?.Node));
+        var semantics = ChannelSemantics.Of(ChannelSemantics.OfTrack(channel.Value.Kind));
         ImGui.TextDisabled($"{channel.Value.Kind} channel on '{channel.Value.Target}' ({semantics.Semantics}, {semantics.Units}){(track is null ? ", not keyed yet" : $", {track.Keys.Count} keys")}");
         if (nested is not null)
         {
@@ -66,7 +66,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
 
         if (channel.Value.Kind == MotionClip.TranslateKind)
         {
-            var boneIk = rig.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == local);
+            var boneIk = rig.Chains.Values.Any(c => c.Root == local);
             var limit = rig.Nodes[local].Limit;
             if (boneIk)
             {
@@ -121,39 +121,12 @@ internal sealed class AnimationControlInspector(EditorSession session)
                 }
             }
 
-            var affine = rig.Controls[local].Node == RigNodeKinds.Affine;
-            if (!affine || boneIk)
+            // The uniform pose scale channel: one multiplier on the node's similarity (ChannelSemantics.UniformPoseScale).
+            var scaleChannel = new Channel(MotionClip.ScaleKind, control);
+            var scale = ClipAuthoring.Value(clip, scaleChannel, time).Value.X + 1;
+            if (Ui.Drag("Uniform pose scale multiplier", ref scale, .01f, .01f, 100))
             {
-                // The uniform pose scale channel: one multiplier on the node's similarity (ChannelSemantics.UniformPoseScale).
-                var scaleChannel = new Channel(MotionClip.ScaleKind, control);
-                var scale = ClipAuthoring.Value(clip, scaleChannel, time).Value.X + 1;
-                if (Ui.Drag("Uniform pose scale multiplier", ref scale, .01f, .01f, 100))
-                {
-                    session.Change(document, () => ClipAuthoring.SetKey(document.Asset, scaleChannel, time, new(scale - 1, scale - 1, 0)));
-                }
-            }
-            else if (affine)
-            {
-                void Axis(string label, string kind, int axis)
-                {
-                    var channel = new Channel(kind, control);
-                    var delta = ClipAuthoring.Value(clip, channel, time).Value;
-                    var value = (axis == 0 ? delta.X : delta.Y) + (kind == MotionClip.ScaleKind ? 1 : 0);
-                    if (kind == MotionClip.ShearKind)
-                    {
-                        value = float.RadiansToDegrees(value);
-                    }
-
-                    if (Ui.Drag(label, ref value, .01f, -100, 100))
-                    {
-                        var keyed = kind == MotionClip.ScaleKind ? value - 1 : float.DegreesToRadians(value);
-                        session.Change(document, () => ClipAuthoring.SetComponentKey(document.Asset, channel, time, axis, keyed));
-                    }
-                }
-                Axis("Scale X multiplier", MotionClip.ScaleKind, 0);
-                Axis("Scale Y multiplier", MotionClip.ScaleKind, 1);
-                Axis("Shear X offset (degrees)", MotionClip.ShearKind, 0);
-                Axis("Shear Y offset (degrees)", MotionClip.ShearKind, 1);
+                session.Change(document, () => ClipAuthoring.SetKey(document.Asset, scaleChannel, time, new(scale - 1, scale - 1, 0)));
             }
         }
         var channels = ClipAuthoring.ChannelsForControl(model, control);

@@ -195,11 +195,10 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
             var children = structure.Controls.Where(c => c.Parent == control.Id).ToArray();
             var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanAvailWidth | (children.Length == 0 ? ImGuiTreeNodeFlags.Leaf : 0)
                 | (session.Selection.Control == control.Id ? ImGuiTreeNodeFlags.Selected : 0);
-            var ik = structure.IkChains.FirstOrDefault(c => c.Joint == control.Id || c.End == control.Id || c.Solver == ModelChain.BoneSolver && c.Root == control.Id);
+            var ik = structure.IkChains.FirstOrDefault(c => c.Joint == control.Id || c.End == control.Id || c.Root == control.Id);
             var label = control.Node switch
             {
                 RigNodeKinds.Bone => $"{control.Id}  (bone {control.Length:0.##}{(control.Link is not null ? ", bound" : "")})",
-                RigNodeKinds.Affine => $"{control.Id}  (affine{(control.Length > 0 ? $" {control.Length:0.##}" : "")})",
                 _ => control.Length > 0 ? $"{control.Id}  (bone {control.Length:0.##})" : control.Id,
             };
             var open = ImGui.TreeNodeEx(control.Id, flags, label + (ik is null ? "" : ik.End == control.Id ? "  (IK end)" : ik.Root == control.Id ? "  (IK rotation)" : "  (IK bend)"));
@@ -260,14 +259,13 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
             var pointEnd = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control);
             var pointJoint = structure.Controls.FirstOrDefault(c => c.Id == pointEnd?.Parent);
             var pointRoot = structure.Controls.FirstOrDefault(c => c.Id == pointJoint?.Parent);
-            // A point chain moves positions only; it needs point or tip-bound bone controls. A bone constraint needs two lengths.
-            var pointChain = pointEnd is { Node: not RigNodeKinds.Affine, Length: 0 } && pointJoint is { Node: not RigNodeKinds.Affine } && pointRoot is { Node: not RigNodeKinds.Affine }
-                && (pointJoint.Length == 0 || pointEnd is { Node: RigNodeKinds.Bone, Link.IsTip: true }) && (pointRoot.Length == 0 || pointJoint is { Node: RigNodeKinds.Bone, Link.IsTip: true });
+            // A run of point controls converts to bone nodes as the constraint is made; a bone constraint needs two lengths.
+            var pointChain = pointEnd is { Node: RigNodeKinds.Point } && pointJoint is { Node: RigNodeKinds.Point } && pointRoot is { Node: RigNodeKinds.Point };
             var boneChain = pointEnd is not null && pointJoint is { Length: > 0 } && pointRoot is { Length: > 0 };
             if (Ui.Button("Make IK constraint", pointChain || boneChain))
             {
                 structural.Request(model, "add an IK constraint", () => session.Selection.Select(chain: (pointChain
-                    ? ModelAuthoring.AddChain(model.Asset, session.Selection.Control!)
+                    ? ModelAuthoring.AddIkOverPoints(model.Asset, session.Selection.Control!)
                     : ModelAuthoring.AddBoneIk(model.Asset, session.Selection.Control!)).Id));
             }
 
@@ -281,7 +279,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
         Ui.Header("IK constraints");
         foreach (var chain in structure.IkChains)
         {
-            if (ImGui.Selectable($"{chain.Id}  ({chain.Solver}: {chain.Root} > {chain.Joint} > {chain.End})", session.Selection.Chain == chain.Id))
+            if (ImGui.Selectable($"{chain.Id}  ({chain.Root} > {chain.Joint} > {chain.End})", session.Selection.Chain == chain.Id))
             {
                 session.Selection.Select(chain: chain.Id);
             }

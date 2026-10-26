@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 1,
+  "version": 2,
   "id": "sandal",
   "name": "Leather sandal",
   "usage": "shoe",
@@ -106,5 +106,12 @@
       ],
       "thickness": 0.009
     }
-  ]
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
 }

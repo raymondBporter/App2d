@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 11,
+  "version": 12,
   "id": "baby-triceratops-rig",
   "name": "Baby triceratops",
   "structureRevision": 2,
@@ -207,7 +207,6 @@
   "constraints": [
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "far-hind-root",
       "joint": "far-hind-joint",
       "end": "far-hind-foot",
@@ -216,7 +215,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "far-front-root",
       "joint": "far-front-joint",
       "end": "far-front-foot",
@@ -224,7 +222,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "near-hind-root",
       "joint": "near-hind-joint",
       "end": "near-hind-foot",
@@ -233,7 +230,6 @@
     },
     {
       "kind": "two-bone-ik",
-      "solver": "bone",
       "root": "near-front-root",
       "joint": "near-front-joint",
       "end": "near-front-foot",
@@ -1472,21 +1468,6 @@
         "hit": "baby-triceratops-hit",
         "death": "baby-triceratops-death"
       }
-    }
-  ],
-  "hurtLayouts": [
-    {
-      "id": "body",
-      "regions": [
-        {
-          "id": "body",
-          "controls": [
-            "body",
-            "head"
-          ],
-          "pad": 0.245
-        }
-      ]
     }
   ],
   "groups": [

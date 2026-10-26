@@ -30,7 +30,7 @@ namespace App2d.Gameplay.Enemies;
 /// action's "fire" event launches its projectile from the equipped prop's muzzle, unless terrain crosses the barrel; bolts
 /// sweep in small steps so thin walls stop them, and their current values are included in enemy observations.
 /// </summary>
-public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IAuthoredHurt2D, ICombatGuard2D
+public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IRegisteredHurt2D, ICombatGuard2D
 {
     private const float Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
     private readonly EntityAnimator _animator;
@@ -482,44 +482,11 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return !player.IsAlive;
     }
 
-    public bool HurtRegistered => Entity.HurtRegistered;
-
+    /// <summary>Whether a hit box reaches the enemy's enabled registered hurt colliders (diagnostics and tests; the game queries the collision system).</summary>
     public bool OverlapsHurt(Rect2D hit) => HurtContact(hit) is not null;
 
-    public Vector2? HurtContact(Rect2D hit)
-    {
-        if (!_enabled || !IsAlive)
-        {
-            return null;
-        }
-
-        if (HurtRegistered)
-        {
-            return _colliders.HurtContact(hit);
-        }
-
-        Vector2? closest = null;
-        var distance = float.PositiveInfinity;
-        // Authored hurt regions are world-aligned boxes around pose controls. Pick an overlap centre,
-        // not the attack box's centre (which can be outside the visible target).
-        foreach (var region in EntityCollision.Hurt(Entity, Pose))
-        {
-            var bounds = ToWorld(region).Bounds;
-            if (!bounds.Intersects(hit))
-            {
-                continue;
-            }
-
-            var point = (Vector2.Max(bounds.Min, hit.Min) + Vector2.Min(bounds.Max, hit.Max)) / 2;
-            var d = Vector2.DistanceSquared(point, hit.Center);
-            if (d < distance)
-            {
-                distance = d;
-                closest = point;
-            }
-        }
-        return closest;
-    }
+    /// <summary>Where a hit box lands on the enemy's registered hurt colliders, or null when it reaches none (or the enemy is disabled or dead).</summary>
+    public Vector2? HurtContact(Rect2D hit) => !_enabled || !IsAlive ? null : _colliders.HurtContact(hit);
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {

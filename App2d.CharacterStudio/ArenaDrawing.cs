@@ -13,14 +13,14 @@ internal sealed record ArenaColliderFrame(string Id, string Use, EntityRegion Re
 
 /// <summary>
 /// One actor as the arena left it after a step: its final pose and the actual registered colliders read from the collision
-/// system (<see cref="Colliders"/>), plus the legacy hurt boxes of an entity whose hurt is not registered yet.
+/// system (<see cref="Colliders"/>).
 /// </summary>
-internal sealed record ArenaActorFrame(ResolvedEntity Entity, ActorPose Pose, EntityRegion Movement, IReadOnlyList<EntityRegion> Hurt,
+internal sealed record ArenaActorFrame(ResolvedEntity Entity, ActorPose Pose, EntityRegion Movement,
     IReadOnlyList<EntityRegion> Attacks, IReadOnlyDictionary<string, Vector3> Anchors, bool Alive, IReadOnlyList<ArenaColliderFrame> Colliders)
 {
     /// <summary>Every actor, with the bolts in flight shown as attack regions of the actor that fired them.</summary>
     public static IReadOnlyList<ArenaActorFrame> Capture(AuthoredArena arena) => [.. arena.Actors.Select(a => new ArenaActorFrame(
-        a.Entity, a.Pose, a.Movement, a.Colliders.HasHurt ? [] : a.Hurt,
+        a.Entity, a.Pose, a.Movement,
         [.. a.Attacks.Select(x => x.Region), .. arena.Bolts.Where(b => b.Owner == a.Index).Select(b => new EntityRegion("bolt", b.Shape, Similarity2D.FromTranslation(b.Position)))],
         a.Animator.Anchors.ToDictionary(), a.Alive,
         [.. a.Colliders.All.Where(c => c.Use != ColliderUses.Movement && c.Use != ColliderUses.Attack).Select(c => new ArenaColliderFrame(c.Id, c.Use, c.Region, c.Enabled))]))];
@@ -79,11 +79,6 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
             if (!detail || !actor.Alive)
             {
                 continue;
-            }
-
-            foreach (var region in actor.Hurt)
-            {
-                Outline(region, StudioTheme.HurtRegion, 2);
             }
 
             foreach (var collider in actor.Colliders)

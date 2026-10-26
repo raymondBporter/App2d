@@ -130,10 +130,6 @@ public sealed class BoneEditingTests
         TestModels.Near(before.Rest["tip"], rooted.Rest["tip"], 1e-5f);
         Assert.Equal(2, rooted.Nodes["tip"].Setup.Scale, 4);
         Assert.True(rooted.Nodes["tip"].Setup.Reflect);
-        var (wheel, _) = TestModels.Wheel();
-        wheel.Controls.Add(new() { Id = "pin", Node = RigNodeKinds.Bone, Local = new() { X = 1 } });
-        wheel.Validate();
-        Assert.Contains("affine", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.Reparent(wheel, "pin", "wheel-root")).Message);
     }
 
     [Theory, InlineData(1, false), InlineData(2, false), InlineData(.5f, true), InlineData(2, true)]

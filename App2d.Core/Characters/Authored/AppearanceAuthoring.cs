@@ -5,11 +5,12 @@ public static class AppearanceAuthoring
 {
     public static readonly string[] Templates = ["hair", "beard", "skirt", "sandal", "boot", "blank"];
 
-    public static PropAsset New(string id, string name, string template, string ink, float lineWidth, Func<string, PropAsset?>? findTemplate = null)
+    /// <param name="hair">The hair prop the "hair" template starts from: the game profile's hair gear when the caller knows the profile, else the built-in default.</param>
+    public static PropAsset New(string id, string name, string template, string ink, float lineWidth, Func<string, PropAsset?>? findTemplate = null, string? hair = null)
     {
         var source = template switch
         {
-            "hair" => PersonLoadout.ShortHair,
+            "hair" => hair ?? PersonLoadout.ShortHair,
             "beard" => "brute-beard",
             "skirt" => "cinder-hide-wrap",
             "sandal" => "sandal-left",

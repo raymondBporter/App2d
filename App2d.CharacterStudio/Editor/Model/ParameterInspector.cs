@@ -156,7 +156,7 @@ internal sealed class ParameterInspector(EditorSession session)
 
         if (properties.Count == 0)
         {
-            Ui.Help($"The {owner} exposes no bindable properties (legacy affine adapter).");
+            Ui.Help($"The {owner} exposes no bindable properties.");
             return;
         }
 

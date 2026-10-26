@@ -12,63 +12,9 @@ namespace App2d.Tests.Authored;
 public sealed class RigConstraintTests
 {
     [Fact]
-    public void TypedPointConstraintsPreserveLegacyContactsFramesAndMasks()
+    public void BoneIkTurnsSegmentsBranchesAttachmentsAndSockets()
     {
-        // A version-6 file keeps its point chains in a separate list; the reader folds them into the one constraint list.
-        var original = TestModels.Creature();
-        var node = System.Text.Json.Nodes.JsonNode.Parse(original.ToJson())!.AsObject();
-        node["version"] = 6;
-        var chains = new System.Text.Json.Nodes.JsonArray();
-        foreach (var chain in node["constraints"]!.AsArray().ToArray())
-        {
-            node["constraints"]!.AsArray().Remove(chain);
-            chain!.AsObject().Remove("kind");
-            chains.Add(chain);
-        }
-        node.Remove("constraints");
-        node["chains"] = chains;
-        var before = ResolvedModel.From(original);
-        var reread = CharacterModel.FromJson(node.ToJsonString());
-        Assert.Equal(original.ToJson(), reread.ToJson());
-        var after = ResolvedModel.From(reread);
-        var clip = TestModels.Clip(before);
-        clip.Travel = new()
-        {
-            Scale = "leg",
-            Keys = [new(), new() { Time = 1, Value = new(.15f, 0, 0) }]
-        };
-        clip.Tracks = [new() { Kind = MotionClip.RotateKind, Target = "body", Keys = [new() { Angle = .13f }] }];
-        clip.Contacts = [new() { Chain = "leg", Start = .2f, Finish = .7f, Target = new(.03f, .01f, .1f) }];
-        clip.Validate(after);
-        foreach (var time in new[] { 0, .2, .35, .69999, .7, 1, 2.35 })
-        {
-            foreach (var weight in new[] { 0, .5f, 1 })
-            {
-                var input = new PoseInput
-                {
-                    InPlace = true,
-                    ReverseHorizontalMotion = true,
-                    Contact = (_, p) => p + new Vector3(.01f, .02f, 0),
-                    Overlay = new(clip, .3, new HashSet<string> { "leg" }, weight)
-                };
-                var a = PoseEvaluator.Sample(before, clip, time, true, input);
-                var b = PoseEvaluator.Sample(after, clip, time, true, input);
-                foreach (var control in before.Order)
-                {
-                    Assert.Equal(a.Points[control.Id], b.Points[control.Id]);
-                    Assert.Equal(a.Bones[control.Id], b.Bones[control.Id]);
-                    Assert.Equal(a.Angles[control.Id], b.Angles[control.Id]);
-                }
-                Assert.Equal(a.Chains, b.Chains);
-                Assert.Equal(a.Contacts, b.Contacts);
-            }
-        }
-    }
-
-    [Theory, InlineData(true), InlineData(false)]
-    public void BoneIkTurnsSegmentsBranchesAttachmentsAndSockets(bool affine)
-    {
-        var model = Machine(affine);
+        var model = Machine();
         var resolved = ResolvedModel.From(model);
         var clip = Aim(resolved, new(1, 1, .4f));
         var pose = PoseEvaluator.Sample(resolved, clip, .5);
@@ -96,11 +42,7 @@ public sealed class RigConstraintTests
     public void UniformScaleAndReflectionsCarryBendAndDescendants(float x, float y)
     {
         var model = Machine();
-        model.Controls.Single(c => c.Id == "carrier").Transform = new()
-        {
-            ScaleX = x,
-            ScaleY = y
-        };
+        model.Controls.Single(c => c.Id == "carrier").Local = Setup(x, y);
         var resolved = ResolvedModel.From(model);
         var clip = Aim(resolved, new(x, y, .2f));
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
@@ -117,14 +59,7 @@ public sealed class RigConstraintTests
     {
         var model = Machine();
         model.IkChains.Single().Frame = "carrier";
-        model.Controls[0].Transform = new()
-        {
-            X = .4f,
-            Y = -.2f,
-            Rotation = .4f,
-            ScaleX = -2,
-            ScaleY = 2
-        };
+        model.Controls[0].Local = Setup(-2, 2, .4f, .4f, -.2f);
         var resolved = ResolvedModel.From(model);
         var clip = ClipAuthoring.New(resolved, "machine-move", "Move");
         ClipAuthoring.SetKey(clip, new(MotionClip.RotateKind, "carrier"), 0, default, .2f);
@@ -223,11 +158,7 @@ public sealed class RigConstraintTests
     public void AContactAtTheRootKeepsTheMirroredFoldDirection(float x, float y)
     {
         var model = Machine();
-        model.Controls[0].Transform = new()
-        {
-            ScaleX = x,
-            ScaleY = y
-        };
+        model.Controls[0].Local = Setup(x, y);
         var resolved = ResolvedModel.From(model);
         var clip = Aim(resolved, new(x, y, .2f));
         clip.Contacts = [new() { Chain = "reach", Finish = 1, Target = new(-2 * x, 0) }];
@@ -237,24 +168,16 @@ public sealed class RigConstraintTests
         TestModels.Near(new(0, y, .1f), pose.World("hinge"));
     }
 
-    [Theory, InlineData("nonuniform"), InlineData("shear"), InlineData("collapsed"), InlineData("detached"), InlineData("own-frame")]
+    [Theory, InlineData("detached"), InlineData("own-frame")]
     public void InvalidBoneSetupsAreRejectedWithTheConstraintName(string edit)
     {
         var model = Machine();
-        var beam = model.Controls.Single(c => c.Id == "beam");
         switch (edit)
         {
-            case "nonuniform":
-                beam.Transform!.ScaleX = 2;
-                break;
-            case "shear":
-                beam.Transform!.ShearY = .2f;
-                break;
-            case "collapsed":
-                beam.Transform!.ScaleX = beam.Transform.ScaleY = 0;
-                break;
             case "detached":
-                model.Controls.Single(c => c.Id == "hinge").Transform!.Y = .1f;
+                var hinge = model.Controls.Single(c => c.Id == "hinge");
+                hinge.Link = null;
+                hinge.Local = new() { X = 1, Y = .1f, Layer = .1f };
                 break;
             case "own-frame":
                 model.IkChains.Single().Frame = "beam";
@@ -263,7 +186,7 @@ public sealed class RigConstraintTests
         Assert.Contains("reach", Assert.Throws<InvalidDataException>(model.Validate).Message);
     }
 
-    [Theory, InlineData(1, 0), InlineData(-1, -1), InlineData(-.99999f, -.99999f)]
+    [Theory, InlineData(-1, -1), InlineData(-.99999f, -.99999f)]
     public void UnsupportedAnimatedScalesFailExplicitly(float x, float y)
     {
         var resolved = ResolvedModel.From(Machine());
@@ -276,17 +199,15 @@ public sealed class RigConstraintTests
     [Fact]
     public void BoneVariantOffsetsCannotSilentlyChangeTheDeclaredLengths()
     {
-        // A legacy affine node exposes no overridable setup at all; a point bone's joint cannot leave the +X tip.
-        var affine = new ModelVariant { Id = "bad-offset", Name = "Offset", Base = "machine", Overrides = [PropertyOverride.Of(PropertyRef.OfControl("hinge", RigProperties.LocalY), .2f)] };
-        Assert.Contains("legacy affine", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Machine(), affine)).Message);
-        var point = new ModelVariant { Id = "bad-offset", Name = "Offset", Base = "machine" };
-        Assert.Contains("+X tip", Assert.Throws<InvalidDataException>(() => VariantConversion.PinRest(Machine(affine: false), point, new Dictionary<string, PuppetPoint> { ["hinge"] = new(1, .2f, .1f) })).Message);
+        // A tip-bound joint exposes no local translation: it cannot leave the +X tip through an override; the refusal names it.
+        var offset = new ModelVariant { Id = "bad-offset", Name = "Offset", Base = "machine", Overrides = [PropertyOverride.Of(PropertyRef.OfControl("hinge", RigProperties.LocalY), .2f)] };
+        Assert.Contains("hinge", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Machine(), offset)).Message);
     }
 
-    [Theory, InlineData(true), InlineData(false)]
-    public void RestLengthEditsCarryTheConnectedJointAndCanStillRotate(bool affine)
+    [Fact]
+    public void RestLengthEditsCarryTheConnectedJointAndCanStillRotate()
     {
-        var model = Machine(affine);
+        var model = Machine();
         ModelAuthoring.ResizeBone(model, "beam", 1.5f);
         ModelAuthoring.RotateRestBone(model, "beam", .4f);
         var resolved = ResolvedModel.From(model);
@@ -320,12 +241,11 @@ public sealed class RigConstraintTests
     {
         var json = Machine().ToJson();
         Assert.Contains("\"kind\": \"two-bone-ik\"", json);
-        Assert.Contains("\"solver\": \"bone\"", json);
         Assert.Equal(json, CharacterModel.FromJson(json).ToJson());
         var reordered = json.Replace("\"kind\": \"two-bone-ik\",", "").Replace("\"id\": \"reach\"", "\"id\": \"reach\", \"kind\": \"two-bone-ik\"");
         Assert.Equal("reach", CharacterModel.FromJson(reordered).Constraints.Single().Id);
         Assert.Throws<JsonException>(() => CharacterModel.FromJson(json.Replace("two-bone-ik", "unknown-solver")));
-        Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(json.Replace("\"solver\": \"bone\"", "\"solver\": \"mystery\"")));
+        Assert.Throws<JsonException>(() => CharacterModel.FromJson(json.Replace("\"id\": \"reach\"", "\"id\": \"reach\", \"solver\": \"bone\""))); // the retired solver member (P11c)
         var duplicate = TestModels.Creature();
         duplicate.Constraints.Add(duplicate.IkChains.First() with
         {
@@ -400,23 +320,26 @@ public sealed class RigConstraintTests
         }
     }
 
-    private static CharacterModel Machine(bool affine = true)
+    /// <summary>A parent-local similarity for a scale pair as the original affine fixture declared it: a negative X scale is a half turn with the reflection flipped.</summary>
+    private static RigSetup Setup(float scaleX, float scaleY, float rotation = 0, float x = 0, float y = 0) =>
+        new() { X = x, Y = y, Rotation = rotation + (scaleX < 0 ? MathF.PI : 0), Scale = MathF.Abs(scaleX), Reflect = scaleX < 0 != scaleY < 0 };
+
+    private static CharacterModel Machine()
     {
-        var kind = affine ? RigNodeKinds.Affine : RigNodeKinds.Point;
         var model = new CharacterModel
         {
             Id = "machine",
             Name = "Machine",
             Controls =
             [
-                new() { Id = "carrier", Node = kind, Transform = affine ? new() : null },
-                new() { Id = "beam", Parent = "carrier", Length = 1, Node = kind, Transform = affine ? new() : null },
-                new() { Id = "hinge", Parent = "beam", Length = 1, Rest = new(1, 0, .1f), Node = kind, Transform = affine ? new() { X = 1 } : null },
-                new() { Id = "tool", Parent = "hinge", Rest = new(2, 0, .2f), RestAngle = .3f, Node = kind, Transform = affine ? new() { X = 1, Rotation = .3f } : null },
-                new() { Id = "flag", Parent = "beam", Rest = new(0, .25f), Node = kind, Transform = affine ? new() { Y = .25f } : null },
-                new() { Id = "payload", Parent = "tool", Rest = PuppetPoint.From(new Vector3(new Vector2(2, 0) + Rotation2D.Apply(new(.2f, .3f), .3f), .3f)), RestAngle = .3f, Node = kind, Transform = affine ? new() { X = .2f, Y = .3f } : null }
+                new() { Id = "carrier", Node = RigNodeKinds.Bone },
+                new() { Id = "beam", Parent = "carrier", Node = RigNodeKinds.Bone, Length = 1 },
+                new() { Id = "hinge", Parent = "beam", Node = RigNodeKinds.Bone, Length = 1, Link = new(), Local = new() { Layer = .1f } },
+                new() { Id = "tool", Parent = "hinge", Node = RigNodeKinds.Bone, Link = new(), Local = new() { Rotation = .3f, Layer = .1f } },
+                new() { Id = "flag", Parent = "beam", Node = RigNodeKinds.Bone, Local = new() { Y = .25f } },
+                new() { Id = "payload", Parent = "tool", Node = RigNodeKinds.Bone, Local = new() { X = .2f, Y = .3f, Layer = .1f } }
             ],
-            Constraints = [new ModelChain { Id = "reach", Root = "beam", Joint = "hinge", End = "tool", Solver = ModelChain.BoneSolver }],
+            Constraints = [new ModelChain { Id = "reach", Root = "beam", Joint = "hinge", End = "tool" }],
             Sockets = [new() { Id = "socket", Control = "tool", OffsetX = .2f }]
         };
         ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "beam");

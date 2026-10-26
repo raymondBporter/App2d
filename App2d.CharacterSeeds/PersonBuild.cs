@@ -109,7 +109,7 @@ public sealed record PersonBuild
             : [Scale(control, RigProperties.LocalX), Scale(control, RigProperties.LocalY), Scale(control, RigProperties.LocalLayer)];
         // A limb on the bone solver scales its two solved bones' lengths (the root bone sits beneath the shoulder pivot of an
         // arm, or is the hip itself); a point run scales each segment's parent-local offset.
-        IEnumerable<ParameterBinding> Limb(string start, string joint, string end) => model.IkChains.FirstOrDefault(c => c.End == end) is { Solver: ModelChain.BoneSolver } chain
+        IEnumerable<ParameterBinding> Limb(string start, string joint, string end) => model.IkChains.FirstOrDefault(c => c.End == end) is { } chain
             ? [Scale(chain.Root, RigProperties.Length), Scale(chain.Joint, RigProperties.Length)]
             : controls[start].Node == RigNodeKinds.Bone
             ? [Scale(start, RigProperties.Length), Scale(joint, RigProperties.Length)]

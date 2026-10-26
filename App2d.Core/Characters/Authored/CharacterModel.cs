@@ -19,15 +19,13 @@ public sealed record ModelControl
     public string? Name { get; set; }
     /// <summary>The declared setup kind, one of <see cref="RigNodeKinds"/>. Never inferred from the other members.</summary>
     public string Node { get; set; } = RigNodeKinds.Point;
-    /// <summary>Legacy affine adapter setup; required by and only allowed on <see cref="RigNodeKinds.Affine"/> nodes.</summary>
-    public Affine2D? Transform { get; set; }
     /// <summary>Canonical parent-local similarity setup of a <see cref="RigNodeKinds.Bone"/> node (null is the identity).</summary>
     public RigSetup? Local { get; set; }
     /// <summary>Binds a bone node's origin to a position along its parent bone instead of <see cref="Local"/>'s translation.</summary>
     public RigLink? Link { get; set; }
-    /// <summary>Optional angular joint limits of a bone node (P4b): bounds on its parent-local rotation. A point or affine node has none.</summary>
+    /// <summary>Optional angular joint limits of a bone node (P4b): bounds on its parent-local rotation. A point node has none.</summary>
     public RigLimit? Limit { get; set; }
-    /// <summary>Character-frame rest of a point or affine node. Derived, and so omitted, for a bone node.</summary>
+    /// <summary>Character-frame rest of a point node. Derived, and so omitted, for a bone node.</summary>
     public PuppetPoint Rest { get; set; }
     /// <summary>Character-frame XY direction of a point node's frame in rest, in radians. Derived for a bone node.</summary>
     public float RestAngle { get; set; }
@@ -44,11 +42,12 @@ public abstract record RigConstraint
     public string Id { get; set; } = "";
 }
 
-/// <summary>A two-bone IK constraint. Point controls use the point solver; explicit bones opt into frame propagation.</summary>
+/// <summary>
+/// A two-bone IK constraint over rigid bone frames (<see cref="BoneFrameIk"/>): the root and joint are bone nodes with lengths,
+/// the joint and end bound to their parents' tips; the solve turns the root and joint frames and carries their subtrees.
+/// </summary>
 public sealed record ModelChain : RigConstraint
 {
-    public const string PointSolver = "point", BoneSolver = "bone";
-    public string Solver { get; set; } = PointSolver;
     public string Root { get; set; } = "";
     public string Joint { get; set; } = "";
     public string End { get; set; } = "";
@@ -90,21 +89,6 @@ public sealed record MotionSet
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public Dictionary<string, string> Roles { get; set; } = [];
-}
-
-/// <summary>A hurt region suggestion: the XY bounds of some controls, grown by Pad. Geometry only, no damage.</summary>
-public sealed record HurtShape
-{
-    public string Id { get; set; } = "";
-    public List<string> Controls { get; set; } = [];
-    public float Pad { get; set; } = .1f;
-}
-
-/// <summary>A reusable hurt-region layout. An entity selects one and may override or disable individual regions.</summary>
-public sealed record HurtLayout
-{
-    public string Id { get; set; } = "";
-    public List<HurtShape> Regions { get; set; } = [];
 }
 
 /// <summary>
@@ -168,9 +152,9 @@ public sealed class CharacterModel
     /// library part assets (P5a); version 8 declared exposed <see cref="Parameters"/> with their bindings and
     /// <see cref="Presets"/> in place of the retired code build rule (P4a); version 7 declared each control's node kind,
     /// authored bone nodes as parent-local setups and kept one constraint list (P3a); version 6 moved a curve's wave into
-    /// the typed <c>wave</c> modifier (P2a). Older files read through <see cref="LegacyModelReader"/>.
+    /// the typed <c>wave</c> modifier (P2a). Version 12 (P11c) carries no legacy members: no affine node or <c>transform</c>, no chain <c>solver</c>, no <c>hurtLayouts</c>; an older file is refused by version.
     /// </summary>
-    public const int CurrentVersion = 11;
+    public const int CurrentVersion = 12;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -207,14 +191,13 @@ public sealed class CharacterModel
     /// </summary>
     public string? MotionOwner { get; set; }
     public List<MotionSet> MotionSets { get; set; } = [];
-    public List<HurtLayout> HurtLayouts { get; set; } = [];
     public List<ControlGroup> Groups { get; set; } = [];
     public List<LookPreset> Looks { get; set; } = [];
     /// <summary>The prototype puppet this model was converted from, if any.</summary>
     public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(LegacySourceFields.ReadModel(json), "model");
+    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(json, "model");
     public static CharacterModel FromJson(string json)
     {
         var model = FromDraftJson(json);
@@ -250,7 +233,7 @@ public sealed class CharacterModel
             Require(material is not null, $"{owner}: null material '{id}'.");
             material.Resolve(Materials);
         }
-        Require(Controls is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && Attachments is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
+        Require(Controls is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && Attachments is not null && MotionSets is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
         Limit.Color(Ink, "ink");
@@ -270,7 +253,6 @@ public sealed class CharacterModel
             switch (control.Node)
             {
                 case RigNodeKinds.Bone:
-                    Require(control.Transform is null, $"{field}: a bone node has no affine transform.");
                     Require(control.Rest == default && control.RestAngle == 0, $"{field}: a bone node derives its rest from its local setup; author local, length and link instead.");
                     control.Local?.Validate(field + " local");
                     control.Link?.Validate(field + " link");
@@ -279,15 +261,8 @@ public sealed class CharacterModel
                     control.Limit?.Validate(field + " limit");
                     Require(control.Limit is null || control.Limit.Contains(control.Local?.Rotation ?? 0), $"{field}: its rest rotation lies outside its joint limits; widen the limits or turn the rest.");
                     break;
-                case RigNodeKinds.Affine:
-                    Require(control.Transform is not null, $"{field}: an affine node needs its transform.");
-                    Require(control.Local is null && control.Link is null && control.Limit is null, $"{field}: an affine node authors only its transform.");
-                    control.Rest.Check(field + " rest");
-                    control.Transform.Validate($"{owner} bone '{control.Id}'");
-                    new Limit(-1000, 1000).Check(control.RestAngle, field + " restAngle");
-                    break;
                 default:
-                    Require(control.Transform is null && control.Local is null && control.Link is null, $"{field}: a point control authors only rest and restAngle; declare node 'bone' or 'affine' for a local setup.");
+                    Require(control.Local is null && control.Link is null, $"{field}: a point control authors only rest and restAngle; declare node 'bone' for a local setup.");
                     Require(control.Limit is null, $"{field}: joint limits belong to bone nodes; convert the run to a bone chain first.");
                     control.Rest.Check(field + " rest");
                     new Limit(-1000, 1000).Check(control.RestAngle, field + " restAngle");
@@ -337,23 +312,7 @@ public sealed class CharacterModel
             Require(chain.Bend is -1 or 1, $"{owner}: chain '{chain.Id}' bend must be -1 or 1.");
             Require(Known(chain.Root) && Known(chain.Joint) && Known(chain.End), $"{owner}: chain '{chain.Id}' references an unknown control.");
             Require(controls[chain.Joint].Parent == chain.Root && controls[chain.End].Parent == chain.Joint, $"{owner}: chain '{chain.Id}' needs two connected bones (root → joint → end).");
-            Require(chain.Solver is ModelChain.PointSolver or ModelChain.BoneSolver, $"{owner}: chain '{chain.Id}' has unknown solver '{chain.Solver}'.");
-            if (chain.Solver == ModelChain.PointSolver)
-            {
-                // The legacy point-constraint adapter moves positions only. It never reads a declared length, so a
-                // length is allowed only where the next control is bound to that tip and the two agree by construction.
-                Require(controls[chain.Root].Node != RigNodeKinds.Affine && controls[chain.Joint].Node != RigNodeKinds.Affine && controls[chain.End].Node != RigNodeKinds.Affine,
-                    $"{owner}: chain '{chain.Id}' uses affine bone frames; choose a bone constraint instead of point IK.");
-                Require(TipBound(controls[chain.Root], controls[chain.Joint]) && TipBound(controls[chain.Joint], controls[chain.End]) && controls[chain.End].Length == 0,
-                    $"{owner}: chain '{chain.Id}' declares bone lengths its point solver would ignore; bind each joint to its parent's tip or choose a bone constraint.");
-                // The point solver moves positions without turning frames, so a limit on its solved joint or end would bound nothing it does.
-                Require(controls[chain.Joint].Limit is null && controls[chain.End].Limit is null,
-                    $"{owner}: chain '{chain.Id}' uses the point solver, which moves '{chain.Joint}' and '{chain.End}' without turning their frames; joint limits need a bone constraint.");
-            }
-            else
-            {
-                Require(controls[chain.Root].Length >= .01f && controls[chain.Joint].Length >= .01f, $"{owner}: bone constraint '{chain.Id}' needs positive root and joint lengths of at least 0.01.");
-            }
+            Require(controls[chain.Root].Length >= .01f && controls[chain.Joint].Length >= .01f, $"{owner}: bone constraint '{chain.Id}' needs positive root and joint lengths of at least 0.01.");
 
             Require(solved.Add(chain.Joint) && solved.Add(chain.End), $"{owner}: chains cannot share solved controls ('{chain.Id}').");
             Require(scales.Contains(chain.Scale), $"{owner}: chain '{chain.Id}' uses unknown scale '{chain.Scale}'.");
@@ -366,7 +325,7 @@ public sealed class CharacterModel
                 yield return current;
             }
         }
-        var writes = IkChains.SelectMany(c => (c.Solver == ModelChain.BoneSolver ? new[] { c.Root } : [c.Joint, c.End]).Select(id => (Chain: c, Id: id))).ToArray();
+        var writes = IkChains.Select(c => (Chain: c, Id: c.Root)).ToArray();
         foreach (var chain in IkChains)
         {
             Require(!SelfAndAncestors(chain.Root).Any(id => writes.Any(w => w.Chain != chain && w.Id == id)), $"{owner}: chain '{chain.Id}' overlaps or is nested inside another chain; nested IK is not supported.");
@@ -440,23 +399,6 @@ public sealed class CharacterModel
                 AuthoredAsset.RequireId(clip, $"{owner} motion set '{set.Id}' role '{role}' clip");
             }
         }
-        var layouts = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var layout in HurtLayouts)
-        {
-            Require(layout?.Regions is not null, $"{owner}: incomplete hurt layout.");
-            AuthoredAsset.RequireId(layout.Id, $"{owner} hurt layout id");
-            Require(layouts.Add(layout.Id), $"{owner}: duplicate hurt layout '{layout.Id}'.");
-            var regions = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var region in layout.Regions)
-            {
-                var field = $"{owner} hurt layout '{layout.Id}' region";
-                Require(region?.Controls is not null, $"{field}: incomplete region.");
-                AuthoredAsset.RequireId(region.Id, field + " id");
-                Require(regions.Add(region.Id), $"{field}: duplicate '{region.Id}'.");
-                Require(region.Controls.Count > 0 && region.Controls.All(Known), $"{field} '{region.Id}': needs at least one known control.");
-                new Limit(0, 10).Check(region.Pad, $"{field} '{region.Id}' pad");
-            }
-        }
         var groups = new HashSet<string>(StringComparer.Ordinal);
         foreach (var group in Groups)
         {
@@ -496,19 +438,10 @@ public sealed class CharacterModel
         ParameterCatalog.Compile(this);
     }
 
-    /// <summary>A point-solved segment: the bone has no declared length, or its child is a bone node bound to its tip.</summary>
-    private static bool TipBound(ModelControl bone, ModelControl child) =>
-        bone.Length == 0 || child.Node == RigNodeKinds.Bone && child.Link is { IsTip: true };
-
     /// <summary>Checks lengths that depend on rest geometry, so a variant's overrides are held to the same rules as its base.</summary>
     public static void CheckGeometry(CharacterModel model, IReadOnlyDictionary<string, Vector3> rest, string owner)
     {
         float Length(string a, string b) => Vector2.Distance(new(rest[a].X, rest[a].Y), new(rest[b].X, rest[b].Y));
-        foreach (var chain in model.IkChains.Where(c => c.Solver == ModelChain.PointSolver))
-        {
-            Require(Length(chain.Root, chain.Joint) >= .01f && Length(chain.Joint, chain.End) >= .01f, $"{owner}: chain '{chain.Id}' needs segment lengths of at least 0.01.");
-        }
-
         foreach (var measure in model.Measures)
         {
             Require(measure.Path.Zip(measure.Path.Skip(1)).Sum(p => Length(p.First, p.Second)) >= .001f, $"{owner}: measure '{measure.Id}' has no length.");

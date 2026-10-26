@@ -5,25 +5,24 @@ using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Authored;
 
+/// <summary>
+/// The native image-slot scene (<see cref="TestModels.Wheel"/>): bone nodes with a reflected, scaled root, image slots with
+/// skins, tint and attachment timelines, draw order and events, round-tripping through the native file format. The scene's
+/// inherited nonuniform scale and shear left with the affine adapter in P11c.
+/// </summary>
 public sealed class NativeRigTests
 {
     private static (CharacterModel Model, IReadOnlyList<MotionClip> Animations) Scene() => TestModels.Wheel();
 
     [Fact]
-    public void SamplingExplicitBonesLeavesSetupChannelsVersionsAndSubscribersUntouched()
+    public void SamplingLeavesTheAuthoredModelUntouched()
     {
         var (source, clips) = Scene();
         var model = ResolvedModel.From(source);
         var before = source.ToJson();
-        var setups = model.SetupTransforms.Values.ToArray();
-        var versions = setups.Select(s => s.Version).ToArray();
-        var notifications = 0;
-        foreach (var setup in setups) setup.Changed += () => notifications++;
         foreach (var time in new[] { 0f, .2f, .5f, .9f, 1f })
             PoseEvaluator.Sample(model, clips[0], time);
         Assert.Equal(before, source.ToJson());
-        Assert.Equal(versions, setups.Select(s => s.Version));
-        Assert.Equal(0, notifications);
     }
 
     [Fact]
@@ -55,7 +54,6 @@ public sealed class NativeRigTests
     [Theory]
     [InlineData("translate", .2f)]
     [InlineData("scale", 1f)]
-    [InlineData("shear", .7f)]
     [InlineData("rotate", .7f)]
     public void EqualEndpointCurvesKeepOvershootAfterSavingAndRetiming(string kind, float control)
     {
@@ -112,27 +110,24 @@ public sealed class NativeRigTests
     }
 
     [Fact]
-    public void AffineChannelsComposeReflectShearAndCollapseWithoutLosingDescendantFrames()
+    public void ReflectionAndUniformScaleComposeOntoTheChildAndACollapseStaysFinite()
     {
         var (Model, Animations) = Scene();
         var model = ResolvedModel.From(Model);
-        var setup = Model.Controls[0].Transform!;
         var rest = PoseEvaluator.Rest(model);
-        var expected = Vector2.Transform(new(.4f, .05f), setup.Matrix);
+        // The child's rest is its local origin through the root's reflected, scaled frame.
+        var expected = Vector2.Transform(new(.4f, .05f), model.RestTransforms["wheel-root"]);
         TestModels.Near(new(expected, 0), rest.World("spoke-tip"));
+        Assert.True(model.RestTransforms["wheel-root"].GetDeterminant() < 0, "the root reflects");
+        Assert.Equal(1.5f, new Core.Mathematics.Transforms.Frame2D(model.RestTransforms["wheel-root"]).XAxis.Length(), 4);
         var clip = Animations.Single();
         var pose = PoseEvaluator.Sample(model, clip, 1);
-        var animated = setup with
-        {
-            Rotation = setup.Rotation + MathF.PI,
-            ScaleX = setup.ScaleX * .5f,
-            ScaleY = setup.ScaleY * 1.5f,
-            ShearX = float.DegreesToRadians(10),
-            ShearY = setup.ShearY - float.DegreesToRadians(20)
-        };
-        expected = Vector2.Transform(new(.7f, .25f), animated.Matrix);
+        // At the end: the root turned by a further half turn and halved its pose scale; the child's setup-before-first translate holds its last key.
+        Assert.Equal(.75f, new Core.Mathematics.Transforms.Frame2D(pose.Bones["wheel-root"]).XAxis.Length(), 4);
+        Assert.True(pose.Bones["wheel-root"].GetDeterminant() < 0, "the reflection survives animation");
+        expected = Vector2.Transform(new(.4f + .3f, .05f + .2f), pose.Bones["wheel-root"]);
         TestModels.Near(new(expected, 0), pose.World("spoke-tip"));
-        clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].Value = clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].Value with { X = -1 };
+        clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].Value = new(-1, -1, 0);
         var collapsed = PoseEvaluator.Sample(model, clip, 1);
         Assert.Equal(0, collapsed.Bones["wheel-root"].GetDeterminant(), 5);
         Assert.True(float.IsFinite(collapsed.World("spoke-tip").X));
@@ -166,7 +161,7 @@ public sealed class NativeRigTests
     }
 
     [Fact]
-    public void AffinePoseEditingIsTheInverseOfEvaluationAndRestMovesRespectChildChoice()
+    public void PoseEditingIsTheInverseOfEvaluationAndRestMovesRespectChildChoice()
     {
         var (Model, Animations) = Scene();
         var model = ResolvedModel.From(Model);
@@ -183,12 +178,14 @@ public sealed class NativeRigTests
     }
 
     [Fact]
-    public void VariantsAndFlatteningPreserveAffineSetupAndPoseEditing()
+    public void VariantsAndFlatteningPreserveTheSetupAndPoseEditing()
     {
         var (Model, Animations) = Scene();
-        // The affine adapter exposes no variant-overridable setup (P6a): moving the wheel root on a variant is refused by name.
+        // A bone root's local translation is a variant property (P6a): the override moves it and its child follows.
         var moved = new ModelVariant { Id = "moved-wheel", Name = "Moved wheel", Base = "wheel", Overrides = [PropertyOverride.Of(PropertyRef.OfControl("wheel-root", RigProperties.LocalX), 2)] };
-        Assert.Contains("legacy affine", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Model, moved)).Message);
+        var shifted = ResolvedModel.From(Model, moved);
+        Assert.Equal(2, shifted.Rest["wheel-root"].X, 5);
+        TestModels.Near(ResolvedModel.From(Model).Rest["spoke-tip"] + new Vector3(1.5f, 0, 0), shifted.Rest["spoke-tip"]);
         var variant = new ModelVariant { Id = "moved-wheel", Name = "Moved wheel", Base = "wheel", Overrides = [PropertyOverride.Of(PropertyRef.OfPart(Model.Parts[0].Id, RigProperties.OffsetX), .1f)] };
         var model = ResolvedModel.From(Model, variant);
         var rest = PoseEvaluator.Rest(model);
@@ -219,7 +216,7 @@ public sealed class NativeRigTests
     }
 
     [Fact]
-    public void AffineReparentingKeepsWorldFrameAndVariantMovesCanLeaveChildrenBehind()
+    public void ReparentingKeepsWorldFrameAndVariantMovesCanLeaveChildrenBehind()
     {
         var source = Scene();
         var initial = ResolvedModel.From(source.Model);
@@ -228,22 +225,25 @@ public sealed class NativeRigTests
         var moved = ResolvedModel.From(source.Model);
         MatrixNear(oldFrame, moved.RestTransforms["spoke-tip"]);
         TestModels.Near(initial.Rest["spoke-tip"], moved.Rest["spoke-tip"]);
-        // A variant cannot move a legacy affine node (P6a: the adapter exposes no setup); the refusal names it and writes nothing.
+        // A variant move without children re-expresses the child's setup so it stays in place (P6a).
         var variant = new ModelVariant { Id = "moved-wheel", Name = "Moved", Base = "wheel" };
         source = Scene();
-        Assert.Contains("legacy affine", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(ResolvedModel.From(source.Model), variant, "wheel-root", new(3, 4, 0), children: false)).Message);
-        Assert.Empty(variant.Overrides);
-        TestModels.Near(initial.Rest["spoke-tip"], PoseEvaluator.Rest(ResolvedModel.From(source.Model, variant)).World("spoke-tip"));
+        ModelAuthoring.MoveRest(ResolvedModel.From(source.Model), variant, "wheel-root", new(3, 4, 0), children: false);
+        Assert.NotEmpty(variant.Overrides);
+        var left = ResolvedModel.From(source.Model, variant);
+        TestModels.Near(new(3, 4, 0), left.Rest["wheel-root"]);
+        TestModels.Near(initial.Rest["spoke-tip"], left.Rest["spoke-tip"]);
     }
 
     [Theory]
     [InlineData("model", 2)]
-    [InlineData("model", 3)]
+    [InlineData("model", 11)]
     [InlineData("clip", 1)]
-    [InlineData("clip", 2)]
-    [InlineData("variant", 2)]
+    [InlineData("clip", 3)]
+    [InlineData("variant", 5)]
     public void PreviousNativeFormatsAreRejected(string kind, int version)
     {
+        // P11c retired the legacy readers: a file below its kind's current version is refused by version, never translated.
         var source = TestModels.Creature();
         var json = kind switch
         {

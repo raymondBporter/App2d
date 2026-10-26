@@ -107,7 +107,6 @@ public sealed class ColliderActivationTests
         // The player with three overlapping hurt colliders against the guard: one hit per thrust, not one per collider.
         var player = StarterContent.PlayerEntity();
         player.Version = EntityAsset.CurrentVersion;
-        player.Hurt = new();
         player.Colliders.RemoveAll(c => c.Use == ColliderUses.Hurt);
         player.Colliders.AddRange(
         [
@@ -116,7 +115,7 @@ public sealed class ColliderActivationTests
             new() { Id = "head", Use = ColliderUses.Hurt, Control = Humanoid.Head, Frame = CharacterModel.Locomotion, Shape = Circle2D.Builder.Create(.45f) },
         ]);
         var target = Compile(player);
-        Assert.True(target.HurtRegistered);
+        Assert.Equal(3, target.Colliders.Count(c => c.Use == ColliderUses.Hurt));
         var arena = GuardThrust(target, Catalog.Entities["spear-guard"]);
         for (var i = 0; i < 360; i++)
         {

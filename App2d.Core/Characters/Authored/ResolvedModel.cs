@@ -35,7 +35,6 @@ public sealed class ResolvedModel
         Children = model.Controls.ToDictionary(c => c.Id, c => (IReadOnlyList<string>)[.. model.Controls.Where(child => child.Parent == c.Id).Select(child => child.Id)], StringComparer.Ordinal);
         Rest = order.ToDictionary(c => c.Id, c => nodes[c.Id].Rest, StringComparer.Ordinal);
         RestTransforms = order.ToDictionary(c => c.Id, c => nodes[c.Id].RestFrame, StringComparer.Ordinal);
-        SetupTransforms = order.Where(c => nodes[c.Id].Affine is not null).ToDictionary(c => c.Id, c => nodes[c.Id].Affine!, StringComparer.Ordinal);
         // Authored rest Z is an absolute character layer; the evaluator composes layers by addition, so each node
         // carries only its offset from its parent (a root keeps its rest Z). Summing offsets down the tree reproduces
         // every authored value without double counting (character-migration-baseline.md, section 7.4).
@@ -52,8 +51,6 @@ public sealed class ResolvedModel
     /// <summary>Each control's derived rest position in the character frame, at its absolute rest layer.</summary>
     public IReadOnlyDictionary<string, Vector3> Rest { get; }
     public IReadOnlyDictionary<string, Matrix3x2> RestTransforms { get; }
-    /// <summary>The legacy affine adapter's setups: only <see cref="RigNodeKinds.Affine"/> nodes have one.</summary>
-    public IReadOnlyDictionary<string, Affine2D> SetupTransforms { get; }
     /// <summary>Each control's drawing layer relative to its parent (a root's is its rest Z). Composed layers reproduce the authored absolute rest Z.</summary>
     public IReadOnlyDictionary<string, float> LayerOffsets { get; }
     /// <summary>The base's declared parameters, compiled and validated once with their bindings.</summary>

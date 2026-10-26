@@ -242,15 +242,14 @@ public sealed class MigrationReferenceTests
         // and still report reached (baseline 7.2), now it reports the gap with the same residual.
         Assert.False(reached[1], "a target 5.6e-3 past full reach is not reached");
         Assert.False(reached[7], "a target 5.6e-3 past full reach is not reached");
-        Assert.Equal(.0055562f, PoseEvaluator.Sample(Linkage, crank, 1 / 8.0, true).Chains.Single().Residual, 5);
+        Assert.Equal(.0055427f, PoseEvaluator.Sample(Linkage, crank, 1 / 8.0, true).Chains.Single().Residual, 5); // the rigid solve's gap (P11c; the point adapter reported .0055562)
         var pin = PoseEvaluator.Sample(Linkage, crank, .5, true);
         TestModels.Near(new(-.4f, 1, 0), pin.World("crank-pin"), 1e-4f, "half a turn carries the pin to the far side");
-        // The point solver keeps a 1e-3 minimum root-to-end distance for a degenerate target; the fold is preserved and, since
-        // P4b, reported as a 1e-3 gap rather than as reached.
+        // A degenerate target folds the rod fully onto its root (P11c: the rigid solve; the point adapter kept a 1e-3 minimum fold and reported it as a gap).
         var zero = PoseEvaluator.Sample(Linkage, FixtureClips["linkage-reach"], 0);
-        TestModels.Near(zero.World("piston"), zero.World("rod-end"), 2e-3f, "a zero-length target folds the rod onto its root");
-        Assert.Equal(.001f, zero.Chains.Single().Residual, 4);
-        Assert.False(zero.Chains.Single().Reached);
+        TestModels.Near(zero.World("piston"), zero.World("rod-end"), 1e-5f, "a zero-length target folds the rod onto its root");
+        Assert.Equal(0, zero.Chains.Single().Residual, 4);
+        Assert.True(zero.Chains.Single().Reached);
     }
 
     private static void WriteReferences(string path, string json)
@@ -339,9 +338,8 @@ public sealed class MigrationReferenceTests
             Chains = pose.Chains.Select(ch => new ChainRecord(ch.Chain, ch.Residual, ch.Reached)).ToList(),
             Contacts = pose.Contacts.Select(ct => new ContactRecord(ct.Chain, V(actor.Place(ct.Target)), ct.Residual)).ToList(),
             Expressions = pose.Expressions.Count == 0 ? null : new(pose.Expressions),
-            // Full bone matrices only where a control carries an explicit affine setup: that is where shear and reflection live.
-            Bones = model.Base.Controls.Any(k => k.Transform is not null)
-                ? model.Order.ToDictionary(k => k.Id, k => M(pose.Bones[k.Id]), StringComparer.Ordinal) : null,
+            // Full bone matrices for the wheel fixture: that is where the inherited reflection and scale live.
+            Bones = model.Base.Id == "wheel" ? model.Order.ToDictionary(k => k.Id, k => M(pose.Bones[k.Id]), StringComparer.Ordinal) : null,
             Slots = pose.Slots.Count == 0 ? null : pose.Slots.Select(s => new SlotRecord(s.Slot.Id, s.Part?.Id, [s.Color.X, s.Color.Y, s.Color.Z, s.Color.W])).ToList(),
             Sockets = model.Base.Sockets.ToDictionary(s => s.Id, s => Frame(actor.Socket(s)), StringComparer.Ordinal),
             Parts = model.Parts.Where(p => !p.Hidden).Select(p => Silhouette(p, pose, model, actor)).ToList(),

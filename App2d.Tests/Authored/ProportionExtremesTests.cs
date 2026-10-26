@@ -107,7 +107,7 @@ public sealed class ProportionExtremesTests
         // Every track kind maps to a declared channel semantics with units the inspector can show, including the normalized bend.
         foreach (var kind in MotionClip.TrackKinds)
         {
-            var declaration = ChannelSemantics.Of(ChannelSemantics.OfTrack(kind, RigNodeKinds.Bone));
+            var declaration = ChannelSemantics.Of(ChannelSemantics.OfTrack(kind));
             Assert.Contains(declaration.Units, ParameterUnits.All);
         }
         Assert.Equal(ParameterUnits.Normalized, ChannelSemantics.Of(ChannelSemantics.NormalizedParameter).Units);

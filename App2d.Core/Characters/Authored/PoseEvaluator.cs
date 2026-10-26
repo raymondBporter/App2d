@@ -301,7 +301,7 @@ public static class PoseEvaluator
                 return delta;
             }
 
-            return new(-delta.X, kind == MotionClip.ShearKind ? -delta.Y : delta.Y, delta.Z);
+            return new(-delta.X, delta.Y, delta.Z);
         }
         // Every masking layer in order blends the value below it toward its own; an unkeyed masked channel rests.
         Vector3 Delta(string kind, string target, string defaultScale)
@@ -380,16 +380,7 @@ public static class PoseEvaluator
             var localLayer = node.Layer + translate.Z;
             var parent = node.Parent is null ? null : model.Nodes[node.Parent];
             var parentAngle = parent is null ? 0 : pose.Angles[parent.Id];
-            // The legacy affine adapter carries its point children by rotation only; its scale and shear stay on its own frame.
-            var carrier = parent is null ? locomotion
-                : parent.Kind == RigNodeKinds.Affine ? LayeredFrame2D.FromRotation(parentAngle, pose.Points[parent.Id])
-                : pose.Placement(parent.Id);
-            if (node.Kind == RigNodeKinds.Affine)
-            {
-                LegacyAffineRig.Evaluate(pose, node, translate, rotate, Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit), Delta(MotionClip.ShearKind, control.Id, CharacterModel.Unit), localLayer,
-                    parent is null ? locomotion : pose.Placement(parent.Id));
-                continue;
-            }
+            var carrier = parent is null ? locomotion : pose.Placement(parent.Id);
             var origin = node.Origin(parent?.Length ?? 0) + translate.XY;
             var rotation = node.Rotation + rotate;
             if (node.Limit is { } limit)

@@ -116,17 +116,24 @@ public sealed class LayeredFrame2DTests
         }
 
         // The same local meaning for point controls and explicit bones: a parent's translate-Z key is a layer delta its children inherit.
-        foreach (var affine in new[] { false, true })
+        foreach (var bones in new[] { false, true })
         {
             var model = new CharacterModel
             {
                 Id = "layers",
                 Name = "Layers",
-                Controls =
+                Controls = bones
+                ?
                 [
-                    new() { Id = "root", Rest = new(0, 1, .1f), Node = affine ? RigNodeKinds.Affine : RigNodeKinds.Point, Transform = affine ? new() { Y = 1 } : null },
-                    new() { Id = "child", Parent = "root", Rest = new(.5f, 1, -.2f), Node = affine ? RigNodeKinds.Affine : RigNodeKinds.Point, Transform = affine ? new() { X = .5f } : null },
-                    new() { Id = "leaf", Parent = "child", Rest = new(1, 1, -.25f), Node = affine ? RigNodeKinds.Affine : RigNodeKinds.Point, Transform = affine ? new() { X = .5f } : null },
+                    new() { Id = "root", Node = RigNodeKinds.Bone, Local = new() { Y = 1, Layer = .1f } },
+                    new() { Id = "child", Parent = "root", Node = RigNodeKinds.Bone, Local = new() { X = .5f, Layer = -.3f } },
+                    new() { Id = "leaf", Parent = "child", Node = RigNodeKinds.Bone, Local = new() { X = .5f, Layer = -.05f } },
+                ]
+                :
+                [
+                    new() { Id = "root", Rest = new(0, 1, .1f) },
+                    new() { Id = "child", Parent = "root", Rest = new(.5f, 1, -.2f) },
+                    new() { Id = "leaf", Parent = "child", Rest = new(1, 1, -.25f) },
                 ],
             };
             model.Validate();

@@ -26,10 +26,13 @@ internal sealed class EditorApp : Game
     private RenderTarget2D? _capture;
     private Form? _form;
 
-    public EditorApp(string authoredRoot, string? smokePath)
+    private readonly bool _acceptance;
+
+    public EditorApp(string authoredRoot, string? smokePath, bool acceptance = false)
     {
         _authoredRoot = authoredRoot;
         _smokePath = smokePath;
+        _acceptance = acceptance;
         _graphics = new(this)
         {
             GraphicsProfile = GraphicsProfile.HiDef,
@@ -69,7 +72,7 @@ internal sealed class EditorApp : Game
         var root = _authoredRoot;
         if (_smokePath is not null)
         {
-            _smoke = new(_smokePath);
+            _smoke = new(_smokePath, _acceptance);
             root = _smoke.PrepareWorkspace(_authoredRoot);
         }
         var assets = AuthoringWorkspace.Open(root);

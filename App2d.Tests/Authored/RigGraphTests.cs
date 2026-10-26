@@ -51,12 +51,12 @@ public sealed class RigGraphTests
         TestModels.Near(new(expectedPin, .04f), model.Rest["pin"]);
         Assert.Equal(.5f, model.Nodes["pin"].RestAngle, 5);
         TestModels.Near(new(new Vector2(.5f, 1.2f) + Rotation2D.Apply(new(.2f, .1f), .3f), .05f), model.Rest["lamp"]);
-        // The point model's derived rest reproduces its authored character-frame values exactly.
-        var point = ResolvedModel.From(TestModels.Creature());
-        foreach (var control in point.Base.Controls)
+        // A point control's derived rest reproduces its authored character-frame value exactly.
+        var creature = ResolvedModel.From(TestModels.Creature());
+        foreach (var control in creature.Base.Controls.Where(c => c.Node == RigNodeKinds.Point))
         {
-            Assert.Equal(control.Rest.XYZ, point.Rest[control.Id]);
-            Assert.Equal(RigNodeKinds.Point, point.Nodes[control.Id].Kind);
+            Assert.Equal(control.Rest.XYZ, creature.Rest[control.Id]);
+            Assert.Equal(RigNodeKinds.Point, creature.Nodes[control.Id].Kind);
         }
     }
 
@@ -139,52 +139,7 @@ public sealed class RigGraphTests
     }
 
     [Fact]
-    public void APointRigAndItsCanonicalConversionEvaluateAlike()
-    {
-        // The Creature's arm as bone nodes: shoulder bone toward the elbow, elbow bound to its tip, hand bound to the elbow's tip.
-        var point = TestModels.Creature();
-        var converted = CharacterModel.FromJson(point.ToJson());
-        var shoulder = converted.Controls.Single(c => c.Id == "shoulder");
-        var elbow = converted.Controls.Single(c => c.Id == "elbow");
-        var hand = converted.Controls.Single(c => c.Id == "hand");
-        var toElbow = elbow.Rest.XY - shoulder.Rest.XY;
-        var toHand = hand.Rest.XY - elbow.Rest.XY;
-        var body = converted.Controls.Single(c => c.Id == "body");
-        shoulder.Node = RigNodeKinds.Bone;
-        shoulder.Local = new() { X = shoulder.Rest.X - body.Rest.X, Y = shoulder.Rest.Y - body.Rest.Y, Rotation = MathF.Atan2(toElbow.Y, toElbow.X), Layer = shoulder.Rest.Z - body.Rest.Z };
-        shoulder.Length = toElbow.Length();
-        shoulder.Rest = default;
-        elbow.Node = RigNodeKinds.Bone;
-        elbow.Link = new();
-        elbow.Local = new() { Rotation = MathF.Atan2(toHand.Y, toHand.X) - MathF.Atan2(toElbow.Y, toElbow.X) };
-        elbow.Length = toHand.Length();
-        elbow.Rest = default;
-        hand.Node = RigNodeKinds.Bone;
-        hand.Link = new();
-        hand.Rest = default;
-        var a = ResolvedModel.From(point);
-        var b = ResolvedModel.From(CharacterModel.FromJson(converted.ToJson()));
-        var clip = TestModels.Clip(a);
-        clip.Tracks.Add(new() { Kind = MotionClip.RotateKind, Target = "body", Keys = [new() { Angle = .4f }] });
-        clip.Tracks.Add(new() { Target = "shoulder", Keys = [new() { Value = new(.05f, -.1f, .02f) }] });
-        clip.Tracks.Add(new() { Kind = MotionClip.TargetKind, Target = "arm", Keys = [new() { Value = new(-.2f, .3f, 0) }] });
-        clip.Validate(b);
-        foreach (var time in new[] { 0, .4 })
-        {
-            var pa = PoseEvaluator.Sample(a, clip, time);
-            var pb = PoseEvaluator.Sample(b, clip, time);
-            foreach (var control in a.Order)
-            {
-                TestModels.Near(pa.World(control.Id), pb.World(control.Id), 1e-5f, control.Id);
-            }
-            // The converted bones carry the limb's direction in their frames; the point rig keeps its rest-plus-turn angles.
-            Assert.Equal(pa.Angles["body"], pb.Angles["body"], 5);
-            Assert.Equal(pa.Chains.Single(c => c.Chain == "arm").Residual, pb.Chains.Single(c => c.Chain == "arm").Residual, 5);
-        }
-    }
-
-    [Fact]
-    public void BoneNodesRoundTripAtTheCurrentVersionAndOlderFilesReadThroughTheLegacyReader()
+    public void BoneNodesRoundTripAtTheCurrentVersionAndOlderFilesAreRefused()
     {
         var model = Crank(scale: 1.5f, reflect: true);
         model.Validate();
@@ -196,33 +151,14 @@ public sealed class RigGraphTests
         Assert.Equal(json, CharacterModel.FromJson(json).ToJson());
         Assert.Equal(CharacterModel.CurrentVersion, CharacterModel.FromJson(json).Version);
 
-        // A version-6 file: point chains in their own list, affine controls recognized by their transform.
-        var (wheel, _) = TestModels.Wheel();
-        var legacy = JsonNode.Parse(wheel.ToJson())!.AsObject();
-        legacy["version"] = 6;
-        foreach (var control in legacy["controls"]!.AsArray())
-        {
-            control!.AsObject().Remove("node");
-        }
-        var read = CharacterModel.FromJson(legacy.ToJsonString());
-        Assert.All(read.Controls, c => Assert.Equal(RigNodeKinds.Affine, c.Node));
-        Assert.Equal(wheel.ToJson(), read.ToJson());
-        var creature = JsonNode.Parse(TestModels.Creature().ToJson())!.AsObject();
-        creature["version"] = 5;
-        var chains = creature["constraints"]!.AsArray();
-        creature.Remove("constraints");
-        creature["chains"] = chains;
-        Assert.Equal(["arm", "leg"], CharacterModel.FromJson(creature.ToJsonString()).IkChains.Select(c => c.Id));
         Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(TestModels.Creature().ToJson().Replace($"\"version\": {CharacterModel.CurrentVersion}", "\"version\": 4"))).Message);
     }
 
     [Theory]
     [InlineData("rest-on-bone", "derives its rest")]
-    [InlineData("affine-without-transform", "needs its transform")]
     [InlineData("linked-translation", "linked origin")]
     [InlineData("unknown-node", "unknown node kind")]
     [InlineData("root-link", "needs a parent")]
-    [InlineData("point-with-transform", "declare node")]
     [InlineData("zero-scale", "scale")]
     public void DeclaredSemanticsAreValidatedByName(string edit, string fragment)
     {
@@ -232,9 +168,6 @@ public sealed class RigGraphTests
         {
             case "rest-on-bone":
                 hub.Rest = new(1, 2);
-                break;
-            case "affine-without-transform":
-                hub.Node = RigNodeKinds.Affine;
                 break;
             case "linked-translation":
                 model.Controls.Single(c => c.Id == "pin").Local!.X = .1f;
@@ -247,37 +180,10 @@ public sealed class RigGraphTests
                 model.Controls.Single(c => c.Id == "frame").Rest = default;
                 model.Controls.Single(c => c.Id == "frame").Link = new();
                 break;
-            case "point-with-transform":
-                model.Controls.Single(c => c.Id == "frame").Transform = new();
-                break;
             case "zero-scale":
                 hub.Local!.Scale = 0;
                 break;
         }
         Assert.Contains(fragment, Assert.Throws<InvalidDataException>(model.Validate).Message);
-    }
-
-    [Fact]
-    public void PointIkOnBoneNodesNeedsTipBoundJointsOrABoneConstraint()
-    {
-        var model = Crank();
-        var pin = model.Controls.Single(c => c.Id == "pin");
-        var tip = model.Controls.Single(c => c.Id == "tip");
-        model.Constraints.Add(new ModelChain { Id = "reach", Root = "hub", Joint = "pin", End = "tip" });
-        model.Validate();
-        var resolved = ResolvedModel.From(model);
-        var clip = ClipAuthoring.New(resolved, "crank-reach", "Reach");
-        ClipAuthoring.SetKey(clip, new(MotionClip.TargetKind, "reach"), 0, new(-.3f, .2f, 0));
-        clip.Validate(resolved);
-        var pose = PoseEvaluator.Sample(resolved, clip, 0);
-        // The legacy adapter moves the joint and end and keeps every frame's setup orientation.
-        Assert.Equal(.4f, Vector2.Distance(XY(pose.World("hub")), XY(pose.World("pin"))), 4);
-        Assert.Equal(.25f, Vector2.Distance(XY(pose.World("pin")), XY(pose.World("tip"))), 4);
-        Assert.Equal(resolved.Nodes["pin"].RestAngle, pose.Angles["pin"], 5);
-        pin.Link = new() { T = .9f };
-        Assert.Contains("point solver would ignore", Assert.Throws<InvalidDataException>(model.Validate).Message);
-        pin.Link = new();
-        tip.Length = .1f;
-        Assert.Contains("point solver would ignore", Assert.Throws<InvalidDataException>(model.Validate).Message);
     }
 }

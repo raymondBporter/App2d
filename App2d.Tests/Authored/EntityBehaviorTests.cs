@@ -27,25 +27,22 @@ public sealed class EntityBehaviorTests
     }
 
     [Fact]
-    public void LegacyAndTypedEntitiesResolveToTheSameTypedBehaviors()
+    public void TypedEntitiesResolveTheirBehaviors()
     {
-        // The maul brute in its version-2 form (P11a converted the shipped file): its window damage, sound, health and mass read into the typed values.
-        var brute = Compile(LegacyEntities.Strip(Catalog.Entities["maul-brute"].Asset, Catalog.Entities["maul-brute"].Model.Base));
-        Assert.Null(brute.Asset.Behaviors);
+        // The maul brute: its strike, hit group and receiving damage are the typed behaviors (P11a converted the shipped file; P11c retired the loose fields).
+        var brute = Catalog.Entities["maul-brute"];
         var slam = brute.Actions["attack"].Hits[0];
         Assert.Equal(new StrikeDef { Damage = 5, Sound = "heavy" }, slam.Strike);
         Assert.Equal("hammer-head", slam.Group);
         Assert.Equal(new ReceiveDamageDef { Health = 22, Mass = 3 }, brute.Damage);
         Assert.Null(brute.GuardBehavior);
         Assert.Empty(brute.Properties);
-        // The shipped shield defender is version 4: the same values come from behaviors, the guard has its typed defaults.
+        // The shield defender: the guard has its typed defaults.
         var defender = Catalog.Entities["shield-defender"];
-        Assert.NotNull(defender.Asset.Behaviors);
         Assert.Equal(EntityAsset.CurrentVersion, defender.Asset.Version);
         Assert.Equal(new StrikeDef { Damage = 2, Sound = "hit" }, defender.Actions["attack"].Hits[0].Strike);
         Assert.Equal(new ReceiveDamageDef { Health = 8, Mass = 1.5f }, defender.Damage);
         Assert.Equal(new GuardBehaviorDef(), defender.GuardBehavior);
-        Assert.Equal(new HitWindow().Damage, defender.Actions["attack"].Hits[0].Window.Damage);
         // A projectile's strike is keyed by its action.
         var gunner = Catalog.Entities["cinder-gunner"];
         Assert.Equal(2, gunner.Actions["attack"].ProjectileStrike!.Damage);
@@ -70,22 +67,20 @@ public sealed class EntityBehaviorTests
             change(broken);
             return Error(broken);
         }
-        Assert.Contains("no hit window or projectile action of that name", Refused(e => e.Behaviors!.Strikes["spear-butt"] = new()));
+        Assert.Contains("no hit window or projectile action of that name", Refused(e => e.Behaviors.Strikes["spear-butt"] = new()));
         var unlisted = StarterContent.SpearGuardEntity();
-        unlisted.Behaviors!.Strikes.Remove("spear-tip");
+        unlisted.Behaviors.Strikes.Remove("spear-tip");
         Assert.Equal(new StrikeDef(), Compile(unlisted).Actions["attack"].Hits[0].Strike); // a group without an entry strikes with the typed defaults
-        Assert.Contains("damage and sound belong to behaviors.strikes.spear-tip", Refused(e => e.Actions[0].Hits[0].Damage = 3));
-        Assert.Contains("health and mass belong to behaviors.damage", Refused(e => e.Health = 9));
-        Assert.Contains("behaviors need entity version 4", Refused(e => e.Version = EntityAsset.ColliderVersion));
-        Assert.Contains("declares its behaviors", Refused(e => e.Behaviors = null));
-        Assert.Contains("behaviors.damage health", Refused(e => e.Behaviors!.Damage.Health = 0));
-        Assert.Contains("behaviors.strikes.spear-tip damage", Refused(e => e.Behaviors!.Strikes["spear-tip"].Damage = -1));
-        Assert.Contains("behaviors.strikes.spear-tip impact", Refused(e => e.Behaviors!.Strikes["spear-tip"].Impact = "laser"));
-        Assert.Contains("behaviors.properties key", Refused(e => e.Behaviors!.Properties["Not An Id"] = "x"));
-        Assert.Contains("behaviors.guard openEvent", Refused(e => e.Behaviors!.Guard = new() { OpenEvent = "" }));
+        Assert.Contains("unsupported format/version", Refused(e => e.Version = 4));
+        Assert.Contains("collections cannot be null", Refused(e => e.Behaviors = null!));
+        Assert.Contains("behaviors.damage health", Refused(e => e.Behaviors.Damage.Health = 0));
+        Assert.Contains("behaviors.strikes.spear-tip damage", Refused(e => e.Behaviors.Strikes["spear-tip"].Damage = -1));
+        Assert.Contains("behaviors.strikes.spear-tip impact", Refused(e => e.Behaviors.Strikes["spear-tip"].Impact = "laser"));
+        Assert.Contains("behaviors.properties key", Refused(e => e.Behaviors.Properties["Not An Id"] = "x"));
+        Assert.Contains("behaviors.guard openEvent", Refused(e => e.Behaviors.Guard = new() { OpenEvent = "" }));
         // Custom properties ride along untouched and reach the resolved entity by name.
         var custom = StarterContent.SpearGuardEntity();
-        custom.Behaviors!.Properties["patrol-note"] = "stays near the gate";
+        custom.Behaviors.Properties["patrol-note"] = "stays near the gate";
         Assert.Equal("stays near the gate", Compile(custom).Properties["patrol-note"]);
         var json = custom.ToJson();
         Assert.Contains("\"patrol-note\"", json);
@@ -94,62 +89,11 @@ public sealed class EntityBehaviorTests
     }
 
     [Fact]
-    public void TheConversionMovesLegacyCombatFieldsIntoBehaviorsAndIsRerunnable()
-    {
-        var brute = LegacyEntities.Strip(Catalog.Entities["maul-brute"].Asset, Catalog.Entities["maul-brute"].Model.Base);
-        var (converted, report) = BehaviorConversion.Convert(brute);
-        Assert.Equal(EntityAsset.CurrentVersion, converted.Version);
-        Assert.Equal(new ReceiveDamageDef { Health = 22, Mass = 3 }, converted.Behaviors!.Damage);
-        Assert.Equal(new StrikeDef { Damage = 5, Sound = "heavy" }, converted.Behaviors.Strikes["hammer-head"]);
-        Assert.Equal(new EntityAsset().Health, converted.Health);
-        Assert.Equal(new HitWindow().Damage, converted.Actions[0].Hits[0].Damage);
-        Assert.Null(converted.Actions[0].Hits[0].Sound);
-        Assert.Contains(report, line => line.Contains("behaviors.strikes.hammer-head"));
-        var resolved = Compile(converted);
-        Assert.Equal(Catalog.Entities["maul-brute"].Actions["attack"].Hits[0].Strike, resolved.Actions["attack"].Hits[0].Strike);
-        var (again, note) = BehaviorConversion.Convert(converted);
-        Assert.Equal(converted.ToJson(), again.ToJson());
-        Assert.Equal("nothing to convert: the entity already declares its behaviors", Assert.Single(note));
-        // The hero's three windows share the hit group 'blade' with one strike; a projectile strike takes its action's name.
-        var hero = LegacyEntities.Strip(Catalog.Entities["hero"].Asset, Catalog.Entities["hero"].Model.Base);
-        var (heroConverted, _) = BehaviorConversion.Convert(hero);
-        Assert.Equal(["blade", "shoot", "wall-shot"], heroConverted.Behaviors!.Strikes.Keys.Order(StringComparer.Ordinal));
-        Assert.Equal(2, heroConverted.Behaviors.Strikes["shoot"].Damage);
-        // A hit group with two different damages cannot become one strike.
-        var conflicting = EntityAsset.FromJson(hero.ToJson());
-        conflicting.Actions[1].Hits[0].Damage = 3;
-        Assert.Contains("a hit group has one strike", Assert.Throws<InvalidDataException>(() => BehaviorConversion.Convert(conflicting)).Message);
-        // On a scratch tree: written once, unchanged on a rerun, the source untouched.
-        var output = Path.Combine(Path.GetTempPath(), "app2d-behavior-conversion", Guid.NewGuid().ToString("N"));
-        var source = LegacyEntities.ScratchTree(Catalog, "club-caveman");
-        try
-        {
-            var first = BehaviorConversion.ConvertFile(source, "club-caveman", output);
-            Assert.Equal("written", first.Status);
-            Assert.Contains(first.Report, line => line.StartsWith("verified", StringComparison.Ordinal));
-            Assert.True(File.Exists(Path.Combine(output, "behavior-conversion-club-caveman.md")));
-            Assert.Equal(EntityAsset.CurrentVersion, EntityAsset.FromJson(File.ReadAllText(first.Output!)).Version);
-            Assert.StartsWith("unchanged", BehaviorConversion.ConvertFile(source, "club-caveman", output).Status);
-            Assert.Equal(EntityAsset.LegacyVersion, EntityAsset.FromJson(File.ReadAllText(Path.Combine(source, "entities", "club-caveman.json"))).Version);
-        }
-        finally
-        {
-            foreach (var directory in new[] { output, source })
-            {
-                if (Directory.Exists(directory))
-                {
-                    Directory.Delete(directory, true);
-                }
-            }
-        }
-    }
-
-    [Fact]
     public void TheArenaAppliesTheTypedStrikeAndReceivingDamage()
     {
         // The guard's thrust strike and the player's hurt window come from the typed behaviors; the fight is the reference one.
         var player = StarterContent.PlayerEntity();
-        player.Behaviors!.Strikes["spear-tip"].Damage = 2;
+        player.Behaviors.Strikes["spear-tip"].Damage = 2;
         player.Behaviors.Damage.HurtSeconds = .1f;
         var target = Compile(player);
         var arena = new AuthoredArena([target, Catalog.Entities["spear-guard"]]);

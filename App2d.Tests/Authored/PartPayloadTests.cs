@@ -108,35 +108,10 @@ public sealed class PartPayloadTests
     }
 
     [Fact]
-    public void TheLegacySourceFieldsSitBehindOneBoundaryWhoseRemainingInputsAreListed()
+    public void AnOlderPartFileIsRefusedByVersion()
     {
-        Assert.All(LegacySourceFields.Entries, e => Assert.Contains(e.Reader, new[] { "LegacyModelReader", "LegacyVariantReader", "LegacyClipReader" }));
-        Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("waveAmplitude") && e.Replacement.Contains("CurveWave"));
-        Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("faceX") && e.Replacement.Contains("refused"));
-        Assert.Contains(LegacySourceFields.Entries, e => e.Asset == "clip" && e.Fields.Contains("faces") && e.Replacement.Contains("plays"));
-        Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("chains"));
-        Assert.Contains(LegacySourceFields.Entries, e => e.Fields.Contains("build"));
-        Assert.Contains(LegacySourceFields.Entries, e => e.Asset == "variant" && e.Fields.Contains("parts"));
-        Assert.Contains("version 11", LegacySourceFields.DeletionCondition);
-        Assert.Contains("version 4", LegacySourceFields.DeletionCondition);
-
-        // The conversion report the deletion condition waits on: exactly these shipped files still read through the boundary
-        // (P7c converted person.json, the three remaining version-4 variants, the 28 face-track clips and, with `--convert-clips`,
-        // the other 63 version-3 clips, whose only change is the version and the empty face list; P10a published quadruped, triceratops and pterosaur at 11; the three version-5 models read unchanged).
-        // P11a converted the last three version-5 models: no shipped file reads through the boundary any more.
-        Assert.Empty(LegacySourceFields.Remaining(TestModels.AuthoredRoot));
-
-        // The boundary is what the parsers call: a current file passes through untouched, a legacy one comes out current.
-        var person = Person.ToJson();
-        Assert.Equal(person, LegacySourceFields.ReadModel(person));
-        var legacy = File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
-        Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", LegacySourceFields.ReadModel(legacy).Replace(" ", "").Replace($"\"version\":{CharacterModel.CurrentVersion}", $"\"version\": {CharacterModel.CurrentVersion}"));
-        var variant = new ModelVariant { Id = "v", Name = "V", Base = "person" }.ToJson();
-        Assert.Equal(variant, LegacySourceFields.ReadVariant(variant));
-        // The last version-4 variants converted with the face bundle (P7c); no variant or clip file reads through the boundary any more.
-        var old = File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "variants", "club-caveman-build.json"));
-        Assert.Equal(ModelVariant.CurrentVersion, ModelVariant.FromJson(old).Version);
-        Assert.Contains($"\"version\": {ModelVariant.CurrentVersion}", old);
-        Assert.All(LegacySourceFields.Remaining(TestModels.AuthoredRoot), f => Assert.Equal("model", f.Kind));
+        // P11c retired the legacy source boundary: a file below its kind's current version is refused by name, never translated.
+        var json = PersonTemplate.Face.ToJson().Replace($"\"version\": {PartAsset.CurrentVersion}", "\"version\": 1");
+        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(() => PartAsset.FromJson(json)).Message);
     }
 }

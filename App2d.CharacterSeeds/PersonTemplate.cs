@@ -121,10 +121,11 @@ public static class PersonTemplate
         _ => null,
     };
 
-    /// <summary>Converts a point-rigged Person's four limbs onto the bone solver exactly as the P11a bundle conversion did.</summary>
+    /// <summary>Converts a point-rigged Person's four limbs onto bone constraints exactly as the P11a bundle conversion did.</summary>
     public static void ConvertLimbs(CharacterModel model)
     {
-        foreach (var chain in model.IkChains.Where(c => c.Solver == ModelChain.PointSolver).ToArray())
+        var byId = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
+        foreach (var chain in model.IkChains.Where(c => byId[c.Root].Node == RigNodeKinds.Point).ToArray())
         {
             RigConversion.ToBoneConstraint(model, chain.Id, [], UpperArmBone(chain));
         }

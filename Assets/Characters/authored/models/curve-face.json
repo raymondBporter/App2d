@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 11,
+  "version": 12,
   "id": "curve-face",
   "name": "Curve face",
   "structureRevision": 3,
@@ -720,7 +720,6 @@
       }
     }
   ],
-  "hurtLayouts": [],
   "groups": [
     {
       "id": "face",

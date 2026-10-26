@@ -40,8 +40,8 @@ public sealed class AnimatedPartTests
         var read = PartAsset.FromJson(json);
         Assert.Equal(json, read.ToJson());
         Assert.True(read.IsAnimated && read.Exposes("tip") && !read.Exposes("root"));
-        Assert.Equal(ChannelSemantics.ArtworkFit, ChannelSemantics.OfTrack(MotionClip.FitKind, null));
-        Assert.Equal(ChannelSemantics.EnabledState, ChannelSemantics.OfTrack(MotionClip.ShowKind, null));
+        Assert.Equal(ChannelSemantics.ArtworkFit, ChannelSemantics.OfTrack(MotionClip.FitKind));
+        Assert.Equal(ChannelSemantics.EnabledState, ChannelSemantics.OfTrack(MotionClip.ShowKind));
 
         static string Error(Action<PartAsset> breaks)
         {

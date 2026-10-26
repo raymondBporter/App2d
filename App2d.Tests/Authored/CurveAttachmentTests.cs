@@ -269,49 +269,6 @@ public sealed class CurveAttachmentTests
         Assert.DoesNotContain("wave", model.ToJson());
     }
 
-    /// <summary>The version-5 compatibility boundary (ModelFormat5Reader): loose part fields become the typed modifier; the file is not touched.</summary>
-    [Fact]
-    public void VersionFiveWaveFieldsReadIntoTheTypedModifier()
-    {
-        var model = Model();
-        model.Controls.Add(new() { Id = "wave", Parent = "root" });
-        model.Parts.Add(new()
-        {
-            Id = "plain", A = "start", B = "end",
-            Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(),
-            Material = new() { Fill = "#00ff00" }
-        });
-        var node = JsonNode.Parse(model.ToJson())!;
-        node["version"] = 5;
-        var stroke = node["parts"]![0]!;
-        stroke["waveAmplitude"] = .045f;
-        stroke["waveCycles"] = 5;
-        stroke["wavePhaseControl"] = "wave";
-        // Version 5 applied no wave for a zero amplitude; cycles alone carried no meaning.
-        var plain = node["parts"]![1]!;
-        plain["WaveCycles"] = 3;
-        var legacy = node.ToJsonString();
-
-        var read = CharacterModel.FromJson(legacy);
-        Assert.Equal(CharacterModel.CurrentVersion, read.Version);
-        Assert.Equal(new CurveWave { Amplitude = .045f, Cycles = 5, PhaseControl = "wave" }, read.Parts[0].Wave);
-        Assert.Null(read.Parts[1].Wave);
-        var written = read.ToJson();
-        Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", written);
-        Assert.DoesNotContain("waveAmplitude", written);
-        Assert.DoesNotContain("waveCycles", written);
-        Assert.Equal(written, CharacterModel.FromJson(written).ToJson());
-
-        // Other version-5 content reads as before, and older versions stay rejected.
-        node["parts"]![0]!.AsObject().Remove("waveAmplitude");
-        node["parts"]![0]!.AsObject().Remove("waveCycles");
-        node["parts"]![0]!.AsObject().Remove("wavePhaseControl");
-        Assert.Null(CharacterModel.FromJson(node.ToJsonString()).Parts[0].Wave);
-        node["parts"]![1]!.AsObject().Remove("WaveCycles");
-        node["version"] = 4;
-        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(node.ToJsonString())).Message);
-    }
-
     [Fact]
     public void OnlyTheCurveFaceHairCarriesTheWaveModifier()
     {

@@ -55,11 +55,7 @@ public sealed record Subject(string Id, ResolvedModel Model, EvaluatedPose Pose,
 /// game would build them. <see cref="Action"/> is the previewed action; <see cref="Weight"/> its masked layer's weight.
 /// </summary>
 public sealed record EntityPreview(ResolvedEntity Entity, ActorPose Pose, float Time, ResolvedAction? Action, float Weight,
-    EntityRegion Movement, IReadOnlyList<EntityRegion> Hurt, IReadOnlyList<(ResolvedHit Hit, EntityRegion Region)> Attacks, IReadOnlyList<PlacedCollider> Colliders)
-{
-    /// <summary>The legacy hurt layout's boxes, when the entity still uses one; its registered hurt is among <see cref="Colliders"/>.</summary>
-    public IReadOnlyList<EntityRegion> LegacyHurt => Entity.HurtRegistered ? [] : Hurt;
-}
+    EntityRegion Movement, IReadOnlyList<(ResolvedHit Hit, EntityRegion Region)> Attacks, IReadOnlyList<PlacedCollider> Colliders);
 
 /// <summary>
 /// One of the entity's attached colliders placed for the preview pose, as the runtime would register it: the same
@@ -455,7 +451,7 @@ public sealed class EditorSession
         var attacks = active.Select(h => (h, EntityCollision.Attack(entity, pose, h))).ToList();
         var movement = EntityCollision.Movement(entity, new(local.Locomotion.X, 0), 1);
         var colliders = entity.Colliders.Select(c => new PlacedCollider(c, c.Region(pose), c.DefaultEnabled && (c.Use != ColliderUses.Attack || active.Any(h => ReferenceEquals(h.Collider, c))))).ToList();
-        return new(entity, pose, time, action, weight, movement, EntityCollision.Hurt(entity, pose), attacks, colliders);
+        return new(entity, pose, time, action, weight, movement, attacks, colliders);
     }
 
     public void Tick(float seconds)
@@ -838,8 +834,11 @@ public sealed class EditorSession
     public bool NewAppearance(string id, string name, string template) => Attempt(() =>
     {
         var model = Assets.Resolve(SubjectId);
+        // A new hair starts from the game profile's hair gear when the workspace carries the profile (P9c/P11c), else the built-in default.
+        var profile = Path.Combine(Assets.Root, "profiles", GameProfile.GameId + ".json");
+        var hair = File.Exists(profile) ? GameProfile.FromJson(File.ReadAllText(profile)).Gear.Hair : null;
         Assets.Create(AppearanceAuthoring.New(id, name, template, model?.Base.Ink ?? "#222b32", model?.Base.LineWidth ?? .045f,
-            source => Assets.Prop(source)?.Asset ?? SeedAppearance?.Invoke(source)));
+            source => Assets.Prop(source)?.Asset ?? SeedAppearance?.Invoke(source), hair));
         Open(id);
     }, $"Created appearance '{id}'. Edit the outline, then equip it on an entity and save all.");
 
@@ -1085,63 +1084,6 @@ public sealed class EditorSession
         }, clipId is null ? $"Role '{role}' follows the motion set again." : $"Role '{role}' overridden with '{clipId}'.");
     }
 
-    /// <summary>
-    /// Converts the open entity's legacy hit-window geometry, guard and hurt layout into explicit attached colliders at
-    /// entity version 3 (P8c), as one undo step with the conversion's report; nothing is rewritten on an ordinary save.
-    /// </summary>
-    public bool ConvertColliders()
-    {
-        var document = EntityDocument;
-        IReadOnlyList<string> report = [];
-        var applied = Edit(document, () =>
-        {
-            var model = Assets.Resolve(document!.Asset.Model, out var error) ?? throw new InvalidDataException(error);
-            var (converted, lines) = ColliderConversion.Convert(document.Asset, model);
-            report = lines;
-            var asset = document.Asset;
-            asset.Version = converted.Version;
-            asset.Colliders = converted.Colliders;
-            asset.Actions = converted.Actions;
-            asset.Guard = converted.Guard;
-            asset.Hurt = converted.Hurt;
-            asset.Validate();
-        });
-        if (applied)
-        {
-            Report(string.Join(" ", report));
-        }
-
-        return applied;
-    }
-
-    /// <summary>
-    /// Moves the open entity's legacy combat fields (health, mass, window damage and sound, projectile damage) into typed
-    /// behaviors at entity version 4 (P9a), as one undo step with the conversion's report.
-    /// </summary>
-    public bool ConvertBehaviors()
-    {
-        var document = EntityDocument;
-        IReadOnlyList<string> report = [];
-        var applied = Edit(document, () =>
-        {
-            var (converted, lines) = BehaviorConversion.Convert(document!.Asset);
-            report = lines;
-            var asset = document.Asset;
-            asset.Version = converted.Version;
-            asset.Behaviors = converted.Behaviors;
-            asset.Health = converted.Health;
-            asset.Mass = converted.Mass;
-            asset.Actions = converted.Actions;
-            asset.Validate();
-        });
-        if (applied)
-        {
-            Report(string.Join(" ", report));
-        }
-
-        return applied;
-    }
-
     /// <summary>Adds an attached collider to the open entity; the definition is validated against the model, sockets and equipment.</summary>
     public bool AddCollider(ColliderDef definition)
     {
@@ -1155,7 +1097,6 @@ public sealed class EditorSession
                 throw new InvalidDataException($"Entity '{asset.Id}' already has a collider '{definition.Id}'.");
             }
 
-            asset.Version = Math.Max(asset.Version, EntityAsset.ColliderVersion);
             asset.Colliders.Add(definition);
             asset.Validate();
             // Compile against the drafts now (the cached compile is keyed on the revision the edit has not bumped yet), so a dangling binding refuses the edit by name.

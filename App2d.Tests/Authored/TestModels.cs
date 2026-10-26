@@ -10,58 +10,83 @@ namespace App2d.Tests.Authored;
 internal static class TestModels
 {
     /// <summary>A body with a two-bone arm keyed in the shoulder's frame and a two-bone leg keyed in the locomotion frame. Rest IK reproduces rest exactly.</summary>
-    public static CharacterModel Creature() => new()
+    public static CharacterModel Creature()
     {
-        Id = "creature",
-        Name = "Creature",
-        Controls =
-        [
-            new() { Id = "body", Rest = new(0, 1), Scale = "leg" },
-            new() { Id = "shoulder", Parent = "body", Rest = new(0, 1.5f) },
-            new() { Id = "elbow", Parent = "shoulder", Rest = new(.4f, 1.3f) },
-            new() { Id = "hand", Parent = "elbow", Rest = new(.8f, 1.5f) },
-            new() { Id = "hip", Parent = "body", Rest = new(0, 1) },
-            new() { Id = "knee", Parent = "hip", Rest = new(.1f, .5f) },
-            new() { Id = "foot", Parent = "knee", Rest = new(0, 0) },
-        ],
-        Constraints =
-        [
-            new ModelChain { Id = "arm", Root = "shoulder", Joint = "elbow", End = "hand", Bend = -1, Frame = "shoulder", Scale = "arm" },
-            new ModelChain { Id = "leg", Root = "hip", Joint = "knee", End = "foot", Bend = 1, Scale = "leg" },
-        ],
-        Measures = [new() { Id = "leg", Path = ["hip", "knee", "foot"] }, new() { Id = "arm", Path = ["shoulder", "elbow", "hand"] }],
-        Parts =
-        [
-            new() { Id = "torso", A = "hip", B = "shoulder", Geometry = RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), Material = new() { Fill = "#fff8e7", Outline = new() } },
-            new() { Id = "upper-arm", A = "shoulder", B = "elbow", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() },
-        ],
-    };
-
-    /// <summary>
-    /// The nonhumanoid mechanical linkage the migration plan keeps in shared tests (P0): a crank on a hub drives a two-bar
-    /// rod through the IK chain "rod", whose root is a fixed piston. Rotating the hub a full turn carries the pin
-    /// round, and the rod can only follow for part of the circle, so one clip exercises reached and unreachable (full-reach)
-    /// targets, and <see cref="LinkageReach"/> adds a zero-length one, without any humanoid assumption.
-    /// Since P3b the hub/pin and piston/rod-elbow/rod-end runs are canonical bone nodes (the pin and rod joints are bound to
-    /// their parents' tips); the rod stays on the declared point solver so the P0 reach and zero-length cases hold until P4b.
-    /// <see cref="LinkageRigid"/> is the same machine with the rod on the canonical bone solver.
-    /// </summary>
-    public static CharacterModel Linkage(bool rigidRod = false)
-    {
-        var model = LinkagePoints();
-        RigConversion.ToBoneChain(model, ["hub", "crank-pin"]);
-        RigConversion.ToBoneChain(model, ["piston", "rod-elbow", "rod-end"]);
-        if (rigidRod)
+        var model = new CharacterModel
         {
-            model.IkChains.Single().Solver = ModelChain.BoneSolver;
-            model.Validate();
-        }
-
+            Id = "creature",
+            Name = "Creature",
+            Controls =
+            [
+                new() { Id = "body", Rest = new(0, 1), Scale = "leg" },
+                new() { Id = "shoulder", Parent = "body", Rest = new(0, 1.5f) },
+                new() { Id = "elbow", Parent = "shoulder", Rest = new(.4f, 1.3f) },
+                new() { Id = "hand", Parent = "elbow", Rest = new(.8f, 1.5f) },
+                new() { Id = "hip", Parent = "body", Rest = new(0, 1) },
+                new() { Id = "knee", Parent = "hip", Rest = new(.1f, .5f) },
+                new() { Id = "foot", Parent = "knee", Rest = new(0, 0) },
+            ],
+            Constraints =
+            [
+                new ModelChain { Id = "arm", Root = "shoulder", Joint = "elbow", End = "hand", Bend = -1, Frame = "shoulder", Scale = "arm" },
+                new ModelChain { Id = "leg", Root = "hip", Joint = "knee", End = "foot", Bend = 1, Scale = "leg" },
+            ],
+            Measures = [new() { Id = "leg", Path = ["hip", "knee", "foot"] }, new() { Id = "arm", Path = ["shoulder", "elbow", "hand"] }],
+            Parts =
+            [
+                new() { Id = "torso", A = "hip", B = "shoulder", Geometry = RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), Material = new() { Fill = "#fff8e7", Outline = new() } },
+                new() { Id = "upper-arm", A = "shoulder", B = "elbow", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() },
+            ],
+        };
+        // P11c: the chains are bone constraints, converted exactly as the shipped library was (plan rule 7): the shoulder stays the
+        // pivot that frames its arm, with the solved 'upper-arm-bone' beneath it; the hip is its leg's root bone; the ends keep the character axes.
+        RigConversion.ToBoneConstraint(model, "arm", [], "upper-arm-bone");
+        RigConversion.ToBoneConstraint(model, "leg", []);
         return model;
     }
 
-    /// <summary>The linkage with the rod declared as a canonical rigid-bone constraint: its frames turn with the solve.</summary>
-    public static CharacterModel LinkageRigid() => Linkage(rigidRod: true);
+    /// <summary>
+    /// The nonhumanoid mechanical linkage the migration plan keeps in shared tests (P0): a crank on a hub drives a two-bar
+    /// rod through the IK constraint "rod", whose root is a fixed piston. Rotating the hub a full turn carries the pin
+    /// round, and the rod can only follow for part of the circle, so one clip exercises reached and unreachable (full-reach)
+    /// targets, and <see cref="LinkageReach"/> adds a zero-length one, without any humanoid assumption.
+    /// Since P3b the hub/pin and piston/rod-elbow/rod-end runs are canonical bone nodes (the pin and rod joints are bound to
+    /// their parents' tips); since P11c the rod is the rigid bone constraint (the point adapter is gone): its frames turn
+    /// with the solve and a target past full reach reports its gap.
+    /// </summary>
+    public static CharacterModel Linkage()
+    {
+        var model = LinkagePoints();
+        RigConversion.ToBoneChain(model, ["piston", "rod-elbow", "rod-end"]);
+        RigConversion.ToBoneChain(model, ["hub", "crank-pin"]);
+        model.Validate();
+        return model;
+    }
+
+    /// <summary>
+    /// A variant that moves the named controls to character-frame rest positions, parents first: a tip-bound node through its
+    /// parent's tip, any other through its local setup; every unnamed control keeps its rest (P11c, in place of the retired
+    /// rest-pin conversion of the variant reader).
+    /// </summary>
+    public static ModelVariant Stretched(CharacterModel model, string id, string name, params (string Control, Vector2 Position)[] pins)
+    {
+        var variant = new ModelVariant { Id = id, Name = name, Base = model.Id };
+        foreach (var (control, position) in pins)
+        {
+            var resolved = ResolvedModel.From(model, variant);
+            var node = resolved.Nodes[control];
+            if (node.Link is not null)
+            {
+                ModelAuthoring.MoveBoneTip(resolved, variant, node.Parent!, position);
+            }
+            else
+            {
+                ModelAuthoring.MoveRest(resolved, variant, control, new(position, node.Rest.Z), children: false);
+            }
+        }
+
+        return variant;
+    }
 
     /// <summary>The linkage as it was authored in P0, every control a point control.</summary>
     public static CharacterModel LinkagePoints() => new()
@@ -126,9 +151,11 @@ internal static class TestModels
     }
 
     /// <summary>
-    /// The native explicit-bone scene from NativeRigTests, shared so the migration reference set can pin it: an affine root
-    /// with reflection, nonuniform scale and shear that a child bone inherits, image slots with two skins, and a clip that
-    /// animates rotation, scale, shear, a setup-before-first translation, a slot attachment, draw order and events.
+    /// The native image-slot scene from NativeRigTests, shared so the migration reference set can pin it: a reflected, scaled
+    /// bone root whose child bone inherits the similarity, image slots with two skins, and a clip that animates rotation, a
+    /// uniform pose scale, a setup-before-first translation, a slot attachment, draw order and events. The native inherited
+    /// nonuniform scale and shear of the original scene were dropped in P11c with the affine adapter (no scoped bake: nothing
+    /// shipped used them); the similarity rig keeps the reflection.
     /// </summary>
     public static (CharacterModel Model, IReadOnlyList<MotionClip> Animations) Wheel()
     {
@@ -138,9 +165,8 @@ internal static class TestModels
             Name = "Wheel",
             Controls =
             [
-                new() { Id = "wheel-root", Name = "Wheel Root", Node = RigNodeKinds.Affine, Transform = new()
-                    { X = .5f, Y = .7f, Rotation = MathF.PI / 6, ScaleX = -1.5f, ScaleY = 2, ShearY = MathF.PI / 12 } },
-                new() { Id = "spoke-tip", Name = "spoke.tip", Parent = "wheel-root", Node = RigNodeKinds.Affine, Transform = new() { X = .4f, Y = .05f, Rotation = MathF.PI / 9 } }
+                new() { Id = "wheel-root", Name = "Wheel Root", Node = RigNodeKinds.Bone, Local = new() { X = .5f, Y = .7f, Rotation = MathF.PI / 6, Scale = 1.5f, Reflect = true } },
+                new() { Id = "spoke-tip", Name = "spoke.tip", Parent = "wheel-root", Node = RigNodeKinds.Bone, Local = new() { X = .4f, Y = .05f, Rotation = MathF.PI / 9 } }
             ],
             Slots =
             [
@@ -175,8 +201,7 @@ internal static class TestModels
         [
             new() { Kind = MotionClip.RotateKind, Target = "wheel-root", Keys =
                 [new() { Curve = new() { Control1 = new(.2f, float.DegreesToRadians(40)), Control2 = new(.8f, float.DegreesToRadians(140)), Absolute = true } }, new() { Time = 1, Angle = MathF.PI }] },
-            new() { Kind = MotionClip.ScaleKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, Value = new(-.5f, .5f, 0)}] },
-            new() { Kind = MotionClip.ShearKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, Value = new(MathF.PI / 18, -MathF.PI / 9, 0)}] },
+            new() { Kind = MotionClip.ScaleKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, Value = new(-.5f, -.5f, 0)}] },
             new() { Kind = MotionClip.TranslateKind, Target = "spoke-tip", SetupBeforeFirst = true, Keys = [new() { Time = .25f, Value = new(.2f, .1f, 0)}, new() { Time = 1, Value = new(.3f, .2f, 0)}] }
         ];
         clip.Attachments = [new() { Slot = "front-paint", Keys = [new() { Time = .5f }, new() { Time = .8f, Attachment = "blue" }] }];

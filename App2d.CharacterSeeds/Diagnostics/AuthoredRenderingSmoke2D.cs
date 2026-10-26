@@ -114,7 +114,7 @@ internal static class AuthoredRenderingSmoke2D
                     if (name.StartsWith("sword-") && hero.Swing(state.Action.Swing) is { } swing
                         && elapsed >= swing.Hits[0].Start && elapsed < swing.Hits[0].Finish)
                     {
-                        var hit = swing.Hits[0].Window;
+                        var hit = swing.Hits[0].Collider.Definition;
                         var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color4b(235, 60, 50, 110)));
                         box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2);
                         close.Draw(box);

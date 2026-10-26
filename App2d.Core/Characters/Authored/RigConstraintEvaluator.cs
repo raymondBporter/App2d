@@ -18,7 +18,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 {
     private readonly Dictionary<string, (RigIkTarget Target, int Index)> _targets = new(StringComparer.Ordinal);
     // A target exactly at the root has no direction. Retain the FK axis so reflection and repeated pins are stable.
-    private readonly Dictionary<string, Vector2> _foldDirections = model.IkConstraints.Where(c => c.Solver == ModelChain.BoneSolver)
+    private readonly Dictionary<string, Vector2> _foldDirections = model.IkConstraints
         .ToDictionary(c => c.Id, c => new Vector2(pose.Bones[c.Root].M11, pose.Bones[c.Root].M12), StringComparer.Ordinal);
 
     public void Apply(RigIkTarget target)
@@ -57,15 +57,15 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
     }
 
     /// <summary>
-    /// Converts a sampled offset into a goal. A point constraint keys its target as a character-frame offset from the end's rest,
-    /// turned by the frame control's rotation since rest; a bone constraint keys it in the frame's own local axes.
+    /// Converts a sampled offset into a goal: a locomotion-framed constraint keys its target as a character-frame offset from
+    /// the end's rest; a control-framed constraint keys it in the frame's own local axes.
     /// </summary>
     public static Vector3 TargetPosition(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 delta)
     {
         var locomotion = chain.Frame == CharacterModel.Locomotion;
         var point = locomotion ? pose.Locomotion : pose.Points[chain.Frame];
         var rest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
-        if (chain.Solver == ModelChain.PointSolver || locomotion)
+        if (locomotion)
         {
             return point + Rotation2D.ApplyXY(model.Rest[chain.End] - rest + delta, locomotion ? 0 : pose.Angles[chain.Frame] - model.Nodes[chain.Frame].RestAngle);
         }
@@ -81,7 +81,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         var locomotion = chain.Frame == CharacterModel.Locomotion;
         var point = locomotion ? pose.Locomotion : pose.Points[chain.Frame];
         var rest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
-        if (chain.Solver == ModelChain.PointSolver || locomotion)
+        if (locomotion)
         {
             return Rotation2D.ApplyXY(world - point, locomotion ? 0 : model.Nodes[chain.Frame].RestAngle - pose.Angles[chain.Frame]) - (model.Rest[chain.End] - rest);
         }
@@ -115,8 +115,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
             throw new InvalidDataException($"Unknown IK constraint '{id}'.");
         }
 
-        // The solver is the constraint's declared semantics: rigid similarity frames, or the legacy position-only adapter.
-        return chain.Solver == ModelChain.BoneSolver ? BoneFrameIk.Solve(model, pose, chain, target, bend, _foldDirections[id]) : LegacyPointConstraint.Solve(model, pose, chain, target, bend);
+        return BoneFrameIk.Solve(model, pose, chain, target, bend, _foldDirections[id]);
     }
 
     private static Vector2 XY(Vector3 v) => new(v.X, v.Y);

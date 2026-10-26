@@ -15,7 +15,7 @@ public static class PuppetMotionConverter
         // follows its parent. A control the prototype never had (a solved bone inserted at a pivot, P11a) gets no channel
         // and follows its parent; every other unsolved control keys its prototype position as before.
         var solved = model.IkChains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
-        foreach (var chain in model.IkChains.Where(c => c.Solver == ModelChain.BoneSolver))
+        foreach (var chain in model.IkChains)
         {
             // The solved bone beneath a pivot (P11a) sits at its parent's origin and takes its position from it: no channel.
             var bone = resolved.Controls[chain.Root];

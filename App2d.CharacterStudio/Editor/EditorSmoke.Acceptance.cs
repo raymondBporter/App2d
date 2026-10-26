@@ -1,0 +1,587 @@
+using App2d.CharacterSeeds;
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Editing;
+using App2d.Core.Constraints;
+using App2d.Core.Geometry;
+using App2d.Core.Shapes;
+using System.Numerics;
+
+namespace App2d.CharacterStudio.Editor;
+
+/// <summary>
+/// The character-system migration plan's section 6 reference workflow (final acceptance, P11c), run end to end on a scratch
+/// copy of the authored library through the editor session with a frame after every step: a person from the template with
+/// its shared walk, a variant with four proportion edits, an attachment on the shin, a shin guard under knee and ankle turns,
+/// a library outfit with one asset on two sockets, instance override / reset / shared edit, the curve face blinking while
+/// walking and a profile-bound expression, a joint limit with an explicit angle and a normalized bend, a sensor on the weapon
+/// with its activation and behaviors, hits / block / miss / kill / several targets in the Test arena, outcomes driving cues
+/// and timeline seeking driving none, save / reopen / undo, the quadruped and flier repeats, and the centaur composition.
+/// </summary>
+internal sealed partial class EditorSmoke
+{
+    private const string Walker = "walker", TallWalker = "walker-tall", WalkerGuard = "walker-guard";
+
+    private (string Name, Action<EditorShell> Run)[] AcceptanceSteps() =>
+    [
+        ("01-person-from-template", shell =>
+        {
+            var s = shell.Session; s.Compare.Clear();
+            Check(s.NewModel(Walker, "Walker", "person", "standard"), s);
+            var walker = s.Assets.Resolve(Walker)!;
+            var walk = walker.Base.MotionSets[0].Roles["walk"];
+            Record(walker.Base.Version == CharacterModel.CurrentVersion && walker.Base.IkChains.Count() == 4 && walker.Attachment(PersonTemplate.FaceInstance) is { IsAnimated: true }
+                && s.Assets.Clips.Count(c => c.Asset.Model == Walker) > 30 && s.Assets.ModelTemplates["person"].ContractProblems(walker.Base, s.Assets.PartOf).Count == 0,
+                $"a person created from the published template is a bundle of its own at model version {CharacterModel.CurrentVersion} (four bone constraints, the face instance, {s.Assets.Clips.Count(c => c.Asset.Model == Walker)} clips) and the contract holds on it");
+            s.SetClip(walk);
+            s.TogglePlay();
+            s.Tick(.3f);
+            var pose = s.Evaluate(Walker)!.Pose;
+            Record(s.Transport.Playing && pose.Chains.All(c => c.Reached) && pose.Contacts.All(c => c.Residual < 1e-4f), "its walk plays with every limb reaching and the planted feet holding");
+            s.TogglePlay();
+            s.Seek(.3f);
+            shell.Viewport.Fit(s.Evaluate(Walker));
+        }),
+        ("02-variant-proportions", shell =>
+        {
+            var s = shell.Session;
+            Check(s.NewVariant(TallWalker, "Tall walker", Walker), s);
+            var tall = s.SubjectVariant!;
+            var basis = s.Assets.Model(Walker)!;
+            var before = s.Assets.Resolve(Walker)!;
+            var forearm = before.Nodes["left-elbow"].Length;
+            var shin = before.Nodes["left-knee"].Length;
+            Check(s.Edit(tall, () =>
+            {
+                ModelAuthoring.SetOverride(tall.Asset, basis.Asset, PropertyOverride.Of(PropertyRef.OfControl("left-elbow", RigProperties.Length), forearm + .12f));
+                ModelAuthoring.SetOverride(tall.Asset, basis.Asset, PropertyOverride.Of(PropertyRef.OfControl("left-knee", RigProperties.Length), shin + .15f));
+                tall.Asset.Parameters["width"] = 1.25f;
+                tall.Asset.Parameters["head"] = 1.2f;
+            }), s);
+            var after = s.Assets.Resolve(TallWalker)!;
+            Record(MathF.Abs(after.Nodes["left-elbow"].Length - forearm - .12f) < 1e-5f && MathF.Abs(after.Nodes["left-knee"].Length - shin - .15f) < 1e-5f
+                && after.ParameterValues["width"] == 1.25f && after.ParameterValues["head"] == 1.2f && after.Provenance(PropertyRef.OfControl("left-elbow", RigProperties.Length)) == PropertySource.Override
+                && s.Assets.Resolve(Walker)!.Nodes["left-elbow"].Length == forearm && !basis.Dirty,
+                "the variant lengthens one forearm and one shin as overrides and widens the torso and head through the parameters; the base is untouched");
+            s.SetClip(before.Base.MotionSets[0].Roles["walk"]);
+            s.Seek(.3f);
+            var pose = s.Evaluate(TallWalker)!.Pose;
+            Record(pose.Chains.All(c => c.Reached) && pose.Contacts.All(c => c.Residual < 1e-4f), "the shared walk plays on the variant with every limb reaching");
+            s.SetMode(Workspace.Model);
+            s.EditRig = true;
+            s.Selection.Select(control: "left-knee");
+            shell.Viewport.Fit(s.Evaluate(TallWalker));
+        }),
+        ("03-attachment-at-shin-midpoint", shell =>
+        {
+            var s = shell.Session;
+            var basis = s.Assets.Model(Walker)!;
+            var shin = s.Assets.Resolve(Walker)!.Nodes["left-knee"].Length;
+            Check(s.Edit(basis, () =>
+            {
+                basis.Asset.Sockets.Add(new() { Id = "left-shin", Control = "left-knee", Frame = "left-knee", OffsetX = shin / 2 });
+                ModelAuthoring.AddPart(basis.Asset, new App2d.Core.Geometry.Curves.LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "left-knee", "left-foot");
+                basis.Asset.Validate();
+            }), s);
+            Check(s.NewPart("shin-pad", "Shin pad"), s);
+            s.Open(Walker);
+            Check(s.AttachPart("shin-pad", "left-shin"), s);
+            var pad = basis.Asset.Attachments[^1].Id;
+            Vector3 Mid(ResolvedModel m) => (m.Rest["left-knee"] + m.Rest["left-foot"]) / 2;
+            var standard = s.Assets.Resolve(Walker)!;
+            var padAt = Placement(standard, PoseEvaluator.Rest(standard), pad).Origin;
+            Record(Vector2.Distance(new(padAt.X, padAt.Y), new(Mid(standard).X, Mid(standard).Y)) < 1e-4f, "the pad sits on the shin's midpoint socket at rest");
+            // The variant's longer shin: the socket rides the knee bone's frame, the midpoint part spans the new length.
+            var tall = s.Assets.Resolve(TallWalker)!;
+            var tallPad = Placement(tall, PoseEvaluator.Rest(tall), pad).Origin;
+            var alongKnee = Vector2.Normalize(new Vector2(tall.Rest["left-foot"].X, tall.Rest["left-foot"].Y) - new Vector2(tall.Rest["left-knee"].X, tall.Rest["left-knee"].Y));
+            var padOffset = new Vector2(tallPad.X, tallPad.Y) - new Vector2(tall.Rest["left-knee"].X, tall.Rest["left-knee"].Y);
+            Record(MathF.Abs(Vector2.Dot(padOffset, alongKnee) - shin / 2) < 1e-4f && MathF.Abs(padOffset.Length() - shin / 2) < 1e-4f && MathF.Abs(tall.Nodes["left-knee"].Length - shin - .15f) < 1e-5f,
+                "on the longer shin the pad follows the knee bone's frame along the segment (the socket's offset in the bone's axes), with the shin part spanning the new length");
+            s.Open(basis.Asset.MotionSets[0].Roles["walk"]);
+            s.SetSubject(TallWalker);
+            s.Seek(.3f);
+            s.Selection.Select(attachment: pad);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("04-shin-guard-no-shear", shell =>
+        {
+            var s = shell.Session;
+            Check(s.NewPart("shin-guard", "Shin guard", "boot-left"), s);
+            s.Open(Walker);
+            Check(s.AttachPart("shin-guard", "left-shin"), s);
+            var basis = s.Assets.Model(Walker)!;
+            var guard = basis.Asset.Attachments[^1].Id;
+            var walker = s.Assets.Resolve(Walker)!;
+            var walk = s.Assets.Clip(basis.Asset.MotionSets[0].Roles["walk"])!.Asset;
+            var run = s.Assets.Clip(basis.Asset.MotionSets[0].Roles["run"])!.Asset;
+            var worst = 0f;
+            var turned = 0f;
+            foreach (var clip in new[] { walk, run })
+            {
+                for (var i = 0; i <= 24; i++)
+                {
+                    var pose = PoseEvaluator.Sample(walker, clip, i * clip.Duration / 24.0, repeat: true);
+                    var frame = Placement(walker, pose, guard);
+                    worst = MathF.Max(worst, MathF.Abs(Vector2.Dot(Vector2.Normalize(frame.XAxis), Vector2.Normalize(frame.YAxis))));
+                    worst = MathF.Max(worst, MathF.Abs(frame.XAxis.Length() / frame.YAxis.Length() - 1));
+                    turned = MathF.Max(turned, MathF.Abs(pose.Angles["left-knee"] - walker.Nodes["left-knee"].RestAngle));
+                }
+            }
+            Record(turned > .3f && worst < 1e-4f, $"through the walk and run the knee turns by up to {float.RadiansToDegrees(turned):0} degrees and the guard's frame stays a similarity (axes orthogonal and equal within {worst:E1}): no shear");
+            s.Open(basis.Asset.MotionSets[0].Roles["run"]);
+            s.Seek(.35f);
+            s.Selection.Select(attachment: guard);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("05-library-outfit", shell =>
+        {
+            var s = shell.Session;
+            Check(s.NewPart("glove", "Glove"), s);
+            Check(s.NewPart("hair", "Hair", "hair-short"), s);
+            Check(s.NewPart("beard", "Beard", "brute-beard"), s);
+            Check(s.NewPart("shirt", "Shirt", "cinder-hide-wrap"), s);
+            s.Open(Walker);
+            Check(s.AttachPart("glove", Humanoid.LeftHandSocket), s);
+            Check(s.AttachPart("glove", Humanoid.RightHandSocket, mirror: true), s);
+            Check(s.AttachPart("hair", Humanoid.HeadSocket), s);
+            Check(s.AttachPart("beard", Humanoid.HeadSocket), s);
+            Check(s.AttachPart("shirt", Humanoid.BodySocket), s);
+            Check(s.AttachPart("boot", Humanoid.LeftFootSocket), s);
+            Check(s.AttachPart("boot", Humanoid.RightFootSocket, mirror: true), s);
+            var basis = s.Assets.Model(Walker)!;
+            var worn = basis.Asset.Attachments;
+            Record(worn.Count(a => a.Asset == "glove") == 2 && worn.Count(a => a.Asset == "boot") == 2 && worn.Where(a => a.Asset == "boot").Select(a => a.Socket).SequenceEqual([Humanoid.LeftFootSocket, Humanoid.RightFootSocket])
+                && worn.Any(a => a.Asset == "hair") && worn.Any(a => a.Asset == "beard") && worn.Any(a => a.Asset == "shirt") && s.Assets.Problems(basis).Count == 0,
+                "the walker wears gloves, hair, beard, shirt and shoes from library assets, the glove and the shipped boot each on two sockets as two instances (the weapon is equipment on the entity, step 9)");
+            s.Open(basis.Asset.MotionSets[0].Roles["walk"]);
+            s.Pin(TallWalker);
+            s.Seek(.3f);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("06-instance-override-reset-shared-edit", shell =>
+        {
+            var s = shell.Session;
+            var basis = s.Assets.Model(Walker)!;
+            var rightBoot = basis.Asset.Attachments.Last(a => a.Asset == "boot").Id;
+            s.Open(TallWalker);
+            var tall = s.SubjectVariant!;
+            Check(s.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, s.Assets.Resolve(TallWalker)!, rightBoot, i => i.Asset = "sandal")), s);
+            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "sandal" && s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Asset.Id == "boot",
+                "an instance override swaps the tall walker's right shoe to the sandal while the base keeps its boot");
+            Check(s.Edit(tall, () => ModelAuthoring.ResetOverride(tall.Asset, PropertyRef.OfAttachment(rightBoot, RigProperties.Asset))), s);
+            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "boot" && !tall.Asset.HasOverride(PropertyRef.OfAttachment(rightBoot, RigProperties.Asset)), "resetting the override restores inheritance");
+            var fillBefore = s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill;
+            s.Open("boot");
+            var boot = s.PartDocument!;
+            Check(s.Edit(boot, () => { var solid = boot.Asset.Solids[0]; solid.Material = solid.RenderMaterial with { Fill = "#7a1f1f" }; boot.Asset.Validate(); }), s);
+            Record(s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == "#7a1f1f" && s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == "#7a1f1f"
+                && s.Assets.Resolve("person")!.Attachments.All(a => a.Asset.Id != "boot" || a.Solids[0].RenderMaterial.Fill == "#7a1f1f"),
+                "editing the shared boot asset once refreshes every wearer: the walker, the tall walker and whatever else wears it");
+            s.Undo();
+            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == fillBefore, "the shared edit undoes from the part editor");
+            s.Redo();
+            s.Open(basis.Asset.MotionSets[0].Roles["walk"]);
+            s.SetSubject(TallWalker);
+            s.Pin(Walker);
+            s.Seek(.3f);
+            s.Selection.Select(attachment: rightBoot);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("07-curve-face-blink-and-expression", shell =>
+        {
+            var s = shell.Session;
+            var basis = s.Assets.Model(Walker)!;
+            var faceId = PersonTemplate.FaceInstance;
+            s.Open(Walker);
+            Check(s.Edit(basis, () =>
+            {
+                basis.Asset.Attachments.First(a => a.Id == faceId).Expression = null;
+                foreach (var look in basis.Asset.Looks)
+                {
+                    look.Expressions.Remove(faceId);
+                }
+
+                ModelAuthoring.SetAttachmentAsset(basis.Asset, faceId, "face-curve", s.Assets.PartOf);
+            }), s);
+            var walkId = basis.Asset.MotionSets[0].Roles["walk"];
+            var walk = s.Assets.Clip(walkId)!;
+            Check(s.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, faceId, 0, "smile")), s);
+            s.Open(walkId);
+            s.Seek(.9f);
+            var subject = s.Evaluate(Walker)!;
+            var face = subject.Pose.Attachments[faceId];
+            Record(face.Attachment.Asset.Id == "face-curve" && face.Expression == "smile" && subject.Pose.Chains.All(c => c.Reached), "the walker wears the curve face and smiles as the walk selects while its legs keep reaching");
+            s.Seek(1.0f);
+            Record(s.Evaluate(Walker)!.Pose.Attachments[faceId].Pose.Fits.TryGetValue("left-pupil", out var fit) && fit.Y == 0, "at the blink's closed instant (its own clock) the pupils collapse through their fit channel");
+            s.Expression = "surprised";
+            Record(s.Evaluate(Walker)!.Pose.Attachments[faceId].Expression == "surprised", "a gameplay expression request bound by the face asset's expression bindings wins over the walk's smile");
+            s.Expression = null;
+            s.Seek(.95f);
+            s.Selection.Select(attachment: faceId);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("08-joint-limit-angle-and-bend", shell =>
+        {
+            var s = shell.Session;
+            var basis = s.Assets.Model(Walker)!;
+            // The walkthrough goes on with the baked face: the Person library's selection words are its vocabulary, and the entity
+            // steps need every role clip to validate (a word the curve face does not bind is reported by name on its clip, step 47 of the editor smoke).
+            var faceId = PersonTemplate.FaceInstance;
+            Check(s.Edit(basis, () =>
+            {
+                ModelAuthoring.SetAttachmentAsset(basis.Asset, faceId, ProceduralFace.AssetId, s.Assets.PartOf);
+                basis.Asset.Attachments.First(a => a.Id == faceId).Expression = "relaxed";
+            }), s);
+            var walkDoc = s.Assets.Clip(basis.Asset.MotionSets[0].Roles["walk"])!;
+            Check(s.Edit(walkDoc, () => ClipAuthoring.SetPlay(walkDoc.Asset, faceId, 0, null)), s);
+            Record(s.Assets.Problems(basis).Count == 0 && s.Assets.Clips.Where(c => c.Asset.Model == Walker).All(c => s.Assets.Problems(c).Count == 0), "with the baked face back every walker clip validates again");
+            s.Open(Walker);
+            var elbowRest = s.Assets.Resolve(Walker)!.Nodes["left-elbow"].Rotation;
+            Check(s.Edit(basis, () =>
+            {
+                var crest = ModelAuthoring.AddBone(basis.Asset, Humanoid.Head, "crest");
+                crest.Local = new() { Y = .2f, Rotation = MathF.PI / 2 };
+                crest.Length = .15f;
+                basis.Asset.Validate();
+                ModelAuthoring.AddPartToBone(basis.Asset, RoundedRectangle2D.Builder.FromSize(.15f, .04f, .01f), "crest");
+                ModelAuthoring.SetLimit(basis.Asset, "crest", new() { Min = MathF.PI / 2 - .6f, Max = MathF.PI / 2 + .6f });
+                ModelAuthoring.SetLimit(basis.Asset, "left-elbow", new() { Min = elbowRest - .9f, Max = elbowRest + .9f });
+            }), s);
+            Check(s.NewClip("walker-pose", "Walker pose", 1, false), s);
+            var clip = s.ClipDocument!;
+            var model = s.Assets.Resolve(Walker)!;
+            Check(s.Edit(clip, () =>
+            {
+                ClipAuthoring.SetKey(clip.Asset, new(MotionClip.RotateKind, Humanoid.LeftShoulder), 0, default, .5f);
+                ClipAuthoring.SetKey(clip.Asset, new(MotionClip.BendKind, "crest"), 0, new(1, 0, 0));
+                ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, Humanoid.LeftArm), 0, new(.1f, -1.2f, 0));
+            }), s);
+            s.Seek(0);
+            var pose = s.Evaluate(Walker)!.Pose;
+            var arm = pose.Chains.Single(c => c.Chain == Humanoid.LeftArm);
+            Record(MathF.Abs(pose.Angles[Humanoid.LeftShoulder] - model.Nodes[Humanoid.LeftShoulder].RestAngle - .5f) < 1e-4f, "an explicit angle key turns the shoulder pivot by exactly its value");
+            Record(pose.Limits["crest"].State == ConstraintLimitState1D.Upper && MathF.Abs(MathF.IEEERemainder(pose.Angles["crest"] - pose.Angles[Humanoid.Head] - (MathF.PI / 2 + .6f), MathF.Tau)) < 1e-3f,
+                "a normalized bend of 1 lands the crest exactly on its upper limit, parent-local");
+            Record(arm.Limited && !arm.Reached && pose.Limits["left-elbow"].State != ConstraintLimitState1D.Inactive,
+                $"a target that needs the elbow past its adjusted limit is held at the bound and reported unreached by {arm.Residual:F3}");
+            Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, Humanoid.LeftArm), 0, new(.05f, -.15f, 0))), s);
+            Record(s.Evaluate(Walker)!.Pose.Chains.Single(c => c.Chain == Humanoid.LeftArm) is { Reached: true, Limited: false }, "a target inside the elbow's range is reached exactly");
+            s.SetMode(Workspace.Animate);
+            s.Selection.Select(control: "left-elbow");
+            shell.Viewport.Fit(s.Evaluate(Walker));
+        }),
+        ("09-weapon-sensor-and-behaviors", shell =>
+        {
+            var s = shell.Session;
+            var basis = s.Assets.Model(Walker)!;
+            // The template copies the locomotion library; the thrust is authored for the walker from the shipped Person thrust (same control ids and measures).
+            var thrust = MotionClip.FromJson(s.Assets.Clip("person-thrust")!.Asset.ToJson());
+            thrust.Id = "walker-thrust";
+            thrust.Name = "Walker thrust";
+            thrust.Model = Walker;
+            thrust.StructureRevision = basis.Asset.StructureRevision;
+            thrust.Validate(s.Assets.Resolve(Walker)!);
+            s.Assets.Create(thrust);
+            Check(s.NewEntity(WalkerGuard, "Walker guard", TallWalker, EntityAuthoring.Guard), s);
+            Check(s.SetEntityRole("attack", thrust.Id), s);
+            var entity = s.EntityDocument!;
+            Check(s.Edit(entity, () => entity.Asset.Equipment.Add(new() { Prop = "spear", Socket = Humanoid.RightGripSocket })), s);
+            Check(s.AddCollider(new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = "spear", Point = PropAsset.TipPoint, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) }), s);
+            Check(s.Edit(entity, () =>
+            {
+                var attack = entity.Asset.Actions.Single(a => a.Id == "attack");
+                attack.Hits.Add(new() { Id = "spear-tip", Collider = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
+                attack.Events.Add(new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" });
+                entity.Asset.Behaviors.Strikes["spear-tip"] = new() { Damage = 2, Sound = "hit" };
+                entity.Asset.Behaviors.Damage.Health = 6;
+            }), s);
+            var resolved = s.Entity!;
+            var window = resolved.Actions["attack"].Hits[0];
+            Record(resolved.Collider("spear-tip") is { Use: ColliderUses.Attack, Binding: ColliderBindings.Prop } && window.Collider.Id == "spear-tip" && window.Strike.Damage == 2 && window.Strike.Sound == "hit" && resolved.Damage.Health == 6,
+                "the entity equips the spear and declares a sensor on its tip: the attack window enables it, its strike and the entity's health are typed behaviors");
+            s.PreviewActionOf("attack");
+            s.Seek(window.Start - .02f);
+            var before = s.EvaluateEntity()!;
+            s.Seek(window.Start + .02f);
+            var inside = s.EvaluateEntity()!;
+            s.Seek(window.Finish + .02f);
+            var after = s.EvaluateEntity()!;
+            Record(!before.Colliders.First(c => c.Id == "spear-tip").Enabled && inside.Colliders.First(c => c.Id == "spear-tip").Enabled && inside.Attacks.Count == 1 && !after.Colliders.First(c => c.Id == "spear-tip").Enabled,
+                "the sensor's activation follows the window: disabled before, enabled with the attack region inside, disabled after");
+            s.Seek(window.Start + .02f);
+            s.Selection.Collider = "spear-tip";
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("10-hits-block-miss-kill-several", shell =>
+        {
+            var s = shell.Session;
+            shell.LiveTest = false;
+            AuthoredArena Fight(string[] roster, Vector2[] positions, int ticks)
+            {
+                shell.Test.Stop();
+                shell.Test.Roster.Clear();
+                shell.Test.Roster.AddRange(roster);
+                shell.Test.Start();
+                var arena = shell.Test.Arena ?? throw new InvalidOperationException("The Test arena did not start: " + string.Join(" | ", shell.Test.Problems));
+                for (var i = 0; i < positions.Length; i++)
+                {
+                    arena.Teleport(i, positions[i]);
+                }
+
+                for (var i = 0; i < ticks; i++)
+                {
+                    shell.Test.Advance(1 / 120f, default);
+                }
+
+                shell.Test.Paused = true;
+                return arena;
+            }
+            // Hits: the walker guard's thrust against the player's three hurt colliders lands once per thrust.
+            var hits = Fight(["player", WalkerGuard], [new(0, 0), new(2.1f, 0)], 240);
+            var thrusts = hits.Events.Count(e => e.Actor == 1 && e.Event.Id == "strike");
+            Record(hits.Hits.Count > 0 && hits.Hits.All(h => h is { Attacker: 1, Target: 0, Window: "spear-tip", Damage: 2 }) && hits.Hits.Count <= thrusts && hits.Player.Health == Catalog(s).Entities["player"].Damage.Health - 2 * hits.Hits.Count,
+                $"the guard's thrust hits the player ({hits.Hits.Count} hit(s) over {thrusts} thrust(s), one per thrust whatever the hurt collider count), each for its typed damage");
+            // Block: the same thrust into the shield defender's raised guard is taken by the guard, not the hurt geometry.
+            var block = Fight(["shield-defender", WalkerGuard], [new(0, 0), new(2.1f, 0)], 240);
+            Record(block.Blocks.Count > 0 && block.Blocks.All(b => b is { Attacker: 1, Target: 0, Window: "spear-tip" }) && block.Hits.Count(h => h.Target == 0) == 0 && block.Actors[0].Health == Catalog(s).Entities["shield-defender"].Damage.Health,
+                $"the thrust into the shield defender's front guard is blocked ({block.Blocks.Count} block(s), no damage)");
+            // Miss: out of reach, nothing lands.
+            var miss = Fight(["player", WalkerGuard], [new(0, 0), new(6, 0)], 60);
+            Record(miss.Hits.Count == 0 && miss.Blocks.Count == 0, "out of reach the thrust misses: no hit or block");
+            // Kill: the stalker pest (health 2) dies to one typed strike of 2.
+            var kill = Fight(["stalker-pest", WalkerGuard], [new(0, 0), new(2.0f, 0)], 360);
+            Record(kill.Hits.Any(h => h.Target == 0) && !kill.Actors[0].Alive, "the stalker pest takes the strike and dies");
+            // Several targets: the maul brute's slam reaches the player and the walker guard in one attack instance.
+            var several = Fight(["maul-brute", "player", WalkerGuard], [new(0, 0), new(1.15f, 0), new(1.35f, 0)], 240);
+            var slams = several.Hits.Where(h => h.Attacker == 0).GroupBy(h => h.Tick).ToList();
+            Record(slams.Any(g => g.Select(h => h.Target).Distinct().Count() == 2), $"one slam of the brute strikes both targets ({string.Join("; ", slams.Select(g => $"tick {g.Key}: {string.Join(",", g.Select(h => h.Target))}"))})");
+            shell.Test.Stop();
+            _ = Fight(["player", WalkerGuard], [new(0, 0), new(2.1f, 0)], 12);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("11-cues-from-outcomes-not-seeking", shell =>
+        {
+            var s = shell.Session;
+            var arena = shell.Test.Arena!;
+            Record(arena.Hits.Count == 0 && arena.Events.All(e => e.Event.Sound is null), "twelve ticks in, nothing has landed and no sound has been raised");
+            shell.Test.Paused = false;
+            for (var i = 0; i < 480 && arena.Hits.Count == 0; i++)
+            {
+                shell.Test.Advance(1 / 120f, default);
+            }
+            shell.Test.Paused = true;
+            var strike = s.Assets.CompileEntity(WalkerGuard)!.Actions["attack"].Hits[0].Strike;
+            var sounds = arena.Events.Where(e => e.Event.Sound is not null).ToList();
+            Record(arena.Hits.Count > 0 && sounds.Any(e => e.Event.Id == "swing") && strike.Sound == "hit",
+                $"the swing's event sound and the accepted contact with its strike sound are the facts the game's audio and effects read ({arena.Hits.Count} hit(s), first at tick {arena.Hits[0].Tick}, strike sound '{strike.Sound}')");
+            shell.Test.Stop();
+            s.Open(WalkerGuard);
+            s.PreviewActionOf("attack");
+            var window = s.Entity!.Actions["attack"].Hits[0];
+            var attacks = 0;
+            for (var i = 0; i <= 20; i++)
+            {
+                s.Seek(window.Start - .05f + i * (window.Finish - window.Start + .1f) / 20);
+                attacks += s.EvaluateEntity()!.Attacks.Count;
+            }
+            Record(attacks > 0 && shell.Test.Arena is null, "seeking the timeline through the window previews the enabled sensor but raises no contact, hit or cue: those come from the arena's accepted outcomes only");
+            s.Seek(window.Start + .02f);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("12-save-reopen-undo", shell =>
+        {
+            var s = shell.Session;
+            var basis = s.Assets.Model(Walker)!;
+            var walkId = basis.Asset.MotionSets[0].Roles["walk"];
+            var liveWalk = PoseEvaluator.Sample(s.Assets.Resolve(TallWalker)!, s.Assets.Clip(walkId)!.Asset, .3, repeat: true);
+            var liveGuard = s.Assets.CompileEntity(WalkerGuard)!;
+            s.SaveAll();
+            Record(!s.MessageIsError && !s.Assets.DirtyDocuments.Any(), "save all writes every dependent asset: " + s.Message);
+            var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+            var reopenedWalk = PoseEvaluator.Sample(reopened.Resolve(TallWalker)!, reopened.Clip(walkId)!.Asset, .3, repeat: true);
+            var reopenedGuard = reopened.CompileEntity(WalkerGuard);
+            var same = liveWalk.Points.All(p => Vector3.Distance(p.Value, reopenedWalk.Points[p.Key]) < 1e-5f) && liveWalk.Attachments.Keys.SequenceEqual(reopenedWalk.Attachments.Keys);
+            Record(reopened.LoadErrors.Count == 0 && reopened.Documents.All(d => reopened.Problems(d).Count == 0) && same && reopenedGuard is not null
+                && reopenedGuard.Colliders.Select(c => c.Id).SequenceEqual(liveGuard.Colliders.Select(c => c.Id)) && reopenedGuard.Actions["attack"].Hits[0].Strike == liveGuard.Actions["attack"].Hits[0].Strike,
+                "reopened from disk, the tall walker's walk pose, its outfit and the guard's colliders and strike are the same");
+            // Undo across a shared asset edit and an instance edit, in order.
+            var rightBoot = basis.Asset.Attachments.Last(a => a.Asset == "boot").Id;
+            s.Open("boot");
+            var boot = s.PartDocument!;
+            var fill = boot.Asset.Solids[0].RenderMaterial.Fill;
+            Check(s.Edit(boot, () => { var solid = boot.Asset.Solids[0]; solid.Material = solid.RenderMaterial with { Fill = "#2f6f2f" }; boot.Asset.Validate(); }), s);
+            s.Open(TallWalker);
+            var tall = s.SubjectVariant!;
+            Check(s.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, s.Assets.Resolve(TallWalker)!, rightBoot, i => i.Asset = "sandal")), s);
+            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "sandal" && s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == "#2f6f2f", "a shared edit and an instance edit stand");
+            s.Undo();
+            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "boot" && s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == "#2f6f2f", "the first undo takes back the instance edit");
+            s.Open("boot");
+            s.Undo();
+            Record(s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == fill, "the second undo takes back the shared edit on its own document");
+            s.Open(walkId);
+            s.SetSubject(TallWalker);
+            s.Seek(.3f);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("13a-quadruped", shell =>
+        {
+            var s = shell.Session; s.Compare.Clear();
+            Check(s.NewModel("hound", "Hound", "quadruped", "long-legged"), s);
+            var hound = s.Assets.Resolve("hound")!;
+            Check(s.NewVariant("hound-tall", "Tall hound", "hound"), s);
+            var tall = s.SubjectVariant!;
+            Check(s.Edit(tall, () => tall.Asset.Parameters["legs"] = 1.45f), s);
+            var walkId = hound.Base.MotionSets[0].Roles["walk"];
+            var pose = PoseEvaluator.Sample(s.Assets.Resolve("hound-tall")!, s.Assets.Clip(walkId)!.Asset, .3, repeat: true);
+            Record(s.Assets.Resolve("hound-tall")!.Rest["body"].Y > hound.Rest["body"].Y && pose.Chains.All(c => c.Reached) && pose.Contacts.All(c => c.Residual < 1e-4f),
+                "a quadruped from the template with a longer-legged variant plays the shared walk with four legs reaching and planted feet holding");
+            Check(s.NewPart("saddle", "Saddle"), s);
+            s.Open("hound");
+            Check(s.AttachPart("saddle", "body-art"), s);
+            var saddle = s.Assets.Model("hound")!.Asset.Attachments[^1].Id;
+            var runId = hound.Base.MotionSets[0].Roles["run"];
+            var worst = 0f;
+            for (var i = 0; i <= 16; i++)
+            {
+                var tallHound = s.Assets.Resolve("hound-tall")!;
+                var frame = Placement(tallHound, PoseEvaluator.Sample(tallHound, s.Assets.Clip(runId)!.Asset, i / 16.0, repeat: true), saddle);
+                worst = MathF.Max(worst, MathF.Abs(Vector2.Dot(Vector2.Normalize(frame.XAxis), Vector2.Normalize(frame.YAxis))));
+            }
+            Record(worst < 1e-4f, "the saddle rides the body socket through the run as a similarity");
+            var rush = s.Assets.Clips.Single(c => c.Asset.Model == "hound" && c.Id.EndsWith("-rush", StringComparison.Ordinal)).Id;
+            Check(s.NewEntity("hound-guard", "Hound guard", "hound-tall", EntityAuthoring.Guard), s);
+            Check(s.SetEntityRole("attack", rush), s);
+            Check(s.AddCollider(new() { Id = "bite", Use = ColliderUses.Attack, Control = "head", Frame = "head", OffsetX = .25f, Shape = Circle2D.Builder.Create(.22f) }), s);
+            var entity = s.EntityDocument!;
+            Check(s.Edit(entity, () =>
+            {
+                entity.Asset.Actions.Single(a => a.Id == "attack").Hits.Add(new() { Id = "bite", Collider = "bite", Start = new() { At = .1f }, Finish = new() { At = .7f } });
+                entity.Asset.Behaviors.Strikes["bite"] = new() { Damage = 1, Sound = "hit" };
+            }), s);
+            Record(s.Entity is not null && s.Entity.Actions["attack"].Hits[0].Collider.Id == "bite" && s.Assets.Problems(entity).Count == 0, "a hound entity on the variant declares a bite sensor on its head and compiles: " + (s.EntityError ?? "ok"));
+            shell.Test.Stop();
+            shell.Test.Roster.Clear();
+            shell.Test.Roster.AddRange(["player", "hound-guard"]);
+            shell.Test.Start();
+            var arena = shell.Test.Arena!;
+            arena.Teleport(0, new(0, 0));
+            arena.Teleport(1, new(2.4f, 0));
+            for (var i = 0; i < 360; i++)
+            {
+                shell.Test.Advance(1 / 120f, default);
+            }
+            shell.Test.Paused = true;
+            Record(arena.Hits.Any(h => h is { Attacker: 1, Target: 0, Window: "bite" }), $"the hound's bite lands on the player in the Test arena ({arena.Hits.Count} hit(s))");
+            shell.Test.Stop();
+            s.Open(walkId);
+            s.SetSubject("hound-tall");
+            s.Pin("hound");
+            s.Seek(.3f);
+            s.Selection.Select(attachment: saddle);
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("13b-flier", shell =>
+        {
+            var s = shell.Session; s.Compare.Clear();
+            Check(s.NewModel("flier", "Flier", "pterosaur", "broad-winged"), s);
+            var flier = s.Assets.Resolve("flier")!;
+            Check(s.NewVariant("flier-wide", "Wide flier", "flier"), s);
+            var wide = s.SubjectVariant!;
+            Check(s.Edit(wide, () => wide.Asset.Parameters["wings"] = 1.3f), s);
+            var hoverId = flier.Base.MotionSets[0].Roles["hover"];
+            var hover = PoseEvaluator.Sample(s.Assets.Resolve("flier-wide")!, s.Assets.Clip(hoverId)!.Asset, .5, repeat: true);
+            Record(s.Assets.Resolve("flier-wide")!.ParameterValues["wings"] == 1.3f && hover.Chains.All(c => c.Reached), "a flier from the template with a wider-winged variant plays the shared hover with its chains reaching");
+            Check(s.NewPart("crest-plume", "Crest plume"), s);
+            s.Open("flier");
+            Check(s.AttachPart("crest-plume", "head-art"), s);
+            var plume = s.Assets.Model("flier")!.Asset.Attachments[^1].Id;
+            // The template copies the flight library; the swoop (with its flight-phase markers) is authored for the flier from the shipped one, and the
+            // attack action carries the flight phases the flying controller needs, as the shipped flier's does.
+            var swoop = MotionClip.FromJson(s.Assets.Clip("pterosaur-swoop")!.Asset.ToJson());
+            swoop.Id = "flier-swoop";
+            swoop.Name = "Flier swoop";
+            swoop.Model = "flier";
+            swoop.StructureRevision = s.Assets.Model("flier")!.Asset.StructureRevision;
+            swoop.Validate(flier);
+            s.Assets.Create(swoop);
+            var shippedAttack = s.Assets.Entity("flying-pterosaur")!.Asset.Actions.Single(a => a.Id == "attack");
+            Check(s.NewEntity("flier-pest", "Flier pest", "flier-wide", EntityAuthoring.Stationary), s);
+            var entity = s.EntityDocument!;
+            Check(s.AddCollider(new() { Id = "beak", Use = ColliderUses.Attack, Control = "jaw", Frame = "jaw", OffsetX = .2f, Shape = Circle2D.Builder.Create(.18f) }), s);
+            Check(s.Edit(entity, () =>
+            {
+                entity.Asset.Controller.Kind = EntityControllers.Flying;
+                entity.Asset.Controller.Flight = new();
+                entity.Asset.Controller.Range = 3.2f;
+                entity.Asset.Actions.Add(new()
+                {
+                    Id = "attack",
+                    Clip = swoop.Id,
+                    Hits = [new() { Id = "beak", Collider = "beak", Start = new() { Marker = "rush" }, Finish = new() { Marker = "brake" } }],
+                    Events = [.. shippedAttack.Events.Select(e => new ActionEvent { Id = e.Id, At = new() { Marker = e.At.Marker, At = e.At.At }, Sound = e.Sound })],
+                });
+                entity.Asset.Behaviors.Strikes["beak"] = new() { Damage = 2, Sound = "hit" };
+            }), s);
+            Record(s.Entity is { } resolved && resolved.Controller.Id == EntityControllers.Flying && resolved.Actions["attack"].Hits[0].Collider.Id == "beak" && s.Assets.Problems(entity).Count == 0,
+                "a flying entity on the variant declares a beak sensor over its swoop with the flight phases and compiles: " + (s.EntityError ?? "ok"));
+            s.PreviewActionOf("attack");
+            var window = s.Entity?.Actions["attack"].Hits[0];
+            s.Seek((window?.Start ?? 0) + .02f);
+            var preview = s.EvaluateEntity();
+            Record(preview is not null && preview.Colliders.First(c => c.Id == "beak").Enabled && preview.Attacks.Count == 1, "inside the swoop's rush window the beak sensor is enabled at the jaw");
+            s.Selection.Collider = "beak";
+            shell.Viewport.Fit(s.Scene().FirstOrDefault());
+        }),
+        ("14-centaur-composition", shell =>
+        {
+            var s = shell.Session; s.Compare.Clear();
+            const string lower = "lower", upper = "upper";
+            var model = new CharacterModel { Id = "my-centaur", Name = "My centaur", Ink = "#242a29", LineWidth = .045f };
+            model.Controls.Add(new() { Id = "root", Rest = new(0, .92f, 0) });
+            model.Parts.Add(new() { Id = "root-mark", A = "root", Geometry = Ellipse2D.Builder.Create(new(.02f, .02f)), Material = new() { Fill = "#000000" }, Hidden = true });
+            model.Sockets.Add(new() { Id = "mount", Control = "root", Frame = CharacterModel.Locomotion, Usage = ModulePlans.LowerBody });
+            model.Sockets.Add(new() { Id = "saddle", Control = lower + PartAsset.Namespace + "body", OffsetX = .42f, OffsetY = .98f, Usage = ModulePlans.UpperBody });
+            model.Attachments.Add(new() { Id = lower, Asset = ModulePlans.QuadrupedLower, Socket = "mount" });
+            model.Attachments.Add(new() { Id = upper, Asset = ModulePlans.PersonUpper, Socket = "saddle", Scale = .9f, Layer = -.05f });
+            model.MotionOwner = lower;
+            model.Validate();
+            s.Assets.Create(model);
+            s.Open("my-centaur");
+            Check(s.NewClip("my-centaur-walk", "Centaur walk", 1, true), s);
+            var walk = s.ClipDocument!;
+            Check(s.Edit(walk, () =>
+            {
+                ClipAuthoring.SetPlay(walk.Asset, lower, 0, "walk");
+                ClipAuthoring.SetPlay(walk.Asset, upper, 0, "hammer-slam");
+            }), s);
+            s.Seek(.55f);
+            var centaur = s.Assets.Resolve("my-centaur")!;
+            var pose = s.Evaluate("my-centaur")!.Pose;
+            var gait = pose.Attachments[lower];
+            var torso = pose.Attachments[upper];
+            var saddle = gait.Frame("body").At(new Vector3(.42f, .98f, 0));
+            Record(centaur.Base.Controls.Count == 1 && centaur.MotionOwner?.Id == lower && gait.Pose.Chains.All(c => c.Reached) && gait.Pose.Contacts.Count >= 2
+                && Vector2.Distance(new(saddle.X, saddle.Y), new(torso.World(Humanoid.Chest).X, torso.World(Humanoid.Chest).Y)) < 1e-4f && (gait.Expression, torso.Expression) == ("walk", "hammer-slam"),
+                "the centaur is one root control wearing the quadruped lower body and the Person upper body: the lower body owns the motion and walks, the chest rides the saddle on lower/body, the upper body slams on its own");
+            var quadrupedWalk = s.Assets.Part(ModulePlans.QuadrupedLower)!.Asset.Clip("quadruped-walk")!;
+            Record(MathF.Abs(PoseEvaluator.CycleTravel(centaur, walk.Asset).X - PoseEvaluator.CycleTravel(gait.Rig, quadrupedWalk).X) < 1e-5f, "the stride is the quadruped gait's, carried by the owning module, with no rig copied and no dedicated runtime type");
+            s.SaveAll();
+            var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+            Record(reopened.LoadErrors.Count == 0 && reopened.Resolve("my-centaur")!.Attachments.Count == 2 && reopened.Problems(reopened.Model("my-centaur")!).Count == 0, "the composition saves and reopens as resources");
+            s.SetMode(Workspace.Animate);
+            s.Selection.Select(attachment: upper);
+            shell.Viewport.Fit(s.Evaluate("my-centaur"));
+        }),
+    ];
+
+    private static AuthoredCatalog Catalog(EditorSession s) => AuthoredCatalog.Load(s.Assets.Root);
+
+    /// <summary>A part instance's placement at a pose: the socket's placement at that pose composed with the instance's own offset (the drawing's rule).</summary>
+    private static App2d.Core.Characters.Geometry.LayeredFrame2D Placement(ResolvedModel model, EvaluatedPose pose, string instance)
+    {
+        var attachment = model.Attachment(instance) ?? throw new InvalidOperationException($"'{model.Id}' has no attachment '{instance}'.");
+        return attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket));
+    }
+}

@@ -49,12 +49,6 @@ public static class ModelAuthoring
             }
 
             control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
-            if (resolved.SetupTransforms.TryGetValue(control.Id, out var setup))
-            {
-                control.Transform = setup with
-                {
-                };
-            }
         }
         model.Parts = [.. resolved.Parts.Select(p => p with { })];
         // The variant's attachment overrides (swaps, placement, fit, materials) become the new base's instances; the assets stay references.
@@ -77,7 +71,7 @@ public static class ModelAuthoring
     /// <summary>What decides clip compatibility: controls and parents, chains, frames and default scales. Proportions and appearance never change it.</summary>
     public static string StructureSignature(CharacterModel model) => string.Join("|",
         model.Controls.Select(c => $"c:{c.Id}<{c.Parent}~{c.Scale}~node:{c.Node}").Order(StringComparer.Ordinal)
-            .Concat(model.IkChains.Select(c => $"k:{c.Id}={c.Root}>{c.Joint}>{c.End}@{c.Frame}~{c.Scale}~{c.Solver}").Order(StringComparer.Ordinal))
+            .Concat(model.IkChains.Select(c => $"k:{c.Id}={c.Root}>{c.Joint}>{c.End}@{c.Frame}~{c.Scale}").Order(StringComparer.Ordinal))
             .Concat(model.Measures.Select(m => $"m:{m.Id}").Order(StringComparer.Ordinal))
             .Concat(model.Slots.Select(s => $"s:{s.Id}={s.Bone}").Order(StringComparer.Ordinal)));
 
@@ -305,22 +299,6 @@ public static class ModelAuthoring
     public static ModelControl AddControl(CharacterModel model, string? parent, Vector3 rest, string? id = null)
     {
         var control = new ModelControl { Id = id ?? UniqueId(parent is null ? "control" : parent + "-child", Names(model)), Parent = parent, Rest = PuppetPoint.From(rest) };
-        if (parent is not null && Control(model, parent).Transform is not null)
-        {
-            var frame = ResolvedModel.Rig(model).RestTransforms[parent];
-            if (!Matrix3x2.Invert(frame, out var inverse))
-            {
-                throw new InvalidOperationException("Cannot add a bone beneath a collapsed parent transform.");
-            }
-
-            var local = Vector2.Transform(new(rest.X, rest.Y), inverse);
-            control.Node = RigNodeKinds.Affine;
-            control.Transform = new()
-            {
-                X = local.X,
-                Y = local.Y
-            };
-        }
         model.Controls.Add(control);
         model.Validate();
         return control;
@@ -328,8 +306,7 @@ public static class ModelAuthoring
 
     /// <summary>
     /// Adds a canonical bone node at a parent's tip, continuing its direction: bound to the tip when the parent is a bone with
-    /// a length, else a local offset along the parent's +X. Its own local +X axis points toward its tip. Beneath a legacy
-    /// affine node it adds an affine child so that rig stays editable by its adapter.
+    /// a length, else a local offset along the parent's +X. Its own local +X axis points toward its tip.
     /// </summary>
     /// <summary>
     /// Declares, changes or removes a bone node's angular joint limits (P4b). Null removes them. Validation refuses a point
@@ -359,17 +336,6 @@ public static class ModelAuthoring
     public static ModelControl AddBone(CharacterModel model, string? parent, string? id = null)
     {
         var basis = parent is null ? null : Control(model, parent);
-        if (basis is { Node: RigNodeKinds.Affine })
-        {
-            var origin = basis.Rest.XYZ + Rotation2D.ApplyXY(new(MathF.Max(basis.Length, .3f), 0, 0), basis.RestAngle);
-            var affine = AddControl(model, parent, origin, id ?? UniqueId("bone", Names(model)));
-            affine.RestAngle = basis.RestAngle;
-            affine.Length = .5f;
-            affine.Transform = new() { X = MathF.Max(basis.Length, .3f) };
-            SyncAffineRest(model);
-            model.Validate();
-            return affine;
-        }
         var bone = new ModelControl { Id = id ?? UniqueId("bone", Names(model)), Parent = parent, Node = RigNodeKinds.Bone, Length = .5f };
         if (basis is { Length: > 0 })
         {
@@ -442,11 +408,6 @@ public static class ModelAuthoring
             var nodes = RigGraph.Compile(model);
             var node = nodes[id];
             var target = parent is null ? null : nodes[parent];
-            if (target is { Kind: RigNodeKinds.Affine })
-            {
-                throw new InvalidOperationException($"Cannot hang bone '{id}' from the affine node '{parent}'; the legacy affine adapter carries no canonical bones.");
-            }
-
             var frame = target?.RestFrame ?? Matrix3x2.Identity;
             if (!new Frame2D(frame).TryToLocal(new(node.Rest.X, node.Rest.Y), out var local))
             {
@@ -470,39 +431,46 @@ public static class ModelAuthoring
             model.Validate();
             return;
         }
-        if (control.Transform is not null)
-        {
-            var resolved = ResolvedModel.Rig(model);
-            var frame = parent is null ? Matrix3x2.Identity : resolved.RestTransforms[parent];
-            if (!Matrix3x2.Invert(frame, out var inverse))
-            {
-                throw new InvalidOperationException("Cannot reparent a bone beneath a collapsed parent transform.");
-            }
-
-            control.Transform = Affine2D.FromMatrix(resolved.RestTransforms[id] * inverse);
-        }
         control.Parent = parent;
         model.Validate();
-        if (control.Transform is not null)
-        {
-            SyncAffineRest(model);
-        }
     }
 
     /// <summary>Converts a parent-to-child run of point controls into canonical bone nodes; see <see cref="RigConversion.ToBoneChain"/>.</summary>
     public static IReadOnlyList<string> ConvertToBoneChain(CharacterModel model, IReadOnlyList<string> controls) => RigConversion.ToBoneChain(model, controls);
 
-    /// <summary>Makes <paramref name="end"/> the tip of a two-bone chain over its parent and grandparent.</summary>
-    public static ModelChain AddChain(CharacterModel model, string end) => AddIk(model, end, bone: false);
+    /// <summary>Adds a two-bone IK constraint ending at <paramref name="end"/> over its parent and grandparent, which must be bone nodes with lengths whose tips the next segment meets.</summary>
+    public static ModelChain AddBoneIk(CharacterModel model, string end)
+    {
+        var chain = Chain(model, end);
+        model.Validate();
+        return chain;
+    }
 
-    /// <summary>Adds a typed bone-frame IK constraint. Both segment origins must meet their parent's +X tip.</summary>
-    public static ModelChain AddBoneIk(CharacterModel model, string end) => AddIk(model, end, bone: true);
-
-    private static ModelChain AddIk(CharacterModel model, string end, bool bone)
+    /// <summary>
+    /// Makes <paramref name="end"/> the tip of a two-bone IK constraint over its point-control parent and grandparent: the run
+    /// becomes bone nodes and the constraint turns their frames (<see cref="RigConversion.ToBoneConstraint"/>: the end keeps the
+    /// character axes, and a root whose own frame is read stays as the pivot of a new solved bone). The one way a point run
+    /// gets a constraint; the editor's "Make IK constraint" on point controls and the seed generators use it.
+    /// </summary>
+    public static ModelChain AddIkOverPoints(CharacterModel model, string end, string? boneId = null)
     {
         var joint = Control(model, end).Parent ?? throw new InvalidOperationException($"'{end}' needs a parent and grandparent to end a chain.");
         var root = Control(model, joint).Parent ?? throw new InvalidOperationException($"'{joint}' needs a parent to root a chain.");
-        var chain = new ModelChain { Id = UniqueId(end + "-chain", model.IkChains.Select(c => c.Id)), Root = root, Joint = joint, End = end, Solver = bone ? ModelChain.BoneSolver : ModelChain.PointSolver };
+        if (new[] { end, joint, root }.Any(id => Control(model, id).Node == RigNodeKinds.Bone))
+        {
+            throw new InvalidOperationException($"A constraint ending at '{end}' already runs over bone nodes; add a bone constraint instead of converting a point run.");
+        }
+
+        var chain = Chain(model, end);
+        RigConversion.ToBoneConstraint(model, chain.Id, [], boneId);
+        return chain;
+    }
+
+    private static ModelChain Chain(CharacterModel model, string end)
+    {
+        var joint = Control(model, end).Parent ?? throw new InvalidOperationException($"'{end}' needs a parent and grandparent to end a chain.");
+        var root = Control(model, joint).Parent ?? throw new InvalidOperationException($"'{joint}' needs a parent to root a chain.");
+        var chain = new ModelChain { Id = UniqueId(end + "-chain", model.IkChains.Select(c => c.Id)), Root = root, Joint = joint, End = end };
         model.Constraints.Add(chain);
         // A group that owned the newly solved controls now owns the chain, whole.
         foreach (var group in model.Groups.Where(g => g.Targets.RemoveAll(t => t == joint || t == end) > 0))
@@ -510,7 +478,6 @@ public static class ModelAuthoring
             group.Targets.Add(chain.Id);
         }
 
-        model.Validate();
         return chain;
     }
 
@@ -748,41 +715,6 @@ public static class ModelAuthoring
             model.Validate();
             return;
         }
-        if (moving.Transform is not null)
-        {
-            var resolved = ResolvedModel.Rig(model);
-            var deltaAffine = position - resolved.Rest[id];
-            var movedIds = (children ? Subtree(model.Controls, id) : [Control(model, id)]).Select(c => c.Id).ToHashSet();
-            var frames = new Dictionary<string, Matrix3x2>();
-            foreach (var control in resolved.Order)
-            {
-                var desired = resolved.Rest[control.Id] + (movedIds.Contains(control.Id) ? deltaAffine : Vector3.Zero);
-                if (control.Transform is { } local)
-                {
-                    var parent = control.Parent is null ? Matrix3x2.Identity : frames[control.Parent];
-                    if (!Matrix3x2.Invert(parent, out var inverse))
-                    {
-                        throw new InvalidOperationException("Cannot move a bone through a collapsed parent transform.");
-                    }
-
-                    var point = Vector2.Transform(new(desired.X, desired.Y), inverse);
-                    local.X = point.X;
-                    local.Y = point.Y;
-                    frames[control.Id] = local.Matrix * parent;
-                }
-                else
-                {
-                    frames[control.Id] = resolved.RestTransforms[control.Id] with
-                    {
-                        M31 = desired.X,
-                        M32 = desired.Y
-                    };
-                }
-
-                control.Rest = PuppetPoint.From(desired);
-            }
-            return;
-        }
         var rest = RigGraph.Compile(model);
         var delta = position - moving.Rest.XYZ;
         moving.Rest = PuppetPoint.From(position);
@@ -835,7 +767,7 @@ public static class ModelAuthoring
             var setup = bone.Local ?? new RigSetup();
             setup.Rotation = node.CharacterOriented ? angle : (parentNode?.Handedness ?? 1) * (angle - (parentNode?.RestAngle ?? 0));
             bone.Local = setup;
-            // Point descendants are authored in the character frame, so they turn about the pivot explicitly; bone and affine
+            // Point descendants are authored in the character frame, so they turn about the pivot explicitly; bone
             // descendants are parent-local and follow.
             var about = new Vector2(node.Rest.X, node.Rest.Y);
             var turn = angle - node.RestAngle;
@@ -846,20 +778,6 @@ public static class ModelAuthoring
             }
 
             model.Validate();
-            return;
-        }
-        if (bone.Transform is { } affine)
-        {
-            var resolved = ResolvedModel.Rig(model);
-            var parent = bone.Parent is null ? Matrix3x2.Identity : resolved.RestTransforms[bone.Parent];
-            if (!Matrix3x2.Invert(parent, out var inverse))
-            {
-                throw new InvalidOperationException("Cannot rotate a bone through a collapsed parent transform.");
-            }
-
-            var axis = Vector2.TransformNormal(new(MathF.Cos(angle), MathF.Sin(angle)), inverse);
-            affine.Rotation = MathF.Atan2(axis.Y, axis.X) - affine.ShearX - (affine.ScaleX < 0 ? MathF.PI : 0);
-            SyncAffineRest(model);
             return;
         }
         var delta = angle - bone.RestAngle;
@@ -878,7 +796,7 @@ public static class ModelAuthoring
 
     /// <summary>
     /// Changes a segment's length. Children bound to the bone follow the new tip through their links without any frame
-    /// stretching; for legacy point and affine bones the connected IK joint and its descendants are carried to the new tip.
+    /// stretching; for a point control with a length the connected IK joint and its descendants are carried to the new tip.
     /// </summary>
     public static void ResizeBone(CharacterModel model, string id, float length)
     {
@@ -890,7 +808,7 @@ public static class ModelAuthoring
             model.Validate();
             return;
         }
-        var next = model.IkChains.Where(c => c.Solver == ModelChain.BoneSolver && (c.Root == id || c.Joint == id))
+        var next = model.IkChains.Where(c => c.Root == id || c.Joint == id)
             .Select(c => c.Root == id ? c.Joint : c.End).Where(child => Control(model, child) is not { Node: RigNodeKinds.Bone, Link: not null }).Distinct().ToArray();
         if (next.Length == 0)
         {
@@ -903,17 +821,11 @@ public static class ModelAuthoring
         bone.Length = length;
         foreach (var child in next)
         {
-            if (Control(model, child).Transform is { } local)
-            {
-                local.X = length;
-                local.Y = 0;
-            }
             foreach (var member in Subtree(model.Controls, child))
             {
                 member.Rest = PuppetPoint.From(resolved.Rest[member.Id] + delta);
             }
         }
-        SyncAffineRest(model);
         model.Validate();
     }
 
@@ -922,16 +834,11 @@ public static class ModelAuthoring
     /// <c>local.y</c>, <c>local.layer</c>; only the components that change), never by freezing an absolute position. With
     /// <paramref name="children"/> the subtree follows through the hierarchy and no descendant is touched; without, every
     /// unbound child gets its own local setup override so it stays in place, and a bound child follows its parent as it
-    /// must. A bound origin and a legacy affine node are refused with the reason.
+    /// must. A bound origin is refused with the reason.
     /// </summary>
     public static void MoveRest(ResolvedModel resolved, ModelVariant variant, string id, Vector3 position, bool children)
     {
         var node = resolved.Nodes.GetValueOrDefault(id) ?? throw new InvalidOperationException($"'{resolved.Id}' has no control '{id}'.");
-        if (node.Kind == RigNodeKinds.Affine)
-        {
-            throw new InvalidOperationException($"'{id}' is a legacy affine node; the adapter exposes no variant-overridable setup until P11. Edit the base model.");
-        }
-
         if (node.Link is { } link)
         {
             throw new InvalidOperationException($"'{id}' is bound to '{node.Parent}' at t = {link.T:0.##}; override the parent's length or the link instead of its origin.");
@@ -953,13 +860,11 @@ public static class ModelAuthoring
             // their setup against it so their character rest stays; bound children have no independent position.
             var moved = node with { Setup = node.Setup with { X = local.X, Y = local.Y, Layer = position.Z - (parent?.RestLayer ?? 0) } };
             var frame = parent is null ? LayeredFrame2D.Local(moved.Setup.ScaleVector, moved.Setup.Rotation, moved.Setup.Translation, 0).Frame.Matrix
-                : parent.Kind == RigNodeKinds.Affine
+                : node.Kind == RigNodeKinds.Point
                     ? Matrix3x2.CreateRotation(moved.RestAngle) * Matrix3x2.CreateTranslation(position.X, position.Y)
-                    : node.Kind == RigNodeKinds.Point
-                        ? Matrix3x2.CreateRotation(moved.RestAngle) * Matrix3x2.CreateTranslation(position.X, position.Y)
-                        : LayeredFrame2D.Local(moved.Setup.ScaleVector, moved.Setup.Rotation, moved.Setup.Translation, 0).Frame.Matrix * parent.RestFrame;
+                    : LayeredFrame2D.Local(moved.Setup.ScaleVector, moved.Setup.Rotation, moved.Setup.Translation, 0).Frame.Matrix * parent.RestFrame;
             var movedNode = moved with { RestFrame = frame, RestLayer = position.Z };
-            foreach (var child in resolved.Base.Controls.Where(c => c.Parent == id && c.Node != RigNodeKinds.Affine))
+            foreach (var child in resolved.Base.Controls.Where(c => c.Parent == id))
             {
                 var childNode = resolved.Nodes[child.Id];
                 if (childNode.Link is not null)
@@ -980,12 +885,6 @@ public static class ModelAuthoring
         if (parent is null)
         {
             return position;
-        }
-
-        if (parent.Kind == RigNodeKinds.Affine)
-        {
-            // The legacy affine adapter carries point children by rotation only; its scale and shear stay on its own frame.
-            return Rotation2D.Apply(position - new Vector2(parent.RestFrame.M31, parent.RestFrame.M32), -parent.RestAngle);
         }
 
         if (!new Frame2D(parent.RestFrame).TryToLocal(position, out var local))
@@ -1011,7 +910,7 @@ public static class ModelAuthoring
 
     /// <summary>
     /// Turns and resizes a variant's bone so its tip lands on a character-frame position: overrides <c>local.rotation</c>
-    /// (when the direction changes) and <c>length</c>. Bound and unbound bone nodes alike; a point or affine node is refused.
+    /// (when the direction changes) and <c>length</c>. Bound and unbound bone nodes alike; a point node is refused.
     /// </summary>
     public static void MoveBoneTip(ResolvedModel resolved, ModelVariant variant, string id, Vector2 position)
     {
@@ -1133,15 +1032,4 @@ public static class ModelAuthoring
 
     private static ModelControl Control(CharacterModel model, string id) =>
         model.Controls.FirstOrDefault(c => c.Id == id) ?? throw new InvalidOperationException($"Model '{model.Id}' has no control '{id}'.");
-
-    public static void SyncAffineRest(CharacterModel model)
-    {
-        var resolved = ResolvedModel.Rig(model);
-        foreach (var control in model.Controls.Where(c => c.Transform is not null))
-        {
-            control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
-            var frame = resolved.RestTransforms[control.Id];
-            control.RestAngle = MathF.Atan2(frame.M12, frame.M11);
-        }
-    }
 }

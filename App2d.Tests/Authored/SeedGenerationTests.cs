@@ -74,7 +74,6 @@ public sealed class SeedGenerationTests
         foreach (var entity in new[] { StarterContent.SpearGuardEntity(), StarterContent.PlayerEntity(), StarterContent.StalkerEntity() })
         {
             Assert.Equal(EntityAsset.CurrentVersion, entity.Version);
-            Assert.Null(entity.Hurt.Layout);
             Assert.Contains(entity.Colliders, c => c.Use == ColliderUses.Hurt);
             Assert.All(entity.Actions.SelectMany(a => a.Hits), h => Assert.NotNull(h.Collider));
         }
@@ -85,8 +84,8 @@ public sealed class SeedGenerationTests
         Assert.Equal(StarterContent.SpearGuardEntity().ToJson(), guard.ToJson());
         foreach (var model in new[] { PersonTemplate.Model(face: true), StarterContent.StalkerModel(), QuadrupedTemplate.Model(), PterosaurTemplate.Model() })
         {
-            Assert.Empty(model.HurtLayouts);
-            Assert.All(model.IkChains, c => Assert.Equal(ModelChain.BoneSolver, c.Solver));
+            Assert.Equal(CharacterModel.CurrentVersion, model.Version);
+            Assert.All(model.IkChains, c => Assert.Equal(RigNodeKinds.Bone, model.Controls.Single(x => x.Id == c.Root).Node));
         }
         // The Person's proof builds are declared presets, and a build that matches a preset applies through it.
         var person = Catalog.Models["person"];
@@ -97,8 +96,26 @@ public sealed class SeedGenerationTests
         Assert.Equal(2, resolved.ParameterValues["legs"]);
         // A new entity from the template starts with one hurt box over its rest pose instead of a layout reference.
         var fresh = EntityAuthoring.New(EntityAuthoring.Guard, "fresh", "Fresh", Catalog.Resolve("quadruped"));
-        Assert.Null(fresh.Hurt.Layout);
         var box = Assert.Single(fresh.Colliders);
         Assert.Equal((ColliderUses.Hurt, "body", CharacterModel.Locomotion), (box.Use, box.Control, box.Frame));
+    }
+
+    [Fact]
+    public void TheSeedPersonIsTheShippedStructure()
+    {
+        var seed = PersonTemplate.Model(face: true);
+        var shipped = Catalog.Models["person"];
+        Assert.Equal(shipped.Controls.Select(c => (c.Id, c.Node, c.Parent, c.Link?.Orientation)), seed.Controls.Select(c => (c.Id, c.Node, c.Parent, c.Link?.Orientation)));
+        Assert.Equal(shipped.IkChains.Select(c => (c.Id, c.Root, c.Frame)), seed.IkChains.Select(c => (c.Id, c.Root, c.Frame)));
+        Assert.Equal(shipped.Parameters.Select(p => (p.Id, p.Bindings.Count)), seed.Parameters.Select(p => (p.Id, p.Bindings.Count)));
+        // Every shipped model and animated part is on the final formats: bone constraints only, no retired member (the P11c format conversion report is the record).
+        foreach (var model in Catalog.Models.Values)
+        {
+            Assert.Equal(CharacterModel.CurrentVersion, model.Version);
+            Assert.All(model.IkChains, c => Assert.Equal(RigNodeKinds.Bone, model.Controls.Single(x => x.Id == c.Root).Node));
+            Assert.Equal(model.ToJson(), File.ReadAllText(Catalog.PathOf(model.Id)));
+        }
+        Assert.All(Catalog.Parts.Values, p => Assert.Equal(PartAsset.CurrentVersion, p.Version));
+        Assert.All(Catalog.Entities.Values, e => Assert.Equal(e.Asset.ToJson(), File.ReadAllText(Catalog.PathOf(e.Id))));
     }
 }

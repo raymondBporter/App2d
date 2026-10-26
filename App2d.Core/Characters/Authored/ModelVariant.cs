@@ -13,7 +13,7 @@ public sealed class ModelVariant
     public const string FormatId = "app2d-variant";
     /// <summary>
     /// Version 6 (P6a): one typed <see cref="Overrides"/> list replaces the per-field <c>rest</c>, <c>parts</c> and
-    /// <c>attachments</c> dictionaries of versions 4 and 5, which read through <see cref="LegacyVariantReader"/>.
+    /// <c>attachments</c> dictionaries of versions 4 and 5; an older file is refused by version (P11c).
     /// </summary>
     public const int CurrentVersion = 6;
     public string Format { get; set; } = FormatId;
@@ -38,7 +38,7 @@ public sealed class ModelVariant
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static ModelVariant FromJson(string json)
     {
-        var variant = AuthoredAsset.Parse<ModelVariant>(LegacySourceFields.ReadVariant(json), "variant");
+        var variant = AuthoredAsset.Parse<ModelVariant>(json, "variant");
         variant.Validate();
         return variant;
     }

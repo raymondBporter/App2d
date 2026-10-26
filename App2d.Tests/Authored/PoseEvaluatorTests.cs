@@ -65,8 +65,7 @@ public sealed class PoseEvaluatorTests
     [Fact]
     public void DeltasScaleByVariantOverReferenceMeasureButDepthDoesNot()
     {
-        var variant = new ModelVariant { Id = "long-arm", Name = "Long arm", Base = "creature" };
-        VariantConversion.PinRest(TestModels.Creature(), variant, new Dictionary<string, PuppetPoint> { ["elbow"] = new(.6f, 1.2f), ["hand"] = new(1.2f, 1.5f) });
+        var variant = TestModels.Stretched(TestModels.Creature(), "long-arm", "Long arm", ("elbow", new(.6f, 1.2f)), ("hand", new(1.2f, 1.5f)));
         var longArm = ResolvedModel.From(TestModels.Creature(), variant);
         var clip = TestModels.Clip(Model);   // reference measures are the base's
         clip.Tracks.Add(new()

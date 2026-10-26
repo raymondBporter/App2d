@@ -56,9 +56,8 @@ public sealed class AuthoredHero2D
     public int Damage(string? swing = null) => Swing(swing).Hits[0].Strike.Damage;
     /// <summary>The hit group a swing's contacts deduplicate on.</summary>
     public string HitGroup(string? swing = null) => Swing(swing).Hits[0].Group;
-    /// <summary>The impact kind the swing's typed strike names, as the game's presentation knows it; null for a legacy entity, whose weapon keeps its own kind.</summary>
-    public CombatImpactKind2D? Impact(string? swing = null) => Entity.Asset.Behaviors is null ? null
-        : Swing(swing).Hits[0].Strike.Impact == ImpactKinds.Sword ? CombatImpactKind2D.Sword : CombatImpactKind2D.Generic;
+    /// <summary>The impact kind the swing's typed strike names, as the game's presentation knows it.</summary>
+    public CombatImpactKind2D Impact(string? swing = null) => Swing(swing).Hits[0].Strike.Impact == ImpactKinds.Sword ? CombatImpactKind2D.Sword : CombatImpactKind2D.Generic;
 
     /// <summary>
     /// A swing's timing and its fixed box, centred where the entity puts it (mirrored by facing when placed). A press any

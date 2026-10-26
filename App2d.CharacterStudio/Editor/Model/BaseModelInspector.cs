@@ -90,7 +90,6 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
         {
             Ui.Header("IK constraint " + chain.Id);
             ImGui.TextUnformatted($"{chain.Root} > {chain.Joint} > {chain.End}");
-            ImGui.TextDisabled($"Solver: {chain.Solver}");
             if (ImGui.Button("Flip bend"))
             {
                 session.Edit(document, () => document.Asset.IkChains.First(c => c.Id == chainId).Bend *= -1);
@@ -100,7 +99,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
             {
                 for (ModelControl? node = c; node is not null; node = model.Controls.FirstOrDefault(p => p.Id == node.Parent))
                 {
-                    if (model.IkChains.Any(k => k.Joint == node.Id || k.End == node.Id || k.Solver == ModelChain.BoneSolver && k.Root == node.Id))
+                    if (model.IkChains.Any(k => k.Joint == node.Id || k.End == node.Id || k.Root == node.Id))
                     {
                         return false;
                     }
@@ -139,10 +138,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
             Ui.Help("The locomotion frame supports contact pins. A free control frame makes the target follow that control.");
 
-            if (chain.Solver == ModelChain.BoneSolver)
-            {
-                Ui.Help("Bone IK turns both segments and their attachments. Uniform scale and reflection are supported; shear and nonuniform segment frames are not.");
-            }
+            Ui.Help("Bone IK turns both segments and their attachments. Uniform scale and reflection are supported; shear and nonuniform segment frames are not.");
         }
         if (session.Selection.Part is { } partId && model.Parts.FirstOrDefault(p => p.Id == partId) is { } part)
         {
@@ -175,7 +171,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                 });
             }
 
-            if (part.Geometry is not ICurve2D && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
+            if (part.Geometry is not ICurve2D && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && c.Length > 0)).Prepend("(none)")) is { } bone)
             {
                 session.Edit(document, () =>
                 {
@@ -293,8 +289,8 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
     /// <summary>
     /// The selected control's setup, by its declared node kind: a point control's character-frame rest; a bone node's origin
-    /// (derived, moved through its local setup or fixed by its link), local similarity, length, link and direction; the legacy
-    /// affine adapter's channels. Every field says where the value lives, and an edit a kind cannot take is refused with its reason.
+    /// (derived, moved through its local setup or fixed by its link), local similarity, length, link and direction. Every field
+    /// says where the value lives, and an edit a kind cannot take is refused with its reason.
     /// </summary>
     private void ControlSetup(AssetDocument<CharacterModel> document, ModelControl control, string id)
     {
@@ -437,7 +433,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
                         Ui.Help(parent.Length > 0 ? "t = 0 is the parent's origin, 1 its tip; the parent's final length places it." : "The parent has no length: t has nothing to measure along until it gets one.");
                     }
-                    else if (parent.Node != RigNodeKinds.Affine && ImGui.Button("Bind to parent tip"))
+                    else if (ImGui.Button("Bind to parent tip"))
                     {
                         session.Edit(document, () =>
                         {
@@ -452,51 +448,6 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                         });
                     }
                 }
-                break;
-            }
-            case RigNodeKinds.Affine:
-            {
-                ImGui.TextDisabled("Legacy affine node (adapter until P11): a full parent-local affine setup; scale and shear are not similarities.");
-                var rest = node is null ? control.Rest.Layered : LayeredPoint2D.From(resolved!.Rest[id]);
-                if (CharacterUi.LayeredPoint("Origin (character)", ref rest))
-                {
-                    session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
-                }
-
-                if (control.Length > 0)
-                {
-                    var length = control.Length;
-                    if (Ui.Drag("Bone length", ref length, .01f, .01f, 100))
-                    {
-                        session.Change(document, () => ModelAuthoring.ResizeBone(document.Asset, id, length));
-                    }
-
-                    var degrees = float.RadiansToDegrees(control.RestAngle);
-                    if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
-                    {
-                        session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, float.DegreesToRadians(degrees)));
-                    }
-                }
-                var transform = control.Transform!;
-                Ui.Header("Legacy affine setup");
-                void Number(string label, float value, Action<Affine2D, float> set, float min = -100, float max = 100)
-                {
-                    if (Ui.Drag(label, ref value, .01f, min, max))
-                    {
-                        session.Change(document, () =>
-                        {
-                            set(Live().Transform!, value);
-                            ModelAuthoring.SyncAffineRest(document.Asset);
-                        });
-                    }
-                }
-                Number("Local X", transform.X, (t, v) => t.X = v);
-                Number("Local Y", transform.Y, (t, v) => t.Y = v);
-                Number("Local rotation (degrees)", float.RadiansToDegrees(transform.Rotation), (t, v) => t.Rotation = float.DegreesToRadians(v), -720, 720);
-                Number("Scale X", transform.ScaleX, (t, v) => t.ScaleX = v);
-                Number("Scale Y", transform.ScaleY, (t, v) => t.ScaleY = v);
-                Number("Shear X (degrees)", float.RadiansToDegrees(transform.ShearX), (t, v) => t.ShearX = float.DegreesToRadians(v), -720, 720);
-                Number("Shear Y (degrees)", float.RadiansToDegrees(transform.ShearY), (t, v) => t.ShearY = float.DegreesToRadians(v), -720, 720);
                 break;
             }
             default:

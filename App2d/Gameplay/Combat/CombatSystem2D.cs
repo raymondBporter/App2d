@@ -13,7 +13,6 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 {
     private readonly CollisionSystem2D _collision = ArgGuard.RequireNotNull(collision);
     private readonly List<CollisionOverlap2D> _overlaps = [];
-    private readonly HashSet<EntityId2D> _visited = [];
 
     public CombatantRegistry2D Combatants { get; } = ArgGuard.RequireNotNull(combatants);
     public int DefeatedEnemies { get; private set; }
@@ -21,8 +20,8 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 
     /// <summary>
     /// Resolves one attack shape against every combatant it reaches through the shared collision queries, once per attack
-    /// source, attack instance and hit group per target: a registered hurt collider, a plain body, or the legacy hurt scan.
-    /// A front guard blocks instead of damaging; only an accepted hit raises <see cref="DamageResolved"/> with its contact.
+    /// source, attack instance and hit group per target: a registered hurt collider, or the plain body of a combatant without
+    /// registered hurt geometry. A front guard blocks instead of damaging; only an accepted hit raises <see cref="DamageResolved"/> with its contact.
     /// </summary>
     public bool ResolveAttack(
         SpatialObject2D hitbox,
@@ -44,7 +43,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 
         var hitAny = false;
         _collision.Overlap(hitbox, _overlaps, targetLayer, includeSensors: true);
-        foreach (var (combatant, hurtCollider) in Candidates(hitbox, targetLayer))
+        foreach (var (combatant, hurtCollider) in Candidates(_overlaps, GetCombatant))
         {
             if (!combatant.IsAlive ||
                 combatant.Faction == attackerFaction)
@@ -61,13 +60,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 
             var attackerPosition = Combatants.Find(attackerId.IsValid ? attackerId : attackSourceId)?.WorldObject.Transform.Position;
             var blocked = combatant is ICombatGuard2D protectedTarget && protectedTarget.CanBlock(hitbox.WorldBounds, direction, attackerPosition);
-            // Registered hurt geometry came from the overlap itself; only the legacy layout still needs the combatant's scan.
-            if (hurtCollider is null && combatant is IAuthoredHurt2D { HurtRegistered: false } authored && !authored.OverlapsHurt(hitbox.WorldBounds) && !blocked)
-            {
-                continue;
-            }
-
-            if (hurtCollider is null && combatant is IAuthoredHurt2D { HurtRegistered: true } && !blocked)
+            if (hurtCollider is null && combatant is IRegisteredHurt2D && !blocked)
             {
                 continue; // only its body or guard was reached, not its hurt geometry
             }
@@ -78,10 +71,8 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
             }
 
             var position = hurtCollider is { } reached ? Centre(hitbox.WorldBounds, reached.WorldObject.WorldBounds)
-                : combatant is IAuthoredHurt2D { HurtRegistered: false } hurt ? hurt.HurtContact(hitbox.WorldBounds)
                 : Vector2.Clamp(hitbox.WorldBounds.Center, combatant.WorldObject.WorldBounds.Min, combatant.WorldObject.WorldBounds.Max);
-            var contact = new CombatContact2D(attackSourceId, attackId,
-                position ?? combatant.WorldObject.Transform.Position, direction, impactKind)
+            var contact = new CombatContact2D(attackSourceId, attackId, position, direction, impactKind)
             {
                 AttackerId = attackerId.IsValid ? attackerId : attackSourceId
             };
@@ -113,7 +104,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         ArgGuard.ThrowIfNull(knockback);
 
         _collision.Overlap(hitbox, _overlaps, targetLayer, includeSensors: true);
-        foreach (var (combatant, hurtCollider) in Candidates(hitbox, targetLayer))
+        foreach (var (combatant, hurtCollider) in Candidates(_overlaps, GetCombatant))
         {
             if (!combatant.IsAlive || combatant.Faction == attackerFaction)
             {
@@ -121,7 +112,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
             }
 
             var force = knockback(combatant);
-            var reachedHurt = hurtCollider is not null || combatant is IAuthoredHurt2D { HurtRegistered: false } legacy && legacy.OverlapsHurt(hitbox.WorldBounds) || combatant is not IAuthoredHurt2D;
+            var reachedHurt = hurtCollider is not null || combatant is not IRegisteredHurt2D;
             if (!reachedHurt && (combatant is not ICombatGuard2D protection || !protection.CanBlock(hitbox.WorldBounds, force, null)))
             {
                 continue;
@@ -144,15 +135,13 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 
     /// <summary>
     /// The combatants an attack shape reaches, each once, with the registered hurt collider it reached when there is one:
-    /// plain bodies and registered hurt/guard colliders through the ordinary broad phase (deduplicated by target entity, never
-    /// per hurt collider), then the legacy authored-hurt scan for combatants whose hurt geometry is not registered yet (their
-    /// heads and long bodies extend past the terrain collider).
+    /// plain bodies and registered hurt/guard colliders through the ordinary broad phase, deduplicated by target entity, never
+    /// per hurt collider.
     /// </summary>
-    private IEnumerable<(ICombatant2D Combatant, Collider2D? Hurt)> Candidates(SpatialObject2D hitbox, uint targetLayer)
+    private static IEnumerable<(ICombatant2D Combatant, Collider2D? Hurt)> Candidates(IEnumerable<CollisionOverlap2D> overlaps, Func<Collider2D, ICombatant2D?> combatantOf)
     {
-        _visited.Clear();
         var reached = new List<(ICombatant2D Combatant, Collider2D? Hurt)>();
-        foreach (var overlap in _overlaps)
+        foreach (var overlap in overlaps)
         {
             var attached = overlap.Collider.UserData as AttachedCollider;
             if (attached is not null && attached.Use is not (ColliderUses.Hurt or ColliderUses.Guard))
@@ -160,7 +149,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
                 continue;
             }
 
-            if (GetCombatant(overlap.Collider) is not { } c)
+            if (combatantOf(overlap.Collider) is not { } c)
             {
                 continue;
             }
@@ -169,7 +158,6 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
             var index = reached.FindIndex(r => ReferenceEquals(r.Combatant, c));
             if (index < 0)
             {
-                _visited.Add(c.Id);
                 reached.Add((c, hurt));
             }
             else if (hurt is not null && reached[index].Hurt is null)
@@ -177,20 +165,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
                 reached[index] = (c, hurt);
             }
         }
-        foreach (var pair in reached)
-        {
-            yield return pair;
-        }
-        foreach (var id in Combatants.Ids)
-        {
-            if (!_visited.Contains(id) && Combatants.Find(id) is ICombatant2D c && (c.Body.CollisionLayer & targetLayer) != 0 &&
-                c is IAuthoredHurt2D { HurtRegistered: false } hurt && (hurt.OverlapsHurt(hitbox.WorldBounds) ||
-                    c is ICombatGuard2D guard && guard.OverlapsGuard(hitbox.WorldBounds)))
-            {
-                _visited.Add(id);
-                yield return (c, null);
-            }
-        }
+        return reached;
     }
 
     private void Damage(ICombatant2D combatant, int damage, Vector2 knockback, CombatContact2D? contact = null)

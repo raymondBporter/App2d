@@ -218,7 +218,7 @@ public sealed class EditorSessionTests : IDisposable
                 ModelAuthoring.AddControl(model.Asset, "body", new(x, .8f, 0), $"hip-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"hip-{i}", new(x + .15f, .4f, 0), $"knee-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"knee-{i}", new(x, 0, 0), $"foot-{i}");
-                ModelAuthoring.AddChain(model.Asset, $"foot-{i}");
+                ModelAuthoring.AddIkOverPoints(model.Asset, $"foot-{i}");
                 ModelAuthoring.AddPart(model.Asset, Core.Geometry.GeometryValidation2D.Validated(new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }), $"hip-{i}", $"knee-{i}");
                 ModelAuthoring.AddPart(model.Asset, Core.Geometry.GeometryValidation2D.Validated(new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }), $"knee-{i}", $"foot-{i}");
             }

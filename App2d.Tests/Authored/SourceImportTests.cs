@@ -36,8 +36,11 @@ public sealed class SourceImportTests
         Assert.All(legs, l => Assert.Equal(CharacterModel.Locomotion, l.Frame));
         Assert.Single(legs.Select(l => l.Scale).Distinct());
         Assert.Equal(legs[0].Scale, result.Clips[0].Travel.Scale);
+        // An arm frames its own constraint on its shoulder: the shoulder stays the pivot and the solved bone hangs beneath it (P11c).
         var arm = result.Model.IkChains.Single(c => c.Id == "left-arm");
-        Assert.Equal(arm.Root, arm.Frame);
+        Assert.Equal("left-shoulder", arm.Frame);
+        Assert.Equal("left-shoulder-bone", arm.Root);
+        Assert.Equal("left-shoulder", result.Model.Controls.Single(c => c.Id == arm.Root).Parent);
         Assert.Equal("left-arm", arm.Scale);
     }
 

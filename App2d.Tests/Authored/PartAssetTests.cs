@@ -150,13 +150,6 @@ public sealed class PartAssetTests : IDisposable
         Assert.Same(glove, ResolvedModel.From(person, tall, library).Attachments.Single().Asset);
         var unknown = new ModelVariant { Id = "odd", Name = "Odd", Base = "person", Overrides = [PropertyOverride.Of(PropertyRef.OfAttachment("hat", RigProperties.Hidden), true)] };
         Assert.Contains("no attachment 'hat'", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(person, unknown, library)).Message);
-        // A version-5 variant file (per-field attachment overrides) reads through the legacy reader as typed overrides.
-        const string legacy = """{"format":"app2d-variant","version":5,"id":"legacy","name":"Legacy","base":"person","build":{},"rest":{},"parts":{},"attachments":{"left-glove":{"asset":"mitten","fitY":2}}}""";
-        var read = ModelVariant.FromJson(legacy);
-        Assert.Equal(ModelVariant.CurrentVersion, read.Version);
-        Assert.Equal("mitten", read.Override(PropertyRef.OfAttachment("left-glove", RigProperties.Asset))?.Selection);
-        Assert.Equal(2, read.Override(PropertyRef.OfAttachment("left-glove", RigProperties.FitY))?.Value);
-        Assert.Same(mitten, ResolvedModel.From(person, read, library).Attachments.Single().Asset);
     }
 
     [Fact]
