@@ -71,7 +71,7 @@ public static class ShapeTessellation2D
         ArgGuard.NonNegative(radius);
         ArgGuard.Finite(localToView);
         if (radius == 0) return 16;
-        var scale = Math.Max(new Vector2(localToView.M11, localToView.M12).Length(), new Vector2(localToView.M21, localToView.M22).Length());
+        var scale = Math.Max(localToView.X.Length(), localToView.Y.Length());
         var segments = MathF.Ceiling(MathF.PI * MathF.Sqrt(Math.Max(1f, radius * scale) * 2f));
         return (int)Math.Clamp(segments, 16f, 128f);
     }

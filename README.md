@@ -2,7 +2,8 @@
 
 A small MonoGame/XNA 2D engine and the side-scroller built on it.
 
-The solution has seven projects. `App2d.Core` is the engine: mathematics, geometry,
+The solution contains the engine, games, editors, supporting tools, and tests.
+`App2d.Core` is the engine: mathematics, geometry,
 collision, physics, tiles, rendering, audio, authored characters, and the WinForms game
 host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
 level storage, the editor, and the in-game debug tools. `App2d.Tests` holds every test.
@@ -13,6 +14,17 @@ retained character generators and the rendering smokes and studies, run with
 `dotnet run --project App2d.CharacterSeeds -- <flag>`. It references the game; the game
 does not reference it. `tools/ClothLab` is a small cape study.
 Everything targets `net10.0-windows10.0.19041.0`.
+
+`App2d.ImageLab` is a small raster workbench: load an image, preview parameterized
+transforms, apply them to an undo/redo stack, and save the current step as PNG.
+Run `dotnet run --project App2d.ImageLab`. See [Image Lab](App2d.ImageLab/README.md)
+for the transforms and a few starting pipelines.
+
+`App2d.Beamwright` is the native Windows optics puzzle game port. Run it with
+`dotnet run --project App2d.Beamwright`. It reuses Core's host, input, renderer,
+affine poses, filled shapes, and raycasts, and includes all 36 original campaign
+levels and 14 optical parts. See [the Beamwright notes](App2d.Beamwright/README.md)
+for controls, reference verification, attribution, and the remaining port scope.
 
 `App2d.Trials` is a separate, minimal trials-game prototype. Run it with
 `dotnet run --project App2d.Trials`. It uses the shared `GameHost`, `Game2D` camera,
@@ -861,6 +873,10 @@ transforms geometry into device-space triangles and submits ordered batches thro
 MonoGame's `GraphicsDevice` and `BasicEffect`. Color values use
 `Color4b` (the global alias for `Microsoft.Xna.Framework.Color`); floating-point HUD
 bounds use `ScreenRectangle2D`.
+`Renderer2D.WrapScreenText(text, width, scale, maxLines)` lays out text using the
+font atlas's glyph advances. `DrawScreenTextWrapped` draws from a first-line baseline
+with the font's scaled line spacing. Explicit newlines are preserved, long words
+are split without dropping characters, and a line limit adds a width-fitting ellipsis.
 Gradients interpolate vertex colors, and textures use XNA sampler states. Circles and
 capsules are tessellated according to their on-screen size. The host requests 4x MSAA.
 

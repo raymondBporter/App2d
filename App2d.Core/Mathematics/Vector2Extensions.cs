@@ -10,6 +10,39 @@ public static class Vector2Extensions
 
     extension(Vector2 value)
     {
+        /// <summary>Unit vector at a finite angle in radians, counter-clockwise from +X in Y-up space.</summary>
+        public static Vector2 FromAngle(float angleRadians) => Polar2D.Direction(angleRadians);
+
+        /// <summary>Unit vector at a finite angle in degrees, counter-clockwise from +X in Y-up space.</summary>
+        public static Vector2 FromAngleDegrees(float angleDegrees) => Polar2D.Direction(float.DegreesToRadians(angleDegrees));
+
+        /// <summary>Removes the component parallel to a unit normal. The normal must already be normalized.</summary>
+        public static Vector2 Reject(Vector2 vector, Vector2 unitNormal) => vector - Vector2.Dot(vector, unitNormal) * unitNormal;
+
+        /// <summary>
+        /// Snell's law for unit directions and unit normals pointing toward the incident medium.
+        /// Indices must be finite and positive. False means total internal reflection; the output is then zero.
+        /// </summary>
+        public static bool TryRefract(Vector2 direction, Vector2 incidentNormal, float fromIndex, float toIndex, out Vector2 transmitted)
+        {
+            Validation.ArgGuard.Positive(fromIndex);
+            Validation.ArgGuard.Positive(toIndex);
+            // Rejection is shared vector math. Widen before applying the ratio so extreme valid indices
+            // do not turn a normal-incidence zero tangent into 0 * infinity, or overflow its squared length.
+            var tangent = Vector2.Reject(direction, incidentNormal).ToVector2d() * ((double)fromIndex / toIndex);
+            var normalSquared = 1d - tangent.LengthSquared();
+            if (normalSquared < 0)
+            {
+                transmitted = default;
+                return false;
+            }
+            transmitted = (tangent - incidentNormal.ToVector2d() * Math.Sqrt(normalSquared)).ToVector2();
+            return true;
+        }
+
+        /// <summary>Vector from a finite, nonnegative radius and a finite angle in radians.</summary>
+        public static Vector2 FromPolar(float radius, float angleRadians) => Polar2D.ToCartesian(radius, angleRadians);
+
         /// <summary>Widens both coordinates before double-precision arithmetic, including subtraction.</summary>
         public Vector2d ToVector2d() => new(value);
 

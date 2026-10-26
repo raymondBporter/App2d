@@ -58,6 +58,51 @@ public sealed class Vector2dTests
     }
 
     [Fact]
+    public void DivisionPreservesScalarRoundingSignedZeroAndIeeeSpecialValues()
+    {
+        var minimumNormal = BitConverter.Int64BitsToDouble(0x0010_0000_0000_0000);
+        double[] values = [0d, -0d, 1d, -1d, 3d, 1d / 3, double.Epsilon, -double.Epsilon,
+            minimumNormal, -minimumNormal, double.MaxValue, double.MinValue,
+            double.PositiveInfinity, double.NegativeInfinity, double.NaN];
+        foreach (var value in values)
+        {
+            foreach (var scale in values)
+            {
+                var quotient = new Vector2d(value, -value) / scale;
+                AssertSameBits(value / scale, quotient.X);
+                AssertSameBits(-value / scale, quotient.Y);
+            }
+        }
+    }
+
+    [Fact]
+    public void DivisionMatchesScalarArithmeticForRandomDoubleBitPatterns()
+    {
+        var random = new Random(1467);
+        for (var i = 0; i < 1024; i++)
+        {
+            var x = BitConverter.Int64BitsToDouble(random.NextInt64(long.MinValue, long.MaxValue));
+            var y = BitConverter.Int64BitsToDouble(random.NextInt64(long.MinValue, long.MaxValue));
+            var scale = BitConverter.Int64BitsToDouble(random.NextInt64(long.MinValue, long.MaxValue));
+            var quotient = new Vector2d(x, y) / scale;
+            AssertSameBits(x / scale, quotient.X);
+            AssertSameBits(y / scale, quotient.Y);
+        }
+    }
+
+    private static void AssertSameBits(double expected, double actual)
+    {
+        if (double.IsNaN(expected))
+        {
+            Assert.True(double.IsNaN(actual));
+        }
+        else
+        {
+            Assert.Equal(BitConverter.DoubleToInt64Bits(expected), BitConverter.DoubleToInt64Bits(actual));
+        }
+    }
+
+    [Fact]
     public void FloatExtremesHaveFiniteDoubleDistancesAndProducts()
     {
         var a = new Vector2(float.MaxValue, float.MaxValue).ToVector2d();

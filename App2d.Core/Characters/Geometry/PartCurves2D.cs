@@ -93,7 +93,7 @@ public static class PartCurves2D
         }
         var parameters = source is RoundedPolylineCurve2D sampled
             ? sampled.SampleParameters(Math.Max(part.CurveSections, wave is null ? 0 : count - 1))
-            : Enumerable.Range(0, count).Select(i => (float)i / (count - 1)).ToArray();
+            : [.. Enumerable.Range(0, count).Select(i => (float)i / (count - 1))];
         var result = new List<Vector3>(parameters.Length);
         foreach (var t in parameters)
         {

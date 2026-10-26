@@ -61,8 +61,9 @@ public sealed class AirJumpCloud2D : IDisposable
         {
             var birth = WispBirths[i];
             if (previousAge < birth && _age >= birth)
-                _wispOrigins[i] = Vector2.Lerp(_previousFeet, feet, (birth - previousAge) / dt)
-                    - new Vector2(0, 5);
+            {
+                _wispOrigins[i] = Vector2.Lerp(_previousFeet, feet, (birth - previousAge) / dt) - new Vector2(0, 5);
+            }
         }
         _previousFeet = feet;
         Draw();
@@ -97,11 +98,9 @@ public sealed class AirJumpCloud2D : IDisposable
             var progress = age / WispLifetime;
             var radius = (7 - group * 1.2f) * (1 - .5f * progress);
             // Wisps inherit a little lift, then linger behind the departing feet.
-            wisp.Transform.Position = _wispOrigins[group] + new Vector2(
-                lobe * radius * (.7f + progress), 30 * age - 45 * age * age + (lobe == 0 ? 2 : 0));
+            wisp.Transform.Position = _wispOrigins[group] + new Vector2(lobe * radius * (.7f + progress), 30 * age - 45 * age * age + (lobe == 0 ? 2 : 0));
             wisp.Transform.Scale = new Vector2(radius, radius * .7f);
-            ((CloudInk)wisp.Shader).BaseColor = new Color(242, 249, 255,
-                (int)((150 - group * 25) * (1 - progress) * (1 - progress)));
+            ((CloudInk)wisp.Shader).BaseColor = new Color(242, 249, 255, (int)((150 - group * 25) * (1 - progress) * (1 - progress)));
         }
     }
 

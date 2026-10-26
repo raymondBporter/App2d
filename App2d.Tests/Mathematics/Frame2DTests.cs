@@ -5,6 +5,25 @@ namespace App2d.Tests.Mathematics;
 
 public sealed class Frame2DTests
 {
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(-35)]
+    [InlineData(450)]
+    public void DegreeFramesPlaceLocalOffsetsAndProjectDirectionsWithoutTranslation(float degrees)
+    {
+        var frame = Frame2D.FromRotationDegrees(degrees, new(7, -3));
+        var local = new Vector2(.32f, -.16f);
+        var expected = frame.Origin + Rotation2D.Apply(local, float.DegreesToRadians(degrees));
+        Assert.True(Vector2.Distance(expected, frame.TransformPoint(local)) < .000002f);
+        Assert.Equal(frame.XAxis, frame.Matrix.GetRows().X);
+        Assert.Equal(frame.YAxis, frame.Matrix.GetRows().Y);
+        Assert.True(Vector2.Distance(local, frame.Matrix.TransposeTransformDirection(frame.TransformDirection(local))) < .000002f);
+
+        var reflected = new Frame2D(frame.Origin, frame.XAxis, -frame.YAxis);
+        Assert.True(Vector2.Distance(local, reflected.Matrix.TransposeTransformDirection(reflected.TransformDirection(local))) < .000002f);
+    }
+
     [Fact]
     public void LocalOriginRemainsExactAtLargeWorldOffsets()
     {

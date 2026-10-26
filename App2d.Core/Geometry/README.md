@@ -70,6 +70,10 @@ Value types: `Rect2D` (the only axis-aligned box; `Unbounded` covers the plane),
 (anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `OrientedFrame2D` (a center and a
 unit axis that oriented shapes project every query through), `Interval<T>`, `Line2D`, `Ray2D`, `RayHit2D`, `IGeometry2D`.
 
+Rectangle `Contains(point)` includes edges. `ContainsInterior(point)` explicitly excludes
+all edges and corners; a rectangle with a collapsed dimension has no interior. The raw
+equivalents are `Containment2D.Rectangle` and `Containment2D.RectangleInterior`.
+
 `Rectangle2D`, `RoundedRectangle2D` and `Ellipse2D` carry a unit `Axis` for their local +X and so rotate in local space;
 an unset axis reads as +X. Their JSON writes `center`, `size` (or `radii`) and `angleRadians`, and the two rectangle kinds
 also read the axis-aligned `min`/`max` spelling, never mixed with `center`/`size`. `AxisAlignedRectangle2D` keeps `Min`/`Max`
@@ -87,8 +91,11 @@ Rectangles expose `XInterval` and `YInterval` while retaining their existing vec
 
 `ISegment<TSelf, TPoint>` supplies `Start`/`End` and a static abstract `Create` factory.
 `LineSegmentCurve2D` and Noodle's bone segment implement it with `Vector2` endpoints.
-`SegmentMath2D` adds `segment.Length()`, clamped `segment.PointAt(amount)`, and `segment.Reversed()`.
-Reversing calls the concrete type's factory and returns that same type.
+`SegmentMath2D` adds the computed `segment.Midpoint` property, `segment.Length()`,
+clamped `segment.PointAt(amount)`, and `segment.Reversed()` for `Vector2` endpoints.
+The midpoint uses double intermediates to avoid overflow or underflow at finite float extremes.
+These operations need no additional vector interface. Reversing calls the concrete
+type's factory and returns that same type.
 
 `GiantTree2D(root, settings, seed)` creates immutable, seeded tree-level geometry. `GiantTreeSettings2D`
 uses world units; `Branches` gives exact flat-topped platform bounds. `GiantTreeVisual2D` adds bark, moss,
@@ -135,6 +142,69 @@ var convex = Gjk2D.Query(new ConvexProxy2D(first, firstRadius), new ConvexProxy2
 var ground = Line2D.Horizontal(0);
 if (Raycast2D.TryCircle(origin, direction, center, radius, 100, out var rayHit)) { /* rayHit.Point, .Normal, .Distance */ }
 ```
+
+## Ray queries
+
+`GeometryRaycast2D.TryIntersect` in `Geometry.Operations.Intersection` is the shared
+nearest-hit entry point for `IGeometryValue2D` values: shapes and curves. It dispatches
+to `ShapeRaycast2D` or `CurveRaycast2D`, with no physics or renderer dependency.
+`Raycast2D.TryLine`, `TryRay`, and `TrySegment` also query the corresponding linear
+primitives directly, including unbounded lines and rays without fabricated finite boxes.
+
+```csharp
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Primitives;
+using System.Numerics;
+
+var curve = QuadraticBezier2D.Builder.Create(new(0, 0), new(1, 2), new(2, 0));
+var ray = new Ray2D(new(-1, .75f), Vector2.UnitX);
+if (GeometryRaycast2D.TryIntersect(ray, curve, 10f, out var hit))
+{
+    // Nearest point is (.5, .75); hit.Normal is the curve's directed unit normal.
+}
+// An optional Matrix3x2 localToWorld argument accepts an invertible affine pose.
+// GeometryRaycast2D.TryIntersect(ray, curve, localToWorld, 10f, out hit);
+```
+
+| Boundary | Query representation |
+| --- | --- |
+| Circles, ellipses, capsules, half-spaces | Direct analytic primitive intersections |
+| Rectangles, triangles, convex/concave polygons, baked heightfields | Their actual straight boundaries |
+| Rounded rectangles | Exact straight sides and circular corners, including collapsed circle/capsule cores |
+| Arcs | Both supporting-circle roots, restricted by the signed angular sweep |
+| Quadratic and cubic Beziers | Polynomial roots on the original curve; no flattening |
+| B-splines | Cached Bernstein spans extracted by knot insertion, preserving degree and knot intervals |
+| Polylines and rounded polylines | Actual line spans and quadratic fillets |
+| Curve slices, including nested slices | Restricted source parameter intervals before nearest-hit selection |
+
+Bezier control-hull bounds reject irrelevant spans before root solving. Degrees up
+to four reuse `PolynomialRoots`; higher-degree spline spans use derivative root
+isolation and bisection in Bernstein form. Roots, knot insertion, points and normals
+use double intermediates; result vectors and distances retain the engine's float
+API. This intersects the represented curve numerically, rather than a polyline
+approximation. Floating-point root accuracy still applies, especially near tangencies.
+Prepared spline/rounded-polyline spans are cached against immutable source data.
+These local queries do not yet provide a scene acceleration structure.
+
+Queries return the nearest nonnegative hit, including tangencies and endpoints,
+within `maxDistance`. Vector-origin/direction overloads preserve the original ray
+parameter for non-unit directions. `Ray2D` overloads report coordinate-space distance.
+Solid normals point outward; open-curve normals point counterclockwise from the
+increasing local curve tangent. Cusps use the first nonzero one-sided derivative;
+point curves and collinear overlaps have no isolated surface crossing and miss.
+A ray starting inside a solid reports its exit, following the existing shape API.
+
+The affine overload transforms the ray without renormalizing its local direction,
+retains world distance, and transforms normals with the inverse transpose. This
+preserves the authored normal side under mirroring; it need not be counterclockwise
+from the mirrored world tangent. Singular/nonfinite poses are rejected.
+
+`NormalOffsetCurve2D` and arbitrary custom/procedural curves are explicitly unsupported
+and throw `NotSupportedException`; there is no hidden sampled fallback. A deliberate
+approximation remains possible by explicitly converting to `PolylineCurve2D` first.
+Composites retain their existing nearest-part semantics, rather than computing a
+new constructive-solid-geometry union boundary.
 
 ## Curves
 
@@ -186,8 +256,8 @@ bounds cache. The switch tables map a shape to raw parameters once:
   `ShapeConvexQuery2D`, shared with collision contacts. Ellipses use analytic support mappings; point and circle
   queries use the bracketed closest-point solver.
 - `RoundedRectangle2D` is an inset rectangle expanded by a radius. Point distances and pair distances against
-  circles, capsules and polygonal convex shapes use that core exactly, as do collision contacts. Ray casts still
-  sample its curved perimeter.
+  circles, capsules and polygonal convex shapes use that core exactly, as do collision contacts. Ray casts use
+  its exact straight sides and circular corners.
 
 `TriangleMesh2D` is a mesh, not a shape; `ToCompositeShape()` bridges to collision. `CompositeShape2D` is the
 non-convex shape and always resolves per part.

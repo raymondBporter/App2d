@@ -72,8 +72,8 @@ public readonly record struct Similarity2D
     /// <returns>True when the matrix is a similarity.</returns>
     public static bool TryFromMatrix(Matrix3x2 matrix, out Similarity2D similarity)
     {
-        var xAxis = new Vector2(matrix.M11, matrix.M12);
-        var yAxis = new Vector2(matrix.M21, matrix.M22);
+        var xAxis = matrix.X;
+        var yAxis = matrix.Y;
         var xLength = xAxis.Length();
         var yLength = yAxis.Length();
         var largest = Math.Max(xLength, yLength);

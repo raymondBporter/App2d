@@ -28,8 +28,7 @@ public readonly partial record struct Arc2D : ICurve2D
     {
         amount = Clamping.Clamp01(amount);
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
-        return new((float)(Center.X + Radius * Math.Cos(angle)),
-            (float)(Center.Y + Radius * Math.Sin(angle)));
+        return (Center.ToVector2d() + Vector2d.FromAngle(angle) * Radius).ToVector2();
     }
 
     public Vector2 EvaluateDerivative(float amount)
@@ -37,7 +36,7 @@ public readonly partial record struct Arc2D : ICurve2D
         amount = Clamping.Clamp01(amount);
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
         var speed = (double)Radius * SweepAngleRadians;
-        return new((float)(-speed * Math.Sin(angle)), (float)(speed * Math.Cos(angle)));
+        return (Vector2d.FromAngle(angle).PerpCcw * speed).ToVector2();
     }
 
     public float Distance(Vector2 point)

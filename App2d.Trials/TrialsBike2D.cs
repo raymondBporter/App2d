@@ -1,5 +1,6 @@
 using App2d.Core.Constraints;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Shapes;
@@ -178,7 +179,7 @@ public sealed class TrialsBike2D
             for (var spoke = 0; spoke < 4; spoke++)
             {
                 var angle = spoke * MathF.PI / 2f;
-                var end = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * 19f;
+                var end = Vector2.FromPolar(19f, angle);
                 renderer.DrawWorldThickSegment(Vector2.Transform(Vector2.Zero, matrix),
                     Vector2.Transform(end, matrix), 1.2f, MetalColor);
             }

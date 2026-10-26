@@ -11,6 +11,31 @@ public sealed class Rect2DTests
 {
     private static readonly Rect2D Sample = new(new(-4, -2), new(2, 8));
 
+    [Theory]
+    [InlineData(0, 0, true)]
+    [InlineData(-4, 0, false)]
+    [InlineData(2, 0, false)]
+    [InlineData(0, -2, false)]
+    [InlineData(0, 8, false)]
+    [InlineData(-4, -2, false)]
+    [InlineData(0, 9, false)]
+    public void InteriorContainmentExcludesEveryBoundary(float x, float y, bool expected)
+    {
+        var point = new Vector2(x, y);
+        Assert.Equal(expected, Sample.ContainsInterior(point));
+        Assert.Equal(expected, new CustomValue(Sample.Min, Sample.Max).ContainsInterior(point));
+    }
+
+    [Fact]
+    public void DegenerateRectanglesHaveNoInteriorAndNaNIsNeverContained()
+    {
+        Assert.False(default(Rect2D).ContainsInterior(Vector2.Zero));
+        Assert.False(new Rect2D(new(0, -1), new(0, 1)).ContainsInterior(Vector2.Zero));
+        Assert.False(Sample.ContainsInterior(new(float.NaN, 0)));
+        Assert.True(Rect2D.Unbounded.ContainsInterior(Vector2.Zero));
+        Assert.False(Rect2D.Unbounded.ContainsInterior(new(float.PositiveInfinity, 0)));
+    }
+
     [Fact]
     public void PositiveSizesCreateCenteredAndMinAnchoredRectangles()
     {

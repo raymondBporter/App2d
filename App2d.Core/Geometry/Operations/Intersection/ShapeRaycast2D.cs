@@ -36,6 +36,8 @@ public static class ShapeRaycast2D
                 return true;
             case Capsule2D capsule:
                 return Raycast2D.TryCapsule(origin, direction, capsule.Start, capsule.End, capsule.Radius, maxDistance, out hit);
+            case RoundedRectangle2D rounded:
+                return Raycast2D.TryRoundedRectangle(origin, direction, rounded, maxDistance, out hit);
             case HalfSpace2D halfSpace:
                 return Raycast2D.TryHalfSpace(origin, direction, halfSpace.Normal, halfSpace.Offset, maxDistance, out hit);
             case SimplePolygon2D polygon:

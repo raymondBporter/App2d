@@ -367,24 +367,59 @@ public sealed partial class Renderer2D : IDisposable
         DrawScreenText(text, topLeft + new Vector2(14, 9 + _font.Ascent), DebugTheme.LabelText);
     }
 
-    public void DrawScreenText(string text, Vector2 baseline, Color4b color)
+    /// <summary>Measures the widest line in device pixels at the requested atlas scale.</summary>
+    public float MeasureScreenText(string text, float scale = 1f)
+    {
+        ArgGuard.ThrowIfNull(text);
+        ArgGuard.Positive(scale);
+        return _font.Measure(text) * scale;
+    }
+
+    public void DrawScreenText(string text, Vector2 baseline, Color4b color) => DrawScreenText(text, baseline, color, 1f);
+
+    /// <summary>
+    /// Word-wraps text to a device-pixel width using measured glyph advances. Explicit line breaks are preserved;
+    /// long words are split without dropping characters. Excess lines end in an ellipsis that fits the width.
+    /// A glyph wider than the width occupies a line by itself.
+    /// </summary>
+    public string WrapScreenText(string text, float width, float scale = 1f, int maxLines = int.MaxValue)
+    {
+        ArgGuard.ThrowIfNull(text);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(scale);
+        ArgGuard.Positive(maxLines);
+        return ScreenTextWrapping2D.Wrap(text, width / scale, maxLines, _font.Advance);
+    }
+
+    /// <summary>Draws wrapped text from the first line's baseline, with the font's scaled line spacing.</summary>
+    public void DrawScreenTextWrapped(string text, Vector2 baseline, float width, Color4b color,
+        float scale = 1f, int maxLines = int.MaxValue)
+    {
+        RequireFrame();
+        var wrapped = WrapScreenText(text, width, scale, maxLines);
+        if (!string.IsNullOrWhiteSpace(wrapped)) DrawScreenText(wrapped, baseline, color, scale);
+    }
+
+    /// <summary>Draws text at a device-space baseline, scaling the existing font atlas without changing the camera.</summary>
+    public void DrawScreenText(string text, Vector2 baseline, Color4b color, float scale)
     {
         RequireFrame();
         ArgGuard.ThrowIfNullOrWhiteSpace(text);
+        ArgGuard.Positive(scale);
         SelectTexture(_font.Texture, new(TextureAddressMode.Clamp, TextureAddressMode.Clamp, TextureFilter.Linear));
-        var cursor = baseline - new Vector2(4, _font.Ascent + 4);
+        var cursor = baseline - new Vector2(4, _font.Ascent + 4) * scale;
         foreach (var character in text)
         {
             if (character == '\n')
             {
-                cursor.X = baseline.X - 4;
-                cursor.Y += _font.LineHeight;
+                cursor.X = baseline.X - 4 * scale;
+                cursor.Y += _font.LineHeight * scale;
                 continue;
             }
             var glyph = _font.GetGlyph(character);
-            TexturedQuad(new(cursor.X, cursor.Y, cursor.X + glyph.Bounds.Width, cursor.Y + glyph.Bounds.Height),
+            TexturedQuad(new(cursor.X, cursor.Y, cursor.X + glyph.Bounds.Width * scale, cursor.Y + glyph.Bounds.Height * scale),
                 glyph.Bounds, _font.Texture.Width, _font.Texture.Height, color);
-            cursor.X += glyph.Advance;
+            cursor.X += glyph.Advance * scale;
         }
     }
 

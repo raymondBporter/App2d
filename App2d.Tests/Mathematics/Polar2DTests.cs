@@ -15,8 +15,8 @@ public sealed class Polar2DTests
     public void DirectionsFollowYUpCounterClockwiseConvention(float degrees, float x, float y)
     {
         var radians = float.DegreesToRadians(degrees);
-        AssertClose(new(x, y), Polar2D.Direction(radians));
-        AssertClose(new Vector2(x, y) * 7f, Polar2D.ToCartesian(7, radians));
+        AssertClose(new(x, y), Vector2.FromAngle(radians));
+        AssertClose(new Vector2(x, y) * 7f, Vector2.FromPolar(7, radians));
     }
 
     [Theory]
@@ -69,7 +69,9 @@ public sealed class Polar2DTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar2D(value, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar2D(1, value));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Polar2D.Direction(value));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2.FromAngle(value));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2.FromPolar(1, value));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2.FromPolar(value, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => Polar2D.AngleOf(new(value, 1)));
         Assert.Throws<ArgumentOutOfRangeException>(() => Polar2D.FromCartesian(new(1, value)));
     }
@@ -78,7 +80,7 @@ public sealed class Polar2DTests
     public void RadiusCannotBeNegativeOrOverflowWhenConverting()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar2D(-1, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Polar2D.ToCartesian(-1, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2.FromPolar(-1, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => Polar2D.FromCartesian(new(float.MaxValue)));
     }
 
@@ -103,7 +105,7 @@ public sealed class Polar2DTests
 
         static float Convert(int i)
         {
-            var point = Polar2D.ToCartesian(5, i * .01f);
+            var point = Vector2.FromPolar(5, i * .01f);
             var polar = point.ToPolar();
             return polar.Radius + point.AngleRadians + polar.ToCartesian().X;
         }

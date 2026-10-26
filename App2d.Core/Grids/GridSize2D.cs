@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 namespace App2d.Core.Grids;
 
@@ -22,7 +23,7 @@ public readonly record struct GridSize2D
     public GridCellRange2D Cells => IsEmpty ? default : new(default, new(Width - 1, Height - 1));
 
     public bool Contains(int x, int y) => (uint)x < (uint)Width && (uint)y < (uint)Height;
-    public bool Contains(GridCell2D cell) => Contains(cell.X, cell.Y);
+    public bool Contains(Vector2i cell) => Contains(cell.X, cell.Y);
 
     public int GetIndex(int x, int y)
     {
@@ -31,15 +32,15 @@ public readonly record struct GridSize2D
         return x + y * Width;
     }
 
-    public int GetIndex(GridCell2D cell) => GetIndex(cell.X, cell.Y);
+    public int GetIndex(Vector2i cell) => GetIndex(cell.X, cell.Y);
 
-    public bool TryGetIndex(GridCell2D cell, out int index)
+    public bool TryGetIndex(Vector2i cell, out int index)
     {
         index = Contains(cell) ? cell.X + cell.Y * Width : -1;
         return index >= 0;
     }
 
-    public GridCell2D GetCell(int index)
+    public Vector2i GetCell(int index)
     {
         ArgGuard.Index(index, CellCount);
         return new(index % Width, index / Width);

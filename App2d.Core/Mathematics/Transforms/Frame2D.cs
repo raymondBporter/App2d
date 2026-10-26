@@ -17,9 +17,9 @@ public readonly record struct Frame2D
 
     public static Frame2D Identity { get; } = new(Matrix3x2.Identity);
     public Matrix3x2 Matrix { get; }
-    public Vector2 Origin => new(Matrix.M31, Matrix.M32);
-    public Vector2 XAxis => new(Matrix.M11, Matrix.M12);
-    public Vector2 YAxis => new(Matrix.M21, Matrix.M22);
+    public Vector2 Origin => Matrix.Translation;
+    public Vector2 XAxis => Matrix.X;
+    public Vector2 YAxis => Matrix.Y;
     public Vector2 TransformPoint(Vector2 local) => Vector2.Transform(local, Matrix);
     public Vector2 TransformDirection(Vector2 local) => Vector2.TransformNormal(local, Matrix);
 
@@ -30,9 +30,13 @@ public readonly record struct Frame2D
             return new(origin, Vector2.UnitX, Vector2.UnitY);
         }
 
-        var (sin, cos) = MathF.SinCos(radians);
-        return new(new Matrix3x2(cos, sin, -sin, cos, origin.X, origin.Y));
+        var axis = Vector2.FromAngle(radians);
+        return new(origin, axis, axis.PerpCcw);
     }
+
+    /// <summary>A rotation frame authored in degrees, with an optional world-space origin.</summary>
+    public static Frame2D FromRotationDegrees(float degrees, Vector2 origin = default) =>
+        FromRotation(float.DegreesToRadians(degrees), origin);
 
     /// <summary>Uses the supplied Y axis and its clockwise perpendicular as X; does not normalize or choose a fallback.</summary>
     public static Frame2D FromYAxis(Vector2 origin, Vector2 yAxis) => new(origin, yAxis.PerpCw, yAxis);

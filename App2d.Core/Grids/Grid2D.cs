@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -37,7 +38,7 @@ public sealed class Grid2D<T>
     public Rect2D WorldBounds { get; }
 
     public ref T this[int x, int y] => ref _values[Size.GetIndex(x, y)];
-    public ref T this[GridCell2D cell] => ref _values[Size.GetIndex(cell)];
+    public ref T this[Vector2i cell] => ref _values[Size.GetIndex(cell)];
     public ref T this[int index] => ref _values[index];
 
     public Span<T> AsSpan() => _values;
@@ -49,7 +50,7 @@ public sealed class Grid2D<T>
 
     public void Fill(T value) => _values.AsSpan().Fill(value);
     public void Clear() => _values.AsSpan().Clear();
-    public Rect2D GetCellBounds(GridCell2D cell)
+    public Rect2D GetCellBounds(Vector2i cell)
     {
         if (!Size.Contains(cell))
         {
@@ -60,5 +61,5 @@ public sealed class Grid2D<T>
     }
     public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2D => Geometry.GetCellRange(bounds, Size);
 
-    public bool TryGetCell(Vector2 position, out GridCell2D cell) => Geometry.TryWorldToCell(position, out cell) && Size.Contains(cell);
+    public bool TryGetCell(Vector2 position, out Vector2i cell) => Geometry.TryWorldToCell(position, out cell) && Size.Contains(cell);
 }

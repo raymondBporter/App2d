@@ -7,7 +7,7 @@ using System.Numerics;
 namespace App2d.Core.Geometry.Operations.Containment;
 
 /// <summary>
-/// Point containment for raw primitives, boundaries included. Inputs are finite, radii are nonnegative,
+/// Point containment for raw primitives, boundaries included unless explicitly named Interior. Inputs are finite, radii are nonnegative,
 /// ellipse radii and box half-extents are positive, and rectangle bounds are ordered (infinite bounds allowed).
 /// </summary>
 public static class Containment2D
@@ -40,6 +40,10 @@ public static class Containment2D
     /// <param name="max">The upper-right corner.</param>
     /// <returns>True when the point is inside, including all four edges.</returns>
     public static bool Rectangle(Vector2 point, Vector2 min, Vector2 max) => point.X >= min.X && point.X <= max.X && point.Y >= min.Y && point.Y <= max.Y;
+
+    /// <summary>Tests the open interior of an ordered rectangle. All edges and degenerate rectangles are excluded.</summary>
+    public static bool RectangleInterior(Vector2 point, Vector2 min, Vector2 max) =>
+        point.X > min.X && point.X < max.X && point.Y > min.Y && point.Y < max.Y;
 
     /// <summary>Tests whether one ordered rectangle lies entirely inside another, shared edges included.</summary>
     /// <param name="min">The outer lower-left corner.</param>

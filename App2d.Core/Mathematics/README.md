@@ -6,7 +6,8 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | --- | --- |
 | `Direction2D` | Finite unit vector with angle, perpendicular, reversal and signed scaling helpers |
 | `Polar2D` | Radius/angle value and direct polar/Cartesian conversions |
-| `Vector2Extensions` | `IsFinite()`, `AngleRadians`, `ToPolar()`, `Rotate()`, `RotateAround()`, cross products, three-point orientation, and perpendicular vectors |
+| `Vector2i` | Signed integer coordinates, checked addition/subtraction/scaling, and explicit float conversion |
+| `Vector2Extensions` | Angle construction, rejection/refraction, finite checks, rotation, cross products, orientation, and perpendicular vectors |
 | `Vector3Extensions` | `IsFinite()`, componentwise `DegreesToRadians()` / `RadiansToDegrees()`, and `XY`, `XZ`, and `YZ` coordinate-plane projections |
 | `Vector4Extensions` | `IsFinite()` component query |
 | `Matrix3x2Extensions` | `GetRows()`, `GetColumns()`, `IsFinite()` entry query and transpose direction transform |
@@ -20,6 +21,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `ProgressMapKind` | Stable JSON names for built-in maps; ordered lists describe composition |
 | `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
 | `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
+| `Frame2D` | Immutable origin and two basis axes, forward mapping, inversion, and rotation from radians or degrees |
 | `Affine2D` | Editable translation, rotation, independent axis scales and shear; shared by scene objects and authored rigs |
 
 `PolynomialRoots.FindRealRoots(coefficients, minimum, maximum, roots)` accepts coefficients in ascending order
@@ -91,6 +93,20 @@ There are two transform families. `Similarity2D` is the uniform-scale, orthogona
 `Affine2D` is the general affine transform shared by scene objects, rendering, and animation. Nonuniform scales and
 composition can introduce shear. Both use `Matrix3x2`'s row-vector convention: local * parent.
 
+`Frame2D` stores an evaluated matrix as an immutable origin and basis. It is useful for
+placing local offsets, projecting directions, and optical coordinate frames without editable channels:
+
+```csharp
+var frame = Frame2D.FromRotationDegrees(angle, source.Center);
+Vector2 origin = frame.TransformPoint(new(.32f, offset)); // rotation + translation
+Vector2 direction = frame.XAxis;
+```
+
+In this convention the transformed axes are the first two matrix rows, exposed as
+`XAxis` and `YAxis`; `Origin` is the translation row. For orthonormal axes,
+`frame.Matrix.TransposeTransformDirection(direction)` gives the two axis dot products,
+with no translation. A scaled or sheared basis needs an actual inverse for local coordinates.
+
 `Affine2D` permits reflections and singular transforms, including zero scale. "Affine" here means an affine map;
 it does not promise an inverse. Use `TryInverse` when invertibility matters. Collision rejects an affine transform
 unless `Similarity2D.TryFromMatrix` accepts its finite, equal-length, orthogonal axes.
@@ -146,9 +162,23 @@ Vector2 restored = center + polar.ToCartesian();
 var authored = new Polar2D(radius: 24, angleRadians: 3 * MathF.Tau + heading);
 ```
 
-Angles are radians, increasing counter-clockwise from +X in Y-up coordinates.
+Angles are radians unless a method explicitly names degrees, increasing counter-clockwise from +X in Y-up coordinates.
 In a screen coordinate system where Y points down, convert the Y component explicitly
-when you want the same visual convention. Angles are not degrees.
+when you want the same visual convention. `Vector2.FromAngleDegrees(angle)` shares
+the direction convention of `Vector2.FromAngle(radians)`.
+
+`Vector2.Reject(vector, unitNormal)` removes the component parallel to a normalized normal.
+`Vector2.TryRefract(direction, incidentNormal, fromIndex, toIndex, out transmitted)`
+applies Snell's law to unit vectors. The normal points toward the incident medium;
+indices must be finite and positive. Total internal reflection returns false and
+sets the output to zero. These CPU helpers support ray tracing and lighting calculations;
+a GPU shader can use the equivalent vector equations.
+
+`Vector2i` is a plain `(int X, int Y)` value in this namespace, suitable for grid cells,
+offsets, or integer dimensions without grid-specific rules. Addition, subtraction,
+and integer scaling throw on overflow. Division is omitted so callers choose their
+own rounding policy. `ToVector2()` explicitly converts to the existing float vector;
+large integers may round. The float vector remains `System.Numerics.Vector2`.
 
 `u.Cross(v)` is the two-vector determinant (also called the perpendicular dot product).
 `a.Orientation(b, c)` computes `cross(b - a, c - a)`: twice the signed triangle area,

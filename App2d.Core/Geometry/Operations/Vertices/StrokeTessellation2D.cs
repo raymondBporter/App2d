@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -82,7 +83,7 @@ public static class StrokeTessellation2D
         for (var i = 1; i <= segments; i++)
         {
             var angle = i * MathF.Tau / segments;
-            var next = center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius;
+            var next = center + Vector2.FromPolar(radius, angle);
             var offset = (i - 1) * 3;
             vertices[offset] = center; vertices[offset + 1] = previous; vertices[offset + 2] = next;
             previous = next;

@@ -1,7 +1,5 @@
 using App2d.CharacterSeeds;
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
