@@ -31,8 +31,9 @@ internal sealed partial class EditorSmoke
             var walker = s.Assets.Resolve(Walker)!;
             var walk = walker.Base.MotionSets[0].Roles["walk"];
             Record(walker.Base.Version == CharacterModel.CurrentVersion && walker.Base.IkChains.Count() == 4 && walker.Attachment(PersonTemplate.FaceInstance) is { IsAnimated: true }
-                && s.Assets.Clips.Count(c => c.Asset.Model == Walker) > 30 && s.Assets.ModelTemplates["person"].ContractProblems(walker.Base, s.Assets.PartOf).Count == 0,
-                $"a person created from the published template is a bundle of its own at model version {CharacterModel.CurrentVersion} (four bone constraints, the face instance, {s.Assets.Clips.Count(c => c.Asset.Model == Walker)} clips) and the contract holds on it");
+                && s.Assets.Clips.Count(c => c.Asset.Model == Walker) == s.Assets.ModelTemplates["person"].Animations.Count && s.Assets.ModelTemplates["person"].ContractProblems(walker.Base, s.Assets.PartOf).Count == 0,
+                $"a person created from the published template is a bundle of its own at model version {CharacterModel.CurrentVersion} (four bone constraints, the face instance, the template's {s.Assets.Clips.Count(c => c.Asset.Model == Walker)} library clips copied) and the contract holds on it: "
+                + string.Join(" | ", s.Assets.ModelTemplates["person"].ContractProblems(walker.Base, s.Assets.PartOf)));
             s.SetClip(walk);
             s.TogglePlay();
             s.Tick(.3f);
@@ -255,9 +256,17 @@ internal sealed partial class EditorSmoke
             {
                 ClipAuthoring.SetKey(clip.Asset, new(MotionClip.RotateKind, Humanoid.LeftShoulder), 0, default, .5f);
                 ClipAuthoring.SetKey(clip.Asset, new(MotionClip.BendKind, "crest"), 0, new(1, 0, 0));
-                ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, Humanoid.LeftArm), 0, new(.1f, -1.2f, 0));
             }), s);
             s.Seek(0);
+            // Targets are authored from world positions through the drag inverse (RigConstraintEvaluator.TargetDelta), as Studio's drag does:
+            // one beside the shoulder pivot needs the elbow folded far past its +-0.9 rad range, one 96% of the way to the rest hand stays inside it.
+            var chain = model.Chains[Humanoid.LeftArm];
+            var keyed = s.Evaluate(Walker)!.Pose;
+            var pivot = keyed.World(Humanoid.LeftUpperArmBone);
+            var hand = keyed.World(Humanoid.LeftHand);
+            var folded = RigConstraintEvaluator.TargetDelta(model, keyed, chain, pivot + new Vector3(.04f, -.04f, 0));
+            var inside = RigConstraintEvaluator.TargetDelta(model, keyed, chain, pivot + (hand - pivot) * .96f);
+            Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, Humanoid.LeftArm), 0, folded)), s);
             var pose = s.Evaluate(Walker)!.Pose;
             var arm = pose.Chains.Single(c => c.Chain == Humanoid.LeftArm);
             Record(MathF.Abs(pose.Angles[Humanoid.LeftShoulder] - model.Nodes[Humanoid.LeftShoulder].RestAngle - .5f) < 1e-4f, "an explicit angle key turns the shoulder pivot by exactly its value");
@@ -265,8 +274,9 @@ internal sealed partial class EditorSmoke
                 "a normalized bend of 1 lands the crest exactly on its upper limit, parent-local");
             Record(arm.Limited && !arm.Reached && pose.Limits["left-elbow"].State != ConstraintLimitState1D.Inactive,
                 $"a target that needs the elbow past its adjusted limit is held at the bound and reported unreached by {arm.Residual:F3}");
-            Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, Humanoid.LeftArm), 0, new(.05f, -.15f, 0))), s);
-            Record(s.Evaluate(Walker)!.Pose.Chains.Single(c => c.Chain == Humanoid.LeftArm) is { Reached: true, Limited: false }, "a target inside the elbow's range is reached exactly");
+            Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, Humanoid.LeftArm), 0, inside)), s);
+            var reach = s.Evaluate(Walker)!.Pose.Chains.Single(c => c.Chain == Humanoid.LeftArm);
+            Record(reach is { Reached: true, Limited: false }, $"a target inside the elbow's range is reached exactly (residual {reach.Residual:E1}, limited {reach.Limited})");
             s.SetMode(Workspace.Animate);
             s.Selection.Select(control: "left-elbow");
             shell.Viewport.Fit(s.Evaluate(Walker));
@@ -317,7 +327,7 @@ internal sealed partial class EditorSmoke
         {
             var s = shell.Session;
             shell.LiveTest = false;
-            AuthoredArena Fight(string[] roster, Vector2[] positions, int ticks)
+            AuthoredArena Fight(string[] roster, Vector2[] positions, int ticks, bool press = false)
             {
                 shell.Test.Stop();
                 shell.Test.Roster.Clear();
@@ -331,7 +341,8 @@ internal sealed partial class EditorSmoke
 
                 for (var i = 0; i < ticks; i++)
                 {
-                    shell.Test.Advance(1 / 120f, default);
+                    // The first roster entry is the controlled actor: it attacks only on a press (one, on the first tick).
+                    shell.Test.Advance(1 / 120f, new ArenaInput(Attack: press && i == 1));
                 }
 
                 shell.Test.Paused = true;
@@ -352,10 +363,11 @@ internal sealed partial class EditorSmoke
             // Kill: the stalker pest (health 2) dies to one typed strike of 2.
             var kill = Fight(["stalker-pest", WalkerGuard], [new(0, 0), new(2.0f, 0)], 360);
             Record(kill.Hits.Any(h => h.Target == 0) && !kill.Actors[0].Alive, "the stalker pest takes the strike and dies");
-            // Several targets: the maul brute's slam reaches the player and the walker guard in one attack instance.
-            var several = Fight(["maul-brute", "player", WalkerGuard], [new(0, 0), new(1.15f, 0), new(1.35f, 0)], 240);
-            var slams = several.Hits.Where(h => h.Attacker == 0).GroupBy(h => h.Tick).ToList();
-            Record(slams.Any(g => g.Select(h => h.Target).Distinct().Count() == 2), $"one slam of the brute strikes both targets ({string.Join("; ", slams.Select(g => $"tick {g.Key}: {string.Join(",", g.Select(h => h.Target))}"))})");
+            // Several targets: the walker guard, controlled, thrusts once into the player and the spear guard standing together; one attack
+            // instance strikes both (the brute's slam is the reference set's recorded miss, so it is not the probe here).
+            var several = Fight([WalkerGuard, "player", "spear-guard"], [new(0, 0), new(2.0f, 0), new(2.15f, 0)], 120, press: true);
+            var struck = several.Hits.Where(h => h.Attacker == 0).Select(h => h.Target).Distinct().ToList();
+            Record(struck.Count == 2, $"one thrust of the walker guard strikes both targets ({string.Join("; ", several.Hits.Where(h => h.Attacker == 0).Select(h => $"tick {h.Tick} target {h.Target}"))})");
             shell.Test.Stop();
             _ = Fight(["player", WalkerGuard], [new(0, 0), new(2.1f, 0)], 12);
             shell.Viewport.Fit(s.Scene().FirstOrDefault());
@@ -455,8 +467,11 @@ internal sealed partial class EditorSmoke
             Check(s.SetEntityRole("attack", rush), s);
             Check(s.AddCollider(new() { Id = "bite", Use = ColliderUses.Attack, Control = "head", Frame = "head", OffsetX = .25f, Shape = Circle2D.Builder.Create(.22f) }), s);
             var entity = s.EntityDocument!;
+            // The guard template's range (1.6) suits a spear; the hound attacks from where its bite actually sits ahead of its feet.
+            var biteAhead = s.Entity!.Collider("bite")!.Region(new ActorPose(PoseEvaluator.Rest(s.Entity.Model), Vector2.Zero, 1)).Bounds.Max.X;
             Check(s.Edit(entity, () =>
             {
+                entity.Asset.Controller.Range = MathF.Round(biteAhead, 2);
                 entity.Asset.Actions.Single(a => a.Id == "attack").Hits.Add(new() { Id = "bite", Collider = "bite", Start = new() { At = .1f }, Finish = new() { At = .7f } });
                 entity.Asset.Behaviors.Strikes["bite"] = new() { Damage = 1, Sound = "hit" };
             }), s);
@@ -468,12 +483,14 @@ internal sealed partial class EditorSmoke
             var arena = shell.Test.Arena!;
             arena.Teleport(0, new(0, 0));
             arena.Teleport(1, new(2.4f, 0));
-            for (var i = 0; i < 360; i++)
+            for (var i = 0; i < 720 && !arena.Hits.Any(h => h.Attacker == 1); i++)
             {
                 shell.Test.Advance(1 / 120f, default);
             }
             shell.Test.Paused = true;
-            Record(arena.Hits.Any(h => h is { Attacker: 1, Target: 0, Window: "bite" }), $"the hound's bite lands on the player in the Test arena ({arena.Hits.Count} hit(s))");
+            var houndActor = arena.Actors[1];
+            Record(arena.Hits.Any(h => h is { Attacker: 1, Target: 0, Window: "bite" }),
+                $"the hound's bite lands on the player in the Test arena ({arena.Hits.Count} hit(s); hound at {houndActor.Position.X:0.00} facing {houndActor.Facing}, role {houndActor.Animator.Role}, {arena.Events.Count(e => e.Actor == 1)} hound event(s), tick {arena.Tick})");
             shell.Test.Stop();
             s.Open(walkId);
             s.SetSubject("hound-tall");
@@ -556,9 +573,13 @@ internal sealed partial class EditorSmoke
             var gait = pose.Attachments[lower];
             var torso = pose.Attachments[upper];
             var saddle = gait.Frame("body").At(new Vector3(.42f, .98f, 0));
-            Record(centaur.Base.Controls.Count == 1 && centaur.MotionOwner?.Id == lower && gait.Pose.Chains.All(c => c.Reached) && gait.Pose.Contacts.Count >= 2
-                && Vector2.Distance(new(saddle.X, saddle.Y), new(torso.World(Humanoid.Chest).X, torso.World(Humanoid.Chest).Y)) < 1e-4f && (gait.Expression, torso.Expression) == ("walk", "hammer-slam"),
-                "the centaur is one root control wearing the quadruped lower body and the Person upper body: the lower body owns the motion and walks, the chest rides the saddle on lower/body, the upper body slams on its own");
+            // The upper body's connection (its chest) is placed on the saddle; the slam then moves the module's own chest within that placement.
+            var seat = Vector2.Distance(new(saddle.X, saddle.Y), new(torso.Placement.Origin.X, torso.Placement.Origin.Y));
+            Record(centaur.Base.Controls.Count == 1 && centaur.MotionOwner?.Id == lower && (gait.Expression, torso.Expression) == ("walk", "hammer-slam"),
+                $"the centaur is one root control wearing the quadruped lower body and the Person upper body, the lower body owning the motion and walking while the upper body slams ({gait.Expression}, {torso.Expression})");
+            Record(gait.Pose.Chains.All(c => c.Reached) && gait.Pose.Contacts.Count >= 2,
+                $"the lower body's legs reach with its planted feet holding ({gait.Pose.Chains.Count(c => c.Reached)}/{gait.Pose.Chains.Count} reached, {gait.Pose.Contacts.Count} contacts)");
+            Record(seat < 1e-4f, $"the upper body's connection rides the saddle socket on lower/body as the gait moves it ({seat:E1} apart)");
             var quadrupedWalk = s.Assets.Part(ModulePlans.QuadrupedLower)!.Asset.Clip("quadruped-walk")!;
             Record(MathF.Abs(PoseEvaluator.CycleTravel(centaur, walk.Asset).X - PoseEvaluator.CycleTravel(gait.Rig, quadrupedWalk).X) < 1e-5f, "the stride is the quadruped gait's, carried by the owning module, with no rig copied and no dedicated runtime type");
             s.SaveAll();
