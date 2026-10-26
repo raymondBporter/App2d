@@ -497,15 +497,9 @@ internal sealed partial class EditorSmoke
             s.Open("flier");
             Check(s.AttachPart("crest-plume", "head-art"), s);
             var plume = s.Assets.Model("flier")!.Asset.Attachments[^1].Id;
-            // The template copies the flight library; the swoop (with its flight-phase markers) is authored for the flier from the shipped one, and the
-            // attack action carries the flight phases the flying controller needs, as the shipped flier's does.
-            var swoop = MotionClip.FromJson(s.Assets.Clip("pterosaur-swoop")!.Asset.ToJson());
-            swoop.Id = "flier-swoop";
-            swoop.Name = "Flier swoop";
-            swoop.Model = "flier";
-            swoop.StructureRevision = s.Assets.Model("flier")!.Asset.StructureRevision;
-            swoop.Validate(flier);
-            s.Assets.Create(swoop);
+            // The template copies the flight library including the swoop with its flight-phase markers; the attack action carries the
+            // flight phases the flying controller needs, as the shipped flier's does.
+            var swoop = s.Assets.Clip("flier-swoop")!.Asset;
             var shippedAttack = s.Assets.Entity("flying-pterosaur")!.Asset.Actions.Single(a => a.Id == "attack");
             Check(s.NewEntity("flier-pest", "Flier pest", "flier-wide", EntityAuthoring.Stationary), s);
             var entity = s.EntityDocument!;
