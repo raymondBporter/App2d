@@ -28,6 +28,14 @@ public sealed class PuppetDrawing
         Batches.Clear();
     }
 
+    /// <summary>A standalone part in its own units, with its ordinary animation clock.</summary>
+    public void Build(Part asset, double seconds = 0, string? textureRoot = null)
+    {
+        Clear();
+        TextureRoot = textureRoot ?? asset.TextureRoot;
+        AddAttachment(asset, Frame3D.Identity, seconds: seconds);
+    }
+
     public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World, rest: id => definition.Controls.First(c => c.Id == id).Rest.XYZ);
     /// <summary>
     /// The model's parts over the evaluated pose, then its slot attachments and library part instances through the same

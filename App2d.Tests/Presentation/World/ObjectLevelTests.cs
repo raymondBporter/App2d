@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.CharacterSeeds.Diagnostics;
 using App2d.Core;
 using App2d.Core.Collision;
@@ -16,7 +17,7 @@ public sealed class ObjectLevelTests
     [Fact]
     public void LevelReloadsObjectsAndPresentationDropsTheirVisuals()
     {
-        var asset = ObjectAsset2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "objects", "lift.json"));
+        var asset = Part.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "objects", "lift.json"));
         using var level = new SideScrollerLevel2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), CreateMap(), objects: [new("one", asset, new(128f, -64f))]);
         var scene = new Scene2D();
         var collision = new CollisionSystem2D();

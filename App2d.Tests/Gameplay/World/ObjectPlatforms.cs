@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Characters;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;
@@ -15,13 +16,12 @@ internal static class ObjectPlatforms
     public static ObjectPlacement2D Place(string id, Vector2 position, Vector2 travel, float speed, float width = 96f, float height = 16f) =>
         new(id, Asset(id, travel, speed, width, height), position);
 
-    public static ObjectAsset2D Asset(string id, Vector2 travel, float speed, float width = 96f, float height = 16f) =>
+    public static Part Asset(string id, Vector2 travel, float speed, float width = 96f, float height = 16f) =>
         new()
         {
             Id = id,
             Name = id,
-            Geometry = Rectangle2D.Builder.Create(new(-width / 2f, -height / 2f), new(width / 2f, height / 2f)),
-            Material = new RenderMaterialDefinition2D { Fill = "#25d2be" },
+            Geometry = [new() { Id = "shape", A = "origin", Frame = "origin", Geometry = Rectangle2D.Builder.Create(new(-width / 2f, -height / 2f), new(width / 2f, height / 2f)), Material = new RenderMaterialDefinition2D { Fill = "#25d2be" }, }],
             Physics = new PhysicsBodySettings2D { MotionType = BodyMotionType2D.Kinematic, Restitution = 0f, TransfersContactMotion = true },
             Surface = new ObjectSurface2D { OneWayNormal = Vector2.UnitY },
             Motion = new CurveMotionDefinition2D

@@ -1,0 +1,188 @@
+using App2d.CharacterSeeds.Diagnostics;
+using App2d.Contracts.World;
+using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Physics;
+using App2d.Core.Objects;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
+using App2d.Core.Rendering.Textures;
+using App2d.Core.Shapes;
+using App2d.Core.Spatial;
+using App2d.Core.Tiles;
+using App2d.Gameplay.Combat;
+using App2d.Gameplay.Simulation;
+using App2d.Gameplay.World;
+using App2d.Presentation.World.Presentation;
+using System.Numerics;
+
+namespace App2d.Tests.Gameplay.World;
+
+public sealed class PhysicalPartTests
+{
+    private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
+
+    [Theory]
+    [InlineData("dumbbell")]
+    [InlineData("tumbling-crate")]
+    public void JsonPartsFallCollideRotateAndLoseSpeedThroughContactFriction(string id)
+    {
+        var slippery = Run(0);
+        var rough = Run(.65f);
+        Assert.True(rough.Speed < slippery.Speed - 5, $"rough={rough.Speed}, slippery={slippery.Speed}");
+
+        (float Speed, float Spin) Run(float friction)
+        {
+            var asset = Part.FromJson(Catalog.Parts[id].ToJson());
+            asset.Physics!.Friction = friction;
+            var physics = new PhysicsWorld2D { Gravity = new(0, -240) };
+            var ground = physics.AddBody(new SpatialObject2D(Rectangle2D.Builder.Create(new(-1000, -30), new(1000, 0))), BodyMotionType2D.Static);
+            ground.Friction = friction; ground.Restitution = 0;
+            using var item = new AuthoredObject2D(new(1), new(id, asset, new(0, 120)), physics, 1, uint.MaxValue);
+            Assert.False((object)item is ICombatant2D);
+            item.WorldObject.Transform.Rotation = .31f;
+            item.Body!.LinearVelocity = new(80, 0);
+            physics.Step(1f / 120);
+            Assert.True(item.WorldObject.Transform.Position.Y < 120);
+            var touched = false;
+            var spin = 0f;
+            for (var i = 0; i < 480; i++)
+            {
+                item.Update(1f / 120); physics.Step(1f / 120);
+                touched |= physics.LastContacts.Count > 0;
+                spin = Math.Max(spin, Math.Abs(item.Body.AngularVelocity));
+            }
+            Assert.True(touched);
+            Assert.True(spin > .1f, $"No contact-driven spin: {spin}");
+            Assert.InRange(item.WorldObject.Transform.Position.Y, 0, 80);
+            return (Math.Abs(item.Body.LinearVelocity.X), spin);
+        }
+    }
+
+    [Theory]
+    [InlineData(BodyMotionType2D.Dynamic)]
+    [InlineData(BodyMotionType2D.Kinematic)]
+    [InlineData(BodyMotionType2D.Static)]
+    public void PauseResumeAndStateRestoreKeepMotionTypeVelocitiesAndRegistrations(BodyMotionType2D motion)
+    {
+        var asset = Part.FromJson(Catalog.Parts["dumbbell"].ToJson());
+        asset.Physics!.MotionType = motion;
+        var physics = new PhysicsWorld2D();
+        var item = new AuthoredObject2D(new(1), new("one", asset, new(20, 50)), physics, 1, uint.MaxValue);
+        item.Body!.LinearVelocity = new(30, 10); item.Body.AngularVelocity = .8f;
+        item.Update(.2f); physics.Step(.2f);
+        var active = item.CaptureState();
+        item.SetSimulationEnabled(false);
+        var paused = item.CaptureState();
+        for (var i = 0; i < 5; i++) { item.Update(.1f); physics.Step(.1f); }
+        Assert.Equal(paused, item.CaptureState());
+        Assert.False(item.Body.IsCollider);
+        Assert.Equal(BodyMotionType2D.Static, item.Body.MotionType);
+        item.SetSimulationEnabled(true);
+        Assert.Equal(motion, item.Body.MotionType);
+        Assert.Equal(active, item.CaptureState());
+        item.WorldObject.Transform.Position = new(500, 500);
+        item.RestoreState(paused);
+        Assert.Equal(paused, item.CaptureState());
+        item.RestoreState(active);
+        Assert.Equal(active, item.CaptureState());
+        Assert.Equal(motion, item.Body.MotionType);
+        Assert.Single(physics.Bodies);
+        item.Dispose(); item.Dispose();
+        Assert.Empty(physics.Bodies);
+        Assert.Empty(physics.CollisionSystem.Colliders);
+    }
+
+    [Fact]
+    public void LegacyAndGenericPlacementsUseWorldOwnershipStreamingAndReloadWithoutCombatants()
+    {
+        var map = new EditableTileMap2D(320, 32, 32, 32, Vector2.Zero, ["dark-cave"]);
+        var cratePlacement = new ObjectPlacement2D("crate", Catalog.Parts["tumbling-crate"], new(400, 100));
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
+            [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(100, 100)),
+             new(2, WorldThingKind2D.TumbleProp, null, true, new(200, 100))])
+        { AuthoredCharacters = Catalog, Objects = [cratePlacement] });
+        Assert.Empty(game.Level.EnemySystem.Combatants);
+        Assert.Empty(game.Session.CaptureEnemies());
+        Assert.Equal(2, game.Level.Objects.Count);
+        Assert.Equal(["dumbbell", "tumbling-crate"], game.Level.CaptureContent().Objects.Select(o => o.Part.Id).Order());
+        var objects = game.Level.Objects.ToArray();
+        game.Level.UpdateStreaming(new(9000, 100));
+        Assert.All(objects, o => Assert.False(o.IsEnabled));
+        game.Level.UpdateStreaming(new(100, 100));
+        Assert.All(objects, o => Assert.Equal(BodyMotionType2D.Dynamic, o.Body!.MotionType));
+        game.Level.ReloadObjects([cratePlacement]);
+        Assert.Equal(2, game.Level.Objects.Count);
+        Assert.All(game.Level.Objects, o => Assert.DoesNotContain(o.Id, objects.Select(old => old.Id)));
+        Assert.All(objects, o => Assert.DoesNotContain(o.Body!, game.Physics.Bodies));
+        var bodies = game.Level.Objects.Select(o => o.Body!).ToArray();
+        game.Level.Dispose();
+        Assert.All(bodies, body => Assert.DoesNotContain(body, game.Physics.Bodies));
+    }
+
+    [Theory]
+    [InlineData("dumbbell")]
+    [InlineData("tumbling-crate")]
+    public void PresentationMatchesScaledPivotedPhysicsAndWaitsForSnapshots(string id)
+    {
+        var asset = Part.FromJson(Catalog.Parts[id].ToJson());
+        asset.Scale = 1.7f; asset.Pivot = "mount";
+        asset.Locations = [new() { Id = "mount", X = 7, Y = -4 }];
+        var physics = new PhysicsWorld2D();
+        using var item = new AuthoredObject2D(new(1), new(id, asset, new(100, 80)), physics, 1, uint.MaxValue);
+        using var textures = new TextureCache2D(TestAssetPath.Root);
+        var scene = new Scene2D();
+        using var view = new WorldPresentation2D(scene, textures);
+        var content = LevelContent2D.Empty with { Objects = [item.CaptureDefinition()] };
+        var state = WorldState2D.Empty with { Objects = [item.CaptureState()] };
+        view.ApplyState(content, state);
+        var visual = Assert.Single(scene);
+        var shader = Assert.IsType<PartShader2D>(visual.Shader);
+        Assert.Same(asset, shader.Part);
+        Assert.InRange(Vector2.Distance(visual.LocalBounds.Min, item.WorldObject.LocalBounds.Min), 0, .01f);
+        Assert.InRange(Vector2.Distance(visual.LocalBounds.Max, item.WorldObject.LocalBounds.Max), 0, .01f);
+        item.WorldObject.Transform.Rotation = .7f;
+        item.WorldObject.Transform.Position = new(200, 30);
+        Assert.Equal(new Vector2(100, 80), visual.Transform.Position);
+        view.ApplyState(content, state with { Objects = [item.CaptureState()] });
+        Assert.Equal(item.WorldObject.Transform.Matrix, visual.Transform.Matrix);
+        item.SetSimulationEnabled(false);
+        view.ApplyState(content, state with { Objects = [item.CaptureState()] });
+        Assert.False(visual.IsVisible);
+        view.ApplyState(LevelContent2D.Empty, WorldState2D.Empty);
+        Assert.Empty(scene);
+    }
+
+    [Fact]
+    public void PathClockRestoresAndPausesWithTheBody()
+    {
+        var part = Part.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "objects", "lift.json"));
+        var physics = new PhysicsWorld2D();
+        using var item = new AuthoredObject2D(new(1), new("lift", part, Vector2.Zero), physics, 1, uint.MaxValue);
+        item.Update(.75f); physics.Step(.75f);
+        var state = item.CaptureState();
+        item.Update(.25f); physics.Step(.25f);
+        var next = item.CaptureState();
+        item.RestoreState(state);
+        item.SetSimulationEnabled(false);
+        item.Update(5); physics.Step(5);
+        item.SetSimulationEnabled(true);
+        item.Update(.25f); physics.Step(.25f);
+        Assert.Equal(next, item.CaptureState());
+    }
+
+    [Fact]
+    public void SteadyStatePartPresentationDoesNotAllocateOrMutateObservations()
+    {
+        using var textures = new TextureCache2D(TestAssetPath.Root);
+        using var view = new WorldPresentation2D(new Scene2D(), textures);
+        var part = Catalog.Parts["dumbbell"];
+        var content = LevelContent2D.Empty with { Objects = [new(new(1), "dumbbell", part)] };
+        var state = WorldState2D.Empty with { Objects = [new(new(1), Vector2.Zero, .3f)] };
+        for (var i = 0; i < 1000; i++) view.ApplyState(content, state);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1000; i++) view.ApplyState(content, state);
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        Assert.Equal(Vector2.Zero, state.Objects[0].Position);
+    }
+}

@@ -11,8 +11,17 @@ using System.Numerics;
 namespace App2d.Contracts.World;
 
 /// <summary>Fixed per placed object; a replaced object gets a new runtime ID.</summary>
-public sealed record ObjectDefinition2D(EntityId2D Id, string PlacementId, IShape2D? Geometry, RenderMaterialDefinition2D? Material, string TextureRoot);
-public readonly record struct ObjectState2D(EntityId2D Id, Vector2 Position, float Rotation);
+public sealed record ObjectDefinition2D(EntityId2D Id, string PlacementId, App2d.Core.Characters.Authored.Part Part)
+{
+    public string TextureRoot { get; init; } = Part.TextureRoot;
+}
+public readonly record struct ObjectState2D(EntityId2D Id, Vector2 Position, float Rotation)
+{
+    public Vector2 LinearVelocity { get; init; }
+    public float AngularVelocity { get; init; }
+    public double Time { get; init; }
+    public bool IsEnabled { get; init; } = true;
+}
 public readonly record struct CheckpointPlacement2D(long ThingId, Vector2 BasePosition);
 public readonly record struct CheckpointState2D(long ThingId, bool IsActive);
 
@@ -31,7 +40,7 @@ public sealed record LevelContent2D(long Revision, ImmutableArray<TerrainChunkSt
     public ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
 }
 
-/// <summary>Per-tick dynamic world observation, not a physics restore point.</summary>
+/// <summary>Per-tick world observation, including the motion state of placed objects.</summary>
 public sealed record WorldState2D(ImmutableArray<CheckpointState2D> Checkpoints)
 {
     public ImmutableArray<ObjectState2D> Objects { get; init; } = [];

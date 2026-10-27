@@ -181,7 +181,7 @@ public sealed class EditorSession
                 // The shared asset is edited in Appearance on a wearer: the subject, or the first model when none is open.
                 Mode = Workspace.Appearance;
                 PreviewPart = part.Id;
-                PreviewPartOnWearer = !part.Asset.IsModule;
+                PreviewPartOnWearer = !part.Asset.IsModule && part.Asset.Physics is null && part.Asset.Motion is null;
                 PreviewProp = "";
                 PreviewWeapon = EditWeapon = false;
                 Selection.Clear();

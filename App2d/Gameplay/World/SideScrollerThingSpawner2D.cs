@@ -34,7 +34,7 @@ internal sealed class SideScrollerThingSpawner2D(
 
         foreach (var thing in things)
         {
-            if (!thing.Enabled)
+            if (!thing.Enabled || thing.Kind == WorldThingKind2D.TumbleProp)
             {
                 continue;
             }
@@ -73,17 +73,6 @@ internal sealed class SideScrollerThingSpawner2D(
                         thing.Position.X + tileSize * 6f,
                         worldLayer,
                         playerLayer,
-                        enemyLayer));
-                    break;
-                case WorldThingKind2D.TumbleProp:
-                    var prop = authored?.PhysicsProps.GetValueOrDefault("dumbbell")
-                        ?? throw new InvalidDataException("TumbleProp requires its authored physics prop 'dumbbell'.");
-                    Register(new PhysicsProp2D(
-                        ids.Allocate(),
-                        prop,
-                        physics,
-                        thing.Position,
-                        worldLayer,
                         enemyLayer));
                     break;
             }

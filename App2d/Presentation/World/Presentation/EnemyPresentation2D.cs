@@ -125,8 +125,6 @@ public sealed class EnemyPresentation2D(
                         {
                             EnemyKind2D.Shieldback => new ShieldbackView(scene, textures),
                             EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
-                            EnemyKind2D.PhysicsProp => new PropView(scene, state.PhysicsProp
-                                ?? throw ArgGuard.CreateInvalid("A physics prop needs its authored asset.", nameof(states))),
                             _ => throw ArgGuard.CreateInvalid("An authored enemy needs its resolved entity.", nameof(states))
                         };
                     _views.Add(state.Id, view);
@@ -334,22 +332,4 @@ public sealed class EnemyPresentation2D(
         }
     }
 
-    private sealed class PropView : View
-    {
-        private readonly Scene2D _scene;
-        private readonly WorldObject2D _visual;
-        public PropView(Scene2D scene, PhysicsPropAsset asset)
-        {
-            _scene = scene;
-            _visual = new WorldObject2D(asset.Shape, new SolidColorShader(ColorExtensions.FromHexRgb(asset.Fill))) { ZIndex = 1 };
-            scene.Add(_visual);
-        }
-        public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
-        {
-            _visual.Transform.Position = state.Position;
-            _visual.Transform.Rotation = state.Rotation;
-            _visual.IsVisible = state.IsEnabled;
-        }
-        public override void Dispose() => _scene.Remove(_visual);
-    }
 }

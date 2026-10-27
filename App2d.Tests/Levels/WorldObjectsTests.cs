@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Objects;
 using App2d.Core.Tiles;
@@ -17,7 +18,7 @@ public sealed class WorldObjectsTests : IDisposable
         Directory.CreateDirectory(_root);
         using (var database = LevelDatabase2D.Open(Path.Combine(_root, "map.db")))
             database.Save(new EditableTileMap2D(32, 32, 32, 32, Vector2.Zero, ["dark-cave"]), 0);
-        ObjectAsset2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "objects", "lift.json"))
+        Part.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "objects", "lift.json"))
             .Save(Path.Combine(_root, "lift.json"));
         _document = new(1, [new("test", "Test", 0, [new("test", "Test", 0, "map.db")])]);
     }

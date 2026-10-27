@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Objects;
 using App2d.Editor;
 using System.Numerics;
@@ -11,7 +12,7 @@ public sealed class ObjectPathPreview2DTests
     [Fact]
     public void PreviewFollowsTheMotionFromTheOriginAndIsEmptyWithoutMotion()
     {
-        var asset = ObjectAsset2D.Load(LiftPath);
+        var asset = Part.Load(LiftPath);
         var points = ObjectPathPreview2D.Sample(asset, new(100f, 50f), 4);
         Assert.Equal(5, points.Length);
         Assert.Equal(new Vector2(100f, 50f), points[0]);

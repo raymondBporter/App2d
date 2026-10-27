@@ -545,7 +545,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // P5c: one library part on both feet as two instances, swapped on one variant only, edited once for every
                 // wearer, found through uses / used by, undone in order and saved with its wearers.
                 var s = shell.Session;
-                var library = s.Assets.Parts.Where(p => p.Asset.Usage is not ("prop" or "hair" or "clothing")).Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
+                var library = s.Assets.Parts.Where(p => p.Asset.Usage is not ("prop" or "hair" or "clothing" or "world")).Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
                 Record(library.SequenceEqual(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"]) && s.Assets.Part("boot")!.Asset.Geometry.Count == 3, "the parts folder loads boot, the baked Person face, the four rig modules and sandal as library parts");
                 s.Open("person");
                 Check(s.DuplicatePart("hair-short", "mitt", "Mitt"), s);

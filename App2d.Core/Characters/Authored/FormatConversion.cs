@@ -47,13 +47,13 @@ public static class FormatConversion
             var relative = Path.GetRelativePath(root, path);
             var folder = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0];
             var target = Path.Combine(output, relative);
-            if (folder is not ("models" or "parts" or "entities" or "props") && !File.Exists(target))
+            if (folder is not ("models" or "parts" or "entities" or "props" or "physics-props" or "objects") && !File.Exists(target))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 File.Copy(path, target);
             }
         }
-        foreach (var (folder, kind, previous, current) in new[] { ("models", "model", 11, CharacterModel.CurrentVersion), ("parts", "part", 1, Part.CurrentVersion), ("entities", "entity", 4, EntityAsset.CurrentVersion), ("props", "prop", 3, Part.CurrentVersion) })
+        foreach (var (folder, kind, previous, current) in new[] { ("models", "model", 11, CharacterModel.CurrentVersion), ("parts", "part", 1, Part.CurrentVersion), ("entities", "entity", 4, EntityAsset.CurrentVersion), ("props", "prop", 3, Part.CurrentVersion), ("physics-props", "physics-prop", 1, Part.CurrentVersion), ("objects", "object", 1, Part.CurrentVersion) })
         {
             var directory = Path.Combine(root, folder);
             if (!Directory.Exists(directory))
@@ -75,10 +75,19 @@ public static class FormatConversion
                         throw new InvalidDataException($"version {version} is not an input of this conversion (expects {previous} or {current})");
                     }
 
-                    if (kind != "prop") Scan(node, kind, "", dropped);
+                    if (kind is "model" or "part" or "entity") Scan(node, kind, "", dropped);
                     string fresh;
                     switch (kind)
                     {
+                        case "physics-prop":
+                        case "object":
+                            fresh = node["format"]?.GetValue<string>() == Part.FormatId ? Part.FromJson(text).ToJson() : WorldPartConversion.Convert(text).ToJson();
+                            if (kind == "physics-prop")
+                            {
+                                if (node.ContainsKey("hitVelocityScale")) dropped.Add("hitVelocityScale");
+                                if (node.ContainsKey("hitAngularKick")) dropped.Add("hitAngularKick");
+                            }
+                            break;
                         case "prop":
                             fresh = PropPartConversion.Convert(text).ToJson();
                             break;
@@ -110,7 +119,7 @@ public static class FormatConversion
                         }
                     }
 
-                    var destination = Path.Combine(output, kind == "prop" ? "parts" : folder, id + ".json");
+                    var destination = Path.Combine(output, kind is "prop" or "physics-prop" ? "parts" : folder, id + ".json");
                     if (!destinations.Add(destination)) throw new InvalidDataException("Multiple source assets would occupy " + destination);
                     files.Add(new(kind, id, Write(destination, fresh, current, dropped), dropped));
                 }
@@ -163,6 +172,8 @@ public static class FormatConversion
         report.AppendLine($"Source: `{root}` (unchanged). Output: `{output}`. Date: {DateTime.Now:yyyy-MM-dd HH:mm}.");
         report.AppendLine();
         report.AppendLine("Prop v3 files move from props/ to parts/ without changing IDs or units. Meshes and typed shapes become ordinary geometry entries; grip/tip/muzzle/second-grip become named XYZ locations, grip becomes the pivot, and scale is preserved. Original files stay untouched. Shared-file collisions fail explicitly.");
+        report.AppendLine();
+        report.AppendLine("World object v1 and physics-prop v1 convert to Parts at scale 1, preserving world units, materials, body settings, one-way surfaces and paths. Physics props move to parts/. Experimental hit gains are dropped; passive bodies use ordinary contact and have no combatant registration.");
         report.AppendLine();
         report.AppendLine("Part v3 uses one geometry array. Existing drawing-entry IDs, rig targets, layers and units are unchanged; old solids become mesh entries with stable mesh-N IDs (uniquified on collision), their original material and physical Z, attached to the root frame. Normal open/save does not convert legacy files.");
         report.AppendLine();

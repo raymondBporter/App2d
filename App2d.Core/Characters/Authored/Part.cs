@@ -146,7 +146,7 @@ public sealed record PartLocation
 /// its own <see cref="Clips"/>, the <see cref="Layers"/> they play on with their clocks, the targets it <see cref="Exposed"/>
 /// to the wearer's clips and the <see cref="Expressions"/> it binds for gameplay; its pieces hang on its controls.
 /// </summary>
-public sealed class Part
+public sealed record Part
 {
     public const string FormatId = "app2d-part";
     public const int CurrentVersion = 3;
@@ -178,6 +178,13 @@ public sealed class Part
     public List<PartLocation> Locations { get; set; } = [];
     /// <summary>All geometry entries share placement, material, visibility, animation and picking.</summary>
     public List<PartGeometry> Geometry { get; set; } = [];
+
+    /// <summary>Optional rigid collision in asset-local coordinates; otherwise finite rigid shapes supply it.</summary>
+    public App2d.Core.Geometry.Shapes.IShape2D? Collision { get; set; }
+    public App2d.Core.Physics.PhysicsBodySettings2D? Physics { get; set; }
+    public App2d.Core.Objects.ObjectSurface2D? Surface { get; set; }
+    public App2d.Core.Physics.Motion.CurveMotionDefinition2D? Motion { get; set; }
+    [JsonIgnore] public string TextureRoot { get; set; } = Environment.CurrentDirectory;
 
     // ---- Animated payload (P7a) ---------------------------------------------------------------------------------------
 
@@ -216,7 +223,7 @@ public sealed class Part
         part.Validate();
         return part;
     }
-    public static Part Load(string path) => FromJson(File.ReadAllText(path));
+    public static Part Load(string path) => FromJson(File.ReadAllText(path)) with { TextureRoot = Path.GetDirectoryName(Path.GetFullPath(path))! };
     public void Save(string path)
     {
         Validate();
@@ -357,7 +364,7 @@ public sealed class Part
             AuthoredAsset.RequireId(BackView, owner + " backView");
             Require(BackView != Id, owner + ": back view cannot reference itself.");
         }
-        Require(Geometry.Count > 0, $"{owner}: a part needs at least one shape, curve, image or solid.");
+        Require(Geometry.Count > 0 || Collision is not null, $"{owner}: a part needs at least one shape, curve, image or solid.");
         Require(Geometry.Count <= 384, $"{owner}: capacity exceeded.");
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var part in Geometry)
@@ -379,9 +386,20 @@ public sealed class Part
 
             part.ResolveMaterial(Materials);
         }
-        if (IsAnimated)
+        if (IsAnimated) ValidateAnimated(owner);
+        Physics?.Validate();
+        Motion?.Validate();
+        Require(Collision is null || Physics is not null, owner + ": collision requires physics.");
+        if (Physics is not null)
         {
-            ValidateAnimated(owner);
+            _ = App2d.Core.Characters.Geometry.PartShapes2D.Collision(this);
+            Require(Motion is null || Physics.MotionType == App2d.Core.Physics.BodyMotionType2D.Kinematic,
+                owner + ": a physical part with path motion must be kinematic.");
+        }
+        if (Surface is not null)
+        {
+            Require(Physics is not null, owner + ": surface behavior requires physics.");
+            Surface.Validate();
         }
     }
 

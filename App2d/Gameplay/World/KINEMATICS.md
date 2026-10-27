@@ -55,14 +55,16 @@ format-3 migration; `App2d.Levels.MovingPlatformMigration2D` keeps the period
 
 ## JSON objects
 
-`ObjectAsset2D` (`App2d.Core.Objects`) serializes one finite local `geometry`, optional
-inline `material`, optional `physics`, optional `surface` and optional `motion`.
-Load with `ObjectAsset2D.Load(path)` or `FromJson(json)`; `Save(path)` and `ToJson()`
-preserve the authored definition. Geometry and curves reuse their existing kind-based codecs.
-Unknown properties, unknown progress names and invalid combinations are rejected on loading.
+`Part` (`App2d.Core.Characters.Authored`, `app2d-part` v3) owns a list of geometry entries with materials,
+optional `physics`, `collision`, `surface` and `motion`. `Part.Load(path)` / `FromJson(json)` and
+`Save(path)` / `ToJson()` use the same schema as clothing, equipment and animated modules.
+Finite rigid shape entries double as the collider unless `collision` overrides them. An animated or
+mesh-based physical Part needs an explicit rigid collision shape. Geometry and curves reuse their
+existing kind-based codecs; unknown properties and invalid combinations are rejected on loading.
+The offline `WorldPartConversion` converts retired `app2d-object` v1 files; normal loading never upgrades them.
 
 The working example is [objects/lift.json](../../../Assets/Static/levels/cavern/objects/lift.json).
-It has rectangle geometry, fill and outline, a kinematic body, rider carrying, a one-way normal,
+It has a rectangle geometry entry with fill and outline, a kinematic body, rider carrying, a one-way normal,
 and a cubic Bézier path. The default world places it near the original playground arrival:
 
 ```json
@@ -120,3 +122,9 @@ Friction still defaults to zero. `TransfersContactMotion` uses the previous step
 contact to carry a dynamic body along a kinematic surface and match its supporting
 normal velocity. The physics solver does not keep a persistent contact manifold or
 apply damping.
+
+Placed Parts share `AuthoredObject2D` ownership, streaming and snapshots. Pausing retains velocities and the
+path/animation clock; resuming restores the authored motion type. `CaptureState` / `RestoreState` include
+position, rotation, velocities, time and enabled state. Disposal removes the physics body and collider.
+Passive objects carry no combatant or enemy registration. Physics dimensions are world units at scale 1;
+Part scale and pivot transform collision and drawing together, without implicit character-unit conversion.

@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
@@ -165,7 +166,7 @@ internal sealed class TileEditor2D : IDisposable
     public event Action<IReadOnlyList<ObjectPlacement2D>>? ObjectsChanged;
 
     /// <summary>The asset an object definition names, when a world is configured and the file loads.</summary>
-    public bool TryGetObjectAsset(string? assetPath, [NotNullWhen(true)] out ObjectAsset2D? asset)
+    public bool TryGetObjectAsset(string? assetPath, [NotNullWhen(true)] out Part? asset)
     {
         asset = null;
         return _objectAssets is not null && !string.IsNullOrWhiteSpace(assetPath) && _objectAssets.TryLoad(assetPath, out asset);
@@ -546,7 +547,7 @@ internal sealed class TileEditor2D : IDisposable
             bool hit;
             if (TryGetObjectAsset(thing.Asset, out var asset))
             {
-                var bounds = ShapeBounds2D.Calculate(asset.Collision ?? asset.Geometry!);
+                var bounds = ShapeBounds2D.Calculate((asset.Physics is not null ? App2d.Core.Characters.Geometry.PartShapes2D.Collision(asset) : new App2d.Core.Rendering.Characters.PartShader2D(asset).BoundsShape()));
                 var local = world - position;
                 hit = local.X >= bounds.Min.X && local.X <= bounds.Max.X && local.Y >= bounds.Min.Y && local.Y <= bounds.Max.Y;
             }

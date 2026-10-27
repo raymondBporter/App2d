@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Mathematics.Progress;
@@ -157,9 +158,9 @@ public sealed class ThingDatabase2DTests : IDisposable
         var path = WriteVersionTwoPlatforms(("Bridge ferry", 10f, 20f, 288f, 0f, 105f), ("Summit lift", 30f, 40f, 0f, 256f, 110f));
         using var database = LevelDatabase2D.Open(path, worldRoot: _directory);
         Assert.Equal(3, database.FormatVersion);
-        var ferry = ObjectAsset2D.Load(Path.Combine(_directory, "objects", "bridge-ferry.json"));
-        Assert.Equal(new Vector2(-48f, -8f), ShapeBounds2D.Calculate(ferry.Geometry!).Min);
-        Assert.Equal("#25d2be", ferry.Material!.Fill);
+        var ferry = Part.Load(Path.Combine(_directory, "objects", "bridge-ferry.json"));
+        Assert.Equal(new Vector2(-48f, -8f), ShapeBounds2D.Calculate((App2d.Core.Geometry.Shapes.IShape2D)ferry.Geometry[0].Geometry!).Min);
+        Assert.Equal("#25d2be", ferry.Geometry[0].Material!.Fill);
         Assert.Equal(BodyMotionType2D.Kinematic, ferry.Physics!.MotionType);
         Assert.Equal(0f, ferry.Physics.Restitution);
         Assert.True(ferry.Physics.TransfersContactMotion);

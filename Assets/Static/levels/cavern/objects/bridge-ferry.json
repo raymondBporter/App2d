@@ -1,28 +1,36 @@
 {
-  "format": "app2d-object",
-  "version": 1,
+  "format": "app2d-part",
+  "version": 3,
   "id": "bridge-ferry",
   "name": "Bridge ferry",
-  "geometry": {
-    "kind": "rectangle",
-    "min": {
-      "x": -48,
-      "y": -8
-    },
-    "max": {
-      "x": 48,
-      "y": 8
+  "usage": "world",
+  "geometry": [
+    {
+      "id": "shape-1",
+      "a": "origin",
+      "frame": "origin",
+      "geometry": {
+        "kind": "rectangle",
+        "min": {
+          "x": -48,
+          "y": -8
+        },
+        "max": {
+          "x": 48,
+          "y": 8
+        }
+      },
+      "material": {
+        "asset": null,
+        "paint": null,
+        "fill": "#d4923a",
+        "strokeWidth": null,
+        "outline": null,
+        "texture": null,
+        "tint": null
+      }
     }
-  },
-  "material": {
-    "asset": null,
-    "paint": null,
-    "fill": "#d4923a",
-    "strokeWidth": null,
-    "outline": null,
-    "texture": null,
-    "tint": null
-  },
+  ],
   "physics": {
     "motionType": "Kinematic",
     "mass": 1,

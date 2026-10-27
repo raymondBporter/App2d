@@ -44,18 +44,17 @@ public sealed class ObservationRoundTripTests
             new(false, 0f, position, [new(new EntityId2D(102), position, new(1250f, 0f), new(2f, 4f))]));
         var content = new LevelContent2D(3, [terrain], [new(42, position)], new(300f, 0f))
         {
-            Objects = [new(new(105), "orbit", Circle2D.Builder.Create(12), new RenderMaterialDefinition2D { Fill = "#25d2be" }, "assets")]
+            Objects = [new(new(105), "orbit", new() { Id = "orbit", Name = "Orbit", Geometry = [new() { Id = "circle", A = "origin", Geometry = Circle2D.Builder.Create(12), Material = new() { Fill = "#25d2be" } }] })]
         };
         var world = new WorldState2D([new(42, true)])
         {
             CutGrass = [new(3, 1), new(5, 2)],
-            Objects = [new(new(105), position, .3f)]
+            Objects = [new(new(105), position, .3f) { LinearVelocity = new(12, -4), AngularVelocity = .7f, Time = 2.5, IsEnabled = false }]
         };
         ImmutableArray<EnemyState2D> enemies =
         [
             new(enemyId, EnemyKind2D.Rival, position, new(5f, 1f), 0.2f, -1f, true, true)
                 { Person = person with { Id = enemyId }, IsAttacking = true, AttackElapsedSeconds = 0.12f, MoveX = -1f },
-            new(new EntityId2D(104), EnemyKind2D.PhysicsProp, position, Vector2.Zero, 0.4f, 1f, true, true)
         ];
         var snapshot = new SessionFrame2D(500, [player], content, world, enemies, []);
         var options = CreateOptions();
@@ -71,8 +70,8 @@ public sealed class ObservationRoundTripTests
         Assert.Equal([.. player.Weapons.Projectiles], [.. restored.Players[0].Weapons.Projectiles]);
         Assert.Equal(enemies.ToArray(), restored.Enemies.ToArray());
         Assert.Equal([.. world.Objects], [.. restored.World.Objects]);
-        Assert.Equal(content.Objects[0].Geometry!.ToJson(), restored.Content.Objects[0].Geometry!.ToJson());
-        Assert.Equal(content.Objects[0].Material, restored.Content.Objects[0].Material);
+        Assert.Equal(content.Objects[0].Part.ToJson(), restored.Content.Objects[0].Part.ToJson());
+        Assert.Equal(content.Objects[0].TextureRoot, restored.Content.Objects[0].TextureRoot);
         Assert.True(world.CutGrass.SetEquals(restored.World.CutGrass));
         Assert.Equal([.. content.Checkpoints], [.. restored.Content.Checkpoints]);
         var restoredTerrain = Assert.Single(restored.Content.Terrain);

@@ -8,15 +8,15 @@ using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Authored;
 
-public sealed class PhysicsPropAssetTests
+public sealed class PhysicalPartAssetTests
 {
-    private static string DumbbellJson => File.ReadAllText(Path.Combine(TestAssetPath.AuthoredRoot, "physics-props", "dumbbell.json"));
+    private static string DumbbellJson => File.ReadAllText(Path.Combine(TestAssetPath.AuthoredRoot, "parts", "dumbbell.json"));
 
     [Fact]
     public void DumbbellLoadsItsCompositePartsAndPhysicsSettingsFromJsonAndRoundTrips()
     {
-        var asset = PhysicsPropAsset.FromJson(DumbbellJson);
-        var shape = Assert.IsType<CompositeShape2D>(asset.Shape);
+        var asset = Part.FromJson(DumbbellJson);
+        var shape = Assert.IsType<CompositeShape2D>(App2d.Core.Characters.Geometry.PartShapes2D.Collision(asset));
         Assert.Collection(shape.Parts.ToArray(),
             part => Assert.Equal(Rectangle2D.Builder.Create(new(-36, -9), new(36, 9)), Assert.IsType<Rectangle2D>(part)),
             part => Assert.Equal(Circle2D.Builder.Create(16, new(-42, 0)), Assert.IsType<Circle2D>(part)),
@@ -24,33 +24,31 @@ public sealed class PhysicsPropAssetTests
         var bounds = ShapeBounds2D.Calculate(shape);
         Assert.Equal(new Vector2(-58, -16), bounds.Min);
         Assert.Equal(new Vector2(58, 16), bounds.Max);
-        Assert.Equal(BodyMotionType2D.Dynamic, asset.Body.MotionType);
-        Assert.Equal(2f, asset.Body.Mass);
-        Assert.Equal(1800f, asset.Body.MomentOfInertia);
-        Assert.False(asset.Body.FreezeRotation);
-        Assert.Equal(.4f, asset.Body.Friction);
-        Assert.Equal(.15f, asset.Body.Restitution);
-        Assert.Equal(.8f, asset.HitVelocityScale);
-        Assert.Equal(4.5f, asset.HitAngularKick);
-        Assert.Equal(asset.ToJson(), PhysicsPropAsset.FromJson(asset.ToJson()).ToJson());
+        Assert.Equal(BodyMotionType2D.Dynamic, asset.Physics!.MotionType);
+        Assert.Equal(2f, asset.Physics!.Mass);
+        Assert.Equal(1800f, asset.Physics!.MomentOfInertia);
+        Assert.False(asset.Physics!.FreezeRotation);
+        Assert.Equal(.4f, asset.Physics!.Friction);
+        Assert.Equal(.15f, asset.Physics!.Restitution);
+        Assert.Equal(asset.ToJson(), Part.FromJson(asset.ToJson()).ToJson());
     }
 
     [Fact]
     public void InvalidCompositeChildrenAreRejectedAtTheAssetBoundary()
     {
         var json = JsonNode.Parse(DumbbellJson)!;
-        json["shape"]!["parts"]![1]!["radius"] = 0;
+        json["geometry"]![1]!["geometry"]!["radius"] = 0;
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => PhysicsPropAsset.FromJson(json.ToJsonString()));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Part.FromJson(json.ToJsonString()));
     }
 
     [Fact]
     public void MisspelledPhysicsSettingsAreRejected()
     {
         var json = JsonNode.Parse(DumbbellJson)!;
-        json["body"]!["fricton"] = .4f;
+        json["physics"]!["fricton"] = .4f;
 
-        Assert.Throws<JsonException>(() => PhysicsPropAsset.FromJson(json.ToJsonString()));
+        Assert.Throws<JsonException>(() => Part.FromJson(json.ToJsonString()));
     }
 
     [Fact]
@@ -59,16 +57,16 @@ public sealed class PhysicsPropAssetTests
         var root = Path.Combine(Path.GetTempPath(), $"physics-props-{Guid.NewGuid():N}");
         try
         {
-            Directory.CreateDirectory(Path.Combine(root, "physics-props"));
-            File.WriteAllText(Path.Combine(root, "physics-props", "dumbbell.json"), DumbbellJson);
+            Directory.CreateDirectory(Path.Combine(root, "parts"));
+            File.WriteAllText(Path.Combine(root, "parts", "dumbbell.json"), DumbbellJson);
             var invalid = JsonNode.Parse(DumbbellJson)!;
             invalid["id"] = "broken-prop";
-            invalid["body"]!["mass"] = 0;
-            File.WriteAllText(Path.Combine(root, "physics-props", "broken.json"), invalid.ToJsonString());
+            invalid["physics"]!["mass"] = 0;
+            File.WriteAllText(Path.Combine(root, "parts", "broken.json"), invalid.ToJsonString());
 
             var catalog = AuthoredCatalog.Load(root);
 
-            Assert.Equal("dumbbell", Assert.Single(catalog.PhysicsProps).Key);
+            Assert.Equal("dumbbell", Assert.Single(catalog.Parts).Key);
             Assert.Contains("broken.json", Assert.Single(catalog.Errors));
             Assert.EndsWith("dumbbell.json", catalog.PathOf("dumbbell"));
         }

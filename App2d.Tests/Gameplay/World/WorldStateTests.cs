@@ -92,7 +92,8 @@ public sealed class WorldStateTests
         Assert.True(Assert.Single(entered.World.Checkpoints).IsActive);
         Assert.False(Assert.Single(initial.Checkpoints).IsActive);
         Assert.NotEqual(initial.Objects[0].Position, entered.World.Objects[0].Position);
-        Assert.Equal(5, entered.Enemies.Length);
+        Assert.Equal(4, entered.Enemies.Length);
+        Assert.Equal(2, entered.World.Objects.Length);
         Assert.Equal(things[2].Position, entered.Content.GoalPosition);
         Assert.Same(initialContent, entered.Content); // Nothing streamed or changed, so content is shared.
         Assert.Empty(Step().Events.OfType<CheckpointActivated2D>());

@@ -1,3 +1,5 @@
+using App2d.Core.Rendering.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.World;
 using App2d.Core;
@@ -24,12 +26,12 @@ public sealed class AuthoredObject2DTests
     [Fact]
     public void JsonAssetRoundTripsItsShapeMaterialBodySurfaceAndGenericCurve()
     {
-        var asset = ObjectAsset2D.Load(SamplePath);
-        var restored = ObjectAsset2D.FromJson(asset.ToJson());
+        var asset = Part.Load(SamplePath);
+        var restored = Part.FromJson(asset.ToJson());
         Assert.Equal(asset.ToJson(), restored.ToJson());
-        Assert.IsType<Rectangle2D>(restored.Geometry);
+        Assert.IsType<Rectangle2D>(restored.Geometry[0].Geometry);
         Assert.IsType<CubicBezier2D>(restored.Motion!.Curve);
-        Assert.Equal("#25d2be", restored.Material!.Fill);
+        Assert.Equal("#25d2be", restored.Geometry[0].Material!.Fill);
         Assert.True(restored.Physics!.TransfersContactMotion);
         Assert.Equal(Vector2.UnitY, restored.Surface!.OneWayNormal);
         var origin = new Vector2(30, 40);
@@ -62,15 +64,15 @@ public sealed class AuthoredObject2DTests
             case "progress-name": json["motion"]!["progress"] = new JsonArray("smoth"); break;
             case "empty-progress": json["motion"]!["progress"] = new JsonArray(); break;
             case "period": json["motion"]!["periodSeconds"] = 0; break;
-            case "shape": json["geometry"]!["max"]!["x"] = -100; break;
+            case "shape": json["geometry"]![0]!["geometry"]!["max"]!["x"] = -100; break;
             case "dynamic-path": json["physics"]!["motionType"] = "Dynamic"; break;
             case "normal": json["surface"]!["oneWayNormal"]!["y"] = 0; break;
             case "unknown-field": json["motion"]!["speeed"] = 3; break;
             case "no-shape": json.AsObject().Remove("geometry"); json.AsObject().Remove("material"); break;
-            case "material-without-geometry": json["collision"] = json["geometry"]!.DeepClone(); json.AsObject().Remove("geometry"); break;
-            case "collision-without-physics": json["collision"] = json["geometry"]!.DeepClone(); json.AsObject().Remove("physics"); json.AsObject().Remove("surface"); json.AsObject().Remove("motion"); break;
+            case "material-without-geometry": json["geometry"]![0]!.AsObject().Remove("geometry"); break;
+            case "collision-without-physics": json["collision"] = json["geometry"]![0]!["geometry"]!.DeepClone(); json.AsObject().Remove("physics"); json.AsObject().Remove("surface"); json.AsObject().Remove("motion"); break;
         }
-        var error = Record.Exception(() => ObjectAsset2D.FromJson(json.ToJsonString()));
+        var error = Record.Exception(() => Part.FromJson(json.ToJsonString()));
         Assert.NotNull(error);
         Assert.IsType(exceptionType, error, exactMatch: false);
     }
@@ -78,7 +80,7 @@ public sealed class AuthoredObject2DTests
     [Fact]
     public void JsonPlatformCarriesARiderAcrossACompleteCycleAndDisposesItsBody()
     {
-        var asset = ObjectAsset2D.Load(SamplePath);
+        var asset = Part.Load(SamplePath);
         asset = asset with
         {
             Motion = asset.Motion! with { Curve = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(20, 0)), PeriodSeconds = 4 }
@@ -105,7 +107,7 @@ public sealed class AuthoredObject2DTests
     [Fact]
     public void SnapshotPresentationPreservesGenericGeometryAndOnlyMovesWhenStateArrives()
     {
-        var asset = ObjectAsset2D.Load(SamplePath) with { Geometry = Circle2D.Builder.Create(12) };
+        var asset = Part.Load(SamplePath) with { Geometry = [new() { Id = "circle", A = "origin", Geometry = Circle2D.Builder.Create(12), Material = new() { Fill = "#25d2be" } }] };
         var placement = new ObjectPlacement2D("circle-lift", asset, new(-200, 100));
         var physics = new PhysicsWorld2D();
         var map = new EditableTileMap2D(32, 32, 32, 32, new(-512, -640), ["dark-cave"]);
@@ -116,9 +118,9 @@ public sealed class AuthoredObject2DTests
         using var view = new WorldPresentation2D(scene, textures);
         view.ApplyState(level.CaptureContent(), level.CaptureWorld());
         var visual = Assert.Single(scene);
-        Assert.IsType<Circle2D>(visual.Shape);
-        var shader = Assert.IsType<ShapeMaterialShader2D>(visual.Shader);
-        Assert.Equal(asset.Material, shader.Material);
+        Assert.IsType<Circle2D>(asset.Geometry[0].Geometry);
+        var shader = Assert.IsType<PartShader2D>(visual.Shader);
+        Assert.Same(asset, shader.Part);
         level.UpdateWorldMotion(.5f);
         physics.Step(.5f);
         Assert.Equal(placement.Position, visual.Transform.Position);
@@ -131,17 +133,17 @@ public sealed class AuthoredObject2DTests
     [Fact]
     public void CollisionShapeOverridesTheColliderAndGeometryStillDraws()
     {
-        var asset = ObjectAsset2D.Load(SamplePath) with { Collision = Circle2D.Builder.Create(4) };
+        var asset = Part.Load(SamplePath) with { Collision = Circle2D.Builder.Create(4) };
         var physics = new PhysicsWorld2D();
         using var instance = new AuthoredObject2D(EntityId2D.Create(), new("lift", asset, Vector2.Zero), physics, 1, uint.MaxValue);
         Assert.IsType<Circle2D>(instance.WorldObject.Shape);
-        Assert.IsType<Rectangle2D>(instance.CaptureDefinition().Geometry);
+        Assert.IsType<Rectangle2D>(instance.CaptureDefinition().Part.Geometry[0].Geometry);
     }
 
     [Fact]
     public void CollisionOnlyObjectHasABodyAndNoVisual()
     {
-        var asset = ObjectAsset2D.Load(SamplePath) with { Geometry = null, Material = null, Collision = Circle2D.Builder.Create(4) };
+        var asset = Part.Load(SamplePath) with { Geometry = [], Collision = Circle2D.Builder.Create(4) };
         var physics = new PhysicsWorld2D();
         using var instance = new AuthoredObject2D(EntityId2D.Create(), new("sensor", asset, Vector2.Zero), physics, 1, uint.MaxValue);
         Assert.NotNull(instance.Body);
@@ -155,23 +157,23 @@ public sealed class AuthoredObject2DTests
     [Fact]
     public void CollisionShapeRoundTripsThroughJson()
     {
-        var asset = ObjectAsset2D.Load(SamplePath) with { Collision = Circle2D.Builder.Create(4) };
-        var restored = ObjectAsset2D.FromJson(asset.ToJson());
+        var asset = Part.Load(SamplePath) with { Collision = Circle2D.Builder.Create(4) };
+        var restored = Part.FromJson(asset.ToJson());
         Assert.IsType<Circle2D>(restored.Collision);
-        Assert.IsType<Rectangle2D>(restored.Geometry);
+        Assert.IsType<Rectangle2D>(restored.Geometry[0].Geometry);
     }
 
     [Fact]
     public void RenderingAndPhysicsAreIndependentOptIns()
     {
-        var source = ObjectAsset2D.Load(SamplePath);
+        var source = Part.Load(SamplePath);
         var physics = new PhysicsWorld2D();
         using var visualOnly = new AuthoredObject2D(EntityId2D.Create(), new("art", source with { Physics = null, Surface = null }, Vector2.Zero), physics, 1, uint.MaxValue);
         Assert.Null(visualOnly.Body);
         visualOnly.Update(1);
         Assert.NotEqual(Vector2.Zero, visualOnly.WorldObject.Transform.Position);
-        using var collisionOnly = new AuthoredObject2D(EntityId2D.Create(), new("invisible", source with { Material = null }, Vector2.Zero), physics, 1, uint.MaxValue);
+        using var collisionOnly = new AuthoredObject2D(EntityId2D.Create(), new("invisible", source with { Geometry = [], Collision = (App2d.Core.Geometry.Shapes.IShape2D)source.Geometry[0].Geometry! }, Vector2.Zero), physics, 1, uint.MaxValue);
         Assert.NotNull(collisionOnly.Body);
-        Assert.Null(collisionOnly.CaptureDefinition().Material);
+        Assert.Empty(collisionOnly.CaptureDefinition().Part.Geometry);
     }
 }

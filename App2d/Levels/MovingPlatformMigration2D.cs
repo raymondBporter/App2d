@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Characters;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;
@@ -129,16 +130,15 @@ internal static class MovingPlatformMigration2D
         }
     }
 
-    private static ObjectAsset2D BuildAsset(string slug, string name, Definition definition, Thing sample)
+    private static Part BuildAsset(string slug, string name, Definition definition, Thing sample)
     {
         var travel = new Vector2(sample.TravelX, sample.TravelY);
         var half = new Vector2(definition.Width / 2f, definition.Height / 2f);
-        return new ObjectAsset2D
+        return new Part
         {
             Id = slug,
             Name = name,
-            Geometry = Rectangle2D.Builder.Create(-half, half),
-            Material = new RenderMaterialDefinition2D { Fill = "#" + (definition.ColorArgb & 0xFFFFFF).ToString("x6", CultureInfo.InvariantCulture) },
+            Geometry = [new() { Id = "shape", A = "origin", Frame = "origin", Geometry = Rectangle2D.Builder.Create(-half, half), Material = new RenderMaterialDefinition2D { Fill = "#" + (definition.ColorArgb & 0xFFFFFF).ToString("x6", CultureInfo.InvariantCulture) }, }],
             Physics = new PhysicsBodySettings2D { MotionType = BodyMotionType2D.Kinematic, Restitution = 0f, TransfersContactMotion = true },
             Surface = new ObjectSurface2D { OneWayNormal = Vector2.UnitY },
             Motion = new CurveMotionDefinition2D
@@ -300,5 +300,5 @@ internal static class MovingPlatformMigration2D
 
     private sealed record Definition(long Id, string Name, float Width, float Height, int ColorArgb);
     private sealed record Thing(long Id, string? Name, float TravelX, float TravelY, float Speed);
-    private sealed record Group(long DefinitionId, bool KeepsDefinition, string Name, string File, string AssetPath, ObjectAsset2D Asset, List<long> ThingIds);
+    private sealed record Group(long DefinitionId, bool KeepsDefinition, string Name, string File, string AssetPath, Part Asset, List<long> ThingIds);
 }

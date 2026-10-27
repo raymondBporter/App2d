@@ -38,8 +38,6 @@ internal static class EnemyRenderingSmoke2D
                 Person = default(PersonState2D) with { Id = rivalId, Position = new(220f, 0f), Facing = -1f,
                     HitPoints = 12, MaximumHitPoints = 12, IsGrounded = true }
             },
-            new(EntityId2D.Create(), EnemyKind2D.PhysicsProp, new(340f, 0f), Vector2.Zero, 0.4f, 1f, true, true)
-                { TypeId = "dumbbell", PhysicsProp = catalog.PhysicsProps["dumbbell"] }
         ];
         view.Update(states, [new RivalAttackStarted2D(rivalId, new(220f, 0f), UnarmedAttackKind2D.Kick, 0.42f)], 0.18f, 1);
         using var renderer = new Renderer2D(new Camera2D { Zoom = 1.35f, Position = new(20f, 25f) }, device);

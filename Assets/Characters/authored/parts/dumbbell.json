@@ -1,0 +1,68 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "dumbbell",
+  "name": "Tumbling dumbbell",
+  "usage": "world",
+  "geometry": [
+    {
+      "id": "shape-1",
+      "a": "origin",
+      "frame": "origin",
+      "geometry": {
+        "kind": "rectangle",
+        "min": {
+          "x": -36,
+          "y": -9
+        },
+        "max": {
+          "x": 36,
+          "y": 9
+        }
+      },
+      "material": {
+        "fill": "#ff9a3b"
+      }
+    },
+    {
+      "id": "shape-2",
+      "a": "origin",
+      "frame": "origin",
+      "geometry": {
+        "kind": "circle",
+        "center": {
+          "x": -42,
+          "y": 0
+        },
+        "radius": 16
+      },
+      "material": {
+        "fill": "#ff9a3b"
+      }
+    },
+    {
+      "id": "shape-3",
+      "a": "origin",
+      "frame": "origin",
+      "geometry": {
+        "kind": "circle",
+        "center": {
+          "x": 42,
+          "y": 0
+        },
+        "radius": 16
+      },
+      "material": {
+        "fill": "#ff9a3b"
+      }
+    }
+  ],
+  "physics": {
+    "motionType": "Dynamic",
+    "mass": 2,
+    "momentOfInertia": 1800,
+    "freezeRotation": false,
+    "friction": 0.4,
+    "restitution": 0.15
+  }
+}

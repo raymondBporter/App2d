@@ -107,11 +107,19 @@ public sealed partial class Renderer2D : IDisposable
     public void Draw(WorldObject2D worldObject)
     {
         RequireFrame();
-        if (!worldObject.IsVisible || IsCulled(worldObject))
+        if (!worldObject.IsVisible || worldObject.Shader is not PartShader2D { Part.IsAnimated: true } && IsCulled(worldObject))
         {
             return;
         }
 
+        if (worldObject.Shader is PartShader2D part)
+        {
+            Flush();
+            _characterRenderer ??= new(_device);
+            var transform = worldObject.Transform.Matrix * _camera.WorldToDeviceMatrix;
+            _characterRenderer.Draw(part.Drawing, PointCharacterRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height), ToXnaMatrix(transform));
+            return;
+        }
         if (worldObject.Shader is AuthoredCharacterShader authored)
         {
             Flush();

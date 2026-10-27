@@ -2,7 +2,7 @@
 
 Date: 2026-10-26.
 
-Status: reviewed and in progress. S0, S1 and S2 are implemented. S3-S5 and the remaining S6 cutover are pending; the earlier demo cleanup is recorded below.
+Status: reviewed and in progress. S0, S1, S2 and S3 are implemented. S4-S5 and the remaining S6 cutover are pending; the earlier demo cleanup is recorded below.
 
 This follows the [completed character migration](character-system-migration-plan.md). Keep its working rig, proportions, constraints, module composition, collision registration, animation, document/undo infrastructure and game artwork. The next objective is fewer independent definitions, loaders, placement paths, inspectors and spawners.
 
@@ -178,10 +178,10 @@ Delete: PropAsset's separate codec/catalog route, PropShape's duplicate placemen
 
 ### S3. Replace the physics-prop special case
 
-- [ ] S3a. Load and instantiate a Part with collision and PhysicsBodySettings2D through the shared catalog and world-object path.
-- [ ] S3b. Convert dumbbell.json and its world placement, presentation and state handling. Remove HitVelocityScale, HitAngularKick and its fake combatant health.
+- [x] S3a. Load and instantiate a Part with collision and PhysicsBodySettings2D through the shared catalog and world-object path.
+- [x] S3b. Convert dumbbell.json and its world placement, presentation and state handling. Remove HitVelocityScale, HitAngularKick and its fake combatant health.
 
-The current [PhysicsProp2D](../App2d/Gameplay/World/PhysicsProp2D.cs) is an enemy/combatant with a million-point health pool and TakeDamage that directly changes velocities. That is the concrete special case to remove, not an API to preserve under a different name.
+The retired `PhysicsProp2D` was an enemy/combatant with a million-point health pool and TakeDamage that directly changes velocities. That is the concrete special case to remove, not an API to preserve under a different name.
 
 Physics still requires the existing runtime body and collider. Shared instantiation creates them from settings; there is no Dumbbell class or another per-object actor class.
 
@@ -192,6 +192,16 @@ Gate: a dumbbell and another differently shaped JSON part fall, collide, rotate 
 Move passive-object lifetime/state handling to the common world-object path rather than preserving IEnemyActor2D just to retain the old registration API. Reuse existing world ownership/streaming infrastructure; this does not require redesigning every game actor or introducing another entity framework.
 
 Delete: PhysicsPropAsset, its dedicated loader/catalog collection and PhysicsProp2D-specific spawner/view/state branch after their usages convert. Old TumbleProp world placements can map to a generic asset reference at the loading boundary.
+
+S3 implementation review (2026-10-27):
+
+- Parts now own optional collision, physics, surface and path settings. The existing `AuthoredObject2D` and `ObjectPlacement2D` use Part directly. `PhysicsPropAsset`, `PhysicsProp2D`, their separate catalog and enemy view/state branch are deleted. The former `ObjectAsset2D` schema is also deleted, avoiding parallel Part and platform payloads.
+- The dumbbell and a new rectangular crate share the same world runtime, with no health or AI. All eight platform JSON files also use Parts, preserving paths, one-way surfaces and rider carrying. These resources retain world units and scale 1; character resources are unchanged.
+- Rendering uses shared Part geometry/material/animation drawing. Collision uses rigid shapes with the same pivot and scale, or an explicit collision override. Mesh/animated physical Parts require that override; per-geometry gameplay collision remains S4 work.
+- Streaming, pause/resume, disposal and object state restoration preserve configured motion type, velocities and clock. Passive objects live in world content/state, and old TumbleProp references map to dumbbell at the loading boundary. Texture roots survive snapshot transport. No experimental hit gains remain in normal runtime code.
+- Originals are backed up under `artifacts/part-consolidation/s3-original/Assets`; explicit offline conversions and reports are under `s3-converted-authored` and `s3-converted-world`. All nine source files convert repeatably; ordinary loading rejects the retired formats.
+- Verification: 1,254 affected authoring/gameplay/physics/presentation/loading tests passed, followed by 14 focused simulation/lifecycle checks after simplifying the legacy placement adapter. Studio built; native editor checks passed 158/158. The object rendering study produced five frames, inspected at the initial and settled poses: the two passive bodies fall/rotate/stack while the platform and orbital path still run. Physical tests compare rough/slippery contact, scaled pivots, all three motion types, clock restore, streaming/reload/disposal and allocation-free steady presentation.
+- Production C# is 35 lines smaller, including the offline converter; additional regression coverage increases the total C# diff by 90 lines. S4 Behavior/collider ownership and S5 texture/material/path tracks remain pending.
 
 ### S4. Gather game-specific configuration under Behavior
 
@@ -245,7 +255,7 @@ Use existing test groups and extend only meaningful boundaries:
 | Preview/document selection | LibraryPartEditingTests, AppearanceAuthoringTests, EditorSessionTests |
 | Parts, placement and art | PartAssetTests, PartAttachmentDrawingTests, WeaponOrientationTests, material and rendering tests |
 | Variants/animated parts | AnimatedPartTests, appearance/build tests, module/variant tests and character reference captures |
-| Passive physics and loading | PhysicsPropAssetTests / PhysicsProp2DTests during conversion; generic object/body tests afterward |
+| Passive physics and loading | PhysicalPartAssetTests / PhysicalPartTests / AuthoredObject2DTests / WorldPartConversionTests |
 | Gameplay behavior | EntityBehaviorTests, ContactResolutionTests and existing gameplay/state round trips |
 | Frame/material/path animation | Existing generic animation, key sampling and kinematic-motion tests plus a combined rig/texture test |
 
@@ -291,5 +301,5 @@ Track reduction by the old paths removed and the ease of authoring these example
 | 2026-10-26 | Preview fix implemented; consolidation plan written | S0a: two failures reproduced before fix; 28 focused tests passed afterward in the previous work pass. Current source still contains that fix. This planning pass adds documentation only. Next: S0b and S1a. |
 | 2026-10-26 | Requested demo cleanup completed ahead of consolidation | S6a complete; wave-specific portion of S6b complete. Removed the curve-face model/template, nine demo clips, face-curve part, character wave modifier, unused payload interface and demo conversion command. Game faces and Core normal-offset curves retained. Seven demo reference cases removed; all 74 retained cases unchanged. Verification: 866 character/curve/rendering tests passed; Studio built in a separate output directory because the open editor locked its normal output; editor smoke 155/155 and acceptance 46/46, with curve/game-face frames inspected. These results cover the cleanup snapshot before concurrent consolidation edits. |
 | 2026-10-26 | S0b and S1 complete | 726 affected authored/geometry tests passed, then 24 focused preview/session/mesh tests passed after the final clock adjustment; Studio editor smoke 158/158 and acceptance 46/46. Inspected outfit, centaur, standalone module and mesh-inspector frames. Existing character reference data stayed unchanged. Studio and the Noodle bridge built. Removed separate library-solid handling; next is S2 or the independent S3 passive-object proof. |
-
 | 2026-10-27 | S2a/S2b implemented | 30 props converted into the shared Part library; separate codec/catalog, drawing and clothing inspector removed. 789 integration tests, 158 editor checks and 46 acceptance checks passed. Next: S3. |
+| 2026-10-27 | S3a/S3b implemented | Unified passive bodies and moving platforms on Part and the existing world-object runtime. 1,254 integration tests, 158 native editor checks and the five-frame physics rendering study passed. Next: S4. |

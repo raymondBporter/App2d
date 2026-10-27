@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Contracts.World;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.IO;
@@ -186,16 +187,16 @@ public static class WorldFile2D
     private static System.Collections.ObjectModel.ReadOnlyCollection<ObjectPlacement2D> LoadMapObjects(string root, WorldMapAsset2D map)
     {
         var result = new List<ObjectPlacement2D>();
-        var assets = new Dictionary<string, ObjectAsset2D>(StringComparer.OrdinalIgnoreCase);
+        var assets = new Dictionary<string, Part>(StringComparer.OrdinalIgnoreCase);
         foreach (var thing in map.PositionThings)
         {
             // A disabled thing stays an editor row but places nothing, as a disabled platform once did.
             if (!thing.Enabled || !string.Equals(thing.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal)) continue;
-            ObjectAsset2D? asset;
+            Part? asset;
             try
             {
                 var assetPath = FilePaths.ResolveUnderRoot(root, thing.Asset ?? "");
-                if (!assets.TryGetValue(assetPath, out asset)) assets.Add(assetPath, asset = ObjectAsset2D.Load(assetPath));
+                if (!assets.TryGetValue(assetPath, out asset)) assets.Add(assetPath, asset = Part.Load(assetPath));
             }
             catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
             {

@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.IO;
 using App2d.Core.Objects;
 using App2d.Core.Validation;
@@ -12,7 +13,7 @@ internal sealed class ObjectAssetCatalog2D
 {
     private const string Folder = "objects";
     private readonly string _worldRoot;
-    private readonly Dictionary<string, ObjectAsset2D> _loaded = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Part> _loaded = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Exception> _failures = new(StringComparer.OrdinalIgnoreCase);
     private IReadOnlyList<string> _paths = [];
 
@@ -27,7 +28,7 @@ internal sealed class ObjectAssetCatalog2D
     public IReadOnlyList<string> Paths => _paths;
 
     /// <summary>A file that fails to load is remembered as failed until <see cref="Refresh"/>: the editor asks every frame.</summary>
-    public ObjectAsset2D Load(string relativePath)
+    public Part Load(string relativePath)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(relativePath);
         var resolved = FilePaths.ResolveUnderRoot(_worldRoot, relativePath);
@@ -43,7 +44,7 @@ internal sealed class ObjectAssetCatalog2D
 
         try
         {
-            asset = ObjectAsset2D.Load(resolved);
+            asset = Part.Load(resolved);
         }
         catch (Exception e) when (e is IOException or InvalidDataException or JsonException)
         {
@@ -55,7 +56,7 @@ internal sealed class ObjectAssetCatalog2D
         return asset;
     }
 
-    public bool TryLoad(string relativePath, [NotNullWhen(true)] out ObjectAsset2D? asset)
+    public bool TryLoad(string relativePath, [NotNullWhen(true)] out Part? asset)
     {
         try
         {

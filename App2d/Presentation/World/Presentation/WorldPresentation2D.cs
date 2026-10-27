@@ -1,3 +1,4 @@
+using App2d.Core.Rendering.Characters;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Geometry.Primitives;
@@ -21,7 +22,6 @@ namespace App2d.Presentation.World.Presentation;
 public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) : IDisposable
 {
     private readonly Dictionary<EntityId2D, (ObjectDefinition2D Definition, WorldObject2D Visual)> _objects = [];
-    private readonly Dictionary<string, TextureCache2D> _objectTextures = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<long, CheckpointView> _checkpoints = [];
     private readonly Dictionary<TileChunk2D, ChunkView> _chunks = [];
     private readonly Dictionary<(string Id, float Size), SideScrollerTerrainTileset2D> _tilesets = [];
@@ -80,6 +80,8 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             if (!_objects.TryGetValue(item.Id, out var view)) continue;
             view.Visual.Transform.Position = item.Position;
             view.Visual.Transform.Rotation = item.Rotation;
+            view.Visual.IsVisible = item.IsEnabled;
+            ((PartShader2D)view.Visual.Shader).SetTime(item.Time);
         }
 
         foreach (var checkpoint in _checkpoints)
@@ -114,15 +116,9 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
                 scene.Remove(existing.Visual);
                 _objects.Remove(item.Id);
             }
-            if (item.Material is not { } material || item.Geometry is not { } geometry) continue;
-            Texture2D? texture = null;
-            if (material.Texture is { } path)
-            {
-                if (!_objectTextures.TryGetValue(item.TextureRoot, out var cache))
-                    _objectTextures.Add(item.TextureRoot, cache = new(item.TextureRoot));
-                texture = cache.Load(path);
-            }
-            var visual = new WorldObject2D(geometry, new ShapeMaterialShader2D(material, texture));
+            if (item.Part.Geometry.Count == 0) continue;
+            var shader = new PartShader2D(item.Part) { TextureRoot = item.TextureRoot };
+            var visual = new WorldObject2D(shader.BoundsShape(), shader) { ZIndex = 1 };
             scene.Add(visual);
             _objects.Add(item.Id, (item, visual));
         }
@@ -239,8 +235,6 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
     {
         foreach (var (Definition, Visual) in _objects.Values) scene.Remove(Visual);
         _objects.Clear();
-        foreach (var cache in _objectTextures.Values) cache.Dispose();
-        _objectTextures.Clear();
         foreach (var checkpoint in _checkpoints.Values)
         {
             checkpoint.Visual.Dispose();

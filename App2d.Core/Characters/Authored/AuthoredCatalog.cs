@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;
 
-/// <summary>Authored characters and physics props under one root, found by scanning their folders. IDs come from file contents; errors are collected per file, not thrown.</summary>
+/// <summary>Authored characters and parts under one root, found by scanning their folders. IDs come from file contents; errors are collected per file, not thrown.</summary>
 public sealed class AuthoredCatalog
 {
     private readonly Dictionary<string, CharacterModel> _models = new(StringComparer.Ordinal);
@@ -12,7 +12,6 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, ResolvedModel> _resolved = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EntityAsset> _entityAssets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, PhysicsPropAsset> _physicsProps = new(StringComparer.Ordinal);
     private readonly Dictionary<string, GameProfile> _profiles = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Part> _parts = new(StringComparer.Ordinal);
     private string _textureRoot = Environment.CurrentDirectory;
@@ -24,7 +23,6 @@ public sealed class AuthoredCatalog
     /// <summary>Entity files that parsed. Only those in <see cref="Entities"/> compiled and may be played.</summary>
     public IReadOnlyDictionary<string, EntityAsset> EntityAssets => _entityAssets;
     public IReadOnlyDictionary<string, ResolvedEntity> Entities => _entities;
-    public IReadOnlyDictionary<string, PhysicsPropAsset> PhysicsProps => _physicsProps;
     /// <summary>Game profiles (P9c): the player's entity, role clips, gear and the world placement spawns, checked against the catalog.</summary>
     public IReadOnlyDictionary<string, GameProfile> Profiles => _profiles;
     public List<string> Errors { get; } = [];
@@ -34,7 +32,7 @@ public sealed class AuthoredCatalog
     public static AuthoredCatalog Load(string root)
     {
         var catalog = new AuthoredCatalog { _textureRoot = Path.GetFullPath(root) };
-        catalog.Scan(root, "parts", Part.FromJson, catalog._parts, p => p.Id);
+        catalog.Scan(root, "parts", json => Part.FromJson(json) with { TextureRoot = catalog._textureRoot }, catalog._parts, p => p.Id);
         catalog.Scan(root, "models", CharacterModel.FromJson, catalog._models, m => m.Id);
         foreach (var id in catalog._models.Keys)
         {
@@ -60,7 +58,6 @@ public sealed class AuthoredCatalog
             });
         }
 
-        catalog.Scan(root, "physics-props", PhysicsPropAsset.FromJson, catalog._physicsProps, p => p.Id);
         catalog.Scan(root, "entities", EntityAsset.FromJson, catalog._entityAssets, e => e.Id);
         foreach (var entity in catalog._entityAssets.Values)
         {

@@ -85,17 +85,25 @@ Game profile (P9c). `profiles/game.json` (format `app2d-profile`, `GameProfile`,
 
 BoilerBrute and GreenDinosaur world placements use the authored `maul-brute` and `stalker-pest` entities through `AuthoredEntityEnemy2D`, bound by the profile's `spawns`. Their old gameplay classes, sprite views and hammer-specific messages are removed; missing authored entities produce an error. Presentation uses the same authored final pose and `EntityCue2D` events as other authored enemies. The placement IDs remain compatible with saved maps. Shieldback and Rival still have code-defined fallbacks when their authored entities are absent; those paths remain supported.
 
-Passive physics props load from `physics-props/*.json` into `AuthoredCatalog.PhysicsProps`. The first is
-[`dumbbell.json`](../Assets/Characters/authored/physics-props/dumbbell.json): its `shape` is a composite of one rectangle and two circles,
-shared by collision and presentation. Geometry uses the existing tagged shape JSON directly. Composite `parts` must be nonempty
-and convex; their coordinates, and all physics-prop settings, use game world units rather than character model units.
+Passive world objects are ordinary Parts. [`dumbbell.json`](../Assets/Characters/authored/parts/dumbbell.json)
+and [`tumbling-crate.json`](../Assets/Characters/authored/parts/tumbling-crate.json) load through `AuthoredCatalog.Parts`.
+Their geometry entries carry the render materials; optional `physics` holds the existing `PhysicsBodySettings2D`.
+Rigid finite shape entries also supply collision, or `collision` supplies an explicit rigid shape (required for animated
+or mesh-based physical parts). Both drawing and collision apply the same Part pivot and scale. These assets use world
+units at scale 1; character assets keep their existing units. Mass and inertia remain explicitly authored physics values.
 
-`body` holds plain `PhysicsBodySettings2D` data: motion type, mass, moment of inertia, rotation locking, gravity scale,
-friction and restitution. Settings validate before `CreateBody` registers the live body and collider in `PhysicsWorld2D`.
-The spawning world supplies identity and collision layers. `fill` is a solid `#RRGGBB` color; `hitVelocityScale` and
-`hitAngularKick` configure the response to a registered strike. Physics props are currently passive and indestructible.
-They need no character model, skeleton or animation. Existing `tumble-prop` map placements spawn the catalog's `dumbbell`
-through the shared `PhysicsProp2D` runtime; the old dumbbell-specific class and duplicated drawing shape are removed.
+`ObjectPlacement2D` references a Part and `AuthoredObject2D` owns its optional body in the normal level object collection.
+The same runtime handles moving platforms, optional one-way `surface` settings and `motion` paths. Passive Parts have
+no health, hit ledger, AI or enemy registration: contact and friction drive their motion. Old `TumbleProp` placements
+map to the catalog's dumbbell at loading; new objects use `ObjectPlacement2D` with a Part from the catalog or a level
+object file in the same Part format. World snapshots include position, rotation, velocity, angular velocity, clock and enabled
+state. Streaming pauses the clock and body, resumes the configured motion type and velocities, and disposal removes the
+body and collider. Presentation consumes snapshots and uses the shared Part drawing path, including animation and textures.
+
+The retired `app2d-physics-prop` and `app2d-object` formats are accepted only by the offline `WorldPartConversion` /
+`--convert-formats <source> <scratch>` converter. It preserves units, body settings, materials, surfaces and paths, lists
+the deliberately removed `hitVelocityScale` / `hitAngularKick`, and leaves originals untouched. Normal loading requires
+Part v3. All eight shipped platform files have been converted; their existing paths and placement IDs are retained.
 
 ## First migration: resource-backed model templates
 

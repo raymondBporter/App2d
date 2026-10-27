@@ -31,7 +31,8 @@ public sealed class AuthoredCatalogTests
             "hair-short", "hair-short-back", "hammer", "pistol", "rock-thrower-bag", "rock-thrower-beard", "rock-thrower-hair", "rock-thrower-hide-wrap",
             "sandal-left", "sandal-right", "scavenged-shell", "sheath", "shield-defender-beard", "shield-defender-hair", "shield-defender-hide-wrap", "spear", "sword", "throwing-rock", "wooden-club"], catalog.Parts.Values.Where(p => p.Usage is "prop" or "hair" or "clothing").Select(p => p.Id).Order());
         Assert.Equal(["baby-triceratops", "cinder-gunner", "club-caveman", "flying-pterosaur", "hero", "maul-brute", "player", "rock-thrower", "shield-defender", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
-        Assert.Equal(["dumbbell"], catalog.PhysicsProps.Keys.Order());
+        Assert.Contains("dumbbell", catalog.Parts.Keys);
+        Assert.Contains("tumbling-crate", catalog.Parts.Keys);
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file (the P11a limb conversion raised the Person's structure to 2).
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })

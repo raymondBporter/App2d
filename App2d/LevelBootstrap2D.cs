@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Assets;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.IO;
@@ -98,10 +99,10 @@ internal static class LevelBootstrap2D
             var point = new Vector2(position["x"]!.GetValue<float>(), position["y"]!.GetValue<float>());
             var map = maps.FirstOrDefault(m => Contains(m.TileMap.WorldBounds, point))
                 ?? throw new InvalidDataException($"Invalid world '{manifest}': no map contains object '{id}' at ({point.X}, {point.Y}).");
-            ObjectAsset2D loaded;
+            Part loaded;
             try
             {
-                loaded = ObjectAsset2D.Load(FilePaths.ResolveUnderRoot(root, asset));
+                loaded = Part.Load(FilePaths.ResolveUnderRoot(root, asset));
             }
             catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or JsonException)
             {

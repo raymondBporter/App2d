@@ -1,0 +1,36 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "tumbling-crate",
+  "name": "Tumbling crate",
+  "usage": "world",
+  "geometry": [
+    {
+      "id": "box",
+      "a": "origin",
+      "frame": "origin",
+      "geometry": {
+        "kind": "rectangle",
+        "min": {
+          "x": -18,
+          "y": -24
+        },
+        "max": {
+          "x": 18,
+          "y": 24
+        }
+      },
+      "material": {
+        "fill": "#b7814f"
+      }
+    }
+  ],
+  "physics": {
+    "motionType": "Dynamic",
+    "mass": 3,
+    "momentOfInertia": 900,
+    "freezeRotation": false,
+    "friction": 0.65,
+    "restitution": 0.05
+  }
+}

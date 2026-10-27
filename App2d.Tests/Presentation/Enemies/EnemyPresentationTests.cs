@@ -151,62 +151,6 @@ public sealed class EnemyPresentationTests
         Assert.Empty(scene);
     }
 
-    [Fact]
-    public void PhysicsPropVisualUsesItsAssetAndCopiesValuesInsteadOfSharingThePhysicsObject()
-    {
-        using var textures = new TextureCache2D(TestAssetPath.Root);
-        var scene = new Scene2D();
-        using var view = new EnemyPresentation2D(scene, textures,
-            TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
-        var physics = new PhysicsWorld2D();
-        var asset = PhysicsPropAsset.FromJson(Catalog.PhysicsProps["dumbbell"].ToJson());
-        asset.Shape = Core.Shapes.Circle2D.Builder.Create(7);
-        asset.Fill = "#123456";
-        var prop = new PhysicsProp2D(EntityId2D.Create(), asset, physics, Vector2.Zero, 1, 4);
-        var original = prop.CaptureState();
-        view.Update([original], [], 0f, 0);
-        var visual = Assert.Single(scene);
-        Assert.NotSame(prop.WorldObject, visual);
-        Assert.Same(prop.WorldObject.Shape, visual.Shape);
-        Assert.Equal(ColorExtensions.FromHexRgb("#123456"), visual.Shader.BaseColor);
-        prop.WorldObject.Transform.Position = new Vector2(80f, 20f);
-        prop.WorldObject.Transform.Rotation = 0.4f;
-        Assert.Equal(Vector2.Zero, visual.Transform.Position);
-        view.Update([prop.CaptureState()], [], 0f, 1);
-        Assert.Equal(new Vector2(80f, 20f), visual.Transform.Position);
-        Assert.Equal(0.4f, visual.Transform.Rotation);
-        Assert.Equal(Vector2.Zero, original.Position);
-        prop.SetSimulationEnabled(false);
-        view.Update([prop.CaptureState()], [], 0f, 2);
-        Assert.False(visual.IsVisible);
-    }
-
-    [Fact]
-    public void SteadyStatePropPresentationDoesNotAllocateOrMutateObservations()
-    {
-        using var textures = new TextureCache2D(TestAssetPath.Root);
-        using var view = new EnemyPresentation2D(new Scene2D(), textures,
-            TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
-        var state = new EnemyState2D(new(42), EnemyKind2D.PhysicsProp,
-            Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
-        { TypeId = "dumbbell", PhysicsProp = Catalog.PhysicsProps["dumbbell"] };
-        System.Collections.Immutable.ImmutableArray<EnemyState2D> states = [state];
-        for (var i = 0; i < 1000; i++)
-        {
-            view.ApplyState(states, [], i);
-            view.Advance(1f / 240f);
-        }
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 1000; i++)
-        {
-            view.ApplyState(states, [], i);
-            view.Advance(1f / 240f);
-        }
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-        Assert.Equal(0, allocated);
-        Assert.Equal(state, states[0]);
-    }
-
     private static EnemyState2D AuthoredAttack(string entityId, float seconds, Vector2 position = default, int facing = 1)
     {
         var entity = Catalog.Entities[entityId];

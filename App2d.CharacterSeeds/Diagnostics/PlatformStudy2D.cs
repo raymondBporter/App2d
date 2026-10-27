@@ -69,7 +69,7 @@ internal static class PlatformStudy2D
             using var enemies = new EnemyPresentation2D(scene, textures, traversal, new Silent());
             var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5000, 2), new SolidColorShader(new Color4b(70, 88, 93)));
             scene.Add(ground);
-            var platform = new WorldObject2D(lift.Asset.Geometry!, new SolidColorShader(new Color4b(37, 210, 190)));
+            var platform = new WorldObject2D(App2d.Core.Characters.Geometry.PartShapes2D.Collision(lift.Asset), new SolidColorShader(new Color4b(37, 210, 190)));
             scene.Add(platform);
             camera.Position = focus;
             for (var step = 0; step < 240; step++)
@@ -97,12 +97,11 @@ internal static class PlatformStudy2D
 
     /// <summary>A kinematic one-way lift, 12 units tall, ping-ponging along <paramref name="travel"/> at the August platform's pace.</summary>
     private static ObjectPlacement2D Lift(string id, Vector2 position, Vector2 travel, float width, float speed) =>
-        new(id, new ObjectAsset2D
+        new(id, new Part
         {
             Id = id,
             Name = id,
-            Geometry = Rectangle2D.Builder.Create(new(-width / 2f, -6f), new(width / 2f, 6f)),
-            Material = new RenderMaterialDefinition2D { Fill = "#25d2be" },
+            Geometry = [new() { Id = "shape", A = "origin", Frame = "origin", Geometry = Rectangle2D.Builder.Create(new(-width / 2f, -6f), new(width / 2f, 6f)), Material = new RenderMaterialDefinition2D { Fill = "#25d2be" }, }],
             Physics = new PhysicsBodySettings2D { MotionType = BodyMotionType2D.Kinematic, Restitution = 0f, TransfersContactMotion = true },
             Surface = new ObjectSurface2D { OneWayNormal = Vector2.UnitY },
             Motion = new CurveMotionDefinition2D
