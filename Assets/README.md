@@ -10,7 +10,7 @@ The first folder describes the asset lifecycle:
 - `Sources` contains original and third-party inputs with their licenses and
   provenance. Importers transform these into runtime assets.
 - `Characters` contains the character libraries and the durable documents under
-  `authored`: models, variants, animations, props, and entities edited in Character
+  `authored`: models, variants, animations and Parts edited in Character
   Studio, plus JSON model recipes in `authored/templates`. Recipes reference existing model/clip IDs and populate Studio's
   New menu; see [Character resources](../docs/character-resources.md). Source libraries and their provenance also live here. These are separate
   from generated sprite animation folders in `Runtime/characters`.
@@ -27,8 +27,9 @@ The first folder describes the asset lifecycle:
 | --- | --- | --- |
 | Levels and zone definitions | `Static/levels/<id>` | `AssetLocations.Levels` |
 | Music, manifests, and licenses | `Static/audio/music` | `AssetLocations.Music` |
-| Character models, clips, props, and entities | `Characters/authored` | `AssetLocations.AuthoredCharacters` |
-| Passive physics prop definitions | `Characters/authored/physics-props` | `AuthoredCatalog.PhysicsProps` |
+| Character models, clips, and Parts | `Characters/authored` | `AssetLocations.AuthoredCharacters` |
+| Reusable artwork, weapons, characters and passive physics Parts | `Characters/authored/parts` | `AuthoredCatalog.Parts` |
+| Level-local Parts (same format and runtime) | `Static/levels/<id>/objects` | `ObjectPlacement2D` / `AuthoredObject2D` |
 | Imported character motion libraries | `Characters/<id>` | `AssetLocations.CharacterLibrary` |
 | Curated and baked sound effects | `Static/audio/sfx` | `AssetLocations.SoundEffects` (generated copy) |
 | Tilesets and UI images | `Static` or an importer from `Sources` | `AssetLocations.Tilesets` / `UI` (generated output) |

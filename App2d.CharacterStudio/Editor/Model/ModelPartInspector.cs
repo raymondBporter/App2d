@@ -26,30 +26,6 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         var structure = owner is null ? Structure : null;
         var materials = owner?.Materials ?? structure?.Materials;
         AssetDocument? materialDocument = owner is null ? session.Assets.Model(structure?.Id) : session.Assets.Part(owner.Id);
-        var materialAsset = part.RenderMaterial.Asset;
-        var sharedPaint = false;
-        if (materials is not null)
-        {
-            var authoredMaterial = overrides is null ? part.RenderMaterial : structure!.Parts.First(p => p.Id == part.Id).RenderMaterial.WithOverride(overrides.Material);
-            sharedPaint = authoredMaterial.Asset is not null && authoredMaterial.Paint is null;
-            part = part with { Material = part.RenderMaterial.Resolve(materials) };
-            var defaultMaterial = overrides is null ? "(inline)" : "(base)";
-            if (Ui.Combo("Material", materialAsset ?? defaultMaterial, materials.Keys.Order(StringComparer.Ordinal).Prepend(defaultMaterial)) is { } selected)
-            {
-                if (selected != defaultMaterial) change(p => p.Material = new() { Asset = selected });
-                else if (overrides is null) change(p => p.Material = part.RenderMaterial with { Asset = null });
-                else if (overrides.Material is not null) overrides.StripMaterial(m => m with { Asset = null });
-                return;
-            }
-            if (materialAsset is null && ImGui.SmallButton("Share material"))
-            {
-                var id = ModelAuthoring.UniqueId(part.Id + "-surface", materials.Keys);
-                var surface = part.RenderMaterial;
-                if (session.Edit(materialDocument, () => materials.Add(id, surface)))
-                    change(p => p.Material = new() { Asset = id });
-                return;
-            }
-        }
         bool Marked(string label, bool overridden, Action clear)
         {
             if (overrides is null)
@@ -103,6 +79,31 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         Float("Scale Y", RigProperties.ScaleY, part.ScaleY, -4, 4, (p, v) => p.ScaleY = v);
         Float("Offset X", RigProperties.OffsetX, part.OffsetX, -2, 2, (p, v) => p.OffsetX = v);
         Float("Offset Y", RigProperties.OffsetY, part.OffsetY, -2, 2, (p, v) => p.OffsetY = v);
+        if (part.Material is null) return;
+        var materialAsset = part.RenderMaterial.Asset;
+        var sharedPaint = false;
+        if (materials is not null)
+        {
+            var authoredMaterial = overrides is null ? part.RenderMaterial : structure!.Parts.First(p => p.Id == part.Id).RenderMaterial.WithOverride(overrides.Material);
+            sharedPaint = authoredMaterial.Asset is not null && authoredMaterial.Paint is null;
+            part = part with { Material = part.RenderMaterial.Resolve(materials) };
+            var defaultMaterial = overrides is null ? "(inline)" : "(base)";
+            if (Ui.Combo("Material", materialAsset ?? defaultMaterial, materials.Keys.Order(StringComparer.Ordinal).Prepend(defaultMaterial)) is { } selected)
+            {
+                if (selected != defaultMaterial) change(p => p.Material = new() { Asset = selected });
+                else if (overrides is null) change(p => p.Material = part.RenderMaterial with { Asset = null });
+                else if (overrides.Material is not null) overrides.StripMaterial(m => m with { Asset = null });
+                return;
+            }
+            if (materialAsset is null && ImGui.SmallButton("Share material"))
+            {
+                var id = ModelAuthoring.UniqueId(part.Id + "-surface", materials.Keys);
+                var surface = part.RenderMaterial;
+                if (session.Edit(materialDocument, () => materials.Add(id, surface)))
+                    change(p => p.Material = new() { Asset = id });
+                return;
+            }
+        }
         var materialOverridden = overrides?.Material;
         MaterialAnimationFields.Draw(part, change);
         if (part.Geometry is ICurve2D)

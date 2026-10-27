@@ -1,12 +1,13 @@
 {
   "format": "app2d-part",
-  "version": 3,
+  "version": 4,
   "id": "tumbling-crate",
   "name": "Tumbling crate",
   "usage": "world",
   "geometry": [
     {
       "id": "box",
+      "collision": {},
       "a": "origin",
       "frame": "origin",
       "geometry": {

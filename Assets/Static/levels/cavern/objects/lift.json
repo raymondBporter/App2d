@@ -1,12 +1,13 @@
 {
   "format": "app2d-part",
-  "version": 3,
+  "version": 4,
   "id": "lift",
   "name": "Path lift",
   "usage": "world",
   "geometry": [
     {
       "id": "shape-1",
+      "collision": {},
       "a": "origin",
       "frame": "origin",
       "geometry": {

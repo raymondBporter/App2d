@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 3,
+  "version": 4,
   "id": "quadruped-head",
   "name": "Quadruped head",
   "usage": "head",

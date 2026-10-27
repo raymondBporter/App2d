@@ -4,68 +4,28 @@ using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
-using System.Text.Json;
 
 namespace App2d.Tests.Authored;
 
 public sealed class PartConsolidationTests
 {
     private static Vector3 Point(Microsoft.Xna.Framework.Vector3 p) => new(p.X, p.Y, p.Z);
-    private const string Legacy = """
-        { "format":"app2d-prop", "version":3, "id":"tool", "name":"Tool", "scale":1.7,
-          "grip":{"x":0.2,"y":-0.1,"z":0.03}, "tip":{"x":1,"y":0.2,"z":0.4},
-          "secondGrip":{"x":0.1,"y":0.2,"z":0.3}, "muzzle":{"x":0.8,"y":0.1,"z":0.2},
-          "solids":[{"vertices":[{"x":0,"y":0,"z":0.1},{"x":0.4,"y":0,"z":0.1},{"x":0,"y":0.3,"z":0.1}],
-                      "triangles":[0,1,2],"material":{"fill":"#cccccc"}}],
-          "shapes":[{"geometry":{"kind":"line","start":{"x":0,"y":0},"end":{"x":1,"y":0}},
-                      "depths":[0.1,0.3],"material":{"fill":"#123456","strokeWidth":0.02}}] }
-        """;
-
-    [Fact]
-    public void ConversionPreservesGeometryUnitsAndNamedPointsAndIsNeverImplicit()
+    private static Part Tool() => new()
     {
-        Assert.Throws<JsonException>(() => Part.FromJson(Legacy));
-        var part = PropPartConversion.Convert(Legacy);
-        Assert.Equal(EquipmentPoints.Grip, part.Pivot);
-        Assert.Equal(new PuppetPoint(.2f, -.1f, .03f), part.Point(EquipmentPoints.Grip));
-        Assert.Equal(new PuppetPoint(1, .2f, .4f), part.Point(EquipmentPoints.Tip));
-        Assert.Equal(new PuppetPoint(.1f, .2f, .3f), part.Point(EquipmentPoints.SecondGrip));
-        Assert.Equal(new PuppetPoint(.8f, .1f, .2f), part.Point(EquipmentPoints.Muzzle));
-        Assert.Equal(["mesh-1", "shape-1"], part.Geometry.Select(g => g.Id));
-        Assert.Equal([.1f, .3f], part.Geometry[1].Depths);
-        Assert.Equal(part.ToJson(), Part.FromJson(part.ToJson()).ToJson());
-        Assert.Throws<InvalidDataException>(() => PropPartConversion.Convert(Legacy.Replace("\"scale\":1.7", "\"unrecognized\":42")));
-    }
-
-    [Fact]
-    public void ConversionRefusesCollidingLibraryIdsWithoutOverwritingEitherSource()
-    {
-        var root = Path.Combine(Path.GetTempPath(), "part-conversion-" + Guid.NewGuid().ToString("N"));
-        try
+        Id = "tool", Name = "Tool", Scale = 1.7f, Pivot = EquipmentPoints.Grip,
+        Locations = [new() { Id = EquipmentPoints.Grip, X = .2f, Y = -.1f, Z = .03f }],
+        Geometry = [new()
         {
-            Directory.CreateDirectory(Path.Combine(root, "source", "parts"));
-            Directory.CreateDirectory(Path.Combine(root, "source", "props"));
-            var part = PropPartConversion.Convert(Legacy);
-            part.Name = "Existing library part";
-            var existing = part.ToJson();
-            File.WriteAllText(Path.Combine(root, "source", "parts", "tool.json"), existing);
-            File.WriteAllText(Path.Combine(root, "source", "props", "tool.json"), Legacy);
-            var result = FormatConversion.Convert(Path.Combine(root, "source"), Path.Combine(root, "output"));
-            Assert.False(result.Converted);
-            Assert.Contains(result.Files, f => f.Kind == "prop" && f.Status.Contains("Multiple source assets"));
-            Assert.Equal(existing, File.ReadAllText(Path.Combine(root, "output", "parts", "tool.json")));
-            Assert.Equal(Legacy, File.ReadAllText(Path.Combine(root, "source", "props", "tool.json")));
-        }
-        finally { Directory.Delete(root, true); }
-    }
-
+            Id = "mesh-1", A = "origin", Frame = "origin", Material = new() { Fill = "#cccccc" },
+            Mesh = new() { Vertices = [new(0, 0, .1f), new(.4f, 0, .1f), new(0, .3f, .1f)], Triangles = [0, 1, 2] }
+        }]
+    };
     [Theory]
     [InlineData(1)]
     [InlineData(-1)]
     public void TiltedInstancesShareGeometryButKeepPhysicalDepthSeparateFromLayers(int facing)
     {
-        var part = PropPartConversion.Convert(Legacy);
-        part.Geometry.RemoveAt(1);
+        var part = Tool();
         part.Locations.Add(new() { Id = "mount", X = .4f, Y = .1f, Z = .2f, Layer = .4f });
         var geometry = part.Geometry[0];
         geometry.A = geometry.Frame = "mount";

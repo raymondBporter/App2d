@@ -71,7 +71,7 @@ public sealed class EntityBehaviorTests
         var unlisted = StarterContent.SpearGuardEntity();
         unlisted.Behavior!.Strikes.Remove("spear-tip");
         Assert.Equal(new StrikeDef(), Compile(unlisted).Actions["attack"].Hits[0].Strike); // a group without an entry strikes with the typed defaults
-        Assert.Contains("unsupported format/version", Refused(e => e.Version = 4));
+        Assert.Contains("unsupported format/version", Refused(e => e.Version = Part.CurrentVersion - 1));
         Assert.Contains("needs Behavior", Refused(e => e.Behavior = null));
         Assert.Contains("behaviors.damage health", Refused(e => e.Behavior!.Damage.Health = 0));
         Assert.Contains("behaviors.strikes.spear-tip damage", Refused(e => e.Behavior!.Strikes["spear-tip"].Damage = -1));

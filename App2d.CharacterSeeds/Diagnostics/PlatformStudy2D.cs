@@ -101,7 +101,7 @@ internal static class PlatformStudy2D
         {
             Id = id,
             Name = id,
-            Geometry = [new() { Id = "shape", A = "origin", Frame = "origin", Geometry = Rectangle2D.Builder.Create(new(-width / 2f, -6f), new(width / 2f, 6f)), Material = new RenderMaterialDefinition2D { Fill = "#25d2be" }, }],
+            Geometry = [new() { Id = "shape", A = "origin", Frame = "origin", Collision = new(), Geometry = Rectangle2D.Builder.Create(new(-width / 2f, -6f), new(width / 2f, 6f)), Material = new RenderMaterialDefinition2D { Fill = "#25d2be" }, }],
             Physics = new PhysicsBodySettings2D { MotionType = BodyMotionType2D.Kinematic, Restitution = 0f, TransfersContactMotion = true },
             Surface = new ObjectSurface2D { OneWayNormal = Vector2.UnitY },
             Motion = new CurveMotionDefinition2D

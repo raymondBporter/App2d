@@ -24,7 +24,7 @@ internal static class ObjectRenderingSmoke2D
         var asset = Part.Load(Path.Combine(AssetPaths.Current.Levels, "cavern", "objects", "lift.json"));
         var circle = asset with
         {
-            Geometry = [new() { Id = "circle", A = "origin", Geometry = Circle2D.Builder.Create(18), Material = new() { Fill = "#25d2be" } }],
+            Geometry = [new() { Id = "circle", A = "origin", Collision = new(), Geometry = Circle2D.Builder.Create(18), Material = new() { Fill = "#25d2be" } }],
             Surface = null,
             Motion = asset.Motion! with
             {
@@ -40,7 +40,7 @@ internal static class ObjectRenderingSmoke2D
         using var crate = new AuthoredObject2D(new(4), new("crate", catalog.Parts["tumbling-crate"], new(130, 100)), physics, 1, uint.MaxValue);
         dumbbell.WorldObject.Transform.Rotation = .3f;
         crate.WorldObject.Transform.Rotation = -.2f;
-        var floorPart = new Part { Id = "floor", Name = "Floor", Geometry = [new() { Id = "floor", A = "origin", Geometry = Rectangle2D.Builder.Create(new(-240, -10), new(240, 0)), Material = new() { Fill = "#677d8b" } }], Physics = new() { MotionType = BodyMotionType2D.Static, Friction = .6f, Restitution = 0 } };
+        var floorPart = new Part { Id = "floor", Name = "Floor", Geometry = [new() { Id = "floor", A = "origin", Collision = new(), Geometry = Rectangle2D.Builder.Create(new(-240, -10), new(240, 0)), Material = new() { Fill = "#677d8b" } }], Physics = new() { MotionType = BodyMotionType2D.Static, Friction = .6f, Restitution = 0 } };
         using var floor = new AuthoredObject2D(new(5), new("floor", floorPart, new(-30, -65)), physics, 1, uint.MaxValue);
         AuthoredObject2D[] items = [lift, orbit, dumbbell, crate, floor];
         var content = LevelContent2D.Empty with { Objects = [.. items.Select(o => o.CaptureDefinition())] };

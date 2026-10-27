@@ -280,7 +280,7 @@ public sealed class ColliderAttachmentTests
         var restored = Part.FromJson(guard.ToJson());
         Assert.Equal(5, restored.Behavior!.Colliders.Count);
         var downgraded = Part.FromJson(guard.ToJson());
-        downgraded.Version = 4;
+        downgraded.Version = Part.CurrentVersion - 1;
         Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(downgraded.Validate).Message);
         // A window names another attack collider; the first stays declared and registered.
         var named = GuardWithHurtColliders();

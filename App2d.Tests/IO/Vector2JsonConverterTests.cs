@@ -18,7 +18,6 @@ public sealed class Vector2JsonConverterTests
         nameof(IShape2D),
         nameof(ICurve2D),
         nameof(AuthoredJson.Options),
-        nameof(AuthoredJson.Tolerant),
         nameof(PuppetDefinition)
     ];
 
@@ -28,7 +27,6 @@ public sealed class Vector2JsonConverterTests
         nameof(IShape2D) => GeometryJson2D.JsonOptions,
         nameof(ICurve2D) => GeometryJson2D.JsonOptions,
         nameof(AuthoredJson.Options) => AuthoredJson.Options,
-        nameof(AuthoredJson.Tolerant) => AuthoredJson.Tolerant,
         nameof(PuppetDefinition) => PuppetDefinition.JsonOptions,
         _ => throw new ArgumentOutOfRangeException(nameof(optionsName), optionsName, null)
     };
@@ -88,6 +86,6 @@ public sealed class Vector2JsonConverterTests
     public void TolerantOptionsSkipNestedUnknownValuesAndDefaultMissingCoordinatesToZero()
     {
         Assert.Equal(new Vector2(0, 2), JsonSerializer.Deserialize<Vector2>(
-            "{\"extra\":{\"nested\":[1,2,3]},\"y\":2}", AuthoredJson.Tolerant));
+            "{\"extra\":{\"nested\":[1,2,3]},\"y\":2}", new JsonSerializerOptions(AuthoredJson.Options) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip }));
     }
 }

@@ -39,7 +39,7 @@ public sealed class AuthoredObject2D : IDisposable
         {
             Body.EntityId = id;
             Body.CollisionLayer = layer;
-            Body.CollisionMask = mask;
+            Body.CollisionMask = mask & asset.Geometry.First(g => g.Collision is { Enabled: true }).Collision!.Mask;
             if (asset.Surface is { } surface)
             {
                 var settings = PlatformCollisionRules2D.Attach(physics).Surface(Body);

@@ -8,9 +8,11 @@ Characters now use the same Part document with optional **Behavior**, a model re
 
 The shared geometry inspector now edits material alpha/tint, image paths and timed texture frames, including atlas regions. Enter a rectangle's image path, choose **Animate texture**, then edit frame paths and durations. In **Animate**, select its **geometry** row to key tint/alpha, fit or visibility with the existing timeline and curve editor. Exposed pieces on animated Part instances use the same channels. Texture changes retain the rectangle's world size and anchor.
 
-**Appearance > Path motion** edits a Part's existing motion definition. A standalone preview uses the same transport to scrub its path and texture frames without stepping physics. A physical path-driven Part requires a kinematic body. See [Part consolidation plan](part-consolidation-plan.md) for the completed stages and remaining cleanup.
+**Appearance > Path motion** edits a Part's existing motion definition. A standalone preview uses the same transport to scrub its path and texture frames without stepping physics. A physical path-driven Part requires a kinematic body. See [Part consolidation plan](part-consolidation-plan.md) for the completed cutover.
 
-The proposed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.
+**Appearance > Physics body** edits motion type, mass, rotational inertia, gravity, friction, restitution and contact carrying. On a piece, **Collision geometry** opts its shape into collision, **Collision enabled** controls participation, and **Rendered** controls its material. Invisible collision shapes stay visible as editor outlines. A rigid body combines enabled entries in their bind pose; all use the same mask and one mass. Decorative curves/meshes can coexist without contributing collision. Path motion requires a kinematic body. These edits use the same Part save and undo as appearance edits.
+
+The completed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.
 
 The studio is the character editor: one window, one viewport and one document workflow over the authored assets in
 `Assets/Characters/authored`, which the game plays. Its design and history are in
@@ -23,7 +25,7 @@ no C# menu entry is needed. Person includes seven starter clips, Quadruped and T
 A published template (version 2) shows its contract in the create dialog: the part slots with their usage and default, the
 dimensions with a **Start from preset** choice (the preset's values become the new model's parameter defaults), and the
 default animation library (roles, masks, measure mappings); a contract that does not hold on the source model is listed with
-its reference paths and the creation is refused. Use **Save all** to save the created bundle. Existing model, clip and entity files are unaffected by template creation.
+its reference paths and the creation is refused. Use **Save all** to save the created bundle. Existing model, clip and Part files are unaffected by template creation.
 
 
 ## Run
@@ -90,10 +92,10 @@ action's **Animate this action with weapon** button selects its clip and equipme
   saves motion; **Save weapon** saves the shared art asset. Ctrl+Z/Redo includes both while the weapon inspector is open.
 
 Expand **Weapon asset / import OBJ** for size, grip, tip, muzzle, ink width and solid colors. **Replace geometry from
-OBJ** imports a triangulated mesh into the current prop document as an undoable edit. Export applied transforms with
+OBJ** imports a triangulated mesh into the current Part document as an undoable edit. Export applied transforms with
 +X along the blade/barrel, +Y across the broad face, Z for thickness, and outward face winding. Pick import scale to
 convert into character model units. UVs, normals and materials are ignored; assign flat color in the editor. The imported
-mesh is stored in the prop JSON, with no runtime dependency on the OBJ or modeling application. Check grip, tip and
+mesh is stored in the Part JSON, with no runtime dependency on the OBJ or modeling application. Check grip, tip and
 muzzle after import; they remain explicit markers. Asset changes affect every entity using the prop.
 
 The starter sword, sheath, pistol, spear and hammer are simple closed meshes. Sword attacks, sheathing, gun poses and
@@ -101,7 +103,7 @@ the hammer slam have initial orientation keys for experimentation. These are rou
 automatic conversion of the old imported weapon motion. Characters keep their existing XY rig and character layers.
 
 Rendering uses the same orthographic depth buffer as characters, with flat facet colors and visible silhouette/crease
-ink on solid props. Coplanar triangulation edges are suppressed. Legacy stroke/polygon props still load. Socket
+ink on solid props. Coplanar triangulation edges are suppressed. Stroke and polygon geometry remain ordinary Part entries. Socket
 orientation is evaluated before both drawing and gameplay point projection; gameplay collision remains XY.
 
 ## Quadrupeds and Triceratops
@@ -175,7 +177,7 @@ The tunic is the torso's fill plus normalized `paint`
 patches for the spots and exposed shoulder. Paint follows the torso dimensions and frame and is clipped
 to its contour. Head and torso inherit the same thick outline as the rest of the character, and
 the hair and clothing use matching ink. Fabric spots have no separate border.
-Hair, beards and wraps are editable prop assets equipped on `head-art` and `body-art`.
+Hair, beards and wraps are editable Part assets equipped on `head-art` and `body-art`.
 `PersonWardrobeDepths` derives named depth slots from each build's rest pose. From far to near:
 far arm, wrap back, far leg, torso, near leg, wrap front, belt/pattern details, near arm.
 The belt and pattern have their own thickness budget inside the leg-to-arm gap, including clearance
@@ -202,7 +204,7 @@ When launched from the repository, the editor saves into source `Assets/Characte
 than the build output copy. Rebuild/restart the game to pick up saved asset changes.
 
 `--write-wardrobe <authored-dir>` seeds missing wardrobe art and updates its sockets, equipment bindings,
-and the two enemies' torso paint and outline widths. Existing prop JSON remains editor-owned, including when
+and the two enemies' torso paint and outline widths. Existing Part JSON remains editor-owned, including when
 `--write-player-moves` runs this step. `--replace-wardrobe-art <authored-dir>` explicitly regenerates that art.
 `--smoke-wardrobe <dir>` renders idle, run, attacks, and climbing/death samples in both
 facings, including game-size views. Clothing follows the rig rigidly; this first pass has no cloth simulation.
@@ -228,9 +230,7 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   with wearer preview and equipment binding; and the shared **library parts** (P5c: pieces of shapes, curves, images and
   solids on named locations, shared materials, the wearers that instance the part, preview on any model or variant at a
   chosen socket with mirror, **Attach to** the wearer's base, uses / used by). The browser lists library parts first
-  (`[L]`), filters them with **Parts**, creates one from a shape or from a hair/clothing prop (New menu or right-click
-  the prop), duplicates one and lists its wearers from the right-click menu. A part's own outline points are edited as
-  coordinates in this pass; viewport dragging of library-part outlines arrives with the P7 cutout tools.
+  (`[Part]` or `[Module]`), filters them with **Parts**, creates them from shapes or appearance templates, duplicates them and lists their wearers. Mesh outlines support viewport dragging through the shared placement.
 - **Model → base model → Root motion** (P10c): which instance's clips carry the model's travel (**Owner**; "this model's clips" otherwise). The attachment inspector shows each instance's **Connection** (the socket and the wearer control or the other instance's control it sits on, and the usage the socket takes) and **Owns the root motion**. In Animate, the outline's Parts rows say where each instance mounts, whether it owns the root motion and whether this clip keys it; the timeline marks the owner's play row with "(root motion)". **New → Model: Centaur template** creates the composed study.
 - **Model → attachment instance of a rig module** (P10b): the inspector lists the module's inputs with this instance's values
   (drag to set, **Part default** to clear; a bound input shows its parameter) and the part's contract (connection, inputs,
@@ -243,12 +243,11 @@ Choose the **locomotion** target frame to use the existing **Plant** contact con
   enabled state and shape; removing one a window names is refused by name), **Guard** (on or off, naming one of the guard
   colliders), equipment and the selected action's clip, mask, blend, activation windows (each names its attack collider;
   adding a window needs an attack collider to enable) and events. **Health** and a window's **Damage** edit the typed
-  behaviors (`behaviors.damage.health`, `behaviors.strikes.<window>`); adding a window adds its strike, removing the
+  behaviors (`behavior.damage.health`, `behavior.strikes.<window>`); adding a window adds its strike, removing the
   last window of a hit group removes it. The **Behaviors** section (P9c) is the typed inspector: receiving damage
-  (health, mass, hurt and stagger seconds), one strike per hit group (damage, sound, impact; add one for a group striking
+  (health, knockback resistance, hurt and stagger seconds), one strike per hit group (damage, sound, impact; add one for a group striking
   with the defaults, remove one), the guard's open event and block sound, and custom properties (add, edit, remove), each
-  field with its schema range and help. Since P11c an entity file is version 5 and carries nothing else: no hurt layout,
-  no inline window or guard geometry, no loose combat fields, and no conversion commands. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
+  field with its schema range and help. These settings share the Part v4 document with collision-enabled geometry and optional physics. The viewport draws the colliders the game registers, placed from the preview pose: blue hurt,
   red attack (filled while its window is open, faint otherwise), green guard, orange trigger, the selected one thicker
   and labelled; the timeline labels each window with its collider.
 - **Test** plays the arena from a snapshot of the current drafts; its overlays read the arena's registered colliders and
@@ -303,7 +302,7 @@ presentation, and `-- --face-smoke <dir>` draws every expression the baked Perso
 | --- | --- |
 | `App2d.Core/Characters/Authored` | Schema, resolution, pose evaluation, entity runtime and conversions. No graphics. |
 | `App2d.Core/Characters/Editing` | Documents, workspace, transport and the editor session. No ImGui. |
-| `App2d.Rendering/Characters` | `PuppetDrawing`, attached part instances (faces among them) and depth-tested submission. |
+| `App2d.Core/Characters/Drawing` | `PuppetDrawing`, attached part instances (faces among them) and depth-tested submission. |
 | `App2d.CharacterStudio/Editor` | The ImGui shell and workspace views. |
 | `App2d.CharacterStudio/Proof.*.cs` | The headless proof renders. |
 

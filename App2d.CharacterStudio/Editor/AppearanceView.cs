@@ -125,6 +125,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 
         _partFields.Placement(doc);
         _partFields.Import(doc);
+        _partFields.Physics(doc);
         _partFields.Motion(doc);
 
         var ink = asset.Ink;
@@ -279,6 +280,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             Edit(p => p.B = b);
         }
 
+        _partFields.Participation(doc, index);
         _geometryInspector.Draw(piece, null, Change, doc.Asset);
 
         if (Ui.Button("Remove piece", doc.Asset.Geometry.Count > 1))
@@ -294,14 +296,22 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
     public void Overlay(ViewportFrame frame)
     {
         if (frame.Primary is not { } primary || session.PartDocument is not { } doc ||
-            _partPiece >= doc.Asset.Geometry.Count || doc.Asset.Geometry[_partPiece].Mesh?.Outline is not { } points) return;
+            _partPiece >= doc.Asset.Geometry.Count) return;
         var attachment = primary.Subject.Model.Attachments.FirstOrDefault(a => a.Asset.Id == doc.Id)
             ?? session.PreviewAttachmentOn(primary.Subject.Model);
         if (attachment is null || attachment.IsAnimated) return;
         var piece = doc.Asset.Geometry[_partPiece];
         var (world, localFrame) = attachment.Lookups(LayeredFrame2D.Identity);
+        var placement = PartPlacement3D.Placement(attachment, new ActorPose(primary.Subject.Pose, Vector2.Zero, 1).Socket(attachment.Socket));
+        foreach (var collider in doc.Asset.Geometry.Where(g => g.Collision is { Enabled: true }))
+        {
+            var contour = PartContours2D.Contour(collider, world, localFrame);
+            for (var i = 0; i < contour.Count; i++)
+                frame.Draw.AddLine(frame.Screen(placement.TransformPoint(contour[i])), frame.Screen(placement.TransformPoint(contour[(i + 1) % contour.Count])), StudioTheme.AppearanceSelection.PackedValue, 1.5f);
+        }
+        if (piece.Mesh?.Outline is not { } points) return;
         var socket = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(piece, world, localFrame),
-            PartPlacement3D.Placement(attachment, new ActorPose(primary.Subject.Pose, Vector2.Zero, 1).Socket(attachment.Socket)),
+            placement,
             doc.Asset.Point(piece.A)?.Z ?? 0);
         var gold = StudioTheme.AppearanceSelection.PackedValue;
         for (var i = 0; i < points.Count; i++)

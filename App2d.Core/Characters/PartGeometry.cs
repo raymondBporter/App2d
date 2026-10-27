@@ -67,7 +67,7 @@ public sealed record PartGeometry
     /// <summary>Resolves the entry's surface and optional instance override without changing its authored data.</summary>
     public PartGeometry ResolveMaterial(IReadOnlyDictionary<string, RenderMaterialDefinition2D> materials, RenderMaterialDefinition2D? change = null)
     {
-        if (Material is null && change is null) return this;
+        if (Material is null) return this;
         var material = RenderMaterial.WithOverride(change).Resolve(materials);
         if (Mesh is not null && material.HasTexture)
             throw new InvalidDataException("Mesh textures require UV coordinates; use a textured rectangle.");
@@ -120,7 +120,7 @@ public sealed record PartGeometry
         if (Geometry is IShape2D shape)
         {
             var built = shape.Validated();
-            if (built.GetOutlineVertCount(48) == 0)
+            if (Material is not null && built.GetOutlineVertCount(48) == 0)
             {
                 throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
             }
@@ -161,8 +161,8 @@ public sealed record PartGeometry
         }
 
         Material?.Validate("part.material");
-        if (Collision is not null && (Geometry is not IConvexShape2D || Bindings is { Count: > 0 } || ScaleX <= 0 || ScaleX != ScaleY))
-            throw new InvalidDataException("Collision requires rigid convex geometry with positive uniform scale.");
+        if (Collision is not null && (Geometry is not IShape2D || Bindings is { Count: > 0 } || ScaleX <= 0 || ScaleX != ScaleY))
+            throw new InvalidDataException("Collision requires rigid shape geometry with positive uniform scale.");
         if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY))
         {
             throw new InvalidDataException("Part scale must be finite.");

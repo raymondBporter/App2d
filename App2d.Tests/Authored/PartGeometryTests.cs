@@ -4,7 +4,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Drawing;
 using App2d.Core.Characters.Geometry;
 using System.Numerics;
-using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Authored;
 
@@ -54,29 +53,6 @@ public sealed class PartGeometryTests
         Assert.Equal(original, tail.ToJson());
         var again = PoseEvaluator.Sample(resolved, clip, .2).Attachments["tail"];
         TestModels.Near(evaluated.World("tip"), again.World("tip"));
-    }
-
-    [Fact]
-    public void LegacyConversionPreservesMeshCoordinatesMaterialsAndStableEntryIds()
-    {
-        const string legacy = """
-            { "format":"app2d-part", "version":2, "id":"mixed", "name":"Mixed",
-              "parts":[{ "id":"mesh-1", "a":"origin", "geometry":{"kind":"circle", "center":{"x":0,"y":0}, "radius":0.1}, "material":{"fill":"#abcdef"} }],
-              "solids":[{ "vertices":[{"x":0,"y":0,"z":0.3},{"x":1,"y":0,"z":0.4},{"x":0,"y":1,"z":0.5}], "triangles":[0,1,2], "material":{"fill":"#102030"} }]
-            }
-            """;
-        Assert.Throws<System.Text.Json.JsonException>(() => Part.FromJson(legacy));
-        var node = JsonNode.Parse(legacy)!.AsObject();
-        PartGeometryConversion.Upgrade(node);
-        var part = Part.FromJson(node.ToJsonString());
-        Assert.Equal(2, part.Geometry.Count);
-        Assert.Equal("mesh-1", part.Geometry[0].Id);
-        Assert.NotEqual("mesh-1", part.Geometry[1].Id);
-        Assert.Equal("origin", part.Geometry[1].Frame);
-        Assert.Equal("#102030", part.Geometry[1].Material!.Fill);
-        Assert.Equal([.3f, .4f, .5f], part.Geometry[1].Mesh!.Vertices.Select(v => v.Z));
-        Assert.False(node.ContainsKey("parts") || node.ContainsKey("solids"));
-        Assert.Equal(part.ToJson(), Part.FromJson(part.ToJson()).ToJson());
     }
 
     [Fact]

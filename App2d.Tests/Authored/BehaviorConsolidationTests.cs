@@ -37,28 +37,6 @@ public sealed class BehaviorConsolidationTests
         Assert.Null(Part.FromJson(passive.ToJson()).Behavior);
     }
 
-    [Fact]
-    public void ExplicitConversionKeepsDefaultsGuardPolicyAndTheLegacySocketPlacement()
-    {
-        const string legacy = """
-            {"format":"app2d-entity","version":5,"id":"sample","name":"Sample","model":"person","motionSet":"standard",
-             "behaviors":{"damage":{"health":7,"mass":2},"guard":{"openEvent":"open","blockSound":"block"}},
-             "guard":{"collider":"shield"},"colliders":[{"id":"shield","use":"guard","socket":"right-grip","offsetX":0.15}]}
-            """;
-        Assert.Throws<JsonException>(() => Part.FromJson(legacy));
-        var part = EntityPartConversion.Convert(legacy);
-        Assert.Equal(7, part.Behavior!.Damage.Health);
-        Assert.Equal(2, part.Behavior.Damage.KnockbackResistance);
-        Assert.Equal(new GuardBehaviorDef { Collider = "shield", OpenEvent = "open", BlockSound = "block" }, part.Behavior.Guard);
-        Assert.Null(part.Physics);
-        Assert.Empty(part.Equipment);
-        var shield = part.Geometry.Single(g => g.Id == "shield");
-        Assert.Equal(Vector2.Zero, new(shield.OffsetX, shield.OffsetY));
-        Assert.Equal(new Vector2(.3f, .3f), Assert.IsType<Rectangle2D>(shield.Geometry).Size);
-        Assert.Equal(part.ToJson(), Part.FromJson(part.ToJson()).ToJson());
-        Assert.Throws<JsonException>(() => EntityPartConversion.Convert(legacy.Replace("\"mass\":2", "\"unknownEffect\":2")));
-    }
-
     [Theory]
     [InlineData(null)]
     [InlineData(PartLocation.Origin)]

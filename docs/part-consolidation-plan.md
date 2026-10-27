@@ -2,7 +2,7 @@
 
 Date: 2026-10-26.
 
-Status: reviewed and in progress. S0-S5 are implemented. The remaining S6 cutover is pending; the earlier demo cleanup is recorded below.
+Status: complete (2026-10-27). S0-S6 are implemented and verified. Parts use one authored definition, geometry collection and document workflow; the temporary migration paths are retired.
 
 This follows the [completed character migration](character-system-migration-plan.md). Keep its working rig, proportions, constraints, module composition, collision registration, animation, document/undo infrastructure and game artwork. The next objective is fewer independent definitions, loaders, placement paths, inspectors and spawners.
 
@@ -250,14 +250,24 @@ S5 implementation review (2026-10-27):
 ### S6. Remove unwanted studies and finish the cutover
 
 - [x] S6a. Audit actual references and remove the unused curve-face and wave demonstrations. Preserve face-person and other assets used by game models, variants, profiles and clips.
-- [ ] S6b. Remove unused wave-specific character integration, demo inspectors/generators and any remaining obsolete formats/paths; retain generic curve math that still has a supported use.
-- [ ] S6c. Complete the Studio walkthrough, migrate the rest of the authored bundles and update documentation/dependency listings.
+- [x] S6b. Remove unused wave-specific character integration, demo inspectors/generators and any remaining obsolete formats/paths; retain generic curve math that still has a supported use.
+- [x] S6c. Complete the Studio walkthrough, migrate the rest of the authored bundles and update documentation/dependency listings.
 
-The 2026-10-26 cleanup also completed the wave-specific portion of S6b: the character wave modifier, its inspector, the demo conversion command and the unused payload interface are removed. Core's generic normal-offset curves remain. The remaining obsolete formats/paths still belong to the consolidation stages above.
+The 2026-10-26 cleanup completed the wave-specific portion of S6b: the character wave modifier, its inspector, the demo conversion command and the unused payload interface are removed. Core's generic normal-offset curves remain. S6 closes the remaining format and collision paths below.
 
 A generated module or study is not automatically unused. In particular, centaur currently references person-upper and quadruped-lower. Keep deliberately supported composition examples or move the entire dependent example to test content together.
 
 Gate: one browser and editing workflow handles a passive prop, static decorative part, textured/animated rectangle, weapon and rigged character. No duplicate authoritative definition, rendering or spawning route remains for converted content.
+
+S6 implementation review (2026-10-27):
+
+- Removed `FormatConversion`, `PartGeometryConversion`, `PropPartConversion`, `WorldPartConversion`, `EntityPartConversion`, `--convert-formats`, and the now-unused tolerant authored reader. Conversion-only tests are retired; current-format geometry/placement tests remain. Supported puppet/library imports, rig authoring, module extraction and game-face generation remain.
+- Removed the separate `Part.Collision` shape and implicit collision from every rendered shape. A body's enabled `geometry[].collision` entries now supply its rigid shape through the shared placement, pivot and scale. Decorative shapes/curves/meshes do not collide automatically; collision-only geometry has no material. One body keeps one mass and mask; enabled entries must share that mask, intersected with the spawning world's mask. Animated artwork does not move a rigid body's bind-pose collision. Gameplay's pose-driven colliders retain their existing role-specific registrations.
+- Part format **4** makes that participation change explicit. Migrated all **58** committed Part files: **50** in the authored library and **8** level-local platforms. The **10** physical assets mark their existing geometry with `collision: {}`. An inverse comparison against the saved originals verifies that only versions and collision participation changed: IDs, geometry, units, animation, materials, body settings, paths and references are preserved. Originals and the per-file migration ledger are under `artifacts/part-consolidation/s6-original` and `s6-asset-migration.json`; Git retains every earlier format.
+- Studio's shared Part inspector edits body settings and geometry collision/render participation. Invisible collision geometry has an editor outline and no game visual. All edits use existing document transactions, undo and save/reopen. The walkthrough now includes passive body edits, noncolliding decoration, invisible collision geometry and a reopened library containing a dumbbell, boot, texture/path Part, sword and character in the same Part document format.
+- Dependency audit: **7** models, **7** variants, **87** external clips, **50** Parts, **6** templates and **1** game profile resolve. `face-person` remains the game face; centaur still references `person-upper` and `quadruped-lower`. CharacterModel/ModelVariant/MotionClip remain the shared rig/variation/animation envelopes. `AuthoredCatalog.Entities` is a compiled view and Studio's Entity category is a filter over Parts. Level-local lookup is a path cache over `Part.Load`, and all passive bodies use `AuthoredObject2D`; there is no separate level-object schema. Noodle remains outside this consolidation.
+- Verification: **1,039/1,039** affected regression tests passed, including unchanged character reference captures and new body participation/mask, animated bind-pose, composite collision-only, strict format and save/undo cases. Native Studio passed **182/182** editor checks and **46/46** acceptance checks. The full solution build passed; the five-frame game object study exited successfully. Passive-body, invisible-collider, world-object and centaur frames were visually inspected. Proofs are under `artifacts/part-consolidation/s6-*`.
+- The C# change removes **386 net lines**, including the new tests and native walkthrough. All completion examples below are covered; no further stage remains in this plan.
 
 ## 6. Verification and conversion policy
 
@@ -274,7 +284,7 @@ Use existing test groups and extend only meaningful boundaries:
 | Preview/document selection | LibraryPartEditingTests, AppearanceAuthoringTests, EditorSessionTests |
 | Parts, placement and art | PartAssetTests, PartAttachmentDrawingTests, WeaponOrientationTests, material and rendering tests |
 | Variants/animated parts | AnimatedPartTests, appearance/build tests, module/variant tests and character reference captures |
-| Passive physics and loading | PhysicalPartAssetTests / PhysicalPartTests / AuthoredObject2DTests / WorldPartConversionTests |
+| Passive physics and loading | PhysicalPartAssetTests / PhysicalPartTests / AuthoredObject2DTests / PartCutoverTests |
 | Gameplay behavior | EntityBehaviorTests, ContactResolutionTests and existing gameplay/state round trips |
 | Frame/material/path animation | Existing generic animation, key sampling and kinematic-motion tests plus a combined rig/texture test |
 
@@ -324,3 +334,4 @@ Track reduction by the old paths removed and the ease of authoring these example
 | 2026-10-27 | S3a/S3b implemented | Unified passive bodies and moving platforms on Part and the existing world-object runtime. 1,254 integration tests, 158 native editor checks and the five-frame physics rendering study passed. Next: S4. |
 | 2026-10-27 | S4a/S4b implemented | Unified character definitions on Part with optional Behavior and collision-enabled geometry. Converted all 11 characters; removed the entity format/runtime wrapper and separate collider/movement definitions. 1,264 regression checks passed together, the remaining audio timing check passed in isolation, and native editor/acceptance checks passed 158/158 and 46/46. Next: S5. |
 | 2026-10-27 | S5a/S5b/S5c implemented | Shared pose/frame/path timing, geometry tint/alpha channels, texture sequences with atlas regions, and Studio editing/preview. 1,111 regression checks, 55 final focused checks, 170 native editor checks and 46 acceptance checks passed. Different-size images preserve the animated rectangle's dimensions. Next: remaining S6 cutover. |
+| 2026-10-27 | S6 complete; plan closed | Removed temporary format converters and separate root collision; 58 Parts moved to v4 with explicit body collision entries. Shared Studio body/geometry editing, dependency audit and walkthrough completed. 1,039 regression tests, 182 native editor checks and 46 acceptance checks passed; five-frame world study passed. Net C# reduction: 386 lines including new coverage. |

@@ -149,7 +149,7 @@ public sealed record PartLocation
 public sealed record Part
 {
     public const string FormatId = "app2d-part";
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
     /// <summary>The expression word that hides an animated instance for its span: a back view, a cleared face.</summary>
     public const string None = "none";
     /// <summary>Separates an instance ID from a target inside it in a wearer's clip (<c>face/left-brow</c>).</summary>
@@ -184,8 +184,6 @@ public sealed record Part
     /// <summary>All geometry entries share placement, material, visibility, animation and picking.</summary>
     public List<PartGeometry> Geometry { get; set; } = [];
 
-    /// <summary>Optional rigid collision in asset-local coordinates; otherwise finite rigid shapes supply it.</summary>
-    public App2d.Core.Geometry.Shapes.IShape2D? Collision { get; set; }
     public App2d.Core.Physics.PhysicsBodySettings2D? Physics { get; set; }
     public App2d.Core.Objects.ObjectSurface2D? Surface { get; set; }
     public App2d.Core.Physics.Motion.CurveMotionDefinition2D? Motion { get; set; }
@@ -380,7 +378,7 @@ public sealed record Part
             AuthoredAsset.RequireId(BackView, owner + " backView");
             Require(BackView != Id, owner + ": back view cannot reference itself.");
         }
-        Require(Geometry.Count > 0 || Collision is not null || Model is not null, $"{owner}: a part needs at least one shape, curve, image or solid.");
+        Require(Geometry.Count > 0 || Model is not null, $"{owner}: a part needs at least one shape, curve, image or solid.");
         Require(Geometry.Count <= 384, $"{owner}: capacity exceeded.");
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var part in Geometry)
@@ -405,7 +403,6 @@ public sealed record Part
         if (IsAnimated) ValidateAnimated(owner);
         Physics?.Validate();
         Motion?.Validate();
-        Require(Collision is null || Physics is not null, owner + ": collision requires physics.");
         if (Physics is not null)
         {
             _ = App2d.Core.Characters.Geometry.PartShapes2D.Collision(this);

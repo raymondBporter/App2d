@@ -116,7 +116,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
                 scene.Remove(existing.Visual);
                 _objects.Remove(item.Id);
             }
-            if (item.Part.Geometry.Count == 0) continue;
+            if (!item.Part.Geometry.Any(g => !g.Hidden && g.Material is not null)) continue;
             var shader = new PartShader2D(item.Part) { TextureRoot = item.TextureRoot };
             var visual = new WorldObject2D(shader.BoundsShape(), shader) { ZIndex = 1 };
             scene.Add(visual);

@@ -1,12 +1,13 @@
 {
   "format": "app2d-part",
-  "version": 3,
+  "version": 4,
   "id": "dumbbell",
   "name": "Tumbling dumbbell",
   "usage": "world",
   "geometry": [
     {
       "id": "shape-1",
+      "collision": {},
       "a": "origin",
       "frame": "origin",
       "geometry": {
@@ -26,6 +27,7 @@
     },
     {
       "id": "shape-2",
+      "collision": {},
       "a": "origin",
       "frame": "origin",
       "geometry": {
@@ -42,6 +44,7 @@
     },
     {
       "id": "shape-3",
+      "collision": {},
       "a": "origin",
       "frame": "origin",
       "geometry": {

@@ -6,7 +6,7 @@ namespace App2d.CharacterSeeds;
 /// <summary>Runs the rendering smokes and studies against the game's real assets and simulation. This project references the game; the game does not reference it.</summary>
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --bake-face authored-root | --publish-templates authored-root output-directory | --write-centaur authored-root [--force] | --extract-modules authored-root output-directory | --convert-formats authored-root output-directory | --rig-measure output-directory]";
+    private const string Usage = "Usage: App2d.CharacterSeeds [--render-smoke output-directory | --face-smoke output-directory | --tileset-smoke output-directory (level | ground-id wall-id ...) | --vegetation-smoke output-directory | --object-study output-directory | --smoke-editor-ui output-directory | --giant-tree-study output-directory | --spell-study output-directory | --hitstop-study output-directory | --contact-study output-directory | --platform-study output-directory | --bake-face authored-root | --publish-templates authored-root output-directory | --write-centaur authored-root [--force] | --extract-modules authored-root output-directory | --rig-measure output-directory]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -105,19 +105,6 @@ internal static class Program
                 // P11c: the migration's closing measurements (load and compile time, allocation, registrations, candidates) as a report.
                 MigrationMeasurements.Run(Path.GetFullPath(directory));
                 return 0;
-            case ["--convert-formats", var authoredRoot, var output]:
-                // P11c: the authored tree's model, part and entity files onto the formats without retired members (model 12, part 2, entity 5), on a scratch tree with a report.
-                var formats = FormatConversion.Convert(authoredRoot, output);
-                foreach (var file in formats.Files)
-                {
-                    Console.WriteLine($"{file.Kind} {file.Id}: {file.Status}{(file.Dropped.Count == 0 ? "" : $" (dropped {string.Join(", ", file.Dropped)})")}");
-                }
-                foreach (var difference in formats.Differences)
-                {
-                    Console.WriteLine("  DIFFERENCE: " + difference);
-                }
-                Console.WriteLine($"Report: {formats.ReportPath}");
-                return formats.Converted ? 0 : 2;
             default:
                 Console.Error.WriteLine(Usage);
                 return 1;

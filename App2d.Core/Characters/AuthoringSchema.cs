@@ -45,15 +45,13 @@ public readonly record struct Limit(float Min, float Max, float SoftMin, float S
 /// <summary>Serializer settings for authored files: camelCase, tolerant of member case, strict about unknown members, and sparse. Values equal to the type's defaults are omitted so files stay small and diffs stay readable.</summary>
 public static class AuthoredJson
 {
-    public static JsonSerializerOptions Options { get; } = Create(strict: true, compactExtrusions: true);
+    public static JsonSerializerOptions Options { get; } = Create(compactExtrusions: true);
     // Undo snapshots keep derived meshes because draft restoration intentionally skips validation and rebuilding.
-    internal static JsonSerializerOptions SnapshotOptions { get; } = Create(strict: true, compactExtrusions: false);
-    /// <summary>For files written by other tools, such as head workshop exports, where extra members are tolerated.</summary>
-    public static JsonSerializerOptions Tolerant { get; } = Create(strict: false, compactExtrusions: true);
+    internal static JsonSerializerOptions SnapshotOptions { get; } = Create(compactExtrusions: false);
     // Identity members are always written even when they equal the defaults, so a file states what it is.
     private static readonly HashSet<string> AlwaysWritten = new(StringComparer.Ordinal) { "format", "version", "id", "name", "library", "clip", "structureRevision" };
 
-    private static JsonSerializerOptions Create(bool strict, bool compactExtrusions)
+    private static JsonSerializerOptions Create(bool compactExtrusions)
     {
         var resolver = new DefaultJsonTypeInfoResolver();
         resolver.Modifiers.Add(info =>
@@ -75,7 +73,7 @@ public static class AuthoredJson
             PropertyNameCaseInsensitive = true,
             AllowOutOfOrderMetadataProperties = true,
             WriteIndented = true,
-            UnmappedMemberHandling = strict ? JsonUnmappedMemberHandling.Disallow : JsonUnmappedMemberHandling.Skip,
+            UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
             TypeInfoResolver = resolver,
             Converters = { new Vector2JsonConverter() }
         };

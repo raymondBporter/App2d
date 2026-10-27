@@ -1,12 +1,13 @@
 {
   "format": "app2d-part",
-  "version": 3,
+  "version": 4,
   "id": "summit-lift",
   "name": "Summit lift",
   "usage": "world",
   "geometry": [
     {
       "id": "shape-1",
+      "collision": {},
       "a": "origin",
       "frame": "origin",
       "geometry": {

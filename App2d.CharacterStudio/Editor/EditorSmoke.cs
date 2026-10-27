@@ -1103,6 +1103,9 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
             }),
             ("58-texture-animation-save-undo", SaveTextureAnimation),
             ("59-texture-path-preview", PreviewTexturePath),
+            ("60-passive-part-body", EditPassivePart),
+            ("61-invisible-body-geometry", EditInvisiblePart),
+            ("62-shared-part-workflow", VerifyPartWorkflow),
         ];
         if (acceptance)
         {
