@@ -6,7 +6,9 @@ Clothing and weapons are now ordinary entries under **Parts**, with the same geo
 
 Characters now use the same Part document with optional **Behavior**, a model reference and equipment. The **Entities** browser category opens the existing controller/action/behavior workspace; its collider tools edit shared geometry entries and Behavior selects their movement, hurt, attack or guard roles. Save and undo operate on that one Part file under `parts/`.
 
-For the completed passive-physics and Behavior consolidation and the remaining texture-frame animation work, see [Part consolidation plan](part-consolidation-plan.md).
+The shared geometry inspector now edits material alpha/tint, image paths and timed texture frames, including atlas regions. Enter a rectangle's image path, choose **Animate texture**, then edit frame paths and durations. In **Animate**, select its **geometry** row to key tint/alpha, fit or visibility with the existing timeline and curve editor. Exposed pieces on animated Part instances use the same channels. Texture changes retain the rectangle's world size and anchor.
+
+**Appearance > Path motion** edits a Part's existing motion definition. A standalone preview uses the same transport to scrub its path and texture frames without stepping physics. A physical path-driven Part requires a kinematic body. See [Part consolidation plan](part-consolidation-plan.md) for the completed stages and remaining cleanup.
 
 The proposed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.
 

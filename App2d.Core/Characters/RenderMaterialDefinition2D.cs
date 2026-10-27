@@ -1,3 +1,6 @@
+using App2d.Core.Animation;
+using System.Numerics;
+
 namespace App2d.Core.Characters;
 
 /// <summary>Serializable appearance for an authored shape or curve. Colors are #rrggbb; null outline values inherit the asset's ink style.</summary>
@@ -15,6 +18,12 @@ public sealed record RenderMaterialDefinition2D
     /// <summary>Image path relative to the authored asset root.</summary>
     public string? Texture { get; init; }
     public string? Tint { get; init; }
+    public float? Alpha { get; init; }
+    public TextureRegion? Source { get; init; }
+    public TextureAnimation? TextureAnimation { get; init; }
+    internal AnimationClip2D<TextureFrame>? ResolvedFrames { get; init; }
+    internal Vector4 AnimatedTint { get; init; } = Vector4.One;
+    [System.Text.Json.Serialization.JsonIgnore] public bool HasTexture => Texture is not null || TextureAnimation is { Frames.Count: > 0 };
 
     /// <summary>Apply supplied appearance fields; selecting a different named material replaces the surface.</summary>
     public RenderMaterialDefinition2D WithOverride(RenderMaterialDefinition2D? value) => value is null ? this
@@ -25,6 +34,10 @@ public sealed record RenderMaterialDefinition2D
             StrokeWidth = value.StrokeWidth ?? StrokeWidth,
             Texture = value.Texture ?? Texture,
             Tint = value.Tint ?? Tint,
+            Alpha = value.Alpha ?? Alpha,
+            Source = value.Source ?? Source,
+            TextureAnimation = value.TextureAnimation ?? TextureAnimation,
+            ResolvedFrames = null,
             Outline = value.Outline is null ? Outline : (Outline ?? new RenderOutlineDefinition2D()) with
             {
                 Color = value.Outline.Color ?? Outline?.Color,
@@ -45,7 +58,18 @@ public sealed record RenderMaterialDefinition2D
         }
         var resolved = Read(this);
         resolved.Validate("material");
-        return resolved with { Asset = Asset };
+        return resolved with { Asset = Asset, ResolvedFrames = resolved.TextureAnimation?.Compile() };
+    }
+
+    /// <summary>Samples appearance from supplied time and channel multipliers; the definition stays unchanged.</summary>
+    public RenderMaterialDefinition2D Sample(double seconds, Vector4 tint)
+    {
+        var frame = (ResolvedFrames ?? TextureAnimation?.Compile())?.Sample(seconds);
+        return frame is null && tint == Vector4.One ? this : this with
+        {
+            Texture = frame?.Texture ?? Texture, Source = frame?.Source ?? Source,
+            TextureAnimation = null, ResolvedFrames = null, AnimatedTint = tint
+        };
     }
 
     public void Validate(string field)
@@ -67,10 +91,16 @@ public sealed record RenderMaterialDefinition2D
             Authored.SkeletonAppearance2D.Color(Tint);
         }
 
-        if (Texture is not null && (string.IsNullOrWhiteSpace(Texture) || Path.IsPathRooted(Texture) || Texture.Replace('\\', '/').Split('/').Any(p => p is ".." or "." or "")))
-        {
-            throw new InvalidDataException($"{field}.texture must be a path beneath the authored asset root.");
-        }
+        if (Alpha is { } alpha) new Limit(0, 1).Check(alpha, field + ".alpha");
+        Source?.Validate(field + ".source");
+        if (Texture is not null) CheckTexture(Texture, field + ".texture");
+        if (TextureAnimation is not null) _ = TextureAnimation.Compile();
+    }
+
+    internal static void CheckTexture(string texture, string field)
+    {
+        if (string.IsNullOrWhiteSpace(texture) || Path.IsPathRooted(texture) || texture.Replace('\\', '/').Split('/').Any(p => p is ".." or "." or ""))
+            throw new InvalidDataException($"{field} must be a path beneath the authored asset root.");
     }
 }
 

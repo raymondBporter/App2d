@@ -41,25 +41,22 @@ public sealed class PlaybackClock
                 return _elapsedSeconds;
             }
 
-            if (EndMode == PlaybackEndMode.Hold)
-            {
-                return Math.Min(_elapsedSeconds, duration);
-            }
-
-            if (_seekedToEnd)
-            {
-                return duration;
-            }
-
-            if (EndMode == PlaybackEndMode.Loop)
-            {
-                return _elapsedSeconds % duration;
-            }
-
-            var trip = Math.Floor(_elapsedSeconds / duration);
-            var offset = _elapsedSeconds % duration;
-            return trip % 2 == 0 ? offset : duration - offset;
+            return _seekedToEnd ? duration : SampleTime(_elapsedSeconds, duration, EndMode);
         }
+    }
+
+    /// <summary>Pure playhead mapping for seeking and sampling; does not advance a clock or dispatch events.</summary>
+    public static double SampleTime(double seconds, double duration, PlaybackEndMode mode)
+    {
+        ArgGuard.NonNegative(seconds);
+        ArgGuard.Positive(duration);
+        return mode switch
+        {
+            PlaybackEndMode.Hold => Math.Min(seconds, duration),
+            PlaybackEndMode.Loop => seconds % duration,
+            PlaybackEndMode.PingPong => Math.Floor(seconds / duration) % 2 == 0 ? seconds % duration : duration - seconds % duration,
+            _ => throw new ArgumentOutOfRangeException(nameof(mode))
+        };
     }
 
     /// <summary>Completed loops, or completed round trips for PingPong.</summary>

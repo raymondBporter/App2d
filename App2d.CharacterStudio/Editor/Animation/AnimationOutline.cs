@@ -40,6 +40,8 @@ internal sealed class AnimationOutline(EditorSession session, AnimationWeaponEdi
             Row(clip.Asset, control.Id, $"{control.Id}{(channel.Value.Kind == MotionClip.TargetKind ? "  (IK " + channel.Value.Target + ")" : "")}", channel.Value);
         }
         var animated = primary.Model.Attachments.Where(a => a.IsAnimated).ToArray();
+        foreach (var piece in primary.Model.Parts)
+            Row(clip.Asset, piece.Id, piece.Id + "  (geometry)", new(MotionClip.FitKind, piece.Id), [.. MotionClip.PartKinds.Select(k => new Channel(k, piece.Id))]);
         if (animated.Length > 0)
         {
             Ui.Header("Parts");
@@ -77,7 +79,7 @@ internal sealed class AnimationOutline(EditorSession session, AnimationWeaponEdi
                         continue;
                     }
 
-                    Row(clip.Asset, id, $"    {target}{(isPiece ? "  (piece)" : "")}", channel.Value, isPiece ? [channel.Value, new(MotionClip.ShowKind, id)] : null);
+                    Row(clip.Asset, id, $"    {target}{(isPiece ? "  (piece)" : "")}", channel.Value, isPiece ? [.. ClipAuthoring.ChannelsForControl(primary.Model, id)] : null);
                 }
             }
         }
@@ -103,9 +105,10 @@ internal sealed class AnimationOutline(EditorSession session, AnimationWeaponEdi
             ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
         }
 
-        if (ImGui.Selectable(label, session.Selection.Control == id))
+        var piece = channel.Kind == MotionClip.FitKind;
+        if (ImGui.Selectable(label, (piece ? session.Selection.Part : session.Selection.Control) == id))
         {
-            session.Selection.Select(control: id);
+            session.Selection.Select(control: piece ? null : id, part: piece ? id : null);
             session.EditWeapon = false;
         }
         if (!keyed)

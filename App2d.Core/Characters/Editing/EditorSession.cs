@@ -1,7 +1,9 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Animation;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Physics.Motion;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Editing;
@@ -119,7 +121,8 @@ public sealed class EditorSession
     public bool PreviewMirror { get; set; }
     /// <summary>Temporary preview choice; modules open alone until explicitly previewed on a wearer.</summary>
     public bool PreviewPartOnWearer { get; set; } = true;
-    private (string Id, int Revision, ResolvedModel Model)? _partPreview;
+    private (string Id, int Revision, ResolvedModel Model, CurveMotion2D? Motion)? _partPreview;
+    private (string Id, int Revision, MotionClip? Clip)? _partTimeline;
     public AssetDocument<Part>? PartDocument => Assets.Part(PreviewPart);
     public bool PreviewWeapon { get; set; }
     public bool EditWeapon { get; set; }
@@ -403,13 +406,17 @@ public sealed class EditorSession
                 };
                 try
                 {
-                    _partPreview = (part.Id, Assets.PartsRevision, ResolvedModel.From(preview, partOf: Assets.PartOf));
+                    _partPreview = (part.Id, Assets.PartsRevision, ResolvedModel.From(preview, partOf: Assets.PartOf), part.Asset.Motion?.CreateMotion());
                     _partPreview.Value.Model.TextureRoot = Assets.Root;
                 }
                 catch (InvalidDataException) { return []; }
             }
             var model = _partPreview.Value.Model;
             var time = ShowRest ? 0 : Transport.Time;
+            var position = _partPreview.Value.Motion?.Position(time) ?? Vector2.Zero;
+            var socket = model.Attachments[0].Socket;
+            socket.OffsetX = position.X;
+            socket.OffsetY = position.Y;
             var pose = PoseEvaluator.Sample(model, null, time, input: new(Expression) { Clock = time });
             return [new(model.Id, model, pose, null)];
         }
@@ -418,10 +425,29 @@ public sealed class EditorSession
 
     /// <summary>The clip the one transport runs: the open clip, or in Entity the previewed action or role.</summary>
     public MotionClip? TransportClip => Mode == Workspace.Appearance && !PreviewPartOnWearer && PartDocument is { } part
-        ? part.Asset.Clip(part.Asset.Binding(Expression is { } expression && part.Asset.Binds(expression) ? expression : part.Asset.Expression)?.Clip ?? part.Asset.BaseLayer?.Clip)
+        ? PartTimeline(part)
         : Mode != Workspace.Entity ? ClipDocument?.Asset
         : Entity is not { } entity ? null
         : PreviewAction is { } action && entity.Actions.TryGetValue(action, out var resolved) ? resolved.Clip : entity.Clip(PreviewRole);
+
+    private MotionClip? PartTimeline(AssetDocument<Part> document)
+    {
+        var part = document.Asset;
+        if (part.Clip(part.Binding(Expression is { } expression && part.Binds(expression) ? expression : part.Expression)?.Clip ?? part.BaseLayer?.Clip) is { } clip) return clip;
+        if (_partTimeline is { } cached && cached.Id == part.Id && cached.Revision == Assets.PartsRevision) return cached.Clip;
+        AnimationClip2D<TextureFrame>[] animations;
+        try { animations = part.Geometry.Select(p => p.Material?.Resolve(part.Materials).ResolvedFrames).OfType<AnimationClip2D<TextureFrame>>().ToArray(); }
+        catch (Exception error) when (AuthoringWorkspace.IsAssetError(error)) { return null; }
+        var duration = Math.Max(part.Motion?.PeriodSeconds ?? 0, animations.Select(a => (double)a.Duration).DefaultIfEmpty().Max());
+        // A timeline descriptor lets the existing transport seek a static Part's texture or path. It is never saved.
+        var timeline = duration == 0 ? null : new MotionClip
+        {
+            Id = part.Id + "-preview", Name = "Part motion and texture", Model = part.Id, Duration = (float)duration,
+            Loop = part.Motion?.Repeat ?? animations.Any(a => a.IsLooping)
+        };
+        _partTimeline = (part.Id, Assets.PartsRevision, timeline);
+        return timeline;
+    }
 
     /// <summary>
     /// The open entity at the transport time, in authored preview: clip travel shown, facing +X, feet at the origin. An action

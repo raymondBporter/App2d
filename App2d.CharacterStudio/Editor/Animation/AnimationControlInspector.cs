@@ -207,7 +207,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
     }
 
     /// <summary>A drawing part's channels (P7a): its explicit artwork fit (multipliers of its leaf scale) and its held visibility.</summary>
-    private void DrawPiece(AssetDocument<MotionClip> document, ResolvedModel model, string control, string local, string? asset)
+    public void DrawPiece(AssetDocument<MotionClip> document, ResolvedModel model, string control, string local, string? asset)
     {
         var clip = document.Asset;
         var time = session.Transport.Time;
@@ -223,7 +223,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
             session.Change(document, () => ClipAuthoring.SetKey(document.Asset, fit, time, new(multipliers.X - 1, multipliers.Y - 1, 0)));
         }
 
-        var shownNow = showTrack is null || showTrack.Keys.Count == 0 || (showTrack.Keys.LastOrDefault(k => k.Time <= time) ?? showTrack.Keys[0]).Value.X != 0;
+        var shownNow = ClipAuthoring.Value(clip, show, time).Value.X != 0;
         var shown = shownNow;
         if (ImGui.Checkbox("Shown (held from this key)", ref shown))
         {
@@ -231,7 +231,15 @@ internal sealed class AnimationControlInspector(EditorSession session)
         }
 
         Ui.Help("A fit squashes or stretches this piece's artwork without touching the rig: a pupil closing, a cheek puffing. Nothing inherits it.");
-        var channels = ClipAuthoring.ChannelsForControl(model, control);
+        var alpha = new Channel(MotionClip.AlphaKind, control);
+        var opacity = ClipAuthoring.Value(clip, alpha, time).Value.X;
+        if (Ui.Slider("Alpha multiplier", ref opacity, 0, 1))
+            session.Change(document, () => ClipAuthoring.SetKey(document.Asset, alpha, time, new(opacity, 0, 0)));
+        var tint = new Channel(MotionClip.TintKind, control);
+        var color = ClipAuthoring.Value(clip, tint, time).Value;
+        if (ImGui.ColorEdit3("Tint multiplier", ref color))
+            session.Change(document, () => ClipAuthoring.SetKey(document.Asset, tint, time, color));
+        Channel[] channels = [.. MotionClip.PartKinds.Select(kind => new Channel(kind, control))];
         var key = channels.SelectMany(c => ClipAuthoring.Track(clip, c)?.Keys ?? []).FirstOrDefault(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
         if (key is null)
         {
@@ -249,7 +257,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
             session.Edit(document, () => ClipAuthoring.DeleteKeys(document.Asset, time, channels));
         }
 
-        AnimationCurveEditor.DrawChannels(session, document, [fit], time);
+        AnimationCurveEditor.DrawChannels(session, document, [fit, alpha, tint], time);
     }
 
     /// <summary>

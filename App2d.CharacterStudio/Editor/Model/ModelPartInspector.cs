@@ -104,6 +104,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         Float("Offset X", RigProperties.OffsetX, part.OffsetX, -2, 2, (p, v) => p.OffsetX = v);
         Float("Offset Y", RigProperties.OffsetY, part.OffsetY, -2, 2, (p, v) => p.OffsetY = v);
         var materialOverridden = overrides?.Material;
+        MaterialAnimationFields.Draw(part, change);
         if (part.Geometry is ICurve2D)
         {
             if (!Marked("Stroke width", materialOverridden?.StrokeWidth is not null, () => overrides!.StripMaterial(m => m with { StrokeWidth = null })))

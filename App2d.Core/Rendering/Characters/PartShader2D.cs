@@ -10,6 +10,7 @@ namespace App2d.Core.Rendering.Characters;
 public sealed class PartShader2D(Part part) : IShader2D
 {
     private double? _time;
+    private readonly bool _animated = part.IsAnimated || part.Geometry.Any(p => p.Material?.Resolve(part.Materials).TextureAnimation is { Frames.Count: > 0 });
     public Part Part { get; } = part;
     public string TextureRoot { get; init; } = part.TextureRoot;
     public PuppetDrawing Drawing { get; } = new();
@@ -17,7 +18,7 @@ public sealed class PartShader2D(Part part) : IShader2D
 
     public void SetTime(double seconds)
     {
-        if (_time == seconds || _time is not null && !Part.IsAnimated) return;
+        if (_time == seconds || _time is not null && !_animated) return;
         Drawing.Build(Part, seconds, TextureRoot);
         _time = seconds;
     }

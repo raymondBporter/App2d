@@ -348,7 +348,7 @@ internal sealed class PartOverrideView(AssetDocument<ModelVariant> document, Cha
             stripped = stripped with { Outline = null };
         }
 
-        if (stripped.Asset is null && stripped.Fill is null && stripped.Paint is null && stripped.StrokeWidth is null && stripped.Outline is null && stripped.Texture is null && stripped.Tint is null)
+        if (stripped.Asset is null && stripped.Fill is null && stripped.Paint is null && stripped.StrokeWidth is null && stripped.Outline is null && stripped.Texture is null && stripped.Tint is null && stripped.Alpha is null && stripped.Source is null && stripped.TextureAnimation is null)
         {
             ModelAuthoring.ResetOverride(document.Asset, target);
         }

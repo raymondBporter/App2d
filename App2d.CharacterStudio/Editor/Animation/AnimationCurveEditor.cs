@@ -27,7 +27,7 @@ internal static class AnimationCurveEditor
 
             var key = track.Keys[index];
             var next = track.Keys[index + 1];
-            var count = channel.Kind is MotionClip.RotateKind or MotionClip.BendKind ? 1 : channel.Kind is MotionClip.ScaleKind ? 2 : 3;
+            var count = channel.Kind is MotionClip.RotateKind or MotionClip.BendKind or MotionClip.AlphaKind ? 1 : channel.Kind is MotionClip.ScaleKind or MotionClip.FitKind ? 2 : 3;
             for (var axis = 0; axis < count; axis++)
             {
                 var component = axis;

@@ -103,7 +103,7 @@ public static partial class ClipAuthoring
     public static ClipTrack? Track(MotionClip clip, Channel channel) => clip.Tracks.FirstOrDefault(t => t.Kind == channel.Kind && t.Target == channel.Target);
 
     public static (Vector3 Value, float Angle) Value(MotionClip clip, Channel channel, float time) =>
-        Track(clip, channel) is { } track ? PoseEvaluator.Interpolate(track, time) : default;
+        Track(clip, channel) is { } track ? PoseEvaluator.Interpolate(track, time) : (MotionClip.DefaultValue(channel.Kind), 0);
 
     /// <summary>Writes a key at <paramref name="time"/>, replacing a key already there and keeping its easing.</summary>
     public static void SetKey(MotionClip clip, Channel channel, float time, Vector3 value, float angle = 0)
@@ -531,8 +531,9 @@ public static partial class ClipAuthoring
             curve ??= ease == ClipEase.Smooth ? KeyCurve2D.FromEase(ease) : null;
             return curve?.Slice(Math.Clamp((a - startTime) / (endTime - startTime), 0, 1), Math.Clamp((b - startTime) / (endTime - startTime), 0, 1), start, end);
         }
-        List<ClipKey> Cut(List<ClipKey> keys, bool setupBeforeFirst = false, bool rotate = false)
+        List<ClipKey> Cut(List<ClipKey> keys, ClipTrack? track = null)
         {
+            var rotate = track?.Kind == MotionClip.RotateKind;
             if (keys.Count == 0)
             {
                 return keys;
@@ -548,7 +549,7 @@ public static partial class ClipAuthoring
                     };
                 }
 
-                var (value, angle) = setupBeforeFirst && time < keys[0].Time ? default : PoseEvaluator.Interpolate(keys, time, rotate);
+                var (value, angle) = track is null ? PoseEvaluator.Interpolate(keys, time) : PoseEvaluator.Interpolate(track, time);
                 var before = keys.LastOrDefault(k => k.Time < time);
                 return new()
                 {
@@ -583,7 +584,7 @@ public static partial class ClipAuthoring
         }
         foreach (var track in copy.Tracks)
         {
-            track.Keys = Cut(track.Keys, track.SetupBeforeFirst, track.Kind == MotionClip.RotateKind);
+            track.Keys = Cut(track.Keys, track);
         }
 
         copy.Travel.Keys = Cut(copy.Travel.Keys);

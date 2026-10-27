@@ -1,6 +1,7 @@
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
+using App2d.Core.Timing;
 using System.Numerics;
 
 namespace App2d.Core.Physics.Motion;
@@ -46,8 +47,7 @@ public sealed class CurveMotion2D : IKinematicMotion2D
 
     private double Phase(double seconds)
     {
-        ArgGuard.NonNegative(seconds);
-        return Repeat ? seconds % PeriodSeconds / PeriodSeconds : Math.Min(seconds / PeriodSeconds, 1d);
+        return PlaybackClock.SampleTime(seconds, PeriodSeconds, Repeat ? PlaybackEndMode.Loop : PlaybackEndMode.Hold) / PeriodSeconds;
     }
 
     private static float CheckedProgress(double progress)

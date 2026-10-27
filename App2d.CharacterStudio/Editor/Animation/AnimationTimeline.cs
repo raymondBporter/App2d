@@ -47,7 +47,9 @@ internal sealed class AnimationTimeline(EditorSession session)
             rows.Add(("Weapon rotation", new[] { new Channel(MotionClip.OrientKind, session.PreviewSocket) }));
         }
 
-        if (session.Selection.Control is { } control && AnimationInspector.Keyable(primary.Model, control) && ClipAuthoring.ChannelsForControl(primary.Model, control) is { Count: > 0 } selected)
+        if (session.Selection.Part is { } piece && AnimationInspector.Keyable(primary.Model, piece))
+            rows.Add((piece + " geometry", MotionClip.PartKinds.Select(k => new Channel(k, piece)).ToArray()));
+        else if (session.Selection.Control is { } control && AnimationInspector.Keyable(primary.Model, control) && ClipAuthoring.ChannelsForControl(primary.Model, control) is { Count: > 0 } selected)
         {
             rows.Add((control, selected));
         }

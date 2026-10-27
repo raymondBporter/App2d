@@ -22,7 +22,7 @@ public static partial class ClipAuthoring
 
         if (channel.Kind == MotionClip.FitKind)
         {
-            return [channel, new(MotionClip.ShowKind, control)];
+            return [.. MotionClip.PartKinds.Select(kind => new Channel(kind, control))];
         }
 
         if (channel.Kind != MotionClip.TranslateKind)

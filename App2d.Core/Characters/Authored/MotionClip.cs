@@ -82,7 +82,7 @@ public sealed record ClipMarker
 }
 
 /// <summary>A held expression on an animated part instance from this time until the next key; <see cref="Part.None"/> hides the instance.</summary>
-public sealed record ClipPlayKey
+public sealed record ClipPlayKey : ITimedKey
 {
     public float Time { get; set; }
     public string Expression { get; set; } = Part.None;
@@ -150,9 +150,11 @@ public sealed class MotionClip
     public const string FitKind = "fit";
     /// <summary>A drawing part's visibility (<see cref="ChannelSemantics.EnabledState"/>, held): key x 1 shows, 0 hides, from the key until the next.</summary>
     public const string ShowKind = "show";
-    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, BendKind, FitKind, ShowKind];
+    public const string TintKind = "tint", AlphaKind = "alpha";
+    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, BendKind, FitKind, ShowKind, TintKind, AlphaKind];
     /// <summary>The kinds that target a drawing part rather than a control, chain or socket.</summary>
-    public static readonly IReadOnlyList<string> PartKinds = [FitKind, ShowKind];
+    public static readonly IReadOnlyList<string> PartKinds = [FitKind, ShowKind, TintKind, AlphaKind];
+    public static Vector3 DefaultValue(string kind) => kind == TintKind ? Vector3.One : kind is AlphaKind or ShowKind ? Vector3.UnitX : Vector3.Zero;
     public string Format { get; set; } = FormatId;
     /// <summary>Version 4 (P7c) carries no <c>faces</c> tracks: a face is an animated part instance selected through <see cref="Plays"/>. Version-3 files without face tracks read unchanged through <see cref="LegacyClipReader"/>.</summary>
     public const int CurrentVersion = 4;
@@ -308,7 +310,10 @@ public sealed class MotionClip
                 Require(track.Keys.All(k => k.Value.X is 0 or 1 && k.Value.Y == 0 && k.Value.Z == 0), $"{owner} show track '{track.Target}': keys use x 0 (hidden) or 1 (shown) only.");
             }
 
-            Require(track.Kind is not (FitKind or ShowKind) || track.Scale is null or CharacterModel.Unit, $"{owner} {track.Kind} track '{track.Target}': a part channel has no measurement scale.");
+            if (track.Kind is TintKind or AlphaKind)
+                Require(track.Keys.All(k => k.Value.X is >= 0 and <= 1 && k.Value.Y is >= 0 and <= 1 && k.Value.Z is >= 0 and <= 1
+                    && (track.Kind != AlphaKind || k.Value.Y == 0 && k.Value.Z == 0)), $"{owner} {track.Kind} track '{track.Target}': tint uses RGB in 0..1; alpha uses x in 0..1 only.");
+            Require(!PartKinds.Contains(track.Kind) || track.Scale is null or CharacterModel.Unit, $"{owner} {track.Kind} track '{track.Target}': a part channel has no measurement scale.");
         }
         var played = new HashSet<string>(StringComparer.Ordinal);
         foreach (var play in Plays)
@@ -444,7 +449,7 @@ public sealed class MotionClip
         void CheckTarget(ResolvedModel rig, ClipTrack track, string field, string fullTarget)
         {
             var solved = rig.Chains.Values.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
-            if (track.Kind is FitKind or ShowKind)
+            if (PartKinds.Contains(track.Kind))
             {
                 Require(rig.Parts.Any(p => p.Id == track.Target), $"{field}: unknown part.");
             }
@@ -530,7 +535,7 @@ public sealed class MotionClip
             return null;
         }
 
-        var key = track.Keys.LastOrDefault(k => k.Time <= time) ?? track.Keys[0];
+        var key = KeyframeSampling.Held(track.Keys, time)!;
         return (key.Expression, key.Time);
     }
 }

@@ -1095,6 +1095,14 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Record(s.PartDocument!.Asset.Geometry.All(p => p.Mesh is not null), "meshes are ordinary geometry entries in the shared inspector");
                 shell.Viewport.Fit(s.Scene().Single());
             }),
+            ("56-texture-animation-first", BuildTextureAnimation),
+            ("57-texture-animation-fade", shell =>
+            {
+                shell.Session.Seek(.5f);
+                CheckTextureAnimation(shell.Session, "images/texture-proof/wide.png");
+            }),
+            ("58-texture-animation-save-undo", SaveTextureAnimation),
+            ("59-texture-path-preview", PreviewTexturePath),
         ];
         if (acceptance)
         {

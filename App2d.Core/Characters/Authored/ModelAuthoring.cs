@@ -972,6 +972,9 @@ public static class ModelAuthoring
             if (now.StrokeWidth != was.StrokeWidth) material = (material ?? new()) with { StrokeWidth = now.StrokeWidth };
             if (now.Texture != was.Texture) material = (material ?? new()) with { Texture = now.Texture };
             if (now.Tint != was.Tint) material = (material ?? new()) with { Tint = now.Tint };
+            if (now.Alpha != was.Alpha) material = (material ?? new()) with { Alpha = now.Alpha };
+            if (now.Source != was.Source) material = (material ?? new()) with { Source = now.Source };
+            if (now.TextureAnimation != was.TextureAnimation) material = (material ?? new()) with { TextureAnimation = now.TextureAnimation };
             if (now.Outline?.Width != was.Outline?.Width)
             {
                 material = (material ?? new()) with { Outline = (material?.Outline ?? new RenderOutlineDefinition2D()) with { Width = now.Outline?.Width } };

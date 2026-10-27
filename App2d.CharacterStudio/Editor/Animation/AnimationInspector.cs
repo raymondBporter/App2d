@@ -32,7 +32,12 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
 
         if (primary is not null)
         {
-            if (session.Selection.Control is { } control && Keyable(primary.Model, control))
+            if (session.Selection.Part is { } piece && Keyable(primary.Model, piece))
+            {
+                var nested = ClipAuthoring.Nested(primary.Model, piece);
+                _controls.DrawPiece(document, primary.Model, piece, nested?.Target ?? piece, nested?.Attachment.Asset.Id);
+            }
+            else if (session.Selection.Control is { } control && Keyable(primary.Model, control))
             {
                 _controls.Draw(document, primary, control);
             }

@@ -376,7 +376,7 @@ public static class ModuleConversion
                 {
                     MotionClip.OrientKind => false,
                     MotionClip.TargetKind => chains.Contains(track.Target),
-                    MotionClip.FitKind or MotionClip.ShowKind => pieces.Contains(track.Target),
+                    MotionClip.FitKind or MotionClip.ShowKind or MotionClip.TintKind or MotionClip.AlphaKind => pieces.Contains(track.Target),
                     _ => ids.Contains(track.Target),
                 };
                 if (!carried)

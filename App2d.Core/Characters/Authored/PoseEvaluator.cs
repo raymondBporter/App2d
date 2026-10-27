@@ -4,6 +4,7 @@ using App2d.Core.Constraints;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
+using App2d.Core.Timing;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -126,7 +127,7 @@ public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, Evaluate
     }
 
     /// <summary>The pieces drawn for this instance: fitted and visible per the nested pose.</summary>
-    public IEnumerable<PartGeometry> DrawnParts() => Attachment.Parts.Where(Pose.Visible).Select(Pose.Fitted);
+    public IEnumerable<PartGeometry> DrawnParts() => Attachment.Parts.Where(Pose.Visible).Select(Pose.Drawn);
 
     /// <summary>A wearer-side namespaced name for one of this instance's targets.</summary>
     public string Qualify(string target) => Id + Part.Namespace + target;
@@ -161,6 +162,9 @@ public sealed class EvaluatedPose
     public Dictionary<string, ConstraintLimitEvaluation1D> Limits { get; } = new(StringComparer.Ordinal);
     /// <summary>Each drawing part's animated artwork fit at this sample (fit tracks), as multipliers of its leaf scale; absent is 1.</summary>
     public Dictionary<string, Vector2> Fits { get; } = new(StringComparer.Ordinal);
+    public Dictionary<string, Vector4> Tints { get; } = new(StringComparer.Ordinal);
+    /// <summary>Time sampled by this pose, shared by texture frames. No rendering clock advances it.</summary>
+    public double SampleSeconds { get; init; }
     /// <summary>Drawing parts a show track hides at this sample.</summary>
     public HashSet<string> HiddenParts { get; } = new(StringComparer.Ordinal);
     /// <summary>Every animated part instance evaluated inside this pose, by instance ID: the nested runtime graph (P7a).</summary>
@@ -172,6 +176,14 @@ public sealed class EvaluatedPose
 
     /// <summary>The part with its animated artwork fit applied to its leaf scale; the part itself when nothing fits it.</summary>
     public PartGeometry Fitted(PartGeometry part) => Fits.TryGetValue(part.Id, out var fit) ? part with { ScaleX = part.ScaleX * fit.X, ScaleY = part.ScaleY * fit.Y } : part;
+
+    public PartGeometry Drawn(PartGeometry part)
+    {
+        var fitted = Fitted(part);
+        if (part.Material is not { } material) return fitted;
+        var sampled = material.Sample(SampleSeconds, Tints.GetValueOrDefault(part.Id, Vector4.One));
+        return ReferenceEquals(sampled, material) ? fitted : fitted with { Material = sampled };
+    }
 
     /// <summary>Whether a part draws at this sample: not hidden on the part and not hidden by a show track.</summary>
     public bool Visible(PartGeometry part) => !part.Hidden && !HiddenParts.Contains(part.Id);
@@ -213,7 +225,7 @@ public static class PoseEvaluator
             Source = source;
             Clip = source.Clip;
             Weight = MathF.Min(source.Weight, 1);
-            Time = (float)(Clip.Loop ? source.Seconds % Clip.Duration : Math.Min(source.Seconds, Clip.Duration));
+            Time = (float)PlaybackClock.SampleTime(source.Seconds, Clip.Duration, Clip.Loop ? PlaybackEndMode.Loop : PlaybackEndMode.Hold);
             var prefix = source.Namespace is null ? null : source.Namespace + Part.Namespace;
             foreach (var track in Clip.Tracks)
             {
@@ -242,10 +254,11 @@ public static class PoseEvaluator
     /// <summary>The clip must already have passed <see cref="MotionClip.Validate(ResolvedModel, bool)"/> for this model. A null clip samples rest.</summary>
     public static EvaluatedPose Sample(ResolvedModel model, MotionClip? clip, double seconds, bool repeat = false, PoseInput input = default)
     {
+        var restOnly = clip is null;
         clip ??= Still;
         ArgGuard.NonNegative(seconds);
         var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
-        var time = (float)(cycles > 0 ? seconds % clip.Duration : Math.Min(seconds, clip.Duration));
+        var time = (float)PlaybackClock.SampleTime(seconds, clip.Duration, repeat && clip.Loop ? PlaybackEndMode.Loop : PlaybackEndMode.Hold);
         float Ratio(string scale) => scale == CharacterModel.Unit ? 1 : model.Measure(scale) / clip.Reference[scale];
 
         var travelRatio = Ratio(clip.Travel.Scale);
@@ -256,7 +269,7 @@ public static class PoseEvaluator
         }
         var cycleTravel = (Travel(clip.Duration) - Travel(0)) * (float)cycles;
         var cycleOrigin = new Vector3(Travel(0) + cycleTravel, 0);
-        var pose = new EvaluatedPose { Locomotion = new(Travel(time) + cycleTravel, 0) };
+        var pose = new EvaluatedPose { Locomotion = new(Travel(time) + cycleTravel, 0), SampleSeconds = restOnly ? seconds : time };
         var layers = input.Layers().Select(l => new Layer(l)).ToArray();
         if (model.MotionOwner is { } mover)
         {
@@ -288,7 +301,7 @@ public static class PoseEvaluator
             var (track, at, source) = Read(layer, kind, target);
             if (track is null)
             {
-                return default;
+                return MotionClip.DefaultValue(kind);
             }
 
             var (value, _) = Interpolate(track, at);
@@ -296,7 +309,7 @@ public static class PoseEvaluator
             // A wearer's namespaced layer keys a nested part in the part's own units (P7a/P10b): no measure scales it.
             var ratio = scale == CharacterModel.Unit || layer?.Source.Namespace is not null ? 1 : model.Measure(scale) / source.Reference[scale];
             var delta = new Vector3(value.X * ratio, value.Y * ratio, value.Z);
-            if (!input.ReverseHorizontalMotion || kind is MotionClip.ScaleKind or MotionClip.FitKind or MotionClip.ShowKind)
+            if (!input.ReverseHorizontalMotion || kind == MotionClip.ScaleKind || MotionClip.PartKinds.Contains(kind))
             {
                 return delta;
             }
@@ -477,6 +490,8 @@ public static class PoseEvaluator
         // Part channels (P7a): an explicit artwork fit and a held visibility per drawing part, layered like any other channel.
         foreach (var part in model.Parts)
         {
+            var tint = new Vector4(Delta(MotionClip.TintKind, part.Id, CharacterModel.Unit), Delta(MotionClip.AlphaKind, part.Id, CharacterModel.Unit).X);
+            if (tint != Vector4.One) pose.Tints[part.Id] = Vector4.Clamp(tint, Vector4.Zero, Vector4.One);
             var fit = Delta(MotionClip.FitKind, part.Id, CharacterModel.Unit);
             if (fit.X != 0 || fit.Y != 0)
             {
@@ -491,8 +506,8 @@ public static class PoseEvaluator
         bool? ShownAt(string part)
         {
             // Held, discrete: the topmost layer owning the part from half weight, else the base; no track keeps the part shown.
-            bool? Read1(Layer? layer) => Read(layer, MotionClip.ShowKind, part) is { Track: { } track, Time: var at } && track.Keys.Count > 0
-                ? (track.Keys.LastOrDefault(k => k.Time <= at) ?? track.Keys[0]).Value.X != 0 : null;
+            bool? Read1(Layer? layer) => Read(layer, MotionClip.ShowKind, part) is { Track: { } track, Time: var at }
+                ? Interpolate(track, at).Value.X != 0 : null;
             for (var i = layers.Length - 1; i >= 0; i--)
             {
                 if (layers[i].Masks(part) && layers[i].Weight >= .5f)
@@ -589,7 +604,7 @@ public static class PoseEvaluator
             return (asset.Clip(binding.Clip), at);
         }
 
-        if (binding?.Mutes.Contains(layer.Id) == true || layer.Clip is null)
+        if (binding?.Mutes.Contains(layer.Id) == true)
         {
             return (null, 0);
         }
@@ -669,7 +684,7 @@ public static class PoseEvaluator
                 // from that key (at the layer's rate); one a request chose runs on the layer's clock.
                 at = binding.Time ?? owned ?? (since is { } key ? Math.Max(0, time - key) * (layer.Clock == PartClocks.Mapped ? layer.Rate : 1) : Math.Max(0, layer.Time(seconds, input.Clock)));
             }
-            else if (binding?.Mutes.Contains(layer.Id) == true || layer.Clip is null)
+            else if (binding?.Mutes.Contains(layer.Id) == true)
             {
                 playing = null;
                 at = 0;
@@ -775,5 +790,7 @@ public static class PoseEvaluator
     }
 
     public static (Vector3 Value, float Angle) Interpolate(ClipTrack track, float time) =>
-        track.SetupBeforeFirst && track.Keys.Count > 0 && time < track.Keys[0].Time ? default : Interpolate(track.Keys, time, track.Kind == MotionClip.RotateKind);
+        track.Keys.Count == 0 || track.SetupBeforeFirst && time < track.Keys[0].Time ? (MotionClip.DefaultValue(track.Kind), 0)
+        : track.Kind == MotionClip.ShowKind ? (KeyframeSampling.Held(track.Keys, time)!.Value, 0)
+        : Interpolate(track.Keys, time, track.Kind == MotionClip.RotateKind);
 }

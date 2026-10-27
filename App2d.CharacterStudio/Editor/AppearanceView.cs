@@ -125,6 +125,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 
         _partFields.Placement(doc);
         _partFields.Import(doc);
+        _partFields.Motion(doc);
 
         var ink = asset.Ink;
         if (Ui.ColorHex("Ink", ref ink))

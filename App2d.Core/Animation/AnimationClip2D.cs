@@ -1,4 +1,5 @@
 using App2d.Core.Validation;
+using App2d.Core.Timing;
 
 namespace App2d.Core.Animation;
 
@@ -68,6 +69,10 @@ public sealed class AnimationClip2D<TFrame>
     public TFrame this[int index] => _frames[index];
 
     public float GetFrameDuration(int index) => _frameDurations[index];
+
+    /// <summary>Samples the same loop/hold rules as a player without creating or advancing one.</summary>
+    public TFrame Sample(double seconds) => this[GetFrameIndexAtTime((float)PlaybackClock.SampleTime(seconds, Duration,
+        IsLooping ? PlaybackEndMode.Loop : PlaybackEndMode.Hold))];
 
     public int GetFrameIndexAtTime(float elapsedSeconds)
     {

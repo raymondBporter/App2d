@@ -2,7 +2,7 @@
 
 Date: 2026-10-26.
 
-Status: reviewed and in progress. S0-S4 are implemented. S5 and the remaining S6 cutover are pending; the earlier demo cleanup is recorded below.
+Status: reviewed and in progress. S0-S5 are implemented. The remaining S6 cutover is pending; the earlier demo cleanup is recorded below.
 
 This follows the [completed character migration](character-system-migration-plan.md). Keep its working rig, proportions, constraints, module composition, collision registration, animation, document/undo infrastructure and game artwork. The next objective is fewer independent definitions, loaders, placement paths, inspectors and spawners.
 
@@ -116,7 +116,7 @@ Texture animation must:
 
 Continuous values interpolate; frame/selection values hold. Sharing timing does not require forcing every value into a float or duplicating the generic frame-animation implementation.
 
-The current character image draw path maps the entire texture onto the quad. Source-region selection needs an explicit UV mapping change there; changing a texture filename alone does not implement atlas animation.
+The shared image draw path maps either the full texture or the sampled frame's normalized source region onto the same authored rectangle. Source-region selection changes UVs, not world dimensions or placement.
 
 For curves, reuse existing control-point bindings. Distinguish a point the curve passes through from a Bezier handle that influences its shape. Curve deformation and optional effects belong to the geometry operation, not the definition of every Part.
 
@@ -230,13 +230,22 @@ S4 implementation review (2026-10-27):
 
 ### S5. Share animation binding and add texture frames
 
-- [ ] S5a. Bind the useful existing pose/parameter, material and enabled/selection targets through shared sampling/playback rules.
-- [ ] S5b. Add a timed image sequence on a rectangle, then exercise it on a moving bone. Reuse AnimationClip2D and existing clock semantics; add source-region UV selection through the same frame binding when required.
-- [ ] S5c. Reuse the existing kinematic motion interface for a path-driven Part/body and expose it as motion configuration, not a material.
+- [x] S5a. Bind the useful existing pose/parameter, material and enabled/selection targets through shared sampling/playback rules.
+- [x] S5b. Add a timed image sequence on a rectangle, then exercise it on a moving bone. Reuse AnimationClip2D and existing clock semantics; add source-region UV selection through the same frame binding when required.
+- [x] S5c. Reuse the existing kinematic motion interface for a path-driven Part/body and expose it as motion configuration, not a material.
 
 Gate: a bone-animated object can simultaneously change texture frames and material alpha. Seeking to a given time always produces the same pose/frame/color without advancing simulation or playing sound. Rect size/anchor remains stable across different image sizes; looping/holding and both facings work. A kinematic path retains its correct fixed-step velocity.
 
 Delete: duplicated frame clocks, selection sampling and material/geometry timing branches introduced during the consolidation. Do not rewrite the generic animation library or attempt animation of all fields.
+
+S5 implementation review (2026-10-27):
+
+- `tint` (RGB) and `alpha` (X) are ordinary geometry-targeted clip channels, including exposed `instance/piece` targets. Values in 0..1 multiply the authored material and blend through existing masked layers. Fit, visibility, poses and normalized bend parameters keep their existing bindings. Held visibility and expression selection now share `KeyframeSampling.Held`; continuous tracks still share the existing easing/curve sampler.
+- A material can declare `textureAnimation.frames` with relative image paths, durations in seconds and optional normalized `source` regions. `AnimationClip2D<TextureFrame>` owns frame selection; `PlaybackClock.SampleTime` supplies the same loop/hold mapping to frames, poses, layers and path motion. No per-texture player or render-time clock was added. A pose carries its sampled time, and standalone static Parts use their supplied instance time. Texture dimensions do not change authored geometry. An empty frame list explicitly clears an inherited sequence.
+- Material tint and alpha apply to images, shapes, curves, paint and meshes through the shared drawing path. Atlas frames alter UVs only. The existing texture cache still loads image resources; static geometry with animated textures now refreshes its shader on supplied time changes.
+- Studio edits frame paths/durations/regions and material values in the shared geometry inspector. Geometry rows in Animate expose tint/alpha, fit and visibility with the existing key/curve/undo tools, separately from a bone with the same name. Standalone texture/path previews use the existing transport with an unsaved timeline descriptor. Part path controls edit the existing `Motion` definition; the world runtime still computes kinematic velocity from fixed-step displacement.
+- This stage adds optional fields and track kinds; existing Part/clip files need no conversion, and shipped artwork/reference data is unchanged. Verification covers repeat/hold boundaries, seeking backwards, both facings, shared-material overrides, namespaced layers, editor save/reopen/undo and fixed-step path velocity. Native proof images use different pixel sizes and an atlas crop on a moving bone; the proof files stay in the smoke workspace.
+- Verification: 1,111 affected regression tests passed, including eight new S5 cases. The final 55 focused checks also passed, adding coverage for held visibility/material defaults in clip excerpts and texture sampling on a resting rig's mapped layer clock. Native editor checks passed 170/170 and acceptance passed 46/46; the first frame, cropped second frame and fading/moving bone were inspected in `artifacts/part-consolidation/s5-editor`. The final Studio build passed.
 
 ### S6. Remove unwanted studies and finish the cutover
 
@@ -314,3 +323,4 @@ Track reduction by the old paths removed and the ease of authoring these example
 | 2026-10-27 | S2a/S2b implemented | 30 props converted into the shared Part library; separate codec/catalog, drawing and clothing inspector removed. 789 integration tests, 158 editor checks and 46 acceptance checks passed. Next: S3. |
 | 2026-10-27 | S3a/S3b implemented | Unified passive bodies and moving platforms on Part and the existing world-object runtime. 1,254 integration tests, 158 native editor checks and the five-frame physics rendering study passed. Next: S4. |
 | 2026-10-27 | S4a/S4b implemented | Unified character definitions on Part with optional Behavior and collision-enabled geometry. Converted all 11 characters; removed the entity format/runtime wrapper and separate collider/movement definitions. 1,264 regression checks passed together, the remaining audio timing check passed in isolation, and native editor/acceptance checks passed 158/158 and 46/46. Next: S5. |
+| 2026-10-27 | S5a/S5b/S5c implemented | Shared pose/frame/path timing, geometry tint/alpha channels, texture sequences with atlas regions, and Studio editing/preview. 1,111 regression checks, 55 final focused checks, 170 native editor checks and 46 acceptance checks passed. Different-size images preserve the animated rectangle's dimensions. Next: remaining S6 cutover. |

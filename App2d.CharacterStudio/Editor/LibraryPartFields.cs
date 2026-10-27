@@ -3,6 +3,9 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Physics;
 
 namespace App2d.CharacterStudio.Editor;
 
@@ -63,5 +66,42 @@ internal sealed class LibraryPartFields(EditorSession session)
             session.Edit(doc, () => { doc.Asset.Geometry = [entry]; doc.Asset.Validate(); }, "Imported geometry. Check size and named locations before saving.");
         }
         catch (Exception ex) when (ex is IOException or ArgumentException) { session.Report(ex.Message, true); }
+    }
+
+    public void Motion(AssetDocument<Part> doc)
+    {
+        Ui.Header("Path motion");
+        if (doc.Asset.Motion is not { } motion)
+        {
+            if (Ui.Button("Add path motion", doc.Asset.Physics is null || doc.Asset.Physics.MotionType == BodyMotionType2D.Kinematic))
+                session.Edit(doc, () => doc.Asset.Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(0, .5f), new(1, .5f), new(1, 0)) });
+            Ui.Help("A path moves the whole part. A physical part must use a kinematic body.");
+            return;
+        }
+        var period = (float)motion.PeriodSeconds;
+        if (Ui.Drag("Path period (seconds)", ref period, .05f, .01f, 600))
+            session.Change(doc, () => { doc.Asset.Motion = motion with { PeriodSeconds = period }; doc.Asset.Validate(); });
+        var repeat = motion.Repeat;
+        if (ImGui.Checkbox("Repeat path", ref repeat))
+            session.Edit(doc, () => { doc.Asset.Motion = motion with { Repeat = repeat }; doc.Asset.Validate(); });
+        ImGui.TextDisabled("Progress: " + string.Join(" → ", motion.Progress));
+        if (motion.Curve is QuadraticBezier2D or CubicBezier2D or RoundedPolylineCurve2D)
+        {
+            var points = PartCurves2D.ControlPoints(motion.Curve);
+            for (var i = 0; i < points.Count; i++)
+            {
+                var index = i;
+                var point = points[i];
+                if (Ui.Drag2("Path point " + i, ref point, .01f, -10000, 10000))
+                    session.Change(doc, () =>
+                    {
+                        var changed = points.ToArray(); changed[index] = point;
+                        doc.Asset.Motion = motion with { Curve = PartCurves2D.WithControlPoints(motion.Curve, changed) };
+                        doc.Asset.Validate();
+                    });
+            }
+        }
+        if (ImGui.SmallButton("Remove path motion")) session.Edit(doc, () => doc.Asset.Motion = null);
+        Ui.Help("Use the standalone preview to seek the path without stepping physics. The world applies its fixed-step velocity.");
     }
 }

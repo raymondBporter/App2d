@@ -69,7 +69,7 @@ public sealed record PartGeometry
     {
         if (Material is null && change is null) return this;
         var material = RenderMaterial.WithOverride(change).Resolve(materials);
-        if (Mesh is not null && material.Texture is not null)
+        if (Mesh is not null && material.HasTexture)
             throw new InvalidDataException("Mesh textures require UV coordinates; use a textured rectangle.");
         return this with { Material = material };
     }
@@ -115,7 +115,7 @@ public sealed record PartGeometry
             if (Bindings is { Count: > 0 } || B is not null)
                 throw new InvalidDataException("Physical vertex depths require rigid geometry placement.");
         }
-        if (Mesh is not null && Material?.Texture is not null)
+        if (Mesh is not null && Material?.HasTexture == true)
             throw new InvalidDataException("Mesh textures require UV coordinates; use a textured rectangle.");
         if (Geometry is IShape2D shape)
         {
