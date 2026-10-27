@@ -10,7 +10,6 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, MotionClip> _animations = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _paths = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedModel> _resolved = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, EntityAsset> _entityAssets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<string, GameProfile> _profiles = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Part> _parts = new(StringComparer.Ordinal);
@@ -20,8 +19,6 @@ public sealed class AuthoredCatalog
     public IReadOnlyDictionary<string, CharacterModel> Models => _models;
     public IReadOnlyDictionary<string, ModelVariant> Variants => _variants;
     public IReadOnlyDictionary<string, MotionClip> Animations => _animations;
-    /// <summary>Entity files that parsed. Only those in <see cref="Entities"/> compiled and may be played.</summary>
-    public IReadOnlyDictionary<string, EntityAsset> EntityAssets => _entityAssets;
     public IReadOnlyDictionary<string, ResolvedEntity> Entities => _entities;
     /// <summary>Game profiles (P9c): the player's entity, role clips, gear and the world placement spawns, checked against the catalog.</summary>
     public IReadOnlyDictionary<string, GameProfile> Profiles => _profiles;
@@ -58,8 +55,7 @@ public sealed class AuthoredCatalog
             });
         }
 
-        catalog.Scan(root, "entities", EntityAsset.FromJson, catalog._entityAssets, e => e.Id);
-        foreach (var entity in catalog._entityAssets.Values)
+        foreach (var entity in catalog._parts.Values.Where(p => p.Behavior is not null))
         {
             catalog.Check(entity.Id, () => catalog._entities[entity.Id] = ResolvedEntity.Compile(entity, catalog.Resolve, catalog._animations.GetValueOrDefault, catalog._parts.GetValueOrDefault));
         }

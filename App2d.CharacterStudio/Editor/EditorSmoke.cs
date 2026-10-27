@@ -545,7 +545,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // P5c: one library part on both feet as two instances, swapped on one variant only, edited once for every
                 // wearer, found through uses / used by, undone in order and saved with its wearers.
                 var s = shell.Session;
-                var library = s.Assets.Parts.Where(p => p.Asset.Usage is not ("prop" or "hair" or "clothing" or "world")).Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
+                var library = s.Assets.Parts.Where(p => p.Asset.Behavior is null && p.Asset.Usage is not ("prop" or "hair" or "clothing" or "world")).Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
                 Record(library.SequenceEqual(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"]) && s.Assets.Part("boot")!.Asset.Geometry.Count == 3, "the parts folder loads boot, the baked Person face, the four rig modules and sandal as library parts");
                 s.Open("person");
                 Check(s.DuplicatePart("hair-short", "mitt", "Mitt"), s);
@@ -854,9 +854,9 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Open("spear-guard");
                 var guard = s.EntityDocument!;
                 Record(s.Entity is not null, "the converted spear guard compiles in the workspace: " + (s.EntityError ?? "ok"));
-                Record(guard.Asset.Version == EntityAsset.CurrentVersion
-                    && guard.Asset.Colliders.Select(c => c.Id).SequenceEqual(["spear-tip", "body", "head", "legs", "reach"]) && guard.Asset.Actions[0].Hits[0].Collider == "spear-tip",
-                    "the spear guard declares its attack, hurt and trigger colliders at entity version " + EntityAsset.CurrentVersion + " and its window names the attack collider");
+                Record(guard.Asset.Version == Part.CurrentVersion
+                    && guard.Asset.Behavior!.Colliders.Keys.SequenceEqual(["spear-tip", "body", "head", "legs", "reach"]) && guard.Asset.Behavior!.Actions[0].Hits[0].Collider == "spear-tip",
+                    "the spear guard declares its attack, hurt and trigger colliders at entity version " + Part.CurrentVersion + " and its window names the attack collider");
                 s.PreviewActionOf("attack");
                 var strike = s.Entity!.Actions["attack"].Hits[0];
                 s.Seek(strike.Start + .02f);
@@ -869,15 +869,15 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Seek(strike.Finish + .1f);
                 Record(!s.EvaluateEntity()!.Colliders.First(c => c.Id == "spear-tip").Enabled, "after the window closes the attack collider is shown disabled");
                 s.Selection.Collider = "reach";
-                var radius = ((Circle2D)guard.Asset.Colliders.First(c => c.Id == "reach").Shape).Radius;
-                Check(s.Edit(guard, () => guard.Asset.Colliders.First(c => c.Id == "reach").Shape = Circle2D.Builder.Create(radius + .2f)), s);
+                var radius = ((Circle2D)guard.Asset.Geometry.First(c => c.Id == "reach").Geometry!).Radius;
+                Check(s.Edit(guard, () => guard.Asset.Geometry.First(c => c.Id == "reach").Geometry = Circle2D.Builder.Create(radius + .2f)), s);
                 Record(((Circle2D)s.Entity!.Collider("reach")!.Shape).Radius > radius + .19f, "editing the trigger's shape re-resolves the entity");
                 s.Undo();
                 Record(((Circle2D)s.Entity!.Collider("reach")!.Shape).Radius == radius, "and undoes exactly");
-                Check(s.Edit(guard, () => guard.Asset.Colliders.First(c => c.Id == "head").Shape = Capsule2D.Builder.Create(new(0, -.2f), new(0, .2f), .3f)), s);
+                Check(s.Edit(guard, () => guard.Asset.Geometry.First(c => c.Id == "head").Geometry = Capsule2D.Builder.Create(new(0, -.2f), new(0, .2f), .3f)), s);
                 Record(s.EvaluateEntity()!.Colliders.First(c => c.Id == "head").Region.Shape is Capsule2D, "a hurt collider takes any convex shape: the head as a capsule, shown as registered");
                 s.Undo();
-                Check(s.AddCollider(new() { Id = "shin", Use = ColliderUses.Hurt, Control = Humanoid.LeftKnee, Toward = Humanoid.LeftFoot, Stretch = true, Shape = Capsule2D.Builder.Create(Vector2.Zero, new(0, .39f), .06f) }), s);
+                Check(s.AddCollider(new() { Id = "shin", A = Humanoid.LeftKnee, B = Humanoid.LeftFoot, Stretch = true, Geometry = Capsule2D.Builder.Create(Vector2.Zero, new(0, .39f), .06f) }, ColliderUses.Hurt), s);
                 Record(s.Entity!.Collider("shin") is { Binding: ColliderBindings.Control, RestSpan: > .3f } && s.EvaluateEntity()!.Colliders.Any(c => c.Id == "shin" && c.Enabled),
                     "a stretched capsule along the shin is added, resolved against the rig and shown");
                 Record(!s.RemoveCollider("spear-tip") && s.Message.Contains("re-point the window first"), "removing the collider a window names is refused by name");
@@ -885,8 +885,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // P11a converted every shipped entity: the maul brute's tilted hammer registers as an attack collider with its three hurt boxes.
                 s.Open("maul-brute");
                 var brute = s.EntityDocument!;
-                Record(brute.Asset.Version == EntityAsset.CurrentVersion && brute.Asset.Colliders.Select(c => c.Id).SequenceEqual(["hammer-head", "body", "head", "legs"]) && s.Entity!.Colliders.Count(c => c.Use == ColliderUses.Hurt) == 3,
-                    "the maul brute declares its hammer-head attack collider and three hurt colliders at version " + EntityAsset.CurrentVersion);
+                Record(brute.Asset.Version == Part.CurrentVersion && brute.Asset.Behavior!.Colliders.Keys.SequenceEqual(["hammer-head", "body", "head", "legs"]) && s.Entity!.Colliders.Count(c => c.Use == ColliderUses.Hurt) == 3,
+                    "the maul brute declares its hammer-head attack collider and three hurt colliders at version " + Part.CurrentVersion);
                 // Test mode: the arena registers every actor's colliders once and the overlays read them; the reach trigger reports the player.
                 shell.LiveTest = false;
                 shell.Test.Roster.Clear();
@@ -919,23 +919,23 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var s = shell.Session; s.Compare.Clear();
                 s.Open("spear-guard");
                 var guard = s.EntityDocument!;
-                Record(guard.Asset.Version == EntityAsset.CurrentVersion && guard.Asset.Behaviors.Strikes.ContainsKey("spear-tip") && guard.Asset.Behaviors.Damage.Health == 3,
-                    "the spear guard declares its strike and receiving-damage behaviors at entity version " + EntityAsset.CurrentVersion);
-                Check(s.Edit(guard, () => guard.Asset.Behaviors.Strikes["spear-tip"].Damage = 2), s);
+                Record(guard.Asset.Version == Part.CurrentVersion && guard.Asset.Behavior!.Strikes.ContainsKey("spear-tip") && guard.Asset.Behavior!.Damage.Health == 3,
+                    "the spear guard declares its strike and receiving-damage behaviors at entity version " + Part.CurrentVersion);
+                Check(s.Edit(guard, () => guard.Asset.Behavior!.Strikes["spear-tip"].Damage = 2), s);
                 Record(s.Entity!.Actions["attack"].Hits[0].Strike.Damage == 2, "a strike's damage edit re-resolves the window's strike");
                 s.Undo();
                 Record(s.Entity!.Actions["attack"].Hits[0].Strike.Damage == 1, "and undoes exactly");
-                Check(s.Edit(guard, () => guard.Asset.Behaviors.Properties["patrol-note"] = "holds the gate"), s);
+                Check(s.Edit(guard, () => guard.Asset.Behavior!.Properties["patrol-note"] = "holds the gate"), s);
                 Record(s.Entity!.Properties["patrol-note"] == "holds the gate", "a custom property reaches the resolved entity by name");
                 s.Undo();
                 // A strike for no hit group is a resolution problem reported on the entity by name (the inspector only offers real groups).
-                Check(s.Edit(guard, () => guard.Asset.Behaviors.Strikes["spear-butt"] = new()), s);
+                Check(s.Edit(guard, () => guard.Asset.Behavior!.Strikes["spear-butt"] = new()), s);
                 Record(s.Entity is null && s.EntityError?.Contains("behaviors.strikes.spear-butt: no hit window or projectile action") == true, "a strike for no hit group is reported on the entity by name: " + s.EntityError);
                 s.Undo();
                 Record(s.Entity is not null, "and undoing it restores the compiling entity");
                 s.Open("maul-brute");
                 var brute = s.EntityDocument!;
-                Record(brute.Asset.Behaviors.Strikes["hammer-head"] == new StrikeDef { Damage = 5, Sound = "heavy" } && brute.Asset.Behaviors.Damage.Health == 22,
+                Record(brute.Asset.Behavior!.Strikes["hammer-head"] == new StrikeDef { Damage = 5, Sound = "heavy" } && brute.Asset.Behavior!.Damage.Health == 22,
                     "the maul brute's strike (damage 5 / heavy) and health 22 are typed behaviors since P11a");
                 var profile = AuthoredCatalog.Load(s.Assets.Root).Profiles.GetValueOrDefault(GameProfile.GameId);
                 Record(profile is { HasPlayer: true, Entity: "hero" } && profile.Roles[PersonRoles.GunShot] == "player-gun-shot" && profile.Spawns["BoilerBrute"] == "maul-brute",
@@ -1248,7 +1248,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         Check(s.SetEntityRole("attack", "person-thrust"), s);
         Check(s.NewEntity("brute-heavy", "Heavy bruiser", "bruiser", EntityAuthoring.Guard), s);
         Check(s.SetEntityRole("attack", "person-thrust"), s);
-        Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.MotionSet = "heavy"), s);
+        Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.Behavior!.MotionSet = "heavy"), s);
         var heavy = s.Entity!;
         var standard = s.Assets.CompileEntity("ranger-guard")!;
         Record(heavy.Clip("walk")!.Id == StarterContent.HeavyWalk && standard.Clip("walk")!.Id == "person-walk", "Heavy on the short bruiser, Standard on the tall ranger");
@@ -1262,19 +1262,20 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         var entity = s.EntityDocument!;
         Check(s.Edit(entity, () =>
         {
-            entity.Asset.Roles.Clear();
+            entity.Asset.Behavior!.Roles.Clear();
             entity.Asset.Equipment.Add(new()
             {
                 Prop = "spear",
                 Socket = Humanoid.RightGripSocket
             });
-            var attack = entity.Asset.Actions.Single(a => a.Id == "attack");
+            var attack = entity.Asset.Behavior!.Actions.Single(a => a.Id == "attack");
             attack.Role = null;
             attack.Clip = "person-thrust";
             attack.Mask = Humanoid.UpperGroup;
             attack.BlendIn = .08f;
             attack.BlendOut = .12f;
-            entity.Asset.Colliders.Add(new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = "spear", Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) });
+            entity.Asset.Geometry.Add(new() { Id = "spear-tip", Prop = "spear", Point = EquipmentPoints.Tip, Along = -.14f, Geometry = Rectangle2D.Builder.FromSize(.42f, .26f), Collision = new() });
+            entity.Asset.Behavior!.Colliders.Add("spear-tip", ColliderUses.Attack);
             attack.Hits.Add(new()
             {
                 Id = "spear-tip",

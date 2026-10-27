@@ -5,8 +5,8 @@ using System.Text.Json.Nodes;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>
-/// P11c: rewrites an authored tree's model, part and entity files onto the formats that carry no retired member (model 12,
-/// part 3, entity 5), on a scratch tree with a report (plan rule 4). A file at the previous version is read with the retired
+/// Rewrites legacy authored files into current model and Part formats on a scratch tree with a report.
+/// Entity v5 becomes a Part with optional Behavior; no separate entity format remains. Older model/part files have retired
 /// members skipped (<see cref="AuthoredJson.Tolerant"/>), every retired member it carried is listed by path, the asset is
 /// validated at the new version and written under <paramref name="output"/>; nothing under <paramref name="root"/> is written.
 /// A rerun reports every output unchanged; an output edited after an earlier run is kept. Verification: every converted model
@@ -53,7 +53,7 @@ public static class FormatConversion
                 File.Copy(path, target);
             }
         }
-        foreach (var (folder, kind, previous, current) in new[] { ("models", "model", 11, CharacterModel.CurrentVersion), ("parts", "part", 1, Part.CurrentVersion), ("entities", "entity", 4, EntityAsset.CurrentVersion), ("props", "prop", 3, Part.CurrentVersion), ("physics-props", "physics-prop", 1, Part.CurrentVersion), ("objects", "object", 1, Part.CurrentVersion) })
+        foreach (var (folder, kind, previous, current) in new[] { ("models", "model", 11, CharacterModel.CurrentVersion), ("parts", "part", 1, Part.CurrentVersion), ("entities", "entity", 5, Part.CurrentVersion), ("props", "prop", 3, Part.CurrentVersion), ("physics-props", "physics-prop", 1, Part.CurrentVersion), ("objects", "object", 1, Part.CurrentVersion) })
         {
             var directory = Path.Combine(root, folder);
             if (!Directory.Exists(directory))
@@ -70,12 +70,12 @@ public static class FormatConversion
                     var text = File.ReadAllText(path);
                     var node = JsonNode.Parse(text) as JsonObject ?? throw new InvalidDataException("not a JSON object");
                     var version = node["version"]?.GetValue<int>() ?? 0;
-                    if (version != previous && version != current && !(kind == "part" && version == 2))
+                    if (version != previous && version != current && !(kind == "part" && version == 2) && !(kind == "entity" && version == 4))
                     {
                         throw new InvalidDataException($"version {version} is not an input of this conversion (expects {previous} or {current})");
                     }
 
-                    if (kind is "model" or "part" or "entity") Scan(node, kind, "", dropped);
+                    if (kind is "model" or "part" or "entity") Scan(node, kind, "", dropped, remove: kind == "entity" && version == 4);
                     string fresh;
                     switch (kind)
                     {
@@ -111,15 +111,22 @@ public static class FormatConversion
                         }
                         default:
                         {
-                            var entity = JsonSerializer.Deserialize<EntityAsset>(text, AuthoredJson.Tolerant) ?? throw new InvalidDataException("empty file");
-                            entity.Version = EntityAsset.CurrentVersion;
-                            entity.Validate();
-                            fresh = entity.ToJson();
+                            node["version"] = 5;
+                            fresh = EntityPartConversion.Convert(node.ToJsonString()).ToJson();
+                            foreach (var collider in node["colliders"]?.AsArray() ?? [])
+                            {
+                                if (collider?["control"] is not null && collider?["along"]?.GetValue<float>() is { } along && along != 0)
+                                    dropped.Add($"colliders[{collider["id"]}].along (ignored by the legacy binding)");
+                                if (collider?["socket"] is not null || collider?["prop"] is not null)
+                                    foreach (var offset in new[] { "offsetX", "offsetY" })
+                                        if (collider?[offset]?.GetValue<float>() is { } value && value != 0)
+                                            dropped.Add($"colliders[{collider!["id"]}].{offset} (ignored by the legacy binding)");
+                            }
                             break;
                         }
                     }
 
-                    var destination = Path.Combine(output, kind is "prop" or "physics-prop" ? "parts" : folder, id + ".json");
+                    var destination = Path.Combine(output, kind is "entity" or "prop" or "physics-prop" ? "parts" : folder, id + ".json");
                     if (!destinations.Add(destination)) throw new InvalidDataException("Multiple source assets would occupy " + destination);
                     files.Add(new(kind, id, Write(destination, fresh, current, dropped), dropped));
                 }
@@ -195,27 +202,28 @@ public static class FormatConversion
         return new(files, differences, reportPath);
     }
 
-    private static void Scan(JsonNode? node, string kind, string path, List<string> dropped)
+    private static void Scan(JsonNode? node, string kind, string path, List<string> dropped, bool remove = false)
     {
         switch (node)
         {
             case JsonObject obj:
-                foreach (var (name, value) in obj)
+                foreach (var (name, value) in obj.ToArray())
                 {
                     var here = path.Length == 0 ? name : path + "." + name;
                     if (Retired[kind].Contains(name) && IsRetired(kind, path, name))
                     {
                         dropped.Add(here);
+                        if (remove) obj.Remove(name);
                         continue;
                     }
 
-                    Scan(value, kind, here, dropped);
+                    Scan(value, kind, here, dropped, remove);
                 }
                 break;
             case JsonArray array:
                 for (var i = 0; i < array.Count; i++)
                 {
-                    Scan(array[i], kind, $"{path}[{i}]", dropped);
+                    Scan(array[i], kind, $"{path}[{i}]", dropped, remove);
                 }
                 break;
         }

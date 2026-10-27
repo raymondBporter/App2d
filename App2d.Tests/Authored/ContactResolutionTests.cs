@@ -14,7 +14,7 @@ public sealed class ContactResolutionTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
 
-    private static ResolvedEntity Compile(EntityAsset asset) =>
+    private static ResolvedEntity Compile(Part asset) =>
         ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
     [Fact]

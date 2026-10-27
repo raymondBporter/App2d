@@ -105,10 +105,10 @@ public sealed class PartConsolidationTests
     public void CollidersCanUseAnArbitraryPartLocation()
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
-        var entity = EntityAsset.FromJson(catalog.EntityAssets["spear-guard"].ToJson());
+        var entity = Part.FromJson(catalog.Parts["spear-guard"].ToJson());
         var spear = Part.FromJson(catalog.Parts["spear"].ToJson());
         spear.Locations.Add(new() { Id = "blade-centre", X = 1.2f, Z = .08f });
-        var collider = entity.Colliders.First(c => c.Prop == spear.Id);
+        var collider = entity.Geometry.First(c => c.Prop == spear.Id);
         collider.Point = "blade-centre";
         var resolved = ResolvedEntity.Compile(entity, catalog.Resolve, catalog.Animations.GetValueOrDefault,
             id => id == spear.Id ? spear : catalog.Parts.GetValueOrDefault(id));

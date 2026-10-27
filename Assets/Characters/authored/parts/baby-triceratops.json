@@ -1,0 +1,142 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "baby-triceratops",
+  "name": "Baby triceratops",
+  "model": "baby-triceratops-rig",
+  "behavior": {
+    "motionSet": "standard",
+    "roles": {},
+    "controller": {
+      "walkSpeed": 1.2,
+      "range": 4.5,
+      "cooldown": 0.7,
+      "respectTerrain": true,
+      "verticalRange": 0.8,
+      "chargeSpeed": 5,
+      "chargeStartSeconds": 1,
+      "chargeEndSeconds": 1.85
+    },
+    "colliders": {
+      "horns": "attack",
+      "body": "hurt"
+    },
+    "actions": [
+      {
+        "id": "attack",
+        "clip": "baby-triceratops-charge",
+        "hits": [
+          {
+            "id": "horns",
+            "start": {
+              "marker": "rush"
+            },
+            "finish": {
+              "marker": "brake"
+            },
+            "collider": "horns"
+          }
+        ],
+        "events": [
+          {
+            "id": "scrape",
+            "at": {
+              "marker": "scrape"
+            },
+            "sound": "charge-scrape"
+          },
+          {
+            "id": "rush",
+            "at": {
+              "marker": "rush"
+            },
+            "sound": "charge-rush"
+          },
+          {
+            "id": "brake",
+            "at": {
+              "marker": "brake"
+            },
+            "sound": "charge-stop"
+          }
+        ]
+      }
+    ],
+    "strikes": {
+      "horns": {
+        "damage": 3,
+        "sound": "hit"
+      }
+    },
+    "damage": {
+      "health": 8,
+      "knockbackResistance": 1.5
+    },
+    "properties": {}
+  },
+  "usage": "character",
+  "materials": {},
+  "locations": [],
+  "geometry": [
+    {
+      "id": "movement",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": -0.099999994,
+          "y": 0.475
+        },
+        "size": {
+          "x": 1.5999999,
+          "y": 0.95
+        },
+        "angleRadians": 0
+      },
+      "collision": {}
+    },
+    {
+      "id": "horns",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.75,
+          "y": 0.65
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "socket": "head-art"
+    },
+    {
+      "id": "body",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.169,
+          "y": 0.532
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "body",
+      "frame": "locomotion",
+      "offsetX": 0.3395,
+      "offsetY": -0.021
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

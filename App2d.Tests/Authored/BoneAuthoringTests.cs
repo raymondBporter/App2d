@@ -51,14 +51,20 @@ public sealed class BoneAuthoringTests
     }
 
     [Fact]
-    public void BoneFrameAndTowardControlCannotCompeteForAShape()
+    public void TowardControlOrientsGeometryWithTheBoneFrameAsItsDegenerateFallback()
     {
         var model = ModelAuthoring.Empty("bones", "Bones");
         var bone = ModelAuthoring.AddBone(model, null, "root");
         var other = ModelAuthoring.AddBone(model, bone.Id, "child");
         var shape = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), bone.Id);
         shape.B = other.Id;
-        Assert.Throws<InvalidDataException>(model.Validate);
+        model.Validate();
+        var frame = PartAttachment2D.Carrier(shape, id => id == shape.A ? Vector3.Zero : Vector3.UnitX,
+            _ => LayeredFrame2D.FromRotation(.3f, Vector3.Zero));
+        Assert.Equal(Vector2.UnitX, frame.YAxis);
+        var collapsed = PartAttachment2D.Carrier(shape, _ => Vector3.Zero,
+            _ => LayeredFrame2D.FromRotation(.3f, Vector3.Zero));
+        Assert.Equal(LayeredFrame2D.FromRotation(.3f, Vector3.Zero), collapsed);
     }
 
     [Fact]

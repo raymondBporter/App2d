@@ -74,17 +74,17 @@ public sealed record ResolvedEquipment(Part Prop, ModelSocket Socket);
 /// </summary>
 public sealed class ResolvedEntity
 {
-    private ResolvedEntity(EntityAsset asset, ResolvedModel model, ControllerSpec controller)
+    private ResolvedEntity(Part asset, ResolvedModel model, ControllerSpec controller)
     {
         Asset = asset;
         Model = model;
         Controller = controller;
-        MovementShape = (IConvexShape2D)asset.Movement.Shape.Validated();
     }
 
-    public EntityAsset Asset { get; }
+    public Part Asset { get; }
     /// <summary>The movement shape built once: feet at the origin, +X toward facing.</summary>
-    public IConvexShape2D MovementShape { get; }
+    public ResolvedCollider Movement { get; private set; } = null!;
+    public IConvexShape2D MovementShape => Movement.Shape;
     public string Id => Asset.Id;
     public string Name => Asset.Name;
     public ResolvedModel Model { get; }
@@ -95,6 +95,7 @@ public sealed class ResolvedEntity
     public IReadOnlyDictionary<string, ModelSocket> Sockets { get; private set; } = new Dictionary<string, ModelSocket>();
     /// <summary>Every attached collider the entity declares, each with a stable ID, in declaration order. Actors register these once.</summary>
     public IReadOnlyList<ResolvedCollider> Colliders { get; private set; } = [];
+    public IReadOnlyList<ResolvedGeometry> Geometry { get; private set; } = [];
     /// <summary>The guard collider, when the entity has a guard.</summary>
     public ResolvedCollider? GuardCollider { get; private set; }
     /// <summary>Receiving damage: the typed behavior.</summary>
@@ -112,11 +113,12 @@ public sealed class ResolvedEntity
     /// Compiles an entity against its assets. Every missing reference, unsupported action, incompatible clip and missing
     /// marker is an error naming the entity and field; nothing is dropped or defaulted silently.
     /// </summary>
-    public static ResolvedEntity Compile(EntityAsset asset, Func<string, ResolvedModel> resolve, Func<string, MotionClip?> clipOf, Func<string, Part?> propOf)
+    public static ResolvedEntity Compile(Part asset, Func<string, ResolvedModel> resolve, Func<string, MotionClip?> clipOf, Func<string, Part?> propOf)
     {
         asset.Validate();
+        if (asset.Behavior is null || asset.Model is null) throw new InvalidDataException($"Part '{asset.Id}' needs Behavior and a model to compile a character.");
         var owner = $"Entity '{asset.Id}'";
-        var controller = EntityControllers.Get(asset.Controller.Kind, $"{owner} controller.kind");
+        var controller = EntityControllers.Get(asset.Behavior!.Controller.Kind, $"{owner} controller.kind");
         ResolvedModel model;
         try
         {
@@ -128,11 +130,11 @@ public sealed class ResolvedEntity
         }
         var entity = new ResolvedEntity(asset, model, controller);
         // P9a: typed behaviors. Every strike key must name a hit group.
-        var behaviors = asset.Behaviors;
+        var behaviors = asset.Behavior!;
         entity.Damage = behaviors.Damage;
-        entity.GuardBehavior = asset.Guard is null ? null : behaviors.Guard ?? new GuardBehaviorDef();
+        entity.GuardBehavior = behaviors.Guard;
         entity.Properties = behaviors.Properties;
-        var groups = asset.Actions.SelectMany(a => a.Hits.Select(h => h.Id)).Concat(asset.Actions.Where(a => a.Projectile is not null).Select(a => a.Id)).ToHashSet(StringComparer.Ordinal);
+        var groups = asset.Behavior!.Actions.SelectMany(a => a.Hits.Select(h => h.Id)).Concat(asset.Behavior!.Actions.Where(a => a.Projectile is not null).Select(a => a.Id)).ToHashSet(StringComparer.Ordinal);
         foreach (var group in behaviors.Strikes.Keys)
         {
             if (!groups.Contains(group))
@@ -157,8 +159,8 @@ public sealed class ResolvedEntity
             return clip;
         }
 
-        var set = model.Base.MotionSets.FirstOrDefault(s => s.Id == asset.MotionSet)
-            ?? throw new InvalidDataException($"{owner} motionSet: '{model.Base.Id}' has no motion set '{asset.MotionSet}'.");
+        var set = model.Base.MotionSets.FirstOrDefault(s => s.Id == asset.Behavior!.MotionSet)
+            ?? throw new InvalidDataException($"{owner} motionSet: '{model.Base.Id}' has no motion set '{asset.Behavior!.MotionSet}'.");
         var roles = new Dictionary<string, RoleClip>(StringComparer.Ordinal);
         foreach (var (role, clip) in set.Roles)
         {
@@ -171,7 +173,7 @@ public sealed class ResolvedEntity
             roles[role] = new(role, Clip(clip, $"{owner} variant '{model.Id}' role '{role}'"), $"variant:{model.Id}");
         }
 
-        foreach (var (role, clip) in asset.Roles)
+        foreach (var (role, clip) in asset.Behavior!.Roles)
         {
             roles[role] = new(role, Clip(clip, $"{owner} roles.{role}"), "entity");
         }
@@ -215,12 +217,16 @@ public sealed class ResolvedEntity
 
         // Attached colliders: every actor registers this one set and every query runs over it (P8a).
         var colliders = new List<ResolvedCollider>();
-        foreach (var definition in asset.Colliders)
-        {
-            colliders.Add(ResolvedCollider.Resolve(definition, "collider", $"{owner} collider '{definition.Id}'", model, entity.Sockets, equipment));
-        }
+        foreach (var geometry in asset.Geometry)
+            geometry.Validate(id => id == PartLocation.Origin || id == CharacterModel.Locomotion || model.Controls.ContainsKey(id));
+        ResolvedCollider ResolveGeometry(string id, string use) => ResolvedCollider.Resolve(asset.Geometry.First(g => g.Id == id), use,
+            use == ColliderUses.Movement ? "movement" : "collider", $"{owner} geometry '{id}'", model, entity.Sockets, equipment);
+        entity.Movement = ResolveGeometry(behaviors.Movement, ColliderUses.Movement);
+        foreach (var (id, use) in behaviors.Colliders) colliders.Add(ResolveGeometry(id, use));
+        entity.Geometry = asset.Geometry.Select(g => (ResolvedGeometry?)colliders.FirstOrDefault(c => c.Id == g.Id)
+            ?? (g.Id == entity.Movement.Id ? entity.Movement : new ResolvedGeometry(g, model, entity.Sockets, equipment, $"{owner} geometry '{g.Id}'"))).ToArray();
         var windowColliders = new Dictionary<(string Action, string Window), ResolvedCollider>();
-        foreach (var action in asset.Actions)
+        foreach (var action in asset.Behavior!.Actions)
         {
             var field = $"{owner} action '{action.Id}'";
             foreach (var hit in action.Hits)
@@ -229,14 +235,14 @@ public sealed class ResolvedEntity
                     ?? throw new InvalidDataException($"{field} hit '{hit.Id}': no attack collider '{hit.Collider}'.");
             }
         }
-        if (asset.Guard is { } guard)
+        if (asset.Behavior!.Guard is { } guard)
         {
             entity.GuardCollider = colliders.First(c => c.Id == guard.Collider);
         }
         entity.Colliders = colliders;
 
         var actions = new Dictionary<string, ResolvedAction>(StringComparer.Ordinal);
-        foreach (var action in asset.Actions)
+        foreach (var action in asset.Behavior!.Actions)
         {
             var field = $"{owner} action '{action.Id}'";
             var (clip, source) = action.Clip is { } direct
@@ -309,7 +315,7 @@ public sealed class ResolvedEntity
                 Recovery = recovery
             };
         }
-        if (asset.Controller.Flight is not null)
+        if (asset.Behavior!.Controller.Flight is not null)
         {
             if (!actions.TryGetValue(EntityControllers.Attack, out var swoop))
             {

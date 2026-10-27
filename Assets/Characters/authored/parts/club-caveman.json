@@ -1,0 +1,194 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "club-caveman",
+  "name": "Club caveman",
+  "model": "club-caveman-build",
+  "equipment": [
+    {
+      "prop": "wooden-club",
+      "socket": "sword-hand"
+    },
+    {
+      "prop": "club-caveman-hide-wrap",
+      "socket": "body-art"
+    },
+    {
+      "prop": "club-caveman-hair",
+      "socket": "head-art"
+    },
+    {
+      "prop": "club-caveman-beard",
+      "socket": "head-art"
+    }
+  ],
+  "behavior": {
+    "motionSet": "standard",
+    "roles": {
+      "walk": "person-run",
+      "hit": "person-hit",
+      "death": "person-death"
+    },
+    "controller": {
+      "walkSpeed": 2.5,
+      "range": 1.15,
+      "cooldown": 0.35,
+      "respectTerrain": true,
+      "verticalRange": 0.75
+    },
+    "colliders": {
+      "club-head": "attack",
+      "body": "hurt",
+      "head": "hurt",
+      "legs": "hurt"
+    },
+    "actions": [
+      {
+        "id": "attack",
+        "clip": "club-caveman-slam",
+        "hits": [
+          {
+            "id": "club-head",
+            "start": {
+              "marker": "strike"
+            },
+            "finish": {
+              "marker": "recover"
+            },
+            "collider": "club-head"
+          }
+        ],
+        "events": [
+          {
+            "id": "club-lift",
+            "at": {
+              "marker": "windup"
+            },
+            "sound": "club-windup"
+          },
+          {
+            "id": "heavy",
+            "at": {
+              "marker": "strike"
+            },
+            "sound": "heavy"
+          }
+        ]
+      }
+    ],
+    "strikes": {
+      "club-head": {
+        "damage": 3,
+        "sound": "heavy"
+      }
+    },
+    "damage": {
+      "health": 9
+    },
+    "properties": {}
+  },
+  "usage": "character",
+  "materials": {},
+  "locations": [],
+  "geometry": [
+    {
+      "id": "movement",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 1.005
+        },
+        "size": {
+          "x": 0.353,
+          "y": 2.01
+        },
+        "angleRadians": 0
+      },
+      "collision": {}
+    },
+    {
+      "id": "club-head",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.7,
+          "y": 0.65
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "prop": "wooden-club",
+      "point": "tip"
+    },
+    {
+      "id": "body",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.469,
+          "y": 0.8975
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.02273,
+      "offsetY": 0.30875
+    },
+    {
+      "id": "head",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.3308,
+          "y": 0.842
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.0954,
+      "offsetY": -0.351
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

@@ -26,7 +26,7 @@ recovery. No navigation, jumping, wall-stun bonus, armor or projectile deflectio
 
 ## Editable assets
 
-- Entity: `Assets/Characters/authored/entities/baby-triceratops.json`.
+- Character Part: `Assets/Characters/authored/parts/baby-triceratops.json`; gameplay configuration is under `behavior`.
 - Rig/art: `models/baby-triceratops-rig.json`, a 70% copy of the existing
   triceratops model with smaller horns and slightly larger eyes.
 - Defining action: `animations/baby-triceratops-charge.json`. Named rush/brake

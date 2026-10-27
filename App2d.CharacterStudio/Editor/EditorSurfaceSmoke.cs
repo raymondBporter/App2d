@@ -170,7 +170,7 @@ internal static class EditorSurfaceSmoke
                 session.Undo();
             }
             // P8c: the converted spear guard's colliders in the Entity inspector, and the overlay of the registered colliders inside the thrust window.
-            if (assets.Entity("spear-guard") is { Asset.Colliders.Count: > 0 })
+            if (assets.Entity("spear-guard") is { Asset.Behavior.Colliders.Count: > 0 })
             {
                 session.Open("spear-guard");
                 session.Selection.Collider = "reach";

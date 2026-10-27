@@ -1,0 +1,189 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "maul-brute",
+  "name": "Maul brute",
+  "model": "brute",
+  "equipment": [
+    {
+      "prop": "hammer",
+      "socket": "sword-hand"
+    },
+    {
+      "prop": "brute-hide-wrap",
+      "socket": "body-art"
+    },
+    {
+      "prop": "brute-hair",
+      "socket": "head-art"
+    },
+    {
+      "prop": "brute-beard",
+      "socket": "head-art"
+    },
+    {
+      "prop": "boot-left",
+      "socket": "left-foot-art"
+    },
+    {
+      "prop": "boot-right",
+      "socket": "right-foot-art"
+    }
+  ],
+  "behavior": {
+    "motionSet": "heavy",
+    "roles": {},
+    "controller": {
+      "walkSpeed": 1.1,
+      "range": 1.3
+    },
+    "colliders": {
+      "hammer-head": "attack",
+      "body": "hurt",
+      "head": "hurt",
+      "legs": "hurt"
+    },
+    "actions": [
+      {
+        "id": "attack",
+        "clip": "person-hammer-slam",
+        "hits": [
+          {
+            "id": "hammer-head",
+            "start": {
+              "marker": "strike"
+            },
+            "finish": {
+              "marker": "recover"
+            },
+            "collider": "hammer-head"
+          }
+        ],
+        "events": [
+          {
+            "id": "heavy",
+            "at": {
+              "marker": "strike"
+            },
+            "sound": "heavy"
+          }
+        ]
+      }
+    ],
+    "strikes": {
+      "hammer-head": {
+        "damage": 5,
+        "sound": "heavy"
+      }
+    },
+    "damage": {
+      "health": 22,
+      "knockbackResistance": 3
+    },
+    "properties": {}
+  },
+  "usage": "character",
+  "materials": {},
+  "locations": [],
+  "geometry": [
+    {
+      "id": "movement",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 1.0615
+        },
+        "size": {
+          "x": 0.319,
+          "y": 2.123
+        },
+        "angleRadians": 0
+      },
+      "collision": {}
+    },
+    {
+      "id": "hammer-head",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.2,
+          "y": 1
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "prop": "hammer",
+      "point": "tip"
+    },
+    {
+      "id": "body",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.541,
+          "y": 0.9625
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.03139,
+      "offsetY": 0.34125
+    },
+    {
+      "id": "head",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.3824,
+          "y": 0.881
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.1212,
+      "offsetY": -0.3705
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

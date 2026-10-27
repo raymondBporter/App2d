@@ -568,7 +568,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
         foreach (var set in model.MotionSets.ToArray())
         {
             ImGui.PushID(set.Id);
-            var users = session.Assets.EntitiesOn(model.Id).Where(e => e.Asset.MotionSet == set.Id).ToArray();
+            var users = session.Assets.EntitiesOn(model.Id).Where(e => e.Asset.Behavior!.MotionSet == set.Id).ToArray();
             if (ImGui.TreeNodeEx($"{set.Name} ({set.Id})", ImGuiTreeNodeFlags.None, $"{set.Name}  ({set.Roles.Count} roles, {users.Length} entities)"))
             {
                 var name = set.Name;

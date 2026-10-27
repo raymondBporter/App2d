@@ -73,14 +73,14 @@ public sealed class SeedGenerationTests
         // (the spear guard's authored reach trigger aside), so regeneration into the shipped tree finds them unchanged.
         foreach (var entity in new[] { StarterContent.SpearGuardEntity(), StarterContent.PlayerEntity(), StarterContent.StalkerEntity() })
         {
-            Assert.Equal(EntityAsset.CurrentVersion, entity.Version);
-            Assert.Contains(entity.Colliders, c => c.Use == ColliderUses.Hurt);
-            Assert.All(entity.Actions.SelectMany(a => a.Hits), h => Assert.NotNull(h.Collider));
+            Assert.Equal(Part.CurrentVersion, entity.Version);
+            Assert.Contains(ColliderUses.Hurt, entity.Behavior!.Colliders.Values);
+            Assert.All(entity.Behavior!.Actions.SelectMany(a => a.Hits), h => Assert.NotNull(h.Collider));
         }
         Assert.Equal(StarterContent.PlayerEntity().ToJson(), Catalog.Entities["player"].Asset.ToJson());
         Assert.Equal(StarterContent.StalkerEntity().ToJson(), Catalog.Entities["stalker-pest"].Asset.ToJson());
-        var guard = EntityAsset.FromJson(Catalog.Entities["spear-guard"].Asset.ToJson());
-        guard.Colliders.RemoveAll(c => c.Use == ColliderUses.Trigger);
+        var guard = Part.FromJson(Catalog.Entities["spear-guard"].Asset.ToJson());
+        guard.RemoveColliders(ColliderUses.Trigger);
         Assert.Equal(StarterContent.SpearGuardEntity().ToJson(), guard.ToJson());
         foreach (var model in new[] { PersonTemplate.Model(face: true), StarterContent.StalkerModel(), QuadrupedTemplate.Model(), PterosaurTemplate.Model() })
         {
@@ -96,8 +96,8 @@ public sealed class SeedGenerationTests
         Assert.Equal(2, resolved.ParameterValues["legs"]);
         // A new entity from the template starts with one hurt box over its rest pose instead of a layout reference.
         var fresh = EntityAuthoring.New(EntityAuthoring.Guard, "fresh", "Fresh", Catalog.Resolve("quadruped"));
-        var box = Assert.Single(fresh.Colliders);
-        Assert.Equal((ColliderUses.Hurt, "body", CharacterModel.Locomotion), (box.Use, box.Control, box.Frame));
+        var box = Assert.Single(fresh.Geometry.Where(g => fresh.Behavior!.Colliders.ContainsKey(g.Id)));
+        Assert.Equal((ColliderUses.Hurt, "body", CharacterModel.Locomotion), (fresh.Behavior!.Colliders[box.Id], box.A, box.Frame));
     }
 
     [Fact]

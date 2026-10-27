@@ -1,0 +1,345 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "hero",
+  "name": "Hero",
+  "model": "person",
+  "equipment": [
+    {
+      "prop": "sword",
+      "socket": "sword-hand"
+    },
+    {
+      "prop": "pistol",
+      "socket": "gun-hand"
+    },
+    {
+      "prop": "hair-short",
+      "socket": "head-art"
+    }
+  ],
+  "behavior": {
+    "motionSet": "standard",
+    "roles": {
+      "idle": "player-idle",
+      "jump": "player-jump",
+      "fall": "player-fall",
+      "hit": "player-hit",
+      "death": "player-death"
+    },
+    "controller": {
+      "kind": "traversal",
+      "walkSpeed": 1.8,
+      "runSpeed": 4.2,
+      "range": 1.2,
+      "cooldown": 0
+    },
+    "colliders": {
+      "attack-blade": "attack",
+      "follow-up-blade": "attack",
+      "forehand-blade": "attack",
+      "body": "hurt",
+      "head": "hurt",
+      "legs": "hurt"
+    },
+    "actions": [
+      {
+        "id": "attack",
+        "clip": "player-sword-side-cut",
+        "hits": [
+          {
+            "id": "blade",
+            "start": {
+              "marker": "strike"
+            },
+            "finish": {
+              "marker": "recover"
+            },
+            "collider": "attack-blade"
+          }
+        ],
+        "events": [
+          {
+            "id": "swing",
+            "at": {
+              "marker": "strike"
+            },
+            "sound": "swing"
+          }
+        ],
+        "next": "follow-up",
+        "recovery": "player-sword-put-away"
+      },
+      {
+        "id": "follow-up",
+        "clip": "player-sword-backhand",
+        "hits": [
+          {
+            "id": "blade",
+            "start": {
+              "marker": "strike"
+            },
+            "finish": {
+              "marker": "recover"
+            },
+            "collider": "follow-up-blade"
+          }
+        ],
+        "events": [
+          {
+            "id": "swing",
+            "at": {
+              "marker": "strike"
+            },
+            "sound": "swing"
+          }
+        ],
+        "next": "forehand",
+        "recovery": "player-sword-put-away-backhand"
+      },
+      {
+        "id": "forehand",
+        "clip": "player-sword-forehand",
+        "hits": [
+          {
+            "id": "blade",
+            "start": {
+              "marker": "strike"
+            },
+            "finish": {
+              "marker": "recover"
+            },
+            "collider": "forehand-blade"
+          }
+        ],
+        "events": [
+          {
+            "id": "swing",
+            "at": {
+              "marker": "strike"
+            },
+            "sound": "swing"
+          }
+        ],
+        "next": "follow-up",
+        "recovery": "player-sword-put-away"
+      },
+      {
+        "id": "shoot",
+        "clip": "player-gun-shot",
+        "projectile": {
+          "speed": 31,
+          "shape": {
+            "kind": "rectangle",
+            "center": {
+              "x": 0,
+              "y": 0
+            },
+            "size": {
+              "x": 0.75,
+              "y": 0.25
+            },
+            "angleRadians": 0
+          },
+          "lifetime": 1.5
+        },
+        "hits": [],
+        "events": [
+          {
+            "id": "fire",
+            "at": {
+              "marker": "fire"
+            },
+            "sound": "shot"
+          }
+        ]
+      },
+      {
+        "id": "wall-shot",
+        "clip": "player-gun-wall-shot",
+        "projectile": {
+          "speed": 31,
+          "shape": {
+            "kind": "rectangle",
+            "center": {
+              "x": 0,
+              "y": 0
+            },
+            "size": {
+              "x": 0.75,
+              "y": 0.25
+            },
+            "angleRadians": 0
+          },
+          "lifetime": 1.5
+        },
+        "hits": [],
+        "events": [
+          {
+            "id": "fire",
+            "at": {
+              "marker": "fire"
+            },
+            "sound": "shot"
+          }
+        ]
+      }
+    ],
+    "strikes": {
+      "blade": {
+        "damage": 2,
+        "impact": "sword"
+      },
+      "shoot": {
+        "damage": 2
+      },
+      "wall-shot": {
+        "damage": 2
+      }
+    },
+    "damage": {
+      "health": 30
+    },
+    "properties": {}
+  },
+  "usage": "character",
+  "materials": {},
+  "locations": [],
+  "geometry": [
+    {
+      "id": "movement",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0.8525
+        },
+        "size": {
+          "x": 0.55,
+          "y": 1.705
+        },
+        "angleRadians": 0
+      },
+      "collision": {}
+    },
+    {
+      "id": "attack-blade",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.274,
+          "y": 0.667
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "offsetX": 1.143,
+      "offsetY": 0.874
+    },
+    {
+      "id": "follow-up-blade",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.342,
+          "y": 0.559
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "offsetX": 0.937,
+      "offsetY": 0.946
+    },
+    {
+      "id": "forehand-blade",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.524,
+          "y": 0.667
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "offsetX": 1.018,
+      "offsetY": 0.874
+    },
+    {
+      "id": "body",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.46,
+          "y": 0.93
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.02165,
+      "offsetY": 0.325
+    },
+    {
+      "id": "head",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.332,
+          "y": 0.92
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.096,
+      "offsetY": -0.39
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

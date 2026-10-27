@@ -1,0 +1,160 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "flying-pterosaur",
+  "name": "Pterosaur",
+  "model": "pterosaur",
+  "behavior": {
+    "motionSet": "standard",
+    "roles": {
+      "hit": "pterosaur-hit",
+      "death": "pterosaur-death"
+    },
+    "controller": {
+      "kind": "flying",
+      "flight": {},
+      "range": 3.2,
+      "cooldown": 0.8
+    },
+    "colliders": {
+      "beak": "attack",
+      "body": "hurt"
+    },
+    "actions": [
+      {
+        "id": "attack",
+        "clip": "pterosaur-swoop",
+        "hits": [
+          {
+            "id": "beak",
+            "start": {
+              "marker": "rush"
+            },
+            "finish": {
+              "marker": "brake"
+            },
+            "collider": "beak"
+          }
+        ],
+        "events": [
+          {
+            "id": "screech",
+            "at": {
+              "marker": "screech"
+            },
+            "sound": "pterosaur-screech"
+          },
+          {
+            "id": "commit",
+            "at": {
+              "marker": "commit"
+            }
+          },
+          {
+            "id": "rush",
+            "at": {
+              "marker": "rush"
+            },
+            "sound": "pterosaur-rush"
+          },
+          {
+            "id": "brake",
+            "at": {
+              "marker": "brake"
+            },
+            "sound": "pterosaur-brake"
+          },
+          {
+            "id": "low",
+            "at": {
+              "marker": "low"
+            }
+          },
+          {
+            "id": "reset",
+            "at": {
+              "marker": "reset"
+            },
+            "sound": "pterosaur-reset"
+          }
+        ]
+      }
+    ],
+    "strikes": {
+      "beak": {
+        "damage": 2,
+        "sound": "hit"
+      }
+    },
+    "damage": {
+      "health": 4,
+      "knockbackResistance": 0.8
+    },
+    "properties": {}
+  },
+  "usage": "character",
+  "materials": {},
+  "locations": [],
+  "geometry": [
+    {
+      "id": "movement",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0.7
+        },
+        "size": {
+          "x": 0.85,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "collision": {}
+    },
+    {
+      "id": "beak",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.65,
+          "y": 0.5
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "socket": "head-art"
+    },
+    {
+      "id": "body",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.62,
+          "y": 0.37
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "body",
+      "frame": "locomotion",
+      "offsetX": 0.15,
+      "offsetY": 0.025
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

@@ -66,7 +66,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _collision = physics.CollisionSystem;
         _physics = physics;
         _worldLayer = worldLayer;
-        _flight = entity.Asset.Controller.Flight is { } flight ? new(flight) : null;
+        _flight = entity.Asset.Behavior!.Controller.Flight is { } flight ? new(flight) : null;
         _movement = ShapeBounds2D.Calculate(entity.MovementShape);
         WorldObject = new(AxisAlignedRectangle2D.Builder.CreateFromSize(_movement.Size * Scale));
         WorldObject.Transform.Position = position;
@@ -133,7 +133,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             return;
         }
 
-        var config = Entity.Asset.Controller;
+        var config = Entity.Asset.Behavior!.Controller;
         if (_reaction.Tick(dt))
         {
             _cooldown = MathF.Max(_cooldown, config.Cooldown);
@@ -147,7 +147,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         if (_flight is not null)
         {
             var velocity = _flight.Update(dt, WorldObject.Transform.Position, targetPosition,
-                _animator.Current, (float)_animator.ActionTime, Entity.Asset.Controller, ref _facing, _chargeBlocked, RecoveryAltitude);
+                _animator.Current, (float)_animator.ActionTime, Entity.Asset.Behavior!.Controller, ref _facing, _chargeBlocked, RecoveryAltitude);
             if (_animator.Action is null && _flight.Ready && _cooldown <= 0 && CanFly(targetPosition - WorldObject.Transform.Position) &&
                 _animator.TryStart(EntityControllers.Attack))
             {
@@ -270,7 +270,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         var bounds = WorldObject.WorldBounds;
         var x = WorldObject.Transform.Position.X + direction *
-            (_movement.Width * Scale / 2 + (speed ?? Entity.Asset.Controller.WalkSpeed) * Scale * dt + 3);
+            (_movement.Width * Scale / 2 + (speed ?? Entity.Asset.Behavior!.Controller.WalkSpeed) * Scale * dt + 3);
         var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 8));
         probe.Transform.Position = new(x, bounds.Min.Y - 3);
         if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0)
@@ -576,7 +576,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
         // Publish the reaction pose on the damage tick; collision and rendering continue to share it.
         Evaluate(0, false);
-        Body.LinearVelocity = IsAlive ? knockback / Entity.Damage.Mass : Vector2.Zero;
+        Body.LinearVelocity = IsAlive ? knockback / Entity.Damage.KnockbackResistance : Vector2.Zero;
         if (!IsAlive)
         {
             Body.IsCollider = false;
@@ -592,7 +592,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         ActionSeconds = (float)(_animator.Action is null ? _animator.RoleTime : _animator.ActionTime),
         IsAttacking = _animator.Action == EntityControllers.Attack,
         AttackElapsedSeconds = (float)_animator.ActionTime,
-        MoveSpeed = Entity.Asset.Controller.WalkSpeed * Scale,
+        MoveSpeed = Entity.Asset.Behavior!.Controller.WalkSpeed * Scale,
         AuthoredEntity = Entity,
         AuthoredPose = Pose,
         Bolts = [.. _bolts],

@@ -47,7 +47,7 @@ public static class PartContours2D
             return PartCurves2D.Contour(part, world, rest);
         }
 
-        var frame = PartAttachment2D.FrameOf(part, world, bone);
+        var frame = PartAttachment2D.FrameOf(part, world, bone, rest);
         if (part.Mesh is { } mesh)
         {
             var lifted = PartPlacement3D.Extend(frame);

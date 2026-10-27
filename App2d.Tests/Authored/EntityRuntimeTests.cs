@@ -13,10 +13,10 @@ public sealed class EntityRuntimeTests
     private const float Dt = 1 / 120f;
     private static readonly string[] expected = ["body", "legs"];
 
-    private static ResolvedEntity Compile(EntityAsset asset) =>
+    private static ResolvedEntity Compile(Part asset) =>
         ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
-    private static string Error(EntityAsset asset) => Assert.Throws<InvalidDataException>(() => Compile(asset)).Message;
+    private static string Error(Part asset) => Assert.Throws<InvalidDataException>(() => Compile(asset)).Message;
 
     [Fact]
     public void AnActorHitBoxIsFixedToTheActorAndAComboChainsThroughNext()
@@ -38,12 +38,12 @@ public sealed class EntityRuntimeTests
         Assert.Equal(EntityControllers.FollowUp, hero.Actions[hero.Actions[swing.Next!].Next!].Next);
         Assert.All([swing, hero.Actions[swing.Next!]], a => Assert.NotNull(a.Recovery));
 
-        var broken = EntityAsset.FromJson(hero.Asset.ToJson());
-        broken.Actions[0].Next = "nowhere";
+        var broken = Part.FromJson(hero.Asset.ToJson());
+        broken.Behavior!.Actions[0].Next = "nowhere";
         Assert.Contains("no action 'nowhere'", Assert.Throws<InvalidDataException>(broken.Validate).Message);
         // Nothing chains to the forehand any more, and the controller has no such action of its own.
-        var unchained = EntityAsset.FromJson(hero.Asset.ToJson());
-        unchained.Actions.ForEach(a => a.Next = null);
+        var unchained = Part.FromJson(hero.Asset.ToJson());
+        unchained.Behavior!.Actions.ForEach(a => a.Next = null);
         Assert.Contains("action 'forehand': the 'traversal' controller does not support it", Assert.Throws<InvalidDataException>(unchained.Validate).Message);
     }
 
@@ -72,7 +72,7 @@ public sealed class EntityRuntimeTests
         Assert.False(new EntityAnimator(player).TryStart("spin"));
 
         var jumpingGuard = StarterContent.SpearGuardEntity();
-        jumpingGuard.Actions.Add(new()
+        jumpingGuard.Behavior!.Actions.Add(new()
         {
             Id = "jump",
             Role = "jump",
@@ -86,20 +86,20 @@ public sealed class EntityRuntimeTests
     {
         var post = StarterContent.SpearGuardEntity();
         post.Id = "post";
-        post.Controller.Kind = EntityControllers.Stationary;
-        post.Actions.Clear();
-        post.Behaviors!.Strikes.Clear(); // a strike for no hit group is reported at resolution (P9a)
-        post.MotionSet = "deliberate";
-        post.Roles = [];
+        post.Behavior!.Controller.Kind = EntityControllers.Stationary;
+        post.Behavior!.Actions.Clear();
+        post.Behavior!.Strikes.Clear(); // a strike for no hit group is reported at resolution (P9a)
+        post.Behavior!.MotionSet = "deliberate";
+        post.Behavior!.Roles = [];
         Assert.Empty(Compile(post).Actions); // a stationary object needs neither walk nor attack
 
         var stalker = StarterContent.StalkerEntity();
-        stalker.Roles["walk"] = "stalker-lunge";
+        stalker.Behavior!.Roles["walk"] = "stalker-lunge";
         Assert.Contains("locomotion clip 'stalker-lunge' must loop", Error(stalker));
         var set = Catalog.Models["stalker"].MotionSets[0];
         var model = Catalog.Models["stalker"];
         var noWalk = StarterContent.StalkerEntity();
-        noWalk.MotionSet = "bare";
+        noWalk.Behavior!.MotionSet = "bare";
         var original = model.MotionSets;
         try
         {
@@ -119,7 +119,7 @@ public sealed class EntityRuntimeTests
         var player = Catalog.Entities["player"];
         Assert.Equal("set:standard", player.Roles["walk"].Source);
         var custom = StarterContent.PlayerEntity();
-        custom.Roles["idle"] = "person-walk";
+        custom.Behavior!.Roles["idle"] = "person-walk";
         var compiled = Compile(custom);
         Assert.Equal(("person-walk", "entity"), (compiled.Roles["idle"].Clip.Id, compiled.Roles["idle"].Source));
         Assert.Equal("clip", compiled.Actions["attack"].Source);
@@ -130,7 +130,7 @@ public sealed class EntityRuntimeTests
     public void MissingReferencesAndMarkersAreErrorsNamingTheField()
     {
         var entity = StarterContent.SpearGuardEntity();
-        entity.Actions[0].Hits[0].Finish = new()
+        entity.Behavior!.Actions[0].Hits[0].Finish = new()
         {
             Marker = "follow-through"
         };
@@ -139,13 +139,13 @@ public sealed class EntityRuntimeTests
         entity.Equipment[0].Socket = "left-ear";
         Assert.Contains("'person' has no socket 'left-ear'", Error(entity));
         entity = StarterContent.SpearGuardEntity();
-        entity.MotionSet = "hulking";
+        entity.Behavior!.MotionSet = "hulking";
         Assert.Contains("has no motion set 'hulking'", Error(entity));
         entity = StarterContent.StalkerEntity();
-        entity.Actions[0].Clip = "person-thrust";
+        entity.Behavior!.Actions[0].Clip = "person-thrust";
         Assert.Contains("is for model 'person', not 'stalker'", Error(entity));
         var player = StarterContent.PlayerEntity();
-        player.Actions[1].Events.Clear();
+        player.Behavior!.Actions[1].Events.Clear();
         Assert.Contains("a jump needs a 'launch' event", Error(player));
     }
 
@@ -153,7 +153,7 @@ public sealed class EntityRuntimeTests
     public void AHurtColliderDisabledByDefaultLeavesTheHurtRegions()
     {
         var entity = StarterContent.SpearGuardEntity();
-        entity.Colliders.Single(c => c.Id == "head").Enabled = false;
+        entity.Geometry.Single(c => c.Id == "head").Collision!.Enabled = false;
         var compiled = Compile(entity);
         var pose = new ActorPose(PoseEvaluator.Rest(compiled.Model), Vector2.Zero, 1);
         Assert.Equal(["body", "legs"], EntityCollision.Hurt(compiled, pose).Select(r => r.Id));

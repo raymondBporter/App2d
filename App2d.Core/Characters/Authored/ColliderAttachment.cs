@@ -44,217 +44,41 @@ public static class ColliderBindings
 }
 
 /// <summary>
-/// An attached collider as the entity authors it: shared convex geometry, a placement binding, its use (category), the
-/// default enabled state and the mask of layers it may be tested against. The owner and the stable identity come from the
-/// entity. Exactly one binding: a <see cref="Socket"/>, a <see cref="Control"/> (with the socket rules <see cref="Frame"/>,
-/// <see cref="Toward"/>, <see cref="OffsetX"/>/<see cref="OffsetY"/>/<see cref="Angle"/>, optionally stretched along the
-/// toward control), an equipped <see cref="Prop"/>'s point, or none for the actor itself. Drawing layers never reach the XY
-/// collision placement.
-/// </summary>
-public sealed record ColliderDef
-{
-    public string Id { get; set; } = "";
-    public string Use { get; set; } = ColliderUses.Hurt;
-    /// <summary>The shape in the binding's frame; any convex shape definition in authored units.</summary>
-    public IShape2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.3f, .3f);
-    public string? Socket { get; set; }
-    public string? Control { get; set; }
-    /// <summary>With <see cref="Control"/>: the control whose rotation orients the frame (socket rules; locomotion keeps the screen axes).</summary>
-    public string? Frame { get; set; }
-    /// <summary>With <see cref="Control"/>: local +Y points toward this control, as a socket's does.</summary>
-    public string? Toward { get; set; }
-    /// <summary>With <see cref="Toward"/>: scale the shape uniformly by the distance to that control over its rest distance, so a capsule along a span follows it.</summary>
-    public bool Stretch { get; set; }
-    public string? Prop { get; set; }
-    public string Point { get; set; } = EquipmentPoints.Tip;
-    /// <summary>Socket and prop bindings: how far the origin is pushed along the projected anchor axis.</summary>
-    public float Along { get; set; }
-    /// <summary>Actor binding: the offset from the feet; control binding: the socket offset.</summary>
-    public float OffsetX { get; set; }
-    public float OffsetY { get; set; }
-    /// <summary>Control binding: the socket angle.</summary>
-    public float Angle { get; set; }
-    /// <summary>The enabled state outside animation: hurt, guard and trigger colliders start enabled; attack colliders are enabled only by their activation windows.</summary>
-    public bool Enabled { get; set; } = true;
-    /// <summary>The layers the collider may be tested against; all by default.</summary>
-    public uint Mask { get; set; } = uint.MaxValue;
-
-    [JsonIgnore]
-    public string Binding => Prop is not null ? ColliderBindings.Prop : Socket is not null ? ColliderBindings.Socket : Control is not null ? ColliderBindings.Control : ColliderBindings.Actor;
-
-    /// <summary>Checks the definition on its own; references to the model and equipment are checked when compiling.</summary>
-    public void Validate(string field, IReadOnlySet<string> equippedProps)
-    {
-        AuthoredAsset.RequireId(Id, field + " id");
-        EntityVocabulary.Require(Use, ColliderUses.All, field + " use");
-        var bindings = new[] { Socket, Control, Prop }.Count(b => b is not null);
-        if (bindings > 1)
-        {
-            throw new InvalidDataException($"{field}: bind to a socket, a control or a prop, not several (none fixes it to the actor).");
-        }
-
-        if (Control is null && (Frame is not null || Toward is not null || Stretch || Angle != 0))
-        {
-            throw new InvalidDataException($"{field}: frame, toward, stretch and angle apply to a control binding only.");
-        }
-
-        if (Stretch && Toward is null)
-        {
-            throw new InvalidDataException($"{field}: stretch needs a toward control.");
-        }
-
-        if (Prop is not null)
-        {
-            if (!equippedProps.Contains(Prop))
-            {
-                throw new InvalidDataException($"{field}: prop '{Prop}' is not equipped.");
-            }
-
-            AuthoredAsset.RequireId(Point, field + " point");
-        }
-        new Limit(-100, 100).Check(Along, field + " along");
-        new Limit(-100, 100).Check(OffsetX, field + " offsetX");
-        new Limit(-100, 100).Check(OffsetY, field + " offsetY");
-        new Limit(-MathF.PI * 4, MathF.PI * 4).Check(Angle, field + " angle");
-    }
-}
-
-/// <summary>
 /// An attached collider with every reference resolved: the shape built once, the binding's socket or equipment looked up and
 /// the rest span measured for stretching. Shared by every actor of the entity; placement is a pure function of a pose.
 /// </summary>
-public sealed class ResolvedCollider
+public sealed class ResolvedCollider : ResolvedGeometry
 {
-    private ResolvedCollider(ColliderDef definition, string source, IConvexShape2D shape)
+    private ResolvedCollider(PartGeometry definition, string use, string source, IConvexShape2D shape, ResolvedModel model,
+        IReadOnlyDictionary<string, ModelSocket> sockets, IReadOnlyList<ResolvedEquipment> equipment, string field)
+        : base(definition, model, sockets, equipment, field)
     {
-        Definition = definition;
+        Use = use;
         Source = source;
         Shape = shape;
     }
 
-    public ColliderDef Definition { get; }
-    public string Id => Definition.Id;
-    public string Use => Definition.Use;
-    /// <summary>Where the collider came from: an explicit entry ("collider"), a legacy hit window's inline geometry ("window") or the legacy guard ("guard").</summary>
+    public string Use { get; }
+    /// <summary>Whether this geometry supplies a gameplay sensor or the stable movement body.</summary>
     public string Source { get; }
     public IConvexShape2D Shape { get; }
     public bool Sensor => Use != ColliderUses.Movement;
-    public bool DefaultEnabled => Definition.Enabled;
-    public uint Mask => Definition.Mask;
-    public string Binding => Definition.Binding;
-    /// <summary>The socket the collider rides: the named model socket, or the anonymous one a control binding declares.</summary>
-    public ModelSocket? Socket { get; private set; }
-    public ResolvedEquipment? Equipment { get; private set; }
-    public PuppetPoint PropPoint { get; private set; }
-    /// <summary>The rest distance from the control to its toward control, for <see cref="ColliderDef.Stretch"/>.</summary>
-    public float RestSpan { get; private set; }
+    public bool DefaultEnabled => Definition.Collision!.Enabled;
+    public uint Mask => Definition.Collision!.Mask;
 
     /// <summary>Resolves a definition against the entity's model, sockets and equipment, refusing dangling references by name.</summary>
-    public static ResolvedCollider Resolve(ColliderDef definition, string source, string field, ResolvedModel model, IReadOnlyDictionary<string, ModelSocket> sockets, IReadOnlyList<ResolvedEquipment> equipment)
+    public static ResolvedCollider Resolve(PartGeometry definition, string use, string source, string field, ResolvedModel model, IReadOnlyDictionary<string, ModelSocket> sockets, IReadOnlyList<ResolvedEquipment> equipment)
     {
         IConvexShape2D shape;
         try
         {
-            shape = definition.Shape.Validated() as IConvexShape2D ?? throw new InvalidDataException("the shape must be convex.");
+            shape = (definition.Geometry as IShape2D)?.Validated() as IConvexShape2D ?? throw new InvalidDataException("the shape must be convex.");
         }
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or NotSupportedException or InvalidDataException)
         {
             throw new InvalidDataException($"{field} shape: {error.Message}", error);
         }
-        var resolved = new ResolvedCollider(definition, source, shape);
-        switch (definition.Binding)
-        {
-            case ColliderBindings.Socket:
-                resolved.Socket = sockets.TryGetValue(definition.Socket!, out var socket) ? socket
-                    : throw new InvalidDataException($"{field}: '{model.Base.Id}' has no socket '{definition.Socket}'.");
-                break;
-            case ColliderBindings.Prop:
-                resolved.Equipment = equipment.FirstOrDefault(e => e.Prop.Id == definition.Prop)
-                    ?? throw new InvalidDataException($"{field}: prop '{definition.Prop}' is not equipped.");
-                resolved.PropPoint = resolved.Equipment.Prop.Point(definition.Point)
-                    ?? throw new InvalidDataException($"{field}: prop '{definition.Prop}' has no '{definition.Point}' point.");
-                break;
-            case ColliderBindings.Control:
-                foreach (var (name, control) in new[] { ("control", definition.Control), ("frame", definition.Frame), ("toward", definition.Toward) })
-                {
-                    if (control is not null && control != CharacterModel.Locomotion && !model.Controls.ContainsKey(control))
-                    {
-                        throw new InvalidDataException($"{field} {name}: '{model.Base.Id}' has no control '{control}'.");
-                    }
-                }
-                if (definition.Toward == CharacterModel.Locomotion || definition.Control == CharacterModel.Locomotion)
-                {
-                    throw new InvalidDataException($"{field}: the locomotion frame orients a binding; it cannot be its control or toward target.");
-                }
-
-                resolved.Socket = new ModelSocket
-                {
-                    Id = definition.Id,
-                    Control = definition.Control!,
-                    Frame = definition.Frame,
-                    Toward = definition.Toward,
-                    OffsetX = definition.OffsetX,
-                    OffsetY = definition.OffsetY,
-                    Angle = definition.Angle,
-                };
-                if (definition.Toward is { } toward)
-                {
-                    resolved.RestSpan = Vector2.Distance(model.Rest[definition.Control!].XY, model.Rest[toward].XY);
-                }
-
-                break;
-        }
-        return resolved;
-    }
-
-    /// <summary>
-    /// The collider's XY placement for a pose, in the pose's units scaled uniformly by <paramref name="scale"/> (a unit
-    /// conversion). Socket and prop bindings follow the lifted 3D frame projected with <see cref="PartPlacement3D.ProjectAxis"/>
-    /// (the facing when head-on) and keep +Y toward the frame's across direction, so a mirrored actor keeps up up; actor
-    /// bindings use the actor's own axes; control bindings are the planar socket placement.
-    /// </summary>
-    public Similarity2D Place(ActorPose pose, float scale = 1)
-    {
-        switch (Binding)
-        {
-            case ColliderBindings.Control:
-            {
-                var socket = Socket!;
-                var placement = pose.SocketPlacement(socket);
-                var xAxis = placement.XAxis;
-                var mirror = new Vector2d(xAxis).Cross(new(placement.YAxis)) < 0d;
-                var stretch = 1f;
-                if (Definition.Stretch && RestSpan > 1e-6f)
-                {
-                    stretch = Vector2.Distance(pose.World(socket.Control).XY, pose.World(socket.Toward!).XY) / RestSpan;
-                }
-
-                return Similarity2D.FromAxis(placement.Origin.XY * scale, xAxis, mirror, xAxis.Length() * stretch * scale);
-            }
-            default:
-            {
-                var frame = Anchor(pose);
-                var axis = PartPlacement3D.ProjectAxis(frame, pose.Facing);
-                var mirror = new Vector2d(axis).Cross(new(frame.YAxis.XY)) < 0d;
-                return Similarity2D.FromAxis(frame.TransformPoint(new(Definition.Along, 0, 0)).XY * scale, axis, mirror, scale);
-            }
-        }
-    }
-
-    /// <summary>The 3D anchor frame of an actor, socket or prop binding (the frame a hit window was anchored to before P8).</summary>
-    public Frame3D Anchor(ActorPose pose) => Binding switch
-    {
-        ColliderBindings.Socket => pose.Socket(Socket!),
-        ColliderBindings.Prop => Prop(pose),
-        ColliderBindings.Actor => pose.Placement3D.WithOrigin(pose.Place(new(Definition.OffsetX, Definition.OffsetY, 0))),
-        _ => throw new InvalidOperationException($"Collider '{Id}' is bound to a control; it has no 3D anchor."),
-    };
-
-    private Frame3D Prop(ActorPose pose)
-    {
-        var equipment = Equipment!;
-        var frame = pose.Socket(equipment.Socket);
-        return frame.WithOrigin(PartPlacement3D.Point(frame, equipment.Prop, PropPoint));
+        return new(definition, use, source, shape, model, sockets, equipment, field);
     }
 
     /// <summary>The placed shape as a region value, for outlines, reference capture and legacy overlap tests.</summary>
@@ -339,13 +163,7 @@ public sealed class ActorColliders
         Scale = scale;
         if (movement)
         {
-            Movement = Register(ResolvedCollider.Resolve(new ColliderDef
-            {
-                Id = ColliderUses.Movement,
-                Use = ColliderUses.Movement,
-                Shape = entity.Asset.Movement.Shape,
-                Enabled = true,
-            }, "movement", $"Entity '{entity.Id}' movement", entity.Model, entity.Sockets, entity.Equipment), layer);
+            Movement = Register(entity.Movement, layer);
         }
         foreach (var collider in entity.Colliders)
         {

@@ -123,6 +123,25 @@ public sealed class PuppetDrawing
         {
             AddAttachment(equipment.Prop, placed.Socket(equipment.Socket));
         }
+        Vector3 World(string id) => id == PartLocation.Origin ? Vector3.Zero : local.World(id);
+        Vector3 Rest(string id) => id == PartLocation.Origin ? Vector3.Zero : entity.Model.Rest[id];
+        LayeredFrame2D Bone(string id) => id is PartLocation.Origin or CharacterModel.Locomotion ? LayeredFrame2D.Identity : local.Placement(id);
+        LayeredFrame2D RestBone(string id) => id is PartLocation.Origin or CharacterModel.Locomotion ? LayeredFrame2D.Identity : entity.Model.RestPlacement(id);
+        foreach (var geometry in entity.Geometry.Where(g => g.Definition.Material is not null && !g.Definition.Hidden))
+        {
+            if (geometry.Binding is ColliderBindings.Actor or ColliderBindings.Control)
+            {
+                Add(entity.Asset.Ink, entity.Asset.LineWidth, [geometry.Definition.ResolveMaterial(entity.Asset.Materials)], World, Bone, Rest, RestBone);
+                continue;
+            }
+            var frame = geometry.Frame(placed);
+            var drawing = geometry.Definition.ResolveMaterial(entity.Asset.Materials) with
+            {
+                A = PartLocation.Origin, B = null, Frame = PartLocation.Origin, Socket = null, Prop = null,
+                OffsetX = 0, OffsetY = 0, Angle = 0, ScaleX = 1, ScaleY = 1, Depth = 0, Along = 0, Stretch = false,
+            };
+            Add(entity.Asset.Ink, entity.Asset.LineWidth, [drawing], _ => frame.Origin, _ => frame);
+        }
     }
 
     /// <summary>Shared library instance at a spatial socket, including weapon tilt/twist and physical Z.</summary>
@@ -169,22 +188,22 @@ public sealed class PuppetDrawing
         var ink = Tinted(ColorExtensions.FromHexRgb(inkColor), tint);
         foreach (var part in parts)
         {
-            if (part.Hidden)
+            if (part.Hidden || part.Material is null)
             {
                 continue;
             }
 
             if (part.Material?.Texture is not null)
             {
-                AddImage(part, PartAttachment2D.FrameOf(part, world, bone), tint ?? Color4b.White, blend, imageDepth, spatial, physicalDepth?.Invoke(part.A) ?? 0);
+                AddImage(part, PartAttachment2D.FrameOf(part, world, bone, rest), tint ?? Color4b.White, blend, imageDepth, spatial, physicalDepth?.Invoke(part.A) ?? 0);
                 continue;
             }
             var start = Mesh.Count;
             var material = part.RenderMaterial;
             if (part.Mesh is { } mesh)
             {
-                var lifted = PartPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone));
-                if (spatial is { } meshFrame) lifted = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, bone), meshFrame, physicalDepth?.Invoke(part.A) ?? 0);
+                var lifted = PartPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone, rest));
+                if (spatial is { } meshFrame) lifted = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, bone, rest), meshFrame, physicalDepth?.Invoke(part.A) ?? 0);
                 MeshDrawing.Add(Mesh, mesh, material, inkColor, lineWidth, point => lifted.TransformPoint(point.XYZ), tint: tint);
                 if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
                 continue;
@@ -239,7 +258,7 @@ public sealed class PuppetDrawing
                 HeightFieldShape2D field => field.Polygon.Mesh,
                 _ => null
             };
-            var frame = PartAttachment2D.FrameOf(part, world, bone);
+            var frame = PartAttachment2D.FrameOf(part, world, bone, rest);
             if (material.Fill is { } shapeFill)
             {
                 var fillColor = Tinted(ColorExtensions.FromHexRgb(shapeFill), tint);

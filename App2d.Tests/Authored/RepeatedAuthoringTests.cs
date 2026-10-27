@@ -26,17 +26,17 @@ public sealed class RepeatedAuthoringTests : IDisposable
 
     private static void Ok(EditorSession session, bool result) => Assert.True(result, session.Message);
 
-    private static ResolvedEntity Compile(AuthoredCatalog catalog, EntityAsset asset) =>
+    private static ResolvedEntity Compile(AuthoredCatalog catalog, Part asset) =>
         ResolvedEntity.Compile(asset, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Parts.GetValueOrDefault);
 
     /// <summary>The spear guard thrusting from the upper body over its walk.</summary>
-    private static EntityAsset SkirmishingGuard()
+    private static Part SkirmishingGuard()
     {
         var guard = StarterContent.SpearGuardEntity();
         guard.Id = "skirmisher";
-        guard.Actions[0].Mask = Humanoid.UpperGroup;
-        guard.Actions[0].BlendIn = .08f;
-        guard.Actions[0].BlendOut = .12f;
+        guard.Behavior!.Actions[0].Mask = Humanoid.UpperGroup;
+        guard.Behavior!.Actions[0].BlendIn = .08f;
+        guard.Behavior!.Actions[0].BlendOut = .12f;
         return guard;
     }
 
@@ -83,16 +83,16 @@ public sealed class RepeatedAuthoringTests : IDisposable
     {
         var catalog = AuthoredCatalog.Load(_root);
         var blendWithoutMask = StarterContent.SpearGuardEntity();
-        blendWithoutMask.Actions[0].BlendIn = .1f;
+        blendWithoutMask.Behavior!.Actions[0].BlendIn = .1f;
         Assert.Contains("blending needs a mask", Assert.Throws<InvalidDataException>(blendWithoutMask.Validate).Message);
         var unknown = SkirmishingGuard();
-        unknown.Actions[0].Mask = "tail";
+        unknown.Behavior!.Actions[0].Mask = "tail";
         Assert.Contains("mask: 'person' has no control group 'tail'", Assert.Throws<InvalidDataException>(() => Compile(catalog, unknown)).Message);
         var tooLong = SkirmishingGuard();
-        tooLong.Actions[0].BlendIn = 2;
+        tooLong.Behavior!.Actions[0].BlendIn = 2;
         Assert.Contains("exceed the clip", Assert.Throws<InvalidDataException>(() => Compile(catalog, tooLong)).Message);
         var jump = StarterContent.PlayerEntity();
-        jump.Actions.Single(a => a.Id == "jump").Mask = Humanoid.UpperGroup;
+        jump.Behavior!.Actions.Single(a => a.Id == "jump").Mask = Humanoid.UpperGroup;
         Assert.Contains("cannot be masked", Assert.Throws<InvalidDataException>(() => Compile(catalog, jump)).Message);
 
         var model = PersonTemplate.Model();
@@ -194,14 +194,14 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.NewEntity("heavy-short", "Heavy short", "short-broad", EntityAuthoring.Guard));
         Ok(session, session.Edit(session.EntityDocument, () =>
         {
-            session.EntityDocument!.Asset.MotionSet = "heavy";
-            session.EntityDocument.Asset.Actions[0].Clip = "person-thrust";
-            session.EntityDocument.Asset.Actions[0].Role = null;
+            session.EntityDocument!.Asset.Behavior!.MotionSet = "heavy";
+            session.EntityDocument.Asset.Behavior!.Actions[0].Clip = "person-thrust";
+            session.EntityDocument.Asset.Behavior!.Actions[0].Role = null;
         }));
         Ok(session, session.DuplicateEntity("heavy-short", "heavy-tall", "Heavy tall"));
         Ok(session, session.Edit(session.EntityDocument, () => session.EntityDocument!.Asset.Model = "tall-thin"));
         Ok(session, session.DuplicateEntity("heavy-tall", "standard-tall", "Standard tall"));
-        Ok(session, session.Edit(session.EntityDocument, () => session.EntityDocument!.Asset.MotionSet = "standard"));
+        Ok(session, session.Edit(session.EntityDocument, () => session.EntityDocument!.Asset.Behavior!.MotionSet = "standard"));
 
         var heavyShort = session.Assets.CompileEntity("heavy-short", out var error);
         Assert.True(heavyShort is not null, error);
@@ -288,8 +288,8 @@ public sealed class RepeatedAuthoringTests : IDisposable
                 Prop = "spear",
                 Socket = "right-grip"
             });
-            document.Asset.Colliders.Add(new() { Id = "tip", Use = ColliderUses.Attack, Prop = "spear" });
-            document.Asset.Actions[0].Hits.Add(new()
+            document.Asset.AddCollider(new() { Id = "tip", Prop = "spear", Point = EquipmentPoints.Tip, Geometry = App2d.Core.Shapes.Rectangle2D.Builder.FromSize(.3f, .3f) }, ColliderUses.Attack);
+            document.Asset.Behavior!.Actions[0].Hits.Add(new()
             {
                 Id = "tip",
                 Collider = "tip",
@@ -355,7 +355,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
     {
         var session = Session();
         Ok(session, session.NewEntity("heavy-guard", "Heavy guard", "short-broad", EntityAuthoring.Stationary));
-        Ok(session, session.Edit(session.EntityDocument, () => session.EntityDocument!.Asset.MotionSet = "standard"));
+        Ok(session, session.Edit(session.EntityDocument, () => session.EntityDocument!.Asset.Behavior!.MotionSet = "standard"));
         var walk = session.Assets.Clip("person-walk")!;
         Ok(session, session.Edit(walk, () => walk.Asset.Markers.Add(new() { Id = "step", Time = .3f })));
         foreach (var id in new[] { "heavy-guard", "spear-guard", "player" })
@@ -391,8 +391,8 @@ public sealed class RepeatedAuthoringTests : IDisposable
             EntityAuthoring.ApplyLook(person, variant, looks[i % looks.Length]);
             variant.Save(Path.Combine(_root, "variants", variant.Id + ".json"));
             var entity = EntityAuthoring.New(EntityAuthoring.Stationary, $"villager-{i:00}", $"Villager {i:00}", ResolvedModel.From(person, variant, PersonTemplate.PartOf));
-            entity.MotionSet = sets[i % sets.Length];
-            entity.Save(Path.Combine(_root, "entities", entity.Id + ".json"));
+            entity.Behavior!.MotionSet = sets[i % sets.Length];
+            entity.Save(Path.Combine(_root, "parts", entity.Id + ".json"));
         }
         var clipFiles = Directory.GetFiles(Path.Combine(_root, "animations")).Length;
 

@@ -145,7 +145,7 @@ public sealed class EditorSession
     public bool MessageIsError { get; private set; }
 
     public AssetDocument? ActiveDocument => Mode switch { Workspace.Model => Assets.Find(SubjectId), Workspace.Animate => Assets.Find(ClipId), Workspace.Appearance => PartDocument, _ => Assets.Find(EntityId) };
-    public AssetDocument<EntityAsset>? EntityDocument => Assets.Entity(EntityId);
+    public AssetDocument<Part>? EntityDocument => Assets.Entity(EntityId);
     /// <summary>The open entity compiled against the drafts, or null with <see cref="EntityError"/> saying why.</summary>
     public ResolvedEntity? Entity => Assets.CompileEntity(EntityId, out _);
     public string? EntityError
@@ -173,7 +173,7 @@ public sealed class EditorSession
                 Mode = Workspace.Animate;
                 SetClip(clip.Id);
                 break;
-            case AssetDocument<EntityAsset> entity:
+            case AssetDocument<Part> entity when entity.Asset.Behavior is not null:
                 Mode = Workspace.Entity;
                 SetEntity(entity.Id);
                 break;
@@ -214,7 +214,7 @@ public sealed class EditorSession
         Mode = mode;
         if (mode == Workspace.Appearance && PartDocument is null)
         {
-            var art = Assets.Parts.FirstOrDefault(p => p.Asset.Usage != "prop");
+            var art = Assets.Parts.FirstOrDefault(p => p.Asset.Behavior is null && p.Asset.Usage != "prop");
             if (art is not null)
             {
                 Open(art.Id);
@@ -790,11 +790,11 @@ public sealed class EditorSession
             return;
         }
 
-        if (Selection.Action is { } action && entity.Actions.All(a => a.Id != action))
+        if (Selection.Action is { } action && entity.Behavior!.Actions.All(a => a.Id != action))
         {
             Selection.Action = Selection.Hit = null;
         }
-        if (PreviewAction is { } previewed && entity.Actions.All(a => a.Id != previewed))
+        if (PreviewAction is { } previewed && entity.Behavior!.Actions.All(a => a.Id != previewed))
         {
             PreviewAction = null;
         }
@@ -1055,7 +1055,7 @@ public sealed class EditorSession
             AuthoredAsset.RequireId(role, "role");
             if (clipId is null)
             {
-                document!.Asset.Roles.Remove(role);
+                document!.Asset.Behavior!.Roles.Remove(role);
                 return;
             }
             var clip = Assets.Clip(clipId) ?? throw new InvalidDataException($"No animation '{clipId}'.");
@@ -1064,28 +1064,30 @@ public sealed class EditorSession
                 throw new InvalidDataException($"Animation '{clipId}' is for model '{clip.Asset.Model}', not '{Assets.BaseOf(document.Asset.Model)}'.");
             }
 
-            document.Asset.Roles[role] = clipId;
+            document.Asset.Behavior!.Roles[role] = clipId;
         }, clipId is null ? $"Role '{role}' follows the motion set again." : $"Role '{role}' overridden with '{clipId}'.");
     }
 
     /// <summary>Adds an attached collider to the open entity; the definition is validated against the model, sockets and equipment.</summary>
-    public bool AddCollider(ColliderDef definition)
+    public bool AddCollider(PartGeometry definition, string use = ColliderUses.Hurt)
     {
         var document = EntityDocument;
         return Edit(document, () =>
         {
             ArgumentNullException.ThrowIfNull(definition);
             var asset = document!.Asset;
-            if (asset.Colliders.Any(c => c.Id == definition.Id))
+            if (asset.Geometry.Any(c => c.Id == definition.Id))
             {
                 throw new InvalidDataException($"Entity '{asset.Id}' already has a collider '{definition.Id}'.");
             }
 
-            asset.Colliders.Add(definition);
+            definition.Collision ??= new();
+            asset.Geometry.Add(definition);
+            asset.Behavior!.Colliders.Add(definition.Id, use);
             asset.Validate();
             // Compile against the drafts now (the cached compile is keyed on the revision the edit has not bumped yet), so a dangling binding refuses the edit by name.
             ResolvedEntity.Compile(asset, model => Assets.Resolve(model, out var problem) ?? throw new InvalidDataException(problem), clip => Assets.Clip(clip)?.Asset, prop => Assets.Part(prop)?.Asset);
-        }, $"Added {definition.Use} collider '{definition.Id}'.");
+        }, $"Added {use} collider '{definition.Id}'.");
     }
 
     /// <summary>Removes an attached collider; a window or guard that names it is refused by name.</summary>
@@ -1095,21 +1097,22 @@ public sealed class EditorSession
         return Edit(document, () =>
         {
             var asset = document!.Asset;
-            var window = asset.Actions.SelectMany(a => a.Hits.Select(h => (Action: a, Hit: h))).FirstOrDefault(p => p.Hit.Collider == id);
+            var window = asset.Behavior!.Actions.SelectMany(a => a.Hits.Select(h => (Action: a, Hit: h))).FirstOrDefault(p => p.Hit.Collider == id);
             if (window.Hit is not null)
             {
                 throw new InvalidDataException($"Collider '{id}' is the geometry of hit window '{window.Hit.Id}' of action '{window.Action.Id}'; re-point the window first.");
             }
 
-            if (asset.Guard?.Collider == id)
+            if (asset.Behavior!.Guard?.Collider == id)
             {
                 throw new InvalidDataException($"Collider '{id}' is the guard; clear the guard's collider first.");
             }
 
-            if (asset.Colliders.RemoveAll(c => c.Id == id) == 0)
+            if (!asset.Behavior!.Colliders.Remove(id))
             {
                 throw new InvalidDataException($"No collider '{id}'.");
             }
+            asset.Geometry.RemoveAll(g => g.Id == id);
         }, $"Removed collider '{id}'.");
     }
 
@@ -1120,8 +1123,9 @@ public sealed class EditorSession
         return Edit(document, () =>
         {
             var model = Assets.Resolve(document!.Asset.Model, out var error) ?? throw new InvalidDataException(error);
-            var current = ShapeBounds2D.Calculate(document.Asset.Movement.Shape.Validated());
-            document.Asset.Movement = EntityAuthoring.FitMovement(model, current.Center.X);
+            var current = ShapeBounds2D.Calculate(((App2d.Core.Geometry.Shapes.IShape2D)document.Asset.Geometry.First(g => g.Id == document.Asset.Behavior!.Movement).Geometry!).Validated());
+            var geometry = document.Asset.Geometry.First(g => g.Id == document.Asset.Behavior!.Movement);
+            geometry.Geometry = EntityAuthoring.FitMovement(model, current.Center.X).Geometry;
         }, "Fitted the movement box to the rest pose.");
     }
 
@@ -1132,7 +1136,7 @@ public sealed class EditorSession
     /// <summary>Removes a motion set, refusing while any entity selects it.</summary>
     public bool RemoveMotionSet(string baseId, string setId)
     {
-        var users = Assets.EntitiesOn(baseId).Where(e => e.Asset.MotionSet == setId).Select(e => e.Id).ToList();
+        var users = Assets.EntitiesOn(baseId).Where(e => e.Asset.Behavior!.MotionSet == setId).Select(e => e.Id).ToList();
         if (users.Count > 0)
         {
             Report($"Motion set '{setId}' is selected by {string.Join(", ", users)}; choose another set there first.", true);

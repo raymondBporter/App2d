@@ -20,29 +20,27 @@ public sealed class ColliderAttachmentTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
     private const float Dt = 1 / 120f;
 
-    private static ResolvedEntity Compile(EntityAsset asset) =>
+    private static ResolvedEntity Compile(Part asset) =>
         ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
-    private static string Error(EntityAsset asset) => Assert.Throws<InvalidDataException>(() => Compile(asset)).Message;
+    private static string Error(Part asset) => Assert.Throws<InvalidDataException>(() => Compile(asset)).Message;
 
     /// <summary>The spear guard with explicit version-3 hurt colliders instead of the legacy layout: a head box in the screen frame and a hips-to-chest capsule that stretches with the span.</summary>
-    internal static EntityAsset GuardWithHurtColliders()
+    internal static Part GuardWithHurtColliders()
     {
         var guard = StarterContent.SpearGuardEntity();
-        guard.Version = EntityAsset.CurrentVersion;
+        guard.Version = Part.CurrentVersion;
         // The seed's own hurt boxes give way to these; its spear-tip attack collider stays.
-        guard.Colliders.RemoveAll(c => c.Use == ColliderUses.Hurt);
-        guard.Colliders.AddRange(
-        [
-            new() { Id = "head", Use = ColliderUses.Hurt, Control = Humanoid.Head, Frame = CharacterModel.Locomotion, Shape = Rectangle2D.Builder.FromSize(.6f, .6f) },
-            new() { Id = "torso", Use = ColliderUses.Hurt, Control = Humanoid.Hips, Toward = Humanoid.Chest, Stretch = true, Shape = Capsule2D.Builder.Create(Vector2.Zero, new(0, .5f), .2f) },
-            new() { Id = "legs", Use = ColliderUses.Hurt, Control = Humanoid.LeftHip, Frame = CharacterModel.Locomotion, OffsetY = -.4f, Shape = Rectangle2D.Builder.FromSize(.5f, .9f) },
-            new() { Id = "reach", Use = ColliderUses.Trigger, Prop = StarterContent.Spear, Point = EquipmentPoints.Tip, Shape = Circle2D.Builder.Create(.5f) },
-        ]);
+        guard.RemoveColliders(ColliderUses.Hurt);
+        guard.AddCollider(new() { Id = "head", A = Humanoid.Head, Frame = CharacterModel.Locomotion, Geometry = Rectangle2D.Builder.FromSize(.6f, .6f) });
+        guard.AddCollider(new() { Id = "torso", A = Humanoid.Hips, B = Humanoid.Chest, Stretch = true, Geometry = Capsule2D.Builder.Create(Vector2.Zero, new(0, .5f), .2f) });
+        guard.AddCollider(new() { Id = "legs", A = Humanoid.LeftHip, Frame = CharacterModel.Locomotion, OffsetY = -.4f, Geometry = Rectangle2D.Builder.FromSize(.5f, .9f) });
+        guard.AddCollider(new() { Id = "reach", Prop = StarterContent.Spear, Point = EquipmentPoints.Tip, Geometry = Circle2D.Builder.Create(.5f) }, ColliderUses.Trigger);
         // The attack collider last, as the P8a-era fixture listed its implied window collider after the explicit ones.
-        var tip = guard.Colliders.First(c => c.Use == ColliderUses.Attack);
-        guard.Colliders.Remove(tip);
-        guard.Colliders.Add(tip);
+        var tip = guard.Geometry.First(c => c.Id == "spear-tip");
+        guard.Geometry.Remove(tip);
+        guard.Geometry.Add(tip);
+        guard.Behavior!.Colliders = guard.Geometry.Where(g => guard.Behavior.Colliders.ContainsKey(g.Id)).ToDictionary(g => g.Id, g => guard.Behavior.Colliders[g.Id]);
         return guard;
     }
 
@@ -52,7 +50,7 @@ public sealed class ColliderAttachmentTests
         foreach (var entity in Catalog.Entities.Values)
         {
             var windows = entity.Actions.Values.SelectMany(a => a.Hits).ToList();
-            Assert.Equal(entity.Asset.Colliders.Count, entity.Colliders.Count);
+            Assert.Equal(entity.Asset.Behavior!.Colliders.Count, entity.Colliders.Count);
             Assert.Equal(entity.Colliders.Count, entity.Colliders.Select(c => c.Id).Distinct(StringComparer.Ordinal).Count());
             foreach (var hit in windows)
             {
@@ -61,7 +59,7 @@ public sealed class ColliderAttachmentTests
                 Assert.True(hit.Collider.Sensor);
                 Assert.Same(hit.Collider.Shape, hit.Shape);
             }
-            Assert.Equal(entity.Asset.Guard is not null, entity.GuardCollider is not null);
+            Assert.Equal(entity.Asset.Behavior!.Guard is not null, entity.GuardCollider is not null);
         }
         // P8c converted the player, the spear guard and the shield defender; P11a the other eight: every shipped entity declares its hurt colliders.
         Assert.All(Catalog.Entities.Values, e => Assert.Contains(e.Colliders, c => c.Use == ColliderUses.Hurt));
@@ -279,20 +277,20 @@ public sealed class ColliderAttachmentTests
         Assert.True(compiled.Collider("torso")!.RestSpan > .3f);
         Assert.Equal(ColliderBindings.Prop, compiled.Collider("reach")!.Binding);
         // Round trip at the current version; an older version is refused.
-        var restored = EntityAsset.FromJson(guard.ToJson());
-        Assert.Equal(5, restored.Colliders.Count); // the fixture's four plus the seed's declared spear-tip (P11b)
-        var downgraded = EntityAsset.FromJson(guard.ToJson());
+        var restored = Part.FromJson(guard.ToJson());
+        Assert.Equal(5, restored.Behavior!.Colliders.Count);
+        var downgraded = Part.FromJson(guard.ToJson());
         downgraded.Version = 4;
         Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(downgraded.Validate).Message);
         // A window names another attack collider; the first stays declared and registered.
         var named = GuardWithHurtColliders();
-        named.Colliders.Add(new() { Id = "point", Use = ColliderUses.Attack, Prop = StarterContent.Spear, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) });
-        named.Actions[0].Hits[0].Collider = "point";
+        named.AddCollider(new() { Id = "point", Prop = StarterContent.Spear, Point = EquipmentPoints.Tip, Along = -.14f, Geometry = Rectangle2D.Builder.FromSize(.42f, .26f) }, ColliderUses.Attack);
+        named.Behavior!.Actions[0].Hits[0].Collider = "point";
         var pointed = Compile(named);
         Assert.Same(pointed.Collider("point"), pointed.Actions["attack"].Hits[0].Collider);
         Assert.Equal(6, pointed.Colliders.Count);
         // Refusals by name.
-        string Refused(Action<EntityAsset> change)
+        string Refused(Action<Part> change)
         {
             var broken = GuardWithHurtColliders();
             change(broken);
@@ -307,18 +305,18 @@ public sealed class ColliderAttachmentTests
 
             return Error(broken);
         }
-        Assert.Contains("duplicate collider 'head'", Refused(e => e.Colliders.Add(new() { Id = "head", Use = ColliderUses.Hurt, Control = Humanoid.Head })));
-        Assert.Contains("has no control 'tail'", Refused(e => e.Colliders[0].Control = "tail"));
-        Assert.Contains("has no control 'tail'", Refused(e => e.Colliders[1].Toward = "tail"));
-        Assert.Contains("has no socket 'ear'", Refused(e => { e.Colliders[0].Control = null; e.Colliders[0].Frame = null; e.Colliders[0].Socket = "ear"; }));
-        Assert.Contains("prop 'hammer' is not equipped", Refused(e => e.Colliders[3].Prop = "hammer"));
-        Assert.Contains("has no 'muzzle' point", Refused(e => e.Colliders[3].Point = EquipmentPoints.Muzzle));
-        Assert.Contains("stretch needs a toward control", Refused(e => { e.Colliders[0].Stretch = true; }));
-        Assert.Contains("not several", Refused(e => e.Colliders[3].Control = Humanoid.Head));
-        Assert.Contains("guard.collider", Refused(e => e.Guard = new()));
-        Assert.Contains("no collider 'blade'", Refused(e => e.Actions[0].Hits[0].Collider = "blade"));
-        Assert.Contains("is a hurt collider, not attack", Refused(e => e.Actions[0].Hits[0].Collider = "head"));
-        Assert.Contains("use", Refused(e => e.Colliders[0].Use = "poke"));
-        Assert.Contains("duplicate collider 'spear-tip'", Refused(e => e.Colliders.Add(new() { Id = "spear-tip", Use = ColliderUses.Trigger, Control = Humanoid.Head }))); // the seed's declared attack collider (P11b)
+        Assert.Contains("duplicate drawing part 'head'", Refused(e => e.Geometry.Add(e.Geometry[1] with { })));
+        Assert.Contains("Unknown control: tail", Refused(e => e.Geometry[1].A = "tail"));
+        Assert.Contains("Unknown control: tail", Refused(e => e.Geometry[2].B = "tail"));
+        Assert.Contains("has no socket 'ear'", Refused(e => { e.Geometry[1].A = PartLocation.Origin; e.Geometry[1].Frame = null; e.Geometry[1].Socket = "ear"; }));
+        Assert.Contains("prop 'hammer' is not equipped", Refused(e => e.Geometry[4].Prop = "hammer"));
+        Assert.Contains("has no 'muzzle' point", Refused(e => e.Geometry[4].Point = EquipmentPoints.Muzzle));
+        Assert.Contains("Stretch needs a toward control", Refused(e => { e.Geometry[1].Stretch = true; }));
+        Assert.Contains("one attachment", Refused(e => e.Geometry[4].A = Humanoid.Head));
+        Assert.Contains("guard.collider", Refused(e => e.Behavior!.Guard = new()));
+        Assert.Contains("no collider 'blade'", Refused(e => e.Behavior!.Actions[0].Hits[0].Collider = "blade"));
+        Assert.Contains("is a hurt collider, not attack", Refused(e => e.Behavior!.Actions[0].Hits[0].Collider = "head"));
+        Assert.Contains("use", Refused(e => e.Behavior!.Colliders["head"] = "poke"));
+        Assert.Contains("duplicate drawing part 'spear-tip'", Refused(e => e.Geometry.Add(e.Geometry.Last() with { })));
     }
 }

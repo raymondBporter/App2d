@@ -23,7 +23,7 @@ public sealed class AttachedColliderSyncTests
     private const float Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
 
-    private static ResolvedEntity Compile(EntityAsset asset) =>
+    private static ResolvedEntity Compile(Part asset) =>
         ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
     private static void AssertSynchronized(AuthoredEntityEnemy2D enemy)

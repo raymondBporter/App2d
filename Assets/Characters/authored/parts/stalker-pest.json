@@ -1,0 +1,139 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "stalker-pest",
+  "name": "Stalker pest",
+  "model": "stalker",
+  "behavior": {
+    "motionSet": "standard",
+    "roles": {},
+    "controller": {
+      "walkSpeed": 0.6,
+      "range": 1.05,
+      "cooldown": 1.4
+    },
+    "colliders": {
+      "sting": "attack",
+      "shell": "hurt",
+      "legs": "hurt"
+    },
+    "actions": [
+      {
+        "id": "attack",
+        "clip": "stalker-lunge",
+        "hits": [
+          {
+            "id": "sting",
+            "start": {
+              "marker": "strike"
+            },
+            "finish": {
+              "marker": "recover"
+            },
+            "collider": "sting"
+          }
+        ],
+        "events": [
+          {
+            "id": "bite",
+            "at": {
+              "marker": "strike"
+            },
+            "sound": "bite"
+          }
+        ]
+      }
+    ],
+    "strikes": {
+      "sting": {}
+    },
+    "damage": {
+      "health": 2
+    },
+    "properties": {}
+  },
+  "usage": "character",
+  "materials": {},
+  "locations": [],
+  "geometry": [
+    {
+      "id": "movement",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0.55
+        },
+        "size": {
+          "x": 1,
+          "y": 1.1
+        },
+        "angleRadians": 0
+      },
+      "collision": {}
+    },
+    {
+      "id": "sting",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.3,
+          "y": 0.3
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "socket": "stinger"
+    },
+    {
+      "id": "shell",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 1.1,
+          "y": 0.5
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "body",
+      "frame": "locomotion",
+      "offsetY": -0.05
+    },
+    {
+      "id": "legs",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.95,
+          "y": 0.5
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "knee-0",
+      "frame": "locomotion",
+      "offsetX": 0.275,
+      "offsetY": -0.2
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

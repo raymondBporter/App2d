@@ -244,8 +244,8 @@ internal sealed partial class ProofRenders
                     var socket = placed.Socket(rock.Socket).WithOrigin(centre + rock.Prop.Point(EquipmentPoints.Grip)!.Value.XYZ);
                     drawing.AddAttachment(rock.Prop, socket);
                 }
-                var charging = subject.Asset.Controller.ChargeSpeed > 0;
-                var config = subject.Asset.Controller;
+                var charging = subject.Asset.Behavior!.Controller.ChargeSpeed > 0;
+                var config = subject.Asset.Behavior!.Controller;
                 var start = action.Events.FirstOrDefault(e => e.Event.Id == "rush")?.Seconds ?? config.ChargeStartSeconds;
                 var finish = action.Events.FirstOrDefault(e => e.Event.Id == "brake")?.Seconds ?? config.ChargeEndSeconds;
                 var rushSeconds = Math.Clamp(at - start, 0, finish - start);

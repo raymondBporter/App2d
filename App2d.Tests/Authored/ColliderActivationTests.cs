@@ -14,16 +14,16 @@ public sealed class ColliderActivationTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
     private const float Dt = AuthoredArena.StepSeconds;
 
-    private static ResolvedEntity Compile(EntityAsset asset) =>
+    private static ResolvedEntity Compile(Part asset) =>
         ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
     /// <summary>The spear guard whose thrust is active over a normalized interval of the 0.9 s clip, instead of the strike..recover markers.</summary>
-    private static EntityAsset GuardWithWindow(float startSeconds, float finishSeconds, string? id = null)
+    private static Part GuardWithWindow(float startSeconds, float finishSeconds, string? id = null)
     {
         var guard = StarterContent.SpearGuardEntity();
         guard.Id = id ?? guard.Id;
-        guard.Actions[0].Hits[0].Start = new() { At = startSeconds / .9f };
-        guard.Actions[0].Hits[0].Finish = new() { At = finishSeconds / .9f };
+        guard.Behavior!.Actions[0].Hits[0].Start = new() { At = startSeconds / .9f };
+        guard.Behavior!.Actions[0].Hits[0].Finish = new() { At = finishSeconds / .9f };
         return guard;
     }
 
@@ -106,14 +106,11 @@ public sealed class ColliderActivationTests
     {
         // The player with three overlapping hurt colliders against the guard: one hit per thrust, not one per collider.
         var player = StarterContent.PlayerEntity();
-        player.Version = EntityAsset.CurrentVersion;
-        player.Colliders.RemoveAll(c => c.Use == ColliderUses.Hurt);
-        player.Colliders.AddRange(
-        [
-            new() { Id = "torso-a", Use = ColliderUses.Hurt, Control = Humanoid.Hips, Frame = CharacterModel.Locomotion, OffsetY = .5f, Shape = Rectangle2D.Builder.FromSize(.6f, 1.2f) },
-            new() { Id = "torso-b", Use = ColliderUses.Hurt, Control = Humanoid.Chest, Frame = CharacterModel.Locomotion, Shape = Rectangle2D.Builder.FromSize(.7f, .8f) },
-            new() { Id = "head", Use = ColliderUses.Hurt, Control = Humanoid.Head, Frame = CharacterModel.Locomotion, Shape = Circle2D.Builder.Create(.45f) },
-        ]);
+        player.Version = Part.CurrentVersion;
+        player.RemoveColliders(ColliderUses.Hurt);
+        player.AddCollider(new() { Id = "torso-a", A = Humanoid.Hips, Frame = CharacterModel.Locomotion, OffsetY = .5f, Geometry = Rectangle2D.Builder.FromSize(.6f, 1.2f) });
+        player.AddCollider(new() { Id = "torso-b", A = Humanoid.Chest, Frame = CharacterModel.Locomotion, Geometry = Rectangle2D.Builder.FromSize(.7f, .8f) });
+        player.AddCollider(new() { Id = "head", A = Humanoid.Head, Frame = CharacterModel.Locomotion, Geometry = Circle2D.Builder.Create(.45f) });
         var target = Compile(player);
         Assert.Equal(3, target.Colliders.Count(c => c.Use == ColliderUses.Hurt));
         var arena = GuardThrust(target, Catalog.Entities["spear-guard"]);
@@ -129,12 +126,12 @@ public sealed class ColliderActivationTests
         Assert.Equal(target.Damage.Health - strikes, arena.Player.Health);
         // Two pulses on one explicit collider are two hit groups: each lands once per thrust.
         var pulsed = StarterContent.SpearGuardEntity();
-        pulsed.Version = EntityAsset.CurrentVersion;
-        pulsed.Behaviors!.Strikes.Remove("spear-tip"); // the renamed windows strike with the typed defaults
-        pulsed.Colliders.RemoveAll(c => c.Use == ColliderUses.Attack);
-        pulsed.Colliders.Add(new() { Id = "point", Use = ColliderUses.Attack, Prop = StarterContent.Spear, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) });
-        var window = pulsed.Actions[0].Hits[0];
-        pulsed.Actions[0].Hits =
+        pulsed.Version = Part.CurrentVersion;
+        pulsed.Behavior!.Strikes.Remove("spear-tip"); // the renamed windows strike with the typed defaults
+        pulsed.RemoveColliders(ColliderUses.Attack);
+        pulsed.AddCollider(new() { Id = "point", Prop = StarterContent.Spear, Point = EquipmentPoints.Tip, Along = -.14f, Geometry = Rectangle2D.Builder.FromSize(.42f, .26f) }, ColliderUses.Attack);
+        var window = pulsed.Behavior!.Actions[0].Hits[0];
+        pulsed.Behavior!.Actions[0].Hits =
         [
             new() { Id = "first", Collider = "point", Start = window.Start, Finish = new() { At = .5f / .9f } },
             new() { Id = "second", Collider = "point", Start = new() { At = .5f / .9f }, Finish = window.Finish },
@@ -154,7 +151,7 @@ public sealed class ColliderActivationTests
     public void QueriesRespectBothMasksLikePairCollectionAndNeverTheOwner()
     {
         var guard = ColliderAttachmentTests.GuardWithHurtColliders();
-        guard.Colliders.First(c => c.Id == "head").Mask = ArenaLayers.Others; // only another of the guard's own faction may reach the head
+        guard.Geometry.First(c => c.Id == "head").Collision!.Mask = ArenaLayers.Others; // only another of the guard's own faction may reach the head
         var entity = Compile(guard);
         var system = new CollisionSystem2D { CellSize = 2 };
         var player = new ActorColliders(entity, system, EntityId2D.Create(), ArenaLayers.Player, movement: true);
@@ -203,7 +200,7 @@ public sealed class ColliderActivationTests
         }
         // The same fight without the trigger produces the same hits and events: triggers are facts, not behaviour.
         var plain = ColliderAttachmentTests.GuardWithHurtColliders();
-        plain.Colliders.RemoveAll(c => c.Use == ColliderUses.Trigger);
+        plain.RemoveColliders(ColliderUses.Trigger);
         var control = GuardThrust(Catalog.Entities["player"], Compile(plain), 3.2f);
         for (var i = 0; i < 360; i++)
         {

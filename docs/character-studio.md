@@ -4,7 +4,9 @@ Library parts now use the same geometry inspector as model artwork, including me
 
 Clothing and weapons are now ordinary entries under **Parts**, with the same geometry editor, arbitrary XYZ locations, pivot, size, material and OBJ controls. Weapon tilt/twist remains available in Animate. **Attach** writes a model instance; **Equip on an entity** writes a gameplay equipment binding. Saved meshes keep editable outlines, and undo retains their rebuilt geometry.
 
-For the remaining consolidation of passive physics, Behavior and texture-frame animation, see [Part consolidation plan](part-consolidation-plan.md).
+Characters now use the same Part document with optional **Behavior**, a model reference and equipment. The **Entities** browser category opens the existing controller/action/behavior workspace; its collider tools edit shared geometry entries and Behavior selects their movement, hurt, attack or guard roles. Save and undo operate on that one Part file under `parts/`.
+
+For the completed passive-physics and Behavior consolidation and the remaining texture-frame animation work, see [Part consolidation plan](part-consolidation-plan.md).
 
 The proposed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.
 

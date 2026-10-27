@@ -234,7 +234,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     {
         AssetDocument<ModelVariant> v => "variant of " + (Session.Assets.Model(v.Asset.Base)?.Name ?? v.Asset.Base + " (missing)"),
         AssetDocument<MotionClip> c => "animation for " + (Session.Assets.Model(c.Asset.Model)?.Name ?? c.Asset.Model + " (missing)"),
-        AssetDocument<EntityAsset> e => "entity on " + (Session.Assets.Find(e.Asset.Model)?.Name ?? e.Asset.Model + " (missing)"),
+        AssetDocument<Part> e when e.Asset.Behavior is not null => "entity on " + (Session.Assets.Find(e.Asset.Model)?.Name ?? e.Asset.Model + " (missing)"),
         AssetDocument<Part> p => p.Asset.IsModule ? "shared rig module" : "shared part",
         _ => "base model",
     };

@@ -297,8 +297,8 @@ public static class PersonWardrobe
         }
         foreach (var id in new[] { "hero", "maul-brute", "cinder-gunner" })
         {
-            var path = Path.Combine(root, "entities", id + ".json");
-            var entity = EntityAsset.FromJson(File.ReadAllText(path));
+            var path = Path.Combine(root, "parts", id + ".json");
+            var entity = Part.FromJson(File.ReadAllText(path));
             // The old floating shirt is now the body's material.
             entity.Equipment.RemoveAll(e => e.Prop is "brute-tunic" or "cinder-tunic");
             var clothes = id == "hero" ? [new EquipmentBinding { Prop = ShortHair, Socket = HeadSocket }] : Caveman(id == "maul-brute" ? "brute" : "cinder").ToArray();

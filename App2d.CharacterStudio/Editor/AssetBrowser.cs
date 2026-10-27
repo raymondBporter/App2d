@@ -127,7 +127,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
             if (session.Assets.Parts.Any())
             {
                 Ui.Header("Library parts");
-                foreach (var part in session.Assets.Parts.OrderBy(p => p.Name))
+                foreach (var part in session.Assets.Parts.Where(p => p.Asset.Behavior is null).OrderBy(p => p.Name))
                 {
                     Row(part, 0);
                 }
@@ -163,7 +163,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         }
         // Assets whose base is missing still belong somewhere visible, so they can be repaired.
         var orphans = session.Assets.Documents.Where(d => d.Kind is AssetKind.Variant or AssetKind.Animation && session.Assets.Model(session.Assets.BaseOf(d.Id)) is null
-            || d is AssetDocument<EntityAsset> e && session.Assets.Model(session.Assets.BaseOf(e.Asset.Model)) is null).ToArray();
+            || d is AssetDocument<Part> { Asset.Behavior: not null } e && session.Assets.Model(session.Assets.BaseOf(e.Asset.Model)) is null).ToArray();
         if (orphans.Length > 0 && _filter == "All" && _search.Length == 0)
         {
             Ui.Header("Missing base");
@@ -272,8 +272,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
             AssetKind.Model => "Models",
             AssetKind.Variant => "Variants",
             AssetKind.Animation => "Animations",
-            AssetKind.Entity => "Entities",
-            AssetKind.Part => "Parts",
+            AssetKind.Part => document is AssetDocument<Part> { Asset.Behavior: not null } ? "Entities" : "Parts",
             _ => "Props"
         }) &&
         (document.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || document.Id.Contains(_search, StringComparison.OrdinalIgnoreCase));
@@ -303,8 +302,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
             AssetKind.Model => "[M]",
             AssetKind.Variant => "[V]",
             AssetKind.Animation => "[A]",
-            AssetKind.Entity => "[E]",
-            AssetKind.Part => document is AssetDocument<Part> { Asset.IsModule: true } ? "[Module]" : "[Part]",
+            AssetKind.Part => document is AssetDocument<Part> { Asset.Behavior: not null } ? "[E]" : document is AssetDocument<Part> { Asset.IsModule: true } ? "[Module]" : "[Part]",
             _ => "[P]"
         };
         if (document.Name.Contains("study", StringComparison.OrdinalIgnoreCase) || document.Name.Contains("demo", StringComparison.OrdinalIgnoreCase)) tag = "[Study]";
@@ -338,7 +336,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         {
             switch (document)
             {
-                case AssetDocument<Part> part:
+                case AssetDocument<Part> part when part.Asset.Behavior is null:
                     if (ImGui.MenuItem("Duplicate library part"))
                     {
                         Start(Create.DuplicatePart, part.Id, part.Name + " copy");
@@ -405,10 +403,10 @@ internal sealed partial class AssetBrowser(EditorSession session)
                     }
 
                     break;
-                case AssetDocument<EntityAsset> entity:
+                case AssetDocument<Part> entity when entity.Asset.Behavior is not null:
                     if (ImGui.MenuItem("Open model", "", false, session.Assets.Find(entity.Asset.Model) is not null))
                     {
-                        session.Open(entity.Asset.Model);
+                        session.Open(entity.Asset.Model!);
                     }
 
                     if (ImGui.MenuItem("Duplicate entity"))

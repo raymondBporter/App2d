@@ -1,0 +1,179 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "spear-guard",
+  "name": "Spear guard",
+  "model": "tall-thin",
+  "equipment": [
+    {
+      "prop": "spear",
+      "socket": "right-grip"
+    }
+  ],
+  "behavior": {
+    "motionSet": "deliberate",
+    "roles": {},
+    "controller": {
+      "walkSpeed": 0.9,
+      "range": 2.1,
+      "cooldown": 1.1
+    },
+    "colliders": {
+      "spear-tip": "attack",
+      "body": "hurt",
+      "head": "hurt",
+      "legs": "hurt",
+      "reach": "trigger"
+    },
+    "actions": [
+      {
+        "id": "attack",
+        "clip": "person-thrust",
+        "hits": [
+          {
+            "id": "spear-tip",
+            "start": {
+              "marker": "strike"
+            },
+            "finish": {
+              "marker": "recover"
+            },
+            "collider": "spear-tip"
+          }
+        ],
+        "events": [
+          {
+            "id": "swing",
+            "at": {
+              "marker": "strike"
+            },
+            "sound": "swing"
+          }
+        ]
+      }
+    ],
+    "strikes": {
+      "spear-tip": {}
+    },
+    "properties": {}
+  },
+  "usage": "character",
+  "materials": {},
+  "locations": [],
+  "geometry": [
+    {
+      "id": "movement",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0.933
+        },
+        "size": {
+          "x": 0.5,
+          "y": 1.866
+        },
+        "angleRadians": 0
+      },
+      "collision": {}
+    },
+    {
+      "id": "spear-tip",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.42,
+          "y": 0.26
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "prop": "spear",
+      "point": "tip",
+      "along": -0.14
+    },
+    {
+      "id": "body",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.424,
+          "y": 1.008
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "hips",
+      "frame": "locomotion",
+      "offsetX": -0.01732,
+      "offsetY": 0.364
+    },
+    {
+      "id": "head",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.6,
+          "y": 0.6
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "legs",
+      "geometry": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 0.3224,
+          "y": 1.076
+        },
+        "angleRadians": 0
+      },
+      "collision": {},
+      "a": "left-hip",
+      "frame": "locomotion",
+      "offsetX": 0.0912,
+      "offsetY": -0.468
+    },
+    {
+      "id": "reach",
+      "geometry": {
+        "kind": "circle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radius": 0.35
+      },
+      "collision": {},
+      "prop": "spear",
+      "point": "tip"
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

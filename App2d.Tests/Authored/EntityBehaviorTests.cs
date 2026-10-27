@@ -9,10 +9,10 @@ public sealed class EntityBehaviorTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
 
-    private static ResolvedEntity Compile(EntityAsset asset) =>
+    private static ResolvedEntity Compile(Part asset) =>
         ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
-    private static string Error(EntityAsset asset)
+    private static string Error(Part asset)
     {
         try
         {
@@ -34,15 +34,15 @@ public sealed class EntityBehaviorTests
         var slam = brute.Actions["attack"].Hits[0];
         Assert.Equal(new StrikeDef { Damage = 5, Sound = "heavy" }, slam.Strike);
         Assert.Equal("hammer-head", slam.Group);
-        Assert.Equal(new ReceiveDamageDef { Health = 22, Mass = 3 }, brute.Damage);
+        Assert.Equal(new ReceiveDamageDef { Health = 22, KnockbackResistance = 3 }, brute.Damage);
         Assert.Null(brute.GuardBehavior);
         Assert.Empty(brute.Properties);
         // The shield defender: the guard has its typed defaults.
         var defender = Catalog.Entities["shield-defender"];
-        Assert.Equal(EntityAsset.CurrentVersion, defender.Asset.Version);
+        Assert.Equal(Part.CurrentVersion, defender.Asset.Version);
         Assert.Equal(new StrikeDef { Damage = 2, Sound = "hit" }, defender.Actions["attack"].Hits[0].Strike);
-        Assert.Equal(new ReceiveDamageDef { Health = 8, Mass = 1.5f }, defender.Damage);
-        Assert.Equal(new GuardBehaviorDef(), defender.GuardBehavior);
+        Assert.Equal(new ReceiveDamageDef { Health = 8, KnockbackResistance = 1.5f }, defender.Damage);
+        Assert.Equal(new GuardBehaviorDef { Collider = defender.Asset.Behavior!.Guard!.Collider }, defender.GuardBehavior);
         // A projectile's strike is keyed by its action.
         var gunner = Catalog.Entities["cinder-gunner"];
         Assert.Equal(2, gunner.Actions["attack"].ProjectileStrike!.Damage);
@@ -56,36 +56,36 @@ public sealed class EntityBehaviorTests
     public void TypedBehaviorsValidateAndUnknownStrikesAreReportedAtResolution()
     {
         var guard = StarterContent.SpearGuardEntity();
-        Assert.Equal(EntityAsset.CurrentVersion, guard.Version);
-        Assert.NotNull(guard.Behaviors);
+        Assert.Equal(Part.CurrentVersion, guard.Version);
+        Assert.NotNull(guard.Behavior!);
         var compiled = Compile(guard);
         Assert.Equal(3, compiled.Damage.Health);
         Assert.Equal(1, compiled.Actions["attack"].Hits[0].Strike.Damage);
-        string Refused(Action<EntityAsset> change)
+        string Refused(Action<Part> change)
         {
             var broken = StarterContent.SpearGuardEntity();
             change(broken);
             return Error(broken);
         }
-        Assert.Contains("no hit window or projectile action of that name", Refused(e => e.Behaviors.Strikes["spear-butt"] = new()));
+        Assert.Contains("no hit window or projectile action of that name", Refused(e => e.Behavior!.Strikes["spear-butt"] = new()));
         var unlisted = StarterContent.SpearGuardEntity();
-        unlisted.Behaviors.Strikes.Remove("spear-tip");
+        unlisted.Behavior!.Strikes.Remove("spear-tip");
         Assert.Equal(new StrikeDef(), Compile(unlisted).Actions["attack"].Hits[0].Strike); // a group without an entry strikes with the typed defaults
         Assert.Contains("unsupported format/version", Refused(e => e.Version = 4));
-        Assert.Contains("collections cannot be null", Refused(e => e.Behaviors = null!));
-        Assert.Contains("behaviors.damage health", Refused(e => e.Behaviors.Damage.Health = 0));
-        Assert.Contains("behaviors.strikes.spear-tip damage", Refused(e => e.Behaviors.Strikes["spear-tip"].Damage = -1));
-        Assert.Contains("behaviors.strikes.spear-tip impact", Refused(e => e.Behaviors.Strikes["spear-tip"].Impact = "laser"));
-        Assert.Contains("behaviors.properties key", Refused(e => e.Behaviors.Properties["Not An Id"] = "x"));
-        Assert.Contains("behaviors.guard openEvent", Refused(e => e.Behaviors.Guard = new() { OpenEvent = "" }));
+        Assert.Contains("needs Behavior", Refused(e => e.Behavior = null));
+        Assert.Contains("behaviors.damage health", Refused(e => e.Behavior!.Damage.Health = 0));
+        Assert.Contains("behaviors.strikes.spear-tip damage", Refused(e => e.Behavior!.Strikes["spear-tip"].Damage = -1));
+        Assert.Contains("behaviors.strikes.spear-tip impact", Refused(e => e.Behavior!.Strikes["spear-tip"].Impact = "laser"));
+        Assert.Contains("behaviors.properties key", Refused(e => e.Behavior!.Properties["Not An Id"] = "x"));
+        Assert.Contains("behaviors.guard openEvent", Refused(e => e.Behavior!.Guard = new() { OpenEvent = "" }));
         // Custom properties ride along untouched and reach the resolved entity by name.
         var custom = StarterContent.SpearGuardEntity();
-        custom.Behaviors.Properties["patrol-note"] = "stays near the gate";
+        custom.Behavior!.Properties["patrol-note"] = "stays near the gate";
         Assert.Equal("stays near the gate", Compile(custom).Properties["patrol-note"]);
         var json = custom.ToJson();
         Assert.Contains("\"patrol-note\"", json);
         Assert.DoesNotContain("\"health\"", json.Split("\"behaviors\"")[0]); // no legacy health outside the behaviors
-        Assert.Equal(custom.ToJson(), EntityAsset.FromJson(json).ToJson());
+        Assert.Equal(custom.ToJson(), Part.FromJson(json).ToJson());
     }
 
     [Fact]
@@ -93,8 +93,8 @@ public sealed class EntityBehaviorTests
     {
         // The guard's thrust strike and the player's hurt window come from the typed behaviors; the fight is the reference one.
         var player = StarterContent.PlayerEntity();
-        player.Behaviors.Strikes["spear-tip"].Damage = 2;
-        player.Behaviors.Damage.HurtSeconds = .1f;
+        player.Behavior!.Strikes["spear-tip"].Damage = 2;
+        player.Behavior!.Damage.HurtSeconds = .1f;
         var target = Compile(player);
         var arena = new AuthoredArena([target, Catalog.Entities["spear-guard"]]);
         arena.Teleport(0, new(0, 0));

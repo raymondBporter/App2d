@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
@@ -7,6 +8,13 @@ using App2d.Core.Shapes;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters;
+
+/// <summary>Geometry's collision participation and layer filter; gameplay roles live in Behavior.</summary>
+public sealed record GeometryCollision
+{
+    public bool Enabled { get; set; } = true;
+    public uint Mask { get; set; } = uint.MaxValue;
+}
 
 /// <summary>One placed geometry entry in a Part or rig: shape, curve, textured rectangle or mesh, with one material and binding.</summary>
 public sealed record PartGeometry
@@ -20,11 +28,20 @@ public sealed record PartGeometry
     [JsonIgnore] public string Kind => Mesh is null ? Geometry?.Kind ?? "?" : "mesh";
     /// <summary>Authored drawing style.</summary>
     public RenderMaterialDefinition2D? Material { get; set; }
-    public string A { get; set; } = "";
+    public GeometryCollision? Collision { get; set; }
+    public string A { get; set; } = PartLocation.Origin;
     public string? B { get; set; }
 
     /// <summary>Optional bone whose XY rotation carries this shape's local offset and direction.</summary>
     public string? Frame { get; set; }
+    /// <summary>Optional socket or equipped part location carrying this entry instead of A.</summary>
+    public string? Socket { get; set; }
+    public string? Prop { get; set; }
+    public string Point { get; set; } = PartLocation.Origin;
+    public float Along { get; set; }
+    /// <summary>Uniformly follows the A-to-B span relative to its rest length.</summary>
+    public bool Stretch { get; set; }
+    [JsonIgnore] public string Binding => Prop is not null ? ColliderBindings.Prop : Socket is not null ? ColliderBindings.Socket : A != PartLocation.Origin ? ColliderBindings.Control : ColliderBindings.Actor;
     /// <summary>Additional shape rotation in its bone frame, in radians.</summary>
     public float Angle { get; set; }
     /// <summary>Local geometry scale, applied before its attachment frame for every shape or curve.</summary>
@@ -50,6 +67,7 @@ public sealed record PartGeometry
     /// <summary>Resolves the entry's surface and optional instance override without changing its authored data.</summary>
     public PartGeometry ResolveMaterial(IReadOnlyDictionary<string, RenderMaterialDefinition2D> materials, RenderMaterialDefinition2D? change = null)
     {
+        if (Material is null && change is null) return this;
         var material = RenderMaterial.WithOverride(change).Resolve(materials);
         if (Mesh is not null && material.Texture is not null)
             throw new InvalidDataException("Mesh textures require UV coordinates; use a textured rectangle.");
@@ -78,10 +96,12 @@ public sealed record PartGeometry
         {
             throw new InvalidDataException("Unknown part frame: " + Frame);
         }
-        if (Frame is not null && B is not null)
-        {
-            throw new InvalidDataException("A part uses either a bone frame or a toward control.");
-        }
+        if (Socket is not null && Prop is not null || (Socket is not null || Prop is not null) && (A != PartLocation.Origin || B is not null || Frame is not null))
+            throw new InvalidDataException("Geometry has one attachment: controls, socket or equipped part.");
+        if (Socket is not null) AuthoredAsset.RequireId(Socket, "geometry socket");
+        if (Prop is not null) { AuthoredAsset.RequireId(Prop, "geometry prop"); AuthoredAsset.RequireId(Point, "geometry point"); }
+        if (Stretch && B is null) throw new InvalidDataException("Stretch needs a toward control.");
+        new Limit(-100, 100).Check(Along, "geometry along");
         if ((Geometry is null) == (Mesh is null) || Geometry is not null and not IShape2D and not ICurve2D)
         {
             throw new InvalidDataException("A geometry entry needs exactly one shape, curve or mesh.");
@@ -135,12 +155,14 @@ public sealed record PartGeometry
         new Limit(-100, 100).Check(OffsetX, "part.offsetX");
         new Limit(-100, 100).Check(OffsetY, "part.offsetY");
         new Limit(-16, 16).Check(Depth, "part.depth");
-        if (Material is null)
+        if (Material is null && Collision is null)
         {
             throw new InvalidDataException("A part needs a material.");
         }
 
-        Material.Validate("part.material");
+        Material?.Validate("part.material");
+        if (Collision is not null && (Geometry is not IConvexShape2D || Bindings is { Count: > 0 } || ScaleX <= 0 || ScaleX != ScaleY))
+            throw new InvalidDataException("Collision requires rigid convex geometry with positive uniform scale.");
         if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY))
         {
             throw new InvalidDataException("Part scale must be finite.");

@@ -2,7 +2,7 @@
 
 Date: 2026-10-26.
 
-Status: reviewed and in progress. S0, S1, S2 and S3 are implemented. S4-S5 and the remaining S6 cutover are pending; the earlier demo cleanup is recorded below.
+Status: reviewed and in progress. S0-S4 are implemented. S5 and the remaining S6 cutover are pending; the earlier demo cleanup is recorded below.
 
 This follows the [completed character migration](character-system-migration-plan.md). Keep its working rig, proportions, constraints, module composition, collision registration, animation, document/undo infrastructure and game artwork. The next objective is fewer independent definitions, loaders, placement paths, inspectors and spawners.
 
@@ -70,9 +70,9 @@ Geometry and attachments can bind to a rig node, a named location or the part ro
 | Configuration | Contents and scope | Reuse |
 | --- | --- | --- |
 | Render material | Fill, texture, tint, outline, stroke and appearance properties. Keeping this fairly broad is acceptable. | RenderMaterialDefinition2D and current renderer/texture cache |
-| Collision settings | Enabled/sensor state, category, mask and owner identity at runtime. | Collider2D, ColliderDef's useful settings and shared shape collision |
+| Collision settings | Enabled/sensor state, category, mask and owner identity at runtime. | GeometryCollision, Collider2D and shared shape collision |
 | Physics settings | Motion type, finite positive mass/inertia, rotation lock, friction, restitution and gravity settings for a body. | PhysicsBodySettings2D and PhysicsWorld2D |
-| Behavior | Controller/action/role bindings and game-specific damage, receiving damage, guarding, sound/event configuration. | Existing EntityBehaviors and typed action/controller records |
+| Behavior | Controller/action/role bindings and game-specific damage, receiving damage, guarding, sound/event configuration. | Behavior and existing typed action/controller records |
 
 Use existing PhysicsBodySettings2D as the pragmatic physics block initially. There is no need to split it into several new “material” and “body descriptor” classes merely to match terminology. A body owns its mass, inertia and velocity; geometry entries contribute collision shapes. Do not create a body or duplicate mass for every rendered piece.
 
@@ -205,8 +205,8 @@ S3 implementation review (2026-10-27):
 
 ### S4. Gather game-specific configuration under Behavior
 
-- [ ] S4a. Evolve EntityBehaviors into the one optional Behavior aggregate, moving existing controller, action/role, strike, guard, reaction and event configuration under it.
-- [ ] S4b. Update game consumers and the existing typed inspector. Collapse EntityAsset's remaining wrapper only as its useful responsibilities move onto Part/Behavior references.
+- [x] S4a. Evolve EntityBehaviors into the one optional Behavior aggregate, moving existing controller, action/role, strike, guard, reaction and event configuration under it.
+- [x] S4b. Update game consumers and the existing typed inspector. Collapse EntityAsset's remaining wrapper only as its useful responsibilities move onto Part/Behavior references.
 
 During this stage, finish moving Movement/Colliders shapes and placement onto geometry entries. Behavior retains stable references and activation/interaction policy, including attack windows; the common collision path retains shape construction, attachment, filtering and registration.
 
@@ -217,6 +217,16 @@ No new key/value framework, plugin registry or universal behavior interpreter is
 Gate: current player/enemy attacks, guards, projectiles, reactions, accepted impact sounds and replay/state behavior work. Generic geometry/rig evaluation ignores Behavior. Passive objects do not inherit default character health or combat registration.
 
 Delete: duplicate game configuration on appearance/prop/geometry definitions and obsolete forwarding wrappers. Retain game-specific algorithms inside their owning behavior/controller implementation.
+
+S4 implementation review (2026-10-27):
+
+- Characters are Parts with a model reference, equipment and optional `Behavior`. The 11 shipped character definitions now live under `parts/`. `EntityAsset`, `EntityBehaviors`, `MovementDef`, `ColliderDef`, `GuardDef`, the entity file kind and the separate entity document/catalog store are removed. `Entities` remains the compiled gameplay view of Parts that opt into Behavior.
+- Movement, hurt, attack and guard shapes live in `Part.Geometry`; Behavior selects stable geometry IDs and owns activation, controller, action, strike, reaction and sound policy. Geometry collision supplies enabled state and mask. Missing material makes a collider invisible. Passive Parts retain no Behavior, invented health or combat registration.
+- Drawing and collision use the same geometry attachment frame, including socket/equipment points, local offsets, uniform stretch and both facings. Draw depth remains separate from collision position and physical Z. Body mass remains in Physics; the old gameplay mass is now named `KnockbackResistance`.
+- Studio's existing entity workspace edits the same Part document, including collision geometry, typed behavior, equipment, undo and save. Character Parts retain their entity browser category; the ordinary part/module preview list excludes them. No second authoritative asset or universal behavior interpreter was introduced.
+- Explicit offline conversion preserves IDs, defaults, controller behavior and evaluated legacy placements. The report identifies the pterosaur beak's old ignored socket offset; new geometry offsets apply consistently. Original files and the validated conversion report are retained under `artifacts/part-consolidation/s4-original` and `s4-final-converted`. Ordinary load/save does not accept the retired entity format.
+- Verification: 1,264 of 1,265 affected regression tests passed together; one audio decoder timing test missed its startup deadline during the concurrent native editor run, then all five audio performance tests passed in isolation. All 29 focused seed/part/reference checks passed with existing reference data unchanged. The final seed cleanup passed seven focused checks, and root-frame/movement validation passed 14 focused checks. Native Studio editor checks passed 158/158 and acceptance passed 46/46; collider attachment artwork was inspected. New tests cover shared Part identity, conversion defaults, passive noncombat behavior and matching drawn/collision frames.
+- Production C# outside offline conversion is 63 lines smaller. Conversion support adds 86 lines, making the complete production C# change 23 lines larger; regression tests add 152 lines. The reduction is in independent definitions and runtime/editor paths, not a net deletion once migration coverage is included.
 
 ### S5. Share animation binding and add texture frames
 
@@ -303,3 +313,4 @@ Track reduction by the old paths removed and the ease of authoring these example
 | 2026-10-26 | S0b and S1 complete | 726 affected authored/geometry tests passed, then 24 focused preview/session/mesh tests passed after the final clock adjustment; Studio editor smoke 158/158 and acceptance 46/46. Inspected outfit, centaur, standalone module and mesh-inspector frames. Existing character reference data stayed unchanged. Studio and the Noodle bridge built. Removed separate library-solid handling; next is S2 or the independent S3 passive-object proof. |
 | 2026-10-27 | S2a/S2b implemented | 30 props converted into the shared Part library; separate codec/catalog, drawing and clothing inspector removed. 789 integration tests, 158 editor checks and 46 acceptance checks passed. Next: S3. |
 | 2026-10-27 | S3a/S3b implemented | Unified passive bodies and moving platforms on Part and the existing world-object runtime. 1,254 integration tests, 158 native editor checks and the five-frame physics rendering study passed. Next: S4. |
+| 2026-10-27 | S4a/S4b implemented | Unified character definitions on Part with optional Behavior and collision-enabled geometry. Converted all 11 characters; removed the entity format/runtime wrapper and separate collider/movement definitions. 1,264 regression checks passed together, the remaining audio timing check passed in isolation, and native editor/acceptance checks passed 158/158 and 46/46. Next: S5. |

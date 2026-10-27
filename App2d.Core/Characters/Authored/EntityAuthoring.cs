@@ -39,34 +39,35 @@ public static class EntityAuthoring
     /// first motion set, one hurt box over the rest pose, and a movement box fitted to it. References it cannot fill stay visible
     /// as compile problems for the author to repair, rather than being invented.
     /// </summary>
-    public static EntityAsset New(string template, string id, string name, ResolvedModel model)
+    public static Part New(string template, string id, string name, ResolvedModel model)
     {
-        var entity = new EntityAsset
+        var entity = new Part
         {
+            Usage = "character",
             Id = id,
             Name = name,
             Model = model.Id,
-            MotionSet = model.Base.MotionSets.FirstOrDefault()?.Id ?? "standard",
-            Movement = FitMovement(model),
-            // P11b: a new entity starts with one hurt box over its whole rest pose (edit or split it in the Colliders section).
-            Colliders = [ColliderAuthoring.HurtBox(model, "body", [.. model.Order.Select(c => c.Id)], .1f)],
-            // P9a: a new entity declares its behaviors (version 4); its windows get a strike each as they are added.
-            Behaviors = new(),
+            Geometry = [FitMovement(model), ColliderAuthoring.HurtBox(model, "body", [.. model.Order.Select(c => c.Id)], .1f)],
+            Behavior = new()
+            {
+                MotionSet = model.Base.MotionSets.FirstOrDefault()?.Id ?? "standard",
+                Colliders = new() { ["body"] = ColliderUses.Hurt }
+            },
         };
         switch (template)
         {
             case Guard:
-                entity.Controller = new()
+                entity.Behavior!.Controller = new()
                 {
                     Kind = EntityControllers.Walker,
                     WalkSpeed = .9f,
                     Range = 1.6f,
                     Cooldown = 1
                 };
-                entity.Actions = [new() { Id = EntityControllers.Attack, Role = "attack" }];
+                entity.Behavior!.Actions = [new() { Id = EntityControllers.Attack, Role = "attack" }];
                 break;
             case Platformer:
-                entity.Controller = new()
+                entity.Behavior!.Controller = new()
                 {
                     Kind = EntityControllers.Platformer,
                     WalkSpeed = 1.5f,
@@ -75,10 +76,10 @@ public static class EntityAuthoring
                     Range = 1.5f,
                     Cooldown = .4f
                 };
-                entity.Actions = [new() { Id = EntityControllers.Jump, Role = EntityControllers.Jump, Events = [new() { Id = EntityControllers.Launch, At = new() { At = .25f } }] }];
+                entity.Behavior!.Actions = [new() { Id = EntityControllers.Jump, Role = EntityControllers.Jump, Events = [new() { Id = EntityControllers.Launch, At = new() { At = .25f } }] }];
                 break;
             case Stationary:
-                entity.Controller = new()
+                entity.Behavior!.Controller = new()
                 {
                     Kind = EntityControllers.Stationary,
                     WalkSpeed = 0,
@@ -94,9 +95,9 @@ public static class EntityAuthoring
     }
 
     /// <summary>A copy that keeps every model, clip and prop reference: a sibling, not a child. There is no entity inheritance.</summary>
-    public static EntityAsset Duplicate(EntityAsset source, string id, string name)
+    public static Part Duplicate(Part source, string id, string name)
     {
-        var copy = AuthoredAsset.Parse<EntityAsset>(source.ToJson(), "entity");
+        var copy = AuthoredAsset.Parse<Part>(source.ToJson(), "entity");
         copy.Id = id;
         copy.Name = name;
         return copy;
@@ -104,7 +105,7 @@ public static class EntityAuthoring
 
     /// <summary>The movement box around the rest pose's visible parts: full height from the feet, a narrow body width. Explicit, never automatic.</summary>
     /// <param name="offsetX">How far the box centre sits ahead of the feet; kept from the previous shape when refitting.</param>
-    public static MovementDef FitMovement(ResolvedModel model, float offsetX = 0)
+    public static PartGeometry FitMovement(ResolvedModel model, float offsetX = 0)
     {
         var pose = PoseEvaluator.Rest(model);
         var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, model, pose))
@@ -113,9 +114,15 @@ public static class EntityAuthoring
         var width = Math.Clamp((points.Max(p => p.X) - points.Min(p => p.X)) * .6f, .2f, height);
         return new()
         {
-            Shape = MovementDef.Box(MathF.Round(width, 3), MathF.Round(height, 3), offsetX)
+            Id = ColliderUses.Movement,
+            A = PartLocation.Origin,
+            Collision = new(),
+            Geometry = MovementBox(MathF.Round(width, 3), MathF.Round(height, 3), offsetX)
         };
     }
+
+    public static App2d.Core.Shapes.Rectangle2D MovementBox(float width, float height, float offsetX = 0) =>
+        App2d.Core.Shapes.Rectangle2D.Builder.FromSize(width, height, new(offsetX, height / 2));
 
     // ---- Motion sets ---------------------------------------------------------------------------------------------
 

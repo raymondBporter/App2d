@@ -57,7 +57,7 @@ public static class StarterContent
     /// The Person's hurt colliders (P8c, declared by the seeds since P11b): a body box over the hips, chest and shoulders, a head
     /// box and a legs box, each holding the rest-pose bounds of its controls on the entity's own build, following its anchor control.
     /// </summary>
-    public static IEnumerable<ColliderDef> PersonHurt(ResolvedModel model, float legsPad = .07f) =>
+    public static IEnumerable<PartGeometry> PersonHurt(ResolvedModel model, float legsPad = .07f) =>
     [
         ColliderAuthoring.HurtBox(model, Humanoid.Body, [Humanoid.Hips, Humanoid.Chest, Humanoid.LeftShoulder, Humanoid.RightShoulder], .14f),
         ColliderAuthoring.HurtBox(model, Humanoid.Head, [Humanoid.Head], .3f),
@@ -107,7 +107,7 @@ public static class StarterContent
         foreach (var entity in new[] { SpearGuardEntity(), PlayerEntity(), StalkerEntity() })
         {
             entity.Validate();
-            Save("entities", entity.Id, entity.ToJson());
+            Save("parts", entity.Id, entity.ToJson());
         }
     }
 
@@ -427,89 +427,93 @@ public static class StarterContent
     };
 
     /// <summary>The spear's attack collider: a box just behind the tip, enabled by the thrust's window.</summary>
-    private static ColliderDef SpearTip() => new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = Spear, Point = EquipmentPoints.Tip, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) };
+    private static PartGeometry SpearTip() => new() { Id = "spear-tip", Prop = Spear, Point = EquipmentPoints.Tip, Along = -.14f, Geometry = Rectangle2D.Builder.FromSize(.42f, .26f), Collision = new() { } };
 
     /// <summary>P9a: the typed behaviors of a starter entity: its health and one default strike per hit group.</summary>
-    private static EntityBehaviors Behaviors(int health, params string[] groups) => new()
+    private static Behavior Behaviors(int health, params string[] groups) => new()
     {
         Damage = new() { Health = health },
         Strikes = groups.ToDictionary(g => g, _ => new StrikeDef(), StringComparer.Ordinal),
     };
 
-    public static EntityAsset SpearGuardEntity() => new()
+    public static Part SpearGuardEntity() => new()
     {
+        Usage = "character",
         Id = SpearGuard,
         Name = "Spear guard",
         Model = "tall-thin",
-        MotionSet = "deliberate",
-        Controller = new()
-        {
-            Kind = EntityControllers.Walker,
-            WalkSpeed = .9f,
-            Range = 2.1f,
-            Cooldown = 1.1f
-        },
-        Behaviors = Behaviors(3, "spear-tip"),
-        Movement = new()
-        {
-            Shape = MovementDef.Box(.5f, 1.866f)
-        },
-        Colliders = [SpearTip(), .. PersonHurt(TallThin())],
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
-        Actions = [Thrust()],
+        Geometry = [new() { Id = ColliderUses.Movement, Collision = new(), A = PartLocation.Origin,
+            Geometry = EntityAuthoring.MovementBox(.5f, 1.866f)
+         }, SpearTip(), .. PersonHurt(TallThin())],
+        Behavior = Behaviors(3, "spear-tip") with
+        {
+            MotionSet = "deliberate",
+            Controller = new()
+            {
+                Kind = EntityControllers.Walker,
+                WalkSpeed = .9f,
+                Range = 2.1f,
+                Cooldown = 1.1f
+            },
+            Actions = [Thrust()]
+        ,
+            Colliders = new() { ["spear-tip"] = ColliderUses.Attack, ["body"] = ColliderUses.Hurt, ["head"] = ColliderUses.Hurt, ["legs"] = ColliderUses.Hurt }
+        },
     };
 
-    public static EntityAsset PlayerEntity() => new()
+    public static Part PlayerEntity() => new()
     {
+        Usage = "character",
         Id = Player,
         Name = "Player",
         Model = PersonTemplate.Id,
-        MotionSet = "standard",
-        Controller = new()
-        {
-            Kind = EntityControllers.Platformer,
-            WalkSpeed = 1.8f,
-            RunSpeed = 4.2f,
-            JumpSpeed = 7.5f,
-            Range = 1.6f,
-            Cooldown = .2f
-        },
-        Behaviors = Behaviors(5, "spear-tip"),
-        Movement = new()
-        {
-            Shape = MovementDef.Box(.55f, 1.705f)
-        },
-        // The player's legs box is tighter than the guards' (pad .05).
-        Colliders = [SpearTip(), .. PersonHurt(ResolvedModel.From(PersonTemplate.Model(face: true), null, PersonTemplate.PartOf), .05f)],
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
-        Actions = [Thrust(), new() { Id = EntityControllers.Jump, Role = "jump", Events = [new() { Id = EntityControllers.Launch, At = new() { Marker = "launch" } }] }],
+        Geometry = [new() { Id = ColliderUses.Movement, Collision = new(), A = PartLocation.Origin,
+            Geometry = EntityAuthoring.MovementBox(.55f, 1.705f)
+         }, SpearTip(), .. PersonHurt(ResolvedModel.From(PersonTemplate.Model(face: true), null, PersonTemplate.PartOf), .05f)],
+        Behavior = Behaviors(5, "spear-tip") with
+        {
+            MotionSet = "standard",
+            Controller = new()
+            {
+                Kind = EntityControllers.Platformer,
+                WalkSpeed = 1.8f,
+                RunSpeed = 4.2f,
+                JumpSpeed = 7.5f,
+                Range = 1.6f,
+                Cooldown = .2f
+            },
+            Actions = [Thrust(), new() { Id = EntityControllers.Jump, Role = "jump", Events = [new() { Id = EntityControllers.Launch, At = new() { Marker = "launch" } }] }]
+        ,
+            Colliders = new() { ["spear-tip"] = ColliderUses.Attack, ["body"] = ColliderUses.Hurt, ["head"] = ColliderUses.Hurt, ["legs"] = ColliderUses.Hurt }
+        },
     };
 
-    public static EntityAsset StalkerEntity() => new()
+    public static Part StalkerEntity() => new()
     {
+        Usage = "character",
         Id = StalkerPest,
         Name = "Stalker pest",
         Model = Stalker,
-        MotionSet = "standard",
-        Controller = new()
-        {
-            Kind = EntityControllers.Walker,
-            WalkSpeed = .6f,
-            Range = 1.05f,
-            Cooldown = 1.4f
-        },
-        Behaviors = Behaviors(2, "sting"),
-        Movement = new()
-        {
-            Shape = MovementDef.Box(1, 1.1f)
-        },
-        Colliders =
-        [
-            new() { Id = "sting", Use = ColliderUses.Attack, Socket = "stinger", Shape = Rectangle2D.Builder.FromSize(.3f, .3f) },
+        Geometry = [new() { Id = ColliderUses.Movement, Collision = new(), A = PartLocation.Origin,
+            Geometry = EntityAuthoring.MovementBox(1, 1.1f)
+         },
+            new() { Id = "sting", Socket = "stinger",Geometry = Rectangle2D.Builder.FromSize(.3f, .3f),Collision = new() {  }},
             ColliderAuthoring.HurtBox(ResolvedModel.From(StalkerModel()), "shell", ["body", "hip-0", "hip-2"], .2f),
             ColliderAuthoring.HurtBox(ResolvedModel.From(StalkerModel()), "legs", ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], .05f),
         ],
-        Actions =
+        Behavior = Behaviors(2, "sting") with
+        {
+            MotionSet = "standard",
+            Controller = new()
+            {
+                Kind = EntityControllers.Walker,
+                WalkSpeed = .6f,
+                Range = 1.05f,
+                Cooldown = 1.4f
+            },
+            Actions =
         [
             new()
             {
@@ -517,6 +521,9 @@ public static class StarterContent
                 Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Collider = "sting" }],
                 Events = [new() { Id = "bite", At = new() { Marker = "strike" }, Sound = "bite" }],
             },
-        ],
+        ]
+        ,
+            Colliders = new() { ["sting"] = ColliderUses.Attack, ["shell"] = ColliderUses.Hurt, ["legs"] = ColliderUses.Hurt }
+        },
     };
 }

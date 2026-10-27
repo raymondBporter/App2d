@@ -137,7 +137,7 @@ public sealed class HumanoidFootwearTests
         copy.Equipment.AddRange(PersonWardrobe.Footwear("boot"));
         var dressed = ResolvedEntity.Compile(copy, catalog.Resolve, id => catalog.Animations.GetValueOrDefault(id), id => catalog.Parts.GetValueOrDefault(id));
         Assert.Same(original.Model, dressed.Model);
-        Assert.Equal(original.Asset.Behaviors.Damage.Health, dressed.Asset.Behaviors.Damage.Health);
+        Assert.Equal(original.Asset.Behavior!.Damage.Health, dressed.Asset.Behavior!.Damage.Health);
         Assert.Same(original.Actions["attack"].Clip, dressed.Actions["attack"].Clip);
         var pose = new ActorPose(PoseEvaluator.Sample(original.Model, original.Actions["attack"].Clip, .6f), Vector2.Zero, 1);
         Assert.Equal(EntityCollision.Hurt(original, pose), EntityCollision.Hurt(dressed, pose));

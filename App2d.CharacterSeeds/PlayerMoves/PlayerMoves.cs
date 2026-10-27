@@ -129,18 +129,18 @@ internal static partial class PlayerMoves
         }
 
         var hero = Hero(ResolvedModel.From(person, null, PersonTemplate.PartOf), clips);
-        report.Write(Path.Combine(authoredRoot, "entities", hero.Id + ".json"), hero.ToJson());
+        report.Write(Path.Combine(authoredRoot, "parts", hero.Id + ".json"), hero.ToJson());
         // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
         report.Write(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"), WeaponMotion(PistolShot(model)).ToJson());
         var cinder = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "cinder.json")));
         var gunner = CinderGunner(ResolvedModel.From(person, cinder, PersonTemplate.PartOf));
-        report.Write(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"), gunner.ToJson());
+        report.Write(Path.Combine(authoredRoot, "parts", gunner.Id + ".json"), gunner.ToJson());
         // The maul: a broad brute on the Heavy set with a one-handed hammer and a slow overhead slam.
         report.Write(Path.Combine(authoredRoot, "parts", "hammer.json"), HammerProp().ToJson());
         report.Write(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"), WeaponMotion(HammerSlam(model)).ToJson());
         var brute = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "brute.json")));
         var maul = MaulBrute(ResolvedModel.From(person, brute, PersonTemplate.PartOf));
-        report.Write(Path.Combine(authoredRoot, "entities", maul.Id + ".json"), maul.ToJson());
+        report.Write(Path.Combine(authoredRoot, "parts", maul.Id + ".json"), maul.ToJson());
         PersonWardrobe.Write(authoredRoot, report: report);
     }
 
@@ -173,26 +173,12 @@ internal static partial class PlayerMoves
         .Build();
 
     /// <summary>Heavy motion, heavy hits: walks in slowly and slams for 5 when the player is within 1.3 units. Knockback barely moves it.</summary>
-    public static EntityAsset MaulBrute(ResolvedModel model) => new()
+    public static Part MaulBrute(ResolvedModel model) => new()
     {
+        Usage = "character",
         Id = "maul-brute",
         Name = "Maul brute",
         Model = model.Id,
-        MotionSet = "heavy",
-        Controller = new ControllerConfig()
-        {
-            Kind = EntityControllers.Walker,
-            WalkSpeed = 1.1f,
-            Range = 1.3f,
-            Cooldown = 1
-        },
-        Behaviors = new()
-        {
-            Damage = new() { Health = 22, Mass = 3 },
-            Strikes = new(StringComparer.Ordinal) { ["hammer-head"] = new() { Damage = 5, Sound = "heavy" } },
-        },
-        Movement = EntityAuthoring.FitMovement(model),
-        Colliders = [new() { Id = "hammer-head", Use = ColliderUses.Attack, Prop = "hammer", Shape = Rectangle2D.Builder.FromSize(1.2f, 1f) }, .. StarterContent.PersonHurt(model)],
         Equipment =
         [
             new EquipmentBinding()
@@ -201,7 +187,20 @@ internal static partial class PlayerMoves
                 Socket = Humanoid.SwordSocket
             }
         ],
-        Actions =
+        Geometry = [EntityAuthoring.FitMovement(model), new() { Id = "hammer-head", Prop = "hammer", Geometry = Rectangle2D.Builder.FromSize(1.2f, 1f), Point = EquipmentPoints.Tip, Collision = new() { } }, .. StarterContent.PersonHurt(model)],
+        Behavior = new()
+        {
+            Damage = new() { Health = 22, KnockbackResistance = 3 },
+            Strikes = new(StringComparer.Ordinal) { ["hammer-head"] = new() { Damage = 5, Sound = "heavy" } },
+            MotionSet = "heavy",
+            Controller = new ControllerConfig()
+            {
+                Kind = EntityControllers.Walker,
+                WalkSpeed = 1.1f,
+                Range = 1.3f,
+                Cooldown = 1
+            },
+            Actions =
         [
             new()
             {
@@ -236,7 +235,10 @@ internal static partial class PlayerMoves
                     }
                 ],
             },
-        ],
+        ]
+        ,
+            Colliders = new() { ["hammer-head"] = ColliderUses.Attack, ["body"] = ColliderUses.Hurt, ["head"] = ColliderUses.Hurt, ["legs"] = ColliderUses.Hurt }
+        },
     };
 
     /// <summary>
@@ -257,26 +259,12 @@ internal static partial class PlayerMoves
         .Build();
 
     /// <summary>Keeps its distance and shoots: walks in to 4.5 units, then fires an 8 unit/s bolt from the pistol's muzzle.</summary>
-    public static EntityAsset CinderGunner(ResolvedModel model) => new()
+    public static Part CinderGunner(ResolvedModel model) => new()
     {
+        Usage = "character",
         Id = "cinder-gunner",
         Name = "Cinder gunner",
         Model = model.Id,
-        MotionSet = "standard",
-        Controller = new()
-        {
-            Kind = EntityControllers.Walker,
-            WalkSpeed = 1.4f,
-            Range = 4.5f,
-            Cooldown = 1
-        },
-        Behaviors = new()
-        {
-            Damage = new() { Health = 7 },
-            Strikes = new(StringComparer.Ordinal) { [EntityControllers.Attack] = new() { Damage = 2 } },
-        },
-        Movement = EntityAuthoring.FitMovement(model),
-        Colliders = [.. StarterContent.PersonHurt(model)],
         Equipment =
         [
             new()
@@ -285,7 +273,20 @@ internal static partial class PlayerMoves
                 Socket = Humanoid.GunSocket
             }
         ],
-        Actions =
+        Geometry = [EntityAuthoring.FitMovement(model), .. StarterContent.PersonHurt(model)],
+        Behavior = new()
+        {
+            Damage = new() { Health = 7 },
+            Strikes = new(StringComparer.Ordinal) { [EntityControllers.Attack] = new() { Damage = 2 } },
+            MotionSet = "standard",
+            Controller = new()
+            {
+                Kind = EntityControllers.Walker,
+                WalkSpeed = 1.4f,
+                Range = 4.5f,
+                Cooldown = 1
+            },
+            Actions =
         [
             new()
             {
@@ -307,7 +308,10 @@ internal static partial class PlayerMoves
                     Lifetime = 3
                 },
             },
-        ],
+        ]
+        ,
+            Colliders = new() { ["body"] = ColliderUses.Hurt, ["head"] = ColliderUses.Hurt, ["legs"] = ColliderUses.Hurt }
+        },
     };
 
     /// <summary>
@@ -370,44 +374,12 @@ internal static partial class PlayerMoves
     /// pressed, each with its put-away), each swing's strike → recover window and hit rectangle, and the muzzle at each
     /// shot's fire marker. Health and the movement box are the player's too.
     /// </summary>
-    public static EntityAsset Hero(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips) => new()
+    public static Part Hero(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips) => new()
     {
+        Usage = "character",
         Id = "hero",
         Name = "Hero",
         Model = PersonTemplate.Id,
-        MotionSet = "standard",
-        Roles = new()
-        {
-            ["idle"] = "player-idle",
-            ["jump"] = "player-jump",
-            ["fall"] = "player-fall",
-            ["hit"] = "player-hit",
-            ["death"] = "player-death"
-        },
-        Controller = new()
-        {
-            Kind = EntityControllers.Traversal,
-            WalkSpeed = 1.8f,
-            RunSpeed = 4.2f,
-            Range = 1.2f,
-            Cooldown = 0
-        },
-        Behaviors = new()
-        {
-            Damage = new() { Health = 30 },
-            Strikes = new(StringComparer.Ordinal)
-            {
-                ["blade"] = new() { Damage = 2, Impact = ImpactKinds.Sword },
-                [EntityControllers.Shoot] = new() { Damage = 2 },
-                [EntityControllers.WallShot] = new() { Damage = 2 },
-            },
-        },
-        Movement = new()
-        {
-            Shape = MovementDef.Box(.55f, 1.705f)
-        },
-        // Each swing's blade box is its own attack collider, fixed to the player; the hurt boxes are the Person's.
-        Colliders = [.. new[] { (EntityControllers.Attack, "player-sword-side-cut"), (EntityControllers.FollowUp, "player-sword-backhand"), (Forehand, "player-sword-forehand") }.Select(s => BladeCollider(model, clips, s.Item1, s.Item2)), .. StarterContent.PersonHurt(model)],
         Equipment =
         [
             new()
@@ -421,14 +393,46 @@ internal static partial class PlayerMoves
                 Socket = Humanoid.GunSocket
             }
         ],
-        Actions =
+        Geometry = [new() { Id = ColliderUses.Movement, Collision = new(), A = PartLocation.Origin,
+            Geometry = EntityAuthoring.MovementBox(.55f, 1.705f)
+         }, .. new[] { (EntityControllers.Attack, "player-sword-side-cut"), (EntityControllers.FollowUp, "player-sword-backhand"), (Forehand, "player-sword-forehand") }.Select(s => BladeCollider(model, clips, s.Item1, s.Item2)), .. StarterContent.PersonHurt(model)],
+        Behavior = new()
+        {
+            Damage = new() { Health = 30 },
+            Strikes = new(StringComparer.Ordinal)
+            {
+                ["blade"] = new() { Damage = 2, Impact = ImpactKinds.Sword },
+                [EntityControllers.Shoot] = new() { Damage = 2 },
+                [EntityControllers.WallShot] = new() { Damage = 2 },
+            },
+            MotionSet = "standard",
+            Roles = new()
+            {
+                ["idle"] = "player-idle",
+                ["jump"] = "player-jump",
+                ["fall"] = "player-fall",
+                ["hit"] = "player-hit",
+                ["death"] = "player-death"
+            },
+            Controller = new()
+            {
+                Kind = EntityControllers.Traversal,
+                WalkSpeed = 1.8f,
+                RunSpeed = 4.2f,
+                Range = 1.2f,
+                Cooldown = 0
+            },
+            Actions =
         [
             Swing(model, clips, EntityControllers.Attack, SwingLab.SideCutClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
             Swing(model, clips, EntityControllers.FollowUp, SwingLab.BackhandClip, Forehand, SwingLab.PutAwayBackhandClip),
             Swing(model, clips, Forehand, SwingLab.ForehandClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
             new() { Id = EntityControllers.Shoot, Clip = "player-gun-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }], Projectile = PlayerBolt },
             new() { Id = EntityControllers.WallShot, Clip = "player-gun-wall-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }], Projectile = PlayerBolt },
-        ],
+        ]
+        ,
+            Colliders = new() { ["attack-blade"] = ColliderUses.Attack, ["follow-up-blade"] = ColliderUses.Attack, ["forehand-blade"] = ColliderUses.Attack, ["body"] = ColliderUses.Hurt, ["head"] = ColliderUses.Hurt, ["legs"] = ColliderUses.Hurt }
+        },
     };
 
     /// <summary>The combo's forehand: the backhand's next swing, chaining back to the backhand.</summary>
@@ -449,7 +453,7 @@ internal static partial class PlayerMoves
     };
 
     /// <summary>A swing's attack collider: the rectangle, fixed to the player, that bounds what the blade sweeps in front of the body between the strike and the recovery.</summary>
-    private static ColliderDef BladeCollider(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips, string action, string clip)
+    private static PartGeometry BladeCollider(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips, string action, string clip)
     {
         var swing = clips[clip];
         float At(string marker) => swing.Markers.Single(m => m.Id == marker).Time;
@@ -458,7 +462,7 @@ internal static partial class PlayerMoves
         var (min, max) = SwingLab.HitRectangle(model, swing, At(PersonLoadout.SwooshMarker), At("strike"), At("recover"), t => SwingLab.Blade(model, swing, t, sword, socket))
             ?? throw new InvalidOperationException($"'{clip}': the blade never gets in front of the player.");
         static float R(float v) => MathF.Round(v, 3);
-        return new() { Id = action + "-blade", Use = ColliderUses.Attack, OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Shape = Rectangle2D.Builder.FromSize(R(max.X - min.X), R(max.Y - min.Y)) };
+        return new() { Id = action + "-blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Geometry = Rectangle2D.Builder.FromSize(R(max.X - min.X), R(max.Y - min.Y)), Collision = new() { } };
     }
 
     private static MoveBuilder New(ResolvedModel m, string id, string name, float duration, bool loop) => new(m, id, name, duration, loop);

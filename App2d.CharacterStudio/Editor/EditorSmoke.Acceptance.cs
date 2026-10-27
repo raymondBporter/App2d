@@ -273,14 +273,14 @@ internal sealed partial class EditorSmoke
             Check(s.SetEntityRole("attack", thrust.Id), s);
             var entity = s.EntityDocument!;
             Check(s.Edit(entity, () => entity.Asset.Equipment.Add(new() { Prop = "spear", Socket = Humanoid.RightGripSocket })), s);
-            Check(s.AddCollider(new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = "spear", Point = EquipmentPoints.Tip, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) }), s);
+            Check(s.AddCollider(new() { Id = "spear-tip", Prop = "spear", Point = EquipmentPoints.Tip, Along = -.14f, Geometry = Rectangle2D.Builder.FromSize(.42f, .26f) }, ColliderUses.Attack), s);
             Check(s.Edit(entity, () =>
             {
-                var attack = entity.Asset.Actions.Single(a => a.Id == "attack");
+                var attack = entity.Asset.Behavior!.Actions.Single(a => a.Id == "attack");
                 attack.Hits.Add(new() { Id = "spear-tip", Collider = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
                 attack.Events.Add(new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" });
-                entity.Asset.Behaviors.Strikes["spear-tip"] = new() { Damage = 2, Sound = "hit" };
-                entity.Asset.Behaviors.Damage.Health = 6;
+                entity.Asset.Behavior!.Strikes["spear-tip"] = new() { Damage = 2, Sound = "hit" };
+                entity.Asset.Behavior!.Damage.Health = 6;
             }), s);
             var resolved = s.Entity!;
             var window = resolved.Actions["attack"].Hits[0];
@@ -441,15 +441,15 @@ internal sealed partial class EditorSmoke
             var rush = s.Assets.Clips.Single(c => c.Asset.Model == "hound" && c.Id.EndsWith("-rush", StringComparison.Ordinal)).Id;
             Check(s.NewEntity("hound-guard", "Hound guard", "hound-tall", EntityAuthoring.Guard), s);
             Check(s.SetEntityRole("attack", rush), s);
-            Check(s.AddCollider(new() { Id = "bite", Use = ColliderUses.Attack, Control = "head", Frame = "head", OffsetX = .25f, Shape = Circle2D.Builder.Create(.22f) }), s);
+            Check(s.AddCollider(new() { Id = "bite", A = "head", Frame = "head", OffsetX = .25f, Geometry = Circle2D.Builder.Create(.22f) }, ColliderUses.Attack), s);
             var entity = s.EntityDocument!;
             // The guard template's range (1.6) suits a spear; the hound attacks from where its bite actually sits ahead of its feet.
             var biteAhead = s.Entity!.Collider("bite")!.Region(new ActorPose(PoseEvaluator.Rest(s.Entity.Model), Vector2.Zero, 1)).Bounds.Max.X;
             Check(s.Edit(entity, () =>
             {
-                entity.Asset.Controller.Range = MathF.Round(biteAhead, 2);
-                entity.Asset.Actions.Single(a => a.Id == "attack").Hits.Add(new() { Id = "bite", Collider = "bite", Start = new() { At = .1f }, Finish = new() { At = .7f } });
-                entity.Asset.Behaviors.Strikes["bite"] = new() { Damage = 1, Sound = "hit" };
+                entity.Asset.Behavior!.Controller.Range = MathF.Round(biteAhead, 2);
+                entity.Asset.Behavior!.Actions.Single(a => a.Id == "attack").Hits.Add(new() { Id = "bite", Collider = "bite", Start = new() { At = .1f }, Finish = new() { At = .7f } });
+                entity.Asset.Behavior!.Strikes["bite"] = new() { Damage = 1, Sound = "hit" };
             }), s);
             Record(s.Entity is not null && s.Entity.Actions["attack"].Hits[0].Collider.Id == "bite" && s.Assets.Problems(entity).Count == 0, "a hound entity on the variant declares a bite sensor on its head and compiles: " + (s.EntityError ?? "ok"));
             shell.Test.Stop();
@@ -493,23 +493,23 @@ internal sealed partial class EditorSmoke
             // The template copies the flight library including the swoop with its flight-phase markers; the attack action carries the
             // flight phases the flying controller needs, as the shipped flier's does.
             var swoop = s.Assets.Clip("flier-swoop")!.Asset;
-            var shippedAttack = s.Assets.Entity("flying-pterosaur")!.Asset.Actions.Single(a => a.Id == "attack");
+            var shippedAttack = s.Assets.Entity("flying-pterosaur")!.Asset.Behavior!.Actions.Single(a => a.Id == "attack");
             Check(s.NewEntity("flier-pest", "Flier pest", "flier-wide", EntityAuthoring.Stationary), s);
             var entity = s.EntityDocument!;
-            Check(s.AddCollider(new() { Id = "beak", Use = ColliderUses.Attack, Control = "jaw", Frame = "jaw", OffsetX = .2f, Shape = Circle2D.Builder.Create(.18f) }), s);
+            Check(s.AddCollider(new() { Id = "beak", A = "jaw", Frame = "jaw", OffsetX = .2f, Geometry = Circle2D.Builder.Create(.18f) }, ColliderUses.Attack), s);
             Check(s.Edit(entity, () =>
             {
-                entity.Asset.Controller.Kind = EntityControllers.Flying;
-                entity.Asset.Controller.Flight = new();
-                entity.Asset.Controller.Range = 3.2f;
-                entity.Asset.Actions.Add(new()
+                entity.Asset.Behavior!.Controller.Kind = EntityControllers.Flying;
+                entity.Asset.Behavior!.Controller.Flight = new();
+                entity.Asset.Behavior!.Controller.Range = 3.2f;
+                entity.Asset.Behavior!.Actions.Add(new()
                 {
                     Id = "attack",
                     Clip = swoop.Id,
                     Hits = [new() { Id = "beak", Collider = "beak", Start = new() { Marker = "rush" }, Finish = new() { Marker = "brake" } }],
                     Events = [.. shippedAttack.Events.Select(e => new ActionEvent { Id = e.Id, At = new() { Marker = e.At.Marker, At = e.At.At }, Sound = e.Sound })],
                 });
-                entity.Asset.Behaviors.Strikes["beak"] = new() { Damage = 2, Sound = "hit" };
+                entity.Asset.Behavior!.Strikes["beak"] = new() { Damage = 2, Sound = "hit" };
             }), s);
             Record(s.Entity is { } resolved && resolved.Controller.Id == EntityControllers.Flying && resolved.Actions["attack"].Hits[0].Collider.Id == "beak" && s.Assets.Problems(entity).Count == 0,
                 "a flying entity on the variant declares a beak sensor over its swoop with the flight phases and compiles: " + (s.EntityError ?? "ok"));

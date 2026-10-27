@@ -23,25 +23,34 @@ public static class PartAttachment2D
     public static LayeredFrame2D Carrier(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null)
     {
         var origin = world(part.A);
-        if (part.Frame is { } frame)
+        var direction = part.B is { } end ? (world(end) - origin).XY : Vector2.Zero;
+        if (part.Frame is { } frame && (part.B is null || direction.LengthSquared() <= 1e-10f))
         {
             return bone is null
                 ? throw new InvalidOperationException("A bone-attached part needs bone placements.")
                 : bone(frame).WithOrigin(origin);
         }
 
-        var b = part.B is { } end ? world(end) : origin + Vector3.UnitY;
-        var direction = (b - origin).XY;
+        if (part.B is null) direction = Vector2.UnitY;
         var up = part.Geometry is ICurve2D ? direction
             : direction.LengthSquared() > 1e-10f ? Vector2.Normalize(direction) : Vector2.UnitY;
         return LayeredFrame2D.FromYAxis(origin, up);
     }
 
     /// <summary>Where a part's geometry lands: its attachment on its carrier.</summary>
-    public static LayeredFrame2D FrameOf(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null) =>
-        Attachment(part).Then(Carrier(part, world, bone));
+    public static LayeredFrame2D FrameOf(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null)
+    {
+        var stretch = 1f;
+        if (part.Stretch && part.B is { } toward && rest is not null)
+        {
+            var span = Vector2.Distance(rest(part.A).XY, rest(toward).XY);
+            if (span > 1e-6f) stretch = Vector2.Distance(world(part.A).XY, world(toward).XY) / span;
+        }
+        return LayeredFrame2D.Local(new(part.ScaleX * stretch, part.ScaleY * stretch), part.Angle,
+            new(part.OffsetX + part.Along, part.OffsetY), part.Depth).Then(Carrier(part, world, bone));
+    }
 
-    public static LayeredFrame2D FrameOf(PartGeometry part, ResolvedModel model, EvaluatedPose pose) => FrameOf(part, pose.World, pose.Placement);
+    public static LayeredFrame2D FrameOf(PartGeometry part, ResolvedModel model, EvaluatedPose pose) => FrameOf(part, pose.World, pose.Placement, id => model.Rest[id]);
 
     internal static LayeredFrame2D BindingFrame(PartPointBinding binding, Func<string, Vector3> world)
     {

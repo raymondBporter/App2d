@@ -158,6 +158,11 @@ public sealed record Part
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
+    /// <summary>Optional reference to the existing model/variant rig envelope.</summary>
+    public string? Model { get; set; }
+    public List<EquipmentBinding> Equipment { get; set; } = [];
+    /// <summary>Opt-in gameplay configuration; generic geometry and animation do not read it.</summary>
+    public Behavior? Behavior { get; set; }
     /// <summary>A library category such as glove, shoe, hair or shirt: browser grouping, not engine behavior.</summary>
     public string Usage { get; set; } = "part";
     /// <summary>Optional editor attachment suggestion and alternate artwork selected by gameplay.</summary>
@@ -348,6 +353,17 @@ public sealed record Part
             Require(material is not null, $"{owner}: null material '{id}'.");
             material.Resolve(Materials);
         }
+        Require(Equipment is not null, owner + ": equipment cannot be null.");
+        var equipmentIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var binding in Equipment)
+        {
+            Require(binding is not null, owner + ": null equipment.");
+            AuthoredAsset.RequireId(binding.Prop, owner + " equipment part");
+            AuthoredAsset.RequireId(binding.Socket, owner + " equipment socket");
+            Require(equipmentIds.Add(binding.Prop), $"{owner}: part '{binding.Prop}' is equipped twice.");
+        }
+        if (Model is not null) AuthoredAsset.RequireId(Model, owner + " model");
+        Behavior?.Validate(this);
         var locations = new HashSet<string>(StringComparer.Ordinal) { PartLocation.Origin };
         foreach (var location in Locations)
         {
@@ -364,7 +380,7 @@ public sealed record Part
             AuthoredAsset.RequireId(BackView, owner + " backView");
             Require(BackView != Id, owner + ": back view cannot reference itself.");
         }
-        Require(Geometry.Count > 0 || Collision is not null, $"{owner}: a part needs at least one shape, curve, image or solid.");
+        Require(Geometry.Count > 0 || Collision is not null || Model is not null, $"{owner}: a part needs at least one shape, curve, image or solid.");
         Require(Geometry.Count <= 384, $"{owner}: capacity exceeded.");
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var part in Geometry)
@@ -376,7 +392,7 @@ public sealed record Part
             {
                 try
                 {
-                    part.Validate(locations.Contains);
+                    part.Validate(id => locations.Contains(id) || Model is not null);
                 }
                 catch (InvalidDataException ex)
                 {

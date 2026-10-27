@@ -1,5 +1,6 @@
 using App2d.CharacterSeeds.Diagnostics;
 using App2d.Core.Characters;
+using App2d.Tests.Authored;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Geometry.Curves;
@@ -119,9 +120,9 @@ public sealed class CleanAuthoringTests : IDisposable
         var entity = s.EntityDocument!;
         Assert.True(s.Edit(entity, () =>
         {
-            entity.Asset.Controller.Range = .5f;
-            entity.Asset.Colliders.Add(new() { Id = "bite", Use = ColliderUses.Attack, Socket = "mouth", Shape = Rectangle2D.Builder.FromSize(.4f, .3f) });
-            entity.Asset.Actions.Single().Hits.Add(new()
+            entity.Asset.Behavior!.Controller.Range = .5f;
+            entity.Asset.AddCollider(new() { Id = "bite", Socket = "mouth", Geometry = Rectangle2D.Builder.FromSize(.4f, .3f) }, ColliderUses.Attack);
+            entity.Asset.Behavior!.Actions.Single().Hits.Add(new()
             {
                 Id = "bite",
                 Collider = "bite",

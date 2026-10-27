@@ -39,7 +39,7 @@ public sealed class AuthoringWorkspace
     public IEnumerable<AssetDocument<CharacterModel>> Models => _documents.Values.OfType<AssetDocument<CharacterModel>>();
     public IEnumerable<AssetDocument<ModelVariant>> Variants => _documents.Values.OfType<AssetDocument<ModelVariant>>();
     public IEnumerable<AssetDocument<MotionClip>> Clips => _documents.Values.OfType<AssetDocument<MotionClip>>();
-    public IEnumerable<AssetDocument<EntityAsset>> Entities => _documents.Values.OfType<AssetDocument<EntityAsset>>();
+    public IEnumerable<AssetDocument<Part>> Entities => Parts.Where(p => p.Asset.Behavior is not null);
     /// <summary>Library part assets (P5a): shared by every wearer that instances them.</summary>
     public IEnumerable<AssetDocument<Part>> Parts => _documents.Values.OfType<AssetDocument<Part>>();
     /// <summary>Changes whenever any part document changes, is added or discarded: the transitive dependency every wearer's resolution carries.</summary>
@@ -61,7 +61,7 @@ public sealed class AuthoringWorkspace
         var templates = ModelTemplateCatalog.Load(root);
         workspace.ModelTemplates = templates.Entries;
         // Only unreadable files are load errors; reference problems stay visible on their documents.
-        var loaded = catalog.Parts.Keys.Concat(catalog.Models.Keys).Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Concat(catalog.EntityAssets.Keys).Select(catalog.PathOf).ToList();
+        var loaded = catalog.Parts.Keys.Concat(catalog.Models.Keys).Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Select(catalog.PathOf).ToList();
         workspace.LoadErrors = [.. catalog.Errors.Where(e => !loaded.Any(path => e.StartsWith(path + ":", StringComparison.Ordinal))), .. templates.Errors];
         foreach (var part in catalog.Parts.Values)
         {
@@ -84,10 +84,6 @@ public sealed class AuthoringWorkspace
         }
 
 
-        foreach (var entity in catalog.EntityAssets.Values)
-        {
-            workspace.Add(AssetDocuments.Of(entity, catalog.PathOf(entity.Id)));
-        }
 
         return workspace;
     }
@@ -96,7 +92,7 @@ public sealed class AuthoringWorkspace
     public AssetDocument<CharacterModel>? Model(string? id) => Find(id) as AssetDocument<CharacterModel>;
     public AssetDocument<ModelVariant>? Variant(string? id) => Find(id) as AssetDocument<ModelVariant>;
     public AssetDocument<MotionClip>? Clip(string? id) => Find(id) as AssetDocument<MotionClip>;
-    public AssetDocument<EntityAsset>? Entity(string? id) => Find(id) as AssetDocument<EntityAsset>;
+    public AssetDocument<Part>? Entity(string? id) => Part(id) is { Asset.Behavior: not null } part ? part : null;
     public AssetDocument<Part>? Part(string? id) => Find(id) as AssetDocument<Part>;
     /// <summary>Whether an ID is taken: by a document, or by a file of that name that did not load and must not be overwritten.</summary>
     public bool Exists(string id) => _documents.ContainsKey(id) || FileIds().Contains(id);
@@ -132,7 +128,6 @@ public sealed class AuthoringWorkspace
             CharacterModel model => AssetDocuments.Of(model, null),
             ModelVariant variant => AssetDocuments.Of(variant, null),
             MotionClip clip => AssetDocuments.Of(clip, null),
-            EntityAsset entity => AssetDocuments.Of(entity, null),
             Part part => AssetDocuments.Of(part, null),
             _ => throw ArgGuard.CreateInvalid($"Not an authored asset: {typeof(T).Name}."),
         };
@@ -168,7 +163,7 @@ public sealed class AuthoringWorkspace
     }
 
     /// <summary>The base model a model or variant ID stands on.</summary>
-    public string? BaseOf(string id) => Find(id) switch { AssetDocument<CharacterModel> m => m.Id, AssetDocument<ModelVariant> v => v.Asset.Base, AssetDocument<MotionClip> c => c.Asset.Model, _ => null };
+    public string? BaseOf(string? id) => Find(id) switch { AssetDocument<CharacterModel> m => m.Id, AssetDocument<ModelVariant> v => v.Asset.Base, AssetDocument<MotionClip> c => c.Asset.Model, _ => null };
 
     /// <summary>Resolves a model or variant from current drafts. Null with an error message when it cannot resolve.</summary>
     public ResolvedModel? Resolve(string? id, out string? error)
@@ -317,7 +312,7 @@ public sealed class AuthoringWorkspace
         var entities = new List<ResolvedEntity>();
         foreach (var document in Entities.OrderBy(e => e.Id, StringComparer.Ordinal))
         {
-            var asset = Copy(document, EntityAsset.FromJson);
+            var asset = Copy(document, Authored.Part.FromJson);
             if (asset is null)
             {
                 continue;
@@ -336,7 +331,7 @@ public sealed class AuthoringWorkspace
     }
 
     /// <summary>Clips that name this subject's base model, playable or not; compatibility is checked separately, never inferred from names.</summary>
-    public IEnumerable<AssetDocument<MotionClip>> ClipsFor(string subjectId)
+    public IEnumerable<AssetDocument<MotionClip>> ClipsFor(string? subjectId)
     {
         var basis = BaseOf(subjectId);
         return Clips.Where(c => c.Asset.Model == basis);
@@ -353,9 +348,6 @@ public sealed class AuthoringWorkspace
         var uses = new List<AssetReference>();
         switch (Find(id))
         {
-            case AssetDocument<Part> prop when prop.Asset.BackView is { } back:
-                uses.Add(new(back, "back view"));
-                break;
             case AssetDocument<ModelVariant> variant:
                 uses.Add(new(variant.Asset.Base, "base"));
                 foreach (var change in variant.Asset.Overrides.Where(o => o.Selection is not null).OrderBy(o => o.Key, StringComparer.Ordinal))
@@ -389,20 +381,22 @@ public sealed class AuthoringWorkspace
                 }
 
                 break;
-            case AssetDocument<EntityAsset> entity:
+            case AssetDocument<Part> entity:
                 var asset = entity.Asset;
-                uses.Add(new(asset.Model, "model"));
-                foreach (var (role, clip) in asset.Roles.OrderBy(r => r.Key, StringComparer.Ordinal))
+                if (asset.BackView is { } back) uses.Add(new(back, "back view"));
+                if (asset.Model is { } rig) uses.Add(new(rig, "model"));
+                foreach (var (role, clip) in (asset.Behavior?.Roles ?? []).OrderBy(r => r.Key, StringComparer.Ordinal))
                 {
                     uses.Add(new(clip, $"role {role} (override)"));
                 }
 
-                foreach (var action in asset.Actions)
+                foreach (var action in asset.Behavior?.Actions ?? [])
                 {
                     if (action.Clip is not null)
                     {
                         uses.Add(new(action.Clip, $"action {action.Id}"));
                     }
+                    if (action.Recovery is { } recovery) uses.Add(new(recovery, $"action {action.Id} recovery"));
                 }
 
                 foreach (var binding in asset.Equipment)
@@ -429,7 +423,7 @@ public sealed class AuthoringWorkspace
     }
 
     /// <summary>Entities standing on a base model, directly or through one of its variants.</summary>
-    public IReadOnlyList<AssetDocument<EntityAsset>> EntitiesOn(string modelId) => [.. Entities.Where(e => BaseOf(e.Asset.Model) == modelId)];
+    public IReadOnlyList<AssetDocument<Part>> EntitiesOn(string modelId) => [.. Entities.Where(e => BaseOf(e.Asset.Model) == modelId)];
 
     /// <summary>Variants and clips that depend on a base model.</summary>
     public (IReadOnlyList<AssetDocument<ModelVariant>> Variants, IReadOnlyList<AssetDocument<MotionClip>> Clips) Dependents(string modelId) =>
@@ -530,7 +524,7 @@ public sealed class AuthoringWorkspace
                 }
 
                 break;
-            case AssetDocument<Part> prop:
+            case AssetDocument<Part> prop when prop.Asset.Behavior is null:
                 Try(prop.Asset.Validate);
                 if (prop.Asset.BackView is { } back && Part(back) is null)
                 {
@@ -538,7 +532,7 @@ public sealed class AuthoringWorkspace
                 }
 
                 break;
-            case AssetDocument<EntityAsset> entity:
+            case AssetDocument<Part> entity when entity.Asset.Behavior is not null:
                 if (CompileEntity(entity.Id, out var compile) is null)
                 {
                     problems.Add(compile!);
@@ -588,7 +582,7 @@ public sealed class AuthoringWorkspace
             case AssetDocument<MotionClip> clip:
                 clip.Asset.Validate();
                 break;
-            case AssetDocument<EntityAsset> entity:
+            case AssetDocument<Part> entity when entity.Asset.Behavior is not null:
                 entity.Asset.Validate();
                 break;
             case AssetDocument<Part> part:

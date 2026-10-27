@@ -309,7 +309,7 @@ public sealed class AuthoredArena
         }
 
         var dx = Player.Position.X - actor.Position.X;
-        var config = actor.Entity.Asset.Controller;
+        var config = actor.Entity.Asset.Behavior!.Controller;
         var direction = MathF.Sign(dx);
         if (MathF.Abs(dx) <= config.Range)
         {
@@ -322,7 +322,7 @@ public sealed class AuthoredArena
     private void Control(Actor actor, ArenaInput input)
     {
         var animator = actor.Animator;
-        var config = actor.Entity.Asset.Controller;
+        var config = actor.Entity.Asset.Behavior!.Controller;
         var spec = actor.Entity.Controller;
         actor.Cooldown = MathF.Max(0, actor.Cooldown - StepSeconds);
         actor.HurtTime = MathF.Max(0, actor.HurtTime - StepSeconds);
@@ -336,7 +336,7 @@ public sealed class AuthoredArena
         }
         if (actor.Reaction.Tick(StepSeconds))
         {
-            actor.Cooldown = MathF.Max(actor.Cooldown, actor.Entity.Asset.Controller.Cooldown);
+            actor.Cooldown = MathF.Max(actor.Cooldown, actor.Entity.Asset.Behavior!.Controller.Cooldown);
         }
         // Staggered: the controller neither steers nor starts actions.
         if (actor.Reaction.Staggered)
