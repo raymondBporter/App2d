@@ -16,17 +16,17 @@ public sealed class PersonWardrobeTests
     {
         // A square with the upper-right quarter removed. Fan triangulation would fill the notch.
         PuppetPoint[] outline = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)];
-        var solid = PropGeometry.Extrude(reverse ? outline.Reverse() : outline, .02f, "#aaaaaa");
+        var solid = PartGeometryBuilder.Extrude(reverse ? outline.Reverse() : outline, .02f, "#aaaaaa");
         var area = 0f;
         var edges = new Dictionary<(int, int), int>();
-        for (var i = 0; i < solid.Triangles.Count; i += 3)
+        for (var i = 0; i < solid.Mesh!.Triangles.Count; i += 3)
         {
-            var a = solid.Triangles[i];
-            var b = solid.Triangles[i + 1];
-            var c = solid.Triangles[i + 2];
-            var pa = solid.Vertices[a].XYZ;
-            var pb = solid.Vertices[b].XYZ;
-            var pc = solid.Vertices[c].XYZ;
+            var a = solid.Mesh!.Triangles[i];
+            var b = solid.Mesh!.Triangles[i + 1];
+            var c = solid.Mesh!.Triangles[i + 2];
+            var pa = solid.Mesh!.Vertices[a].XYZ;
+            var pb = solid.Mesh!.Vertices[b].XYZ;
+            var pc = solid.Mesh!.Vertices[c].XYZ;
             if (pa.Z < 0 && pb.Z < 0 && pc.Z < 0)
             {
                 var cross = Vector3.Cross(pb - pa, pc - pa);
@@ -165,20 +165,20 @@ public sealed class PersonWardrobeTests
             Assert.Null(entity.Model.Parts.Single(p => p.Id == "head").RenderMaterial.Outline?.Width);
             Assert.All(entity.Equipment.Where(e => e.Prop.Usage != "prop"), e => Assert.Equal(entity.Model.Base.LineWidth, e.Prop.LineWidth));
             var wrap = entity.Equipment.Single(e => e.Prop.Id.EndsWith("-hide-wrap", StringComparison.Ordinal));
-            var shell = wrap.Prop.Solids[0];
+            var shell = wrap.Prop.Geometry[0].Mesh!;
             var layers = PersonWardrobeDepths.From(entity.Model);
             Assert.True(layers.NearArm < layers.FrontDetail - .0005f); // include the ink bias
             Assert.True(layers.FrontDetail + layers.DetailThickness < layers.WrapFront);
             Assert.True(layers.WrapFront < layers.NearLeg);
             Assert.True(layers.NearLeg < layers.FarLeg);
             Assert.True(layers.FarLeg < layers.WrapBack && layers.WrapBack < layers.FarArm);
-            Assert.All(wrap.Prop.Solids.SelectMany(s => s.Vertices), p => Assert.True(p.Z - .0005f > layers.NearArm));
+            Assert.All(wrap.Prop.Geometry.SelectMany(s => s.Mesh!.Vertices), p => Assert.True(p.Z - .0005f > layers.NearArm));
             foreach (var clip in entity.Roles.Values.Select(r => r.Clip).Concat(entity.Actions.Values.Select(a => a.Clip)))
             {
                 for (var i = 0; i <= 12; i++)
                 {
                     var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, clip.Duration * i / 12), Vector2.Zero, 1);
-                    var vertices = shell.Vertices.Select(p => PropPlacement3D.PropPoint(pose.Socket(wrap.Socket), wrap.Prop, p)).ToArray();
+                    var vertices = shell.Vertices.Select(p => PartPlacement3D.Point(pose.Socket(wrap.Socket), wrap.Prop, p)).ToArray();
                     foreach (var side in new[] { "left", "right" })
                     {
                         var z = pose.World(side + "-hip").Z;

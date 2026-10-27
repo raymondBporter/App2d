@@ -79,7 +79,7 @@ public sealed class PlacementRoutingTests
                 var lifted = pose.Socket(socket);
                 TestModels.Near(planar.Origin, lifted.Origin, 1e-6f, socket.Id);
                 Assert.Equal(pose.Local.Points[socket.Control].Z + socket.OffsetZ, planar.Layer, 6);
-                Assert.Equal(PropPlacement3D.Lift(planar, pose.Local.SocketAngles.GetValueOrDefault(socket.Id)), lifted);
+                Assert.Equal(PartPlacement3D.Lift(planar, pose.Local.SocketAngles.GetValueOrDefault(socket.Id)), lifted);
                 Assert.Equal(facing < 0, planar.Frame.Matrix.GetDeterminant() < 0);
                 if (pose.Local.SocketAngles.GetValueOrDefault(socket.Id) == Vector3.Zero)
                 {

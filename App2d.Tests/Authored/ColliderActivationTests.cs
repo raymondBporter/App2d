@@ -15,7 +15,7 @@ public sealed class ColliderActivationTests
     private const float Dt = AuthoredArena.StepSeconds;
 
     private static ResolvedEntity Compile(EntityAsset asset) =>
-        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
+        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
     /// <summary>The spear guard whose thrust is active over a normalized interval of the 0.9 s clip, instead of the strike..recover markers.</summary>
     private static EntityAsset GuardWithWindow(float startSeconds, float finishSeconds, string? id = null)

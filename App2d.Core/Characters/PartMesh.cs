@@ -1,11 +1,13 @@
 using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Shapes;
+using System.Runtime.InteropServices;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Characters;
 
 /// <summary>Local mesh geometry. Vertex Z and extrusion thickness are physical distances, never drawing layers.</summary>
-public record PartMesh
+public sealed record PartMesh
 {
     public List<PuppetPoint> Vertices { get; set; } = [];
     public List<int> Triangles { get; set; } = [];
@@ -29,9 +31,13 @@ public record PartMesh
         Rebuild();
         if (Vertices is not { Count: >= 3 } || Triangles is not { Count: >= 3 } || Triangles.Count % 3 != 0)
             throw new InvalidDataException("A mesh needs indexed triangles.");
+        if (Vertices.Count > 32768 || Triangles.Count > 196608) throw new InvalidDataException("Mesh is too large.");
         foreach (var point in Vertices) point.Check("mesh.vertex");
         if (Triangles.Any(i => i < 0 || i >= Vertices.Count))
             throw new InvalidDataException("Mesh triangle index outside vertices.");
+        foreach (var (a, b, c) in MeshTopology.Triangles(CollectionsMarshal.AsSpan(Triangles)))
+            if (new Triangle3D(Vertices[a].XYZ, Vertices[b].XYZ, Vertices[c].XYZ).DoubleArea <= 1e-8d)
+                throw new InvalidDataException("Mesh has a degenerate triangle.");
     }
     /// <summary>Extrudes an XY outline around its physical Z; the resulting geometry owns no material.</summary>
     public static PartMesh Extrude(IEnumerable<PuppetPoint> outline, float thickness)

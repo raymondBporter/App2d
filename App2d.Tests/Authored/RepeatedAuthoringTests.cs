@@ -27,7 +27,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
     private static void Ok(EditorSession session, bool result) => Assert.True(result, session.Message);
 
     private static ResolvedEntity Compile(AuthoredCatalog catalog, EntityAsset asset) =>
-        ResolvedEntity.Compile(asset, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
+        ResolvedEntity.Compile(asset, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Parts.GetValueOrDefault);
 
     /// <summary>The spear guard thrusting from the upper body over its walk.</summary>
     private static EntityAsset SkirmishingGuard()

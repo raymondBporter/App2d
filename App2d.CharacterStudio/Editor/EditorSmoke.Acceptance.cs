@@ -108,7 +108,7 @@ internal sealed partial class EditorSmoke
         ("04-shin-guard-no-shear", shell =>
         {
             var s = shell.Session;
-            Check(s.NewPart("shin-guard", "Shin guard", "boot-left"), s);
+            Check(s.DuplicatePart("boot-left", "shin-guard", "Shin guard"), s);
             s.Open(Walker);
             Check(s.AttachPart("shin-guard", "left-shin"), s);
             var basis = s.Assets.Model(Walker)!;
@@ -139,9 +139,9 @@ internal sealed partial class EditorSmoke
         {
             var s = shell.Session;
             Check(s.NewPart("glove", "Glove"), s);
-            Check(s.NewPart("hair", "Hair", "hair-short"), s);
-            Check(s.NewPart("beard", "Beard", "brute-beard"), s);
-            Check(s.NewPart("shirt", "Shirt", "cinder-hide-wrap"), s);
+            Check(s.DuplicatePart("hair-short", "hair", "Hair"), s);
+            Check(s.DuplicatePart("brute-beard", "beard", "Beard"), s);
+            Check(s.DuplicatePart("cinder-hide-wrap", "shirt", "Shirt"), s);
             s.Open(Walker);
             Check(s.AttachPart("glove", Humanoid.LeftHandSocket), s);
             Check(s.AttachPart("glove", Humanoid.RightHandSocket, mirror: true), s);
@@ -273,7 +273,7 @@ internal sealed partial class EditorSmoke
             Check(s.SetEntityRole("attack", thrust.Id), s);
             var entity = s.EntityDocument!;
             Check(s.Edit(entity, () => entity.Asset.Equipment.Add(new() { Prop = "spear", Socket = Humanoid.RightGripSocket })), s);
-            Check(s.AddCollider(new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = "spear", Point = PropAsset.TipPoint, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) }), s);
+            Check(s.AddCollider(new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = "spear", Point = EquipmentPoints.Tip, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) }), s);
             Check(s.Edit(entity, () =>
             {
                 var attack = entity.Asset.Actions.Single(a => a.Id == "attack");

@@ -33,6 +33,7 @@ public static class FormatConversion
     {
         var files = new List<FileResult>();
         var differences = new List<string>();
+        var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var sourceRests = new Dictionary<string, IReadOnlyDictionary<string, System.Numerics.Vector3>>(StringComparer.Ordinal);
         if (Path.GetFullPath(output).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Equals(Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
         {
@@ -46,13 +47,13 @@ public static class FormatConversion
             var relative = Path.GetRelativePath(root, path);
             var folder = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0];
             var target = Path.Combine(output, relative);
-            if (folder is not ("models" or "parts" or "entities") && !File.Exists(target))
+            if (folder is not ("models" or "parts" or "entities" or "props") && !File.Exists(target))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 File.Copy(path, target);
             }
         }
-        foreach (var (folder, kind, previous, current) in new[] { ("models", "model", 11, CharacterModel.CurrentVersion), ("parts", "part", 1, Part.CurrentVersion), ("entities", "entity", 4, EntityAsset.CurrentVersion) })
+        foreach (var (folder, kind, previous, current) in new[] { ("models", "model", 11, CharacterModel.CurrentVersion), ("parts", "part", 1, Part.CurrentVersion), ("entities", "entity", 4, EntityAsset.CurrentVersion), ("props", "prop", 3, Part.CurrentVersion) })
         {
             var directory = Path.Combine(root, folder);
             if (!Directory.Exists(directory))
@@ -74,10 +75,13 @@ public static class FormatConversion
                         throw new InvalidDataException($"version {version} is not an input of this conversion (expects {previous} or {current})");
                     }
 
-                    Scan(node, kind, "", dropped);
+                    if (kind != "prop") Scan(node, kind, "", dropped);
                     string fresh;
                     switch (kind)
                     {
+                        case "prop":
+                            fresh = PropPartConversion.Convert(text).ToJson();
+                            break;
                         case "model":
                         {
                             var model = JsonSerializer.Deserialize<CharacterModel>(text, AuthoredJson.Tolerant) ?? throw new InvalidDataException("empty file");
@@ -106,7 +110,9 @@ public static class FormatConversion
                         }
                     }
 
-                    files.Add(new(kind, id, Write(Path.Combine(output, folder, id + ".json"), fresh, current, dropped), dropped));
+                    var destination = Path.Combine(output, kind == "prop" ? "parts" : folder, id + ".json");
+                    if (!destinations.Add(destination)) throw new InvalidDataException("Multiple source assets would occupy " + destination);
+                    files.Add(new(kind, id, Write(destination, fresh, current, dropped), dropped));
                 }
                 catch (Exception ex) when (ex is InvalidDataException or JsonException or InvalidOperationException)
                 {
@@ -152,9 +158,11 @@ public static class FormatConversion
 
         var reportPath = Path.Combine(output, "format-conversion-report.md");
         var report = new StringBuilder();
-        report.AppendLine("# Format conversion report (P11c: model 12, part 3, entity 5)");
+        report.AppendLine("# Format conversion report (model 12, part 3 including retired props, entity 5)");
         report.AppendLine();
         report.AppendLine($"Source: `{root}` (unchanged). Output: `{output}`. Date: {DateTime.Now:yyyy-MM-dd HH:mm}.");
+        report.AppendLine();
+        report.AppendLine("Prop v3 files move from props/ to parts/ without changing IDs or units. Meshes and typed shapes become ordinary geometry entries; grip/tip/muzzle/second-grip become named XYZ locations, grip becomes the pivot, and scale is preserved. Original files stay untouched. Shared-file collisions fail explicitly.");
         report.AppendLine();
         report.AppendLine("Part v3 uses one geometry array. Existing drawing-entry IDs, rig targets, layers and units are unchanged; old solids become mesh entries with stable mesh-N IDs (uniquified on collision), their original material and physical Z, attached to the root frame. Normal open/save does not convert legacy files.");
         report.AppendLine();

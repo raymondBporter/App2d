@@ -74,7 +74,7 @@ internal static partial class PlayerMoves
         },
     ];
 
-    public static IEnumerable<PropAsset> Props() => [SwordProp(), SheathProp(), PistolProp()];
+    public static IEnumerable<Part> Props() => [SwordProp(), SheathProp(), PistolProp()];
 
     public static IEnumerable<MotionClip> Clips(ResolvedModel m) =>
     [
@@ -117,7 +117,7 @@ internal static partial class PlayerMoves
         var model = StudyProportions(person);
         foreach (var prop in Props())
         {
-            report.Write(Path.Combine(authoredRoot, "props", prop.Id + ".json"), prop.ToJson());
+            report.Write(Path.Combine(authoredRoot, "parts", prop.Id + ".json"), prop.ToJson());
         }
 
         report.Write(Path.Combine(authoredRoot, "profiles", GameProfile.GameId + ".json"), Profile().ToJson());
@@ -136,7 +136,7 @@ internal static partial class PlayerMoves
         var gunner = CinderGunner(ResolvedModel.From(person, cinder, PersonTemplate.PartOf));
         report.Write(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"), gunner.ToJson());
         // The maul: a broad brute on the Heavy set with a one-handed hammer and a slow overhead slam.
-        report.Write(Path.Combine(authoredRoot, "props", "hammer.json"), HammerProp().ToJson());
+        report.Write(Path.Combine(authoredRoot, "parts", "hammer.json"), HammerProp().ToJson());
         report.Write(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"), WeaponMotion(HammerSlam(model)).ToJson());
         var brute = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "brute.json")));
         var maul = MaulBrute(ResolvedModel.From(person, brute, PersonTemplate.PartOf));
@@ -154,7 +154,7 @@ internal static partial class PlayerMoves
         ResolvedModel.From(person, new PersonBuild { Legs = 1 / PersonTemplate.LegLength }.Apply(person, "study", "Study proportions"), PersonTemplate.PartOf);
 
     /// <summary>A short-hafted war hammer: grip at the origin, haft along +X, the head's centre is its tip.</summary>
-    public static PropAsset HammerProp() => HammerArt();
+    public static Part HammerProp() => HammerArt();
 
     /// <summary>
     /// A slow overhead slam, 1.5 s: the hammer climbs over and behind the head (anticipation) and hangs there, then drives down
@@ -808,7 +808,7 @@ internal static partial class PlayerMoves
 
     // ---- Props --------------------------------------------------------------------------------------------------
 
-    public static PropAsset SwordProp() => CartoonSwordArt();
-    public static PropAsset SheathProp() => SheathArt();
-    public static PropAsset PistolProp() => PistolArt();
+    public static Part SwordProp() => CartoonSwordArt();
+    public static Part SheathProp() => SheathArt();
+    public static Part PistolProp() => PistolArt();
 }

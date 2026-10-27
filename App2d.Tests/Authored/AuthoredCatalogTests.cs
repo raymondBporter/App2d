@@ -29,7 +29,7 @@ public sealed class AuthoredCatalogTests
         ], catalog.Animations.Keys.Order());
         Assert.Equal(["boot-left", "boot-right", "brute-beard", "brute-hair", "brute-hide-wrap", "cinder-beard", "cinder-hair", "cinder-hide-wrap", "club-caveman-beard", "club-caveman-hair", "club-caveman-hide-wrap",
             "hair-short", "hair-short-back", "hammer", "pistol", "rock-thrower-bag", "rock-thrower-beard", "rock-thrower-hair", "rock-thrower-hide-wrap",
-            "sandal-left", "sandal-right", "scavenged-shell", "sheath", "shield-defender-beard", "shield-defender-hair", "shield-defender-hide-wrap", "spear", "sword", "throwing-rock", "wooden-club"], catalog.Props.Keys.Order());
+            "sandal-left", "sandal-right", "scavenged-shell", "sheath", "shield-defender-beard", "shield-defender-hair", "shield-defender-hide-wrap", "spear", "sword", "throwing-rock", "wooden-club"], catalog.Parts.Values.Where(p => p.Usage is "prop" or "hair" or "clothing").Select(p => p.Id).Order());
         Assert.Equal(["baby-triceratops", "cinder-gunner", "club-caveman", "flying-pterosaur", "hero", "maul-brute", "player", "rock-thrower", "shield-defender", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
         Assert.Equal(["dumbbell"], catalog.PhysicsProps.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));

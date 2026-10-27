@@ -76,10 +76,10 @@ public static class PersonLoadout
     private static bool OpensSwoosh(string id) => IsSwoosh(id) && !id.EndsWith("-end", StringComparison.Ordinal);
 
     /// <summary>The held sword's blade, guard to tip, in the pose's actor space (along the blade's own axis; mesh swords are centred on it in depth).</summary>
-    public static (Vector3 Guard, Vector3 Tip) Blade(EvaluatedPose pose, PropAsset sword, ModelSocket socket)
+    public static (Vector3 Guard, Vector3 Tip) Blade(EvaluatedPose pose, Part sword, ModelSocket socket)
     {
         var frame = new ActorPose(pose, Vector2.Zero, 1).Socket(socket);
-        return (PropPlacement3D.PropPoint(frame, sword, new(.07f, 0, 0)), PropPlacement3D.PropPoint(frame, sword, new(sword.Tip.X, 0, 0)));
+        return (PartPlacement3D.Point(frame, sword, new(.07f, 0, 0)), PartPlacement3D.Point(frame, sword, new(sword.Point(EquipmentPoints.Tip)!.Value.X, 0, 0)));
     }
 
     /// <summary>
@@ -87,7 +87,7 @@ public static class PersonLoadout
     /// way to a forehand, which crosses from the far side toward the camera. Read from the clip, finely sampled over the
     /// swoosh; false when it has none.
     /// </summary>
-    public static bool Backhand(ResolvedModel model, MotionClip clip, PropAsset sword, ModelSocket socket)
+    public static bool Backhand(ResolvedModel model, MotionClip clip, Part sword, ModelSocket socket)
     {
         if (clip.Markers.FirstOrDefault(m => m.Id == SwooshMarker) is not { } start)
         {

@@ -167,14 +167,15 @@ public sealed class RenderMaterialDefinition2DTests
     [Fact]
     public void PropWritesMaterialsAndUsesThemForDrawing()
     {
-        var prop = new PropAsset
+        var prop = new Part
         {
             Id = "material-prop",
             Name = "Material prop",
-            Shapes =
+            Geometry =
             [
-                new PropShape
+                new PartGeometry
                 {
+                    A = PartLocation.Origin, Frame = PartLocation.Origin,
                     Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(1, 0), new(0, 1)] }.Validated(),
                     Material = new() { Fill = "#224466", Outline = new() { Color = "#ffeeaa", Width = .03f } }
                 }
@@ -182,18 +183,18 @@ public sealed class RenderMaterialDefinition2DTests
         };
         var json = prop.ToJson();
         using var document = JsonDocument.Parse(json);
-        var shape = document.RootElement.GetProperty("shapes")[0];
+        var shape = document.RootElement.GetProperty("geometry")[0];
         Assert.False(shape.TryGetProperty("fill", out _));
         Assert.Equal("#224466", shape.GetProperty("material").GetProperty("fill").GetString());
-        Assert.Equal(json, PropAsset.FromJson(json).ToJson());
+        Assert.Equal(json, Part.FromJson(json).ToJson());
 
         var drawing = new PuppetDrawing();
-        drawing.AddProp(prop, new Frame3D(Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
+        drawing.AddAttachment(prop, new Frame3D(Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
         var colors = drawing.Mesh.Vertices.ToArray().Select(vertex => vertex.Color).ToArray();
         Assert.Contains(ColorExtensions.FromHexRgb("#224466"), colors);
         Assert.Contains(ColorExtensions.FromHexRgb("#ffeeaa"), colors);
 
-        var solid = PropGeometry.Extrude([new(0, 0), new(1, 0), new(0, 1)], .1f, "#224466");
+        var solid = PartGeometryBuilder.Extrude([new(0, 0), new(1, 0), new(0, 1)], .1f, "#224466");
         solid.Material = solid.RenderMaterial with
         {
             Outline = solid.RenderMaterial.Outline! with
@@ -230,20 +231,21 @@ public sealed class RenderMaterialDefinition2DTests
     [Fact]
     public void PropUndoRestoresPointsDerivedFromTypedGeometry()
     {
-        var prop = new PropAsset
+        var prop = new Part
         {
             Id = "undo-prop",
             Name = "Undo prop",
-            Shapes = [new()
+            Geometry = [new()
             {
+                A = PartLocation.Origin, Frame = PartLocation.Origin,
                 Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(1, 0) }.Validated(),
                 Depths = [.1f, .2f], Material = new() { Fill = "#224466", Outline = new() }
             }]
         };
         prop.Validate();
         var document = AssetDocuments.Of(prop, null);
-        document.Edit(() => document.Asset.Shapes[0].Material = document.Asset.Shapes[0].RenderMaterial with { StrokeWidth = .2f });
+        document.Edit(() => document.Asset.Geometry[0].Material = document.Asset.Geometry[0].RenderMaterial with { StrokeWidth = .2f });
         document.Undo();
-        Assert.Equal([.1f, .2f], document.Asset.Shapes[0].Points.Select(p => p.Z));
+        Assert.Equal([.1f, .2f], document.Asset.Geometry[0].Depths);
     }
 }

@@ -213,7 +213,7 @@ public sealed class CutoutAttachmentTests
             }
             Assert.True(session.NewModel("test-blank", "Blank", "empty"), session.Message);
             Assert.True(session.NewAppearance("test-hair", "Hair", "hair"), session.Message);
-            Assert.NotEmpty(session.AppearanceDocument!.Asset.Solids);
+            Assert.NotEmpty(session.PartDocument!.Asset.Geometry);
             session.SaveAll();
             Assert.False(session.MessageIsError, session.Message);
             Assert.Empty(AuthoredCatalog.Load(root).Errors);

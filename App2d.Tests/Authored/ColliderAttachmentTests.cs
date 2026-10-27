@@ -21,7 +21,7 @@ public sealed class ColliderAttachmentTests
     private const float Dt = 1 / 120f;
 
     private static ResolvedEntity Compile(EntityAsset asset) =>
-        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
+        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
     private static string Error(EntityAsset asset) => Assert.Throws<InvalidDataException>(() => Compile(asset)).Message;
 
@@ -37,7 +37,7 @@ public sealed class ColliderAttachmentTests
             new() { Id = "head", Use = ColliderUses.Hurt, Control = Humanoid.Head, Frame = CharacterModel.Locomotion, Shape = Rectangle2D.Builder.FromSize(.6f, .6f) },
             new() { Id = "torso", Use = ColliderUses.Hurt, Control = Humanoid.Hips, Toward = Humanoid.Chest, Stretch = true, Shape = Capsule2D.Builder.Create(Vector2.Zero, new(0, .5f), .2f) },
             new() { Id = "legs", Use = ColliderUses.Hurt, Control = Humanoid.LeftHip, Frame = CharacterModel.Locomotion, OffsetY = -.4f, Shape = Rectangle2D.Builder.FromSize(.5f, .9f) },
-            new() { Id = "reach", Use = ColliderUses.Trigger, Prop = StarterContent.Spear, Point = PropAsset.TipPoint, Shape = Circle2D.Builder.Create(.5f) },
+            new() { Id = "reach", Use = ColliderUses.Trigger, Prop = StarterContent.Spear, Point = EquipmentPoints.Tip, Shape = Circle2D.Builder.Create(.5f) },
         ]);
         // The attack collider last, as the P8a-era fixture listed its implied window collider after the explicit ones.
         var tip = guard.Colliders.First(c => c.Use == ColliderUses.Attack);
@@ -73,7 +73,7 @@ public sealed class ColliderAttachmentTests
         Assert.All(Catalog.Entities["spear-guard"].Colliders, c => Assert.Equal("collider", c.Source));
         var defender = Catalog.Entities["shield-defender"];
         Assert.Equal(ColliderUses.Guard, defender.GuardCollider!.Id);
-        Assert.Equal(("collider", ColliderBindings.Prop, "scavenged-shell", PropAsset.TipPoint), (defender.GuardCollider.Source, defender.GuardCollider.Binding, defender.GuardCollider.Equipment!.Prop.Id, defender.GuardCollider.Definition.Point));
+        Assert.Equal(("collider", ColliderBindings.Prop, "scavenged-shell", EquipmentPoints.Tip), (defender.GuardCollider.Source, defender.GuardCollider.Binding, defender.GuardCollider.Equipment!.Prop.Id, defender.GuardCollider.Definition.Point));
     }
 
     [Theory, InlineData(1), InlineData(-1)]
@@ -107,7 +107,7 @@ public sealed class ColliderAttachmentTests
                 if (hit.Collider.Binding == ColliderBindings.Prop)
                 {
                     var equipment = hit.Collider.Equipment!;
-                    var tip = PropPlacement3D.PropPoint(pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip);
+                    var tip = PartPlacement3D.Point(pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Point(EquipmentPoints.Tip)!.Value);
                     Assert.True(registered.Object.ContainsWorldPoint(tip.XY), $"{id}: the tip {tip.XY} lies in the registered collider {view.Bounds} at {t}, facing {facing}");
                 }
             }
@@ -312,7 +312,7 @@ public sealed class ColliderAttachmentTests
         Assert.Contains("has no control 'tail'", Refused(e => e.Colliders[1].Toward = "tail"));
         Assert.Contains("has no socket 'ear'", Refused(e => { e.Colliders[0].Control = null; e.Colliders[0].Frame = null; e.Colliders[0].Socket = "ear"; }));
         Assert.Contains("prop 'hammer' is not equipped", Refused(e => e.Colliders[3].Prop = "hammer"));
-        Assert.Contains("has no 'muzzle' point", Refused(e => e.Colliders[3].Point = PropAsset.MuzzlePoint));
+        Assert.Contains("has no 'muzzle' point", Refused(e => e.Colliders[3].Point = EquipmentPoints.Muzzle));
         Assert.Contains("stretch needs a toward control", Refused(e => { e.Colliders[0].Stretch = true; }));
         Assert.Contains("not several", Refused(e => e.Colliders[3].Control = Humanoid.Head));
         Assert.Contains("guard.collider", Refused(e => e.Guard = new()));

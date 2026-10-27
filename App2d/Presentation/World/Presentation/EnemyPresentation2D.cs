@@ -239,7 +239,7 @@ public sealed class EnemyPresentation2D(
             // A throwable is visible only while being prepared, and leaves the hand on the fire marker.
             var action = state.ActionId is { } id ? _entity.Actions.GetValueOrDefault(id) : null;
             var holding = action?.Projectile?.Gravity > 0 && state.ActionSeconds < action.Events.First(e => e.Event.Id == EntityControllers.Fire).Seconds;
-            _shader.Props = [.. _entity.Equipment.Where(e => e.Prop.Muzzle is null ||
+            _shader.Props = [.. _entity.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null ||
                 !_entity.Actions.Values.Any(a => a.Projectile?.Gravity > 0) || holding).Select(e => (e.Prop, e.Socket))];
             _visual.Transform.Position = GameWorldUnits2D.AuthoredToWorld(pose.Position);
         }

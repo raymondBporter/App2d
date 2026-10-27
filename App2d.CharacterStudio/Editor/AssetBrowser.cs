@@ -17,12 +17,12 @@ internal sealed partial class AssetBrowser(EditorSession session)
 {
     private enum Create
     {
-        None, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip,
-        Part, PartFromProp, DuplicatePart
+        None, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, ImportPuppet, ImportClip,
+        Part, DuplicatePart
     }
     private string _appearanceTemplate = "hair";
     private string _templatePreset = "";
-    private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Parts", "Sources"];
+    private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Parts", "Sources"];
     private string _search = "", _filter = "All";
     private Create _create;
     private string _name = "", _id = "", _source = "", _preset = "", _template = EntityAuthoring.Guard;
@@ -54,11 +54,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
             if (ImGui.MenuItem("Library part: new shape..."))
             {
                 Start(Create.Part, "", "New part");
-            }
-
-            if (ImGui.MenuItem("Library part: from hair / clothing...", "", false, session.Assets.Props.Any(p => p.Asset.Usage != "prop")))
-            {
-                Start(Create.PartFromProp, session.Assets.Props.First(p => p.Asset.Usage != "prop").Id, "New part");
             }
 
             if (ImGui.MenuItem("Model: empty"))
@@ -175,14 +170,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
             foreach (var orphan in orphans)
             {
                 Row(orphan, 0);
-            }
-        }
-        if (_filter == "All" && _search.Length == 0 && session.Assets.Props.Any())
-        {
-            Ui.Header("Props");
-            foreach (var prop in session.Assets.Props.OrderBy(p => p.Name))
-            {
-                Row(prop, 0);
             }
         }
         if (session.Assets.LoadErrors.Count > 0)
@@ -351,18 +338,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
         {
             switch (document)
             {
-                case AssetDocument<PropAsset> art when art.Asset.Usage != "prop":
-                    if (ImGui.MenuItem("Duplicate appearance"))
-                    {
-                        Start(Create.DuplicateAppearance, art.Id, art.Name + " copy");
-                    }
-
-                    if (ImGui.MenuItem("Convert to library part"))
-                    {
-                        Start(Create.PartFromProp, art.Id, art.Name);
-                    }
-
-                    break;
                 case AssetDocument<Part> part:
                     if (ImGui.MenuItem("Duplicate library part"))
                     {
@@ -506,9 +481,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         ImGui.TextColored(UiTheme.Accent, _create switch
         {
             Create.Appearance => "New hair or clothing",
-            Create.DuplicateAppearance => "Duplicate appearance " + _source,
             Create.Part => "New library part",
-            Create.PartFromProp => "Library part from " + _source,
             Create.DuplicatePart => "Duplicate library part " + _source,
             Create.EmptyModel => "New model from Empty",
             Create.TemplateModel => "New model from " + session.Assets.ModelTemplates[_source].Name,
@@ -556,14 +529,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
                 break;
             case Create.Part:
                 Ui.Help("A reusable library part: one shape on its origin to start. Attach it to any socket of any character, as many times as needed; every wearer shares the asset.");
-                break;
-            case Create.PartFromProp:
-                if (Ui.Combo("From appearance", _source, session.Assets.Props.Where(p => p.Asset.Usage != "prop").Select(p => p.Id).Order(StringComparer.Ordinal)) is { } fromProp)
-                {
-                    _source = fromProp;
-                }
-
-                Ui.Help("Copies the prop's cutout pieces into a library part whose origin is the prop's attachment point. The prop stays for the entities that equip it.");
                 break;
             case Create.DuplicatePart:
                 Ui.Help("An independent copy of the library part. Wearers keep the original; attach the copy where it should differ.");
@@ -702,9 +667,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
     private bool Commit() => _create switch
     {
         Create.Appearance => session.NewAppearance(_id, _name, _appearanceTemplate),
-        Create.DuplicateAppearance => session.DuplicateAppearance(_source, _id, _name),
         Create.Part => session.NewPart(_id, _name),
-        Create.PartFromProp => session.NewPart(_id, _name, _source),
         Create.DuplicatePart => session.DuplicatePart(_source, _id, _name),
         Create.EmptyModel => session.NewModel(_id, _name, "empty"),
         Create.TemplateModel => session.NewModel(_id, _name, _source, _templatePreset.Length == 0 ? null : _templatePreset),

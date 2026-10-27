@@ -250,6 +250,10 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                         var xy = points[i].XY;
                         if (Ui.Drag2($"Outline point {i + 1}", ref xy, .005f, -100, 100))
                             change(p => p.Mesh!.Outline![index] = p.Mesh.Outline[index] with { X = xy.X, Y = xy.Y });
+                        if (ImGui.SmallButton($"Insert after##mesh-{i}"))
+                            change(p => p.Mesh!.Outline!.Insert(index + 1, PuppetPoint.From((points[index].XYZ + points[(index + 1) % points.Count].XYZ) / 2)));
+                        ImGui.SameLine();
+                        if (Ui.Button($"Remove##mesh-{i}", points.Count > 3)) change(p => p.Mesh!.Outline!.RemoveAt(index));
                     }
                 }
             }

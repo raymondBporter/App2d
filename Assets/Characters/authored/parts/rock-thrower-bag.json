@@ -1,0 +1,107 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "rock-thrower-bag",
+  "name": "Hide stone bag with teal sling",
+  "usage": "clothing",
+  "attachment": "body-art",
+  "pivot": "grip",
+  "ink": "#30373a",
+  "lineWidth": 0.025,
+  "materials": {},
+  "locations": [
+    {
+      "id": "grip"
+    },
+    {
+      "id": "tip"
+    }
+  ],
+  "geometry": [
+    {
+      "id": "mesh-1",
+      "mesh": {
+        "outline": [
+          {
+            "x": -0.39,
+            "y": -0.12,
+            "z": 0.12
+          },
+          {
+            "x": -0.58,
+            "y": -0.02,
+            "z": 0.12
+          },
+          {
+            "x": -0.56,
+            "y": 0.25,
+            "z": 0.12
+          },
+          {
+            "x": -0.39,
+            "y": 0.29,
+            "z": 0.12
+          },
+          {
+            "x": -0.21,
+            "y": 0.22,
+            "z": 0.12
+          },
+          {
+            "x": -0.23,
+            "y": -0.05,
+            "z": 0.12
+          }
+        ],
+        "thickness": 0.08
+      },
+      "material": {
+        "fill": "#987347",
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin"
+    },
+    {
+      "id": "mesh-2",
+      "mesh": {
+        "outline": [
+          {
+            "x": -0.42,
+            "y": 0.18,
+            "z": 0.12
+          },
+          {
+            "x": 0.13,
+            "y": 0.71,
+            "z": 0.12
+          },
+          {
+            "x": 0.17,
+            "y": 0.67,
+            "z": 0.12
+          },
+          {
+            "x": -0.37,
+            "y": 0.13,
+            "z": 0.12
+          }
+        ],
+        "thickness": 0.03
+      },
+      "material": {
+        "fill": "#538e89",
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin"
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

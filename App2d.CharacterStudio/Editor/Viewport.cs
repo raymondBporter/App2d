@@ -139,15 +139,15 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 _drawings[i].Build(subject.Model, subject.Pose);
                 if (session.Mode == Workspace.Appearance && session.Entity is { } wearer && wearer.Model.Id == subject.Model.Id)
                 {
-                    foreach (var item in wearer.Equipment.Where(e => e.Prop.Id != session.PreviewProp))
+                    foreach (var item in wearer.Equipment.Where(e => e.Prop.Id != session.PreviewPart))
                     {
-                        _drawings[i].AddProp(item.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(item.Socket));
+                        _drawings[i].AddAttachment(item.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(item.Socket));
                     }
                 }
 
                 if (session.Mode is Workspace.Animate or Workspace.Appearance && session.WeaponFor(subject.Model) is { } weapon)
                 {
-                    _drawings[i].AddProp(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket));
+                    _drawings[i].AddAttachment(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket));
                 }
 
                 // A library part being edited previews on the wearer at the chosen socket until it is attached for real.
@@ -161,7 +161,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                     }
                     else
                     {
-                        _drawings[i].AddAttachment(preview, placement);
+                        _drawings[i].AddAttachment(preview, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(preview.Socket));
                     }
                 }
             }

@@ -70,7 +70,7 @@ public static class PersonWardrobe
         new() { Prop = style + "-right", Socket = RightFootSocket },
     ];
 
-    public static IEnumerable<PropAsset> Props()
+    public static IEnumerable<Part> Props()
     {
         foreach (var prop in FootwearProps()) yield return prop;
         var shortHair = Hair(ShortHair, "Short tousled hair", 1, "#654334", false);
@@ -132,18 +132,18 @@ public static class PersonWardrobe
         }
     }
 
-    private static IEnumerable<PropAsset> FootwearProps()
+    private static IEnumerable<Part> FootwearProps()
     {
         foreach (var side in new[] { "left", "right" })
         {
             var socket = side == "left" ? LeftFootSocket : RightFootSocket;
-            PropAsset Shoe(string style, string name) => new()
+            Part Shoe(string style, string name) => new()
             {
                 Id = style + "-" + side,
                 Name = name + " / " + side,
                 Usage = "clothing",
                 Attachment = socket,
-                Tip = default,
+
                 LineWidth = .045f
             };
             var sandal = Shoe("sandal", "Leather sandal");
@@ -154,7 +154,7 @@ public static class PersonWardrobe
                 [(-.037f, .003f), (-.015f, .003f), (.009f, .072f), (-.014f, .078f)], thickness: .009f);
             Patch(sandal, "#bc8853", -.038f,
                 [(.054f, .003f), (.079f, .003f), (.06f, .038f), (.037f, .033f)], thickness: .009f);
-            foreach (var solid in sandal.Solids)
+            foreach (var solid in sandal.Geometry)
                 solid.Material = solid.RenderMaterial with { Outline = new() { Width = .008f } };
             yield return sandal;
 
@@ -166,40 +166,44 @@ public static class PersonWardrobe
                 [(-.06f, -.024f), (.147f, -.024f), (.153f, -.009f), (-.06f, -.009f)], thickness: .008f);
             Patch(boot, "#b98a59", -.048f,
                 [(-.052f, .135f), (.045f, .135f), (.045f, .163f), (-.052f, .163f)], thickness: .008f);
-            foreach (var solid in boot.Solids)
+            foreach (var solid in boot.Geometry)
                 solid.Material = solid.RenderMaterial with { Outline = new() { Width = .01f } };
             yield return boot;
         }
     }
 
-    private static PropAsset Art(string id, string name) => new()
+    private static Part Art(string id, string name) => new()
     {
         Id = id,
         Name = name,
         Ink = "#222b32",
         LineWidth = .045f,
-        Tip = default,
+
         Usage = id.EndsWith("-hide-wrap", StringComparison.Ordinal) ? "clothing" : "hair",
         Attachment = id.EndsWith("-hide-wrap", StringComparison.Ordinal) ? BodySocket : HeadSocket,
     };
 
-    private static void Patch(PropAsset art, string fill, float z, (float X, float Y)[] points, float sx = 1, float sy = 1, float thickness = .008f)
-        => art.Solids.Add(PropGeometry.Extrude(points.Select(p => new PuppetPoint(p.X * sx, p.Y * sy, z)), thickness, fill));
+    private static void Patch(Part art, string fill, float z, (float X, float Y)[] points, float sx = 1, float sy = 1, float thickness = .008f)
+        {
+        var entry = PartGeometryBuilder.Extrude(points.Select(p => new PuppetPoint(p.X * sx, p.Y * sy, z)), thickness, fill);
+        entry.Id = $"mesh-{art.Geometry.Count + 1}";
+        art.Geometry.Add(entry);
+    }
 
-    private static void Spot(PropAsset art, float x, float y, float radius, string fill, float z, float thickness)
+    private static void Spot(Part art, float x, float y, float radius, string fill, float z, float thickness)
     {
         Patch(art, fill, z, [.. Enumerable.Range(0, 7).Select(i =>
         {
             var angle = i * MathF.Tau / 7;
             return (x + MathF.Cos(angle) * radius * .8f, y + MathF.Sin(angle) * radius);
         })], thickness: thickness);
-        art.Solids[^1].Material = art.Solids[^1].RenderMaterial with
+        art.Geometry[^1].Material = art.Geometry[^1].RenderMaterial with
         {
             Outline = null
         };
     }
 
-    private static PropAsset Hair(string id, string name, float scale, string color, bool wild)
+    private static Part Hair(string id, string name, float scale, string color, bool wild)
     {
         var art = Art(id, name);
         // Behind the head: a short nape or the caveman's wider side tufts.
@@ -238,7 +242,7 @@ public static class PersonWardrobe
         return art;
     }
 
-    private static PropAsset Beard(string id, string name, float head, string color, float length)
+    private static Part Beard(string id, string name, float head, string color, float length)
     {
         var art = Art(id, name);
         // The concave top leaves the animated mouth visible; the bottom is an irregular fan of locks.
@@ -285,7 +289,7 @@ public static class PersonWardrobe
         report.Write(modelPath, model.ToJson());
         foreach (var prop in Props())
         {
-            var path = Path.Combine(root, "props", prop.Id + ".json");
+            var path = Path.Combine(root, "parts", prop.Id + ".json");
             if (replaceExistingProps || !File.Exists(path))
             {
                 report.Write(path, prop.ToJson());

@@ -29,7 +29,7 @@ internal sealed partial class ProofRenders
         var model = catalog.Resolve("person");
         // The lab and game share the approved cartoon sword.
         var props = PlayerMoves.PlayerMoves.Props().ToDictionary(p => p.Id);
-        foreach (var (id, art) in catalog.Props)
+        foreach (var (id, art) in catalog.Parts)
         {
             props.TryAdd(id, art);
         }
@@ -46,14 +46,14 @@ internal sealed partial class ProofRenders
         var scenery = new CharacterMesh(8192);
         var trail = new CharacterMesh(8192);
         var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .45f, ReviewHeight * LabGround), LabPpu);
-        void Frame(string path, MotionClip clip, float seconds, Dictionary<string, PropAsset> worn, BladeSwoosh? swoosh, bool shape, float clock = 0)
+        void Frame(string path, MotionClip clip, float seconds, Dictionary<string, Part> worn, BladeSwoosh? swoosh, bool shape, float clock = 0)
         {
             var pose = PoseEvaluator.Sample(model, clip, seconds);
             drawing.Build(model, pose);
             var placed = new ActorPose(pose, Vector2.Zero, 1);
             foreach (var (prop, socket) in PersonLoadout.Dressed(clip, seconds, PersonGear.Sword, catalog.Entities["hero"]))
             {
-                drawing.AddProp(worn[prop], placed.Socket(sockets[socket]));
+                drawing.AddAttachment(worn[prop], placed.Socket(sockets[socket]));
             }
 
             trail.Clear();
@@ -140,7 +140,7 @@ internal sealed partial class ProofRenders
     }
 
     /// <summary>The player's hit rectangles for a clip, one per live window ("strike" to "recover", "strike-2" to "recover-2"); see <see cref="SwingLab.HitRectangle"/>.</summary>
-    private static List<(float Start, float Finish, Vector2[] Hull)> HitShapes(ResolvedModel model, MotionClip clip, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets)
+    private static List<(float Start, float Finish, Vector2[] Hull)> HitShapes(ResolvedModel model, MotionClip clip, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets)
     {
         var result = new List<(float, float, Vector2[])>();
         foreach (var suffix in Enumerable.Range(1, 8).Select(n => n == 1 ? "" : "-" + n))
@@ -159,7 +159,7 @@ internal sealed partial class ProofRenders
         return result;
     }
 
-    private static (Vector3 Guard, Vector3 Tip)? LabBlade(ResolvedModel model, MotionClip clip, float seconds, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets) =>
+    private static (Vector3 Guard, Vector3 Tip)? LabBlade(ResolvedModel model, MotionClip clip, float seconds, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets) =>
         SwingLab.Blade(model, clip, seconds, props[PersonLoadout.Sword], sockets[Humanoid.SwordSocket]);
 
     /// <summary>
@@ -167,7 +167,7 @@ internal sealed partial class ProofRenders
     /// path during the swoosh is one clean curve, whether the arms reach their targets, and whether the held follow-through
     /// crosses the blade over the torso. Whether it looks good is the reviewer's call.
     /// </summary>
-    private static string SwingCheck(ResolvedModel model, SwingLab.Variant variant, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets, List<(float Start, float Finish, Vector2[] Hull)> shapes)
+    private static string SwingCheck(ResolvedModel model, SwingLab.Variant variant, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets, List<(float Start, float Finish, Vector2[] Hull)> shapes)
     {
         var clip = variant.Clip;
         const int rate = 240;

@@ -133,7 +133,7 @@ internal static class EditorSurfaceSmoke
             session.Selection.Select(control: Humanoid.Chest);
             session.Seek(0);
             Capture("animation-control");
-            if (assets.Props.FirstOrDefault(p => p.Asset.Usage == "prop") is { } prop &&
+            if (assets.Parts.FirstOrDefault(p => p.Asset.Usage == "prop") is { } prop &&
                 session.Scene().FirstOrDefault()?.Model.Base.Sockets.FirstOrDefault() is { } socket)
             {
                 session.PreviewProp = prop.Id;

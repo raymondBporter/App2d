@@ -39,7 +39,6 @@ public sealed class AuthoringWorkspace
     public IEnumerable<AssetDocument<CharacterModel>> Models => _documents.Values.OfType<AssetDocument<CharacterModel>>();
     public IEnumerable<AssetDocument<ModelVariant>> Variants => _documents.Values.OfType<AssetDocument<ModelVariant>>();
     public IEnumerable<AssetDocument<MotionClip>> Clips => _documents.Values.OfType<AssetDocument<MotionClip>>();
-    public IEnumerable<AssetDocument<PropAsset>> Props => _documents.Values.OfType<AssetDocument<PropAsset>>();
     public IEnumerable<AssetDocument<EntityAsset>> Entities => _documents.Values.OfType<AssetDocument<EntityAsset>>();
     /// <summary>Library part assets (P5a): shared by every wearer that instances them.</summary>
     public IEnumerable<AssetDocument<Part>> Parts => _documents.Values.OfType<AssetDocument<Part>>();
@@ -62,7 +61,7 @@ public sealed class AuthoringWorkspace
         var templates = ModelTemplateCatalog.Load(root);
         workspace.ModelTemplates = templates.Entries;
         // Only unreadable files are load errors; reference problems stay visible on their documents.
-        var loaded = catalog.Parts.Keys.Concat(catalog.Models.Keys).Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Concat(catalog.Props.Keys).Concat(catalog.EntityAssets.Keys).Select(catalog.PathOf).ToList();
+        var loaded = catalog.Parts.Keys.Concat(catalog.Models.Keys).Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Concat(catalog.EntityAssets.Keys).Select(catalog.PathOf).ToList();
         workspace.LoadErrors = [.. catalog.Errors.Where(e => !loaded.Any(path => e.StartsWith(path + ":", StringComparison.Ordinal))), .. templates.Errors];
         foreach (var part in catalog.Parts.Values)
         {
@@ -84,10 +83,6 @@ public sealed class AuthoringWorkspace
             workspace.Add(AssetDocuments.Of(clip, catalog.PathOf(clip.Id)));
         }
 
-        foreach (var prop in catalog.Props.Values)
-        {
-            workspace.Add(AssetDocuments.Of(prop, catalog.PathOf(prop.Id)));
-        }
 
         foreach (var entity in catalog.EntityAssets.Values)
         {
@@ -101,7 +96,6 @@ public sealed class AuthoringWorkspace
     public AssetDocument<CharacterModel>? Model(string? id) => Find(id) as AssetDocument<CharacterModel>;
     public AssetDocument<ModelVariant>? Variant(string? id) => Find(id) as AssetDocument<ModelVariant>;
     public AssetDocument<MotionClip>? Clip(string? id) => Find(id) as AssetDocument<MotionClip>;
-    public AssetDocument<PropAsset>? Prop(string? id) => Find(id) as AssetDocument<PropAsset>;
     public AssetDocument<EntityAsset>? Entity(string? id) => Find(id) as AssetDocument<EntityAsset>;
     public AssetDocument<Part>? Part(string? id) => Find(id) as AssetDocument<Part>;
     /// <summary>Whether an ID is taken: by a document, or by a file of that name that did not load and must not be overwritten.</summary>
@@ -138,7 +132,6 @@ public sealed class AuthoringWorkspace
             CharacterModel model => AssetDocuments.Of(model, null),
             ModelVariant variant => AssetDocuments.Of(variant, null),
             MotionClip clip => AssetDocuments.Of(clip, null),
-            PropAsset prop => AssetDocuments.Of(prop, null),
             EntityAsset entity => AssetDocuments.Of(entity, null),
             Part part => AssetDocuments.Of(part, null),
             _ => throw ArgGuard.CreateInvalid($"Not an authored asset: {typeof(T).Name}."),
@@ -269,7 +262,7 @@ public sealed class AuthoringWorkspace
         {
             entity = ResolvedEntity.Compile(document.Asset,
                 model => Find(model) is null ? throw new KeyNotFoundException(model) : Resolve(model, out var problem) ?? throw new InvalidDataException(problem),
-                clip => Clip(clip)?.Asset, prop => Prop(prop)?.Asset);
+                clip => Clip(clip)?.Asset, prop => Part(prop)?.Asset);
         }
         catch (Exception ex) when (IsAssetError(ex))
         {
@@ -306,7 +299,6 @@ public sealed class AuthoringWorkspace
             }
         }
         var clips = Clips.Select(c => Copy(c, MotionClip.FromJson)).OfType<MotionClip>().ToDictionary(c => c.Id, StringComparer.Ordinal);
-        var props = Props.Select(p => Copy(p, PropAsset.FromJson)).OfType<PropAsset>().ToDictionary(p => p.Id, StringComparer.Ordinal);
         var parts = Parts.Select(p => Copy(p, Authored.Part.FromJson)).OfType<Part>().ToDictionary(p => p.Id, StringComparer.Ordinal);
         var resolved = new Dictionary<string, ResolvedModel>(StringComparer.Ordinal);
         ResolvedModel ResolveCopy(string id)
@@ -333,7 +325,7 @@ public sealed class AuthoringWorkspace
 
             try
             {
-                entities.Add(ResolvedEntity.Compile(asset, ResolveCopy, clips.GetValueOrDefault, props.GetValueOrDefault));
+                entities.Add(ResolvedEntity.Compile(asset, ResolveCopy, clips.GetValueOrDefault, parts.GetValueOrDefault));
             }
             catch (Exception ex) when (IsAssetError(ex))
             {
@@ -361,7 +353,7 @@ public sealed class AuthoringWorkspace
         var uses = new List<AssetReference>();
         switch (Find(id))
         {
-            case AssetDocument<PropAsset> prop when prop.Asset.BackView is { } back:
+            case AssetDocument<Part> prop when prop.Asset.BackView is { } back:
                 uses.Add(new(back, "back view"));
                 break;
             case AssetDocument<ModelVariant> variant:
@@ -468,6 +460,7 @@ public sealed class AuthoringWorkspace
                 }
             }
         }
+        wearers.AddRange(Entities.Where(e => e.Asset.Equipment.Any(binding => binding.Prop == partId)).Select(e => e.Id));
         return wearers;
     }
 
@@ -537,9 +530,9 @@ public sealed class AuthoringWorkspace
                 }
 
                 break;
-            case AssetDocument<PropAsset> prop:
+            case AssetDocument<Part> prop:
                 Try(prop.Asset.Validate);
-                if (prop.Asset.BackView is { } back && Prop(back) is null)
+                if (prop.Asset.BackView is { } back && Part(back) is null)
                 {
                     problems.Add($"No back-view appearance '{back}'.");
                 }
@@ -551,9 +544,6 @@ public sealed class AuthoringWorkspace
                     problems.Add(compile!);
                 }
 
-                break;
-            case AssetDocument<Part> part:
-                Try(part.Asset.Validate);
                 break;
         }
         return problems;
@@ -598,9 +588,6 @@ public sealed class AuthoringWorkspace
             case AssetDocument<MotionClip> clip:
                 clip.Asset.Validate();
                 break;
-            case AssetDocument<PropAsset> prop:
-                prop.Asset.Validate();
-                break;
             case AssetDocument<EntityAsset> entity:
                 entity.Asset.Validate();
                 break;
@@ -615,7 +602,7 @@ public sealed class AuthoringWorkspace
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        AuthoredAsset.Write(path, document is AssetDocument<PropAsset> propDocument ? propDocument.Asset.ToJson() : document.Serialize());
+        AuthoredAsset.Write(path, document is AssetDocument<Part> partDocument ? partDocument.Asset.ToJson() : document.Serialize());
         document.MarkSaved(path);
         if (document is AssetDocument<CharacterModel> saved)
         {

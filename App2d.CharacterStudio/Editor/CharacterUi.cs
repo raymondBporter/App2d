@@ -84,7 +84,7 @@ internal static class References
                     ImGui.PushStyleColor(ImGuiCol.Text, UiTheme.Warning);
                 }
 
-                if (ImGui.Selectable($"{label}##{title}{group.Key}") && document is not null && document.Kind != AssetKind.Prop)
+                if (ImGui.Selectable($"{label}##{title}{group.Key}") && document is not null)
                 {
                     session.Open(group.Key);
                 }

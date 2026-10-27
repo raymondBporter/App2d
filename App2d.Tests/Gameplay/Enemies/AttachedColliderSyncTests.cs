@@ -24,7 +24,7 @@ public sealed class AttachedColliderSyncTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
 
     private static ResolvedEntity Compile(EntityAsset asset) =>
-        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
+        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
     private static void AssertSynchronized(AuthoredEntityEnemy2D enemy)
     {

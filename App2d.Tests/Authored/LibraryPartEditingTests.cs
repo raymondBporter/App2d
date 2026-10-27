@@ -36,7 +36,6 @@ public sealed class LibraryPartEditingTests : IDisposable
         Assert.Equal("person-lower", session.ActiveDocument!.Id);
         Assert.Equal("person-lower", session.PartDocument!.Id);
         Assert.Empty(session.PreviewProp);
-        Assert.Null(session.AppearanceDocument);
         var wearer = session.Assets.Resolve("quadruped")!;
         Assert.False(session.PreviewPartOnWearer);
         Assert.Null(session.PreviewAttachmentOn(wearer));
@@ -61,22 +60,21 @@ public sealed class LibraryPartEditingTests : IDisposable
     }
 
     [Fact]
-    public void OpeningAppearanceWithoutALibraryPartSelectsAndPreviewsTheSameProp()
+    public void OpeningAppearanceSelectsAndPreviewsAnOrdinaryPart()
     {
         var session = Session();
         session.Open("person");
         session.SetMode(Workspace.Appearance);
 
-        var appearance = session.AppearanceDocument!;
+        var appearance = session.PartDocument!;
         Assert.NotNull(appearance);
         Assert.Same(appearance, session.ActiveDocument);
-        Assert.Null(session.PartDocument);
         var wearer = session.Assets.Resolve("person")!;
-        var preview = session.WeaponFor(wearer);
+        var preview = session.PreviewAttachmentOn(wearer);
         Assert.NotNull(preview);
-        Assert.Equal(appearance.Id, preview.Value.Prop.Id);
-        Assert.Equal(session.PreviewSocket, preview.Value.Socket.Id);
-        Assert.Null(session.PreviewAttachmentOn(wearer));
+        Assert.Equal(appearance.Id, preview!.Asset.Id);
+        Assert.Equal(session.PreviewSocket, preview!.Socket.Id);
+        Assert.Null(session.WeaponFor(wearer));
         Assert.Empty(session.Assets.DirtyDocuments);
     }
 
@@ -89,10 +87,9 @@ public sealed class LibraryPartEditingTests : IDisposable
         session.Open("brute-beard");
 
         Assert.Equal("brute-beard", session.ActiveDocument!.Id);
-        Assert.Null(session.PartDocument);
         var wearer = session.Assets.Resolve("quadruped")!;
-        Assert.Null(session.PreviewAttachmentOn(wearer));
-        Assert.Equal("brute-beard", session.WeaponFor(wearer)!.Value.Prop.Id);
+        Assert.Equal("brute-beard", session.PreviewAttachmentOn(wearer)!.Asset.Id);
+        Assert.Null(session.WeaponFor(wearer));
         Assert.Empty(wearer.Attachments);
         Assert.Empty(session.Assets.DirtyDocuments);
     }
@@ -101,7 +98,7 @@ public sealed class LibraryPartEditingTests : IDisposable
     public void TheShippedLibraryLoadsAndANewPartOpensInAppearanceWithAPreviewOnTheWearer()
     {
         var session = Session();
-        Assert.Equal(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"], session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal));
+        Assert.Equal(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"], session.Assets.Parts.Where(p => p.Asset.Usage is not ("prop" or "hair" or "clothing")).Select(p => p.Id).Order(StringComparer.Ordinal));
         session.Open("person");
         Assert.True(session.NewPart("badge", "Badge"), session.Message);
         Assert.Equal(Workspace.Appearance, session.Mode);
@@ -117,9 +114,9 @@ public sealed class LibraryPartEditingTests : IDisposable
         session.PreviewMirror = true;
         Assert.True(session.PreviewAttachmentOn(session.Assets.Resolve("person")!)!.Instance.Mirror);
         // Converting a prop keeps its pieces; the prop itself stays for the entities that equip it.
-        Assert.True(session.NewPart("tousle", "Tousle", PersonLoadout.ShortHair), session.Message);
-        Assert.Equal(session.Assets.Prop(PersonLoadout.ShortHair)!.Asset.Solids.Count, session.PartDocument!.Asset.Geometry.Count);
-        Assert.NotNull(session.Assets.Prop(PersonLoadout.ShortHair));
+        Assert.True(session.DuplicatePart(PersonLoadout.ShortHair, "tousle", "Tousle"), session.Message);
+        Assert.Equal(session.Assets.Part(PersonLoadout.ShortHair)!.Asset.Geometry.Count, session.PartDocument!.Asset.Geometry.Count);
+        Assert.NotNull(session.Assets.Part(PersonLoadout.ShortHair));
         Assert.True(session.DuplicatePart("tousle", "tousle-2", "Tousle copy"), session.Message);
         Assert.Equal("tousle-2", session.PartDocument!.Id);
         Assert.False(session.NewPart("boot", "Boot again"));

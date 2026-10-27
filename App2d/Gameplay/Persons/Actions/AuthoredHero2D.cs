@@ -101,8 +101,8 @@ public sealed class AuthoredHero2D
             ?? throw new InvalidOperationException($"Entity '{Entity.Id}' has no shoot action.");
         var fire = action.Events.First(e => e.Event.Id == EntityControllers.Fire).Seconds;
         var pose = Pose(action.Clip, fire, facing);
-        var gun = Entity.Equipment.First(e => e.Prop.Muzzle is not null);
-        var muzzle = PropPlacement3D.PropPoint(pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value);
+        var gun = Entity.Equipment.First(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null);
+        var muzzle = PartPlacement3D.Point(pose.Socket(gun.Socket), gun.Prop, gun.Prop.Point(EquipmentPoints.Muzzle)!.Value);
         return ToWorld(new(muzzle.X, muzzle.Y));
     }
 

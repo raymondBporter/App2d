@@ -14,7 +14,7 @@ public sealed class EntityRuntimeTests
     private static readonly string[] expected = ["body", "legs"];
 
     private static ResolvedEntity Compile(EntityAsset asset) =>
-        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
+        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
     private static string Error(EntityAsset asset) => Assert.Throws<InvalidDataException>(() => Compile(asset)).Message;
 
@@ -52,7 +52,7 @@ public sealed class EntityRuntimeTests
     {
         var model = Catalog.Resolve("person");
         var socket = model.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket);
-        var sword = Catalog.Props[PersonLoadout.Sword];
+        var sword = Catalog.Parts[PersonLoadout.Sword];
         bool Backhand(string clip) => PersonLoadout.Backhand(model, Catalog.Animations[clip], sword, socket);
         Assert.False(Backhand("player-sword-side-cut"));
         Assert.True(Backhand("player-sword-backhand"));
@@ -190,8 +190,8 @@ public sealed class EntityRuntimeTests
             var spear = guard.Equipment[0];
             var frame = pose.Socket(spear.Socket);
             // The grip lands on the hand socket, and the tip is out along the facing direction.
-            TestModels.Near(pose.World("right-hand"), PropPlacement3D.PropPoint(frame, spear.Prop, spear.Prop.Grip), 1e-5f);
-            var tip = PropPlacement3D.PropPoint(frame, spear.Prop, spear.Prop.Tip);
+            TestModels.Near(pose.World("right-hand"), PartPlacement3D.Point(frame, spear.Prop, spear.Prop.Point(EquipmentPoints.Grip)!.Value), 1e-5f);
+            var tip = PartPlacement3D.Point(frame, spear.Prop, spear.Prop.Point(EquipmentPoints.Tip)!.Value);
             Assert.True((tip.X - pose.World("right-hand").X) * facing > 1, "the spear points the way the guard faces");
             var active = animator.ActiveHits().ToList();
             if (animator.ActionTime < hit.Start)

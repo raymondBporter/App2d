@@ -33,6 +33,8 @@ public sealed record PartGeometry
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public float Depth { get; set; }
+    /// <summary>Optional physical Z for sampled shape/curve vertices, separate from the entry's drawing layer.</summary>
+    public List<float>? Depths { get; set; }
 
     /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
     public List<PartPointBinding>? Bindings { get; set; }
@@ -85,6 +87,14 @@ public sealed record PartGeometry
             throw new InvalidDataException("A geometry entry needs exactly one shape, curve or mesh.");
         }
         Mesh?.Validate();
+        if (Depths is { } depths)
+        {
+            if (Geometry is null || depths.Count != PartContours2D.LocalContour(this).Count)
+                throw new InvalidDataException("Physical depth count must match geometry vertices.");
+            foreach (var z in depths) new Limit(-100, 100).Check(z, "geometry.depths");
+            if (Bindings is { Count: > 0 } || B is not null)
+                throw new InvalidDataException("Physical vertex depths require rigid geometry placement.");
+        }
         if (Mesh is not null && Material?.Texture is not null)
             throw new InvalidDataException("Mesh textures require UV coordinates; use a textured rectangle.");
         if (Geometry is IShape2D shape)
@@ -110,7 +120,7 @@ public sealed record PartGeometry
             throw new InvalidDataException("A character curve supports at most 64 points.");
         }
 
-        var linkedCurve = Geometry is ICurve2D;
+        var linkedCurve = Geometry is ICurve2D && Frame is null;
         if (linkedCurve && (B is null || A == B))
         {
             throw new InvalidDataException("A linked curve needs two different controls.");

@@ -39,7 +39,7 @@ public sealed class PersonMoves
     public const string GunWallShot = PersonRoles.GunWallShot;
     public static IReadOnlyList<string> All => PersonRoles.All;
 
-    private PersonMoves(GameProfile profile, ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, PropAsset> props)
+    private PersonMoves(GameProfile profile, ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, Part> props)
     {
         Profile = profile;
         Model = model;
@@ -59,7 +59,7 @@ public sealed class PersonMoves
     public ResolvedAction Swing(string? action) => Hero.Actions[action ?? EntityControllers.Attack];
     /// <summary>Clips by role, and the hero's action and recovery clips by id.</summary>
     public IReadOnlyDictionary<string, MotionClip> Clips { get; }
-    public IReadOnlyDictionary<string, PropAsset> Props { get; }
+    public IReadOnlyDictionary<string, Part> Props { get; }
     public MotionClip this[string id] => Clips[id];
 
     /// <summary>The move set the catalog's player profile binds. Every role, the hero entity and every gear prop must resolve, by name.</summary>
@@ -77,7 +77,7 @@ public sealed class PersonMoves
         var missing = All
             .Where(role => !profile.Roles.TryGetValue(role, out var clip) || !catalog.Animations.ContainsKey(clip))
             .Select(role => $"role {role}")
-            .Concat(new[] { profile.Gear.Sword, profile.Gear.Pistol, profile.Gear.Hair, profile.Gear.HairBack }.Where(id => !catalog.Props.ContainsKey(id)).Select(id => $"prop {id}"))
+            .Concat(new[] { profile.Gear.Sword, profile.Gear.Pistol, profile.Gear.Hair, profile.Gear.HairBack }.Where(id => !catalog.Parts.ContainsKey(id)).Select(id => $"prop {id}"))
             .ToList();
 
         if (missing.Count > 0)
@@ -111,7 +111,7 @@ public sealed class PersonMoves
             }
         }
 
-        return new(profile, resolved, hero, clips, catalog.Props.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
+        return new(profile, resolved, hero, clips, catalog.Parts.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
     }
 }
 

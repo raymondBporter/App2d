@@ -46,7 +46,7 @@ internal sealed partial class ProofRenders
     {
         var catalog = ProofCatalog();
         var model = catalog.Resolve("person");
-        var props = catalog.Props;
+        var props = catalog.Parts;
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
         using var target = RenderCapture2D.CreateTarget(GraphicsDevice, ReviewWidth, ReviewHeight);
         var drawing = new PuppetDrawing();
@@ -70,7 +70,7 @@ internal sealed partial class ProofRenders
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
                 foreach (var (prop, socket) in PersonLoadout.Dressed(upper?.Clip ?? clip, upper?.Seconds ?? seconds, item.Gun ? PersonGear.Gun : PersonGear.Sword, catalog.Entities["hero"]))
                 {
-                    drawing.AddProp(props[prop], placed.Socket(sockets[socket]));
+                    drawing.AddAttachment(props[prop], placed.Socket(sockets[socket]));
                 }
 
                 var centerX = pose.Locomotion.X + item.ViewX;

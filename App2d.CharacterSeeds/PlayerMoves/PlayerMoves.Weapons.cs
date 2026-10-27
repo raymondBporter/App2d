@@ -62,7 +62,7 @@ internal static partial class PlayerMoves
         report.Write(path, model.ToJson());
         foreach (var prop in Props().Append(HammerProp()).Append(StarterContent.SpearProp()))
         {
-            report.Write(Path.Combine(root, "props", prop.Id + ".json"), prop.ToJson());
+            report.Write(Path.Combine(root, "parts", prop.Id + ".json"), prop.ToJson());
         }
 
         foreach (var file in Directory.EnumerateFiles(Path.Combine(root, "animations"), "*.json"))

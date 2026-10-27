@@ -1,0 +1,147 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "sword",
+  "name": "Sword",
+  "usage": "prop",
+  "pivot": "grip",
+  "lineWidth": 0.02,
+  "materials": {},
+  "locations": [
+    {
+      "id": "grip"
+    },
+    {
+      "id": "tip",
+      "x": 1.02,
+      "y": 0.03
+    }
+  ],
+  "geometry": [
+    {
+      "id": "mesh-1",
+      "mesh": {
+        "outline": [
+          {
+            "x": 0.045,
+            "y": -0.11,
+            "z": 0
+          },
+          {
+            "x": 0.055,
+            "y": -0.11,
+            "z": 0
+          },
+          {
+            "x": 0.065,
+            "y": -0.1,
+            "z": 0
+          },
+          {
+            "x": 0.065,
+            "y": 0.1,
+            "z": 0
+          },
+          {
+            "x": 0.055,
+            "y": 0.11,
+            "z": 0
+          },
+          {
+            "x": 0.045,
+            "y": 0.11,
+            "z": 0
+          },
+          {
+            "x": 0.035,
+            "y": 0.1,
+            "z": 0
+          },
+          {
+            "x": 0.035,
+            "y": -0.1,
+            "z": 0
+          }
+        ],
+        "thickness": 0.06
+      },
+      "material": {
+        "fill": "#465963",
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin"
+    },
+    {
+      "id": "mesh-2",
+      "mesh": {
+        "outline": [
+          {
+            "x": 0.065,
+            "y": -0.075,
+            "z": 0
+          },
+          {
+            "x": 0.88,
+            "y": -0.075,
+            "z": 0
+          },
+          {
+            "x": 1.02,
+            "y": 0.03,
+            "z": 0
+          },
+          {
+            "x": 0.96,
+            "y": 0.075,
+            "z": 0
+          },
+          {
+            "x": 0.065,
+            "y": 0.075,
+            "z": 0
+          }
+        ],
+        "thickness": 0.03
+      },
+      "material": {
+        "fill": "#dce5e7",
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin"
+    },
+    {
+      "id": "shape-1",
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": -0.055,
+          "y": 0
+        },
+        "end": {
+          "x": 0.025,
+          "y": 0
+        }
+      },
+      "material": {
+        "fill": "#714b3e",
+        "strokeWidth": 0.006,
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin",
+      "depths": [
+        0,
+        0
+      ]
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

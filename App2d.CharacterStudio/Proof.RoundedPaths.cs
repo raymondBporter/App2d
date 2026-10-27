@@ -68,7 +68,7 @@ internal sealed partial class ProofRenders
                         var hero = catalog.Entities["hero"];
                         foreach (var (prop, socket) in PersonLoadout.Dressed(clip, seconds, PersonGear.Sword, hero))
                         {
-                            drawing.AddProp(catalog.Props[prop], placed.Socket(hero.Sockets[socket]));
+                            drawing.AddAttachment(catalog.Parts[prop], placed.Socket(hero.Sockets[socket]));
                         }
                     }
                     var facing = tile % 2 == 0 ? 1 : -1;

@@ -55,7 +55,7 @@ public sealed class EntityRegionShapeTests
         var collider = asset.Colliders.Single(c => c.Id == window.Collider);
         collider.Shape = new Circle2D { Center = new(0, 0), Radius = .2f }.Validated();
         var restored = EntityAsset.FromJson(asset.ToJson());
-        var entity = ResolvedEntity.Compile(restored, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
+        var entity = ResolvedEntity.Compile(restored, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Parts.GetValueOrDefault);
         var hit = entity.Actions.Values.SelectMany(action => action.Hits).First(h => h.Window.Id == window.Id);
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, entity.Actions.Values.First(action => action.Hits.Contains(hit)).Clip, hit.Start), new(3, 0), 1);
         Assert.IsType<Circle2D>(EntityCollision.Attack(entity, pose, hit).Shape);
@@ -79,7 +79,7 @@ public sealed class EntityRegionShapeTests
         var window = asset.Actions.SelectMany(action => action.Hits).First();
         // The converted spear guard's window names its attack collider (P8c); the shape lives on that collider.
         asset.Colliders.First(c => c.Id == window.Collider).Shape = new Capsule2D { Start = new(-.3f, 0), End = new(.3f, 0), Radius = .1f }.Validated();
-        var entity = ResolvedEntity.Compile(asset, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
+        var entity = ResolvedEntity.Compile(asset, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Parts.GetValueOrDefault);
         var attack = entity.Actions["attack"];
         var hit = attack.Hits.First(h => h.Window.Id == window.Id);
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, attack.Clip, hit.Start), new(3, 0), facing);

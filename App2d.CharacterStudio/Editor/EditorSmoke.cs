@@ -222,15 +222,15 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Compare.Clear();
                 s.ShowRest = true;
                 s.EditRig = false;
-                Check(s.DuplicateAppearance("brute-hide-wrap", "test-wrap", "Custom hide wrap"), s);
-                var doc = s.AppearanceDocument!;
-                Check(s.Edit(doc, () => doc.Asset.Solids[0].Material = doc.Asset.Solids[0].RenderMaterial with { Fill = "#ac7243" }), s);
+                Check(s.DuplicatePart("brute-hide-wrap", "test-wrap", "Custom hide wrap"), s);
+                var doc = s.PartDocument!;
+                Check(s.Edit(doc, () => doc.Asset.Geometry[0].Material = doc.Asset.Geometry[0].RenderMaterial with { Fill = "#ac7243" }), s);
                 Check(s.EquipAppearance("maul-brute", doc.Id, Humanoid.BodySocket), s);
                 Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.Equipment.RemoveAll(e => e.Prop == "brute-hide-wrap")), s);
                 s.SaveAll();
                 var reopened = AuthoredCatalog.Load(s.Assets.Root);
-                Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Solids[0].RenderMaterial.Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");
-                Record(doc.Asset.Solids[0].Outline is not null, "outline remains editable after saving");
+                Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Geometry[0].RenderMaterial.Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");
+                Record(doc.Asset.Geometry[0].Mesh!.Outline is not null, "outline remains editable after saving");
             }),
             ("25-triceratops-cutout", shell =>
             {
@@ -545,12 +545,12 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // P5c: one library part on both feet as two instances, swapped on one variant only, edited once for every
                 // wearer, found through uses / used by, undone in order and saved with its wearers.
                 var s = shell.Session;
-                var library = s.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
+                var library = s.Assets.Parts.Where(p => p.Asset.Usage is not ("prop" or "hair" or "clothing")).Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
                 Record(library.SequenceEqual(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"]) && s.Assets.Part("boot")!.Asset.Geometry.Count == 3, "the parts folder loads boot, the baked Person face, the four rig modules and sandal as library parts");
                 s.Open("person");
-                Check(s.NewPart("mitt", "Mitt", "hair-short"), s);
+                Check(s.DuplicatePart("hair-short", "mitt", "Mitt"), s);
                 var mitt = s.PartDocument!;
-                Record(s.Mode == Workspace.Appearance && mitt.Asset.Geometry.Count > 0 && mitt.IsNew, "a library part converted from a hair prop opens in Appearance as a new draft");
+                Record(s.Mode == Workspace.Appearance && mitt.Asset.Geometry.Count > 0 && mitt.IsNew, "a duplicated hair part opens in Appearance as a new draft");
                 s.PreviewSocket = Humanoid.LeftHandSocket;
                 Record(s.PreviewAttachmentOn(s.Assets.Resolve("person")!) is { Instance.Socket: Humanoid.LeftHandSocket }, "the open part previews on the wearer's chosen socket before it is attached");
                 Check(s.AttachPart("mitt", Humanoid.LeftHandSocket), s);

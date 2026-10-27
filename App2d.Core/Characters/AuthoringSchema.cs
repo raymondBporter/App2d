@@ -130,9 +130,9 @@ public static class AuthoredJson
 
             var baseline = property.Get(defaults);
             // An extrusion's outline is its editable source. Its mesh is rebuilt when loaded.
-            if (compactExtrusions && info.Type == typeof(PropSolid) && property.Name is "vertices" or "triangles")
+            if (compactExtrusions && info.Type == typeof(PartMesh) && property.Name is "vertices" or "triangles")
             {
-                property.ShouldSerialize = (owner, value) => ((PropSolid)owner).Outline is null && !Equals(value, baseline);
+                property.ShouldSerialize = (owner, value) => ((PartMesh)owner).Outline is null && !Equals(value, baseline);
             }
             else if (info.Type == typeof(Authored.Part) && property.Name is "parameters" or "presets" or "measures" || info.Type == typeof(Authored.PartInstance) && property.Name == "inputs")
             {

@@ -379,7 +379,7 @@ internal static class SwingLab
     }
 
     /// <summary>The held sword's blade, guard to tip, in actor space; null while it is on the back.</summary>
-    public static (Vector3 Guard, Vector3 Tip)? Blade(ResolvedModel model, MotionClip clip, float seconds, PropAsset sword, ModelSocket socket) =>
+    public static (Vector3 Guard, Vector3 Tip)? Blade(ResolvedModel model, MotionClip clip, float seconds, Part sword, ModelSocket socket) =>
         PersonLoadout.SwordInHand(clip, seconds) ? PersonLoadout.Blade(PoseEvaluator.Sample(model, clip, seconds), sword, socket) : null;
 
     /// <summary>Where "in front of the player" starts, in actor units from the feet.</summary>

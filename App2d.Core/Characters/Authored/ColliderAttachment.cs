@@ -66,7 +66,7 @@ public sealed record ColliderDef
     /// <summary>With <see cref="Toward"/>: scale the shape uniformly by the distance to that control over its rest distance, so a capsule along a span follows it.</summary>
     public bool Stretch { get; set; }
     public string? Prop { get; set; }
-    public string Point { get; set; } = PropAsset.TipPoint;
+    public string Point { get; set; } = EquipmentPoints.Tip;
     /// <summary>Socket and prop bindings: how far the origin is pushed along the projected anchor axis.</summary>
     public float Along { get; set; }
     /// <summary>Actor binding: the offset from the feet; control binding: the socket offset.</summary>
@@ -110,7 +110,7 @@ public sealed record ColliderDef
                 throw new InvalidDataException($"{field}: prop '{Prop}' is not equipped.");
             }
 
-            EntityVocabulary.Require(Point, PropAsset.PointNames, field + " point");
+            AuthoredAsset.RequireId(Point, field + " point");
         }
         new Limit(-100, 100).Check(Along, field + " along");
         new Limit(-100, 100).Check(OffsetX, field + " offsetX");
@@ -209,7 +209,7 @@ public sealed class ResolvedCollider
 
     /// <summary>
     /// The collider's XY placement for a pose, in the pose's units scaled uniformly by <paramref name="scale"/> (a unit
-    /// conversion). Socket and prop bindings follow the lifted 3D frame projected with <see cref="PropPlacement3D.ProjectAxis"/>
+    /// conversion). Socket and prop bindings follow the lifted 3D frame projected with <see cref="PartPlacement3D.ProjectAxis"/>
     /// (the facing when head-on) and keep +Y toward the frame's across direction, so a mirrored actor keeps up up; actor
     /// bindings use the actor's own axes; control bindings are the planar socket placement.
     /// </summary>
@@ -234,7 +234,7 @@ public sealed class ResolvedCollider
             default:
             {
                 var frame = Anchor(pose);
-                var axis = PropPlacement3D.ProjectAxis(frame, pose.Facing);
+                var axis = PartPlacement3D.ProjectAxis(frame, pose.Facing);
                 var mirror = new Vector2d(axis).Cross(new(frame.YAxis.XY)) < 0d;
                 return Similarity2D.FromAxis(frame.TransformPoint(new(Definition.Along, 0, 0)).XY * scale, axis, mirror, scale);
             }
@@ -254,7 +254,7 @@ public sealed class ResolvedCollider
     {
         var equipment = Equipment!;
         var frame = pose.Socket(equipment.Socket);
-        return frame.WithOrigin(PropPlacement3D.PropPoint(frame, equipment.Prop, PropPoint));
+        return frame.WithOrigin(PartPlacement3D.Point(frame, equipment.Prop, PropPoint));
     }
 
     /// <summary>The placed shape as a region value, for outlines, reference capture and legacy overlap tests.</summary>

@@ -2,7 +2,9 @@
 
 Library parts now use the same geometry inspector as model artwork, including mesh placement, fit, layer, material, physical Z and thickness. The browser distinguishes **Part**, **Module**, and named **Study** entries. Whole rig modules open alone; **Preview on wearer (temporary)** places one on the selected wearer for fitting. **Attach** creates the saved instance. Standalone previews use the part's animation clock without changing the wearer or its documents.
 
-For the next consolidation of Part definitions, prop/physics loading, Behavior and texture-frame animation, see [Part consolidation plan](part-consolidation-plan.md).
+Clothing and weapons are now ordinary entries under **Parts**, with the same geometry editor, arbitrary XYZ locations, pivot, size, material and OBJ controls. Weapon tilt/twist remains available in Animate. **Attach** writes a model instance; **Equip on an entity** writes a gameplay equipment binding. Saved meshes keep editable outlines, and undo retains their rebuilt geometry.
+
+For the remaining consolidation of passive physics, Behavior and texture-frame animation, see [Part consolidation plan](part-consolidation-plan.md).
 
 The proposed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.
 

@@ -65,11 +65,11 @@ internal static class ModelOverlay
             return;
         }
 
-        var (world, local) = attachment.Lookups(placement);
+        var socket = new ActorPose(pose, Vector2.Zero, 1).Socket(attachment.Socket);
         var pieces = evaluated is null ? attachment.Parts.Where(p => !p.Hidden).ToList() : [.. evaluated.DrawnParts()];
         foreach (var part in pieces)
         {
-            var outline = (evaluated is null ? PartContours2D.Contour(part, world, local, world, local) : PartContours2D.Contour(part, evaluated)).Select(p => frame.Screen(p)).ToArray();
+            var outline = (evaluated is null ? PartContours2D.Contour(part, attachment, socket) : PartContours2D.Contour(part, evaluated)).Select(p => frame.Screen(p)).ToArray();
             for (var i = 1; i < outline.Length; i++)
             {
                 frame.Draw.AddLine(outline[i - 1], outline[i], color, 2);

@@ -344,8 +344,8 @@ public sealed class MigrationReferenceTests
         if (c.Gear is { } gear && clip is not null)
         {
             placements = PersonLoadout.Dressed(clip, c.Seconds, gear == "gun" ? PersonGear.Gun : PersonGear.Sword, entity)
-                .Where(d => Catalog.Props.ContainsKey(d.Prop) && entity.Sockets.ContainsKey(d.Socket))
-                .Select(d => (Catalog.Props[d.Prop], entity.Sockets[d.Socket])).ToList();
+                .Where(d => Catalog.Parts.ContainsKey(d.Prop) && entity.Sockets.ContainsKey(d.Socket))
+                .Select(d => (Catalog.Parts[d.Prop], entity.Sockets[d.Socket])).ToList();
         }
 
         record.Props = placements.ToDictionary(p => $"{p.Item1.Id}@{p.Item2.Id}", p => PropPoints(p.Item1, actor.Socket(p.Item2)), StringComparer.Ordinal);
@@ -356,7 +356,7 @@ public sealed class MigrationReferenceTests
             var region = EntityCollision.Attack(entity, actor, h);
             return new AttackRecord(a.Id, h.Window.Id, h.Start, h.Finish, h.Start <= c.Seconds && c.Seconds < h.Finish, Bounds(region.Bounds), V2(region.Pose.Translation), V2(region.Pose.XAxis), region.Pose.IsMirrored);
         })).ToList();
-        if (entity.Equipment.Any(e => e.Prop.Muzzle is not null))
+        if (entity.Equipment.Any(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null))
         {
             var (point, axis) = EntityCollision.Muzzle(entity, actor);
             record.Muzzle = new(V(point), V2(axis));
@@ -502,14 +502,14 @@ public sealed class MigrationReferenceTests
 
     private static FrameRecord Frame(Frame3D f) => new(V(f.Origin), V(f.XAxis), V(f.YAxis), V(f.ZAxis));
 
-    private static Dictionary<string, float[]> PropPoints(PropAsset prop, Frame3D frame)
+    private static Dictionary<string, float[]> PropPoints(Part prop, Frame3D frame)
     {
         var points = new Dictionary<string, float[]>(StringComparer.Ordinal);
-        foreach (var name in PropAsset.PointNames)
+        foreach (var name in EquipmentPoints.All)
         {
             if (prop.Point(name) is { } local)
             {
-                points[name] = V(PropPlacement3D.PropPoint(frame, prop, local));
+                points[name] = V(PartPlacement3D.Point(frame, prop, local));
             }
         }
 

@@ -1,0 +1,82 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "throwing-rock",
+  "name": "Throwing rock",
+  "usage": "prop",
+  "pivot": "grip",
+  "ink": "#30373a",
+  "lineWidth": 0.025,
+  "materials": {},
+  "locations": [
+    {
+      "id": "grip",
+      "y": -0.17,
+      "z": 0.5
+    },
+    {
+      "id": "tip"
+    },
+    {
+      "id": "muzzle"
+    }
+  ],
+  "geometry": [
+    {
+      "id": "mesh-1",
+      "mesh": {
+        "outline": [
+          {
+            "x": -0.19,
+            "y": -0.1,
+            "z": 0
+          },
+          {
+            "x": -0.08,
+            "y": -0.18,
+            "z": 0
+          },
+          {
+            "x": 0.13,
+            "y": -0.16,
+            "z": 0
+          },
+          {
+            "x": 0.22,
+            "y": -0.02,
+            "z": 0
+          },
+          {
+            "x": 0.13,
+            "y": 0.16,
+            "z": 0
+          },
+          {
+            "x": -0.1,
+            "y": 0.18,
+            "z": 0
+          },
+          {
+            "x": -0.22,
+            "y": 0.04,
+            "z": 0
+          }
+        ],
+        "thickness": 0.16
+      },
+      "material": {
+        "fill": "#858b86",
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin"
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

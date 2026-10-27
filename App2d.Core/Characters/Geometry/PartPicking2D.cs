@@ -7,6 +7,7 @@ using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -42,34 +43,37 @@ public static class PartPicking2D
     /// The picking score of a library part instance at a placement (P5b): the best of its payload pieces through the same
     /// geometry picking. Shapes, curves, images and indexed meshes share this route.
     /// </summary>
-    public static float Distance(ResolvedAttachment attachment, LayeredFrame2D placement, Vector3 point)
-    {
-        var (world, frame) = attachment.Lookups(placement);
-        var best = float.PositiveInfinity;
-        foreach (var part in attachment.Parts.Where(p => !p.Hidden))
-        {
-            best = MathF.Min(best, Distance(part, world, point, frame, world, frame, attachment.Asset.LineWidth));
-        }
-
-        return best;
-    }
+    public static float Distance(ResolvedAttachment attachment, LayeredFrame2D placement, Vector3 point) =>
+        DistanceAt(attachment, PartPlacement3D.Local(attachment.Asset).Then(PartPlacement3D.Extend(placement)), point);
 
     /// <summary>The picking score of an instance in an evaluated pose: its placement on the socket's evaluated placement, or its evaluated nested pose when animated.</summary>
     public static float Distance(ResolvedAttachment attachment, EvaluatedPose pose, Vector3 point) =>
         pose.Attachments.TryGetValue(attachment.Id, out var evaluated) ? Distance(evaluated, point)
-        : Distance(attachment, attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket)), point);
+        : Distance(attachment, new ActorPose(pose, Vector2.Zero, 1).Socket(attachment.Socket), point);
+
+    public static float Distance(ResolvedAttachment attachment, Frame3D socket, Vector3 point) =>
+        DistanceAt(attachment, PartPlacement3D.Placement(attachment, socket), point);
+
+    private static float DistanceAt(ResolvedAttachment attachment, Frame3D spatial, Vector3 point)
+    {
+        if (attachment.Instance.Hidden) return float.PositiveInfinity;
+        var (world, frame) = attachment.Lookups(LayeredFrame2D.Identity);
+        return attachment.Parts.Select(part => Distance(part, world, point, frame, world, frame, attachment.Asset.LineWidth,
+            spatial, attachment.Asset.Point(part.A)?.Z ?? 0)).DefaultIfEmpty(float.PositiveInfinity).Min();
+    }
 
     /// <summary>
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
-    public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, float lineWidth = .045f)
+    public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, float lineWidth = .045f, Frame3D? spatial = null, float physicalZ = 0)
     {
         var p = new Vector2(point.X, point.Y);
         if (part.Hidden) return float.PositiveInfinity;
         if (part.Mesh is { } solid)
         {
-            var frame = PropPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone));
+            var frame = PartPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone));
+            if (spatial is { } placed) frame = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, bone), placed, physicalZ);
             var vertices = solid.Vertices.Select(v => frame.TransformPoint(v.XYZ).XY).ToArray();
             var nearest = float.PositiveInfinity;
             foreach (var (ia, ib, ic) in MeshTopology.Triangles(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(solid.Triangles)))
@@ -82,10 +86,27 @@ public static class PartPicking2D
             return nearest / .06f;
         }
 
+        if (spatial is { } projection)
+        {
+            var contour = PartPlacement3D.Contour(part, PartContours2D.Contour(part, world, bone, rest, restBone), projection, physicalZ);
+            var closed = part.Geometry is IShape2D;
+            if (closed)
+            {
+                var triangles = PolygonTriangulationCache2D.Get(PartContours2D.LocalContour(part), 1e-8);
+                foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
+                    if (MathF.Abs(contour[a].XY.Orientation(contour[b].XY, contour[c].XY)) > 1e-8f &&
+                        new Triangle<Vector2>(contour[a].XY, contour[b].XY, contour[c].XY).Contains(p, 1e-7)) return 0;
+            }
+            var nearest = float.PositiveInfinity;
+            foreach (var (a, b) in MeshTopology.Edges(contour.Count, closed))
+                nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, contour[a].XY, contour[b].XY));
+            return nearest / MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
+        }
+
         if (part.Geometry is ICurve2D curve)
         {
             var pickWidth = MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
-            if (part.Bindings is { Count: > 0 } || part.ScaleX != part.ScaleY)
+            if (part.Frame is not null || part.Bindings is { Count: > 0 } || part.ScaleX != part.ScaleY)
             {
                 var path = PartContours2D.Contour(part, world, bone, rest, restBone);
                 var nearest = float.PositiveInfinity;

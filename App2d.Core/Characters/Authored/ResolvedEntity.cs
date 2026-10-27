@@ -66,7 +66,7 @@ public sealed record ResolvedAction(string Id, MotionClip Clip, string Source, I
         return Math.Clamp(weight, 0, 1);
     }
 }
-public sealed record ResolvedEquipment(PropAsset Prop, ModelSocket Socket);
+public sealed record ResolvedEquipment(Part Prop, ModelSocket Socket);
 
 /// <summary>
 /// An entity with every reference resolved and checked: model, effective role clips, enabled actions with marker times
@@ -112,7 +112,7 @@ public sealed class ResolvedEntity
     /// Compiles an entity against its assets. Every missing reference, unsupported action, incompatible clip and missing
     /// marker is an error naming the entity and field; nothing is dropped or defaulted silently.
     /// </summary>
-    public static ResolvedEntity Compile(EntityAsset asset, Func<string, ResolvedModel> resolve, Func<string, MotionClip?> clipOf, Func<string, PropAsset?> propOf)
+    public static ResolvedEntity Compile(EntityAsset asset, Func<string, ResolvedModel> resolve, Func<string, MotionClip?> clipOf, Func<string, Part?> propOf)
     {
         asset.Validate();
         var owner = $"Entity '{asset.Id}'";
@@ -271,7 +271,7 @@ public sealed class ResolvedEntity
                 throw new InvalidDataException($"{field}: a jump needs a '{EntityControllers.Launch}' event.");
             }
 
-            if (events.Any(e => e.Event.Id == EntityControllers.Fire) && !equipment.Any(e => e.Prop.Muzzle is not null))
+            if (events.Any(e => e.Event.Id == EntityControllers.Fire) && !equipment.Any(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null))
             {
                 throw new InvalidDataException($"{field}: a '{EntityControllers.Fire}' event needs an equipped prop with a muzzle.");
             }
@@ -412,7 +412,7 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
 
     /// <summary>The socket's 3D frame for props: its planar placement lifted by the clip's tilt/twist/turn orientation.</summary>
     public Frame3D Socket(ModelSocket socket) =>
-        PropPlacement3D.Lift(SocketPlacement(socket), Local.SocketAngles.GetValueOrDefault(socket.Id));
+        PartPlacement3D.Lift(SocketPlacement(socket), Local.SocketAngles.GetValueOrDefault(socket.Id));
 }
 
 /// <summary>
@@ -439,10 +439,10 @@ public static class EntityCollision
     /// <summary>Where a shot leaves: the first equipped prop with a muzzle, and its unit axis in world XY (facing included).</summary>
     public static (Vector3 Point, Vector2 Axis) Muzzle(ResolvedEntity entity, ActorPose pose)
     {
-        var gun = entity.Equipment.FirstOrDefault(e => e.Prop.Muzzle is not null) ?? throw new InvalidOperationException($"Entity '{entity.Id}' equips no prop with a muzzle.");
+        var gun = entity.Equipment.FirstOrDefault(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null) ?? throw new InvalidOperationException($"Entity '{entity.Id}' equips no prop with a muzzle.");
         var frame = pose.Socket(gun.Socket);
         // Gameplay stays in XY; foreshortening must not change projectile speed. A head-on barrel has no XY aim.
-        return (PropPlacement3D.PropPoint(frame, gun.Prop, gun.Prop.Muzzle!.Value), PropPlacement3D.ProjectAxis(frame, pose.Facing));
+        return (PartPlacement3D.Point(frame, gun.Prop, gun.Prop.Point(EquipmentPoints.Muzzle)!.Value), PartPlacement3D.ProjectAxis(frame, pose.Facing));
     }
 
     /// <summary>

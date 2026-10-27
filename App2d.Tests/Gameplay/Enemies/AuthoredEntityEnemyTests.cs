@@ -229,8 +229,8 @@ public sealed class AuthoredEntityEnemyTests
             if (bolts.Length > 0 && !sawBolt)
             {
                 sawBolt = true;
-                var gun = gunner.Entity.Equipment.Single(e => e.Prop.Muzzle is not null); // Hair and clothing are equipment too.
-                var muzzle = PropPlacement3D.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
+                var gun = gunner.Entity.Equipment.Single(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null); // Hair and clothing are equipment too.
+                var muzzle = PartPlacement3D.Point(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Point(EquipmentPoints.Muzzle)!.Value) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
                 Assert.True(Vector2.Distance(new(muzzle.X, muzzle.Y), bolts[0].Position) < 12, "the bolt leaves the drawn muzzle");
                 Assert.True(bolts[0].Velocity.X > 0, "toward the player");
             }
@@ -335,7 +335,7 @@ public sealed class AuthoredEntityEnemyTests
                 {
                     sawHitbox = true;
                     var spear = guard.Entity.Equipment[0];
-                    var tip = PropPlacement3D.PropPoint(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Tip) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
+                    var tip = PartPlacement3D.Point(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Point(EquipmentPoints.Tip)!.Value) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
                     var bounds = box.WorldBounds;
                     Assert.InRange(tip.X, bounds.Min.X, bounds.Max.X);
                     Assert.InRange(tip.Y, bounds.Min.Y, bounds.Max.Y);

@@ -112,7 +112,7 @@ public sealed class GameProfile
             }
             foreach (var (what, prop) in new[] { ("sword", Gear.Sword), ("pistol", Gear.Pistol), ("hair", Gear.Hair), ("hairBack", Gear.HairBack) })
             {
-                if (!catalog.Props.ContainsKey(prop))
+                if (!catalog.Parts.ContainsKey(prop))
                 {
                     throw new InvalidDataException($"{owner} gear.{what}: no prop '{prop}'.");
                 }

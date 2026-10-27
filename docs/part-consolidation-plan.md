@@ -2,7 +2,7 @@
 
 Date: 2026-10-26.
 
-Status: reviewed and in progress. S0 and S1 are implemented. S2-S5 and the remaining S6 cutover are pending; the earlier demo cleanup is recorded below.
+Status: reviewed and in progress. S0, S1 and S2 are implemented. S3-S5 and the remaining S6 cutover are pending; the earlier demo cleanup is recorded below.
 
 This follows the [completed character migration](character-system-migration-plan.md). Keep its working rig, proportions, constraints, module composition, collision registration, animation, document/undo infrastructure and game artwork. The next objective is fewer independent definitions, loaders, placement paths, inspectors and spawners.
 
@@ -169,8 +169,8 @@ Delete: duplicate per-entry placement/material/binding handling. A rename withou
 
 ### S2. Absorb props and named points
 
-- [ ] S2a. Convert clothing and weapons to Part geometry, with arbitrary named locations for grip, tip, muzzle and other points.
-- [ ] S2b. Move equipped-prop rendering, attachment preview and geometry editing onto the shared instancing path; retain equipment selection and attack rules under Behavior.
+- [x] S2a. Convert clothing and weapons to Part geometry, with arbitrary named locations for grip, tip, muzzle and other points.
+- [x] S2b. Move equipped-prop rendering, attachment preview and geometry editing onto the shared instancing path; retain equipment selection and attack rules under Behavior.
 
 Gate: the same asset can appear on two sockets; beard/hair/clothing remain correct; sword sheathing, both facings and weapon tilt/twist preserve grip/tip/muzzle positions. Physical mesh Z and character layer remain distinct.
 
@@ -272,7 +272,17 @@ Track reduction by the old paths removed and the ease of authoring these example
 - Conversion is explicit through `--convert-formats <source> <scratch-output>` and `PartGeometryConversion`. Normal loading rejects the old schema. Original files and the validated scratch bundle are retained in `artifacts/part-consolidation/original/parts` and `artifacts/part-consolidation/converted`. Existing entry IDs win collisions with generated mesh names. An old animated part's root-level solids receive an independent origin control.
 - Removed separate library-solid rendering, picking, selection-overlay and inspector branches. `PartMesh` holds geometry only; the old prop wrapper reuses it until S2. Model and library geometry share material resolution and an inspector. Meshes follow rig nodes and receive existing fit/show tracks. Extrusion remains one algorithm. Standalone previews cache their resolved instance, use the part's clock and texture root, and never enter a document.
 - Studio distinguishes reusable parts, whole rig modules, and named studies/demos. Modules open alone. **Preview on wearer (temporary)** is explicit; **Attach** is the saved operation. Instance layer and per-entry layer remain planar draw order; mesh vertex Z and thickness remain physical distances.
-- Still pending: weapon named points and orientation (S2), passive world objects and removal of fake combatant health (S3), Behavior/collider ownership (S4), texture/material/path animation (S5), and the final single-workflow cutover (S6).
+- Still pending after S1 (S2 is now completed below): passive world objects and removal of fake combatant health (S3), Behavior/collider ownership (S4), texture/material/path animation (S5), and the final single-workflow cutover (S6).
+
+### S2 conversion and review notes (2026-10-27)
+
+- All **30** clothing and weapon files now live in `parts/` as ordinary Part format 3 resources; the catalog contains **37** shared parts. IDs, equipment bindings, clip targets, state references and units are unchanged. Existing models, variants, animations, entities and profiles needed no JSON changes.
+- `PropAsset`, `PropShape`, `PropSolid`, their document/catalog route, the separate prop drawing loop, the clothing mesh inspector and the appearance-to-part conversion UI are removed. Extrusion and OBJ helpers now build `PartGeometry` with `PartMesh`. Both equipment and library previews draw through shared instancing and geometry code. Existing equipment selection, draw/sheath markers, hair/back-view selection, strikes and projectiles remain in gameplay; the Behavior aggregate is still S4.
+- Grip, tip, second-grip and muzzle are conventional names in arbitrary `locations`. A location has physical `z` separately from `layer`; rigid shape/curve vertices can carry physical `depths`. The generic `pivot` location and `scale` preserve the old grip-relative coordinate system without rewriting geometry. Physical rotation happens before instance/location/entry layer offsets are added. Collider location validation and the editor accept arbitrary names.
+- Geometry editing, named locations, OBJ import, material controls, cutout insertion/removal, viewport dragging, undo and compact save/reopen remain available. Undo snapshots retain derived mesh data; persisted extrusion files omit it. Entity equipment users now appear in the shared part's wearer list.
+- Conversion is explicit via `PropPartConversion` and the existing `--convert-formats <source> <scratch-output>` command. It refuses unknown source fields and colliding destination IDs. Original files are retained in `artifacts/part-consolidation/s2-original/props`; the verified dependency bundle and report are in `artifacts/part-consolidation/s2-converted`. Normal loading does not accept legacy prop files.
+- Validation: **789** character/geometry/entity/enemy integration tests passed, including unchanged migration reference captures and added checks for arbitrary collider locations, mirrored tilted instances, independent repeated instances, physical Z versus layers, conversion collisions and mesh undo. Native Studio: **158** editor checks and **46** acceptance checks passed. Clothing and tilted-weapon captures were visually inspected. Logs/captures are under `artifacts/part-consolidation/s2-*`.
+- The C# diff removes **446 net lines**, including new converter code and regression tests. This does not count moved JSON files as code reduction. Next: S3's common passive-body path; S4 Behavior/collider ownership and S5 texture/material/path animation remain pending.
 
 ## 8. Continuation record
 
@@ -281,3 +291,5 @@ Track reduction by the old paths removed and the ease of authoring these example
 | 2026-10-26 | Preview fix implemented; consolidation plan written | S0a: two failures reproduced before fix; 28 focused tests passed afterward in the previous work pass. Current source still contains that fix. This planning pass adds documentation only. Next: S0b and S1a. |
 | 2026-10-26 | Requested demo cleanup completed ahead of consolidation | S6a complete; wave-specific portion of S6b complete. Removed the curve-face model/template, nine demo clips, face-curve part, character wave modifier, unused payload interface and demo conversion command. Game faces and Core normal-offset curves retained. Seven demo reference cases removed; all 74 retained cases unchanged. Verification: 866 character/curve/rendering tests passed; Studio built in a separate output directory because the open editor locked its normal output; editor smoke 155/155 and acceptance 46/46, with curve/game-face frames inspected. These results cover the cleanup snapshot before concurrent consolidation edits. |
 | 2026-10-26 | S0b and S1 complete | 726 affected authored/geometry tests passed, then 24 focused preview/session/mesh tests passed after the final clock adjustment; Studio editor smoke 158/158 and acceptance 46/46. Inspected outfit, centaur, standalone module and mesh-inspector frames. Existing character reference data stayed unchanged. Studio and the Noodle bridge built. Removed separate library-solid handling; next is S2 or the independent S3 passive-object proof. |
+
+| 2026-10-27 | S2a/S2b implemented | 30 props converted into the shared Part library; separate codec/catalog, drawing and clothing inspector removed. 789 integration tests, 158 editor checks and 46 acceptance checks passed. Next: S3. |

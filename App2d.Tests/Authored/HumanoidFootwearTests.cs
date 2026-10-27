@@ -90,7 +90,7 @@ public sealed class HumanoidFootwearTests
                         var item = Assert.Single(entity.Equipment, e => e.Socket.Id == socketId);
                         Assert.Equal(style + "-" + side, item.Prop.Id);
                         var frame = pose.Socket(item.Socket);
-                        TestModels.Near(pose.World(foot), PropPlacement3D.PropPoint(frame, item.Prop, item.Prop.Grip));
+                        TestModels.Near(pose.World(foot), PartPlacement3D.Point(frame, item.Prop, item.Prop.Point(EquipmentPoints.Grip)!.Value));
                         var up = pose.World(knee) - pose.World(foot);
                         up.Z = 0;
                         TestModels.Near(Vector3.Normalize(up), frame.YAxis);
@@ -98,7 +98,7 @@ public sealed class HumanoidFootwearTests
                         var point = new Vector2(.04f, 0);
                         // Both the bare foot and its shoe use the same local XY axes and mirroring.
                         var onFoot = pose.Place(bare.At(point));
-                        var onShoe = PropPlacement3D.PropPoint(frame, item.Prop, new(point.X, point.Y));
+                        var onShoe = PartPlacement3D.Point(frame, item.Prop, new(point.X, point.Y));
                         TestModels.Near(onFoot with { Z = onShoe.Z }, onShoe);
                     }
                 }
@@ -114,15 +114,15 @@ public sealed class HumanoidFootwearTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         foreach (var side in new[] { "left", "right" })
         {
-            var original = catalog.Props[style + "-" + side];
+            var original = catalog.Parts[style + "-" + side];
             var json = original.ToJson();
             Assert.DoesNotContain("\"vertices\"", json);
-            var copy = PropAsset.FromJson(json);
-            copy.Solids[0].Material = copy.Solids[0].RenderMaterial with { Fill = "#123456" };
-            var edited = PropAsset.FromJson(copy.ToJson());
-            Assert.Equal("#123456", edited.Solids[0].RenderMaterial.Fill);
-            Assert.NotEqual(original.Solids[0].RenderMaterial.Fill, edited.Solids[0].RenderMaterial.Fill);
-            Assert.All(edited.Solids, solid => Assert.NotEmpty(solid.Outline!));
+            var copy = Part.FromJson(json);
+            copy.Geometry[0].Material = copy.Geometry[0].RenderMaterial with { Fill = "#123456" };
+            var edited = Part.FromJson(copy.ToJson());
+            Assert.Equal("#123456", edited.Geometry[0].RenderMaterial.Fill);
+            Assert.NotEqual(original.Geometry[0].RenderMaterial.Fill, edited.Geometry[0].RenderMaterial.Fill);
+            Assert.All(edited.Geometry, solid => Assert.NotEmpty(solid.Mesh!.Outline!));
             Assert.Equal(original.Attachment, edited.Attachment);
         }
     }
@@ -135,7 +135,7 @@ public sealed class HumanoidFootwearTests
         var copy = EntityAuthoring.Duplicate(original.Asset, "booted-cinder", "Booted Cinder");
         copy.Equipment.RemoveAll(e => e.Socket is Humanoid.LeftFootSocket or Humanoid.RightFootSocket);
         copy.Equipment.AddRange(PersonWardrobe.Footwear("boot"));
-        var dressed = ResolvedEntity.Compile(copy, catalog.Resolve, id => catalog.Animations.GetValueOrDefault(id), id => catalog.Props.GetValueOrDefault(id));
+        var dressed = ResolvedEntity.Compile(copy, catalog.Resolve, id => catalog.Animations.GetValueOrDefault(id), id => catalog.Parts.GetValueOrDefault(id));
         Assert.Same(original.Model, dressed.Model);
         Assert.Equal(original.Asset.Behaviors.Damage.Health, dressed.Asset.Behaviors.Damage.Health);
         Assert.Same(original.Actions["attack"].Clip, dressed.Actions["attack"].Clip);

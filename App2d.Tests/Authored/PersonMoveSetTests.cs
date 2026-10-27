@@ -91,11 +91,11 @@ public sealed class PersonMoveSetTests
             var pose = new ActorPose(PoseEvaluator.Sample(Person, clip, time), Vector2.Zero, 1);
             var hand = pose.Socket(Person.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
             var back = pose.Socket(Person.Base.Sockets.Single(s => s.Id == Humanoid.BackSocket));
-            var sword = Catalog.Props[PersonLoadout.Sword];
-            foreach (var point in new PuppetPoint[] { new(0, 0, 0), new(sword.Tip.X, 0, 0) })
+            var sword = Catalog.Parts[PersonLoadout.Sword];
+            foreach (var point in new PuppetPoint[] { new(0, 0, 0), new(sword.Point(EquipmentPoints.Tip)!.Value.X, 0, 0) })
             {
-                var a = PropPlacement3D.PropPoint(hand, sword, point);
-                var b = PropPlacement3D.PropPoint(back, sword, point);
+                var a = PartPlacement3D.Point(hand, sword, point);
+                var b = PartPlacement3D.Point(back, sword, point);
                 Assert.InRange(Vector2.Distance(new(a.X, a.Y), new(b.X, b.Y)), 0, .01f);
             }
         }

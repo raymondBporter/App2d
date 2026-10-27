@@ -13,16 +13,16 @@ public sealed class WeaponOrientationTests
     [Fact]
     public void FacetedBladeIsClosedOutwardWoundAndEndsAtItsTip()
     {
-        var mesh = PropGeometry.Blade(.1f, .65f, .82f, .047f, .014f, "#dce5e7");
-        new PropAsset { Id = "blade", Name = "Blade", Solids = [mesh] }.Validate();
+        var mesh = PartGeometryBuilder.Blade(.1f, .65f, .82f, .047f, .014f, "#dce5e7");
+        new Part { Id = "blade", Name = "Blade", Geometry = [mesh] }.Validate();
         var center = new Vector3(.4f, 0, 0);
         var edges = new Dictionary<(int, int), int>();
-        for (var i = 0; i < mesh.Triangles.Count; i += 3)
+        for (var i = 0; i < mesh.Mesh!.Triangles.Count; i += 3)
         {
-            var indices = mesh.Triangles.Skip(i).Take(3).ToArray();
-            var a = mesh.Vertices[indices[0]].XYZ;
-            var b = mesh.Vertices[indices[1]].XYZ;
-            var c = mesh.Vertices[indices[2]].XYZ;
+            var indices = mesh.Mesh!.Triangles.Skip(i).Take(3).ToArray();
+            var a = mesh.Mesh!.Vertices[indices[0]].XYZ;
+            var b = mesh.Mesh!.Vertices[indices[1]].XYZ;
+            var c = mesh.Mesh!.Vertices[indices[2]].XYZ;
             Assert.True(Vector3.Dot(Vector3.Cross(b - a, c - a), (a + b + c) / 3 - center) > 0);
             for (var j = 0; j < 3; j++)
             {
@@ -33,7 +33,7 @@ public sealed class WeaponOrientationTests
             }
         }
         Assert.All(edges.Values, count => Assert.Equal(2, count));
-        Assert.Equal(new PuppetPoint(.82f, 0, 0), mesh.Vertices.MaxBy(v => v.X));
+        Assert.Equal(new PuppetPoint(.82f, 0, 0), mesh.Mesh!.Vertices.MaxBy(v => v.X));
     }
 
     private static (ResolvedModel Model, ModelSocket Socket, MotionClip Clip) Setup()
@@ -67,13 +67,13 @@ public sealed class WeaponOrientationTests
         var origin = new Vector2(4, 2);
         var right = new ActorPose(local, origin, 1).Socket(socket);
         var left = new ActorPose(local, origin, -1).Socket(socket);
-        var prop = new PropAsset { Grip = new(.2f, -.1f, .03f), Scale = 2 };
-        foreach (var p in new[] { prop.Grip, new PuppetPoint(1, .2f, -.04f), new PuppetPoint(.3f, -.3f, .2f) })
+        var prop = new Part { Pivot = EquipmentPoints.Grip, Locations = [new() { Id = EquipmentPoints.Grip, X = .2f, Y = -.1f, Z = .03f }], Scale = 2 };
+        foreach (var p in new[] { prop.Point(EquipmentPoints.Grip)!.Value, new PuppetPoint(1, .2f, -.04f), new PuppetPoint(.3f, -.3f, .2f) })
         {
-            var r = PropPlacement3D.PropPoint(right, prop, p);
-            var l = PropPlacement3D.PropPoint(left, prop, p);
+            var r = PartPlacement3D.Point(right, prop, p);
+            var l = PartPlacement3D.Point(left, prop, p);
             TestModels.Near(new(8 - r.X, r.Y, r.Z), l, 1e-5f);
-            Assert.InRange(Vector3.Distance(r, right.Origin) - Vector3.Distance(p.XYZ, prop.Grip.XYZ) * 2, -1e-5f, 1e-5f);
+            Assert.InRange(Vector3.Distance(r, right.Origin) - Vector3.Distance(p.XYZ, prop.Point(EquipmentPoints.Grip)!.Value.XYZ) * 2, -1e-5f, 1e-5f);
         }
         Assert.True(right.XAxis.XY.Length() < .9f);
     }
@@ -121,31 +121,31 @@ public sealed class WeaponOrientationTests
     [Fact]
     public void ObjAcceptsNegativeIndicesAndWeldsPositionsButRequiresTriangles()
     {
-        var mesh = PropGeometry.ImportObj("v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 0\nf -1/1/1 -2/2/1 -3/3/1", 2);
-        Assert.Equal(3, mesh.Vertices.Count);
-        Assert.Equal(new[] { 0, 2, 1 }, mesh.Triangles);
-        Assert.Equal(2, mesh.Vertices[1].X);
-        Assert.Throws<InvalidDataException>(() => PropGeometry.ImportObj("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3 1"));
-        Assert.Throws<InvalidDataException>(() => PropGeometry.ImportObj("v NaN 0 0"));
-        Assert.Throws<InvalidDataException>(() => PropGeometry.ImportObj("v 0 0 0\nf 1 1 1"));
+        var mesh = PartGeometryBuilder.ImportObj("v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 0\nf -1/1/1 -2/2/1 -3/3/1", 2);
+        Assert.Equal(3, mesh.Mesh!.Vertices.Count);
+        Assert.Equal(new[] { 0, 2, 1 }, mesh.Mesh!.Triangles);
+        Assert.Equal(2, mesh.Mesh!.Vertices[1].X);
+        Assert.Throws<InvalidDataException>(() => PartGeometryBuilder.ImportObj("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3 1"));
+        Assert.Throws<InvalidDataException>(() => PartGeometryBuilder.ImportObj("v NaN 0 0"));
+        Assert.Throws<InvalidDataException>(() => PartGeometryBuilder.ImportObj("v 0 0 0\nf 1 1 1"));
     }
 
     [Fact]
     public void SolidBladeKeepsAThinVisibleEdgeAndDoesNotLoseItsReverseFace()
     {
-        var prop = new PropAsset
+        var prop = new Part
         {
             Id = "blade",
             Name = "Blade",
             LineWidth = .008f,
-            Solids = [PropGeometry.Extrude([new(0, -.1f), new(1, -.1f), new(1, .1f), new(0, .1f)], .02f, "#cccccc")]
+            Geometry = [PartGeometryBuilder.Extrude([new(0, -.1f), new(1, -.1f), new(1, .1f), new(0, .1f)], .02f, "#cccccc")]
         };
         var drawing = new PuppetDrawing();
         float Width(float angle)
         {
             drawing.Mesh.Clear();
             var matrix = Matrix4x4.CreateRotationX(angle);
-            drawing.AddProp(prop, new(Vector3.Zero, Vector3.UnitX, Vector3.Transform(Vector3.UnitY, matrix), Vector3.Transform(Vector3.UnitZ, matrix)));
+            drawing.AddAttachment(prop, new(Vector3.Zero, Vector3.UnitX, Vector3.Transform(Vector3.UnitY, matrix), Vector3.Transform(Vector3.UnitZ, matrix)));
             Assert.True(drawing.Mesh.TriangleCount > 12);
             return drawing.Mesh.Max.Y - drawing.Mesh.Min.Y;
         }
@@ -159,23 +159,23 @@ public sealed class WeaponOrientationTests
     [Fact]
     public void CollapsedPlacementSkipsDegenerateFacesWithoutNaNGeometry()
     {
-        var prop = new PropAsset
+        var prop = new Part
         {
             Id = "triangle",
             Name = "Triangle",
-            Solids = [new PropSolid
+            Geometry = [new PartGeometry
             {
                 Material = new() { Fill = "#c8b18a", Outline = new() },
-                Vertices = [new(0, 0), new(1, 0), new(0, 1)],
-                Triangles = [0, 1, 2]
+                A = PartLocation.Origin, Frame = PartLocation.Origin,
+                Mesh = new() { Vertices = [new(0, 0), new(1, 0), new(0, 1)], Triangles = [0, 1, 2] }
             }]
         };
         prop.Validate();
         var drawing = new PuppetDrawing();
-        drawing.AddProp(prop, new(new Vector3(1e9f), Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
+        drawing.AddAttachment(prop, new(new Vector3(1e9f), Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
         Assert.Equal(0, drawing.Mesh.Count);
 
-        drawing.AddProp(prop, new(Vector3.Zero, Vector3.UnitX, Vector3.UnitX, Vector3.UnitZ));
+        drawing.AddAttachment(prop, new(Vector3.Zero, Vector3.UnitX, Vector3.UnitX, Vector3.UnitZ));
         Assert.Equal(0, drawing.Mesh.Count);
     }
 

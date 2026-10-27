@@ -15,7 +15,7 @@ public sealed class ContactResolutionTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
 
     private static ResolvedEntity Compile(EntityAsset asset) =>
-        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
+        ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
     [Fact]
     public void ResolveReportsEachTargetOncePerInstanceAndGroupAndLetsTheGuardTakeAFrontContact()

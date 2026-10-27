@@ -239,12 +239,12 @@ public sealed class PartAssetTests : IDisposable
     }
 
     [Fact]
-    public void AFootwearPropConvertsToAPartWhoseOriginTakesTheGripsRole()
+    public void FootwearUsesTheSharedPartCodecAndRetainsItsGeometry()
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
-        var boot = Part.FromProp(catalog.Props["boot-left"], "boot", "Short leather boot", "shoe");
-        Assert.Equal(catalog.Props["boot-left"].Solids.Count, boot.Geometry.Count);
-        Assert.Equal(catalog.Props["boot-left"].Solids[0].Vertices.Count, boot.Geometry[0].Mesh!.Vertices.Count);
+        var boot = AppearanceAuthoring.Duplicate(catalog.Parts["boot-left"], "boot", "Short leather boot");
+        Assert.Equal(catalog.Parts["boot-left"].Geometry.Count, boot.Geometry.Count);
+        Assert.Equal(catalog.Parts["boot-left"].Geometry[0].Mesh!.Vertices.Count, boot.Geometry[0].Mesh!.Vertices.Count);
         Assert.Equal(PartPayloads.Static, boot.Payload);
         Assert.Equal(boot.ToJson(), Part.FromJson(boot.ToJson()).ToJson());
     }

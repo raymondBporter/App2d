@@ -62,7 +62,7 @@ public sealed class PartAttachmentDrawingTests
         var viaProp = new PuppetDrawing();
         viaProp.Build(plain, pose);
         var bare = viaProp.Mesh.Count;
-        viaProp.AddProp(Catalog.Props["boot-left"], new ActorPose(pose, Vector2.Zero, 1).Socket(booted.Base.Sockets.First(s => s.Id == Humanoid.LeftFootSocket)));
+        viaProp.AddAttachment(Catalog.Parts["boot-left"], new ActorPose(pose, Vector2.Zero, 1).Socket(booted.Base.Sockets.First(s => s.Id == Humanoid.LeftFootSocket)));
         Assert.Equal(viaProp.Mesh.Count, viaPart.Mesh.Count);
         Assert.True(viaProp.Mesh.Count > bare);
         for (var i = bare; i < viaProp.Mesh.Count; i++)
@@ -118,7 +118,7 @@ public sealed class PartAttachmentDrawingTests
         TestModels.Near(world("cuff"), seam[^1], 1e-5f);
         var badge = PartAttachment2D.FrameOf(attachment.Parts[2], world, frame);
         TestModels.Near(world("cuff"), badge.Origin, 1e-5f);
-        var lifted = PropPlacement3D.Extend(placement);
+        var lifted = PartPlacement3D.Extend(placement);
         TestModels.Near(placement.At(new Vector3(.03f, .14f, 0)), lifted.TransformPoint(new(.03f, .14f, 0)), 1e-5f);
         // The instance's fit and mirror are in the placement: X stretched by 2 × 1.5 and reflected, Y by 1.5.
         Assert.Equal(3, placement.XAxis.Length(), 4);

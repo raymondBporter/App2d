@@ -74,7 +74,7 @@ public sealed class AuthoredArenaTests
         skirmisher.Actions[0].Mask = Humanoid.UpperGroup;
         skirmisher.Actions[0].BlendIn = .08f;
         skirmisher.Actions[0].BlendOut = .12f;
-        var masked = ResolvedEntity.Compile(skirmisher, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
+        var masked = ResolvedEntity.Compile(skirmisher, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
         foreach (var (entity, walks) in new[] { (masked, true), (Catalog.Entities["spear-guard"], false) })
         {
             var arena = new AuthoredArena([entity]);

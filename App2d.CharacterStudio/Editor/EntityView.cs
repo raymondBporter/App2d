@@ -566,7 +566,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         switch (collider.Binding)
         {
             case ColliderBindings.Prop:
-                if (Ui.Combo("Prop point", collider.Point, PropAsset.PointNames) is { } point)
+                if (Ui.Combo("Part location", collider.Point, session.Assets.Part(collider.Prop)?.Asset.Locations.Select(l => l.Id).Prepend(PartLocation.Origin) ?? []) is { } point)
                 {
                     session.Edit(document, () => Collider().Point = point);
                 }
@@ -708,8 +708,8 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         foreach (var binding in equipment.ToArray())
         {
             ImGui.PushID(binding.Prop);
-            ImGui.TextUnformatted(session.Assets.Prop(binding.Prop)?.Name ?? binding.Prop + " (missing)");
-            if (session.Assets.Prop(binding.Prop)?.Asset.Usage is "hair" or "clothing")
+            ImGui.TextUnformatted(session.Assets.Part(binding.Prop)?.Name ?? binding.Prop + " (missing)");
+            if (session.Assets.Part(binding.Prop)?.Asset.Usage is "hair" or "clothing")
             {
                 if (ImGui.SmallButton("Edit appearance"))
                 {
@@ -738,7 +738,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
 
             ImGui.PopID();
         }
-        var available = session.Assets.Props.Select(p => p.Id).Where(p => equipment.All(e => e.Prop != p)).Order(StringComparer.Ordinal).ToArray();
+        var available = session.Assets.Parts.Select(p => p.Id).Where(p => equipment.All(e => e.Prop != p)).Order(StringComparer.Ordinal).ToArray();
         if (available.Length == 0 || sockets.Length == 0)
         {
             Ui.Help(sockets.Length == 0 ? "The base has no sockets to hold props." : "Every prop is equipped.");
@@ -1143,8 +1143,9 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             }
         }
         foreach (var equipment in preview.Entity.Equipment)
+        foreach (var location in equipment.Prop.Locations)
         {
-            var tip = PropPlacement3D.PropPoint(preview.Pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip);
+            var tip = PartPlacement3D.Point(preview.Pose.Socket(equipment.Socket), equipment.Prop, location.Point);
             draw.AddCircleFilled(frame.Screen(tip), 4 * Ui.Scale, StudioTheme.WeaponTip.PackedValue);
         }
         if (preview.Action is { Mask: not null } masked)

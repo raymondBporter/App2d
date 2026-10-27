@@ -10,7 +10,6 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, MotionClip> _animations = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _paths = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedModel> _resolved = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, PropAsset> _props = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EntityAsset> _entityAssets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PhysicsPropAsset> _physicsProps = new(StringComparer.Ordinal);
@@ -22,7 +21,6 @@ public sealed class AuthoredCatalog
     public IReadOnlyDictionary<string, CharacterModel> Models => _models;
     public IReadOnlyDictionary<string, ModelVariant> Variants => _variants;
     public IReadOnlyDictionary<string, MotionClip> Animations => _animations;
-    public IReadOnlyDictionary<string, PropAsset> Props => _props;
     /// <summary>Entity files that parsed. Only those in <see cref="Entities"/> compiled and may be played.</summary>
     public IReadOnlyDictionary<string, EntityAsset> EntityAssets => _entityAssets;
     public IReadOnlyDictionary<string, ResolvedEntity> Entities => _entities;
@@ -62,12 +60,11 @@ public sealed class AuthoredCatalog
             });
         }
 
-        catalog.Scan(root, "props", PropAsset.FromJson, catalog._props, p => p.Id);
         catalog.Scan(root, "physics-props", PhysicsPropAsset.FromJson, catalog._physicsProps, p => p.Id);
         catalog.Scan(root, "entities", EntityAsset.FromJson, catalog._entityAssets, e => e.Id);
         foreach (var entity in catalog._entityAssets.Values)
         {
-            catalog.Check(entity.Id, () => catalog._entities[entity.Id] = ResolvedEntity.Compile(entity, catalog.Resolve, catalog._animations.GetValueOrDefault, catalog._props.GetValueOrDefault));
+            catalog.Check(entity.Id, () => catalog._entities[entity.Id] = ResolvedEntity.Compile(entity, catalog.Resolve, catalog._animations.GetValueOrDefault, catalog._parts.GetValueOrDefault));
         }
 
         catalog.Scan(root, "profiles", GameProfile.FromJson, catalog._profiles, p => p.Id);

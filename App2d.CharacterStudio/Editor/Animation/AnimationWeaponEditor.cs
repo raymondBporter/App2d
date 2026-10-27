@@ -14,7 +14,8 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
     private string? _weaponDrag;
     private float _weaponPointerAngle;
     private Vector3 _weaponStart;
-    private float _objScale = 1;
+    private readonly LibraryPartFields _partFields = new(session);
+    private readonly Model.ModelPartInspector _geometryInspector = new(session, new(session));
 
     public void DrawOutline(Subject primary)
     {
@@ -30,7 +31,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
             session.PreviewWeapon = visible;
         }
 
-        if (Ui.Combo("Prop", session.PreviewProp, session.Assets.Props.Select(p => p.Id), id => session.Assets.Prop(id)?.Name ?? id) is { } prop)
+        if (Ui.Combo("Prop", session.PreviewProp, session.Assets.Parts.Select(p => p.Id), id => session.Assets.Part(id)?.Name ?? id) is { } prop)
         {
             session.PreviewProp = prop;
             session.EditWeapon = true;
@@ -146,7 +147,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
 
         if (ImGui.CollapsingHeader("Weapon asset / import OBJ"))
         {
-            PropFields(session.Assets.Prop(weapon.Prop.Id)!);
+            PropFields(session.Assets.Part(weapon.Prop.Id)!);
         }
 
         foreach (var problem in session.Assets.Problems(document))
@@ -155,85 +156,19 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
         }
     }
 
-    private void PropFields(AssetDocument<PropAsset> document)
+    private void PropFields(AssetDocument<Part> document)
     {
-        Ui.Help("Shared asset: these changes affect every entity using this weapon. Save weapon separately, or use Save all.");
-        var prop = document.Asset;
-        var scale = prop.Scale;
-        if (Ui.Drag("Size", ref scale, .005f, .001f, 100))
+        _partFields.Placement(document);
+        _partFields.Locations(document);
+        _partFields.Import(document);
+        foreach (var piece in document.Asset.Geometry)
         {
-            session.Change(document, () => document.Asset.Scale = Math.Clamp(scale, .001f, 100));
+            ImGui.PushID(piece.Id);
+            if (ImGui.CollapsingHeader(piece.Id))
+                _geometryInspector.Draw(piece, null, change => session.Change(document, () => { change(piece); document.Asset.Validate(); }), document.Asset);
+            ImGui.PopID();
         }
-
-        var grip = prop.Grip.XYZ;
-        if (Ui.Drag3("Grip (local XYZ)", ref grip))
-        {
-            session.Change(document, () => document.Asset.Grip = PuppetPoint.From(grip));
-        }
-
-        var tip = prop.Tip.XYZ;
-        if (Ui.Drag3("Tip (local XYZ)", ref tip))
-        {
-            session.Change(document, () => document.Asset.Tip = PuppetPoint.From(tip));
-        }
-
-        if (prop.Muzzle is { } muzzle)
-        {
-            var point = muzzle.XYZ;
-            if (Ui.Drag3("Muzzle (local XYZ)", ref point))
-            {
-                session.Change(document, () => document.Asset.Muzzle = PuppetPoint.From(point));
-            }
-        }
-        var ink = prop.LineWidth;
-        if (Ui.Drag("Ink width", ref ink, .001f, .001f, .1f))
-        {
-            session.Change(document, () => document.Asset.LineWidth = Math.Clamp(ink, .001f, .1f));
-        }
-
-        for (var i = 0; i < prop.Solids.Count; i++)
-        {
-            var index = i;
-            var color = prop.Solids[i].RenderMaterial.Fill!;
-            if (Ui.ColorHex("Color " + (i + 1), ref color))
-            {
-                session.Change(document, () =>
-            {
-                var solid = document.Asset.Solids[index];
-                solid.Material = solid.RenderMaterial with
-                {
-                    Fill = color
-                };
-            });
-            }
-        }
-        Ui.Drag("OBJ import scale", ref _objScale, .001f, .001f, 100);
-        Ui.Help("Triangulated OBJ, outward face winding. +X along blade/barrel, +Y across broad face, Z thickness. Export applied transforms. Materials/textures are not imported.");
-        if (ImGui.Button("Replace geometry from OBJ..."))
-        {
-            using var dialog = new OpenFileDialog { Filter = "Triangulated OBJ|*.obj", Title = "Import weapon geometry" };
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    if (new FileInfo(dialog.FileName).Length > 16 * 1024 * 1024)
-                    {
-                        throw new InvalidDataException("OBJ must be under 16 MB.");
-                    }
-
-                    var mesh = PropGeometry.ImportObj(File.ReadAllText(dialog.FileName), _objScale, prop.Solids.FirstOrDefault()?.RenderMaterial.Fill ?? "#c8b18a");
-                    session.Edit(document, () =>
-                    {
-                        document.Asset.Shapes.Clear();
-                        document.Asset.Solids = [mesh];
-                    }, "Imported geometry. Check size, grip, tip and muzzle, then save weapon.");
-                }
-                catch (Exception ex) when (ex is IOException or ArgumentException)
-                {
-                    session.Report(ex.Message, true);
-                }
-            }
-        }
+        if (ImGui.Button("Open part geometry editor")) session.Open(document.Id);
         if (Ui.Button("Undo weapon edit", document.CanUndo))
         {
             document.Undo();
@@ -263,7 +198,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
         var draw = frame.Draw;
         var scale = Ui.Scale;
         var angles = subject.Pose.SocketAngles.GetValueOrDefault(weapon.Socket.Id);
-        var tip = frame.Screen(PropPlacement3D.PropPoint(socket, weapon.Prop, weapon.Prop.Tip));
+        var tip = frame.Screen(PartPlacement3D.Point(socket, weapon.Prop, (weapon.Prop.Point(EquipmentPoints.Tip) ?? default)));
         draw.AddLine(center, tip, StudioTheme.Selection.PackedValue, 1);
         draw.AddCircle(tip, 6 * scale, StudioTheme.Selection.PackedValue, 20, 2);
         draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, .24f, 0))), StudioTheme.WeaponAxisY.PackedValue, 2);

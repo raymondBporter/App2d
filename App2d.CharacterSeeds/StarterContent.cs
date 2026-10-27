@@ -93,7 +93,7 @@ public static class StarterContent
             Save("animations", clip.Id, clip.ToJson());
         }
         var spear = SpearProp();
-        Save("props", spear.Id, spear.ToJson());
+        Save("parts", spear.Id, spear.ToJson());
 
         var stalker = StalkerModel();
         var stalkerResolved = ResolvedModel.From(stalker);
@@ -303,21 +303,21 @@ public static class StarterContent
         return clip;
     }
 
-    public static PropAsset SpearProp() => new()
+    public static Part SpearProp() => PartGeometryBuilder.Named(new()
     {
         Id = Spear,
         Name = "Spear",
-        Tip = new(1.38f, 0),
-        SecondGrip = new(-.3f, 0),
+        Usage = "prop",
+        Locations = [new() { Id = EquipmentPoints.Grip }, new() { Id = EquipmentPoints.Tip, X = 1.38f, Y = 0 }, new() { Id = EquipmentPoints.SecondGrip, X = -.3f, Y = 0 }],
         LineWidth = .013f,
-        Solids =
+        Geometry =
         [
-            PropGeometry.Extrude([new(-.5f, -.024f), new(1.12f, -.021f), new(1.12f, .021f), new(-.5f, .024f)], .039f, "#876646"),
-            PropGeometry.Extrude([new(-.5f, -.031f), new(-.41f, -.031f), new(-.41f, .031f), new(-.5f, .031f)], .05f, "#465963"),
-            PropGeometry.Extrude([new(1.035f, -.039f), new(1.115f, -.039f), new(1.115f, .039f), new(1.035f, .039f)], .064f, "#c5a26b"),
-            PropGeometry.Blade(1.1f, 1.17f, 1.38f, .076f, .022f, "#dce5e7"),
+            PartGeometryBuilder.Extrude([new(-.5f, -.024f), new(1.12f, -.021f), new(1.12f, .021f), new(-.5f, .024f)], .039f, "#876646"),
+            PartGeometryBuilder.Extrude([new(-.5f, -.031f), new(-.41f, -.031f), new(-.41f, .031f), new(-.5f, .031f)], .05f, "#465963"),
+            PartGeometryBuilder.Extrude([new(1.035f, -.039f), new(1.115f, -.039f), new(1.115f, .039f), new(1.035f, .039f)], .064f, "#c5a26b"),
+            PartGeometryBuilder.Blade(1.1f, 1.17f, 1.38f, .076f, .022f, "#dce5e7"),
         ],
-    };
+    });
 
     // ---- Stalker --------------------------------------------------------------------------------------------------
 
@@ -427,7 +427,7 @@ public static class StarterContent
     };
 
     /// <summary>The spear's attack collider: a box just behind the tip, enabled by the thrust's window.</summary>
-    private static ColliderDef SpearTip() => new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) };
+    private static ColliderDef SpearTip() => new() { Id = "spear-tip", Use = ColliderUses.Attack, Prop = Spear, Point = EquipmentPoints.Tip, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) };
 
     /// <summary>P9a: the typed behaviors of a starter entity: its health and one default strike per hit group.</summary>
     private static EntityBehaviors Behaviors(int health, params string[] groups) => new()

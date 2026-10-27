@@ -1,0 +1,150 @@
+{
+  "format": "app2d-part",
+  "version": 3,
+  "id": "sheath",
+  "name": "Sheath",
+  "usage": "prop",
+  "pivot": "grip",
+  "lineWidth": 0.012,
+  "materials": {},
+  "locations": [
+    {
+      "id": "grip"
+    },
+    {
+      "id": "tip",
+      "x": 0.85
+    }
+  ],
+  "geometry": [
+    {
+      "id": "mesh-1",
+      "mesh": {
+        "outline": [
+          {
+            "x": 0.075,
+            "y": -0.056,
+            "z": 0
+          },
+          {
+            "x": 0.68,
+            "y": -0.043,
+            "z": 0
+          },
+          {
+            "x": 0.85,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 0.68,
+            "y": 0.043,
+            "z": 0
+          },
+          {
+            "x": 0.075,
+            "y": 0.056,
+            "z": 0
+          }
+        ],
+        "thickness": 0.064
+      },
+      "material": {
+        "fill": "#344b53",
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin"
+    },
+    {
+      "id": "mesh-2",
+      "mesh": {
+        "outline": [
+          {
+            "x": 0.078,
+            "y": -0.065,
+            "z": 0
+          },
+          {
+            "x": 0.104,
+            "y": -0.065,
+            "z": 0
+          },
+          {
+            "x": 0.112,
+            "y": -0.056999996,
+            "z": 0
+          },
+          {
+            "x": 0.112,
+            "y": 0.056999996,
+            "z": 0
+          },
+          {
+            "x": 0.104,
+            "y": 0.065,
+            "z": 0
+          },
+          {
+            "x": 0.078,
+            "y": 0.065,
+            "z": 0
+          },
+          {
+            "x": 0.07,
+            "y": 0.056999996,
+            "z": 0
+          },
+          {
+            "x": 0.07,
+            "y": -0.056999996,
+            "z": 0
+          }
+        ],
+        "thickness": 0.078
+      },
+      "material": {
+        "fill": "#c5a26b",
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin"
+    },
+    {
+      "id": "mesh-3",
+      "mesh": {
+        "outline": [
+          {
+            "x": 0.71,
+            "y": -0.036,
+            "z": 0
+          },
+          {
+            "x": 0.85,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 0.71,
+            "y": 0.036,
+            "z": 0
+          }
+        ],
+        "thickness": 0.067
+      },
+      "material": {
+        "fill": "#c5a26b",
+        "outline": {}
+      },
+      "a": "origin",
+      "frame": "origin"
+    }
+  ],
+  "controls": [],
+  "constraints": [],
+  "groups": [],
+  "exposed": [],
+  "layers": [],
+  "clips": [],
+  "expressions": {}
+}

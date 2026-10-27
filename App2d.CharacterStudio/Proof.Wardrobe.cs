@@ -96,7 +96,7 @@ internal sealed partial class ProofRenders
                         var placed = new ActorPose(pose, Vector2.Zero, 1);
                         foreach (var (prop, socket) in PersonLoadout.Dressed(clip, at, PersonGear.Sword, entity))
                         {
-                            drawing.AddProp(catalog.Props[prop], placed.Socket(entity.Sockets[socket]));
+                            drawing.AddAttachment(catalog.Parts[prop], placed.Socket(entity.Sockets[socket]));
                         }
                     }
                     else
@@ -164,9 +164,9 @@ internal sealed partial class ProofRenders
                 });
                 drawing.Build(thrower.Model, pose);
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
-                foreach (var equipment in thrower.Equipment.Where(e => e.Prop.Muzzle is null || i is 2 or 3 or 4))
+                foreach (var equipment in thrower.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null || i is 2 or 3 or 4))
                 {
-                    drawing.AddProp(equipment.Prop, placed.Socket(equipment.Socket));
+                    drawing.AddAttachment(equipment.Prop, placed.Socket(equipment.Socket));
                 }
 
                 foreach (var (ppu, y, facing) in new[] { (125, 380, 1), (48, 440, -1) })
@@ -228,21 +228,21 @@ internal sealed partial class ProofRenders
                 });
                 drawing.Build(subject.Model, pose);
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
-                foreach (var equipment in subject.Equipment.Where(e => e.Prop.Muzzle is null || at < release))
+                foreach (var equipment in subject.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null || at < release))
                 {
-                    drawing.AddProp(equipment.Prop, placed.Socket(equipment.Socket));
+                    drawing.AddAttachment(equipment.Prop, placed.Socket(equipment.Socket));
                 }
 
                 if (at >= release && action.Projectile is { } shot)
                 {
-                    var rock = subject.Equipment.First(e => e.Prop.Muzzle is not null);
+                    var rock = subject.Equipment.First(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null);
                     var origin = EntityCollision.Muzzle(subject, releasePose).Point;
                     var flight = shot.FlightSeconds;
                     var velocity = (new Vector3(3.8f, .65f, origin.Z) - origin) / flight + new Vector3(0, shot.Gravity * flight / 2, 0);
                     var elapsed = at - release;
                     var centre = origin + velocity * elapsed - new Vector3(0, shot.Gravity * elapsed * elapsed / 2, 0);
-                    var socket = placed.Socket(rock.Socket).WithOrigin(centre + rock.Prop.Grip.XYZ);
-                    drawing.AddProp(rock.Prop, socket);
+                    var socket = placed.Socket(rock.Socket).WithOrigin(centre + rock.Prop.Point(EquipmentPoints.Grip)!.Value.XYZ);
+                    drawing.AddAttachment(rock.Prop, socket);
                 }
                 var charging = subject.Asset.Controller.ChargeSpeed > 0;
                 var config = subject.Asset.Controller;

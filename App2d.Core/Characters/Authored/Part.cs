@@ -108,6 +108,8 @@ public sealed record PartLocation
     public string Id { get; set; } = "";
     public float X { get; set; }
     public float Y { get; set; }
+    /// <summary>Physical depth in the part's local space, independent of drawing layer.</summary>
+    public float Z { get; set; }
     /// <summary>Rotation in radians in the asset's local axes.</summary>
     public float Angle { get; set; }
     /// <summary>Drawing-layer offset from the asset's origin.</summary>
@@ -116,6 +118,7 @@ public sealed record PartLocation
     public string? Control { get; set; }
 
     [JsonIgnore] public Vector2 Position => new(X, Y);
+    [JsonIgnore] public PuppetPoint Point => new(X, Y, Z);
 
     public void Validate(string field)
     {
@@ -127,6 +130,7 @@ public sealed record PartLocation
 
         new Limit(-100, 100).Check(X, field + " x");
         new Limit(-100, 100).Check(Y, field + " y");
+        new Limit(-100, 100).Check(Z, field + " z");
         new Limit(-1000, 1000).Check(Angle, field + " angle");
         new Limit(-16, 16).Check(Layer, field + " layer");
     }
@@ -156,6 +160,13 @@ public sealed class Part
     public string Name { get; set; } = "";
     /// <summary>A library category such as glove, shoe, hair or shirt: browser grouping, not engine behavior.</summary>
     public string Usage { get; set; } = "part";
+    /// <summary>Optional editor attachment suggestion and alternate artwork selected by gameplay.</summary>
+    public string? Attachment { get; set; }
+    public string? BackView { get; set; }
+    /// <summary>The local location placed on the instance's socket; origin by default.</summary>
+    public string Pivot { get; set; } = PartLocation.Origin;
+    public float Scale { get; set; } = 1;
+    public PuppetPoint? Point(string name) => name == PartLocation.Origin ? default(PuppetPoint) : Locations.FirstOrDefault(l => l.Id == name)?.Point;
     /// <summary>One of <see cref="PartPayloads"/>.</summary>
     public string Payload { get; set; } = PartPayloads.Static;
     /// <summary>One of <see cref="PartFittings"/>: what an instance's leaf fit does to this composite asset.</summary>
@@ -196,6 +207,7 @@ public sealed class Part
     [JsonIgnore] public bool IsAnimated => Payload == PartPayloads.Animated;
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
+    internal string ToSnapshotJson() => JsonSerializer.Serialize(this, AuthoredJson.SnapshotOptions);
     internal static Part FromDraftJson(string json) => AuthoredAsset.Parse<Part>(json, "part");
     public static Part FromJson(string json)
     {
@@ -337,6 +349,14 @@ public sealed class Part
             Require(locations.Add(location.Id), $"{owner}: duplicate location '{location.Id}'.");
             Require(location.Control is null || IsAnimated && Controls.Any(c => c.Id == location.Control), $"{owner} location '{location.Id}': no rig control '{location.Control}' to ride on.");
         }
+        new Limit(.001f, 100).Check(Scale, owner + " scale");
+        Require(Point(Pivot) is not null, owner + ": unknown pivot location.");
+        if (Attachment is not null) AuthoredAsset.RequireId(Attachment, owner + " attachment");
+        if (BackView is not null)
+        {
+            AuthoredAsset.RequireId(BackView, owner + " backView");
+            Require(BackView != Id, owner + ": back view cannot reference itself.");
+        }
         Require(Geometry.Count > 0, $"{owner}: a part needs at least one shape, curve, image or solid.");
         Require(Geometry.Count <= 384, $"{owner}: capacity exceeded.");
         var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -442,39 +462,7 @@ public sealed class Part
         Require(Expression is null || Binds(Expression), $"{owner}: the default expression '{Expression}' is not bound.");
     }
 
-    /// <summary>A static part holding one prop's meshes as ordinary geometry entries, for converting hair, clothing and footwear props into library parts.</summary>
-    public static Part FromProp(PropAsset prop, string id, string name, string usage)
-    {
-        var part = new Part
-        {
-            Id = id,
-            Name = name,
-            Usage = usage,
-            Ink = prop.Ink,
-            LineWidth = prop.LineWidth,
-        };
-        foreach (var solid in prop.Solids)
-        {
-            // The prop's grip is the point its socket carried; the part's origin takes that role.
-            part.Geometry.Add(new()
-            {
-                Id = $"mesh-{part.Geometry.Count + 1}",
-                A = PartLocation.Origin,
-                Frame = PartLocation.Origin,
-                Material = solid.Material,
-                Mesh = new()
-                {
-                    Outline = solid.Outline?.ConvertAll(p => new PuppetPoint((p.X - prop.Grip.X) * prop.Scale, (p.Y - prop.Grip.Y) * prop.Scale, (p.Z - prop.Grip.Z) * prop.Scale)),
-                    Vertices = solid.Vertices.ConvertAll(p => new PuppetPoint((p.X - prop.Grip.X) * prop.Scale, (p.Y - prop.Grip.Y) * prop.Scale, (p.Z - prop.Grip.Z) * prop.Scale)),
-                    Triangles = [.. solid.Triangles],
-                    Thickness = solid.Thickness * prop.Scale,
-                }
-            });
-        }
-        part.RebuildMeshes();
-        part.Validate();
-        return part;
-    }
+
 }
 
 /// <summary>
