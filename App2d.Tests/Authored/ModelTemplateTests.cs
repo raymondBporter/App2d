@@ -19,7 +19,7 @@ public sealed class ModelTemplateTests : IDisposable
         Assert.True(session.NewAppearance("resource-hair", "Resource hair", "hair"), session.Message);
         // No anatomy is named in code (P10a): an unknown template is refused with the resources listed.
         Assert.False(session.NewModel("creature", "Creature", "centipede"));
-        Assert.Contains("one of empty, centaur, curve-face, person, pterosaur, quadruped, stalker, triceratops", session.Message);
+        Assert.Contains("one of empty, centaur, person, pterosaur, quadruped, stalker, triceratops", session.Message);
     }
 
     private readonly string _root = Path.Combine(Path.GetTempPath(), "model-templates-" + Guid.NewGuid().ToString("N"));
@@ -33,7 +33,6 @@ public sealed class ModelTemplateTests : IDisposable
 
     [Theory]
     [InlineData("person", 7)]
-    [InlineData("curve-face", 9)]
     [InlineData("quadruped", 8)]
     [InlineData("triceratops", 8)]
     [InlineData("stalker", 5)]

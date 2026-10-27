@@ -13,8 +13,8 @@ namespace App2d.CharacterStudio.Editor;
 /// The character-system migration plan's section 6 reference workflow (final acceptance, P11c), run end to end on a scratch
 /// copy of the authored library through the editor session with a frame after every step: a person from the template with
 /// its shared walk, a variant with four proportion edits, an attachment on the shin, a shin guard under knee and ankle turns,
-/// a library outfit with one asset on two sockets, instance override / reset / shared edit, the curve face blinking while
-/// walking and a profile-bound expression, a joint limit with an explicit angle and a normalized bend, a sensor on the weapon
+/// a library outfit with one asset on two sockets, instance override / reset / shared edit, game face expressions while
+/// walking, a joint limit with an explicit angle and a normalized bend, a sensor on the weapon
 /// with its activation and behaviors, hits / block / miss / kill / several targets in the Test arena, outcomes driving cues
 /// and timeline seeking driving none, save / reopen / undo, the quadruped and flier repeats, and the centaur composition.
 /// </summary>
@@ -189,34 +189,20 @@ internal sealed partial class EditorSmoke
             s.Selection.Select(attachment: rightBoot);
             shell.Viewport.Fit(s.Scene().FirstOrDefault());
         }),
-        ("07-curve-face-blink-and-expression", shell =>
+        ("07-game-face-expression", shell =>
         {
             var s = shell.Session;
-            var basis = s.Assets.Model(Walker)!;
             var faceId = PersonTemplate.FaceInstance;
             s.Open(Walker);
-            Check(s.Edit(basis, () =>
-            {
-                basis.Asset.Attachments.First(a => a.Id == faceId).Expression = null;
-                foreach (var look in basis.Asset.Looks)
-                {
-                    look.Expressions.Remove(faceId);
-                }
-
-                ModelAuthoring.SetAttachmentAsset(basis.Asset, faceId, "face-curve", s.Assets.PartOf);
-            }), s);
-            var walkId = basis.Asset.MotionSets[0].Roles["walk"];
-            var walk = s.Assets.Clip(walkId)!;
-            Check(s.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, faceId, 0, "smile")), s);
-            s.Open(walkId);
+            s.ShowRest = s.EditRig = false;
+            s.Expression = "happy";
             s.Seek(.9f);
             var subject = s.Evaluate(Walker)!;
             var face = subject.Pose.Attachments[faceId];
-            Record(face.Attachment.Asset.Id == "face-curve" && face.Expression == "smile" && subject.Pose.Chains.All(c => c.Reached), "the walker wears the curve face and smiles as the walk selects while its legs keep reaching");
-            s.Seek(1.0f);
-            Record(s.Evaluate(Walker)!.Pose.Attachments[faceId].Pose.Fits.TryGetValue("left-pupil", out var fit) && fit.Y == 0, "at the blink's closed instant (its own clock) the pupils collapse through their fit channel");
-            s.Expression = "surprised";
-            Record(s.Evaluate(Walker)!.Pose.Attachments[faceId].Expression == "surprised", "a gameplay expression request bound by the face asset's expression bindings wins over the walk's smile");
+            Record(face.Attachment.Asset.Id == ProceduralFace.AssetId && face.Expression == "happy" && subject.Pose.Chains.All(c => c.Reached),
+                "the walker keeps its game face and smiles while its legs keep reaching");
+            s.Expression = "hurt";
+            Record(s.Evaluate(Walker)!.Pose.Attachments[faceId].Expression == "hurt", "the game face responds to a gameplay expression request");
             s.Expression = null;
             s.Seek(.95f);
             s.Selection.Select(attachment: faceId);
@@ -226,8 +212,7 @@ internal sealed partial class EditorSmoke
         {
             var s = shell.Session;
             var basis = s.Assets.Model(Walker)!;
-            // The walkthrough goes on with the baked face: the Person library's selection words are its vocabulary, and the entity
-            // steps need every role clip to validate (a word the curve face does not bind is reported by name on its clip, step 47 of the editor smoke).
+            // Keep the game face active while testing the rig limits and entity actions.
             var faceId = PersonTemplate.FaceInstance;
             Check(s.Edit(basis, () =>
             {

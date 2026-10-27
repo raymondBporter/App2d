@@ -140,14 +140,6 @@ public sealed class MigrationReferenceTests
         var swoop = Catalog.Animations["pterosaur-swoop"];
         yield return new("flying-pterosaur/swoop@rush", "pterosaur", "flying-pterosaur", swoop.Id, Marker(swoop, "rush"), 1);
 
-        // Curve face: affine eye controls, scale tracks, the wave and bound curve features.
-        yield return new("curve-face/rest", "curve-face", null, null, 0, 1);
-        yield return new("curve-face/curve-face-blink@1.0", "curve-face", null, "curve-face-blink", 1, 1);
-        yield return new("curve-face/curve-face-crossed-eyes@1.0", "curve-face", null, "curve-face-crossed-eyes", 1, 1);
-        yield return new("curve-face/curve-face-expressions@2.0", "curve-face", null, "curve-face-expressions", 2, 1);
-        yield return new("curve-face/curve-face-expressions@6.5", "curve-face", null, "curve-face-expressions", 6.5f, 1);
-        yield return new("curve-face/curve-face-hair-wave@0.5", "curve-face", null, "curve-face-hair-wave", .5f, 1);
-        yield return new("curve-face/curve-face-smile@1.5/left", "curve-face", null, "curve-face-smile", 1.5f, -1);
 
         // Stalker: three-legged point rig with a socket off the body.
         yield return new("stalker-pest/stalker-lunge@strike", "stalker", "stalker-pest", "stalker-lunge", Marker(Catalog.Animations["stalker-lunge"], "strike"), 1);

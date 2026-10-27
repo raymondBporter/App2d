@@ -223,13 +223,12 @@ public sealed class EditorSession
     {
         CommitAll();
         Mode = mode;
-        if (mode == Workspace.Appearance && AppearanceDocument?.Asset.Usage is null or "prop")
+        if (mode == Workspace.Appearance && PartDocument is null && AppearanceDocument?.Asset.Usage is null or "prop")
         {
             var art = Assets.Props.FirstOrDefault(p => p.Asset.Usage != "prop");
             if (art is not null)
             {
-                PreviewProp = art.Id;
-                PreviewSocket = art.Asset.Attachment ?? Humanoid.HeadSocket;
+                Open(art.Id);
             }
         }
         if (mode == Workspace.Animate && ClipId is null)

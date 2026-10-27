@@ -2,6 +2,8 @@
 
 Date: 2026-10-23. Passes P0a, P0b and P0c of the [Character system and Studio migration plan](character-system-migration-plan.md), section 5, "P0. Establish a trustworthy baseline and conversion cases".
 
+2026-10-26 cleanup: the unused curve-face model, template, nine clips and converted face-curve part were removed at the user's request, along with the character-specific wave feature and demo conversion code. Their seven reference cases were removed from `character-migration-references.json`; every retained reference value is unchanged. Descriptions below of those demos record the historical migration. The game face (`face-person`) and Core's generic normal-offset curve remain supported.
+
 This file is the evidence record for P0a and P0b: the exact source snapshot, a schema-aware inventory of the authored character library with its reference graph, a fresh run of the existing character, editor, rendering and combat checks with pre-existing failures listed separately, (section 6) the reference set the conversion passes compare against, and (section 7) the conversion disposition of every general-affine and point-specific case in that set. Nothing was converted. Numbers here come from the run on this date; rerun the commands in "How to reproduce" before comparing anything against them.
 
 ## 1. Source snapshot

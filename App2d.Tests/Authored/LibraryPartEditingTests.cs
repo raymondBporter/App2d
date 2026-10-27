@@ -25,10 +25,66 @@ public sealed class LibraryPartEditingTests : IDisposable
     private EditorSession Session() => new(AuthoringWorkspace.Open(_root)) { SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id) };
 
     [Fact]
+    public void ReturningToAppearanceKeepsTheLibraryPartAsTheOnlyPreviewSelection()
+    {
+        var session = Session();
+        session.Open("quadruped");
+        session.Open("person-lower");
+        session.SetMode(Workspace.Model);
+        session.SetMode(Workspace.Appearance);
+
+        Assert.Equal("person-lower", session.ActiveDocument!.Id);
+        Assert.Equal("person-lower", session.PartDocument!.Id);
+        Assert.Empty(session.PreviewProp);
+        Assert.Null(session.AppearanceDocument);
+        var wearer = session.Assets.Resolve("quadruped")!;
+        Assert.Equal("person-lower", session.PreviewAttachmentOn(wearer)!.Asset.Id);
+        Assert.Null(session.WeaponFor(wearer));
+        Assert.Empty(session.Assets.DirtyDocuments);
+    }
+
+    [Fact]
+    public void OpeningAppearanceWithoutALibraryPartSelectsAndPreviewsTheSameProp()
+    {
+        var session = Session();
+        session.Open("person");
+        session.SetMode(Workspace.Appearance);
+
+        var appearance = session.AppearanceDocument!;
+        Assert.NotNull(appearance);
+        Assert.Same(appearance, session.ActiveDocument);
+        Assert.Null(session.PartDocument);
+        var wearer = session.Assets.Resolve("person")!;
+        var preview = session.WeaponFor(wearer);
+        Assert.NotNull(preview);
+        Assert.Equal(appearance.Id, preview.Value.Prop.Id);
+        Assert.Equal(session.PreviewSocket, preview.Value.Socket.Id);
+        Assert.Null(session.PreviewAttachmentOn(wearer));
+        Assert.Empty(session.Assets.DirtyDocuments);
+    }
+
+    [Fact]
+    public void OpeningABeardReplacesTheLibraryModulePreviewWithoutChangingTheWearer()
+    {
+        var session = Session();
+        session.Open("quadruped");
+        session.Open("quadruped-lower");
+        session.Open("brute-beard");
+
+        Assert.Equal("brute-beard", session.ActiveDocument!.Id);
+        Assert.Null(session.PartDocument);
+        var wearer = session.Assets.Resolve("quadruped")!;
+        Assert.Null(session.PreviewAttachmentOn(wearer));
+        Assert.Equal("brute-beard", session.WeaponFor(wearer)!.Value.Prop.Id);
+        Assert.Empty(wearer.Attachments);
+        Assert.Empty(session.Assets.DirtyDocuments);
+    }
+
+    [Fact]
     public void TheShippedLibraryLoadsAndANewPartOpensInAppearanceWithAPreviewOnTheWearer()
     {
         var session = Session();
-        Assert.Equal(["boot", "face-curve", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"], session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal));
+        Assert.Equal(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"], session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal));
         session.Open("person");
         Assert.True(session.NewPart("badge", "Badge"), session.Message);
         Assert.Equal(Workspace.Appearance, session.Mode);

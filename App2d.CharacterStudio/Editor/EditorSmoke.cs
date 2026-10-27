@@ -429,31 +429,6 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var part = s.SubjectModel!.Asset.Parts.Single(p => p.Id == "left-arm");
                 Record(part.Bindings?.Count == 3 && part.CurveSections == 20, "the Person arm exposes its rounded path in the existing part inspector");
             }),
-            ("38-curve-wave-modifier", shell =>
-            {
-                var s = shell.Session; s.Open("curve-face"); s.Compare.Clear(); s.EditRig = false;
-                s.Selection.Part = "hair"; shell.Viewport.Fit(s.Evaluate("curve-face"));
-                var doc = s.SubjectModel!;
-                PuppetPart Part(string id) => doc.Asset.Parts.Single(p => p.Id == id);
-                Record(Part("hair").Wave is { PhaseControl: "hair-wave" } && doc.Asset.Parts.All(p => p.Id == "hair" || p.Wave is null), "only the hair curve carries a wave modifier after reading the version-5 file");
-                var before = doc.Serialize();
-                Check(s.Edit(doc, () => Part("mouth").Wave = CurveWave.Starter), s);
-                Record(Part("mouth").Wave is not null, "a curve part gains a wave modifier");
-                s.Undo();
-                Record(before == doc.Serialize() && Part("mouth").Wave is null, "adding the wave undoes exactly");
-                Record(!s.Edit(doc, () => ModelAuthoring.RemoveControl(doc.Asset, "hair-wave")) && doc.Asset.Controls.Any(c => c.Id == "hair-wave"), "deleting the referenced phase control is refused: " + s.Message);
-                Check(s.Edit(doc, () => Part("hair").Wave = Part("hair").Wave! with { Amplitude = .06f }), s);
-                s.SaveAll();
-                var saved = File.ReadAllText(doc.Path!);
-                var reopened = AuthoredCatalog.Load(s.Assets.Root);
-                Record(reopened.Errors.Count == 0 && reopened.Models["curve-face"].Parts.Single(p => p.Id == "hair").Wave?.Amplitude == .06f && saved.Contains("\"wave\"") && !saved.Contains("waveAmplitude"),
-                    "the wave saves as the typed modifier at version " + CharacterModel.CurrentVersion + " and reopens");
-                Check(s.Edit(doc, () => Part("hair").Wave = null), s);
-                Record(Part("hair").Wave is null && s.Edit(doc, () => ModelAuthoring.RemoveControl(doc.Asset, "hair-wave")), "removing the wave frees its phase control");
-                s.Undo();
-                s.Undo();
-                Record(Part("hair").Wave?.Amplitude == .06f, "removing the wave undoes");
-            }),
             ("39-canonical-bone-editing", shell =>
             {
                 var s = shell.Session; s.Open("person"); s.Compare.Clear(); s.SetMode(Workspace.Model); s.EditRig = true;
@@ -571,7 +546,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // wearer, found through uses / used by, undone in order and saved with its wearers.
                 var s = shell.Session;
                 var library = s.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
-                Record(library.SequenceEqual(["boot", "face-curve", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot, the converted curve face (P7b), the baked Person face (P7c), the four rig modules (P10b) and sandal as library parts");
+                Record(library.SequenceEqual(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot, the baked Person face, the four rig modules and sandal as library parts");
                 s.Open("person");
                 Check(s.NewPart("mitt", "Mitt", "hair-short"), s);
                 var mitt = s.PartDocument!;
@@ -870,114 +845,12 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Select(control: "tail/tip");
                 shell.Viewport.Fit(s.Scene().FirstOrDefault());
             }),
-            ("47-curve-face-part", shell =>
-            {
-                // P7b: the converted curve face (parts/face-curve.json) instanced on the walking Person: it blinks on the actor's
-                // clock while the walk selects a smile, swaps to a second face asset, follows the head parameter through a
-                // bound layout fit, and the game-face request reaches it; the curve-face model and clips stay as they were.
-                var s = shell.Session; s.Compare.Clear();
-                var face = s.Assets.Part("face-curve");
-                Record(face is { Asset.IsAnimated: true, Asset.Clips.Count: 9, Asset.Layers.Count: 2 } && s.Assets.Model("curve-face")!.Asset.Controls.All(c => c.Node == RigNodeKinds.Point),
-                    "the parts folder loads the converted curve face with its nine clips and two layers; the curve-face model's eyes are point controls since P11a");
-                s.Open("person");
-                var personDocument = s.Assets.Model("person")!;
-                var faceId = PersonTemplate.FaceInstance;
-                // Swapping the Person's face instance to the curve face: its default word 'relaxed' and the looks' words are not ones the
-                // curve face binds, so the swap alone leaves the wearer reporting the unbound word by name; clearing the instance default
-                // and the looks' words in the same edit lets the asset's own default show.
-                Check(s.Edit(personDocument, () => ModelAuthoring.SetAttachmentAsset(personDocument.Asset, faceId, "face-curve", s.Assets.PartOf)), s);
-                var unbound = s.Assets.Problems(personDocument);
-                Record(unbound.Any(p => p.Contains("binds no expression 'relaxed'")), "swapping the face to an asset that does not bind the instance's default word is reported by name on the wearer: " + string.Join(" | ", unbound));
-                s.Undo();
-                Record(s.Assets.Problems(personDocument).Count == 0 && personDocument.Asset.Attachments.First(a => a.Id == faceId).Asset == ProceduralFace.AssetId, "undoing the swap restores the baked face without a problem");
-                Check(s.Edit(personDocument, () =>
-                {
-                    personDocument.Asset.Attachments.First(a => a.Id == faceId).Expression = null;
-                    foreach (var look in personDocument.Asset.Looks)
-                    {
-                        look.Expressions.Remove(faceId);
-                    }
-
-                    ModelAuthoring.SetAttachmentAsset(personDocument.Asset, faceId, "face-curve", s.Assets.PartOf);
-                }), s);
-                // The variants that override the face's word with one the curve face does not bind report it by name; each is cleared on its own document.
-                var worded = s.Assets.Variants.Where(v => v.Asset.Base == "person" && v.Asset.Override(PropertyRef.OfAttachment(faceId, RigProperties.Expression)) is { Selection: { } word } && !face!.Asset.Binds(word)).ToList();
-                Record(worded.Count >= 4 && worded.All(v => s.Assets.Problems(v).Any(p => p.Contains("binds no expression"))),
-                    $"the {worded.Count} variants whose face word the curve face does not bind (four shipped 'smug' ones, brute's 'angry' is bound, and this smoke's own) report it by name: " + string.Join(" | ", worded.Select(v => v.Id)));
-                foreach (var variant in worded)
-                {
-                    Check(s.Edit(variant, () => variant.Asset.Overrides.RemoveAll(o => o.Target.Attachment == faceId && o.Target.Property == RigProperties.Expression)), s);
-                }
-
-                Record(worded.All(v => s.Assets.Problems(v).Count == 0), "clearing each variant's face word on its own document resolves them all again");
-                var walk = s.Assets.Clip("person-walk")!;
-                Check(s.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, faceId, 0, "smile")), s);
-                s.Open("person-walk");
-                s.Seek(.9f);
-                var subject = s.Evaluate("person")!;
-                var evaluated = subject.Pose.Attachments[faceId];
-                Record(evaluated.Attachment.Asset.Id == "face-curve", "the Person's face instance now wears the curve face");
-                var rig = subject.Model.Attachment(faceId)!.Rig!;
-                var smile = PoseEvaluator.Sample(rig, face!.Asset.Clip("curve-face-smile")!, .9, repeat: true);
-                var blink = PoseEvaluator.Sample(rig, face.Asset.Clip("curve-face-blink")!, .9, repeat: true);
-                Record(evaluated.Expression == "smile" && Vector3.Distance(smile.Points["mouth-bend"], evaluated.Pose.Points["mouth-bend"]) < 1e-5f
-                    && Vector3.Distance(blink.Points["left-eye-upper-bend"], evaluated.Pose.Points["left-eye-upper-bend"]) < 1e-5f && !subject.Pose.Chains.Any(c => !c.Reached),
-                    "at 0.9 s the walking Person smiles (selected by the walk) while the blink layer runs its own clock and the legs reach their contacts");
-                s.Seek(1.0f);
-                Record(s.Evaluate("person")!.Pose.Attachments[faceId].Pose.Fits.TryGetValue("left-pupil", out var fit) && fit.Y == 0, "at the blink's closed instant the pupils collapse through their fit channel, with no rig scale anywhere");
-                var head = subject.Model.ParameterValues["head"];
-                var wide = s.Assets.Resolve("short-broad")!;
-                var narrowSpan = evaluated.World("right-eye").X - evaluated.World("left-eye").X;
-                var wideFace = s.Evaluate("short-broad")!.Pose.Attachments[faceId];
-                Record(MathF.Abs((wideFace.World("right-eye").X - wideFace.World("left-eye").X) / narrowSpan - wide.ParameterValues["head"] / head) < 1e-3f,
-                    $"short-broad's head parameter ({wide.ParameterValues["head"]:0.##}) widens the eye spacing by the same factor through the bound layout fit");
-                Check(s.DuplicatePart("face-curve", "face-curve-red", "Red curve face"), s);
-                var red = s.PartDocument!;
-                Check(s.Edit(red, () => { red.Asset.Ink = "#8b0000"; red.Asset.Validate(); }), s);
-                s.Open("person");
-                Check(s.Edit(personDocument, () => ModelAuthoring.SetAttachmentAsset(personDocument.Asset, faceId, "face-curve-red", s.Assets.PartOf)), s);
-                Record(s.Assets.Resolve("person")!.Attachment(faceId)!.Asset.Ink == "#8b0000" && s.Assets.Part("face-curve")!.Asset.Ink == "#222b32", "swapping the instance to the duplicated face asset changes what the Person wears and leaves the shared asset alone");
-                s.Undo();
-                s.Open("person-walk");
-                s.Expression = "surprised";
-                Record(s.Evaluate("person")!.Pose.Attachments[faceId].Expression == "surprised", "a game-face request the asset binds wins over the walk's smile");
-                s.Expression = null;
-                s.SaveAll();
-                var reopened = AuthoringWorkspace.Open(s.Assets.Root);
-                // The Person's converted clips select words of the baked face's vocabulary; with the curve face worn, every such key the new
-                // asset does not bind is reported by name on its clip (a vocabulary change is an authoring decision, never repaired silently).
-                var leftover = reopened.Documents.SelectMany(d => reopened.Problems(d).Select(p => (Document: d.Id, Problem: p))).ToList();
-                Record(reopened.Resolve("person")!.Attachment(faceId) is { IsAnimated: true, Asset.Id: "face-curve" } && reopened.Clip("person-walk")!.Asset.Plays.Any(p => p.Instance == faceId)
-                    && reopened.Model("curve-face")!.Asset.Version == CharacterModel.CurrentVersion && reopened.Problems(reopened.Model("person")!).Count == 0
-                    && leftover.Count > 0 && leftover.All(l => l.Problem.Contains("play track 'face'") && l.Problem.Contains("binds no expression")),
-                    $"the face instance, its bindings and the walk's selection save and reopen; the only problems are the {leftover.Count} converted clips whose selection words the curve face does not bind, each reported by name on its clip: "
-                    + string.Join(", ", leftover.Select(l => l.Document).Distinct()));
-                s.Pin("short-broad");
-                s.Seek(.95f);
-                s.Selection.Select(attachment: faceId);
-                shell.Viewport.Fit(s.Scene().FirstOrDefault());
-            }),
             ("48-collider-attachments", shell =>
             {
                 // P8c: the converted spear guard's colliders are editable and shown as views of what the game registers; an
                 // unconverted entity converts explicitly as one undo step, keeping every attack placement; the Test arena's
                 // overlays read the registered colliders and the guard's reach trigger reports its contacts.
                 var s = shell.Session; s.Compare.Clear();
-                // Step 47 saved the Person wearing the curve face, which leaves the converted Person clips' selection words unbound and no
-                // Person entity compiling; this walk needs compiling entities, so the Person wears the baked face again first.
-                if (s.Assets.Model("person") is { } personDoc && personDoc.Asset.Attachments.FirstOrDefault(a => a.Id == PersonTemplate.FaceInstance) is { } worn && worn.Asset != ProceduralFace.AssetId)
-                {
-                    Check(s.Edit(personDoc, () =>
-                    {
-                        ModelAuthoring.SetAttachmentAsset(personDoc.Asset, PersonTemplate.FaceInstance, ProceduralFace.AssetId, s.Assets.PartOf);
-                        personDoc.Asset.Attachments.First(a => a.Id == PersonTemplate.FaceInstance).Expression = "relaxed";
-                    }), s);
-                }
-                // Step 47 also keyed the curve face's 'smile' on the walk, a word the baked face does not bind.
-                if (s.Assets.Clip("person-walk") is { } walkDoc && walkDoc.Asset.Plays.Any(p => p.Instance == PersonTemplate.FaceInstance && p.Keys.Any(k => k.Expression == "smile")))
-                {
-                    Check(s.Edit(walkDoc, () => ClipAuthoring.SetPlay(walkDoc.Asset, PersonTemplate.FaceInstance, walkDoc.Asset.Plays.First(p => p.Instance == PersonTemplate.FaceInstance).Keys.First(k => k.Expression == "smile").Time, null)), s);
-                }
                 s.Open("spear-guard");
                 var guard = s.EntityDocument!;
                 Record(s.Entity is not null, "the converted spear guard compiles in the workspace: " + (s.EntityError ?? "ok"));
@@ -1091,7 +964,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                     $"creating from the quadruped template with the long-legged preset writes its values as the new model's defaults (body at {created.Rest["body"].Y:0.##} over {shipped.Rest["body"].Y:0.##}) and copies the presets and eight clips");
                 Record(s.Assets.ModelTemplates["quadruped"].ContractProblems(created.Base, s.Assets.PartOf).Count == 0, "the published contract holds on the created copy (roles remapped to its own clips)");
                 Record(!s.NewModel("giant-quadruped", "Giant", "quadruped", "giant") && s.Message!.Contains("publishes no preset 'giant'"), "a preset the template does not publish is refused by name: " + s.Message);
-                Record(!s.NewModel("centipede", "Centipede", "centipede") && s.Message!.Contains("one of empty, centaur, curve-face, person, pterosaur, quadruped, stalker, triceratops"), "an unknown template lists the resources; no anatomy is named in code: " + s.Message);
+                Record(!s.NewModel("centipede", "Centipede", "centipede") && s.Message!.Contains("one of empty, centaur, person, pterosaur, quadruped, stalker, triceratops"), "an unknown template lists the resources; no anatomy is named in code: " + s.Message);
                 var broken = ModelTemplate.FromJson(quadruped.ToJson());
                 broken.Slots.Add(new() { Id = "horn-art", Usage = "horn" });
                 broken.Dimensions.Add("neck");

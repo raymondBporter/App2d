@@ -144,7 +144,7 @@ public sealed class PersonFaceConversionTests : IDisposable
     }
 
     [Fact]
-    public void TheWalkingHeroBlinksWhileSmilingAndSwapsItsFaceAsset()
+    public void TheWalkingHeroBlinksWhileSmiling()
     {
         var hero = Catalog.Entities["hero"];
         var walk = Catalog.Animations["person-walk"];
@@ -154,18 +154,5 @@ public sealed class PersonFaceConversionTests : IDisposable
         // Happy mutes the blink (only relaxed, focused and worried blink, as the old presentation did); relaxed blinks at the same instant.
         Assert.True(smiling.Attachments[PersonTemplate.FaceInstance].Pose.Fits.GetValueOrDefault("left-pupil", Vector2.One).Y > .5f);
         Assert.Equal(0, PoseEvaluator.Sample(hero.Model, walk, .3, repeat: true, new("relaxed") { Clock = 3.62 }).Attachments[PersonTemplate.FaceInstance].Pose.Fits["left-pupil"].Y, 4);
-        // The same instance wears the curve face instead: its default word must be cleared first (the curve face binds other words), then the swap holds.
-        var person = CharacterModel.FromJson(hero.Model.Base.ToJson());
-        Assert.Contains("binds no expression 'relaxed'", Assert.Throws<InvalidDataException>(() =>
-        {
-            ModelAuthoring.SetAttachmentAsset(person, PersonTemplate.FaceInstance, "face-curve", Catalog.Parts.GetValueOrDefault);
-            ResolvedModel.From(person, null, Catalog.Parts.GetValueOrDefault);
-        }).Message);
-        person.Attachments[0].Expression = null;
-        var curved = ResolvedModel.From(person, null, Catalog.Parts.GetValueOrDefault);
-        Assert.Equal("face-curve", curved.Attachment(PersonTemplate.FaceInstance)!.Asset.Id);
-        Assert.Equal("neutral", PoseEvaluator.Rest(curved).Expressions[PersonTemplate.FaceInstance]);
-        Assert.Equal("smile", PoseEvaluator.Sample(curved, walk, .3, repeat: true, new("smile")).Expressions[PersonTemplate.FaceInstance]);
-        Assert.Equal("relaxed", PoseEvaluator.Rest(hero.Model).Expressions[PersonTemplate.FaceInstance]);
     }
 }

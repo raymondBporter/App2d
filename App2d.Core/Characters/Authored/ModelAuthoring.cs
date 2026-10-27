@@ -373,7 +373,7 @@ public static class ModelAuthoring
             throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
         }
 
-        // A part's bindings and feature payloads answer for their own control references (P2c); the command names the owner.
+        // A part's point bindings answer for their control references; the command names the owner.
         foreach (var part in model.Parts)
         {
             if (part.Dependency(id) is { } dependency)
@@ -581,8 +581,6 @@ public static class ModelAuthoring
         }
 
         part.Geometry = geometry;
-        // Each feature payload decides whether the new geometry can carry it; the command knows no wave or face rule.
-        part.DropUnsupportedPayloads();
         if (part.Geometry is IShape2D && part.Material is { Fill: null, Outline: null })
         {
             part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };

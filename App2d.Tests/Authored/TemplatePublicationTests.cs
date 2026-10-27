@@ -45,8 +45,8 @@ public sealed class TemplatePublicationTests : IDisposable
             Assert.All(template.Dimensions, d => Assert.Contains(model.Parameters, p => p.Id == d));
             Assert.All(template.Library.Mappings.Keys, m => Assert.Contains(model.Measures, x => x.Id == m));
         }
-        // The two older recipes read unchanged at version 1 and publish nothing.
-        Assert.All(new[] { "stalker", "curve-face" }, id => Assert.False(assets.ModelTemplates[id].Publishes));
+        // The older stalker recipe reads unchanged at version 1 and publishes nothing.
+        Assert.False(assets.ModelTemplates["stalker"].Publishes);
         Assert.Equal(3, assets.ModelTemplates["person"].Presets.Count);
         Assert.Equal([PersonBuild.LegsId, PersonBuild.TorsoId, PersonBuild.ArmsId, PersonBuild.WidthId, PersonBuild.HeadId], assets.ModelTemplates["person"].Dimensions);
         var person = assets.ModelTemplates["person"].Slots.Single(s => s.Id == "head-art");

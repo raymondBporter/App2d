@@ -54,10 +54,10 @@ public static class ImageContours2D
                     heading = NextDirection(outgoing[point], heading);
                 }
                 while (point != start || heading != direction);
-                loops.Add(points.ToArray());
+                loops.Add([.. points]);
             }
         }
-        return loops.ToArray();
+        return [.. loops];
 
         void Add(Vector2i point, int direction) =>
             outgoing[point] = (byte)(outgoing.GetValueOrDefault(point) | (1 << direction));

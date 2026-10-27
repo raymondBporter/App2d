@@ -148,19 +148,6 @@ internal static class EditorSurfaceSmoke
             session.Seek(0);
             shell.Viewport.Fit(session.Scene().FirstOrDefault());
             Capture("animation-slot");
-            foreach (var (role, at) in new[] { ("smile", 1.5f), ("blink", 1f), ("wink", 1f), ("angry", 1f), ("worried", 1f), ("surprised", 1f), ("crossed-eyes", 1f), ("hair-wave", .375f) })
-            {
-                session.Open("curve-face-" + role);
-                session.ShowRest = session.EditRig = false;
-                session.SetMode(Workspace.Model);
-                session.Selection.Clear();
-                session.Seek(at);
-                shell.Viewport.Fit(session.Scene().FirstOrDefault());
-                Capture("curve-face-" + role);
-            }
-            session.Open("curve-face");
-            session.Selection.Select(part: "hair");
-            Capture("curve-face-hair-inspector");
             // P7a: an animated part (the tail) instanced on the Person, its exposed tip selected in the walk.
             if (assets.Part(PartSeeds.TailId) is null)
             {
@@ -182,37 +169,10 @@ internal static class EditorSurfaceSmoke
                 Capture("model-animated-attachment");
                 session.Undo();
             }
-            // P7b/P7c: the Person's face instance swapped to the converted curve face on the three builds, smiling in the walk while the blink layer runs.
-            if (assets.Part("face-curve") is { } face && assets.Model("person") is { } person && session.Edit(person, () =>
-            {
-                person.Asset.Attachments.First(a => a.Id == PersonTemplate.FaceInstance).Expression = null;
-                ModelAuthoring.SetAttachmentAsset(person.Asset, PersonTemplate.FaceInstance, "face-curve", assets.PartOf);
-            }))
-            {
-                var faceId = PersonTemplate.FaceInstance;
-                var walk = assets.Clip("person-walk")!;
-                session.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, faceId, 0, "smile"));
-                session.Open("person-walk");
-                session.Pin("tall-thin");
-                session.Pin("short-broad");
-                foreach (var (name, at) in new[] { ("face-part-walk-smile", .9f), ("face-part-walk-blink", 1f) })
-                {
-                    session.Seek(at);
-                    session.Selection.Select(attachment: faceId);
-                    shell.Viewport.Fit(session.Scene().FirstOrDefault());
-                    Capture(name);
-                }
-
-                session.Open(face.Id);
-                Capture("appearance-face-part");
-                session.Undo();
-                session.Open("person");
-                session.Undo();
-            }
             // P8c: the converted spear guard's colliders in the Entity inspector, and the overlay of the registered colliders inside the thrust window.
             if (assets.Entity("spear-guard") is { Asset.Colliders.Count: > 0 })
             {
-                // The face walk above may leave the Person wearing the curve face (its converted clips then report unbound words and no Person entity compiles): wear the baked face for the entity frames.
+                // Use the game face for the entity frames.
                 if (assets.Model("person") is { } personDoc && personDoc.Asset.Attachments.FirstOrDefault(a => a.Id == PersonTemplate.FaceInstance) is { } worn && worn.Asset != ProceduralFace.AssetId)
                 {
                     session.Edit(personDoc, () =>

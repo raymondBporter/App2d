@@ -96,7 +96,7 @@ public sealed class LayeredFrame2DTests
     public void LayerOffsetsReproduceAbsoluteRestDepthAndAnimatedParentsCarryChildren()
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
-        foreach (var id in new[] { "person", "quadruped", "pterosaur", "curve-face" })
+        foreach (var id in new[] { "person", "quadruped", "pterosaur" })
         {
             var model = catalog.Resolve(id);
             var rest = PoseEvaluator.Rest(model);

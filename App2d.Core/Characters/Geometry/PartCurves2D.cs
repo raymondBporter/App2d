@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;
 
-/// <summary>Attached curve handles and sampling, applying a curve's <see cref="CurveWave"/> modifier when it has one.</summary>
+/// <summary>Attached curve handles and sampling.</summary>
 public static class PartCurves2D
 {
     /// <summary>Point indices follow curve order: start, handle(s), end.</summary>
@@ -78,32 +78,24 @@ public static class PartCurves2D
                 layers = WithControlPoints(curve, [.. placed.Select(p => new Vector2(p.Z, 0))]).Validated();
             }
         }
-        var worldSpace = layers is not null || pinned is not null;
         var count = source switch
         {
             LineSegmentCurve2D => 2,
             PolylineCurve2D polyline => polyline.Points.Length,
             _ => 33
         };
-        ICurve2D? wave = null;
-        if (part.Wave is { Deforms: true } modifier)
-        {
-            wave = modifier.Apply(source, modifier.Phase(coordinates, world), worldSpace ? Vector2.Distance(a.XY, b.XY) : 1);
-            count = Math.Max(count, modifier.Samples);
-        }
         var parameters = source is RoundedPolylineCurve2D sampled
-            ? sampled.SampleParameters(Math.Max(part.CurveSections, wave is null ? 0 : count - 1))
+            ? sampled.SampleParameters(part.CurveSections)
             : [.. Enumerable.Range(0, count).Select(i => (float)i / (count - 1))];
         var result = new List<Vector3>(parameters.Length);
         foreach (var t in parameters)
         {
             var p = source.Evaluate(t);
-            var xy = wave?.Evaluate(t) ?? p;
             result.Add(pinned is { } path
-                ? new(xy, path.Interpolate(pinnedDepths!, t))
+                ? new(p, path.Interpolate(pinnedDepths!, t))
                 : layers is null
-                    ? new(coordinates.TransformPoint(xy), a.Z + (b.Z - a.Z) * p.Y + part.Depth)
-                    : new(xy, layers.Evaluate(t).X));
+                    ? new(coordinates.TransformPoint(p), a.Z + (b.Z - a.Z) * p.Y + part.Depth)
+                    : new(p, layers.Evaluate(t).X));
         }
         return result;
     }

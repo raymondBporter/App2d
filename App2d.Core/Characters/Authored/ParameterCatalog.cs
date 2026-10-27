@@ -61,7 +61,7 @@ public static class RigProperties
         new(Hidden, PropertyKinds.Flag),
     ];
 
-    /// <summary>The part properties a part exposes: its fit, material and visibility (a feature payload's own properties, like the wave's, are edited on the payload).</summary>
+    /// <summary>The part properties a part exposes: its fit, material and visibility.</summary>
     public static IEnumerable<PropertyDeclaration> Declarations(PuppetPart part) => PartDeclarations;
 
     /// <summary>

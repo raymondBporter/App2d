@@ -116,26 +116,6 @@ public sealed record PartPointBinding
     public string? Toward { get; set; }
 }
 
-/// <summary>
-/// An optional feature payload a part may carry (character-system migration, P2c): the wave of a linked curve. (The
-/// procedural face payload of P2b retired in P7c: a face is an animated library part instanced on a socket.) Each payload
-/// owns what the common part must not know: which geometry can carry it, which controls it references
-/// and how it validates. Common authoring asks the payloads through <see cref="PuppetPart.Payloads"/> and never a field of one.
-/// </summary>
-public interface IPartPayload
-{
-    /// <summary>The payload's name in messages and JSON ("wave", "face").</summary>
-    string Name { get; }
-    /// <summary>What a part needs to carry this payload, for the refusal message ("a linked curve", "a shape part").</summary>
-    string Requirement { get; }
-    /// <summary>Whether a geometry can carry this payload.</summary>
-    bool Fits(IGeometryValue2D? geometry);
-    /// <summary>Whether deleting this control would leave the payload dangling; the owning authoring commands refuse that.</summary>
-    bool References(string controlId);
-    /// <summary>The payload's own limits and control references, checked with the part that owns it.</summary>
-    void Validate(Func<string, bool> isControl, string field);
-}
-
 /// <summary>Curve endpoints follow controls. Shapes attach to A; B optionally points their local +Y axis.</summary>
 public sealed record PuppetPart
 {
@@ -160,8 +140,6 @@ public sealed record PuppetPart
 
     /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
     public List<PartPointBinding>? Bindings { get; set; }
-    /// <summary>Optional wave modifier of a linked curve. Shapes and other parts carry none; the modifier owns its limits and references.</summary>
-    public CurveWave? Wave { get; set; }
     /// <summary>Base sampling density for rounded paths; exact fillet boundaries are added by the curve library.</summary>
     public int CurveSections { get; set; } = 20;
 
@@ -171,32 +149,12 @@ public sealed record PuppetPart
     [JsonIgnore]
     public RenderMaterialDefinition2D RenderMaterial => Material ?? throw new InvalidDataException($"Part '{Id}' needs a material.");
 
-    /// <summary>The feature payloads this part carries; the only place the optional payload slots are enumerated.</summary>
-    [JsonIgnore]
-    public IEnumerable<IPartPayload> Payloads
-    {
-        get
-        {
-            if (Wave is not null) yield return Wave;
-        }
-    }
-
     /// <summary>Whether this part is attached to the control (its endpoints or bone frame); deleting the control removes such parts.</summary>
     public bool AttachedTo(string controlId) => A == controlId || B == controlId || Frame == controlId;
 
-    /// <summary>
-    /// Why deleting a control would leave this part dangling, or null: a point binding or a payload's own reference. The owning
-    /// feature answers; the common part knows no wave or face field.
-    /// </summary>
+    /// <summary>Why deleting a control would leave a point binding dangling, or null.</summary>
     public string? Dependency(string controlId) =>
-        Bindings?.Any(b => b.Control == controlId || b.Toward == controlId) == true ? "point binding"
-        : Payloads.FirstOrDefault(p => p.References(controlId)) is { } payload ? payload.Name + " reference" : null;
-
-    /// <summary>Drops the payloads the current geometry cannot carry, after a geometry switch; each payload decides for itself.</summary>
-    public void DropUnsupportedPayloads()
-    {
-        if (Wave?.Fits(Geometry) == false) Wave = null;
-    }
+        Bindings?.Any(b => b.Control == controlId || b.Toward == controlId) == true ? "point binding" : null;
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
@@ -253,16 +211,6 @@ public sealed record PuppetPart
         if (linkedCurve && Frame is not null)
         {
             throw new InvalidDataException("A linked curve cannot use a bone frame.");
-        }
-
-        foreach (var payload in Payloads)
-        {
-            if (!payload.Fits(Geometry))
-            {
-                throw new InvalidDataException($"A {payload.Name} payload requires {payload.Requirement}.");
-            }
-
-            payload.Validate(isControl, "part." + payload.Name);
         }
 
         new Limit(-1000, 1000).Check(Angle, "part.angle");

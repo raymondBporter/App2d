@@ -9,8 +9,8 @@ using ImGuiNET;
 namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>
-/// The fit, material, layer and visibility fields shared by base parts and variant overrides. Feature inspectors (curve handles
-/// and wave, cutout silhouette, face payload) are called unconditionally and decide their own applicability (P2c).
+/// The fit, material, layer and visibility fields shared by base parts and variant overrides. Curve handle and cutout
+/// inspectors decide their own applicability.
 /// </summary>
 internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEditor cutout)
 {
@@ -117,7 +117,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         }
         if (overrides is null && structure is not null)
         {
-            // Base-only feature inspectors, each checking the part's geometry itself: curve handles and the wave payload, the cutout silhouette.
+            // Base-only curve and cutout inspectors check the part's geometry themselves.
             ModelCurveInspector.Draw(part, [.. structure.Controls.Select(c => c.Id)], change);
             cutout.Inspector(part, change);
         }

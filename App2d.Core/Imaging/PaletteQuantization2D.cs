@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -36,7 +37,7 @@ public static class PaletteQuantization2D
         var palette = Seed(pixels, Math.Min(colorCount, pixels.Length));
         var labels = indices.AsSpan();
         labels.Fill(-1);
-        var sums = new (double X, double Y, double Z)[palette.Length];
+        var sums = new Vector3d[palette.Length];
         var counts = new int[palette.Length];
         for (var iteration = 0; iteration < maxIterations; iteration++)
         {
@@ -48,9 +49,7 @@ public static class PaletteQuantization2D
                 var index = Nearest(pixels[i], palette);
                 changed |= labels[i] != index;
                 labels[i] = index;
-                sums[index].X += pixels[i].X;
-                sums[index].Y += pixels[i].Y;
-                sums[index].Z += pixels[i].Z;
+                sums[index] += pixels[i].ToVector3d();
                 counts[index]++;
             }
 
@@ -58,8 +57,7 @@ public static class PaletteQuantization2D
             {
                 if (counts[i] > 0)
                 {
-                    palette[i] = new((float)(sums[i].X / counts[i]),
-                        (float)(sums[i].Y / counts[i]), (float)(sums[i].Z / counts[i]));
+                    palette[i] = (sums[i] / counts[i]).ToVector3();
                 }
             }
             if (!changed)
@@ -75,7 +73,10 @@ public static class PaletteQuantization2D
             labels[i] = Nearest(pixels[i], palette);
             counts[labels[i]]++;
         }
-        return (Compact(palette, counts, labels), indices);
+        return (
+            Palette: Compact(palette, counts, labels),
+            Indices: indices
+        );
     }
 
     private static Vector3[] Seed(ReadOnlySpan<Vector3> pixels, int count)
@@ -88,7 +89,7 @@ public static class PaletteQuantization2D
             var farthest = 0;
             for (var i = 0; i < pixels.Length; i++)
             {
-                distances[i] = Math.Min(distances[i], DistanceSquared(pixels[i], palette[^1]));
+                distances[i] = Math.Min(distances[i], Vector3d.DistanceSquared(pixels[i].ToVector3d(), palette[^1].ToVector3d()));
                 if (distances[i] > distances[farthest])
                 {
                     farthest = i;
@@ -100,16 +101,16 @@ public static class PaletteQuantization2D
             }
             palette.Add(pixels[farthest]);
         }
-        return palette.ToArray();
+        return [.. palette];
     }
 
     private static int Nearest(Vector3 pixel, ReadOnlySpan<Vector3> palette)
     {
         var nearest = 0;
-        var distance = DistanceSquared(pixel, palette[0]);
+        var distance = Vector3d.DistanceSquared(pixel.ToVector3d(), palette[0].ToVector3d());
         for (var i = 1; i < palette.Length; i++)
         {
-            var candidate = DistanceSquared(pixel, palette[i]);
+            var candidate = Vector3d.DistanceSquared(pixel.ToVector3d(), palette[i].ToVector3d());
             if (candidate < distance)
             {
                 distance = candidate;
@@ -119,14 +120,6 @@ public static class PaletteQuantization2D
         return nearest;
     }
 
-    private static double DistanceSquared(Vector3 a, Vector3 b)
-    {
-        // Double intermediates keep distances and means finite even for large finite float channels.
-        var x = (double)a.X - b.X;
-        var y = (double)a.Y - b.Y;
-        var z = (double)a.Z - b.Z;
-        return x * x + y * y + z * z;
-    }
 
     private static Vector3[] Compact(Vector3[] palette, ReadOnlySpan<int> counts, Span<int> labels)
     {
