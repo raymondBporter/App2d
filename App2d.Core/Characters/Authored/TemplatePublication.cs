@@ -28,7 +28,7 @@ public static class TemplatePublication
         var sourceVersion = FileVersion(sourceText);
         var report = new List<string> { $"template '{template.Id}' publishes model '{template.Model}' (file at version {sourceVersion?.ToString() ?? "?"}, read at {source.Version})" };
         var differences = new List<string>();
-        Func<string, PartAsset?> partOf = catalog.Parts.GetValueOrDefault;
+        Func<string, Part?> partOf = catalog.Parts.GetValueOrDefault;
         var before = ResolvedModel.From(source, null, partOf);
         var declared = CharacterModel.FromJson(source.ToJson());
         var parameters = declared.Parameters.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);

@@ -134,7 +134,7 @@ public static class AuthoredJson
             {
                 property.ShouldSerialize = (owner, value) => ((PropSolid)owner).Outline is null && !Equals(value, baseline);
             }
-            else if (info.Type == typeof(Authored.PartAsset) && property.Name is "parameters" or "presets" or "measures" || info.Type == typeof(Authored.PartInstance) && property.Name == "inputs")
+            else if (info.Type == typeof(Authored.Part) && property.Name is "parameters" or "presets" or "measures" || info.Type == typeof(Authored.PartInstance) && property.Name == "inputs")
             {
                 // The module contract members (P10b) are written only when declared, so a part or instance without them keeps its file as it was.
                 property.ShouldSerialize = (_, value) => value is System.Collections.ICollection { Count: > 0 };

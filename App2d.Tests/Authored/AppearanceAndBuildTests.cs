@@ -65,10 +65,10 @@ public sealed class AppearanceAndBuildTests
     public void AClipCanHideTheFaceForABackView()
     {
         var model = ResolvedModel.From(PersonTemplate.Model(face: true), null, PersonTemplate.PartOf);
-        var clip = new MotionClip { Id = "climb", Name = "Climb", Model = "person", Duration = 1, Plays = [new() { Instance = PersonTemplate.FaceInstance, Keys = [new() { Expression = PartAsset.None }] }] };
+        var clip = new MotionClip { Id = "climb", Name = "Climb", Model = "person", Duration = 1, Plays = [new() { Instance = PersonTemplate.FaceInstance, Keys = [new() { Expression = Part.None }] }] };
         clip.Validate(model);
         var pose = PoseEvaluator.Sample(model, clip, .5);
-        Assert.Equal(PartAsset.None, pose.Expressions[PersonTemplate.FaceInstance]);
+        Assert.Equal(Part.None, pose.Expressions[PersonTemplate.FaceInstance]);
         Assert.True(pose.Attachments[PersonTemplate.FaceInstance].Hidden);
     }
 

@@ -115,7 +115,7 @@ public sealed class PersonWardrobeTests
     [Fact]
     public void TunicPaintStaysOnTheTorsoAndClipsToItsSilhouette()
     {
-        var part = new PuppetPart
+        var part = new PartGeometry
         {
             A = "origin",
             ScaleX = 2,

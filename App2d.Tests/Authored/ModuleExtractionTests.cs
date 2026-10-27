@@ -53,7 +53,7 @@ public sealed class ModuleExtractionTests : IDisposable
             Assert.Equal(File.ReadAllText(file), File.ReadAllText(Path.Combine(Authored, Path.GetRelativePath(TestModels.AuthoredRoot, file))));
         }
         Assert.All(ModulePlans.Extract(Authored, Output), r => Assert.StartsWith("unchanged", r.Status));
-        var edited = PartAsset.FromJson(File.ReadAllText(Path.Combine(Output, "parts", ModulePlans.QuadrupedHead + ".json")));
+        var edited = Part.FromJson(File.ReadAllText(Path.Combine(Output, "parts", ModulePlans.QuadrupedHead + ".json")));
         edited.Name = "Edited head";
         edited.Save(Path.Combine(Output, "parts", ModulePlans.QuadrupedHead + ".json"));
         Assert.StartsWith("kept", ModulePlans.Extract(Authored, Output).Single(r => r.PartId == ModulePlans.QuadrupedHead).Status);
@@ -94,10 +94,10 @@ public sealed class ModuleExtractionTests : IDisposable
         Assert.Equal(["head", "head-up"], Catalog.Parts[ModulePlans.QuadrupedHead].Controls.Select(c => c.Id));
         Assert.Equal([Humanoid.Hips, Humanoid.LeftHip, Humanoid.LeftKnee, Humanoid.LeftFoot, Humanoid.RightHip, Humanoid.RightKnee, Humanoid.RightFoot], Catalog.Parts[ModulePlans.PersonLower].Controls.Select(c => c.Id));
         // A connection control must be a root at the origin; a static part declares no contract members.
-        var bent = PartAsset.FromJson(lower.ToJson());
+        var bent = Part.FromJson(lower.ToJson());
         bent.Connection = "tail";
         Assert.Contains("must be a rig root at the origin", Assert.Throws<InvalidDataException>(bent.Validate).Message);
-        var boot = PartAsset.FromJson(Catalog.Parts["boot"].ToJson());
+        var boot = Part.FromJson(Catalog.Parts["boot"].ToJson());
         boot.Parameters.Add(new() { Id = "size" });
         Assert.Contains("declares no inputs", Assert.Throws<InvalidDataException>(boot.Validate).Message);
     }

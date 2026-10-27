@@ -50,7 +50,7 @@ public sealed class ModelEditingTests
                 PropertyOverride.Of(PropertyRef.OfPart("torso", RigProperties.Material), new RenderMaterialDefinition2D { Fill = "#654321" }),
             ],
         };
-        PuppetPart Part() => ResolvedModel.From(model, variant).Parts.First(p => p.Id == "torso");
+        PartGeometry Part() => ResolvedModel.From(model, variant).Parts.First(p => p.Id == "torso");
 
         ModelAuthoring.EditPartOverride(variant, model, Part(), edited =>
             edited.Material = edited.RenderMaterial with

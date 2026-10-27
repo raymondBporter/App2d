@@ -270,9 +270,9 @@ internal sealed class AnimationControlInspector(EditorSession session)
         var track = clip.Plays.FirstOrDefault(p => p.Instance == instance);
         var here = track?.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
         var selected = clip.PlayAt(instance, time);
-        var words = asset.Expressions.Keys.Append(PartAsset.None).ToArray();
+        var words = asset.Expressions.Keys.Append(Part.None).ToArray();
         var state = here is not null ? "keyed here" : selected is null ? "instance default" : "held from earlier key";
-        if (Ui.Combo($"Expression ({state})", here?.Expression ?? selected?.Expression ?? attachment.DefaultExpression ?? PartAsset.None, words) is { } expression)
+        if (Ui.Combo($"Expression ({state})", here?.Expression ?? selected?.Expression ?? attachment.DefaultExpression ?? Part.None, words) is { } expression)
         {
             session.Edit(document, () => ClipAuthoring.SetPlay(document.Asset, instance, time, expression));
         }

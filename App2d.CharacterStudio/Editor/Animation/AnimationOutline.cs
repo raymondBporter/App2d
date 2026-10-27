@@ -69,7 +69,7 @@ internal sealed class AnimationOutline(EditorSession session, AnimationWeaponEdi
                 // The targets the asset exposes to the wearer, as namespaced channels; a piece's fit and visibility are keyed through the control inspector's channels too.
                 foreach (var target in attachment.Asset.Exposed)
                 {
-                    var id = attachment.Id + PartAsset.Namespace + target;
+                    var id = attachment.Id + Part.Namespace + target;
                     var isPiece = attachment.Parts.Any(p => p.Id == target);
                     var channel = isPiece ? new Channel(MotionClip.FitKind, id) : ClipAuthoring.ChannelFor(primary.Model, id);
                     if (channel is null || channel.Value.Kind == MotionClip.TargetKind)

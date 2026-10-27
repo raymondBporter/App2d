@@ -38,7 +38,24 @@ public sealed class LibraryPartEditingTests : IDisposable
         Assert.Empty(session.PreviewProp);
         Assert.Null(session.AppearanceDocument);
         var wearer = session.Assets.Resolve("quadruped")!;
+        Assert.False(session.PreviewPartOnWearer);
+        Assert.Null(session.PreviewAttachmentOn(wearer));
+        Assert.Equal("quadruped", session.SubjectId);
+        var standalone = Assert.Single(session.Scene());
+        Assert.Equal("person-lower", Assert.Single(standalone.Model.Attachments).Asset.Id);
+        Assert.Empty(wearer.Attachments);
+        Assert.Equal("person-lower", session.TransportClip!.Model);
+        Assert.Same(standalone.Model, Assert.Single(session.Scene()).Model);
+        Assert.Equal(session.Assets.Root, standalone.Model.TextureRoot);
+        session.PreviewPartOnWearer = true;
         Assert.Equal("person-lower", session.PreviewAttachmentOn(wearer)!.Asset.Id);
+        Assert.Equal("quadruped", Assert.Single(session.Scene()).Id);
+        session.SetMode(Workspace.Model);
+        session.SetMode(Workspace.Appearance);
+        Assert.True(session.PreviewPartOnWearer);
+        session.SaveAll();
+        Assert.False(session.MessageIsError, session.Message);
+        Assert.Empty(AuthoringWorkspace.Open(_root).Resolve("quadruped")!.Attachments);
         Assert.Null(session.WeaponFor(wearer));
         Assert.Empty(session.Assets.DirtyDocuments);
     }
@@ -91,7 +108,7 @@ public sealed class LibraryPartEditingTests : IDisposable
         Assert.Same(session.PartDocument, session.ActiveDocument);
         Assert.Equal("person", session.SubjectId);
         Assert.True(session.PartDocument!.IsNew);
-        Assert.Single(session.PartDocument.Asset.Parts);
+        Assert.Single(session.PartDocument.Asset.Geometry);
         session.PreviewSocket = Humanoid.HeadSocket;
         var preview = session.PreviewAttachmentOn(session.Assets.Resolve("person")!);
         Assert.NotNull(preview);
@@ -101,7 +118,7 @@ public sealed class LibraryPartEditingTests : IDisposable
         Assert.True(session.PreviewAttachmentOn(session.Assets.Resolve("person")!)!.Instance.Mirror);
         // Converting a prop keeps its pieces; the prop itself stays for the entities that equip it.
         Assert.True(session.NewPart("tousle", "Tousle", PersonLoadout.ShortHair), session.Message);
-        Assert.Equal(session.Assets.Prop(PersonLoadout.ShortHair)!.Asset.Solids.Count, session.PartDocument!.Asset.Solids.Count);
+        Assert.Equal(session.Assets.Prop(PersonLoadout.ShortHair)!.Asset.Solids.Count, session.PartDocument!.Asset.Geometry.Count);
         Assert.NotNull(session.Assets.Prop(PersonLoadout.ShortHair));
         Assert.True(session.DuplicatePart("tousle", "tousle-2", "Tousle copy"), session.Message);
         Assert.Equal("tousle-2", session.PartDocument!.Id);
@@ -149,20 +166,20 @@ public sealed class LibraryPartEditingTests : IDisposable
         var instance = session.Selection.Attachment!;
         session.Open("sandal");
         var sandal = session.PartDocument!;
-        var fill = session.Assets.Resolve("cinder")!.Attachment(instance)!.Solids[0].RenderMaterial.Fill;
-        Assert.True(session.Edit(sandal, () => { var solid = sandal.Asset.Solids[0]; solid.Material = solid.RenderMaterial with { Fill = "#102030" }; sandal.Asset.Validate(); }), session.Message);
-        Assert.Equal("#102030", session.Assets.Resolve("cinder")!.Attachment(instance)!.Solids[0].RenderMaterial.Fill);
-        Assert.Equal("#102030", session.Assets.CompileEntity("cinder-gunner")!.Model.Attachment(instance)!.Solids[0].RenderMaterial.Fill);
+        var fill = session.Assets.Resolve("cinder")!.Attachment(instance)!.Parts[0].RenderMaterial.Fill;
+        Assert.True(session.Edit(sandal, () => { var solid = sandal.Asset.Geometry[0]; solid.Material = solid.RenderMaterial with { Fill = "#102030" }; sandal.Asset.Validate(); }), session.Message);
+        Assert.Equal("#102030", session.Assets.Resolve("cinder")!.Attachment(instance)!.Parts[0].RenderMaterial.Fill);
+        Assert.Equal("#102030", session.Assets.CompileEntity("cinder-gunner")!.Model.Attachment(instance)!.Parts[0].RenderMaterial.Fill);
         Assert.Equal(["brute", "cinder", "club-caveman-build", "person", "rock-thrower-build", "shield-defender-build", "short-broad", "tall-thin"], session.Assets.Wearers("sandal").Order(StringComparer.Ordinal));
         session.Undo();
-        Assert.Equal(fill, session.Assets.Resolve("cinder")!.Attachment(instance)!.Solids[0].RenderMaterial.Fill);
+        Assert.Equal(fill, session.Assets.Resolve("cinder")!.Attachment(instance)!.Parts[0].RenderMaterial.Fill);
         session.Redo();
         session.SaveAll();
         Assert.False(session.MessageIsError, session.Message);
         var reopened = AuthoringWorkspace.Open(_root);
         Assert.Empty(reopened.LoadErrors);
-        Assert.Equal("#102030", reopened.Part("sandal")!.Asset.Solids[0].RenderMaterial.Fill);
-        Assert.Equal("#102030", reopened.Resolve("brute")!.Attachment(instance)!.Solids[0].RenderMaterial.Fill);
+        Assert.Equal("#102030", reopened.Part("sandal")!.Asset.Geometry[0].RenderMaterial.Fill);
+        Assert.Equal("#102030", reopened.Resolve("brute")!.Attachment(instance)!.Parts[0].RenderMaterial.Fill);
         Assert.Contains("\"attachments\"", File.ReadAllText(Path.Combine(_root, "models", "person.json")));
         Assert.Equal(CharacterModel.CurrentVersion, reopened.Model("person")!.Asset.Version);
     }

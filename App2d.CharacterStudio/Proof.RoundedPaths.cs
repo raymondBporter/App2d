@@ -45,7 +45,7 @@ internal sealed partial class ProofRenders
                     else
                     {
                         // The segmented version draws each rounded path as straight strokes between its controls.
-                        var parts = new List<PuppetPart>();
+                        var parts = new List<PartGeometry>();
                         foreach (var part in model.Parts)
                         {
                             if (part.Geometry is not RoundedPolylineCurve2D || part.Bindings is not { Count: > 1 })

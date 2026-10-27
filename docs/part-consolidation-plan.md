@@ -2,11 +2,11 @@
 
 Date: 2026-10-26.
 
-Status: proposed next implementation plan. The preview-selection fix in S0a is implemented and tested; the consolidation stages have not started.
+Status: reviewed and in progress. S0 and S1 are implemented. S2-S5 and the remaining S6 cutover are pending; the earlier demo cleanup is recorded below.
 
 This follows the [completed character migration](character-system-migration-plan.md). Keep its working rig, proportions, constraints, module composition, collision registration, animation, document/undo infrastructure and game artwork. The next objective is fewer independent definitions, loaders, placement paths, inspectors and spawners.
 
-Scope: Core, Studio, the game, authored content and relevant tests. Noodle is excluded. Do not restart the previous migration or build a new component framework.
+Scope: Core, Studio, the game, authored content and relevant tests. Noodle is excluded from the migration; its existing bridge only follows the public geometry type rename. Do not restart the previous migration or build a new component framework.
 
 ## 1. Decisions from the discussion
 
@@ -47,7 +47,7 @@ This is a consolidation of authored data. Runtime poses, GPU resources, physics 
 
 ### Part and geometry
 
-Today, [PartAsset](../App2d.Core/Characters/Authored/PartAsset.cs) is the reusable container; [PuppetPart](../App2d.Core/Characters/PuppetDefinition.cs) is mostly one geometry entry with placement and binding rules. Combine their public vocabulary by evolving the container into the one Part definition and reducing PuppetPart to its geometry-entry responsibility.
+S1 evolves the reusable container into [Part](../App2d.Core/Characters/Authored/Part.cs), with one `Geometry` collection of [PartGeometry](../App2d.Core/Characters/PartGeometry.cs) entries. The old `PartAsset` and `PuppetPart` types are gone. Shapes, curves, textured rectangles and meshes share entry placement, material resolution, visibility, animation, picking and inspection. `CharacterModel.Parts` retains its serialized name while using those same entries; it remains the working rig envelope.
 
 Do not merge every field of both classes into a larger ambiguous class. A geometry entry is not another asset category or a second part system.
 
@@ -143,14 +143,14 @@ Reuse [IKinematicMotion2D](../App2d.Core/Physics/Motion/IKinematicMotion2D.cs) a
 
 ## 5. Implementation order
 
-Each stage is a small group of reviewable changes. Update its runtime path, file conversion and Studio commands together. This pass creates the plan only; checked items below refer to work already completed.
+Each stage is a small group of reviewable changes. Update its runtime path, file conversion and Studio commands together. Checked items below record completed, verified stages; later capabilities are not implied by the public type rename.
 
 S1 establishes the shared representation. S2 and S3 then address separate consumers: the passive-physics proof can ship after S1 without waiting for every weapon to convert. S5's image/material animation can also begin once the shared geometry targets exist; it need not wait for all Behavior consumers to move. S6 closes the conversion and deletion work.
 
 ### S0. Finish the preview bug checkpoint and clarify the asset list
 
 - [x] S0a. Fix Appearance selection so a selected library part is not combined with a fallback prop, and fallback prop selection actually enables its preview. Two regressions failed before the change; the 28 focused library-part, appearance and editor-session tests passed afterward.
-- [ ] S0b. Make the browser/preview distinguish a whole module, a reusable part and a study/demo. Previewing a full lower-body module on a wearer must be an explicit, clearly labeled operation rather than look like saved corruption.
+- [x] S0b. Make the browser/preview distinguish a whole module, a reusable part and a study/demo. Previewing a full lower-body module on a wearer must be an explicit, clearly labeled operation rather than look like saved corruption.
 
 Current fix: [EditorSession.SetMode](../App2d.Core/Characters/Editing/EditorSession.cs) and [LibraryPartEditingTests](../App2d.Tests/Authored/LibraryPartEditingTests.cs). It is in the working tree; no asset JSON was changed. The All-list clarification did not reproduce the user's original report as game-art corruption.
 
@@ -158,8 +158,8 @@ Gate: beard and module selections have one consistent active asset and preview. 
 
 ### S1. Establish Part plus geometry entries
 
-- [ ] S1a. Evolve the current PartAsset into the shared Part definition and narrow PuppetPart into geometry-entry data. Preserve the existing instance-reference and resolved-resource roles.
-- [ ] S1b. Route model artwork, library parts, picking and their inspectors through that entry representation. Avoid copying rig fields into another new parallel document type.
+- [x] S1a. Evolve the current PartAsset into the shared Part definition and narrow PuppetPart into geometry-entry data. Preserve the existing instance-reference and resolved-resource roles.
+- [x] S1b. Route model artwork, library parts, picking and their inspectors through that entry representation. Avoid copying rig fields into another new parallel document type.
 
 Keep CharacterModel as the working rig envelope during this step. Where a Part needs a rig, reuse the rig data/representation instead of duplicating its evaluator. A root character can ultimately be a rigged Part; changing that envelope is justified only when it removes a real remaining wrapper/path.
 
@@ -266,9 +266,18 @@ The consolidation is complete when these examples need data and shared runtime c
 
 Track reduction by the old paths removed and the ease of authoring these examples, not by forcing every helper value type into a single enormous class.
 
+### S1 conversion and review notes
+
+- Part format **3** replaces its `parts` and `solids` collections with `geometry`. Entry IDs and animation/variant targets are unchanged. The three meshes in each of `boot` and `sandal` are now `mesh-1`, `mesh-2`, `mesh-3`, bound to `origin`. All seven shipped part files were converted; model, clip, variant and entity schemas did not change. Units, physical vertex Z, layer offsets and instance/state IDs are preserved.
+- Conversion is explicit through `--convert-formats <source> <scratch-output>` and `PartGeometryConversion`. Normal loading rejects the old schema. Original files and the validated scratch bundle are retained in `artifacts/part-consolidation/original/parts` and `artifacts/part-consolidation/converted`. Existing entry IDs win collisions with generated mesh names. An old animated part's root-level solids receive an independent origin control.
+- Removed separate library-solid rendering, picking, selection-overlay and inspector branches. `PartMesh` holds geometry only; the old prop wrapper reuses it until S2. Model and library geometry share material resolution and an inspector. Meshes follow rig nodes and receive existing fit/show tracks. Extrusion remains one algorithm. Standalone previews cache their resolved instance, use the part's clock and texture root, and never enter a document.
+- Studio distinguishes reusable parts, whole rig modules, and named studies/demos. Modules open alone. **Preview on wearer (temporary)** is explicit; **Attach** is the saved operation. Instance layer and per-entry layer remain planar draw order; mesh vertex Z and thickness remain physical distances.
+- Still pending: weapon named points and orientation (S2), passive world objects and removal of fake combatant health (S3), Behavior/collider ownership (S4), texture/material/path animation (S5), and the final single-workflow cutover (S6).
+
 ## 8. Continuation record
 
 | Date | Work | Evidence / next step |
 | --- | --- | --- |
 | 2026-10-26 | Preview fix implemented; consolidation plan written | S0a: two failures reproduced before fix; 28 focused tests passed afterward in the previous work pass. Current source still contains that fix. This planning pass adds documentation only. Next: S0b and S1a. |
-
+| 2026-10-26 | Requested demo cleanup completed ahead of consolidation | S6a complete; wave-specific portion of S6b complete. Removed the curve-face model/template, nine demo clips, face-curve part, character wave modifier, unused payload interface and demo conversion command. Game faces and Core normal-offset curves retained. Seven demo reference cases removed; all 74 retained cases unchanged. Verification: 866 character/curve/rendering tests passed; Studio built in a separate output directory because the open editor locked its normal output; editor smoke 155/155 and acceptance 46/46, with curve/game-face frames inspected. These results cover the cleanup snapshot before concurrent consolidation edits. |
+| 2026-10-26 | S0b and S1 complete | 726 affected authored/geometry tests passed, then 24 focused preview/session/mesh tests passed after the final clock adjustment; Studio editor smoke 158/158 and acceptance 46/46. Inspected outfit, centaur, standalone module and mesh-inspector frames. Existing character reference data stayed unchanged. Studio and the Noodle bridge built. Removed separate library-solid handling; next is S2 or the independent S3 passive-object proof. |

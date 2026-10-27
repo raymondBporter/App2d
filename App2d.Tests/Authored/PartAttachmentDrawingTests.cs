@@ -19,26 +19,27 @@ public sealed class PartAttachmentDrawingTests
     private static CharacterModel Person() => CharacterModel.FromJson(Catalog.Models["person"].ToJson());
 
     /// <summary>A shape on the origin, a curve to a cuff location, an image on the cuff and one solid: all four payload kinds.</summary>
-    private static PartAsset Mixed() => new()
+    private static Part Mixed() => new()
     {
         Id = "mixed",
         Name = "Mixed",
         Materials = { ["leather"] = new() { Fill = "#c9a27a", Outline = new() } },
         Locations = [new() { Id = "cuff", Y = .2f, Angle = .3f, Layer = -.02f }],
-        Parts =
+        Geometry =
         [
             new() { Id = "palm", A = PartLocation.Origin, Geometry = Ellipse2D.Builder.Create(new(.08f, .06f)), Material = new() { Asset = "leather" } },
             new() { Id = "seam", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = new() { StrokeWidth = .02f } },
             new() { Id = "badge", A = "cuff", Geometry = Rectangle2D.Builder.FromSize(.1f, .1f), Material = new() { Texture = "images/badge.png" } },
+            new() { Id = "cuff-mesh", A = PartLocation.Origin, Frame = PartLocation.Origin, Material = new() { Fill = "#333333" }, Mesh = new() { Outline = [new(-.03f, .1f), new(.03f, .1f), new(.03f, .14f), new(-.03f, .14f)], Thickness = .02f } },
         ],
-        Solids = [new() { Material = new() { Fill = "#333333" }, Outline = [new(-.03f, .1f), new(.03f, .1f), new(.03f, .14f), new(-.03f, .14f)], Thickness = .02f }],
+
     };
 
     private static Vector3 Point(Microsoft.Xna.Framework.Vector3 v) => new(v.X, v.Y, v.Z);
 
-    private static Func<string, PartAsset?> Library(params PartAsset[] parts) => id => parts.FirstOrDefault(p => p.Id == id) ?? Catalog.Parts.GetValueOrDefault(id);
+    private static Func<string, Part?> Library(params Part[] parts) => id => parts.FirstOrDefault(p => p.Id == id) ?? Catalog.Parts.GetValueOrDefault(id);
 
-    private static (ResolvedAttachment Attachment, LayeredFrame2D Placement, EvaluatedPose Pose) Worn(PartInstance instance, PartAsset? asset = null)
+    private static (ResolvedAttachment Attachment, LayeredFrame2D Placement, EvaluatedPose Pose) Worn(PartInstance instance, Part? asset = null)
     {
         var person = Person();
         person.Attachments.Add(instance);
@@ -69,7 +70,7 @@ public sealed class PartAttachmentDrawingTests
             TestModels.Near(Point(viaProp.Mesh.Vertices[i].Position), Point(viaPart.Mesh.Vertices[i].Position), 1e-5f, $"vertex {i}");
             Assert.Equal(viaProp.Mesh.Vertices[i].Color, viaPart.Mesh.Vertices[i].Color);
         }
-        Assert.Equal(viaProp.Batches.Count, viaPart.Batches.Count);
+        Assert.All(viaPart.Batches, batch => Assert.Null(batch.Texture));
     }
 
     [Fact]
@@ -171,9 +172,9 @@ public sealed class PartAttachmentDrawingTests
         person.Attachments.Add(new() { Id = "glove", Asset = "mixed", Socket = Humanoid.LeftHandSocket, Material = new() { Fill = "#ff0000" } });
         var over = ResolvedModel.From(person, null, Library(mixed)).Attachments[^1];
         Assert.Equal("#ff0000", over.Parts[0].RenderMaterial.Fill);
-        Assert.Equal("#ff0000", over.Solids[0].RenderMaterial.Fill);
+        Assert.Equal("#ff0000", over.Parts[^1].RenderMaterial.Fill);
         Assert.NotNull(over.Parts[0].RenderMaterial.Outline);
-        Assert.Equal("leather", mixed.Parts[0].Material!.Asset);
+        Assert.Equal("leather", mixed.Geometry[0].Material!.Asset);
         person.Attachments[^1].Material = null;
         var inherited = ResolvedModel.From(person, null, Library(mixed)).Attachments[^1];
         Assert.Equal("#c9a27a", inherited.Parts[0].RenderMaterial.Fill);

@@ -73,7 +73,7 @@ public sealed class PartAuthoringTests
     public void AnOlderPartFileIsRefusedByVersion()
     {
         // P11c retired the legacy source boundary: a file below its kind's current version is refused by name, never translated.
-        var json = PersonTemplate.Face.ToJson().Replace($"\"version\": {PartAsset.CurrentVersion}", "\"version\": 1");
-        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(() => PartAsset.FromJson(json)).Message);
+        var json = PersonTemplate.Face.ToJson().Replace($"\"version\": {Part.CurrentVersion}", "\"version\": 1");
+        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(() => Part.FromJson(json)).Message);
     }
 }

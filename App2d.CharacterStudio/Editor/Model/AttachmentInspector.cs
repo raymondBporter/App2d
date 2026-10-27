@@ -131,7 +131,7 @@ internal sealed class AttachmentInspector(EditorSession session)
         if (session.Assets.PartOf(instance.Asset) is { IsAnimated: true } animated)
         {
             // An animated part (P7a): which bound expression this instance shows before any clip or gameplay request.
-            var words = animated.Expressions.Keys.Append(PartAsset.None).Prepend("").ToArray();
+            var words = animated.Expressions.Keys.Append(Part.None).Prepend("").ToArray();
             if (Ui.Combo("Default expression", instance.Expression ?? "", words, w => w.Length == 0 ? $"asset default ({animated.Expression ?? "nothing"})" : w) is { } expression)
             {
                 session.Edit(document, () => { Live().Expression = expression.Length == 0 ? null : expression; document.Asset.Validate(); });
@@ -158,7 +158,7 @@ internal sealed class AttachmentInspector(EditorSession session)
     /// (bindable as the attachment property input.&lt;id&gt;, so a wearer parameter or a variant override may drive it) or the
     /// part's default when the instance sets none.
     /// </summary>
-    private void Inputs(AssetDocument<CharacterModel> document, string id, PartInstance instance, PartAsset asset)
+    private void Inputs(AssetDocument<CharacterModel> document, string id, PartInstance instance, Part asset)
     {
         if (asset.Parameters.Count == 0)
         {
@@ -195,7 +195,7 @@ internal sealed class AttachmentInspector(EditorSession session)
     }
 
     /// <summary>What an animated asset brings to the instance (P7a): its layers with their clocks, the targets a clip may key and the words it binds.</summary>
-    private static void Animated(PartAsset asset)
+    private static void Animated(Part asset)
     {
         foreach (var line in asset.Contract())
         {
@@ -346,7 +346,7 @@ internal sealed class AttachmentInspector(EditorSession session)
             }
             else
             {
-                var words = animated.Expressions.Keys.Append(PartAsset.None).Prepend("").ToArray();
+                var words = animated.Expressions.Keys.Append(Part.None).Prepend("").ToArray();
                 if (Ui.Combo("##attachment-expression", shown.Expression ?? "", words, w => w.Length == 0 ? $"asset default ({animated.Expression ?? "nothing"})" : w) is { } expression)
                 {
                     Set(i => i.Expression = expression.Length == 0 ? null : expression, true);

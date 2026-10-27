@@ -5,7 +5,7 @@ namespace App2d.CharacterStudio.Editor.Model;
 /// <summary>The same control attachment fields for cutout vertices and curve handles.</summary>
 internal static class ModelPointBindingInspector
 {
-    public static void Draw(PuppetPart part, int index, IReadOnlyList<string> controls, Action<Action<PuppetPart>> change)
+    public static void Draw(PartGeometry part, int index, IReadOnlyList<string> controls, Action<Action<PartGeometry>> change)
     {
         var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
         void Attach(string? control, string? toward)

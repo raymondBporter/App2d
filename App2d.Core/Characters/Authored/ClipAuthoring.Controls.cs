@@ -11,7 +11,7 @@ public static partial class ClipAuthoring
         if (Nested(model, control) is { } nested)
         {
             // A nested control's channels are the part rig's, namespaced; a wearer keys no IK target or socket inside a part.
-            var prefix = nested.Attachment.Id + PartAsset.Namespace;
+            var prefix = nested.Attachment.Id + Part.Namespace;
             return [.. ChannelsForControl(nested.Attachment.Rig!, nested.Target).Where(c => c.Kind != MotionClip.TargetKind).Select(c => c with { Target = prefix + c.Target })];
         }
 

@@ -17,7 +17,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
 
     public bool DragEnabled => _editCutout;
 
-    public void Inspector(PuppetPart part, Action<Action<PuppetPart>> change)
+    public void Inspector(PartGeometry part, Action<Action<PartGeometry>> change)
     {
         if (part.Geometry is SimplePolygon2D polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
         {
@@ -66,7 +66,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
         }
     }
 
-    public void Drag(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
+    public void Drag(ViewportFrame frame, PartGeometry part, EvaluatedPose pose, ResolvedModel model)
     {
         var contour = PartContours2D.Contour(part, model, pose);
         var points = PartContours2D.CutoutPoints(part);

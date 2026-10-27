@@ -28,22 +28,23 @@ public sealed class PartAssetTests : IDisposable
     public void Dispose() => Directory.Delete(_root, true);
 
     /// <summary>A glove: a disc on the origin and a cuff curve toward a second location, plus one extruded solid.</summary>
-    internal static PartAsset Glove(string id = "glove", string fill = "#c9a27a") => new()
+    internal static Part Glove(string id = "glove", string fill = "#c9a27a") => new()
     {
         Id = id,
         Name = "Glove",
         Usage = "glove",
         Materials = { ["leather"] = new() { Fill = fill, Outline = new() } },
         Locations = [new() { Id = "cuff", Y = .12f, Layer = -.01f }],
-        Parts =
+        Geometry =
         [
             new() { Id = "palm", A = PartLocation.Origin, Geometry = Ellipse2D.Builder.Create(new(.06f, .05f)), Material = new() { Asset = "leather" } },
             new() { Id = "cuff-line", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = new() { StrokeWidth = .02f } },
+            new() { Id = "cuff-mesh", A = PartLocation.Origin, Frame = PartLocation.Origin, Material = new() { Fill = fill }, Mesh = new() { Outline = [new(-.03f, .1f), new(.03f, .1f), new(.03f, .14f), new(-.03f, .14f)], Thickness = .02f } },
         ],
-        Solids = [new() { Material = new() { Fill = fill }, Outline = [new(-.03f, .1f), new(.03f, .1f), new(.03f, .14f), new(-.03f, .14f)], Thickness = .02f }],
+
     };
 
-    private static Func<string, PartAsset?> Library(params PartAsset[] parts) => id => parts.FirstOrDefault(p => p.Id == id);
+    private static Func<string, Part?> Library(params Part[] parts) => id => parts.FirstOrDefault(p => p.Id == id);
 
     [Fact]
     public void APartAssetRoundTripsValidatesItsPayloadAndRefusesTheAnimatedBoundary()
@@ -52,9 +53,9 @@ public sealed class PartAssetTests : IDisposable
         glove.Validate();
         var json = glove.ToJson();
         Assert.Contains("\"format\": \"app2d-part\"", json);
-        var read = PartAsset.FromJson(json);
+        var read = Part.FromJson(json);
         Assert.Equal(json, read.ToJson());
-        Assert.Equal(glove.Solids[0].Vertices.Count, read.Solids[0].Vertices.Count);
+        Assert.Equal(glove.Geometry[^1].Mesh!.Vertices.Count, read.Geometry[^1].Mesh!.Vertices.Count);
         Assert.True(read.IsLocation("origin") && read.IsLocation("cuff") && !read.IsLocation("thumb"));
         TestModels.Near(new(0, .12f, -.01f), read.LocationFrame("cuff").Origin);
 
@@ -66,9 +67,9 @@ public sealed class PartAssetTests : IDisposable
         rigged.Layers.Add(new() { Id = "base" });
         Assert.Contains("a static payload carries no rig", Assert.Throws<InvalidDataException>(rigged.Validate).Message);
         var dangling = Glove();
-        dangling.Parts[1].B = "thumb";
+        dangling.Geometry[1].B = "thumb";
         Assert.Contains("thumb", Assert.Throws<InvalidDataException>(dangling.Validate).Message);
-        var empty = new PartAsset { Id = "nothing", Name = "Nothing" };
+        var empty = new Part { Id = "nothing", Name = "Nothing" };
         Assert.Contains("at least one", Assert.Throws<InvalidDataException>(empty.Validate).Message);
         var originLocation = Glove();
         originLocation.Locations.Add(new() { Id = "origin" });
@@ -92,8 +93,8 @@ public sealed class PartAssetTests : IDisposable
         Assert.Equal(Humanoid.RightHandSocket, resolved.Attachments[1].Socket.Id);
         // Materials resolve against the asset's shared surfaces; the asset itself is untouched.
         Assert.Equal("#c9a27a", resolved.Attachments[0].Parts[0].RenderMaterial.Fill);
-        Assert.Equal("leather", glove.Parts[0].Material!.Asset);
-        Assert.Null(glove.Parts[0].Material!.Fill);
+        Assert.Equal("leather", glove.Geometry[0].Material!.Asset);
+        Assert.Null(glove.Geometry[0].Material!.Fill);
         // The two instances place the same origin on different sockets; the mirrored one reflects X in its socket's axes.
         var pose = PoseEvaluator.Rest(resolved);
         var actor = new ActorPose(pose, Vector2.Zero, 1);
@@ -139,7 +140,7 @@ public sealed class PartAssetTests : IDisposable
         Assert.Equal(1, onBroad.Instance.FitY);
         Assert.Equal("#c9a27a", onBroad.Parts[0].RenderMaterial.Fill);
         Assert.Equal("glove", person.Attachments[0].Asset);
-        Assert.Null(mitten.Parts[0].Material!.Fill);
+        Assert.Null(mitten.Geometry[0].Material!.Fill);
         // Clearing the override restores inheritance without writing the base value into the variant.
         foreach (var property in new[] { RigProperties.Asset, RigProperties.FitY, RigProperties.Material })
         {
@@ -241,10 +242,10 @@ public sealed class PartAssetTests : IDisposable
     public void AFootwearPropConvertsToAPartWhoseOriginTakesTheGripsRole()
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
-        var boot = PartAsset.FromProp(catalog.Props["boot-left"], "boot", "Short leather boot", "shoe");
-        Assert.Equal(catalog.Props["boot-left"].Solids.Count, boot.Solids.Count);
-        Assert.Equal(catalog.Props["boot-left"].Solids[0].Vertices.Count, boot.Solids[0].Vertices.Count);
+        var boot = Part.FromProp(catalog.Props["boot-left"], "boot", "Short leather boot", "shoe");
+        Assert.Equal(catalog.Props["boot-left"].Solids.Count, boot.Geometry.Count);
+        Assert.Equal(catalog.Props["boot-left"].Solids[0].Vertices.Count, boot.Geometry[0].Mesh!.Vertices.Count);
         Assert.Equal(PartPayloads.Static, boot.Payload);
-        Assert.Equal(boot.ToJson(), PartAsset.FromJson(boot.ToJson()).ToJson());
+        Assert.Equal(boot.ToJson(), Part.FromJson(boot.ToJson()).ToJson());
     }
 }

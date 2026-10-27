@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 2,
+  "version": 3,
   "id": "person-lower",
   "name": "Person lower body",
   "usage": "lower-body",
@@ -142,7 +142,7 @@
     }
   },
   "locations": [],
-  "parts": [
+  "geometry": [
     {
       "id": "left-leg",
       "geometry": {
@@ -270,7 +270,6 @@
       "depth": -0.004
     }
   ],
-  "solids": [],
   "controls": [
     {
       "id": "hips",

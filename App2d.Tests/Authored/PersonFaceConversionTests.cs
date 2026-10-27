@@ -74,11 +74,11 @@ public sealed class PersonFaceConversionTests : IDisposable
         Assert.Equal("strained", PoseEvaluator.Sample(hero.Model, hit, .3).Expressions[PersonTemplate.FaceInstance]);
         var climb = Catalog.Animations["player-climb"];
         var back = PoseEvaluator.Sample(hero.Model, climb, .4, repeat: true);
-        Assert.Equal(PartAsset.None, back.Expressions[PersonTemplate.FaceInstance]);
+        Assert.Equal(Part.None, back.Expressions[PersonTemplate.FaceInstance]);
         Assert.True(back.Attachments[PersonTemplate.FaceInstance].Hidden);
         // The climb-on clip hides the face from its 'none' key on: shown just before, hidden just after.
         var on = Catalog.Animations["player-climb-on"];
-        var hiddenFrom = on.Plays.Single().Keys.First(k => k.Expression == PartAsset.None).Time;
+        var hiddenFrom = on.Plays.Single().Keys.First(k => k.Expression == Part.None).Time;
         Assert.True(hiddenFrom > 0);
         Assert.False(PoseEvaluator.Sample(hero.Model, on, hiddenFrom - .01f).Attachments[PersonTemplate.FaceInstance].Hidden);
         Assert.True(PoseEvaluator.Sample(hero.Model, on, hiddenFrom + .01f).Attachments[PersonTemplate.FaceInstance].Hidden);

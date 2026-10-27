@@ -56,7 +56,7 @@ public static partial class ClipAuthoring
     /// </summary>
     public static (ResolvedAttachment Attachment, string Target)? Nested(ResolvedModel model, string control)
     {
-        if (!control.Contains(PartAsset.Namespace))
+        if (!control.Contains(Part.Namespace))
         {
             return null;
         }
@@ -76,7 +76,7 @@ public static partial class ClipAuthoring
     {
         if (Nested(model, control) is { } nested)
         {
-            return ChannelFor(nested.Attachment.Rig!, nested.Target) is { } inner ? inner with { Target = nested.Attachment.Id + PartAsset.Namespace + inner.Target } : null;
+            return ChannelFor(nested.Attachment.Rig!, nested.Target) is { } inner ? inner with { Target = nested.Attachment.Id + Part.Namespace + inner.Target } : null;
         }
 
         foreach (var chain in model.Chains.Values)
@@ -154,7 +154,7 @@ public static partial class ClipAuthoring
 
             var fit = evaluated.LayoutFit;
             var inner = Delta(nested.Attachment.Rig!, clip, evaluated.Pose, nested.Target, new(local.X / fit.X, local.Y / fit.Y, local.Z), nested: true);
-            var channel = inner.Channel with { Target = nested.Attachment.Id + PartAsset.Namespace + inner.Channel.Target };
+            var channel = inner.Channel with { Target = nested.Attachment.Id + Part.Namespace + inner.Channel.Target };
             SetKey(clip, channel, time, inner.Value);
             return channel;
         }

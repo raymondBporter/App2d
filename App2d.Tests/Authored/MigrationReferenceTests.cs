@@ -140,7 +140,6 @@ public sealed class MigrationReferenceTests
         var swoop = Catalog.Animations["pterosaur-swoop"];
         yield return new("flying-pterosaur/swoop@rush", "pterosaur", "flying-pterosaur", swoop.Id, Marker(swoop, "rush"), 1);
 
-
         // Stalker: three-legged point rig with a socket off the body.
         yield return new("stalker-pest/stalker-lunge@strike", "stalker", "stalker-pest", "stalker-lunge", Marker(Catalog.Animations["stalker-lunge"], "strike"), 1);
         yield return new("stalker/stalker-walk@0.5", "stalker", null, "stalker-walk", .5f, 1);
@@ -366,7 +365,7 @@ public sealed class MigrationReferenceTests
         return record;
     }
 
-    private static SilhouetteRecord Silhouette(PuppetPart part, EvaluatedPose pose, ResolvedModel model, ActorPose actor)
+    private static SilhouetteRecord Silhouette(PartGeometry part, EvaluatedPose pose, ResolvedModel model, ActorPose actor)
     {
         var contour = PartContours2D.Contour(part, model, pose)
             .ConvertAll(actor.Place);

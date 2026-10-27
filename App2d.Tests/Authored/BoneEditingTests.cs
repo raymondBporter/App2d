@@ -99,7 +99,7 @@ public sealed class BoneEditingTests
         // A point parent with a bone child: the bone child re-expresses its local setup to stay.
         var shipped = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var person = CharacterModel.FromJson(shipped.Models["person"].ToJson());
-        Func<string, PartAsset?> parts = shipped.Parts.GetValueOrDefault;
+        Func<string, Part?> parts = shipped.Parts.GetValueOrDefault;
         var rest = ResolvedModel.From(person, null, parts);
         ModelAuthoring.MoveRest(person, "chest", rest.Rest["chest"] + new Vector3(0, .2f, 0), children: false);
         var lifted = ResolvedModel.From(person, null, parts);

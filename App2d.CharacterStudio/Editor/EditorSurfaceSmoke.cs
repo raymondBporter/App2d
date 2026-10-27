@@ -172,19 +172,6 @@ internal static class EditorSurfaceSmoke
             // P8c: the converted spear guard's colliders in the Entity inspector, and the overlay of the registered colliders inside the thrust window.
             if (assets.Entity("spear-guard") is { Asset.Colliders.Count: > 0 })
             {
-                // Use the game face for the entity frames.
-                if (assets.Model("person") is { } personDoc && personDoc.Asset.Attachments.FirstOrDefault(a => a.Id == PersonTemplate.FaceInstance) is { } worn && worn.Asset != ProceduralFace.AssetId)
-                {
-                    session.Edit(personDoc, () =>
-                    {
-                        ModelAuthoring.SetAttachmentAsset(personDoc.Asset, PersonTemplate.FaceInstance, ProceduralFace.AssetId, assets.PartOf);
-                        personDoc.Asset.Attachments.First(a => a.Id == PersonTemplate.FaceInstance).Expression = "relaxed";
-                    });
-                }
-                if (assets.Clip("person-walk") is { } walkDoc && walkDoc.Asset.Plays.Any(p => p.Instance == PersonTemplate.FaceInstance && p.Keys.Any(k => k.Expression == "smile")))
-                {
-                    session.Edit(walkDoc, () => ClipAuthoring.SetPlay(walkDoc.Asset, PersonTemplate.FaceInstance, walkDoc.Asset.Plays.First(p => p.Instance == PersonTemplate.FaceInstance).Keys.First(k => k.Expression == "smile").Time, null));
-                }
                 session.Open("spear-guard");
                 session.Selection.Collider = "reach";
                 Capture("entity-colliders");

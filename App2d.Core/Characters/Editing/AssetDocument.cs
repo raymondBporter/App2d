@@ -184,5 +184,5 @@ internal static class AssetDocuments
     public static AssetDocument<PropAsset> Of(PropAsset prop, string? path) =>
         new(AssetKind.Prop, prop, prop.Id, path, p => p.ToSnapshotJson(), p => p.Name, PropAsset.FromDraftJson);
     public static AssetDocument<EntityAsset> Of(EntityAsset entity, string? path) => new(AssetKind.Entity, entity, entity.Id, path, e => e.ToJson(), e => e.Name);
-    public static AssetDocument<PartAsset> Of(PartAsset part, string? path) => new(AssetKind.Part, part, part.Id, path, p => p.ToJson(), p => p.Name, PartAsset.FromDraftJson);
+    public static AssetDocument<Part> Of(Part part, string? path) => new(AssetKind.Part, part, part.Id, path, p => p.ToJson(), p => p.Name, Part.FromDraftJson);
 }

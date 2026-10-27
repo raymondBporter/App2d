@@ -546,11 +546,11 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // wearer, found through uses / used by, undone in order and saved with its wearers.
                 var s = shell.Session;
                 var library = s.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
-                Record(library.SequenceEqual(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"]) && s.Assets.Part("boot")!.Asset.Solids.Count == 3, "the parts folder loads boot, the baked Person face, the four rig modules and sandal as library parts");
+                Record(library.SequenceEqual(["boot", "face-person", "person-lower", "person-upper", "quadruped-head", "quadruped-lower", "sandal"]) && s.Assets.Part("boot")!.Asset.Geometry.Count == 3, "the parts folder loads boot, the baked Person face, the four rig modules and sandal as library parts");
                 s.Open("person");
                 Check(s.NewPart("mitt", "Mitt", "hair-short"), s);
                 var mitt = s.PartDocument!;
-                Record(s.Mode == Workspace.Appearance && mitt.Asset.Solids.Count > 0 && mitt.IsNew, "a library part converted from a hair prop opens in Appearance as a new draft");
+                Record(s.Mode == Workspace.Appearance && mitt.Asset.Geometry.Count > 0 && mitt.IsNew, "a library part converted from a hair prop opens in Appearance as a new draft");
                 s.PreviewSocket = Humanoid.LeftHandSocket;
                 Record(s.PreviewAttachmentOn(s.Assets.Resolve("person")!) is { Instance.Socket: Humanoid.LeftHandSocket }, "the open part previews on the wearer's chosen socket before it is attached");
                 Check(s.AttachPart("mitt", Humanoid.LeftHandSocket), s);
@@ -566,19 +566,19 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                     "swapping the right instance on tall-thin leaves the base and short-broad wearing the mitt");
                 Record(s.Assets.UsedBy("mitt").Any(r => r.Id == "person") && s.Assets.Wearers("mitt").Contains("short-broad") && s.Assets.UsedBy("boot").Any(r => r.Id == "tall-thin"),
                     "uses / used by follow the instances and the override");
-                var fillBefore = s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill;
+                var fillBefore = s.Assets.Resolve("short-broad")!.Attachment(right)!.Parts[0].RenderMaterial.Fill;
                 s.Open("mitt");
-                Check(s.Edit(mitt, () => { var solid = mitt.Asset.Solids[0]; solid.Material = solid.RenderMaterial with { Fill = "#13579b" }; mitt.Asset.Validate(); }), s);
-                Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill == "#13579b" && s.Assets.Resolve("person")!.Attachments[^2].Solids[0].RenderMaterial.Fill == "#13579b",
+                Check(s.Edit(mitt, () => { var solid = mitt.Asset.Geometry[0]; solid.Material = solid.RenderMaterial with { Fill = "#13579b" }; mitt.Asset.Validate(); }), s);
+                Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Parts[0].RenderMaterial.Fill == "#13579b" && s.Assets.Resolve("person")!.Attachments[^2].Parts[0].RenderMaterial.Fill == "#13579b",
                     "one shared edit reaches every wearer's preview without copying the asset");
                 s.Undo();
-                Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Solids[0].RenderMaterial.Fill == fillBefore && mitt.CanRedo, "the shared edit undoes in order from the part editor");
+                Record(s.Assets.Resolve("short-broad")!.Attachment(right)!.Parts[0].RenderMaterial.Fill == fillBefore && mitt.CanRedo, "the shared edit undoes in order from the part editor");
                 s.Redo();
                 s.SaveAll();
                 Record(!s.MessageIsError && File.Exists(Path.Combine(s.Assets.Root, "parts", "mitt.json")), "save all writes the part before the characters that wear it: " + s.Message);
                 var reopened = AuthoringWorkspace.Open(s.Assets.Root);
                 Record(reopened.LoadErrors.Count == 0 && reopened.Resolve("person")!.Attachments.Count == 3 && reopened.Resolve("tall-thin")!.Attachment(right)!.Asset.Id == "boot"
-                    && reopened.Resolve("person")!.Attachments[^2].Solids[0].RenderMaterial.Fill == "#13579b" && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
+                    && reopened.Resolve("person")!.Attachments[^2].Parts[0].RenderMaterial.Fill == "#13579b" && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
                     "the part, its instances and the variant's swap reopen together");
                 s.Open("person");
                 s.Selection.Select(attachment: right);
@@ -1064,6 +1064,36 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.SetMode(Workspace.Animate);
                 s.Selection.Select(attachment: CentaurStudy.Upper);
                 shell.Viewport.Fit(s.Evaluate(CentaurStudy.Id));
+            }),
+            ("53-module-preview-alone", shell =>
+            {
+                var s = shell.Session;
+                s.Compare.Clear();
+                s.Open("quadruped");
+                s.Open("person-lower");
+                s.ShowRest = true;
+                Record(!s.PreviewPartOnWearer && s.SubjectId == "quadruped"
+                    && s.PreviewAttachmentOn(s.Assets.Resolve("quadruped")!) is null
+                    && s.Scene().Single().Model.Attachments.Single().Asset.Id == "person-lower",
+                    "a whole rig module opens alone without combining it with the selected wearer");
+                shell.Viewport.Fit(s.Scene().Single());
+            }),
+            ("54-module-preview-on-wearer", shell =>
+            {
+                var s = shell.Session;
+                s.PreviewPartOnWearer = true;
+                s.PreviewSocket = s.Assets.Resolve("quadruped")!.Base.Sockets.First(socket => socket.Usage is null).Id;
+                Record(s.PreviewAttachmentOn(s.Assets.Resolve("quadruped")!) is not null,
+                    "previewing a module on a wearer is an explicit temporary choice");
+                shell.Viewport.Fit(s.Scene().Single());
+            }),
+            ("55-shared-mesh-inspector", shell =>
+            {
+                var s = shell.Session;
+                s.Open("boot");
+                s.PreviewPartOnWearer = false;
+                Record(s.PartDocument!.Asset.Geometry.All(p => p.Mesh is not null), "meshes are ordinary geometry entries in the shared inspector");
+                shell.Viewport.Fit(s.Scene().Single());
             }),
         ];
         if (acceptance)

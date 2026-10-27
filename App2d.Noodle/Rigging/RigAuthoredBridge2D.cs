@@ -47,9 +47,9 @@ internal static class RigAuthoredBridge2D
     private static PuppetPoint Point(Vector2 pixels) =>
         new(pixels.X * UnitsPerPixel, pixels.Y * UnitsPerPixel);
 
-    private static PuppetPart Part(RigShape2D shape, string bone)
+    private static PartGeometry Part(RigShape2D shape, string bone)
     {
-        var part = new PuppetPart
+        var part = new PartGeometry
         {
             Id = $"part-{shape.Id}",
             A = bone,

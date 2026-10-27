@@ -79,7 +79,7 @@ public sealed record ModelSocket
     public float OffsetY { get; set; }
     public float OffsetZ { get; set; }
     public float Angle { get; set; }
-    /// <summary>The slot contract (P10b): the <see cref="PartAsset.Usage"/> of the parts this socket takes; null takes any.</summary>
+    /// <summary>The slot contract (P10b): the <see cref="Part.Usage"/> of the parts this socket takes; null takes any.</summary>
     public string? Usage { get; set; }
 }
 
@@ -176,7 +176,7 @@ public sealed class CharacterModel
     /// <summary>The two-bone IK constraints, in evaluation order.</summary>
     [JsonIgnore] public IEnumerable<ModelChain> IkChains => Constraints.OfType<ModelChain>();
     public List<ModelMeasure> Measures { get; set; } = [];
-    public List<PuppetPart> Parts { get; set; } = [];
+    public List<PartGeometry> Parts { get; set; } = [];
     /// <summary>Shared surfaces selected by parts and variants through material.asset.</summary>
     public Dictionary<string, RenderMaterialDefinition2D> Materials { get; set; } = [];
     public List<SkeletonSlot2D> Slots { get; set; } = [];
@@ -287,7 +287,7 @@ public sealed class CharacterModel
         bool Known(string? id) => id is not null && controls.ContainsKey(id);
         // A socket may sit on a module instance's control (P10c), named instance/control; the control itself is checked when the instance resolves.
         var instanceIds = Attachments?.Where(a => a?.Id is not null).Select(a => a.Id).ToHashSet(StringComparer.Ordinal) ?? [];
-        string? InstanceOf(string? id) => id is not null && id.Contains(PartAsset.Namespace) ? MotionClip.Split(id).Instance : null;
+        string? InstanceOf(string? id) => id is not null && id.Contains(Part.Namespace) ? MotionClip.Split(id).Instance : null;
         bool KnownOrNested(string? id) => Known(id) || InstanceOf(id) is { } instance && instanceIds.Contains(instance);
         var scales = new HashSet<string>(StringComparer.Ordinal) { Unit };
         foreach (var measure in Measures)
@@ -341,7 +341,7 @@ public sealed class CharacterModel
             AuthoredAsset.RequireId(part.Id, $"{owner} part id");
             Require(parts.Add(part.Id), $"{owner}: duplicate part '{part.Id}'.");
             part.Validate(Known);
-            part.RenderMaterial.Resolve(Materials);
+            part.ResolveMaterial(Materials);
         }
         var sockets = new HashSet<string>(StringComparer.Ordinal);
         foreach (var socket in Sockets)

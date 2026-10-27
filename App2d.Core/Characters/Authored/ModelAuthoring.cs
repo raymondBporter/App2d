@@ -146,7 +146,7 @@ public static class ModelAuthoring
     // ---- Attachment instances (P5a) ------------------------------------------------------------------------------------
 
     /// <summary>Instances a library part on a socket with a new stable instance ID. The asset must exist in <paramref name="partOf"/>; the socket on the model.</summary>
-    public static PartInstance AddAttachment(CharacterModel model, string asset, string socket, Func<string, PartAsset?> partOf, string? id = null, bool mirror = false)
+    public static PartInstance AddAttachment(CharacterModel model, string asset, string socket, Func<string, Part?> partOf, string? id = null, bool mirror = false)
     {
         if (partOf(asset) is null)
         {
@@ -180,7 +180,7 @@ public static class ModelAuthoring
     }
 
     /// <summary>Replaces the library asset of one base instance; every wearer that does not override it follows.</summary>
-    public static void SetAttachmentAsset(CharacterModel model, string id, string asset, Func<string, PartAsset?> partOf)
+    public static void SetAttachmentAsset(CharacterModel model, string id, string asset, Func<string, Part?> partOf)
     {
         var instance = model.Attachments.FirstOrDefault(a => a.Id == id) ?? throw new InvalidDataException($"Model '{model.Id}' has no attachment '{id}'.");
         if (partOf(asset) is null)
@@ -355,7 +355,7 @@ public static class ModelAuthoring
     /// Removes a control and the drawing parts attached to it, which are returned. Refused while other structure depends on it:
     /// children, chains, measures or chain frames must be changed first, so nothing is discarded silently.
     /// </summary>
-    public static IReadOnlyList<PuppetPart> RemoveControl(CharacterModel model, string id)
+    public static IReadOnlyList<PartGeometry> RemoveControl(CharacterModel model, string id)
     {
         var owner = $"Model '{model.Id}'";
         if (model.Controls.FirstOrDefault(c => c.Parent == id) is { } child)
@@ -517,9 +517,9 @@ public static class ModelAuthoring
         model.Validate();
     }
 
-    public static PuppetPart AddPart(CharacterModel model, IGeometryValue2D geometry, string a, string? b = null)
+    public static PartGeometry AddPart(CharacterModel model, IGeometryValue2D geometry, string a, string? b = null)
     {
-        var part = new PuppetPart
+        var part = new PartGeometry
         {
             Id = UniqueId(geometry.Kind, model.Parts.Select(p => p.Id)),
             Geometry = geometry,
@@ -534,7 +534,7 @@ public static class ModelAuthoring
     }
 
     /// <summary>Creates a drawing part centered on a bone and carried by its local XY frame.</summary>
-    public static PuppetPart AddPartToBone(CharacterModel model, IShape2D geometry, string boneId)
+    public static PartGeometry AddPartToBone(CharacterModel model, IShape2D geometry, string boneId)
     {
         var bone = Control(model, boneId);
         if (bone.Length <= 0)
@@ -581,6 +581,7 @@ public static class ModelAuthoring
         }
 
         part.Geometry = geometry;
+        part.Mesh = null;
         if (part.Geometry is IShape2D && part.Material is { Fill: null, Outline: null })
         {
             part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
@@ -590,7 +591,7 @@ public static class ModelAuthoring
     }
 
     /// <summary>Authors a drawing path over existing controls. It consumes the pose; it does not create or solve IK.</summary>
-    public static void SetRoundedPath(PuppetPart part, IReadOnlyList<string> controls, float softness = 1)
+    public static void SetRoundedPath(PartGeometry part, IReadOnlyList<string> controls, float softness = 1)
     {
         if (controls.Count is < 2 or > 64 || controls.Any(string.IsNullOrWhiteSpace) || controls.Distinct().Count() != controls.Count)
         {
@@ -605,7 +606,7 @@ public static class ModelAuthoring
         part.Bindings = [.. controls.Select((id, i) => new PartPointBinding { Point = i, Control = id })];
     }
 
-    public static void SetCutout(PuppetPart part, IReadOnlyList<Vector2> points)
+    public static void SetCutout(PartGeometry part, IReadOnlyList<Vector2> points)
     {
         CheckCutout(points);
         part.Geometry = new SimplePolygon2D { Vertices = [.. points] }.Validated();
@@ -634,7 +635,7 @@ public static class ModelAuthoring
     }
 
     /// <summary>Edits the perimeter and remaps attachments in the same transaction. New points inherit their preceding attachment.</summary>
-    public static void InsertCutoutPoint(PuppetPart part, int after)
+    public static void InsertCutoutPoint(PartGeometry part, int after)
     {
         var points = new List<Vector2>(PartContours2D.CutoutPoints(part));
         points.Insert(after + 1, Vector2.Lerp(points[after], points[(after + 1) % points.Count], .5f));
@@ -652,7 +653,7 @@ public static class ModelAuthoring
         part.Bindings = bindings.Count > 0 ? bindings : null;
     }
 
-    public static void RemoveCutoutPoint(PuppetPart part, int index)
+    public static void RemoveCutoutPoint(PartGeometry part, int index)
     {
         var points = new List<Vector2>(PartContours2D.CutoutPoints(part));
         points.RemoveAt(index);
@@ -950,7 +951,7 @@ public static class ModelAuthoring
     /// overrides of this variant; untouched fields keep inheriting. A material edit merges the changed members into the
     /// existing material override, so a fill override survives a later outline edit.
     /// </summary>
-    public static void EditPartOverride(ModelVariant variant, CharacterModel basis, PuppetPart resolved, Action<PuppetPart> change)
+    public static void EditPartOverride(ModelVariant variant, CharacterModel basis, PartGeometry resolved, Action<PartGeometry> change)
     {
         var edited = resolved with { };
         change(edited);

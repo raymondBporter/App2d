@@ -142,10 +142,10 @@ public sealed record PartLocation
 /// its own <see cref="Clips"/>, the <see cref="Layers"/> they play on with their clocks, the targets it <see cref="Exposed"/>
 /// to the wearer's clips and the <see cref="Expressions"/> it binds for gameplay; its pieces hang on its controls.
 /// </summary>
-public sealed class PartAsset
+public sealed class Part
 {
     public const string FormatId = "app2d-part";
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     /// <summary>The expression word that hides an animated instance for its span: a back view, a cleared face.</summary>
     public const string None = "none";
     /// <summary>Separates an instance ID from a target inside it in a wearer's clip (<c>face/left-brow</c>).</summary>
@@ -165,10 +165,8 @@ public sealed class PartAsset
     /// <summary>Shared surfaces the payload selects through <c>material.asset</c>, like a model's.</summary>
     public Dictionary<string, RenderMaterialDefinition2D> Materials { get; set; } = [];
     public List<PartLocation> Locations { get; set; } = [];
-    /// <summary>Shapes, curves and images: ordinary drawing parts whose <c>a</c>/<c>b</c> name the asset's locations (static) or its rig controls (animated).</summary>
-    public List<PuppetPart> Parts { get; set; } = [];
-    /// <summary>Solid meshes in the asset's local space (X along, Y across, Z thickness), lifted by the one planar-to-3D bridge.</summary>
-    public List<PropSolid> Solids { get; set; } = [];
+    /// <summary>All geometry entries share placement, material, visibility, animation and picking.</summary>
+    public List<PartGeometry> Geometry { get; set; } = [];
 
     // ---- Animated payload (P7a) ---------------------------------------------------------------------------------------
 
@@ -194,43 +192,29 @@ public sealed class PartAsset
     /// <summary>The expression an instance shows when neither gameplay, the wearer's clip nor the instance names one.</summary>
     public string? Expression { get; set; }
 
+    [JsonIgnore] public bool IsModule => Connection is not null;
     [JsonIgnore] public bool IsAnimated => Payload == PartPayloads.Animated;
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    internal static PartAsset FromDraftJson(string json) => AuthoredAsset.Parse<PartAsset>(json, "part");
-    public static PartAsset FromJson(string json)
+    internal static Part FromDraftJson(string json) => AuthoredAsset.Parse<Part>(json, "part");
+    public static Part FromJson(string json)
     {
         var part = FromDraftJson(json);
-        part.RebuildSolids();
+        part.RebuildMeshes();
         part.Validate();
         return part;
     }
-    public static PartAsset Load(string path) => FromJson(File.ReadAllText(path));
+    public static Part Load(string path) => FromJson(File.ReadAllText(path));
     public void Save(string path)
     {
         Validate();
         AuthoredAsset.Write(path, ToJson());
     }
 
-    /// <summary>Rebuilds the indexed meshes of extruded outlines, which are the editable source.</summary>
-    public void RebuildSolids()
+    /// <summary>Rebuilds meshes from their editable outlines.</summary>
+    public void RebuildMeshes()
     {
-        foreach (var solid in Solids ?? [])
-        {
-            if (solid?.Outline is not { } outline)
-            {
-                continue;
-            }
-
-            if (outline.Count is < 3 or > 256)
-            {
-                throw new InvalidDataException($"Part '{Id}': outline needs 3 to 256 points.");
-            }
-
-            var mesh = PropGeometry.Extrude(outline, solid.Thickness, solid.RenderMaterial.Fill ?? throw new InvalidDataException($"Part '{Id}': a solid needs a fill."));
-            solid.Vertices = mesh.Vertices;
-            solid.Triangles = mesh.Triangles;
-        }
+        foreach (var entry in Geometry ?? []) entry?.Mesh?.Rebuild();
     }
 
     public bool IsLocation(string? id) => id == PartLocation.Origin || id is not null && Locations.Any(l => l.Id == id);
@@ -266,7 +250,7 @@ public sealed class PartAsset
     /// pieces (with <paramref name="parts"/> standing in for the pieces when an instance's materials are resolved over them).
     /// A static asset has no rig.
     /// </summary>
-    public CharacterModel RigModel(IReadOnlyList<PuppetPart>? parts = null)
+    public CharacterModel RigModel(IReadOnlyList<PartGeometry>? parts = null)
     {
         if (!IsAnimated)
         {
@@ -286,7 +270,7 @@ public sealed class PartAsset
             Parameters = Parameters,
             Presets = Presets,
             Measures = Measures,
-            Parts = [.. parts ?? Parts],
+            Parts = [.. parts ?? Geometry],
         };
     }
 
@@ -324,7 +308,7 @@ public sealed class PartAsset
         var owner = $"Part '{Id}'";
         Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
         // An outline is the editable source of a solid; its mesh is derived here as on load, so an authored draft validates too.
-        RebuildSolids();
+        RebuildMeshes();
         AuthoredAsset.RequireId(Id, "part id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         AuthoredAsset.RequireId(Usage, owner + " usage");
@@ -332,7 +316,7 @@ public sealed class PartAsset
         Require(PartFittings.All.Contains(Fitting, StringComparer.Ordinal), $"{owner}: unknown fitting '{Fitting}' (one of {string.Join(", ", PartFittings.All)}).");
         Limit.Color(Ink, owner + " ink");
         new Limit(.001f, 1).Check(LineWidth, owner + " lineWidth");
-        Require(Materials is not null && Locations is not null && Parts is not null && Solids is not null, $"{owner}: collections cannot be null.");
+        Require(Materials is not null && Locations is not null && Geometry is not null, $"{owner}: collections cannot be null.");
         Require(Controls is not null && Constraints is not null && Groups is not null && Exposed is not null && Layers is not null && Clips is not null && Expressions is not null, $"{owner}: collections cannot be null.");
         Require(Parameters is not null && Presets is not null && Measures is not null, $"{owner}: collections cannot be null.");
         Require(IsAnimated || Controls.Count == 0 && Constraints.Count == 0 && Groups.Count == 0 && Exposed.Count == 0 && Layers.Count == 0 && Clips.Count == 0 && Expressions.Count == 0 && Expression is null,
@@ -353,15 +337,14 @@ public sealed class PartAsset
             Require(locations.Add(location.Id), $"{owner}: duplicate location '{location.Id}'.");
             Require(location.Control is null || IsAnimated && Controls.Any(c => c.Id == location.Control), $"{owner} location '{location.Id}': no rig control '{location.Control}' to ride on.");
         }
-        Require(Parts.Count + Solids.Count > 0, $"{owner}: a part needs at least one shape, curve, image or solid.");
-        Require(Parts.Count <= 256 && Solids.Count <= 128, $"{owner}: capacity exceeded.");
+        Require(Geometry.Count > 0, $"{owner}: a part needs at least one shape, curve, image or solid.");
+        Require(Geometry.Count <= 384, $"{owner}: capacity exceeded.");
         var ids = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var part in Parts)
+        foreach (var part in Geometry)
         {
             Require(part is not null, $"{owner}: null drawing part.");
             AuthoredAsset.RequireId(part.Id, $"{owner} drawing part id");
             Require(ids.Add(part.Id), $"{owner}: duplicate drawing part '{part.Id}'.");
-            Require(IsAnimated || part.Frame is null, $"{owner} part '{part.Id}': a static library part's pieces attach to its locations, not to a bone.");
             if (!IsAnimated)
             {
                 try
@@ -374,27 +357,7 @@ public sealed class PartAsset
                 }
             }
 
-            part.RenderMaterial.Resolve(Materials);
-        }
-        for (var i = 0; i < Solids.Count; i++)
-        {
-            var solid = Solids[i];
-            var field = $"{owner} solid {i + 1}";
-            Require(solid?.Vertices is not null && solid.Triangles is not null, $"{field}: incomplete solid.");
-            Require(solid.Material is not null, $"{field}: a material is required.");
-            solid.Material.Validate(field + " material");
-            Require(solid.Material.Fill is not null, $"{field}: a solid needs a fill.");
-            if (solid.Outline is { } outline)
-            {
-                Require(outline.Count is >= 3 and <= 256, $"{field}: outline needs 3 to 256 points.");
-                new Limit(.0001f, 32).Check(solid.Thickness, field + " thickness");
-                foreach (var point in outline)
-                {
-                    point.Check(field + " outline");
-                }
-            }
-            Require(solid.Vertices.Count >= 3 && solid.Triangles.Count >= 3 && solid.Triangles.Count % 3 == 0, $"{field}: a solid needs indexed triangles (an outline is extruded on load).");
-            Require(solid.Triangles.All(t => t >= 0 && t < solid.Vertices.Count), $"{field}: triangle index outside vertices.");
+            part.ResolveMaterial(Materials);
         }
         if (IsAnimated)
         {
@@ -417,7 +380,7 @@ public sealed class PartAsset
         }
 
         var controls = Controls.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
-        var pieces = Parts.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
+        var pieces = Geometry.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
         Require(Connection is null || controls.Contains(Connection), $"{owner}: the connection control '{Connection}' is not a rig control.");
         Require(Connection is null || Controls.First(c => c.Id == Connection).Parent is null && Controls.First(c => c.Id == Connection).Rest.XYZ == System.Numerics.Vector3.Zero,
             $"{owner}: the connection control '{Connection}' must be a rig root at the origin (the payload's origin is what lands on the wearer's socket).");
@@ -479,10 +442,10 @@ public sealed class PartAsset
         Require(Expression is null || Binds(Expression), $"{owner}: the default expression '{Expression}' is not bound.");
     }
 
-    /// <summary>A static part holding one prop's solids, for converting hair, clothing and footwear props into library parts.</summary>
-    public static PartAsset FromProp(PropAsset prop, string id, string name, string usage)
+    /// <summary>A static part holding one prop's meshes as ordinary geometry entries, for converting hair, clothing and footwear props into library parts.</summary>
+    public static Part FromProp(PropAsset prop, string id, string name, string usage)
     {
-        var part = new PartAsset
+        var part = new Part
         {
             Id = id,
             Name = name,
@@ -493,15 +456,22 @@ public sealed class PartAsset
         foreach (var solid in prop.Solids)
         {
             // The prop's grip is the point its socket carried; the part's origin takes that role.
-            part.Solids.Add(solid with
+            part.Geometry.Add(new()
             {
-                Outline = solid.Outline?.ConvertAll(p => new PuppetPoint((p.X - prop.Grip.X) * prop.Scale, (p.Y - prop.Grip.Y) * prop.Scale, (p.Z - prop.Grip.Z) * prop.Scale)),
-                Vertices = solid.Vertices.ConvertAll(p => new PuppetPoint((p.X - prop.Grip.X) * prop.Scale, (p.Y - prop.Grip.Y) * prop.Scale, (p.Z - prop.Grip.Z) * prop.Scale)),
-                Triangles = [.. solid.Triangles],
-                Thickness = solid.Thickness * prop.Scale,
+                Id = $"mesh-{part.Geometry.Count + 1}",
+                A = PartLocation.Origin,
+                Frame = PartLocation.Origin,
+                Material = solid.Material,
+                Mesh = new()
+                {
+                    Outline = solid.Outline?.ConvertAll(p => new PuppetPoint((p.X - prop.Grip.X) * prop.Scale, (p.Y - prop.Grip.Y) * prop.Scale, (p.Z - prop.Grip.Z) * prop.Scale)),
+                    Vertices = solid.Vertices.ConvertAll(p => new PuppetPoint((p.X - prop.Grip.X) * prop.Scale, (p.Y - prop.Grip.Y) * prop.Scale, (p.Z - prop.Grip.Z) * prop.Scale)),
+                    Triangles = [.. solid.Triangles],
+                    Thickness = solid.Thickness * prop.Scale,
+                }
             });
         }
-        part.RebuildSolids();
+        part.RebuildMeshes();
         part.Validate();
         return part;
     }
@@ -597,7 +567,7 @@ public sealed record PartInstance
 /// compiled here too (<see cref="Rig"/>), over the resolved pieces. The placement is derived per pose from the socket's
 /// evaluated placement; nothing here is a copy of the asset.
 /// </summary>
-public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, ModelSocket Socket, IReadOnlyList<PuppetPart> Parts, IReadOnlyList<PropSolid> Solids, ResolvedModel? Rig = null)
+public sealed record ResolvedAttachment(PartInstance Instance, Part Asset, ModelSocket Socket, IReadOnlyList<PartGeometry> Parts, ResolvedModel? Rig = null)
 {
     public string Id => Instance.Id;
     public bool IsAnimated => Rig is not null;
@@ -625,7 +595,7 @@ public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, 
     public string? DefaultExpression => Instance.Expression ?? Asset.Expression;
 
     /// <summary>Resolves an instance for a wearer: the asset must exist and the socket must be the wearer's.</summary>
-    public static ResolvedAttachment Resolve(PartInstance instance, Func<string, PartAsset?> partOf, IReadOnlyDictionary<string, ModelSocket> sockets, string owner)
+    public static ResolvedAttachment Resolve(PartInstance instance, Func<string, Part?> partOf, IReadOnlyDictionary<string, ModelSocket> sockets, string owner)
     {
         var asset = partOf(instance.Asset) ?? throw new InvalidDataException($"{owner} attachment '{instance.Id}': no part asset '{instance.Asset}'.");
         if (!sockets.TryGetValue(instance.Socket, out var socket))
@@ -647,8 +617,7 @@ public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, 
             }
         }
 
-        var parts = asset.Parts.ConvertAll(p => p with { Material = p.RenderMaterial.WithOverride(instance.Material).Resolve(asset.Materials) });
-        var solids = asset.Solids.ConvertAll(s => s with { Material = s.RenderMaterial.WithOverride(instance.Material).Resolve(asset.Materials) });
+        var parts = asset.Geometry.ConvertAll(p => p.ResolveMaterial(asset.Materials, instance.Material));
         ResolvedModel? rig = null;
         if (asset.IsAnimated)
         {
@@ -666,9 +635,9 @@ public sealed record ResolvedAttachment(PartInstance Instance, PartAsset Asset, 
 
         if (instance.Expression is { } expression && !asset.Binds(expression))
         {
-            throw new InvalidDataException($"{owner} attachment '{instance.Id}': part '{asset.Id}' binds no expression '{expression}'" + (asset.IsAnimated ? $" (one of {string.Join(", ", asset.Expressions.Keys.Append(PartAsset.None))})." : "; a static part shows no expression."));
+            throw new InvalidDataException($"{owner} attachment '{instance.Id}': part '{asset.Id}' binds no expression '{expression}'" + (asset.IsAnimated ? $" (one of {string.Join(", ", asset.Expressions.Keys.Append(Part.None))})." : "; a static part shows no expression."));
         }
 
-        return new(instance, asset, socket, parts, solids, rig);
+        return new(instance, asset, socket, parts, rig);
     }
 }

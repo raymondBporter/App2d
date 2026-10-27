@@ -62,14 +62,14 @@ public static class RigProperties
     ];
 
     /// <summary>The part properties a part exposes: its fit, material and visibility.</summary>
-    public static IEnumerable<PropertyDeclaration> Declarations(PuppetPart part) => PartDeclarations;
+    public static IEnumerable<PropertyDeclaration> Declarations(PartGeometry part) => PartDeclarations;
 
     /// <summary>
     /// The typed overrides that take a part from <paramref name="was"/> to <paramref name="now"/> (every registered part
     /// property but the material, which merges separately): the registry reads each property once here, so a part-edit
     /// command carries no feature field.
     /// </summary>
-    public static IEnumerable<PropertyOverride> PartChanges(PuppetPart was, PuppetPart now)
+    public static IEnumerable<PropertyOverride> PartChanges(PartGeometry was, PartGeometry now)
     {
         PropertyRef Target(string property) => PropertyRef.OfPart(was.Id, property);
         if (now.ScaleX != was.ScaleX) yield return PropertyOverride.Of(Target(ScaleX), now.ScaleX);
@@ -200,7 +200,7 @@ public static class RigProperties
 /// </summary>
 internal sealed class RigLayout
 {
-    private RigLayout(Dictionary<string, RigSetup> setups, Dictionary<string, float> lengths, Dictionary<string, RigLink?> links, Dictionary<string, RigLimit?> limits, List<PuppetPart> parts, List<PartInstance> attachments)
+    private RigLayout(Dictionary<string, RigSetup> setups, Dictionary<string, float> lengths, Dictionary<string, RigLink?> links, Dictionary<string, RigLimit?> limits, List<PartGeometry> parts, List<PartInstance> attachments)
     {
         Setups = setups;
         Lengths = lengths;
@@ -215,7 +215,7 @@ internal sealed class RigLayout
     public Dictionary<string, RigLink?> Links { get; }
     /// <summary>Each bone node's joint limits (null where none are declared), written by limit bindings and overrides.</summary>
     public Dictionary<string, RigLimit?> Limits { get; }
-    public List<PuppetPart> Parts { get; }
+    public List<PartGeometry> Parts { get; }
     /// <summary>The attachment instances with bound placement and fit, then the wearer's overrides, written.</summary>
     public List<PartInstance> Attachments { get; }
     /// <summary>Controls whose setup a binding or override changed. An untouched point control keeps its authored rest bit for bit.</summary>

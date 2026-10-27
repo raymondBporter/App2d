@@ -9,7 +9,7 @@ namespace App2d.Core.Characters.Authored;
 public sealed record TemplateSlot
 {
     public string Id { get; set; } = "";
-    /// <summary>The <see cref="PartAsset.Usage"/> a part instanced here must declare.</summary>
+    /// <summary>The <see cref="Part.Usage"/> a part instanced here must declare.</summary>
     public string Usage { get; set; } = "part";
     public bool Required { get; set; }
     /// <summary>The asset the published model instances on this slot, or null for an empty slot.</summary>
@@ -203,7 +203,7 @@ public sealed class ModelTemplate
     /// is filled, every dimension is a parameter, every preset exists, every mask is a group and every mapping names a
     /// measure. A version-1 recipe has nothing to check.
     /// </summary>
-    public IReadOnlyList<string> ContractProblems(CharacterModel model, Func<string, PartAsset?>? partOf)
+    public IReadOnlyList<string> ContractProblems(CharacterModel model, Func<string, Part?>? partOf)
     {
         var problems = new List<string>();
         if (!Publishes)
@@ -298,7 +298,7 @@ public sealed class ModelTemplate
     /// published template's contract is checked against the source first; <paramref name="preset"/> (one the template
     /// publishes) writes its values as the new model's parameter defaults.
     /// </summary>
-    public ModelTemplateInstance Instantiate(string id, string name, Func<string, CharacterModel?> modelOf, Func<string, MotionClip?> clipOf, Func<string, PartAsset?>? partOf = null, string? preset = null)
+    public ModelTemplateInstance Instantiate(string id, string name, Func<string, CharacterModel?> modelOf, Func<string, MotionClip?> clipOf, Func<string, Part?>? partOf = null, string? preset = null)
     {
         Validate();
         AuthoredAsset.RequireId(id, "new model id");

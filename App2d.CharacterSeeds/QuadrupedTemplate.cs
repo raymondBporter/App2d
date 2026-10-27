@@ -45,15 +45,15 @@ public static class QuadrupedTemplate
                 Bend = front ? 1 : -1
             });
         }
-        PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IGeometryValue2D? geometry = null)
+        PartGeometry Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IGeometryValue2D? geometry = null)
         {
-            var p = new PuppetPart { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
+            var p = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
             m.Parts.Add(p);
             return p;
         }
-        PuppetPart Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
+        PartGeometry Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
             => Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, new SimplePolygon2D { Vertices = [.. points] }.Validated());
-        void SetOutlineWidth(PuppetPart part, float width) => part.Material = part.RenderMaterial with
+        void SetOutlineWidth(PartGeometry part, float width) => part.Material = part.RenderMaterial with
         {
             Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with
             {
@@ -187,7 +187,7 @@ public static class QuadrupedTemplate
         var clips = new List<MotionClip>();
         MotionClip Clip(string role, float duration, bool loop)
         {
-            var c = ClipAuthoring.New(resolved, model.Id + "-" + role, model.Name + " · " + role, duration, loop);
+            var c = ClipAuthoring.New(resolved, model.Id + "-" + role, model.Name + " ï¿½ " + role, duration, loop);
             clips.Add(c);
             return c;
         }

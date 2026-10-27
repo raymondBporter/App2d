@@ -44,9 +44,9 @@ public static class PterosaurTemplate
                 Control(side + "-toe-" + i, side + "-foot", sign * .09f + (i - 1) * .045f, .27f + (i == 1 ? -.015f : 0), z);
             }
         }
-        PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IShape2D? geometry = null)
+        PartGeometry Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IShape2D? geometry = null)
         {
-            var part = new PuppetPart { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
+            var part = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
             model.Parts.Add(part);
             return part;
         }
@@ -59,7 +59,7 @@ public static class PterosaurTemplate
             Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
             Material = new() { Fill = model.Ink, StrokeWidth = width, Outline = new() },
         });
-        PuppetPart Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
+        PartGeometry Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
             => Shape(key, a, a + "-up", w, h, x, y, depth, fill, new SimplePolygon2D { Vertices = [.. points] }.Validated());
         foreach (var (side, sign, depth, fill) in new[] { ("far", 1f, .12f, "#9e5f7e"), ("near", -1f, -.02f, "#b56e8b") })
         {

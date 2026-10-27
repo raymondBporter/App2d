@@ -1,5 +1,7 @@
 # Character Studio
 
+Library parts now use the same geometry inspector as model artwork, including mesh placement, fit, layer, material, physical Z and thickness. The browser distinguishes **Part**, **Module**, and named **Study** entries. Whole rig modules open alone; **Preview on wearer (temporary)** places one on the selected wearer for fitting. **Attach** creates the saved instance. Standalone previews use the part's animation clock without changing the wearer or its documents.
+
 For the next consolidation of Part definitions, prop/physics loading, Behavior and texture-frame animation, see [Part consolidation plan](part-consolidation-plan.md).
 
 The proposed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.

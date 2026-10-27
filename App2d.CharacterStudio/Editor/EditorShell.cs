@@ -236,6 +236,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         AssetDocument<MotionClip> c => "animation for " + (Session.Assets.Model(c.Asset.Model)?.Name ?? c.Asset.Model + " (missing)"),
         AssetDocument<EntityAsset> e => "entity on " + (Session.Assets.Find(e.Asset.Model)?.Name ?? e.Asset.Model + " (missing)"),
         AssetDocument<PropAsset> => "shared appearance",
+        AssetDocument<Part> p => p.Asset.IsModule ? "shared rig module" : "shared part",
         _ => "base model",
     };
 
@@ -323,7 +324,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
             }
 
             // Every word the subject's animated part instances bind (P7a/P7c); there is no fixed vocabulary any more.
-            var bound = Session.Scene().SelectMany(s => s.Model.Attachments.Where(a => a.IsAnimated).SelectMany(a => a.Asset.Expressions.Keys.Append(PartAsset.None)));
+            var bound = Session.Scene().SelectMany(s => s.Model.Attachments.Where(a => a.IsAnimated).SelectMany(a => a.Asset.Expressions.Keys.Append(Part.None)));
             foreach (var face in bound.Distinct(StringComparer.Ordinal))
             {
                 if (ImGui.Selectable(face, Session.Expression == face))

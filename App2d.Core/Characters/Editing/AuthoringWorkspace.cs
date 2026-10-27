@@ -42,11 +42,11 @@ public sealed class AuthoringWorkspace
     public IEnumerable<AssetDocument<PropAsset>> Props => _documents.Values.OfType<AssetDocument<PropAsset>>();
     public IEnumerable<AssetDocument<EntityAsset>> Entities => _documents.Values.OfType<AssetDocument<EntityAsset>>();
     /// <summary>Library part assets (P5a): shared by every wearer that instances them.</summary>
-    public IEnumerable<AssetDocument<PartAsset>> Parts => _documents.Values.OfType<AssetDocument<PartAsset>>();
+    public IEnumerable<AssetDocument<Part>> Parts => _documents.Values.OfType<AssetDocument<Part>>();
     /// <summary>Changes whenever any part document changes, is added or discarded: the transitive dependency every wearer's resolution carries.</summary>
     public int PartsRevision => _discarded + Parts.Sum(p => p.Version + 1);
     /// <summary>The library lookup resolution reads: current part drafts, so a shared edit reaches every dependent preview.</summary>
-    public PartAsset? PartOf(string id) => Part(id)?.Asset;
+    public Part? PartOf(string id) => Part(id)?.Asset;
     /// <summary>JSON recipes for creating independent models and animation bundles from this workspace's resources.</summary>
     public IReadOnlyDictionary<string, ModelTemplate> ModelTemplates { get; private set; } = new Dictionary<string, ModelTemplate>();
 
@@ -103,7 +103,7 @@ public sealed class AuthoringWorkspace
     public AssetDocument<MotionClip>? Clip(string? id) => Find(id) as AssetDocument<MotionClip>;
     public AssetDocument<PropAsset>? Prop(string? id) => Find(id) as AssetDocument<PropAsset>;
     public AssetDocument<EntityAsset>? Entity(string? id) => Find(id) as AssetDocument<EntityAsset>;
-    public AssetDocument<PartAsset>? Part(string? id) => Find(id) as AssetDocument<PartAsset>;
+    public AssetDocument<Part>? Part(string? id) => Find(id) as AssetDocument<Part>;
     /// <summary>Whether an ID is taken: by a document, or by a file of that name that did not load and must not be overwritten.</summary>
     public bool Exists(string id) => _documents.ContainsKey(id) || FileIds().Contains(id);
 
@@ -140,7 +140,7 @@ public sealed class AuthoringWorkspace
             MotionClip clip => AssetDocuments.Of(clip, null),
             PropAsset prop => AssetDocuments.Of(prop, null),
             EntityAsset entity => AssetDocuments.Of(entity, null),
-            PartAsset part => AssetDocuments.Of(part, null),
+            Part part => AssetDocuments.Of(part, null),
             _ => throw ArgGuard.CreateInvalid($"Not an authored asset: {typeof(T).Name}."),
         };
         AuthoredAsset.RequireId(document.Id, AssetKinds.Label(document.Kind) + " id");
@@ -307,7 +307,7 @@ public sealed class AuthoringWorkspace
         }
         var clips = Clips.Select(c => Copy(c, MotionClip.FromJson)).OfType<MotionClip>().ToDictionary(c => c.Id, StringComparer.Ordinal);
         var props = Props.Select(p => Copy(p, PropAsset.FromJson)).OfType<PropAsset>().ToDictionary(p => p.Id, StringComparer.Ordinal);
-        var parts = Parts.Select(p => Copy(p, PartAsset.FromJson)).OfType<PartAsset>().ToDictionary(p => p.Id, StringComparer.Ordinal);
+        var parts = Parts.Select(p => Copy(p, Authored.Part.FromJson)).OfType<Part>().ToDictionary(p => p.Id, StringComparer.Ordinal);
         var resolved = new Dictionary<string, ResolvedModel>(StringComparer.Ordinal);
         ResolvedModel ResolveCopy(string id)
         {
@@ -552,7 +552,7 @@ public sealed class AuthoringWorkspace
                 }
 
                 break;
-            case AssetDocument<PartAsset> part:
+            case AssetDocument<Part> part:
                 Try(part.Asset.Validate);
                 break;
         }
@@ -604,7 +604,7 @@ public sealed class AuthoringWorkspace
             case AssetDocument<EntityAsset> entity:
                 entity.Asset.Validate();
                 break;
-            case AssetDocument<PartAsset> part:
+            case AssetDocument<Part> part:
                 part.Asset.Validate();
                 break;
         }

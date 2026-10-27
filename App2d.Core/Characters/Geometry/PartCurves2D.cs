@@ -25,7 +25,7 @@ public static class PartCurves2D
         _ => throw new InvalidDataException("Curve point count must match its curve definition.")
     };
 
-    internal static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3>? rest)
+    internal static List<Vector3> Contour(PartGeometry part, Func<string, Vector3> world, Func<string, Vector3>? rest)
     {
         var curve = (ICurve2D)part.Geometry!;
         var a = world(part.A);

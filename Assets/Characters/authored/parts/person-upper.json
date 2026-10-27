@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 2,
+  "version": 3,
   "id": "person-upper",
   "name": "Person upper body",
   "usage": "upper-body",
@@ -142,7 +142,7 @@
     }
   },
   "locations": [],
-  "parts": [
+  "geometry": [
     {
       "id": "chest-head",
       "geometry": {
@@ -473,7 +473,6 @@
       "depth": -0.004
     }
   ],
-  "solids": [],
   "controls": [
     {
       "id": "chest",

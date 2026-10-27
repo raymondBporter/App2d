@@ -56,7 +56,7 @@ internal static class Program
                 var baked = ProceduralFace.Bake();
                 var bakedPath = Path.Combine(authoredRoot, "parts", baked.Id + ".json");
                 baked.Save(bakedPath);
-                Console.WriteLine($"{baked.Id}: {baked.Controls.Count} controls, {baked.Parts.Count} pieces, {baked.Clips.Count} clips, {baked.Expressions.Count} expressions -> {bakedPath}");
+                Console.WriteLine($"{baked.Id}: {baked.Controls.Count} controls, {baked.Geometry.Count} pieces, {baked.Clips.Count} clips, {baked.Expressions.Count} expressions -> {bakedPath}");
                 return 0;
             case ["--publish-templates", var authoredRoot, var output]:
                 // P10a: the Person, quadruped, triceratops and pterosaur templates as version-2 resources with their models'

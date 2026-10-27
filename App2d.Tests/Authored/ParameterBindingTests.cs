@@ -132,7 +132,7 @@ public sealed class ParameterBindingTests
     }
 
     /// <summary>The retired <c>PersonBuildRule.Apply</c>, kept here as the oracle the data bindings must reproduce.</summary>
-    private static (Dictionary<string, Vector3> Positions, List<PuppetPart> Parts) LegacyPersonBuild(ResolvedModel standard, PersonBuild b)
+    private static (Dictionary<string, Vector3> Positions, List<PartGeometry> Parts) LegacyPersonBuild(ResolvedModel standard, PersonBuild b)
     {
         var rest = standard.Order.ToDictionary(c => c.Id, c => standard.Rest[c.Id], StringComparer.Ordinal);
         var parts = standard.Base.Parts.ConvertAll(p => p with { });

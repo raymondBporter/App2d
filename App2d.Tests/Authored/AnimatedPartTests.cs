@@ -17,11 +17,11 @@ public sealed class AnimatedPartTests
 {
     private const string Tail = "tail", Instance = "tail", Socket = Humanoid.BodySocket;
 
-    internal static PartAsset TailAsset(string fitting = PartFittings.Layout) => PartSeeds.Tail(fitting);
+    internal static Part TailAsset(string fitting = PartFittings.Layout) => PartSeeds.Tail(fitting);
 
-    private static Func<string, PartAsset?> Library(params PartAsset[] parts) => id => parts.FirstOrDefault(p => p.Id == id);
+    private static Func<string, Part?> Library(params Part[] parts) => id => parts.FirstOrDefault(p => p.Id == id);
 
-    private static (CharacterModel Model, PartAsset Tail, ResolvedModel Resolved) Wearer(string fitting = PartFittings.Layout)
+    private static (CharacterModel Model, Part Tail, ResolvedModel Resolved) Wearer(string fitting = PartFittings.Layout)
     {
         var person = PersonTemplate.Model();
         var tail = TailAsset(fitting);
@@ -37,13 +37,13 @@ public sealed class AnimatedPartTests
         var tail = TailAsset();
         var json = tail.ToJson();
         Assert.Contains("\"payload\": \"animated\"", json);
-        var read = PartAsset.FromJson(json);
+        var read = Part.FromJson(json);
         Assert.Equal(json, read.ToJson());
         Assert.True(read.IsAnimated && read.Exposes("tip") && !read.Exposes("root"));
         Assert.Equal(ChannelSemantics.ArtworkFit, ChannelSemantics.OfTrack(MotionClip.FitKind));
         Assert.Equal(ChannelSemantics.EnabledState, ChannelSemantics.OfTrack(MotionClip.ShowKind));
 
-        static string Error(Action<PartAsset> breaks)
+        static string Error(Action<Part> breaks)
         {
             var broken = TailAsset();
             breaks(broken);
@@ -55,7 +55,7 @@ public sealed class AnimatedPartTests
         Assert.Contains("no control group 'ears'", Error(a => a.Layers[1].Mask = "ears"));
         Assert.Contains("needs a mask", Error(a => a.Layers[1].Mask = null));
         Assert.Contains("no clip 'curl'", Error(a => a.Expressions["curl"] = new() { Clip = "curl" }));
-        Assert.Contains("hiding word", Error(a => a.Expressions[PartAsset.None] = new()));
+        Assert.Contains("hiding word", Error(a => a.Expressions[Part.None] = new()));
         Assert.Contains("unknown clock", Error(a => a.Layers[0].Clock = "sidereal"));
         Assert.Contains("is not bound", Error(a => a.Expression = "sulk"));
         Assert.Contains("authored for 'dog'", Error(a => a.Clips[0].Model = "dog"));
@@ -117,7 +117,7 @@ public sealed class AnimatedPartTests
         Assert.Equal("wag", pose.Expressions[Instance]);
         Assert.False(evaluated.Hidden);
         // Drawing, contours and picking read the nested pose: the tuft is where the tip is, in the wearer's frame.
-        var contour = PartContours2D.Contour(tail.Parts[1], evaluated);
+        var contour = PartContours2D.Contour(tail.Geometry[1], evaluated);
         var center = contour.Aggregate(Vector3.Zero, (a, b) => a + b) / contour.Count;
         TestModels.Near(evaluated.World("tip"), center, 1e-3f);
         Assert.Equal(0, PartPicking2D.Distance(resolved.Attachment(Instance)!, pose, evaluated.World("tip")), 3);
@@ -220,7 +220,7 @@ public sealed class AnimatedPartTests
         var peak = PoseEvaluator.Sample(resolved, clip, 1.2, input: new("peak") { Clock = 7 }).Attachments[Instance];
         Assert.Equal(PoseEvaluator.Sample(rig, tail.Clips[0], .25).Angles["root"], peak.Pose.Angles["root"], 5);
         // 'none' hides; the instance default and the asset default fill in when nothing selects.
-        ClipAuthoring.SetPlay(clip, Instance, 1.5f, PartAsset.None);
+        ClipAuthoring.SetPlay(clip, Instance, 1.5f, Part.None);
         Assert.True(PoseEvaluator.Sample(resolved, clip, 1.75).Attachments[Instance].Hidden);
         Assert.Equal("wag", PoseEvaluator.Rest(resolved).Attachments[Instance].Expression);
         person.Attachments[0].Expression = "still";
@@ -251,7 +251,7 @@ public sealed class AnimatedPartTests
             var rest = PoseEvaluator.Rest(resolved.Attachment(Instance)!.Rig!);
             // Both policies put the fitted origin at the socket; layout repositions controls and keeps the tuft round, stretch scales the frame.
             TestModels.Near(socket.Origin, evaluated.World("root"));
-            var contour = PartContours2D.Contour(tail.Parts[1], evaluated);
+            var contour = PartContours2D.Contour(tail.Geometry[1], evaluated);
             var width = contour.Max(p => p.X) - contour.Min(p => p.X);
             var height = contour.Max(p => p.Y) - contour.Min(p => p.Y);
             if (fitting == PartFittings.Layout)

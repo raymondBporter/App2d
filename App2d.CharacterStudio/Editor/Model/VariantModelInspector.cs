@@ -83,7 +83,7 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
         // What is selected comes first; the variant-wide sections follow.
         if (session.Selection.Part is { } partId && resolved.Parts.FirstOrDefault(p => p.Id == partId) is { } part)
         {
-            Ui.Header($"Part {part.Id} ({part.Geometry!.Kind})");
+            Ui.Header($"Part {part.Id} ({part.Kind})");
             ImGui.TextDisabled("Overrides on this variant; the base owns the shape.");
             var view = new PartOverrideView(document, basis.Asset, resolved, part.Id, session);
             parts.Draw(part, view, change => session.Change(document, () => ModelAuthoring.EditPartOverride(document.Asset, basis.Asset, part, change)));

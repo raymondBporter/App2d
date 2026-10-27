@@ -88,7 +88,7 @@ public sealed class CentaurCompositionTests
     public void OneOwnerOnlyAndCyclesAndWearerTravelAreRefusedWithPaths()
     {
         var model = CentaurStudy.Model();
-        Func<string, PartAsset?> parts = Catalog.Parts.GetValueOrDefault;
+        Func<string, Part?> parts = Catalog.Parts.GetValueOrDefault;
         // The owner must be an instance mounted on the wearer's own control.
         var onModule = CentaurStudy.Model();
         onModule.MotionOwner = CentaurStudy.Upper;
@@ -103,13 +103,13 @@ public sealed class CentaurCompositionTests
         Assert.Contains("root motion is owned by attachment 'lower' (path: centaur > motionOwner); this clip may not travel itself", Assert.Throws<InvalidDataException>(() => travelling.Validate(resolved)).Message);
         // Instances mounting on each other are refused with the cycle named.
         var cyclic = CentaurStudy.Model();
-        cyclic.Sockets.First(s => s.Id == CentaurStudy.Mount).Control = CentaurStudy.Upper + PartAsset.Namespace + Humanoid.Chest;
+        cyclic.Sockets.First(s => s.Id == CentaurStudy.Mount).Control = CentaurStudy.Upper + Part.Namespace + Humanoid.Chest;
         cyclic.MotionOwner = null;
         cyclic.Validate();
         Assert.Contains("mount on each other in a cycle: lower > upper > lower (path: centaur > attachments > lower > socket mount)", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(cyclic, null, parts)).Message);
         // A socket on a control the module does not have, and on an instance that does not exist, name their paths.
         var noControl = CentaurStudy.Model();
-        noControl.Sockets.First(s => s.Id == CentaurStudy.Saddle).Control = CentaurStudy.Lower + PartAsset.Namespace + "neck";
+        noControl.Sockets.First(s => s.Id == CentaurStudy.Saddle).Control = CentaurStudy.Lower + Part.Namespace + "neck";
         noControl.Validate();
         Assert.Contains("part 'quadruped-lower' has no control 'neck' (path: centaur > sockets > saddle > control > attachments > lower > part quadruped-lower > controls)", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(noControl, null, parts)).Message);
         var noInstance = CentaurStudy.Model();

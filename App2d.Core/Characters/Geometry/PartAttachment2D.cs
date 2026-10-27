@@ -13,14 +13,14 @@ namespace App2d.Core.Characters.Geometry;
 public static class PartAttachment2D
 {
     /// <summary>The part's own placement on its carrier: scale, then rotation, then offset in the carrier's XY, then depth as a layer offset.</summary>
-    public static LayeredFrame2D Attachment(PuppetPart part) =>
+    public static LayeredFrame2D Attachment(PartGeometry part) =>
         LayeredFrame2D.Local(new(part.ScaleX, part.ScaleY), part.Angle, new(part.OffsetX, part.OffsetY), part.Depth);
 
     /// <summary>
     /// The carrier a part attaches to: its bone's frame placed at control A, or the frame whose +Y runs from A toward B
     /// (unit length for shapes, the full A to B span for curves, screen up without B or when A and B coincide).
     /// </summary>
-    public static LayeredFrame2D Carrier(PuppetPart part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null)
+    public static LayeredFrame2D Carrier(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null)
     {
         var origin = world(part.A);
         if (part.Frame is { } frame)
@@ -38,10 +38,10 @@ public static class PartAttachment2D
     }
 
     /// <summary>Where a part's geometry lands: its attachment on its carrier.</summary>
-    public static LayeredFrame2D FrameOf(PuppetPart part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null) =>
+    public static LayeredFrame2D FrameOf(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null) =>
         Attachment(part).Then(Carrier(part, world, bone));
 
-    public static LayeredFrame2D FrameOf(PuppetPart part, ResolvedModel model, EvaluatedPose pose) => FrameOf(part, pose.World, pose.Placement);
+    public static LayeredFrame2D FrameOf(PartGeometry part, ResolvedModel model, EvaluatedPose pose) => FrameOf(part, pose.World, pose.Placement);
 
     internal static LayeredFrame2D BindingFrame(PartPointBinding binding, Func<string, Vector3> world)
     {
@@ -61,7 +61,7 @@ public static class PartAttachment2D
     }
 
     /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
-    public static Vector2 ArtworkPoint(PuppetPart part, int index, Vector2 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
+    public static Vector2 ArtworkPoint(PartGeometry part, int index, Vector2 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
         var art = binding is null ? FrameOf(part, world, bone) : FrameOf(part, rest, restBone);
@@ -79,6 +79,6 @@ public static class PartAttachment2D
         return local;
     }
 
-    public static Vector2 ArtworkPoint(PuppetPart part, int index, Vector2 target, ResolvedModel model, EvaluatedPose pose) =>
+    public static Vector2 ArtworkPoint(PartGeometry part, int index, Vector2 target, ResolvedModel model, EvaluatedPose pose) =>
         ArtworkPoint(part, index, target, pose.World, id => model.Rest[id], pose.Placement, model.RestPlacement);
 }

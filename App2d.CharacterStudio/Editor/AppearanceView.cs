@@ -176,11 +176,12 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 
     // ---- Library parts (P5c) -------------------------------------------------------------------------------------------
 
+    private readonly Model.ModelPartInspector _geometryInspector = new(session, new(session));
     private int _partPiece;
     private string _partAsset = "";
     private string _newLocation = "";
 
-    private void PartOutline(AssetDocument<PartAsset> doc)
+    private void PartOutline(AssetDocument<Part> doc)
     {
         Ui.Header("Library parts");
         Ui.Help("Shared assets: every character and variant that instances one shows the same artwork. Attach from here or from Model > Library parts.");
@@ -197,19 +198,12 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 
         Ui.Header("Pieces");
         var asset = doc.Asset;
-        for (var i = 0; i < asset.Parts.Count; i++)
+        var origin = asset.IsAnimated ? asset.Controls[0].Id : PartLocation.Origin;
+        for (var i = 0; i < asset.Geometry.Count; i++)
         {
-            if (ImGui.Selectable($"{asset.Parts[i].Id}  ({asset.Parts[i].Geometry?.Kind ?? "?"} on {asset.Parts[i].A})", _partPiece == i))
+            if (ImGui.Selectable($"{asset.Geometry[i].Id}  ({asset.Geometry[i].Kind} on {asset.Geometry[i].A})", _partPiece == i))
             {
                 _partPiece = i;
-            }
-        }
-
-        for (var i = 0; i < asset.Solids.Count; i++)
-        {
-            if (ImGui.Selectable($"solid {i + 1}  ({asset.Solids[i].Outline?.Count.ToString() ?? "mesh"} points)", _partPiece == asset.Parts.Count + i))
-            {
-                _partPiece = asset.Parts.Count + i;
             }
         }
 
@@ -217,36 +211,36 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         {
             session.Edit(doc, () =>
             {
-                doc.Asset.Parts.Add(new() { Id = ModelAuthoring.UniqueId("shape", doc.Asset.Parts.Select(p => p.Id)), A = PartLocation.Origin, Geometry = RoundedRectangle2D.Builder.FromSize(.12f, .1f, .02f), Material = new() { Fill = "#b97549", Outline = new() } });
+                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("shape", doc.Asset.Geometry.Select(p => p.Id)), A = origin, Frame = origin, Geometry = RoundedRectangle2D.Builder.FromSize(.12f, .1f, .02f), Material = new() { Fill = "#b97549", Outline = new() } });
                 doc.Asset.Validate();
-                _partPiece = doc.Asset.Parts.Count - 1;
+                _partPiece = doc.Asset.Geometry.Count - 1;
             });
         }
 
         ImGui.SameLine();
-        if (ImGui.SmallButton("Add curve"))
+        if (Ui.Button("Add curve", !asset.IsAnimated || asset.Controls.Count > 1))
         {
             session.Edit(doc, () =>
             {
-                if (doc.Asset.Locations.Count == 0)
+                if (!doc.Asset.IsAnimated && doc.Asset.Locations.Count == 0)
                 {
                     doc.Asset.Locations.Add(new() { Id = "end", Y = .2f });
                 }
 
-                doc.Asset.Parts.Add(new() { Id = ModelAuthoring.UniqueId("curve", doc.Asset.Parts.Select(p => p.Id)), A = PartLocation.Origin, B = doc.Asset.Locations[0].Id, Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = new() { StrokeWidth = .03f } });
+                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("curve", doc.Asset.Geometry.Select(p => p.Id)), A = origin, B = doc.Asset.IsAnimated ? doc.Asset.Controls[1].Id : doc.Asset.Locations[0].Id, Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = new() { StrokeWidth = .03f } });
                 doc.Asset.Validate();
-                _partPiece = doc.Asset.Parts.Count - 1;
+                _partPiece = doc.Asset.Geometry.Count - 1;
             });
         }
 
         ImGui.SameLine();
-        if (ImGui.SmallButton("Add solid"))
+        if (ImGui.SmallButton("Add mesh"))
         {
             session.Edit(doc, () =>
             {
-                doc.Asset.Solids.Add(PropGeometry.Extrude([new(-.08f, 0), new(.08f, 0), new(.08f, .12f), new(-.08f, .12f)], .02f, "#8c4d2c"));
+                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("mesh", doc.Asset.Geometry.Select(p => p.Id)), A = origin, Frame = origin, Material = new() { Fill = "#8c4d2c", Outline = new() }, Mesh = new() { Outline = [new(-.08f, 0), new(.08f, 0), new(.08f, .12f), new(-.08f, .12f)], Thickness = .02f } });
                 doc.Asset.Validate();
-                _partPiece = doc.Asset.Parts.Count + doc.Asset.Solids.Count - 1;
+                _partPiece = doc.Asset.Geometry.Count - 1;
             });
         }
 
@@ -285,7 +279,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         }
     }
 
-    private void PartInspector(AssetDocument<PartAsset> doc)
+    private void PartInspector(AssetDocument<Part> doc)
     {
         var asset = doc.Asset;
         Ui.Header("Shared library part");
@@ -315,7 +309,10 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             session.Change(doc, () => doc.Asset.LineWidth = Math.Clamp(line, .001f, .2f));
         }
 
-        Ui.Header("Preview on wearer");
+        Ui.Header(asset.IsModule ? "Whole rig module preview" : "Part preview");
+        var onWearer = session.PreviewPartOnWearer;
+        if (ImGui.Checkbox("Preview on wearer (temporary)", ref onWearer)) session.PreviewPartOnWearer = onWearer;
+        Ui.Help(onWearer ? "This is a temporary fitting preview. Only Attach writes an instance to the model." : "Showing this part alone. The wearer and its saved attachments are unchanged.");
         var subjects = session.Assets.Models.Select(m => m.Id).Concat(session.Assets.Variants.Select(v => v.Id)).Order(StringComparer.Ordinal);
         if (Ui.Combo("Wearer", session.SubjectId ?? "", subjects, id => session.Assets.Find(id)?.Name is { } n ? $"{n} ({id})" : id) is { } wearer)
         {
@@ -348,7 +345,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
                 session.AttachPart(doc.Id, session.PreviewSocket, session.PreviewMirror);
             }
 
-            Ui.Help(worn.Length == 0 ? "The preview shows the part at the chosen socket until it is attached. Attaching creates an instance on the base model; variants override it per instance."
+            Ui.Help(worn.Length == 0 ? "Attach creates a saved instance at the chosen socket on the base model; variants can override it per instance."
                 : "Attaching again adds another instance (the other hand or foot, mirrored).");
         }
 
@@ -363,16 +360,11 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             AnimatedPayload(doc);
         }
 
-        _partPiece = Math.Clamp(_partPiece, 0, Math.Max(0, asset.Parts.Count + asset.Solids.Count - 1));
-        if (_partPiece < asset.Parts.Count)
+        _partPiece = Math.Clamp(_partPiece, 0, Math.Max(0, asset.Geometry.Count - 1));
+        if (_partPiece < asset.Geometry.Count)
         {
             PartPiece(doc, _partPiece);
         }
-        else if (_partPiece - asset.Parts.Count < asset.Solids.Count)
-        {
-            SolidPiece(doc, _partPiece - asset.Parts.Count);
-        }
-
         if (ImGui.Button("Save all"))
         {
             session.SaveAll();
@@ -390,7 +382,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
     /// An animated payload's own section (P7a): its rig, clips, layers and expression bindings as the asset declares them,
     /// the fitting policy, and which controls and pieces a wearer's clip may key (exposure toggles edit the shared asset).
     /// </summary>
-    private void AnimatedPayload(AssetDocument<PartAsset> doc)
+    private void AnimatedPayload(AssetDocument<Part> doc)
     {
         var asset = doc.Asset;
         Ui.Header("Animated payload");
@@ -405,7 +397,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}{(layer.Clock == PartClocks.Mapped ? $" (x{layer.Rate:0.##} + {layer.Offset:0.##} s)" : "")}, plays {(layer.Clip ?? "nothing")} by default");
         }
 
-        var words = asset.Expressions.Keys.Append(PartAsset.None).Prepend("").ToArray();
+        var words = asset.Expressions.Keys.Append(Part.None).Prepend("").ToArray();
         if (Ui.Combo("Default expression", asset.Expression ?? "", words, w => w.Length == 0 ? "nothing (rest and the layers' default clips)" : w) is { } expression)
         {
             session.Edit(doc, () => { doc.Asset.Expression = expression.Length == 0 ? null : expression; doc.Asset.Validate(); });
@@ -417,10 +409,10 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         }
 
         ImGui.TextDisabled("Exposed to a wearer's clips (namespaced tracks):");
-        foreach (var target in asset.Controls.Select(c => c.Id).Concat(asset.Parts.Select(p => p.Id)))
+        foreach (var target in asset.Controls.Select(c => c.Id).Concat(asset.Geometry.Select(p => p.Id)))
         {
             var exposed = asset.Exposed.Contains(target, StringComparer.Ordinal);
-            if (ImGui.Checkbox($"{target}{(asset.Parts.Any(p => p.Id == target) ? " (piece)" : "")}##expose", ref exposed))
+            if (ImGui.Checkbox($"{target}{(asset.Geometry.Any(p => p.Id == target) ? " (piece)" : "")}##expose", ref exposed))
             {
                 session.Edit(doc, () =>
                 {
@@ -438,16 +430,16 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         Ui.Help("The rig, clips and bindings are authored as data (conversion or seeds); a wearer's clip selects expressions and keys the exposed targets through Animate.");
     }
 
-    private void PartPiece(AssetDocument<PartAsset> doc, int index)
+    private void PartPiece(AssetDocument<Part> doc, int index)
     {
-        var piece = doc.Asset.Parts[index];
-        Ui.Header($"Piece {piece.Id} ({piece.Geometry?.Kind})");
-        void Change(Action<PuppetPart> set) => session.Change(doc, () => { set(doc.Asset.Parts[index]); doc.Asset.Validate(); });
-        void Edit(Action<PuppetPart> set) => session.Edit(doc, () => { set(doc.Asset.Parts[index]); doc.Asset.Validate(); });
-        var locations = doc.Asset.Locations.Select(l => l.Id).Prepend(PartLocation.Origin).ToArray();
+        var piece = doc.Asset.Geometry[index];
+        Ui.Header($"Piece {piece.Id} ({piece.Kind})");
+        void Change(Action<PartGeometry> set) => session.Change(doc, () => { set(doc.Asset.Geometry[index]); doc.Asset.Validate(); });
+        void Edit(Action<PartGeometry> set) => session.Edit(doc, () => { set(doc.Asset.Geometry[index]); doc.Asset.Validate(); });
+        var locations = doc.Asset.IsAnimated ? doc.Asset.Controls.Select(c => c.Id).ToArray() : doc.Asset.Locations.Select(l => l.Id).Prepend(PartLocation.Origin).ToArray();
         if (Ui.Combo("Attached at", piece.A, locations) is { } a)
         {
-            Edit(p => p.A = a);
+            Edit(p => { p.A = a; if (p.Frame is not null) p.Frame = a; });
         }
 
         if (piece.Geometry is ICurve2D && Ui.Combo("Toward", piece.B ?? "", locations) is { } b)
@@ -455,110 +447,15 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             Edit(p => p.B = b);
         }
 
-        var fill = piece.RenderMaterial.Fill ?? (piece.Geometry is ICurve2D ? doc.Asset.Ink : "#fff8e7");
-        if (Ui.ColorHex("Fill", ref fill))
-        {
-            Change(p => p.Material = p.RenderMaterial with { Fill = fill });
-        }
+        _geometryInspector.Draw(piece, null, Change, doc.Asset);
 
-        if (piece.Geometry is ICurve2D)
+        if (Ui.Button("Remove piece", doc.Asset.Geometry.Count > 1))
         {
-            var stroke = piece.RenderMaterial.StrokeWidth ?? doc.Asset.LineWidth;
-            if (Ui.Drag("Stroke width", ref stroke, .001f, .001f, 2))
-            {
-                Change(p => p.Material = p.RenderMaterial with { StrokeWidth = stroke });
-            }
-        }
-        else
-        {
-            var outlined = piece.RenderMaterial.Outline is not null;
-            if (ImGui.Checkbox("Outline", ref outlined))
-            {
-                Edit(p => p.Material = p.RenderMaterial with { Outline = outlined ? new RenderOutlineDefinition2D() : null });
-            }
-        }
-        var scale = new Vector2(piece.ScaleX, piece.ScaleY);
-        if (Ui.Drag2("Scale X / Y", ref scale, .01f, -4, 4))
-        {
-            Change(p => { p.ScaleX = scale.X; p.ScaleY = scale.Y; });
-        }
-
-        var offset = new Vector2(piece.OffsetX, piece.OffsetY);
-        if (Ui.Drag2("Offset X / Y", ref offset, .005f, -2, 2))
-        {
-            Change(p => { p.OffsetX = offset.X; p.OffsetY = offset.Y; });
-        }
-
-        var angle = float.RadiansToDegrees(piece.Angle);
-        if (Ui.Drag("Angle (degrees)", ref angle, 1f, -720, 720))
-        {
-            Change(p => p.Angle = float.DegreesToRadians(angle));
-        }
-
-        var depth = piece.Depth;
-        if (Ui.Drag("Layer offset", ref depth, .005f, -16, 16))
-        {
-            Change(p => p.Depth = depth);
-        }
-
-        var hidden = piece.Hidden;
-        if (ImGui.Checkbox("Hidden", ref hidden))
-        {
-            Edit(p => p.Hidden = hidden);
-        }
-
-        if (Ui.Button("Remove piece", doc.Asset.Parts.Count + doc.Asset.Solids.Count > 1))
-        {
-            session.Edit(doc, () => { doc.Asset.Parts.RemoveAt(index); doc.Asset.Validate(); });
+            session.Edit(doc, () => { doc.Asset.Geometry.RemoveAt(index); doc.Asset.Validate(); });
             _partPiece = 0;
         }
 
         Ui.Help("Pieces sit in the part's own frame; the instance's placement, mirror and fit on each wearer come from Model > Library parts.");
-    }
-
-    private void SolidPiece(AssetDocument<PartAsset> doc, int index)
-    {
-        var solid = doc.Asset.Solids[index];
-        Ui.Header($"Solid {index + 1}");
-        var fill = solid.RenderMaterial.Fill ?? "#8c4d2c";
-        if (Ui.ColorHex("Fill", ref fill))
-        {
-            session.Change(doc, () => { var s = doc.Asset.Solids[index]; s.Material = s.RenderMaterial with { Fill = fill }; doc.Asset.Validate(); });
-        }
-
-        var outlined = solid.RenderMaterial.Outline is not null;
-        if (ImGui.Checkbox("Outline", ref outlined))
-        {
-            session.Edit(doc, () => { var s = doc.Asset.Solids[index]; s.Material = s.RenderMaterial with { Outline = outlined ? s.RenderMaterial.Outline ?? new RenderOutlineDefinition2D() : null }; doc.Asset.Validate(); });
-        }
-
-        if (solid.Outline is { } points)
-        {
-            var thickness = solid.Thickness;
-            if (Ui.Drag("Thickness", ref thickness, .001f, .0001f, 2))
-            {
-                session.Change(doc, () => { doc.Asset.Solids[index].Thickness = Math.Clamp(thickness, .0001f, 2); doc.Asset.RebuildSolids(); doc.Asset.Validate(); });
-            }
-
-            var layer = points.Average(p => p.Z);
-            if (Ui.Drag("Layer", ref layer, .005f, -2, 2))
-            {
-                var delta = layer - points.Average(p => p.Z);
-                session.Change(doc, () => { var s = doc.Asset.Solids[index]; s.Outline = s.Outline!.ConvertAll(p => p with { Z = p.Z + delta }); doc.Asset.RebuildSolids(); doc.Asset.Validate(); });
-            }
-
-            Ui.Help("Outline points are edited as coordinates for now; dragging library-part outlines in the viewport arrives with the cutout tools in P7.");
-        }
-        else
-        {
-            Ui.Help("This mesh has no editable outline.");
-        }
-
-        if (Ui.Button("Remove solid", doc.Asset.Parts.Count + doc.Asset.Solids.Count > 1))
-        {
-            session.Edit(doc, () => { doc.Asset.Solids.RemoveAt(index); doc.Asset.Validate(); });
-            _partPiece = 0;
-        }
     }
 
     private void Piece(AssetDocument<PropAsset> doc)

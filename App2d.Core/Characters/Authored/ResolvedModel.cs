@@ -7,14 +7,14 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>A base model with one variant's overrides applied, compiled once and shared by every actor that uses it.</summary>
 public sealed class ResolvedModel
 {
-    private readonly Func<string, PartAsset?>? _partOf;
+    private readonly Func<string, Part?>? _partOf;
     private readonly RigLayout _layout;
     private readonly RigLayout _authored;
     private readonly Dictionary<string, PropertyOverride> _overrides;
 
-    private ResolvedModel(CharacterModel model, ModelVariant? variant, IReadOnlyList<ModelControl> order, Dictionary<string, RigNode> nodes, List<PuppetPart> parts,
+    private ResolvedModel(CharacterModel model, ModelVariant? variant, IReadOnlyList<ModelControl> order, Dictionary<string, RigNode> nodes, List<PartGeometry> parts,
         ParameterCatalog parameters, Dictionary<string, float> parameterValues, List<ResolvedAttachment> attachments, Dictionary<string, string> roleClips,
-        RigLayout layout, RigLayout authored, Dictionary<string, PropertyOverride> overrides, Func<string, PartAsset?>? partOf)
+        RigLayout layout, RigLayout authored, Dictionary<string, PropertyOverride> overrides, Func<string, Part?>? partOf)
     {
         Base = model;
         Variant = variant;
@@ -63,7 +63,7 @@ public sealed class ResolvedModel
     /// <summary>A control's rest placement: its rest frame at its absolute rest layer.</summary>
     public LayeredFrame2D RestPlacement(string control) => new(new Frame2D(RestTransforms[control]), Rest[control].Z);
     public string TextureRoot { get; set; } = Environment.CurrentDirectory;
-    public IReadOnlyList<PuppetPart> Parts { get; }
+    public IReadOnlyList<PartGeometry> Parts { get; }
     /// <summary>Library part instances resolved for this wearer, in the base's order, with the variant's overrides applied.</summary>
     public IReadOnlyList<ResolvedAttachment> Attachments { get; }
     public ResolvedAttachment? Attachment(string? id) => Attachments.FirstOrDefault(a => a.Id == id);
@@ -72,7 +72,7 @@ public sealed class ResolvedModel
     /// <summary>The instance whose clips own the wearer's root motion, or null (P10c).</summary>
     public ResolvedAttachment? MotionOwner => Attachment(Base.MotionOwner);
     /// <summary>The instance a socket sits on when its control is a nested one (<c>instance/control</c>), else null.</summary>
-    public static (string Instance, string Control)? NestedSocket(ModelSocket socket) => socket.Control.Contains(PartAsset.Namespace) && MotionClip.Split(socket.Control) is var (instance, control) ? (instance, control) : null;
+    public static (string Instance, string Control)? NestedSocket(ModelSocket socket) => socket.Control.Contains(Part.Namespace) && MotionClip.Split(socket.Control) is var (instance, control) ? (instance, control) : null;
     public IReadOnlyDictionary<string, float> Measures { get; }
 
     /// <summary>Controls ordered so every parent precedes its children.</summary>
@@ -118,7 +118,7 @@ public sealed class ResolvedModel
     /// bound values (a set pins the value, a clear pins the authored or empty value); then the derived positions, frames,
     /// fitting, attachments and measures.
     /// </summary>
-    public static ResolvedModel From(CharacterModel model, ModelVariant? variant = null, Func<string, PartAsset?>? partOf = null) => Resolve(model, variant, partOf, rigOnly: false);
+    public static ResolvedModel From(CharacterModel model, ModelVariant? variant = null, Func<string, Part?>? partOf = null) => Resolve(model, variant, partOf, rigOnly: false);
 
     /// <summary>
     /// The rig alone: rest geometry, frames, parameters and overrides, with the wearer's attachment instances left
@@ -128,7 +128,7 @@ public sealed class ResolvedModel
     /// </summary>
     public static ResolvedModel Rig(CharacterModel model, ModelVariant? variant = null) => Resolve(model, variant, null, rigOnly: true);
 
-    private static ResolvedModel Resolve(CharacterModel model, ModelVariant? variant, Func<string, PartAsset?>? partOf, bool rigOnly)
+    private static ResolvedModel Resolve(CharacterModel model, ModelVariant? variant, Func<string, Part?>? partOf, bool rigOnly)
     {
         model.Validate();
         variant?.Validate();
@@ -201,7 +201,7 @@ public sealed class ResolvedModel
         var parts = layout.Parts;
         for (var i = 0; i < parts.Count; i++)
         {
-            parts[i] = parts[i] with { Material = parts[i].RenderMaterial.Resolve(model.Materials) };
+            parts[i] = parts[i].ResolveMaterial(model.Materials);
         }
         var resolved = new ResolvedModel(model, variant, order, nodes, parts, parameters, values, attachments, roleClips, layout, authored, overrides, partOf) { EvaluationOrder = evaluationOrder };
         return resolved;

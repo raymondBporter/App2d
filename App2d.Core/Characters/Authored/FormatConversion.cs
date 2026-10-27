@@ -6,7 +6,7 @@ namespace App2d.Core.Characters.Authored;
 
 /// <summary>
 /// P11c: rewrites an authored tree's model, part and entity files onto the formats that carry no retired member (model 12,
-/// part 2, entity 5), on a scratch tree with a report (plan rule 4). A file at the previous version is read with the retired
+/// part 3, entity 5), on a scratch tree with a report (plan rule 4). A file at the previous version is read with the retired
 /// members skipped (<see cref="AuthoredJson.Tolerant"/>), every retired member it carried is listed by path, the asset is
 /// validated at the new version and written under <paramref name="output"/>; nothing under <paramref name="root"/> is written.
 /// A rerun reports every output unchanged; an output edited after an earlier run is kept. Verification: every converted model
@@ -52,7 +52,7 @@ public static class FormatConversion
                 File.Copy(path, target);
             }
         }
-        foreach (var (folder, kind, previous, current) in new[] { ("models", "model", 11, CharacterModel.CurrentVersion), ("parts", "part", 1, PartAsset.CurrentVersion), ("entities", "entity", 4, EntityAsset.CurrentVersion) })
+        foreach (var (folder, kind, previous, current) in new[] { ("models", "model", 11, CharacterModel.CurrentVersion), ("parts", "part", 1, Part.CurrentVersion), ("entities", "entity", 4, EntityAsset.CurrentVersion) })
         {
             var directory = Path.Combine(root, folder);
             if (!Directory.Exists(directory))
@@ -69,7 +69,7 @@ public static class FormatConversion
                     var text = File.ReadAllText(path);
                     var node = JsonNode.Parse(text) as JsonObject ?? throw new InvalidDataException("not a JSON object");
                     var version = node["version"]?.GetValue<int>() ?? 0;
-                    if (version != previous && version != current)
+                    if (version != previous && version != current && !(kind == "part" && version == 2))
                     {
                         throw new InvalidDataException($"version {version} is not an input of this conversion (expects {previous} or {current})");
                     }
@@ -89,8 +89,9 @@ public static class FormatConversion
                         }
                         case "part":
                         {
-                            var part = JsonSerializer.Deserialize<PartAsset>(text, AuthoredJson.Tolerant) ?? throw new InvalidDataException("empty file");
-                            part.Version = PartAsset.CurrentVersion;
+                            if (version < Part.CurrentVersion) PartGeometryConversion.Upgrade(node);
+                            var part = JsonSerializer.Deserialize<Part>(node.ToJsonString(), AuthoredJson.Tolerant) ?? throw new InvalidDataException("empty file");
+                            part.Version = Part.CurrentVersion;
                             part.Validate();
                             fresh = part.ToJson();
                             break;
@@ -151,9 +152,11 @@ public static class FormatConversion
 
         var reportPath = Path.Combine(output, "format-conversion-report.md");
         var report = new StringBuilder();
-        report.AppendLine("# Format conversion report (P11c: model 12, part 2, entity 5)");
+        report.AppendLine("# Format conversion report (P11c: model 12, part 3, entity 5)");
         report.AppendLine();
         report.AppendLine($"Source: `{root}` (unchanged). Output: `{output}`. Date: {DateTime.Now:yyyy-MM-dd HH:mm}.");
+        report.AppendLine();
+        report.AppendLine("Part v3 uses one geometry array. Existing drawing-entry IDs, rig targets, layers and units are unchanged; old solids become mesh entries with stable mesh-N IDs (uniquified on collision), their original material and physical Z, attached to the root frame. Normal open/save does not convert legacy files.");
         report.AppendLine();
         report.AppendLine("| Kind | Id | Status | Retired members dropped |");
         report.AppendLine("| --- | --- | --- | --- |");

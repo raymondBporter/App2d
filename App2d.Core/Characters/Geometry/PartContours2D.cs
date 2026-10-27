@@ -10,21 +10,21 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>Character part outlines, including curves and cutouts deformed by control bindings.</summary>
 public static class PartContours2D
 {
-    public static IReadOnlyList<Vector2> CutoutPoints(PuppetPart part) =>
+    public static IReadOnlyList<Vector2> CutoutPoints(PartGeometry part) =>
         ((SimplePolygon2D)part.Geometry!).VertexList;
 
-    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, bone: null, rest: rest);
+    public static List<Vector3> Contour(PartGeometry part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, bone: null, rest: rest);
 
     /// <summary>A part's outline in an evaluated pose of a resolved model, with the pose's animated artwork fit applied (P7a).</summary>
-    public static List<Vector3> Contour(PuppetPart part, ResolvedModel model, EvaluatedPose pose) =>
+    public static List<Vector3> Contour(PartGeometry part, ResolvedModel model, EvaluatedPose pose) =>
         Contour(pose.Fitted(part), pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement);
 
     /// <summary>A piece's outline inside an evaluated animated instance, in the wearer's frame.</summary>
-    public static List<Vector3> Contour(PuppetPart part, EvaluatedAttachment attachment) =>
+    public static List<Vector3> Contour(PartGeometry part, EvaluatedAttachment attachment) =>
         Contour(attachment.Pose.Fitted(part), attachment.World, attachment.Frame, attachment.Rest, attachment.RestFrame);
 
     /// <summary>A shape's closed outline or a curve's sampled open stroke.</summary>
-    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
+    public static List<Vector3> Contour(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         if (part.Geometry is ICurve2D)
         {
@@ -32,6 +32,11 @@ public static class PartContours2D
         }
 
         var frame = PartAttachment2D.FrameOf(part, world, bone);
+        if (part.Mesh is { } mesh)
+        {
+            var lifted = PropPlacement3D.Extend(frame);
+            return (mesh.Outline ?? mesh.Vertices).Select(v => lifted.TransformPoint(v.XYZ)).ToList();
+        }
         if (part.Geometry is SimplePolygon2D && part.Bindings is { Count: > 0 })
         {
             var cutout = CutoutPoints(part).Select(frame.At).ToList();

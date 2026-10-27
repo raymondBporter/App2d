@@ -11,9 +11,11 @@ internal static class TransportBar
     public static void Draw(EditorSession session, bool preview)
     {
         var clips = session.SubjectId is null ? [] : session.Assets.ClipsFor(session.SubjectId).OrderBy(c => c.Name).ToArray();
-        var clip = session.ClipDocument;
+        var standalone = session.Mode == Workspace.Appearance && session.PartDocument is not null && !session.PreviewPartOnWearer;
+        var clip = standalone ? session.TransportClip : session.ClipDocument?.Asset;
         ImGui.SetNextItemWidth(170 * Ui.Scale);
-        if (ImGui.BeginCombo("##clip", clip?.Name ?? "(no animation)"))
+        if (standalone) ImGui.TextUnformatted(clip?.Name ?? "Static part");
+        else if (ImGui.BeginCombo("##clip", clip?.Name ?? "(no animation)"))
         {
             foreach (var c in clips)
             {
@@ -33,11 +35,11 @@ internal static class TransportBar
         if (clip is null)
         {
             ImGui.SameLine();
-            ImGui.TextDisabled(clips.Length == 0 ? "No animations for this model yet." : "");
+            ImGui.TextDisabled(!standalone && clips.Length == 0 ? "No animations for this model yet." : "");
             return;
         }
         var transport = session.Transport;
-        var duration = clip.Asset.Duration;
+        var duration = clip.Duration;
         ImGui.SameLine();
         if (ImGui.Button(transport.Playing ? "Pause" : "Play", new(64 * Ui.Scale, 0)))
         {
@@ -72,7 +74,7 @@ internal static class TransportBar
             transport.Speed = speed;
         }
 
-        PlaybackModePicker.Draw(session, clip.Asset);
+        PlaybackModePicker.Draw(session, clip);
         if (preview)
         {
             ImGui.SameLine();
@@ -86,7 +88,7 @@ internal static class TransportBar
         {
             Ui.Help("Editing the rig shows rest. Turn off Edit rig to watch the build move.");
         }
-        else if (transport.EndMode(clip.Asset) == PlaybackEndMode.Hold && transport.Time >= duration)
+        else if (transport.EndMode(clip) == PlaybackEndMode.Hold && transport.Time >= duration)
         {
             ImGui.TextDisabled("Holding the final pose.");
         }

@@ -7,7 +7,7 @@ namespace App2d.CharacterStudio.Editor.Model;
 
 internal static class ModelCurveInspector
 {
-    public static void Draw(PuppetPart part, IReadOnlyList<string> controls, Action<Action<PuppetPart>> change)
+    public static void Draw(PartGeometry part, IReadOnlyList<string> controls, Action<Action<PartGeometry>> change)
     {
         if (part.Geometry is not ICurve2D curve)
         {

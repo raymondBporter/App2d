@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 2,
+  "version": 3,
   "id": "quadruped-head",
   "name": "Quadruped head",
   "usage": "head",
@@ -8,7 +8,7 @@
   "ink": "#242a29",
   "materials": {},
   "locations": [],
-  "parts": [
+  "geometry": [
     {
       "id": "head",
       "geometry": {
@@ -146,7 +146,6 @@
       "depth": -0.31
     }
   ],
-  "solids": [],
   "controls": [
     {
       "id": "head",

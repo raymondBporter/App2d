@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 2,
+  "version": 3,
   "id": "face-person",
   "name": "Person face",
   "usage": "face",
@@ -8,7 +8,7 @@
   "lineWidth": 0.027000003,
   "materials": {},
   "locations": [],
-  "parts": [
+  "geometry": [
     {
       "id": "left-pupil",
       "geometry": {
@@ -427,7 +427,6 @@
       "frame": "mouth-oval"
     }
   ],
-  "solids": [],
   "controls": [
     {
       "id": "left-brow-a",

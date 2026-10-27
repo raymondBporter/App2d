@@ -10,13 +10,13 @@ public static class PersonTemplate
     public const float LegLength = .8f;
     /// <summary>The Person's face instance (P7c): the baked procedural face part on the head socket.</summary>
     public const string FaceInstance = "face";
-    private static PartAsset? _face;
+    private static Part? _face;
 
     /// <summary>The Person face part the procedural generator bakes, as the shipped `parts/face-person.json` carries it.</summary>
-    public static PartAsset Face => _face ??= ProceduralFace.Bake();
+    public static Part Face => _face ??= ProceduralFace.Bake();
 
     /// <summary>The seed part library: the face. The shipped tree's library is the catalog's.</summary>
-    public static PartAsset? PartOf(string id) => id == ProceduralFace.AssetId ? Face : null;
+    public static Part? PartOf(string id) => id == ProceduralFace.AssetId ? Face : null;
 
     /// <summary>
     /// Instances the face on a Person model exactly as the P7c conversion placed it: on the head socket at the old payload

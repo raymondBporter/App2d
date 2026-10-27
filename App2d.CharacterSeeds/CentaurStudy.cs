@@ -24,7 +24,7 @@ public static class CentaurStudy
         model.Parts.Add(new() { Id = "root-mark", A = "root", Geometry = App2d.Core.Shapes.Ellipse2D.Builder.Create(new(.02f, .02f)), Material = new() { Fill = "#000000" }, Hidden = true });
         model.Sockets.Add(new() { Id = Mount, Control = "root", Frame = CharacterModel.Locomotion, Usage = ModulePlans.LowerBody });
         // The saddle sits on the lower module's body control (instance/control), just above the withers, so the torso rides the gait.
-        model.Sockets.Add(new() { Id = Saddle, Control = Lower + PartAsset.Namespace + "body", OffsetX = .42f, OffsetY = .98f, Usage = ModulePlans.UpperBody });
+        model.Sockets.Add(new() { Id = Saddle, Control = Lower + Part.Namespace + "body", OffsetX = .42f, OffsetY = .98f, Usage = ModulePlans.UpperBody });
         model.Attachments.Add(new() { Id = Lower, Asset = ModulePlans.QuadrupedLower, Socket = Mount, Inputs = { [QuadrupedTemplate.LegsId] = 1, [QuadrupedTemplate.BodyId] = 1 } });
         model.Attachments.Add(new() { Id = Upper, Asset = ModulePlans.PersonUpper, Socket = Saddle, Scale = .9f, Layer = -.05f, Inputs = { [PersonBuild.ArmsId] = 1, [PersonBuild.HeadId] = 1 } });
         model.MotionOwner = Lower;

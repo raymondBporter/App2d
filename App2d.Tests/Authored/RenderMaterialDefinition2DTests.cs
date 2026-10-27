@@ -14,7 +14,7 @@ namespace App2d.Tests.Authored;
 
 public sealed class RenderMaterialDefinition2DTests
 {
-    private static readonly Func<string, PartAsset?> Parts = AuthoredCatalog.Load(TestModels.AuthoredRoot).Parts.GetValueOrDefault;
+    private static readonly Func<string, Part?> Parts = AuthoredCatalog.Load(TestModels.AuthoredRoot).Parts.GetValueOrDefault;
 
     [Fact]
     public void StrokeWidthInheritsFromNamedMaterialAndSurvivesVariantEditing()
@@ -131,7 +131,7 @@ public sealed class RenderMaterialDefinition2DTests
     [Fact]
     public void PartMaterialControlsRenderedFillAndOutlineWithoutMutatingBaseOnOverride()
     {
-        var part = new PuppetPart
+        var part = new PartGeometry
         {
             A = "root",
             ScaleX = 1,

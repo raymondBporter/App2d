@@ -16,7 +16,7 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void TrapezoidTapersTowardItsUpperControlAndPickingFollowsTheTaper()
     {
-        var part = new PuppetPart { Geometry = new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated(), A = "base", B = "top", ScaleX = 2, ScaleY = 2 };
+        var part = new PartGeometry { Geometry = new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated(), A = "base", B = "top", ScaleX = 2, ScaleY = 2 };
         // Local up points right in this pose, so the narrow end is at world X = 1.
         static Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
         var contour = PartContours2D.Contour(part, World);

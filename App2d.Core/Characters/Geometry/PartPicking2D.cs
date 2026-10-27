@@ -15,10 +15,10 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>Normalized character-part picking scores using the same attachment and cutout outlines as drawing.</summary>
 public static class PartPicking2D
 {
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, bone: null, rest: rest);
+    public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, bone: null, rest: rest);
 
     /// <summary>The picking score of a part in an evaluated pose of a resolved model, with the pose's animated artwork fit applied.</summary>
-    public static float Distance(PuppetPart part, ResolvedModel model, EvaluatedPose pose, Vector3 point) =>
+    public static float Distance(PartGeometry part, ResolvedModel model, EvaluatedPose pose, Vector3 point) =>
         Distance(pose.Fitted(part), pose.World, point, pose.Placement, id => model.Rest[id], model.RestPlacement, model.Base.LineWidth);
 
     /// <summary>The picking score of an evaluated animated instance (P7a): the best of its visible pieces in their nested pose.</summary>
@@ -40,7 +40,7 @@ public static class PartPicking2D
 
     /// <summary>
     /// The picking score of a library part instance at a placement (P5b): the best of its payload pieces through the same
-    /// part picking, and of its solids by their outline in the placement's plane. Shapes, curves, images and meshes share it.
+    /// geometry picking. Shapes, curves, images and indexed meshes share this route.
     /// </summary>
     public static float Distance(ResolvedAttachment attachment, LayeredFrame2D placement, Vector3 point)
     {
@@ -51,30 +51,6 @@ public static class PartPicking2D
             best = MathF.Min(best, Distance(part, world, point, frame, world, frame, attachment.Asset.LineWidth));
         }
 
-        var p = point.XY;
-        foreach (var solid in attachment.Solids)
-        {
-            var outline = (solid.Outline ?? solid.Vertices).Select(v => placement.At(new Vector3(v.X, v.Y, 0)).XY).ToArray();
-            if (outline.Length < 3)
-            {
-                continue;
-            }
-
-            var inside = false;
-            var nearest = float.PositiveInfinity;
-            for (int i = 0, j = outline.Length - 1; i < outline.Length; j = i++)
-            {
-                var a = outline[j];
-                var b = outline[i];
-                if (a.Y > p.Y != b.Y > p.Y && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X)
-                {
-                    inside = !inside;
-                }
-
-                nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, a, b));
-            }
-            best = MathF.Min(best, inside ? 0 : nearest / .06f);
-        }
         return best;
     }
 
@@ -87,9 +63,25 @@ public static class PartPicking2D
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, float lineWidth = .045f)
+    public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, float lineWidth = .045f)
     {
         var p = new Vector2(point.X, point.Y);
+        if (part.Hidden) return float.PositiveInfinity;
+        if (part.Mesh is { } solid)
+        {
+            var frame = PropPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone));
+            var vertices = solid.Vertices.Select(v => frame.TransformPoint(v.XYZ).XY).ToArray();
+            var nearest = float.PositiveInfinity;
+            foreach (var (ia, ib, ic) in MeshTopology.Triangles(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(solid.Triangles)))
+            {
+                var a = vertices[ia]; var b = vertices[ib]; var c = vertices[ic];
+                if (MathF.Abs(a.Orientation(b, c)) > 1e-8f && new Triangle<Vector2>(a, b, c).Contains(p, 1e-7)) return 0;
+                nearest = MathF.Min(nearest, MathF.Min(Distance2D.DistanceToSegment(p, a, b),
+                    MathF.Min(Distance2D.DistanceToSegment(p, b, c), Distance2D.DistanceToSegment(p, c, a))));
+            }
+            return nearest / .06f;
+        }
+
         if (part.Geometry is ICurve2D curve)
         {
             var pickWidth = MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);

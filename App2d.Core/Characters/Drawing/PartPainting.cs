@@ -14,7 +14,7 @@ namespace App2d.Core.Characters.Drawing;
 /// <summary>Paint lives in rest artwork coordinates and follows the same triangles as fill, including folding membranes.</summary>
 internal static class PartPainting
 {
-    public static void Add(CharacterMesh mesh, PuppetPart part, LayeredFrame2D frame, IReadOnlyList<Vector3> contour, TriangleMesh2D? triangles)
+    public static void Add(CharacterMesh mesh, PartGeometry part, LayeredFrame2D frame, IReadOnlyList<Vector3> contour, TriangleMesh2D? triangles)
     {
         if (part.RenderMaterial.Paint is not { } paint)
         {

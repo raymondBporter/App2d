@@ -92,6 +92,13 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     {
         var pose = PoseEvaluator.Rest(model);
         return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, model, pose))
+            .Concat(model.Attachments.SelectMany(a => pose.Attachments.TryGetValue(a.Id, out var nested)
+                ? nested.DrawnParts().SelectMany(p => PartContours2D.Contour(p, nested))
+                : a.Parts.Where(p => !p.Hidden).SelectMany(p =>
+                {
+                    var (world, frame) = a.Lookups(a.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(a.Socket)));
+                    return PartContours2D.Contour(p, world, frame, world, frame);
+                })))
             .Concat(model.Rest.Values)
             .Concat(model.Order.Where(c => c.Length > 0).Select(c => pose.Placement(c.Id).At(new Vector2(c.Length, 0))))
             .Append(Vector3.Zero);

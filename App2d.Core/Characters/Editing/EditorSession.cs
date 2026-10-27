@@ -117,7 +117,10 @@ public sealed class EditorSession
     /// <summary>Appearance workspace: the library part (P5c) open for editing; previewed on the subject at <see cref="PreviewSocket"/> unless the subject already wears it.</summary>
     public string? PreviewPart { get; private set; }
     public bool PreviewMirror { get; set; }
-    public AssetDocument<PartAsset>? PartDocument => Assets.Part(PreviewPart);
+    /// <summary>Temporary preview choice; modules open alone until explicitly previewed on a wearer.</summary>
+    public bool PreviewPartOnWearer { get; set; } = true;
+    private (string Id, int Revision, ResolvedModel Model)? _partPreview;
+    public AssetDocument<Part>? PartDocument => Assets.Part(PreviewPart);
     public bool PreviewWeapon { get; set; }
     public bool EditWeapon { get; set; }
     public string? Skin { get; set; }
@@ -175,10 +178,11 @@ public sealed class EditorSession
                 Mode = Workspace.Entity;
                 SetEntity(entity.Id);
                 break;
-            case AssetDocument<PartAsset> part:
+            case AssetDocument<Part> part:
                 // The shared asset is edited in Appearance on a wearer: the subject, or the first model when none is open.
                 Mode = Workspace.Appearance;
                 PreviewPart = part.Id;
+                PreviewPartOnWearer = !part.Asset.IsModule;
                 PreviewProp = "";
                 PreviewWeapon = EditWeapon = false;
                 Selection.Clear();
@@ -401,11 +405,36 @@ public sealed class EditorSession
             return EvaluateEntity() is { } preview ? [new(preview.Entity.Id, preview.Entity.Model, preview.Pose.Local, TransportClip, preview.Entity)] : [];
         }
 
+        if (Mode == Workspace.Appearance && !PreviewPartOnWearer && PartDocument is { } part)
+        {
+            if (_partPreview is not { } cached || cached.Id != part.Id || cached.Revision != Assets.PartsRevision)
+            {
+                var preview = new CharacterModel
+                {
+                    Id = "preview-" + part.Id, Name = part.Name,
+                    Controls = [new() { Id = "root" }],
+                    Sockets = [new() { Id = "origin", Control = "root" }],
+                    Attachments = [new() { Id = "part", Asset = part.Id, Socket = "origin" }],
+                };
+                try
+                {
+                    _partPreview = (part.Id, Assets.PartsRevision, ResolvedModel.From(preview, partOf: Assets.PartOf));
+                    _partPreview.Value.Model.TextureRoot = Assets.Root;
+                }
+                catch (InvalidDataException) { return []; }
+            }
+            var model = _partPreview.Value.Model;
+            var time = ShowRest ? 0 : Transport.Time;
+            var pose = PoseEvaluator.Sample(model, null, time, input: new(Expression) { Clock = time });
+            return [new(model.Id, model, pose, null)];
+        }
         return [.. new[] { SubjectId }.Concat(Compare).OfType<string>().Select(Evaluate).OfType<Subject>()];
     }
 
     /// <summary>The clip the one transport runs: the open clip, or in Entity the previewed action or role.</summary>
-    public MotionClip? TransportClip => Mode != Workspace.Entity ? ClipDocument?.Asset
+    public MotionClip? TransportClip => Mode == Workspace.Appearance && !PreviewPartOnWearer && PartDocument is { } part
+        ? part.Asset.Clip(part.Asset.Binding(Expression is { } expression && part.Asset.Binds(expression) ? expression : part.Asset.Expression)?.Clip ?? part.Asset.BaseLayer?.Clip)
+        : Mode != Workspace.Entity ? ClipDocument?.Asset
         : Entity is not { } entity ? null
         : PreviewAction is { } action && entity.Actions.TryGetValue(action, out var resolved) ? resolved.Clip : entity.Clip(PreviewRole);
 
@@ -730,7 +759,7 @@ public sealed class EditorSession
         // The shared library parts the subject wears: an edit to one of them undoes in the same order as the wearer's own edits.
         if (Mode is Workspace.Model or Workspace.Appearance && Assets.Resolve(SubjectId) is { } resolved)
         {
-            foreach (var part in resolved.Attachments.Select(a => a.Asset.Id).Distinct(StringComparer.Ordinal).Select(Assets.Part).OfType<AssetDocument<PartAsset>>())
+            foreach (var part in resolved.Attachments.Select(a => a.Asset.Id).Distinct(StringComparer.Ordinal).Select(Assets.Part).OfType<AssetDocument<Part>>())
             {
                 yield return part;
             }
@@ -853,24 +882,24 @@ public sealed class EditorSession
     /// <summary>A new library part: one shape on the origin, or a prop's hair/clothing solids with the grip as the origin.</summary>
     public bool NewPart(string id, string name, string? fromProp = null) => Attempt(() =>
     {
-        PartAsset part;
+        Part part;
         if (fromProp is null)
         {
             var model = Assets.Resolve(SubjectId);
-            part = new PartAsset
+            part = new Part
             {
                 Id = id,
                 Name = name,
                 Ink = model?.Base.Ink ?? "#222b32",
                 LineWidth = model?.Base.LineWidth ?? .045f,
-                Parts = [new() { Id = "shape", A = PartLocation.Origin, Geometry = App2d.Core.Shapes.RoundedRectangle2D.Builder.FromSize(.16f, .12f, .03f), Material = new() { Fill = "#b97549", Outline = new() } }],
+                Geometry = [new() { Id = "shape", A = PartLocation.Origin, Geometry = App2d.Core.Shapes.RoundedRectangle2D.Builder.FromSize(.16f, .12f, .03f), Material = new() { Fill = "#b97549", Outline = new() } }],
             };
             part.Validate();
         }
         else
         {
             var prop = Assets.Prop(fromProp)?.Asset ?? SeedAppearance?.Invoke(fromProp) ?? throw new InvalidDataException($"No appearance '{fromProp}'.");
-            part = PartAsset.FromProp(prop, id, name, prop.Usage == "hair" ? "hair" : "clothing");
+            part = Part.FromProp(prop, id, name, prop.Usage == "hair" ? "hair" : "clothing");
         }
         Assets.Create(part);
         Open(id);
@@ -879,7 +908,7 @@ public sealed class EditorSession
     public bool DuplicatePart(string source, string id, string name) => Attempt(() =>
     {
         var part = Assets.Part(source) ?? throw new InvalidDataException($"No library part '{source}'.");
-        var copy = PartAsset.FromJson(part.Asset.ToJson());
+        var copy = Part.FromJson(part.Asset.ToJson());
         copy.Id = id;
         copy.Name = name;
         // An animated part's clips are authored against the part itself; the copy's clips are the copy's.
@@ -918,7 +947,7 @@ public sealed class EditorSession
     /// </summary>
     public ResolvedAttachment? PreviewAttachmentOn(ResolvedModel model)
     {
-        if (Mode != Workspace.Appearance || PartDocument is not { } part || model.Attachments.Any(a => a.Asset.Id == part.Id))
+        if (Mode != Workspace.Appearance || !PreviewPartOnWearer || PartDocument is not { } part || model.Attachments.Any(a => a.Asset.Id == part.Id))
         {
             return null;
         }

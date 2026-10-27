@@ -58,7 +58,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
                 ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
             }
 
-            if (ImGui.Selectable($"{part.Id}  ({part.Geometry!.Kind}){(part.Hidden ? "  hidden" : "")}", session.Selection.Part == part.Id))
+            if (ImGui.Selectable($"{part.Id}  ({part.Kind}){(part.Hidden ? "  hidden" : "")}", session.Selection.Part == part.Id))
             {
                 session.Selection.Select(part: part.Id);
             }

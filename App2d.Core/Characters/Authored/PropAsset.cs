@@ -76,18 +76,13 @@ public sealed record PropShape
 }
 
 /// <summary>A closed, consistently wound triangle mesh in prop space. X along the weapon, Y across its broad face, Z thickness.</summary>
-public sealed record PropSolid
+public sealed record PropSolid : PartMesh
 {
-    public List<PuppetPoint> Vertices { get; set; } = [];
-    public List<int> Triangles { get; set; } = [];
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public RenderMaterialDefinition2D? Material { get; set; }
     [JsonIgnore]
     public RenderMaterialDefinition2D RenderMaterial => Material
         ?? throw new InvalidDataException("A prop solid needs a material.");
-    /// <summary>Editable source for an extruded cutout. The indexed runtime mesh is rebuilt from it when loaded.</summary>
-    public List<PuppetPoint>? Outline { get; set; }
-    public float Thickness { get; set; }
 }
 
 /// <summary>

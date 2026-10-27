@@ -39,7 +39,7 @@ internal static class ModelOverlay
         }
     }
 
-    public static void DrawPart(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
+    public static void DrawPart(ViewportFrame frame, PartGeometry part, EvaluatedPose pose, ResolvedModel model)
     {
         var outline = PartContours2D.Contour(part, model, pose).Select(p => frame.Screen(p)).ToArray();
         for (var i = 1; i < outline.Length; i++)
@@ -78,14 +78,6 @@ internal static class ModelOverlay
             if (part.Geometry is not App2d.Core.Geometry.Curves.ICurve2D && outline.Length > 1)
             {
                 frame.Draw.AddLine(outline[^1], outline[0], color, 2);
-            }
-        }
-        foreach (var solid in attachment.Solids)
-        {
-            var points = (solid.Outline ?? solid.Vertices).Select(v => frame.Screen(placement.At(new Vector3(v.X, v.Y, 0)))).ToArray();
-            for (var i = 0; i < points.Length; i++)
-            {
-                frame.Draw.AddLine(points[i], points[(i + 1) % points.Length], color, 2);
             }
         }
         frame.Draw.AddCircleFilled(frame.Screen(placement.Origin), 4 * Ui.Scale, color);

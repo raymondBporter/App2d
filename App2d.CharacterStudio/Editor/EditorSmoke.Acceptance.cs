@@ -172,15 +172,15 @@ internal sealed partial class EditorSmoke
                 "an instance override swaps the tall walker's right shoe to the sandal while the base keeps its boot");
             Check(s.Edit(tall, () => ModelAuthoring.ResetOverride(tall.Asset, PropertyRef.OfAttachment(rightBoot, RigProperties.Asset))), s);
             Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "boot" && !tall.Asset.HasOverride(PropertyRef.OfAttachment(rightBoot, RigProperties.Asset)), "resetting the override restores inheritance");
-            var fillBefore = s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill;
+            var fillBefore = s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Parts[0].RenderMaterial.Fill;
             s.Open("boot");
             var boot = s.PartDocument!;
-            Check(s.Edit(boot, () => { var solid = boot.Asset.Solids[0]; solid.Material = solid.RenderMaterial with { Fill = "#7a1f1f" }; boot.Asset.Validate(); }), s);
-            Record(s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == "#7a1f1f" && s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == "#7a1f1f"
-                && s.Assets.Resolve("person")!.Attachments.All(a => a.Asset.Id != "boot" || a.Solids[0].RenderMaterial.Fill == "#7a1f1f"),
+            Check(s.Edit(boot, () => { var solid = boot.Asset.Geometry[0]; solid.Material = solid.RenderMaterial with { Fill = "#7a1f1f" }; boot.Asset.Validate(); }), s);
+            Record(s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Parts[0].RenderMaterial.Fill == "#7a1f1f" && s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Parts[0].RenderMaterial.Fill == "#7a1f1f"
+                && s.Assets.Resolve("person")!.Attachments.All(a => a.Asset.Id != "boot" || a.Parts[0].RenderMaterial.Fill == "#7a1f1f"),
                 "editing the shared boot asset once refreshes every wearer: the walker, the tall walker and whatever else wears it");
             s.Undo();
-            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == fillBefore, "the shared edit undoes from the part editor");
+            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Parts[0].RenderMaterial.Fill == fillBefore, "the shared edit undoes from the part editor");
             s.Redo();
             s.Open(basis.Asset.MotionSets[0].Roles["walk"]);
             s.SetSubject(TallWalker);
@@ -212,16 +212,7 @@ internal sealed partial class EditorSmoke
         {
             var s = shell.Session;
             var basis = s.Assets.Model(Walker)!;
-            // Keep the game face active while testing the rig limits and entity actions.
-            var faceId = PersonTemplate.FaceInstance;
-            Check(s.Edit(basis, () =>
-            {
-                ModelAuthoring.SetAttachmentAsset(basis.Asset, faceId, ProceduralFace.AssetId, s.Assets.PartOf);
-                basis.Asset.Attachments.First(a => a.Id == faceId).Expression = "relaxed";
-            }), s);
-            var walkDoc = s.Assets.Clip(basis.Asset.MotionSets[0].Roles["walk"])!;
-            Check(s.Edit(walkDoc, () => ClipAuthoring.SetPlay(walkDoc.Asset, faceId, 0, null)), s);
-            Record(s.Assets.Problems(basis).Count == 0 && s.Assets.Clips.Where(c => c.Asset.Model == Walker).All(c => s.Assets.Problems(c).Count == 0), "with the baked face back every walker clip validates again");
+            Record(s.Assets.Problems(basis).Count == 0 && s.Assets.Clips.Where(c => c.Asset.Model == Walker).All(c => s.Assets.Problems(c).Count == 0), "the walker and its clips validate with the game face");
             s.Open(Walker);
             var elbowRest = s.Assets.Resolve(Walker)!.Nodes["left-elbow"].Rotation;
             Check(s.Edit(basis, () =>
@@ -406,17 +397,17 @@ internal sealed partial class EditorSmoke
             var rightBoot = basis.Asset.Attachments.Last(a => a.Asset == "boot").Id;
             s.Open("boot");
             var boot = s.PartDocument!;
-            var fill = boot.Asset.Solids[0].RenderMaterial.Fill;
-            Check(s.Edit(boot, () => { var solid = boot.Asset.Solids[0]; solid.Material = solid.RenderMaterial with { Fill = "#2f6f2f" }; boot.Asset.Validate(); }), s);
+            var fill = boot.Asset.Geometry[0].RenderMaterial.Fill;
+            Check(s.Edit(boot, () => { var solid = boot.Asset.Geometry[0]; solid.Material = solid.RenderMaterial with { Fill = "#2f6f2f" }; boot.Asset.Validate(); }), s);
             s.Open(TallWalker);
             var tall = s.SubjectVariant!;
             Check(s.Edit(tall, () => ModelAuthoring.EditAttachmentOverride(tall.Asset, s.Assets.Resolve(TallWalker)!, rightBoot, i => i.Asset = "sandal")), s);
-            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "sandal" && s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == "#2f6f2f", "a shared edit and an instance edit stand");
+            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "sandal" && s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Parts[0].RenderMaterial.Fill == "#2f6f2f", "a shared edit and an instance edit stand");
             s.Undo();
-            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "boot" && s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == "#2f6f2f", "the first undo takes back the instance edit");
+            Record(s.Assets.Resolve(TallWalker)!.Attachment(rightBoot)!.Asset.Id == "boot" && s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Parts[0].RenderMaterial.Fill == "#2f6f2f", "the first undo takes back the instance edit");
             s.Open("boot");
             s.Undo();
-            Record(s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Solids[0].RenderMaterial.Fill == fill, "the second undo takes back the shared edit on its own document");
+            Record(s.Assets.Resolve(Walker)!.Attachment(rightBoot)!.Parts[0].RenderMaterial.Fill == fill, "the second undo takes back the shared edit on its own document");
             s.Open(walkId);
             s.SetSubject(TallWalker);
             s.Seek(.3f);
@@ -538,7 +529,7 @@ internal sealed partial class EditorSmoke
             model.Controls.Add(new() { Id = "root", Rest = new(0, .92f, 0) });
             model.Parts.Add(new() { Id = "root-mark", A = "root", Geometry = Ellipse2D.Builder.Create(new(.02f, .02f)), Material = new() { Fill = "#000000" }, Hidden = true });
             model.Sockets.Add(new() { Id = "mount", Control = "root", Frame = CharacterModel.Locomotion, Usage = ModulePlans.LowerBody });
-            model.Sockets.Add(new() { Id = "saddle", Control = lower + PartAsset.Namespace + "body", OffsetX = .42f, OffsetY = .98f, Usage = ModulePlans.UpperBody });
+            model.Sockets.Add(new() { Id = "saddle", Control = lower + Part.Namespace + "body", OffsetX = .42f, OffsetY = .98f, Usage = ModulePlans.UpperBody });
             model.Attachments.Add(new() { Id = lower, Asset = ModulePlans.QuadrupedLower, Socket = "mount" });
             model.Attachments.Add(new() { Id = upper, Asset = ModulePlans.PersonUpper, Socket = "saddle", Scale = .9f, Layer = -.05f });
             model.MotionOwner = lower;

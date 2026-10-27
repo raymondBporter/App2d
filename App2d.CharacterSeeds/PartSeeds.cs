@@ -15,9 +15,9 @@ public static class PartSeeds
 {
     public const string TailId = "tail";
 
-    public static PartAsset Tail(string fitting = PartFittings.Layout)
+    public static Part Tail(string fitting = PartFittings.Layout)
     {
-        var asset = new PartAsset
+        var asset = new Part
         {
             Id = TailId,
             Name = "Tail",
@@ -31,7 +31,7 @@ public static class PartSeeds
                 new() { Id = "tip", Parent = "mid", Rest = new(0, .4f) },
             ],
             Groups = [new() { Id = "tip-group", Targets = ["tip"] }],
-            Parts =
+            Geometry =
             [
                 new() { Id = "stroke", A = "root", B = "tip", Geometry = LineSegmentCurve2D.Create(Vector2.Zero, Vector2.UnitY), Material = new() { StrokeWidth = .03f, Fill = "#8c4d2c" } },
                 new() { Id = "tuft", A = "tip", Frame = "tip", Geometry = Ellipse2D.Builder.Create(new(.05f, .05f)), Material = new() { Fill = "#8c4d2c", Outline = new() } },

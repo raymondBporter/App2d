@@ -142,11 +142,11 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
         }
         if (session.Selection.Part is { } partId && model.Parts.FirstOrDefault(p => p.Id == partId) is { } part)
         {
-            Ui.Header($"Part {part.Id} ({part.Geometry!.Kind})");
+            Ui.Header($"Part {part.Id} ({part.Kind})");
 
             var controls = model.Controls.Select(c => c.Id).ToArray();
 
-            if (Ui.Combo("Geometry", part.Geometry.Kind, GeometryJson2D.DrawableKinds.Where(kind => controls.Length > 1 || !CurveKinds2D.All.Contains(kind))) is { } kind)
+            if (Ui.Combo("Geometry", part.Kind, GeometryJson2D.DrawableKinds.Where(kind => controls.Length > 1 || !CurveKinds2D.All.Contains(kind))) is { } kind)
             {
                 session.Edit(document, () =>
                 {
@@ -497,10 +497,10 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
         }
     }
 
-    private static PuppetPart Part(AssetDocument<CharacterModel> document, string id) => document.Asset.Parts.First(p => p.Id == id);
+    private static PartGeometry Part(AssetDocument<CharacterModel> document, string id) => document.Asset.Parts.First(p => p.Id == id);
 
     /// <summary>The ordered controls a rounded path draws through. Rounding follows the pose; it adds no IK or motion.</summary>
-    private void RoundedPath(AssetDocument<CharacterModel> document, PuppetPart part)
+    private void RoundedPath(AssetDocument<CharacterModel> document, PartGeometry part)
     {
         var rounded = (RoundedPolylineCurve2D)part.Geometry!;
         var path = part.Bindings!.OrderBy(b => b.Point).Select(b => b.Control).ToList();

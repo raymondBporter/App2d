@@ -115,7 +115,7 @@ public sealed class SeedGenerationTests
             Assert.All(model.IkChains, c => Assert.Equal(RigNodeKinds.Bone, model.Controls.Single(x => x.Id == c.Root).Node));
             Assert.Equal(model.ToJson(), File.ReadAllText(Catalog.PathOf(model.Id)));
         }
-        Assert.All(Catalog.Parts.Values, p => Assert.Equal(PartAsset.CurrentVersion, p.Version));
+        Assert.All(Catalog.Parts.Values, p => Assert.Equal(Part.CurrentVersion, p.Version));
         Assert.All(Catalog.Entities.Values, e => Assert.Equal(e.Asset.ToJson(), File.ReadAllText(Catalog.PathOf(e.Id))));
     }
 }

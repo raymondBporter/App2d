@@ -317,9 +317,10 @@ internal sealed partial class AssetBrowser(EditorSession session)
             AssetKind.Variant => "[V]",
             AssetKind.Animation => "[A]",
             AssetKind.Entity => "[E]",
-            AssetKind.Part => "[L]",
+            AssetKind.Part => document is AssetDocument<Part> { Asset.IsModule: true } ? "[Module]" : "[Part]",
             _ => "[P]"
         };
+        if (document.Name.Contains("study", StringComparison.OrdinalIgnoreCase) || document.Name.Contains("demo", StringComparison.OrdinalIgnoreCase)) tag = "[Study]";
         var label = $"{new string(' ', indent * 3)}{tag} {document.Name}{(document.Dirty || document.IsNew ? " *" : "")}";
         var selected = document.Id == session.SubjectId && session.Mode == Workspace.Model || document.Id == session.ClipId && session.Mode == Workspace.Animate
             || document.Id == session.EntityId && session.Mode == Workspace.Entity
@@ -362,7 +363,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
                     }
 
                     break;
-                case AssetDocument<PartAsset> part:
+                case AssetDocument<Part> part:
                     if (ImGui.MenuItem("Duplicate library part"))
                     {
                         Start(Create.DuplicatePart, part.Id, part.Name + " copy");

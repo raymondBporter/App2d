@@ -81,11 +81,11 @@ public sealed record ClipMarker
     public float Time { get; set; }
 }
 
-/// <summary>A held expression on an animated part instance from this time until the next key; <see cref="PartAsset.None"/> hides the instance.</summary>
+/// <summary>A held expression on an animated part instance from this time until the next key; <see cref="Part.None"/> hides the instance.</summary>
 public sealed record ClipPlayKey
 {
     public float Time { get; set; }
-    public string Expression { get; set; } = PartAsset.None;
+    public string Expression { get; set; } = Part.None;
 }
 
 /// <summary>
@@ -425,7 +425,7 @@ public sealed class MotionClip
         foreach (var track in Tracks)
         {
             var field = $"{owner} {track.Kind} track '{track.Target}'";
-            if (track.Target.Contains(PartAsset.Namespace))
+            if (track.Target.Contains(Part.Namespace))
             {
                 // A namespaced target reaches into an animated part instance (P7a): the instance must be the wearer's, its
                 // asset animated, and the target one it exposes; the key's kind must fit what the asset's rig offers.
@@ -494,7 +494,7 @@ public sealed class MotionClip
             Require(attachment.IsAnimated, $"{field}: attachment '{play.Instance}' wears the static part '{attachment.Asset.Id}', which plays nothing.");
             foreach (var key in play.Keys)
             {
-                Require(attachment.Asset.Binds(key.Expression), $"{field}: part '{attachment.Asset.Id}' binds no expression '{key.Expression}' (one of {string.Join(", ", attachment.Asset.Expressions.Keys.Append(PartAsset.None))}; path: {Model} > attachments > {play.Instance} > part {attachment.Asset.Id} > expressions).");
+                Require(attachment.Asset.Binds(key.Expression), $"{field}: part '{attachment.Asset.Id}' binds no expression '{key.Expression}' (one of {string.Join(", ", attachment.Asset.Expressions.Keys.Append(Part.None))}; path: {Model} > attachments > {play.Instance} > part {attachment.Asset.Id} > expressions).");
             }
         }
         foreach (var contact in Contacts)
@@ -509,8 +509,8 @@ public sealed class MotionClip
     /// <summary>Splits a namespaced target (<c>instance/target</c>) into the instance and the target inside its asset.</summary>
     public static (string Instance, string Target) Split(string target)
     {
-        var at = target.IndexOf(PartAsset.Namespace);
-        if (at <= 0 || at == target.Length - 1 || target.IndexOf(PartAsset.Namespace, at + 1) >= 0)
+        var at = target.IndexOf(Part.Namespace);
+        if (at <= 0 || at == target.Length - 1 || target.IndexOf(Part.Namespace, at + 1) >= 0)
         {
             throw new InvalidDataException($"'{target}' is not an instance/target name.");
         }
@@ -519,7 +519,7 @@ public sealed class MotionClip
     }
 
     /// <summary>The instance a namespaced target belongs to, or null for the wearer's own target.</summary>
-    public static string? InstanceOf(string target) => target.Contains(PartAsset.Namespace) ? Split(target).Instance : null;
+    public static string? InstanceOf(string target) => target.Contains(Part.Namespace) ? Split(target).Instance : null;
 
     /// <summary>The expression a play track selects for an instance at a time: the last key at or before it, else the first key. Null without a track.</summary>
     public (string Expression, float Since)? PlayAt(string instance, float time)

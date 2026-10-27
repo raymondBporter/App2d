@@ -82,7 +82,7 @@ public sealed record PoseLayer(MotionClip Clip, double Seconds, IReadOnlySet<str
     /// <summary>The targets a clip keys inside one instance, stripped of the namespace: the mask of the wearer-driven layer on that part.</summary>
     public static HashSet<string> KeyedTargets(MotionClip clip, string instance)
     {
-        var prefix = instance + PartAsset.Namespace;
+        var prefix = instance + Part.Namespace;
         var targets = new HashSet<string>(StringComparer.Ordinal);
         foreach (var track in clip.Tracks)
         {
@@ -126,10 +126,10 @@ public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, Evaluate
     }
 
     /// <summary>The pieces drawn for this instance: fitted and visible per the nested pose.</summary>
-    public IEnumerable<PuppetPart> DrawnParts() => Attachment.Parts.Where(Pose.Visible).Select(Pose.Fitted);
+    public IEnumerable<PartGeometry> DrawnParts() => Attachment.Parts.Where(Pose.Visible).Select(Pose.Fitted);
 
     /// <summary>A wearer-side namespaced name for one of this instance's targets.</summary>
-    public string Qualify(string target) => Id + PartAsset.Namespace + target;
+    public string Qualify(string target) => Id + Part.Namespace + target;
 }
 
 /// <summary>
@@ -171,10 +171,10 @@ public sealed class EvaluatedPose
     public LayeredFrame2D Placement(string id) => new(new Frame2D(_bones[id]), _points[id].Z);
 
     /// <summary>The part with its animated artwork fit applied to its leaf scale; the part itself when nothing fits it.</summary>
-    public PuppetPart Fitted(PuppetPart part) => Fits.TryGetValue(part.Id, out var fit) ? part with { ScaleX = part.ScaleX * fit.X, ScaleY = part.ScaleY * fit.Y } : part;
+    public PartGeometry Fitted(PartGeometry part) => Fits.TryGetValue(part.Id, out var fit) ? part with { ScaleX = part.ScaleX * fit.X, ScaleY = part.ScaleY * fit.Y } : part;
 
     /// <summary>Whether a part draws at this sample: not hidden on the part and not hidden by a show track.</summary>
-    public bool Visible(PuppetPart part) => !part.Hidden && !HiddenParts.Contains(part.Id);
+    public bool Visible(PartGeometry part) => !part.Hidden && !HiddenParts.Contains(part.Id);
 
     /// <summary>Writes a control's frame, layer and accumulated angle together; the origin is read from the frame.</summary>
     internal void Place(string id, Matrix3x2 frame, float layer, float angle)
@@ -214,12 +214,12 @@ public static class PoseEvaluator
             Clip = source.Clip;
             Weight = MathF.Min(source.Weight, 1);
             Time = (float)(Clip.Loop ? source.Seconds % Clip.Duration : Math.Min(source.Seconds, Clip.Duration));
-            var prefix = source.Namespace is null ? null : source.Namespace + PartAsset.Namespace;
+            var prefix = source.Namespace is null ? null : source.Namespace + Part.Namespace;
             foreach (var track in Clip.Tracks)
             {
                 if (prefix is null)
                 {
-                    if (!track.Target.Contains(PartAsset.Namespace))
+                    if (!track.Target.Contains(Part.Namespace))
                     {
                         Tracks[(track.Kind, track.Target)] = track;
                     }
@@ -274,7 +274,7 @@ public static class PoseEvaluator
         var tracks = new Dictionary<(string, string), ClipTrack>();
         foreach (var track in clip.Tracks)
         {
-            if (!track.Target.Contains(PartAsset.Namespace))
+            if (!track.Target.Contains(Part.Namespace))
             {
                 tracks[(track.Kind, track.Target)] = track;
             }
@@ -533,7 +533,7 @@ public static class PoseEvaluator
             var placement = attachment.Placement(actor.SocketPlacement(attachment.Socket));
             var (expression, since, owned) = Select(attachment, clip, time, input, layers);
             var binding = attachment.Asset.Binding(expression);
-            var hidden = attachment.Instance.Hidden || expression == PartAsset.None || binding?.Hidden == true;
+            var hidden = attachment.Instance.Hidden || expression == Part.None || binding?.Hidden == true;
             pose.Attachments[attachment.Id] = EvaluateAttachment(attachment, placement, expression, binding, hidden, time, seconds, since, owned, input, clip, layers);
             if (expression is not null)
             {
@@ -729,7 +729,7 @@ public static class PoseEvaluator
     {
         expression ??= attachment.DefaultExpression;
         var binding = attachment.Asset.Binding(expression);
-        var hidden = attachment.Instance.Hidden || expression == PartAsset.None || binding?.Hidden == true;
+        var hidden = attachment.Instance.Hidden || expression == Part.None || binding?.Hidden == true;
         return EvaluateAttachment(attachment, placement, expression, binding, hidden, (float)seconds, seconds, null, null, new() { Clock = seconds }, Still, []);
     }
 

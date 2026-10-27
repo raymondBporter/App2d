@@ -49,7 +49,7 @@ public sealed record AnimationEvent2D
     public string? String { get; set; }
 }
 
-public sealed record EvaluatedSlot2D(SkeletonSlot2D Slot, PuppetPart? Part, Vector4 Color);
+public sealed record EvaluatedSlot2D(SkeletonSlot2D Slot, PartGeometry? Part, Vector4 Color);
 
 internal static class SkeletonAppearance2D
 {

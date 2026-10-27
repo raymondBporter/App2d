@@ -80,7 +80,7 @@ public static class ModuleConversion
 
                     try
                     {
-                        PartAsset.FromJson(existing);
+                        Part.FromJson(existing);
                         result = new(plan.PartId, source, target, "kept: the output was edited after an earlier run (delete it to reconvert)", lines, []);
                         goto write;
                     }
@@ -126,7 +126,7 @@ public static class ModuleConversion
     /// The module beneath the plan's anchor, in memory, with the report lines and the target mapping (source target →
     /// the module target a wearer addresses as <c>instance/target</c>). Nothing is written.
     /// </summary>
-    public static (PartAsset Asset, IReadOnlyList<string> Report, IReadOnlyDictionary<string, string> Mapping) Build(CharacterModel model, IReadOnlyList<MotionClip> clips, Plan plan)
+    public static (Part Asset, IReadOnlyList<string> Report, IReadOnlyDictionary<string, string> Mapping) Build(CharacterModel model, IReadOnlyList<MotionClip> clips, Plan plan)
     {
         var report = new List<string>();
         var mapping = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -164,7 +164,7 @@ public static class ModuleConversion
             throw new InvalidDataException($"Model '{model.Id}': '{plan.Anchor}' is not axis-aligned at rest; the conversion re-expresses positions by translation only.");
         }
 
-        var asset = new PartAsset
+        var asset = new Part
         {
             Id = plan.PartId,
             Name = plan.Name,
@@ -294,11 +294,11 @@ public static class ModuleConversion
                 Frame = piece.Frame is null ? null : Map(piece.Frame),
                 Bindings = piece.Bindings?.Select(b => b with { Control = Map(b.Control), Toward = b.Toward is null ? null : Map(b.Toward) }).ToList(),
             };
-            asset.Parts.Add(carried);
+            asset.Geometry.Add(carried);
             mapping[piece.Id] = piece.Id;
             report.Add($"piece '{piece.Id}' -> module piece{(mapped.Any(standIns.Contains) ? " (on a stand-in)" : "")}");
         }
-        var pieces = asset.Parts.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
+        var pieces = asset.Geometry.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
         foreach (var group in model.Groups)
         {
             if (group.Targets.All(t => ids.Contains(t) || chains.Contains(t) || pieces.Contains(t)))
@@ -462,14 +462,14 @@ public static class ModuleConversion
             report.Add($"word '{word}' plays '{clip.Id}'");
         }
         asset.Expression = plan.Default;
-        asset.Exposed = [.. asset.Controls.Where(c => !standIns.Contains(c.Id)).Select(c => c.Id).Concat(asset.Parts.Select(p => p.Id)).Distinct(StringComparer.Ordinal)];
+        asset.Exposed = [.. asset.Controls.Where(c => !standIns.Contains(c.Id)).Select(c => c.Id).Concat(asset.Geometry.Select(p => p.Id)).Distinct(StringComparer.Ordinal)];
         report.Add($"exposed: every control and piece ({asset.Exposed.Count}); targets a wearer keys as <instance>/<target>: {string.Join(", ", mapping.Keys)}");
         asset.Validate();
         return (asset, report, mapping);
     }
 
     /// <summary>A minimal wearer carrying the module on a socket at the anchor's rest, for verification and previews.</summary>
-    public static CharacterModel Stand(ResolvedModel source, Plan plan, PartAsset asset, string instance = "module")
+    public static CharacterModel Stand(ResolvedModel source, Plan plan, Part asset, string instance = "module")
     {
         var stand = new CharacterModel { Id = plan.PartId + "-stand", Name = plan.Name + " stand" };
         stand.Controls.Add(new() { Id = "mount", Rest = PuppetPoint.From(source.Rest[plan.Anchor]) });
@@ -485,10 +485,10 @@ public static class ModuleConversion
     /// control's position relative to the anchor in the anchor's parent frame, and each piece's silhouette (translated to
     /// the anchor; pieces on stand-ins only at rest, since a stand-in does not follow the wearer's control).
     /// </summary>
-    public static List<string> Verify(ResolvedModel source, IReadOnlyList<MotionClip> clips, Plan plan, PartAsset asset, float positionTolerance, float silhouetteTolerance)
+    public static List<string> Verify(ResolvedModel source, IReadOnlyList<MotionClip> clips, Plan plan, Part asset, float positionTolerance, float silhouetteTolerance)
     {
         var differences = new List<string>();
-        var probe = PartAsset.FromJson(asset.ToJson());
+        var probe = Part.FromJson(asset.ToJson());
         probe.Expressions.Clear();
         foreach (var layer in probe.Layers.Skip(1))
         {
@@ -535,7 +535,7 @@ public static class ModuleConversion
                     continue;
                 }
 
-                foreach (var piece in asset.Parts)
+                foreach (var piece in asset.Geometry)
                 {
                     var onStandIn = new[] { piece.A, piece.B, piece.Frame }.OfType<string>().Any(standIns.Contains);
                     if (onStandIn && time > 0)

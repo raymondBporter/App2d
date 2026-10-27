@@ -165,10 +165,10 @@ public static class ProceduralFace
     private static readonly string[] Pieces = ["left-pupil", "left-white", "left-dot", "left-lid", "left-cross", "left-brow", "right-pupil", "right-white", "right-dot", "right-lid", "right-cross", "right-brow", "mouth", "mouth-open"];
 
     /// <summary>The Person face as an animated part asset, laid out over a unit head (the instance's fit carries the head's size).</summary>
-    public static PartAsset Bake()
+    public static Part Bake()
     {
         var rest = LayoutOf(Get("relaxed"));
-        var asset = new PartAsset
+        var asset = new Part
         {
             Id = AssetId,
             Name = "Person face",
@@ -184,20 +184,20 @@ public static class ProceduralFace
             asset.Controls.Add(new() { Id = id, Rest = new(position.X, position.Y) });
         }
 
-        static PuppetPart Oval(string id, string control, float rx, float ry, string fill, float depth = 0) =>
+        static PartGeometry Oval(string id, string control, float rx, float ry, string fill, float depth = 0) =>
             new() { Id = id, A = control, Frame = control, Geometry = Ellipse2D.Builder.Create(new(rx, ry)), Material = new() { Fill = fill }, Depth = depth };
-        static PuppetPart Curve(string id, string a, string bend, string b, float weight) => new()
+        static PartGeometry Curve(string id, string a, string bend, string b, float weight) => new()
         {
             Id = id, A = a, B = b,
             Geometry = QuadraticBezier2D.Builder.Create(Vector2.Zero, new(0, .5f), Vector2.UnitY),
             Bindings = [new() { Point = 0, Control = a }, new() { Point = 1, Control = bend }, new() { Point = 2, Control = b }],
             Material = new() { Fill = Ink, StrokeWidth = Stroke * weight },
         };
-        static PuppetPart Line(string id, string a, string b, float weight) => new()
+        static PartGeometry Line(string id, string a, string b, float weight) => new()
         {
             Id = id, A = a, B = b, Geometry = LineSegmentCurve2D.Create(Vector2.Zero, Vector2.UnitY), Material = new() { Fill = Ink, StrokeWidth = Stroke * weight },
         };
-        static PuppetPart Cross(string id, string control)
+        static PartGeometry Cross(string id, string control)
         {
             // Two bars of the old X, as one cutout: a plus sign of half-length .085 and half-thickness .011, turned 45 degrees.
             const float L = .085f, T = .011f;
@@ -210,17 +210,17 @@ public static class ProceduralFace
         }
         foreach (var side in new[] { "left", "right" })
         {
-            asset.Parts.Add(Oval(side + "-pupil", side + "-eye", .045f, .065f, Ink));
-            asset.Parts.Add(Oval(side + "-white", side + "-eye", .045f * .77f, .065f * .84f, "#ffffff", -.002f));
-            asset.Parts.Add(Oval(side + "-dot", side + "-gaze", .035f, .035f, Ink, -.004f));
-            asset.Parts.Add(Curve(side + "-lid", side + "-lid-a", side + "-lid-bend", side + "-lid-b", 1));
-            asset.Parts.Add(Cross(side + "-cross", side + "-eye"));
-            asset.Parts.Add(Line(side + "-brow", side + "-brow-a", side + "-brow-b", 1.2f));
+            asset.Geometry.Add(Oval(side + "-pupil", side + "-eye", .045f, .065f, Ink));
+            asset.Geometry.Add(Oval(side + "-white", side + "-eye", .045f * .77f, .065f * .84f, "#ffffff", -.002f));
+            asset.Geometry.Add(Oval(side + "-dot", side + "-gaze", .035f, .035f, Ink, -.004f));
+            asset.Geometry.Add(Curve(side + "-lid", side + "-lid-a", side + "-lid-bend", side + "-lid-b", 1));
+            asset.Geometry.Add(Cross(side + "-cross", side + "-eye"));
+            asset.Geometry.Add(Line(side + "-brow", side + "-brow-a", side + "-brow-b", 1.2f));
         }
-        asset.Parts.Add(Curve("mouth", "mouth-left", "mouth-bend", "mouth-right", 1.15f));
-        asset.Parts.Add(Oval("mouth-open", "mouth-oval", .2f, .1f, Ink));
+        asset.Geometry.Add(Curve("mouth", "mouth-left", "mouth-bend", "mouth-right", 1.15f));
+        asset.Geometry.Add(Oval("mouth-open", "mouth-oval", .2f, .1f, Ink));
         asset.Groups.Add(new() { Id = EyesGroup, Targets = ["left-pupil", "right-pupil"] });
-        asset.Exposed = [.. asset.Controls.Select(c => c.Id).Concat(asset.Parts.Select(p => p.Id))];
+        asset.Exposed = [.. asset.Controls.Select(c => c.Id).Concat(asset.Geometry.Select(p => p.Id))];
 
         // One pose per word at its own second; step eases hold each pose exactly at its time.
         var expressions = new MotionClip { Id = ExpressionsClip, Name = "Expressions", Model = AssetId, Duration = Names.Count, Loop = false };

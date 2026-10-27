@@ -1,5 +1,9 @@
 # Character resources and migration
 
+Part consolidation S1 (2026-10-26): `Part` is the shared authored definition and `PartInstance` is one occurrence. Part format **3** stores one `geometry` array of `PartGeometry` entries. An entry has either planar `geometry` (shape/curve; a material can texture a rectangle) or a `mesh` with vertices/triangles and an optional extrusion outline/thickness. Both use the same placement, material, visibility and animation targets. Physical mesh Z is distinct from an entry's drawing-layer `depth` and the instance's `layer`. `CharacterModel.Parts` uses the same entry type within its existing rig schema.
+
+Convert earlier part files explicitly with `dotnet run --project App2d.CharacterSeeds -- --convert-formats <authored-root> <scratch-output>` and verify the report before adopting the bundle. Ordinary open/save does not upgrade legacy files. Prop, passive-physics and Behavior cutovers remain subsequent stages in [the consolidation plan](part-consolidation-plan.md).
+
 For the current full migration proposal, see [Character system and Studio migration plan](character-system-migration-plan.md). It supersedes the future sequence below; this document retains the implementation history and current resource background.
 
 Review and migrations: 2026-10-09. Resource-backed templates and the shared IK/contact layer are implemented. The later stages remain a proposed sequence.
@@ -8,7 +12,7 @@ Keep the existing authored pipeline and make its remaining assumptions explicit.
 
 ## What exists
 
-The authored library uses model format 12 (P11c: every model carries bone nodes and bone constraints only, no affine node or `transform`, no chain `solver`, no `hurtLayouts`; the format conversion of 2026-10-25 rewrote the eight model files, the eight part files and the eleven entity files from a scratch tree with a report), clip format 4 (no `shear` track kind since P11c; `scale` is a uniform pose scale, `fit` the artwork fit), variant format 6, entity format 5 (P11c: every window and the guard name a declared collider, every strike and the health pool are `behaviors`; the loose `health`/`mass`/`hurt` members and the inline window and guard geometry are gone), prop format 3, part format 2 (P11c, the same retirement for the rigs the animated parts carry) and template format 2 (P10a). A file below its kind's current version is refused by version: there is no legacy reader and no automatic upgrade (the 2026-10-15 cleanup converted the 95 older files once; the migration's passes converted each later format explicitly, on a scratch tree with a report). Paint coordinates are XY only.
+The authored library uses model format 12 (P11c: every model carries bone nodes and bone constraints only, no affine node or `transform`, no chain `solver`, no `hurtLayouts`; the format conversion of 2026-10-25 rewrote the eight model files, the eight part files and the eleven entity files from a scratch tree with a report), clip format 4 (no `shear` track kind since P11c; `scale` is a uniform pose scale, `fit` the artwork fit), variant format 6, entity format 5 (P11c: every window and the guard name a declared collider, every strike and the health pool are `behaviors`; the loose `health`/`mass`/`hurt` members and the inline window and guard geometry are gone), prop format 3, part format 3 (P11c, the same retirement for the rigs the animated parts carry) and template format 2 (P10a). A file below its kind's current version is refused by version: there is no legacy reader and no automatic upgrade (the 2026-10-15 cleanup converted the 95 older files once; the migration's passes converted each later format explicitly, on a scratch tree with a report). Paint coordinates are XY only.
 
 Geometry is the actual shape or curve value, serialized with its `kind` and source parameters. Placement uses `scaleX`/`scaleY`, rotation, offsets and rig attachments; the same transform places outlines, picking and editable points. Shape dimensions belong to the geometry, including rounded rectangles. Appearance uses `material`, with `strokeWidth` for curves on both character parts and props (omitted values inherit the owning asset's line width). Parts and variants have no generic `width`/`height` fields. The 2026-10-17 migration updated checked-in models, variants and props once; older files must be converted explicitly. Prototype puppet format is now 3.
 
@@ -168,7 +172,6 @@ The prototype importer (`PuppetImport`) converts a puppet's point chains into bo
 ## One reusable rig, several ways to drive it
 
 Quadratic and cubic Bézier parts now accept the same `bindings` as cutouts. Their point indices are start, handle(s), end: 0/1/2 for a quadratic and 0/1/2/3 for a cubic. Each bound point preserves its drawing offset from a named control's rest frame; `toward` optionally rotates that offset. Unbound points keep following the ordinary two-endpoint curve frame. Curve XY and character layer order use the same Bézier weights. No face names or expression channels are needed.
-
 
 Select a curve in rig editing, expand **Edit curve handles**, and use **Follow** to bind points to rig controls. The **Geometry** field uses the shared shape and curve library.
 

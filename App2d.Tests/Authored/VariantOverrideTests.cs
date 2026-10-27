@@ -31,7 +31,7 @@ public sealed class VariantOverrideTests : IDisposable
         var person = PersonTemplate.Model();
         var glove = PartAssetTests.Glove();
         var mitten = PartAssetTests.Glove("mitten", "#333333");
-        Func<string, PartAsset?> library = id => new[] { glove, mitten }.FirstOrDefault(p => p.Id == id);
+        Func<string, Part?> library = id => new[] { glove, mitten }.FirstOrDefault(p => p.Id == id);
         ModelAuthoring.AddAttachment(person, "glove", Humanoid.LeftHandSocket, library, "left-glove");
         var baseJson = person.ToJson();
         var tall = PersonBuild.TallThin.Apply(person, "tall", "Tall");

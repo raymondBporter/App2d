@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 2,
+  "version": 3,
   "id": "quadruped-lower",
   "name": "Quadruped lower body",
   "usage": "lower-body",
@@ -15,7 +15,7 @@
       "control": "body"
     }
   ],
-  "parts": [
+  "geometry": [
     {
       "id": "tail",
       "geometry": {
@@ -881,7 +881,6 @@
       "offsetY": 0.04
     }
   ],
-  "solids": [],
   "controls": [
     {
       "id": "body",
