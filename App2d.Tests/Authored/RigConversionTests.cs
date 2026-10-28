@@ -153,7 +153,7 @@ public sealed class RigConversionTests
     public void TheLinkageIsBoneChainsWhoseRodTurnsItsFramesAndCarriesAttachmentsWithThem()
     {
         var linkage = TestModels.Linkage();
-        Assert.All(new[] { "hub", "crank-pin", "piston", "rod-elbow", "rod-end" }, id => Assert.Equal(RigNodeKinds.Bone, linkage.Controls.Single(c => c.Id == id).Node));
+        Assert.All(["hub", "crank-pin", "piston", "rod-elbow", "rod-end"], id => Assert.Equal(RigNodeKinds.Bone, linkage.Controls.Single(c => c.Id == id).Node));
         Assert.Equal(RigNodeKinds.Point, linkage.Controls.Single(c => c.Id == "frame").Node);
         var model = ResolvedModel.From(linkage);
         var crank = TestModels.LinkageCrank(model);

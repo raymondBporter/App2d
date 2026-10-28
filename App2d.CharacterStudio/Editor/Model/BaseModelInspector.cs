@@ -477,7 +477,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                 }
                 // A run of single children below this control can become a canonical bone chain.
                 var run = new List<string> { id };
-                for (var next = document.Asset.Controls.Where(c => c.Parent == run[^1]).ToArray(); next.Length == 1 && next[0].Node == RigNodeKinds.Point; next = document.Asset.Controls.Where(c => c.Parent == run[^1]).ToArray())
+                for (var next = document.Asset.Controls.Where(c => c.Parent == run[^1]).ToArray(); next.Length == 1 && next[0].Node == RigNodeKinds.Point; next = [.. document.Asset.Controls.Where(c => c.Parent == run[^1])])
                 {
                     run.Add(next[0].Id);
                 }

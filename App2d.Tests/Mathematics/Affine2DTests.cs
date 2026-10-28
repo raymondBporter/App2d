@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
@@ -9,7 +10,6 @@ namespace App2d.Tests.Mathematics;
 
 public sealed class Affine2DTests
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     [Theory]
     [InlineData(float.NaN)]
@@ -126,14 +126,14 @@ public sealed class Affine2DTests
     public void ProposedChannelsMatchAnEditedCopyWithoutEditingOrNotifyingTheOwner()
     {
         var transform = Affine2D.FromMatrix(new(-2, .3f, 1.1f, 3, 7, 2));
-        var before = JsonSerializer.Serialize(transform, JsonOptions);
+        var before = JsonSerializer.Serialize(transform, JsonProfiles.CamelCase);
         var version = transform.Version;
         var notifications = 0;
         transform.Changed += () => notifications++;
         var expected = transform with { X = -3, Rotation = 2 * MathF.Tau, ScaleY = 0, ShearX = -.2f };
         var actual = transform.EvaluateMatrix(new(-3, transform.Y), 2 * MathF.Tau, new(transform.ScaleX, 0), new(-.2f, transform.ShearY));
         Assert.Equal(expected.Matrix, actual);
-        Assert.Equal(before, JsonSerializer.Serialize(transform, JsonOptions));
+        Assert.Equal(before, JsonSerializer.Serialize(transform, JsonProfiles.CamelCase));
         Assert.Equal(version, transform.Version);
         Assert.Equal(0, notifications);
     }
@@ -224,10 +224,10 @@ public sealed class Affine2DTests
     {
         var transform = new Affine2D { Position = new(2, 3), Rotation = .4f, Scale = new(-2, 1.5f), ShearX = .1f, ShearY = -.3f };
         _ = transform.Matrix;
-        var json = JsonSerializer.Serialize(transform, JsonOptions);
+        var json = JsonSerializer.Serialize(transform, JsonProfiles.CamelCase);
         using var document = JsonDocument.Parse(json);
         Assert.Equal(["rotation", "scaleX", "scaleY", "shearX", "shearY", "x", "y"], document.RootElement.EnumerateObject().Select(p => p.Name).Order());
-        var restored = JsonSerializer.Deserialize<Affine2D>(json, JsonOptions)!;
+        var restored = JsonSerializer.Deserialize<Affine2D>(json, JsonProfiles.CamelCase)!;
         Assert.Equal(transform, restored);
         Near(transform.TransformPoint(new(1, 2)), restored.TransformPoint(new(1, 2)));
         Assert.False(Affine2D.TryFromMatrix(new(float.NaN, 0, 0, 1, 0, 0), out _));

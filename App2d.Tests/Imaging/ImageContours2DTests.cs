@@ -48,7 +48,9 @@ public sealed class ImageContours2DTests
             // Cancel reverse edges between adjacent cells to independently define the perimeter.
             var expected = new HashSet<(Vector2i From, Vector2i To)>();
             for (var y = 0; y < 3; y++)
+            {
                 for (var x = 0; x < 3; x++)
+                {
                     if (source[x, y])
                     {
                         Add(new(x, y), new(x + 1, y));
@@ -56,6 +58,8 @@ public sealed class ImageContours2DTests
                         Add(new(x + 1, y + 1), new(x, y + 1));
                         Add(new(x, y + 1), new(x, y));
                     }
+                }
+            }
 
             var actual = new HashSet<(Vector2i From, Vector2i To)>();
             var loops = source.TraceBoundaryLoops();

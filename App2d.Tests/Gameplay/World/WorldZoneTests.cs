@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.World;
 using App2d.Core;
@@ -67,7 +68,7 @@ public sealed class WorldZoneTests
         var content = level.CaptureContent();
         Assert.Same(zone, Assert.Single(content.Zones));
         Assert.Same(content, level.CaptureContent());
-        var jsonOptions = new System.Text.Json.JsonSerializerOptions { IncludeFields = true };
+        var jsonOptions = JsonProfiles.Fields;
         var json = System.Text.Json.JsonSerializer.Serialize(content.Zones, jsonOptions);
         var received = System.Text.Json.JsonSerializer.Deserialize<WorldZone2D[]>(json, jsonOptions);
         Assert.Equal(zone, Assert.Single(received!));

@@ -36,8 +36,10 @@ public sealed record PartMesh
         if (Triangles.Any(i => i < 0 || i >= Vertices.Count))
             throw new InvalidDataException("Mesh triangle index outside vertices.");
         foreach (var (a, b, c) in MeshTopology.Triangles(CollectionsMarshal.AsSpan(Triangles)))
+        {
             if (new Triangle3D(Vertices[a].XYZ, Vertices[b].XYZ, Vertices[c].XYZ).DoubleArea <= 1e-8d)
                 throw new InvalidDataException("Mesh has a degenerate triangle.");
+        }
     }
     /// <summary>Extrudes an XY outline around its physical Z; the resulting geometry owns no material.</summary>
     public static PartMesh Extrude(IEnumerable<PuppetPoint> outline, float thickness)

@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core;
@@ -29,7 +30,6 @@ public sealed class SideScrollerGame : Game2D
 {
     private readonly ResourceManager2D _resources = new();
     private readonly AuthoredCatalog _authored;
-    private static readonly System.Text.Json.JsonSerializerOptions SpellJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly TraversalMetrics2D Traversal;
 
     private readonly SideScrollerSimulation2D _simulation;
@@ -92,7 +92,7 @@ public sealed class SideScrollerGame : Game2D
             PlayerMaximumHealth = hero.Damage.Health,
             Spells = System.Text.Json.JsonSerializer.Deserialize<SpellTuning2D>(
                 File.ReadAllText(Path.Combine(AssetPaths.Current.Runtime, "gameplay", "player-spells.json")),
-                SpellJsonOptions)
+                JsonProfiles.CaseInsensitive)
                 ?? throw new InvalidDataException("Player spell tuning is missing."),
             AuthoredCharacters = _authored,
             Objects = loadedLevel.Objects,

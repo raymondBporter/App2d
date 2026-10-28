@@ -10,6 +10,25 @@ namespace App2d.Core.Geometry.Operations.Vertices;
 /// </summary>
 public static class VertexGenerator2D
 {
+    /// <summary>Divisible by the common 12, 24, 48, 60, 80 and 120 segment counts.</summary>
+    public const int UnitCircleSegments = 240;
+    private static readonly Vector2[] CircleSamples = CreateUnitCircle();
+
+    /// <summary>
+    /// Shared unit-circle directions, including the closing sample at 2π. A resolution that divides
+    /// <see cref="UnitCircleSegments"/> samples this span at an exact stride. For other resolutions,
+    /// calculate directions directly instead of rounding the stride.
+    /// </summary>
+    public static ReadOnlySpan<Vector2> UnitCircle => CircleSamples;
+
+    private static Vector2[] CreateUnitCircle()
+    {
+        var samples = new Vector2[UnitCircleSegments + 1];
+        for (var i = 0; i <= UnitCircleSegments; i++)
+            samples[i] = PointOnEllipse(Vector2.Zero, Vector2.One, i / (float)UnitCircleSegments * MathF.Tau);
+        return samples;
+    }
+
     /// <summary>A point on an axis-aligned ellipse at a parametric angle.</summary>
     /// <param name="center">The ellipse center.</param>
     /// <param name="radii">The half-extents along X and Y.</param>

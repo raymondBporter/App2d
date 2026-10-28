@@ -11,7 +11,6 @@ namespace App2d.CharacterStudio;
 /// </summary>
 internal sealed partial class ProofRenders : Game
 {
-    private static readonly JsonSerializerOptions ManifestJsonOptions = new() { WriteIndented = true };
 
     public enum Mode
     {

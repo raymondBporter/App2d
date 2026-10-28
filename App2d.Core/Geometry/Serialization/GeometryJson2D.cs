@@ -1,7 +1,7 @@
+using App2d.Core.Json;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Conversion;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.IO;
 using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json;
@@ -30,13 +30,7 @@ public static class GeometryJson2D
         _ => new Ellipse2D { Center = Vector2.Zero, Radii = new(.5f, .5f) }.Validated().WithKind(kind)
     };
 
-    public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        AllowOutOfOrderMetadataProperties = true,
-        Converters = { new Vector2JsonConverter() }
-    };
+    public static JsonSerializerOptions JsonOptions => JsonProfiles.Geometry;
 
     public static string ToJson(this IGeometryValue2D geometry)
     {

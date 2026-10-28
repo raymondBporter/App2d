@@ -1,8 +1,11 @@
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Collision.Filtering;
+using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Physics;
+using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -130,8 +133,12 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
         {
             return false;
         }
-        var previousNearSide = -MaximumProjection(other.WorldObject, -surfaceNormal) +
-            Vector2.Dot(other.PreviousPosition - other.WorldObject.Transform.Position, surfaceNormal);
+        // A tumbling body's previous support point must use its previous rotation as well as position.
+        var pose = other.WorldObject.CollisionPose;
+        var rotation = Matrix3x2.CreateRotation(other.PreviousRotation - other.WorldObject.Transform.Rotation);
+        var previousPose = Similarity2D.FromAxis(other.PreviousPosition,
+            Vector2.TransformNormal(pose.XAxis, rotation), pose.IsMirrored, pose.Scale);
+        var previousNearSide = -MaximumProjection(other.WorldObject.Shape, previousPose, -surfaceNormal);
         if (previousNearSide < face - settings.OneWaySlop)
         {
             return false;
@@ -142,15 +149,24 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
         return relativeMotion <= 0f && Vector2.Dot(other.LinearVelocity - surface.LinearVelocity, surfaceNormal) <= 0f;
     }
 
-    private static float MaximumProjection(SpatialObject2D worldObject, Vector2 normal)
+    private static float MaximumProjection(SpatialObject2D worldObject, Vector2 normal) =>
+        MaximumProjection(worldObject.Shape, worldObject.CollisionPose, normal);
+
+    private static float MaximumProjection(IShape2D shape, Similarity2D pose, Vector2 normal)
     {
-        if (worldObject.Shape is IConvexShape2D shape)
+        if (shape is IConvexShape2D convex)
         {
-            var pose = worldObject.CollisionPose;
-            var point = pose.TransformPoint(shape.GetSupportPoint(pose.TransposeTransformDirection(normal)));
+            var point = pose.TransformPoint(convex.GetSupportPoint(pose.TransposeTransformDirection(normal)));
             return Vector2.Dot(point, normal);
         }
-        var bounds = worldObject.WorldBounds;
+        if (shape is CompositeShape2D composite)
+        {
+            var maximum = float.NegativeInfinity;
+            foreach (var part in composite.Parts)
+                maximum = MathF.Max(maximum, MaximumProjection(part, pose, normal));
+            return maximum;
+        }
+        var bounds = ShapeBounds2D.CalculateTransformed(shape, pose.ToMatrix());
         return Vector2.Dot(bounds.Center, normal) + (MathF.Abs(normal.X) * bounds.Size.X + MathF.Abs(normal.Y) * bounds.Size.Y) * 0.5f;
     }
 }

@@ -77,21 +77,21 @@ public static class BinaryImageRegions2D
     public static Image2D<bool> FillHoles(this Image2D<bool> source)
     {
         ArgGuard.ThrowIfNull(source);
-        var background = source.Map(static foreground => !foreground).LabelComponents(eightConnected: false);
-        var exterior = new bool[background.PixelCounts.Length];
+        var (Labels, PixelCounts) = source.Map(static foreground => !foreground).LabelComponents(eightConnected: false);
+        var exterior = new bool[PixelCounts.Length];
         for (var x = 0; x < source.Width && source.Height > 0; x++)
         {
-            exterior[background.Labels[x, 0]] = true;
-            exterior[background.Labels[x, source.Height - 1]] = true;
+            exterior[Labels[x, 0]] = true;
+            exterior[Labels[x, source.Height - 1]] = true;
         }
         for (var y = 0; y < source.Height && source.Width > 0; y++)
         {
-            exterior[background.Labels[0, y]] = true;
-            exterior[background.Labels[source.Width - 1, y]] = true;
+            exterior[Labels[0, y]] = true;
+            exterior[Labels[source.Width - 1, y]] = true;
         }
         var result = source.Clone();
         var filled = result.AsSpan();
-        var labels = background.Labels.AsSpan();
+        var labels = Labels.AsSpan();
         for (var i = 0; i < filled.Length; i++)
         {
             filled[i] |= !exterior[labels[i]];

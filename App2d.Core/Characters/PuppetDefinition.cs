@@ -1,6 +1,7 @@
+using App2d.Core.Json;
+using App2d.Core.IO;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Operations.Polygons;
-using App2d.Core.IO;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -151,12 +152,7 @@ public sealed class PuppetDefinition
     public List<PuppetChain> Chains { get; set; } = [];
     public List<PartGeometry> Parts { get; set; } = [];
     public List<PuppetMotion> Motions { get; set; } = [new()];
-    public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        Converters = { new Vector2JsonConverter() }
-    };
+    public static JsonSerializerOptions JsonOptions => JsonProfiles.Puppet;
 
     public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
     public static PuppetDefinition FromJson(string json)

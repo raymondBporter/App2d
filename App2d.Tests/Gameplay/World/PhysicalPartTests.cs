@@ -1,7 +1,9 @@
 using App2d.CharacterSeeds.Diagnostics;
+using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Objects;
 using App2d.Core.Rendering;
@@ -13,6 +15,7 @@ using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
+using App2d.Gameplay.World.Vegetation;
 using App2d.Presentation.World.Presentation;
 using System.Numerics;
 
@@ -23,13 +26,65 @@ public sealed class PhysicalPartTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
 
     [Theory]
+    [InlineData("dumbbell", true, TileKind2D.Solid)]
+    [InlineData("dumbbell", false, TileKind2D.Solid)]
+    [InlineData("tumbling-crate", false, TileKind2D.Solid)]
+    [InlineData("dumbbell", true, TileKind2D.OneWay)]
+    [InlineData("dumbbell", false, TileKind2D.OneWay)]
+    [InlineData("tumbling-crate", false, TileKind2D.OneWay)]
+    public void PlacedPartsLandOnStreamedTerrain(string partId, bool legacy, TileKind2D floor)
+    {
+        var map = new EditableTileMap2D(64, 16, 32, 32, Vector2.Zero, ["dark-cave"]);
+        for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 0, floor);
+        var things = new List<WorldThingSpec2D>
+        {
+            new(1, WorldThingKind2D.PlayerSpawn, null, true, new(100, 100))
+        };
+        if (legacy) things.Add(new(2, WorldThingKind2D.TumbleProp, null, true, new(300, 160)));
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, things)
+        {
+            AuthoredCharacters = Catalog,
+            Objects = legacy ? [] : [new("prop", Catalog.Parts[partId], new(300, 160))]
+        });
+        var item = Assert.Single(game.Level.Objects);
+        var touched = false;
+        for (var i = 0; i < 360; i++)
+        {
+            game.Session.Advance(new PlayerInput2D(game.Player.Id, default));
+            touched |= game.Physics.LastContacts.Any(c => ReferenceEquals(c.First, item.Body) || ReferenceEquals(c.Second, item.Body));
+        }
+        Assert.True(touched, "The placed part never contacted the streamed floor.");
+        Assert.InRange(item.WorldObject.WorldBounds.Min.Y, 31, 35);
+    }
+
+    [Fact]
+    public void WorldPartsLandOnGeneratedTreeBranches()
+    {
+        var tree = new GiantTree2D(new(500, 0), new()
+        {
+            Height = 320, TrunkWidth = 32, BranchLength = new(250, 250), BranchGap = new(80, 80)
+        }, 3107);
+        var branch = tree.Branches.MaxBy(b => b.Bounds.Max.Y);
+        var map = new EditableTileMap2D(64, 32, 32, 32, Vector2.Zero, ["dark-cave"]);
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
+            [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(100, 100))])
+        {
+            Objects = [new("prop", Catalog.Parts["dumbbell"], new(branch.Bounds.Center.X, branch.Bounds.Max.Y + 120))],
+            GiantTrees = [tree]
+        });
+        var item = Assert.Single(game.Level.Objects);
+        for (var i = 0; i < 360; i++) game.Session.Advance(new PlayerInput2D(game.Player.Id, default));
+        Assert.InRange(item.WorldObject.WorldBounds.Min.Y, branch.Bounds.Max.Y - 1, branch.Bounds.Max.Y + 3);
+    }
+
+    [Theory]
     [InlineData("dumbbell")]
     [InlineData("tumbling-crate")]
     public void JsonPartsFallCollideRotateAndLoseSpeedThroughContactFriction(string id)
     {
-        var slippery = Run(0);
+        var (Speed, Spin) = Run(0);
         var rough = Run(.65f);
-        Assert.True(rough.Speed < slippery.Speed - 5, $"rough={rough.Speed}, slippery={slippery.Speed}");
+        Assert.True(rough.Speed < Speed - 5, $"rough={rough.Speed}, slippery={Speed}");
 
         (float Speed, float Spin) Run(float friction)
         {

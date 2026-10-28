@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Animation;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Validation;
@@ -9,7 +10,6 @@ internal static class CharacterAnimationAssets2D
 {
     private static readonly Lock ManifestLock = new();
     private static readonly Dictionary<string, CharacterManifest> Manifests = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public static AnimationClip2D<Texture2D> LoadClip(TextureCache2D textures, string characterId, string animationId)
     {
@@ -87,7 +87,7 @@ internal static class CharacterAnimationAssets2D
                 throw new FileNotFoundException("Character manifest was not found.", manifestPath);
             }
 
-            var manifest = JsonSerializer.Deserialize<CharacterManifest>(File.ReadAllText(manifestPath), JsonOptions) ??
+            var manifest = JsonSerializer.Deserialize<CharacterManifest>(File.ReadAllText(manifestPath), JsonProfiles.Web) ??
                 throw new InvalidDataException($"Character manifest is empty: {manifestPath}");
             ValidateManifest(manifest, characterId, characterRoot, manifestPath);
             Manifests.Add(manifestPath, manifest);

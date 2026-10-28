@@ -198,7 +198,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
         var draw = frame.Draw;
         var scale = Ui.Scale;
         var angles = subject.Pose.SocketAngles.GetValueOrDefault(weapon.Socket.Id);
-        var tip = frame.Screen(PartPlacement3D.Point(socket, weapon.Prop, (weapon.Prop.Point(EquipmentPoints.Tip) ?? default)));
+        var tip = frame.Screen(PartPlacement3D.Point(socket, weapon.Prop, weapon.Prop.Point(EquipmentPoints.Tip) ?? default));
         draw.AddLine(center, tip, StudioTheme.Selection.PackedValue, 1);
         draw.AddCircle(tip, 6 * scale, StudioTheme.Selection.PackedValue, 20, 2);
         draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, .24f, 0))), StudioTheme.WeaponAxisY.PackedValue, 2);

@@ -10,7 +10,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
-internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunkedTileMap2D tileMap, uint worldLayer, uint actorMask) : IDisposable
+internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunkedTileMap2D tileMap, uint worldLayer, uint collisionMask) : IDisposable
 {
     private const int HorizontalChunkRadius = 2;
     private const int VerticalChunkRadius = 1;
@@ -124,7 +124,7 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
                 restoredIds.IsEmpty ? null : restoredIds[colliders.Count]);
             body.Restitution = 0f;
             body.CollisionLayer = worldLayer;
-            body.CollisionMask = actorMask;
+            body.CollisionMask = collisionMask;
             var surface = PlatformCollisionRules2D.Attach(_physics).Surface(body);
             surface.OneWaySurfaceNormal = isOneWay ? Vector2.UnitY : null;
             surface.IsWallGrippable = collision.Kind.IsGrippable();

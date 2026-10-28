@@ -205,7 +205,7 @@ internal sealed class AttachmentInspector(EditorSession session)
         ImGui.TextDisabled($"Animated part: {asset.Controls.Count} control(s), {asset.Clips.Count} clip(s), fitting '{asset.Fitting}'.");
         foreach (var layer in asset.Layers)
         {
-            ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}, plays {(layer.Clip ?? "nothing")} by default");
+            ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}, plays {layer.Clip ?? "nothing"} by default");
         }
 
         ImGui.TextDisabled($"  exposed to the wearer's clips: {(asset.Exposed.Count == 0 ? "nothing" : string.Join(", ", asset.Exposed))}");

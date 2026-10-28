@@ -18,9 +18,9 @@ public sealed class PaletteQuantization2DTests
         Assert.InRange(Vector3.Distance(new(0, 0, .9f), reconstructed[0, 1]), 0, 1e-6f);
         Assert.Equal(reconstructed[0, 1], reconstructed[1, 1]);
         Assert.Equal(pixels, source.AsSpan().ToArray());
-        var again = source.QuantizePalette(2);
-        Assert.Equal(palette, again.Palette);
-        Assert.Equal(indices.AsSpan().ToArray(), again.Indices.AsSpan().ToArray());
+        var (Palette, Indices) = source.QuantizePalette(2);
+        Assert.Equal(palette, Palette);
+        Assert.Equal(indices.AsSpan().ToArray(), Indices.AsSpan().ToArray());
     }
 
     [Fact]
@@ -43,10 +43,10 @@ public sealed class PaletteQuantization2DTests
         foreach (var index in Enumerable.Range(0, palette.Length))
             Assert.Contains(index, indices.AsSpan().ToArray());
 
-        var empty = new Image2D<Vector3>(0, 7).QuantizePalette(8);
-        Assert.Empty(empty.Palette);
-        Assert.Equal(7, empty.Indices.Height);
-        Assert.Equal(0, empty.Indices.Count);
+        var (Palette, Indices) = new Image2D<Vector3>(0, 7).QuantizePalette(8);
+        Assert.Empty(Palette);
+        Assert.Equal(7, Indices.Height);
+        Assert.Equal(0, Indices.Count);
     }
 
     [Fact]

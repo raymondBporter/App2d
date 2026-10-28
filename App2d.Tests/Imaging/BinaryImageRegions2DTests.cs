@@ -8,9 +8,9 @@ public sealed class BinaryImageRegions2DTests
     public void ComponentsDistinguishDiagonalConnectivityAndIncludeBackgroundCount()
     {
         var source = new Image2D<bool>(3, 2, [true, false, false, false, true, false]);
-        var eight = source.LabelComponents();
-        Assert.Equal([4, 2], eight.PixelCounts);
-        Assert.Equal([1, 0, 0, 0, 1, 0], eight.Labels.AsSpan().ToArray());
+        var (Labels, PixelCounts) = source.LabelComponents();
+        Assert.Equal([4, 2], PixelCounts);
+        Assert.Equal([1, 0, 0, 0, 1, 0], Labels.AsSpan().ToArray());
         var four = source.LabelComponents(eightConnected: false);
         Assert.Equal([4, 1, 1], four.PixelCounts);
         Assert.Equal([1, 0, 0, 0, 2, 0], four.Labels.AsSpan().ToArray());
@@ -28,9 +28,9 @@ public sealed class BinaryImageRegions2DTests
         Assert.False(filtered[6, 1]);
 
         source[3, 1] = false; // A manual cut splits the main stroke from the two-pixel branch.
-        var split = source.LabelComponents(eightConnected: false);
-        Assert.Equal(4, split.PixelCounts.Length);
-        Assert.Equal([4, 1, 2], split.PixelCounts[1..]);
+        var (Labels, PixelCounts) = source.LabelComponents(eightConnected: false);
+        Assert.Equal(4, PixelCounts.Length);
+        Assert.Equal([4, 1, 2], PixelCounts[1..]);
     }
 
     [Fact]

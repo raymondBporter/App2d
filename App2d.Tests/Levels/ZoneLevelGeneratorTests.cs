@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Tiles;
 using App2d.Levels;
 using System.Text.Json;
@@ -36,7 +37,7 @@ public sealed class ZoneLevelGeneratorTests
                 StartMapId = "combat",
                 StartAtArrival = true
             };
-            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            var options = JsonProfiles.CamelCase;
             void Write(WorldFile2D.WorldDocument value) => File.WriteAllText(path, JsonSerializer.Serialize(value, options));
             Write(document);
             var first = ZoneLevelGenerator2D.Regenerate(path, "combat-zone", tilesets);

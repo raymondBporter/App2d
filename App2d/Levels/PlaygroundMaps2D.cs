@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Tiles;
 using System.Numerics;
 using System.Text.Json;
@@ -7,11 +8,6 @@ namespace App2d.Levels;
 /// <summary>Small authored starter maps; never regenerates or replaces existing content.</summary>
 public static class PlaygroundMaps2D
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
-    };
     public static Vector2 Arrival(WorldMapAsset2D map, float playerHeight, float groundProbe)
     {
         var spawn = map.PositionThings.FirstOrDefault(t => t.Enabled && t.TypeKey == "player-spawn");
@@ -49,7 +45,7 @@ public static class PlaygroundMaps2D
             new("sandbox-b", "Sandbox B", 0, [new("sandbox-b", "Sandbox B", 3, "sandbox-b.db")]),
             new("cavern-world", "Original playground", -1, [new("main", "Original playground", 0, "level.db")])
         ]);
-        File.WriteAllText(Path.Combine(directory, "world.json"), JsonSerializer.Serialize(world, JsonOptions));
+        File.WriteAllText(Path.Combine(directory, "world.json"), JsonSerializer.Serialize(world, JsonProfiles.World));
 
         void CreateMap(string file, float x, int width, byte tileset)
         {

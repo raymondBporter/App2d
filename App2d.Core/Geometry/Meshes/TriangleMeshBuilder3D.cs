@@ -72,11 +72,11 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 
         var segments = dome ? 48 : 12;
         var rings = dome ? 8 : 1;
+        var stride = VertexGenerator2D.UnitCircleSegments / segments;
         Vector3 At(int ring, int index)
         {
-            var angle = index / (float)segments * MathF.Tau;
             var ringRadius = radius * ring / rings;
-            return center + new Vector3(VertexGenerator2D.PointOnEllipse(Vector2.Zero, new(ringRadius), angle),
+            return center + new Vector3(VertexGenerator2D.UnitCircle[index * stride] * ringRadius,
                 dome ? -MathF.Sqrt(MathF.Max(0f, radius * radius - ringRadius * ringRadius)) : 0f);
         }
         for (var ring = 1; ring <= rings; ring++)

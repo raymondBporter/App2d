@@ -3,7 +3,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.IO;
+using App2d.Core.Json;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,6 +12,23 @@ namespace App2d.Tests.IO;
 
 public sealed class Vector2JsonConverterTests
 {
+    // Independent contracts deliberately exercise converter registration, casing and quoted numeric tokens.
+    private static readonly JsonSerializerOptions PascalVectors = new()
+    {
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        Converters = { new Vector2JsonConverter() }
+    };
+    private static readonly JsonSerializerOptions QuotedVectors = new(PascalVectors)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString
+    };
+    private static readonly JsonSerializerOptions TolerantVectors = new(AuthoredJson.Options)
+    {
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip
+    };
+
     public static TheoryData<string> AuthoringOptions =>
     [
         nameof(IGeometryValue2D),
@@ -50,21 +67,12 @@ public sealed class Vector2JsonConverterTests
     [Fact]
     public void TheConverterCanBeRegisteredElsewhereAndRespectsNamingAndNumberPolicies()
     {
-        var defaults = new JsonSerializerOptions
-        {
-            UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-            Converters = { new Vector2JsonConverter() }
-        };
+        var defaults = PascalVectors;
         Assert.Equal("{\"X\":1,\"Y\":2}", JsonSerializer.Serialize(new Vector2(1, 2), defaults));
         Assert.Equal(new Vector2(1, 0), JsonSerializer.Deserialize<Vector2>("{\"X\":1}", defaults));
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2>("{\"x\":1}", defaults));
 
-        var quoted = new JsonSerializerOptions(defaults)
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString
-        };
+        var quoted = QuotedVectors;
         var json = JsonSerializer.Serialize(new Vector2(1.25f, -2.5f), quoted);
         Assert.Equal("{\"x\":\"1.25\",\"y\":\"-2.5\"}", json);
         Assert.Equal(new Vector2(1.25f, -2.5f), JsonSerializer.Deserialize<Vector2>(json, quoted));
@@ -86,6 +94,6 @@ public sealed class Vector2JsonConverterTests
     public void TolerantOptionsSkipNestedUnknownValuesAndDefaultMissingCoordinatesToZero()
     {
         Assert.Equal(new Vector2(0, 2), JsonSerializer.Deserialize<Vector2>(
-            "{\"extra\":{\"nested\":[1,2,3]},\"y\":2}", new JsonSerializerOptions(AuthoredJson.Options) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip }));
+            "{\"extra\":{\"nested\":[1,2,3]},\"y\":2}", TolerantVectors));
     }
 }

@@ -94,8 +94,13 @@ public static class PartPicking2D
             {
                 var triangles = PolygonTriangulationCache2D.Get(PartContours2D.LocalContour(part), 1e-8);
                 foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
+                {
                     if (MathF.Abs(contour[a].XY.Orientation(contour[b].XY, contour[c].XY)) > 1e-8f &&
-                        new Triangle<Vector2>(contour[a].XY, contour[b].XY, contour[c].XY).Contains(p, 1e-7)) return 0;
+                        new Triangle<Vector2>(contour[a].XY, contour[b].XY, contour[c].XY).Contains(p, 1e-7))
+                    {
+                        return 0;
+                    }
+                }
             }
             var nearest = float.PositiveInfinity;
             foreach (var (a, b) in MeshTopology.Edges(contour.Count, closed))

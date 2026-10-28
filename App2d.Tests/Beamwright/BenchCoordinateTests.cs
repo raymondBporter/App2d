@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Beamwright;
 using App2d.Beamwright.Optics;
 using App2d.Core.Mathematics;
@@ -11,7 +12,7 @@ public sealed class BenchCoordinateTests
     [Fact]
     public void TypedCoordinatesRetainTheOriginalCampaignJsonFormat()
     {
-        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var options = JsonProfiles.CamelCase;
         var level = BeamwrightContent.Default.Levels[0];
         var json = JsonSerializer.Serialize(level, options);
         using var document = JsonDocument.Parse(json);

@@ -202,7 +202,7 @@ public sealed class CurveRaycast2DTests
         Near(shapeHit.Point, curveHit.Point);
         var procedural = new NormalOffsetCurve2D((ICurve2D)line, _ => throw new Exception("Must not sample arbitrary code."));
         Assert.Throws<NotSupportedException>(() => GeometryRaycast2D.TryIntersect(ray, procedural, 5, out _));
-        Assert.ThrowsAny<ArgumentException>(() => CurveRaycast2D.TryIntersect(default(Ray2D), (ICurve2D)line, 5, out _));
+        Assert.ThrowsAny<ArgumentException>(() => CurveRaycast2D.TryIntersect(default, (ICurve2D)line, 5, out _));
         Assert.ThrowsAny<ArgumentException>(() => CurveRaycast2D.TryIntersect(Vector2.Zero, Vector2.Zero, (ICurve2D)line, 5, out _));
         Assert.ThrowsAny<ArgumentException>(() => CurveRaycast2D.TryIntersect(Vector2.Zero, Vector2.UnitX, (ICurve2D)line, -1, out _));
     }

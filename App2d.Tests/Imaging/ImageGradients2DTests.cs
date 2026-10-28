@@ -10,8 +10,10 @@ public sealed class ImageGradients2DTests
     {
         var source = new Image2D<float>(5, 4);
         for (var y = 0; y < source.Height; y++)
+        {
             for (var x = 0; x < source.Width; x++)
                 source[x, y] = 2 * x - 3 * y + 10;
+        }
 
         var gradient = source.Sobel();
         Assert.Equal(new Vector2(2, -3), gradient[2, 2]);
@@ -40,8 +42,10 @@ public sealed class ImageGradients2DTests
         // These two RGB colors have the same linear luminance under these weights.
         var source = new Image2D<Vector3>(4, 3);
         for (var y = 0; y < source.Height; y++)
+        {
             for (var x = 0; x < source.Width; x++)
                 source[x, y] = x < 2 ? Vector3.UnitX : new(0, .2126f / .7152f, 0);
+        }
 
         var gray = source.Map(static c => .2126f * c.X + .7152f * c.Y + .0722f * c.Z);
         Assert.InRange(gray.Sobel()[1, 1].Length(), 0, 1e-7f);

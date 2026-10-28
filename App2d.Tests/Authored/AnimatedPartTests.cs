@@ -49,7 +49,7 @@ public sealed class AnimatedPartTests
             breaks(broken);
             return Assert.Throws<InvalidDataException>(broken.Validate).Message;
         }
-        Assert.Contains("parent cycle", Error(a => { a.Controls[0].Parent = "tip"; }));
+        Assert.Contains("parent cycle", Error(a => a.Controls[0].Parent = "tip"));
         Assert.Contains("duplicate control 'tip'", Error(a => a.Controls.Add(new() { Id = "tip", Parent = "root" })));
         Assert.Contains("neither a rig control nor a piece", Error(a => a.Exposed.Add("tail-feather")));
         Assert.Contains("no control group 'ears'", Error(a => a.Layers[1].Mask = "ears"));
@@ -280,7 +280,7 @@ public sealed class AnimatedPartTests
         ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, Humanoid.Body), 0, new(0, 0, 0));
         ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, Humanoid.Body), .5f, new(1, 0, 0));
         clip.Validate(resolved);
-        var pose = PoseEvaluator.Sample(clip: clip, model: resolved, seconds: .2);
+        var pose = PoseEvaluator.Sample(model: resolved, clip: clip, seconds: .2);
         var head = resolved.Parts.First(p => p.Id == Humanoid.Head);
         Assert.Equal(new Vector2(1, 0), pose.Fits[Humanoid.Head]);
         var squashed = PartContours2D.Contour(head, resolved, pose);

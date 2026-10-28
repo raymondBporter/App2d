@@ -311,8 +311,11 @@ public sealed class MotionClip
             }
 
             if (track.Kind is TintKind or AlphaKind)
+            {
                 Require(track.Keys.All(k => k.Value.X is >= 0 and <= 1 && k.Value.Y is >= 0 and <= 1 && k.Value.Z is >= 0 and <= 1
                     && (track.Kind != AlphaKind || k.Value.Y == 0 && k.Value.Z == 0)), $"{owner} {track.Kind} track '{track.Target}': tint uses RGB in 0..1; alpha uses x in 0..1 only.");
+            }
+
             Require(!PartKinds.Contains(track.Kind) || track.Scale is null or CharacterModel.Unit, $"{owner} {track.Kind} track '{track.Target}': a part channel has no measurement scale.");
         }
         var played = new HashSet<string>(StringComparer.Ordinal);

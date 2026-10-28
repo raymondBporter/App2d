@@ -13,7 +13,7 @@ public sealed class ImGuiSamplingTests
     {
         using var graphics = new GraphicsTestContext();
         using var texture = new Texture2D(graphics.Device, 2, 1);
-        texture.SetData(new[] { Color4b.Black, Color4b.White });
+        texture.SetData([Color4b.Black, Color4b.White]);
         using var gui = new ImGuiHost(graphics.Device, new TestPlatform());
         var point = gui.Register(texture, pointSample: true);
         var linear = gui.Register(texture);

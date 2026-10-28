@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Beamwright.Optics;
 using System.Text.Json;
 
@@ -138,7 +139,7 @@ public sealed class BenchSession
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_savePath))!);
             var temporary = _savePath + ".tmp";
-            File.WriteAllText(temporary, JsonSerializer.Serialize(_progress));
+            File.WriteAllText(temporary, JsonSerializer.Serialize(_progress, JsonProfiles.Indented));
             File.Move(temporary, _savePath, true);
             HasSaveError = false;
         }
@@ -150,7 +151,7 @@ public sealed class BenchSession
         if (path is null) return new();
         try
         {
-            var progress = JsonSerializer.Deserialize<ProgressData>(File.ReadAllText(path)) ?? new();
+            var progress = JsonSerializer.Deserialize<ProgressData>(File.ReadAllText(path), JsonProfiles.Indented) ?? new();
             progress.BestParts ??= [];
             return progress;
         }

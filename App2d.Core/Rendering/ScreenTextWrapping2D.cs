@@ -33,7 +33,10 @@ internal static class ScreenTextWrapping2D
                 next = lastSpace + 1;
                 end = lastSpace;
             }
-            else next = end + (newline ? 1 : 0);
+            else
+            {
+                next = end + (newline ? 1 : 0);
+            }
 
             while (end > start && char.IsWhiteSpace(text[end - 1])) end--;
             if (!newline)

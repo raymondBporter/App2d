@@ -120,7 +120,6 @@ public static class PaletteQuantization2D
         return nearest;
     }
 
-
     private static Vector3[] Compact(Vector3[] palette, ReadOnlySpan<int> counts, Span<int> labels)
     {
         var remap = new int[palette.Length];

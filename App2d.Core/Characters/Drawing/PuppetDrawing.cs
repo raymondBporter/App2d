@@ -163,8 +163,11 @@ public sealed class PuppetDrawing
         {
             var evaluated = PoseEvaluator.Preview(attachment, LayeredFrame2D.Identity, seconds);
             if (!evaluated.Hidden)
+            {
                 Add(attachment.Asset.Ink, attachment.Asset.LineWidth, evaluated.DrawnParts(), evaluated.World,
                     evaluated.Frame, evaluated.Rest, evaluated.RestFrame, spatial: spatial);
+            }
+
             return;
         }
         var (world, frame) = attachment.Lookups(LayeredFrame2D.Identity);

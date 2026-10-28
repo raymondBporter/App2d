@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -34,12 +35,6 @@ public sealed class MigrationReferenceTests
         ["wheel-turn"] = WheelScene.Animations[0],
     };
 
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
 
     /// <summary>Absolute tolerances by observable quantity (plan section 7: per quantity and scale, no global epsilon).</summary>
     private static readonly Dictionary<string, float> Tolerances = new(StringComparer.Ordinal)
@@ -192,13 +187,13 @@ public sealed class MigrationReferenceTests
         };
         if (Environment.GetEnvironmentVariable("APP2D_WRITE_REFERENCES") is { Length: > 0 })
         {
-            WriteReferences(path, JsonSerializer.Serialize(fresh, Json));
+            WriteReferences(path, JsonSerializer.Serialize(fresh, JsonProfiles.SparseCamelCase));
             return;
         }
 
         Assert.True(File.Exists(path), $"No reference file at {path}; run once with APP2D_WRITE_REFERENCES=1.");
         using var expected = JsonDocument.Parse(File.ReadAllText(path));
-        using var actual = JsonDocument.Parse(JsonSerializer.Serialize(fresh, Json));
+        using var actual = JsonDocument.Parse(JsonSerializer.Serialize(fresh, JsonProfiles.SparseCamelCase));
         var differences = new List<string>();
         Compare(expected.RootElement.GetProperty("cases"), actual.RootElement.GetProperty("cases"), "cases", differences);
         Compare(expected.RootElement.GetProperty("combat"), actual.RootElement.GetProperty("combat"), "combat", differences);
@@ -213,7 +208,7 @@ public sealed class MigrationReferenceTests
                 merged[section] = Splice(merged[section], actual.RootElement.GetProperty(section), section, changed);
             }
 
-            WriteReferences(path, merged.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            WriteReferences(path, merged.ToJsonString(JsonProfiles.Indented));
             return;
         }
 
@@ -326,14 +321,14 @@ public sealed class MigrationReferenceTests
             Facing = c.Facing,
             Points = model.Order.ToDictionary(k => k.Id, k => V(actor.World(k.Id)), StringComparer.Ordinal),
             Angles = model.Order.ToDictionary(k => k.Id, k => pose.Angles[k.Id], StringComparer.Ordinal),
-            Chains = pose.Chains.Select(ch => new ChainRecord(ch.Chain, ch.Residual, ch.Reached)).ToList(),
-            Contacts = pose.Contacts.Select(ct => new ContactRecord(ct.Chain, V(actor.Place(ct.Target)), ct.Residual)).ToList(),
+            Chains = [.. pose.Chains.Select(ch => new ChainRecord(ch.Chain, ch.Residual, ch.Reached))],
+            Contacts = [.. pose.Contacts.Select(ct => new ContactRecord(ct.Chain, V(actor.Place(ct.Target)), ct.Residual))],
             Expressions = pose.Expressions.Count == 0 ? null : new(pose.Expressions),
             // Full bone matrices for the wheel fixture: that is where the inherited reflection and scale live.
             Bones = model.Base.Id == "wheel" ? model.Order.ToDictionary(k => k.Id, k => M(pose.Bones[k.Id]), StringComparer.Ordinal) : null,
-            Slots = pose.Slots.Count == 0 ? null : pose.Slots.Select(s => new SlotRecord(s.Slot.Id, s.Part?.Id, [s.Color.X, s.Color.Y, s.Color.Z, s.Color.W])).ToList(),
+            Slots = pose.Slots.Count == 0 ? null : [.. pose.Slots.Select(s => new SlotRecord(s.Slot.Id, s.Part?.Id, [s.Color.X, s.Color.Y, s.Color.Z, s.Color.W]))],
             Sockets = model.Base.Sockets.ToDictionary(s => s.Id, s => Frame(actor.Socket(s)), StringComparer.Ordinal),
-            Parts = model.Parts.Where(p => !p.Hidden).Select(p => Silhouette(p, pose, model, actor)).ToList(),
+            Parts = [.. model.Parts.Where(p => !p.Hidden).Select(p => Silhouette(p, pose, model, actor))],
         };
         if (entity is null)
         {
@@ -343,19 +338,19 @@ public sealed class MigrationReferenceTests
         var placements = entity.Equipment.Select(e => (e.Prop, e.Socket)).ToList();
         if (c.Gear is { } gear && clip is not null)
         {
-            placements = PersonLoadout.Dressed(clip, c.Seconds, gear == "gun" ? PersonGear.Gun : PersonGear.Sword, entity)
+            placements = [.. PersonLoadout.Dressed(clip, c.Seconds, gear == "gun" ? PersonGear.Gun : PersonGear.Sword, entity)
                 .Where(d => Catalog.Parts.ContainsKey(d.Prop) && entity.Sockets.ContainsKey(d.Socket))
-                .Select(d => (Catalog.Parts[d.Prop], entity.Sockets[d.Socket])).ToList();
+                .Select(d => (Catalog.Parts[d.Prop], entity.Sockets[d.Socket]))];
         }
 
-        record.Props = placements.ToDictionary(p => $"{p.Item1.Id}@{p.Item2.Id}", p => PropPoints(p.Item1, actor.Socket(p.Item2)), StringComparer.Ordinal);
+        record.Props = placements.ToDictionary(p => $"{p.Prop.Id}@{p.Socket.Id}", p => PropPoints(p.Prop, actor.Socket(p.Socket)), StringComparer.Ordinal);
         record.Movement = Bounds(EntityCollision.Movement(entity, Vector2.Zero, c.Facing).Bounds);
-        record.Hurt = EntityCollision.Hurt(entity, actor).Select(h => new RegionRecord(h.Id, Bounds(h.Bounds), V2(h.Pose.Translation), V2(h.Pose.XAxis), h.Pose.IsMirrored)).ToList();
-        record.Attacks = entity.Actions.Values.Where(a => a.Clip.Id == c.Clip).SelectMany(a => a.Hits.Select(h =>
+        record.Hurt = [.. EntityCollision.Hurt(entity, actor).Select(h => new RegionRecord(h.Id, Bounds(h.Bounds), V2(h.Pose.Translation), V2(h.Pose.XAxis), h.Pose.IsMirrored))];
+        record.Attacks = [.. entity.Actions.Values.Where(a => a.Clip.Id == c.Clip).SelectMany(a => a.Hits.Select(h =>
         {
             var region = EntityCollision.Attack(entity, actor, h);
             return new AttackRecord(a.Id, h.Window.Id, h.Start, h.Finish, h.Start <= c.Seconds && c.Seconds < h.Finish, Bounds(region.Bounds), V2(region.Pose.Translation), V2(region.Pose.XAxis), region.Pose.IsMirrored);
-        })).ToList();
+        }))];
         if (entity.Equipment.Any(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null))
         {
             var (point, axis) = EntityCollision.Muzzle(entity, actor);
@@ -400,9 +395,9 @@ public sealed class MigrationReferenceTests
         }
 
         return new(
-            arena.Hits.Select(h => new HitRecord(h.Tick, h.Attacker, h.Target, h.Window, h.Damage)).ToList(),
-            arena.Events.Select(e => new EventRecord(e.Tick, e.Actor, e.Event.Kind, e.Event.Id, e.Event.Sound, e.Event.Action, e.Event.ActionSequence)).ToList(),
-            arena.Actors.Select(a => new ActorRecord(a.Entity.Id, a.Health, a.Alive, V2(a.Position), a.Facing, a.Animator.Role, a.Animator.Action, a.Animator.ActionSequence)).ToList(),
+            [.. arena.Hits.Select(h => new HitRecord(h.Tick, h.Attacker, h.Target, h.Window, h.Damage))],
+            [.. arena.Events.Select(e => new EventRecord(e.Tick, e.Actor, e.Event.Kind, e.Event.Id, e.Event.Sound, e.Event.Action, e.Event.ActionSequence))],
+            [.. arena.Actors.Select(a => new ActorRecord(a.Entity.Id, a.Health, a.Alive, V2(a.Position), a.Facing, a.Animator.Role, a.Animator.Action, a.Animator.ActionSequence))],
             arena.Bolts.Count);
     }
 

@@ -51,21 +51,21 @@ public static class PartSeeds
                 ["peak"] = new() { Clip = "wag", Time = .25f },
             },
             Expression = "wag",
+            Clips =
+            [
+                new()
+                {
+                    Id = "wag", Name = "Wag", Model = TailId, Duration = 1, Loop = true,
+                    Tracks = [new() { Kind = MotionClip.RotateKind, Target = "root", Keys = [new() { Time = 0, Angle = -.5f }, new() { Time = .5f, Angle = .5f }, new() { Time = 1, Angle = -.5f }] }],
+                    Markers = [new() { Id = "swish", Time = .5f }],
+                },
+                new()
+                {
+                    Id = "flick", Name = "Flick", Model = TailId, Duration = .5f,
+                    Tracks = [new() { Kind = MotionClip.TranslateKind, Target = "tip", Keys = [new() { Time = 0 }, new() { Time = .25f, Value = new(.1f, 0, 0) }, new() { Time = .5f }] }],
+                },
+            ]
         };
-        asset.Clips =
-        [
-            new()
-            {
-                Id = "wag", Name = "Wag", Model = TailId, Duration = 1, Loop = true,
-                Tracks = [new() { Kind = MotionClip.RotateKind, Target = "root", Keys = [new() { Time = 0, Angle = -.5f }, new() { Time = .5f, Angle = .5f }, new() { Time = 1, Angle = -.5f }] }],
-                Markers = [new() { Id = "swish", Time = .5f }],
-            },
-            new()
-            {
-                Id = "flick", Name = "Flick", Model = TailId, Duration = .5f,
-                Tracks = [new() { Kind = MotionClip.TranslateKind, Target = "tip", Keys = [new() { Time = 0 }, new() { Time = .25f, Value = new(.1f, 0, 0) }, new() { Time = .5f }] }],
-            },
-        ];
         asset.Validate();
         return asset;
     }

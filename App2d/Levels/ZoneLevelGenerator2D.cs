@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,17 +8,10 @@ namespace App2d.Levels;
 /// <summary>Generates a new map revision, validates the world layout, then assigns it to its zone.</summary>
 public static class ZoneLevelGenerator2D
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
 
     public static string Regenerate(string manifest, string zoneId, IReadOnlyList<string> tilesets)
     {
-        var world = JsonSerializer.Deserialize<WorldFile2D.WorldDocument>(File.ReadAllText(manifest), Options)
+        var world = JsonSerializer.Deserialize<WorldFile2D.WorldDocument>(File.ReadAllText(manifest), JsonProfiles.World)
             ?? throw new InvalidDataException("World layout is null.");
         var zone = world.Zones.SingleOrDefault(z => z.Id == zoneId)
             ?? throw new ArgumentException($"Unknown zone '{zoneId}'.", nameof(zoneId));
@@ -44,7 +38,7 @@ public static class ZoneLevelGenerator2D
         {
             Zones = [.. world.Zones.Select(z => z.Id == zoneId ? z with { Maps = [updatedMap] } : z)]
         };
-        var json = JsonSerializer.Serialize(updated, Options);
+        var json = JsonSerializer.Serialize(updated, JsonProfiles.World);
         var candidate = Path.Combine(root, $".world-{Guid.NewGuid():N}.json");
         try
         {

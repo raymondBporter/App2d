@@ -1147,11 +1147,14 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             }
         }
         foreach (var equipment in preview.Entity.Equipment)
-        foreach (var location in equipment.Prop.Locations)
+        {
+            foreach (var location in equipment.Prop.Locations)
         {
             var tip = PartPlacement3D.Point(preview.Pose.Socket(equipment.Socket), equipment.Prop, location.Point);
             draw.AddCircleFilled(frame.Screen(tip), 4 * Ui.Scale, StudioTheme.WeaponTip.PackedValue);
         }
+        }
+
         if (preview.Action is { Mask: not null } masked)
         {
             draw.AddText(frame.Origin + new Vector2(12, frame.Size.Y - 28 * Ui.Scale), StudioTheme.LayerMaskText.PackedValue, $"{masked.Id} over {session.PreviewRole}: layer weight {preview.Weight:P0}");

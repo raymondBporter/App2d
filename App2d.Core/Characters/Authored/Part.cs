@@ -492,8 +492,6 @@ public sealed record Part
         }
         Require(Expression is null || Binds(Expression), $"{owner}: the default expression '{Expression}' is not bound.");
     }
-
-
 }
 
 /// <summary>

@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Tiles;
 using App2d.Levels;
 using Microsoft.Data.Sqlite;
@@ -10,10 +11,6 @@ public sealed class WorldFileTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "app2d-world-" + Guid.NewGuid().ToString("N"));
     private string Manifest => Path.Combine(_root, "world.json");
-    readonly JsonSerializerOptions serializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
 
     private void CreateMap(string name, float x)
     {
@@ -26,7 +23,7 @@ public sealed class WorldFileTests : IDisposable
 
     private void Write(params WorldFile2D.MapDocument[] maps)
     {
-        var json = JsonSerializer.Serialize(new WorldFile2D.WorldDocument(1, [new("zone", "Zone", 0, maps)]), serializerOptions);
+        var json = JsonSerializer.Serialize(new WorldFile2D.WorldDocument(1, [new("zone", "Zone", 0, maps)]), JsonProfiles.World);
         File.WriteAllText(Manifest, json);
     }
 

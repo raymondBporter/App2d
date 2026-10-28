@@ -51,5 +51,3 @@ public static class AtomicFile
     }
 }
 
-
-

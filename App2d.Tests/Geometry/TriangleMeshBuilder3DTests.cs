@@ -6,6 +6,32 @@ namespace App2d.Tests.Geometry;
 
 public sealed class TriangleMeshBuilder3DTests
 {
+    [Theory]
+    [InlineData(false, .03f)]
+    [InlineData(false, 3.5f)]
+    [InlineData(true, .03f)]
+    [InlineData(true, 3.5f)]
+    public void DisksAndDomesKeepTheirSurfaceRadiusWindingAndResolution(bool dome, float radius)
+    {
+        var center = new Vector3(2, -3, .4f);
+        var builder = new TriangleMeshBuilder3D<Vector3, byte>((point, _, _) => point);
+        builder.Disk(center, radius, 0, dome);
+        Assert.Equal(dome ? 720 : 12, builder.TriangleCount);
+        foreach (var point in builder.Vertices)
+        {
+            var offset = point - center;
+            Assert.InRange(new Vector2(offset.X, offset.Y).Length(), 0, radius + 1e-5f);
+            if (dome) Assert.InRange(offset.Length(), radius - 1e-5f, radius + 1e-5f);
+            else Assert.Equal(center.Z, point.Z);
+            Assert.InRange(point.Z, center.Z - radius - 1e-5f, center.Z + 1e-5f);
+        }
+        for (var i = 0; i < builder.Count; i += 3)
+        {
+            var vertices = builder.Vertices;
+            Assert.True(Vector3.Cross(vertices[i + 1] - vertices[i], vertices[i + 2] - vertices[i]).Z > 0);
+        }
+    }
+
     [Fact]
     public void FailedVertexFactoryPreservesThePreviousMeshAndVersion()
     {

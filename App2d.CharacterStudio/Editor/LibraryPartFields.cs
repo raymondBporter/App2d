@@ -60,11 +60,13 @@ internal sealed class LibraryPartFields(EditorSession session)
             if (ImGui.Checkbox("Collision enabled", ref enabled)) Edit(p => p.Collision = settings with { Enabled = enabled });
             var mask = settings.Mask.ToString("X8");
             if (Ui.Text("Collision mask (hex)", ref mask, 8) && uint.TryParse(mask, System.Globalization.NumberStyles.HexNumber, null, out var bits))
+            {
                 Edit(p =>
                 {
                     if (doc.Asset.Physics is null) p.Collision = settings with { Mask = bits };
                     else foreach (var entry in doc.Asset.Geometry.Where(g => g.Collision is not null)) entry.Collision = entry.Collision! with { Mask = bits };
                 });
+            }
         }
         var rendered = piece.Material is not null;
         ImGui.BeginDisabled(piece.Collision is null);
@@ -151,12 +153,14 @@ internal sealed class LibraryPartFields(EditorSession session)
                 var index = i;
                 var point = points[i];
                 if (Ui.Drag2("Path point " + i, ref point, .01f, -10000, 10000))
+                {
                     session.Change(doc, () =>
                     {
                         var changed = points.ToArray(); changed[index] = point;
                         doc.Asset.Motion = motion with { Curve = PartCurves2D.WithControlPoints(motion.Curve, changed) };
                         doc.Asset.Validate();
                     });
+                }
             }
         }
         if (ImGui.SmallButton("Remove path motion")) session.Edit(doc, () => doc.Asset.Motion = null);

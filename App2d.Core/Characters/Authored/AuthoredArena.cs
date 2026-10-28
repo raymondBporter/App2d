@@ -77,7 +77,7 @@ public sealed class AuthoredArena
         /// <summary>The movement collider as registered.</summary>
         public EntityRegion Movement => Colliders.Movement!.Region;
         /// <summary>The hurt regions at the current pose, as registered.</summary>
-        public List<EntityRegion> Hurt => Colliders.Hurt.Select(h => h.Region).ToList();
+        public List<EntityRegion> Hurt => [.. Colliders.Hurt.Select(h => h.Region)];
         /// <summary>The attack colliders enabled by the windows active in the latest step, as registered.</summary>
         public IEnumerable<(ResolvedHit Hit, EntityRegion Region)> Attacks => Animator.ActiveHits().Select(h => (h, Colliders.Find(h.Collider.Id)!.Region));
 

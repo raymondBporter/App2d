@@ -7,6 +7,24 @@ namespace App2d.Tests.Geometry;
 
 public sealed class VertexGenerator2DTests
 {
+    [Theory]
+    [InlineData(12)]
+    [InlineData(24)]
+    [InlineData(48)]
+    [InlineData(60)]
+    [InlineData(80)]
+    [InlineData(120)]
+    public void SharedCircleStridesPreserveTheExactAngularSamples(int segments)
+    {
+        var stride = VertexGenerator2D.UnitCircleSegments / segments;
+        var points = VertexGenerator2D.UnitCircle;
+        for (var i = 0; i <= segments; i++)
+        {
+            var expected = VertexGenerator2D.PointOnEllipse(Vector2.Zero, Vector2.One, i / (float)segments * MathF.Tau);
+            Assert.Equal(expected, points[i * stride]);
+        }
+    }
+
     [Fact]
     public void EllipseSamplesCardinalPointsInCounterClockwiseOrder()
     {

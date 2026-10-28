@@ -198,9 +198,13 @@ public sealed class PartAnimationTests
         var excerpt = ClipAuthoring.Excerpt(clip, .2f, .8f, "cut", "Cut");
         excerpt.Validate();
         foreach (var time in new[] { 0, .15f, .3f, .4f, .6f })
+        {
             foreach (var track in clip.Tracks)
+            {
                 Assert.Equal(ClipAuthoring.Value(clip, new(track.Kind, track.Target), time + .2f).Value,
                     ClipAuthoring.Value(excerpt, new(track.Kind, track.Target), time).Value);
+            }
+        }
     }
 
     [Fact]

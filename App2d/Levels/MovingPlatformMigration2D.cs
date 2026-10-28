@@ -138,7 +138,7 @@ internal static class MovingPlatformMigration2D
         {
             Id = slug,
             Name = name,
-            Geometry = [new() { Id = "shape", A = "origin", Frame = "origin", Geometry = Rectangle2D.Builder.Create(-half, half), Material = new RenderMaterialDefinition2D { Fill = "#" + (definition.ColorArgb & 0xFFFFFF).ToString("x6", CultureInfo.InvariantCulture) }, }],
+            Geometry = [new() { Id = "shape", A = "origin", Frame = "origin", Collision = new(), Geometry = Rectangle2D.Builder.Create(-half, half), Material = new RenderMaterialDefinition2D { Fill = "#" + (definition.ColorArgb & 0xFFFFFF).ToString("x6", CultureInfo.InvariantCulture) }, }],
             Physics = new PhysicsBodySettings2D { MotionType = BodyMotionType2D.Kinematic, Restitution = 0f, TransfersContactMotion = true },
             Surface = new ObjectSurface2D { OneWayNormal = Vector2.UnitY },
             Motion = new CurveMotionDefinition2D

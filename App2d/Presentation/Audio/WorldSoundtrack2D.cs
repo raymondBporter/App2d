@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Contracts.World;
 using App2d.Core.Audio;
 using System.Collections.Immutable;
@@ -11,11 +12,6 @@ public readonly record struct MusicSelection2D(string Piece, string Mood);
 /// <summary>Presentation policy binds reusable world IDs to music, without adding audio to zone geometry.</summary>
 public sealed class WorldSoundtrack2D
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
-    };
     public ImmutableDictionary<string, MusicCue2D> Cues { get; }
     public MusicSelection2D Default { get; }
     public ImmutableDictionary<string, MusicSelection2D> Zones { get; }
@@ -46,7 +42,7 @@ public sealed class WorldSoundtrack2D
 
     public static WorldSoundtrack2D Load(string root, IEnumerable<WorldZone2D> worldZones)
     {
-        var file = JsonSerializer.Deserialize<SoundtrackFile>(File.ReadAllText(Path.Combine(root, "soundtrack.json")), Options)
+        var file = JsonSerializer.Deserialize<SoundtrackFile>(File.ReadAllText(Path.Combine(root, "soundtrack.json")), JsonProfiles.StrictCamelCase)
             ?? throw new InvalidDataException("Empty soundtrack definition.");
         if (file.Version != 1 || file.Cues is not { Length: > 0 } || file.Zones is null)
         {

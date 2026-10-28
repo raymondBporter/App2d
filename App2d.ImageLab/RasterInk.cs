@@ -29,7 +29,7 @@ internal readonly record struct RasterInk(Color4b Color, float Scalar)
         ArgumentOutOfRangeException.ThrowIfLessThan(maximum, 1);
         if (frame.Mask is not null)
         {
-            return new[] { Black, White }.Take(maximum).ToArray();
+            return [.. new[] { Black, White }.Take(maximum)];
         }
         var counts = new Dictionary<uint, (int Count, RasterInk Ink)>();
         for (var i = 0; i < frame.Width * frame.Height; i++)
@@ -45,7 +45,7 @@ internal readonly record struct RasterInk(Color4b Color, float Scalar)
                 counts.Add(key, (1, ink));
             }
         }
-        return counts.OrderByDescending(static pair => pair.Value.Count).ThenBy(static pair => pair.Key)
-            .Take(maximum).Select(static pair => pair.Value.Ink).ToArray();
+        return [.. counts.OrderByDescending(static pair => pair.Value.Count).ThenBy(static pair => pair.Key)
+            .Take(maximum).Select(static pair => pair.Value.Ink)];
     }
 }

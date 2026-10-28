@@ -34,7 +34,6 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 {
     private const float Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
     private readonly EntityAnimator _animator;
-    private readonly ActorColliders _colliders;
     private readonly HitLedger _ledger = new();
     private readonly Dictionary<(EntityId2D Source, string Group), int> _hitHistory = [];
     private readonly List<EnemyEvent2D> _events = [];
@@ -77,13 +76,13 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         Body.Restitution = 0;
         Body.GravityScale = _flight is null ? 1 : 0;
         Health = new(entity.Damage.Health);
-        _colliders = new(entity, physics.CollisionSystem, id, enemyLayer, Scale);
+        Colliders = new(entity, physics.CollisionSystem, id, enemyLayer, Scale);
         _rootBefore = Root;
         Evaluate(0, true);
     }
 
     /// <summary>The registered attached colliders, as the collision system holds them (world units).</summary>
-    public ActorColliders Colliders => _colliders;
+    public ActorColliders Colliders { get; }
 
     public ResolvedEntity Entity { get; }
     public EntityId2D Id { get; }
@@ -103,7 +102,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _enabled = isEnabled;
         Body.IsCollider = isEnabled && IsAlive;
         Body.MotionType = Body.IsCollider ? BodyMotionType2D.Dynamic : BodyMotionType2D.Static;
-        _colliders.SetActive(isEnabled);
+        Colliders.SetActive(isEnabled);
         if (!isEnabled)
         {
             Body.LinearVelocity = Vector2.Zero;
@@ -342,7 +341,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     }
 
     /// <summary>The pose/collider synchronization point: the registered colliders follow the final pose the animator just produced.</summary>
-    private void SyncColliders() => _colliders.Sync(Pose, _animator.ActiveHits(), IsAlive, GuardUp);
+    private void SyncColliders() => Colliders.Sync(Pose, _animator.ActiveHits(), IsAlive, GuardUp);
 
     /// <summary>Whether the shield is up: alive, not staggered and the action has not passed its guard-open event.</summary>
     private bool GuardUp
@@ -470,7 +469,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
         // The shared resolution against the player's body collider: once per attack instance and hit group; the player's own
         // reception (invulnerability, dashing, knockback from the attacker's side) decides whether the contact is accepted.
-        CombatContacts.Resolve(_colliders, _animator.ActionSequence, _animator.ActiveHits(), player.Body.CollisionLayer, _ledger,
+        CombatContacts.Resolve(Colliders, _animator.ActionSequence, _animator.ActiveHits(), player.Body.CollisionLayer, _ledger,
             (_, collider) => collider.EntityId == player.Id && player.IsAlive ? (player.Id, false) : null, _contacts, _overlaps);
         foreach (var contact in _contacts)
         {
@@ -486,7 +485,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     public bool OverlapsHurt(Rect2D hit) => HurtContact(hit) is not null;
 
     /// <summary>Where a hit box lands on the enemy's registered hurt colliders, or null when it reaches none (or the enemy is disabled or dead).</summary>
-    public Vector2? HurtContact(Rect2D hit) => !_enabled || !IsAlive ? null : _colliders.HurtContact(hit);
+    public Vector2? HurtContact(Rect2D hit) => !_enabled || !IsAlive ? null : Colliders.HurtContact(hit);
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
@@ -497,7 +496,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
         foreach (var hit in _animator.ActiveHits())
         {
-            yield return _colliders.Find(hit.Collider.Id)!.Object;
+            yield return Colliders.Find(hit.Collider.Id)!.Object;
         }
     }
 
@@ -521,7 +520,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             return null;
         }
 
-        var shield = _colliders.Find(guard.Id)!;
+        var shield = Colliders.Find(guard.Id)!;
         return shield.Enabled ? shield.Bounds : null;
     }
 

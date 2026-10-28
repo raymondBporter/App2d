@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Assets;
 using App2d.Core.Geometry.Primitives;
@@ -128,7 +129,7 @@ internal static class LevelBootstrap2D
         }
 
         document.Remove("objects");
-        AtomicFile.WriteAllText(manifest, document.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine);
+        AtomicFile.WriteAllText(manifest, document.ToJsonString(JsonProfiles.Indented) + Environment.NewLine);
     }
 
     private static List<WorldMapAsset2D> LoadManifestMaps(JsonObject document, string manifest, string root)

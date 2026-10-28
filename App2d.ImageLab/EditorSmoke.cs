@@ -21,10 +21,7 @@ internal static class EditorSmoke
             window.LoadImage(sourcePath);
             window.SelectTransform(new(TransformKind.Palette, Colors: 6));
         }, waitForPreview: true);
-        Capture(1100, 760, "contour-stack", window =>
-        {
-            window.LoadImage(sourcePath);
-        }, waitForPreview: false, buildStack: true);
+        Capture(1100, 760, "contour-stack", window => window.LoadImage(sourcePath), waitForPreview: false, buildStack: true);
         Capture(1100, 760, "empty", _ => { }, waitForPreview: false);
         Capture(1380, 880, "canny-preview", window =>
         {

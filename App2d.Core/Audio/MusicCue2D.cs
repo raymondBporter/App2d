@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using System.Collections.Immutable;
 using System.Text.Json;
 
@@ -6,7 +7,6 @@ namespace App2d.Core.Audio;
 /// <summary>Validated authoring manifest for stereo stems sharing one musical timeline.</summary>
 public sealed class MusicCue2D
 {
-    private static readonly JsonSerializerOptions Options = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
     public const int SampleRate = 44_100;
     public string Title { get; }
     public long LoopFrames { get; }
@@ -26,7 +26,7 @@ public sealed class MusicCue2D
 
     public static MusicCue2D Load(string manifestPath)
     {
-        var data = JsonSerializer.Deserialize<Manifest>(File.ReadAllText(manifestPath), Options)
+        var data = JsonSerializer.Deserialize<Manifest>(File.ReadAllText(manifestPath), JsonProfiles.SnakeCase)
             ?? throw new InvalidDataException($"Empty music manifest: {manifestPath}");
         if (string.IsNullOrWhiteSpace(data.Title) || data.SampleRate != SampleRate || data.Channels != 2 ||
             data.LoopStartFrame != 0 || data.LoopEndFrame <= 0 || !double.IsFinite(data.Bpm) ||

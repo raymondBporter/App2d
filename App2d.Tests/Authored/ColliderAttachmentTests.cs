@@ -311,12 +311,12 @@ public sealed class ColliderAttachmentTests
         Assert.Contains("has no socket 'ear'", Refused(e => { e.Geometry[1].A = PartLocation.Origin; e.Geometry[1].Frame = null; e.Geometry[1].Socket = "ear"; }));
         Assert.Contains("prop 'hammer' is not equipped", Refused(e => e.Geometry[4].Prop = "hammer"));
         Assert.Contains("has no 'muzzle' point", Refused(e => e.Geometry[4].Point = EquipmentPoints.Muzzle));
-        Assert.Contains("Stretch needs a toward control", Refused(e => { e.Geometry[1].Stretch = true; }));
+        Assert.Contains("Stretch needs a toward control", Refused(e => e.Geometry[1].Stretch = true));
         Assert.Contains("one attachment", Refused(e => e.Geometry[4].A = Humanoid.Head));
         Assert.Contains("guard.collider", Refused(e => e.Behavior!.Guard = new()));
         Assert.Contains("no collider 'blade'", Refused(e => e.Behavior!.Actions[0].Hits[0].Collider = "blade"));
         Assert.Contains("is a hurt collider, not attack", Refused(e => e.Behavior!.Actions[0].Hits[0].Collider = "head"));
         Assert.Contains("use", Refused(e => e.Behavior!.Colliders["head"] = "poke"));
-        Assert.Contains("duplicate drawing part 'spear-tip'", Refused(e => e.Geometry.Add(e.Geometry.Last() with { })));
+        Assert.Contains("duplicate drawing part 'spear-tip'", Refused(e => e.Geometry.Add(e.Geometry[^1] with { })));
     }
 }

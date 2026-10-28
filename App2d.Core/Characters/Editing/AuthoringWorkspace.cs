@@ -83,8 +83,6 @@ public sealed class AuthoringWorkspace
             workspace.Add(AssetDocuments.Of(clip, catalog.PathOf(clip.Id)));
         }
 
-
-
         return workspace;
     }
 

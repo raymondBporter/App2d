@@ -13,7 +13,7 @@ internal sealed class RasterRegions
     public RasterRegions(Image2D<bool> mask, bool eightConnected)
     {
         (Labels, PixelCounts) = mask.LabelComponents(eightConnected);
-        LargestFirst = Enumerable.Range(1, Count).OrderByDescending(id => PixelCounts[id]).ThenBy(static id => id).ToArray();
+        LargestFirst = [.. Enumerable.Range(1, Count).OrderByDescending(id => PixelCounts[id]).ThenBy(static id => id)];
     }
 
     public RasterFrame Filter(int largestCount, int minimumPixels, bool largestOnly, bool eightConnected)

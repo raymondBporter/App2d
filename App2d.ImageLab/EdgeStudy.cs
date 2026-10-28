@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using System.Text.Json;
 
 namespace App2d.ImageLab;
@@ -21,7 +22,7 @@ internal static class EdgeStudy
                     edgePixels = frame.Mask!.AsSpan().ToArray().Count(static pixel => pixel) });
             }
         }
-        File.WriteAllText(Path.Combine(outputDirectory, "settings.json"), JsonSerializer.Serialize(measurements, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(outputDirectory, "settings.json"), JsonSerializer.Serialize(measurements, JsonProfiles.Indented));
         Console.WriteLine($"Edge study saved to {Path.GetFullPath(outputDirectory)}");
     }
 }

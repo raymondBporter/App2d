@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
@@ -28,8 +29,6 @@ internal enum SpikeTilePart2D
 
 internal sealed class SideScrollerTerrainTileset2D
 {
-    private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.Web);
 
     private readonly Texture2D _fill;
     private readonly float _fillPeriod;
@@ -110,7 +109,7 @@ internal sealed class SideScrollerTerrainTileset2D
             throw new FileNotFoundException("Tileset manifest was not found.", manifestPath);
         }
 
-        var manifest = JsonSerializer.Deserialize<TilesetManifest>(File.ReadAllText(manifestPath), JsonOptions) ??
+        var manifest = JsonSerializer.Deserialize<TilesetManifest>(File.ReadAllText(manifestPath), JsonProfiles.Web) ??
             throw new InvalidDataException($"Tileset manifest is empty: {manifestPath}");
         if (!string.Equals(manifest.Id, tilesetId, StringComparison.Ordinal))
         {

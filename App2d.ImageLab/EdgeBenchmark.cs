@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Imaging;
 using System.Diagnostics;
 using System.Text.Json;
@@ -37,7 +38,7 @@ internal static class EdgeBenchmark
             medianOf = 5, vectorLanes = System.Numerics.Vector<float>.Count,
             vectorAccelerated = System.Numerics.Vector.IsHardwareAccelerated,
             cacheBytes = processor.CachedPixelBytes, preparations = processor.CannyPreparationCount,
-            measurements }, new JsonSerializerOptions { WriteIndented = true });
+            measurements }, JsonProfiles.Indented);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
         File.WriteAllText(outputPath, report);
         Console.WriteLine(report);

@@ -40,7 +40,7 @@ public static class PartShapes2D
             1 => shapes[0],
             _ => CompositeShape2D.Builder.Create(shapes.SelectMany(shape => shape switch
             {
-                IConvexShape2D convex => new[] { convex },
+                IConvexShape2D convex => [convex],
                 CompositeShape2D composite => composite.Parts.ToArray().Cast<IConvexShape2D>(),
                 _ => throw new InvalidDataException("Multiple body collision entries must be convex or composite.")
             }))

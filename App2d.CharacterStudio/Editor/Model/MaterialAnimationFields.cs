@@ -40,7 +40,7 @@ internal static class MaterialAnimationFields
             var index = i;
             var frame = animation.Frames[i];
             void Set(TextureFrame value) => change(p => p.Material = p.RenderMaterial with
-            { TextureAnimation = animation with { Frames = animation.Frames.Select((f, n) => n == index ? value : f).ToList() } });
+            { TextureAnimation = animation with { Frames = [.. animation.Frames.Select((f, n) => n == index ? value : f)] } });
             ImGui.PushID(i);
             var path = frame.Texture;
             if (ImGui.InputText("Frame image (Enter)", ref path, 512, ImGuiInputTextFlags.EnterReturnsTrue)) Set(frame with { Texture = path.Trim() });
@@ -48,7 +48,7 @@ internal static class MaterialAnimationFields
             if (Ui.Drag("Seconds", ref seconds, .01f, .001f, 600)) Set(frame with { Seconds = seconds });
             Region("Frame region", frame.Source, source => Set(frame with { Source = source }));
             if (Ui.Button("Remove frame", animation.Frames.Count > 1))
-                change(p => p.Material = p.RenderMaterial with { TextureAnimation = animation with { Frames = animation.Frames.Where((_, n) => n != index).ToList() } });
+                change(p => p.Material = p.RenderMaterial with { TextureAnimation = animation with { Frames = [.. animation.Frames.Where((_, n) => n != index)] } });
             ImGui.PopID();
         }
         if (Ui.Button("Add frame", animation.Frames.Count < 512))

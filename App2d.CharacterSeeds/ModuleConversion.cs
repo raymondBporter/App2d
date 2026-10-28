@@ -1,9 +1,11 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterSeeds;
 
 /// <summary>
 /// Extracts a rig module from a model (character-system migration, P10b): the subtree beneath an anchor control becomes an
@@ -453,9 +455,9 @@ public static class ModuleConversion
         foreach (var clip in asset.Clips)
         {
             var word = plan.Words.GetValueOrDefault(clip.Id) ?? (clip.Id.StartsWith(model.Id + "-", StringComparison.Ordinal) ? clip.Id[(model.Id.Length + 1)..] : clip.Id);
-            if (asset.Expressions.ContainsKey(word))
+            if (asset.Expressions.TryGetValue(word, out var assetExpression))
             {
-                throw new InvalidDataException($"Clips '{asset.Expressions[word].Clip}' and '{clip.Id}' both bind the word '{word}'; name one in the plan.");
+                throw new InvalidDataException($"Clips '{assetExpression.Clip}' and '{clip.Id}' both bind the word '{word}'; name one in the plan.");
             }
 
             asset.Expressions[word] = new() { Clip = clip.Id };
@@ -543,9 +545,9 @@ public static class ModuleConversion
                         continue;
                     }
 
-                    var before = Silhouette(PartContours2D.Contour(source.Parts.First(p => p.Id == piece.Id), source, expected), anchorWorld);
+                    var (Min, Max, Centroid, Area) = Silhouette(PartContours2D.Contour(source.Parts.First(p => p.Id == piece.Id), source, expected), anchorWorld);
                     var after = Silhouette(PartContours2D.Contour(instance.Pose.Fitted(piece), instance.World, instance.Frame, instance.Rest, instance.RestFrame), moduleAnchor);
-                    var gap = MathF.Max(Vector3.Distance(before.Min, after.Min), MathF.Max(Vector3.Distance(before.Max, after.Max), MathF.Max(Vector3.Distance(before.Centroid, after.Centroid), MathF.Abs(before.Area - after.Area))));
+                    var gap = MathF.Max(Vector3.Distance(Min, after.Min), MathF.Max(Vector3.Distance(Max, after.Max), MathF.Max(Vector3.Distance(Centroid, after.Centroid), MathF.Abs(Area - after.Area))));
                     if (gap > silhouetteTolerance)
                     {
                         differences.Add($"clip '{clip.Id}' at {time:0.###} s: piece '{piece.Id}' silhouette moved by {gap:0.######}");

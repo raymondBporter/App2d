@@ -297,7 +297,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
 
         foreach (var layer in asset.Layers)
         {
-            ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}{(layer.Clock == PartClocks.Mapped ? $" (x{layer.Rate:0.##} + {layer.Offset:0.##} s)" : "")}, plays {(layer.Clip ?? "nothing")} by default");
+            ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}{(layer.Clock == PartClocks.Mapped ? $" (x{layer.Rate:0.##} + {layer.Offset:0.##} s)" : "")}, plays {layer.Clip ?? "nothing"} by default");
         }
 
         Ui.Help($"The asset binds {string.Join(", ", asset.Expressions.Keys)}. Exposed targets ({string.Join(", ", asset.Exposed)}) are keyed through the Parts rows of the outline.");

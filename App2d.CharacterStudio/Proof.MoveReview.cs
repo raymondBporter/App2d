@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.CharacterSeeds.PlayerMoves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -96,7 +97,7 @@ internal sealed partial class ProofRenders
             });
             report.Add(Check(model, item));
         }
-        File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, ManifestJsonOptions));
+        File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, JsonProfiles.Indented));
         File.WriteAllLines(Path.Combine(_smokePath, "checks.txt"), report);
         return false;
     }

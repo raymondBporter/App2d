@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Contracts.World;
 using System.Collections.Immutable;
 using System.Text.Json;
@@ -8,11 +9,6 @@ namespace App2d.Levels;
 /// <summary>Durable zone authoring alongside level.db; no audio or simulation dependencies.</summary>
 public static class WorldZoneFile2D
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-    };
 
     public static ImmutableArray<WorldZone2D> Load(string path)
     {
@@ -23,7 +19,7 @@ public static class WorldZoneFile2D
 
         try
         {
-            var file = JsonSerializer.Deserialize<ZoneFile>(File.ReadAllText(path), Options)
+            var file = JsonSerializer.Deserialize<ZoneFile>(File.ReadAllText(path), JsonProfiles.StrictCamelCase)
                 ?? throw new InvalidDataException("Zone document is null.");
             if (file.Version != 1 || file.Zones is null)
             {

@@ -436,7 +436,7 @@ public sealed class EditorSession
         if (part.Clip(part.Binding(Expression is { } expression && part.Binds(expression) ? expression : part.Expression)?.Clip ?? part.BaseLayer?.Clip) is { } clip) return clip;
         if (_partTimeline is { } cached && cached.Id == part.Id && cached.Revision == Assets.PartsRevision) return cached.Clip;
         AnimationClip2D<TextureFrame>[] animations;
-        try { animations = part.Geometry.Select(p => p.Material?.Resolve(part.Materials).ResolvedFrames).OfType<AnimationClip2D<TextureFrame>>().ToArray(); }
+        try { animations = [.. part.Geometry.Select(p => p.Material?.Resolve(part.Materials).ResolvedFrames).OfType<AnimationClip2D<TextureFrame>>()]; }
         catch (Exception error) when (AuthoringWorkspace.IsAssetError(error)) { return null; }
         var duration = Math.Max(part.Motion?.PeriodSeconds ?? 0, animations.Select(a => (double)a.Duration).DefaultIfEmpty().Max());
         // A timeline descriptor lets the existing transport seek a static Part's texture or path. It is never saved.

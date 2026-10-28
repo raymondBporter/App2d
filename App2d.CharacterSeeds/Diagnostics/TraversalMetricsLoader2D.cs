@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Contracts.Player;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Validation;
@@ -8,8 +9,6 @@ namespace App2d.CharacterSeeds.Diagnostics;
 
 public static class TraversalMetricsLoader2D
 {
-    private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.Web);
 
     public static TraversalMetrics2D Load(string contentRoot)
     {
@@ -21,7 +20,7 @@ public static class TraversalMetricsLoader2D
             throw new FileNotFoundException("Player geometry manifest was not found.", path);
         }
 
-        var manifest = JsonSerializer.Deserialize<PlayerGeometryManifest>(File.ReadAllText(path), JsonOptions)
+        var manifest = JsonSerializer.Deserialize<PlayerGeometryManifest>(File.ReadAllText(path), JsonProfiles.Web)
             ?? throw new InvalidDataException($"Player geometry manifest is empty: {path}");
         Validate(manifest, path);
 

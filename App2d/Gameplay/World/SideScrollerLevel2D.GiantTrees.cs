@@ -45,7 +45,7 @@ public sealed partial class SideScrollerLevel2D
                 platform.Transform.Position = branch.Bounds.Center;
                 var body = environment.Physics.AddBody(platform, BodyMotionType2D.Static);
                 body.CollisionLayer = environment.WorldLayer;
-                body.CollisionMask = environment.PlayerLayer | environment.EnemyLayer;
+                body.CollisionMask = environment.WorldLayer | environment.PlayerLayer | environment.EnemyLayer;
                 PlatformCollisionRules2D.Attach(environment.Physics).Surface(body).OneWaySurfaceNormal = Vector2.UnitY;
                 body.Restitution = 0;
                 _giantTreeBranches.Add(body);

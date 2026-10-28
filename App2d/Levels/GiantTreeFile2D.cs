@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
@@ -12,11 +13,6 @@ namespace App2d.Levels;
 /// <summary>Editable giant trees alongside level.db. All file dimensions and positions are in tiles.</summary>
 public static class GiantTreeFile2D
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
-    };
 
     public static ImmutableArray<GiantTree2D> Load(string path, IChunkedTileMap2D map)
     {
@@ -28,7 +24,7 @@ public static class GiantTreeFile2D
 
         try
         {
-            var file = JsonSerializer.Deserialize<TreeFile>(File.ReadAllText(path), Options)
+            var file = JsonSerializer.Deserialize<TreeFile>(File.ReadAllText(path), JsonProfiles.StrictCamelCase)
                 ?? throw new InvalidDataException("Tree document is null.");
             if (file.Version != 1 || file.Trees is null)
             {

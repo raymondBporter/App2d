@@ -331,7 +331,7 @@ internal sealed partial class EditorSmoke
                 $"the guard's thrust hits the player ({hits.Hits.Count} hit(s) over {thrusts} thrust(s), one per thrust whatever the hurt collider count), each for its typed damage");
             // Block: the same thrust into the shield defender's raised guard is taken by the guard, not the hurt geometry.
             var block = Fight(["shield-defender", WalkerGuard], [new(0, 0), new(2.1f, 0)], 240);
-            Record(block.Blocks.Count > 0 && block.Blocks.All(b => b is { Attacker: 1, Target: 0, Window: "spear-tip" }) && block.Hits.Count(h => h.Target == 0) == 0 && block.Actors[0].Health == Catalog(s).Entities["shield-defender"].Damage.Health,
+            Record(block.Blocks.Count > 0 && block.Blocks.All(b => b is { Attacker: 1, Target: 0, Window: "spear-tip" }) && !block.Hits.Any(h => h.Target == 0) && block.Actors[0].Health == Catalog(s).Entities["shield-defender"].Damage.Health,
                 $"the thrust into the shield defender's front guard is blocked ({block.Blocks.Count} block(s), no damage)");
             // Miss: out of reach, nothing lands.
             var miss = Fight(["player", WalkerGuard], [new(0, 0), new(6, 0)], 60);

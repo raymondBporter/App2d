@@ -34,7 +34,7 @@ public static class PartContours2D
         if (part.Mesh is { } mesh)
         {
             var placed = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, frame), spatial, physicalZ);
-            return (mesh.Outline ?? mesh.Vertices).Select(p => placed.TransformPoint(p.XYZ)).ToList();
+            return [.. (mesh.Outline ?? mesh.Vertices).Select(p => placed.TransformPoint(p.XYZ))];
         }
         return PartPlacement3D.Contour(part, Contour(part, world, frame, world, frame), spatial, physicalZ);
     }
@@ -51,11 +51,11 @@ public static class PartContours2D
         if (part.Mesh is { } mesh)
         {
             var lifted = PartPlacement3D.Extend(frame);
-            return (mesh.Outline ?? mesh.Vertices).Select(v => lifted.TransformPoint(v.XYZ)).ToList();
+            return [.. (mesh.Outline ?? mesh.Vertices).Select(v => lifted.TransformPoint(v.XYZ))];
         }
         if (part.Geometry is ICurve2D || part.Depths is not null)
         {
-            return LocalContour(part).Select((v, i) => frame.At(v) + new Vector3(0, 0, part.Depths?[i] ?? 0)).ToList();
+            return [.. LocalContour(part).Select((v, i) => frame.At(v) + new Vector3(0, 0, part.Depths?[i] ?? 0))];
         }
         if (part.Geometry is SimplePolygon2D && part.Bindings is { Count: > 0 })
         {

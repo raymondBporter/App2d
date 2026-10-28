@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Characters.Authored;
 using App2d.Contracts.World;
 using App2d.Core.Geometry.Primitives;
@@ -67,13 +68,6 @@ public sealed class WorldAsset2D(IReadOnlyList<WorldMapAsset2D> maps, ImmutableA
 /// <summary>World manifest: zones own map files; each database stores world-space tile and thing positions.</summary>
 public static class WorldFile2D
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        Converters = { new Vector2JsonConverter() },
-        WriteIndented = true
-    };
 
     public static WorldAsset2D Load(string path, IReadOnlyList<string>? legacyTilesets = null)
     {
@@ -89,7 +83,7 @@ public static class WorldFile2D
                 }
             }
 
-            var file = JsonSerializer.Deserialize<WorldDocument>(text, Options)
+            var file = JsonSerializer.Deserialize<WorldDocument>(text, JsonProfiles.World)
                 ?? throw new InvalidDataException("World document is null.");
             if (file.Version != 1 || file.Zones is null || file.Zones.Count == 0)
             {

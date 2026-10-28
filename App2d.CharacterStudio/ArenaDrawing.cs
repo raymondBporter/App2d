@@ -98,12 +98,14 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
             }
 
             foreach (var equipment in actor.Entity.Equipment)
-            foreach (var location in equipment.Prop.Locations)
+            {
+                foreach (var location in equipment.Prop.Locations)
             {
                 mesh.Disk(PartPlacement3D.Point(actor.Pose.Socket(equipment.Socket), equipment.Prop, location.Point) with
                 {
                     Z = -6.2f
                 }, 5 * pixel, new Color4b(240, 200, 40));
+            }
             }
 
             foreach (var anchor in actor.Anchors.Values)

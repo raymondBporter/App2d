@@ -146,6 +146,6 @@ public sealed class RasterWorkspaceTests
         preview.Change(source, new(TransformKind.FillHoles));
         Assert.False(preview.Pending);
         Assert.Null(preview.Frame);
-        Assert.Contains("Threshold", preview.Error!);
+        Assert.Contains("Threshold", preview.Error);
     }
 }

@@ -57,7 +57,7 @@ public sealed class EntityBehaviorTests
     {
         var guard = StarterContent.SpearGuardEntity();
         Assert.Equal(Part.CurrentVersion, guard.Version);
-        Assert.NotNull(guard.Behavior!);
+        Assert.NotNull(guard.Behavior);
         var compiled = Compile(guard);
         Assert.Equal(3, compiled.Damage.Health);
         Assert.Equal(1, compiled.Actions["attack"].Hits[0].Strike.Damage);

@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using System.Text.Json;
@@ -31,15 +32,9 @@ public static class CombatLevelGenerator2D
     private static readonly HashSet<string> MeleeTypes =
         ["club-caveman", "shield-defender", "baby-triceratops", "shieldback", "boiler-brute", "green-dinosaur"];
     private static readonly HashSet<string> RangedTypes = ["rock-thrower", "rival"];
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
-    };
 
     public static CombatLevelSettings2D LoadSettings(string path) =>
-        JsonSerializer.Deserialize<CombatLevelSettings2D>(File.ReadAllText(path), JsonOptions)
+        JsonSerializer.Deserialize<CombatLevelSettings2D>(File.ReadAllText(path), JsonProfiles.StrictCamelCase)
         ?? throw new InvalidDataException("Generator settings are null.");
 
     public static CombatLevelDraft2D Generate(CombatLevelSettings2D settings, IReadOnlyList<string> tilesets,
@@ -217,7 +212,8 @@ public static class CombatLevelGenerator2D
         });
         return manifest;
 
-        void Write(string name, object value) => File.WriteAllText(Path.Combine(root, name), JsonSerializer.Serialize(value, JsonOptions));
+        void Write(string name, object value) => File.WriteAllText(Path.Combine(root, name),
+            JsonSerializer.Serialize(value, value is WorldFile2D.WorldDocument ? JsonProfiles.World : JsonProfiles.StrictCamelCase));
     }
 
     private static void ValidateRoster(IReadOnlyList<string> roster, HashSet<string> allowed)

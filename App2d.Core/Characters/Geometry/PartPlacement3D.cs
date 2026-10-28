@@ -57,11 +57,11 @@ public static class PartPlacement3D
     }
 
     public static List<Vector3> Contour(PartGeometry part, IReadOnlyList<Vector3> points, Frame3D spatial, float physicalZ = 0) =>
-        points.Select((p, i) =>
+        [.. points.Select((p, i) =>
         {
             var z = part.Depths?[i] ?? 0;
             return spatial.TransformPoint(new(p.X, p.Y, physicalZ + z)) + Vector3.UnitZ * (p.Z - z);
-        }).ToList();
+        })];
 
     /// <summary>A prop's local point in the world, with its grip on the frame's origin. The one transform art, hits and muzzles share.</summary>
     public static Vector3 Point(Frame3D frame, Part prop, PuppetPoint local) =>

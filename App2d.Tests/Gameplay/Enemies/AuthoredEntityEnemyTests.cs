@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
@@ -25,7 +26,6 @@ namespace App2d.Tests.Gameplay.Enemies;
 /// <summary>Authored entities in the real game: spawning, the shared final pose and combat.</summary>
 public sealed class AuthoredEntityEnemyTests
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { IncludeFields = true };
 
     [Theory]
     [InlineData(-1, -1, false)]
@@ -179,11 +179,15 @@ public sealed class AuthoredEntityEnemyTests
             var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, new PersonCommand2D { MoveX = i < 60 ? .3f : 0 }));
             var guard = frame.Enemies[0];
             return JsonSerializer.Serialize(new { frame.Tick, Health = game.Player.Health.Current, guard.Position, guard.ActionId, guard.ActionSeconds, Points = guard.AuthoredPose!.Local.Points.Values.ToArray() },
-                JsonOptions);
+                JsonProfiles.Fields);
         })];
         var first = Run();
         var damaged = game.Player.Health.Current;
-        Assert.Contains(first, json => json.Contains("\"ActionId\":\"attack\""));
+        Assert.Contains(first, json =>
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.GetProperty("ActionId").GetString() == "attack";
+        });
         Assert.True(damaged < 30, "the spear reached the player");
     }
 
@@ -275,12 +279,17 @@ public sealed class AuthoredEntityEnemyTests
                                         .CaptureEnemies()
                                         .Select(e => (e.Position, e.Bolts.Select(b => b.Position).ToArray()))
                                         .ToArray(),
-                                        JsonOptions)
+                                        JsonProfiles.Fields)
                                         + (game.Session.Advance() is var frame ? "" : "") // this does nothing??
                 )
         ];
         var first = Run();
-        Assert.Contains(first, json => json.Contains("\"X\"") && json.Contains("[{"));
+        Assert.Contains(first, json =>
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.GetArrayLength() > 0
+                && document.RootElement[0].GetProperty("Item1").TryGetProperty("X", out _);
+        });
         Assert.True(game.Player.Health.Current < 30, "the gunner's shots land");
     }
 

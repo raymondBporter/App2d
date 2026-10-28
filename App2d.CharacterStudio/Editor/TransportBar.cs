@@ -14,7 +14,10 @@ internal static class TransportBar
         var standalone = session.Mode == Workspace.Appearance && session.PartDocument is not null && !session.PreviewPartOnWearer;
         var clip = standalone ? session.TransportClip : session.ClipDocument?.Asset;
         ImGui.SetNextItemWidth(170 * Ui.Scale);
-        if (standalone) ImGui.TextUnformatted(clip?.Name ?? "Static part");
+        if (standalone)
+        {
+            ImGui.TextUnformatted(clip?.Name ?? "Static part");
+        }
         else if (ImGui.BeginCombo("##clip", clip?.Name ?? "(no animation)"))
         {
             foreach (var c in clips)

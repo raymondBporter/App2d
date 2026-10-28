@@ -7,6 +7,7 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Characters;
 using App2d.Core.Geometry.Serialization;
+using App2d.Core.Json;
 using App2d.Core.Shapes;
 using App2d.Core.Tiles;
 using System.Collections.Immutable;
@@ -19,6 +20,8 @@ namespace App2d.Tests.Gameplay.Simulation;
 
 public sealed class ObservationRoundTripTests
 {
+    private static readonly JsonSerializerOptions JsonOptions = CreateOptions();
+
     [Fact]
     public void CompleteObservationAndEveryOccurrenceCanCrossAValueOnlyBoundary()
     {
@@ -57,7 +60,7 @@ public sealed class ObservationRoundTripTests
                 { Person = person with { Id = enemyId }, IsAttacking = true, AttackElapsedSeconds = 0.12f, MoveX = -1f },
         ];
         var snapshot = new SessionFrame2D(500, [player], content, world, enemies, []);
-        var options = CreateOptions();
+        var options = JsonOptions;
         var restored = RoundTrip(snapshot, options);
         Assert.Equal(player.Person, restored.Players[0].Person);
         Assert.Equal(player with
@@ -145,8 +148,9 @@ public sealed class ObservationRoundTripTests
                 info.PolymorphismOptions.DerivedTypes.Add(new JsonDerivedType(type, type.Name));
             }
         });
-        var options = new JsonSerializerOptions { IncludeFields = true, TypeInfoResolver = resolver };
+        var options = new JsonSerializerOptions(JsonProfiles.Fields) { TypeInfoResolver = resolver };
         options.Converters.Add(new EntityIdConverter());
+        options.MakeReadOnly();
         return options;
     }
 

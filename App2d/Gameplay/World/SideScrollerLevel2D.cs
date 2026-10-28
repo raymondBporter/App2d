@@ -153,7 +153,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(ids);
         StateGuard.ThrowIf(_environment is not null, "The level simulation has already been created.");
-        var streamer = new SideScrollerChunkStreamer2D(physics, TileMap, worldLayer, playerLayer | enemyLayer);
+        var streamer = new SideScrollerChunkStreamer2D(physics, TileMap, worldLayer, worldLayer | playerLayer | enemyLayer);
         _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
         CreateObjects();

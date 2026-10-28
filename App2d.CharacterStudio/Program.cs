@@ -103,7 +103,7 @@ internal static class Program
             Console.WriteLine(line);
         }
 
-        Console.WriteLine(report.ToString() + (report.Count(SeedReport.Kept) > 0 ? " (kept files are editor-owned; pass --force to replace them)" : ""));
+        Console.WriteLine(report + (report.Count(SeedReport.Kept) > 0 ? " (kept files are editor-owned; pass --force to replace them)" : ""));
         return 0;
     }
 

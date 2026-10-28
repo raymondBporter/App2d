@@ -1,6 +1,8 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterSeeds;
 
 /// <summary>
 /// Publishes an anatomy template as resources (character-system migration, P10a): the model with the dimensions its seed

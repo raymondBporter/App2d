@@ -31,7 +31,7 @@ internal sealed partial class EditorSmoke
         _textureProof = new() { Frames = [new() { Texture = folder + "/small.png", Seconds = .25f },
             new() { Texture = folder + "/wide.png", Seconds = .75f, Source = new() { X = .5f, Width = .5f } }] };
         Check(s.NewModel("texture-proof", "Texture on a moving bone", "empty"), s);
-        Check(s.Edit(s.SubjectModel!, () =>
+        Check(s.Edit(s.SubjectModel, () =>
         {
             var model = s.SubjectModel!.Asset;
             ModelAuthoring.AddBone(model, null, "carrier");
@@ -39,7 +39,7 @@ internal sealed partial class EditorSmoke
                 Material = new() { TextureAnimation = _textureProof, Alpha = .9f } });
         }), s);
         Check(s.NewClip("texture-proof-motion", "Sway and fade", 1), s);
-        Check(s.Edit(s.ClipDocument!, () =>
+        Check(s.Edit(s.ClipDocument, () =>
         {
             var clip = s.ClipDocument!.Asset;
             ClipAuthoring.SetKey(clip, new(MotionClip.RotateKind, "carrier"), 0, default, -.3f);

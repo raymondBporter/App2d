@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Primitives;
@@ -12,7 +13,6 @@ namespace App2d.Beamwright;
 /// <summary>Snapshots of the original campaign and part definitions; no JavaScript at runtime.</summary>
 public sealed class BeamwrightContent
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     public static BeamwrightContent Default { get; } = ReadResource<BeamwrightContent>("campaign.json");
     public string Version { get; init; } = "";
     public PartDefinition[] Pieces { get; init; } = [];
@@ -24,7 +24,7 @@ public sealed class BeamwrightContent
     {
         using var stream = typeof(BeamwrightContent).Assembly.GetManifestResourceStream($"App2d.Beamwright.Content.{name}")
             ?? throw new InvalidOperationException($"Missing Beamwright content: {name}");
-        return JsonSerializer.Deserialize<T>(stream, JsonOptions) ?? throw new InvalidDataException(name);
+        return JsonSerializer.Deserialize<T>(stream, JsonProfiles.CaseInsensitive) ?? throw new InvalidDataException(name);
     }
 
     public static BenchLevel FreeBench => new()

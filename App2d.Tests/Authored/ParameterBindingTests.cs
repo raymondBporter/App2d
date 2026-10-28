@@ -382,7 +382,7 @@ public sealed class ParameterBindingTests
         Assert.True(session.Edit(document, () => ModelAuthoring.AddParameter(document.Asset, "hand-span", "Hand span", ParameterUnits.Length, 0, 0, 1)), session.Message);
         Assert.True(session.Edit(document, () => ModelAuthoring.AddBinding(document.Asset, "hand-span", new() { Kind = BindingKinds.Set, Target = PropertyRef.OfControl("left-hand", RigProperties.Length) })), session.Message);
         Assert.Equal(0, session.Assets.Resolve("person")!.Nodes["left-hand"].Length);
-        session.Change(document, () => { document.Asset.Parameters.Last().Default = .12f; document.Asset.Validate(); });
+        session.Change(document, () => { document.Asset.Parameters[^1].Default = .12f; document.Asset.Validate(); });
         session.CommitAll();
         Assert.Equal(.12f, session.Assets.Resolve("person")!.Nodes["left-hand"].Length);
         Assert.True(session.Save(document), session.Message);

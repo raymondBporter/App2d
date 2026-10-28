@@ -42,12 +42,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         }
         bool Property(string label, string property)
         {
-            if (Marked(label, overrides?.Has(property) == true, () => overrides!.Reset(property)))
-            {
-                return true;
-            }
-
-            return false;
+            return Marked(label, overrides?.Has(property) == true, () => overrides!.Reset(property));
         }
         void Float(string label, string property, float value, float min, float max, Action<PartGeometry, float> set)
         {
@@ -162,10 +157,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 change(p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new()) with { Color = null } });
             }
         }
-        if (overrides is not null)
-        {
-            overrides.Note(RigProperties.Material);
-        }
+        overrides?.Note(RigProperties.Material);
 
         if (part.Geometry is IShape2D)
         {

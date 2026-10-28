@@ -223,8 +223,8 @@ public sealed class ResolvedEntity
             use == ColliderUses.Movement ? "movement" : "collider", $"{owner} geometry '{id}'", model, entity.Sockets, equipment);
         entity.Movement = ResolveGeometry(behaviors.Movement, ColliderUses.Movement);
         foreach (var (id, use) in behaviors.Colliders) colliders.Add(ResolveGeometry(id, use));
-        entity.Geometry = asset.Geometry.Select(g => (ResolvedGeometry?)colliders.FirstOrDefault(c => c.Id == g.Id)
-            ?? (g.Id == entity.Movement.Id ? entity.Movement : new ResolvedGeometry(g, model, entity.Sockets, equipment, $"{owner} geometry '{g.Id}'"))).ToArray();
+        entity.Geometry = [.. asset.Geometry.Select(g => (ResolvedGeometry?)colliders.FirstOrDefault(c => c.Id == g.Id)
+            ?? (g.Id == entity.Movement.Id ? entity.Movement : new ResolvedGeometry(g, model, entity.Sockets, equipment, $"{owner} geometry '{g.Id}'")))];
         var windowColliders = new Dictionary<(string Action, string Window), ResolvedCollider>();
         foreach (var action in asset.Behavior!.Actions)
         {
@@ -434,7 +434,7 @@ public static class EntityCollision
 
     /// <summary>The hurt regions at a pose: the entity's enabled-by-default hurt colliders placed.</summary>
     public static List<EntityRegion> Hurt(ResolvedEntity entity, ActorPose pose) =>
-        entity.Colliders.Where(c => c.Use == ColliderUses.Hurt && c.DefaultEnabled).Select(c => c.Region(pose)).ToList();
+        [.. entity.Colliders.Where(c => c.Use == ColliderUses.Hurt && c.DefaultEnabled).Select(c => c.Region(pose))];
 
     /// <summary>
     /// The 3D frame an attack collider is anchored to: a socket, an equipped prop's named point with the prop's orientation,

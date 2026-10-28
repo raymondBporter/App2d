@@ -227,7 +227,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 
         foreach (var layer in asset.Layers)
         {
-            ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}{(layer.Clock == PartClocks.Mapped ? $" (x{layer.Rate:0.##} + {layer.Offset:0.##} s)" : "")}, plays {(layer.Clip ?? "nothing")} by default");
+            ImGui.TextDisabled($"  layer '{layer.Id}': {(layer.Mask is null ? "everything" : "mask '" + layer.Mask + "'")}, clock {layer.Clock}{(layer.Clock == PartClocks.Mapped ? $" (x{layer.Rate:0.##} + {layer.Offset:0.##} s)" : "")}, plays {layer.Clip ?? "nothing"} by default");
         }
 
         var words = asset.Expressions.Keys.Append(Part.None).Prepend("").ToArray();
@@ -269,7 +269,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         Ui.Header($"Piece {piece.Id} ({piece.Kind})");
         void Change(Action<PartGeometry> set) => session.Change(doc, () => { set(doc.Asset.Geometry[index]); doc.Asset.Validate(); });
         void Edit(Action<PartGeometry> set) => session.Edit(doc, () => { set(doc.Asset.Geometry[index]); doc.Asset.Validate(); });
-        var locations = doc.Asset.IsAnimated ? doc.Asset.Controls.Select(c => c.Id).ToArray() : doc.Asset.Locations.Select(l => l.Id).Prepend(PartLocation.Origin).ToArray();
+        var locations = doc.Asset.IsAnimated ? doc.Asset.Controls.Select(c => c.Id).ToArray() : [.. doc.Asset.Locations.Select(l => l.Id).Prepend(PartLocation.Origin)];
         if (Ui.Combo("Attached at", piece.A, locations) is { } a)
         {
             Edit(p => { p.A = a; if (p.Frame is not null) p.Frame = a; });
@@ -296,7 +296,11 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
     public void Overlay(ViewportFrame frame)
     {
         if (frame.Primary is not { } primary || session.PartDocument is not { } doc ||
-            _partPiece >= doc.Asset.Geometry.Count) return;
+            _partPiece >= doc.Asset.Geometry.Count)
+        {
+            return;
+        }
+
         var attachment = primary.Subject.Model.Attachments.FirstOrDefault(a => a.Asset.Id == doc.Id)
             ?? session.PreviewAttachmentOn(primary.Subject.Model);
         if (attachment is null || attachment.IsAnimated) return;

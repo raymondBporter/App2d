@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Mathematics.Progress;
 using System.Numerics;
 using System.Text.Json;
@@ -212,7 +213,6 @@ internal sealed class ProceduralLocomotion2D
 
 internal sealed class PoseAuthoring2D
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private readonly List<PoseKeyframe2D> _frames = [];
 
     public IReadOnlyList<PoseKeyframe2D> Frames => _frames;
@@ -242,7 +242,7 @@ internal sealed class PoseAuthoring2D
                 SavedPoint.From(frame.Pose.FootRight),
                 frame.Pose.TorsoAngle,
                 frame.Pose.HeadAngle))]);
-        var json = JsonSerializer.Serialize(saved, JsonOptions);
+        var json = JsonSerializer.Serialize(saved, JsonProfiles.Indented);
         Core.IO.AtomicFile.WriteAllText(path, json);
         return path;
     }

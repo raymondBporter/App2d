@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using App2d.Core.Assets;
 using App2d.Core.IO;
 using App2d.Core.Validation;
@@ -8,12 +9,6 @@ namespace App2d.Persistence;
 
 public sealed class PlayerSaveStore2D
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
-    };
 
     public PlayerSaveStore2D(string path)
     {
@@ -35,7 +30,7 @@ public sealed class PlayerSaveStore2D
             }
 
             var json = File.ReadAllText(Path);
-            return JsonSerializer.Deserialize<PlayerSave2D>(json, JsonOptions);
+            return JsonSerializer.Deserialize<PlayerSave2D>(json, JsonProfiles.CamelCaseInsensitive);
         }
         catch (Exception exception) when (IsRecoverableFileException(exception) || exception is JsonException or ArgumentException)
         {
@@ -48,7 +43,7 @@ public sealed class PlayerSaveStore2D
         ArgGuard.ThrowIfNull(save);
         try
         {
-            AtomicFile.WriteAllText(Path, JsonSerializer.Serialize(save, JsonOptions));
+            AtomicFile.WriteAllText(Path, JsonSerializer.Serialize(save, JsonProfiles.CamelCaseInsensitive));
             return true;
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
