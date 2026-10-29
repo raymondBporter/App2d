@@ -18,8 +18,14 @@ internal static class EdgeStudy
                 var frame = transform.Apply(source);
                 var name = $"{channel}-blur{sigma:0.0}.png";
                 frame.SavePng(Path.Combine(outputDirectory, name));
-                measurements.Add(new { image = name, weak = transform.WeakEdge, strong = transform.StrongEdge, sigma,
-                    edgePixels = frame.Mask!.AsSpan().ToArray().Count(static pixel => pixel) });
+                measurements.Add(new
+                {
+                    image = name,
+                    weak = transform.WeakEdge,
+                    strong = transform.StrongEdge,
+                    sigma,
+                    edgePixels = frame.Mask!.AsSpan().ToArray().Count(static pixel => pixel)
+                });
             }
         }
         File.WriteAllText(Path.Combine(outputDirectory, "settings.json"), JsonSerializer.Serialize(measurements, JsonProfiles.Indented));

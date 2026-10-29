@@ -1,8 +1,8 @@
 using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Editing;
 using App2d.Core;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Bounds;
@@ -107,7 +107,9 @@ public sealed class PartCutoverTests
 
     private static Part Body() => new()
     {
-        Id = "body", Name = "Body", Physics = new() { Mass = 2, FreezeRotation = false },
+        Id = "body",
+        Name = "Body",
+        Physics = new() { Mass = 2, FreezeRotation = false },
         Geometry = [new() { Id = "shape", Geometry = Circle2D.Builder.Create(1), Collision = new() }]
     };
 }

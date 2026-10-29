@@ -6,13 +6,12 @@ The solution contains the engine, games, editors, supporting tools, and tests.
 `App2d.Core` is the engine: mathematics, geometry,
 collision, physics, tiles, rendering, audio, authored characters, and the WinForms game
 host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
-level storage, the editor, and the in-game debug tools. `App2d.Tests` holds every test.
-`App2d.CharacterStudio` is the character editor and `App2d.Noodle` holds the rig
-experiments; both build on `App2d.Core`. `App2d.EditorUi` supplies shared editor UI.
-`App2d.CharacterSeeds` is the home for everything that is not the game or Studio: the
-retained character generators and the rendering smokes and studies, run with
-`dotnet run --project App2d.CharacterSeeds -- <flag>`. It references the game; the game
-does not reference it. `tools/ClothLab` is a small cape study.
+level storage, the editor, and the in-game debug tools. `App2d.Tests` holds the game and engine tests.
+`App2d.CharacterStudio` is the character editor and owns the retained character generators,
+rendering smokes and studies in its `CharacterSeeds` folder. Run those commands with
+`dotnet run --project App2d.CharacterStudio -- <flag>`. Studio references the game;
+the game does not reference Studio. `App2d.EditorUi` supplies shared editor UI.
+`tools/ClothLab` is a small cape study.
 Everything targets `net10.0-windows10.0.19041.0`.
 
 `App2d.ImageLab` is a small raster workbench: load an image, preview parameterized
@@ -20,55 +19,10 @@ transforms, apply them to an undo/redo stack, and save the current step as PNG.
 Run `dotnet run --project App2d.ImageLab`. See [Image Lab](App2d.ImageLab/README.md)
 for the transforms and a few starting pipelines.
 
-`App2d.Beamwright` is the native Windows optics puzzle game port. Run it with
-`dotnet run --project App2d.Beamwright`. It reuses Core's host, input, renderer,
-affine poses, filled shapes, and raycasts, and includes all 36 original campaign
-levels and 14 optical parts. See [the Beamwright notes](App2d.Beamwright/README.md)
-for controls, reference verification, attribution, and the remaining port scope.
-
-`App2d.Trials` is a separate, minimal trials-game prototype. Run it with
-`dotnet run --project App2d.Trials`. It uses the shared `GameHost`, `Game2D` camera,
-and physics world to simulate a double-triangle bike on a cubic B-spline terrain course.
-Use **A/D** or **Left/Right** to drive, **W/S** to lean, **Space** to brake,
-**R** to reset, and **Esc** to close. The camera follows the terrain height; surface marks show movement.
-Three repeating depth layers provide clouds, distant mountains, and nearby hills;
-both games use the shared [parallax layer API](docs/rendering-passes.md#parallax-layers).
-No external assets are needed. `TrialsBike2D` holds the editable tube geometry, fork,
-wheel radius, motor and suspension tuning. The front triangle and rear swingarm are
-separate rigid bodies. A front wheel joint allows 28 units of travel along the fork;
-a rear pivot and wheel bearing keep the rear triangle connected while its shock
-compresses up to 14 units. Wheels rotate freely and rear-wheel torque drives through
-ground friction. The fork telescopes and the rear shock graphic follows its mounts.
-
-`TrialsCourse2D` holds the course `Width`, `FrequencyAmplitudes` and additive `Ramps`.
-Change `Width` in that file to grow the default map, or pass a different configuration to
-`TrialsGame2D(course)` / `TrialsTerrain2D(world, course)`. Width is measured from `XMin`
-to `XMax = XMin + Width`, including the area left of the spawn. Frequencies are cycles
-per world unit (`1 / wavelength`), amplitudes are heights in world units, and ramps use
-world-space X/Y points. Increasing width adds more waves without stretching their scale
-or moving authored ramps. The final wave fade follows the new right endpoint.
-
-```csharp
-var course = TrialsCourse2D.Default with
-{
-    Width = 40_000f,
-    FrequencyAmplitudes = [(1f / 2400f, 48f), (1f / 700f, 20f)],
-    Ramps = [PolylineCurve2D.Builder.Create([new(2000, 0), new(2200, 120), new(2400, 0)])]
-};
-using var game = new TrialsGame2D(course);
-```
-
-`ControlPointSpacing`, `YMin`, `WaveStartX` and wave fade lengths are also configurable.
-The control-point grid remains anchored when width changes, with an exact final endpoint
-even when the width is not a multiple of the spacing. Empty wave/ramp collections are valid.
-The default map keeps the three waves and two hand-shaped ramp profiles.
-The clamped cubic `BSpline2D` has continuous position, first and second
-derivatives at its simple interior knots; its control points influence the curve rather
-than being interpolation targets. `Curve2D.ToPolyline` samples each knot span adaptively,
-with a 12-unit chord limit and 0.05-unit sampled-deviation target. Visible and collidable
-terrain use the same sampled boundary. `SimplePolygon2D.Builder.BelowPolyline` closes
-the region down to a bottom plane and builds narrow strip triangles directly. This is a
-finite default course of width 12800 from x = -1600 to 11200, with a flat starting area.
+Beamwright and Trials have their own solutions and repositories:
+[Beamwright](https://github.com/raymondBporter/beamwright) and
+[Trials](https://github.com/raymondBporter/trials). Both reference `App2d.Core` from an
+existing App2d checkout; their READMEs document the configurable `App2dRoot` path.
 
 `IHeightField2D` in Core describes the solid `XMin <= x <= XMax` and
 `YMin <= y <= HeightAt(x)`: a function on top, vertical end caps, and a supplied flat bottom.
@@ -606,39 +560,6 @@ under **Sources**: converting one onto a model, or importing a `.puppet.json`, i
 source. See [Character Studio](docs/character-studio.md) for the workflow and headless renders, and
 [the replacement design](docs/character-editor-replacement.md) for the design and what remains.
 
-Run the rigid-puppet side-scroller experiment with:
-
-```powershell
-dotnet run --project App2d.Noodle
-```
-
-It uses one fixed humanoid skeleton and rigid per-bone stand-ins for future PNG parts.
-Use `A`/`D` to move, `Space` to jump, `J` to attack, `H` to preview a hit reaction,
-and `V` to swap the entire part set without changing any animation. `Tab` opens the
-pose authoring mode: drag hand/foot IK handles, rotate the torso/head with `Q`/`E`
-and `Z`/`X`, capture keyframes with `K`, preview with `P`, and save the pose list with
-`Ctrl+S`. `B` overlays the standard skeleton.
-
-Run the general entity/bones editor with:
-
-```powershell
-dotnet run --project App2d.Noodle -- --bones
-```
-
-The right sidebar authors a parent/child bone hierarchy and attached rectangle, circle,
-capsule, or convex-polygon shapes. The property grid edits transforms, dimensions, color,
-and visual/collision purpose. Middle-drag pans, the mouse wheel zooms, and `Escape` closes.
-
-The earlier weighted noodle-person and joint-gallery experiment remains available with:
-
-```powershell
-dotnet run --project App2d.Noodle -- --prototype
-```
-
-Its joint gallery visualizes distance, axis/prismatic, and polar-link projections backed
-by the same pure constraint-coordinate math used by physics. Editor projectors remain
-separate from body-bound physics constraints.
-
 Startup currently runs `SideScrollerGame`. It is the composition root and explicit
 fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of
 being implemented by the game class. `LevelBootstrap2D` loads the cavern level file
@@ -990,7 +911,7 @@ Build and test on Windows with a Direct3D-capable adapter:
 ```powershell
 dotnet build App2d.slnx
 dotnet test App2d.slnx
-dotnet run --project App2d.CharacterSeeds -- --render-smoke artifacts/monogame-smoke
+dotnet run --project App2d.CharacterStudio -- --render-smoke artifacts/monogame-smoke
 ```
 
 Rendering tests draw into real GPU render targets and read pixels back to check sprite

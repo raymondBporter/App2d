@@ -36,7 +36,6 @@ public sealed class PuppetDrawing
         AddAttachment(asset, Frame3D.Identity, seconds: seconds);
     }
 
-    public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World, rest: id => definition.Controls.First(c => c.Id == id).Rest.XYZ);
     /// <summary>
     /// The model's parts over the evaluated pose, then its slot attachments and library part instances through the same
     /// per-part path (P5b): any payload kind, one placement. A face is an animated instance like any other (P7c).
@@ -137,8 +136,19 @@ public sealed class PuppetDrawing
             var frame = geometry.Frame(placed);
             var drawing = geometry.Definition.ResolveMaterial(entity.Asset.Materials) with
             {
-                A = PartLocation.Origin, B = null, Frame = PartLocation.Origin, Socket = null, Prop = null,
-                OffsetX = 0, OffsetY = 0, Angle = 0, ScaleX = 1, ScaleY = 1, Depth = 0, Along = 0, Stretch = false,
+                A = PartLocation.Origin,
+                B = null,
+                Frame = PartLocation.Origin,
+                Socket = null,
+                Prop = null,
+                OffsetX = 0,
+                OffsetY = 0,
+                Angle = 0,
+                ScaleX = 1,
+                ScaleY = 1,
+                Depth = 0,
+                Along = 0,
+                Stretch = false,
             };
             Add(entity.Asset.Ink, entity.Asset.LineWidth, [drawing], _ => frame.Origin, _ => frame, seconds: local.SampleSeconds);
         }

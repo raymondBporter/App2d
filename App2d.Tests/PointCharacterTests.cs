@@ -1,4 +1,4 @@
-using App2d.Core.Characters;
+using App2d.CharacterStudio.Importing;
 using System.Numerics;
 using System.Text.Json;
 

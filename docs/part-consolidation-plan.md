@@ -152,7 +152,7 @@ S1 establishes the shared representation. S2 and S3 then address separate consum
 - [x] S0a. Fix Appearance selection so a selected library part is not combined with a fallback prop, and fallback prop selection actually enables its preview. Two regressions failed before the change; the 28 focused library-part, appearance and editor-session tests passed afterward.
 - [x] S0b. Make the browser/preview distinguish a whole module, a reusable part and a study/demo. Previewing a full lower-body module on a wearer must be an explicit, clearly labeled operation rather than look like saved corruption.
 
-Current fix: [EditorSession.SetMode](../App2d.Core/Characters/Editing/EditorSession.cs) and [LibraryPartEditingTests](../App2d.Tests/Authored/LibraryPartEditingTests.cs). It is in the working tree; no asset JSON was changed. The All-list clarification did not reproduce the user's original report as game-art corruption.
+Current fix: [EditorSession.SetMode](../App2d.CharacterStudio/Editing/EditorSession.cs) and [LibraryPartEditingTests](../App2d.Tests/Authored/LibraryPartEditingTests.cs). It is in the working tree; no asset JSON was changed. The All-list clarification did not reproduce the user's original report as game-art corruption.
 
 Gate: beard and module selections have one consistent active asset and preview. Switching workspaces does not silently change the subject or save a preview attachment.
 

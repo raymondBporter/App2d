@@ -1,8 +1,7 @@
-using App2d.Core.Characters.Authored;
 using App2d.CharacterSeeds.Diagnostics;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
-using App2d.Core.Objects;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;

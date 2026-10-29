@@ -1,7 +1,5 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Constraints;
-using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json.Nodes;
@@ -67,7 +65,10 @@ public sealed class JointLimitTests
         var model = ResolvedModel.From(limited);
         var clip = new MotionClip
         {
-            Id = "bend", Name = "Bend", Model = "arm", Duration = 1,
+            Id = "bend",
+            Name = "Bend",
+            Model = "arm",
+            Duration = 1,
             Tracks = [new() { Kind = MotionClip.BendKind, Target = "fore", Keys = [new() { Value = Vector3.Zero }, new() { Time = .5f, Value = new(.5f, 0, 0) }, new() { Time = 1, Value = new(1, 0, 0) }] }],
         };
         clip.Validate(model);

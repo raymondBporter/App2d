@@ -5,8 +5,6 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Core.Characters;
-using App2d.Core.Geometry.Serialization;
 using App2d.Core.Json;
 using App2d.Core.Shapes;
 using App2d.Core.Tiles;

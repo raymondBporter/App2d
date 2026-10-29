@@ -1,6 +1,5 @@
-using App2d.Core.Characters;
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
 using ImGuiNET;
 
 namespace App2d.CharacterStudio.Editor.Animation;

@@ -52,7 +52,7 @@ contact effect. Each damaged target in a multi-target swing gets its own fact.
 
 
 
-Run `dotnet run --project App2d.CharacterSeeds -- --contact-study output/contact-study`, then open
+Run `dotnet run --project App2d.CharacterStudio -- --contact-study output/contact-study`, then open
 
 `output/contact-study/index.html`. The page contains synchronized real game renders
 
@@ -72,7 +72,7 @@ camera shake and physical corpse movement remain separate refinements.
 
 ## Reaction timing comparison
 
-Run `dotnet run --project App2d.CharacterSeeds -- --hitstop-study output/contact-study/timing`
+Run `dotnet run --project App2d.CharacterStudio -- --hitstop-study output/contact-study/timing`
 and open that directory's `index.html`. Four synchronized variants compare Normal,
 old Strong+ (enemy only), Contact Hold (both actors, 70 ms) and Exaggerated (both
 actors, 140 ms). The new curves hold immediately, ease back up over 25 ms and repay

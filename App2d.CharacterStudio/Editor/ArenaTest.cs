@@ -1,6 +1,6 @@
 using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using ImGuiNET;

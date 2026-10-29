@@ -87,7 +87,8 @@ public sealed class AuthoredObject2D : IDisposable
     {
         LinearVelocity = IsEnabled ? Body?.LinearVelocity ?? Vector2.Zero : _pausedVelocity,
         AngularVelocity = IsEnabled ? Body?.AngularVelocity ?? 0 : _pausedSpin,
-        Time = _time, IsEnabled = IsEnabled
+        Time = _time,
+        IsEnabled = IsEnabled
     };
 
     public void RestoreState(ObjectState2D state)

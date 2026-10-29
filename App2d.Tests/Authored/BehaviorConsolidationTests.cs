@@ -1,12 +1,8 @@
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
-using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
-using App2d.Core.Shapes;
 using System.Numerics;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Authored;

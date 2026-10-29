@@ -10,7 +10,6 @@ using App2d.Core.Spatial;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
-using App2d.Tests.Authored;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Combat;

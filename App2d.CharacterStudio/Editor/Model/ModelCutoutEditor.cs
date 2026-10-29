@@ -1,6 +1,6 @@
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;

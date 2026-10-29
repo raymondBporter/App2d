@@ -2,8 +2,8 @@ using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
-using System.Numerics;
 using Microsoft.Xna.Framework.Graphics;
+using System.Numerics;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.CharacterStudio;

@@ -15,7 +15,7 @@ public static class JsonProfiles
 
     /// <summary>Value observations that include public fields, such as numerics vectors.</summary>
     public static JsonSerializerOptions Fields { get; } = Freeze(new(Indented) { IncludeFields = true });
-    
+
     public static JsonSerializerOptions CamelCase { get; } = Freeze(new(Indented)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase

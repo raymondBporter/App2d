@@ -1,7 +1,7 @@
 using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
 using App2d.Core.Characters.Geometry;
 using System.Numerics;
 
@@ -60,7 +60,9 @@ public sealed class PartGeometryTests
     {
         var entry = new PartGeometry
         {
-            Id = "islands", A = "origin", Material = new() { Fill = "#ffffff" },
+            Id = "islands",
+            A = "origin",
+            Material = new() { Fill = "#ffffff" },
             Mesh = new()
             {
                 Vertices = [new(0, 0), new(1, 0), new(0, 1), new(3, 0), new(4, 0), new(3, 1)],

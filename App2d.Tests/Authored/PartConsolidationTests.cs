@@ -1,8 +1,7 @@
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Mathematics;
-using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -12,7 +11,10 @@ public sealed class PartConsolidationTests
     private static Vector3 Point(Microsoft.Xna.Framework.Vector3 p) => new(p.X, p.Y, p.Z);
     private static Part Tool() => new()
     {
-        Id = "tool", Name = "Tool", Scale = 1.7f, Pivot = EquipmentPoints.Grip,
+        Id = "tool",
+        Name = "Tool",
+        Scale = 1.7f,
+        Pivot = EquipmentPoints.Grip,
         Locations = [new() { Id = EquipmentPoints.Grip, X = .2f, Y = -.1f, Z = .03f }],
         Geometry = [new()
         {

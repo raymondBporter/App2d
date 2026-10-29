@@ -275,8 +275,8 @@ proportions. IK joints are solved with the model's lengths, and any reach shortf
 converted clip is sampled at 30 fps and has no contacts or travel: plant the feet, set travel and check depth in
 Animate. **Show source points** overlays the mapped source at the same time for comparison.
 
-The conversion code is `App2d.Core/Characters/Authored/SourceImport.cs` (`PuppetImport`, `LibraryImport`,
-`SourceLibraries`).
+Puppet conversion lives in `App2d.CharacterStudio/Authoring/PuppetImport.cs`; point-library conversion and
+source lookup live in `App2d.CharacterStudio/Importing` (`LibraryImport`, `SourceLibraries`).
 
 ## Headless renders
 
@@ -293,15 +293,19 @@ studies; `--write-player-moves <authored-dir>` regenerates the player move set.
 `--write-weapons <authored-dir>` replaces the five starter weapon assets and their sample orientation tracks, keeping
 body keys and entity settings. It is a regeneration command and overwrites edits to those weapon assets/tracks.
 
-The game has two more: `dotnet run --project App2d.CharacterSeeds -- --render-smoke <dir>` draws authored entities through the game
+The game has two more: `dotnet run --project App2d.CharacterStudio -- --render-smoke <dir>` draws authored entities through the game
 presentation, and `-- --face-smoke <dir>` draws every expression the baked Person face part binds.
 
 ## Code
 
 | Where | Holds |
 | --- | --- |
-| `App2d.Core/Characters/Authored` | Schema, resolution, pose evaluation, entity runtime and conversions. No graphics. |
-| `App2d.Core/Characters/Editing` | Documents, workspace, transport and the editor session. No ImGui. |
+| `App2d.Core/Characters/Authored` | Shared asset schema, resolution, pose evaluation and entity runtime. |
+| `App2d.CharacterStudio/Authoring` | Model and clip edits, conversions, template recipes, geometry builders and the test arena. Existing namespaces are retained for source and JSON compatibility. |
+| `App2d.CharacterStudio/CharacterSeeds` | Retained generators and diagnostic commands, with their existing `App2d.CharacterSeeds` namespaces. |
+| `App2d.CharacterStudio/Editing` | Documents, workspace, transport, editor session, part picking, appearance edits, behavior inspector metadata and template lookup. No ImGui. |
+| `App2d.CharacterStudio/Importing` | Imported point libraries, library conversion and source lookup. |
+| `App2d.CharacterStudio/CharacterSeeds/PuppetPose.cs` | Prototype pose sampling used by seed generation and reference tests. |
 | `App2d.Core/Characters/Drawing` | `PuppetDrawing`, attached part instances (faces among them) and depth-tested submission. |
 | `App2d.CharacterStudio/Editor` | The ImGui shell and workspace views. |
 | `App2d.CharacterStudio/Proof.*.cs` | The headless proof renders. |

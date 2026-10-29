@@ -1,8 +1,7 @@
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Shapes;
-using System.Runtime.InteropServices;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Validation;
+using System.Runtime.InteropServices;
 
 namespace App2d.Core.Characters;
 

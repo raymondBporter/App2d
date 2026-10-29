@@ -2,10 +2,9 @@ using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Physics;
 using App2d.Core.Objects;
+using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Rendering.Textures;
@@ -62,7 +61,10 @@ public sealed class PhysicalPartTests
     {
         var tree = new GiantTree2D(new(500, 0), new()
         {
-            Height = 320, TrunkWidth = 32, BranchLength = new(250, 250), BranchGap = new(80, 80)
+            Height = 320,
+            TrunkWidth = 32,
+            BranchLength = new(250, 250),
+            BranchGap = new(80, 80)
         }, 3107);
         var branch = tree.Branches.MaxBy(b => b.Bounds.Max.Y);
         var map = new EditableTileMap2D(64, 32, 32, 32, Vector2.Zero, ["dark-cave"]);

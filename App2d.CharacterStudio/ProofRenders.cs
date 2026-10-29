@@ -1,7 +1,6 @@
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Text.Json;
 
 namespace App2d.CharacterStudio;
 

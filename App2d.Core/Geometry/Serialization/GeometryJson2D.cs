@@ -1,11 +1,10 @@
-using App2d.Core.Json;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Conversion;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Json;
 using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace App2d.Core.Geometry.Serialization;
 

@@ -2,7 +2,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Mathematics.Progress;
-using App2d.Core.Objects;
 using App2d.Core.Physics;
 using App2d.Core.Tiles;
 using App2d.Levels;

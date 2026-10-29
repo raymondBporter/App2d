@@ -1,7 +1,6 @@
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -28,15 +27,24 @@ internal sealed partial class EditorSmoke
             }
             image.Save(Path.Combine(s.Assets.Root, folder, name + ".png"), System.Drawing.Imaging.ImageFormat.Png);
         }
-        _textureProof = new() { Frames = [new() { Texture = folder + "/small.png", Seconds = .25f },
-            new() { Texture = folder + "/wide.png", Seconds = .75f, Source = new() { X = .5f, Width = .5f } }] };
+        _textureProof = new()
+        {
+            Frames = [new() { Texture = folder + "/small.png", Seconds = .25f },
+            new() { Texture = folder + "/wide.png", Seconds = .75f, Source = new() { X = .5f, Width = .5f } }]
+        };
         Check(s.NewModel("texture-proof", "Texture on a moving bone", "empty"), s);
         Check(s.Edit(s.SubjectModel, () =>
         {
             var model = s.SubjectModel!.Asset;
             ModelAuthoring.AddBone(model, null, "carrier");
-            model.Parts.Add(new() { Id = "panel", A = "carrier", Frame = "carrier", Geometry = Rectangle2D.Builder.FromSize(1.5f, .8f),
-                Material = new() { TextureAnimation = _textureProof, Alpha = .9f } });
+            model.Parts.Add(new()
+            {
+                Id = "panel",
+                A = "carrier",
+                Frame = "carrier",
+                Geometry = Rectangle2D.Builder.FromSize(1.5f, .8f),
+                Material = new() { TextureAnimation = _textureProof, Alpha = .9f }
+            });
         }), s);
         Check(s.NewClip("texture-proof-motion", "Sway and fade", 1), s);
         Check(s.Edit(s.ClipDocument, () =>

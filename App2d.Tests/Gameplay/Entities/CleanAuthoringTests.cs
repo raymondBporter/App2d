@@ -1,14 +1,15 @@
 using App2d.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Importing;
 using App2d.Core.Characters;
-using App2d.Tests.Authored;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
+using App2d.Tests.Authored;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Entities;
@@ -121,7 +122,13 @@ public sealed class CleanAuthoringTests : IDisposable
         Assert.True(s.Edit(entity, () =>
         {
             entity.Asset.Behavior!.Controller.Range = .5f;
-            entity.Asset.AddCollider(new() { Id = "bite", Socket = "mouth", Geometry = Rectangle2D.Builder.FromSize(.4f, .3f) }, ColliderUses.Attack);
+            entity.Asset.AddCollider(new()
+            {
+                Id = "bite",
+                Socket = "mouth",
+                Geometry = Rectangle2D.Builder.FromSize(.4f, .3f)
+            },
+            ColliderUses.Attack);
             entity.Asset.Behavior!.Actions.Single().Hits.Add(new()
             {
                 Id = "bite",
@@ -142,7 +149,15 @@ public sealed class CleanAuthoringTests : IDisposable
 
         // The placement binding is profile data (P9c): a spawns-only profile maps the dinosaur placement to the new entity.
         Directory.CreateDirectory(Path.Combine(Root, "profiles"));
-        new GameProfile { Spawns = new(StringComparer.Ordinal) { [nameof(WorldThingKind2D.GreenDinosaur)] = "stalker-pest" } }.Save(Path.Combine(Root, "profiles", "game.json"));
+        new GameProfile
+        {
+            Spawns = new(StringComparer.Ordinal)
+            {
+                [nameof(WorldThingKind2D.GreenDinosaur)] = "stalker-pest"
+            }
+        }
+        .Save(Path.Combine(Root, "profiles", "game.json"));
+
         // Reopen with the loader the game uses, then play it.
         var catalog = AuthoredCatalog.Load(Root);
         Assert.Empty(catalog.Errors);

@@ -14,6 +14,9 @@ internal static class Program
         ApplicationConfiguration.Initialize();
         try
         {
+            if (SeedCommands.Handles(args))
+                return SeedCommands.Run(args);
+
             switch (args)
             {
                 case ["--smoke-rounded-paths", var curveOutput]:
@@ -73,7 +76,7 @@ internal static class Program
                         return 0;
                     }
                 default:
-                    throw ArgGuard.CreateInvalid(Usage);
+                    throw ArgGuard.CreateInvalid(Usage + Environment.NewLine + SeedCommands.Usage);
             }
         }
         catch (Exception ex)

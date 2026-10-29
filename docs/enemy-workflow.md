@@ -89,7 +89,7 @@ dotnet build App2d.slnx
 dotnet test App2d.Gameplay.Tests
 dotnet run --project App2d.CharacterStudio -- --smoke-wardrobe artifacts/prehistoric-enemies
 python tools/ArtPipeline/pack_enemy_reviews.py artifacts/prehistoric-enemies
-dotnet run --project App2d.CharacterSeeds -- --render-smoke artifacts/prehistoric-game
+dotnet run --project App2d.CharacterStudio -- --render-smoke artifacts/prehistoric-game
 ```
 
 The wardrobe review emits pose sheets and action sequences for the enemy roster and attack frame sequences

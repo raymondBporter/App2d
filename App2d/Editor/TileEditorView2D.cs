@@ -2,7 +2,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
 using App2d.Core.Mathematics;
-using App2d.Core.Objects;
 using App2d.Core.Shapes;
 using App2d.Presentation;
 using App2d.Rendering;

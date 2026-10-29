@@ -1,7 +1,7 @@
 using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Importing;
 using App2d.Core.Assets;
-using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;

@@ -563,7 +563,7 @@ acceptance path on a scratch copy of the assets and writes a frame per step, plu
 | --- | --- | --- |
 | Schema | `App2d.Core/Characters/Authored/` | Variants store build values (`build`), applied by an explicit `IBuildRule` (`PersonBuild.Rule`) before rest overrides, so base edits propagate. Clips gain per-key `ease`, `markers` and `faces`. Parts gain `hidden`. `PartGeometry` is the one part layout used by drawing and picking. |
 | Authoring ops | `ClipAuthoring`, `ModelAuthoring` | Graphics-free edits. `ClipAuthoring.Pose` inverts the evaluator: a dragged world position becomes a delta in the channel's frame and reference units, so a key made on a tall preview reads correctly on every build. Structural edits refuse to discard dependents. |
-| Documents / session | `App2d.Core/Characters/Editing/` | `AssetDocument` (transaction undo: a drag is one step, serialized only at edit boundaries), `AuthoringWorkspace` (every asset as a document, resolution over drafts cached on versions, dependents, save), `Transport`, `EditorSession` (all commands). No ImGui. |
+| Documents / session | `App2d.CharacterStudio/Editing/` | `AssetDocument` (transaction undo: a drag is one step, serialized only at edit boundaries), `AuthoringWorkspace` (every asset as a document, resolution over drafts cached on versions, dependents, save), `Transport`, `EditorSession` (all commands). No ImGui. |
 | Views | `App2d.CharacterStudio/Editor/` | `EditorShell` layout, `Viewport` (camera, compare, game-size inset), `AssetBrowser`, and `IWorkspaceView` implementations `ModelView` and `AnimateView`. |
 
 Structure revisions are settled at save: saving a model whose structure signature changed raises its revision and moves
@@ -615,7 +615,7 @@ Verification:
 - `App2d.Tests.Authored.EntityRuntimeTests` covers capabilities, set/override sources, error messages, spear grip and tip against the hit region in both facings, mirroring, marker dispatch (skipped spans, loop wraps, no advance means no event), planted feet holding their anchors on all three entities, contact resets, face independence and capture/restore.
 - `App2d.Gameplay.Tests` `AuthoredArenaTests` covers the guard that cannot jump, the player's jump, hits inside the strike→recover window, the creature, interruptions and deterministic replay.
 - `AuthoredEntityEnemyTests` covers game spawning, the shared pose, damage to the player, rollback replay, pose-derived head hits and spear hitboxes in both facings.
-- Renders: `App2d.CharacterStudio --smoke-entities <dir>` draws anticipation, active and recovery frames in both facings, the jump and the stalker, with overlays. `App2d.CharacterSeeds --render-smoke <dir>` writes `entity-*.png` through the game presentation. `--smoke-editor` ends in Test.
+- Renders: `App2d.CharacterStudio --smoke-entities <dir>` draws anticipation, active and recovery frames in both facings, the jump and the stalker, with overlays. `App2d.CharacterStudio --render-smoke <dir>` writes `entity-*.png` through the game presentation. `--smoke-editor` ends in Test.
 
 Not yet covered:
 - ~~An Entity workspace~~: done in phase 4.
@@ -689,7 +689,7 @@ Verification:
 - `AuthoredEntityGameTests` covers the sword's clip timing, the follow-up choice and the mirrored hit box and muzzle.
 - `AuthoredEntityEnemyTests` covers gunner bolts leaving the muzzle, landing and stopping at walls, gunner rollback replay, the maul's slam window and cue, and mass.
 - `AuthoredArenaTests` covers gunner bolts in the arena.
-- `App2d.CharacterSeeds --render-smoke` overlays the sword hit box and muzzle on the player and draws the gunner and maul.
+- `App2d.CharacterStudio --render-smoke` overlays the sword hit box and muzzle on the player and draws the gunner and maul.
 - The game starts and runs on authored assets alone.
 
 Still in code (open issue 6):

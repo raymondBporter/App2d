@@ -3,7 +3,6 @@ using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
-using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Authored;
 

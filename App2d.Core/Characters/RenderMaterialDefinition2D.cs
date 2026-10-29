@@ -67,8 +67,11 @@ public sealed record RenderMaterialDefinition2D
         var frame = (ResolvedFrames ?? TextureAnimation?.Compile())?.Sample(seconds);
         return frame is null && tint == Vector4.One ? this : this with
         {
-            Texture = frame?.Texture ?? Texture, Source = frame?.Source ?? Source,
-            TextureAnimation = null, ResolvedFrames = null, AnimatedTint = tint
+            Texture = frame?.Texture ?? Texture,
+            Source = frame?.Source ?? Source,
+            TextureAnimation = null,
+            ResolvedFrames = null,
+            AnimatedTint = tint
         };
     }
 

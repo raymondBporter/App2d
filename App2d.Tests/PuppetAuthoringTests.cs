@@ -1,4 +1,5 @@
 using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
@@ -72,13 +73,13 @@ public sealed class PuppetAuthoringTests
     {
         var empty = PuppetDefinition.FromJson(new PuppetDefinition().ToJson());
         var drawing = new PuppetDrawing();
-        drawing.Build(empty, PuppetPose.Rest(empty));
+        drawing.Build(empty.Ink, empty.LineWidth, empty.Parts, PuppetPose.Rest(empty).World, rest: id => empty.Controls.First(c => c.Id == id).Rest.XYZ);
         Assert.Equal(0, drawing.Mesh.Count);
         var puppet = PuppetTemplates.StickFigure();
         puppet.RemoveControl("head");
         puppet = PuppetDefinition.FromJson(puppet.ToJson());
         var pose = PuppetPose.Sample(puppet, puppet.Motions[0], 0);
-        drawing.Build(puppet, pose);
+        drawing.Build(puppet.Ink, puppet.LineWidth, puppet.Parts, pose.World, rest: id => puppet.Controls.First(c => c.Id == id).Rest.XYZ);
         Assert.True(drawing.Mesh.Count > 0);
         Assert.DoesNotContain(puppet.Parts, p => p.A == "head" || p.B == "head");
         Assert.DoesNotContain("head", pose.Points.Keys);
@@ -285,7 +286,7 @@ public sealed class PuppetAuthoringTests
         var drawing = new PuppetDrawing();
         for (var i = 0; i <= 30; i++)
         {
-            drawing.Build(puppet, PuppetPose.Sample(puppet, puppet.Motions[0], i * .04));
+            drawing.Build(puppet.Ink, puppet.LineWidth, puppet.Parts, PuppetPose.Sample(puppet, puppet.Motions[0], i * .04).World, rest: id => puppet.Controls.First(c => c.Id == id).Rest.XYZ);
             Assert.True(drawing.Mesh.TriangleCount > 100);
             Assert.True(float.IsFinite(drawing.Mesh.Min.X) && float.IsFinite(drawing.Mesh.Max.Y));
         }

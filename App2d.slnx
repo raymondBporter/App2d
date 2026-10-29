@@ -3,16 +3,12 @@
   <Project Path="App2d.Analyzers/App2d.Analyzers.csproj" />
   <Project Path="App2d.Analyzers.CodeFixes/App2d.Analyzers.CodeFixes.csproj" />
   <Project Path="App2d.Analyzers.Tests/App2d.Analyzers.Tests.csproj" />
-  <Project Path="App2d.CharacterSeeds/App2d.CharacterSeeds.csproj" />
   <Project Path="App2d.EditorUi/App2d.EditorUi.csproj" />
   <Project Path="App2d.ImageLab/App2d.ImageLab.csproj" />
   <Project Path="App2d/App2d.csproj" />
-  <Project Path="App2d.Trials/App2d.Trials.csproj" />
-  <Project Path="App2d.Beamwright/App2d.Beamwright.csproj" />
   <Project Path="App2d.Tests/App2d.Tests.csproj" />
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Project Path="App2d.Noodle/App2d.Noodle.csproj" />
   <Project Path="App2d.CharacterStudio/App2d.CharacterStudio.csproj" />
 </Solution>

@@ -1,12 +1,12 @@
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
-using ImGuiNET;
-using System.Numerics;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Physics;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Physics;
+using ImGuiNET;
+using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor;
 

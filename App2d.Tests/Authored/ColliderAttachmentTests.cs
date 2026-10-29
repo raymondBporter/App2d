@@ -1,12 +1,11 @@
-using App2d.Core.Characters;
 using App2d.CharacterSeeds;
 using App2d.Core;
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
-using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;

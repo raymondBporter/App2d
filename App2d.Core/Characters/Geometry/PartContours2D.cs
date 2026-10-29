@@ -4,8 +4,8 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Shapes;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;

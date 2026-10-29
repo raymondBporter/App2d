@@ -1,13 +1,11 @@
+using App2d.CharacterStudio.Editing;
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics;
-using App2d.Core.Objects;
 using App2d.Core.Physics;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
@@ -20,8 +18,11 @@ public sealed class PartAnimationTests
 {
     private static Part Panel(bool loop = true) => new()
     {
-        Id = "animated-panel", Name = "Animated panel", Payload = PartPayloads.Animated,
-        Controls = [new() { Id = "root", Node = RigNodeKinds.Bone }], Exposed = ["panel"],
+        Id = "animated-panel",
+        Name = "Animated panel",
+        Payload = PartPayloads.Animated,
+        Controls = [new() { Id = "root", Node = RigNodeKinds.Bone }],
+        Exposed = ["panel"],
         Geometry = [new() { Id = "panel", A = "root", Frame = "root", OffsetX = .3f,
             Geometry = Rectangle2D.Builder.FromSize(2, 1), Material = new() { Alpha = .5f, TextureAnimation = new()
             {
@@ -105,8 +106,14 @@ public sealed class PartAnimationTests
     public void NamespacedMaterialTracksBlendWithoutMirroringAndHeldVisibilityUsesTheSameSampler()
     {
         var part = Panel();
-        var model = new CharacterModel { Id = "wearer", Name = "Wearer", Controls = [new() { Id = "root" }],
-            Sockets = [new() { Id = "mount", Control = "root" }], Attachments = [new() { Id = "screen", Asset = part.Id, Socket = "mount" }] };
+        var model = new CharacterModel
+        {
+            Id = "wearer",
+            Name = "Wearer",
+            Controls = [new() { Id = "root" }],
+            Sockets = [new() { Id = "mount", Control = "root" }],
+            Attachments = [new() { Id = "screen", Asset = part.Id, Socket = "mount" }]
+        };
         var resolved = ResolvedModel.From(model, partOf: _ => part);
         var clip = ClipAuthoring.New(resolved, "fade", "Fade");
         ClipAuthoring.SetKey(clip, new(MotionClip.AlphaKind, "screen/panel"), 0, new(.3f, 0, 0));
@@ -133,8 +140,15 @@ public sealed class PartAnimationTests
         try
         {
             Directory.CreateDirectory(Path.Combine(root, "parts"));
-            var part = Panel() with { Payload = PartPayloads.Static, Controls = [], Exposed = [], Layers = [], Clips = [],
-                Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(0, 1), new(2, 1), new(2, 0)), PeriodSeconds = 2 } };
+            var part = Panel() with
+            {
+                Payload = PartPayloads.Static,
+                Controls = [],
+                Exposed = [],
+                Layers = [],
+                Clips = [],
+                Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(0, 1), new(2, 1), new(2, 0)), PeriodSeconds = 2 }
+            };
             part.Geometry[0].A = part.Geometry[0].Frame = PartLocation.Origin;
             part.Save(Path.Combine(root, "parts", part.Id + ".json"));
             var session = new EditorSession(AuthoringWorkspace.Open(root));
@@ -191,10 +205,16 @@ public sealed class PartAnimationTests
     [Fact]
     public void ExcerptsPreserveHeldVisibilityAndMaterialSetupBeforeTheFirstKey()
     {
-        var clip = new MotionClip { Id = "fade", Name = "Fade", Model = "panel", Tracks = [
+        var clip = new MotionClip
+        {
+            Id = "fade",
+            Name = "Fade",
+            Model = "panel",
+            Tracks = [
             new() { Kind = MotionClip.ShowKind, Target = "panel", Keys = [new() { Value = Vector3.Zero }, new() { Time = .5f, Value = Vector3.UnitX }] },
             new() { Kind = MotionClip.AlphaKind, Target = "panel", SetupBeforeFirst = true, Keys = [new() { Time = .5f, Value = new(.3f, 0, 0) }] }
-        ] };
+        ]
+        };
         var excerpt = ClipAuthoring.Excerpt(clip, .2f, .8f, "cut", "Cut");
         excerpt.Validate();
         foreach (var time in new[] { 0, .15f, .3f, .4f, .6f })

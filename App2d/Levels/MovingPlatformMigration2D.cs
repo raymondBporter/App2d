@@ -1,5 +1,5 @@
-using App2d.Core.Characters.Authored;
 using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Objects;

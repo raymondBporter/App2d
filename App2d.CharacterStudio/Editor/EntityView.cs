@@ -1,10 +1,10 @@
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
-using App2d.Core.Shapes;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Operations.Conversion;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
 
@@ -581,67 +581,67 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 AlongField(document, Collider);
                 break;
             case ColliderBindings.Control:
-            {
-                const string Own = "(the control's own)";
-                var frames = (basis?.Controls.Select(c => c.Id) ?? []).Prepend(CharacterModel.Locomotion).Prepend(Own);
-                if (Ui.Combo("Frame", collider.Frame ?? Own, frames, f => f == CharacterModel.Locomotion ? "locomotion (screen axes)" : f) is { } frame)
                 {
-                    session.Edit(document, () => Collider().Frame = frame == Own ? Collider().A : frame);
-                }
-
-                const string None = "(none)";
-                if (Ui.Combo("Toward (+Y)", collider.B ?? None, (basis?.Controls.Select(c => c.Id) ?? []).Prepend(None)) is { } toward)
-                {
-                    session.Edit(document, () =>
+                    const string Own = "(the control's own)";
+                    var frames = (basis?.Controls.Select(c => c.Id) ?? []).Prepend(CharacterModel.Locomotion).Prepend(Own);
+                    if (Ui.Combo("Frame", collider.Frame ?? Own, frames, f => f == CharacterModel.Locomotion ? "locomotion (screen axes)" : f) is { } frame)
                     {
-                        var c = Collider();
-                        c.B = toward == None ? null : toward;
-                        c.Stretch = c.Stretch && c.B is not null;
-                    });
-                }
-
-                if (collider.B is not null)
-                {
-                    var stretch = collider.Stretch;
-                    if (ImGui.Checkbox("Stretch with the span", ref stretch))
-                    {
-                        session.Edit(document, () => Collider().Stretch = stretch);
+                        session.Edit(document, () => Collider().Frame = frame == Own ? Collider().A : frame);
                     }
-                }
-                var offset = new Vector2(collider.OffsetX, collider.OffsetY);
-                if (Ui.Drag2("Offset in the frame", ref offset))
-                {
-                    session.Change(document, () =>
+
+                    const string None = "(none)";
+                    if (Ui.Combo("Toward (+Y)", collider.B ?? None, (basis?.Controls.Select(c => c.Id) ?? []).Prepend(None)) is { } toward)
                     {
-                        var c = Collider();
-                        c.OffsetX = offset.X;
-                        c.OffsetY = offset.Y;
-                    });
-                }
+                        session.Edit(document, () =>
+                        {
+                            var c = Collider();
+                            c.B = toward == None ? null : toward;
+                            c.Stretch = c.Stretch && c.B is not null;
+                        });
+                    }
 
-                var degrees = float.RadiansToDegrees(collider.Angle);
-                if (Ui.Drag("Angle (deg)", ref degrees, .5f, -360, 360))
-                {
-                    session.Change(document, () => Collider().Angle = float.DegreesToRadians(degrees));
-                }
+                    if (collider.B is not null)
+                    {
+                        var stretch = collider.Stretch;
+                        if (ImGui.Checkbox("Stretch with the span", ref stretch))
+                        {
+                            session.Edit(document, () => Collider().Stretch = stretch);
+                        }
+                    }
+                    var offset = new Vector2(collider.OffsetX, collider.OffsetY);
+                    if (Ui.Drag2("Offset in the frame", ref offset))
+                    {
+                        session.Change(document, () =>
+                        {
+                            var c = Collider();
+                            c.OffsetX = offset.X;
+                            c.OffsetY = offset.Y;
+                        });
+                    }
 
-                break;
-            }
+                    var degrees = float.RadiansToDegrees(collider.Angle);
+                    if (Ui.Drag("Angle (deg)", ref degrees, .5f, -360, 360))
+                    {
+                        session.Change(document, () => Collider().Angle = float.DegreesToRadians(degrees));
+                    }
+
+                    break;
+                }
             default:
-            {
-                var offset = new Vector2(collider.OffsetX, collider.OffsetY);
-                if (Ui.Drag2("Centre ahead / above the feet", ref offset))
                 {
-                    session.Change(document, () =>
+                    var offset = new Vector2(collider.OffsetX, collider.OffsetY);
+                    if (Ui.Drag2("Centre ahead / above the feet", ref offset))
                     {
-                        var c = Collider();
-                        c.OffsetX = offset.X;
-                        c.OffsetY = offset.Y;
-                    });
-                }
+                        session.Change(document, () =>
+                        {
+                            var c = Collider();
+                            c.OffsetX = offset.X;
+                            c.OffsetY = offset.Y;
+                        });
+                    }
 
-                break;
-            }
+                    break;
+                }
         }
         var enabled = collider.Collision!.Enabled;
         if (ImGui.Checkbox(document.Asset.Behavior!.Colliders[id] == ColliderUses.Attack ? "Can be enabled by windows" : "Enabled", ref enabled))
@@ -1129,30 +1129,30 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                     Outline(placed.Region, StudioTheme.AttackDisabled.PackedValue, selected ? 3 : 1);
                     break;
                 default:
-                {
-                    var color = placed.Use switch
                     {
-                        ColliderUses.Hurt => StudioTheme.HurtRegion,
-                        ColliderUses.Guard => StudioTheme.GuardRegion,
-                        _ => StudioTheme.TriggerRegion,
-                    };
-                    Outline(placed.Region, (placed.Enabled ? color : new Color4b(color, 80)).PackedValue, selected ? 4 : 2);
-                    if (selected)
-                    {
-                        draw.AddText(points[0] + new Vector2(4, 4), color.PackedValue, placed.Id);
-                    }
+                        var color = placed.Use switch
+                        {
+                            ColliderUses.Hurt => StudioTheme.HurtRegion,
+                            ColliderUses.Guard => StudioTheme.GuardRegion,
+                            _ => StudioTheme.TriggerRegion,
+                        };
+                        Outline(placed.Region, (placed.Enabled ? color : new Color4b(color, 80)).PackedValue, selected ? 4 : 2);
+                        if (selected)
+                        {
+                            draw.AddText(points[0] + new Vector2(4, 4), color.PackedValue, placed.Id);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
         }
         foreach (var equipment in preview.Entity.Equipment)
         {
             foreach (var location in equipment.Prop.Locations)
-        {
-            var tip = PartPlacement3D.Point(preview.Pose.Socket(equipment.Socket), equipment.Prop, location.Point);
-            draw.AddCircleFilled(frame.Screen(tip), 4 * Ui.Scale, StudioTheme.WeaponTip.PackedValue);
-        }
+            {
+                var tip = PartPlacement3D.Point(preview.Pose.Socket(equipment.Socket), equipment.Prop, location.Point);
+                draw.AddCircleFilled(frame.Screen(tip), 4 * Ui.Scale, StudioTheme.WeaponTip.PackedValue);
+            }
         }
 
         if (preview.Action is { Mask: not null } masked)

@@ -1,7 +1,7 @@
 using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Editing;
 using App2d.Core.Constraints;
 using App2d.Core.Geometry;
 using App2d.Core.Shapes;
@@ -451,7 +451,7 @@ internal sealed partial class EditorSmoke
                 entity.Asset.Behavior!.Actions.Single(a => a.Id == "attack").Hits.Add(new() { Id = "bite", Collider = "bite", Start = new() { At = .1f }, Finish = new() { At = .7f } });
                 entity.Asset.Behavior!.Strikes["bite"] = new() { Damage = 1, Sound = "hit" };
             }), s);
-            Record(s.Entity is not null && s.Entity.Actions["attack"].Hits[0].Collider.Id == "bite" && s.Assets.Problems(entity).Count == 0, "a hound entity on the variant declares a bite sensor on its head and compiles: " + (s.EntityError ?? "ok"));
+            Record(s.Entity?.Actions["attack"].Hits[0].Collider.Id == "bite" && s.Assets.Problems(entity).Count == 0, "a hound entity on the variant declares a bite sensor on its head and compiles: " + (s.EntityError ?? "ok"));
             shell.Test.Stop();
             shell.Test.Roster.Clear();
             shell.Test.Roster.AddRange(["player", "hound-guard"]);

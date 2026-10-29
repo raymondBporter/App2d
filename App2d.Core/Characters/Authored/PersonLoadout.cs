@@ -1,6 +1,6 @@
 using App2d.Core.Characters.Geometry;
-using static App2d.Core.Characters.Humanoid;
 using System.Numerics;
+using static App2d.Core.Characters.Humanoid;
 
 namespace App2d.Core.Characters.Authored;
 

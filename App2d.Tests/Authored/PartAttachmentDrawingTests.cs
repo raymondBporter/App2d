@@ -1,6 +1,6 @@
+using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
@@ -199,7 +199,11 @@ public sealed class PartAttachmentDrawingTests
         person.Attachments.Add(new() { Id = "glove", Asset = "mixed", Socket = Humanoid.LeftHandSocket });
         person.Parameters.Add(new()
         {
-            Id = "glove-size", Name = "Glove size", Default = 1, Min = .5f, Max = 3,
+            Id = "glove-size",
+            Name = "Glove size",
+            Default = 1,
+            Min = .5f,
+            Max = 3,
             Bindings =
             [
                 new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment("glove", RigProperties.FitX) },
