@@ -152,6 +152,53 @@ public sealed class ClipAuthoringTests
     }
 
     [Fact]
+    public void MovingOntoAnotherKeyPreservesTheOutgoingCurveAndBend()
+    {
+        var clip = TestModels.Clip(Model);
+        var curve = new KeyCurve2D { Absolute = true, Control1 = new(1f / 3, 2), Control2 = new(2f / 3, 2) };
+        var channel = new Channel(MotionClip.TargetKind, "arm");
+        clip.Tracks = [new() { Kind = channel.Kind, Target = channel.Target, Keys = [
+            new() { Curve = curve, Bend = -1 }, new() { Time = .5f, Value = Vector3.One }, new() { Time = 1 } ] }];
+
+        ClipAuthoring.MoveKeys(clip, 0, .5f, [channel]);
+
+        var keys = clip.Tracks[0].Keys;
+        Assert.Equal([.5f, 1f], keys.Select(k => k.Time));
+        Assert.Same(curve, keys[0].Curve);
+        Assert.Equal(-1, keys[0].Bend);
+        Assert.Equal(1.5f, ClipAuthoring.Value(clip, channel, .75f).Value.X, 5);
+        Assert.Equal(Vector3.Zero, ClipAuthoring.Value(clip, channel, 1).Value);
+        clip.Validate(Model);
+    }
+
+    [Fact]
+    public void NearbyKeyEditsReplaceTheValueAndKeepItsCurve()
+    {
+        var clip = TestModels.Clip(Model);
+        var channel = new Channel(MotionClip.TranslateKind, "body");
+        var curve = new KeyCurve2D { Absolute = true, Control1 = new(.2f, 2), Control2 = new(.8f, -1) };
+        ClipAuthoring.SetKey(clip, channel, .5f, Vector3.Zero);
+        ClipAuthoring.SetCurve(clip, channel, .5f, 0, curve);
+        ClipAuthoring.SetKey(clip, channel, .5f + ClipAuthoring.SameTime / 2, Vector3.UnitX);
+
+        var key = Assert.Single(clip.Tracks[0].Keys);
+        Assert.Equal(Vector3.UnitX, key.Value);
+        Assert.Equal(curve, key.Curve);
+        ClipAuthoring.DeleteKeys(clip, .5f);
+        Assert.Empty(clip.Tracks);
+    }
+
+    [Fact]
+    public void KeyTimesUseTheSameToleranceAsKeyEditing()
+    {
+        var clip = TestModels.Clip(Model);
+        var channel = new Channel(MotionClip.TranslateKind, "body");
+        ClipAuthoring.SetKey(clip, channel, ClipAuthoring.SameTime, Vector3.UnitX);
+        ClipAuthoring.SetKey(clip, channel, 0, Vector3.Zero);
+        Assert.Equal([0, ClipAuthoring.SameTime], ClipAuthoring.KeyTimes(clip));
+    }
+
+    [Fact]
     public void RetimingScalesKeysContactsMarkersAndFaces()
     {
         var clip = TestModels.Clip(Model);

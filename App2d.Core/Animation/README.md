@@ -43,3 +43,11 @@ Sampling belongs to Animation. Numeric interpolation and progress maps remain in
 in Geometry. Interpolation computes a value between endpoints; easing maps its progress. Integrating a velocity over
 time is a separate operation. The sampler adds neither clock advancement nor animation events, loops, or serialized
 track types. Existing authored JSON and editor key data remain unchanged.
+
+`KeyframeEditing` supplies `AtTime`, `Put`, `Move`, and `DeleteAtTime` on the existing key lists. Authoring uses a shared
+time tolerance; sampling still selects exact key times. `Put` maintains time order when inserting, and `Move` delegates
+copying the key's payload to its caller (draw-order keys also copy their mutable slot list). Easing and curve metadata
+travel with the copied key. Callers own clip bounds and which lists an edit targets.
+Editable keys implement `IEditableTimedKey`, adding a writable time to the read-only sampling contract. Studio uses one
+enumeration of motion, travel, expression, attachment, color, and draw-order keys for key times and retiming; retiming
+updates the existing objects. Markers, events, and contact intervals retain their separate editing semantics.

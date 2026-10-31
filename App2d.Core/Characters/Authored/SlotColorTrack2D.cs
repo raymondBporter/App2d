@@ -6,7 +6,7 @@ using System.Numerics;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>Absolute slot tint. Each component has its own outgoing curve; endpoints are in [0,1].</summary>
-public sealed record SlotColorKey2D : ITimedKey
+public sealed record SlotColorKey2D : IEditableTimedKey
 {
     public float Time { get; set; }
     public Vector4 Value { get; set; } = Vector4.One;

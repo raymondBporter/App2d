@@ -18,7 +18,7 @@ public readonly record struct Channel(string Kind, string Target)
 public static partial class ClipAuthoring
 {
     /// <summary>Keys closer than this are the same key.</summary>
-    public const float SameTime = 1e-4f;
+    public const float SameTime = KeyframeEditing.TimeTolerance;
 
     /// <summary>
     /// An empty clip authored against <paramref name="preview"/>'s measures. Travel scales like the model's planted limbs, when
@@ -121,7 +121,7 @@ public static partial class ClipAuthoring
 
         var rotate = channel.Kind == MotionClip.RotateKind;
         var key = new ClipKey { Time = time, Value = rotate ? Vector3.Zero : value, Angle = rotate ? angle : 0 };
-        if (track.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } existing)
+        if (track.Keys.AtTime(time) is { } existing)
         {
             key.Ease = existing.Ease;
             key.Curve = existing.Curve;
@@ -129,7 +129,7 @@ public static partial class ClipAuthoring
             key.CurveZ = existing.CurveZ;
             key.Bend = existing.Bend;
         }
-        Put(track.Keys, key, k => k.Time);
+        track.Keys.Put(key);
     }
 
     /// <summary>
@@ -267,22 +267,13 @@ public static partial class ClipAuthoring
         return contact;
     }
 
-    /// <summary>Every time at which any channel, or travel, has a key.</summary>
+    /// <summary>Every time at which a selected channel has a key; null selects motion, travel, and appearance.</summary>
     public static IReadOnlyList<float> KeyTimes(MotionClip clip, IReadOnlyCollection<Channel>? channels = null)
     {
-        var times = Tracks(clip, channels).SelectMany(t => t.Keys).Select(k => k.Time);
-        if (channels is null)
-        {
-            times = times.Concat(clip.Travel.Keys.Select(k => k.Time))
-            .Concat(clip.Attachments.SelectMany(t => t.Keys).Select(k => k.Time)).Concat(clip.Colors.SelectMany(t => t.Keys).Select(k => k.Time))
-            .Concat(clip.DrawOrder.Select(k => k.Time));
-        }
-
-        var sorted = times.Order().ToList();
         var distinct = new List<float>();
-        foreach (var time in sorted)
+        foreach (var time in Keys(clip, channels).Select(k => k.Time).Order())
         {
-            if (distinct.Count == 0 || time - distinct[^1] > SameTime)
+            if (distinct.Count == 0 || !KeyframeEditing.SameTime(time, distinct[^1]))
             {
                 distinct.Add(time);
             }
@@ -302,75 +293,42 @@ public static partial class ClipAuthoring
         if (clip.Travel.Keys.Count > 0)
         {
             var (value, _) = PoseEvaluator.Interpolate(clip.Travel.Keys, time);
-            Put(clip.Travel.Keys, new ClipKey { Time = time, Value = value with { Z = 0 } }, k => k.Time);
+            clip.Travel.Keys.Put(new ClipKey { Time = time, Value = value with { Z = 0 } });
         }
     }
 
-    /// <summary>Moves (or with <paramref name="copy"/>, copies) the keys at one time to another. Null channels means every channel and travel.</summary>
+    /// <summary>Moves (or copies) keys at one time to another. Null channels selects motion, travel, and appearance.</summary>
     public static void MoveKeys(MotionClip clip, float from, float to, IReadOnlyCollection<Channel>? channels = null, bool copy = false)
     {
         to = Math.Clamp(to, 0, clip.Duration);
-        if (MathF.Abs(from - to) < SameTime)
+        if (KeyframeEditing.SameTime(from, to))
         {
             return;
         }
 
-        void Move(List<ClipKey> keys)
-        {
-            var key = keys.FirstOrDefault(k => MathF.Abs(k.Time - from) < SameTime);
-            if (key is null)
-            {
-                return;
-            }
-
-            if (!copy)
-            {
-                keys.Remove(key);
-            }
-
-            Put(keys, key with
-            {
-                Time = to
-            }, k => k.Time);
-        }
         foreach (var track in Tracks(clip, channels))
         {
-            Move(track.Keys);
+            track.Keys.Move(from, to, copy, static (key, at) => key with { Time = at });
         }
 
         if (channels is null)
         {
-            Move(clip.Travel.Keys);
-        }
-
-        if (channels is null)
-        {
-            void MoveAppearance<T>(List<T> keys, Func<T, float> time, Func<T, T> at)
+            clip.Travel.Keys.Move(from, to, copy, static (key, at) => key with { Time = at });
+            foreach (var track in clip.Plays)
             {
-                var key = keys.FirstOrDefault(k => MathF.Abs(time(k) - from) < SameTime);
-                if (key is null)
-                {
-                    return;
-                }
-
-                if (!copy)
-                {
-                    keys.Remove(key);
-                }
-
-                Put(keys, at(key), time);
+                track.Keys.Move(from, to, copy, static (key, at) => key with { Time = at });
             }
             foreach (var track in clip.Attachments)
             {
-                MoveAppearance(track.Keys, k => k.Time, k => k with { Time = to });
+                track.Keys.Move(from, to, copy, static (key, at) => key with { Time = at });
             }
 
             foreach (var track in clip.Colors)
             {
-                MoveAppearance(track.Keys, k => k.Time, k => k with { Time = to });
+                track.Keys.Move(from, to, copy, static (key, at) => key with { Time = at });
             }
 
-            MoveAppearance(clip.DrawOrder, k => k.Time, k => k with { Time = to, Slots = [.. k.Slots] });
+            clip.DrawOrder.Move(from, to, copy, static (key, at) => key with { Time = at, Slots = [.. key.Slots] });
         }
     }
 
@@ -378,27 +336,28 @@ public static partial class ClipAuthoring
     {
         foreach (var track in Tracks(clip, channels))
         {
-            track.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+            track.Keys.DeleteAtTime(time);
         }
 
         if (channels is null)
         {
-            clip.Travel.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
-        }
-
-        if (channels is null)
-        {
+            clip.Travel.Keys.DeleteAtTime(time);
+            foreach (var track in clip.Plays)
+            {
+                track.Keys.DeleteAtTime(time);
+            }
             foreach (var track in clip.Attachments)
             {
-                track.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+                track.Keys.DeleteAtTime(time);
             }
 
             foreach (var track in clip.Colors)
             {
-                track.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+                track.Keys.DeleteAtTime(time);
             }
 
-            clip.DrawOrder.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+            clip.DrawOrder.DeleteAtTime(time);
+            clip.Plays.RemoveAll(t => t.Keys.Count == 0);
             clip.Attachments.RemoveAll(t => t.Keys.Count == 0);
             clip.Colors.RemoveAll(t => t.Keys.Count == 0);
         }
@@ -428,7 +387,7 @@ public static partial class ClipAuthoring
         ArgGuard.InRange(component, 0, 2);
 
         curve?.Validate();
-        var key = Track(clip, channel)?.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime)
+        var key = Track(clip, channel)?.Keys.AtTime(time)
             ?? throw new InvalidOperationException("Add a key at the playhead before editing its curve.");
         var copy = curve is null ? null : curve with
         {
@@ -458,7 +417,7 @@ public static partial class ClipAuthoring
         new Limit(.05f, 60).Check(duration, "duration");
         var ratio = duration / clip.Duration;
         float Scale(float time) => MathF.Min(duration, time * ratio);
-        foreach (var key in clip.Tracks.SelectMany(t => t.Keys).Concat(clip.Travel.Keys))
+        foreach (var key in Keys(clip, null))
         {
             key.Time = Scale(key.Time);
         }
@@ -471,26 +430,6 @@ public static partial class ClipAuthoring
         foreach (var marker in clip.Markers)
         {
             marker.Time = Scale(marker.Time);
-        }
-
-        foreach (var key in clip.Plays.SelectMany(p => p.Keys))
-        {
-            key.Time = Scale(key.Time);
-        }
-
-        foreach (var key in clip.Attachments.SelectMany(t => t.Keys))
-        {
-            key.Time = Scale(key.Time);
-        }
-
-        foreach (var key in clip.Colors.SelectMany(t => t.Keys))
-        {
-            key.Time = Scale(key.Time);
-        }
-
-        foreach (var key in clip.DrawOrder)
-        {
-            key.Time = Scale(key.Time);
         }
 
         foreach (var key in clip.Events)
@@ -544,7 +483,7 @@ public static partial class ClipAuthoring
 
             ClipKey End(float time)
             {
-                if (keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } existing)
+                if (keys.AtTime(time) is { } existing)
                 {
                     return existing with
                     {
@@ -628,7 +567,7 @@ public static partial class ClipAuthoring
             }
             SlotColorKey2D End(float at)
             {
-                if (keys.FirstOrDefault(k => MathF.Abs(k.Time - at) < SameTime) is { } existing)
+                if (keys.AtTime(at) is { } existing)
                 {
                     return existing with
                     {
@@ -692,7 +631,7 @@ public static partial class ClipAuthoring
         var track = clip.Plays.FirstOrDefault(p => p.Instance == instance);
         if (expression is null)
         {
-            track?.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+            track?.Keys.DeleteAtTime(time);
             clip.Plays.RemoveAll(p => p.Keys.Count == 0);
             return;
         }
@@ -706,22 +645,18 @@ public static partial class ClipAuthoring
             });
         }
 
-        Put(track.Keys, new ClipPlayKey { Time = time, Expression = expression }, k => k.Time);
+        track.Keys.Put(new ClipPlayKey { Time = time, Expression = expression });
     }
 
     private static IEnumerable<ClipTrack> Tracks(MotionClip clip, IReadOnlyCollection<Channel>? channels) =>
         channels is null ? clip.Tracks : clip.Tracks.Where(t => channels.Contains(new(t.Kind, t.Target)));
 
-    private static void Put<T>(List<T> keys, T key, Func<T, float> time)
+    private static IEnumerable<IEditableTimedKey> Keys(MotionClip clip, IReadOnlyCollection<Channel>? channels)
     {
-        var index = keys.FindIndex(k => MathF.Abs(time(k) - time(key)) < SameTime);
-        if (index >= 0)
-        {
-            keys[index] = key;
-            return;
-        }
-        index = keys.FindIndex(k => time(k) > time(key));
-        keys.Insert(index < 0 ? keys.Count : index, key);
+        IEnumerable<IEditableTimedKey> keys = Tracks(clip, channels).SelectMany(t => t.Keys);
+        return channels is not null ? keys : keys.Concat(clip.Travel.Keys)
+            .Concat(clip.Plays.SelectMany(t => t.Keys)).Concat(clip.Attachments.SelectMany(t => t.Keys))
+            .Concat(clip.Colors.SelectMany(t => t.Keys)).Concat(clip.DrawOrder);
     }
 
     /// <summary>The locomotion frame's origin at a clip time, as the evaluator places it for the first cycle.</summary>

@@ -29,10 +29,14 @@ public sealed class SlotTimelineTests
         Assert.Equal([.25f, .5f, .75f], ClipAuthoring.KeyTimes(clip));
         Assert.Equal(2, clip.Colors[0].Keys.Count);
         Assert.Equal(2, clip.DrawOrder.Count);
+        Assert.NotSame(clip.DrawOrder[0].Slots, clip.DrawOrder[1].Slots);
+        Assert.Null(clip.Attachments[0].Keys[1].Attachment);
         ClipAuthoring.DeleteKeys(clip, .25f);
         Assert.Equal([.5f, .75f], ClipAuthoring.KeyTimes(clip));
+        var colorKey = clip.Colors[0].Keys[0];
         ClipAuthoring.Retime(clip, 2);
         Assert.Equal([1f, 1.5f], ClipAuthoring.KeyTimes(clip));
+        Assert.Same(colorKey, clip.Colors[0].Keys[0]);
         clip.Validate(model);
         var restored = MotionClip.FromJson(clip.ToJson());
         Assert.Equal(clip.ToJson(), restored.ToJson());

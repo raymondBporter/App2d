@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>A keyed value at a time. Translate, target and travel keys use X/Y/Z; rotate keys use Angle (radians).</summary>
-public sealed record ClipKey : ITimedKey
+public sealed record ClipKey : IEditableTimedKey
 {
     public float Time { get; set; }
     public Vector3 Value { get; set; }
@@ -34,7 +34,7 @@ public sealed record ClipMarker
 }
 
 /// <summary>A held expression on an animated part instance from this time until the next key; <see cref="Part.None"/> hides the instance.</summary>
-public sealed record ClipPlayKey : ITimedKey
+public sealed record ClipPlayKey : IEditableTimedKey
 {
     public float Time { get; set; }
     public string Expression { get; set; } = Part.None;

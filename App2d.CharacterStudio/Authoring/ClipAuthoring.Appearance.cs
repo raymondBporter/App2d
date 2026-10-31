@@ -19,16 +19,16 @@ public static partial class ClipAuthoring
             });
         }
 
-        Put(track.Keys, new()
+        track.Keys.Put(new()
         {
             Time = time,
             Attachment = attachment
-        }, k => k.Time);
+        });
     }
 
     public static void DeleteAttachmentKey(MotionClip clip, string slot, float time)
     {
-        clip.Attachments.FirstOrDefault(t => t.Slot == slot)?.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+        clip.Attachments.FirstOrDefault(t => t.Slot == slot)?.Keys.DeleteAtTime(time);
         clip.Attachments.RemoveAll(t => t.Keys.Count == 0);
     }
 
@@ -44,16 +44,16 @@ public static partial class ClipAuthoring
         }
 
         (order[index], order[(int)next]) = (order[(int)next], order[index]);
-        Put(clip.DrawOrder, new()
+        clip.DrawOrder.Put(new()
         {
             Time = time,
             Slots = order
-        }, k => k.Time);
+        });
         return true;
     }
 
     public static void DeleteDrawOrderKey(MotionClip clip, float time) =>
-        clip.DrawOrder.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+        clip.DrawOrder.DeleteAtTime(time);
 
     public static void SetColorKey(MotionClip clip, string slot, string kind, float time, Vector4 value)
     {
@@ -69,7 +69,7 @@ public static partial class ClipAuthoring
 
         var key = new SlotColorKey2D { Time = time, Value = value };
 
-        if (track.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } previous)
+        if (track.Keys.AtTime(time) is { } previous)
         {
             key.Ease = previous.Ease;
             key.CurveR = previous.CurveR;
@@ -77,12 +77,12 @@ public static partial class ClipAuthoring
             key.CurveB = previous.CurveB;
             key.CurveA = previous.CurveA;
         }
-        Put(track.Keys, key, k => k.Time);
+        track.Keys.Put(key);
     }
 
     public static void DeleteColorKey(MotionClip clip, string slot, string kind, float time)
     {
-        clip.Colors.FirstOrDefault(t => t.Slot == slot && t.Kind == kind)?.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+        clip.Colors.FirstOrDefault(t => t.Slot == slot && t.Kind == kind)?.Keys.DeleteAtTime(time);
         clip.Colors.RemoveAll(t => t.Keys.Count == 0);
     }
 
@@ -129,6 +129,6 @@ public static partial class ClipAuthoring
     }
 
     private static SlotColorKey2D ColorKey(MotionClip clip, string slot, string kind, float time) =>
-        clip.Colors.FirstOrDefault(t => t.Slot == slot && t.Kind == kind)?.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime)
+        clip.Colors.FirstOrDefault(t => t.Slot == slot && t.Kind == kind)?.Keys.AtTime(time)
         ?? throw new InvalidOperationException("Add a tint key at the playhead before editing its curve.");
 }

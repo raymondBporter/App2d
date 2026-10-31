@@ -187,6 +187,41 @@ public sealed class AnimatedPartTests
     }
 
     [Fact]
+    public void ExpressionKeysFollowWholeClipEditsAndRespectSelectedMotionChannels()
+    {
+        var (_, _, model) = Wearer();
+        var clip = ClipAuthoring.New(model, "edited-tail", "Edited tail", duration: 2);
+        var channel = new Channel(MotionClip.TranslateKind, "tail/tip");
+        ClipAuthoring.SetKey(clip, channel, .5f, new(.1f, 0, 0));
+        ClipAuthoring.SetPlay(clip, Instance, .25f, "flick");
+        ClipAuthoring.SetPlay(clip, Instance, 1.5f, "still");
+        Assert.Equal([.25f, .5f, 1.5f], ClipAuthoring.KeyTimes(clip));
+        Assert.Equal([.5f], ClipAuthoring.KeyTimes(clip, [channel]));
+
+        ClipAuthoring.MoveKeys(clip, .5f, .75f, [channel]);
+        Assert.Equal([.25f, 1.5f], clip.Plays[0].Keys.Select(k => k.Time));
+        ClipAuthoring.MoveKeys(clip, .25f, .75f, copy: true);
+        Assert.Equal(("flick", .25f), clip.PlayAt(Instance, .5f));
+        Assert.Equal(("flick", .75f), clip.PlayAt(Instance, 1));
+        ClipAuthoring.DeleteKeys(clip, .25f);
+        ClipAuthoring.MoveKeys(clip, .75f, 1.5f);
+        Assert.Equal("flick", Assert.Single(clip.Plays[0].Keys).Expression);
+
+        var key = clip.Plays[0].Keys[0];
+        ClipAuthoring.Retime(clip, 4);
+        Assert.Same(key, clip.Plays[0].Keys[0]);
+        Assert.Equal(("flick", 3f), clip.PlayAt(Instance, 3.5f));
+        clip.Validate(model);
+        Assert.Equal(clip.ToJson(), MotionClip.FromJson(clip.ToJson()).ToJson());
+
+        ClipAuthoring.DeleteKeys(clip, 3, [channel]);
+        Assert.Empty(clip.Tracks);
+        Assert.Single(clip.Plays);
+        ClipAuthoring.DeleteKeys(clip, 3);
+        Assert.Empty(clip.Plays);
+    }
+
+    [Fact]
     public void ExpressionsResolveFromRequestChannelInstanceAndAssetInThatOrder()
     {
         var (person, tail, resolved) = Wearer();

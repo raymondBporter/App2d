@@ -23,7 +23,7 @@ public sealed record SkeletonSkin2D
     public Dictionary<string, Dictionary<string, string>> Attachments { get; set; } = [];
 }
 
-public sealed record SlotAttachmentKey2D : ITimedKey
+public sealed record SlotAttachmentKey2D : IEditableTimedKey
 {
     public float Time { get; set; }
     public string? Attachment { get; set; }
@@ -35,7 +35,7 @@ public sealed record SlotAttachmentTrack2D
     public List<SlotAttachmentKey2D> Keys { get; set; } = [];
 }
 
-public sealed record DrawOrderKey2D : ITimedKey
+public sealed record DrawOrderKey2D : IEditableTimedKey
 {
     public float Time { get; set; }
     public List<string> Slots { get; set; } = [];
