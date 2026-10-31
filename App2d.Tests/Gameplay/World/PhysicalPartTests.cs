@@ -15,7 +15,9 @@ using App2d.Gameplay.Combat;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Gameplay.World.Vegetation;
+using App2d.Levels;
 using App2d.Presentation.World.Presentation;
+using App2d.Things;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
@@ -25,13 +27,11 @@ public sealed class PhysicalPartTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
 
     [Theory]
-    [InlineData("dumbbell", true, TileKind2D.Solid)]
-    [InlineData("dumbbell", false, TileKind2D.Solid)]
-    [InlineData("tumbling-crate", false, TileKind2D.Solid)]
-    [InlineData("dumbbell", true, TileKind2D.OneWay)]
-    [InlineData("dumbbell", false, TileKind2D.OneWay)]
-    [InlineData("tumbling-crate", false, TileKind2D.OneWay)]
-    public void PlacedPartsLandOnStreamedTerrain(string partId, bool legacy, TileKind2D floor)
+    [InlineData("dumbbell", TileKind2D.Solid)]
+    [InlineData("tumbling-crate", TileKind2D.Solid)]
+    [InlineData("dumbbell", TileKind2D.OneWay)]
+    [InlineData("tumbling-crate", TileKind2D.OneWay)]
+    public void PlacedPartsLandOnStreamedTerrain(string partId, TileKind2D floor)
     {
         var map = new EditableTileMap2D(64, 16, 32, 32, Vector2.Zero, ["dark-cave"]);
         for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 0, floor);
@@ -39,11 +39,10 @@ public sealed class PhysicalPartTests
         {
             new(1, WorldThingKind2D.PlayerSpawn, null, true, new(100, 100))
         };
-        if (legacy) things.Add(new(2, WorldThingKind2D.TumbleProp, null, true, new(300, 160)));
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, things)
         {
             AuthoredCharacters = Catalog,
-            Objects = legacy ? [] : [new("prop", Catalog.Parts[partId], new(300, 160))]
+            Objects = [new("prop", Catalog.Parts[partId], new(300, 160))]
         });
         var item = Assert.Single(game.Level.Objects);
         var touched = false;
@@ -151,14 +150,39 @@ public sealed class PhysicalPartTests
     }
 
     [Fact]
-    public void LegacyAndGenericPlacementsUseWorldOwnershipStreamingAndReloadWithoutCombatants()
+    public void ShippedCavernSpawnsAllFiveSharedDumbbellsAsOrdinaryObjects()
+    {
+        using var world = WorldFile2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "world.json"));
+        var things = world.PositionThings.Where(t => t.TypeKey != LevelDatabase2D.ObjectTypeKey)
+            .Select(ThingTypeRegistry2D.ToRuntime).ToArray();
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), world.TileMap, things)
+        {
+            AuthoredCharacters = Catalog,
+            Objects = world.Objects
+        });
+        var parts = game.Level.Objects.Where(o => o.CaptureDefinition().Part.Id == "dumbbell").ToArray();
+        Assert.Equal([new Vector2(368, -226), new(3216, -194), new(7696, -226), new(15056, -162), new(19248, -130)],
+            parts.Select(o => o.WorldObject.Transform.Position).OrderBy(p => p.X));
+        var expected = Catalog.Parts["dumbbell"].ToJson();
+        Assert.All(parts, part =>
+        {
+            Assert.NotNull(part.Body);
+            Assert.Equal(expected, part.CaptureDefinition().Part.ToJson());
+        });
+        Assert.All(world.PositionThings, thing => Assert.NotEqual("tumble-prop", thing.TypeKey));
+        Assert.Equal([1017L, 1018L, 1019L, 1020L, 1021L],
+            world.PositionThings.Where(t => t.Asset == "parts/dumbbell.json").Select(t => t.ThingId));
+    }
+
+    [Fact]
+    public void PlacedPartsUseWorldOwnershipStreamingAndReloadWithoutCombatants()
     {
         var map = new EditableTileMap2D(320, 32, 32, 32, Vector2.Zero, ["dark-cave"]);
         var cratePlacement = new ObjectPlacement2D("crate", Catalog.Parts["tumbling-crate"], new(400, 100));
+        var dumbbellPlacement = new ObjectPlacement2D("dumbbell", Catalog.Parts["dumbbell"], new(200, 100));
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
-            [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(100, 100)),
-             new(2, WorldThingKind2D.TumbleProp, null, true, new(200, 100))])
-        { AuthoredCharacters = Catalog, Objects = [cratePlacement] });
+            [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(100, 100))])
+        { AuthoredCharacters = Catalog, Objects = [cratePlacement, dumbbellPlacement] });
         Assert.Empty(game.Level.EnemySystem.Combatants);
         Assert.Empty(game.Session.CaptureEnemies());
         Assert.Equal(2, game.Level.Objects.Count);
@@ -168,7 +192,7 @@ public sealed class PhysicalPartTests
         Assert.All(objects, o => Assert.False(o.IsEnabled));
         game.Level.UpdateStreaming(new(100, 100));
         Assert.All(objects, o => Assert.Equal(BodyMotionType2D.Dynamic, o.Body!.MotionType));
-        game.Level.ReloadObjects([cratePlacement]);
+        game.Level.ReloadObjects([cratePlacement, dumbbellPlacement]);
         Assert.Equal(2, game.Level.Objects.Count);
         Assert.All(game.Level.Objects, o => Assert.DoesNotContain(o.Id, objects.Select(old => old.Id)));
         Assert.All(objects, o => Assert.DoesNotContain(o.Body!, game.Physics.Bodies));

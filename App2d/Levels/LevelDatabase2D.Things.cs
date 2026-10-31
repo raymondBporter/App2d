@@ -29,7 +29,7 @@ public sealed partial class LevelDatabase2D
         """;
 
     private const string ObjectReferencesSql = """
-        CREATE TABLE IF NOT EXISTS object_references(
+        CREATE TABLE object_references(
             definition_id INTEGER PRIMARY KEY
                 REFERENCES thing_definitions(definition_id) ON DELETE CASCADE,
             asset TEXT NOT NULL);

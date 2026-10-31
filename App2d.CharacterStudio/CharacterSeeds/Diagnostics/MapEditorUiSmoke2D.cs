@@ -16,7 +16,7 @@ internal static class MapEditorUiSmoke2D
         var scratchPath = Path.Combine(outputDirectory, "editor-smoke-level.db");
         File.Copy(LevelBootstrap2D.CavernLevelPath, scratchPath, overwrite: true);
         using var database = LevelDatabase2D.OpenRead(scratchPath);
-        var map = database.Load(LevelBootstrap2D.TerrainTilesetIds);
+        var map = database.Load();
         using var editor = new TileEditor2D(map, () => LevelDatabase2D.Open(scratchPath), game.Camera);
         using var surface = new Control();
         using var ui = new MapEditorUi2D(editor, game.Textures, game.DebugPanel);

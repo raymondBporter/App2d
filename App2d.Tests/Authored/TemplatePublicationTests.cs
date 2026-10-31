@@ -32,7 +32,6 @@ public sealed class TemplatePublicationTests : IDisposable
         foreach (var id in new[] { "person", "quadruped", "triceratops", "pterosaur" })
         {
             var template = assets.ModelTemplates[id];
-            Assert.True(template.Publishes, id);
             Assert.Equal(ModelTemplate.CurrentVersion, template.Version);
             Assert.NotEmpty(template.Slots);
             Assert.Equal(3, template.Presets.Count);
@@ -45,8 +44,8 @@ public sealed class TemplatePublicationTests : IDisposable
             Assert.All(template.Dimensions, d => Assert.Contains(model.Parameters, p => p.Id == d));
             Assert.All(template.Library.Mappings.Keys, m => Assert.Contains(model.Measures, x => x.Id == m));
         }
-        // The older stalker recipe reads unchanged at version 1 and publishes nothing.
-        Assert.False(assets.ModelTemplates["stalker"].Publishes);
+        Assert.Equal(ModelTemplate.CurrentVersion, assets.ModelTemplates["stalker"].Version);
+        Assert.Empty(assets.TemplateProblems(assets.ModelTemplates["stalker"]));
         Assert.Equal(3, assets.ModelTemplates["person"].Presets.Count);
         Assert.Equal([PersonBuild.LegsId, PersonBuild.TorsoId, PersonBuild.ArmsId, PersonBuild.WidthId, PersonBuild.HeadId], assets.ModelTemplates["person"].Dimensions);
         var person = assets.ModelTemplates["person"].Slots.Single(s => s.Id == "head-art");
@@ -124,10 +123,10 @@ public sealed class TemplatePublicationTests : IDisposable
         Assert.Contains(problems, p => p.StartsWith("templates > person > slots > head-art > default: model 'person' does not wear 'boot' there", StringComparison.Ordinal));
         Assert.Contains("templates > person > library > roles > sheathe: no motion set of 'person' assigns 'person-idle' to it (path: person > motionSets).", problems);
 
-        // A version-1 recipe publishes nothing; a mapping onto an unexposed dimension is refused on its own.
+        // Old versions and mappings onto unexposed dimensions are refused.
         var recipe = TemplateResources.Quadruped(false);
-        recipe.Version = ModelTemplate.RecipeVersion;
-        Assert.Contains("publishes no slots", Assert.Throws<InvalidDataException>(recipe.Validate).Message);
+        recipe.Version = ModelTemplate.CurrentVersion - 1;
+        Assert.Contains("unsupported format/version", Assert.Throws<InvalidDataException>(recipe.Validate).Message);
         var unexposed = TemplateResources.Quadruped(false);
         unexposed.Library.Mappings["leg"] = "tail";
         Assert.Contains("'tail' is not an exposed dimension", Assert.Throws<InvalidDataException>(unexposed.Validate).Message);

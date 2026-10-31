@@ -950,11 +950,11 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 // quadruped's published contract holds on the shipped model, a creation starts from a published preset, and a
                 // contract that does not hold is reported with its reference path instead of creating a broken bundle.
                 var s = shell.Session; s.Compare.Clear();
-                var published = s.Assets.ModelTemplates.Values.Where(t => t.Publishes).Select(t => t.Id).Order(StringComparer.Ordinal).ToArray();
+                var published = s.Assets.ModelTemplates.Keys.Order(StringComparer.Ordinal).ToArray();
                 // The Person's contract is checked against the smoke's own edited Person (earlier steps swap its face), so it is reported, not required here.
                 var contracts = s.Assets.ModelTemplates.Values.ToDictionary(t => t.Id, t => s.Assets.TemplateProblems(t));
-                Record(published.SequenceEqual(["centaur", "person", "pterosaur", "quadruped", "triceratops"]) && contracts.Where(c => c.Key != "person").All(c => c.Value.Count == 0),
-                    "the Person, quadruped, triceratops, pterosaur and centaur templates publish their contracts (slots, dimensions, presets, library) and every creature contract holds on its shipped model (" + string.Join(", ", published) + "); the edited Person reports: " + (contracts["person"].Count == 0 ? "nothing" : string.Join(" | ", contracts["person"])));
+                Record(published.SequenceEqual(["centaur", "person", "pterosaur", "quadruped", "stalker", "triceratops"]) && contracts.Where(c => c.Key != "person").All(c => c.Value.Count == 0),
+                    "all six templates publish their contracts (slots, dimensions, presets, library) and every creature contract holds on its shipped model (" + string.Join(", ", published) + "); the edited Person reports: " + (contracts["person"].Count == 0 ? "nothing" : string.Join(" | ", contracts["person"])));
                 var quadruped = s.Assets.ModelTemplates["quadruped"];
                 Record(quadruped.Slots.Select(x => x.Id + ":" + x.Usage).SequenceEqual(["head-art:headgear", "body-art:saddle"]) && quadruped.Dimensions.SequenceEqual(["legs", "body", "head"]) && quadruped.Library.Masks.SequenceEqual(["head", "legs"]) && quadruped.Library.Mappings["leg"] == "legs",
                     "the quadruped template publishes two part slots, three dimensions with three presets, two masks and the leg and body measure mappings");

@@ -43,14 +43,12 @@ public sealed record TemplateLibrary
 /// <summary>
 /// An authoring recipe over existing resources. Animation keys are suffixes for new IDs; values are source clip IDs.
 /// Instantiation copies the model and clips, remapping references without changing control IDs or motion data.
-/// Version 2 (P10a) publishes the anatomy's contract as data: part slots, exposed dimensions and presets, and the default
-/// animation library; a version-1 recipe reads unchanged and publishes none.
+/// Publishes the anatomy's contract as data: part slots, exposed dimensions and presets, and the default animation library.
 /// </summary>
 public sealed class ModelTemplate
 {
     public const string FormatId = "app2d-model-template";
     public const int CurrentVersion = 2;
-    public const int RecipeVersion = 1;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -67,8 +65,6 @@ public sealed class ModelTemplate
     /// <summary>The model presets a creation may start from.</summary>
     public List<string> Presets { get; set; } = [];
     public TemplateLibrary Library { get; set; } = new();
-
-    [System.Text.Json.Serialization.JsonIgnore] public bool Publishes => Version >= CurrentVersion;
 
     public static ModelTemplate FromJson(string json)
     {
@@ -88,7 +84,7 @@ public sealed class ModelTemplate
     public void Validate()
     {
         var owner = $"Model template '{Id}'";
-        if (Format != FormatId || Version is not (RecipeVersion or CurrentVersion))
+        if (Format != FormatId || Version != CurrentVersion)
         {
             throw new InvalidDataException($"{owner}: unsupported format/version.");
         }
@@ -128,16 +124,6 @@ public sealed class ModelTemplate
         if (Slots is null || Dimensions is null || Presets is null || Library?.Roles is null || Library.Masks is null || Library.Mappings is null)
         {
             throw new InvalidDataException($"{owner}: collections cannot be null.");
-        }
-
-        if (!Publishes)
-        {
-            if (Slots.Count > 0 || Dimensions.Count > 0 || Presets.Count > 0 || Library.Roles.Count > 0 || Library.Masks.Count > 0 || Library.Mappings.Count > 0)
-            {
-                throw new InvalidDataException($"{owner}: a version-{RecipeVersion} recipe publishes no slots, dimensions, presets or library; declare version {CurrentVersion}.");
-            }
-
-            return;
         }
 
         var slots = new HashSet<string>(StringComparer.Ordinal);
@@ -203,16 +189,11 @@ public sealed class ModelTemplate
     /// The published contract checked against the model it publishes (P10a), each problem with its reference path: every
     /// slot is a socket, a slot's default asset exists with the slot's usage and the model wears it there, a required slot
     /// is filled, every dimension is a parameter, every preset exists, every mask is a group and every mapping names a
-    /// measure. A version-1 recipe has nothing to check.
+    /// measure.
     /// </summary>
     public IReadOnlyList<string> ContractProblems(CharacterModel model, Func<string, Part?>? partOf)
     {
         var problems = new List<string>();
-        if (!Publishes)
-        {
-            return problems;
-        }
-
         var path = $"templates > {Id}";
         foreach (var slot in Slots)
         {

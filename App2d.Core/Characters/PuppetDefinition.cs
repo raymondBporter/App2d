@@ -139,7 +139,7 @@ public sealed record PuppetMotion
 public sealed class PuppetDefinition
 {
     public const string FormatId = "app2d-puppet";
-    /// <summary>Version 5 (P7c) carries no face on a part (a face is a library part instance); version 4 had the typed payload, version 3 a loose expression string. No shipped puppet file exists, so there is no reader for older versions.</summary>
+    /// <summary>The current prototype puppet schema; other versions are refused.</summary>
     public const int CurrentVersion = 5;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;

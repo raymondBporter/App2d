@@ -94,12 +94,13 @@ public sealed class SideScrollerSimulation2DTests
             new(4, WorldThingKind2D.Shieldback, null, true, new Vector2(-100f, 50f)),
             new(5, WorldThingKind2D.BoilerBrute, null, true, new Vector2(100f, 50f)),
             new(6, WorldThingKind2D.Rival, null, true, new Vector2(300f, 50f)),
-            new(7, WorldThingKind2D.TumbleProp, null, true, new Vector2(500f, 50f)),
         ];
+        var authored = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
         return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, things)
         {
-            AuthoredCharacters = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot),
-            Objects = [ObjectPlatforms.Place("lift", new(-200f, 100f), new(96f, 0f), 48f, 80f, 14f)]
+            AuthoredCharacters = authored,
+            Objects = [ObjectPlatforms.Place("lift", new(-200f, 100f), new(96f, 0f), 48f, 80f, 14f),
+                new("prop", authored.Parts["dumbbell"], new(500f, 50f))]
         };
     }
 }

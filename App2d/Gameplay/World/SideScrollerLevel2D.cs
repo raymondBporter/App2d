@@ -28,7 +28,6 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private readonly IReadOnlyList<WorldThingSpec2D> _worldThingSpecs;
     private IReadOnlyList<ObjectPlacement2D> _objectPlacements;
     private readonly List<AuthoredObject2D> _objects = [];
-    private readonly List<ObjectPlacement2D> _legacyObjectPlacements = [];
     private readonly List<SavePoint2D> _savePoints = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
@@ -236,7 +235,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private void CreateObjects()
     {
         var environment = RequireEnvironment();
-        foreach (var placement in _objectPlacements.Concat(_legacyObjectPlacements))
+        foreach (var placement in _objectPlacements)
             _objects.Add(new(environment.Ids.Allocate(), placement, environment.Physics, environment.WorldLayer, environment.WorldLayer | environment.PlayerLayer | environment.EnemyLayer));
         UpdateObjectStreaming();
     }
@@ -296,16 +295,6 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             environment.PlayerLayer,
             environment.EnemyLayer)
             .Create(_worldThingSpecs, combat, authored);
-        // Old map kinds adapt to ordinary placements here; new objects already reference Parts.
-        foreach (var thing in _worldThingSpecs.Where(t => t.Enabled && t.Kind == WorldThingKind2D.TumbleProp))
-        {
-            var part = authored?.Parts.GetValueOrDefault("dumbbell")
-                ?? throw new InvalidDataException("TumbleProp placement requires Part 'dumbbell'.");
-            var placement = new ObjectPlacement2D($"thing-{thing.ThingId}", part, thing.Position);
-            _legacyObjectPlacements.Add(placement);
-            _objects.Add(new(environment.Ids.Allocate(), placement, environment.Physics, environment.WorldLayer,
-                environment.WorldLayer | environment.PlayerLayer | environment.EnemyLayer));
-        }
         UpdateObjectStreaming();
         _definitionRevision++;
         _combatants = combat.Combatants;

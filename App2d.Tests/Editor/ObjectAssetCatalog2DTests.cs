@@ -28,6 +28,16 @@ public sealed class ObjectAssetCatalog2DTests : IDisposable
     }
 
     [Fact]
+    public void SharedPartsLoadFromTheCharacterLibraryAndStayWithinItsPartsFolder()
+    {
+        var catalog = new ObjectAssetCatalog2D(_root);
+        var part = catalog.Load("parts/dumbbell.json");
+        Assert.Equal("dumbbell", part.Id);
+        Assert.Same(part, catalog.Load("parts/dumbbell.json"));
+        Assert.Throws<ArgumentException>(() => catalog.Load("parts/../models/person.json"));
+    }
+
+    [Fact]
     public void AFailedLoadIsRememberedUntilTheCatalogRefreshes()
     {
         var broken = Path.Combine(_root, "objects", "broken.json");

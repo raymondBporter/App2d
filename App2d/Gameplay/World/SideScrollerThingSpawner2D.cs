@@ -34,7 +34,7 @@ internal sealed class SideScrollerThingSpawner2D(
 
         foreach (var thing in things)
         {
-            if (!thing.Enabled || thing.Kind == WorldThingKind2D.TumbleProp)
+            if (!thing.Enabled)
             {
                 continue;
             }

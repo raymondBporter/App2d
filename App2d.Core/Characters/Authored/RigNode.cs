@@ -15,9 +15,8 @@ namespace App2d.Core.Characters.Authored;
 public static class RigNodeKinds
 {
     /// <summary>
-    /// Legacy input: the rest position and rest angle are authored in the character frame (<see cref="ModelControl.Rest"/>,
-    /// <see cref="ModelControl.RestAngle"/>) and the parent-local similarity is derived when the model resolves. Every
-    /// shipped model authors its controls this way; the compiler turns them into canonical nodes without loss.
+    /// Point control: the rest position and rest angle are authored in the character frame (<see cref="ModelControl.Rest"/>,
+    /// <see cref="ModelControl.RestAngle"/>) and the parent-local similarity is derived when the model resolves.
     /// </summary>
     public const string Point = "point";
     /// <summary>

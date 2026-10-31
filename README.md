@@ -540,9 +540,8 @@ See [the authoring pipeline](tools/ArtPipeline/README.md).
 dotnet run --project App2d
 ```
 
-Level files written before the current format are upgraded once with
-`dotnet run --project App2d -- --migrate-level` (old moving-platform rows become `objects/*.json`
-assets and object things); see [world maps](docs/world-maps.md).
+Level files must use the current format. New maps are created directly in that format; older files are rejected.
+See [world maps](docs/world-maps.md).
 
 Run the C# / Dear ImGui character editor with:
 

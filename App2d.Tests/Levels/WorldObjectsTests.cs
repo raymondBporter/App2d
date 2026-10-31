@@ -4,6 +4,7 @@ using App2d.Core.Tiles;
 using App2d.Levels;
 using System.Numerics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Levels;
 
@@ -37,6 +38,16 @@ public sealed class WorldObjectsTests : IDisposable
         Assert.Equal(world.Maps[0].WorldThingId(1).ToString(), world.Objects[0].Id);
         Assert.Equal(new Vector2(500f, 600f), world.Objects[1].Position);
         Assert.Equal(_root, world.Root);
+    }
+
+    [Fact]
+    public void ManifestObjectPlacementsAreRejectedAsUnknownMembers()
+    {
+        var document = JsonNode.Parse(JsonSerializer.Serialize(_document, GeometryJson2D.JsonOptions))!;
+        document["objects"] = new JsonArray();
+        var path = Path.Combine(_root, "world.json");
+        File.WriteAllText(path, document.ToJsonString());
+        Assert.Contains("objects", Assert.Throws<InvalidDataException>(() => WorldFile2D.Load(path)).Message);
     }
 
     [Fact]

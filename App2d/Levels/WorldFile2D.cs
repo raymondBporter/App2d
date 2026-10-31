@@ -1,4 +1,5 @@
 using App2d.Contracts.World;
+using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.IO;
@@ -69,20 +70,11 @@ public sealed class WorldAsset2D(IReadOnlyList<WorldMapAsset2D> maps, ImmutableA
 public static class WorldFile2D
 {
 
-    public static WorldAsset2D Load(string path, IReadOnlyList<string>? legacyTilesets = null)
+    public static WorldAsset2D Load(string path)
     {
         try
         {
             var text = File.ReadAllText(path);
-            using (var raw = JsonDocument.Parse(text))
-            {
-                // Checked before the typed read: unmapped members are disallowed there, which would hide the real cause.
-                if (raw.RootElement.ValueKind == JsonValueKind.Object && raw.RootElement.TryGetProperty("objects", out _))
-                {
-                    throw new InvalidDataException("World manifests no longer carry objects; run 'dotnet run --project App2d -- --migrate-level <world.json>' once.");
-                }
-            }
-
             var file = JsonSerializer.Deserialize<WorldDocument>(text, JsonProfiles.World)
                 ?? throw new InvalidDataException("World document is null.");
             if (file.Version != 1 || file.Zones is null || file.Zones.Count == 0)
@@ -122,7 +114,7 @@ public static class WorldFile2D
                         throw new InvalidDataException("Map files must be unique relative paths within the world directory.");
                     }
 
-                    var loaded = LoadMap(databasePath, map.Id, map.Name, zone.Id, map.Identity, legacyTilesets, root);
+                    var loaded = LoadMap(databasePath, map.Id, map.Name, zone.Id, map.Identity, root);
                     maps.Add(loaded);
                     min = Vector2.Min(min, loaded.TileMap.WorldBounds.Min);
                     max = Vector2.Max(max, loaded.TileMap.WorldBounds.Max);
@@ -154,7 +146,7 @@ public static class WorldFile2D
     }
 
     /// <summary><paramref name="worldRoot"/> is where object asset paths resolve; the map's own directory when it has no world file.</summary>
-    public static WorldMapAsset2D LoadMap(string path, string id, string name, string zoneId, int identity, IReadOnlyList<string>? legacyTilesets = null, string? worldRoot = null)
+    public static WorldMapAsset2D LoadMap(string path, string id, string name, string zoneId, int identity, string? worldRoot = null)
     {
         var root = worldRoot ?? Path.GetDirectoryName(Path.GetFullPath(path))!;
         using var database = LevelDatabase2D.OpenRead(path);
@@ -165,7 +157,7 @@ public static class WorldFile2D
             ZoneId = zoneId,
             Identity = identity,
             DatabasePath = path,
-            TileMap = database.Load(legacyTilesets),
+            TileMap = database.Load(),
             PositionThings = database.LoadPositionThings(),
             Objects = []
         };
@@ -184,12 +176,12 @@ public static class WorldFile2D
         var assets = new Dictionary<string, Part>(StringComparer.OrdinalIgnoreCase);
         foreach (var thing in map.PositionThings)
         {
-            // A disabled thing stays an editor row but places nothing, as a disabled platform once did.
+            // A disabled thing stays an editor row but places nothing.
             if (!thing.Enabled || !string.Equals(thing.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal)) continue;
             Part? asset;
             try
             {
-                var assetPath = FilePaths.ResolveUnderRoot(root, thing.Asset ?? "");
+                var assetPath = ResolveObjectAssetPath(root, thing.Asset ?? "");
                 if (!assets.TryGetValue(assetPath, out asset)) assets.Add(assetPath, asset = Part.Load(assetPath));
             }
             catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
@@ -200,6 +192,11 @@ public static class WorldFile2D
         }
         return result.AsReadOnly();
     }
+
+    /// <summary>Object files are world-local; parts/ references use the shared authored Part library.</summary>
+    internal static string ResolveObjectAssetPath(string worldRoot, string asset) => asset.StartsWith("parts/", StringComparison.Ordinal)
+        ? FilePaths.ResolveUnderRoot(Path.Combine(AssetPaths.Current.AuthoredCharacters, "parts"), asset["parts/".Length..])
+        : FilePaths.ResolveUnderRoot(worldRoot, asset);
 
     public sealed record WorldDocument(int Version, IReadOnlyList<ZoneDocument> Zones)
     {

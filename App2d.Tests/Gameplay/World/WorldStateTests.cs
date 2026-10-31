@@ -67,12 +67,13 @@ public sealed class WorldStateTests
             new(4, WorldThingKind2D.Shieldback, null, true, new Vector2(600f, 50f)),
             new(5, WorldThingKind2D.GreenDinosaur, null, true, new Vector2(800f, 50f)),
             new(6, WorldThingKind2D.BoilerBrute, null, true, new Vector2(1000f, 50f)),
-            new(7, WorldThingKind2D.Rival, null, true, new Vector2(1200f, 50f)),
-            new(8, WorldThingKind2D.TumbleProp, null, true, new Vector2(1400f, 50f))
+            new(7, WorldThingKind2D.Rival, null, true, new Vector2(1200f, 50f))
         ];
-        using var level = new SideScrollerLevel2D(metrics, map, things, objects: [Platform()]);
+        var authored = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
+        using var level = new SideScrollerLevel2D(metrics, map, things,
+            objects: [Platform(), new("prop", authored.Parts["dumbbell"], new(1400f, 50f))]);
         level.CreateSimulation(physics.CollisionSystem, physics, new EntityIdAllocator2D(), 1, 2, 4);
-        level.CreateAuthoredWorldThings(combat, AuthoredCatalog.Load(TestAssetPath.AuthoredRoot));
+        level.CreateAuthoredWorldThings(combat, authored);
         var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, spawn, 2, 1, CombatFaction2D.Player, tileMap: map);
         registry.Register(player);
         var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), player.Body, metrics.GunMuzzleOffset, physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat);

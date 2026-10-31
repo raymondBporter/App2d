@@ -611,12 +611,6 @@ internal sealed partial class AssetBrowser(EditorSession session)
     /// </summary>
     private void DrawContract(ModelTemplate recipe)
     {
-        if (!recipe.Publishes)
-        {
-            ImGui.TextDisabled("A version-1 recipe: it publishes no slots, dimensions or library.");
-            return;
-        }
-
         var problems = session.Assets.TemplateProblems(recipe);
         foreach (var problem in problems)
         {

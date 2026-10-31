@@ -11,8 +11,8 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>
 /// One rig node. <see cref="Node"/> declares how its setup is authored (<see cref="RigNodeKinds"/>): a point control's
 /// <see cref="Rest"/>/<see cref="RestAngle"/> are character-frame values the resolver turns into a parent-local similarity;
-/// a bone node authors <see cref="Local"/>, <see cref="Length"/> and an optional <see cref="Link"/> and derives its rest; an
-/// affine node keeps the legacy <see cref="Transform"/>. Scale names the measure this control's animated translation scales with.
+/// a bone node authors <see cref="Local"/>, <see cref="Length"/> and an optional <see cref="Link"/> and derives its rest.
+/// Scale names the measure this control's animated translation scales with.
 /// </summary>
 public sealed record ModelControl
 {
@@ -108,13 +108,8 @@ public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
     /// <summary>
-    /// Version 11 carries no face on a part (P7c: a face is an animated library part instanced on a socket, selected by
-    /// expression word); version 10 carried the procedural face as the typed <c>face</c> payload (P2b) in place of the loose
-    /// expression string and <c>faceX</c>; version 9 added <see cref="Attachments"/>, instances of
-    /// library part assets (P5a); version 8 declared exposed <see cref="Parameters"/> with their bindings and
-    /// <see cref="Presets"/> in place of the retired code build rule (P4a); version 7 declared each control's node kind,
-    /// authored bone nodes as parent-local setups and kept one constraint list (P3a); version 6 moved a curve's wave into
-    /// the typed <c>wave</c> modifier (P2a). Version 12 (P11c) carries no legacy members: no affine node or <c>transform</c>, no chain <c>solver</c>, no <c>hurtLayouts</c>; an older file is refused by version.
+    /// The current model schema: point or bone controls, bone constraints, typed parameters and Part attachments.
+    /// Other versions are refused rather than translated.
     /// </summary>
     public const int CurrentVersion = 12;
     public string Format { get; set; } = FormatId;

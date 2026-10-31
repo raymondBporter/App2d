@@ -108,7 +108,7 @@ public sealed class MotionClip
     public static readonly IReadOnlyList<string> PartKinds = [FitKind, ShowKind, TintKind, AlphaKind];
     public static Vector3 DefaultValue(string kind) => kind == TintKind ? Vector3.One : kind is AlphaKind or ShowKind ? Vector3.UnitX : Vector3.Zero;
     public string Format { get; set; } = FormatId;
-    /// <summary>Version 4 (P7c) carries no <c>faces</c> tracks: a face is an animated part instance selected through <see cref="Plays"/>. Version-3 files without face tracks read unchanged through <see cref="LegacyClipReader"/>.</summary>
+    /// <summary>The current clip schema selects animated Part expressions through <see cref="Plays"/>.</summary>
     public const int CurrentVersion = 4;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";

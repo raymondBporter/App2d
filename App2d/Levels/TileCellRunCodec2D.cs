@@ -4,8 +4,7 @@ using App2d.Core.Validation;
 namespace App2d.Levels;
 
 /// <summary>
-/// Run-length encoding for packed tile cells. The payload stays [cell:u8][count:u8],
-/// so kind-only level blobs from before tilesets were authored decode unchanged.
+/// Run-length encoding for packed tile cells as [cell:u8][count:u8] pairs.
 /// </summary>
 internal static class TileCellRunCodec2D
 {

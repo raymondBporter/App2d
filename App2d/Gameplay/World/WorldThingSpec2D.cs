@@ -11,7 +11,6 @@ public enum WorldThingKind2D
     BoilerBrute,
     Rival,
     GreenDinosaur,
-    TumbleProp,
     ClubCaveman,
     RockThrower,
     BabyTriceratops,

@@ -54,7 +54,7 @@ public sealed class GiantTree2DTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new GiantTree2D(new(float.NaN, 0), new(), 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new GiantTree2D(Vector2.Zero, new() { BranchGap = new(0, 10) }, 1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new GiantTree2D(Vector2.Zero, new() { BranchLength = new(100, 50) }, 1));
+        Assert.Throws<ArgumentException>(() => new GiantTree2D(Vector2.Zero, new() { BranchLength = new(100, 50) }, 1));
         Assert.Throws<ArgumentException>(() => new GiantTree2D(Vector2.Zero, new() { Height = 1_000_000 }, 1));
     }
 }

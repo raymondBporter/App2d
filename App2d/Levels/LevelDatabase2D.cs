@@ -22,8 +22,8 @@ public sealed partial class LevelDatabase2D : IDisposable
 
     public int ChunkRowCount => (int)ReadScalarLong("SELECT COUNT(*) FROM chunks;");
 
-    /// <summary>Opens or creates a level for editing and upgrades its format. Migrated object assets are written under <paramref name="worldRoot"/>, the file's own directory by default.</summary>
-    public static LevelDatabase2D Open(string path, string? worldRoot = null)
+    /// <summary>Opens a current level for editing, or creates the current schema in an empty database.</summary>
+    public static LevelDatabase2D Open(string path)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(path);
         var directory = Path.GetDirectoryName(Path.GetFullPath(path));
@@ -42,7 +42,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         try
         {
             EnableForeignKeys(connection);
-            Migrate(connection, worldRoot ?? (string.IsNullOrEmpty(directory) ? Environment.CurrentDirectory : directory));
+            Initialize(connection);
         }
         catch
         {
@@ -70,23 +70,18 @@ public sealed partial class LevelDatabase2D : IDisposable
         }.ToString());
         connection.Open();
 
-        EnableForeignKeys(connection);
-
-        var database = new LevelDatabase2D(connection);
-        var version = database.FormatVersion;
-        if (version > CurrentFormatVersion)
+        try
+        {
+            EnableForeignKeys(connection);
+            var database = new LevelDatabase2D(connection);
+            RequireCurrentVersion(database.FormatVersion);
+            return database;
+        }
+        catch
         {
             connection.Dispose();
-            StateGuard.Throw($"The level file is format version {version}, newer than this build understands ({CurrentFormatVersion}).");
+            throw;
         }
-        if (version < CurrentFormatVersion)
-        {
-            connection.Dispose();
-            StateGuard.Throw(
-                $"The level file is format version {version}; run 'dotnet run --project App2d -- --migrate-level <world.json>' to upgrade it to {CurrentFormatVersion}.");
-        }
-
-        return database;
     }
 
     public void Save(EditableTileMap2D map, ulong sourceSeed)
@@ -147,7 +142,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         transaction.Commit();
     }
 
-    public EditableTileMap2D Load(IReadOnlyList<string>? legacyTilesetIds = null)
+    public EditableTileMap2D Load()
     {
         var width = (int)RequireMetaLong("width");
         var height = (int)RequireMetaLong("height");
@@ -155,7 +150,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         var tileSize = RequireMetaFloat("tile_size");
         var origin = new Vector2(RequireMetaFloat("origin_x"), RequireMetaFloat("origin_y"));
 
-        var tilesetIds = ReadTilesetCatalog() ?? legacyTilesetIds ?? ["default"];
+        var tilesetIds = ReadTilesetCatalog();
         var map = new EditableTileMap2D(width, height, tileSize, chunkSize, origin, tilesetIds);
         var buffer = new TileCell2D[chunkSize * chunkSize];
 
@@ -184,19 +179,17 @@ public sealed partial class LevelDatabase2D : IDisposable
         command.ExecuteNonQuery();
     }
 
-    private static void Migrate(SqliteConnection connection, string worldRoot)
+    private static void RequireCurrentVersion(long version) =>
+        StateGuard.ThrowIf(version != CurrentFormatVersion,
+            $"Unsupported level format version {version}; expected {CurrentFormatVersion}.");
+
+    private static void Initialize(SqliteConnection connection)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(worldRoot);
         long version;
         using (var versionCommand = connection.CreateCommand())
         {
             versionCommand.CommandText = "PRAGMA user_version;";
             version = Convert.ToInt64(versionCommand.ExecuteScalar(), CultureInfo.InvariantCulture);
-        }
-
-        if (version > CurrentFormatVersion)
-        {
-            StateGuard.Throw($"The level file's format version ({version}) is newer than this build supports ({CurrentFormatVersion}).");
         }
 
         // A current file is left untouched: even re-stamping the same version bumps SQLite's change counter,
@@ -206,49 +199,24 @@ public sealed partial class LevelDatabase2D : IDisposable
             return;
         }
 
+        using (var schema = connection.CreateCommand())
+        {
+            schema.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE name NOT GLOB 'sqlite_*';";
+            if (version != 0 || Convert.ToInt64(schema.ExecuteScalar(), CultureInfo.InvariantCulture) != 0)
+                RequireCurrentVersion(version);
+        }
+
         using var transaction = connection.BeginTransaction();
-        if (version == 0)
-        {
-            using var createBase = connection.CreateCommand();
-            createBase.CommandText = """
-                CREATE TABLE IF NOT EXISTS meta(
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL) WITHOUT ROWID;
-                CREATE TABLE IF NOT EXISTS chunks(
-                    cx INTEGER NOT NULL,
-                    cy INTEGER NOT NULL,
-                    tiles BLOB NOT NULL,
-                    PRIMARY KEY(cx, cy)) WITHOUT ROWID;
-                """;
-            createBase.ExecuteNonQuery();
-            version = 1;
-        }
-
-        if (version == 1)
-        {
-            using var createThings = connection.CreateCommand();
-            createThings.CommandText = ThingSchemaSql;
-            createThings.ExecuteNonQuery();
-            version = 2;
-        }
-
-        if (version == 2)
-        {
-            using (var createObjects = connection.CreateCommand())
-            {
-                createObjects.CommandText = ObjectReferencesSql;
-                createObjects.ExecuteNonQuery();
-            }
-
-            MovingPlatformMigration2D.Convert(connection, worldRoot);
-            version = 3;
-        }
-
-        using (var stamp = connection.CreateCommand())
-        {
-            stamp.CommandText = $"PRAGMA user_version = {CurrentFormatVersion};";
-            stamp.ExecuteNonQuery();
-        }
+        using var create = connection.CreateCommand();
+        create.CommandText = $"""
+            CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE chunks(cx INTEGER NOT NULL, cy INTEGER NOT NULL, tiles BLOB NOT NULL,
+                PRIMARY KEY(cx, cy)) WITHOUT ROWID;
+            {ThingSchemaSql}
+            {ObjectReferencesSql}
+            PRAGMA user_version = {CurrentFormatVersion};
+            """;
+        create.ExecuteNonQuery();
         transaction.Commit();
     }
 
@@ -315,16 +283,9 @@ public sealed partial class LevelDatabase2D : IDisposable
         }
     }
 
-    private string[]? ReadTilesetCatalog()
+    private string[] ReadTilesetCatalog()
     {
-        using var countCommand = _connection.CreateCommand();
-        countCommand.CommandText = "SELECT value FROM meta WHERE key = 'tileset_count';";
-        if (countCommand.ExecuteScalar() is not string countText)
-        {
-            return null;
-        }
-
-        var count = int.Parse(countText, CultureInfo.InvariantCulture);
+        var count = int.Parse(RequireMeta("tileset_count"), CultureInfo.InvariantCulture);
         if (count <= 0 || count > TileCell2D.MaximumTilesetCount)
         {
             throw new InvalidDataException($"Level tileset count {count} is outside the supported range.");

@@ -1,13 +1,13 @@
 using App2d.Core.Characters.Authored;
-using App2d.Core.IO;
 using App2d.Core.Validation;
+using App2d.Levels;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using System.Text.Json;
 
 namespace App2d.Editor;
 
-/// <summary>The object asset files under a world's <c>objects</c> folder, by path relative to the world root, each loaded once.</summary>
+/// <summary>The world's object-file palette and cached loading of world-local or shared Part references.</summary>
 internal sealed class ObjectAssetCatalog2D
 {
     private const string Folder = "objects";
@@ -30,7 +30,7 @@ internal sealed class ObjectAssetCatalog2D
     public Part Load(string relativePath)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(relativePath);
-        var resolved = FilePaths.ResolveUnderRoot(_worldRoot, relativePath);
+        var resolved = WorldFile2D.ResolveObjectAssetPath(_worldRoot, relativePath);
         if (_loaded.TryGetValue(resolved, out var asset))
         {
             return asset;

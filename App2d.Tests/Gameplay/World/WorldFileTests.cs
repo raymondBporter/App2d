@@ -30,9 +30,7 @@ public sealed class WorldFileTests : IDisposable
     [Fact]
     public void ShippedPlaygroundStartsInUpstreamMapAndRetainsGeneratedCombatZone()
     {
-        using var world = WorldFile2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "world.json"),
-            ["ink-medieval-ground", "ink-medieval-wall", "ink-prehistoric-ground", "ink-prehistoric-wall",
-             "ink-wasteland-ground", "ink-wasteland-wall"]);
+        using var world = WorldFile2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "world.json"));
         Assert.Equal("main", world.Maps[0].Id);
         Assert.Equal("level.db", Path.GetFileName(world.Maps[0].DatabasePath));
         Assert.True(world.StartAtArrival);
@@ -42,9 +40,9 @@ public sealed class WorldFileTests : IDisposable
         Assert.Equal(4, world.Maps.Count);
         Assert.Equal(4, world.Maps.Select(m => m.Identity).Distinct().Count());
         Assert.Equal("player-spawn", world.PositionThings.First(t => t.Enabled).TypeKey);
-        // The migrated lifts and the arrival lift: every shipped object moves along a path.
-        Assert.Equal(8, world.Objects.Count);
-        Assert.All(world.Objects, o => Assert.NotNull(o.Asset.Motion));
+        Assert.Equal(13, world.Objects.Count);
+        Assert.Equal(5, world.Objects.Count(o => o.Asset.Id == "dumbbell"));
+        Assert.All(world.Objects.Where(o => o.Asset.Id != "dumbbell"), o => Assert.NotNull(o.Asset.Motion));
     }
 
     [Fact]

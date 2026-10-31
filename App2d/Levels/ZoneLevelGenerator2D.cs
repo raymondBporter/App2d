@@ -43,7 +43,7 @@ public static class ZoneLevelGenerator2D
         {
             File.WriteAllText(candidate, json);
             // Includes map identity, grid alignment, overlap, and arrival-map validation.
-            using var validated = WorldFile2D.Load(candidate, tilesets);
+            using var validated = WorldFile2D.Load(candidate);
             AtomicFile.WriteAllText(manifest, json);
         }
         finally

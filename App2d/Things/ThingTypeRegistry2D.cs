@@ -46,8 +46,6 @@ internal static class ThingTypeRegistry2D
 
     public static ThingTypeDescriptor2D GreenDinosaur { get; } = new("green-dinosaur", "Scrap Hound", WorldThingKind2D.GreenDinosaur, new Color4b(142, 205, 92));
 
-    public static ThingTypeDescriptor2D TumbleProp { get; } = new("tumble-prop", "Tumble prop", WorldThingKind2D.TumbleProp, new Color4b(255, 154, 59));
-
     public static IReadOnlyList<ThingTypeDescriptor2D> All { get; } =
         [
             Object,
@@ -62,8 +60,7 @@ internal static class ThingTypeRegistry2D
             ShieldDefender,
             Pterosaur,
             Rival,
-            GreenDinosaur,
-            TumbleProp
+            GreenDinosaur
         ];
 
     public static ThingTypeDescriptor2D Require(string typeKey) =>

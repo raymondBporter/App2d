@@ -47,38 +47,26 @@ Other easings live in `App2d.Core.Mathematics.Progress.Easing`; custom maps can 
 velocity change at the loop seam. B-spline parameter progress is not generally
 constant distance, so a constant-speed spline would need an arc-length map.
 
-A moving platform is an authored object: a `line` curve with `ping-pong` and `smooth`
-progress, a kinematic body with `transfersContactMotion`, and a one-way `surface`. The
-cavern's lifts were converted from the August platform rows by the level database's
-format-3 migration; `App2d.Levels.MovingPlatformMigration2D` keeps the period
-`2 × |travel| / speed` so each lift's round trip takes exactly what it did before.
+A moving platform is an authored object: a line curve with ping-pong and smooth
+progress, a kinematic body with `transfersContactMotion`, and a one-way `surface`.
+A straight lift with travel speed `speed` uses period `2 * |travel| / speed`.
 
 ## JSON objects
 
-`Part` (`App2d.Core.Characters.Authored`, `app2d-part` v3) owns a list of geometry entries with materials,
+`Part` (`App2d.Core.Characters.Authored`, `app2d-part` v4) owns a list of geometry entries with materials,
 optional `physics`, `collision`, `surface` and `motion`. `Part.Load(path)` / `FromJson(json)` and
 `Save(path)` / `ToJson()` use the same schema as clothing, equipment and animated modules.
 Finite rigid shape entries double as the collider unless `collision` overrides them. An animated or
 mesh-based physical Part needs an explicit rigid collision shape. Geometry and curves reuse their
 existing kind-based codecs; unknown properties and invalid combinations are rejected on loading.
-The offline `WorldPartConversion` converts retired `app2d-object` v1 files; normal loading never upgrades them.
+Only the current Part schema is accepted; loading does not convert older formats.
 
 The working example is [objects/lift.json](../../../Assets/Static/levels/cavern/objects/lift.json).
 It has a rectangle geometry entry with fill and outline, a kinematic body, rider carrying, a one-way normal,
-and a cubic Bézier path. The default world places it near the original playground arrival:
-
-```json
-"objects": [
-  {
-    "id": "arrival-lift",
-    "asset": "objects/lift.json",
-    "position": { "x": 80, "y": -240 }
-  }
-]
-```
-
-Asset paths are relative to the world manifest; texture paths are relative to the object asset's
-directory. Placement IDs are unique within the world. Multiple placements can reference the
+and a cubic Bezier path. The map database's object definition references
+`objects/lift.json`; its things and transforms store the named world-space placements.
+Object references resolve world-local files or shared library Parts such as `parts/dumbbell.json`.
+Placement IDs are unique within the world. Multiple placements can reference the
 same definition and have independent runtime identities and clocks. No thing-type registration
 is needed for each asset.
 

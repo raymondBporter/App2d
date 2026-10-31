@@ -230,7 +230,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
     }
 
-    /// <summary>The typed gameplay behaviors of a version-4 entity, each field from <see cref="BehaviorSchema"/>; a legacy entity converts explicitly.</summary>
+    /// <summary>The typed gameplay behaviors of a Part, each field from <see cref="BehaviorSchema"/>.</summary>
     private void Behaviors(AssetDocument<Part> document)
     {
         var asset = document.Asset;
