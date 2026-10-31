@@ -15,6 +15,15 @@ public readonly partial record struct AxisAlignedRectangle2D
     public static class Builder
     {
         public static AxisAlignedRectangle2D Create(Vector2 min, Vector2 max) => new AxisAlignedRectangle2D(min, max).Validated();
+
+        /// <summary>A normalized image region given its top-left coordinates and explicit width and height.</summary>
+        public static AxisAlignedRectangle2D CreateUvRect(float x, float y, float width, float height)
+        {
+            var region = Create(new(x, y), new(x + width, y + height));
+            region.ValidateUvRect();
+            return region;
+        }
+
         public static AxisAlignedRectangle2D FromSize(float width, float height, Vector2 center = default) => FromSize(new Vector2(width, height), center);
         public static AxisAlignedRectangle2D Create(float width, float height, Vector2 center = default) => FromSize(width, height, center);
         public static AxisAlignedRectangle2D CreateFromSize(float width, float height, Vector2 center = default) => Create(width, height, center);

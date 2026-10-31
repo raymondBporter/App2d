@@ -10,9 +10,6 @@ namespace App2d.Core.Shapes;
 /// <summary>A filled circle in local space.</summary>
 public readonly partial record struct Circle2D : IConvexShape2D
 {
-    /// <inheritdoc/>
-    public string Kind => ShapeKinds2D.Circle;
-
     /// <summary>Creates a circle.</summary>
     /// <param name="radius">The finite, positive radius.</param>
     /// <param name="center">The finite local center.</param>

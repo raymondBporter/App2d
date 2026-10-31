@@ -500,7 +500,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                     "a second binding on a bound property is refused: " + s.Message);
                 Check(s.Edit(doc, () => ModelAuthoring.AddParameter(doc.Asset, "hand-span", "Hand span", ParameterUnits.Length, 0, 0, 1)), s);
                 Check(s.Edit(doc, () => ModelAuthoring.AddBinding(doc.Asset, "hand-span", new() { Kind = BindingKinds.Set, Target = PropertyRef.OfControl("left-hand", RigProperties.Length) })), s);
-                s.Change(doc, () => { doc.Asset.Parameters.Last().Default = .12f; doc.Asset.Validate(); });
+                s.Change(doc, () => { doc.Asset.Parameters[^1].Default = .12f; doc.Asset.Validate(); });
                 s.CommitAll();
                 Record(MathF.Abs(s.Assets.Resolve("person")!.Nodes["left-hand"].Length - .12f) < 1e-6f && s.Assets.Resolve("tall-thin")!.Nodes["left-hand"].Length == s.Assets.Resolve("person")!.Nodes["left-hand"].Length,
                     "a new parameter's set binding re-resolves the hand bone's length on the base and its variants");
@@ -1024,7 +1024,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 wrong.Attachments.Add(new() { Id = "legs", Asset = ModulePlans.QuadrupedLower, Socket = "left-seat" });
                 string? refusal = null;
                 try { ResolvedModel.From(wrong, null, s.Assets.PartOf); } catch (InvalidDataException ex) { refusal = ex.Message; }
-                Record(refusal is not null && refusal.Contains("socket 'left-seat' takes 'upper-body', part 'quadruped-lower' is a 'lower-body' (path: Model 'rider-stand' > attachments > legs > socket left-seat > usage)"),
+                Record(refusal?.Contains("socket 'left-seat' takes 'upper-body', part 'quadruped-lower' is a 'lower-body' (path: Model 'rider-stand' > attachments > legs > socket left-seat > usage)") == true,
                     "a lower body on a socket that takes upper bodies is refused with the reference path: " + refusal);
                 s.SetMode(Workspace.Animate);
                 s.Selection.Select(attachment: "b");
@@ -1059,7 +1059,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 travelling.Travel.Keys = [new(), new() { Time = 1, Value = new(1, 0, 0) }];
                 string? refusal = null;
                 try { travelling.Validate(centaur); } catch (InvalidDataException ex) { refusal = ex.Message; }
-                Record(refusal is not null && refusal.Contains("root motion is owned by attachment 'lower' (path: centaur > motionOwner)"), "a wearer clip that travels while the lower body owns the motion is refused with the path: " + refusal);
+                Record(refusal?.Contains("root motion is owned by attachment 'lower' (path: centaur > motionOwner)") == true, "a wearer clip that travels while the lower body owns the motion is refused with the path: " + refusal);
                 s.SetClip("centaur-walk");
                 s.Seek(.55f);
                 s.SetMode(Workspace.Animate);

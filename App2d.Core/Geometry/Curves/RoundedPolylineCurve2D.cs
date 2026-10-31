@@ -11,8 +11,6 @@ namespace App2d.Core.Geometry.Curves;
 /// </summary>
 public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
 {
-    public string Kind => CurveKinds2D.RoundedPolyline;
-
     private readonly Vector2[]? _points;
     private readonly float[]? _distance, _trim;
     private readonly float _softness = 1;

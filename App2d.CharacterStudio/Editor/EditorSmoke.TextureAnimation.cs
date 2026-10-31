@@ -31,7 +31,7 @@ internal sealed partial class EditorSmoke
         _textureProof = new()
         {
             Frames = [new() { Texture = folder + "/small.png", Seconds = .25f },
-            new() { Texture = folder + "/wide.png", Seconds = .75f, Source = new() { X = .5f, Width = .5f } }]
+            new() { Texture = folder + "/wide.png", Seconds = .75f, Source = AxisAlignedRectangle2D.Builder.CreateUvRect(.5f, 0, .5f, 1) }]
         };
         Check(s.NewModel("texture-proof", "Texture on a moving bone", "empty"), s);
         Check(s.Edit(s.SubjectModel, () =>

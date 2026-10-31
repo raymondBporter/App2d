@@ -25,7 +25,7 @@ public sealed class ShapeAuthoring2DTests
     {
         var source = Rectangle2D.Builder.FromSize(4, 2, new(1, 1));
         var converted = source.WithKind(kind);
-        Assert.Equal(kind, converted.Kind);
+        Assert.Equal(kind, converted.GetKind());
         var bounds = ShapeBounds2D.Calculate(converted.Validated());
         Assert.True(new Rect2D(new(-1, 0), new(3, 2)).InflatedBy(1e-5f, 1e-5f).Contains(bounds), $"{kind} spilled to {bounds}.");
         Assert.True(Vector2.Distance(new(1, 1), bounds.Center) < 1e-5f);
@@ -56,7 +56,7 @@ public sealed class ShapeAuthoring2DTests
             var json = builder.ToJson();
             using var document = JsonDocument.Parse(json);
             Assert.Single(document.RootElement.EnumerateObject(), property => property.Name == "kind");
-            Assert.Equal(rectangle.Kind, document.RootElement.GetProperty("kind").GetString());
+            Assert.Equal(rectangle.GetKind(), document.RootElement.GetProperty("kind").GetString());
             Assert.False(document.RootElement.TryGetProperty("axisAligned", out _));
             Assert.Equal(rectangle.GetType(), GeometryJson2D.ShapeFromJson(json).Validated().GetType());
             Assert.Equal(rectangle.GetType(), Assert.IsType<IShape2D>(GeometryJson2D.FromJson(json), exactMatch: false).Validated().GetType());
@@ -70,7 +70,7 @@ public sealed class ShapeAuthoring2DTests
     {
         var backwards = "{\"kind\":\"" + kind + "\",\"min\":{\"x\":1,\"y\":1},\"max\":{\"x\":0,\"y\":0}}";
         var builder = GeometryJson2D.ShapeFromJson(backwards);
-        Assert.Equal(kind, builder.Kind);
+        Assert.Equal(kind, builder.GetKind());
         Assert.ThrowsAny<ArgumentException>(builder.Validate);
         Assert.ThrowsAny<ArgumentException>(() => builder.Validated());
         var withFlag = backwards[..^1] + ",\"axisAligned\":true}";

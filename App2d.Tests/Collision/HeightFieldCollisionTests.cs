@@ -36,15 +36,15 @@ public sealed class HeightFieldCollisionTests
         foreach (var shape in OtherShapes())
         {
             var penetrating = Similarity2D.FromTranslation(new(0, 0.25f));
-            Assert.True(ShapeCollision2D.TryGetContact(shape, penetrating, flat, Similarity2D.Identity, out var contact), shape.Kind);
-            Assert.True(contact.Normal.Y > 0.99f, $"{shape.Kind}: {contact.Normal}");
+            Assert.True(ShapeCollision2D.TryGetContact(shape, penetrating, flat, Similarity2D.Identity, out var contact), shape.GetKind());
+            Assert.True(contact.Normal.Y > 0.99f, $"{shape.GetKind()}: {contact.Normal}");
             Assert.InRange(contact.PenetrationDepth, 0.249f, 0.251f);
             Assert.True(ShapeCollision2D.TryGetContact(flat, Similarity2D.Identity, shape, penetrating, out var reverse));
             Assert.InRange(Vector2.Distance(contact.Normal, -reverse.Normal), 0f, 0.0001f);
             Assert.Equal(contact.PenetrationDepth, reverse.PenetrationDepth, 4);
             Assert.Equal(0f, ShapeDistance2D.Distance(shape, penetrating, flat, Similarity2D.Identity));
-            Assert.False(ShapeCollision2D.TryGetContact(shape, Similarity2D.FromTranslation(new(0, 4)), valley, Similarity2D.Identity, out _), shape.Kind);
-            Assert.True(ShapeDistance2D.Distance(shape, Similarity2D.FromTranslation(new(0, 4)), valley, Similarity2D.Identity) > 1f, shape.Kind);
+            Assert.False(ShapeCollision2D.TryGetContact(shape, Similarity2D.FromTranslation(new(0, 4)), valley, Similarity2D.Identity, out _), shape.GetKind());
+            Assert.True(ShapeDistance2D.Distance(shape, Similarity2D.FromTranslation(new(0, 4)), valley, Similarity2D.Identity) > 1f, shape.GetKind());
         }
         var halfSpace = HalfSpace2D.Builder.Create(Vector2.UnitY, -5f);
         Assert.True(ShapeCollision2D.TryGetContact(flat, Similarity2D.Identity, halfSpace, Similarity2D.Identity, out _));
@@ -82,8 +82,8 @@ public sealed class HeightFieldCollisionTests
         var shape = new FunctionHeightField2D(-20f, 20f, -10f, x => 0.1f * x * x, yMax: 40f).ToShape(0.5f, 0.001f);
         foreach (var other in OtherShapes())
         {
-            Assert.False(ShapeCollision2D.TryGetContact(other, Similarity2D.FromTranslation(new(0, 3)), shape, Similarity2D.Identity, out _), other.Kind);
-            Assert.True(ShapeCollision2D.TryGetContact(other, Similarity2D.FromTranslation(new(0, 0.25f)), shape, Similarity2D.Identity, out _), other.Kind);
+            Assert.False(ShapeCollision2D.TryGetContact(other, Similarity2D.FromTranslation(new(0, 3)), shape, Similarity2D.Identity, out _), other.GetKind());
+            Assert.True(ShapeCollision2D.TryGetContact(other, Similarity2D.FromTranslation(new(0, 0.25f)), shape, Similarity2D.Identity, out _), other.GetKind());
         }
     }
 

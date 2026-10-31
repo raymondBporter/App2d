@@ -512,7 +512,7 @@ public static class ModelAuthoring
     {
         var part = new PartGeometry
         {
-            Id = UniqueId(geometry.Kind, model.Parts.Select(p => p.Id)),
+            Id = UniqueId(geometry.GetKind(), model.Parts.Select(p => p.Id)),
             Geometry = geometry,
             A = a,
             B = b,

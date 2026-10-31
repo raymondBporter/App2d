@@ -76,7 +76,7 @@ public sealed class RoundedRectangle2DTests
         Assert.Contains("\"kind\": \"rounded-rectangle\"", json);
         var restored = CharacterModel.FromJson(json).Parts.Single();
         Assert.IsType<RoundedRectangle2D>(restored.Geometry);
-        Assert.Equal(ShapeKinds2D.RoundedRectangle, restored.Geometry!.Kind);
+        Assert.Equal(ShapeKinds2D.RoundedRectangle, restored.Geometry!.GetKind());
         Assert.Equal(before, PartContours2D.Contour(restored, _ => Vector3.Zero));
     }
 
@@ -125,7 +125,7 @@ public sealed class RoundedRectangle2DTests
     [Fact]
     public void RoundedJsonRoundTripsAndReadsMinMax()
     {
-        var back = Assert.IsType<RoundedRectangle2D>(GeometryJson2D.ShapeFromJson(TiltedRounded.ToJson()).Validated());
+        var back = Assert.IsType<RoundedRectangle2D>(GeometryJson2D.ShapeFromJson(TiltedRounded.ToJson<IShape2D>()).Validated());
         Assert.Equal(TiltedRounded.AngleRadians, back.AngleRadians, 5);
         Assert.Equal(.5f, back.Radius);
         var legacy = Assert.IsType<RoundedRectangle2D>(GeometryJson2D.ShapeFromJson("{\"kind\":\"rounded-rectangle\",\"min\":{\"x\":-2,\"y\":-1},\"max\":{\"x\":2,\"y\":1},\"radius\":0.4}").Validated());

@@ -214,7 +214,7 @@ public sealed class SlotTimelineTests
     {
         var (model, clip) = Scene();
         const float firstChange = .5f;
-        var secondChange = firstChange + ClipAuthoring.SameTime / 2;
+        const float secondChange = firstChange + ClipAuthoring.SameTime / 2;
         clip.Tracks = [new() { Target = "body", Keys = [
             new() { Value = new(.2f), Ease = ProgressMapKind.Step },
             new() { Time = firstChange, Value = new(.8f), Ease = ProgressMapKind.Step },

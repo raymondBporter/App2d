@@ -43,7 +43,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                 return properties.ContainsKey(key) ? R<V>(name) : fallback;
             }
             read.Add("kind");
-            var kind = properties.TryGetValue("kind", out var tag) ? tag.GetString() : KindOf(typeof(T));
+            var kind = properties.TryGetValue("kind", out var tag) ? tag.GetString() : IGeometryValue2D.GetKind(typeof(T));
             // Raw construction is intentional here: callers validate after reading the whole document.
 #pragma warning disable APP2D001
             // A rectangle is spelled with min and max (the axis-aligned form) or with center and size, never both.
@@ -106,8 +106,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
         {
             if (value is null) { writer.WriteNullValue(); return; }
             writer.WriteStartObject();
-            var kind = KindOf(value.GetType()) ?? throw new NotSupportedException($"No geometry schema exists for {value.GetType().Name}.");
-            writer.WriteString("kind", kind);
+            if (typeof(T).IsInterface) writer.WriteString("kind", value.GetKind());
             void W<V>(string name, V item)
             {
                 writer.WritePropertyName(options.PropertyNamingPolicy?.ConvertName(name) ?? name);
@@ -200,32 +199,10 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                     W("ControlPoints", geometry.ControlPoints.ToArray());
                     W("Degree", geometry.Degree);
                     break;
+                default:
+                    throw new NotSupportedException($"No geometry schema exists for {value.GetType().Name}.");
             }
             writer.WriteEndObject();
         }
     }
-
-    private static string? KindOf(Type type) => type.Name switch
-    {
-        nameof(Circle2D) when type == typeof(Circle2D) => ShapeKinds2D.Circle,
-        nameof(Ellipse2D) when type == typeof(Ellipse2D) => ShapeKinds2D.Ellipse,
-        nameof(Capsule2D) when type == typeof(Capsule2D) => ShapeKinds2D.Capsule,
-        nameof(Rectangle2D) when type == typeof(Rectangle2D) => ShapeKinds2D.Rectangle,
-        nameof(AxisAlignedRectangle2D) when type == typeof(AxisAlignedRectangle2D) => ShapeKinds2D.AxisAlignedRectangle,
-        nameof(RoundedRectangle2D) when type == typeof(RoundedRectangle2D) => ShapeKinds2D.RoundedRectangle,
-        nameof(Triangle2D) when type == typeof(Triangle2D) => ShapeKinds2D.Triangle,
-        nameof(ConvexPolygon2D) when type == typeof(ConvexPolygon2D) => ShapeKinds2D.ConvexPolygon,
-        nameof(SimplePolygon2D) when type == typeof(SimplePolygon2D) => ShapeKinds2D.SimplePolygon,
-        nameof(HeightFieldShape2D) when type == typeof(HeightFieldShape2D) => ShapeKinds2D.HeightField,
-        nameof(HalfSpace2D) when type == typeof(HalfSpace2D) => ShapeKinds2D.HalfSpace,
-        nameof(CompositeShape2D) when type == typeof(CompositeShape2D) => ShapeKinds2D.Composite,
-        nameof(LineSegmentCurve2D) when type == typeof(LineSegmentCurve2D) => CurveKinds2D.Line,
-        nameof(PolylineCurve2D) when type == typeof(PolylineCurve2D) => CurveKinds2D.Polyline,
-        nameof(RoundedPolylineCurve2D) when type == typeof(RoundedPolylineCurve2D) => CurveKinds2D.RoundedPolyline,
-        nameof(Arc2D) when type == typeof(Arc2D) => CurveKinds2D.Arc,
-        nameof(QuadraticBezier2D) when type == typeof(QuadraticBezier2D) => CurveKinds2D.QuadraticBezier,
-        nameof(CubicBezier2D) when type == typeof(CubicBezier2D) => CurveKinds2D.CubicBezier,
-        nameof(BSpline2D) when type == typeof(BSpline2D) => CurveKinds2D.BSpline,
-        _ => null
-    };
 }

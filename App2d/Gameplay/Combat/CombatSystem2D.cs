@@ -144,7 +144,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         foreach (var overlap in overlaps)
         {
             var attached = overlap.Collider.UserData as AttachedCollider;
-            if (attached is not null && attached.Use is not (ColliderUses.Hurt or ColliderUses.Guard))
+            if (attached is { Use: not (ColliderUses.Hurt or ColliderUses.Guard) })
             {
                 continue;
             }

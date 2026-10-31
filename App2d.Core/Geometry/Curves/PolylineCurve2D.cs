@@ -6,8 +6,6 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>An open polyline parameterized uniformly across its segments.</summary>
 public readonly partial record struct PolylineCurve2D : ICurve2D
 {
-    public string Kind => CurveKinds2D.Polyline;
-
     private readonly Vector2[]? _points;
 
     public PolylineCurve2D(IEnumerable<Vector2> points)

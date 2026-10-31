@@ -86,7 +86,7 @@ public static class PartContours2D
             var count = shape.GetOutlineVertCount(48);
             if (count == 0)
             {
-                throw new NotSupportedException($"A {typed.Kind} has no drawable outline.");
+                throw new NotSupportedException($"A {typed.GetKind()} has no drawable outline.");
             }
 
             Span<Vector2> buffer = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];

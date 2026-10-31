@@ -37,7 +37,7 @@ public sealed class CurveSerialization2DTests
     public void TaggedValuesRoundTripIntoEquivalentRuntimeCurves(string kind)
     {
         var original = CreateCurve(kind);
-        var json = original.ToJson();
+        var json = original.ToJson<ICurve2D>();
         using var document = JsonDocument.Parse(json);
         Assert.Equal(kind, document.RootElement.GetProperty("kind").GetString());
         var restored = GeometryJson2D.CurveFromJson(json).Validated();
@@ -53,7 +53,7 @@ public sealed class CurveSerialization2DTests
     public void ShapeAndDegreeDataSurviveTheRoundTrip()
     {
         var original = BSpline2D.Builder.Create([new(0, 0), new(1, 2), new(3, 0)], degree: 2);
-        var definition = Assert.IsType<BSpline2D>(GeometryJson2D.CurveFromJson(original.ToJson()));
+        var definition = Assert.IsType<BSpline2D>(GeometryJson2D.CurveFromJson(original.ToJson<ICurve2D>()));
         Assert.Equal(2, definition.Degree);
         Assert.Equal(original.ControlPoints.ToArray(), definition.ControlPoints.ToArray());
     }

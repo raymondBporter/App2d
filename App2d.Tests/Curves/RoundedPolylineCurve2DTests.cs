@@ -56,7 +56,7 @@ public sealed class RoundedPolylineCurve2DTests
     {
         Vector2[] points = [new(0, 0), new(1, 0), new(1, 1), new(2, 1), new(2, 2)];
         var original = RoundedPolylineCurve2D.Builder.Create(points, .8f);
-        var restored = Assert.IsType<RoundedPolylineCurve2D>(GeometryJson2D.CurveFromJson(original.ToJson()));
+        var restored = Assert.IsType<RoundedPolylineCurve2D>(GeometryJson2D.CurveFromJson(original.ToJson<ICurve2D>()));
         var curve = restored.Validated();
         Assert.Equal(points[0], curve.Evaluate(0));
         Assert.Equal(points[^1], curve.Evaluate(1));

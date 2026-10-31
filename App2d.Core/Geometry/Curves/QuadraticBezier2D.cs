@@ -7,8 +7,6 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A quadratic Bezier curve over normalized progress [0, 1].</summary>
 public readonly partial record struct QuadraticBezier2D : ICurve2D
 {
-    public string Kind => CurveKinds2D.QuadraticBezier;
-
     public QuadraticBezier2D(Vector2 start, Vector2 control, Vector2 end)
     {
         Start = start;

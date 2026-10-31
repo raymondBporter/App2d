@@ -1053,8 +1053,8 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
     /// <summary>Kind and geometry fields for one shape definition. Kind changes are discrete edits; drags are continuous changes.</summary>
     private void ShapeFields(AssetDocument<Part> document, IShape2D shape, Action<IShape2D> set)
     {
-        IEnumerable<string> kinds = EditableShapeKinds.Contains(shape.Kind) ? EditableShapeKinds : EditableShapeKinds.Append(shape.Kind);
-        if (Ui.Combo("Shape", shape.Kind, kinds) is { } kind)
+        IEnumerable<string> kinds = EditableShapeKinds.Contains(shape.GetKind()) ? EditableShapeKinds : EditableShapeKinds.Append(shape.GetKind());
+        if (Ui.Combo("Shape", shape.GetKind(), kinds) is { } kind)
         {
             session.Edit(document, () => set(shape.WithKind(kind)));
         }

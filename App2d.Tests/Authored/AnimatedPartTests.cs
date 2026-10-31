@@ -227,7 +227,7 @@ public sealed class AnimatedPartTests
         var (_, _, model) = Wearer();
         var clip = ClipAuthoring.New(model, "tail-selections", "Tail selections", duration: 2, loop: false);
         const float first = .5f;
-        var near = first + ClipAuthoring.SameTime / 2;
+        const float near = first + ClipAuthoring.SameTime / 2;
         clip.Plays = [new() { Instance = Instance, Keys = [new() { Time = first, Expression = "flick" },
             new() { Time = near, Expression = "still" }, new() { Time = 1, Expression = "tucked" }] }];
         var original = clip.ToJson();

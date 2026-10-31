@@ -66,7 +66,7 @@ public static class ShapeVertices2D
         var count = shape.GetVertCount();
         if (count == 0)
         {
-            throw new NotSupportedException($"A {shape.Kind} has no exact finite polygonal convex core.");
+            throw new NotSupportedException($"A {shape.GetKind()} has no exact finite polygonal convex core.");
         }
 
         ArgGuard.ThrowIfTooShort(vertices, count);
@@ -139,7 +139,7 @@ public static class ShapeVertices2D
         var count = shape.GetOutlineVertCount(roundSegments, cornerSegments);
         if (count == 0)
         {
-            throw new NotSupportedException($"A {shape.Kind} has no single finite outline.");
+            throw new NotSupportedException($"A {shape.GetKind()} has no single finite outline.");
         }
 
         ArgGuard.ThrowIfTooShort(vertices, count);

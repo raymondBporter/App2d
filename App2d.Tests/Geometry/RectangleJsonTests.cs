@@ -17,7 +17,8 @@ public sealed class RectangleJsonTests
         Assert.Contains("\"size\"", json);
         Assert.Equal(.5f, JsonDocument.Parse(json).RootElement.GetProperty("angleRadians").GetSingle(), 5);
         Assert.DoesNotContain("\"min\"", json);
-        var back = Assert.IsType<Rectangle2D>(GeometryJson2D.ShapeFromJson(json).Validated());
+        Assert.False(JsonDocument.Parse(json).RootElement.TryGetProperty("kind", out _));
+        var back = JsonSerializer.Deserialize<Rectangle2D>(json, GeometryJson2D.JsonOptions).Validated();
         Assert.Equal(.5f, back.AngleRadians, 5);
         Assert.Equal(new Vector2(4, 2), back.Size, Near);
     }

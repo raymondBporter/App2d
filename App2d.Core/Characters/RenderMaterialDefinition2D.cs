@@ -1,4 +1,5 @@
 using App2d.Core.Animation;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters;
@@ -19,7 +20,8 @@ public sealed record RenderMaterialDefinition2D
     public string? Texture { get; init; }
     public string? Tint { get; init; }
     public float? Alpha { get; init; }
-    public TextureRegion? Source { get; init; }
+    /// <summary>Normalized image coordinates measured from the top left; null uses the whole image.</summary>
+    public AxisAlignedRectangle2D? Source { get; init; }
     public TextureAnimation? TextureAnimation { get; init; }
     internal AnimationClip2D<TextureFrame>? ResolvedFrames { get; init; }
     internal Vector4 AnimatedTint { get; init; } = Vector4.One;
@@ -95,7 +97,7 @@ public sealed record RenderMaterialDefinition2D
         }
 
         if (Alpha is { } alpha) new Limit(0, 1).Check(alpha, field + ".alpha");
-        Source?.Validate(field + ".source");
+        if (Source is { } source) source.ValidateUvRect(field + ".source");
         if (Texture is not null) CheckTexture(Texture, field + ".texture");
         if (TextureAnimation is not null) _ = TextureAnimation.Compile();
     }

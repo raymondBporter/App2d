@@ -51,7 +51,7 @@ public sealed class ShapeSerialization2DTests
         var type = shape.GetType();
         Assert.True(type.IsValueType);
         Assert.True(type.IsDefined(typeof(System.Runtime.CompilerServices.IsReadOnlyAttribute), inherit: false));
-        Assert.Equal(kind, shape.Kind);
+        Assert.Equal(kind, shape.GetKind());
         Assert.Equal(type, shape.Validated().GetType());
     }
 
@@ -75,7 +75,7 @@ public sealed class ShapeSerialization2DTests
         var original = CreateShape(shapeName);
         var json = original.ToJson();
         using var document = JsonDocument.Parse(json);
-        Assert.Equal(kind, original.Kind);
+        Assert.Equal(kind, original.GetKind());
         Assert.Equal(kind, document.RootElement.GetProperty("kind").GetString());
         var restored = GeometryJson2D.ShapeFromJson(json).Validated();
         Assert.Equal(original.GetType(), restored.GetType());
@@ -91,12 +91,12 @@ public sealed class ShapeSerialization2DTests
     [Fact]
     public void AxisAlignmentAndCompositePartsSurviveTheRoundTrip()
     {
-        var rectangle = Assert.IsType<AxisAlignedRectangle2D>(GeometryJson2D.ShapeFromJson(AxisAlignedRectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson()));
-        Assert.Equal(ShapeKinds2D.AxisAlignedRectangle, rectangle.Kind);
+        var rectangle = Assert.IsType<AxisAlignedRectangle2D>(GeometryJson2D.ShapeFromJson(AxisAlignedRectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson<IShape2D>()));
+        Assert.Equal(ShapeKinds2D.AxisAlignedRectangle, ((IShape2D)rectangle).GetKind());
         Assert.IsType<AxisAlignedRectangle2D>(rectangle.Validated());
-        Assert.IsType<Rectangle2D>(GeometryJson2D.ShapeFromJson(Rectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson()).Validated());
+        Assert.IsType<Rectangle2D>(GeometryJson2D.ShapeFromJson(Rectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson<IShape2D>()).Validated());
 
-        var composite = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1), Triangle2D.Builder.Create(new(0, 0), new(1, 0), new(0, 1)), AxisAlignedRectangle2D.Builder.Create(Vector2.Zero, Vector2.One)]).ToJson()));
+        var composite = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1), Triangle2D.Builder.Create(new(0, 0), new(1, 0), new(0, 1)), AxisAlignedRectangle2D.Builder.Create(Vector2.Zero, Vector2.One)]).ToJson<IShape2D>()));
         Assert.Collection(composite.Parts.ToArray(), part => Assert.IsType<Circle2D>(part), part => Assert.IsType<Triangle2D>(part), part => Assert.IsType<AxisAlignedRectangle2D>(part));
         Assert.IsType<AxisAlignedRectangle2D>(composite.Validated().Parts[2]);
     }
@@ -151,12 +151,12 @@ public sealed class ShapeSerialization2DTests
     public void CustomShapesNeedAnExplicitDefinition()
     {
         Assert.Throws<NotSupportedException>(() => new CustomShape().ToJson());
-        Assert.Throws<ArgumentNullException>(() => GeometryJson2D.ToJson(null!));
+        Assert.Throws<ArgumentNullException>(() => GeometryJson2D.ToJson<IGeometryValue2D>(null!));
     }
 
     private sealed class CustomShape : IShape2D
     {
-        public string Kind => "custom";
+        public string GetKind() => "custom";
         public float Area => 1;
         public bool ContainsPoint(Vector2 point) => false;
     }

@@ -16,9 +16,6 @@ public readonly partial record struct RoundedRectangle2D : IConvexShape2D
 {
     private readonly Vector2 _axis;
 
-    /// <inheritdoc/>
-    public string Kind => ShapeKinds2D.RoundedRectangle;
-
     /// <summary>Creates a rounded rectangle from its center, outer half extents, corner radius and axis.</summary>
     /// <param name="center">The finite local center.</param>
     /// <param name="halfSize">Finite, positive outer half extents along the shape's own axes.</param>

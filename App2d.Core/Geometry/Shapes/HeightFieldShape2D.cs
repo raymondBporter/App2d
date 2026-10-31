@@ -26,7 +26,6 @@ public readonly record struct HeightFieldShape2D : IShape2D, IHeightField2D
         YMin = yMin;
     }
 
-    public string Kind => ShapeKinds2D.HeightField;
     public ReadOnlySpan<Vector2> Surface { get => _surface; init => _surface = value.ToArray(); }
     public float YMin { get; init; }
     public float XMin => Profile.XMin;

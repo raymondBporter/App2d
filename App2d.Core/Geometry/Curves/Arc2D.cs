@@ -6,8 +6,6 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A circular arc with a signed sweep; positive angles turn counter-clockwise in Y-up coordinates.</summary>
 public readonly partial record struct Arc2D : ICurve2D
 {
-    public string Kind => CurveKinds2D.Arc;
-
     public Arc2D(Vector2 center, float radius, float startAngleRadians, float sweepAngleRadians)
     {
         Center = center;

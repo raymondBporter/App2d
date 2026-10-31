@@ -93,8 +93,10 @@ public sealed class ParameterBindingTests
         var values = variant.Parameters;
         var build = new PersonBuild
         {
-            Legs = values.GetValueOrDefault(PersonBuild.LegsId, 1), Torso = values.GetValueOrDefault(PersonBuild.TorsoId, 1),
-            Arms = values.GetValueOrDefault(PersonBuild.ArmsId, 1), Width = values.GetValueOrDefault(PersonBuild.WidthId, 1),
+            Legs = values.GetValueOrDefault(PersonBuild.LegsId, 1),
+            Torso = values.GetValueOrDefault(PersonBuild.TorsoId, 1),
+            Arms = values.GetValueOrDefault(PersonBuild.ArmsId, 1),
+            Width = values.GetValueOrDefault(PersonBuild.WidthId, 1),
             Head = values.GetValueOrDefault(PersonBuild.HeadId, 1)
         };
         var (rest, parts) = LegacyPersonBuild(standard, build);

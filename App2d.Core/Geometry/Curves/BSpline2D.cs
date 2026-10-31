@@ -11,8 +11,6 @@ namespace App2d.Core.Geometry.Curves;
 /// </summary>
 public readonly partial record struct BSpline2D : ICurve2D
 {
-    public string Kind => CurveKinds2D.BSpline;
-
     private readonly Vector2[]? _controlPoints;
     private static readonly ConditionalWeakTable<Vector2[], Dictionary<int, Prepared>> PreparedCurves = [];
 

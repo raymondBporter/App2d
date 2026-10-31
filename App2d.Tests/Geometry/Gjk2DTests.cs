@@ -176,7 +176,7 @@ public sealed class Gjk2DTests
 
     private sealed class CustomDisk : IConvexShape2D
     {
-        public string Kind => "customDisk";
+        public string GetKind() => "customDisk";
         public float Area => MathF.PI;
         public bool ContainsPoint(Vector2 point) => point.LengthSquared() <= 1f;
         public Vector2 GetSupportPoint(Vector2 direction) => Vector2.Normalize(direction);

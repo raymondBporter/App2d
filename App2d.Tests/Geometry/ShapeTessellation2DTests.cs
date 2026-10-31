@@ -202,7 +202,7 @@ public sealed class ShapeTessellation2DTests
 
     private readonly record struct CustomRectangle : IShape2D, IRect2D
     {
-        public string Kind => "test-rectangle";
+        public string GetKind() => "test-rectangle";
         public Vector2 Min => Vector2.Zero;
         public Vector2 Max => new(3, 2);
         public float Area => 6;

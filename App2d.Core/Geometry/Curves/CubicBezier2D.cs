@@ -8,8 +8,6 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A cubic Bezier curve with normalized parameter range [0, 1].</summary>
 public readonly partial record struct CubicBezier2D : ICurve2D
 {
-    public string Kind => CurveKinds2D.CubicBezier;
-
     public CubicBezier2D(Vector2 start, Vector2 control1, Vector2 control2, Vector2 end)
     {
         Start = start;

@@ -111,10 +111,10 @@ public sealed class HeightFieldShape2DTests
         _ = functionShape.ContainsPoint(new(50f, -5f));
         _ = ShapeDistance2D.Distance(new Vector2(50f, 10f), functionShape);
         Assert.Equal(callsAfterBaking, calls);
-        var restored = Assert.IsType<HeightFieldShape2D>(GeometryJson2D.ShapeFromJson(functionShape.ToJson()).Validated());
+        var restored = Assert.IsType<HeightFieldShape2D>(GeometryJson2D.ShapeFromJson(functionShape.ToJson<IShape2D>()).Validated());
         Assert.Equal(functionShape.Surface.ToArray(), restored.Surface.ToArray());
         Assert.Equal(functionShape.YMin, restored.YMin);
-        Assert.Equal(functionShape.ToJson(), restored.ToJson());
+        Assert.Equal(functionShape.ToJson<IShape2D>(), restored.ToJson<IShape2D>());
     }
 
     [Fact]

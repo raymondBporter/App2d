@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Shapes;
 
@@ -13,7 +14,7 @@ public sealed class OrientedShapeEqualityTests
         var initialized = new Rectangle2D { Center = new(1, 1), HalfSize = new(2, 1) };
         Assert.Equal(built, initialized);
         Assert.Equal(built.GetHashCode(), initialized.GetHashCode());
-        Assert.Equal(built, GeometryJson2D.ShapeFromJson(initialized.ToJson()));
+        Assert.Equal(built, GeometryJson2D.ShapeFromJson(initialized.ToJson<IShape2D>()));
         Assert.NotEqual(built, Rectangle2D.Builder.FromSize(4, 2, new(1, 1), .1f));
     }
 
@@ -24,7 +25,7 @@ public sealed class OrientedShapeEqualityTests
         var initialized = new RoundedRectangle2D { Center = new(1, 1), HalfSize = new(2, 1), Radius = .5f };
         Assert.Equal(built, initialized);
         Assert.Equal(built.GetHashCode(), initialized.GetHashCode());
-        Assert.Equal(built, GeometryJson2D.ShapeFromJson(initialized.ToJson()));
+        Assert.Equal(built, GeometryJson2D.ShapeFromJson(initialized.ToJson<IShape2D>()));
     }
 
     [Fact]
@@ -34,6 +35,6 @@ public sealed class OrientedShapeEqualityTests
         var initialized = new Ellipse2D { Radii = new(2, 1), Center = new(1, 1) };
         Assert.Equal(built, initialized);
         Assert.Equal(built.GetHashCode(), initialized.GetHashCode());
-        Assert.Equal(built, GeometryJson2D.ShapeFromJson(initialized.ToJson()));
+        Assert.Equal(built, GeometryJson2D.ShapeFromJson(initialized.ToJson<IShape2D>()));
     }
 }

@@ -380,7 +380,7 @@ public sealed class ShapeArea2DTests
         var composite = CompositeShape2D.Builder.Create(parts, includeOverlap: false, areaOutlineSegments: 3);
         Assert.Equal(12 + 2 * MathF.PI, composite.Area, 5);
         Assert.Equal(16 + 2 * MathF.PI, CompositeShape2D.Builder.Create(parts).Area, 5);
-        var restored = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(composite.ToJson()).Validated());
+        var restored = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(composite.ToJson<IShape2D>()).Validated());
         Assert.Equal(2, restored.Parts.Length);
         foreach (var part in restored.Parts)
         {
@@ -410,7 +410,7 @@ public sealed class ShapeArea2DTests
         Assert.Equal(MathF.PI + 4, CompositeShape2D.Builder.Create(parts).Area);
         var composite = CompositeShape2D.Builder.Create(parts, includeOverlap: false, areaOutlineSegments: 96);
         Assert.Equal(MathF.PI / 2 + 4, composite.Area, 5);
-        var json = composite.ToJson();
+        var json = composite.ToJson<IShape2D>();
         var restored = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(json).Validated());
         Assert.False(restored.IncludeOverlap);
         Assert.Equal(96, restored.AreaOutlineSegments);
@@ -507,7 +507,7 @@ public sealed class ShapeArea2DTests
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(1, 2), new(1, 1), axis.PerpCcw)]), 5);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(2, 1), new(1, 1), Vector2.UnitY), Ellipse2D.Builder.Create(new(2, 1), new(1, 1), -Vector2.UnitY)]), 5);
         Assert.Equal(MathF.PI, ShapeArea2D.Union([Circle2D.Builder.Create(1), Ellipse2D.Builder.Create(Vector2.One, default, axis)]), 5);
-        var roundTrip = (Ellipse2D)GeometryJson2D.ShapeFromJson(ellipse.ToJson());
+        var roundTrip = (Ellipse2D)GeometryJson2D.ShapeFromJson(ellipse.ToJson<IShape2D>());
         Assert.InRange(MathF.Abs(ShapeArea2D.Union([ellipse, roundTrip]) - ellipse.Area), 0f, 1e-5f);
     }
 
@@ -728,7 +728,7 @@ public sealed class ShapeArea2DTests
 
     private sealed class CountingCircle : IConvexShape2D
     {
-        public string Kind => "CountingCircle";
+        public string GetKind() => "CountingCircle";
         public float Area => MathF.PI;
         public int SupportReads { get; private set; }
         public bool ContainsPoint(Vector2 point) => point.LengthSquared() <= 1;
@@ -741,7 +741,7 @@ public sealed class ShapeArea2DTests
 
     internal sealed class PointShape : IConvexShape2D
     {
-        public string Kind => "Point";
+        public string GetKind() => "Point";
         public float Area => 0;
         public bool ContainsPoint(Vector2 point) => point == Vector2.Zero;
         public Vector2 GetSupportPoint(Vector2 direction) => Vector2.Zero;

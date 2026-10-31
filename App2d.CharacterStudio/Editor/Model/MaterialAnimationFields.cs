@@ -1,4 +1,5 @@
 using App2d.Core.Characters;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using ImGuiNET;
@@ -58,14 +59,19 @@ internal static class MaterialAnimationFields
         Ui.Help("Frames use the pose time; image dimensions do not change this rectangle's size or anchor. Animate alpha and tint in its piece channels.");
     }
 
-    private static void Region(string label, TextureRegion? region, Action<TextureRegion?> set)
+    private static void Region(string label, AxisAlignedRectangle2D? region, Action<AxisAlignedRectangle2D?> set)
     {
-        var crop = region is not null && region != new TextureRegion();
-        if (ImGui.Checkbox(label, ref crop)) set(crop ? new() { Width = .5f } : new());
-        if (!crop || region is null) return;
-        var xy = new Vector2(region.X, region.Y);
-        if (Ui.Drag2(label + " X / Y", ref xy, .005f, 0, 1)) set(region with { X = xy.X, Y = xy.Y });
-        var size = new Vector2(region.Width, region.Height);
-        if (Ui.Drag2(label + " width / height", ref size, .005f, .00001f, 1)) set(region with { Width = size.X, Height = size.Y });
+        var bounds = region ?? AxisAlignedRectangle2D.UnitRect;
+        var crop = bounds != AxisAlignedRectangle2D.UnitRect;
+        if (ImGui.Checkbox(label, ref crop))
+        {
+            set(crop ? AxisAlignedRectangle2D.Builder.CreateUvRect(0, 0, .5f, 1) : AxisAlignedRectangle2D.UnitRect);
+            return;
+        }
+        if (!crop) return;
+        var xy = bounds.Min;
+        if (Ui.Drag2(label + " X / Y", ref xy, .005f, 0, 1)) set(AxisAlignedRectangle2D.Builder.Create(xy, xy + bounds.Size));
+        var size = bounds.Size;
+        if (Ui.Drag2(label + " width / height", ref size, .005f, .00001f, 1)) set(AxisAlignedRectangle2D.Builder.Create(bounds.Min, bounds.Min + size));
     }
 }

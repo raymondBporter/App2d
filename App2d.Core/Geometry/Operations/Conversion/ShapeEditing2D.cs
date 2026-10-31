@@ -19,7 +19,7 @@ public static class ShapeEditing2D
     /// <exception cref="InvalidOperationException">This definition has no finite bounds to fit.</exception>
     public static IShape2D WithKind(this IShape2D definition, string kind)
     {
-        if (kind == definition.Kind)
+        if (kind == definition.GetKind())
         {
             return definition;
         }
@@ -27,7 +27,7 @@ public static class ShapeEditing2D
         var bounds = ShapeBounds2D.Calculate(definition.Validated());
         if (!bounds.IsFinite)
         {
-            throw new InvalidOperationException($"A {definition.Kind} has no finite bounds to re-author from.");
+            throw new InvalidOperationException($"A {definition.GetKind()} has no finite bounds to re-author from.");
         }
 
         var center = bounds.Center;

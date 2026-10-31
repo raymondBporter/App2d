@@ -520,7 +520,7 @@ internal sealed partial class EditorSmoke
             var window = s.Entity?.Actions["attack"].Hits[0];
             s.Seek((window?.Start ?? 0) + .02f);
             var preview = s.EvaluateEntity();
-            Record(preview is not null && preview.Colliders.First(c => c.Id == "beak").Enabled && preview.Attacks.Count == 1, "inside the swoop's rush window the beak sensor is enabled at the jaw");
+            Record(preview?.Colliders.First(c => c.Id == "beak").Enabled == true && preview.Attacks.Count == 1, "inside the swoop's rush window the beak sensor is enabled at the jaw");
             s.Selection.Collider = "beak";
             shell.Viewport.Fit(s.Scene().FirstOrDefault());
         }),

@@ -31,7 +31,8 @@ public static class GeometryJson2D
 
     public static JsonSerializerOptions JsonOptions => JsonProfiles.Geometry;
 
-    public static string ToJson(this IGeometryValue2D geometry)
+    /// <summary>Writes a kind tag only when the declared geometry type is an interface.</summary>
+    public static string ToJson<T>(this T geometry) where T : IGeometryValue2D
     {
         ArgumentNullException.ThrowIfNull(geometry);
         return JsonSerializer.Serialize(geometry, JsonOptions);

@@ -11,9 +11,6 @@ namespace App2d.Core.Shapes;
 /// <summary>A filled capsule in local space: every point within <see cref="Radius"/> of the spine segment.</summary>
 public readonly partial record struct Capsule2D : IConvexShape2D
 {
-    /// <inheritdoc/>
-    public string Kind => ShapeKinds2D.Capsule;
-
     /// <summary>Creates a capsule.</summary>
     /// <param name="start">The finite spine start; may equal <paramref name="end"/> for a circle.</param>
     /// <param name="end">The finite spine end.</param>

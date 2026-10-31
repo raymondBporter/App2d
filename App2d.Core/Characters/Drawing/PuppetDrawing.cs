@@ -326,8 +326,8 @@ public sealed class PuppetDrawing
         var c = At(.5f, .5f);
         var d = At(-.5f, .5f);
         var start = Mesh.Count;
-        var uv = material.Source;
-        Vector2 Uv(float x, float y) => new((uv?.X ?? 0) + x * (uv?.Width ?? 1), (uv?.Y ?? 0) + y * (uv?.Height ?? 1));
+        var uv = material.Source ?? AxisAlignedRectangle2D.UnitRect;
+        Vector2 Uv(float x, float y) => uv.Min + new Vector2(x, y) * uv.Size;
         var layer = depth ?? frame.Layer;
         Mesh.Vertex(a, color, Uv(0, 1), layer);
         Mesh.Vertex(b, color, Uv(1, 1), layer);

@@ -106,7 +106,7 @@ public sealed class ShapeDiameterTests
 
     private sealed class CustomDisk : IConvexShape2D
     {
-        public string Kind => "custom-disk";
+        public string GetKind() => "custom-disk";
         public float Area => MathF.PI * 1.25f * 1.25f;
         public bool ContainsPoint(Vector2 point) => point.Length() <= 1.25f;
         public Vector2 GetSupportPoint(Vector2 direction) => Vector2.Normalize(direction) * 1.25f;

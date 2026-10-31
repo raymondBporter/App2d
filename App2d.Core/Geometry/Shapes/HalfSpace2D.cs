@@ -10,9 +10,6 @@ namespace App2d.Core.Shapes;
 /// </summary>
 public readonly partial record struct HalfSpace2D : IShape2D
 {
-    /// <inheritdoc/>
-    public string Kind => ShapeKinds2D.HalfSpace;
-
     /// <summary>Creates a half-space from normalized data. Builder.Create normalizes and validates input.</summary>
     /// <param name="outwardNormal">The unit normal pointing toward free space.</param>
     /// <param name="offset">The finite signed boundary offset along <paramref name="outwardNormal"/>.</param>

@@ -26,7 +26,7 @@ public sealed class GeometryJson2DTests
         foreach (var kind in GeometryJson2D.DrawableKinds)
         {
             var geometry = GeometryJson2D.CreateDefault(kind);
-            Assert.Equal(kind, geometry.Kind);
+            Assert.Equal(kind, geometry.GetKind());
             using var json = JsonDocument.Parse(geometry.ToJson());
             Assert.Single(json.RootElement.EnumerateObject(), p => p.Name == "kind");
             var model = ModelAuthoring.Empty("geometry-test", "Geometry test");
@@ -104,8 +104,8 @@ public sealed class GeometryJson2DTests
         var shape = new Capsule2D { Start = new(0, 0), End = new(1, 0), Radius = .5f }.Validated();
         var curve = new Arc2D { Center = new(0, 0), Radius = 2, StartAngleRadians = 0, SweepAngleRadians = 1 }.Validated();
 
-        Assert.IsType<Capsule2D>(GeometryJson2D.FromJson(shape.ToJson()));
-        Assert.IsType<Arc2D>(GeometryJson2D.FromJson(curve.ToJson()));
+        Assert.IsType<Capsule2D>(GeometryJson2D.FromJson(shape.ToJson<IGeometryValue2D>()));
+        Assert.IsType<Arc2D>(GeometryJson2D.FromJson(curve.ToJson<IGeometryValue2D>()));
     }
 
     [Fact]

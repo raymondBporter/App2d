@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -62,7 +63,7 @@ public static class JsonProfiles
     {
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         AllowOutOfOrderMetadataProperties = true,
-        Converters = { new Vector2JsonConverter() }
+        Converters = { new Vector2JsonConverter(), new GeometryJsonConverterFactory() }
     });
 
     /// <summary>The prototype puppet file keeps its existing metadata-order contract.</summary>

@@ -31,7 +31,7 @@ public sealed record PartGeometry
     /// <summary>Mesh geometry, mutually exclusive with the planar shape/curve value.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public PartMesh? Mesh { get; set; }
-    [JsonIgnore] public string Kind => SpatialCurve is not null ? "spatial-curve" : Mesh is null ? Geometry?.Kind ?? "?" : "mesh";
+    [JsonIgnore] public string Kind => SpatialCurve is not null ? "spatial-curve" : Mesh is null ? Geometry?.GetKind() ?? "?" : "mesh";
     /// <summary>Authored drawing style.</summary>
     public RenderMaterialDefinition2D? Material { get; set; }
     public GeometryCollision? Collision { get; set; }
@@ -137,7 +137,7 @@ public sealed record PartGeometry
             var built = shape.Validated();
             if (Material is not null && built.GetOutlineVertCount(48) == 0)
             {
-                throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
+                throw new InvalidDataException($"A {shape.GetKind()} cannot be drawn as a part.");
             }
         }
         if (Geometry is ICurve2D curve)

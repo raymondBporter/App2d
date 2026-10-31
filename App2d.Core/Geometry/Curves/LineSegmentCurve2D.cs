@@ -6,8 +6,6 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A finite line segment parameterized from start to end over [0, 1].</summary>
 public readonly partial record struct LineSegmentCurve2D : ICurve2D, ISegment<LineSegmentCurve2D, Vector2>
 {
-    public string Kind => CurveKinds2D.Line;
-
     public LineSegmentCurve2D(Vector2 start, Vector2 end)
     {
         Start = start;

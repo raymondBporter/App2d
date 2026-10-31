@@ -18,9 +18,6 @@ public readonly partial record struct Rectangle2D : IConvexShape2D
 {
     private readonly Vector2 _axis;
 
-    /// <inheritdoc/>
-    public string Kind => ShapeKinds2D.Rectangle;
-
     /// <summary>Creates a rectangle from its center, half extents and axis.</summary>
     /// <param name="center">The finite local center.</param>
     /// <param name="halfSize">Finite, positive half extents along the rectangle's own axes.</param>

@@ -27,7 +27,7 @@ public sealed class PartAnimationTests
             Geometry = Rectangle2D.Builder.FromSize(2, 1), Material = new() { Alpha = .5f, TextureAnimation = new()
             {
                 Loop = loop, Frames = [new() { Texture = "small.png", Seconds = .25f },
-                    new() { Texture = "wide.png", Seconds = .75f, Source = new() { X = .5f, Width = .5f } }]
+                    new() { Texture = "wide.png", Seconds = .75f, Source = AxisAlignedRectangle2D.Builder.CreateUvRect(.5f, 0, .5f, 1) }]
             } } }],
         Layers = [new() { Id = "base", Clip = "sway" }],
         Clips = [new() { Id = "sway", Name = "Sway", Model = "animated-panel", Duration = 2,
@@ -70,6 +70,8 @@ public sealed class PartAnimationTests
         Assert.InRange(Vector3.Distance(worldA, worldB), 1.9999f, 2.0001f);
         Assert.Equal(.5f, vertices.Min(v => v.TextureCoordinate.X));
         Assert.Equal(1f, vertices.Max(v => v.TextureCoordinate.X));
+        Assert.Equal(0f, vertices.Min(v => v.TextureCoordinate.Y));
+        Assert.Equal(1f, vertices.Max(v => v.TextureCoordinate.Y));
         drawing.Clear();
         drawing.AddAttachment(PoseEvaluator.Preview(attachment, LayeredFrame2D.Identity, 1.6));
         drawing.Clear();
@@ -183,7 +185,7 @@ public sealed class PartAnimationTests
         Assert.Empty(still.TextureAnimation!.Frames);
         Assert.Throws<InvalidDataException>(() => (material with { TextureAnimation = new() { Frames = [new() { Texture = "../outside.png" }] } }).Validate("test"));
         Assert.Throws<InvalidDataException>(() => (material with { TextureAnimation = new() { Frames = [new() { Texture = "valid.png", Seconds = 0 }] } }).Validate("test"));
-        Assert.Throws<InvalidDataException>(() => (material with { Source = new() { X = .5f, Width = .8f } }).Validate("test"));
+        Assert.Throws<InvalidDataException>(() => (material with { Source = AxisAlignedRectangle2D.Builder.Create(new(.5f, 0), new(1.3f, 1)) }).Validate("test"));
         part.Clips[0].Tracks.First(t => t.Kind == MotionClip.AlphaKind).Keys[0].Value = new(1.1f, 0, 0);
         Assert.Throws<InvalidDataException>(part.Validate);
     }

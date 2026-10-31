@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Convex;
@@ -79,7 +80,7 @@ public sealed class Ellipse2DTests
     [Fact]
     public void EllipseJsonRoundTripsAndReadsWithoutAnAngle()
     {
-        Assert.Equal(MathF.PI / 6, Assert.IsType<Ellipse2D>(GeometryJson2D.ShapeFromJson(Tilted.ToJson()).Validated()).AngleRadians, 5);
+        Assert.Equal(MathF.PI / 6, Assert.IsType<Ellipse2D>(GeometryJson2D.ShapeFromJson(Tilted.ToJson<IShape2D>()).Validated()).AngleRadians, 5);
         Assert.True(Assert.IsType<Ellipse2D>(GeometryJson2D.ShapeFromJson("{\"kind\":\"ellipse\",\"center\":{\"x\":0,\"y\":0},\"radii\":{\"x\":2,\"y\":1}}").Validated()).IsAxisAligned);
     }
 }

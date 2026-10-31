@@ -17,9 +17,6 @@ public readonly partial record struct Ellipse2D : IConvexShape2D
 {
     private readonly Vector2 _axis;
 
-    /// <inheritdoc/>
-    public string Kind => ShapeKinds2D.Ellipse;
-
     /// <summary>Default samples for callers requesting a drawable perimeter; collision queries do not use these.</summary>
     public const int DefaultOutlineSegments = 64;
 

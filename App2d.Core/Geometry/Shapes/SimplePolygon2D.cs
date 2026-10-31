@@ -12,9 +12,6 @@ namespace App2d.Core.Shapes;
 /// <summary>A filled simple polygon, including concave outlines, in either winding.</summary>
 public readonly partial record struct SimplePolygon2D : IShape2D
 {
-    /// <inheritdoc/>
-    public string Kind => ShapeKinds2D.SimplePolygon;
-
     private readonly Vector2[]? _vertices;
     private static readonly ConditionalWeakTable<Vector2[], ReadOnlyCollection<Vector2>> Views = [];
     internal IReadOnlyList<Vector2> VertexList => Views.GetValue(_vertices!, static vertices => Array.AsReadOnly(vertices));
