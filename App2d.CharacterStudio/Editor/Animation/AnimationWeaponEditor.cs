@@ -234,7 +234,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
                 if (_weaponDrag == "Turn")
                 {
                     var pointer = MathF.Atan2(center.Y - ViewportFrame.Mouse.Y, ViewportFrame.Mouse.X - center.X);
-                    _weaponStart.Z += MathF.IEEERemainder(pointer - _weaponPointerAngle, MathF.Tau) * speed;
+                    _weaponStart.Z += Angles.WrapSigned(pointer - _weaponPointerAngle) * speed;
                     _weaponPointerAngle = pointer;
                 }
                 else if (_weaponDrag == "Tilt")

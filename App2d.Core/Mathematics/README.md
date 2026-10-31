@@ -16,6 +16,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Vector4Extensions` | `IsFinite()` component query |
 | `Matrix3x2Extensions` | `GetRows()`, `GetColumns()`, `IsFinite()` entry query and transpose direction transform |
 | `Rotation2D` | Rotate vectors or points about a pivot, solve a pivot from two endpoints and a turn, and interpolate an endpoint arc |
+| `Angles` | Generic IEEE floating-point angle wrapping in radians |
 | `Interpolation` | Value blending, optional progress-map application, and inverse lerp |
 | `Clamping` | Generic `Clamp(value, minimum, maximum)` and `Clamp01(value)` scalar helpers |
 | `Progress` | Clamped smoothstep families, their inverses, and unclamped maps with analytic derivatives |
@@ -25,6 +26,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `ProgressMapKind` | Stable JSON names for built-in maps; ordered lists describe composition |
 | `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
 | `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
+| `RigidTransform2D` | Immutable translation and unwrapped rotation; default identity, composition and inverse |
 | `Frame2D` | Immutable origin and two basis axes, forward mapping, inversion, and rotation from radians or degrees |
 | `Affine2D` | Editable translation, rotation, independent axis scales and shear; shared by scene objects and authored rigs |
 
@@ -101,9 +103,10 @@ must be finite. Zero values and singular matrices are finite; a finite vector's 
 (channel arithmetic can overflow). `Similarity2D.IsFinite` checks both axes, translation, and scale; it does not
 require nonzero scale. Use `TryInverse` or `Similarity2D.TryFromMatrix` for those stricter requirements.
 
-There are two transform families. `Similarity2D` is the uniform-scale, orthogonal subset used by collision.
+`RigidTransform2D` stores only translation and rotation, with default identity. `Similarity2D` adds uniform scale and
+optional reflection for collision; `Affine2D` permits independent axis scales and shear.
 `Affine2D` is the general affine transform shared by scene objects, rendering, and animation. Nonuniform scales and
-composition can introduce shear. Both use `Matrix3x2`'s row-vector convention: local * parent.
+composition can introduce shear. All use `Matrix3x2`'s row-vector convention: local * parent.
 
 `Frame2D` stores an evaluated matrix as an immutable origin and basis. It is useful for
 placing local offsets, projecting directions, and optical coordinate frames without editable channels:
@@ -145,7 +148,9 @@ of making temporary editor-transform copies. Matrix evaluation itself performs n
 For a snapshot, use `var saved = transform with { };` and restore with `transform.CopyFrom(saved)`. A copy owns its
 cache and does not copy event subscribers. Record equality compares the seven channels, never cache/version state.
 `Affine2D` replaces the former `BoneTransform2D`, `Transform2D`, and `TransformState2D`; there is no additional snapshot
-transform type. Rigid motions and isometries can use unit-scale `Similarity2D` until an API needs a stricter type.
+transform type. `RigidTransform2D` is the stricter translation-and-rotation value; use `Similarity2D` when reflection
+or uniform scale is part of the operation. `RigidTransform2D.Then(parent)` composes local before parent and adds
+their unwrapped rotations; `Inverse()` reverses it. `ToFrame()` carries it into a general affine frame.
 
 ```csharp
 var local = new Affine2D { Position = new(2, 3), Rotation = .4f, Scale = new(2, 1), ShearY = .2f };
@@ -175,6 +180,10 @@ var authored = new Polar2D(radius: 24, angleRadians: 3 * MathF.Tau + heading);
 ```
 
 Angles are radians unless a method explicitly names degrees, increasing counter-clockwise from +X in Y-up coordinates.
+`Angles.WrapSigned(radians)` works with IEEE floating-point types, including float and double. Its IEEE remainder
+range is **[-PI, PI]**, with both half-turn signs possible; it does not choose a unique side at the seam. Use it for
+angle differences, not stored animation rotations whose full turns matter. A matrix's `matrix.X.AngleRadians` is the
+heading of its transformed local +X axis, not a unique decomposition of a reflected or sheared transform.
 In a screen coordinate system where Y points down, convert the Y component explicitly
 when you want the same visual convention. `Vector2.FromAngleDegrees(angle)` shares
 the direction convention of `Vector2.FromAngle(radians)`.

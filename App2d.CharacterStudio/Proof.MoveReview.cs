@@ -2,6 +2,7 @@ using App2d.CharacterStudio.CharacterSeeds.PlayerMoves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Json;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
@@ -291,7 +292,7 @@ internal sealed partial class ProofRenders
 
             var shoulders = Yaw(pose, Humanoid.LeftShoulder, Humanoid.RightShoulder, Humanoid.Chest) - restShoulders;
             var hips = Yaw(pose, Humanoid.LeftHip, Humanoid.RightHip, Humanoid.Hips) - restHips;
-            var offset = MathF.IEEERemainder(shoulders - hips, MathF.Tau); // back views sit on the +-180 degree seam
+            var offset = Angles.WrapSigned(shoulders - hips); // back views sit on the +-180 degree seam
             turnSum += offset;
             swing = MathF.Max(swing, MathF.Abs(offset));
         }

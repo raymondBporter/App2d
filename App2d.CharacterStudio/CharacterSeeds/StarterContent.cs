@@ -28,9 +28,9 @@ public static class StarterContent
         // back, back-view, sword-hand and gun-hand belong to the player move set (App2d.CharacterSeeds/PlayerMoves); keep them in step.
         model.Sockets =
         [
-            new() { Id = Humanoid.RightGripSocket, Control = Humanoid.RightHand, Frame = Humanoid.Chest, Angle = .12f }, new() { Id = Humanoid.LeftGripSocket, Control = Humanoid.LeftHand, Frame = Humanoid.Chest, Angle = .12f },
-            new() { Id = Humanoid.BackSocket, Control = Humanoid.Chest, Frame = Humanoid.Chest, OffsetX = -.1f, OffsetY = -.08f, Angle = -MathF.PI / 2 - .12f },
-            new() { Id = Humanoid.BackViewSocket, Control = Humanoid.Chest, Frame = Humanoid.Chest, OffsetX = -.13f, OffsetY = .12f, Angle = -MathF.PI / 2 + .55f },
+            new() { Id = Humanoid.RightGripSocket, Control = Humanoid.RightHand, Frame = Humanoid.Chest, Transform = new(default, .12f) }, new() { Id = Humanoid.LeftGripSocket, Control = Humanoid.LeftHand, Frame = Humanoid.Chest, Transform = new(default, .12f) },
+            new() { Id = Humanoid.BackSocket, Control = Humanoid.Chest, Frame = Humanoid.Chest, Transform = new(new(-.1f, -.08f), -MathF.PI / 2 - .12f) },
+            new() { Id = Humanoid.BackViewSocket, Control = Humanoid.Chest, Frame = Humanoid.Chest, Transform = new(new(-.13f, .12f), -MathF.PI / 2 + .55f) },
             new() { Id = Humanoid.SwordSocket, Control = Humanoid.RightHand, Frame = Humanoid.RightShoulder }, new() { Id = Humanoid.GunSocket, Control = Humanoid.RightHand, Frame = Humanoid.RightShoulder },
             .. PersonWardrobe.Sockets(),
         ];
@@ -359,7 +359,7 @@ public static class StarterContent
             Fill = "#c9e0b8"
         };
         shell.Layer = -.05f;
-        model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
+        model.Sockets = [new() { Id = "stinger", Control = "body", Transform = new(new(.5f, -.02f)) }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
         model.Validate();
         return model;

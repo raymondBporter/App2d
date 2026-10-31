@@ -41,9 +41,7 @@ public class ResolvedGeometry
                     Control = definition.A,
                     Frame = definition.Frame,
                     Toward = definition.B,
-                    OffsetX = definition.OffsetX,
-                    OffsetY = definition.OffsetY,
-                    Angle = definition.Angle
+                    Transform = new(new(definition.OffsetX, definition.OffsetY), definition.Angle)
                 };
                 if (definition.B is { } toward)
                     RestSpan = Vector2.Distance(model.Rest[definition.A].XY, toward == PartLocation.Origin ? Vector2.Zero : model.Rest[toward].XY);

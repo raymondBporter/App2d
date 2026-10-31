@@ -159,8 +159,7 @@ public sealed class PartAnimationTests
             var drawing = new PuppetDrawing(); drawing.Build(subject.Model, subject.Pose);
             Assert.Equal("wide.png", Assert.Single(drawing.Batches).Texture);
             var expected = part.Motion.CreateMotion().Position(.5);
-            Assert.Equal(expected.X, subject.Model.Attachments[0].Socket.OffsetX);
-            Assert.Equal(expected.Y, subject.Model.Attachments[0].Socket.OffsetY);
+            Assert.Equal(expected, subject.Model.Attachments[0].Socket.Transform.Translation);
             Assert.False(session.Transport.Playing);
             var doc = session.PartDocument!;
             Assert.True(session.Edit(doc, () => doc.Asset.Geometry[0].Material = doc.Asset.Geometry[0].Material! with { Alpha = .2f }));

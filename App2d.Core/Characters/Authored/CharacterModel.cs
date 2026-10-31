@@ -1,4 +1,6 @@
 using App2d.Core.Json;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics.Transforms;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -64,8 +66,8 @@ public sealed record ModelMeasure
 }
 
 /// <summary>
-/// A named attachment frame for faces, equipment and collision. Its origin is Control plus (OffsetX, OffsetY) turned by
-/// Frame's accumulated rotation, plus a drawing-layer offset. Angle supplies its rest XY direction; orient tracks add local 3D rotation. Not structural.
+/// A named attachment frame for faces, equipment and collision. Its rigid local transform is carried by the chosen
+/// control frame, with a separate drawing-layer offset. Orient tracks add local 3D rotation. Not structural.
 /// </summary>
 public sealed record ModelSocket
 {
@@ -75,10 +77,10 @@ public sealed record ModelSocket
     public string? Frame { get; set; }
     /// <summary>When set, local +Y points from Control to this control in XY. Useful for clothing following a torso segment.</summary>
     public string? Toward { get; set; }
-    public float OffsetX { get; set; }
-    public float OffsetY { get; set; }
+    /// <summary>Local XY translation and rest rotation. The authored JSON keeps offsetX, offsetY and angle.</summary>
+    public RigidTransform2D Transform { get; set; }
     public float Layer { get; set; }
-    public float Angle { get; set; }
+    [JsonIgnore] public LayeredFrame2D LocalPlacement => new(Transform.ToFrame(), Layer);
     /// <summary>The slot contract (P10b): the <see cref="Part.Usage"/> of the parts this socket takes; null takes any.</summary>
     public string? Usage { get; set; }
 }
@@ -323,10 +325,10 @@ public sealed class CharacterModel
                 Require(socket.Frame is null or Locomotion || Known(socket.Frame), $"{owner}: socket '{socket.Id}' frames on a nested control while sitting on the wearer's own (path: {Id} > sockets > {socket.Id} > frame).");
                 Require(socket.Toward is null || Known(socket.Toward), $"{owner}: socket '{socket.Id}' points toward a nested control while sitting on the wearer's own (path: {Id} > sockets > {socket.Id} > toward).");
             }
-            new Limit(-100, 100).Check(socket.OffsetX, $"{owner} socket '{socket.Id}' offsetX");
-            new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
+            new Limit(-100, 100).Check(socket.Transform.Translation.X, $"{owner} socket '{socket.Id}' offsetX");
+            new Limit(-100, 100).Check(socket.Transform.Translation.Y, $"{owner} socket '{socket.Id}' offsetY");
             new Limit(-100, 100).Check(socket.Layer, $"{owner} socket '{socket.Id}' layer");
-            new Limit(-10, 10).Check(socket.Angle, $"{owner} socket '{socket.Id}' angle");
+            new Limit(-10, 10).Check(socket.Transform.Rotation, $"{owner} socket '{socket.Id}' angle");
             if (socket.Usage is not null)
             {
                 AuthoredAsset.RequireId(socket.Usage, $"{owner} socket '{socket.Id}' usage");

@@ -20,7 +20,7 @@ public static class AuthoredJson
         var resolver = new DefaultJsonTypeInfoResolver();
         resolver.Modifiers.Add(info =>
         {
-            KeyframeComponents(info);
+            AuthoredComponents(info);
             // Runtime-only members are outside the file schema, including when checking unknown input fields.
             for (var i = info.Properties.Count - 1; i >= 0; i--)
             {
@@ -43,13 +43,35 @@ public static class AuthoredJson
         };
     }
 
-    // Keep the authored file vocabulary at the serialization boundary. Working keys store vectors only.
-    private static void KeyframeComponents(JsonTypeInfo info)
+    // Keep component-based file vocabulary at the boundary. Working values use vectors and transforms.
+    private static void AuthoredComponents(JsonTypeInfo info)
     {
         Components<ClipKey>(info, nameof(ClipKey.Value), ["x", "y", "z"], static (key, i) => key.Value[i], static (key, i, component) => { var value = key.Value; value[i] = component; key.Value = value; });
         Components<SlotColorKey2D>(info, nameof(SlotColorKey2D.Value), ["r", "g", "b", "a"], static (key, i) => key.Value[i], static (key, i, component) => { var value = key.Value; value[i] = component; key.Value = value; });
         Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control1), ["x1", "y1"], static (curve, i) => curve.Control1[i], static (curve, i, component) => { var value = curve.Control1; value[i] = component; curve.Control1 = value; });
         Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control2), ["x2", "y2"], static (curve, i) => curve.Control2[i], static (curve, i, component) => { var value = curve.Control2; value[i] = component; curve.Control2 = value; });
+        Components<ModelSocket>(info, nameof(ModelSocket.Transform), ["offsetX", "offsetY", "angle"],
+            static (socket, i) => i == 2 ? socket.Transform.Rotation : socket.Transform.Translation[i],
+            static (socket, i, component) =>
+            {
+                var transform = socket.Transform;
+                if (i == 2) transform = transform with { Rotation = component };
+                else
+                {
+                    var offset = transform.Translation;
+                    offset[i] = component;
+                    transform = transform with { Translation = offset };
+                }
+                socket.Transform = transform;
+            });
+        if (info.Type == typeof(ModelSocket))
+        {
+            // Preserve the canonical file order: offsetX, offsetY, layer, angle.
+            var angle = info.Properties.Single(property => property.Name == "angle");
+            info.Properties.Remove(angle);
+            var layer = info.Properties.Single(property => property.Name == "layer");
+            info.Properties.Insert(info.Properties.IndexOf(layer) + 1, angle);
+        }
     }
 
     private static void Components<T>(JsonTypeInfo info, string vectorName, string[] names,

@@ -53,8 +53,8 @@ internal static class BoneFrameIk
 
     internal static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 target, int bend, Vector2 zeroTargetDirection)
     {
-        var root = pose.Bones[chain.Root];
-        var joint = pose.Bones[chain.Joint];
+        var root = pose.Controls[chain.Root].Frame.Matrix;
+        var joint = pose.Controls[chain.Joint].Frame.Matrix;
         var first = Segment(chain, model.Nodes[chain.Root], root, joint);
         var second = Segment(chain, model.Nodes[chain.Joint], joint, pose.Bones[chain.End]);
         var rootOrigin = new Vector2(root.M31, root.M32);
@@ -63,23 +63,24 @@ internal static class BoneFrameIk
         // Bend is in the bone frame's handedness, so mirroring a rig mirrors its elbow too.
         var handedness = root.GetDeterminant() < 0 ? -1 : 1;
         var solved = TwoBoneIk2D.SolveExact(rootOrigin, goal, first, second, bend * handedness, zeroTargetDirection);
-        var firstAngle = Angle(solved.Joint - rootOrigin);
-        var secondAngle = Angle(solved.End - solved.Joint);
+        var firstAngle = (solved.Joint - rootOrigin).AngleRadians;
+        var secondAngle = (solved.End - solved.Joint).AngleRadians;
         var limited = Limit(model, pose, chain, rootOrigin, goal, first, second, handedness, ref firstAngle, ref secondAngle);
 
-        var jointPosition = rootOrigin + first * Direction(firstAngle);
-        var endPosition = jointPosition + second * Direction(secondAngle);
-        TransformSubtree(chain.Root, pose.Points[chain.Root], firstAngle - Angle(root));
-        joint = pose.Bones[chain.Joint];
-        TransformSubtree(chain.Joint, new(jointPosition, pose.Points[chain.Joint].Z), secondAngle - Angle(joint));
-        TransformSubtree(chain.End, new(endPosition, target.Z), 0);
+        var jointPosition = rootOrigin + first * Vector2.FromAngle(firstAngle);
+        var endPosition = jointPosition + second * Vector2.FromAngle(secondAngle);
+        var rootState = pose.Controls[chain.Root];
+        TransformSubtree(chain.Root, rootState.Position, rootState.Layer, firstAngle - root.X.AngleRadians);
+        joint = pose.Controls[chain.Joint].Frame.Matrix;
+        TransformSubtree(chain.Joint, jointPosition, pose.Controls[chain.Joint].Layer, secondAngle - joint.X.AngleRadians);
+        TransformSubtree(chain.End, endPosition, target.Z, 0);
         return ChainResult.Of(chain.Id, Vector2.Distance(endPosition, goal), limited);
 
-        void TransformSubtree(string id, Vector3 at, float rotation)
+        void TransformSubtree(string id, Vector2 at, float layer, float rotation)
         {
-            var origin = pose.Points[id];
-            var depth = at.Z - origin.Z;
-            Apply(id, Matrix3x2.CreateTranslation(-origin.X, -origin.Y) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(at.X, at.Y));
+            var origin = pose.Controls[id];
+            var layerOffset = layer - origin.Layer;
+            Apply(id, Matrix3x2.CreateTranslation(-origin.Position) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(at));
             void Apply(string bone, Matrix3x2 delta)
             {
                 // A character-oriented node rides its parent's origin and keeps the character axes: the solve carries it
@@ -87,12 +88,13 @@ internal static class BoneFrameIk
                 var oriented = model.Nodes[bone].CharacterOriented;
                 if (oriented)
                 {
-                    var was = new Vector2(pose.Points[bone].X, pose.Points[bone].Y);
+                    var was = pose.Controls[bone].Position;
                     delta = Matrix3x2.CreateTranslation(Vector2.Transform(was, delta) - was);
                 }
 
-                var frame = pose.Bones[bone] * delta;
-                pose.Place(bone, frame, pose.Points[bone].Z + depth, oriented ? pose.Angles[bone] : Angle(frame));
+                var control = pose.Controls[bone];
+                var frame = control.Frame.Matrix * delta;
+                pose.Place(bone, frame, control.Layer + layerOffset, oriented ? control.Angle : frame.X.AngleRadians);
                 foreach (var child in model.Children[bone])
                 {
                     Apply(child, delta);
@@ -117,10 +119,10 @@ internal static class BoneFrameIk
             return false;
         }
 
-        var parentAngle = rootNode.Parent is null ? 0 : Angle(pose.Bones[rootNode.Parent]);
+        var parentAngle = rootNode.Parent is null ? 0 : pose.Bones[rootNode.Parent].X.AngleRadians;
         var parentHand = rootNode.Parent is null ? 1 : pose.Bones[rootNode.Parent].GetDeterminant() < 0 ? -1 : 1;
-        float RootLocal(float a) => parentHand * Wrap(a - parentAngle);
-        float JointLocal(float a1, float a2) => rootHand * Wrap(a2 - a1);
+        float RootLocal(float a) => parentHand * Angles.WrapSigned(a - parentAngle);
+        float JointLocal(float a1, float a2) => rootHand * Angles.WrapSigned(a2 - a1);
         var rootState = rootNode.Limit is { } r0 ? r0.Evaluate(r0.Unwrap(RootLocal(firstAngle))) : (ConstraintLimitEvaluation1D?)null;
         var jointState = jointNode.Limit is { } j0 ? j0.Evaluate(j0.Unwrap(JointLocal(firstAngle, secondAngle))) : (ConstraintLimitEvaluation1D?)null;
         var limited = false;
@@ -133,7 +135,7 @@ internal static class BoneFrameIk
             var aim = goal - rootOrigin;
             if (aim.LengthSquared() > 1e-12f)
             {
-                firstAngle = Angle(aim) - Angle(shape);
+                firstAngle = aim.AngleRadians - shape.AngleRadians;
             }
 
             if (rootNode.Limit is { } rootLimit)
@@ -148,10 +150,10 @@ internal static class BoneFrameIk
             limited = true;
             // The upper segment is held at its bound; the lower one aims at the target from the fixed elbow.
             firstAngle = parentAngle + parentHand * heldRoot.Target;
-            var aim = goal - (rootOrigin + first * Direction(firstAngle));
+            var aim = goal - (rootOrigin + first * Vector2.FromAngle(firstAngle));
             if (aim.LengthSquared() > 1e-12f)
             {
-                secondAngle = Angle(aim);
+                secondAngle = aim.AngleRadians;
             }
 
             if (jointNode.Limit is { } jointLimit)
@@ -173,9 +175,4 @@ internal static class BoneFrameIk
         return limited;
     }
 
-    private static float Angle(Vector2 v) => MathF.Atan2(v.Y, v.X);
-    private static float Angle(Matrix3x2 frame) => MathF.Atan2(frame.M12, frame.M11);
-    private static Vector2 Direction(float angle) => new(MathF.Cos(angle), MathF.Sin(angle));
-    /// <summary>An angle wrapped into (-pi, pi].</summary>
-    private static float Wrap(float angle) => MathF.IEEERemainder(angle, MathF.Tau);
 }

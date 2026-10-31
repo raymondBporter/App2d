@@ -20,6 +20,18 @@ into its serialized x/y/z values, as do the planar evaluator's coordinate lookup
 domain explicitly. Its packed points must not be treated as spatial geometry; character bindings resolve them
 into a contour's positions and layer attributes. Spatial rig joints are a separate future change.
 
+`EvaluatedPose.Controls` is the single stored dictionary of `EvaluatedControl2D` values: an affine `LayeredFrame2D`
+and an unwrapped angle. `Position` is XY and `Layer` is separate. The angle cannot be recovered from matrix axes
+without losing complete turns. The older `Points`, `Bones` and `Angles` dictionaries are live read-only projections,
+not independent stores; `World` remains a compatibility lookup packing XY and layer. `RigNode.Rest` is also a derived
+compatibility value, not another stored position. `RigNode.Layer` is parent-local; `RestLayer` is accumulated.
+
+`ModelSocket.Transform` is a `RigidTransform2D`, with independent `Layer`. Its `LocalPlacement` supplies the general
+frame needed when its carrier has scale or reflection. Socket JSON still writes sparse `offsetX`, `offsetY`, `layer`
+and `angle` components through `AuthoredJson`; the transform object is the in-memory representation. Bone setup is
+a similarity (uniform scale and optional reflection), so evaluated bones retain general frames rather than being
+forced into rigid transforms. `SocketAngles` remains a real three-axis orientation, not a position or drawing layer.
+
 The fixed-camera `PointCharacterRenderer` uses the existing actor-local depth convention. At its GPU submission
 boundary, `CharacterMesh.Buffer` encodes `physicalZ + layer` as draw depth. Stored geometry and bounds retain real
 positions. `CharacterMesh.CopySpatialTo` exports only physical positions for `Renderer3D`; arbitrary 3D compositing

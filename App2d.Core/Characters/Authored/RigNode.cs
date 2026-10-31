@@ -185,15 +185,15 @@ public sealed record RigNode(
 {
     public Vector2 ScaleVector => Setup.ScaleVector;
     public float Rotation => Setup.Rotation;
+    /// <summary>The parent-local setup layer; RestLayer is the accumulated layer in the character frame.</summary>
     public float Layer => Setup.Layer;
     public bool CharacterOriented => Link?.Orientation == RigLinkOrientations.Character;
-    /// <summary>The rest position in the character frame at the rest layer.</summary>
+    /// <summary>Compatibility view packing the rest XY origin and drawing layer. No physical Z is stored here.</summary>
     public Vector3 Rest => new(RestFrame.M31, RestFrame.M32, RestLayer);
     /// <summary>The setup origin in the parent's local axes, before animation: the link's bound position or the setup translation.</summary>
     public Vector2 Origin(float parentLength) => Link is { } link ? link.Origin(parentLength) : Setup.Translation;
 }
 
-/// <summary>Compiles authored controls into canonical nodes and their rest frame graph.</summary>
 /// <summary>Compiles authored controls into canonical nodes and their rest frame graph.</summary>
 internal static class RigGraph
 {

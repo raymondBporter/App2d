@@ -224,7 +224,7 @@ internal sealed partial class ProofRenders
             var (Guard, Tip) = LabBlade(model, clip, t, props, sockets)!.Value;
             var forearm = p.Points[Humanoid.RightHand] - p.Points[Humanoid.RightElbow];
             var along = Tip - Guard;
-            return float.RadiansToDegrees(MathF.Abs(MathF.IEEERemainder(MathF.Atan2(along.Y, along.X) - MathF.Atan2(forearm.Y, forearm.X), MathF.Tau)));
+            return float.RadiansToDegrees(MathF.Abs(Angles.WrapSigned(along.XY.AngleRadians - forearm.XY.AngleRadians)));
         }).ToArray();
         // All out: the elbow's bend (0 = locked straight) at contact and in the held follow-through.
         float Bend(float t)

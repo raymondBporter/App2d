@@ -48,20 +48,16 @@ internal static partial class PlayerMoves
             Id = Humanoid.BackSocket,
             Control = Humanoid.Chest,
             Frame = Humanoid.Chest,
-            OffsetX = SheathGrip.X,
-            OffsetY = SheathGrip.Y,
-            Layer = .2f,
-            Angle = SheathAngle
+            Transform = new(SheathGrip, SheathAngle),
+            Layer = .2f
         },
         new ModelSocket()
         {
             Id = Humanoid.BackViewSocket,
             Control = Humanoid.Chest,
             Frame = Humanoid.Chest,
-            OffsetX = BackViewGrip.X,
-            OffsetY = BackViewGrip.Y,
-            Layer = -.2f,
-            Angle = BackViewAngle
+            Transform = new(BackViewGrip, BackViewAngle),
+            Layer = -.2f
         },
         new ModelSocket()
         {

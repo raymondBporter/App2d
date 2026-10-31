@@ -32,8 +32,8 @@ public sealed class ModuleExtractionTests : IDisposable
         stand.Controls.Add(new() { Id = "root", Rest = new(0, 1, 0) });
         stand.Controls.Add(new() { Id = "head", Parent = "root", Rest = new(0, 1.3f, 0) });
         stand.Parts.Add(new() { Id = "beam", A = "root", B = "head", Geometry = Core.Shapes.Ellipse2D.Builder.Create(new(.05f, .15f)), Material = new() { Fill = "#888888" } });
-        stand.Sockets.Add(new() { Id = "left-seat", Control = "root", OffsetX = -.6f, Frame = CharacterModel.Locomotion, Usage = usage });
-        stand.Sockets.Add(new() { Id = "right-seat", Control = "root", OffsetX = .6f, Frame = CharacterModel.Locomotion, Usage = usage });
+        stand.Sockets.Add(new() { Id = "left-seat", Control = "root", Transform = new(new(-.6f, 0)), Frame = CharacterModel.Locomotion, Usage = usage });
+        stand.Sockets.Add(new() { Id = "right-seat", Control = "root", Transform = new(new(.6f, 0)), Frame = CharacterModel.Locomotion, Usage = usage });
         stand.Validate();
         return stand;
     }

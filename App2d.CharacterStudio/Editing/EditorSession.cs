@@ -419,8 +419,7 @@ public sealed class EditorSession
             var time = ShowRest ? 0 : Transport.Time;
             var position = _partPreview.Value.Motion?.Position(time) ?? Vector2.Zero;
             var socket = model.Attachments[0].Socket;
-            socket.OffsetX = position.X;
-            socket.OffsetY = position.Y;
+            socket.Transform = socket.Transform with { Translation = position };
             var pose = PoseEvaluator.Sample(model, null, time, input: new(Expression) { Clock = time });
             return [new(model.Id, model, pose, null)];
         }

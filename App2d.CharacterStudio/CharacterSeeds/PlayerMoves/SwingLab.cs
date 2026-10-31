@@ -103,7 +103,7 @@ internal static class SwingLab
         {
             if (!float.IsNaN(_lastBlade))
             {
-                angle = _lastBlade + MathF.IEEERemainder(angle - _lastBlade, MathF.Tau);
+                angle = _lastBlade + Angles.WrapSigned(angle - _lastBlade);
             }
 
             return _lastBlade = angle;

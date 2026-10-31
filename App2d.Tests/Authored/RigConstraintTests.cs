@@ -341,7 +341,7 @@ public sealed class RigConstraintTests
                 new() { Id = "payload", Parent = "tool", Node = RigNodeKinds.Bone, Local = new() { X = .2f, Y = .3f, Layer = .1f } }
             ],
             Constraints = [new ModelChain { Id = "reach", Root = "beam", Joint = "hinge", End = "tool" }],
-            Sockets = [new() { Id = "socket", Control = "tool", OffsetX = .2f }]
+            Sockets = [new() { Id = "socket", Control = "tool", Transform = new(new(.2f, 0)) }]
         };
         ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "beam");
         model.Validate();

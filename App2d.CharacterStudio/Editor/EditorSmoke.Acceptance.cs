@@ -5,6 +5,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Constraints;
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -81,7 +82,7 @@ internal sealed partial class EditorSmoke
             var shin = s.Assets.Resolve(Walker)!.Nodes["left-knee"].Length;
             Check(s.Edit(basis, () =>
             {
-                basis.Asset.Sockets.Add(new() { Id = "left-shin", Control = "left-knee", Frame = "left-knee", OffsetX = shin / 2 });
+                basis.Asset.Sockets.Add(new() { Id = "left-shin", Control = "left-knee", Frame = "left-knee", Transform = new(new(shin / 2, 0)) });
                 ModelAuthoring.AddPart(basis.Asset, new Core.Geometry.Curves.LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "left-knee", "left-foot");
                 basis.Asset.Validate();
             }), s);
@@ -246,7 +247,7 @@ internal sealed partial class EditorSmoke
             var pose = s.Evaluate(Walker)!.Pose;
             var arm = pose.Chains.Single(c => c.Chain == Humanoid.LeftArm);
             Record(MathF.Abs(pose.Angles[Humanoid.LeftShoulder] - model.Nodes[Humanoid.LeftShoulder].RestAngle - .5f) < 1e-4f, "an explicit angle key turns the shoulder pivot by exactly its value");
-            Record(pose.Limits["crest"].State == ConstraintLimitState1D.Upper && MathF.Abs(MathF.IEEERemainder(pose.Angles["crest"] - pose.Angles[Humanoid.Head] - (MathF.PI / 2 + .6f), MathF.Tau)) < 1e-3f,
+            Record(pose.Limits["crest"].State == ConstraintLimitState1D.Upper && MathF.Abs(Angles.WrapSigned(pose.Angles["crest"] - pose.Angles[Humanoid.Head] - (MathF.PI / 2 + .6f))) < 1e-3f,
                 "a normalized bend of 1 lands the crest exactly on its upper limit, parent-local");
             Record(arm.Limited && !arm.Reached && pose.Limits["left-elbow"].State != ConstraintLimitState1D.Inactive,
                 $"a target that needs the elbow past its adjusted limit is held at the bound and reported unreached by {arm.Residual:F3}");
@@ -529,7 +530,7 @@ internal sealed partial class EditorSmoke
             model.Controls.Add(new() { Id = "root", Rest = new(0, .92f, 0) });
             model.Parts.Add(new() { Id = "root-mark", A = "root", Geometry = Ellipse2D.Builder.Create(new(.02f, .02f)), Material = new() { Fill = "#000000" }, Hidden = true });
             model.Sockets.Add(new() { Id = "mount", Control = "root", Frame = CharacterModel.Locomotion, Usage = ModulePlans.LowerBody });
-            model.Sockets.Add(new() { Id = "saddle", Control = lower + Part.Namespace + "body", OffsetX = .42f, OffsetY = .98f, Usage = ModulePlans.UpperBody });
+            model.Sockets.Add(new() { Id = "saddle", Control = lower + Part.Namespace + "body", Transform = new(new(.42f, .98f)), Usage = ModulePlans.UpperBody });
             model.Attachments.Add(new() { Id = lower, Asset = ModulePlans.QuadrupedLower, Socket = "mount" });
             model.Attachments.Add(new() { Id = upper, Asset = ModulePlans.PersonUpper, Socket = "saddle", Scale = .9f, Layer = -.05f });
             model.MotionOwner = lower;

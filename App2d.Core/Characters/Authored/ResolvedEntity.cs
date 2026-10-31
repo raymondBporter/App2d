@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
@@ -404,13 +405,13 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
     /// carried by the actor's placement. Clothing, picking and editor handles read this; props lift it to 3D.
     /// </summary>
     public LayeredFrame2D SocketPlacement(ModelSocket socket) =>
-        LayeredFrame2D.Local(Vector2.One, socket.Angle, new(socket.OffsetX, socket.OffsetY), socket.Layer).Then(SocketCarrier(socket)).Then(Placement);
+        socket.LocalPlacement.Then(SocketCarrier(socket)).Then(Placement);
 
     /// <summary>The socket's screen-plane turn with its animated orientation applied, shared with editor handles.</summary>
     public float SocketTurn(ModelSocket socket)
     {
-        var planar = LayeredFrame2D.Local(Vector2.One, socket.Angle, Vector2.Zero, 0).Then(SocketCarrier(socket));
-        return MathF.Atan2(planar.XAxis.Y, planar.XAxis.X) + Local.SocketAngles.GetValueOrDefault(socket.Id).Z;
+        var planar = socket.LocalPlacement.Then(SocketCarrier(socket));
+        return planar.XAxis.AngleRadians + Local.SocketAngles.GetValueOrDefault(socket.Id).Z;
     }
 
     /// <summary>The socket's 3D frame for props: its planar placement lifted by the clip's tilt/twist/turn orientation.</summary>

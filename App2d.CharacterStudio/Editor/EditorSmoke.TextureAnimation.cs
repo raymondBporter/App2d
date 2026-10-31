@@ -108,7 +108,7 @@ internal sealed partial class EditorSmoke
         s.Seek(.5f);
         var subject = s.Scene().Single();
         var drawing = new PuppetDrawing(); drawing.Build(subject.Model, subject.Pose);
-        Record(drawing.Batches.Single().Texture == "images/texture-proof/wide.png" && subject.Model.Attachments[0].Socket.OffsetX > 0,
+        Record(drawing.Batches.Single().Texture == "images/texture-proof/wide.png" && subject.Model.Attachments[0].Socket.Transform.Translation.X > 0,
             "one standalone transport previews a static Part's texture and path motion");
         Check(s.Save(doc), s);
         shell.Viewport.Fit(subject);

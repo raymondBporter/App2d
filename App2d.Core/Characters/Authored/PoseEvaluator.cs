@@ -141,16 +141,24 @@ public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, Evaluate
 /// </summary>
 public sealed class EvaluatedPose
 {
-    private readonly Dictionary<string, Vector3> _points = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, float> _angles = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, Matrix3x2> _bones = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, EvaluatedControl2D> _controls = new(StringComparer.Ordinal);
 
-    /// <summary>Each control's origin in the character frame; Z is its drawing layer.</summary>
-    public IReadOnlyDictionary<string, Vector3> Points => _points;
+    public EvaluatedPose()
+    {
+        Points = new ControlView<Vector3>(_controls, static control => new(control.Position, control.Layer));
+        Angles = new ControlView<float>(_controls, static control => control.Angle);
+        Bones = new ControlView<Matrix3x2>(_controls, static control => control.Frame.Matrix);
+    }
+
+    /// <summary>The canonical control states. Position is XY; drawing layer is a separate scalar.</summary>
+    public IReadOnlyDictionary<string, EvaluatedControl2D> Controls => _controls;
+
+    /// <summary>Compatibility view of XY plus drawing layer in Z, derived from Controls.</summary>
+    public IReadOnlyDictionary<string, Vector3> Points { get; }
     /// <summary>Accumulated XY rotation of each control's frame, unwrapped so full turns stay meaningful; inherited by its children.</summary>
-    public IReadOnlyDictionary<string, float> Angles => _angles;
+    public IReadOnlyDictionary<string, float> Angles { get; }
     /// <summary>Each control's frame in the character frame (row-vector convention: <c>nodeInCharacter = nodeLocal * parentInCharacter</c>).</summary>
-    public IReadOnlyDictionary<string, Matrix3x2> Bones => _bones;
+    public IReadOnlyDictionary<string, Matrix3x2> Bones { get; }
     public List<EvaluatedSlot2D> Slots { get; } = [];
     public Dictionary<string, Vector3> SocketAngles { get; } = new(StringComparer.Ordinal);
     /// <summary>The expression each animated part instance shows (P7a/P7c): a gameplay request, then the clip's selection channel, then the instance's and the asset's default.</summary>
@@ -170,10 +178,15 @@ public sealed class EvaluatedPose
     public HashSet<string> HiddenParts { get; } = new(StringComparer.Ordinal);
     /// <summary>Every animated part instance evaluated inside this pose, by instance ID: the nested runtime graph (P7a).</summary>
     public Dictionary<string, EvaluatedAttachment> Attachments { get; } = new(StringComparer.Ordinal);
-    public Vector3 World(string id) => _points[id];
+    /// <summary>Compatibility lookup packing XY and layer; this is not a physical 3D position.</summary>
+    public Vector3 World(string id)
+    {
+        var control = _controls[id];
+        return new(control.Position, control.Layer);
+    }
 
     /// <summary>A control's evaluated placement: its bone frame at its drawing layer. Artwork, sockets and handles attach to this.</summary>
-    public LayeredFrame2D Placement(string id) => new(new Frame2D(_bones[id]), _points[id].Z);
+    public LayeredFrame2D Placement(string id) => _controls[id].Placement;
 
     /// <summary>The part with its animated artwork fit applied to its leaf scale; the part itself when nothing fits it.</summary>
     public PartGeometry Fitted(PartGeometry part) => Fits.TryGetValue(part.Id, out var fit) ? part with { ScaleX = part.ScaleX * fit.X, ScaleY = part.ScaleY * fit.Y } : part;
@@ -192,21 +205,31 @@ public sealed class EvaluatedPose
     /// <summary>Writes a control's frame, layer and accumulated angle together; the origin is read from the frame.</summary>
     internal void Place(string id, Matrix3x2 frame, float layer, float angle)
     {
-        _bones[id] = frame;
-        _points[id] = new(frame.M31, frame.M32, layer);
-        _angles[id] = angle;
+        Place(id, new(new Frame2D(frame), layer), angle);
     }
 
-    internal void Place(string id, LayeredFrame2D placement, float angle) => Place(id, placement.Frame.Matrix, placement.Layer, angle);
+    internal void Place(string id, LayeredFrame2D placement, float angle) => _controls[id] = new(placement, angle);
 
-    /// <summary>Moves a control's origin without turning its frame: the legacy point-constraint adapter's write.</summary>
-    internal void Translate(string id, Vector3 origin)
+    // Live compatibility views share the same dictionary; no position or angle copies need synchronizing.
+    private sealed class ControlView<T>(IReadOnlyDictionary<string, EvaluatedControl2D> controls, Func<EvaluatedControl2D, T> select)
+        : IReadOnlyDictionary<string, T>
     {
-        var frame = _bones[id];
-        frame.M31 = origin.X;
-        frame.M32 = origin.Y;
-        _bones[id] = frame;
-        _points[id] = origin;
+        public T this[string key] => select(controls[key]);
+        public int Count => controls.Count;
+        public IEnumerable<string> Keys => controls.Keys;
+        public IEnumerable<T> Values => controls.Values.Select(select);
+        public bool ContainsKey(string key) => controls.ContainsKey(key);
+        public bool TryGetValue(string key, out T value)
+        {
+            var found = controls.TryGetValue(key, out var control);
+            value = found ? select(control) : default!;
+            return found;
+        }
+        public IEnumerator<KeyValuePair<string, T>> GetEnumerator()
+        {
+            foreach (var (key, control) in controls) yield return new(key, select(control));
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
 
@@ -648,7 +671,7 @@ public static class PoseEvaluator
         var socket = mover.Socket;
         var angle = socket.Frame == CharacterModel.Locomotion ? 0 : model.Nodes[socket.Frame ?? socket.Control].RestAngle;
         var carrier = LayeredFrame2D.FromRotation(angle, model.Rest[socket.Control]);
-        return mover.Placement(LayeredFrame2D.Local(Vector2.One, socket.Angle, new(socket.OffsetX, socket.OffsetY), socket.Layer).Then(carrier));
+        return mover.Placement(socket.LocalPlacement.Then(carrier));
     }
 
     /// <summary>A clip's root travel at a time on a model, cycles included, as the pose's locomotion reads it.</summary>
