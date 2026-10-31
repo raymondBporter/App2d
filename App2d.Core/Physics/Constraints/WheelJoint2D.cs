@@ -1,4 +1,5 @@
 using App2d.Core.Constraints;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -39,7 +40,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
     public bool IsEnabled { get; set; } = true;
     public bool IsSpringEnabled { get; set; } = true;
     /// <summary>Allowed travel in world units along the guide axis, measured from coincident anchors.</summary>
-    public ConstraintLimit1D TranslationLimits { get; set; } = ConstraintLimit1D.Free;
+    public Interval<float> TranslationLimits { get; set; } = Interval.Entire<float>();
     /// <summary>Unloaded spring coordinate in world units; zero means the anchors coincide.</summary>
     public float RestTranslation
     {
@@ -85,7 +86,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
     {
         if (!IsEnabled) return false;
         var moved = CreateAxis(JointMath2D.Perpendicular(WorldAxis)).CorrectPosition(LateralError);
-        var error = TranslationLimits.Evaluate(Translation).Error;
+        var error = ConstraintMath1D.EvaluateLimit(TranslationLimits, Translation).Error;
         return CreateAxis(WorldAxis).CorrectPosition(error) || moved;
     }
 

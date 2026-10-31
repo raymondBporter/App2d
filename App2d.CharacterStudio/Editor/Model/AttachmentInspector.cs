@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters.Authored;
 using ImGuiNET;

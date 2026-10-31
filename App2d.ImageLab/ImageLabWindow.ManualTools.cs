@@ -110,7 +110,7 @@ internal sealed partial class ImageLabWindow
 
     internal void PixelRepairStudy()
     {
-        var mask = new App2d.Core.Imaging.Image2D<bool>(64, 56);
+        var mask = new Core.Imaging.Image2D<bool>(64, 56);
         for (var y = 6; y <= 22; y++)
         {
             mask[30, y] = true;

@@ -1,4 +1,4 @@
-using App2d.Core.Constraints;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Shapes;
@@ -15,7 +15,7 @@ public sealed class DistanceConstraint2DTests
         var (first, second) = CreateBodies(0f, 10f);
         var constraint = new DistanceConstraint2D(first, second, 6f);
 
-        Assert.True(constraint.Limits.IsLocked);
+        Assert.True(constraint.Limits.IsSingleton);
         Assert.True(constraint.SolvePosition(1f / 60f));
         Assert.Equal(6f, second.WorldObject.Transform.Position.X, 4);
     }
@@ -24,7 +24,7 @@ public sealed class DistanceConstraint2DTests
     public void BoundedDistanceCorrectsEitherLimitButLeavesInteriorAlone()
     {
         var (first, second) = CreateBodies(0f, 10f);
-        var constraint = new DistanceConstraint2D(first, second, ConstraintLimit1D.Between(4f, 6f));
+        var constraint = new DistanceConstraint2D(first, second, new Interval<float>(4f, 6f));
 
         Assert.True(constraint.SolvePosition(1f / 60f));
         Assert.Equal(6f, second.WorldObject.Transform.Position.X, 4);
@@ -42,7 +42,7 @@ public sealed class DistanceConstraint2DTests
     public void UpperLimitOnlyCancelsOutwardVelocity()
     {
         var (first, second) = CreateBodies(0f, 5f);
-        var constraint = new DistanceConstraint2D(first, second, ConstraintLimit1D.AtMost(5f));
+        var constraint = new DistanceConstraint2D(first, second, Interval.AtMost(5f));
 
         second.LinearVelocity = new Vector2(10f, 0f);
         constraint.SolveVelocity(1f / 60f);
@@ -57,7 +57,7 @@ public sealed class DistanceConstraint2DTests
     public void LowerLimitOnlyCancelsInwardVelocity()
     {
         var (first, second) = CreateBodies(0f, 5f);
-        var constraint = new DistanceConstraint2D(first, second, ConstraintLimit1D.AtLeast(5f));
+        var constraint = new DistanceConstraint2D(first, second, Interval.AtLeast(5f));
 
         second.LinearVelocity = new Vector2(-10f, 0f);
         constraint.SolveVelocity(1f / 60f);

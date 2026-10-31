@@ -1,7 +1,9 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using System.Globalization;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterStudio.Authoring;
 
 /// <summary>Small solid-art helpers and a deliberately limited, triangulated OBJ interchange path. No runtime file dependencies.</summary>
 public static class PartGeometryBuilder

@@ -1,10 +1,13 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Json;
 using App2d.Core.Mathematics;
 using System.Diagnostics;
 using System.Numerics;
+using System.Text.Json;
 
 namespace App2d.Tests.Authored;
 
@@ -263,9 +266,36 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.Edit(variant, () => variant.Asset.Set(PropertyOverride.Of(PropertyRef.OfPart("body", RigProperties.Material), new RenderMaterialDefinition2D { Fill = "#88aa66" }))));
         Ok(session, session.SaveLook("fern", "Fern"));
         Assert.True(person.Dirty);
-        Assert.Equal("#88aa66", person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Material?.Fill);
-        Assert.Equal("determined", person.Asset.Looks.Single(l => l.Id == "fern").Expressions[PersonTemplate.FaceInstance]); // looks carry appearance (material, expression, visibility), never sizes
+        Assert.Equal("#88aa66", LookPreset.ReadFrom(person.Asset).Single(l => l.Id == "fern").Parts["body"].Material?.Fill);
+        Assert.Equal("determined", LookPreset.ReadFrom(person.Asset).Single(l => l.Id == "fern").Expressions[PersonTemplate.FaceInstance]); // looks carry appearance (material, expression, visibility), never sizes
         Assert.Equal("#d8e9db", person.Asset.Parts.Single(p => p.Id == "body").RenderMaterial.Fill); // the base's own parts are untouched
+
+        Ok(session, session.Save(person));
+        var reopened = Session().Assets.Model("person")!;
+        var savedLook = LookPreset.ReadFrom(reopened.Asset).Single(l => l.Id == "fern");
+        Assert.Equal("#88aa66", savedLook.Parts["body"].Material?.Fill);
+        Assert.Equal("determined", savedLook.Expressions[PersonTemplate.FaceInstance]);
+    }
+
+    [Fact]
+    public void InvalidLookIsAnEditorProblemAndCannotBeSaved()
+    {
+        var workspace = Session().Assets;
+        var person = workspace.Model("person")!;
+        var looks = LookPreset.ReadFrom(person.Asset);
+        looks[0].Parts["missing-part"] = new() { Hidden = true };
+        person.Asset.LookData = JsonSerializer.SerializeToElement(looks, AuthoredJson.Options);
+
+        // Runtime loading preserves the editor data without interpreting it.
+        var loaded = CharacterModel.FromJson(person.Asset.ToJson());
+        Assert.True(LookPreset.ReadFrom(loaded)[0].Parts["missing-part"].Hidden);
+        Assert.Contains(workspace.Problems(person), problem => problem.Contains("no part 'missing-part'"));
+        Assert.Throws<InvalidDataException>(() => workspace.Save(person));
+
+        File.WriteAllText(person.Path!, person.Asset.ToJson());
+        var reopened = AuthoringWorkspace.Open(_root);
+        Assert.Null(reopened.Model("person"));
+        Assert.Contains(reopened.LoadErrors, error => error.Contains("person.json") && error.Contains("no part 'missing-part'"));
     }
 
     [Fact]
@@ -288,7 +318,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
                 Prop = "spear",
                 Socket = "right-grip"
             });
-            document.Asset.AddCollider(new() { Id = "tip", Prop = "spear", Point = EquipmentPoints.Tip, Geometry = App2d.Core.Shapes.Rectangle2D.Builder.FromSize(.3f, .3f) }, ColliderUses.Attack);
+            document.Asset.AddCollider(new() { Id = "tip", Prop = "spear", Point = EquipmentPoints.Tip, Geometry = Core.Shapes.Rectangle2D.Builder.FromSize(.3f, .3f) }, ColliderUses.Attack);
             document.Asset.Behavior!.Actions[0].Hits.Add(new()
             {
                 Id = "tip",
@@ -314,7 +344,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         session.Seek(strike.Start + .01f);
         var preview = session.EvaluateEntity()!;
         Assert.Single(preview.Attacks);
-        Assert.Single(preview.Colliders.Where(c => c.Use == ColliderUses.Hurt)); // the template's whole-body hurt box (P11b)
+        Assert.Single(preview.Colliders, c => c.Use == ColliderUses.Hurt); // the template's whole-body hurt box (P11b)
         Assert.Single(session.Scene());
         Assert.NotNull(session.Scene()[0].Entity);
 
@@ -375,7 +405,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
     {
         var person = AuthoredCatalog.Load(_root).Models["person"];
         var random = new Random(4);
-        var looks = person.Looks.Select(l => l.Id).ToArray();
+        var looks = LookPreset.ReadFrom(person).Select(l => l.Id).ToArray();
         var sets = new[] { "standard", "heavy", "deliberate" };
         for (var i = 0; i < 50; i++)
         {

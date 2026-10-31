@@ -8,7 +8,7 @@ using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 public static class PuppetTemplates
 {

@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -440,7 +441,8 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                                 live.Link = new RigLink();
                                 if (live.Local is not null)
                                 {
-                                    live.Local.X = live.Local.Y = 0;
+                                    live.Local.X = 0;
+                                    live.Local.Y = 0;
                                 }
 
                                 document.Asset.Validate();
@@ -648,10 +650,11 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
             Ui.Help("A masked action owns a group's channels over locomotion.");
         }
-        if (model.Looks.Count > 0)
+        var looks = LookPreset.ReadFrom(model);
+        if (looks.Count > 0)
         {
             Ui.Header("Looks");
-            ImGui.TextWrapped(string.Join(", ", model.Looks.Select(l => l.Name)));
+            ImGui.TextWrapped(string.Join(", ", looks.Select(l => l.Name)));
             Ui.Help("Variants apply looks as overrides. Save a variant's look from its inspector.");
         }
     }

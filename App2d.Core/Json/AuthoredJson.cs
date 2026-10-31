@@ -1,10 +1,10 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Json;
 
 /// <summary>Serializer settings for authored files: camelCase, tolerant of member case, strict about unknown members, and sparse. Values equal to the type's defaults are omitted so files stay small and diffs stay readable.</summary>
 public static class AuthoredJson
@@ -92,7 +92,7 @@ public static class AuthoredJson
             {
                 property.ShouldSerialize = (owner, value) => ((PartMesh)owner).Outline is null && !Equals(value, baseline);
             }
-            else if (info.Type == typeof(Authored.Part) && property.Name is "parameters" or "presets" or "measures" or "equipment" || info.Type == typeof(Authored.PartInstance) && property.Name == "inputs")
+            else if (info.Type == typeof(Part) && property.Name is "parameters" or "presets" or "measures" or "equipment" || info.Type == typeof(PartInstance) && property.Name == "inputs")
             {
                 // The module contract members (P10b) are written only when declared, so a part or instance without them keeps its file as it was.
                 property.ShouldSerialize = (_, value) => value is System.Collections.ICollection { Count: > 0 };

@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -120,7 +121,7 @@ public sealed class PersonWardrobeTests
             A = "origin",
             ScaleX = 2,
             ScaleY = 1,
-            Geometry = new App2d.Core.Shapes.Ellipse2D { Center = new(0, 0), Radii = new(.5f, .5f) }.Validated(),
+            Geometry = new Core.Shapes.Ellipse2D { Center = new(0, 0), Radii = new(.5f, .5f) }.Validated(),
             Material = new()
             {
                 Fill = "#fff8e7",

@@ -1,4 +1,4 @@
-using App2d.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 using App2d.Core;
 using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;

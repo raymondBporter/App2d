@@ -1,4 +1,5 @@
 using App2d.Core.Constraints;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -11,7 +12,7 @@ namespace App2d.Core.Physics.Constraints;
 public sealed class SpringDamperJoint2D : IPhysicsConstraint2D
 {
     private float _frequencyHertz = 6f, _dampingRatio = 0.7f, _restLength;
-    private ConstraintLimit1D _lengthLimits = ConstraintLimit1D.Free;
+    private Interval<float> _lengthLimits = Interval.Entire<float>();
     private JointAxis2D _axis;
     private SpringCoefficients2D _spring;
     private float _length, _springImpulse, _lowerImpulse, _upperImpulse;
@@ -39,12 +40,12 @@ public sealed class SpringDamperJoint2D : IPhysicsConstraint2D
         get => _restLength;
         set => _restLength = ArgGuard.Positive(value, nameof(RestLength));
     }
-    public ConstraintLimit1D LengthLimits
+    public Interval<float> LengthLimits
     {
         get => _lengthLimits;
         set
         {
-            ArgGuard.ThrowIf(value.HasMinimum && value.Minimum < 0f || value.HasMaximum && value.Maximum < 0f,
+            ArgGuard.ThrowIf(value.IsBoundedBelow && value.Min < 0f || value.IsBoundedAbove && value.Max < 0f,
                 "Shock length limits cannot be negative.");
             _lengthLimits = value;
         }
@@ -79,7 +80,7 @@ public sealed class SpringDamperJoint2D : IPhysicsConstraint2D
         _axis.SolveLimits(_length, LengthLimits, deltaSeconds, ref _lowerImpulse, ref _upperImpulse);
     }
 
-    public bool SolvePosition(float deltaSeconds) => IsEnabled && CreateAxis().CorrectPosition(LengthLimits.Evaluate(Length).Error);
+    public bool SolvePosition(float deltaSeconds) => IsEnabled && CreateAxis().CorrectPosition(ConstraintMath1D.EvaluateLimit(LengthLimits, Length).Error);
 
     private JointAxis2D CreateAxis()
     {

@@ -5,7 +5,7 @@ using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds.PlayerMoves;
+namespace App2d.CharacterStudio.CharacterSeeds.PlayerMoves;
 
 /// <summary>
 /// Builds a Person clip from key poses written the way an animator thinks: feet and hands where they land in actor space

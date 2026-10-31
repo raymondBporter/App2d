@@ -16,7 +16,7 @@ public sealed class PhysicalPartAssetTests
     public void DumbbellLoadsItsCompositePartsAndPhysicsSettingsFromJsonAndRoundTrips()
     {
         var asset = Part.FromJson(DumbbellJson);
-        var shape = Assert.IsType<CompositeShape2D>(App2d.Core.Characters.Geometry.PartShapes2D.Collision(asset));
+        var shape = Assert.IsType<CompositeShape2D>(Core.Characters.Geometry.PartShapes2D.Collision(asset));
         Assert.Collection(shape.Parts.ToArray(),
             part => Assert.Equal(Rectangle2D.Builder.Create(new(-36, -9), new(36, 9)), Assert.IsType<Rectangle2D>(part)),
             part => Assert.Equal(Circle2D.Builder.Create(16, new(-42, 0)), Assert.IsType<Circle2D>(part)),

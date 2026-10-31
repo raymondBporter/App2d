@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Authored;
@@ -95,7 +96,7 @@ public sealed class SeedGenerationTests
         Assert.Equal(2, resolved.ParameterValues["legs"]);
         // A new entity from the template starts with one hurt box over its rest pose instead of a layout reference.
         var fresh = EntityAuthoring.New(EntityAuthoring.Guard, "fresh", "Fresh", Catalog.Resolve("quadruped"));
-        var box = Assert.Single(fresh.Geometry.Where(g => fresh.Behavior!.Colliders.ContainsKey(g.Id)));
+        var box = Assert.Single(fresh.Geometry, g => fresh.Behavior!.Colliders.ContainsKey(g.Id));
         Assert.Equal((ColliderUses.Hurt, "body", CharacterModel.Locomotion), (fresh.Behavior!.Colliders[box.Id], box.A, box.Frame));
     }
 

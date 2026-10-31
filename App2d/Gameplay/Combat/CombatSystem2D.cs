@@ -138,7 +138,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
     /// plain bodies and registered hurt/guard colliders through the ordinary broad phase, deduplicated by target entity, never
     /// per hurt collider.
     /// </summary>
-    private static IEnumerable<(ICombatant2D Combatant, Collider2D? Hurt)> Candidates(IEnumerable<CollisionOverlap2D> overlaps, Func<Collider2D, ICombatant2D?> combatantOf)
+    private static List<(ICombatant2D Combatant, Collider2D? Hurt)> Candidates(IEnumerable<CollisionOverlap2D> overlaps, Func<Collider2D, ICombatant2D?> combatantOf)
     {
         var reached = new List<(ICombatant2D Combatant, Collider2D? Hurt)>();
         foreach (var overlap in overlaps)

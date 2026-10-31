@@ -14,7 +14,7 @@ public sealed class ExtendedShapeRaycast2DTests
     {
         var rectangle = RoundedRectangle2D.Builder.Create(new(3, -2), new(1.5f, 1), .5f,
             new(MathF.Cos(rotation), MathF.Sin(rotation)));
-        var angle = .297f;
+        const float angle = .297f;
         var normal = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
         var point = new Vector2(1, .5f) + normal * .5f;
         var frame = rectangle.Frame;

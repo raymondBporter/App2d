@@ -15,7 +15,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Exports the real grove and a real player standing halfway up a generated branch.</summary>
 internal static class GiantTreeStudy2D

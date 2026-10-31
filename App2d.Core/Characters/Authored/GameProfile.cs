@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;
@@ -160,7 +161,28 @@ public static class PersonRoles
     public const string HealGather = "heal-gather";
     public static readonly IReadOnlyList<string> All =
     [
-        Idle, Walk, Run, Jump, Fall, Land, Dash, ClimbOn, Climb, ClimbOff, WallGrip, BalanceForward, BalanceBackward,
-        Hit, Death, Celebrate, Sheathe, DownAttack, GunAim, GunShot, GunWallShot, GunCharge, HealGather,
+        Idle,
+        Walk,
+        Run,
+        Jump,
+        Fall,
+        Land,
+        Dash,
+        ClimbOn,
+        Climb,
+        ClimbOff,
+        WallGrip,
+        BalanceForward,
+        BalanceBackward,
+        Hit,
+        Death,
+        Celebrate,
+        Sheathe,
+        DownAttack,
+        GunAim,
+        GunShot,
+        GunWallShot,
+        GunCharge,
+        HealGather,
     ];
 }

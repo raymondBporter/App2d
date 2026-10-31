@@ -4,7 +4,7 @@ using App2d.Core.Rendering.Textures;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Renders real game assets and the tile palette without opening a play/edit session.</summary>
 internal static class RenderingSmoke2D

@@ -121,7 +121,7 @@ public sealed class ShapeTessellation2DTests
         buffer.Fill(new(99));
         var count = StrokeTessellation2D.WriteSegment(buffer, Vector2.Zero, new(10, 0), 2, cap, cap);
         var area = 0d;
-        foreach (var triangle in MeshTopology.TriangleList<Vector2>(buffer[..count])) area += triangle.GetArea();
+        foreach (var triangle in MeshTopology.TriangleList(buffer[..count])) area += triangle.GetArea();
         Assert.InRange(area, expectedArea - .01, expectedArea + .01);
         Assert.Equal(new Vector2(99), buffer[count]);
     }
@@ -133,7 +133,7 @@ public sealed class ShapeTessellation2DTests
         var count = StrokeTessellation2D.WriteSegment(buffer, Vector2.Zero, new(10, 0), startWidth: 2, endWidth: 4, LineCap2D.Butt, LineCap2D.Butt);
         Assert.Equal(6, count);
         var area = 0d;
-        foreach (var triangle in MeshTopology.TriangleList<Vector2>(buffer[..count])) area += triangle.GetArea();
+        foreach (var triangle in MeshTopology.TriangleList(buffer[..count])) area += triangle.GetArea();
         Assert.InRange(area, 29.99, 30.01);
     }
 
@@ -166,7 +166,7 @@ public sealed class ShapeTessellation2DTests
             foreach (var triangle in shape.Triangles(scratch)) sum += triangle.GetArea();
             foreach (var segment in shape.OutlineSegments(scratch)) sum += segment.Length();
             var count = StrokeTessellation2D.WriteSegment(scratch, Vector2.Zero, Vector2.One, 1, LineCap2D.Round, LineCap2D.Round);
-            foreach (var triangle in MeshTopology.TriangleList<Vector2>(scratch[..count])) sum += triangle.GetArea();
+            foreach (var triangle in MeshTopology.TriangleList(scratch[..count])) sum += triangle.GetArea();
             return sum;
         }
     }

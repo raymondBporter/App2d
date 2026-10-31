@@ -1,7 +1,8 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 /// <summary>The Person starting template, with the shared short-legged proportions. A template, not an engine category.</summary>
 public static class PersonTemplate
@@ -31,13 +32,15 @@ public static class PersonTemplate
         instance.FitY = head.ScaleY;
         instance.Layer = head.Depth - .002f;
         BindFace(model);
+        var looks = LookPreset.ReadFrom(model);
         foreach (var (look, word) in new[] { ("slate", "focused"), ("ember", "determined"), ("night", "smug") })
         {
-            if (model.Looks.FirstOrDefault(l => l.Id == look) is { } preset)
+            if (looks.FirstOrDefault(l => l.Id == look) is { } preset)
             {
                 preset.Expressions[FaceInstance] = word;
             }
         }
+        LookPreset.WriteTo(model, looks);
         model.Validate();
         return instance;
     }

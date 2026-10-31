@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
@@ -7,7 +8,7 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 /// <summary>
 /// The phase 3 starter content, written as ordinary authored assets: Person idle/thrust/jump clips, a spear, a stalker
@@ -43,14 +44,14 @@ public static class StarterContent
             new() { Id = Humanoid.UpperGroup, Targets = [.. PersonLoadout.UpperBody.Order(StringComparer.Ordinal)] },
             new() { Id = Humanoid.LowerGroup, Targets = [Humanoid.Hips, Humanoid.LeftHip, Humanoid.LeftLeg, Humanoid.RightHip, Humanoid.RightLeg] },
         ];
-        model.Looks =
+        LookPreset.WriteTo(model,
         [
             new() { Id = "sage", Name = "Sage", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#d8e9db" } } } },
             // The looks' face words (slate focused, ember determined, night smug) join as instance expressions when the face is attached (PersonTemplate.AttachFace).
             new() { Id = "slate", Name = "Slate", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#b8c4d6" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#efe6da" } } } },
             new() { Id = "ember", Name = "Ember", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#eab596" } } } },
             new() { Id = "night", Name = "Night", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#7d879a" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#e2d6c6" } } } },
-        ];
+        ]);
     }
 
     /// <summary>

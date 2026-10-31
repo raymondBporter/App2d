@@ -97,9 +97,10 @@ public sealed class PersonMoves
 
         foreach (var action in hero.Actions.Values)
         {
-            foreach (var clip in new MotionClip[] { action.Clip, action.Recovery }.OfType<MotionClip>())
+            clips[action.Clip.Id] = action.Clip;
+            if (action.Recovery != null)
             {
-                clips[clip.Id] = clip;
+                clips[action.Recovery.Id] = action.Recovery;
             }
         }
 

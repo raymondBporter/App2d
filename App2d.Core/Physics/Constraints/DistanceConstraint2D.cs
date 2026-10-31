@@ -1,4 +1,5 @@
 using App2d.Core.Constraints;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -7,20 +8,20 @@ namespace App2d.Core.Physics.Constraints;
 /// <summary>A distance limit between the bodies' centers of mass, without offset anchors.</summary>
 public sealed class DistanceConstraint2D : IPhysicsConstraint2D
 {
-    private ConstraintLimit1D _limits;
+    private Interval<float> _limits;
     private float _positionStrength = 1f;
     private float _velocityStrength = 1f;
     private float _positionTolerance = 0.01f;
 
     public DistanceConstraint2D(RigidBody2D first, RigidBody2D second, float restLength)
-        : this(first, second, ConstraintLimit1D.Locked(restLength))
+        : this(first, second, Interval<float>.Singleton(restLength))
     {
     }
 
     public DistanceConstraint2D(
         RigidBody2D first,
         RigidBody2D second,
-        ConstraintLimit1D limits)
+        Interval<float> limits)
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
@@ -34,12 +35,12 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
     public RigidBody2D First { get; }
     public RigidBody2D Second { get; }
     public bool IsEnabled { get; set; } = true;
-    public ConstraintLimit1D Limits
+    public Interval<float> Limits
     {
         get => _limits;
         set
         {
-            if (value.HasMinimum && value.Minimum < 0f || value.HasMaximum && value.Maximum < 0f)
+            if (value.IsBoundedBelow && value.Min < 0f || value.IsBoundedAbove && value.Max < 0f)
             {
                 ArgGuard.ThrowOutOfRange(value, "Distance limits cannot be negative.");
             }

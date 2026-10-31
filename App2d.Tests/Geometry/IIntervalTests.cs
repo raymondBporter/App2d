@@ -1,5 +1,4 @@
 using App2d.Core.Characters;
-using App2d.Core.Constraints;
 using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
@@ -11,7 +10,7 @@ public sealed class IIntervalTests
     public void AuthoredAndPhysicsLimitsShareClosedRangeQueries()
     {
         var authored = new Limit(-1, 5).Soft(0, 1);
-        var physics = ConstraintLimit1D.Between(1, 7);
+        var physics = new Interval<float>(1, 7);
 
         Assert.Equal(6f, IntervalMath<float>.Length(authored));
         Assert.True(authored.Contains(-1f));
@@ -20,7 +19,7 @@ public sealed class IIntervalTests
         Assert.False(authored.Contains(float.NaN));
         Assert.True(physics.Contains(7f));
         Assert.True(IntervalMath<float>.Overlaps(authored, physics));
-        Assert.True(IntervalMath<float>.ContainsInterval(ConstraintLimit1D.Free, authored));
+        Assert.True(IntervalMath<float>.ContainsInterval(Interval.Entire<float>(), authored));
         Assert.False(IntervalMath<float>.ContainsInterval(authored, physics));
         Assert.True(IntervalMath<float>.TryIntersect(authored, physics, out var shared));
         Assert.Equal(new Interval<float>(1, 5), shared);
@@ -33,7 +32,7 @@ public sealed class IIntervalTests
     [Fact]
     public void ExtensionQueriesDistinguishTouchingFromDisjointIntervals()
     {
-        var limits = ConstraintLimit1D.Between(2, 5);
+        var limits = new Interval<float>(2, 5);
 
         Assert.True(limits.ContainsInterval(new Interval<float>(3, 4)));
         Assert.True(limits.Overlaps(new Interval<float>(5, 8)));
@@ -62,14 +61,14 @@ public sealed class IIntervalTests
     }
 
     [Fact]
-    public void PhysicsLimitsRetainUnboundedAndValidatedClampBehavior()
+    public void UnboundedIntervalsShareArithmeticAndClampBehavior()
     {
-        Assert.Equal(float.PositiveInfinity, IntervalMath<float>.Length(ConstraintLimit1D.Free));
-        Assert.Equal(42f, ConstraintLimit1D.Free.Clamp(42f));
-        Assert.Equal(2f, ConstraintLimit1D.AtLeast(2).Clamp(-5));
-        Assert.Equal(0f, IntervalMath<float>.Length(ConstraintLimit1D.Locked(4)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ConstraintLimit1D.Free.Clamp(float.NaN));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ConstraintLimit1D.Free.Clamp(float.PositiveInfinity));
+        Assert.Equal(float.PositiveInfinity, IntervalMath<float>.Length(Interval.Entire<float>()));
+        Assert.Equal(42f, Interval.Entire<float>().Clamp(42f));
+        Assert.Equal(2f, Interval.AtLeast(2f).Clamp(-5));
+        Assert.Equal(0f, IntervalMath<float>.Length(Interval<float>.Singleton(4)));
+        Assert.True(float.IsNaN(Interval.Entire<float>().Clamp(float.NaN)));
+        Assert.Equal(float.PositiveInfinity, Interval.Entire<float>().Clamp(float.PositiveInfinity));
         Assert.True(float.IsNaN(new Limit(0, 1).Clamp(float.NaN)));
     }
 
@@ -90,7 +89,7 @@ public sealed class IIntervalTests
     public void MixedStructQueriesDoNotAllocateAfterWarmup()
     {
         var authored = new Limit(-1, 5);
-        var physics = ConstraintLimit1D.Between(1, 7);
+        var physics = new Interval<float>(1, 7);
         RunQueries(authored, physics, 256);
 
         var before = GC.GetAllocatedBytesForCurrentThread();
@@ -101,7 +100,7 @@ public sealed class IIntervalTests
         Assert.Equal(0L, allocated);
     }
 
-    private static int RunQueries(Limit authored, ConstraintLimit1D physics, int count)
+    private static int RunQueries(Limit authored, Interval<float> physics, int count)
     {
         var matches = 0;
         for (var i = 0; i < count; i++)

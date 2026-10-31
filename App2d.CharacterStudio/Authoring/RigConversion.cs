@@ -1,7 +1,8 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterStudio.Authoring;
 
 /// <summary>
 /// Explicit conversions between rig representations (character-system migration, P3b). A conversion is a deliberate
@@ -21,7 +22,7 @@ public static class RigConversion
     /// </summary>
     public static IReadOnlyList<string> ToBoneChain(CharacterModel model, IReadOnlyList<string> controls) => ToBoneChain(model, controls, validate: true);
 
-    private static IReadOnlyList<string> ToBoneChain(CharacterModel model, IReadOnlyList<string> controls, bool validate)
+    private static List<string> ToBoneChain(CharacterModel model, IReadOnlyList<string> controls, bool validate)
     {
         if (controls.Count < 2)
         {

@@ -547,7 +547,7 @@ internal sealed class TileEditor2D : IDisposable
             bool hit;
             if (TryGetObjectAsset(thing.Asset, out var asset))
             {
-                var bounds = ShapeBounds2D.Calculate(asset.Physics is not null ? App2d.Core.Characters.Geometry.PartShapes2D.Collision(asset) : new App2d.Core.Rendering.Characters.PartShader2D(asset).BoundsShape());
+                var bounds = ShapeBounds2D.Calculate(asset.Physics is not null ? Core.Characters.Geometry.PartShapes2D.Collision(asset) : new Core.Rendering.Characters.PartShader2D(asset).BoundsShape());
                 var local = world - position;
                 hit = local.X >= bounds.Min.X && local.X <= bounds.Max.X && local.Y >= bounds.Min.Y && local.Y <= bounds.Max.Y;
             }

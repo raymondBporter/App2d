@@ -262,7 +262,7 @@ internal sealed partial class ImageLabWindow
                 ImGui.TextUnformatted("Weak / strong edge cutoff");
                 var cutoffWidth = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
                 ImGui.SetNextItemWidth(cutoffWidth);
-                var cutoffFlags = ImGuiSliderFlags.Logarithmic | ImGuiSliderFlags.AlwaysClamp;
+                const ImGuiSliderFlags cutoffFlags = ImGuiSliderFlags.Logarithmic | ImGuiSliderFlags.AlwaysClamp;
                 cannyChanged |= ImGui.SliderFloat("##weak", ref weak, .0001f, .25f, "%.4f", cutoffFlags);
                 if (ImGui.IsItemHovered())
                 {

@@ -158,7 +158,7 @@ public sealed class ThingDatabase2DTests : IDisposable
         using var database = LevelDatabase2D.Open(path, worldRoot: _directory);
         Assert.Equal(3, database.FormatVersion);
         var ferry = Part.Load(Path.Combine(_directory, "objects", "bridge-ferry.json"));
-        Assert.Equal(new Vector2(-48f, -8f), ShapeBounds2D.Calculate((App2d.Core.Geometry.Shapes.IShape2D)ferry.Geometry[0].Geometry!).Min);
+        Assert.Equal(new Vector2(-48f, -8f), ShapeBounds2D.Calculate((Core.Geometry.Shapes.IShape2D)ferry.Geometry[0].Geometry!).Min);
         Assert.Equal("#25d2be", ferry.Geometry[0].Material!.Fill);
         Assert.Equal(BodyMotionType2D.Kinematic, ferry.Physics!.MotionType);
         Assert.Equal(0f, ferry.Physics.Restitution);

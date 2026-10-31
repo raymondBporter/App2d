@@ -23,7 +23,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Reproducible spell samples driven by real simulation, authored poses, HUD and effect rendering.</summary>
 internal static class SpellRenderingSmoke2D

@@ -84,7 +84,7 @@ public readonly partial record struct CubicBezier2D : ICurve2D
     public int FindParametersAtX(float x, Span<double> parameters)
     {
         ArgGuard.Finite(x);
-        ArgGuard.ThrowIfTooShort<double>(parameters, 3);
+        ArgGuard.ThrowIfTooShort(parameters, 3);
         var start = (double)Start.X;
         var first = Control1.X - start;
         var second = (double)Control2.X - Control1.X;

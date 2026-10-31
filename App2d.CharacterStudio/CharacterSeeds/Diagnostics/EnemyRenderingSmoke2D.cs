@@ -15,7 +15,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Immutable;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Exercises all enemy views using only client observations.</summary>
 internal static class EnemyRenderingSmoke2D

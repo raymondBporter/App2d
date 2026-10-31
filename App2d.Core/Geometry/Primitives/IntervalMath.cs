@@ -15,9 +15,6 @@ public static class IntervalMath<T> where T : INumber<T>
     public static T Length<TInterval>(TInterval interval)
         where TInterval : IInterval<T>
     {
-        // are we working in the reals or the extended real?
-        // for [-∞, -∞]	and [+∞, +∞] the difference is NaN
-        // these also are not legit real number intervals but are in the extended reals
         if (interval.Min == interval.Max)
             return T.Zero;
 

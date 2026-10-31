@@ -1,3 +1,4 @@
+using App2d.Core.Json;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -100,46 +101,6 @@ public sealed record ControlGroup
     public List<string> Targets { get; set; } = [];
 }
 
-/// <summary>
-/// One part's appearance in a look: the material and visibility a look writes onto a variant as typed overrides
-/// (<see cref="RigProperties.Material"/>, <see cref="RigProperties.Hidden"/>). Null leaves the variant's value alone. Never
-/// sizes: a look restyles, it does not refit. A look's expressions sit on its animated instances (<see cref="LookPreset.Expressions"/>).
-/// </summary>
-public sealed record LookAppearance
-{
-    public RenderMaterialDefinition2D? Material { get; set; }
-    public bool? Hidden { get; set; }
-    [JsonIgnore]
-    public bool IsEmpty => Material is null && Hidden is null;
-
-    public static void Check(LookAppearance? part, string field)
-    {
-        if (part is null)
-        {
-            throw new InvalidDataException($"{field}: null look part.");
-        }
-
-        part.Material?.Validate(field + ".material");
-    }
-
-    /// <summary>The typed overrides this appearance writes on a part.</summary>
-    public IEnumerable<PropertyOverride> Overrides(string part)
-    {
-        if (Material is not null) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.Material), Material);
-        if (Hidden is { } hidden) yield return PropertyOverride.Of(PropertyRef.OfPart(part, RigProperties.Hidden), hidden);
-    }
-}
-
-/// <summary>A named appearance an author applies to a variant: part appearance overrides and instance expressions it writes, never a live parent.</summary>
-public sealed record LookPreset
-{
-    public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-    public Dictionary<string, LookAppearance> Parts { get; set; } = [];
-    /// <summary>The default expression each animated instance shows in this look (P7c): the attachment property <see cref="RigProperties.Expression"/>.</summary>
-    public Dictionary<string, string> Expressions { get; set; } = [];
-}
-
 /// <summary>A reusable character structure. Controls without a parent hang from the locomotion frame.</summary>
 public sealed class CharacterModel
 {
@@ -191,7 +152,9 @@ public sealed class CharacterModel
     public string? MotionOwner { get; set; }
     public List<MotionSet> MotionSets { get; set; } = [];
     public List<ControlGroup> Groups { get; set; } = [];
-    public List<LookPreset> Looks { get; set; } = [];
+    /// <summary>Opaque Character Studio presets, preserved with the asset but unused by the runtime.</summary>
+    [JsonPropertyName("looks")]
+    public JsonElement? LookData { get; set; }
     /// <summary>The prototype puppet this model was converted from, if any.</summary>
     public AssetSource? Source { get; set; }
 
@@ -232,7 +195,7 @@ public sealed class CharacterModel
             Require(material is not null, $"{owner}: null material '{id}'.");
             material.Resolve(Materials);
         }
-        Require(Controls is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && Attachments is not null && MotionSets is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
+        Require(Controls is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && Attachments is not null && MotionSets is not null && Groups is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
         Limit.Color(Ink, "ink");
@@ -370,6 +333,8 @@ public sealed class CharacterModel
             }
         }
         var attachments = new HashSet<string>(StringComparer.Ordinal);
+
+        Require(Attachments != null, "Unexpected null attachments container.");
         Require(Attachments.Count <= 256, $"{owner}: capacity exceeded.");
         foreach (var instance in Attachments)
         {
@@ -411,25 +376,6 @@ public sealed class CharacterModel
                 Require(Known(target) || target is not null && (chainIds.Contains(target) || attachments.Contains(target) || parts.Contains(target)), $"{owner} group '{group.Id}': '{target}' is not a control, chain, part or attachment instance.");
                 // A chain moves its joint and end; owning one of them without the chain would split it between two layers.
                 Require(!solved.Contains(target), $"{owner} group '{group.Id}': '{target}' is solved by IK; name its chain instead.");
-            }
-        }
-        var looks = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var look in Looks)
-        {
-            Require(look?.Parts is not null && look.Expressions is not null, $"{owner}: incomplete look.");
-            AuthoredAsset.RequireId(look.Id, $"{owner} look id");
-            Require(looks.Add(look.Id), $"{owner}: duplicate look '{look.Id}'.");
-            Require(!string.IsNullOrWhiteSpace(look.Name), $"{owner} look '{look.Id}': a name is required.");
-            foreach (var (part, change) in look.Parts)
-            {
-                Require(parts.Contains(part), $"{owner} look '{look.Id}': no part '{part}'.");
-                LookAppearance.Check(change, $"{owner} look '{look.Id}' parts.{part}");
-                change.Material?.Resolve(Materials);
-            }
-            foreach (var (instance, expression) in look.Expressions)
-            {
-                Require(attachments.Contains(instance), $"{owner} look '{look.Id}': no attachment '{instance}'.");
-                AuthoredAsset.RequireId(expression, $"{owner} look '{look.Id}' expressions.{instance}");
             }
         }
         CheckGeometry(this, nodes.ToDictionary(n => n.Key, n => n.Value.Rest, StringComparer.Ordinal), owner);

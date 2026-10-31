@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
@@ -90,7 +91,7 @@ public sealed class ContactResolutionTests
 
         Assert.NotEmpty(arena.Blocks);
         Assert.All(arena.Blocks, b => Assert.Equal((0, 1, "spear-tip", "shield-block"), (b.Attacker, b.Target, b.Window, b.Sound)));
-        Assert.Single(arena.Blocks.Where(b => b.Attacker == 0));
+        Assert.Single(arena.Blocks, b => b.Attacker == 0);
         Assert.DoesNotContain(arena.Hits, h => h.Attacker == 0);
         Assert.Equal(healthBefore, defender.Health);
         Assert.True(defender.GuardUp);

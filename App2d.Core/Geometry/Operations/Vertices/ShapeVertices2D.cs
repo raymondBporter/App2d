@@ -69,7 +69,7 @@ public static class ShapeVertices2D
             throw new NotSupportedException($"A {shape.Kind} has no exact finite polygonal convex core.");
         }
 
-        ArgGuard.ThrowIfTooShort<Vector2>(vertices, count);
+        ArgGuard.ThrowIfTooShort(vertices, count);
         radius = 0f;
         switch (shape)
         {
@@ -142,7 +142,7 @@ public static class ShapeVertices2D
             throw new NotSupportedException($"A {shape.Kind} has no single finite outline.");
         }
 
-        ArgGuard.ThrowIfTooShort<Vector2>(vertices, count);
+        ArgGuard.ThrowIfTooShort(vertices, count);
         switch (shape)
         {
             case Circle2D circle:

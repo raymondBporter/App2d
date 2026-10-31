@@ -13,7 +13,7 @@ public sealed class PrimitiveBufferViewTests
     public void TriangleViewsUseTheSelectedStaticFactoryAndSupportShapeValues()
     {
         Span<Vector2> points = [Vector2.Zero, new(4, 0), new(0, 3)];
-        var triangles = MeshTopology.TriangleFan<Vector2>(points);
+        var triangles = MeshTopology.TriangleFan(points);
         var custom = triangles.As<FactoryTriangle>().GetEnumerator();
         Assert.True(custom.MoveNext());
         Assert.True(custom.Current.FromFactory);
@@ -42,18 +42,18 @@ public sealed class PrimitiveBufferViewTests
     {
         Span<Vector3> points = [Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.One, Vector3.UnitY, Vector3.UnitZ];
         var actual = new List<Triangle3D>();
-        foreach (var triangle in MeshTopology.TriangleList<Vector3>(points).As<Triangle3D>()) actual.Add(triangle);
+        foreach (var triangle in MeshTopology.TriangleList(points).As<Triangle3D>()) actual.Add(triangle);
         Assert.Equal(2, actual.Count);
         Assert.Equal(.5d, actual[0].Area);
         Assert.Equal(Vector3.One, actual[1].A);
-        Assert.Throws<ArgumentException>(() => MeshTopology.TriangleList<Vector2>([Vector2.Zero]));
+        Assert.Throws<ArgumentException>(() => MeshTopology.TriangleList([Vector2.Zero]));
     }
 
     [Fact]
     public void SegmentViewsBorrowVerticesAndCanReturnValidatedCurveSegments()
     {
         Span<Vector2> points = [new(1, 2), new(4, 6), new(7, 8)];
-        var outline = MeshTopology.Segments<Vector2>(points);
+        var outline = MeshTopology.Segments(points);
         points[0] = new(1, 3);
         var edges = new List<Segment<Vector2>>();
         foreach (var edge in outline) edges.Add(edge);
@@ -70,7 +70,7 @@ public sealed class PrimitiveBufferViewTests
         Assert.Equal(points[0] + new Vector2(5, 6), cursor.Current.TransformedBy(Matrix3x2.CreateTranslation(5, 6)).Start);
         Assert.Equal(0, MeshTopology.Segments<Vector2>([], closed: false).Count);
         Assert.Equal(0, MeshTopology.Segments<Vector2>([]).Count);
-        Assert.Equal(1, MeshTopology.Segments<Vector2>([Vector2.Zero]).Count);
+        Assert.Equal(1, MeshTopology.Segments([Vector2.Zero]).Count);
     }
 
     [Fact]

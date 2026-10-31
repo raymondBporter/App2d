@@ -6,7 +6,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Every face expression the baked face part binds, on the authored Person's head instance, through the game's drawing path, labelled.</summary>
 internal static class FaceRenderingSmoke2D

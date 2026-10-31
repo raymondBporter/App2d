@@ -1,3 +1,5 @@
+using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Primitives;
@@ -7,7 +9,7 @@ using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterStudio.Authoring;
 
 public readonly record struct ArenaInput(float Move = 0, bool Run = false, bool Jump = false, bool Attack = false);
 public readonly record struct ArenaEvent(long Tick, int Actor, AnimationEvent Event, Vector2 Position);

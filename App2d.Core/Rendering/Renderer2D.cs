@@ -463,7 +463,7 @@ public sealed partial class Renderer2D : IDisposable
         var matrix = _camera.WorldToDeviceMatrix;
         if (fillColor is { } fill)
         {
-            foreach (var triangle in MeshTopology.TriangleFan<Vector2>(points))
+            foreach (var triangle in MeshTopology.TriangleFan(points))
             {
                 Triangle(
                     Vertex(Vector2.Transform(triangle.A, matrix), fill),
@@ -592,7 +592,7 @@ public sealed partial class Renderer2D : IDisposable
 
     private void StrokePolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, Color4b color, float width)
     {
-        foreach (var segment in MeshTopology.Segments<Vector2>(points))
+        foreach (var segment in MeshTopology.Segments(points))
         {
             Line(Vector2.Transform(segment.Start, matrix), Vector2.Transform(segment.End, matrix), color, width);
         }
@@ -607,7 +607,7 @@ public sealed partial class Renderer2D : IDisposable
     {
         Span<Vector2> vertices = stackalloc Vector2[StrokeTessellation2D.MaximumSegmentVertices];
         var count = StrokeTessellation2D.WriteSegment(vertices, start, end, startWidth, endWidth, startCap, endCap);
-        foreach (var triangle in MeshTopology.TriangleList<Vector2>(vertices[..count]))
+        foreach (var triangle in MeshTopology.TriangleList(vertices[..count]))
         {
             Triangle(Vertex(triangle.A, color), Vertex(triangle.B, color), Vertex(triangle.C, color));
         }

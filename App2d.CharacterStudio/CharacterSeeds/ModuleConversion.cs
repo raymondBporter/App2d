@@ -5,7 +5,7 @@ using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 /// <summary>
 /// Extracts a rig module from a model (character-system migration, P10b): the subtree beneath an anchor control becomes an
@@ -225,7 +225,7 @@ public static class ModuleConversion
         // Measures along module controls (through stand-ins) are the module's; a control scaled by a dropped measure is refused.
         foreach (var measure in model.Measures)
         {
-            var path = measure.Path.Select(Map).ToList();
+            var path = measure.Path.ConvertAll(Map);
             if (path.All(Inside))
             {
                 asset.Measures.Add(new() { Id = measure.Id, Path = path });
@@ -475,7 +475,7 @@ public static class ModuleConversion
     {
         var stand = new CharacterModel { Id = plan.PartId + "-stand", Name = plan.Name + " stand" };
         stand.Controls.Add(new() { Id = "mount", Rest = PuppetPoint.From(source.Rest[plan.Anchor]) });
-        stand.Parts.Add(new() { Id = "mount-mark", A = "mount", Geometry = App2d.Core.Shapes.Ellipse2D.Builder.Create(new(.01f, .01f)), Material = new() { Fill = "#000000" }, Hidden = true });
+        stand.Parts.Add(new() { Id = "mount-mark", A = "mount", Geometry = Core.Shapes.Ellipse2D.Builder.Create(new(.01f, .01f)), Material = new() { Fill = "#000000" }, Hidden = true });
         stand.Sockets.Add(new() { Id = "module", Control = "mount", Frame = CharacterModel.Locomotion, Usage = asset.Usage });
         stand.Attachments.Add(new() { Id = instance, Asset = asset.Id, Socket = "module" });
         stand.Validate();

@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.Importing;
 using App2d.Core.Animation;
 using App2d.Core.Characters;
@@ -493,7 +494,7 @@ public sealed class EditorSession
 
         var pose = new ActorPose(local, Vector2.Zero, 1);
         var active = action is null ? [] : action.Hits.Where(h => time >= h.Start && time < h.Finish).ToList();
-        var attacks = active.Select(h => (h, EntityCollision.Attack(entity, pose, h))).ToList();
+        var attacks = active.ConvertAll(h => (h, EntityCollision.Attack(entity, pose, h)));
         var movement = EntityCollision.Movement(entity, new(local.Locomotion.X, 0), 1);
         var colliders = entity.Colliders.Select(c => new PlacedCollider(c, c.Region(pose), c.DefaultEnabled && (c.Use != ColliderUses.Attack || active.Any(h => ReferenceEquals(h.Collider, c))))).ToList();
         return new(entity, pose, time, action, weight, movement, attacks, colliders);
@@ -898,7 +899,7 @@ public sealed class EditorSession
             Ink = model?.Base.Ink ?? "#222b32",
             LineWidth = model?.Base.LineWidth ?? .045f,
             Geometry = [new() { Id = "shape", A = PartLocation.Origin, Frame = PartLocation.Origin,
-                Geometry = App2d.Core.Shapes.RoundedRectangle2D.Builder.FromSize(.16f, .12f, .03f), Material = new() { Fill = "#b97549", Outline = new() } }],
+                Geometry = Core.Shapes.RoundedRectangle2D.Builder.FromSize(.16f, .12f, .03f), Material = new() { Fill = "#b97549", Outline = new() } }],
         };
         part.Validate();
         Assets.Create(part);
@@ -1158,7 +1159,7 @@ public sealed class EditorSession
         return Edit(document, () =>
         {
             var model = Assets.Resolve(document!.Asset.Model, out var error) ?? throw new InvalidDataException(error);
-            var current = ShapeBounds2D.Calculate(((App2d.Core.Geometry.Shapes.IShape2D)document.Asset.Geometry.First(g => g.Id == document.Asset.Behavior!.Movement).Geometry!).Validated());
+            var current = ShapeBounds2D.Calculate(((Core.Geometry.Shapes.IShape2D)document.Asset.Geometry.First(g => g.Id == document.Asset.Behavior!.Movement).Geometry!).Validated());
             var geometry = document.Asset.Geometry.First(g => g.Id == document.Asset.Behavior!.Movement);
             geometry.Geometry = EntityAuthoring.FitMovement(model, current.Center.X).Geometry;
         }, "Fitted the movement box to the rest pose.");

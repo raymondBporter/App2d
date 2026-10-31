@@ -1,7 +1,10 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterStudio.Authoring;
 
 /// <summary>A starting point for a new entity: gameplay defaults it copies, never a live parent.</summary>
 public sealed record EntityTemplate(string Id, string Name, string Description);
@@ -121,8 +124,7 @@ public static class EntityAuthoring
         };
     }
 
-    public static App2d.Core.Shapes.Rectangle2D MovementBox(float width, float height, float offsetX = 0) =>
-        App2d.Core.Shapes.Rectangle2D.Builder.FromSize(width, height, new(offsetX, height / 2));
+    public static Rectangle2D MovementBox(float width, float height, float offsetX = 0) => Rectangle2D.Builder.FromSize(width, height, new(offsetX, height / 2));
 
     // ---- Motion sets ---------------------------------------------------------------------------------------------
 
@@ -169,7 +171,8 @@ public static class EntityAuthoring
     /// <summary>Writes a look's part appearance onto a variant as typed overrides, property by property; properties the look does not set are kept. A look's material merges over an existing material override.</summary>
     public static void ApplyLook(CharacterModel model, ModelVariant variant, string lookId)
     {
-        var look = model.Looks.FirstOrDefault(l => l.Id == lookId) ?? throw new InvalidDataException($"'{model.Id}' has no look '{lookId}'.");
+        LookPreset.Validate(model);
+        var look = LookPreset.ReadFrom(model).FirstOrDefault(l => l.Id == lookId) ?? throw new InvalidDataException($"'{model.Id}' has no look '{lookId}'.");
         foreach (var (part, change) in look.Parts)
         {
             foreach (var entry in change.Overrides(part))
@@ -224,9 +227,11 @@ public static class EntityAuthoring
         }
 
         var preset = new LookPreset { Id = id, Name = name, Parts = parts, Expressions = expressions };
-        model.Looks.RemoveAll(l => l.Id == id);
-        model.Looks.Add(preset);
         model.Validate();
+        var looks = LookPreset.ReadFrom(model);
+        looks.RemoveAll(l => l.Id == id);
+        looks.Add(preset);
+        LookPreset.WriteTo(model, looks);
         return preset;
     }
 }

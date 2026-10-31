@@ -9,7 +9,7 @@ using System.Numerics;
 namespace App2d.Contracts.World;
 
 /// <summary>Fixed per placed object; a replaced object gets a new runtime ID.</summary>
-public sealed record ObjectDefinition2D(EntityId2D Id, string PlacementId, App2d.Core.Characters.Authored.Part Part)
+public sealed record ObjectDefinition2D(EntityId2D Id, string PlacementId, Core.Characters.Authored.Part Part)
 {
     public string TextureRoot { get; init; } = Part.TextureRoot;
 }

@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -33,7 +34,6 @@ public sealed class MigrationReferenceTests
         ["linkage-reach"] = TestModels.LinkageReach(Linkage),
         ["wheel-turn"] = WheelScene.Animations[0],
     };
-
 
     /// <summary>Absolute tolerances by observable quantity (plan section 7: per quantity and scale, no global epsilon).</summary>
     private static readonly Dictionary<string, float> Tolerances = new(StringComparer.Ordinal)
@@ -481,7 +481,11 @@ public sealed class MigrationReferenceTests
             : leaf.StartsWith("area", StringComparison.Ordinal) ? Tolerances["area"]
             : parent.Contains("/parts[", StringComparison.Ordinal) ? Tolerances["contour"]
             : path.StartsWith("combat", StringComparison.Ordinal) ? Tolerances["combat"]
-            : parent.EndsWith("/angles", StringComparison.Ordinal) || leaf.StartsWith("start", StringComparison.Ordinal) || leaf.StartsWith("finish", StringComparison.Ordinal) || leaf.StartsWith("seconds", StringComparison.Ordinal) || leaf.StartsWith("depth", StringComparison.Ordinal) ? Tolerances["angle"]
+            : parent.EndsWith("/angles", StringComparison.Ordinal) ||
+            leaf.StartsWith("start", StringComparison.Ordinal) ||
+            leaf.StartsWith("finish", StringComparison.Ordinal) ||
+            leaf.StartsWith("seconds", StringComparison.Ordinal) ||
+            leaf.StartsWith("depth", StringComparison.Ordinal) ? Tolerances["angle"]
             : leaf.EndsWith("Axis", StringComparison.Ordinal) || leaf.StartsWith("axis", StringComparison.Ordinal) ? Tolerances["axis"]
             : Tolerances["position"];
     }

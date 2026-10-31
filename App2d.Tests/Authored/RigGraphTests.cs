@@ -64,7 +64,7 @@ public sealed class RigGraphTests
     {
         var model = ResolvedModel.From(Crank());
         var pose = PoseEvaluator.Sample(model, Turn(model, MathF.Tau + .5f, -.2f), 0);
-        var hubAngle = .3f + MathF.Tau + .5f;
+        const float hubAngle = .3f + MathF.Tau + .5f;
         Assert.Equal(hubAngle, pose.Angles["hub"], 4);
         Assert.Equal(hubAngle + .2f - .2f, pose.Angles["pin"], 4);
         var hubPoint = XY(pose.World("hub"));
@@ -108,7 +108,7 @@ public sealed class RigGraphTests
         var model = ResolvedModel.From(Crank(scale: scale, reflect: reflect));
         var hand = reflect ? -1 : 1;
         var pose = PoseEvaluator.Sample(model, Turn(model, .4f, .25f), 0);
-        var hubAngle = .3f + .4f;
+        const float hubAngle = .3f + .4f;
         Assert.Equal(hubAngle, pose.Angles["hub"], 4);
         Assert.Equal(hubAngle + hand * (.2f + .25f), pose.Angles["pin"], 4);
         var hubFrame = new Frame2D(pose.Bones["hub"]);

@@ -42,7 +42,7 @@ internal sealed partial class ImageLabWindow
 
     private static bool PanKey(ImGuiKey key)
     {
-        var flags = ImGuiInputFlags.RouteGlobal | ImGuiInputFlags.Repeat;
+        const ImGuiInputFlags flags = ImGuiInputFlags.RouteGlobal | ImGuiInputFlags.Repeat;
         var normal = ImGui.Shortcut(key, flags);
         var fast = ImGui.Shortcut(key | ImGuiKey.ModShift, flags);
         return normal || fast;

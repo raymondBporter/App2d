@@ -32,7 +32,7 @@ public readonly record struct Direction2D
 
     public Direction2D PerpCcw => new(new(-Vector.Y, Vector.X));
 
-    public Direction2D PerpCw => new Direction2D(Vector.Y, -Vector.X);
+    public Direction2D PerpCw => new(Vector.Y, -Vector.X);
 
     public Direction2D Reversed => new(-Vector);
 

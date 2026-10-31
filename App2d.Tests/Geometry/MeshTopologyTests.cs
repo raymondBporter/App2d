@@ -78,7 +78,7 @@ public sealed class MeshTopologyTests
     {
         Span<Vector2> vertices = [Vector2.Zero, Vector2.UnitX, Vector2.UnitY, Vector2.One];
         Span<int> indices = [3, 0, 2];
-        var triangles = MeshTopology.IndexedTriangles<Vector2>(vertices, indices);
+        var triangles = MeshTopology.IndexedTriangles(vertices, indices);
         vertices[3] = new(7, 8);
         indices[1] = 1;
 
@@ -115,7 +115,7 @@ public sealed class MeshTopologyTests
     {
         Assert.Throws<IndexOutOfRangeException>(() =>
         {
-            var triangles = MeshTopology.IndexedTriangles<Vector2>([Vector2.Zero, Vector2.UnitX, Vector2.UnitY], [0, 1, index]);
+            var triangles = MeshTopology.IndexedTriangles([Vector2.Zero, Vector2.UnitX, Vector2.UnitY], [0, 1, index]);
             var enumerator = triangles.GetEnumerator();
             enumerator.MoveNext();
             _ = enumerator.Current;

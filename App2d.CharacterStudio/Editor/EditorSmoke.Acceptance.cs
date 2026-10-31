@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -81,7 +82,7 @@ internal sealed partial class EditorSmoke
             Check(s.Edit(basis, () =>
             {
                 basis.Asset.Sockets.Add(new() { Id = "left-shin", Control = "left-knee", Frame = "left-knee", OffsetX = shin / 2 });
-                ModelAuthoring.AddPart(basis.Asset, new App2d.Core.Geometry.Curves.LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "left-knee", "left-foot");
+                ModelAuthoring.AddPart(basis.Asset, new Core.Geometry.Curves.LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "left-knee", "left-foot");
                 basis.Asset.Validate();
             }), s);
             Check(s.NewPart("shin-pad", "Shin pad"), s);
@@ -192,20 +193,19 @@ internal sealed partial class EditorSmoke
         ("07-game-face-expression", shell =>
         {
             var s = shell.Session;
-            var faceId = PersonTemplate.FaceInstance;
             s.Open(Walker);
             s.ShowRest = s.EditRig = false;
             s.Expression = "happy";
             s.Seek(.9f);
             var subject = s.Evaluate(Walker)!;
-            var face = subject.Pose.Attachments[faceId];
+            var face = subject.Pose.Attachments[PersonTemplate.FaceInstance];
             Record(face.Attachment.Asset.Id == ProceduralFace.AssetId && face.Expression == "happy" && subject.Pose.Chains.All(c => c.Reached),
                 "the walker keeps its game face and smiles while its legs keep reaching");
             s.Expression = "hurt";
-            Record(s.Evaluate(Walker)!.Pose.Attachments[faceId].Expression == "hurt", "the game face responds to a gameplay expression request");
+            Record(s.Evaluate(Walker)!.Pose.Attachments[PersonTemplate.FaceInstance].Expression == "hurt", "the game face responds to a gameplay expression request");
             s.Expression = null;
             s.Seek(.95f);
-            s.Selection.Select(attachment: faceId);
+            s.Selection.Select(attachment: PersonTemplate.FaceInstance);
             shell.Viewport.Fit(s.Scene().FirstOrDefault());
         }),
         ("08-joint-limit-angle-and-bend", shell =>
@@ -570,7 +570,7 @@ internal sealed partial class EditorSmoke
     private static AuthoredCatalog Catalog(EditorSession s) => AuthoredCatalog.Load(s.Assets.Root);
 
     /// <summary>A part instance's placement at a pose: the socket's placement at that pose composed with the instance's own offset (the drawing's rule).</summary>
-    private static App2d.Core.Characters.Geometry.LayeredFrame2D Placement(ResolvedModel model, EvaluatedPose pose, string instance)
+    private static Core.Characters.Geometry.LayeredFrame2D Placement(ResolvedModel model, EvaluatedPose pose, string instance)
     {
         var attachment = model.Attachment(instance) ?? throw new InvalidOperationException($"'{model.Id}' has no attachment '{instance}'.");
         return attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket));

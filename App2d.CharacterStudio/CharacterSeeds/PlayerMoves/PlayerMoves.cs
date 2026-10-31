@@ -1,5 +1,6 @@
-using App2d.CharacterSeeds;
-using App2d.CharacterSeeds.PlayerMoves;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
+using App2d.CharacterStudio.CharacterSeeds.PlayerMoves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
@@ -74,7 +75,12 @@ internal static partial class PlayerMoves
         },
     ];
 
-    public static IEnumerable<Part> Props() => [SwordProp(), SheathProp(), PistolProp()];
+    public static IEnumerable<Part> Props() =>
+    [
+        SwordProp(),
+        SheathProp(),
+        PistolProp()
+    ];
 
     public static IEnumerable<MotionClip> Clips(ResolvedModel m) =>
     [
@@ -167,9 +173,14 @@ internal static partial class PlayerMoves
         .Key(.78f, k => k.Hips(.08f, -.22f).Chest(-.4f).Head(.12f).RightHandAt(.62f, .95f).LeftHand(-.2f, -.4f).Blade(-.9f))
         .Key(.95f, k => k.Hips(.08f, -.24f).Chest(-.42f).Head(.14f).RightHandAt(.62f, .9f).LeftHand(-.22f, -.4f).Blade(-1.05f))
         .Key(1.5f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHandAt(.3f, .95f).LeftHand(.05f, -.6f).Blade(.3f))
-        .Plant(Humanoid.LeftLeg, 0, 1.5f, -.2f).Plant(Humanoid.RightLeg, 0, 1.5f, .2f)
-        .Marker("windup", .1f).Marker("strike", .78f).Marker("recover", .95f)
-        .Face(0, "focused").Face(.5f, "determined").Face(.78f, "angry")
+        .Plant(Humanoid.LeftLeg, 0, 1.5f, -.2f)
+        .Plant(Humanoid.RightLeg, 0, 1.5f, .2f)
+        .Marker("windup", .1f)
+        .Marker("strike", .78f)
+        .Marker("recover", .95f)
+        .Face(0, "focused")
+        .Face(.5f, "determined")
+        .Face(.78f, "angry")
         .Build();
 
     /// <summary>Heavy motion, heavy hits: walks in slowly and slams for 5 when the player is within 1.3 units. Knockback barely moves it.</summary>
@@ -187,11 +198,30 @@ internal static partial class PlayerMoves
                 Socket = Humanoid.SwordSocket
             }
         ],
-        Geometry = [EntityAuthoring.FitMovement(model), new() { Id = "hammer-head", Prop = "hammer", Geometry = Rectangle2D.Builder.FromSize(1.2f, 1f), Point = EquipmentPoints.Tip, Collision = new() { } }, .. StarterContent.PersonHurt(model)],
+        Geometry =
+        [
+            EntityAuthoring.FitMovement(model),
+            new PartGeometry()
+            {
+                Id = "hammer-head",
+                Prop = "hammer",
+                Geometry = Rectangle2D.Builder.FromSize(1.2f, 1f),
+                Point = EquipmentPoints.Tip,
+                Collision = new GeometryCollision()
+            },
+            .. StarterContent.PersonHurt(model)
+        ],
         Behavior = new()
         {
             Damage = new() { Health = 22, KnockbackResistance = 3 },
-            Strikes = new(StringComparer.Ordinal) { ["hammer-head"] = new() { Damage = 5, Sound = "heavy" } },
+            Strikes = new(StringComparer.Ordinal)
+            {
+                ["hammer-head"] = new StrikeDef()
+                {
+                    Damage = 5,
+                    Sound = "heavy"
+                }
+            },
             MotionSet = "heavy",
             Controller = new ControllerConfig()
             {
@@ -201,43 +231,48 @@ internal static partial class PlayerMoves
                 Cooldown = 1
             },
             Actions =
-        [
-            new()
-            {
-                Id = EntityControllers.Attack,
-                Clip = "person-hammer-slam",
-                Hits =
-                [
-                    new HitWindow()
-                    {
-                        Id = "hammer-head",
-                        Collider = "hammer-head",
-                        Start = new()
+            [
+                new EntityActionDef()
+                {
+                    Id = EntityControllers.Attack,
+                    Clip = "person-hammer-slam",
+                    Hits =
+                    [
+                        new HitWindow()
                         {
-                            Marker = "strike"
-                        },
-                        Finish = new()
-                        {
-                            Marker = "recover"
+                            Id = "hammer-head",
+                            Collider = "hammer-head",
+                            Start = new()
+                            {
+                                Marker = "strike"
+                            },
+                            Finish = new()
+                            {
+                                Marker = "recover"
+                            }
                         }
-                    }
-                ],
-                Events =
-                [
-                    new ActionEvent()
-                    {
-                        Id = "heavy",
-                        At = new()
+                    ],
+                    Events =
+                    [
+                        new ActionEvent()
                         {
-                            Marker = "strike"
-                        },
-                        Sound = "heavy"
-                    }
-                ],
-            },
-        ]
-        ,
-            Colliders = new() { ["hammer-head"] = ColliderUses.Attack, ["body"] = ColliderUses.Hurt, ["head"] = ColliderUses.Hurt, ["legs"] = ColliderUses.Hurt }
+                            Id = "heavy",
+                            At = new()
+                            {
+                                Marker = "strike"
+                            },
+                            Sound = "heavy"
+                        }
+                    ],
+                },
+            ],
+            Colliders = new Dictionary<string, string>()
+            {
+                ["hammer-head"] = ColliderUses.Attack,
+                ["body"] = ColliderUses.Hurt,
+                ["head"] = ColliderUses.Hurt,
+                ["legs"] = ColliderUses.Hurt
+            }
         },
     };
 
@@ -382,20 +417,31 @@ internal static partial class PlayerMoves
         Model = PersonTemplate.Id,
         Equipment =
         [
-            new()
+            new EquipmentBinding()
             {
                 Prop = PersonLoadout.Sword,
                 Socket = Humanoid.SwordSocket
             },
-            new()
+            new EquipmentBinding()
             {
                 Prop = PersonLoadout.Pistol,
                 Socket = Humanoid.GunSocket
             }
         ],
-        Geometry = [new() { Id = ColliderUses.Movement, Collision = new(), A = PartLocation.Origin,
-            Geometry = EntityAuthoring.MovementBox(.55f, 1.705f)
-         }, .. new[] { (EntityControllers.Attack, "player-sword-side-cut"), (EntityControllers.FollowUp, "player-sword-backhand"), (Forehand, "player-sword-forehand") }.Select(s => BladeCollider(model, clips, s.Item1, s.Item2)), .. StarterContent.PersonHurt(model)],
+        Geometry =
+        [
+            new PartGeometry()
+            {
+                Id = ColliderUses.Movement,
+                Collision = new(),
+                A = PartLocation.Origin,
+                Geometry = EntityAuthoring.MovementBox(.55f, 1.705f)
+            },
+            BladeCollider(model, clips, EntityControllers.Attack, "player-sword-side-cut"),
+            BladeCollider(model, clips, EntityControllers.FollowUp, "player-sword-backhand"),
+            BladeCollider(model, clips, Forehand, "player-sword-forehand") ,
+            .. StarterContent.PersonHurt(model)
+        ],
         Behavior = new()
         {
             Damage = new() { Health = 30 },
@@ -423,15 +469,50 @@ internal static partial class PlayerMoves
                 Cooldown = 0
             },
             Actions =
-        [
-            Swing(model, clips, EntityControllers.Attack, SwingLab.SideCutClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
-            Swing(model, clips, EntityControllers.FollowUp, SwingLab.BackhandClip, Forehand, SwingLab.PutAwayBackhandClip),
-            Swing(model, clips, Forehand, SwingLab.ForehandClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
-            new() { Id = EntityControllers.Shoot, Clip = "player-gun-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }], Projectile = PlayerBolt },
-            new() { Id = EntityControllers.WallShot, Clip = "player-gun-wall-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }], Projectile = PlayerBolt },
-        ]
-        ,
-            Colliders = new() { ["attack-blade"] = ColliderUses.Attack, ["follow-up-blade"] = ColliderUses.Attack, ["forehand-blade"] = ColliderUses.Attack, ["body"] = ColliderUses.Hurt, ["head"] = ColliderUses.Hurt, ["legs"] = ColliderUses.Hurt }
+            [
+                Swing(EntityControllers.Attack, SwingLab.SideCutClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
+                Swing(EntityControllers.FollowUp, SwingLab.BackhandClip, Forehand, SwingLab.PutAwayBackhandClip),
+                Swing(Forehand, SwingLab.ForehandClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
+                new()
+                {
+                    Id = EntityControllers.Shoot,
+                    Clip = "player-gun-shot",
+                    Events =
+                    [
+                        new ActionEvent()
+                        {
+                            Id = EntityControllers.Fire,
+                            At = new() { Marker = "fire" },
+                            Sound = "shot"
+                        }
+                    ],
+                    Projectile = PlayerBolt
+                },
+                new EntityActionDef()
+                {
+                    Id = EntityControllers.WallShot,
+                    Clip = "player-gun-wall-shot",
+                    Events =
+                    [
+                        new ActionEvent()
+                        {
+                            Id = EntityControllers.Fire,
+                            At = new() { Marker = "fire" },
+                            Sound = "shot"
+                        }
+                    ],
+                    Projectile = PlayerBolt
+                },
+            ],
+            Colliders = new Dictionary<string, string>()
+            {
+                ["attack-blade"] = ColliderUses.Attack,
+                ["follow-up-blade"] = ColliderUses.Attack,
+                ["forehand-blade"] = ColliderUses.Attack,
+                ["body"] = ColliderUses.Hurt,
+                ["head"] = ColliderUses.Hurt,
+                ["legs"] = ColliderUses.Hurt
+            }
         },
     };
 
@@ -442,7 +523,7 @@ internal static partial class PlayerMoves
     /// One sword swing of the combo: its clip, the swing a further press plays, the clip that puts the sword away after it,
     /// and its hit, a rectangle fixed to the player that bounds what the blade sweeps in front of the body.
     /// </summary>
-    private static EntityActionDef Swing(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips, string id, string clip, string next, string recovery) => new()
+    private static EntityActionDef Swing(string id, string clip, string next, string recovery) => new()
     {
         Id = id,
         Clip = clip,
@@ -462,7 +543,14 @@ internal static partial class PlayerMoves
         var (min, max) = SwingLab.HitRectangle(model, swing, At(PersonLoadout.SwooshMarker), At("strike"), At("recover"), t => SwingLab.Blade(model, swing, t, sword, socket))
             ?? throw new InvalidOperationException($"'{clip}': the blade never gets in front of the player.");
         static float R(float v) => MathF.Round(v, 3);
-        return new() { Id = action + "-blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Geometry = Rectangle2D.Builder.FromSize(R(max.X - min.X), R(max.Y - min.Y)), Collision = new() { } };
+        return new PartGeometry()
+        {
+            Id = action + "-blade",
+            OffsetX = R((min.X + max.X) / 2),
+            OffsetY = R((min.Y + max.Y) / 2),
+            Geometry = Rectangle2D.Builder.Create(min, max),
+            Collision = new GeometryCollision()
+        };
     }
 
     private static MoveBuilder New(ResolvedModel m, string id, string name, float duration, bool loop) => new(m, id, name, duration, loop);
@@ -602,8 +690,7 @@ internal static partial class PlayerMoves
         }
         for (var step = 1; step <= 5; step++)
         {
-            var a = float.DegreesToRadians(-90 + 22.5f * step);
-            var hand = Vector2.FromPolar(.64f, a);
+            var hand = Vector2.FromPolar(.64f, float.DegreesToRadians(-90 + 22.5f * step));
             b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(hand.X, hand.Y).RightHand(-hand.X, hand.Y), ClipEase.Linear);
         }
         return b

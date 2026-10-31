@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -265,7 +266,7 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
     private void Looks(AssetDocument<ModelVariant> document, CharacterModel basis)
     {
         Ui.Header("Look");
-        foreach (var look in basis.Looks)
+        foreach (var look in LookPreset.ReadFrom(basis))
         {
             if (ImGui.SmallButton(look.Name + "##look-" + look.Id))
             {

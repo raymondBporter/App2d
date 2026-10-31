@@ -84,7 +84,7 @@ internal sealed record RasterTransform(
             TransformKind.RemoveSmallRegions or TransformKind.LargestRegion => FilterRegions(new(source.Mask!, EightConnected)),
             TransformKind.Contours => Contours(source.Mask!),
             TransformKind.Skeleton => new(source.Mask!.Skeletonize()),
-            _ => throw new ArgumentOutOfRangeException(nameof(Kind))
+            _ => throw new ArgumentOutOfRangeException(nameof(source))
         };
     }
 

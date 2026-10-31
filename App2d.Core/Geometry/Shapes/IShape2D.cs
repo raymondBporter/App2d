@@ -10,7 +10,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// A filled shape in its own coordinate space. Shapes must remain immutable while attached to a <see cref="SpatialObject2D"/>.
 /// Bounds, distance, ray and contact queries live in <see cref="ShapeBounds2D"/>, <see cref="ShapeDistance2D"/> and the collision tables.
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(App2d.Core.Geometry.Serialization.GeometryJsonConverterFactory))]
+[System.Text.Json.Serialization.JsonConverter(typeof(Serialization.GeometryJsonConverterFactory))]
 public interface IShape2D : IGeometry2D, IGeometryValue2D
 {
     /// <summary>The local-space area; infinite shapes report positive infinity.</summary>

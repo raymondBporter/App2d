@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
@@ -58,8 +59,8 @@ public sealed class PersonFaceConversionTests : IDisposable
             Assert.DoesNotContain(variant.Overrides, o => o.Target.Property is "face" or "faceX");
             Assert.Equal(word, PoseEvaluator.Rest(Catalog.Resolve(id)).Expressions[PersonTemplate.FaceInstance]);
         }
-        Assert.Equal(["slate", "ember", "night"], person.Base.Looks.Where(l => l.Expressions.Count > 0).Select(l => l.Id));
-        Assert.Equal("determined", person.Base.Looks.Single(l => l.Id == "ember").Expressions[PersonTemplate.FaceInstance]);
+        Assert.Equal(["slate", "ember", "night"], LookPreset.ReadFrom(person.Base).Where(l => l.Expressions.Count > 0).Select(l => l.Id));
+        Assert.Equal("determined", LookPreset.ReadFrom(person.Base).Single(l => l.Id == "ember").Expressions[PersonTemplate.FaceInstance]);
         Assert.Equal(11, Catalog.Entities.Count);
     }
 

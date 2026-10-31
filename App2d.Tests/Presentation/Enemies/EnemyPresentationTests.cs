@@ -1,4 +1,4 @@
-using App2d.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
 using App2d.Core;
@@ -21,8 +21,8 @@ public sealed class EnemyPresentationTests
     public void ThrowerReleasesHeldStoneRendersRockAndCleansUpOnStreaming()
     {
         var entity = Catalog.Entities["rock-thrower"];
-        var pose = new Core.Characters.Authored.ActorPose(
-            Core.Characters.Authored.PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2.Zero, 1);
+        var pose = new ActorPose(
+            PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2.Zero, 1);
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
         var sounds = new RecordingSounds();

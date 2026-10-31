@@ -1,4 +1,4 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core.Assets;
 using App2d.Core.Validation;
 

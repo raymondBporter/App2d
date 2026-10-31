@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -290,7 +291,7 @@ public sealed class ColliderAttachmentTests
         Assert.Same(pointed.Collider("point"), pointed.Actions["attack"].Hits[0].Collider);
         Assert.Equal(6, pointed.Colliders.Count);
         // Refusals by name.
-        string Refused(Action<Part> change)
+        static string Refused(Action<Part> change)
         {
             var broken = GuardWithHurtColliders();
             change(broken);

@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -185,7 +186,7 @@ public sealed class PartAssetTests : IDisposable
         Assert.Equal("#123456", workspace.Resolve("tall-thin")!.Attachments[1].Parts[0].RenderMaterial.Fill);
         Assert.Equal("#123456", workspace.Resolve("person")!.Attachments[2].Parts[0].RenderMaterial.Fill);
         Assert.Equal("#123456", workspace.CompileEntity("hero")!.Model.Attachments[1].Parts[0].RenderMaterial.Fill);
-        Assert.False(person.Dirty is false);
+        Assert.False(!person.Dirty);
         session.Undo();
         Assert.Equal("#c9a27a", workspace.Resolve("tall-thin")!.Attachments[1].Parts[0].RenderMaterial.Fill);
 

@@ -80,9 +80,14 @@ also read the axis-aligned `min`/`max` spelling, never mixed with `center`/`size
 and is the one shape that never rotates. `ShapeTransforms2D.Posed(shape, Similarity2D)` carries any built-in shape through
 a translation, rotation, uniform scale and optional mirror and returns a shape of the same kind.
 
-`IInterval<T>` supplies ordered scalar `Min`/`Max` endpoints. `Interval<T>`, authored `Limit` values
-and physics `ConstraintLimit1D` share `IntervalMath<T>` operations without converting structs to interfaces.
-The contract is closed and permits infinite endpoints; it does not impose domain-specific validation.
+`IInterval<T>` supplies ordered scalar `Min`/`Max` endpoints. `Interval<T>` and authored `Limit` values
+share `IntervalMath<T>` operations without converting structs to interfaces. Physics and rig limits use `Interval<float>`.
+`Interval<T>` validates ordered, non-NaN endpoints and allows negative/positive infinity for an unbounded lower/upper end.
+Use `new Interval<float>(min, max)` for a bounded range and `Interval<T>.Singleton(value)` for a single value.
+The floating-point factories `Interval.Entire<float>()`, `Interval.AtLeast(2f)` and `Interval.AtMost(8f)` construct
+unbounded ranges; `IsBoundedBelow`, `IsBoundedAbove`, `IsEntire` and `IsSingleton` describe their bounds.
+Interval clamping follows the shared numeric arithmetic, including NaN propagation. Constraint-specific finite-coordinate
+validation, activation tolerance and active-side reporting live in `ConstraintMath1D.EvaluateLimit`.
 `Length` is an endpoint difference, including for integer ranges; it is not an inclusive element count.
 Arguments enable convenient calls such as `limits.Contains(3f)` and `limits.Overlaps(new Interval<float>(2, 5))`.
 For queries where C# cannot infer the scalar from arguments, name it once: `IntervalMath<float>.Length(limits)`

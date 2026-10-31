@@ -6,7 +6,7 @@ namespace App2d.Core.Geometry.Curves;
 /// A zero-thickness, one-dimensional path in 2D space, evaluated over normalized progress [0, 1].
 /// Stroke width, caps, and joins belong to rendering; geometry queries describe the path itself.
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(App2d.Core.Geometry.Serialization.GeometryJsonConverterFactory))]
+[System.Text.Json.Serialization.JsonConverter(typeof(Serialization.GeometryJsonConverterFactory))]
 public interface ICurve2D : IGeometryValue2D
 {
     /// <summary>Returns the point at <paramref name="amount"/>. Implementations clamp to [0, 1].</summary>

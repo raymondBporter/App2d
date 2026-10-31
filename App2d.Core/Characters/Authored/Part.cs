@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Json;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -183,9 +184,9 @@ public sealed record Part
     /// <summary>All geometry entries share placement, material, visibility, animation and picking.</summary>
     public List<PartGeometry> Geometry { get; set; } = [];
 
-    public App2d.Core.Physics.PhysicsBodySettings2D? Physics { get; set; }
-    public App2d.Core.Objects.ObjectSurface2D? Surface { get; set; }
-    public App2d.Core.Physics.Motion.CurveMotionDefinition2D? Motion { get; set; }
+    public Physics.PhysicsBodySettings2D? Physics { get; set; }
+    public Objects.ObjectSurface2D? Surface { get; set; }
+    public Physics.Motion.CurveMotionDefinition2D? Motion { get; set; }
     [JsonIgnore] public string TextureRoot { get; set; } = Environment.CurrentDirectory;
 
     // ---- Animated payload (P7a) ---------------------------------------------------------------------------------------
@@ -404,8 +405,8 @@ public sealed record Part
         Motion?.Validate();
         if (Physics is not null)
         {
-            _ = App2d.Core.Characters.Geometry.PartShapes2D.Collision(this);
-            Require(Motion is null || Physics.MotionType == App2d.Core.Physics.BodyMotionType2D.Kinematic,
+            _ = PartShapes2D.Collision(this);
+            Require(Motion is null || Physics.MotionType == Core.Physics.BodyMotionType2D.Kinematic,
                 owner + ": a physical part with path motion must be kinematic.");
         }
         if (Surface is not null)
@@ -432,7 +433,7 @@ public sealed record Part
         var controls = Controls.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
         var pieces = Geometry.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
         Require(Connection is null || controls.Contains(Connection), $"{owner}: the connection control '{Connection}' is not a rig control.");
-        Require(Connection is null || Controls.First(c => c.Id == Connection).Parent is null && Controls.First(c => c.Id == Connection).Rest.XYZ == System.Numerics.Vector3.Zero,
+        Require(Connection is null || Controls.First(c => c.Id == Connection).Parent is null && Controls.First(c => c.Id == Connection).Rest.XYZ == Vector3.Zero,
             $"{owner}: the connection control '{Connection}' must be a rig root at the origin (the payload's origin is what lands on the wearer's socket).");
         foreach (var target in Exposed)
         {

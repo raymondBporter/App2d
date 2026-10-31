@@ -44,7 +44,7 @@ public sealed class SideScrollerGame : Game2D
     private readonly MapEditorUi2D _editorUi;
     private readonly PlayerSaveStore2D _saveStore;
     private readonly ViewportTerrainSource2D _terrainSource;
-    private readonly App2d.Levels.WorldAsset2D _loadedWorld;
+    private readonly Levels.WorldAsset2D _loadedWorld;
     private readonly LevelPicker2D _levelPicker;
 
     public SideScrollerGame(string? worldManifest = null)
@@ -55,7 +55,7 @@ public sealed class SideScrollerGame : Game2D
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
         var textures = _resources.GetLoad<TextureCache2D>("textures/runtime", "presentation");
         _resources.Register("audio/sfx", () => new SoundEffectBank2D<SoundEffect2D>(AssetPaths.Current.SoundEffects, SoundEffectCues2D.Cues), AssetPaths.Current.SoundEffects);
-        var profile = _authored.Profiles.GetValueOrDefault(Core.Characters.Authored.GameProfile.GameId)
+        var profile = _authored.Profiles.GetValueOrDefault(GameProfile.GameId)
             ?? throw new InvalidDataException("The authored 'game' profile (profiles/game.json), which binds the game's player, is missing or does not check.");
         var hero = _authored.Entities.GetValueOrDefault(profile.Entity)
             ?? throw new InvalidDataException($"The authored '{profile.Entity}' entity, the game's player, is missing.");
@@ -70,7 +70,7 @@ public sealed class SideScrollerGame : Game2D
 
         _resources.Register("level/cavern", () => worldManifest is null ? LevelBootstrap2D.Load() : LevelBootstrap2D.LoadWorld(worldManifest),
             worldManifest ?? LevelBootstrap2D.CavernLevelPath);
-        var loadedLevel = _resources.GetLoad<App2d.Levels.WorldAsset2D>("level/cavern", "simulation");
+        var loadedLevel = _resources.GetLoad<Levels.WorldAsset2D>("level/cavern", "simulation");
         _loadedWorld = loadedLevel;
         _levelPicker = new(loadedLevel.Maps);
         var tileMap = loadedLevel.TileMap;
@@ -117,7 +117,7 @@ public sealed class SideScrollerGame : Game2D
 
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
-        _resources.Get<App2d.Levels.WorldAsset2D>("level/cavern", "editor");
+        _resources.Get<Levels.WorldAsset2D>("level/cavern", "editor");
         _editorUi = new(_editor, Textures, DebugPanel);
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ConfigureMaps(loadedLevel.Maps, loadedLevel.Root);

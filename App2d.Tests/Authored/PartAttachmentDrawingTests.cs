@@ -188,7 +188,7 @@ public sealed class PartAttachmentDrawingTests
         var hidden = new PuppetDrawing();
         hidden.Build(ResolvedModel.From(person, null, Library(mixed)), PoseEvaluator.Rest(ResolvedModel.From(person, null, Library(mixed))));
         Assert.True(hidden.Mesh.Count < shown.Mesh.Count);
-        Assert.Equal(new PuppetDrawing().Mesh.Count, 0);
+        Assert.Equal(0, new PuppetDrawing().Mesh.Count);
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using System.Text.RegularExpressions;
 
 namespace App2d.Core.Characters.Authored;

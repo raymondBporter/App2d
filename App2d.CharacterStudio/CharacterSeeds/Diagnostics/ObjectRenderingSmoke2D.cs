@@ -13,7 +13,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Exercises JSON loading, generic shapes, actual physics, observations and material rendering.</summary>
 internal static class ObjectRenderingSmoke2D

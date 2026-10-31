@@ -1,4 +1,4 @@
-using App2d.Core.Constraints;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -95,21 +95,21 @@ internal readonly record struct JointAxis2D(RigidBody2D First, RigidBody2D Secon
         return JointMath2D.ApplyPosition(First, Second, Direction * impulse, FirstLever * impulse, SecondLever * impulse);
     }
 
-    internal void SolveLimits(float coordinate, ConstraintLimit1D limits, float dt, ref float lowerImpulse, ref float upperImpulse)
+    internal void SolveLimits(float coordinate, Interval<float> limits, float dt, ref float lowerImpulse, ref float upperImpulse)
     {
         var mass = EffectiveMass;
-        if (limits.HasMinimum)
+        if (limits.IsBoundedBelow)
         {
             // A positive gap permits inward travel up to gap/dt; at the stop, cancel outward speed.
             // Accumulate a nonnegative reaction so the stop can push, but cannot pull.
-            var impulse = -mass * (Speed + Math.Max(0f, coordinate - limits.Minimum) / dt);
+            var impulse = -mass * (Speed + Math.Max(0f, coordinate - limits.Min) / dt);
             var previous = lowerImpulse;
             lowerImpulse = Math.Max(0f, previous + impulse);
             ApplyVelocity(lowerImpulse - previous);
         }
-        if (limits.HasMaximum)
+        if (limits.IsBoundedAbove)
         {
-            var impulse = -mass * (-Speed + Math.Max(0f, limits.Maximum - coordinate) / dt);
+            var impulse = -mass * (-Speed + Math.Max(0f, limits.Max - coordinate) / dt);
             var previous = upperImpulse;
             upperImpulse = Math.Max(0f, previous + impulse);
             ApplyVelocity(previous - upperImpulse);

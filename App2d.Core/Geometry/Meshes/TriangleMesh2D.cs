@@ -46,10 +46,10 @@ public sealed class TriangleMesh2D
     public ReadOnlySpan<Vector2> Vertices => _vertices;
     public ReadOnlySpan<int> Indices => _indices;
     /// <summary>A borrowed, allocation-free view of the mesh's vertex triples in index-buffer order.</summary>
-    public IndexedTriangleEnumerable<Vector2> Triangles => MeshTopology.IndexedTriangles<Vector2>(_vertices, _indices);
+    public IndexedTriangleEnumerable<Vector2> Triangles => MeshTopology.IndexedTriangles(_vertices, _indices);
     /// <summary>Cached index topology, independent of vertex positions and rendering.</summary>
     public ReadOnlySpan<Segment<int>> BoundaryEdges => _boundaryEdges ??= MeshTopology.BoundaryEdges(_indices);
-    public SegmentVertexEnumerable<Segment<Vector2>, Vector2> BoundarySegments => MeshTopology.IndexedSegments<Vector2>(_vertices, BoundaryEdges);
+    public SegmentVertexEnumerable<Segment<Vector2>, Vector2> BoundarySegments => MeshTopology.IndexedSegments(_vertices, BoundaryEdges);
     public int TriangleCount => _indices.Length / 3;
     /// <summary>The sum of triangle areas; overlaps are counted once per triangle.</summary>
     public float Area { get; }

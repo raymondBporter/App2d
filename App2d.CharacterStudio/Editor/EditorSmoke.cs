@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.Editing;
 using App2d.CharacterStudio.Importing;
 using App2d.Core.Characters;
@@ -668,7 +669,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var brute = s.Assets.Resolve("brute")!;
                 Record(brute.Provenance(PropertyRef.OfAttachment(PersonTemplate.FaceInstance, RigProperties.Expression)) == PropertySource.Override && PoseEvaluator.Rest(brute).Expressions[PersonTemplate.FaceInstance] == "angry",
                     "the brute variant's converted face override is the instance's expression with Override provenance");
-                var ember = s.SubjectModel!.Asset.Looks.First(l => l.Id == "ember");
+                var ember = LookPreset.ReadFrom(s.SubjectModel!.Asset).First(l => l.Id == "ember");
                 Record(ember.Expressions[PersonTemplate.FaceInstance] == "determined", "the ember look carries its face word as the instance's expression");
                 var saved = File.ReadAllText(s.SubjectModel!.Path!);
                 Record(!saved.Contains("\"face\": {") && !saved.Contains("faceX") && saved.Contains("\"attachments\""), "the shipped model file carries no face payload or offset field, only the instance (and the looks' words on it)");
@@ -989,7 +990,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var stand = new CharacterModel { Id = "rider-stand", Name = "Rider stand" };
                 stand.Controls.Add(new() { Id = "root", Rest = new(0, 1, 0) });
                 stand.Controls.Add(new() { Id = "head", Parent = "root", Rest = new(0, 1.3f, 0) });
-                stand.Parts.Add(new() { Id = "beam", A = "root", B = "head", Geometry = App2d.Core.Shapes.Ellipse2D.Builder.Create(new(.05f, .15f)), Material = new() { Fill = "#888888" } });
+                stand.Parts.Add(new() { Id = "beam", A = "root", B = "head", Geometry = Ellipse2D.Builder.Create(new(.05f, .15f)), Material = new() { Fill = "#888888" } });
                 stand.Sockets.Add(new() { Id = "left-seat", Control = "root", OffsetX = -.6f, Frame = CharacterModel.Locomotion, Usage = ModulePlans.UpperBody });
                 stand.Sockets.Add(new() { Id = "right-seat", Control = "root", OffsetX = .6f, Frame = CharacterModel.Locomotion, Usage = ModulePlans.UpperBody });
                 stand.Attachments.Add(new() { Id = "a", Asset = ModulePlans.PersonUpper, Socket = "left-seat" });
@@ -1001,8 +1002,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var wave = s.ClipDocument!;
                 Check(s.Edit(wave, () =>
                 {
-                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "head"), 0, System.Numerics.Vector3.Zero, .2f);
-                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "a/head"), 0, System.Numerics.Vector3.Zero, -.5f);
+                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "head"), 0, Vector3.Zero, .2f);
+                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "a/head"), 0, Vector3.Zero, -.5f);
                     ClipAuthoring.SetKey(wave.Asset, new(MotionClip.TranslateKind, "b/head"), 0, new(0, .1f, 0), 0);
                     ClipAuthoring.SetPlay(wave.Asset, "a", 0, "walk");
                     ClipAuthoring.SetPlay(wave.Asset, "b", 0, "hit");
@@ -1013,8 +1014,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var b = pose.Attachments["b"];
                 Record(MathF.Abs(pose.Angles["head"] - .2f) < 1e-5f && MathF.Abs(a.Pose.Angles["head"] + .5f) < 1e-5f && MathF.Abs(b.Pose.Angles["head"]) < 1e-5f && b.Pose.Points["head"].Y - b.Rig.Rest["head"].Y > .09f && (a.Expression, b.Expression) == ("walk", "hit"),
                     "the wearer's head, a/head and b/head are three targets keyed apart; a walks while b takes the hit, and b's lifted head never reaches a");
-                var reachA = System.Numerics.Vector3.Distance(a.Rig.Rest["left-hand"], a.Rig.Rest["left-shoulder"]);
-                var reachB = System.Numerics.Vector3.Distance(b.Rig.Rest["left-hand"], b.Rig.Rest["left-shoulder"]);
+                var reachA = Vector3.Distance(a.Rig.Rest["left-hand"], a.Rig.Rest["left-shoulder"]);
+                var reachB = Vector3.Distance(b.Rig.Rest["left-hand"], b.Rig.Rest["left-shoulder"]);
                 Record(MathF.Abs(reachB / reachA - 1.5f) < 1e-3f && b.Rig.ParameterValues["arms"] == 1.5f, $"b's arms input (1.5) lengthens its own rig's arms through the module's bindings ({reachB / reachA:0.###} of a's); a keeps the part's default");
                 Check(s.Edit(standDocument, () => standDocument.Asset.Attachments.First(x => x.Id == "a").Inputs["head"] = 1.3f), s);
                 Record(s.Evaluate("rider-stand")!.Pose.Attachments["a"].Rig.ParameterValues["head"] == 1.3f, "setting a's head input re-resolves that instance's rig alone");
@@ -1044,8 +1045,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var pose = s.Evaluate(CentaurStudy.Id)!.Pose;
                 var lower = pose.Attachments[CentaurStudy.Lower];
                 var upper = pose.Attachments[CentaurStudy.Upper];
-                var saddle = lower.Frame("body").At(new System.Numerics.Vector3(.42f, .98f, 0));
-                Record(lower.Pose.Chains.All(c => c.Reached) && lower.Pose.Contacts.Count >= 2 && lower.Pose.Contacts.All(c => c.Residual < 1e-4f) && System.Numerics.Vector2.Distance(new(saddle.X, saddle.Y), new(upper.World(Humanoid.Chest).X, upper.World(Humanoid.Chest).Y)) < 1e-4f,
+                var saddle = lower.Frame("body").At(new Vector3(.42f, .98f, 0));
+                Record(lower.Pose.Chains.All(c => c.Reached) && lower.Pose.Contacts.Count >= 2 && lower.Pose.Contacts.All(c => c.Residual < 1e-4f) && Vector2.Distance(new(saddle.X, saddle.Y), new(upper.World(Humanoid.Chest).X, upper.World(Humanoid.Chest).Y)) < 1e-4f,
                     "at 0.55 s of the walk the lower body's legs reach with the planted feet holding, and the chest sits on the saddle socket carried by lower/body");
                 var walkClip = s.Assets.Clip("centaur-walk")!.Asset;
                 var gait = s.Assets.Part(ModulePlans.QuadrupedLower)!.Asset.Clip("quadruped-walk")!;

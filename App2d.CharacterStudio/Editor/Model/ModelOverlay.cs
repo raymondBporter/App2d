@@ -75,7 +75,7 @@ internal static class ModelOverlay
                 frame.Draw.AddLine(outline[i - 1], outline[i], color, 2);
             }
 
-            if (part.Geometry is not App2d.Core.Geometry.Curves.ICurve2D && outline.Length > 1)
+            if (part.Geometry is not ICurve2D && outline.Length > 1)
             {
                 frame.Draw.AddLine(outline[^1], outline[0], color, 2);
             }

@@ -1,4 +1,4 @@
-using App2d.Core.Constraints;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Shapes;
@@ -63,7 +63,7 @@ public sealed class SuspensionJoint2DTests
         var joint = new WheelJoint2D(frame, wheel, Vector2.Zero, Vector2.Zero, Vector2.UnitY)
         {
             IsSpringEnabled = false,
-            TranslationLimits = ConstraintLimit1D.Between(0f, 28f)
+            TranslationLimits = new Interval<float>(0f, 28f)
         };
         world.Constraints.Add(joint);
         wheel.WorldObject.Transform.Position = Vector2.UnitY * position;
@@ -191,7 +191,7 @@ public sealed class SuspensionJoint2DTests
         var shock = new SpringDamperJoint2D(frame, arm, Vector2.Zero, Vector2.Zero, 5f)
         {
             IsEnabled = false,
-            LengthLimits = ConstraintLimit1D.Between(4f, 6f)
+            LengthLimits = new Interval<float>(4f, 6f)
         };
         world.Constraints.Add(shock);
         world.Step(Dt);

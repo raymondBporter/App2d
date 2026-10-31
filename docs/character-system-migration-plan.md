@@ -168,7 +168,7 @@ Normalized bend does not mean the same thing as a fixed angle. Changing limits i
 
 Constraints evaluate in a deterministic declared order with explicit target spaces. Joint limits on IK require a limit-aware solve that can return a closest valid pose and residual. Clamping an analytical IK result afterward must not continue reporting that the target was reached.
 
-Reuse [ConstraintLimit1D](../App2d.Core/Constraints/ConstraintLimit1D.cs), [ConstraintMath2D](../App2d.Core/Constraints/ConstraintMath2D.cs), existing IK math and interpolation where their semantics fit. Editor slider ranges and active physical/kinematic limit state have different responsibilities; sharing primitives does not require merging those responsibilities.
+Reuse [Interval<T>](../App2d.Core/Geometry/Primitives/Interval.cs), [ConstraintMath1D](../App2d.Core/Constraints/ConstraintMath1D.cs), [ConstraintMath2D](../App2d.Core/Constraints/ConstraintMath2D.cs), existing IK math and interpolation where their semantics fit. Editor slider ranges and active physical/kinematic limit state have different responsibilities; sharing primitives does not require merging those responsibilities.
 
 Parameter/layout dependencies are validated for cycles. Explicit property overrides win over parameter-produced values for the same exposed property, then downstream attachment/layout calculations use that final value. Studio shows when an override masks a parameter binding.
 

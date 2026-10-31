@@ -1,7 +1,8 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 /// <summary>
 /// The anatomy templates as published resources (character-system migration, P10a): the version-2 recipes that declare part

@@ -6,7 +6,7 @@ using App2d.Levels;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Exercises the real map views against a disposable level copy, without writing authored content.</summary>
 internal static class MapEditorUiSmoke2D

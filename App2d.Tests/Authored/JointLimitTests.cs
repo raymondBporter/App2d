@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Constraints;
 using App2d.Core.Shapes;
@@ -12,6 +13,15 @@ namespace App2d.Tests.Authored;
 /// </summary>
 public sealed class JointLimitTests
 {
+    [Theory]
+    [InlineData(float.NegativeInfinity, 1f)]
+    [InlineData(0f, float.PositiveInfinity)]
+    public void RigIntervalsStillRequireFiniteAngularBounds(float min, float max)
+    {
+        var limit = new RigLimit { Min = min, Max = max };
+        Assert.Throws<ArgumentOutOfRangeException>(() => limit.Interval);
+    }
+
     /// <summary>A two-bone arm on the canonical bone solver hanging from a shoulder, optionally beneath a reflected torso.</summary>
     private static CharacterModel Arm(bool reflected = false, bool ik = true, RigLimit? upper = null, RigLimit? elbow = null) => new()
     {

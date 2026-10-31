@@ -13,7 +13,7 @@ using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Exercises actual authored sword damage and captures the resulting foliage.</summary>
 internal static class VegetationRenderingSmoke2D

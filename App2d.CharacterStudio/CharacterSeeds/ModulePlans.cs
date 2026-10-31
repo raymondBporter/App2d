@@ -1,6 +1,6 @@
 using App2d.Core.Characters;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 /// <summary>
 /// The declared module extractions (character-system migration, P10b): the Person's upper and lower body and the quadruped's

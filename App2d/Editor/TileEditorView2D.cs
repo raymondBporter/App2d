@@ -75,7 +75,7 @@ internal static class TileEditorView2D
     /// <summary>An object's collider (or drawn shape) outline at its placement, and its path when it moves.</summary>
     private static void DrawObject(Renderer2D renderer, TileEditor2D editor, Part asset, Vector2 position, Color4b color, bool isSelected)
     {
-        renderer.DrawShape(asset.Physics is not null ? App2d.Core.Characters.Geometry.PartShapes2D.Collision(asset) : new App2d.Core.Rendering.Characters.PartShader2D(asset).BoundsShape(), Matrix3x2.CreateTranslation(position), outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
+        renderer.DrawShape(asset.Physics is not null ? Core.Characters.Geometry.PartShapes2D.Collision(asset) : new Core.Rendering.Characters.PartShader2D(asset).BoundsShape(), Matrix3x2.CreateTranslation(position), outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
         var path = ObjectPathPreview2D.Sample(asset, position);
         if (path.Length == 0)
         {

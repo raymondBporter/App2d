@@ -22,7 +22,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>
 /// Real simulation and renderer: the player and an enemy standing on authored lifts, exported as frames. Planted feet
@@ -69,7 +69,7 @@ internal static class PlatformStudy2D
             using var enemies = new EnemyPresentation2D(scene, textures, traversal, new Silent());
             var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5000, 2), new SolidColorShader(new Color4b(70, 88, 93)));
             scene.Add(ground);
-            var platform = new WorldObject2D(App2d.Core.Characters.Geometry.PartShapes2D.Collision(lift.Asset), new SolidColorShader(new Color4b(37, 210, 190)));
+            var platform = new WorldObject2D(Core.Characters.Geometry.PartShapes2D.Collision(lift.Asset), new SolidColorShader(new Color4b(37, 210, 190)));
             scene.Add(platform);
             camera.Position = focus;
             for (var step = 0; step < 240; step++)

@@ -1,6 +1,8 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterStudio.Authoring;
 
 /// <summary>
 /// One-way, explicit conversion of a prototype motion (absolute per-key positions) into channels for a model built from the

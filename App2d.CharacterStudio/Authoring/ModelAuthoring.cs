@@ -1,3 +1,5 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
@@ -7,7 +9,7 @@ using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterStudio.Authoring;
 
 /// <summary>
 /// Graphics-free edits to a base model and a variant. Each structural edit validates the whole model before returning; callers
@@ -246,7 +248,7 @@ public static class ModelAuthoring
     /// </summary>
     public static void SetOverride(ModelVariant variant, CharacterModel basis, PropertyOverride change) => SetOverrides(variant, basis, [change]);
 
-    private static void SetOverrides(ModelVariant variant, CharacterModel basis, IReadOnlyList<PropertyOverride> changes)
+    private static void SetOverrides(ModelVariant variant, CharacterModel basis, List<PropertyOverride> changes)
     {
         if (changes.Count == 0)
         {
@@ -726,7 +728,7 @@ public static class ModelAuthoring
     /// (bone descendants follow through the hierarchy); without, bone children re-express their local setup against the
     /// moved parent so every descendant keeps its character-frame rest. A bound child always follows its parent.
     /// </summary>
-    private static void CarryDescendants(CharacterModel model, string id, Vector3 delta, bool children, IReadOnlyDictionary<string, RigNode> before)
+    private static void CarryDescendants(CharacterModel model, string id, Vector3 delta, bool children, Dictionary<string, RigNode> before)
     {
         if (children)
         {

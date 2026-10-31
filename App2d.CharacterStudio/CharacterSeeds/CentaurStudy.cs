@@ -1,6 +1,7 @@
+using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 /// <summary>
 /// The centaur study (character-system migration, P10c): a character composed entirely from library modules and resources.
@@ -21,7 +22,7 @@ public static class CentaurStudy
         var model = new CharacterModel { Id = Id, Name = "Centaur study", Ink = "#242a29", LineWidth = .045f };
         model.Controls.Add(new() { Id = "root", Rest = new(0, .92f, 0) });
         // A model carries at least one drawing part; the root's mark is hidden, the modules draw everything.
-        model.Parts.Add(new() { Id = "root-mark", A = "root", Geometry = App2d.Core.Shapes.Ellipse2D.Builder.Create(new(.02f, .02f)), Material = new() { Fill = "#000000" }, Hidden = true });
+        model.Parts.Add(new() { Id = "root-mark", A = "root", Geometry = Core.Shapes.Ellipse2D.Builder.Create(new(.02f, .02f)), Material = new() { Fill = "#000000" }, Hidden = true });
         model.Sockets.Add(new() { Id = Mount, Control = "root", Frame = CharacterModel.Locomotion, Usage = ModulePlans.LowerBody });
         // The saddle sits on the lower module's body control (instance/control), just above the withers, so the torso rides the gait.
         model.Sockets.Add(new() { Id = Saddle, Control = Lower + Part.Namespace + "body", OffsetX = .42f, OffsetY = .98f, Usage = ModulePlans.UpperBody });
@@ -30,7 +31,7 @@ public static class CentaurStudy
         model.MotionOwner = Lower;
         model.Groups.Add(new() { Id = UpperGroup, Targets = [Upper] });
         model.Groups.Add(new() { Id = LowerGroup, Targets = [Lower] });
-        ParameterBinding Input(string instance, string input) => new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(instance, RigProperties.Input + input) };
+        static ParameterBinding Input(string instance, string input) => new() { Kind = BindingKinds.Scale, Target = PropertyRef.OfAttachment(instance, RigProperties.Input + input) };
         model.Parameters.Add(new() { Id = LegsId, Name = "Leg length", Default = 1, Min = .5f, Max = 2, SoftMin = .7f, SoftMax = 1.5f, Bindings = [Input(Lower, QuadrupedTemplate.LegsId)] });
         model.Parameters.Add(new() { Id = ArmsId, Name = "Arm length", Default = 1, Min = .5f, Max = 2, SoftMin = .7f, SoftMax = 1.5f, Bindings = [Input(Upper, PersonBuild.ArmsId)] });
         model.Presets.Add(new() { Id = "standard", Name = "Standard", Values = new() { [LegsId] = 1, [ArmsId] = 1 } });

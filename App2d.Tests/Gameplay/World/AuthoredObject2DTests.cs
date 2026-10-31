@@ -1,4 +1,4 @@
-using App2d.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
@@ -128,7 +128,7 @@ public sealed class AuthoredObject2DTests
         Assert.Equal(placement.Position, visual.Transform.Position);
         view.ApplyState(level.CaptureContent(), level.CaptureWorld());
         Assert.Equal(Assert.Single(level.Objects).WorldObject.Transform.Position, visual.Transform.Position);
-        view.ApplyState(App2d.Contracts.World.LevelContent2D.Empty, App2d.Contracts.World.WorldState2D.Empty);
+        view.ApplyState(LevelContent2D.Empty, WorldState2D.Empty);
         Assert.Empty(scene);
     }
 

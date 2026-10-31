@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 using App2d.CharacterStudio.Editing;
 using App2d.CharacterStudio.Importing;
 using App2d.Core.Characters;

@@ -16,7 +16,7 @@ using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Real simulation and renderer, exported at 60 fps for an effects-on/off contact comparison.</summary>
 internal static class CombatContactStudy2D

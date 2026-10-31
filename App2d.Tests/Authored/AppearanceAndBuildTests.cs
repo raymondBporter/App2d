@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Authored;
@@ -52,7 +53,7 @@ public sealed class AppearanceAndBuildTests
     {
         // The face is the baked part instanced on the head socket (P7c); the clip's selection channel and a gameplay request address it by instance.
         var model = ResolvedModel.From(PersonTemplate.Model(face: true), null, PersonTemplate.PartOf);
-        var face = PersonTemplate.FaceInstance;
+        const string face = PersonTemplate.FaceInstance;
         var clip = new MotionClip { Id = "blink", Name = "Blink", Model = "person", Duration = 1, Plays = [new() { Instance = face, Keys = [new() { Time = .5f, Expression = "blink" }] }] };
         clip.Validate(model);
         Assert.Equal("blink", PoseEvaluator.Sample(model, clip, .1).Expressions[face]);
@@ -118,7 +119,7 @@ public sealed class AppearanceAndBuildTests
     [Fact]
     public void AHiddenPartKeepsItsControlsAndDrawsNoFace()
     {
-        var head = "head";
+        const string head = "head";
         var headless = new ModelVariant { Id = "headless", Name = "Headless", Base = "person", Overrides = [PropertyOverride.Of(PropertyRef.OfPart(head, RigProperties.Hidden), true)] };
         var model = ResolvedModel.From(Person, headless);
         var pose = PoseEvaluator.Rest(model);

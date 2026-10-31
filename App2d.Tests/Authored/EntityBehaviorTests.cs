@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Authored;
@@ -60,7 +61,7 @@ public sealed class EntityBehaviorTests
         var compiled = Compile(guard);
         Assert.Equal(3, compiled.Damage.Health);
         Assert.Equal(1, compiled.Actions["attack"].Hits[0].Strike.Damage);
-        string Refused(Action<Part> change)
+        static string Refused(Action<Part> change)
         {
             var broken = StarterContent.SpearGuardEntity();
             change(broken);
@@ -119,7 +120,7 @@ public sealed class EntityBehaviorTests
         {
             duel.Step(new(Attack: i == 0));
         }
-        var strike = Assert.Single(duel.Hits.Where(h => h.Attacker == 0));
+        var strike = Assert.Single(duel.Hits, h => h.Attacker == 0);
         Assert.Equal(2, strike.Damage);
         Assert.Equal(Catalog.Entities["spear-guard"].Damage.Health - 2, duel.Actors[1].Health);
     }

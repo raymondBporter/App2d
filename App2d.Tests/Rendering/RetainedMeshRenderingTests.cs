@@ -105,7 +105,7 @@ public sealed class RetainedMeshRenderingTests
     {
         using var texture = CreateTexture();
         using var replacementBitmap = new Bitmap(1, 1);
-        replacementBitmap.SetPixel(0, 0, System.Drawing.Color.Magenta);
+        replacementBitmap.SetPixel(0, 0, Color.Magenta);
         using var replacement = Texture2D.FromBitmap("replacement", replacementBitmap);
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
@@ -279,10 +279,10 @@ public sealed class RetainedMeshRenderingTests
     private static Texture2D CreateTexture()
     {
         using var bitmap = new Bitmap(2, 2);
-        bitmap.SetPixel(0, 0, System.Drawing.Color.FromArgb(128, 255, 0, 0));
-        bitmap.SetPixel(1, 0, System.Drawing.Color.Lime);
-        bitmap.SetPixel(0, 1, System.Drawing.Color.Blue);
-        bitmap.SetPixel(1, 1, System.Drawing.Color.Yellow);
+        bitmap.SetPixel(0, 0, Color.FromArgb(128, 255, 0, 0));
+        bitmap.SetPixel(1, 0, Color.Lime);
+        bitmap.SetPixel(0, 1, Color.Blue);
+        bitmap.SetPixel(1, 1, Color.Yellow);
         return Texture2D.FromBitmap("mesh-test", bitmap);
     }
 }

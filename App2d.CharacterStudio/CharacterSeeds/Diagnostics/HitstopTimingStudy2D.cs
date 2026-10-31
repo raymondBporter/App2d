@@ -4,7 +4,7 @@ using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
 using System.Collections.Immutable;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Opt-in art study: displayed attack/reaction clocks change while simulation stays live. Contact Hold uses the runtime preset.</summary>
 internal static class HitstopTimingStudy2D

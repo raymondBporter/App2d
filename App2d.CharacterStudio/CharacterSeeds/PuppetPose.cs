@@ -3,7 +3,7 @@ using App2d.Core.Kinematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 public sealed record PuppetContactResult(string End, Vector3 Target, float Error);
 

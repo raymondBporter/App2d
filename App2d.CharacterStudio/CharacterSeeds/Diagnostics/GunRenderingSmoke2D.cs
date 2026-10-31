@@ -20,7 +20,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 
 /// <summary>Isolated, deterministic visual checks for the real gun state and muzzle pose.</summary>
 internal static class GunRenderingSmoke2D

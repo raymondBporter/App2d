@@ -1,4 +1,4 @@
-using App2d.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;

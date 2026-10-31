@@ -5,7 +5,7 @@ using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.CharacterSeeds;
+namespace App2d.CharacterStudio.CharacterSeeds;
 
 /// <summary>A small, rig-independent facial pose of the retired procedural style. Feature coordinates use X right, Y down, over a unit head.</summary>
 public readonly record struct ProceduralFacePose(

@@ -1,4 +1,5 @@
-using App2d.CharacterSeeds;
+using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
@@ -343,14 +344,14 @@ public sealed class EditorSessionTests : IDisposable
         var basis = session.Assets.Model(variant.Asset.Base)!;
         Ok(session, session.ApplyLook("sage"));
         Ok(session, session.SaveLook("mine", "Mine"));
-        Assert.Contains(basis.Asset.Looks, l => l.Id == "mine");
+        Assert.Contains(LookPreset.ReadFrom(basis.Asset), l => l.Id == "mine");
         session.Undo();
-        Assert.DoesNotContain(basis.Asset.Looks, l => l.Id == "mine");
+        Assert.DoesNotContain(LookPreset.ReadFrom(basis.Asset), l => l.Id == "mine");
         Assert.True(variant.CanUndo, "the variant's look is still applied");
         session.Undo();
         Assert.False(variant.Dirty);
         session.Redo();
         Assert.True(variant.Dirty);
-        Assert.DoesNotContain(basis.Asset.Looks, l => l.Id == "mine");
+        Assert.DoesNotContain(LookPreset.ReadFrom(basis.Asset), l => l.Id == "mine");
     }
 }

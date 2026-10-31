@@ -23,9 +23,9 @@ public static class ShapeTessellation2D
         if (shape is HalfSpace2D halfSpace)
         {
             var count = PolygonClipping2D.ClipRectangleToHalfSpace(RequireClipBounds(clipBounds), halfSpace.Normal, halfSpace.Offset, scratch);
-            return MeshTopology.TriangleFan<Vector2>(scratch[..count]);
+            return MeshTopology.TriangleFan(scratch[..count]);
         }
-        return MeshTopology.TriangleFan<Vector2>(OutlineVertices(shape, scratch, roundSegments, cornerSegments));
+        return MeshTopology.TriangleFan(OutlineVertices(shape, scratch, roundSegments, cornerSegments));
     }
 
     /// <summary>Returns true perimeter segments. A half-space contributes only its boundary line, never the clip rectangle's edges.</summary>
@@ -44,9 +44,9 @@ public static class ShapeTessellation2D
                 scratch[1] = end;
                 count = 2;
             }
-            return MeshTopology.Segments<Vector2>(scratch[..count], closed: false);
+            return MeshTopology.Segments(scratch[..count], closed: false);
         }
-        return MeshTopology.Segments<Vector2>(OutlineVertices(shape, scratch, roundSegments, cornerSegments));
+        return MeshTopology.Segments(OutlineVertices(shape, scratch, roundSegments, cornerSegments));
     }
 
     private static ReadOnlySpan<Vector2> OutlineVertices(IShape2D shape, Span<Vector2> scratch, int roundSegments, int cornerSegments) => shape switch

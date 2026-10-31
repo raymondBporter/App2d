@@ -1,5 +1,6 @@
-using App2d.Core.Characters;
+using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Json;
 using App2d.Core.Validation;
 using System.Text.Json;
 using Authored = App2d.Core.Characters.Authored;
@@ -72,7 +73,16 @@ public sealed class AuthoringWorkspace
 
         foreach (var model in catalog.Models.Values)
         {
-            workspace.Add(AssetDocuments.Of(model, catalog.PathOf(model.Id)));
+            var path = catalog.PathOf(model.Id);
+            try
+            {
+                LookPreset.Validate(model);
+                workspace.Add(AssetDocuments.Of(model, path));
+            }
+            catch (Exception ex) when (IsAssetError(ex))
+            {
+                workspace.LoadErrors = [.. workspace.LoadErrors, $"{path}: {ex.Message}"];
+            }
         }
 
         foreach (var variant in catalog.Variants.Values)
@@ -481,6 +491,7 @@ public sealed class AuthoringWorkspace
         {
             case AssetDocument<CharacterModel> model:
                 Try(model.Asset.Validate);
+                if (problems.Count == 0) Try(() => LookPreset.Validate(model.Asset));
                 // The base resolves through the part library too: an instance whose asset or default word is unbound is a
                 // problem of the wearer, reported by name (P7c), not a silent gap until a variant or clip trips over it.
                 if (problems.Count == 0 && Resolve(model.Id, out var unresolved) is null)
@@ -556,6 +567,7 @@ public sealed class AuthoringWorkspace
         {
             case AssetDocument<CharacterModel> model:
                 model.Asset.Validate();
+                LookPreset.Validate(model.Asset);
                 if (!model.IsNew && StructureChanged(model))
                 {
                     var from = model.Asset.StructureRevision;

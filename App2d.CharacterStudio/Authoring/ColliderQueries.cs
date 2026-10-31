@@ -1,8 +1,10 @@
+using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterStudio.Authoring;
 
 /// <summary>
 /// Overlap queries over attached colliders through the ordinary broad phase. The filter is reconciled with collider-pair

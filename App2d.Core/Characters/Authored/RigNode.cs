@@ -1,6 +1,8 @@
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Constraints;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Validation;
 using System.Numerics;
 using System.Text.Json.Serialization;
 
@@ -104,7 +106,7 @@ public sealed record RigLink
 /// evaluator clamps an ordinary angle channel to the limits and records the state; a normalized bend channel maps 0..1 onto
 /// [Min, Max] exactly at both ends, so changing the limits intentionally changes a normalized performance while angle keys
 /// keep their authored values. The limit-aware IK solve (<see cref="BoneFrameIk"/>) returns the closest in-range pose with
-/// its residual. Reuses <see cref="ConstraintLimit1D"/> for the interval semantics.
+/// its residual. Reuses <see cref="Interval{T}"/> for the interval semantics.
 /// </summary>
 public sealed record RigLimit
 {
@@ -116,13 +118,13 @@ public sealed record RigLimit
     /// <summary>A quarter turn either way, for a limit the author has just added.</summary>
     public static RigLimit Starter => new();
 
-    [JsonIgnore] public ConstraintLimit1D Interval => ConstraintLimit1D.Between(Min, Max);
+    [JsonIgnore] public Interval<float> Interval => new(ArgGuard.Finite(Min), ArgGuard.Finite(Max));
     [JsonIgnore] public float Span => Max - Min;
 
     public bool Contains(float rotation) => rotation >= Min && rotation <= Max;
 
     /// <summary>The nearest in-range rotation and the limit state for a local rotation.</summary>
-    public ConstraintLimitEvaluation1D Evaluate(float rotation) => Interval.Evaluate(rotation);
+    public ConstraintLimitEvaluation1D Evaluate(float rotation) => ConstraintMath1D.EvaluateLimit(Interval, rotation);
 
     /// <summary>A normalized bend through the range: 0 is exactly <see cref="Min"/>, 1 exactly <see cref="Max"/>; outside 0..1 is clamped.</summary>
     public float FromNormalized(float bend) => bend <= 0 ? Min : bend >= 1 ? Max : Min + bend * Span;
