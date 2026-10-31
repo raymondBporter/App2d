@@ -10,8 +10,10 @@ public static class Vector3Extensions
         /// <summary>Widens all coordinates before double-precision arithmetic, including subtraction.</summary>
         public Vector3d ToVector3d() => new(value);
 
+        public Vector3f ToVector3f() => new(value);
+
         /// <summary>True when every component is finite, regardless of the vector's length.</summary>
-        public bool IsFinite() => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z);
+        public bool IsFinite() => Vector3f.IsFinite(new(value));
 
         /// <summary>Converts each component from degrees to radians.</summary>
         public Vector3 DegreesToRadians() => new(float.DegreesToRadians(value.X), float.DegreesToRadians(value.Y), float.DegreesToRadians(value.Z));

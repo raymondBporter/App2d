@@ -7,6 +7,10 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Direction2D` | Finite unit vector with angle, perpendicular, reversal and signed scaling helpers |
 | `Polar2D` | Radius/angle value and direct polar/Cartesian conversions |
 | `Vector2i` | Signed integer coordinates, checked addition/subtraction/scaling, and explicit float conversion |
+| `IVector<TSelf, TReal>` | Concrete floating-point vector contract: arithmetic, dot product, component queries, min/max and absolute value |
+| `Vector2f`, `Vector3f`, `Vector4f` | Readonly float vectors backed by the corresponding `System.Numerics` vectors |
+| `Vector2d`, `Vector3d`, `Vector4d` | Readonly double vectors for higher-precision geometry |
+| `IVectorExtensions` | Shared lengths, distances, normalization, interpolation, projection/rejection, reflection and clamping |
 | `Vector2Extensions` | Angle construction, rejection/refraction, finite checks, rotation, cross products, orientation, and perpendicular vectors |
 | `Vector3Extensions` | `IsFinite()`, componentwise `DegreesToRadians()` / `RadiansToDegrees()`, and `XY`, `XZ`, and `YZ` coordinate-plane projections |
 | `Vector4Extensions` | `IsFinite()` component query |
@@ -186,7 +190,43 @@ a GPU shader can use the equivalent vector equations.
 offsets, or integer dimensions without grid-specific rules. Addition, subtraction,
 and integer scaling throw on overflow. Division is omitted so callers choose their
 own rounding policy. `ToVector2()` explicitly converts to the existing float vector;
-large integers may round. The float vector remains `System.Numerics.Vector2`.
+large integers may round. Existing graphics APIs continue to accept `System.Numerics.Vector2`.
+
+The six floating-point vector types implement `IVector<TSelf, TReal>`, with `TReal` constrained to
+`IFloatingPointIeee754<TReal>`. Keep the concrete vector type in storage and generic arguments,
+for example `Segment<Vector3d>`. Do not store an `IVector<...>` interface value: converting a struct
+to an interface boxes it. The integer vector, unit directions, and validated sizes have different
+arithmetic contracts and do not implement this interface.
+
+`IVectorExtensions` contains one implementation of each shared algorithm. Two small extension groups
+fix the scalar to float or double, so C# can infer the vector type for ordinary calls:
+
+```csharp
+var offset = new Vector3d(3, 4, 12);
+double length = offset.Length();
+Vector3d direction = offset.Normalized();
+double distance = Vector3d.Distance(Vector3d.Zero, offset);
+Vector3d halfway = Vector3d.Lerp(Vector3d.Zero, offset, .5);
+```
+
+Code generic over both the vector and scalar uses the same functions explicitly:
+
+```csharp
+static TReal SegmentLength<TVector, TReal>(Segment<TVector> segment)
+    where TVector : unmanaged, IVector<TVector, TReal>
+    where TReal : unmanaged, IFloatingPointIeee754<TReal> =>
+    IVectorExtensions.Distance<TVector, TReal>(segment.Start, segment.End);
+```
+
+The primitives remain concrete: float arithmetic forwards to `System.Numerics`, and `Vector2d` /
+`Vector4d` division uses packed intrinsics. Perpendiculars, orientation, cross products, and transforms retain
+their dimension-specific definitions. Use constructors and `ToVector2()` / `ToVector3()` / `ToVector4()`
+at graphics boundaries, or the corresponding `ToVector*f()` / `ToVector*d()` conversions.
+
+Lengths use `Sqrt(Dot(value, value))`, so finite coordinates can still produce an overflowing or
+underflowing squared length. `Normalize` divides by that length; zero vectors produce NaN components.
+These raw vectors perform no validation. `Direction2D` retains its separate validated construction.
+`Lerp` extrapolates outside [0, 1]. `Project`, `Reject`, and `Reflect` require a unit normal.
 
 `u.Cross(v)` is the two-vector determinant (also called the perpendicular dot product).
 `a.Orientation(b, c)` computes `cross(b - a, c - a)`: twice the signed triangle area,

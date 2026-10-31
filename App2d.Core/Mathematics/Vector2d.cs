@@ -3,33 +3,25 @@ using System.Runtime.Intrinsics;
 
 namespace App2d.Core.Mathematics;
 
-public interface IVecvtor<TSelf, Real> :
-    IAdditionOperators<TSelf, TSelf, TSelf>,
-    ISubtractionOperators<TSelf, TSelf, TSelf>,
-    IDivisionOperators<TSelf, Real, TSelf>,
-    IMultiplyOperators<TSelf, Real, TSelf>,
-    IUnaryNegationOperators<TSelf, TSelf>,
-    IAdditiveIdentity<TSelf, TSelf>,
-    IMultiplicativeIdentity<TSelf, Real>
-    where TSelf : IVecvtor<TSelf, Real>
-    where Real : IBinaryFloatingPointIeee754<Real>
-{
-    static abstract int Dimension { get; }
-    static abstract Real Length { get; }
-    static abstract Real LengthSquared { get; }
-    static abstract TSelf Zero { get; }
-    static abstract TSelf One { get; }
-}
-
 /// <summary>
 /// A pair of double-precision coordinates for intermediate geometric calculations.
 /// Arithmetic follows IEEE 754 without validation. Equality compares stored coordinates without a tolerance.
 /// </summary>
-public readonly record struct Vector2d(double X, double Y)
+public readonly record struct Vector2d(double X, double Y) : IVector<Vector2d, double>
 {
     public Vector2d(Vector2 value) : this(value.X, value.Y) { }
 
+    public static int Dimension => 2;
     public static Vector2d Zero => default;
+    public static Vector2d One => new(1, 1);
+    public static Vector2d UnitX => new(1, 0);
+    public static Vector2d UnitY => new(0, 1);
+    public double this[int index] => index switch
+    {
+        0 => X,
+        1 => Y,
+        _ => throw new ArgumentOutOfRangeException(nameof(index))
+    };
 
     /// <summary>Unit vector at an angle in radians, counter-clockwise from +X in Y-up space.</summary>
     public static Vector2d FromAngle(double angleRadians)
@@ -50,9 +42,11 @@ public readonly record struct Vector2d(double X, double Y)
         return new(quotient.GetElement(0), quotient.GetElement(1));
     }
 
-    public double LengthSquared() => Dot(this);
-    public double Length() => Math.Sqrt(LengthSquared());
-    public double Dot(Vector2d other) => X * other.X + Y * other.Y;
+    public static double Dot(Vector2d left, Vector2d right) => left.X * right.X + left.Y * right.Y;
+    public static Vector2d Min(Vector2d left, Vector2d right) => new(double.Min(left.X, right.X), double.Min(left.Y, right.Y));
+    public static Vector2d Max(Vector2d left, Vector2d right) => new(double.Max(left.X, right.X), double.Max(left.Y, right.Y));
+    public static Vector2d Abs(Vector2d value) => new(double.Abs(value.X), double.Abs(value.Y));
+    public static bool IsFinite(Vector2d value) => double.IsFinite(value.X) && double.IsFinite(value.Y);
 
     /// <summary>The perpendicular dot product; positive for a counter-clockwise turn in Y-up coordinates.</summary>
     public double Cross(Vector2d other) => X * other.Y - Y * other.X;
@@ -62,11 +56,6 @@ public readonly record struct Vector2d(double X, double Y)
 
     public Vector2d PerpCcw => new(-Y, X);
     public Vector2d PerpCw => new(Y, -X);
-    public bool IsFinite() => double.IsFinite(X) && double.IsFinite(Y);
-
-    public static double DistanceSquared(Vector2d a, Vector2d b) => (a - b).LengthSquared();
-    public static double Distance(Vector2d a, Vector2d b) => (a - b).Length();
-
     /// <summary>Transforms a point using Matrix3x2's row-vector convention, with double-precision arithmetic.</summary>
     public static Vector2d Transform(Vector2d point, Matrix3x2 matrix) => new(
         point.X * matrix.M11 + point.Y * matrix.M21 + matrix.M31,
@@ -74,4 +63,5 @@ public readonly record struct Vector2d(double X, double Y)
 
     /// <summary>Rounds each coordinate to a float. Values outside the float range become infinities.</summary>
     public Vector2 ToVector2() => new((float)X, (float)Y);
+    public override string ToString() => $"<{X}, {Y}>";
 }

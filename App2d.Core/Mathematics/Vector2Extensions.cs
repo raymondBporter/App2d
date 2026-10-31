@@ -17,7 +17,8 @@ public static class Vector2Extensions
         public static Vector2 FromAngleDegrees(float angleDegrees) => Polar2D.Direction(float.DegreesToRadians(angleDegrees));
 
         /// <summary>Removes the component parallel to a unit normal. The normal must already be normalized.</summary>
-        public static Vector2 Reject(Vector2 vector, Vector2 unitNormal) => vector - Vector2.Dot(vector, unitNormal) * unitNormal;
+        public static Vector2 Reject(Vector2 vector, Vector2 unitNormal) =>
+            Vector2f.Reject(new(vector), new(unitNormal)).ToVector2();
 
         /// <summary>
         /// Snell's law for unit directions and unit normals pointing toward the incident medium.
@@ -46,8 +47,10 @@ public static class Vector2Extensions
         /// <summary>Widens both coordinates before double-precision arithmetic, including subtraction.</summary>
         public Vector2d ToVector2d() => new(value);
 
+        public Vector2f ToVector2f() => new(value);
+
         /// <summary>True when every component is finite, regardless of the vector's length.</summary>
-        public bool IsFinite() => float.IsFinite(value.X) && float.IsFinite(value.Y);
+        public bool IsFinite() => Vector2f.IsFinite(new(value));
 
         /// <summary>Heading in radians from +X, counter-clockwise in Y-up space. Zero vectors return zero.</summary>
         public float AngleRadians => Polar2D.AngleOf(value);

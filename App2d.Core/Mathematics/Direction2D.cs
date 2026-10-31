@@ -28,7 +28,14 @@ public readonly record struct Direction2D
     public Vector2 Vector { get; }
     public bool IsValid => Vector != Vector2.Zero;
 
-    public float AngleRadians => Polar2D.AngleOf(Vector);
+    public float AngleRadians
+    {
+        get
+        {
+            Validate();
+            return Polar2D.AngleOf(Vector);
+        }
+    }
 
     public Direction2D PerpCcw => new(new(-Vector.Y, Vector.X));
 
@@ -36,7 +43,11 @@ public readonly record struct Direction2D
 
     public Direction2D Reversed => new(-Vector);
 
-    public Vector2 ScaledBy(float distance) => Vector * ArgGuard.Finite(distance);
+    public Vector2 ScaledBy(float distance)
+    {
+        Validate();
+        return Vector * ArgGuard.Finite(distance);
+    }
 
     public static Direction2D FromAngle(float angleRadians) => new(Polar2D.Direction(angleRadians));
 
