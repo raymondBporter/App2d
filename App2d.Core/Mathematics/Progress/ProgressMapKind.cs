@@ -12,7 +12,8 @@ public enum ProgressMapKind
     EaseInCubic, EaseOutCubic, EaseInOutCubic,
     EaseInQuart, EaseOutQuart, EaseInOutQuart,
     EaseInQuint, EaseOutQuint, EaseInOutQuint,
-    EaseInSine, EaseOutSine, EaseInOutSine
+    EaseInSine, EaseOutSine, EaseInOutSine,
+    Step, ReversePingPong
 }
 
 public sealed class ProgressMapKindJsonConverter() : JsonStringEnumConverter<ProgressMapKind>(JsonNamingPolicy.KebabCaseLower, allowIntegerValues: false);

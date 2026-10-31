@@ -51,7 +51,8 @@ standard clamping behavior.
 
 `Progress.SmoothStep`, `SmootherStep`, and `SmoothestStep` clamp inputs to [0,1]. Easing maps do not clamp inputs
 or outputs. The `*StepUnclamped<T>` polynomials share float/double arithmetic
-without forcing float callers to change precision. `ClipEase` retains its saved names and held-step behavior.
+without forcing float callers to change precision. Animation keys use `ProgressMapKind` and `ProgressMaps.FromKind`
+directly. `KeyframeSegmentSampler` samples a map once for all channels in a segment.
 `Progress.SmoothStepMap`, `SmootherStepMap`, and `SmoothestStepMap` package each polynomial with
 its analytic derivative; `Easing.Smooth`, `Smoother`, and `Smoothest` are aliases for those same maps.
 These maps guarantee output in [0,1] for normalized phase, clamping polynomial rounding at the producer.
@@ -76,6 +77,13 @@ and `"ease-in-out-sine"`. `ProgressMaps.Compose(kinds)` applies an ordered list 
 For example, `["ping-pong", "smoother"]` means `smoother(pingPong(phase))`, with the
 analytic chain-rule derivative. Custom delegate maps have no built-in kind; author their
 parameters separately. Arbitrary power degrees remain available in code.
+
+Named maps declare `Travel` as `EasingTravel.Forward`, `Backward`, `ForwardAndBackward`, or `BackwardAndForward`.
+`IsContinuous` describes continuity on [0,1] separately: PingPong and ReversePingPong have continuous positions with
+sharp turns; Step holds zero before phase 1 and jumps to one there, with a NaN derivative at the jump.
+`ProgressMaps.ForTravel(travel, continuousOnly: true)` filters choices without duplicating the map catalogue.
+Custom maps may explicitly declare travel and continuity; otherwise metadata stays unknown rather than guessing from
+an arbitrary function. Motion definitions reject discontinuous maps; animation keys allow continuous forward maps and Step.
 
 The unused back, circular, exponential, elastic and bounce families were removed. The retained
 maps have finite normalized slopes. Ping-pong uses its returning slope at the turnaround;

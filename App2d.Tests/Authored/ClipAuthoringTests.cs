@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 
@@ -6,6 +8,34 @@ namespace App2d.Tests.Authored;
 public sealed class ClipAuthoringTests
 {
     private static readonly ResolvedModel Model = ResolvedModel.From(TestModels.Creature());
+
+    [Fact]
+    public void NamedForwardEasingCanBeAuthoredAndOtherTravelIsRefusedBeforeMutation()
+    {
+        var clip = TestModels.Clip(Model);
+        clip.Travel.Keys = [new() { Curve = new KeyCurve2D() }, new() { Time = 1f, Value = Vector3.UnitX }];
+        ClipAuthoring.SetEase(clip, 0f, ProgressMapKind.Smoother);
+        Assert.Equal(ProgressMapKind.Smoother, clip.Travel.Keys[0].Ease);
+        Assert.Null(clip.Travel.Keys[0].Curve);
+        Assert.Throws<InvalidDataException>(() => ClipAuthoring.SetEase(clip, 0f, ProgressMapKind.Reverse));
+        Assert.Equal(ProgressMapKind.Smoother, clip.Travel.Keys[0].Ease);
+    }
+
+    [Fact]
+    public void ExcerptsKeepNewPresetsOnKeyBoundariesAndRefuseAnInexactInteriorCut()
+    {
+        var clip = TestModels.Clip(Model);
+        clip.Duration = 1f;
+        clip.Tracks = [new() { Kind = MotionClip.RotateKind, Target = "body",
+            Keys = [new() { Ease = ProgressMapKind.EaseInOutSine }, new() { Time = 1f, Angle = 1f }] }];
+        var before = clip.ToJson();
+        var whole = ClipAuthoring.Excerpt(clip, 0f, 1f, "whole", "Whole");
+        Assert.Equal(ProgressMapKind.EaseInOutSine, whole.Tracks[0].Keys[0].Ease);
+        foreach (var time in new[] { 0f, .1f, .5f, .9f, 1f })
+            Assert.Equal(PoseEvaluator.Interpolate(clip.Tracks[0], time), PoseEvaluator.Interpolate(whole.Tracks[0], time));
+        Assert.Contains("Cut at its key times", Assert.Throws<InvalidOperationException>(() => ClipAuthoring.Excerpt(clip, .2f, .8f, "part", "Part")).Message);
+        Assert.Equal(before, clip.ToJson());
+    }
 
     private static Vector3 Posed(MotionClip clip, string control, float time, ResolvedModel? model = null)
     {
@@ -37,7 +67,7 @@ public sealed class ClipAuthoringTests
         {
             Kind = MotionClip.RotateKind,
             Target = "body",
-            Keys = [new() { Time = 0, Angle = 0 }, new() { Time = .2f, Angle = .4f, Ease = ClipEase.Smooth }, new() { Time = .8f, Angle = -.2f }]
+            Keys = [new() { Time = 0, Angle = 0 }, new() { Time = .2f, Angle = .4f, Ease = ProgressMapKind.Smooth }, new() { Time = .8f, Angle = -.2f }]
         });
         clip.Markers = [new() { Id = "early", Time = .1f }, new() { Id = "strike", Time = .5f }];
         var part = ClipAuthoring.Excerpt(clip, .2f, .8f, "part", "Part"); // cut on the body's keys
@@ -47,7 +77,7 @@ public sealed class ClipAuthoringTests
             TestModels.Near(Posed(clip, "hand", .2f + t), Posed(part, "hand", t), 1e-4f, $"hand at {t}");
         }
 
-        Assert.Equal(ClipEase.Smooth, part.Tracks.Single(t => t.Target == "body").Keys[0].Ease); // an end on a key keeps its easing
+        Assert.Equal(ProgressMapKind.Smooth, part.Tracks.Single(t => t.Target == "body").Keys[0].Ease); // an end on a key keeps its easing
         Assert.Equal([("strike", .3f)], part.Markers.Select(m => (m.Id, MathF.Round(m.Time, 4))));
     }
 
@@ -116,7 +146,7 @@ public sealed class ClipAuthoringTests
         ClipAuthoring.MoveKeys(clip, .5f, .6f, [new(MotionClip.TargetKind, "arm")]);
         Assert.Contains(.6f, ClipAuthoring.KeyTimes(clip, [new(MotionClip.TargetKind, "arm")]));
         ClipAuthoring.DeleteKeys(clip, .6f);
-        ClipAuthoring.SetEase(clip, 0, ClipEase.Step);
+        ClipAuthoring.SetEase(clip, 0, ProgressMapKind.Step);
         Assert.Equal(.1f, ClipAuthoring.Value(clip, new(MotionClip.TranslateKind, "body"), .2f).Value.Y, 4);
         clip.Validate(Model);
     }

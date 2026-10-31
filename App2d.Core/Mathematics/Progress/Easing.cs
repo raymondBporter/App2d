@@ -5,7 +5,7 @@ namespace App2d.Core.Mathematics.Progress;
 /// <summary>Polynomial and sine easing maps with analytic derivatives. Normalized phases produce progress in [0,1]; other phases extrapolate.</summary>
 public static class Easing
 {
-    public static readonly ProgressMap Linear = new(x => x, _ => 1d, ProgressMapKind.Linear);
+    public static readonly ProgressMap Linear = new(x => x, _ => 1d, ProgressMapKind.Linear, EasingTravel.Forward, true);
     public static readonly ProgressMap Smooth = Progress.SmoothStepMap;
     public static readonly ProgressMap Smoother = Progress.SmootherStepMap;
     public static readonly ProgressMap Smoothest = Progress.SmoothestStepMap;
@@ -25,7 +25,7 @@ public static class Easing
 
     public static readonly ProgressMap EaseInSine = new(
         x => 1d - Math.Cos(x * Math.PI / 2d),
-        x => Math.PI / 2d * Math.Sin(x * Math.PI / 2d), ProgressMapKind.EaseInSine);
+        x => Math.PI / 2d * Math.Sin(x * Math.PI / 2d), ProgressMapKind.EaseInSine, EasingTravel.Forward, true);
     public static readonly ProgressMap EaseOutSine = ProgressMaps.EaseOut(EaseInSine).Named(ProgressMapKind.EaseOutSine);
     public static readonly ProgressMap EaseInOutSine = ProgressMaps.EaseInOut(EaseInSine).Named(ProgressMapKind.EaseInOutSine);
 
@@ -33,7 +33,8 @@ public static class Easing
     public static ProgressMap EaseInPower(int power)
     {
         ArgGuard.Positive(power);
-        return power == 1 ? Linear : new(x => Math.Pow(x, power), x => power * Math.Pow(x, power - 1));
+        return power == 1 ? Linear : new(x => Math.Pow(x, power), x => power * Math.Pow(x, power - 1),
+            travel: EasingTravel.Forward, isContinuous: true);
     }
 
     public static ProgressMap EaseOutPower(int power) => power == 1 ? Linear : ProgressMaps.EaseOut(EaseInPower(power));

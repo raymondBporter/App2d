@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
@@ -85,7 +87,7 @@ public sealed class NativeRigTests
             new() { Slot = "rear-paint", Kind = SlotColorTrack2D.Rgb, SetupBeforeFirst = true, Keys =
                 [new() { Time = .25f, Value = new(1, 0, 0, 1)}, new() { Time = 1, Value = new(0, 1, 0, 1)}] },
             new() { Slot = "rear-paint", Kind = SlotColorTrack2D.Alpha, SetupBeforeFirst = true, Keys =
-                [new() { Time = .5f, Value = new(1, 1, 1, .2f), Ease = ClipEase.Step }, new() { Time = .75f, Value = new(1, 1, 1, .8f) }] }
+                [new() { Time = .5f, Value = new(1, 1, 1, .2f), Ease = ProgressMapKind.Step }, new() { Time = .75f, Value = new(1, 1, 1, .8f) }] }
         ];
         var model = ResolvedModel.From(CharacterModel.FromJson(source.ToJson()));
         var motion = MotionClip.FromJson(clip.ToJson());

@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters.Authored;
 using ImGuiNET;
@@ -189,7 +191,7 @@ internal sealed class AnimationTimeline(EditorSession session)
         if (_keyMenu is { } menu)
         {
             ImGui.TextDisabled($"Key at {menu.Time:F3}s");
-            foreach (var ease in ClipEase.All)
+            foreach (var ease in AnimationCurveEditor.EasingKinds)
             {
                 if (ImGui.MenuItem("Ease: " + ease))
                 {

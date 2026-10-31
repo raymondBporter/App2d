@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -63,7 +65,7 @@ public static partial class ClipAuthoring
     {
         var keys = clip.Travel.Keys;
         distance = keys.Count == 2 ? keys[1].Value.X : 0;
-        return keys.Count == 0 || keys.Count == 2 && keys[0] is { Time: 0, Value.X: 0, Value.Y: 0, Value.Z: 0, Ease: ClipEase.Linear, Curve: null, CurveY: null, CurveZ: null }
+        return keys.Count == 0 || keys.Count == 2 && keys[0] is { Time: 0, Value.X: 0, Value.Y: 0, Value.Z: 0, Ease: ProgressMapKind.Linear, Curve: null, CurveY: null, CurveZ: null }
             && MathF.Abs(keys[1].Time - clip.Duration) < SameTime && keys[1].Value.Y == 0 && keys[1].Value.Z == 0;
     }
 

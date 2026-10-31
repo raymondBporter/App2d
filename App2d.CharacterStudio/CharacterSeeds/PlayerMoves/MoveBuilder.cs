@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
@@ -20,9 +22,9 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     public const string ProfileViewMarker = PersonLoadout.ProfileViewMarker;
 
     private readonly Dictionary<(string Kind, string Target), SortedDictionary<float, ClipKey>> _tracks = [];
-    private readonly List<(string Chain, float Time, Vector2 Offset, bool Absolute, string Ease)> _hands = [];
-    private readonly List<(float Time, float Angle, string Ease)> _blade = [];
-    private readonly List<(float Time, float Wrist, string Ease)> _grips = [];
+    private readonly List<(string Chain, float Time, Vector2 Offset, bool Absolute, ProgressMapKind Ease)> _hands = [];
+    private readonly List<(float Time, float Angle, ProgressMapKind Ease)> _blade = [];
+    private readonly List<(float Time, float Wrist, ProgressMapKind Ease)> _grips = [];
     private readonly List<ClipContact> _contacts = [];
     private readonly List<ClipMarker> _markers = [];
     private readonly List<ClipPlayKey> _faces = [];
@@ -33,7 +35,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     public float Duration => duration;
 
     /// <summary>Keys every channel mentioned in <paramref name="pose"/> at one time. Unmentioned channels interpolate through.</summary>
-    public MoveBuilder Key(float time, Action<PoseKey> pose, string ease = ClipEase.Smooth)
+    public MoveBuilder Key(float time, Action<PoseKey> pose, ProgressMapKind ease = ProgressMapKind.Smooth)
     {
         if (time < 0 || time > duration + 1e-4f)
         {
@@ -91,7 +93,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
         {
             Time = time,
             Value = new(x, y, 0),
-            Ease = ClipEase.Linear
+            Ease = ProgressMapKind.Linear
         });
         return this;
     }
@@ -108,9 +110,9 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             Time = time
         };
     }
-    internal void Hand(string chain, float time, Vector2 offset, bool absolute, string ease) => _hands.Add((chain, time, offset, absolute, ease));
-    internal void Blade(float time, float angle, string ease) => _blade.Add((time, angle, ease));
-    internal void Grip(float time, float wrist, string ease) => _grips.Add((time, wrist, ease));
+    internal void Hand(string chain, float time, Vector2 offset, bool absolute, ProgressMapKind ease) => _hands.Add((chain, time, offset, absolute, ease));
+    internal void Blade(float time, float angle, ProgressMapKind ease) => _blade.Add((time, angle, ease));
+    internal void Grip(float time, float wrist, ProgressMapKind ease) => _grips.Add((time, wrist, ease));
 
     public MotionClip Build()
     {
@@ -141,7 +143,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
 
         // Pass 1: the body alone fixes each shoulder's accumulated frame. The blade angle is world-relative, so the
         // right shoulder's own turn is whatever is left after the chest's.
-        void Blades(IEnumerable<(float Time, float Angle, string Ease)> blades)
+        void Blades(IEnumerable<(float Time, float Angle, ProgressMapKind Ease)> blades)
         {
             foreach (var (time, angle, ease) in blades)
             {
@@ -217,7 +219,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
 }
 
 /// <summary>One key pose. Positions are actor-space deltas or absolutes as named; angles are radians, positive counter-clockwise.</summary>
-internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
+internal sealed class PoseKey(MoveBuilder owner, float time, ProgressMapKind ease)
 {
     private ClipKey K(float x = 0, float y = 0, float z = 0) => new() { Value = new(x, y, z), Ease = ease };
     private ClipKey R(float angle) => new() { Angle = angle, Ease = ease };

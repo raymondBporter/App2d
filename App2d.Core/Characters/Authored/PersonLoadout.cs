@@ -37,15 +37,22 @@ public sealed record PersonGearIds
 /// </summary>
 public static class PersonLoadout
 {
-    public const string ShortHair = "hair-short", ShortHairBack = "hair-short-back";
-    public const string BackViewMarker = "view-back", ProfileViewMarker = "view-profile", DrawMarker = "sword-draw", SheatheMarker = "sword-sheathe";
+    public const string ShortHair = "hair-short";
+    public const string ShortHairBack = "hair-short-back";
+    public const string BackViewMarker = "view-back";
+    public const string ProfileViewMarker = "view-profile";
+    public const string DrawMarker = "sword-draw";
+    public const string SheatheMarker = "sword-sheathe";
     /// <summary>
     /// The blade leaves a swoosh from a "swoosh" marker to the next "swoosh-end" (or the clip's end). A clip holding several
     /// swings numbers the later ones: "swoosh-2" and "swoosh-2-end", and so on.
     /// </summary>
-    public const string SwooshMarker = "swoosh", SwooshEndMarker = "swoosh-end";
+    public const string SwooshMarker = "swoosh";
+    public const string SwooshEndMarker = "swoosh-end";
 
-    public const string Sword = "sword", Sheath = "sheath", Pistol = "pistol";
+    public const string Sword = "sword";
+    public const string Sheath = "sheath";
+    public const string Pistol = "pistol";
     /// <summary>The upper-body group: channels an arms-only overlay (a gun shot) owns over any legs. The Person model carries it as its "upper" control group.</summary>
     public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { Chest, Head, LeftShoulder, RightShoulder, LeftArm, RightArm };
     public static readonly IReadOnlySet<string> SwordUpperBody = new HashSet<string>(UpperBody, StringComparer.Ordinal) { SwordSocket };

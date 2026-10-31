@@ -17,6 +17,9 @@ public sealed record CurveMotionDefinition2D
     {
         ArgGuard.ThrowIfNull(Curve);
         Curve.Validate();
+        ArgGuard.ThrowIfNull(Progress);
+        ArgGuard.ThrowIf(Progress.Any(kind => ProgressMaps.FromKind(kind).IsContinuous != true),
+            "Motion paths require continuous progress maps.", nameof(Progress));
         return new(Curve, PeriodSeconds, ProgressMaps.Compose(Progress), origin, Repeat);
     }
 

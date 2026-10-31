@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -133,7 +135,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
                 session.Edit(document, () => ClipAuthoring.DeleteKeys(document.Asset, time, [channel]));
             }
 
-            if (Ui.Combo("Ease to next key", key.Ease, ClipEase.All) is { } ease)
+            if (Ui.EnumCombo("Ease to next key", key.Ease, AnimationCurveEditor.EasingKinds) is { } ease)
             {
                 session.Edit(document, () => ClipAuthoring.SetEase(document.Asset, time, ease, [channel]));
             }

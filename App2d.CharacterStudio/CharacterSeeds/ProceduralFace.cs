@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
@@ -246,14 +248,14 @@ public static class ProceduralFace
             foreach (var (id, position) in layout.Controls)
             {
                 var delta = position - rest.Controls[id];
-                Track(MotionClip.TranslateKind, id).Keys.Add(new() { Time = i, Value = new(delta.X, delta.Y, 0), Ease = ClipEase.Step });
+                Track(MotionClip.TranslateKind, id).Keys.Add(new() { Time = i, Value = new(delta.X, delta.Y, 0), Ease = ProgressMapKind.Step });
             }
 
             foreach (var piece in Pieces)
             {
                 var fit = layout.Fits.GetValueOrDefault(piece, Vector2.One);
-                Track(MotionClip.FitKind, piece).Keys.Add(new() { Time = i, Value = new(fit.X - 1, fit.Y - 1, 0), Ease = ClipEase.Step });
-                Track(MotionClip.ShowKind, piece).Keys.Add(new() { Time = i, Value = new(layout.Shown.Contains(piece) ? 1 : 0, 0, 0), Ease = ClipEase.Step });
+                Track(MotionClip.FitKind, piece).Keys.Add(new() { Time = i, Value = new(fit.X - 1, fit.Y - 1, 0), Ease = ProgressMapKind.Step });
+                Track(MotionClip.ShowKind, piece).Keys.Add(new() { Time = i, Value = new(layout.Shown.Contains(piece) ? 1 : 0, 0, 0), Ease = ProgressMapKind.Step });
             }
         }
         asset.Clips.Add(expressions);

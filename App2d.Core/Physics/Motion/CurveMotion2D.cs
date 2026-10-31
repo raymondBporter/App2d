@@ -13,6 +13,7 @@ public sealed class CurveMotion2D : IKinematicMotion2D
     {
         Curve = ArgGuard.RequireNotNull(curve);
         Progress = ArgGuard.RequireNotNull(progress);
+        ArgGuard.ThrowIf(progress is ProgressMap { IsContinuous: false }, "Motion paths require a continuous progress map.", nameof(progress));
         PeriodSeconds = ArgGuard.Positive(periodSeconds);
         ArgGuard.Finite(origin);
         Origin = origin;

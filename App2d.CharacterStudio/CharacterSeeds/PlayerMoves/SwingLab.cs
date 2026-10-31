@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.PlayerMoves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -70,7 +72,7 @@ internal static class SwingLab
         }
     }
 
-    private static MoveBuilder Pose(this MoveBuilder b, float time, Arc p, string ease = ClipEase.Linear) =>
+    private static MoveBuilder Pose(this MoveBuilder b, float time, Arc p, ProgressMapKind ease = ProgressMapKind.Linear) =>
         b.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(b.Model, p.Yaw).RightHand(p.Hand.X, p.Hand.Y).LeftHand(p.OffX, p.OffY).Grip(p.Wrist), ease);
 
     /// <summary>The right arm's full length, shoulder to elbow to hand.</summary>
@@ -107,7 +109,7 @@ internal static class SwingLab
             return _lastBlade = angle;
         }
 
-        public Swing SidePose(float time, Side p, string ease = ClipEase.Linear)
+        public Swing SidePose(float time, Side p, ProgressMapKind ease = ProgressMapKind.Linear)
         {
             var arm = Side.Direction(p.Arm, p.ArmDip) * _arm;
             var blade = Side.Direction(p.Blade, p.BladeDip);
@@ -124,7 +126,7 @@ internal static class SwingLab
             _orient.Add((time, 0, Depth ? tilt : 0));
             return this;
         }
-        public Swing Pose(float time, Arc p, string ease = ClipEase.Linear)
+        public Swing Pose(float time, Arc p, ProgressMapKind ease = ProgressMapKind.Linear)
         {
             Builder.Pose(time, p.Radius >= Straight ? p with
             {
@@ -148,7 +150,7 @@ internal static class SwingLab
 
     /// <summary>The idle stance with the sword on the back (<paramref name="blade"/> is the right shoulder's sheathed turn).</summary>
     private static void Idle(Swing s, float time, float blade) =>
-        s.Builder.Key(time, k => k.Hips(CharacterStudio.PlayerMoves.PlayerMoves.StanceX, CharacterStudio.PlayerMoves.PlayerMoves.StanceY).Chest(-.03f).Head(.02f).Shoulders(s.Builder.Model, 60).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(blade), ClipEase.Smooth);
+        s.Builder.Key(time, k => k.Hips(CharacterStudio.PlayerMoves.PlayerMoves.StanceX, CharacterStudio.PlayerMoves.PlayerMoves.StanceY).Chest(-.03f).Head(.02f).Shoulders(s.Builder.Model, 60).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(blade), ProgressMapKind.Smooth);
 
     /// <summary>
     /// The forward hit from the back, where the sword rides whenever it isn't swinging. At <paramref name="start"/> the hand
@@ -161,8 +163,8 @@ internal static class SwingLab
     private static float DrawCut(Swing s, float start, int travel)
     {
         var (hilt, sheathed) = CharacterStudio.PlayerMoves.PlayerMoves.Hilt(-.03f, -.04f, .1f);
-        s.Builder.Key(start, k => k.Hips(-.03f, -.04f).Chest(.1f).Head(.02f).Shoulders(s.Builder.Model, 90).RightHandAt(hilt.X, hilt.Y).LeftHand(.12f, -.52f).Blade(sheathed), ClipEase.Linear);
-        s.Builder.Key(start + F, k => k.Hips(-.03f, -.05f).Chest(.03f).Head(.02f).Shoulders(s.Builder.Model, 125).RightHandAt(-.42f, 2.06f).LeftHand(.16f, -.46f).Blade(sheathed - .15f), ClipEase.Linear);
+        s.Builder.Key(start, k => k.Hips(-.03f, -.04f).Chest(.1f).Head(.02f).Shoulders(s.Builder.Model, 90).RightHandAt(hilt.X, hilt.Y).LeftHand(.12f, -.52f).Blade(sheathed), ProgressMapKind.Linear);
+        s.Builder.Key(start + F, k => k.Hips(-.03f, -.05f).Chest(.03f).Head(.02f).Shoulders(s.Builder.Model, 125).RightHandAt(-.42f, 2.06f).LeftHand(.16f, -.46f).Blade(sheathed - .15f), ProgressMapKind.Linear);
         s.Tilt(start, 0).Tilt(start + F, 0);
         if (travel > 1)
         {
@@ -170,7 +172,7 @@ internal static class SwingLab
         }
 
         var contact = start + (1 + travel) * F;
-        s.Pose(contact, Contact).Pose(contact + 2 * F, Past, ClipEase.Smooth).Pose(contact + 6 * F, Held, ClipEase.Smooth);
+        s.Pose(contact, Contact).Pose(contact + 2 * F, Past, ProgressMapKind.Smooth).Pose(contact + 6 * F, Held, ProgressMapKind.Smooth);
         s.Builder.Marker(PersonLoadout.DrawMarker, start + F).Marker(PersonLoadout.SwooshMarker, start + F).Marker(PersonLoadout.SwooshEndMarker, contact + F)
             .Marker("strike", contact).Marker("recover", contact + 5 * F);
         return contact + 6 * F;
@@ -195,8 +197,8 @@ internal static class SwingLab
     private static float SideCut(Swing s, float start, bool across)
     {
         var (hilt, sheathed) = CharacterStudio.PlayerMoves.PlayerMoves.Hilt(-.03f, -.04f, .1f);
-        s.Builder.Key(start, k => k.Hips(-.03f, -.04f).Chest(.1f).Head(.02f).Shoulders(s.Builder.Model, 90).RightHandAt(hilt.X, hilt.Y).LeftHand(.12f, -.52f).Blade(sheathed), ClipEase.Linear);
-        s.Builder.Key(start + F, k => k.Hips(-.03f, -.05f).Chest(.03f).Head(.02f).Shoulders(s.Builder.Model, 100).RightHandAt(-.42f, 2.06f).LeftHand(.16f, -.46f).Blade(sheathed - .15f), ClipEase.Linear);
+        s.Builder.Key(start, k => k.Hips(-.03f, -.04f).Chest(.1f).Head(.02f).Shoulders(s.Builder.Model, 90).RightHandAt(hilt.X, hilt.Y).LeftHand(.12f, -.52f).Blade(sheathed), ProgressMapKind.Linear);
+        s.Builder.Key(start + F, k => k.Hips(-.03f, -.05f).Chest(.03f).Head(.02f).Shoulders(s.Builder.Model, 100).RightHandAt(-.42f, 2.06f).LeftHand(.16f, -.46f).Blade(sheathed - .15f), ProgressMapKind.Linear);
         s.Tilt(start, 0).Tilt(start + F, 0).SeedBlade(sheathed - .15f);
         s.SidePose(start + 2 * F, Wind);
         if (across)
@@ -205,7 +207,7 @@ internal static class SwingLab
         }
 
         var contact = start + (across ? 4 : 3) * F;
-        s.SidePose(contact, Cut).SidePose(contact + 2 * F, Through, ClipEase.Smooth).SidePose(contact + 6 * F, SideHeld, ClipEase.Smooth);
+        s.SidePose(contact, Cut).SidePose(contact + 2 * F, Through, ProgressMapKind.Smooth).SidePose(contact + 6 * F, SideHeld, ProgressMapKind.Smooth);
         s.Builder.Marker(PersonLoadout.DrawMarker, start + F).Marker(PersonLoadout.SwooshMarker, start + 2 * F).Marker(PersonLoadout.SwooshEndMarker, contact + F)
             .Marker("strike", contact).Marker("recover", contact + 5 * F);
         return contact + 6 * F;
@@ -240,13 +242,13 @@ internal static class SwingLab
         var through = new Side(-12, -20, -.35f, .05f, -.16f, .18f, 90, .12f, -.46f, 60, -10, 55);
         var contact = previous + Cadence;
         var start = contact - 2 * F;
-        s.SidePose(previous + 7 * F, SideHeld, ClipEase.Smooth).SidePose(contact - 6 * F, raised, ClipEase.Smooth).SidePose(start, raised with
+        s.SidePose(previous + 7 * F, SideHeld, ProgressMapKind.Smooth).SidePose(contact - 6 * F, raised, ProgressMapKind.Smooth).SidePose(start, raised with
         {
             Arm = 40,
             ArmDip = -58
         })
             .SidePose(start + F, wound).SidePose(contact, cut)
-            .SidePose(contact + 2 * F, through, ClipEase.Smooth).SidePose(contact + 6 * F, BackHeld, ClipEase.Smooth);
+            .SidePose(contact + 2 * F, through, ProgressMapKind.Smooth).SidePose(contact + 6 * F, BackHeld, ProgressMapKind.Smooth);
         Mark(s, n, start + F, contact);
         return contact;
     }
@@ -259,12 +261,12 @@ internal static class SwingLab
     private static float Forehand(Swing s, float previous, int n)
     {
         var contact = previous + Cadence;
-        s.SidePose(previous + 7 * F, BackHeld, ClipEase.Smooth).SidePose(contact - 6 * F, Wind with
+        s.SidePose(previous + 7 * F, BackHeld, ProgressMapKind.Smooth).SidePose(contact - 6 * F, Wind with
         {
             Twist = 10
-        }, ClipEase.Smooth).SidePose(contact - 3 * F, Wind)
+        }, ProgressMapKind.Smooth).SidePose(contact - 3 * F, Wind)
             .SidePose(contact - 2 * F, Wind).SidePose(contact - F, Across).SidePose(contact, Cut)
-            .SidePose(contact + 2 * F, Through, ClipEase.Smooth).SidePose(contact + 6 * F, SideHeld, ClipEase.Smooth);
+            .SidePose(contact + 2 * F, Through, ProgressMapKind.Smooth).SidePose(contact + 6 * F, SideHeld, ProgressMapKind.Smooth);
         Mark(s, n, contact - 2 * F, contact);
         return contact;
     }
@@ -272,7 +274,7 @@ internal static class SwingLab
     private static float ComboPutAway(Swing s)
     {
         var (settled, held) = Combo(s, ComboSwings);
-        return PutAway(s, settled, t => s.SidePose(t, held, ClipEase.Smooth));
+        return PutAway(s, settled, t => s.SidePose(t, held, ProgressMapKind.Smooth));
     }
 
     /// <summary>A combo of <paramref name="swings"/> alternating forehand and backhand from the draw; returns when the last settles and which pose it holds.</summary>
@@ -302,8 +304,8 @@ internal static class SwingLab
         var raised = s.ContinueBlade(1.6f);
         var over = s.ContinueBlade(3.5f);
         var home = s.ContinueBlade(sheathed);
-        s.Builder.Key(t + .08f, k => k.Hips(.01f, -.05f).Chest(-.02f).Head(.06f).Shoulders(s.Builder.Model, 70).RightHandAt(.14f, 2f).LeftHand(0, -.58f).Blade(raised), ClipEase.Linear)
-            .Key(t + .15f, k => k.Hips(CharacterStudio.PlayerMoves.PlayerMoves.StanceX, CharacterStudio.PlayerMoves.PlayerMoves.StanceY).Chest(.04f).Head(.04f).Shoulders(s.Builder.Model, 90).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(over), ClipEase.Linear)
+        s.Builder.Key(t + .08f, k => k.Hips(.01f, -.05f).Chest(-.02f).Head(.06f).Shoulders(s.Builder.Model, 70).RightHandAt(.14f, 2f).LeftHand(0, -.58f).Blade(raised), ProgressMapKind.Linear)
+            .Key(t + .15f, k => k.Hips(CharacterStudio.PlayerMoves.PlayerMoves.StanceX, CharacterStudio.PlayerMoves.PlayerMoves.StanceY).Chest(.04f).Head(.04f).Shoulders(s.Builder.Model, 90).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(over), ProgressMapKind.Linear)
             .Key(t + .22f, k => k.Hips(CharacterStudio.PlayerMoves.PlayerMoves.StanceX, CharacterStudio.PlayerMoves.PlayerMoves.StanceY).Chest(.02f).Head(.02f).Shoulders(s.Builder.Model, 80).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(home))
             .Marker(PersonLoadout.SheatheMarker, t + .22f);
         s.Tilt(t + .08f, 0).Tilt(t + .15f, 0).Tilt(t + .22f, 0);
@@ -331,9 +333,9 @@ internal static class SwingLab
             Idle(s, Lead - F, sheathed);
             return kind switch
             {
-                Kind.OverTheTop => PutAway(s, DrawCut(s, Lead, 2), t => s.Pose(t, Held, ClipEase.Smooth)),
+                Kind.OverTheTop => PutAway(s, DrawCut(s, Lead, 2), t => s.Pose(t, Held, ProgressMapKind.Smooth)),
                 Kind.SideCombo => ComboPutAway(s),
-                _ => PutAway(s, SideCut(s, Lead, kind == Kind.SideAcross), t => s.SidePose(t, SideHeld, ClipEase.Smooth)),
+                _ => PutAway(s, SideCut(s, Lead, kind == Kind.SideAcross), t => s.SidePose(t, SideHeld, ProgressMapKind.Smooth)),
             };
         }
         var length = Author(new Swing(m, id, id, 5));

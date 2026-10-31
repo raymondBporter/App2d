@@ -212,6 +212,24 @@ public static class Ui
         return chosen;
     }
 
+    /// <summary>A combo over an explicit subset of enum values.</summary>
+    public static T? EnumCombo<T>(string label, T current, IEnumerable<T> options) where T : struct, Enum
+    {
+        Label(label);
+        T? chosen = null;
+        if (ImGui.BeginCombo("##" + label, current.ToString()))
+        {
+            foreach (var option in options)
+            {
+                var selected = EqualityComparer<T>.Default.Equals(option, current);
+                if (ImGui.Selectable(option.ToString(), selected) && !selected)
+                    chosen = option;
+            }
+            ImGui.EndCombo();
+        }
+        return chosen;
+    }
+
     /// <summary>
     /// Marks a variant field that overrides its base. Draws the marker and a reset button on the current line; returns true
     /// when the author asked to reset to base.

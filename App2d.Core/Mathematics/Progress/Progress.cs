@@ -19,7 +19,7 @@ public static class Progress
     /// <summary>Cubic smoothstep with its derivative. Normalized samples are bounded; other phases extrapolate.</summary>
     public static ProgressMap SmoothStepMap { get; } = new(
         x => BoundNormalizedSample(x, SmoothStepUnclamped(x)),
-        x => 6d * x * (1d - x), ProgressMapKind.Smooth);
+        x => 6d * x * (1d - x), ProgressMapKind.Smooth, EasingTravel.Forward, true);
 
     /// <summary>The cubic polynomial in the caller's floating-point precision, without clamping.</summary>
     public static T SmoothStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
@@ -28,7 +28,7 @@ public static class Progress
     /// <summary>Quintic smoothstep with its derivative. Normalized samples are bounded; other phases extrapolate.</summary>
     public static ProgressMap SmootherStepMap { get; } = new(
         x => BoundNormalizedSample(x, SmootherStepUnclamped(x)),
-        x => 30d * x * x * (1d - x) * (1d - x), ProgressMapKind.Smoother);
+        x => 30d * x * x * (1d - x) * (1d - x), ProgressMapKind.Smoother, EasingTravel.Forward, true);
 
     public static T SmootherStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
         value * value * value * (value * (value * T.CreateChecked(6) - T.CreateChecked(15)) + T.CreateChecked(10));
@@ -36,7 +36,7 @@ public static class Progress
     /// <summary>Septic smoothstep with its derivative. Normalized samples are bounded; other phases extrapolate.</summary>
     public static ProgressMap SmoothestStepMap { get; } = new(
         x => BoundNormalizedSample(x, SmoothestStepUnclamped(x)),
-        x => 140d * x * x * x * (1d - x) * (1d - x) * (1d - x), ProgressMapKind.Smoothest);
+        x => 140d * x * x * x * (1d - x) * (1d - x) * (1d - x), ProgressMapKind.Smoothest, EasingTravel.Forward, true);
 
     public static T SmoothestStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
         value * value * value * value *

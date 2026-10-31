@@ -22,11 +22,22 @@ rules; the sampler does not clamp or ease values. Motion and color use the same 
 component curves, absolute handles, authored full rotation turns, and their different empty-track defaults.
 Setup-before-first behavior remains with the owning track, and color clamping remains with color evaluation.
 
-Authored cubic channels share a `ClipEase.Sampler` for each segment sample. Matching X handles reuse the same
+Motion and color keys store `ProgressMapKind` directly and resolve it through `ProgressMaps.FromKind`.
+The enum converter keeps named JSON values, including existing `linear`, `smooth`, and `step` files.
+Key validation and editor choices require forward travel; continuous forward maps and the explicit `Step` hold are allowed.
+`KeyframeSampling` selects timeline segments; `KeyframeSegmentSampler` evaluates scalar channels within one.
+
+Authored cubic channels share a `KeyframeSegmentSampler` for each segment sample. Matching X handles reuse the same
 Bezier timing solve, even across different curve objects with different Y handles or absolute/relative value modes.
 Each channel still evaluates its own value curve, including overshoot between equal endpoints. Different X handles
 are solved independently. The four-entry cache lives only for that sample, allocates no managed memory, and cannot
-retain stale handles after editor changes. Named easing is also evaluated once per sample.
+retain stale handles after editor changes. Named easing is also evaluated once per sample through an `IProgressMap`.
+Maps evaluate in double precision before converting to the channel's float; smooth easing can differ from the former
+float polynomial by float rounding. Custom curves replace named easing and held segments override custom curves.
+The segment sampler accepts geometric `CubicBezier2D` values, so Animation does not depend on authored character types.
+The curve editor can replace a preset with an editable cubic. Only Linear and Smooth have the existing exact cubic
+conversion; excerpts through other named presets must cut on key times or first replace that segment with a curve.
+An unsupported interior cut reports an error instead of changing the interpolation silently.
 
 Sampling belongs to Animation. Numeric interpolation and progress maps remain in Mathematics; geometric curves remain
 in Geometry. Interpolation computes a value between endpoints; easing maps its progress. Integrating a velocity over

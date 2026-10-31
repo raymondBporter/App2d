@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.CharacterSeeds.PlayerMoves;
@@ -169,7 +171,7 @@ internal static partial class PlayerMoves
     private static MotionClip HammerSlam(ResolvedModel m) => New(m, "person-hammer-slam", "Hammer slam", 1.5f, false)
         .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHandAt(.3f, .95f).LeftHand(.05f, -.6f).Blade(.3f))
         .Key(.55f, k => k.Hips(-.06f, -.02f).Chest(.25f).Head(-.02f).RightHandAt(-.15f, 2.05f).LeftHand(.1f, -.45f).Blade(2.4f))
-        .Key(.7f, k => k.Hips(-.06f, -.02f).Chest(.28f).Head(-.03f).RightHandAt(-.18f, 2.08f).LeftHand(.12f, -.44f).Blade(2.55f), ClipEase.Linear)
+        .Key(.7f, k => k.Hips(-.06f, -.02f).Chest(.28f).Head(-.03f).RightHandAt(-.18f, 2.08f).LeftHand(.12f, -.44f).Blade(2.55f), ProgressMapKind.Linear)
         .Key(.78f, k => k.Hips(.08f, -.22f).Chest(-.4f).Head(.12f).RightHandAt(.62f, .95f).LeftHand(-.2f, -.4f).Blade(-.9f))
         .Key(.95f, k => k.Hips(.08f, -.24f).Chest(-.42f).Head(.14f).RightHandAt(.62f, .9f).LeftHand(-.22f, -.4f).Blade(-1.05f))
         .Key(1.5f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHandAt(.3f, .95f).LeftHand(.05f, -.6f).Blade(.3f))
@@ -284,7 +286,7 @@ internal static partial class PlayerMoves
     private static MotionClip PistolShot(ResolvedModel m) => New(m, "person-pistol-shot", "Pistol shot", 1.1f, false)
         .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
         .Key(.35f, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
-        .Key(.6f, k => k.Hips(-.02f, -.035f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0), ClipEase.Linear)
+        .Key(.6f, k => k.Hips(-.02f, -.035f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0), ProgressMapKind.Linear)
         .Key(.63f, k => k.Chest(.06f).Head(.05f).RightHand(.54f, 0).LeftHand(.01f, -.6f).Blade(.38f))
         .Key(.85f, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
         .Key(1.1f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
@@ -583,7 +585,7 @@ internal static partial class PlayerMoves
     /// </summary>
     private static MotionClip Jump(ResolvedModel m) => New(m, "player-jump", "Jump", .5f, false)
         .Key(0, k => k.Hips(.02f, -.08f).Chest(-.22f).Head(.12f).LeftFoot(-.2f, .06f).RightFoot(.06f, .03f).LeftHand(-.28f, -.48f).RightHand(-.22f, -.5f))
-        .Key(.08f, k => k.Hips(0, .02f).Chest(-.04f).Head(.02f).LeftFoot(-.14f, .02f).RightFoot(.02f, .1f).LeftHand(.12f, .2f).RightHand(.2f, .22f), ClipEase.Linear)
+        .Key(.08f, k => k.Hips(0, .02f).Chest(-.04f).Head(.02f).LeftFoot(-.14f, .02f).RightFoot(.02f, .1f).LeftHand(.12f, .2f).RightHand(.2f, .22f), ProgressMapKind.Linear)
         .Key(.3f, k => k.Hips(0, .06f).Chest(-.1f).Head(.06f).LeftFoot(-.18f, .46f).RightFoot(.12f, .52f).LeftHand(.18f, -.2f).RightHand(.24f, -.16f))
         .Key(.5f, k => k.Hips(0, .05f).Chest(-.08f).Head(.05f).LeftFoot(-.15f, .38f).RightFoot(.1f, .44f).LeftHand(.14f, -.26f).RightHand(.2f, -.22f))
         .Marker("launch", 0).Marker("apex", .3f)
@@ -686,21 +688,21 @@ internal static partial class PlayerMoves
         {
             var degrees = angles[i];
             var away = Math.Clamp((degrees - 100) / 60, 0, 1);
-            b.Key(T(i * .03f), k => k.Turned(m, degrees, away), ClipEase.Linear);
+            b.Key(T(i * .03f), k => k.Turned(m, degrees, away), ProgressMapKind.Linear);
         }
         for (var step = 1; step <= 5; step++)
         {
             var hand = Vector2.FromPolar(.64f, float.DegreesToRadians(-90 + 22.5f * step));
-            b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(hand.X, hand.Y).RightHand(-hand.X, hand.Y), ClipEase.Linear);
+            b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(hand.X, hand.Y).RightHand(-hand.X, hand.Y), ProgressMapKind.Linear);
         }
         return b
-            .Key(T(0), k => k.Hips(StanceX, StanceY).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground), ClipEase.Linear)
-            .Key(T(.09f), k => k.Hips(0, .01f).LeftHand(0, -.645f).RightHand(0, -.645f).LeftFoot(.08f, Ground).RightFoot(-.08f, Ground), ClipEase.Linear)
+            .Key(T(0), k => k.Hips(StanceX, StanceY).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground), ProgressMapKind.Linear)
+            .Key(T(.09f), k => k.Hips(0, .01f).LeftHand(0, -.645f).RightHand(0, -.645f).LeftFoot(.08f, Ground).RightFoot(-.08f, Ground), ProgressMapKind.Linear)
             // Arms stay straight while they swing out and up (a straight arm hides which way its elbow would fold), and
             // bend only once the hands are above the shoulders, where the elbows then point outward.
-            .Key(T(.15f), k => k.Hips(0, -.03f).Head(0).LeftHand(.08f, -.64f).RightHand(-.08f, -.64f).LeftFoot(.1f, Ground).RightFoot(-.1f, Ground), ClipEase.Linear)
-            .Key(T(.22f), k => k.Hips(0, -.07f).LeftHand(.46f, .43f).RightHand(-.46f, .38f).LeftFoot(.1f, .03f).RightFoot(-.1f, .3f), ClipEase.Linear)
-            .Key(T(.3f), k => k.Turned(m, 180, 1).Hips(0, -.1f).Head(0).LeftHandAt(Rail, RungHigh).RightHandAt(-Rail, RungLow).LeftFoot(.1f, StepLow).RightFoot(-.1f, StepHigh), ClipEase.Linear)
+            .Key(T(.15f), k => k.Hips(0, -.03f).Head(0).LeftHand(.08f, -.64f).RightHand(-.08f, -.64f).LeftFoot(.1f, Ground).RightFoot(-.1f, Ground), ProgressMapKind.Linear)
+            .Key(T(.22f), k => k.Hips(0, -.07f).LeftHand(.46f, .43f).RightHand(-.46f, .38f).LeftFoot(.1f, .03f).RightFoot(-.1f, .3f), ProgressMapKind.Linear)
+            .Key(T(.3f), k => k.Turned(m, 180, 1).Hips(0, -.1f).Head(0).LeftHandAt(Rail, RungHigh).RightHandAt(-Rail, RungLow).LeftFoot(.1f, StepLow).RightFoot(-.1f, StepHigh), ProgressMapKind.Linear)
             // Profile side (the chains' own bends) before the straight moment, mirrored after; reversed when stepping off.
             .Bend(Humanoid.RightArm, 0, onto ? -1 : 1).Bend(Humanoid.RightLeg, 0, onto ? 1 : -1)
             .Bend(Humanoid.RightArm, T(.09f), onto ? 1 : -1).Bend(Humanoid.RightLeg, T(.09f), onto ? -1 : 1)
@@ -721,13 +723,13 @@ internal static partial class PlayerMoves
         var b = New(m, "player-climb", "Climb", .8f, true);
         foreach (var t in new[] { 0f, .8f })
         {
-            b.Key(t, k => k.Turned(m, 180, 1).Hips(0, -.1f).Head(0).LeftHandAt(Rail, RungHigh).RightHandAt(-Rail, RungLow).LeftFoot(.1f, StepLow).RightFoot(-.1f, StepHigh), ClipEase.Linear);
+            b.Key(t, k => k.Turned(m, 180, 1).Hips(0, -.1f).Head(0).LeftHandAt(Rail, RungHigh).RightHandAt(-Rail, RungLow).LeftFoot(.1f, StepLow).RightFoot(-.1f, StepHigh), ProgressMapKind.Linear);
         }
 
         return b
-            .Key(.2f, k => k.Hips(0, -.08f).LeftHandAt(Rail, (RungHigh + RungLow) / 2).RightHandAt(-Rail - .08f, 1.8f).LeftFoot(.16f, .38f).RightFoot(-.1f, (StepHigh + StepLow) / 2), ClipEase.Linear)
-            .Key(.4f, k => k.Hips(0, -.1f).LeftHandAt(Rail, RungLow).RightHandAt(-Rail, RungHigh).LeftFoot(.1f, StepHigh).RightFoot(-.1f, StepLow), ClipEase.Linear)
-            .Key(.6f, k => k.Hips(0, -.08f).LeftHandAt(Rail + .08f, 1.8f).RightHandAt(-Rail, (RungHigh + RungLow) / 2).LeftFoot(.1f, (StepHigh + StepLow) / 2).RightFoot(-.16f, .38f), ClipEase.Linear)
+            .Key(.2f, k => k.Hips(0, -.08f).LeftHandAt(Rail, (RungHigh + RungLow) / 2).RightHandAt(-Rail - .08f, 1.8f).LeftFoot(.16f, .38f).RightFoot(-.1f, (StepHigh + StepLow) / 2), ProgressMapKind.Linear)
+            .Key(.4f, k => k.Hips(0, -.1f).LeftHandAt(Rail, RungLow).RightHandAt(-Rail, RungHigh).LeftFoot(.1f, StepHigh).RightFoot(-.1f, StepLow), ProgressMapKind.Linear)
+            .Key(.6f, k => k.Hips(0, -.08f).LeftHandAt(Rail + .08f, 1.8f).RightHandAt(-Rail, (RungHigh + RungLow) / 2).LeftFoot(.1f, (StepHigh + StepLow) / 2).RightFoot(-.16f, .38f), ProgressMapKind.Linear)
             // From behind, the right side is on screen left: its elbow and knee must bend outward, so mirror them.
             .Bend(Humanoid.RightArm, 0, 1).Bend(Humanoid.RightLeg, 0, -1)
             .Marker(MoveBuilder.BackViewMarker, 0).Marker("rung-left", .4f).Marker("rung-right", 0)
@@ -767,7 +769,7 @@ internal static partial class PlayerMoves
             var left = Polar2D.ToCartesian(radius, phase + .4f);
             var right = Polar2D.ToCartesian(radius, phase + .4f + MathF.PI);
             var tip = lean + wobble * MathF.Sin(MathF.Tau * i / steps);
-            b.Key(t, k => k.Chest(tip).Head(-.22f - tip * .5f).LeftHand(left.X, left.Y - .1f).RightHand(right.X, right.Y - .1f), ClipEase.Linear);
+            b.Key(t, k => k.Chest(tip).Head(-.22f - tip * .5f).LeftHand(left.X, left.Y - .1f).RightHand(right.X, right.Y - .1f), ProgressMapKind.Linear);
         }
         return b;
     }
@@ -791,7 +793,7 @@ internal static partial class PlayerMoves
     /// <summary>Snap back from the chest with the arms flung forward, then recover to the idle stance.</summary>
     private static MotionClip Hit(ResolvedModel m) => New(m, "player-hit", "Hit", .35f, false)
         .Key(0, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
-        .Key(.05f, k => k.Hips(-.07f, -.06f).Chest(.36f).Head(.3f).LeftHand(.3f, -.22f).RightHand(.36f, -.16f), ClipEase.Linear)
+        .Key(.05f, k => k.Hips(-.07f, -.06f).Chest(.36f).Head(.3f).LeftHand(.3f, -.22f).RightHand(.36f, -.16f), ProgressMapKind.Linear)
         .Key(.18f, k => k.Hips(-.05f, -.06f).Chest(.14f).Head(.1f).LeftHand(.18f, -.42f).RightHand(.22f, -.38f))
         .Key(.35f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
         .Plant(Humanoid.LeftLeg, 0, .35f, Back).Plant(Humanoid.RightLeg, 0, .35f, Front)
@@ -804,10 +806,10 @@ internal static partial class PlayerMoves
     /// </summary>
     private static MotionClip Death(ResolvedModel m) => New(m, "player-death", "Death", 1.6f, false)
         .Key(0, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftFoot(Back, Ground).RightFoot(Front, Ground).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
-        .Key(.07f, k => k.Hips(-.08f, -.06f).Chest(.4f).Head(.32f).LeftFoot(Back, Ground).RightFoot(Front, Ground).LeftHand(.32f, -.2f).RightHand(.38f, -.14f), ClipEase.Linear)
+        .Key(.07f, k => k.Hips(-.08f, -.06f).Chest(.4f).Head(.32f).LeftFoot(Back, Ground).RightFoot(Front, Ground).LeftHand(.32f, -.2f).RightHand(.38f, -.14f), ProgressMapKind.Linear)
         .Key(.34f, k => k.Hips(-.24f, -.18f, .12f).Chest(.3f).Head(.2f).LeftFoot(-.38f, Ground).RightFoot(.02f, .06f).LeftHand(.2f, .05f).RightHand(.28f, .1f))
-        .Key(.68f, k => k.Hips(-.46f, -.56f, .85f).Chest(.22f).Head(.14f).LeftFoot(-.1f, .04f).RightFoot(.22f, .2f).LeftHand(.1f, .3f).RightHand(.25f, .28f), ClipEase.Linear)
-        .Key(.92f, k => k.Hips(-.6f, -.83f, 1.45f).Chest(.08f).Head(.12f).LeftFoot(.26f, .08f).RightFoot(.33f, .14f).LeftHandAt(-.95f, .2f).RightHandAt(-.7f, .32f), ClipEase.Linear)
+        .Key(.68f, k => k.Hips(-.46f, -.56f, .85f).Chest(.22f).Head(.14f).LeftFoot(-.1f, .04f).RightFoot(.22f, .2f).LeftHand(.1f, .3f).RightHand(.25f, .28f), ProgressMapKind.Linear)
+        .Key(.92f, k => k.Hips(-.6f, -.83f, 1.45f).Chest(.08f).Head(.12f).LeftFoot(.26f, .08f).RightFoot(.33f, .14f).LeftHandAt(-.95f, .2f).RightHandAt(-.7f, .32f), ProgressMapKind.Linear)
         .Key(1.06f, k => k.Hips(-.6f, -.76f, 1.38f).Chest(.12f).Head(.2f).LeftFoot(.28f, .1f).RightFoot(.34f, .17f).LeftHandAt(-.98f, .16f).RightHandAt(-.72f, .3f))
         .Key(1.3f, k => k.Hips(-.6f, -.83f, 1.5f).Chest(.06f).Head(.1f).LeftFoot(.3f, .04f).RightFoot(.36f, .07f).LeftHandAt(-1.02f, .05f).RightHandAt(-.66f, .04f))
         .Key(1.6f, k => k.Hips(-.6f, -.83f, 1.5f).Chest(.06f).Head(.1f).LeftFoot(.3f, .04f).RightFoot(.36f, .07f).LeftHandAt(-1.02f, .05f).RightHandAt(-.66f, .04f))
@@ -819,7 +821,7 @@ internal static partial class PlayerMoves
     private static MotionClip Celebrate(ResolvedModel m) => New(m, "player-celebrate", "Celebrate", 1.4f, false)
         .Key(0, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground))
         .Key(.16f, k => k.Hips(-.01f, -.16f).Chest(-.18f).Head(.1f).LeftHand(-.12f, -.5f).RightHand(-.08f, -.52f).LeftFoot(Back, Ground).RightFoot(Front, Ground))
-        .Key(.4f, k => k.Hips(0, .12f).Chest(.06f).Head(.08f).LeftHand(-.32f, .5f).RightHand(.3f, .5f).LeftFoot(-.12f, .18f).RightFoot(.1f, .24f), ClipEase.Linear)
+        .Key(.4f, k => k.Hips(0, .12f).Chest(.06f).Head(.08f).LeftHand(-.32f, .5f).RightHand(.3f, .5f).LeftFoot(-.12f, .18f).RightFoot(.1f, .24f), ProgressMapKind.Linear)
         .Key(.62f, k => k.Hips(-.01f, -.12f).Chest(-.08f).Head(.06f).LeftHand(-.3f, .42f).RightHand(.28f, .42f).LeftFoot(Back, Ground).RightFoot(Front, Ground))
         .Key(.86f, k => k.Hips(StanceX, StanceY).Chest(.03f).Head(.08f).LeftHand(-.32f, .5f).RightHand(.3f, .5f))
         .Key(1.02f, k => k.LeftHand(-.28f, .32f).RightHand(.26f, .32f))
@@ -841,8 +843,8 @@ internal static partial class PlayerMoves
         var (hilt, sheathed) = Hilt(StanceX, StanceY, .02f);
         return New(m, "player-sword-sheathe", "Sword sheathe", .42f, false)
             .Key(0, k => k.Hips(.03f, -.07f).Chest(-.12f).Head(.08f).RightHandAt(.34f, 1.2f).LeftHand(-.08f, -.54f).Blade(-.22f))
-            .Key(.12f, k => k.Hips(.01f, -.05f).Chest(-.02f).Head(.06f).RightHandAt(.14f, 2.0f).LeftHand(0, -.58f).Blade(1.6f), ClipEase.Linear)
-            .Key(.22f, k => k.Hips(StanceX, StanceY).Chest(.04f).Head(.04f).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(3.5f), ClipEase.Linear)
+            .Key(.12f, k => k.Hips(.01f, -.05f).Chest(-.02f).Head(.06f).RightHandAt(.14f, 2.0f).LeftHand(0, -.58f).Blade(1.6f), ProgressMapKind.Linear)
+            .Key(.22f, k => k.Hips(StanceX, StanceY).Chest(.04f).Head(.04f).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(3.5f), ProgressMapKind.Linear)
             .Key(.3f, k => k.Hips(StanceX, StanceY).Chest(.02f).Head(.02f).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
             .Key(.42f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
             .Plant(Humanoid.LeftLeg, 0, .42f, Back).Plant(Humanoid.RightLeg, 0, .42f, Front)
@@ -859,7 +861,7 @@ internal static partial class PlayerMoves
     {
         var (hilt, sheathed) = Hilt(0, .04f, .0f);
         return New(m, "player-sword-down-attack", "Sword downward stab", .25f, false)
-            .Key(0, k => k.Hips(0, .04f).Chest(0).Head(0).RightHandAt(hilt.X, hilt.Y).LeftHand(.1f, -.4f).Blade(sheathed).LeftFoot(-.14f, .36f).RightFoot(.1f, .42f), ClipEase.Linear)
+            .Key(0, k => k.Hips(0, .04f).Chest(0).Head(0).RightHandAt(hilt.X, hilt.Y).LeftHand(.1f, -.4f).Blade(sheathed).LeftFoot(-.14f, .36f).RightFoot(.1f, .42f), ProgressMapKind.Linear)
             .Key(.04f, k => k.Hips(0, .06f).Chest(-.2f).Head(-.16f).RightHandAt(.16f, 1.08f).LeftHandAt(.14f, 1.16f).Blade(-MathF.PI / 2).LeftFoot(-.18f, .52f).RightFoot(.08f, .56f))
             .Key(.18f, k => k.Hips(0, .06f).Chest(-.22f).Head(-.18f).RightHandAt(.16f, 1.06f).LeftHandAt(.14f, 1.14f).Blade(-MathF.PI / 2).LeftFoot(-.18f, .54f).RightFoot(.08f, .58f))
             .Key(.25f, k => k.Hips(0, .05f).Chest(-.12f).Head(-.08f).RightHandAt(.2f, 1.14f).LeftHand(.06f, -.5f).Blade(-1.25f).LeftFoot(-.15f, .42f).RightFoot(.1f, .46f))
@@ -881,7 +883,7 @@ internal static partial class PlayerMoves
 
     /// <summary>Upper body only, so it layers on aim, walk or run legs: the muzzle kicks up on "fire" and settles in 0.2 s.</summary>
     private static MotionClip GunShot(ResolvedModel m) => New(m, "player-gun-shot", "Gun shot (upper body)", .2f, false)
-        .Key(0, k => k.Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0), ClipEase.Linear)
+        .Key(0, k => k.Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0), ProgressMapKind.Linear)
         .Key(.03f, k => k.Chest(.06f).Head(.05f).RightHand(.54f, 0).LeftHand(.01f, -.6f).Blade(.38f))
         .Key(.2f, k => k.Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
         .Marker("fire", 0)
@@ -890,7 +892,7 @@ internal static partial class PlayerMoves
 
     /// <summary>Shooting from the wall grip: the free far arm snaps out away from the wall and kicks on "fire".</summary>
     private static MotionClip GunWallShot(ResolvedModel m) => New(m, "player-gun-wall-shot", "Gun wall shot", .3f, false)
-        .Key(0, k => k.Hips(-.1f, -.2f).Chest(.08f).Head(-.02f).LeftHandAt(-.31f, 1.3f).RightHand(.645f, -.02f).LeftFoot(-.3f, .38f).RightFoot(-.18f, .06f).Blade(0), ClipEase.Linear)
+        .Key(0, k => k.Hips(-.1f, -.2f).Chest(.08f).Head(-.02f).LeftHandAt(-.31f, 1.3f).RightHand(.645f, -.02f).LeftFoot(-.3f, .38f).RightFoot(-.18f, .06f).Blade(0), ProgressMapKind.Linear)
         .Key(.03f, k => k.Chest(.13f).Head(.02f).RightHand(.52f, .01f).Blade(.4f))
         .Key(.3f, k => k.Hips(-.1f, -.2f).Chest(.08f).Head(-.02f).LeftHandAt(-.31f, 1.3f).RightHand(.645f, -.02f).LeftFoot(-.3f, .38f).RightFoot(-.18f, .06f).Blade(0))
         .Marker("fire", 0)

@@ -1,10 +1,8 @@
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Animation;
 using App2d.Core.Json;
-using App2d.Core.Mathematics;
-using App2d.Core.Mathematics.Progress;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;
@@ -15,8 +13,8 @@ public sealed record ClipKey : ITimedKey
     public float Time { get; set; }
     public Vector3 Value { get; set; }
     public float Angle { get; set; }
-    /// <summary>How the value moves from this key to the next: see <see cref="ClipEase"/>.</summary>
-    public string Ease { get; set; } = ClipEase.Linear;
+    /// <summary>How the value moves from this key to the next: see <see cref="ProgressMapKind"/>.</summary>
+    public ProgressMapKind Ease { get; set; } = ProgressMapKind.Linear;
     public KeyCurve2D? Curve { get; set; }
     public KeyCurve2D? CurveY { get; set; }
     public KeyCurve2D? CurveZ { get; set; }
@@ -26,53 +24,6 @@ public sealed record ClipKey : ITimedKey
     /// shows. Null keeps the current side; before any key sets one, the chain's own bend applies.
     /// </summary>
     public int? Bend { get; set; }
-}
-
-/// <summary>Per-key easing. Linear is the default; step holds the value until the next key.</summary>
-public static class ClipEase
-{
-    public const string Linear = "linear", Smooth = "smooth", Step = "step";
-    public static readonly IReadOnlyList<string> All = [Linear, Smooth, Step];
-    public static float Apply(string ease, float u) => ease switch { Smooth => Progress.SmoothStepUnclamped(u), Step => 0, _ => u };
-    public static float Interpolate(float start, float end, float phase, string ease, KeyCurve2D? curve) =>
-        new Sampler(phase, ease).Interpolate(start, end, curve);
-
-    /// <summary>One segment sample shared by up to four scalar channels. No state survives the sample.</summary>
-    internal struct Sampler(float phase, string ease)
-    {
-        private readonly float _progress = Apply(ease, phase);
-        private Timings _timings;
-        private int _count;
-
-        public float Interpolate(float start, float end, KeyCurve2D? curve)
-        {
-            if (ease == Step) return start;
-            if (curve is null) return Interpolation.Lerp(start, end, _progress);
-            if (phase <= 0) return start;
-            if (phase >= 1) return end;
-
-            var geometry = curve.ToCurve(start, end);
-            var handles = new Vector2(geometry.Control1.X, geometry.Control2.X);
-            for (var i = 0; i < _count; i++)
-            {
-                if (_timings[i].Handles == handles)
-                {
-                    return geometry.Evaluate(_timings[i].Parameter).Y;
-                }
-            }
-
-            // Only X determines the parameter; Y handles and Absolute stay specific to this channel.
-            var parameter = geometry.ParameterAtX(phase);
-            if (_count < 4) _timings[_count++] = (handles, parameter);
-            return geometry.Evaluate(parameter).Y;
-        }
-
-        [InlineArray(4)]
-        private struct Timings
-        {
-            private (Vector2 Handles, float Parameter) _element0;
-        }
-    }
 }
 
 /// <summary>A named visual moment, such as a footstep or a strike. Gameplay binds events to markers; the clip owns only the time.</summary>
@@ -265,7 +216,7 @@ public sealed class MotionClip
                     new Limit(0, 1).Check(value, $"{owner} color component");
                 }
 
-                EntityVocabulary.Require(key.Ease, ClipEase.All, $"{owner} color key ease");
+                ValidateEase(key.Ease, $"{owner} color key ease");
                 key.CurveR?.Validate();
                 key.CurveG?.Validate();
                 key.CurveB?.Validate();
@@ -362,6 +313,14 @@ public sealed class MotionClip
         }
     }
 
+    internal static void ValidateEase(ProgressMapKind ease, string field)
+    {
+        Require(Enum.IsDefined(ease), $"{field}: unknown progress map '{ease}'.");
+        var map = ProgressMaps.FromKind(ease);
+        Require(map.Travel == EasingTravel.Forward && (map.IsContinuous == true || ease == ProgressMapKind.Step),
+            $"{field}: key easing must travel forward; use a continuous forward map or Step.");
+    }
+
     private void CheckKeys(List<ClipKey> keys, string field, Func<ClipKey, bool> shape, string shapeMessage)
     {
         Require(keys.Count <= 4096, $"{field}: too many keys.");
@@ -378,7 +337,7 @@ public sealed class MotionClip
             }
 
             Require(shape(key), $"{field}: {shapeMessage}.");
-            EntityVocabulary.Require(key.Ease, ClipEase.All, field + " key ease");
+            ValidateEase(key.Ease, field + " key ease");
             key.Curve?.Validate();
             key.CurveY?.Validate();
             key.CurveZ?.Validate();

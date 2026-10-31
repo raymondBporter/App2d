@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Animation;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Constraints;
@@ -781,11 +782,15 @@ public static class PoseEvaluator
 
         public (Vector3 Value, float Angle) Interpolate(ClipKey a, ClipKey b, float phase)
         {
-            var sample = new ClipEase.Sampler(phase, a.Ease);
-            return (new(sample.Interpolate(a.Value.X, b.Value.X, rotate ? null : a.Curve),
-                sample.Interpolate(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
-                sample.Interpolate(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
-                sample.Interpolate(a.Angle, b.Angle, rotate ? a.Curve : null));
+            var progressMap = ProgressMaps.FromKind(a.Ease);
+            if (a.Ease == ProgressMapKind.Step) return (a.Value, a.Angle);
+            var sample = new KeyframeSegmentSampler(phase, progressMap);
+            return (new(Scalar(a.Value.X, b.Value.X, rotate ? null : a.Curve),
+                Scalar(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
+                Scalar(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
+                Scalar(a.Angle, b.Angle, rotate ? a.Curve : null));
+
+            float Scalar(float start, float end, KeyCurve2D? curve) => sample.Interpolate(start, end, curve?.ToCurve(start, end));
         }
     }
 

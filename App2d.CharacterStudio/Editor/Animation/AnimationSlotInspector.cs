@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters.Authored;
 using ImGuiNET;
@@ -99,7 +101,7 @@ internal sealed class AnimationSlotInspector(EditorSession session)
             session.Edit(document, () => ClipAuthoring.DeleteColorKey(document.Asset, slot.Id, selectedKind, time));
         }
 
-        if (Ui.Combo("Tint easing to next key", key.Ease, ClipEase.All) is { } ease)
+        if (Ui.EnumCombo("Tint easing to next key", key.Ease, AnimationCurveEditor.EasingKinds) is { } ease)
         {
             session.Edit(document, () => ClipAuthoring.SetColorEase(document.Asset, slot.Id, selectedKind, time, ease));
         }

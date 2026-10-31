@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.Editing;
 using App2d.CharacterStudio.Importing;
@@ -83,13 +85,13 @@ public sealed class AnimationEditingTests
         ClipAuthoring.SetColorKey(clip, "middle", SlotColorTrack2D.Rgb, 1, new(1, .3f, .5f, 1));
         ClipAuthoring.SetColorKey(clip, "middle", SlotColorTrack2D.Alpha, 0, new(1, 1, 1, .2f));
         ClipAuthoring.SetColorKey(clip, "middle", SlotColorTrack2D.Alpha, 1, new(1, 1, 1, .8f));
-        ClipAuthoring.SetColorEase(clip, "middle", SlotColorTrack2D.Rgb, 0, ClipEase.Step);
+        ClipAuthoring.SetColorEase(clip, "middle", SlotColorTrack2D.Rgb, 0, ProgressMapKind.Step);
         var curve = new KeyCurve2D { Control1 = new(1f / 3, 1f / 3), Control2 = new(2f / 3, 2f / 3) };
         ClipAuthoring.SetColorCurve(clip, "middle", SlotColorTrack2D.Rgb, 0, 0, curve);
         curve.Control1 = curve.Control1 with { Y = 99 };
         var slot = model.Base.Slots[1];
         Assert.InRange(Vector4.Distance(new(.5f, .3f, .5f, .5f), SlotColorTrack2D.Evaluate(clip, slot, .5f)), 0, 1e-5f);
-        ClipAuthoring.SetColorEase(clip, "middle", SlotColorTrack2D.Rgb, 0, ClipEase.Step);
+        ClipAuthoring.SetColorEase(clip, "middle", SlotColorTrack2D.Rgb, 0, ProgressMapKind.Step);
         Assert.Null(clip.Colors[0].Keys[0].CurveR);
         Assert.InRange(Vector4.Distance(new(0, .3f, .5f, .5f), SlotColorTrack2D.Evaluate(clip, slot, .5f)), 0, 1e-5f);
         ClipAuthoring.DeleteColorKey(clip, "middle", SlotColorTrack2D.Rgb, 0);
@@ -171,7 +173,7 @@ public sealed class AnimationEditingTests
                 };
                 break;
             case "ease":
-                clip.Travel.Keys[0].Ease = ClipEase.Smooth;
+                clip.Travel.Keys[0].Ease = ProgressMapKind.Smooth;
                 break;
             case "depth":
                 clip.Travel.Keys[1].Value = clip.Travel.Keys[1].Value with { Z = 1 };

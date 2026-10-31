@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 using System.Text.Json.Nodes;
@@ -151,7 +153,7 @@ public sealed class SlotTimelineTests
         TestModels.Near(new(.25f, .5f, .75f), value);
         ClipAuthoring.SetKey(clip, channel, 0, Vector3.Zero);
         Assert.NotNull(clip.Tracks[0].Keys[0].CurveZ);
-        ClipAuthoring.SetEase(clip, 0, ClipEase.Step);
+        ClipAuthoring.SetEase(clip, 0, ProgressMapKind.Step);
         Assert.Null(clip.Tracks[0].Keys[0].CurveZ);
         TestModels.Near(Vector3.Zero, ClipAuthoring.Value(clip, channel, .5f).Value);
     }

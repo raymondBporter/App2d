@@ -1,4 +1,3 @@
-using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using System.Numerics;
@@ -123,19 +122,5 @@ public sealed class ProgressMapTests
         var vector = Interpolation.Lerp(Vector2.Zero, new(10, -4), .7, overshoot);
         Assert.True(vector.X > 10);
         Assert.True(vector.Y < -4);
-    }
-
-    [Theory]
-    [InlineData(-1f)]
-    [InlineData(0f)]
-    [InlineData(.25f)]
-    [InlineData(1f)]
-    [InlineData(2f)]
-    public void SavedClipEasingNamesKeepTheirFloatAndStepSemantics(float phase)
-    {
-        Assert.Equal(["linear", "smooth", "step"], ClipEase.All);
-        Assert.Equal(phase, ClipEase.Apply("linear", phase));
-        Assert.Equal(phase * phase * (3 - 2 * phase), ClipEase.Apply("smooth", phase));
-        Assert.Equal(0, ClipEase.Apply("step", phase));
     }
 }

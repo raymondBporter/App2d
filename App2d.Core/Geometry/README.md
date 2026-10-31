@@ -248,7 +248,7 @@ can move away from and return to equal endpoint values. The existing keyframe JS
 interval. Both use sampled values for the new key endpoints. Handles are stored as two `Vector2` values;
 motion keys store `Vector3`, and tint keys store `Vector4`. `AuthoredJson` maps these vectors to the existing
 scalar file fields, including their sparse defaults. `KeyframeSampling` owns the shared ordered-key lookup,
-and `ClipEase.Interpolate` owns the shared scalar interpolation policy. Component timing curves stay independent.
+and `KeyframeSegmentSampler` owns shared scalar segment evaluation. Component timing curves stay independent.
 
 ## Shapes
 

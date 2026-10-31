@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
@@ -9,6 +11,8 @@ namespace App2d.CharacterStudio.Editor.Animation;
 /// <summary>Cubic-curve controls shared by motion and tint inspectors; authoring code owns curve conversion.</summary>
 internal static class AnimationCurveEditor
 {
+    public static readonly IReadOnlyList<ProgressMapKind> EasingKinds = ProgressMaps.ForTravel(EasingTravel.Forward);
+
     public static void DrawChannels(EditorSession session, AssetDocument<MotionClip> document, IReadOnlyCollection<Channel> channels, float time)
     {
         foreach (var channel in channels)
@@ -40,7 +44,7 @@ internal static class AnimationCurveEditor
         }
     }
 
-    public static void Draw(string label, KeyCurve2D? curve, string ease, float start, float end, Action<KeyCurve2D?> set)
+    public static void Draw(string label, KeyCurve2D? curve, ProgressMapKind ease, float start, float end, Action<KeyCurve2D?> set)
     {
         if (!ImGui.TreeNode(label + (curve is null ? "" : " (cubic)")))
         {
@@ -49,9 +53,10 @@ internal static class AnimationCurveEditor
 
         if (curve is null)
         {
-            if (ImGui.SmallButton("Add cubic curve"))
+            var convertible = ease is ProgressMapKind.Linear or ProgressMapKind.Smooth;
+            if (ImGui.SmallButton(convertible ? "Add cubic curve" : "Replace easing with editable curve"))
             {
-                set(KeyCurve2D.FromEase(ease == ClipEase.Step ? ClipEase.Linear : ease));
+                set(KeyCurve2D.FromEase(convertible ? ease : ProgressMapKind.Linear));
             }
         }
         else

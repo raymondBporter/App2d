@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Animation;
 using App2d.Core.Rendering;
 using System.Numerics;
@@ -9,7 +10,7 @@ public sealed record SlotColorKey2D : ITimedKey
 {
     public float Time { get; set; }
     public Vector4 Value { get; set; } = Vector4.One;
-    public string Ease { get; set; } = ClipEase.Linear;
+    public ProgressMapKind Ease { get; set; } = ProgressMapKind.Linear;
     public KeyCurve2D? CurveR { get; set; }
     public KeyCurve2D? CurveG { get; set; }
     public KeyCurve2D? CurveB { get; set; }
@@ -60,9 +61,13 @@ public sealed record SlotColorTrack2D
 
         public Vector4 Interpolate(SlotColorKey2D a, SlotColorKey2D b, float phase)
         {
-            var sample = new ClipEase.Sampler(phase, a.Ease);
-            return new(sample.Interpolate(a.Value.X, b.Value.X, a.CurveR), sample.Interpolate(a.Value.Y, b.Value.Y, a.CurveG),
-                sample.Interpolate(a.Value.Z, b.Value.Z, a.CurveB), sample.Interpolate(a.Value.W, b.Value.W, a.CurveA));
+            var progressMap = ProgressMaps.FromKind(a.Ease);
+            if (a.Ease == ProgressMapKind.Step) return a.Value;
+            var sample = new KeyframeSegmentSampler(phase, progressMap);
+            return new(Scalar(a.Value.X, b.Value.X, a.CurveR), Scalar(a.Value.Y, b.Value.Y, a.CurveG),
+                Scalar(a.Value.Z, b.Value.Z, a.CurveB), Scalar(a.Value.W, b.Value.W, a.CurveA));
+
+            float Scalar(float start, float end, KeyCurve2D? curve) => sample.Interpolate(start, end, curve?.ToCurve(start, end));
         }
     }
 }

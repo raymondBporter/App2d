@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -185,8 +187,8 @@ public static class StarterContent
         return clip;
     }
 
-    private static ClipKey K(float time, float x = 0, float y = 0, string ease = ClipEase.Smooth) => new() { Time = time, Value = new(x, y, 0), Ease = ease };
-    private static ClipKey R(float time, float angle, string ease = ClipEase.Smooth) => new() { Time = time, Angle = angle, Ease = ease };
+    private static ClipKey K(float time, float x = 0, float y = 0, ProgressMapKind ease = ProgressMapKind.Smooth) => new() { Time = time, Value = new(x, y, 0), Ease = ease };
+    private static ClipKey R(float time, float angle, ProgressMapKind ease = ProgressMapKind.Smooth) => new() { Time = time, Angle = angle, Ease = ease };
     private static ClipTrack Track(string kind, string target, params ClipKey[] keys) => new() { Kind = kind, Target = target, Keys = [.. keys] };
     private static ClipContact Plant(string chain, float start, float finish, float x = 0) => new() { Chain = chain, Start = start, Finish = finish, Target = new(x) };
 
@@ -227,15 +229,15 @@ public static class StarterContent
         clip.Tracks =
         [
             Track(MotionClip.TranslateKind, Humanoid.Hips,
-                K(0, -0.045f, -0.025f, ClipEase.Linear), K(1 / 60f, -0.1f, -0.055f, ClipEase.Linear), K(0.05f, -0.1f, -0.055f, ClipEase.Smooth), K(0.17f, -0.03f, -0.015f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
+                K(0, -0.045f, -0.025f, ProgressMapKind.Linear), K(1 / 60f, -0.1f, -0.055f, ProgressMapKind.Linear), K(0.05f, -0.1f, -0.055f, ProgressMapKind.Smooth), K(0.17f, -0.03f, -0.015f, ProgressMapKind.Smooth), K(0.3f, 0, 0, ProgressMapKind.Linear)),
             Track(MotionClip.RotateKind, Humanoid.Hips,
-                R(0, 0.16f, ClipEase.Linear), R(1 / 60f, 0.32f, ClipEase.Linear), R(0.05f, 0.32f, ClipEase.Smooth), R(0.17f, 0.08f, ClipEase.Smooth), R(0.3f, 0, ClipEase.Linear)),
+                R(0, 0.16f, ProgressMapKind.Linear), R(1 / 60f, 0.32f, ProgressMapKind.Linear), R(0.05f, 0.32f, ProgressMapKind.Smooth), R(0.17f, 0.08f, ProgressMapKind.Smooth), R(0.3f, 0, ProgressMapKind.Linear)),
             Track(MotionClip.RotateKind, Humanoid.Chest,
-                R(0, 0.08f, ClipEase.Linear), R(1 / 60f, 0.16f, ClipEase.Linear), R(0.05f, 0.16f, ClipEase.Smooth), R(0.17f, 0.04f, ClipEase.Smooth), R(0.3f, 0, ClipEase.Linear)),
+                R(0, 0.08f, ProgressMapKind.Linear), R(1 / 60f, 0.16f, ProgressMapKind.Linear), R(0.05f, 0.16f, ProgressMapKind.Smooth), R(0.17f, 0.04f, ProgressMapKind.Smooth), R(0.3f, 0, ProgressMapKind.Linear)),
             Track(MotionClip.TargetKind, Humanoid.LeftArm,
-                K(0, 0.1f, 0.1f, ClipEase.Linear), K(1 / 60f, 0.22f, 0.16f, ClipEase.Linear), K(0.05f, 0.22f, 0.16f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
+                K(0, 0.1f, 0.1f, ProgressMapKind.Linear), K(1 / 60f, 0.22f, 0.16f, ProgressMapKind.Linear), K(0.05f, 0.22f, 0.16f, ProgressMapKind.Smooth), K(0.3f, 0, 0, ProgressMapKind.Linear)),
             Track(MotionClip.TargetKind, Humanoid.RightArm,
-                K(0, -0.05f, 0.06f, ClipEase.Linear), K(1 / 60f, -0.12f, 0.16f, ClipEase.Linear), K(0.05f, -0.12f, 0.16f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
+                K(0, -0.05f, 0.06f, ProgressMapKind.Linear), K(1 / 60f, -0.12f, 0.16f, ProgressMapKind.Linear), K(0.05f, -0.12f, 0.16f, ProgressMapKind.Smooth), K(0.3f, 0, 0, ProgressMapKind.Linear)),
         ];
         clip.Contacts = [Plant(Humanoid.LeftLeg, 0, .3f), Plant(Humanoid.RightLeg, 0, .3f)];
         clip.Plays = [new() { Instance = PersonTemplate.FaceInstance, Keys = [new() { Time = 0, Expression = "hurt" }] }];
@@ -249,17 +251,17 @@ public static class StarterContent
         clip.Tracks =
         [
             Track(MotionClip.TranslateKind, Humanoid.Hips,
-                K(0, -0.045f, -0.025f, ClipEase.Linear), K(1 / 60f, -0.13f, -0.06f, ClipEase.Linear), K(0.075f, -0.16f, -0.08f, ClipEase.Smooth), K(0.25f, -0.2f, -0.2f, ClipEase.Smooth), K(0.75f, -0.28f, -0.81f, ClipEase.Smooth), K(1.1f, -0.3f, -0.79f, ClipEase.Smooth)),
+                K(0, -0.045f, -0.025f, ProgressMapKind.Linear), K(1 / 60f, -0.13f, -0.06f, ProgressMapKind.Linear), K(0.075f, -0.16f, -0.08f, ProgressMapKind.Smooth), K(0.25f, -0.2f, -0.2f, ProgressMapKind.Smooth), K(0.75f, -0.28f, -0.81f, ProgressMapKind.Smooth), K(1.1f, -0.3f, -0.79f, ProgressMapKind.Smooth)),
             Track(MotionClip.RotateKind, Humanoid.Hips,
-                R(0, 0.16f, ClipEase.Linear), R(1 / 60f, 0.34f, ClipEase.Linear), R(0.075f, 0.37f, ClipEase.Smooth), R(0.25f, 0.53f, ClipEase.Smooth), R(0.75f, 1.42f, ClipEase.Smooth), R(1.1f, 1.45f, ClipEase.Smooth)),
+                R(0, 0.16f, ProgressMapKind.Linear), R(1 / 60f, 0.34f, ProgressMapKind.Linear), R(0.075f, 0.37f, ProgressMapKind.Smooth), R(0.25f, 0.53f, ProgressMapKind.Smooth), R(0.75f, 1.42f, ProgressMapKind.Smooth), R(1.1f, 1.45f, ProgressMapKind.Smooth)),
             Track(MotionClip.RotateKind, Humanoid.Chest,
-                R(0, 0.08f, ClipEase.Linear), R(1 / 60f, 0.18f, ClipEase.Linear), R(0.075f, 0.18f, ClipEase.Smooth), R(0.25f, 0.12f, ClipEase.Smooth), R(0.75f, 0.05f, ClipEase.Smooth), R(1.1f, 0.05f, ClipEase.Smooth)),
+                R(0, 0.08f, ProgressMapKind.Linear), R(1 / 60f, 0.18f, ProgressMapKind.Linear), R(0.075f, 0.18f, ProgressMapKind.Smooth), R(0.25f, 0.12f, ProgressMapKind.Smooth), R(0.75f, 0.05f, ProgressMapKind.Smooth), R(1.1f, 0.05f, ProgressMapKind.Smooth)),
             Track(MotionClip.TargetKind, Humanoid.LeftArm,
-                K(0, 0.1f, 0.1f, ClipEase.Linear), K(1 / 60f, 0.24f, 0.18f, ClipEase.Linear), K(0.075f, 0.24f, 0.18f, ClipEase.Smooth), K(0.4f, 0.15f, 0.25f, ClipEase.Smooth), K(1.1f, -0.1f, 0.05f, ClipEase.Smooth)),
+                K(0, 0.1f, 0.1f, ProgressMapKind.Linear), K(1 / 60f, 0.24f, 0.18f, ProgressMapKind.Linear), K(0.075f, 0.24f, 0.18f, ProgressMapKind.Smooth), K(0.4f, 0.15f, 0.25f, ProgressMapKind.Smooth), K(1.1f, -0.1f, 0.05f, ProgressMapKind.Smooth)),
             Track(MotionClip.TargetKind, Humanoid.RightArm,
-                K(0, -0.05f, 0.06f, ClipEase.Linear), K(1 / 60f, -0.14f, 0.18f, ClipEase.Linear), K(0.075f, -0.14f, 0.18f, ClipEase.Smooth), K(0.4f, 0.15f, 0.25f, ClipEase.Smooth), K(1.1f, -0.05f, 0, ClipEase.Smooth)),
+                K(0, -0.05f, 0.06f, ProgressMapKind.Linear), K(1 / 60f, -0.14f, 0.18f, ProgressMapKind.Linear), K(0.075f, -0.14f, 0.18f, ProgressMapKind.Smooth), K(0.4f, 0.15f, 0.25f, ProgressMapKind.Smooth), K(1.1f, -0.05f, 0, ProgressMapKind.Smooth)),
             Track(MotionClip.OrientKind, Humanoid.RightGripSocket,
-                new ClipKey { Time = 0, Value = new(0, 0, 0), Ease = ClipEase.Linear }, new ClipKey { Time = 0.075f, Value = new(0, 0, 0), Ease = ClipEase.Smooth }, new ClipKey { Time = 0.75f, Value = new(0, 0, -1.47f), Ease = ClipEase.Smooth }, new ClipKey { Time = 1.1f, Value = new(0, 0, -1.5f), Ease = ClipEase.Linear }),
+                new ClipKey { Time = 0, Value = new(0, 0, 0), Ease = ProgressMapKind.Linear }, new ClipKey { Time = 0.075f, Value = new(0, 0, 0), Ease = ProgressMapKind.Smooth }, new ClipKey { Time = 0.75f, Value = new(0, 0, -1.47f), Ease = ProgressMapKind.Smooth }, new ClipKey { Time = 1.1f, Value = new(0, 0, -1.5f), Ease = ProgressMapKind.Linear }),
         ];
         clip.Contacts = [Plant(Humanoid.LeftLeg, 0, 1.1f), Plant(Humanoid.RightLeg, 0, 1.1f)];
         clip.Markers = [new() { Id = "impact", Time = .75f }];
@@ -276,10 +278,10 @@ public static class StarterContent
         var clip = Clip(model, "person-thrust", "Spear thrust", .9f, false);
         clip.Tracks =
         [
-            Track(MotionClip.TranslateKind, Humanoid.Hips, K(0), K(.32f, -.04f, -.03f), K(.42f, .09f, -.05f, ClipEase.Linear), K(.58f, .09f, -.05f), K(.9f)),
-            Track(MotionClip.RotateKind, Humanoid.Chest, R(0, 0), R(.32f, .14f), R(.42f, -.16f, ClipEase.Linear), R(.58f, -.16f), R(.9f, 0)),
-            Track(MotionClip.TargetKind, Humanoid.RightArm, K(0), K(.32f, -.33f, .35f), K(.42f, .57f, .5f, ClipEase.Linear), K(.58f, .57f, .5f), K(.9f)),
-            Track(MotionClip.TargetKind, Humanoid.LeftArm, K(0), K(.32f, .12f, .1f), K(.42f, -.18f, .12f, ClipEase.Linear), K(.58f, -.18f, .12f), K(.9f)),
+            Track(MotionClip.TranslateKind, Humanoid.Hips, K(0), K(.32f, -.04f, -.03f), K(.42f, .09f, -.05f, ProgressMapKind.Linear), K(.58f, .09f, -.05f), K(.9f)),
+            Track(MotionClip.RotateKind, Humanoid.Chest, R(0, 0), R(.32f, .14f), R(.42f, -.16f, ProgressMapKind.Linear), R(.58f, -.16f), R(.9f, 0)),
+            Track(MotionClip.TargetKind, Humanoid.RightArm, K(0), K(.32f, -.33f, .35f), K(.42f, .57f, .5f, ProgressMapKind.Linear), K(.58f, .57f, .5f), K(.9f)),
+            Track(MotionClip.TargetKind, Humanoid.LeftArm, K(0), K(.32f, .12f, .1f), K(.42f, -.18f, .12f, ProgressMapKind.Linear), K(.58f, -.18f, .12f), K(.9f)),
         ];
         clip.Contacts = [Plant(Humanoid.LeftLeg, 0, .9f), Plant(Humanoid.RightLeg, 0, .9f)];
         clip.Markers = [new() { Id = "windup", Time = .05f }, new() { Id = "strike", Time = .4f }, new() { Id = "recover", Time = .58f }];
@@ -376,7 +378,7 @@ public static class StarterContent
     {
         var clip = Clip(model, "stalker-walk", "Stalker walk", 1, true);
         clip.Travel.Keys = [new() { Time = 0 }, new() { Time = 1, Value = new(.6f, 0, 0) }];
-        static ClipKey L(float t, float x, float y = 0) => K(t, x, y, ClipEase.Linear);
+        static ClipKey L(float t, float x, float y = 0) => K(t, x, y, ProgressMapKind.Linear);
         var outer = new[] { L(0, .15f), L(.5f, -.15f), L(.75f, 0, .12f), L(1, .15f) };
         clip.Tracks =
         [
@@ -392,7 +394,7 @@ public static class StarterContent
     private static MotionClip StalkerLunge(ResolvedModel model)
     {
         var clip = Clip(model, "stalker-lunge", "Stalker lunge", .8f, false);
-        clip.Tracks = [Track(MotionClip.TranslateKind, "body", K(0), K(.22f, -.1f, .06f), K(.32f, .24f, -.06f, ClipEase.Linear), K(.5f, .24f, -.06f), K(.8f))];
+        clip.Tracks = [Track(MotionClip.TranslateKind, "body", K(0), K(.22f, -.1f, .06f), K(.32f, .24f, -.06f, ProgressMapKind.Linear), K(.5f, .24f, -.06f), K(.8f))];
         clip.Contacts = [Plant("foot-0-chain", 0, .8f), Plant("foot-1-chain", 0, .8f), Plant("foot-2-chain", 0, .8f)];
         clip.Markers = [new() { Id = "windup", Time = .05f }, new() { Id = "strike", Time = .3f }, new() { Id = "recover", Time = .5f }];
         return clip;
@@ -402,7 +404,7 @@ public static class StarterContent
     private static MotionClip StalkerHit(ResolvedModel model)
     {
         var clip = Clip(model, "stalker-hit", "Stalker hit", .3f, false);
-        clip.Tracks = [Track(MotionClip.TranslateKind, "body", K(0), K(.07f, -.1f, -.08f, ClipEase.Linear), K(.3f))];
+        clip.Tracks = [Track(MotionClip.TranslateKind, "body", K(0), K(.07f, -.1f, -.08f, ProgressMapKind.Linear), K(.3f))];
         clip.Contacts = [Plant("foot-0-chain", 0, .3f), Plant("foot-1-chain", 0, .3f), Plant("foot-2-chain", 0, .3f)];
         return clip;
     }

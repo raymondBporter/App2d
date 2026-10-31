@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -403,9 +405,9 @@ public static partial class ClipAuthoring
         clip.Tracks.RemoveAll(t => t.Keys.Count == 0);
     }
 
-    public static void SetEase(MotionClip clip, float time, string ease, IReadOnlyCollection<Channel>? channels = null)
+    public static void SetEase(MotionClip clip, float time, ProgressMapKind ease, IReadOnlyCollection<Channel>? channels = null)
     {
-        EntityVocabulary.Require(ease, ClipEase.All, "ease");
+        MotionClip.ValidateEase(ease, "ease");
         foreach (var key in Tracks(clip, channels).SelectMany(t => t.Keys).Concat(channels is null ? clip.Travel.Keys : []).Where(k => MathF.Abs(k.Time - time) < SameTime))
         {
             key.Ease = ease;
@@ -431,9 +433,9 @@ public static partial class ClipAuthoring
         var copy = curve is null ? null : curve with
         {
         };
-        if (copy is not null && key.Ease == ClipEase.Step)
+        if (copy is not null && key.Ease == ProgressMapKind.Step)
         {
-            key.Ease = ClipEase.Linear;
+            key.Ease = ProgressMapKind.Linear;
         }
 
         if (component == 0)
@@ -515,9 +517,9 @@ public static partial class ClipAuthoring
         var copy = Duplicate(clip, id, name);
         copy.Loop = loop;
         copy.Duration = to - from;
-        KeyCurve2D? Segment(KeyCurve2D? curve, string ease, float startTime, float endTime, float a, float b, float start, float end)
+        KeyCurve2D? Segment(KeyCurve2D? curve, ProgressMapKind ease, float startTime, float endTime, float a, float b, float start, float end)
         {
-            if (ease == ClipEase.Step)
+            if (ease == ProgressMapKind.Step)
             {
                 return null;
             }
@@ -527,7 +529,9 @@ public static partial class ClipAuthoring
                 return curve;
             }
 
-            curve ??= ease == ClipEase.Smooth ? KeyCurve2D.FromEase(ease) : null;
+            if (curve is null && ease is not (ProgressMapKind.Linear or ProgressMapKind.Smooth))
+                throw new InvalidOperationException($"Cannot cut through a segment using {ease}. Cut at its key times or replace its easing with an editable curve first.");
+            curve ??= ease == ProgressMapKind.Smooth ? KeyCurve2D.FromEase(ease) : null;
             return curve?.Slice(Math.Clamp((a - startTime) / (endTime - startTime), 0, 1), Math.Clamp((b - startTime) / (endTime - startTime), 0, 1), start, end);
         }
         List<ClipKey> Cut(List<ClipKey> keys, ClipTrack? track = null)
@@ -555,7 +559,7 @@ public static partial class ClipAuthoring
                     Time = time,
                     Value = value,
                     Angle = angle,
-                    Ease = before?.Ease ?? ClipEase.Linear
+                    Ease = before?.Ease ?? ProgressMapKind.Linear
                 };
             }
             var first = End(from);
@@ -569,7 +573,7 @@ public static partial class ClipAuthoring
                 var index = keys.FindLastIndex(k => k.Time <= a.Time);
                 if (index < 0 || index + 1 >= keys.Count)
                 {
-                    a.Ease = ClipEase.Step;
+                    a.Ease = ProgressMapKind.Step;
                     a.Curve = a.CurveY = a.CurveZ = null;
                     continue;
                 }
@@ -637,7 +641,7 @@ public static partial class ClipAuthoring
                 {
                     Time = at,
                     Value = value,
-                    Ease = keys.LastOrDefault(k => k.Time < at)?.Ease ?? ClipEase.Linear
+                    Ease = keys.LastOrDefault(k => k.Time < at)?.Ease ?? ProgressMapKind.Linear
                 };
             }
             var cut = new[] { End(startTime) }.Concat(keys.Where(k => k.Time > startTime && k.Time < to).Select(k => k with { }))
@@ -649,7 +653,7 @@ public static partial class ClipAuthoring
                 var index = keys.FindLastIndex(k => k.Time <= a.Time);
                 if (index < 0 || index + 1 >= keys.Count)
                 {
-                    a.Ease = ClipEase.Step;
+                    a.Ease = ProgressMapKind.Step;
                     a.CurveR = a.CurveG = a.CurveB = a.CurveA = null;
                     continue;
                 }

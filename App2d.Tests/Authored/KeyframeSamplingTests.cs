@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Json;
 using App2d.Core.Mathematics;
@@ -9,10 +11,10 @@ namespace App2d.Tests.Authored;
 public sealed class KeyframeSamplingTests
 {
     [Theory]
-    [InlineData(ClipEase.Linear)]
-    [InlineData(ClipEase.Smooth)]
-    [InlineData(ClipEase.Step)]
-    public void MotionAndColorShareTimingWhilePreservingComponentCurves(string ease)
+    [InlineData(ProgressMapKind.Linear)]
+    [InlineData(ProgressMapKind.Smooth)]
+    [InlineData(ProgressMapKind.Step)]
+    public void MotionAndColorShareTimingWhilePreservingComponentCurves(ProgressMapKind ease)
     {
         var curve = new KeyCurve2D { Control1 = new(.1f, 1.5f), Control2 = new(.8f, -.5f) };
         List<ClipKey> motion = [new() { Time = .2f, Value = new(.2f, .4f, .6f), Ease = ease, Curve = curve },
@@ -84,7 +86,7 @@ public sealed class KeyframeSamplingTests
         var g = new KeyCurve2D { Absolute = true, Control1 = new(x1, 4), Control2 = new(x2, -2) };
         var b = new KeyCurve2D { Control1 = new(.25f, -1), Control2 = new(.6f, 2) };
         var a = new KeyCurve2D { Absolute = true, Control1 = new(x1, -3), Control2 = new(x2, 5) };
-        foreach (var ease in ClipEase.All)
+        foreach (var ease in ProgressMaps.ForTravel(EasingTravel.Forward))
         {
             List<ClipKey> motion = [new() { Value = new(2, 3, 4), Angle = 0, Ease = ease, Curve = r, CurveY = g, CurveZ = b },
                 new() { Time = 1, Value = new(-2, 3, 6), Angle = 2 * MathF.Tau }];
@@ -93,12 +95,13 @@ public sealed class KeyframeSamplingTests
             for (var i = 1; i < 100; i++)
             {
                 var time = i / 100f;
-                float Expected(float start, float end, KeyCurve2D curve) => ease == ClipEase.Step ? start : curve.Evaluate(time, start, end);
+                float Expected(float start, float end, KeyCurve2D curve) => ease == ProgressMapKind.Step ? start : curve.Evaluate(time, start, end);
                 var expected = new Vector4(Expected(2, -2, r), Expected(3, 3, g), Expected(4, 6, b), Expected(1, 0, a));
                 Assert.Equal(expected, SlotColorTrack2D.Sample(color, time));
                 var (Value, Angle) = PoseEvaluator.Interpolate(motion, time);
                 Assert.Equal(new Vector3(expected.X, expected.Y, expected.Z), Value);
-                Assert.Equal(ease == ClipEase.Step ? 0 : Interpolation.Lerp(0, 2 * MathF.Tau, ClipEase.Apply(ease, time)), Angle);
+                var progress = (float)ProgressMaps.FromKind(ease).Sample(time);
+                Assert.Equal(ease == ProgressMapKind.Step ? 0 : Interpolation.Lerp(0, 2 * MathF.Tau, progress), Angle);
             }
         }
     }
@@ -155,9 +158,9 @@ public sealed class KeyframeSamplingTests
             Absolute = channel % 2 == 0
         };
         var x = Curve(0); var y = Curve(1); var z = Curve(2); var w = Curve(3);
-        List<ClipKey> motion = [new() { Value = new(1, 2, 3), Ease = ClipEase.Smooth, Curve = x, CurveY = y, CurveZ = z },
+        List<ClipKey> motion = [new() { Value = new(1, 2, 3), Ease = ProgressMapKind.Smooth, Curve = x, CurveY = y, CurveZ = z },
             new() { Time = 1, Value = new(4, 5, 6) }];
-        List<SlotColorKey2D> color = [new() { Ease = ClipEase.Smooth, CurveR = x, CurveG = y, CurveB = z, CurveA = w },
+        List<SlotColorKey2D> color = [new() { Ease = ProgressMapKind.Smooth, CurveR = x, CurveG = y, CurveB = z, CurveA = w },
             new() { Time = 1, Value = Vector4.Zero }];
         for (var i = 0; i < 100; i++) Check();
         var before = GC.GetAllocatedBytesForCurrentThread();

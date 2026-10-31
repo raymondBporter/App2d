@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -85,9 +87,9 @@ public static partial class ClipAuthoring
     }
 
     /// <summary>Changes easing and clears the per-component curves that it replaces.</summary>
-    public static void SetColorEase(MotionClip clip, string slot, string kind, float time, string ease)
+    public static void SetColorEase(MotionClip clip, string slot, string kind, float time, ProgressMapKind ease)
     {
-        EntityVocabulary.Require(ease, ClipEase.All, "ease");
+        MotionClip.ValidateEase(ease, "ease");
         var key = ColorKey(clip, slot, kind, time);
         key.Ease = ease;
         key.CurveR = key.CurveG = key.CurveB = key.CurveA = null;
@@ -103,9 +105,9 @@ public static partial class ClipAuthoring
         var copy = curve is null ? null : curve with
         {
         };
-        if (copy is not null && key.Ease == ClipEase.Step)
+        if (copy is not null && key.Ease == ProgressMapKind.Step)
         {
-            key.Ease = ClipEase.Linear;
+            key.Ease = ProgressMapKind.Linear;
         }
 
         if (component == 0)

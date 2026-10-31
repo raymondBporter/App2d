@@ -1,5 +1,7 @@
+using App2d.Core.Animation;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -26,10 +28,10 @@ public sealed record KeyCurve2D
     }
 
     /// <summary>Creates the continuous cubic for a named ease; held steps have no continuous equivalent.</summary>
-    public static KeyCurve2D FromEase(string ease) => ease switch
+    public static KeyCurve2D FromEase(ProgressMapKind ease) => ease switch
     {
-        ClipEase.Linear => new() { Control1 = new(1f / 3, 1f / 3), Control2 = new(2f / 3, 2f / 3) },
-        ClipEase.Smooth => new() { Control1 = new(1f / 3, 0), Control2 = new(2f / 3, 1) },
+        ProgressMapKind.Linear => new() { Control1 = new(1f / 3, 1f / 3), Control2 = new(2f / 3, 2f / 3) },
+        ProgressMapKind.Smooth => new() { Control1 = new(1f / 3, 0), Control2 = new(2f / 3, 1) },
         _ => throw ArgGuard.CreateInvalid("The ease must have a continuous cubic equivalent.", nameof(ease))
     };
 

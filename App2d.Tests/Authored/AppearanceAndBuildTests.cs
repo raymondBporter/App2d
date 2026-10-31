@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Animation;
 using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core.Characters.Authored;
@@ -127,13 +129,13 @@ public sealed class AppearanceAndBuildTests
         Assert.DoesNotContain(head, pose.Expressions.Keys);
     }
 
-    [Theory, InlineData(ClipEase.Linear, .5f), InlineData(ClipEase.Smooth, .5f), InlineData(ClipEase.Step, 0)]
-    public void KeysEaseTowardTheNextKey(string ease, float middle)
+    [Theory, InlineData(ProgressMapKind.Linear, .5f), InlineData(ProgressMapKind.Smooth, .5f), InlineData(ProgressMapKind.Step, 0)]
+    public void KeysEaseTowardTheNextKey(ProgressMapKind ease, float middle)
     {
         var keys = new List<ClipKey> { new() { Time = 0, Value = new(0, 0, 0), Ease = ease }, new() { Time = 1, Value = new(0, 1, 0) } };
         Assert.Equal(middle, PoseEvaluator.Interpolate(keys, .5f).Value.Y, 4);
         Assert.Equal(1, PoseEvaluator.Interpolate(keys, 1).Value.Y, 4);
-        if (ease == ClipEase.Smooth)
+        if (ease == ProgressMapKind.Smooth)
         {
             Assert.True(PoseEvaluator.Interpolate(keys, .1f).Value.Y < .1f);
         }
