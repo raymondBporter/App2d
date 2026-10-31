@@ -141,7 +141,7 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
         return span > 1e-8f ? (points[i + 1] - points[i]) * (Length / span) : Vector2.Zero;
     }
 
-    /// <summary>Interpolates a scalar per control point (e.g. depth or thickness) with the same fillet weights as XY.</summary>
+    /// <summary>Interpolates caller-supplied scalar values (e.g. depth) with the same fillet weights as XY.</summary>
     public float Interpolate(ReadOnlySpan<float> values, float amount)
     {
         if (values.Length != Points.Length)

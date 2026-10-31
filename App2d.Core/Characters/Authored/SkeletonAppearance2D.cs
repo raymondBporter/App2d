@@ -1,3 +1,4 @@
+using App2d.Core.Animation;
 using App2d.Core.Rendering;
 using System.Numerics;
 
@@ -22,7 +23,7 @@ public sealed record SkeletonSkin2D
     public Dictionary<string, Dictionary<string, string>> Attachments { get; set; } = [];
 }
 
-public sealed record SlotAttachmentKey2D
+public sealed record SlotAttachmentKey2D : ITimedKey
 {
     public float Time { get; set; }
     public string? Attachment { get; set; }
@@ -34,7 +35,7 @@ public sealed record SlotAttachmentTrack2D
     public List<SlotAttachmentKey2D> Keys { get; set; } = [];
 }
 
-public sealed record DrawOrderKey2D
+public sealed record DrawOrderKey2D : ITimedKey
 {
     public float Time { get; set; }
     public List<string> Slots { get; set; } = [];
@@ -127,12 +128,12 @@ internal static class SkeletonAppearance2D
             throw new InvalidDataException($"Unknown skin '{skinId}'.");
         }
 
-        var order = clip.DrawOrder.LastOrDefault(k => k.Time <= time)?.Slots ?? [.. model.Base.Slots.Select(s => s.Id)];
+        var order = KeyframeSampling.Held(clip.DrawOrder, time, holdBeforeFirst: false)?.Slots ?? [.. model.Base.Slots.Select(s => s.Id)];
         foreach (var id in order)
         {
             var slot = model.Base.Slots.First(s => s.Id == id);
             var track = clip.Attachments.FirstOrDefault(t => t.Slot == id);
-            var key = track?.Keys.LastOrDefault(k => k.Time <= time);
+            var key = track is null ? null : KeyframeSampling.Held(track.Keys, time, holdBeforeFirst: false);
             var name = key is null ? slot.Attachment : key.Attachment;
             string? part = null;
             if (name is not null)

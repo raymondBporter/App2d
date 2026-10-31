@@ -5,7 +5,10 @@ using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
-/// <summary>Cubic time/value handles. Endpoints belong to the neighboring keys; value handles may overshoot.</summary>
+/// <summary>
+/// Interpolation handles for the segment between two keyframes. The two dimensions are time and scalar value.
+/// Endpoints belong to the neighboring keys; value handles may overshoot.
+/// </summary>
 public sealed record KeyCurve2D
 {
     public Vector2 Control1 { get; set; }

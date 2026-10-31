@@ -2,7 +2,10 @@ using System.Numerics;
 
 namespace App2d.Core.Geometry.Curves;
 
-/// <summary>A two-dimensional parametric curve evaluated over normalized progress [0, 1].</summary>
+/// <summary>
+/// A zero-thickness, one-dimensional path in 2D space, evaluated over normalized progress [0, 1].
+/// Stroke width, caps, and joins belong to rendering; geometry queries describe the path itself.
+/// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(App2d.Core.Geometry.Serialization.GeometryJsonConverterFactory))]
 public interface ICurve2D : IGeometryValue2D
 {

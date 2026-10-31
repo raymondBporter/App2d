@@ -28,9 +28,11 @@ public static class NumericValidation
         });
 
     public static bool IsFinite(Vector2 value) => value.IsFinite();
+    public static bool IsFinite(Vector2d value) => value.IsFinite();
     public static bool IsPositive(Vector2 value) => IsFinite(value) && value.X > 0f && value.Y > 0f;
     public static bool IsNonNegative(Vector2 value) => IsFinite(value) && value.X >= 0f && value.Y >= 0f;
     public static bool IsNonZero(Vector2 value) => IsFinite(value) && value != Vector2.Zero;
+    public static bool IsNonZero(Vector2d value) => IsFinite(value) && value != Vector2d.Zero;
     public static bool IsComponentWiseLessThan(Vector2 value, Vector2 limit) => value.X < limit.X && value.Y < limit.Y;
     public static bool IsComponentWiseLessThanOrEqual(Vector2 value, Vector2 limit) => value.X <= limit.X && value.Y <= limit.Y;
     public static bool IsComponentWiseGreaterThan(Vector2 value, Vector2 limit) => value.X > limit.X && value.Y > limit.Y;

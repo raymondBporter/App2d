@@ -14,6 +14,8 @@ Times use the caller's units and are not restricted to [0, 1]. An empty timeline
 A single key is held everywhere. Queries outside the range hold the first or last value. At an exact key time,
 the key's own value is returned without segment interpolation, including for outgoing step segments.
 `TrySegment` remains available for consumers needing the two keys and their local progress.
+`Held(keys, time, holdBeforeFirst: false)` instead returns no key before the first time; attachment and draw-order
+tracks use this to preserve setup state. A present key with a null value is distinct from having no key yet.
 
 The interpolation policy reads a key's value and interpolates a segment. It owns easing, output range, and value-specific
 rules; the sampler does not clamp or ease values. Motion and color use the same sampler while retaining independent

@@ -55,6 +55,26 @@ public sealed class AnimationEditingTests
         clip.Validate(model);
     }
 
+    [Theory]
+    [InlineData(.1f, true, "back,middle,front")]
+    [InlineData(.25f, false, "middle,back,front")]
+    [InlineData(.5f, false, "middle,back,front")]
+    [InlineData(.75f, true, "middle,front,back")]
+    [InlineData(.9f, true, "middle,front,back")]
+    public void HeldAppearanceKeepsSetupUntilTheFirstKeyAndSwitchesAtExactTimes(float time, bool visible, string order)
+    {
+        var (model, clip) = Scene();
+        ClipAuthoring.SetAttachmentKey(clip, "middle", .25f, null);
+        ClipAuthoring.SetAttachmentKey(clip, "middle", .75f, "art");
+        ClipAuthoring.MoveSlot(clip, model.Base.Slots, "back", .25f, 1);
+        ClipAuthoring.MoveSlot(clip, model.Base.Slots, "back", .75f, 1);
+        clip.Validate(model);
+
+        var pose = PoseEvaluator.Sample(model, clip, time);
+        Assert.Equal(order.Split(','), pose.Slots.Select(slot => slot.Slot.Id));
+        Assert.Equal(visible, pose.Slots.Single(slot => slot.Slot.Id == "middle").Part is not null);
+    }
+
     [Fact]
     public void TintCurvesKeepIndependentAlphaAndDoNotRetainTheCallersMutableCurve()
     {

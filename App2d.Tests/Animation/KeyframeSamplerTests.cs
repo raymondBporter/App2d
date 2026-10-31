@@ -59,4 +59,17 @@ public sealed class KeyframeSamplerTests
             Assert.Equal(i + .5f, KeyframeSampling.Sample(keys, middle, -1f, new ScalarInterpolation(1)));
         }
     }
+
+    [Fact]
+    public void HeldSamplingCanPreserveSetupUntilTheFirstKey()
+    {
+        ScalarKey[] keys = [new(2, 10), new(4, 30)];
+        Assert.Null(KeyframeSampling.Held(keys, 1, holdBeforeFirst: false));
+        Assert.Same(keys[0], KeyframeSampling.Held(keys, 1));
+        Assert.Same(keys[0], KeyframeSampling.Held(keys, 2, holdBeforeFirst: false));
+        Assert.Same(keys[0], KeyframeSampling.Held(keys, 3, holdBeforeFirst: false));
+        Assert.Same(keys[1], KeyframeSampling.Held(keys, 4, holdBeforeFirst: false));
+        Assert.Same(keys[1], KeyframeSampling.Held(keys, 8, holdBeforeFirst: false));
+        Assert.Null(KeyframeSampling.Held(Array.Empty<ScalarKey>(), 1, holdBeforeFirst: false));
+    }
 }

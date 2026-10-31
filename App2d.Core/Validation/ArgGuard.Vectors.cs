@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -19,6 +20,9 @@ public static partial class ArgGuard
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 NonZero(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+        NumericValidation.IsNonZero(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonzero.", paramName);
+
+    public static Vector2d NonZero(Vector2d value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNonZero(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonzero.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -18,9 +18,9 @@ public interface IKeyframeInterpolation<TKey, TValue>
 /// <summary>Finds a segment in an ordered timeline, holding the first and last keys outside its range.</summary>
 public static class KeyframeSampling
 {
-    /// <summary>Holds a discrete key until the next, including the ordinary first/last-key hold.</summary>
-    public static T? Held<T>(IReadOnlyList<T> keys, float time) where T : class, ITimedKey =>
-        TrySegment(keys, time, out var start, out _, out _) ? start : null;
+    /// <summary>Holds a discrete key until the next. Disable the first-key hold to use setup state before the timeline starts.</summary>
+    public static T? Held<T>(IReadOnlyList<T> keys, float time, bool holdBeforeFirst = true) where T : class, ITimedKey =>
+        TrySegment(keys, time, out var start, out _, out _) && (holdBeforeFirst || time >= start.Time) ? start : null;
 
     /// <summary>
     /// Samples ordered keys with a caller-selected empty value and interpolation rule. Exact keys return their own

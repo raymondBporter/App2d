@@ -17,51 +17,26 @@ public readonly record struct Direction2D
         Vector = (wide / wide.Length()).ToVector2();
     }
 
+    public Direction2D(float x, float y)
+    {
+        // Float squares can overflow or underflow for valid input vectors.
+        var wide = new Vector2d(x, y);
+        ArgGuard.NonZero(wide);
+        Vector = (wide / wide.Length()).ToVector2();
+    }
+
     public Vector2 Vector { get; }
     public bool IsValid => Vector != Vector2.Zero;
 
-    public float AngleRadians
-    {
-        get
-        {
-            Validate();
-            return Polar2D.AngleOf(Vector);
-        }
-    }
+    public float AngleRadians => Polar2D.AngleOf(Vector);
 
-    public Direction2D PerpCcw
-    {
-        get
-        {
-            Validate();
-            return new(new(-Vector.Y, Vector.X));
-        }
-    }
+    public Direction2D PerpCcw => new(new(-Vector.Y, Vector.X));
 
-    public Direction2D PerpCw
-    {
-        get
-        {
-            Validate();
-            return new(new(Vector.Y, -Vector.X));
-        }
-    }
+    public Direction2D PerpCw => new Direction2D(Vector.Y, -Vector.X);
 
-    public Direction2D Reversed
-    {
-        get
-        {
-            Validate();
-            return new(-Vector);
-        }
-    }
+    public Direction2D Reversed => new(-Vector);
 
-    public Vector2 ScaledBy(float distance)
-    {
-        Validate();
-        ArgGuard.Finite(distance);
-        return Vector * distance;
-    }
+    public Vector2 ScaledBy(float distance) => Vector * ArgGuard.Finite(distance);
 
     public static Direction2D FromAngle(float angleRadians) => new(Polar2D.Direction(angleRadians));
 
