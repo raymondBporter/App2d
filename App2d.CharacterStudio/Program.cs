@@ -6,7 +6,7 @@ namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-acceptance output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory [--force] | --write-player-moves authored-directory [--force] | --write-weapons authored-directory [--force] | --write-wardrobe authored-directory [--force] | --replace-wardrobe-art authored-directory | --smoke-rounded-paths output-directory]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--preview-3d | --smoke-3d output-directory | --write-pterosaur authored-directory | --smoke-pterosaur output-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-acceptance output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory [--force] | --write-player-moves authored-directory [--force] | --write-weapons authored-directory [--force] | --write-wardrobe authored-directory [--force] | --replace-wardrobe-art authored-directory | --smoke-rounded-paths output-directory]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -19,6 +19,12 @@ internal static class Program
 
             switch (args)
             {
+                case ["--preview-3d"]:
+                    using (var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), null, start3D: true)) editor.Run();
+                    return 0;
+                case ["--smoke-3d", var spatialOutput]:
+                    using (var proofs = new ProofRenders(FindAssets(preferSource: true), Path.GetFullPath(spatialOutput), ProofRenders.Mode.Spatial)) proofs.Run();
+                    return 0;
                 case ["--smoke-rounded-paths", var curveOutput]:
                     using (var proofs = new ProofRenders(FindAssets(preferSource: true), Path.GetFullPath(curveOutput), ProofRenders.Mode.RoundedPaths))
                     {

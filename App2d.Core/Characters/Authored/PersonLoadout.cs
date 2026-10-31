@@ -57,8 +57,10 @@ public static class PersonLoadout
     public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { Chest, Head, LeftShoulder, RightShoulder, LeftArm, RightArm };
     public static readonly IReadOnlySet<string> SwordUpperBody = new HashSet<string>(UpperBody, StringComparer.Ordinal) { SwordSocket };
 
+
     public static bool SeenFromBehind(MotionClip clip, float seconds) =>
         clip.Markers.Where(m => m.Id is BackViewMarker or ProfileViewMarker && m.Time <= seconds + 1e-4f).MaxBy(m => m.Time)?.Id == BackViewMarker;
+
 
     /// <summary>Whether this clip holds the sword in hand at this time.</summary>
     public static bool SwordInHand(MotionClip clip, float seconds)

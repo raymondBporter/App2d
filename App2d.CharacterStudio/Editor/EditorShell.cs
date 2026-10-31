@@ -22,7 +22,7 @@ internal interface IWorkspaceView
 /// One window, one viewport, one document workflow: asset browser and outline on the left, the shared viewport in the middle,
 /// the selection inspector on the right and the timeline below. Model and Animate are views over the same session.
 /// </summary>
-internal sealed class EditorShell(EditorSession session, Viewport viewport, ArenaTest test, ImGuiHost gui) : IDisposable
+internal sealed class EditorShell(EditorSession session, Viewport viewport, ArenaTest test, ImGuiHost gui, SpatialPreview? spatial = null) : IDisposable
 {
     private readonly AssetBrowser _browser = new(session);
     private readonly IWorkspaceView[] _views =
@@ -39,6 +39,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     public ArenaTest Test { get; } = test;
     /// <summary>False while a smoke run drives the arena itself.</summary>
     public bool LiveTest { get; set; } = true;
+    public bool Show3DPreview { get; set; }
     private IWorkspaceView View => _views.First(v => v.Mode == Session.Mode);
     /// <summary>The Entity workspace's view, for the smokes to frame an inspector section.</summary>
     public EntityView EntityInspector => _views.OfType<EntityView>().First();
@@ -54,6 +55,12 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
             var scale = Ui.Scale;
             var available = ImGui.GetContentRegionAvail();
             var status = 26 * scale;
+            if (Show3DPreview && spatial is not null)
+            {
+                spatial.Draw(new(available.X, MathF.Max(100, available.Y - status - ImGui.GetStyle().ItemSpacing.Y)));
+                StatusLine();
+                return;
+            }
             // Side panels and the timeline keep their design size where there is room, but never crowd out the viewport.
             var timeline = MathF.Min(view.TimelineHeight * scale, available.Y * .34f);
             var left = MathF.Min(250 * scale, available.X * .2f);
@@ -128,7 +135,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         ImGui.SameLine();
         foreach (var mode in new[] { Workspace.Model, Workspace.Animate, Workspace.Entity, Workspace.Appearance })
         {
-            var active = Session.Mode == mode;
+            var active = !Show3DPreview && Session.Mode == mode;
             if (active)
             {
                 ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
@@ -137,6 +144,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
             if (ImGui.Button(mode.ToString()))
             {
                 Session.SetMode(mode);
+                Show3DPreview = false;
             }
 
             if (active)
@@ -146,6 +154,14 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
 
             ImGui.SameLine();
         }
+        if (spatial is not null)
+        {
+            var showing = Show3DPreview;
+            if (showing) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
+            if (ImGui.Button("3D preview")) Show3DPreview = !Show3DPreview;
+            if (showing) ImGui.PopStyleColor();
+            ImGui.SameLine();
+        }
         if (Test.Active)
         {
             ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
@@ -153,6 +169,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
 
         if (ImGui.Button(Test.Active ? "Stop test" : "Test"))
         {
+            Show3DPreview = false;
             if (Test.Active)
             {
                 Test.Stop();
@@ -421,5 +438,6 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     {
         Viewport.Dispose();
         Test.Dispose();
+        spatial?.Dispose();
     }
 }

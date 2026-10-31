@@ -11,18 +11,18 @@ internal sealed class GraphicsTestContext : IDisposable
     public GraphicsDevice Device { get; }
     public RenderTarget2D Target { get; }
 
-    public GraphicsTestContext()
+    public GraphicsTestContext(DepthFormat depthFormat = DepthFormat.None)
     {
         Device = new GraphicsDevice(GraphicsAdapter.DefaultAdapter, GraphicsProfile.HiDef, new PresentationParameters
         {
             DeviceWindowHandle = _window.Handle,
             BackBufferWidth = 128,
             BackBufferHeight = 128,
-            DepthStencilFormat = DepthFormat.None,
+            DepthStencilFormat = depthFormat,
             IsFullScreen = false,
             PresentationInterval = PresentInterval.Immediate
         });
-        Target = new RenderTarget2D(Device, 128, 128, false, SurfaceFormat.Color, DepthFormat.None);
+        Target = new RenderTarget2D(Device, 128, 128, false, SurfaceFormat.Color, depthFormat);
         Device.SetRenderTarget(Target);
     }
 

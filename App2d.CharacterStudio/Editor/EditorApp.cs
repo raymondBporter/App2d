@@ -27,12 +27,14 @@ internal sealed class EditorApp : Game
     private Form? _form;
 
     private readonly bool _acceptance;
+    private readonly bool _start3D;
 
-    public EditorApp(string authoredRoot, string? smokePath, bool acceptance = false)
+    public EditorApp(string authoredRoot, string? smokePath, bool acceptance = false, bool start3D = false)
     {
         _authoredRoot = authoredRoot;
         _smokePath = smokePath;
         _acceptance = acceptance;
+        _start3D = start3D;
         _graphics = new(this)
         {
             GraphicsProfile = GraphicsProfile.HiDef,
@@ -81,7 +83,8 @@ internal sealed class EditorApp : Game
         _shell = new(new EditorSession(assets, sources)
         {
             SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
-        }, new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui);
+        }, new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui,
+            new SpatialPreview(GraphicsDevice, _gui, assets.PartOf("sword"))) { Show3DPreview = _start3D };
         if (_smokePath is null)
         {
             _form = Control.FromHandle(Window.Handle)?.FindForm();

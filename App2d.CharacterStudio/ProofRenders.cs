@@ -13,7 +13,7 @@ internal sealed partial class ProofRenders : Game
 
     public enum Mode
     {
-        Motion, Entities, MoveReview, Weapons, SwingLab, Wardrobe, Quadrupeds, Pterosaur, RoundedPaths
+        Motion, Entities, MoveReview, Weapons, SwingLab, Wardrobe, Quadrupeds, Pterosaur, RoundedPaths, Spatial
     }
 
     private readonly GraphicsDeviceManager _graphics;
@@ -49,6 +49,7 @@ internal sealed partial class ProofRenders : Game
     {
         var more = _mode switch
         {
+            Mode.Spatial => RenderSpatialProof(),
             Mode.RoundedPaths => RenderRoundedPaths(),
             Mode.Pterosaur => RenderPterosaurProof(),
             Mode.Quadrupeds => RenderQuadrupedProof(),
