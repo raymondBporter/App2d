@@ -1,9 +1,9 @@
-using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics;
 
 namespace App2d.CharacterStudio.PlayerMoves;
 
@@ -17,27 +17,9 @@ internal static partial class PlayerMoves
         => Plate(color, depth, new(x0 + bevel, y0), new(x1 - bevel, y0), new(x1, y0 + bevel), new(x1, y1 - bevel),
             new(x1 - bevel, y1), new(x0 + bevel, y1), new(x0, y1 - bevel), new(x0, y0 + bevel));
 
-    private static Part SwordArt() => PartGeometryBuilder.Named(new()
-    {
-        Id = Sword,
-        Name = "Sword",
-        Usage = "prop",
-        Locations = [new() { Id = EquipmentPoints.Grip }, new() { Id = EquipmentPoints.Tip, X = .82f, Y = 0 }],
-        LineWidth = .013f,
-        Geometry =
-        [
-            Block(Leather, -.12f, .04f, -.026f, .026f, .043f, .006f),
-            Block(Brass, -.142f, -.112f, -.036f, .036f, .058f, .008f),
-            Plate(Brass, .05f, new(.028f, -.105f), new(.064f, -.092f), new(.08f, -.035f), new(.08f, .035f), new(.064f, .092f), new(.028f, .105f)),
-            Block(DarkSteel, .064f, .11f, -.045f, .045f, .04f, .006f),
-            PartGeometryBuilder.Blade(.105f, .65f, .82f, .047f, .014f, Steel),
-        ],
-    });
-
     /// <summary>
     /// A cartoon sword after the RGS stick-figure art: a broad blade about six times as long as it is wide with a chisel
-    /// tip, a thin guard, and a grip short enough to disappear in the fist. Larger than <see cref="SwordArt"/> so the blade,
-    /// not the hilt, is what reads at game size. Approved for the player's runtime sword.
+    /// tip, a thin guard, and a grip short enough to disappear in the fist. Its broad blade reads at game size.
     /// </summary>
     internal static Part CartoonSwordArt()
     {

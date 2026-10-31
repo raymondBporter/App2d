@@ -75,12 +75,6 @@ public sealed class ModelTemplate
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
 
-    public void Save(string path)
-    {
-        Validate();
-        File.WriteAllText(path, ToJson());
-    }
-
     public void Validate()
     {
         var owner = $"Model template '{Id}'";

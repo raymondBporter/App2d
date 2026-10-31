@@ -73,5 +73,4 @@ public sealed class Transport
 
     /// <summary>The time to sample, counting completed cycles.</summary>
     public double Seconds(MotionClip clip) => Repeats(clip) ? _clock.ElapsedSeconds : Time;
-    public float Phase(MotionClip clip) => Time / clip.Duration;
 }

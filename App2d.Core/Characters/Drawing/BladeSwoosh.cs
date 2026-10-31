@@ -1,7 +1,7 @@
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Characters.Geometry;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Quaternion = System.Numerics.Quaternion;

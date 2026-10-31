@@ -11,8 +11,6 @@ public sealed class EntityRuntimeTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
     private const float Dt = 1 / 120f;
-    private static readonly string[] expected = ["body", "legs"];
-
     private static ResolvedEntity Compile(Part asset) =>
         ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Parts.GetValueOrDefault);
 
@@ -29,7 +27,7 @@ public sealed class EntityRuntimeTests
         {
             foreach (var t in new[] { hit.Start, hit.Finish - .01f })
             {
-                var box = EntityCollision.Attack(hero, new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
+                var box = EntityCollision.Attack(new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
                 TestModels.Near(new Vector3(3 + hit.Collider.Definition.OffsetX * facing, hit.Collider.Definition.OffsetY, 0), new Vector3(box.Bounds.Center, 0), 1e-4f, $"box centre at {t}, facing {facing}");
             }
         }
@@ -203,7 +201,7 @@ public sealed class EntityRuntimeTests
             else if (animator.ActionTime < hit.Finish)
             {
                 sawActive = true;
-                var region = EntityCollision.Attack(guard, pose, Assert.Single(active));
+                var region = EntityCollision.Attack(pose, Assert.Single(active));
                 var bounds = region.Bounds;
                 Assert.InRange(tip.X, bounds.Min.X, bounds.Max.X);
                 Assert.InRange(tip.Y, bounds.Min.Y, bounds.Max.Y);

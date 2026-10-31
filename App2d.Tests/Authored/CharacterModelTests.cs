@@ -109,7 +109,7 @@ public sealed class CharacterModelTests
         try
         {
             var model = TestModels.Creature();
-            model.Save(path);
+            AuthoredAsset.Write(path, model.ToJson());
             Assert.False(File.Exists(path + ".tmp"));
             Assert.Equal(model.ToJson(), CharacterModel.Load(path).ToJson());
         }

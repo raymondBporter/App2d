@@ -1,7 +1,6 @@
-using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics.Progress;
 using System.Numerics;
 using System.Text.Json.Nodes;
 
@@ -169,7 +168,7 @@ public sealed class NativeRigTests
         var model = ResolvedModel.From(source);
         var clip = clips[0];
         clip.Tracks = [];
-        var near = .5f + ClipAuthoring.SameTime / 2;
+        const float near = .5f + ClipAuthoring.SameTime / 2;
         clip.Attachments = [new() { Slot = "front-paint", Keys = [
             new() { Time = .4f, Attachment = null }, new() { Time = .5f, Attachment = "blue" },
             new() { Time = near, Attachment = null }, new() { Time = .8f, Attachment = "blue" }] }];

@@ -26,8 +26,8 @@ internal static class AuthoredRenderingSmoke2D
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(textures.ContentRoot), new Silent());
         using var renderer = new Renderer2D(new Camera2D { Zoom = 1.6f, Position = new(20, 42) }, device);
         using var target = RenderCapture2D.CreateTarget(device, 1400, 500);
-        RunEntities(device, view, scene, renderer, target, directory);
-        RunPlayer(device, textures, renderer, target, directory);
+        RunEntities(view, scene, renderer, target, directory);
+        RunPlayer(device, textures, target, directory);
         view.ApplyState([], [], 62);
         StateGuard.ThrowIfNot(!scene.Any());
     }
@@ -36,7 +36,7 @@ internal static class AuthoredRenderingSmoke2D
     /// The player through <see cref="AuthoredPersonPresentation2D"/>: each named state is fed at 120 Hz for its duration, the
     /// way the client does, and the last frame is rendered in both facings.
     /// </summary>
-    private static void RunPlayer(GraphicsDevice device, TextureCache2D textures, Renderer2D renderer, RenderTarget2D target, string directory)
+    private static void RunPlayer(GraphicsDevice device, TextureCache2D textures, RenderTarget2D target, string directory)
     {
         var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var moves = PersonMoves.From(authored);
@@ -96,7 +96,7 @@ internal static class AuthoredRenderingSmoke2D
                         };
                     }
 
-                    player.ApplyState(current, i + 1, 0, false, false);
+                    player.ApplyState(current, i + 1);
                     player.Advance(1 / 120f);
                 }
                 var camera = new Camera2D { Zoom = 3, Position = new(position.X, 60) };
@@ -134,7 +134,7 @@ internal static class AuthoredRenderingSmoke2D
     }
 
     /// <summary>Authored entities through the game's presentation: each frame draws the animator's own final pose, props included.</summary>
-    private static void RunEntities(GraphicsDevice device, EnemyPresentation2D view, Scene2D scene, Renderer2D renderer, RenderTarget2D target, string directory)
+    private static void RunEntities(EnemyPresentation2D view, Scene2D scene, Renderer2D renderer, RenderTarget2D target, string directory)
     {
         var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         if (authored.Errors.Count > 0)

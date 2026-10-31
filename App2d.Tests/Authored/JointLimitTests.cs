@@ -204,15 +204,15 @@ public sealed class JointLimitTests
         foreach (var offset in new[] { new Vector3(.3f, -.8f, 0), new Vector3(.1f, -.17f, 0), new Vector3(0, -3, 0) })
         {
             // The reflected torso flips the arm vertically, so the same arm-relative target has its Y mirrored in character space.
-            EvaluatedPose Solve(ResolvedModel model, EvaluatedPose rest)
+            EvaluatedPose Solve(ResolvedModel model)
             {
                 var local = ReferenceEquals(model, mirrored) ? offset with { Y = -offset.Y } : offset;
                 var clip = new MotionClip { Id = "reach", Name = "Reach", Model = "arm", Duration = 1, Tracks = [new() { Kind = MotionClip.TargetKind, Target = "reach", Keys = [new() { Value = local }] }] };
                 clip.Validate(model);
                 return PoseEvaluator.Sample(model, clip, 0);
             }
-            var a = Solve(plain, plainRest);
-            var b = Solve(mirrored, mirrorRest);
+            var a = Solve(plain);
+            var b = Solve(mirrored);
             Assert.Equal(Local(a, plain, "fore"), Local(b, mirrored, "fore"), 4);
             Assert.Equal(a.Limits["fore"].State, b.Limits["fore"].State);
             Assert.Equal(a.Chains[0].Reached, b.Chains[0].Reached);
@@ -254,7 +254,6 @@ public sealed class JointLimitTests
         var resolved = ResolvedModel.From(model, variant);
         Assert.Equal(new RigLimit { Min = 0, Max = 1.2f }, resolved.Nodes["fore"].Limit);
         Assert.Equal(PropertySource.Override, resolved.Provenance(fore));
-        Assert.Equal(2, resolved.AuthoredNumber(fore));
         Assert.Equal(new RigLimit { Min = 0, Max = 2 }, model.Controls[2].Limit); // the base is untouched
         var bendClip = new MotionClip { Id = "bend", Name = "Bend", Model = "arm", Duration = 1, Tracks = [new() { Kind = MotionClip.BendKind, Target = "fore", Keys = [new() { Value = new(1, 0, 0) }] }] };
         var unsolved = ResolvedModel.From(Arm(ik: false, elbow: new() { Min = 0, Max = 2 }), variant);

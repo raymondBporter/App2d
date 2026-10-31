@@ -164,7 +164,7 @@ public sealed class AuthoredArena
             // the ally filtering, the owner is skipped, a front guard blocks), the legacy layout scan only for targets whose
             // hurt is not registered yet, each target once per attack instance and hit group.
             CombatContacts.Resolve(attacker.Colliders, attacker.Animator.ActionSequence, attacker.Animator.ActiveHits(), ArenaLayers.OpponentsOf(attacker.Index), attacker.Ledger,
-                (attack, collider) => TargetOf(attacker.Position.X, collider), _contacts, _overlaps, (hit, attack, extra) =>
+                (_, collider) => TargetOf(attacker.Position.X, collider), _contacts, _overlaps, (_, attack, extra) =>
                 {
                     LastQueryCandidates += Collision.LastBoundsQueryCandidateCount;
                     var region = attack.Region;

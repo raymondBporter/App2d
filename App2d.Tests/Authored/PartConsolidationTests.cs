@@ -1,8 +1,7 @@
-using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Editing;
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;

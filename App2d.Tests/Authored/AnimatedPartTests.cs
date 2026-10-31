@@ -226,7 +226,7 @@ public sealed class AnimatedPartTests
     {
         var (_, _, model) = Wearer();
         var clip = ClipAuthoring.New(model, "tail-selections", "Tail selections", duration: 2, loop: false);
-        var first = .5f;
+        const float first = .5f;
         var near = first + ClipAuthoring.SameTime / 2;
         clip.Plays = [new() { Instance = Instance, Keys = [new() { Time = first, Expression = "flick" },
             new() { Time = near, Expression = "still" }, new() { Time = 1, Expression = "tucked" }] }];
@@ -244,8 +244,8 @@ public sealed class AnimatedPartTests
         var before = ClipAuthoring.Excerpt(clip, .1f, .3f, "before", "Before");
         foreach (var time in new[] { 0f, .1f, before.Duration })
         {
-            var selected = before.PlayAt(Instance, time)!.Value;
-            Assert.Equal(0, Math.Max(0, time - selected.Since));
+            var (Expression, Since) = before.PlayAt(Instance, time)!.Value;
+            Assert.Equal(0, Math.Max(0, time - Since));
             var nested = PoseEvaluator.Sample(model, before, time).Attachments[Instance].Pose;
             Assert.Equal(0, nested.Placement("mid").ToLocal(nested.World("tip")).X, 5);
         }

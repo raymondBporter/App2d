@@ -71,7 +71,7 @@ public sealed class RigGraphTests
         TestModels.Near(new(hubPoint + Rotation2D.Apply(new(.4f, 0), hubAngle), .04f), pose.World("pin"));
         TestModels.Near(new(hubPoint + Rotation2D.Apply(new(.2f, .1f), hubAngle), .05f), pose.World("lamp"));
         TestModels.Near(new(XY(pose.World("pin")) + Rotation2D.Apply(new(.25f, 0), pose.Angles["pin"]), .04f), pose.World("tip"));
-        var art = PartAttachment2D.FrameOf(model.Parts[0], model, pose);
+        var art = PartAttachment2D.FrameOf(model.Parts[0], pose.World, pose.Placement, id => model.Rest[id]);
         TestModels.Near(new(hubPoint + Rotation2D.Apply(new(.2f, 0), hubAngle), .05f), art.Origin);
         Assert.InRange(Vector2.Distance(art.XAxis, Rotation2D.Apply(Vector2.UnitX, hubAngle)), 0, 1e-4f);
         // Positions, frames and angles agree after evaluation: no consumer reconstructs a different pose.

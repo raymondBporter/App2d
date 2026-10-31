@@ -34,7 +34,7 @@ public sealed class Curve2DTests
         BSpline2D spline = BSpline2D.Builder.Create([new(0, 0), new(1, 0), new(2, 0)], degree: 1);
         Assert.Equal(1, spline.Distance(new(1, 1)), 4);
 
-        NormalOffsetCurve2D offset = new NormalOffsetCurve2D(cubic, amount => 1);
+        NormalOffsetCurve2D offset = new NormalOffsetCurve2D(cubic, _ => 1);
         Assert.InRange(offset.Distance(new(1.5f, 2)), .99f, 1.01f);
     }
 

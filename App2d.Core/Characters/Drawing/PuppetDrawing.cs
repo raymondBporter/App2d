@@ -106,10 +106,6 @@ public sealed class PuppetDrawing
         Add(attachment.Asset.Ink, attachment.Asset.LineWidth, evaluated.DrawnParts(), evaluated.World, evaluated.Frame, evaluated.Rest, evaluated.RestFrame);
     }
 
-    /// <summary>One instance's payload at a placement (actor-local or world), for drawing and for previewing an asset on a wearer.</summary>
-    public void AddAttachment(ResolvedAttachment attachment, LayeredFrame2D placement) =>
-        AddPayload(attachment, PartPlacement3D.Local(attachment.Asset).Then(PartPlacement3D.Extend(placement)), 0, placement.Layer);
-
     /// <summary>
     /// An entity's final pose in actor-local units, with its equipped props placed by the same socket transform that hit
     /// regions use. Facing and position belong to the caller's world matrix.

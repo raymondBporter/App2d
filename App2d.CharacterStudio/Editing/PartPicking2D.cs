@@ -18,7 +18,6 @@ namespace App2d.CharacterStudio.Editing;
 /// <summary>Normalized character-part picking scores using the same attachment and cutout outlines as drawing.</summary>
 public static class PartPicking2D
 {
-    public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, bone: null, rest: rest);
 
     /// <summary>The picking score of a part in an evaluated pose of a resolved model, with the pose's animated artwork fit applied.</summary>
     public static float Distance(PartGeometry part, ResolvedModel model, EvaluatedPose pose, Vector3 point) =>
@@ -40,13 +39,6 @@ public static class PartPicking2D
 
         return best;
     }
-
-    /// <summary>
-    /// The picking score of a library part instance at a placement (P5b): the best of its payload pieces through the same
-    /// geometry picking. Shapes, curves, images and indexed meshes share this route.
-    /// </summary>
-    public static float Distance(ResolvedAttachment attachment, LayeredFrame2D placement, Vector3 point) =>
-        DistanceAt(attachment, PartPlacement3D.Local(attachment.Asset).Then(PartPlacement3D.Extend(placement)), point);
 
     /// <summary>The picking score of an instance in an evaluated pose: its placement on the socket's evaluated placement, or its evaluated nested pose when animated.</summary>
     public static float Distance(ResolvedAttachment attachment, EvaluatedPose pose, Vector3 point) =>

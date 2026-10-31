@@ -90,7 +90,14 @@ public sealed class ParameterBindingTests
         var variant = Catalog.Variants[id];
         var standard = Catalog.Resolve("person");
         var actual = ResolvedModel.From(person, variant, Catalog.Parts.GetValueOrDefault);
-        var (rest, parts) = LegacyPersonBuild(standard, PersonBuild.From(variant.Parameters));
+        var values = variant.Parameters;
+        var build = new PersonBuild
+        {
+            Legs = values.GetValueOrDefault(PersonBuild.LegsId, 1), Torso = values.GetValueOrDefault(PersonBuild.TorsoId, 1),
+            Arms = values.GetValueOrDefault(PersonBuild.ArmsId, 1), Width = values.GetValueOrDefault(PersonBuild.WidthId, 1),
+            Head = values.GetValueOrDefault(PersonBuild.HeadId, 1)
+        };
+        var (rest, parts) = LegacyPersonBuild(standard, build);
         foreach (var control in person.Controls)
         {
             TestModels.Near(rest[control.Id], actual.Rest[control.Id], 1e-5f, id + "/" + control.Id);

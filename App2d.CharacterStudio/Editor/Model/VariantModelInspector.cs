@@ -101,7 +101,7 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
 
         Parameters(document, basis.Asset);
         Roles(document, basis.Asset, resolved);
-        Looks(document, basis.Asset);
+        Looks(basis.Asset);
         Overrides(document, resolved);
         References.Draw(session, document.Id);
     }
@@ -263,7 +263,7 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
         Ui.Help("An entity on this variant plays the overridden clip for the role unless the entity assigns its own; the base's motion sets are untouched.");
     }
 
-    private void Looks(AssetDocument<ModelVariant> document, CharacterModel basis)
+    private void Looks(CharacterModel basis)
     {
         Ui.Header("Look");
         foreach (var look in LookPreset.ReadFrom(basis))
@@ -327,7 +327,6 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
 /// <summary>A variant's view of one part's overrides for the shared part inspector: which properties are overridden, the material override, and how to reset.</summary>
 internal sealed class PartOverrideView(AssetDocument<ModelVariant> document, CharacterModel basis, ResolvedModel resolved, string part, EditorSession session)
 {
-    public ResolvedModel Resolved => resolved;
     private PropertyRef Target(string property) => PropertyRef.OfPart(part, property);
     public bool Has(string property) => document.Asset.HasOverride(Target(property));
     public RenderMaterialDefinition2D? Material => document.Asset.Override(Target(RigProperties.Material))?.Material;

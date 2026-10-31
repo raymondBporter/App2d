@@ -13,7 +13,7 @@ public sealed class PersonVariantMotionTests
     private static MotionClip Clip(string which)
     {
         var puppet = which == "walk" ? PuppetTemplates.StepStudy() : PuppetTemplates.RunStudy();
-        return PuppetMotionConverter.Convert(puppet, puppet.Motions[0], PersonTemplate.StudyReference(), "person-" + which, which, "leg");
+        return PuppetMotionConverter.Convert(puppet.Motions[0], PersonTemplate.StudyReference(), "person-" + which, which, "leg");
     }
     private static PersonBuild BuildValues(string build) => build switch { "tall" => PersonBuild.TallThin, "short" => PersonBuild.ShortBroad, _ => new() };
     private static ResolvedModel Build(string build) =>

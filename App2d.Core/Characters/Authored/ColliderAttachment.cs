@@ -180,7 +180,6 @@ public sealed class ActorColliders
 
     public AttachedCollider? Find(string id) => _all.FirstOrDefault(c => c.Id == id);
     public IEnumerable<AttachedCollider> OfUse(string use) => _all.Where(c => c.Use == use);
-    public IEnumerable<AttachedCollider> Enabled => _all.Where(c => c.Enabled);
 
     private AttachedCollider Register(ResolvedCollider definition, uint layer)
     {

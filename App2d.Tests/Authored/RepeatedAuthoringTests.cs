@@ -419,7 +419,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
             };
             var variant = build.Apply(person, $"person-{i:00}", $"Person {i:00}");
             EntityAuthoring.ApplyLook(person, variant, looks[i % looks.Length]);
-            variant.Save(Path.Combine(_root, "variants", variant.Id + ".json"));
+            AuthoredAsset.Write(Path.Combine(_root, "variants", variant.Id + ".json"), variant.ToJson());
             var entity = EntityAuthoring.New(EntityAuthoring.Stationary, $"villager-{i:00}", $"Villager {i:00}", ResolvedModel.From(person, variant, PersonTemplate.PartOf));
             entity.Behavior!.MotionSet = sets[i % sets.Length];
             entity.Save(Path.Combine(_root, "parts", entity.Id + ".json"));

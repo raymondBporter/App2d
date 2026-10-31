@@ -51,7 +51,6 @@ public sealed class EntityAnimator
     public IReadOnlyDictionary<string, Vector3> Anchors => _hold.Anchors;
     public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
     public bool ActionComplete => Current is { } action && ActionTime >= action.Clip.Duration;
-    public MotionClip? Clip => Current?.Clip ?? Entity.Clip(Role);
     /// <summary>Whether locomotion is playing: no action, or a masked one layered over it.</summary>
     public bool Locomoting => Current is null || Current.Mask is not null;
 

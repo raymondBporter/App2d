@@ -34,7 +34,7 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
             if (session.Selection.Part is { } piece && Keyable(primary.Model, piece))
             {
                 var nested = ClipAuthoring.Nested(primary.Model, piece);
-                _controls.DrawPiece(document, primary.Model, piece, nested?.Target ?? piece, nested?.Attachment.Asset.Id);
+                _controls.DrawPiece(document, piece, nested?.Target ?? piece, nested?.Attachment.Asset.Id);
             }
             else if (session.Selection.Control is { } control && Keyable(primary.Model, control))
             {

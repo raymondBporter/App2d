@@ -170,7 +170,7 @@ public sealed class RigConversionTests
         Assert.Equal(MathF.Atan2(piston.Y, piston.X), MathF.IEEERemainder(turned.Angles["piston"], MathF.Tau), 3);
         Assert.NotEqual(rest.Angles["piston"], turned.Angles["piston"], 3);
         var part = model.Parts.Single(p => p.Id == "rod-upper");
-        var art = PartAttachment2D.FrameOf(part, model, turned);
+        var art = PartAttachment2D.FrameOf(part, turned.World, turned.Placement, id => model.Rest[id]);
         Assert.InRange(Vector2.Distance(Vector2.Normalize(art.YAxis), Vector2.Normalize(piston)), 0, 1e-4f);
         // The segment lengths are the declared dimensions, scaled by nothing.
         Assert.Equal(model.Nodes["piston"].Length, Vector2.Distance(XY(turned.World("piston")), XY(turned.World("rod-elbow"))), 4);

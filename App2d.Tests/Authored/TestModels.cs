@@ -247,7 +247,7 @@ internal static class TestModels
                 continue;
             }
 
-            var expected = PuppetPose.Sample(puppet, motion, seconds, repeat: true);
+            var expected = PuppetReferencePose.Sample(puppet, motion, seconds, repeat: true);
             var actual = PoseEvaluator.Sample(model, clip, seconds, repeat: true);
             foreach (var control in puppet.Controls)
             {

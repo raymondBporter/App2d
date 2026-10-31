@@ -1,8 +1,7 @@
-using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Json;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using System.Numerics;
 using System.Text.Json;
 

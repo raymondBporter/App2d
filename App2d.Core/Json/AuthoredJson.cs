@@ -55,7 +55,10 @@ public static class AuthoredJson
             static (socket, i, component) =>
             {
                 var transform = socket.Transform;
-                if (i == 2) transform = transform with { Rotation = component };
+                if (i == 2)
+                {
+                    transform = transform with { Rotation = component };
+                }
                 else
                 {
                     var offset = transform.Translation;

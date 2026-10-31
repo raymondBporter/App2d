@@ -10,7 +10,7 @@ namespace App2d.CharacterStudio.Authoring;
 /// </summary>
 public static class PuppetMotionConverter
 {
-    public static MotionClip Convert(PuppetDefinition puppet, PuppetMotion motion, CharacterModel model, string id, string name, string travelScale)
+    public static MotionClip Convert(PuppetMotion motion, CharacterModel model, string id, string name, string travelScale)
     {
         var resolved = ResolvedModel.Rig(model);
         // A chain's joint and end are solved from the target; a bone constraint also turns its root, whose origin still

@@ -33,7 +33,7 @@ public sealed class CutoutAttachmentTests
         var resolved = ResolvedModel.From(model);
         var part = model.Parts[0];
         var rest = PoseEvaluator.Rest(resolved);
-        var bound = PartContours2D.Contour(part, rest.World, id => resolved.Rest[id]);
+        var bound = PartContours2D.Contour(part, rest.World, rest: id => resolved.Rest[id]);
         var rigid = PartContours2D.Contour(part with
         {
             Bindings = null
@@ -43,7 +43,7 @@ public sealed class CutoutAttachmentTests
         ClipAuthoring.SetKey(clip, new("translate", "tip"), 0, new(1, 0, .3f));
         ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3.Zero, MathF.PI / 2);
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
-        bound = PartContours2D.Contour(part, pose.World, id => resolved.Rest[id]);
+        bound = PartContours2D.Contour(part, pose.World, rest: id => resolved.Rest[id]);
         Assert.True(Vector3.Distance(new(2, 0, .3f), TestModels.DrawPoint(bound, 1)) < 1e-5f);
         Assert.True(Vector3.Distance(new(1, 0, .3f), TestModels.DrawPoint(bound, 2)) < 1e-5f);
         Assert.All(bound, p => Assert.Equal(0, p.Z));
@@ -69,8 +69,8 @@ public sealed class CutoutAttachmentTests
             Assert.True(float.IsFinite(vertex.Position.X));
         }
 
-        Assert.True(PartPicking2D.Distance(part, pose.World, new(-.25f, .5f, 0), id => resolved.Rest[id]) <= 1);
-        Assert.True(PartPicking2D.Distance(part, pose.World, new(.75f, .5f, 0), id => resolved.Rest[id]) > 1);
+        Assert.True(PartPicking2D.Distance(part, pose.World, new(-.25f, .5f, 0), rest: id => resolved.Rest[id]) <= 1);
+        Assert.True(PartPicking2D.Distance(part, pose.World, new(.75f, .5f, 0), rest: id => resolved.Rest[id]) > 1);
         // Paint follows the reflected membrane rather than remaining in the old artwork rectangle.
         foreach (var vertex in drawing.Mesh.Vertices)
         {
@@ -91,7 +91,7 @@ public sealed class CutoutAttachmentTests
         ClipAuthoring.SetKey(clip, new("translate", "tip"), 0, new(-.75f, .75f, 0));
         ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3.Zero, MathF.PI);
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
-        Assert.True(PartPicking2D.Distance(part, pose.World, new(.12f, .5f, 0), id => resolved.Rest[id]) <= 1);
+        Assert.True(PartPicking2D.Distance(part, pose.World, new(.12f, .5f, 0), rest: id => resolved.Rest[id]) <= 1);
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public sealed class CutoutAttachmentTests
         float Span(MotionClip clip, float time)
         {
             var pose = PoseEvaluator.Sample(resolved, clip, time);
-            var points = model.Parts.Where(p => p.Id.EndsWith("-wing")).SelectMany(p => PartContours2D.Contour(p, pose.World, id => resolved.Rest[id])).ToList();
+            var points = model.Parts.Where(p => p.Id.EndsWith("-wing")).SelectMany(p => PartContours2D.Contour(p, pose.World, rest: id => resolved.Rest[id])).ToList();
             return points.Max(p => p.X) - points.Min(p => p.X);
         }
         var hover = clips.Single(c => c.Id.EndsWith("-hover"));

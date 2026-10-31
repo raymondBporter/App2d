@@ -119,7 +119,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
         return new(move, io.KeyShift, ImGui.IsKeyDown(ImGuiKey.Space) || ImGui.IsKeyDown(ImGuiKey.W) || ImGui.IsKeyDown(ImGuiKey.UpArrow), ImGui.IsKeyDown(ImGuiKey.J));
     }
 
-    public void Stage(Vector2 available, bool live)
+    public void Stage(bool live)
     {
         if (live)
         {

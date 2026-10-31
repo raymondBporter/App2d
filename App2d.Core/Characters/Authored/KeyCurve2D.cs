@@ -1,4 +1,3 @@
-using App2d.Core.Animation;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
@@ -35,8 +34,6 @@ public sealed record KeyCurve2D
         _ => throw ArgGuard.CreateInvalid("The ease must have a continuous cubic equivalent.", nameof(ease))
     };
 
-    public float Apply(float time) => Evaluate(time, 0, 1);
-
     public float Evaluate(float time, float start, float end)
     {
         if (time <= 0) return start;
@@ -65,15 +62,6 @@ public sealed record KeyCurve2D
             : (new Vector2(first, second) - new Vector2(start)) / (end - start);
         converted = this with { Absolute = absolute, Control1 = Control1 with { Y = values.X }, Control2 = Control2 with { Y = values.Y } };
         return true;
-    }
-
-    /// <summary>Splits at normalized time, rather than at the Bezier parameter. Each piece uses its sampled endpoint values.</summary>
-    public (KeyCurve2D Left, KeyCurve2D Right) Split(float time, float start, float end)
-    {
-        ArgGuard.InRange(time, 0f, 1f);
-        var curve = ToCurve(start, end);
-        var (left, right) = curve.Split(curve.ParameterAtX(time));
-        return (FromSegment(left, 0, time), FromSegment(right, time, 1));
     }
 
     /// <summary>Restricts normalized time to an interval, keeping value handles in channel units.</summary>

@@ -77,7 +77,7 @@ internal static class PlatformStudy2D
                 var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, new PersonCommand2D()));
                 var state = frame.Players[0];
                 player.Equip(state.Equipment);
-                player.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive);
+                player.ApplyState(state.Person, frame.Tick);
                 enemies.ApplyState(frame.Enemies, [], frame.Tick);
                 platform.Transform.Position = frame.World.Objects[0].Position;
                 if (step % 4 != 0)

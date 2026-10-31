@@ -1,5 +1,3 @@
-using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -37,7 +35,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
         }
         if (channel.Value.Kind == MotionClip.FitKind)
         {
-            DrawPiece(document, model, control, local, nested?.Attachment.Asset.Id);
+            DrawPiece(document, control, local, nested?.Attachment.Asset.Id);
             return;
         }
 
@@ -209,7 +207,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
     }
 
     /// <summary>A drawing part's channels (P7a): its explicit artwork fit (multipliers of its leaf scale) and its held visibility.</summary>
-    public void DrawPiece(AssetDocument<MotionClip> document, ResolvedModel model, string control, string local, string? asset)
+    public void DrawPiece(AssetDocument<MotionClip> document, string control, string local, string? asset)
     {
         var clip = document.Asset;
         var time = session.Transport.Time;

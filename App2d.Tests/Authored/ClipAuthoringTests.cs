@@ -1,6 +1,5 @@
-using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics.Progress;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;

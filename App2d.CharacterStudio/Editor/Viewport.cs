@@ -23,7 +23,6 @@ internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, Vector2 
     public ImDrawListPtr Draw { get; } = draw;
     public Vector2 Origin { get; } = origin;
     public Vector2 Size { get; } = size;
-    public float Ppu { get; } = ppu;
     public IReadOnlyList<SubjectView> Subjects { get; } = subjects;
     public SubjectView? Primary => Subjects.Count > 0 ? Subjects[0] : null;
     public bool Hovered { get; } = hovered;

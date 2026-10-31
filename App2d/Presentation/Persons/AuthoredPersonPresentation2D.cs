@@ -109,7 +109,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         _stateClock = double.NaN;
     }
 
-    public void ApplyState(PersonState2D state, long tick, float moveX, bool shield, bool melee, PersonFrame? animationSample = null)
+    public void ApplyState(PersonState2D state, long tick, PersonFrame? animationSample = null)
     {
         // Planted feet stand on the ground, so they ride a moving platform instead of staying where it was.
         var elapsed = double.IsNaN(_stateClock) ? 0 : (float)Math.Clamp(tick / 120.0 - _stateClock, 0, .1);

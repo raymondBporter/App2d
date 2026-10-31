@@ -205,8 +205,8 @@ public sealed class ModelTemplateTests : IDisposable
         var clip = ClipAuthoring.New(ResolvedModel.From(model), "source-performance", "Swing", 1, true);
         clip.Tracks = [new() { Kind = MotionClip.RotateKind, Target = child.Id, Keys = [new(), new() { Time = 1, Angle = .4f }] }];
         clip.Markers = [new() { Id = "source-performance", Time = .5f }];
-        model.Save(Path.Combine(_root, "models", "machine.json"));
-        clip.Save(Path.Combine(_root, "animations", "source-performance.json"));
+        AuthoredAsset.Write(Path.Combine(_root, "models", "machine.json"), model.ToJson());
+        AuthoredAsset.Write(Path.Combine(_root, "animations", "source-performance.json"), clip.ToJson());
         var template = new ModelTemplate
         {
             Id = "oscillator",

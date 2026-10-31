@@ -107,7 +107,7 @@ internal static class CombatContactStudy2D
                 var state = frame.Players[0];
                 camera.Position = new(name is "run" or "reverse" ? state.Person.Position.X + 113 : -255, 52);
                 player.Equip(state.Equipment);
-                player.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive);
+                player.ApplyState(state.Person, frame.Tick);
                 if (timingStudy)
                 {
                     var live = player.Director.Frame();
@@ -115,8 +115,8 @@ internal static class CombatContactStudy2D
                     history.Record(time, live);
                     heldPlayer.Equip(state.Equipment);
                     exaggeratedPlayer.Equip(state.Equipment);
-                    heldPlayer.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive);
-                    exaggeratedPlayer.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive, timing[3].SamplePlayer(history, time, live));
+                    heldPlayer.ApplyState(state.Person, frame.Tick);
+                    exaggeratedPlayer.ApplyState(state.Person, frame.Tick, timing[3].SamplePlayer(history, time, live));
                 }
                 enemies.ApplyState(frame.Enemies, frame.Events.OfType<EnemyOccurred2D>().Select(e => e.Occurrence), frame.Tick);
                 if (step % 2 != 0)

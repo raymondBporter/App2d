@@ -42,7 +42,7 @@ public sealed class WardrobeDepthTests
         var hand = pose.World("left-hand");
         var y0 = Vector3.Dot(elbow - frame.Origin, frame.YAxis);
         var y1 = Vector3.Dot(hand - frame.Origin, frame.YAxis);
-        var torso = PersonBuild.From(entity.Model.Variant!.Parameters).Torso;
+        var torso = entity.Model.ParameterValues[PersonBuild.TorsoId];
         foreach (var height in new[] { .032f, .052f, .075f })
         {
             var t = (height * torso - y0) / (y1 - y0);

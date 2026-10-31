@@ -16,9 +16,9 @@ public sealed class KeyCurve2DTests
         for (var i = 0; i <= 100; i++)
         {
             var time = i / 100f;
-            Near(time, linear.Apply(time));
+            Near(time, linear.Evaluate(time, 0, 1));
             Near(2 + 4 * time, linear.Evaluate(time, 2, 6));
-            Near(ProgressMath.SmoothStep(time), smooth.Apply(time));
+            Near(ProgressMath.SmoothStep(time), smooth.Evaluate(time, 0, 1));
             Near(2 + 4 * ProgressMath.SmoothStep(time), smooth.Evaluate(time, 2, 6));
         }
         Assert.Equal(2f, smooth.Evaluate(-1, 2, 6));
@@ -97,10 +97,11 @@ public sealed class KeyCurve2DTests
     [InlineData(0f)]
     [InlineData(.3f)]
     [InlineData(1f)]
-    public void SplitUsesTimeAndPreservesOvershootBetweenEqualEndpoints(float at)
+    public void AdjacentSlicesPreserveOvershootBetweenEqualEndpoints(float at)
     {
         var curve = new KeyCurve2D { Control1 = new(.05f, 12), Control2 = new(.6f, -7), Absolute = true };
-        var (left, right) = curve.Split(at, 5, 5);
+        var left = curve.Slice(0, at, 5, 5);
+        var right = curve.Slice(at, 1, 5, 5);
         left.Validate();
         right.Validate();
         var middle = curve.Evaluate(at, 5, 5);

@@ -70,20 +70,12 @@ public sealed class PuppetAuthoringTests
     }
 
     [Fact]
-    public void EmptyAndHeadlessCharactersNeedNoLibraryOrAnatomy()
+    public void EmptyCharactersNeedNoLibraryOrAnatomy()
     {
         var empty = PuppetDefinition.FromJson(new PuppetDefinition().ToJson());
         var drawing = new PuppetDrawing();
-        drawing.Build(empty.Ink, empty.LineWidth, empty.Parts, PuppetPose.Rest(empty).World, rest: id => empty.Controls.First(c => c.Id == id).Rest.XYZ);
+        drawing.Build(empty.Ink, empty.LineWidth, empty.Parts, _ => Vector3.Zero, rest: id => empty.Controls.First(c => c.Id == id).Rest.XYZ);
         Assert.Equal(0, drawing.Mesh.Count);
-        var puppet = PuppetTemplates.StickFigure();
-        puppet.RemoveControl("head");
-        puppet = PuppetDefinition.FromJson(puppet.ToJson());
-        var pose = PuppetPose.Sample(puppet, puppet.Motions[0], 0);
-        drawing.Build(puppet.Ink, puppet.LineWidth, puppet.Parts, pose.World, rest: id => puppet.Controls.First(c => c.Id == id).Rest.XYZ);
-        Assert.True(drawing.Mesh.Count > 0);
-        Assert.DoesNotContain(puppet.Parts, p => p.A == "head" || p.B == "head");
-        Assert.DoesNotContain("head", pose.Points.Keys);
     }
 
     [Fact]
@@ -105,7 +97,7 @@ public sealed class PuppetAuthoringTests
         var motion = puppet.Motions[0];
         for (var i = 0; i <= 120; i++)
         {
-            var pose = PuppetPose.Sample(puppet, motion, i * motion.Duration / 120);
+            var pose = PuppetReferencePose.Sample(puppet, motion, i * motion.Duration / 120);
             Assert.NotEmpty(pose.Contacts);
             foreach (var contact in pose.Contacts)
             {
@@ -114,7 +106,7 @@ public sealed class PuppetAuthoringTests
             }
             AssertBoneLengths(puppet, pose);
         }
-        Assert.InRange(PuppetPose.Sample(puppet, motion, .3).World("left-foot").Y, .14f, .15f);
+        Assert.InRange(PuppetReferencePose.Sample(puppet, motion, .3).World("left-foot").Y, .14f, .15f);
     }
 
     [Fact]
@@ -124,7 +116,7 @@ public sealed class PuppetAuthoringTests
         var motion = puppet.Motions[0];
         foreach (var (time, support, swing) in new[] { (.3, "right", "left"), (.9, "left", "right") })
         {
-            var pose = PuppetPose.Sample(puppet, motion, time);
+            var pose = PuppetReferencePose.Sample(puppet, motion, time);
             float KneeAngle(string side)
             {
                 var thigh = Vector3.Normalize(pose.Points[side + "-hip"] - pose.Points[side + "-knee"]);
@@ -144,7 +136,7 @@ public sealed class PuppetAuthoringTests
         var puppet = PuppetTemplates.StepStudy();
         var motion = puppet.Motions[0];
         motion.Contacts[0].Target = new(20, 0);
-        var pose = PuppetPose.Sample(puppet, motion, .2);
+        var pose = PuppetReferencePose.Sample(puppet, motion, .2);
         Assert.True(pose.Contacts[0].Error > 18);
         AssertBoneLengths(puppet, pose);
     }
@@ -162,7 +154,7 @@ public sealed class PuppetAuthoringTests
 
             for (var i = 0; i < 24; i++)
             {
-                var pose = PuppetPose.Sample(puppet, puppet.Motions[0], i / 20f);
+                var pose = PuppetReferencePose.Sample(puppet, puppet.Motions[0], i / 20f);
                 foreach (var chain in puppet.Chains)
                 {
                     var a = pose.Points[chain.Joint] - pose.Points[chain.Root];
@@ -171,17 +163,6 @@ public sealed class PuppetAuthoringTests
                 }
             }
         }
-    }
-
-    [Fact]
-    public void RemovingAChainControlCleansContactsAndEveryKey()
-    {
-        var puppet = PuppetTemplates.StepStudy();
-        puppet.RemoveControl("right-knee");
-        puppet.Validate();
-        Assert.DoesNotContain(puppet.Chains, c => c.End == "right-foot");
-        Assert.DoesNotContain(puppet.Motions[0].Contacts, c => c.End == "right-foot");
-        Assert.All(puppet.Motions[0].Keys, k => Assert.False(k.Points.ContainsKey("right-knee")));
     }
 
     [Fact]
@@ -205,28 +186,13 @@ public sealed class PuppetAuthoringTests
     }
 
     [Fact]
-    public void BodyTranslationMovesDescendantsWhileContactsRemainPinned()
-    {
-        var puppet = PuppetTemplates.StepStudy();
-        var motion = puppet.Motions[0];
-        var pose = PuppetPose.Sample(puppet, motion, .3);
-        var originalHead = pose.Points["head"];
-        pose.Move(puppet, "hips", pose.Points["hips"] + new Vector3(.03f, -.02f, 0));
-        Assert.InRange(Vector3.Distance(originalHead + new Vector3(.03f, -.02f, 0), pose.Points["head"]), 0, 1e-6f);
-        motion.Keys = [pose.Key(.3f)];
-        var evaluated = PuppetPose.Sample(puppet, motion, .3);
-        Assert.InRange(evaluated.Contacts[0].Error, 0, .00001f);
-        AssertBoneLengths(puppet, evaluated);
-    }
-
-    [Fact]
     public void RepeatedMotionCarriesRootTravelAndContactTargetsTogether()
     {
         var puppet = PuppetTemplates.StepStudy();
         var motion = puppet.Motions[0];
         motion.Loop = true;
-        var first = PuppetPose.Sample(puppet, motion, .3, true);
-        var later = PuppetPose.Sample(puppet, motion, motion.Duration * 3 + .3, true);
+        var first = PuppetReferencePose.Sample(puppet, motion, .3, true);
+        var later = PuppetReferencePose.Sample(puppet, motion, motion.Duration * 3 + .3, true);
         Assert.InRange(later.Position.X - first.Position.X, 1.49999f, 1.50001f);
         Assert.InRange(later.Contacts[0].Target.X - first.Contacts[0].Target.X, 1.49999f, 1.50001f);
         Assert.InRange(later.Contacts[0].Error, 0, .00001f);
@@ -238,15 +204,15 @@ public sealed class PuppetAuthoringTests
         var puppet = PuppetTemplates.StepStudy();
         var motion = puppet.Motions[0];
         Assert.True(motion.Loop);
-        var start = PuppetPose.Sample(puppet, motion, 0);
-        var end = PuppetPose.Sample(puppet, motion, motion.Duration);
+        var start = PuppetReferencePose.Sample(puppet, motion, 0);
+        var end = PuppetReferencePose.Sample(puppet, motion, motion.Duration);
         foreach (var id in start.Points.Keys)
         {
             Assert.InRange(Vector3.Distance(start.Points[id], end.Points[id]), 0, 1e-5f);
         }
 
-        var before = PuppetPose.Sample(puppet, motion, motion.Duration - .0001, true);
-        var after = PuppetPose.Sample(puppet, motion, motion.Duration + .0001, true);
+        var before = PuppetReferencePose.Sample(puppet, motion, motion.Duration - .0001, true);
+        var after = PuppetReferencePose.Sample(puppet, motion, motion.Duration + .0001, true);
         foreach (var id in start.Points.Keys)
         {
             Assert.InRange(Vector3.Distance(before.World(id), after.World(id)), 0, .001f);
@@ -275,9 +241,8 @@ public sealed class PuppetAuthoringTests
         });
         puppet.Validate();
         var pose = PuppetPose.Rest(puppet);
-        pose.Move(puppet, "right-hand", hand + new Vector3(.2f, .1f, 0));
+        pose.Solve(puppet, puppet.Chains.Single(c => c.End == "right-hand"), hand + new Vector3(.2f, .1f, 0));
         Assert.InRange(Vector3.Distance(pose.Points["grip"] - pose.Points["right-hand"], new(.1f, .1f, 0)), 0, 1e-6f);
-        Assert.Throws<InvalidOperationException>(() => pose.Move(puppet, "right-elbow", Vector3.Zero));
     }
 
     [Fact]
@@ -287,7 +252,7 @@ public sealed class PuppetAuthoringTests
         var drawing = new PuppetDrawing();
         for (var i = 0; i <= 30; i++)
         {
-            drawing.Build(puppet.Ink, puppet.LineWidth, puppet.Parts, PuppetPose.Sample(puppet, puppet.Motions[0], i * .04).World, rest: id => puppet.Controls.First(c => c.Id == id).Rest.XYZ);
+            drawing.Build(puppet.Ink, puppet.LineWidth, puppet.Parts, PuppetReferencePose.Sample(puppet, puppet.Motions[0], i * .04).World, rest: id => puppet.Controls.First(c => c.Id == id).Rest.XYZ);
             Assert.True(drawing.Mesh.TriangleCount > 100);
             Assert.True(float.IsFinite(drawing.Mesh.Min.X) && float.IsFinite(drawing.Mesh.Max.Y));
         }
@@ -301,7 +266,7 @@ public sealed class PuppetAuthoringTests
         var airborne = 0;
         for (var i = 0; i <= 240; i++)
         {
-            var pose = PuppetPose.Sample(puppet, motion, i * motion.Duration / 240, repeat: true);
+            var pose = PuppetReferencePose.Sample(puppet, motion, i * motion.Duration / 240, repeat: true);
             foreach (var contact in pose.Contacts)
             {
                 Assert.InRange(Vector3.Distance(pose.World(contact.End), contact.Target), 0, .00001f);
@@ -320,15 +285,15 @@ public sealed class PuppetAuthoringTests
             AssertBoneLengths(puppet, pose);
         }
         Assert.InRange(airborne, 70, 110);
-        var end = PuppetPose.Sample(puppet, motion, motion.Duration - 1e-4);
-        var next = PuppetPose.Sample(puppet, motion, motion.Duration + 1e-4, repeat: true);
+        var end = PuppetReferencePose.Sample(puppet, motion, motion.Duration - 1e-4);
+        var next = PuppetReferencePose.Sample(puppet, motion, motion.Duration + 1e-4, repeat: true);
         foreach (var id in next.Points.Keys)
         {
             Assert.InRange(Vector3.Distance(end.World(id), next.World(id)), 0, .01f);
         }
     }
 
-    private static void AssertBoneLengths(PuppetDefinition puppet, PuppetPose pose)
+    private static void AssertBoneLengths(PuppetDefinition puppet, PuppetReferencePose pose)
     {
         foreach (var chain in puppet.Chains)
         {

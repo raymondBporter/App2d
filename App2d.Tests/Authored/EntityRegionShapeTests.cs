@@ -58,7 +58,7 @@ public sealed class EntityRegionShapeTests
         var entity = ResolvedEntity.Compile(restored, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Parts.GetValueOrDefault);
         var hit = entity.Actions.Values.SelectMany(action => action.Hits).First(h => h.Window.Id == window.Id);
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, entity.Actions.Values.First(action => action.Hits.Contains(hit)).Clip, hit.Start), new(3, 0), 1);
-        Assert.IsType<Circle2D>(EntityCollision.Attack(entity, pose, hit).Shape);
+        Assert.IsType<Circle2D>(EntityCollision.Attack(pose, hit).Shape);
 
 #pragma warning disable APP2D001 // A deliberately invalid shape; asset validation must reject it.
         collider.Geometry = new Circle2D { Center = new(0, 0), Radius = 0 };
@@ -83,9 +83,9 @@ public sealed class EntityRegionShapeTests
         var attack = entity.Actions["attack"];
         var hit = attack.Hits.First(h => h.Window.Id == window.Id);
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, attack.Clip, hit.Start), new(3, 0), facing);
-        var region = EntityCollision.Attack(entity, pose, hit);
+        var region = EntityCollision.Attack(pose, hit);
         var capsule = Assert.IsType<Capsule2D>(region.Shape);
-        var frame = EntityCollision.Anchor(entity, pose, hit);
+        var frame = hit.Collider.Anchor(pose);
         var worldAxis = region.Pose.TransformPoint(capsule.End) - region.Pose.TransformPoint(capsule.Start);
         Assert.True(Vector2.Dot(worldAxis, frame.XAxis.XY) > 0);
         Assert.Equal(.6f, worldAxis.Length(), 3);

@@ -11,7 +11,7 @@ public sealed class PersonStudyConversionTests
     {
         var puppet = which == "walk" ? PuppetTemplates.StepStudy() : PuppetTemplates.RunStudy();
         var model = PersonTemplate.StudyReference();
-        var clip = PuppetMotionConverter.Convert(puppet, puppet.Motions[0], model, "person-" + which, which, "leg");
+        var clip = PuppetMotionConverter.Convert(puppet.Motions[0], model, "person-" + which, which, "leg");
         var resolved = ResolvedModel.From(model);
         clip.Validate(resolved);
         TestModels.AssertMatchesPrototype(puppet, resolved, clip);
@@ -22,7 +22,7 @@ public sealed class PersonStudyConversionTests
     {
         var puppet = PuppetTemplates.StepStudy();
         var model = PersonTemplate.StudyReference();
-        var clip = PuppetMotionConverter.Convert(puppet, puppet.Motions[0], model, "person-walk", "Walk", "leg");
+        var clip = PuppetMotionConverter.Convert(puppet.Motions[0], model, "person-walk", "Walk", "leg");
         Assert.DoesNotContain(clip.Tracks, t => t.Target.EndsWith("-knee") || t.Target.EndsWith("-elbow") || t.Target.EndsWith("-foot") || t.Target.EndsWith("-hand"));
         Assert.Contains(clip.Tracks, t => t is { Kind: MotionClip.TargetKind, Target: "left-leg" });
         Assert.Contains(clip.Tracks, t => t is { Kind: MotionClip.TranslateKind, Target: "hips" });

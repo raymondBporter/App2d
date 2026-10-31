@@ -1,8 +1,7 @@
-using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -28,7 +27,6 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     private readonly List<ClipContact> _contacts = [];
     private readonly List<ClipMarker> _markers = [];
     private readonly List<ClipPlayKey> _faces = [];
-    private readonly List<ClipKey> _travel = [];
     private readonly List<(string Chain, float Time, int Bend)> _bends = [];
 
     public ResolvedModel Model => model;
@@ -87,16 +85,6 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
         _bends.Add((chain, time, bend));
         return this;
     }
-    public MoveBuilder Travel(float time, float x, float y = 0)
-    {
-        _travel.Add(new()
-        {
-            Time = time,
-            Value = new(x, y, 0),
-            Ease = ProgressMapKind.Linear
-        });
-        return this;
-    }
 
     internal void Set(string kind, string target, float time, ClipKey key)
     {
@@ -129,10 +117,6 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             Contacts = [.. _contacts],
             Markers = [.. _markers.OrderBy(m => m.Time)],
         };
-        if (_travel.Count > 0)
-        {
-            clip.Travel.Keys = [.. _travel.OrderBy(k => k.Time)];
-        }
 
         if (_faces.Count > 0)
         {

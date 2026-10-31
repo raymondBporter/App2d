@@ -493,7 +493,7 @@ public sealed class EditorSession
 
         var pose = new ActorPose(local, Vector2.Zero, 1);
         var active = action is null ? [] : action.Hits.Where(h => time >= h.Start && time < h.Finish).ToList();
-        var attacks = active.ConvertAll(h => (h, EntityCollision.Attack(entity, pose, h)));
+        var attacks = active.ConvertAll(h => (h, EntityCollision.Attack(pose, h)));
         var movement = EntityCollision.Movement(entity, new(local.Locomotion.X, 0), 1);
         var colliders = entity.Colliders.Select(c => new PlacedCollider(c, c.Region(pose), c.DefaultEnabled && (c.Use != ColliderUses.Attack || active.Any(h => ReferenceEquals(h.Collider, c))))).ToList();
         return new(entity, pose, time, action, weight, movement, attacks, colliders);

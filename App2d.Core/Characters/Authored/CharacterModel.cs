@@ -1,5 +1,5 @@
-using App2d.Core.Json;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Json;
 using App2d.Core.Mathematics.Transforms;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
@@ -164,11 +164,6 @@ public sealed class CharacterModel
         return model;
     }
     public static CharacterModel Load(string path) => FromJson(File.ReadAllText(path));
-    public void Save(string path)
-    {
-        Validate();
-        AuthoredAsset.Write(path, ToJson());
-    }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message)
     {
@@ -218,7 +213,7 @@ public sealed class CharacterModel
                     Require(control.Link is null || control.Parent is not null, $"{field}: a link needs a parent bone.");
                     Require(control.Link is null || control.Local is null || control.Local.X == 0 && control.Local.Y == 0, $"{field}: a linked origin cannot also author a local translation.");
                     control.Limit?.Validate(field + " limit");
-                    Require(control.Limit is null || control.Limit.Contains(control.Local?.Rotation ?? 0), $"{field}: its rest rotation lies outside its joint limits; widen the limits or turn the rest.");
+                    Require(control.Limit?.Contains(control.Local?.Rotation ?? 0) != false, $"{field}: its rest rotation lies outside its joint limits; widen the limits or turn the rest.");
                     break;
                 default:
                     Require(control.Local is null && control.Link is null, $"{field}: a point control authors only rest and restAngle; declare node 'bone' for a local setup.");
@@ -246,7 +241,7 @@ public sealed class CharacterModel
         bool Known(string? id) => id is not null && controls.ContainsKey(id);
         // A socket may sit on a module instance's control (P10c), named instance/control; the control itself is checked when the instance resolves.
         var instanceIds = Attachments?.Where(a => a?.Id is not null).Select(a => a.Id).ToHashSet(StringComparer.Ordinal) ?? [];
-        string? InstanceOf(string? id) => id is not null && id.Contains(Part.Namespace) ? MotionClip.Split(id).Instance : null;
+        string? InstanceOf(string? id) => id?.Contains(Part.Namespace) == true ? MotionClip.Split(id).Instance : null;
         bool KnownOrNested(string? id) => Known(id) || InstanceOf(id) is { } instance && instanceIds.Contains(instance);
         var scales = new HashSet<string>(StringComparer.Ordinal) { Unit };
         foreach (var measure in Measures)

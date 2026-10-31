@@ -391,8 +391,10 @@ internal sealed partial class EditorSmoke
             var reopenedWalk = PoseEvaluator.Sample(reopened.Resolve(TallWalker)!, reopened.Clip(walkId)!.Asset, .3, repeat: true);
             var reopenedGuard = reopened.CompileEntity(WalkerGuard);
             var same = liveWalk.Points.All(p => Vector3.Distance(p.Value, reopenedWalk.Points[p.Key]) < 1e-5f) && liveWalk.Attachments.Keys.SequenceEqual(reopenedWalk.Attachments.Keys);
-            Record(reopened.LoadErrors.Count == 0 && reopened.Documents.All(d => reopened.Problems(d).Count == 0) && same && reopenedGuard is not null
-                && reopenedGuard.Colliders.Select(c => c.Id).SequenceEqual(liveGuard.Colliders.Select(c => c.Id)) && reopenedGuard.Actions["attack"].Hits[0].Strike == liveGuard.Actions["attack"].Hits[0].Strike,
+            Record(reopened.LoadErrors.Count == 0 &&
+                reopened.Documents.All(d => reopened.Problems(d).Count == 0) &&
+                same && reopenedGuard?.Colliders.Select(c => c.Id).SequenceEqual(liveGuard.Colliders.Select(c => c.Id)) == true &&
+                reopenedGuard.Actions["attack"].Hits[0].Strike == liveGuard.Actions["attack"].Hits[0].Strike,
                 "reopened from disk, the tall walker's walk pose, its outfit and the guard's colliders and strike are the same");
             // Undo across a shared asset edit and an instance edit, in order.
             var rightBoot = basis.Asset.Attachments.Last(a => a.Asset == "boot").Id;

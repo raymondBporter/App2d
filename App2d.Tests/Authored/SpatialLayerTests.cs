@@ -1,5 +1,4 @@
 using App2d.CharacterStudio.Editing;
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
@@ -15,7 +14,8 @@ public sealed class SpatialLayerTests
 {
     private static Part Asset() => new()
     {
-        Id = "curve-study", Name = "Spatial curve study",
+        Id = "curve-study",
+        Name = "Spatial curve study",
         Geometry = [new()
         {
             SpatialCurve = new CubicBezier<Vector3f, float>(new(-1, 0, -2), new(-.5f, 1, 3), new(.5f, 1, -3), new(1, 0, 2)),

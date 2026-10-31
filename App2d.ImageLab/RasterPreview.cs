@@ -23,8 +23,7 @@ internal sealed class RasterPreview
     public void Change(RasterFrame? source, RasterTransform transform)
     {
         var previous = _requested;
-        var sameRegions = previous is not null
-            && previous.Transform.Kind is TransformKind.LargestRegion or TransformKind.RemoveSmallRegions
+        var sameRegions = previous?.Transform.Kind is TransformKind.LargestRegion or TransformKind.RemoveSmallRegions
             && transform.Kind is TransformKind.LargestRegion or TransformKind.RemoveSmallRegions
             && previous.Transform.EightConnected == transform.EightConnected;
         _debounceMilliseconds = previous is not null && ReferenceEquals(previous.Source, source)

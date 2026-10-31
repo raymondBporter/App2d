@@ -24,7 +24,7 @@ public sealed class TileMeshingCharacterizationTests
     {
         // 3x3 chunk: bottom row solid, middle row one-way, top empty.
         var map = new EditableTileMap2D(3, 3, 1f, 3);
-        map.Fill((x, y) => y switch
+        map.Fill((_, y) => y switch
         {
             0 => TileKind2D.Solid,
             1 => TileKind2D.OneWay,

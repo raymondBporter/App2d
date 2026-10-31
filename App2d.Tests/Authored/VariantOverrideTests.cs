@@ -96,7 +96,6 @@ public sealed class VariantOverrideTests : IDisposable
         Assert.Equal(.4f, resolved.Nodes[Humanoid.LeftElbow].Length);
         // A cleared length is the authored one: the arms binding is bypassed, so it equals the standard person's.
         Assert.Equal(ResolvedModel.From(person).Nodes[Humanoid.LeftUpperArmBone].Length, resolved.Nodes[Humanoid.LeftUpperArmBone].Length);
-        Assert.Equal(resolved.AuthoredNumber(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.Length)), resolved.Nodes[Humanoid.LeftUpperArmBone].Length);
         Assert.Equal("#d9e2ef", resolved.Parts.Single(p => p.Id == Humanoid.Body).RenderMaterial.Fill);
         Assert.Equal("person-heavy-walk", resolved.RoleClips["walk"]);
 

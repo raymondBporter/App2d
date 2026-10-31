@@ -130,16 +130,17 @@ public sealed class PartAttachmentDrawingTests
         var drawing = new PuppetDrawing();
         drawing.Build(ResolvedModel.From(Person(), null, Library(Mixed())), pose);
         var bare = drawing.Mesh.Count;
-        drawing.AddAttachment(attachment, placement);
+        var socket = new ActorPose(pose, Vector2.Zero, 1).Socket(attachment.Socket);
+        drawing.AddAttachment(attachment, socket, layer: placement.Layer);
         Assert.True(drawing.Mesh.Count > bare);
         Assert.Contains(drawing.Batches, b => b.Texture == "images/badge.png");
         // One picking score for all four kinds: inside the palm, on the seam, on the badge, inside the solid.
-        Assert.Equal(0, PartPicking2D.Distance(attachment, placement, placement.Origin), 3);
-        Assert.InRange(PartPicking2D.Distance(attachment, placement, placement.At(new Vector3(0, .1f, 0))), 0, 1);
-        Assert.Equal(0, PartPicking2D.Distance(attachment, placement, world("cuff")), 3);
-        Assert.Equal(0, PartPicking2D.Distance(attachment, placement, placement.At(new Vector3(0, .12f, 0))), 3);
-        Assert.True(PartPicking2D.Distance(attachment, placement, placement.At(new Vector3(2, 2, 0))) > 5);
-        Assert.Equal(PartPicking2D.Distance(attachment, placement, placement.Origin), PartPicking2D.Distance(attachment, pose, placement.Origin), 5);
+        Assert.Equal(0, PartPicking2D.Distance(attachment, socket, placement.Origin), 3);
+        Assert.InRange(PartPicking2D.Distance(attachment, socket, placement.At(new Vector3(0, .1f, 0))), 0, 1);
+        Assert.Equal(0, PartPicking2D.Distance(attachment, socket, world("cuff")), 3);
+        Assert.Equal(0, PartPicking2D.Distance(attachment, socket, placement.At(new Vector3(0, .12f, 0))), 3);
+        Assert.True(PartPicking2D.Distance(attachment, socket, placement.At(new Vector3(2, 2, 0))) > 5);
+        Assert.Equal(PartPicking2D.Distance(attachment, socket, placement.Origin), PartPicking2D.Distance(attachment, pose, placement.Origin), 5);
     }
 
     [Fact]

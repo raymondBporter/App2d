@@ -53,16 +53,13 @@ public sealed class LayeredFrame2DTests
     }
 
     [Fact]
-    public void InverseAndLocalCoordinatesUndoThePlacementIncludingTheLayer()
+    public void LocalCoordinatesUndoThePlacementIncludingTheLayer()
     {
         var placement = LayeredFrame2D.Local(new(2, .5f), .4f, new(1, 2), -.1f).Then(LayeredFrame2D.FromRotation(1.2f, new(3, 4, .5f)));
         var local = new Vector3(.3f, -.7f, .05f);
         var world = placement.At(local);
         Assert.True(placement.TryToLocal(world, out var restored));
         TestModels.Near(local, restored, 1e-5f, "local coordinates");
-        Assert.True(placement.TryInverse(out var inverse));
-        TestModels.Near(local, inverse.At(world), 1e-5f, "inverse placement");
-        Assert.Equal(-placement.Layer, inverse.Layer);
         Assert.False(new LayeredFrame2D(new Frame2D(Vector2.Zero, Vector2.UnitX, Vector2.UnitX), 0).TryToLocal(world, out _));
     }
 

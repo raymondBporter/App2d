@@ -42,7 +42,7 @@ public sealed class BoneAuthoringTests
         var pose = PoseEvaluator.Sample(resolved, clip, 1);
         Near(new(.5f * MathF.Cos(.5f), .5f * MathF.Sin(.5f)), pose.World(child.Id));
         Assert.Equal(.4f, pose.Angles[child.Id], 4);
-        var frame = PartAttachment2D.FrameOf(shape, resolved, pose);
+        var frame = PartAttachment2D.FrameOf(shape, pose.World, pose.Placement, id => resolved.Rest[id]);
         var expected = new Vector2(pose.World(child.Id).X, pose.World(child.Id).Y) + Rotation2D.Apply(new(.25f, 0), .4f);
         Near(expected, frame.Origin);
         Near(Rotation2D.Apply(Vector2.UnitX, .55f), new Vector3(frame.XAxis, 0));

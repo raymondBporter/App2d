@@ -1,4 +1,3 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
@@ -60,7 +59,7 @@ public sealed class PropPlacement3DTests
     }
 
     [Fact]
-    public void PropPointsAndTheEditorPlaneAgreeWithTheLiftedFrame()
+    public void PropPointsAgreeWithTheLiftedFrame()
     {
         var hero = Catalog.Entities["hero"];
         var sword = Catalog.Parts["sword"];
@@ -72,11 +71,5 @@ public sealed class PropPlacement3DTests
         var tip = PartPlacement3D.Point(frame, sword, sword.Point(EquipmentPoints.Tip)!.Value);
         TestModels.Near(frame.TransformPoint((sword.Point(EquipmentPoints.Tip)!.Value.ToVector3() - sword.Point(EquipmentPoints.Grip)!.Value.ToVector3()) * sword.Scale), tip, 1e-6f, "tip");
         Assert.True(MathF.Abs(tip.Z - frame.Origin.Z) > .05f, "a tilted blade has real depth");
-
-        var at = new Vector3f(.3f, .1f, 0);
-        var plane = PartPlacement3D.Plane(frame, sword, at);
-        Assert.Equal(PartPlacement3D.Point(frame, sword, at).XY, plane.Origin);
-        TestModels.Near(new(PartPlacement3D.Point(frame, sword, at with { X = at.X + 1 }).XY, 0), new(plane.TransformPoint(Vector2.UnitX), 0), 1e-5f, "x step");
-        TestModels.Near(new(PartPlacement3D.Point(frame, sword, at with { Y = at.Y + 1 }).XY, 0), new(plane.TransformPoint(Vector2.UnitY), 0), 1e-5f, "y step");
     }
 }

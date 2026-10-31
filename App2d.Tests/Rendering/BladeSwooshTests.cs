@@ -9,7 +9,7 @@ public sealed class BladeSwooshTests
     [Fact]
     public void DrawingLayersDoNotChangeTheRecordedSpatialPath()
     {
-        CharacterMesh Build(float layer)
+        static CharacterMesh Build(float layer)
         {
             var swoosh = new BladeSwoosh();
             var (firstGuard, firstTip) = At(0);

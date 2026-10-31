@@ -1,10 +1,9 @@
-using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.Editing;
 using App2d.CharacterStudio.Importing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics.Progress;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -98,19 +97,6 @@ public sealed class AnimationEditingTests
         ClipAuthoring.DeleteColorKey(clip, "middle", SlotColorTrack2D.Rgb, 1);
         Assert.Equal(SlotColorTrack2D.Alpha, Assert.Single(clip.Colors).Kind);
         clip.Validate(model);
-    }
-
-    [Fact]
-    public void ComponentEditsPreserveTheOtherSampledComponents()
-    {
-        var (_, clip) = Scene();
-        var channel = new Channel(MotionClip.TranslateKind, "body");
-        ClipAuthoring.SetKey(clip, channel, 0, new(0, 2, 4));
-        ClipAuthoring.SetKey(clip, channel, 1, new(2, 4, 6));
-        ClipAuthoring.SetComponentKey(clip, channel, .5f, 0, 8);
-        TestModels.Near(new(8, 3, 5), ClipAuthoring.Value(clip, channel, .5f).Value);
-        ClipAuthoring.SetComponentKey(clip, channel, .5f, 1, -3);
-        TestModels.Near(new(8, -3, 5), ClipAuthoring.Value(clip, channel, .5f).Value);
     }
 
     [Fact]

@@ -56,7 +56,7 @@ internal static class GiantTreeStudy2D
             var state = frame.Players[0];
             world.Update(frame.Content, frame.World, 1f / 120f);
             player.Equip(state.Equipment);
-            player.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive);
+            player.ApplyState(state.Person, frame.Tick);
             player.Advance(1f / 120f);
         }
         if (!game.Player.IsGrounded || Math.Abs(game.Player.WorldObject.WorldBounds.Bottom - branch.Bounds.Top) > 1)

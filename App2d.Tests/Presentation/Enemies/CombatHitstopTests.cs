@@ -170,7 +170,7 @@ public sealed class CombatHitstopTests
             Action = new(PlayerAttackKind2D.Melee, .058f, Moves.Swing(null).Clip.Duration, Moves.Swing(null).Id)
         };
         view.PresentContact(Hit(), new(1), 120);
-        view.ApplyState(state, 120, 0, false, true);
+        view.ApplyState(state, 120);
         var initial = view.Pose!;
         var (Guard, Tip) = PersonLoadout.Blade(initial.Local, Moves.Props[PersonLoadout.Sword], Moves.Model.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
         view.Advance(.025f);
@@ -184,7 +184,7 @@ public sealed class CombatHitstopTests
             {
                 ElapsedSeconds = .108f
             }
-        }, 126, 1, false, true);
+        }, 126);
         Assert.NotEqual(initial.Position, view.Pose!.Position);
         Assert.Equal(-1, view.Pose.Facing);
         view.PlayHit();

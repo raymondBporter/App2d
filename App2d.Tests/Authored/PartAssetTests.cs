@@ -56,7 +56,9 @@ public sealed class PartAssetTests : IDisposable
         var read = Part.FromJson(json);
         Assert.Equal(json, read.ToJson());
         Assert.Equal(glove.Geometry[^1].Mesh!.Vertices.Count, read.Geometry[^1].Mesh!.Vertices.Count);
-        Assert.True(read.IsLocation("origin") && read.IsLocation("cuff") && !read.IsLocation("thumb"));
+        Assert.NotNull(read.Point("origin"));
+        Assert.NotNull(read.Point("cuff"));
+        Assert.Null(read.Point("thumb"));
         TestModels.Near(new(0, .12f, -.01f), read.LocationFrame("cuff").Origin);
 
         // An animated payload needs a rig for its pieces (P7a); a static one carries no rig.
@@ -186,7 +188,7 @@ public sealed class PartAssetTests : IDisposable
         Assert.Equal("#123456", workspace.Resolve("tall-thin")!.Attachments[1].Parts[0].RenderMaterial.Fill);
         Assert.Equal("#123456", workspace.Resolve("person")!.Attachments[2].Parts[0].RenderMaterial.Fill);
         Assert.Equal("#123456", workspace.CompileEntity("hero")!.Model.Attachments[1].Parts[0].RenderMaterial.Fill);
-        Assert.False(!person.Dirty);
+        Assert.True(person.Dirty);
         session.Undo();
         Assert.Equal("#c9a27a", workspace.Resolve("tall-thin")!.Attachments[1].Parts[0].RenderMaterial.Fill);
 

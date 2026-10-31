@@ -1,8 +1,7 @@
-using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring;
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using static App2d.Core.Characters.Authored.PersonLoadout;
 using static App2d.Core.Characters.Humanoid;

@@ -52,11 +52,4 @@ public static class PartPlacement3D
     /// <summary>A prop's local point in the world, with its grip on the frame's origin. The one transform art, hits and muzzles share.</summary>
     public static Vector3 Point(Frame3D frame, Part prop, Vector3f local) =>
         frame.TransformPoint((local.ToVector3() - (prop.Point(prop.Pivot) ?? throw new InvalidDataException("Unknown part pivot.")).ToVector3()) * prop.Scale);
-
-    /// <summary>
-    /// The screen-plane frame of a prop's local XY axes at one of its points: the projection editor drags invert to move
-    /// that point. Its determinant is near zero when the prop is seen edge-on.
-    /// </summary>
-    public static Frame2D Plane(Frame3D frame, Part prop, Vector3f at) =>
-        new(Point(frame, prop, at).XY, frame.XAxis.XY * prop.Scale, frame.YAxis.XY * prop.Scale);
 }

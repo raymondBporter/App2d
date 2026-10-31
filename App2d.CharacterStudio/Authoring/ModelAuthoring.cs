@@ -508,17 +508,6 @@ public static class ModelAuthoring
         return measure;
     }
 
-    public static void RemoveMeasure(CharacterModel model, string id)
-    {
-        if (model.Controls.Any(c => c.Scale == id) || model.IkChains.Any(c => c.Scale == id))
-        {
-            throw new InvalidOperationException($"Measure '{id}' is still used as a scale.");
-        }
-
-        model.Measures.RemoveAll(m => m.Id == id);
-        model.Validate();
-    }
-
     public static PartGeometry AddPart(CharacterModel model, IGeometryValue2D geometry, string a, string? b = null)
     {
         var part = new PartGeometry

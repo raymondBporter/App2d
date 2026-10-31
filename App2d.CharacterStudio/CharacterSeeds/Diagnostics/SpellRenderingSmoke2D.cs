@@ -154,7 +154,7 @@ internal static class SpellRenderingSmoke2D
             spells.Apply(state, events);
             spells.Advance(dt);
             events.Clear();
-            player.ApplyState(state, ++tick, command.MoveX, false, arsenal.IsMeleeAttackActive);
+            player.ApplyState(state, ++tick);
         }
         void Save(string name, string caption)
         {

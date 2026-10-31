@@ -62,7 +62,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
         var before = doc.Asset.ToJson();
         var points = doc.Asset.Geometry[1].Mesh!.Outline!.Select(p => p with { Y = p.Y + .05f }).ToArray();
         s.BeginDrag();
-        s.Change(doc, () => AppearanceAuthoring.Cutout(doc.Asset, 1, points, .02f));
+        s.Change(doc, () => doc.Asset.Geometry[1].Mesh = PartMesh.Extrude(points, .02f));
         s.EndDrag();
         s.Undo();
         Assert.Equal(before, doc.Asset.ToJson());
@@ -90,16 +90,13 @@ public sealed class AppearanceAuthoringTests : IDisposable
     }
 
     [Fact]
-    public void DuplicateKeepsIndependentGeometryAndBadOutlineLeavesItIntact()
+    public void DuplicateKeepsIndependentGeometry()
     {
         var original = AppearanceAuthoring.New("original", "Original", "skirt", "#222b32", .045f,
             id => PersonWardrobe.Props().Single(p => p.Id == id));
         var copy = AppearanceAuthoring.Duplicate(original, "copy", "Copy");
         copy.Geometry[0].Mesh!.Outline![0] = new(4, 4);
         Assert.NotEqual(original.Geometry[0].Mesh!.Outline![0], copy.Geometry[0].Mesh!.Outline![0]);
-        var before = original.ToJson();
-        Assert.Throws<InvalidDataException>(() => AppearanceAuthoring.Cutout(original, 0, [new(0, 0), new(1, 0), new(2, 0)], .02f));
-        Assert.Equal(before, original.ToJson());
     }
 
     [Theory]

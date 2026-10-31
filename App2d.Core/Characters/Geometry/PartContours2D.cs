@@ -4,9 +4,9 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
-using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;
@@ -16,8 +16,6 @@ public static class PartContours2D
 {
     public static IReadOnlyList<Vector2> CutoutPoints(PartGeometry part) =>
         ((SimplePolygon2D)part.Geometry!).VertexList;
-
-    public static PartContour Contour(PartGeometry part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, bone: null, rest: rest);
 
     /// <summary>A part's outline in an evaluated pose of a resolved model, with the pose's animated artwork fit applied (P7a).</summary>
     public static PartContour Contour(PartGeometry part, ResolvedModel model, EvaluatedPose pose) =>

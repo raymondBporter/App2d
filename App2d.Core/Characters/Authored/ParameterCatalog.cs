@@ -61,9 +61,6 @@ public static class RigProperties
         new(Hidden, PropertyKinds.Flag),
     ];
 
-    /// <summary>The part properties a part exposes: its fit, material and visibility.</summary>
-    public static IEnumerable<PropertyDeclaration> Declarations(PartGeometry part) => PartDeclarations;
-
     /// <summary>
     /// The typed overrides that take a part from <paramref name="was"/> to <paramref name="now"/> (every registered part
     /// property but the material, which merges separately): the registry reads each property once here, so a part-edit
@@ -451,7 +448,6 @@ public sealed class ParameterCatalog
     public CharacterModel Model { get; }
     public IReadOnlyList<ModelParameter> Parameters { get; }
     public IReadOnlyDictionary<string, ModelParameter> ById => _byId;
-    public IReadOnlyList<ParameterPreset> Presets => Model.Presets;
     public bool IsEmpty => Parameters.Count == 0;
 
     /// <summary>Compiles and validates; throws <see cref="InvalidDataException"/> naming the offending declaration.</summary>

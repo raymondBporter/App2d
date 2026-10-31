@@ -32,7 +32,7 @@ public sealed class HumanoidFootwearTests
                 old.Parts[old.Parts.IndexOf(part)] = part with { Material = new() { Fill = "#fff8e7" } };
             old.Materials.Remove("skin");
             old.Materials["artist-surface"] = new() { Fill = "#123456" };
-            old.Save(Path.Combine(root, "models", "person.json"));
+            AuthoredAsset.Write(Path.Combine(root, "models", "person.json"), old.ToJson());
             // A forced regeneration (P11b): the artist's materials are merged into the generated model, which then replaces the file.
             PersonTemplate.WriteStudies(root, new SeedReport(force: true));
             var regenerated = CharacterModel.Load(Path.Combine(root, "models", "person.json"));

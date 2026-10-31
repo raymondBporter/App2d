@@ -69,7 +69,7 @@ public sealed class IIntervalTests
         Assert.Equal(0f, IntervalMath<float>.Length(Interval<float>.Singleton(4)));
         Assert.True(float.IsNaN(Interval.Entire<float>().Clamp(float.NaN)));
         Assert.Equal(float.PositiveInfinity, Interval.Entire<float>().Clamp(float.PositiveInfinity));
-        Assert.True(float.IsNaN(new Limit(0, 1).Clamp(float.NaN)));
+        Assert.True(float.IsNaN(IntervalMath<float>.Clamp(new Limit(0, 1), float.NaN)));
     }
 
     [Fact]

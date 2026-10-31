@@ -7,12 +7,10 @@ using System.Numerics;
 namespace App2d.CharacterStudio.Editor;
 
 /// <summary>Orbit, mesh picking and plane dragging over a transient scene, using the generic Core 3D path.</summary>
-internal sealed class SpatialPreview : IDisposable
+internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part? sword, Part? curve = null) : IDisposable
 {
-    private readonly GraphicsDevice _device;
-    private readonly ImGuiHost _gui;
-    private readonly Renderer3D _renderer;
-    private readonly SpatialPreviewScene _scene;
+    private readonly Renderer3D _renderer = new(device);
+    private readonly SpatialPreviewScene _scene = new(sword, curve);
     private RenderTarget2D? _target;
     private nint _image;
     private float _yaw = .55f, _pitch = .32f, _distance = 3.9f;
@@ -22,14 +20,6 @@ internal sealed class SpatialPreview : IDisposable
     private string _dragMode = "View plane";
     private Plane _dragPlane;
     private Vector3 _dragOffset;
-
-    public SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part? sword, Part? curve = null)
-    {
-        _device = device;
-        _gui = gui;
-        _renderer = new(device);
-        _scene = new(sword, curve);
-    }
 
     public void Draw(Vector2 available)
     {
@@ -86,9 +76,9 @@ internal sealed class SpatialPreview : IDisposable
         var size = new Vector2(Math.Max(1, (int)available.X), Math.Max(1, (int)available.Y));
         if (_target is null || _target.Width != (int)size.X || _target.Height != (int)size.Y)
         {
-            if (_target is not null) { _gui.Unregister(_image); _target.Dispose(); }
-            _target = RenderCapture2D.CreateTarget(_device, (int)size.X, (int)size.Y);
-            _image = _gui.Register(_target);
+            if (_target is not null) { gui.Unregister(_image); _target.Dispose(); }
+            _target = RenderCapture2D.CreateTarget(device, (int)size.X, (int)size.Y);
+            _image = gui.Register(_target);
         }
         var origin = ImGui.GetCursorScreenPos();
         ImGui.InvisibleButton("spatial-viewport", size, ImGuiButtonFlags.MouseButtonLeft | ImGuiButtonFlags.MouseButtonRight | ImGuiButtonFlags.MouseButtonMiddle);
@@ -128,7 +118,7 @@ internal sealed class SpatialPreview : IDisposable
             }
         }
         camera = Camera(size);
-        using (_device.UseRenderTarget(_target)) _scene.Draw(_renderer, camera);
+        using (device.UseRenderTarget(_target)) _scene.Draw(_renderer, camera);
         var draw = ImGui.GetWindowDrawList();
         draw.AddImage(_image, origin, origin + size);
         draw.PushClipRect(origin, origin + size, true);
@@ -147,7 +137,7 @@ internal sealed class SpatialPreview : IDisposable
 
     public void Dispose()
     {
-        if (_target is not null) { _gui.Unregister(_image); _target.Dispose(); }
+        if (_target is not null) { gui.Unregister(_image); _target.Dispose(); }
         _renderer.Dispose();
     }
 }

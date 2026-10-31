@@ -9,7 +9,7 @@ public sealed class KeyframeEditingTests
     [Fact]
     public void ReplacingNearbyImportedKeysKeepsTheListOrderedAndUnambiguous()
     {
-        var tolerance = KeyframeEditing.TimeTolerance;
+        const float tolerance = KeyframeEditing.TimeTolerance;
         List<Key> keys = [new(0, 1), new(tolerance / 2, 2), new(1, 3)];
         var replacement = new Key(tolerance * .75f, 4);
 
@@ -26,7 +26,7 @@ public sealed class KeyframeEditingTests
     [Fact]
     public void AuthoringToleranceDoesNotSnapSamplingOrMergeKeysExactlyAtTheTolerance()
     {
-        var tolerance = KeyframeEditing.TimeTolerance;
+        const float tolerance = KeyframeEditing.TimeTolerance;
         List<Key> keys = [];
         keys.Put(new(tolerance, 2));
         keys.Put(new(0, 1));

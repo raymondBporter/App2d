@@ -43,15 +43,6 @@ public sealed class PartAuthoringTests
     }
 
     [Fact]
-    public void ThePrototypePuppetRemovesDependentPartsThroughTheSameAnswers()
-    {
-        var puppet = PuppetTemplates.StickFigure();
-        puppet.RemoveControl(Humanoid.Head);
-        Assert.DoesNotContain(puppet.Parts, p => p.Id == Humanoid.Head);
-        puppet.Validate();
-    }
-
-    [Fact]
     public void ThePropertyRegistryDiffsAPartEditIntoTypedOverrides()
     {
         var model = Person;

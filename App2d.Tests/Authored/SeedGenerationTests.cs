@@ -32,10 +32,10 @@ public sealed class SeedGenerationTests
             var clipPath = Path.Combine(root, "animations", "person-walk.json");
             var model = CharacterModel.Load(modelPath);
             model.Name = "Person (edited)";
-            model.Save(modelPath);
+            AuthoredAsset.Write(modelPath, model.ToJson());
             var clip = MotionClip.FromJson(File.ReadAllText(clipPath));
             clip.Name = "Walk (edited)";
-            clip.Save(clipPath);
+            AuthoredAsset.Write(clipPath, clip.ToJson());
             var third = new SeedReport();
             PersonTemplate.WriteStudies(root, third);
             Assert.True(third.Entries.Where(e => e.Status == SeedReport.Kept).Select(e => e.Path).Order(StringComparer.Ordinal).SequenceEqual([clipPath, modelPath]), string.Join("; ", third.Lines));

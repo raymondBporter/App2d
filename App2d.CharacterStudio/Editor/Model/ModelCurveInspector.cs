@@ -1,7 +1,6 @@
-using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Characters;
-using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Curves;
 using ImGuiNET;
 
 namespace App2d.CharacterStudio.Editor.Model;

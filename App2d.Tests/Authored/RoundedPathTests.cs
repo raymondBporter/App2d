@@ -30,15 +30,15 @@ public sealed class RoundedPathTests
         var resolved = ResolvedModel.From(model);
         var pose = PoseEvaluator.Rest(resolved);
         Vector3 Rest(string id) => resolved.Rest[id];
-        var path = PartContours2D.Contour(part, pose.World, Rest);
+        var path = PartContours2D.Contour(part, pose.World, rest: Rest);
         Assert.Equal(pose.World("p0") + new Vector3(0, 0, .1f), TestModels.DrawPoint(path, 0));
         Assert.Equal(pose.World("p4") + new Vector3(0, 0, .1f), TestModels.DrawPoint(path, path.Count - 1));
         var peak = path.MaxBy(p => p.Y);
         Assert.True(peak.Y > .7f);
         Assert.True(Enumerable.Range(0, path.Count).Max(path.LayerAt) > 3);
         Assert.All(path, point => Assert.Equal(0, point.Z));
-        Assert.InRange(PartPicking2D.Distance(part, pose.World, peak, Rest), 0, 1e-4f);
-        Assert.True(PartPicking2D.Distance(part, pose.World, new(2, 0, 0), Rest) > 1);
+        Assert.InRange(PartPicking2D.Distance(part, pose.World, peak, rest: Rest), 0, 1e-4f);
+        Assert.True(PartPicking2D.Distance(part, pose.World, new(2, 0, 0), rest: Rest) > 1);
         var drawing = new PuppetDrawing();
         drawing.Build(resolved, pose);
         Assert.True(drawing.Mesh.Max.Y > .7f);
@@ -68,7 +68,7 @@ public sealed class RoundedPathTests
             var pose = PoseEvaluator.Rest(resolved);
             foreach (var part in resolved.Parts.Where(p => p.Geometry is RoundedPolylineCurve2D))
             {
-                var contour = PartContours2D.Contour(part, pose.World, id => resolved.Rest[id]);
+                var contour = PartContours2D.Contour(part, pose.World, rest: id => resolved.Rest[id]);
                 Assert.Equal(pose.World(part.A) + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(contour, 0));
                 Assert.Equal(pose.World(part.B!) + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(contour, contour.Count - 1));
             }

@@ -1,8 +1,8 @@
-using App2d.Core.Mathematics.Progress;
 using App2d.Core.Animation;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Constraints;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Timing;
 using App2d.Core.Validation;
@@ -622,7 +622,7 @@ public static class PoseEvaluator
         var binding = asset.Binding(expression);
         var layer = asset.BaseLayer!;
         var expressionLayer = binding?.Layer ?? layer.Id;
-        if (binding is not null && binding.Clip is not null && layer.Id == expressionLayer)
+        if (binding?.Clip is not null && layer.Id == expressionLayer)
         {
             var at = binding.Time ?? owned ?? (since is { } key ? Math.Max(0, time - key) * (layer.Clock == PartClocks.Mapped ? layer.Rate : 1) : Math.Max(0, layer.Time(seconds, input.Clock)));
             return (asset.Clip(binding.Clip), at);
@@ -701,7 +701,7 @@ public static class PoseEvaluator
         {
             MotionClip? playing;
             double at;
-            if (binding is not null && binding.Clip is not null && layer.Id == expressionLayer)
+            if (binding?.Clip is not null && layer.Id == expressionLayer)
             {
                 playing = asset.Clip(binding.Clip);
                 // A pose holds one time; a clip gameplay plays runs on gameplay's seconds; one a selection key chose runs

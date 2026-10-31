@@ -98,7 +98,7 @@ public sealed class ColliderAttachmentTests
                 TestModels.Near(new(placed.XAxis, 0), new(view.Pose.XAxis, 0), 1e-5f, $"{id} axis at {t}");
                 Assert.Equal(placed.IsMirrored, view.Pose.IsMirrored);
                 Assert.Equal(facing < 0, placed.IsMirrored);
-                var legacy = EntityCollision.Attack(entity, pose, hit);
+                var legacy = EntityCollision.Attack(pose, hit);
                 Assert.Equal(legacy.Pose, placed);
                 Assert.True(Vector2.Distance(legacy.Bounds.Min, view.Bounds.Min) < 1e-5f && Vector2.Distance(legacy.Bounds.Max, view.Bounds.Max) < 1e-5f);
                 // A prop-anchored window keeps the weapon's tip inside its registered collider: tip, collider and art agree.

@@ -4,8 +4,6 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
-using App2d.Core.Mathematics;
-using System.Numerics;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using ImGuiNET;

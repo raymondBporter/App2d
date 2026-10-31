@@ -7,14 +7,12 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>A base model with one variant's overrides applied, compiled once and shared by every actor that uses it.</summary>
 public sealed class ResolvedModel
 {
-    private readonly Func<string, Part?>? _partOf;
     private readonly RigLayout _layout;
-    private readonly RigLayout _authored;
     private readonly Dictionary<string, PropertyOverride> _overrides;
 
     private ResolvedModel(CharacterModel model, ModelVariant? variant, IReadOnlyList<ModelControl> order, Dictionary<string, RigNode> nodes, List<PartGeometry> parts,
         ParameterCatalog parameters, Dictionary<string, float> parameterValues, List<ResolvedAttachment> attachments, Dictionary<string, string> roleClips,
-        RigLayout layout, RigLayout authored, Dictionary<string, PropertyOverride> overrides, Func<string, Part?>? partOf)
+        RigLayout layout, Dictionary<string, PropertyOverride> overrides)
     {
         Base = model;
         Variant = variant;
@@ -26,9 +24,7 @@ public sealed class ResolvedModel
         Parameters = parameters;
         ParameterValues = parameterValues;
         _layout = layout;
-        _authored = authored;
         _overrides = overrides;
-        _partOf = partOf;
         Controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
         IkConstraints = [.. model.IkChains];
         Chains = IkConstraints.ToDictionary(c => c.Id, StringComparer.Ordinal);
@@ -90,17 +86,10 @@ public sealed class ResolvedModel
         _overrides.TryGetValue(property.Key, out var change) ? change.Clear ? PropertySource.Cleared : PropertySource.Override
         : Parameters.BindingOf(property) is not null ? PropertySource.ParameterBinding
         : PropertySource.Base;
-
-    /// <summary>The variant's override of a property, if any.</summary>
-    public PropertyOverride? Override(PropertyRef property) => _overrides.GetValueOrDefault(property.Key);
     /// <summary>Whether a variant override masks a parameter binding on the same property.</summary>
     public bool Masks(PropertyRef property) => _overrides.ContainsKey(property.Key) && Parameters.BindingOf(property) is not null;
     /// <summary>A number property's final resolved value.</summary>
     public float Number(PropertyRef property) => _layout.Get(property);
-    /// <summary>A number property's authored value before any binding or override.</summary>
-    public float AuthoredNumber(PropertyRef property) => _authored.Get(property);
-    /// <summary>The same base resolved with another variant, through the same part library.</summary>
-    public ResolvedModel With(ModelVariant? variant) => From(Base, variant, _partOf);
 
     /// <summary>The top of the rest pose's visible shapes above the feet: the height a drawn size is fitted to.</summary>
     public float DrawnHeight()
@@ -135,7 +124,7 @@ public sealed class ResolvedModel
         var order = RigGraph.Order(model);
         List<ResolvedAttachment> evaluationOrder = [];
         var parameters = ParameterCatalog.Compile(model);
-        var baseNodes = RigGraph.Compile(model, order, null);
+        var baseNodes = RigGraph.Compile(order, null);
         var layout = RigLayout.From(model, baseNodes);
         var authored = RigLayout.From(model, baseNodes);
         var owner = variant is null ? $"Model '{model.Id}'" : $"Variant '{variant.Id}'";
@@ -187,7 +176,7 @@ public sealed class ResolvedModel
         Dictionary<string, RigNode> nodes;
         try
         {
-            nodes = RigGraph.Compile(model, order, layout);
+            nodes = RigGraph.Compile(order, layout);
         }
         catch (InvalidDataException ex) when (variant is not null)
         {
@@ -203,7 +192,7 @@ public sealed class ResolvedModel
         {
             parts[i] = parts[i].ResolveMaterial(model.Materials);
         }
-        var resolved = new ResolvedModel(model, variant, order, nodes, parts, parameters, values, attachments, roleClips, layout, authored, overrides, partOf) { EvaluationOrder = evaluationOrder };
+        var resolved = new ResolvedModel(model, variant, order, nodes, parts, parameters, values, attachments, roleClips, layout, overrides) { EvaluationOrder = evaluationOrder };
         return resolved;
     }
 

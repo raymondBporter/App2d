@@ -72,17 +72,4 @@ public readonly record struct LayeredFrame2D(Frame2D Frame, float Layer)
 
     public Vector3 ToLocal(Vector3 point) => TryToLocal(point, out var local)
         ? local : throw new InvalidOperationException("The placement's frame has no finite inverse.");
-
-    /// <summary>The placement that undoes this one: the inverse frame with the negated layer.</summary>
-    public bool TryInverse(out LayeredFrame2D inverse)
-    {
-        if (!Frame.TryInverse(out var frame))
-        {
-            inverse = default;
-            return false;
-        }
-
-        inverse = new(frame, -Layer);
-        return true;
-    }
 }

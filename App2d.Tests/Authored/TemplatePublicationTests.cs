@@ -85,7 +85,7 @@ public sealed class TemplatePublicationTests : IDisposable
         Assert.All(rerun, r => Assert.Equal("unchanged, template unchanged", r.Status));
         var edited = ModelTemplate.FromJson(File.ReadAllText(Path.Combine(Output, "templates", "pterosaur.json")));
         edited.Description = "Edited after publication.";
-        edited.Save(Path.Combine(Output, "templates", "pterosaur.json"));
+        AuthoredAsset.Write(Path.Combine(Output, "templates", "pterosaur.json"), edited.ToJson());
         var kept = TemplateResources.Publish(Authored, Output).Single(r => r.TemplateId == "pterosaur");
         Assert.Equal("unchanged, template kept", kept.Status);
         Assert.Equal("Edited after publication.", ModelTemplate.FromJson(File.ReadAllText(Path.Combine(Output, "templates", "pterosaur.json"))).Description);

@@ -304,7 +304,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 
         var attachment = primary.Subject.Model.Attachments.FirstOrDefault(a => a.Asset.Id == doc.Id)
             ?? session.PreviewAttachmentOn(primary.Subject.Model);
-        if (attachment is null || attachment.IsAnimated) return;
+        if (attachment?.IsAnimated != false) return;
         var piece = doc.Asset.Geometry[_partPiece];
         var (world, localFrame) = attachment.Lookups(LayeredFrame2D.Identity);
         var placement = PartPlacement3D.Placement(attachment, new ActorPose(primary.Subject.Pose, Vector2.Zero, 1).Socket(attachment.Socket));

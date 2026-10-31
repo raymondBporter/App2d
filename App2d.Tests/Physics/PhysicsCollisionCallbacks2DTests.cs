@@ -35,7 +35,7 @@ public sealed class PhysicsCollisionCallbacks2DTests
         world.MaxSubstepSeconds = 1f / 120f;
         var callbacks = new Callbacks
         {
-            AfterAction = contact =>
+            AfterAction = _ =>
             {
                 Assert.Equal(0f, actor.LinearVelocity.Y, 4);
                 Assert.Single(world.LastContacts);

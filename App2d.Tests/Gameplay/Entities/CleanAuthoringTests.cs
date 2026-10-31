@@ -150,14 +150,14 @@ public sealed class CleanAuthoringTests : IDisposable
 
         // The placement binding is profile data (P9c): a spawns-only profile maps the dinosaur placement to the new entity.
         Directory.CreateDirectory(Path.Combine(Root, "profiles"));
-        new GameProfile
+        var profile = new GameProfile
         {
             Spawns = new(StringComparer.Ordinal)
             {
                 [nameof(WorldThingKind2D.GreenDinosaur)] = "stalker-pest"
             }
-        }
-        .Save(Path.Combine(Root, "profiles", "game.json"));
+        };
+        AuthoredAsset.Write(Path.Combine(Root, "profiles", "game.json"), profile.ToJson());
 
         // Reopen with the loader the game uses, then play it.
         var catalog = AuthoredCatalog.Load(Root);

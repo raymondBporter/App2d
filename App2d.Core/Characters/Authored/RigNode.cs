@@ -78,8 +78,6 @@ public sealed record RigLink
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public string Orientation { get; set; } = RigLinkOrientations.Parent;
-
-    [JsonIgnore] public Vector2 Offset => new(OffsetX, OffsetY);
     /// <summary>A plain tip binding: the origin is the parent's +X tip and the node turns with it.</summary>
     [JsonIgnore] public bool IsTip => T == 1 && OffsetX == 0 && OffsetY == 0 && Orientation == RigLinkOrientations.Parent;
 
@@ -225,7 +223,7 @@ internal static class RigGraph
     }
 
     /// <summary>Compiles from the authored controls alone: no variant, no parameter values, no overrides.</summary>
-    public static Dictionary<string, RigNode> Compile(CharacterModel model) => Compile(model, Order(model), null);
+    public static Dictionary<string, RigNode> Compile(CharacterModel model) => Compile(Order(model), null);
 
     /// <summary>
     /// Compiles every control in <paramref name="order"/> from its final setup, length and link: the <paramref name="layout"/>
@@ -233,7 +231,7 @@ internal static class RigGraph
     /// moved keeps its authored rest bit for bit; one whose setup changed, or whose ancestor's did, derives its rest from the
     /// setup like a bone node. There is no absolute-position pin: a variant moves a node through its setup overrides (P6a).
     /// </summary>
-    public static Dictionary<string, RigNode> Compile(CharacterModel model, IReadOnlyList<ModelControl> order, RigLayout? layout)
+    public static Dictionary<string, RigNode> Compile(IReadOnlyList<ModelControl> order, RigLayout? layout)
     {
         var nodes = new Dictionary<string, RigNode>(StringComparer.Ordinal);
         var derived = new HashSet<string>(StringComparer.Ordinal);
@@ -259,7 +257,7 @@ internal static class RigGraph
                         var link = layout is null ? control.Link : layout.Links[control.Id];
                         var length = layout?.Lengths[control.Id] ?? control.Length;
                         var limit = layout is null ? control.Limit : layout.Limits[control.Id];
-                        if (limit is not null && !limit.Contains(setup.Rotation))
+                        if (limit?.Contains(setup.Rotation) == false)
                         {
                             throw new InvalidDataException($"Control '{control.Id}': its rest rotation {setup.Rotation:0.###} lies outside its joint limits [{limit.Min:0.###}, {limit.Max:0.###}]; widen the limits or turn the rest.");
                         }

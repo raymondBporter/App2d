@@ -16,7 +16,7 @@ public sealed class ControlTransformTests
         var bones = pose.Bones;
         var angles = pose.Angles;
         var frame = Matrix3x2.CreateScale(-2, 3) * Matrix3x2.CreateRotation(.4f) * Matrix3x2.CreateTranslation(1, 2);
-        var angle = 3 * MathF.Tau + .4f;
+        const float angle = 3 * MathF.Tau + .4f;
         pose.Place("hand", frame, -.2f, angle);
         Assert.Equal(frame, bones["hand"]);
         Assert.Equal(new Vector3(1, 2, -.2f), points["hand"]);

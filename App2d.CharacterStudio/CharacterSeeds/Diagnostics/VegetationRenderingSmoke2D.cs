@@ -78,7 +78,7 @@ internal static class VegetationRenderingSmoke2D
             var state = frame.Players[0];
             world.Update(frame.Content, frame.World, 1f / 120f);
             player.Equip(state.Equipment);
-            player.ApplyState(state.Person, tick, state.MoveX, false, state.IsMeleeAttackActive);
+            player.ApplyState(state.Person, tick);
             player.Advance(1f / 120f);
         }
 

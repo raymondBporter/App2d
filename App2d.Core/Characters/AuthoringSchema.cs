@@ -20,7 +20,6 @@ public readonly record struct Limit(float Min, float Max, float SoftMin, float S
 {
     public Limit(float min, float max) : this(min, max, min, max) { }
     public Limit Soft(float min, float max) => this with { SoftMin = min, SoftMax = max };
-    public float Clamp(float value) => IntervalMath<float>.Clamp(this, value);
     public void Check(float value, string field)
     {
         if (!float.IsFinite(value) || value < Min || value > Max)

@@ -1,6 +1,7 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
+using App2d.Core.Mathematics.Transforms;
 
 namespace App2d.Core.Rendering;
 
@@ -11,12 +12,12 @@ public sealed class Camera3D
 
     public Camera3D(Matrix4x4 view, Matrix4x4 projection)
     {
-        ArgGuard.ThrowIf(!Finite(view) || !Finite(projection), "Camera matrices must be finite.");
+        ArgGuard.ThrowIf(!view.IsFinite() || !projection.IsFinite(), "Camera matrices must be finite.");
         View = view;
         Projection = projection;
         ViewProjection = view * projection;
-        ArgGuard.ThrowIf(!Matrix4x4.Invert(ViewProjection, out _inverse) || !Finite(_inverse), "Camera matrices must have a finite inverse.");
-        ArgGuard.ThrowIf(!Matrix4x4.Invert(view, out var world) || !Finite(world), "The view must have a finite inverse.");
+        ArgGuard.ThrowIf(!Matrix4x4.Invert(ViewProjection, out _inverse) || !_inverse.IsFinite(), "Camera matrices must have a finite inverse.");
+        ArgGuard.ThrowIf(!Matrix4x4.Invert(view, out var world) || !world.IsFinite(), "The view must have a finite inverse.");
         Position = world.Translation;
         Forward = Vector3.Normalize(new(-world.M31, -world.M32, -world.M33));
     }
@@ -93,13 +94,5 @@ public sealed class Camera3D
     {
         ArgGuard.Positive(near);
         ArgGuard.GreaterThan(far, near);
-    }
-
-    private static bool Finite(Matrix4x4 matrix)
-    {
-        for (var row = 0; row < 4; row++)
-            for (var column = 0; column < 4; column++)
-                if (!float.IsFinite(matrix[row, column])) return false;
-        return true;
     }
 }

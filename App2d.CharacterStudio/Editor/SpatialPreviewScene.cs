@@ -1,7 +1,4 @@
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters;
-using App2d.Core.Characters.Drawing;
-using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.Transforms;
@@ -74,7 +71,7 @@ internal sealed class SpatialPreviewScene
         {
             var p = i * .25f;
             var width = i == 0 ? .009f : .0025f;
-            var y = floor + .002f;
+            const float y = floor + .002f;
             Quad(_ground, new(p - width, y, -3), new(p - width, y, 3), new(p + width, y, 3), new(p + width, y, -3), i == 0 ? new(75, 124, 167) : new(49, 64, 82));
             Quad(_ground, new(-3, y, p - width), new(-3, y, p + width), new(3, y, p + width), new(3, y, p - width), i == 0 ? new(157, 84, 87) : new(49, 64, 82));
         }

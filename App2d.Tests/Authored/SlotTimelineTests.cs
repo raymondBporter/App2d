@@ -1,6 +1,5 @@
-using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics.Progress;
 using System.Numerics;
 using System.Text.Json.Nodes;
 
@@ -161,10 +160,10 @@ public sealed class SlotTimelineTests
         {
             for (var i = 0; i < clip.Tracks.Count; i++)
             {
-                var expected = PoseEvaluator.Interpolate(clip.Tracks[i], .2f + time);
+                var (Value, Angle) = PoseEvaluator.Interpolate(clip.Tracks[i], .2f + time);
                 var actual = PoseEvaluator.Interpolate(excerpt.Tracks[i], time);
-                TestModels.Near(expected.Value, actual.Value, 2e-5f);
-                Assert.InRange(MathF.Abs(expected.Angle - actual.Angle), 0, 2e-5f);
+                TestModels.Near(Value, actual.Value, 2e-5f);
+                Assert.InRange(MathF.Abs(Angle - actual.Angle), 0, 2e-5f);
             }
             Assert.InRange(Vector4.Distance(SlotColorTrack2D.Sample(clip.Colors[0].Keys, .2f + time),
                 SlotColorTrack2D.Sample(excerpt.Colors[0].Keys, time)), 0, 2e-5f);
@@ -185,9 +184,14 @@ public sealed class SlotTimelineTests
         clip.Colors = [new() { Slot = "paint", Keys = [
             new() { Time = .4f, Value = new(.2f), Ease = ease }, new() { Time = .6f, Value = new(.8f) }] }];
         // Visibility is always held, even when a saved key carries an unrelated easing or curve.
-        clip.Tracks.Add(new() { Target = "torso", Kind = MotionClip.ShowKind, Keys = [
+        clip.Tracks.Add(new()
+        {
+            Target = "torso",
+            Kind = MotionClip.ShowKind,
+            Keys = [
             new() { Value = Vector3.Zero, Ease = ProgressMapKind.EaseInOutSine, Curve = new() },
-            new() { Time = .5f, Value = Vector3.UnitX }] });
+            new() { Time = .5f, Value = Vector3.UnitX }]
+        });
 
         foreach (var (from, to) in new[] { (0f, .2f), (.1f, .8f), (.8f, 1f), (.4f, .6f), (.2f, .4f), (.6f, .9f) })
         {
@@ -196,10 +200,11 @@ public sealed class SlotTimelineTests
             foreach (var time in Enumerable.Range(0, 21).Select(i => excerpt.Duration * i / 20))
             {
                 for (var i = 0; i < clip.Tracks.Count; i++)
-                    TestModels.Near(PoseEvaluator.Interpolate(clip.Tracks[i], from + time).Value,
-                        PoseEvaluator.Interpolate(excerpt.Tracks[i], time).Value, 2e-5f);
-                Assert.InRange(Vector4.Distance(SlotColorTrack2D.Evaluate(clip, model.Base.Slots[0], from + time),
-                    SlotColorTrack2D.Evaluate(excerpt, model.Base.Slots[0], time)), 0, 2e-5f);
+                {
+                    TestModels.Near(PoseEvaluator.Interpolate(clip.Tracks[i], from + time).Value, PoseEvaluator.Interpolate(excerpt.Tracks[i], time).Value, 2e-5f);
+                }
+
+                Assert.InRange(Vector4.Distance(SlotColorTrack2D.Evaluate(clip, model.Base.Slots[0], from + time), SlotColorTrack2D.Evaluate(excerpt, model.Base.Slots[0], time)), 0, 2e-5f);
             }
         }
     }
@@ -208,7 +213,7 @@ public sealed class SlotTimelineTests
     public void ExcerptsPreserveDistinctKeysNearTheCutBoundaries()
     {
         var (model, clip) = Scene();
-        var firstChange = .5f;
+        const float firstChange = .5f;
         var secondChange = firstChange + ClipAuthoring.SameTime / 2;
         clip.Tracks = [new() { Target = "body", Keys = [
             new() { Value = new(.2f), Ease = ProgressMapKind.Step },

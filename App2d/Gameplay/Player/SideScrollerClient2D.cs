@@ -217,7 +217,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private void ApplyPlayerState()
     {
         _presentation.Equip(State.Equipment);
-        _presentation.ApplyState(State.Person, _frame.Tick, State.MoveX, _shieldPose && State.Person.IsAlive, State.IsMeleeAttackActive);
+        _presentation.ApplyState(State.Person, _frame.Tick);
     }
 
     private PlayerState2D Observe(SessionFrame2D frame) => frame.FindPlayer(_playerId) ?? throw ArgGuard.CreateInvalid("The frame does not observe this player.", nameof(frame));

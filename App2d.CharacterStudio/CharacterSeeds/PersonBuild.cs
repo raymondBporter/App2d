@@ -32,18 +32,6 @@ public sealed record PersonBuild
     public static readonly string[] Ids = [LegsId, TorsoId, ArmsId, WidthId, HeadId];
 
     public Dictionary<string, float> Values() => new(StringComparer.Ordinal) { [LegsId] = Legs, [TorsoId] = Torso, [ArmsId] = Arms, [WidthId] = Width, [HeadId] = Head };
-    public static PersonBuild From(IReadOnlyDictionary<string, float> values)
-    {
-        float Get(string id) => values.TryGetValue(id, out var value) ? value : 1;
-        return new()
-        {
-            Legs = Get(LegsId),
-            Torso = Get(TorsoId),
-            Arms = Get(ArmsId),
-            Width = Get(WidthId),
-            Head = Get(HeadId)
-        };
-    }
 
     /// <summary>A variant of <paramref name="person"/> holding these parameter values; values equal to the default are not stored.</summary>
     public ModelVariant Apply(CharacterModel person, string id, string name, string? bodyFill = null)

@@ -41,8 +41,6 @@ public sealed record PropertyRef
     public static PropertyRef OfPart(string part, string property) => new() { Part = part, Property = property };
     public static PropertyRef OfAttachment(string attachment, string property) => new() { Attachment = attachment, Property = property };
     public static PropertyRef OfRole(string role) => new() { Role = role, Property = RigProperties.Clip };
-    /// <summary>A reference of the same owner kind and ID to another property.</summary>
-    public PropertyRef Sibling(string property) => this with { Property = property };
 
     public void Validate(string field)
     {

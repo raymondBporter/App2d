@@ -31,8 +31,6 @@ public sealed class HitLedger
         _hits.RemoveWhere(h => h.Sequence != sequence);
         return _hits.Add((sequence, group, target));
     }
-
-    public void Clear() => _hits.Clear();
 }
 
 /// <summary>
@@ -63,7 +61,7 @@ public static class CombatContacts
         foreach (var hit in active)
         {
             var attack = attacker.Find(hit.Collider.Id);
-            if (attack is null || !attack.Enabled)
+            if (attack?.Enabled != true)
             {
                 continue;
             }

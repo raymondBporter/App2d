@@ -281,21 +281,4 @@ public sealed class PuppetDefinition
             }
         }
     }
-
-    public void RemoveControl(string id)
-    {
-        Controls.RemoveAll(c => c.Id == id);
-        Bones.RemoveAll(b => b.From == id || b.To == id);
-        Chains.RemoveAll(c => c.Root == id || c.Joint == id || c.End == id);
-        Parts.RemoveAll(p => p.AttachedTo(id) || p.Dependency(id) is not null);
-        foreach (var motion in Motions)
-        {
-            foreach (var key in motion.Keys)
-            {
-                key.Points.Remove(id);
-            }
-
-            motion.Contacts.RemoveAll(c => !Chains.Any(chain => chain.End == c.End));
-        }
-    }
 }

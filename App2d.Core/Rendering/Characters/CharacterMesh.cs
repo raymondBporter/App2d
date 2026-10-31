@@ -62,8 +62,10 @@ public sealed class CharacterMesh(int initialCapacity = 32768)
         if (fill is { } color)
         {
             foreach (var (a, b, c) in MeshTopology.TriangleFan(points.Count))
+            {
                 if (points is PartContour contour) Triangle(points[a], points[b], points[c], color, contour.LayerAt(a), contour.LayerAt(b), contour.LayerAt(c));
                 else Triangle(points[a], points[b], points[c], color);
+            }
         }
         if (ink is { } outline)
         {

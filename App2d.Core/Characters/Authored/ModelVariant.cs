@@ -44,12 +44,6 @@ public sealed class ModelVariant
         return variant;
     }
 
-    public void Save(string path)
-    {
-        Validate();
-        AuthoredAsset.Write(path, ToJson());
-    }
-
     // ---- Override access by stable target ------------------------------------------------------------------------------
 
     public PropertyOverride? Override(PropertyRef target) => Overrides.FirstOrDefault(o => o.Target.Key == target.Key);

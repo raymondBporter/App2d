@@ -1,6 +1,6 @@
-using App2d.Core.Mathematics;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Json;
+using App2d.Core.Mathematics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -239,8 +239,6 @@ public sealed record Part
     {
         foreach (var entry in Geometry ?? []) entry?.Mesh?.Rebuild();
     }
-
-    public bool IsLocation(string? id) => id == PartLocation.Origin || id is not null && Locations.Any(l => l.Id == id);
 
     /// <summary>A location's frame in the asset's local space: identity for the origin (a control-carried location's frame is in the control's axes).</summary>
     public LayeredFrame2D LocationFrame(string id)
@@ -526,13 +524,6 @@ public sealed record PartInstance
     public string? Expression { get; set; }
     /// <summary>The module's dimension inputs this instance sets (P10b): parameter id → value, each exposed as the attachment property <c>input.&lt;id&gt;</c>.</summary>
     public Dictionary<string, float> Inputs { get; set; } = [];
-
-    /// <summary>
-    /// The instance's placement on its socket: fit and size, then rotation, then offset, then the layer; a mirrored instance
-    /// is reflected in the socket's axes afterwards, so the mirror image lands where the socket's other side would.
-    /// </summary>
-    [JsonIgnore]
-    public LayeredFrame2D Local => Placement(stretch: true);
 
     /// <summary>The placement with the fit in the frame (<see cref="PartFittings.Stretch"/>) or left to the asset's layout (<see cref="PartFittings.Layout"/>).</summary>
     public LayeredFrame2D Placement(bool stretch)

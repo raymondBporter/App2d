@@ -50,8 +50,6 @@ public static class PartAttachment2D
             new(part.OffsetX + part.Along, part.OffsetY), part.Layer).Then(Carrier(part, world, bone));
     }
 
-    public static LayeredFrame2D FrameOf(PartGeometry part, ResolvedModel model, EvaluatedPose pose) => FrameOf(part, pose.World, pose.Placement, id => model.Rest[id]);
-
     internal static LayeredFrame2D BindingFrame(PartPointBinding binding, Func<string, Vector3> world)
     {
         var origin = world(binding.Control);

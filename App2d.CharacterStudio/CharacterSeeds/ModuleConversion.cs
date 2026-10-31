@@ -54,7 +54,7 @@ public static class ModuleConversion
     {
         var catalog = AuthoredCatalog.Load(root);
         var model = catalog.Models.GetValueOrDefault(modelId) ?? throw new InvalidDataException($"No model '{modelId}' under '{root}'.");
-        var clips = catalog.Animations.Values.Where(c => c.Model == modelId && (plan.Clips is null || plan.Clips.Contains(c.Id))).OrderBy(c => c.Id, StringComparer.Ordinal).ToList();
+        var clips = catalog.Animations.Values.Where(c => c.Model == modelId && (plan.Clips?.Contains(c.Id) != false)).OrderBy(c => c.Id, StringComparer.Ordinal).ToList();
         var source = catalog.PathOf(modelId);
         Directory.CreateDirectory(Path.Combine(output, "parts"));
         var target = Path.Combine(output, "parts", plan.PartId + ".json");

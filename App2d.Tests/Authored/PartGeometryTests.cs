@@ -26,8 +26,8 @@ public sealed class PartGeometryTests
         tail.Validate();
         var original = tail.ToJson();
         var model = PersonTemplate.Model();
-        ModelAuthoring.AddAttachment(model, tail.Id, Humanoid.BodySocket, id => tail, "tail");
-        var resolved = ResolvedModel.From(model, partOf: id => tail);
+        ModelAuthoring.AddAttachment(model, tail.Id, Humanoid.BodySocket, _ => tail, "tail");
+        var resolved = ResolvedModel.From(model, partOf: _ => tail);
         var clip = ClipAuthoring.New(resolved, "mesh-motion", "Mesh motion", loop: false);
         ClipAuthoring.SetKey(clip, new(MotionClip.FitKind, "tail/tuft"), 0, new(1, 0, 0));
         ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "tail/tuft"), 0, Vector3.UnitX);

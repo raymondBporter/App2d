@@ -27,7 +27,7 @@ public sealed class PlacementRoutingTests
         var pose = PoseEvaluator.Sample(model, Catalog.Animations["person-walk"], .3, true);
         foreach (var part in model.Parts.Where(p => !p.Hidden))
         {
-            var frame = PartAttachment2D.FrameOf(part, model, pose);
+            var frame = PartAttachment2D.FrameOf(part, pose.World, pose.Placement, id => model.Rest[id]);
             Assert.Equal(PartAttachment2D.Attachment(part).Then(PartAttachment2D.Carrier(part, pose.World, pose.Placement)), frame);
             Assert.Equal(pose.World(part.A).Z + part.Layer, frame.Layer, 6);
             if (part.Geometry is IShape2D shape)
@@ -60,7 +60,7 @@ public sealed class PlacementRoutingTests
         shape.ScaleY = 2;
         var resolved = ResolvedModel.From(model);
         var pose = PoseEvaluator.Rest(resolved);
-        var frame = PartAttachment2D.FrameOf(shape, resolved, pose);
+        var frame = PartAttachment2D.FrameOf(shape, pose.World, pose.Placement, id => resolved.Rest[id]);
         Assert.Equal(PartAttachment2D.Attachment(shape).Then(pose.Placement(root.Id)), frame);
         Assert.Equal(pose.Placement(root.Id).At(new Vector2(root.Length, 0)), new Vector3(Vector2.Transform(new(root.Length, 0), pose.Bones[root.Id]), pose.World(root.Id).Z));
         Assert.InRange(Vector2.Dot(frame.XAxis, frame.YAxis), -1e-6f, 1e-6f);

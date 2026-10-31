@@ -219,10 +219,10 @@ public static class PersonTemplate
         void Write(string folder, string id, string json) => report.Write(Path.Combine(authoredRoot, folder, id + ".json"), json);
         Write("parts", Face.Id, Face.ToJson());
         Write("models", model.Id, model.ToJson());
-        var walkClip = PuppetMotionConverter.Convert(walk, walk.Motions[0], reference, "person-walk", "Walk", Humanoid.LegMeasure);
+        var walkClip = PuppetMotionConverter.Convert(walk.Motions[0], reference, "person-walk", "Walk", Humanoid.LegMeasure);
         Write("animations", "person-walk", walkClip.ToJson());
         Write("animations", StarterContent.HeavyWalk, StarterContent.PersonHeavyWalk(walkClip).ToJson());
-        Write("animations", "person-run", PuppetMotionConverter.Convert(run, run.Motions[0], reference, "person-run", "Run", Humanoid.LegMeasure).ToJson());
+        Write("animations", "person-run", PuppetMotionConverter.Convert(run.Motions[0], reference, "person-run", "Run", Humanoid.LegMeasure).ToJson());
         Write("variants", "tall-thin", PersonBuild.TallThin.Apply(model, "tall-thin", "Tall and thin", "#d9e2ef").ToJson());
         Write("variants", "short-broad", PersonBuild.ShortBroad.Apply(model, "short-broad", "Short and broad", "#efdcc9").ToJson());
         StarterContent.Write(authoredRoot, model, report);

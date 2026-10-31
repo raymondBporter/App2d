@@ -13,13 +13,16 @@ using System.Text.RegularExpressions;
 namespace App2d.Tests.Authored;
 
 /// <summary>
+/// <para>
 /// P0b of the character-system migration (docs/character-system-migration-plan.md): the reference set that later
 /// conversion passes compare against. Every case samples the current evaluator, collision placement and contour path for
 /// one representative bundle at one instant and facing, and the result is checked against
 /// Authored/References/character-migration-references.json with the tolerances that file declares.
-///
+/// </para>
+/// <para>
 /// Set APP2D_WRITE_REFERENCES=1 to rewrite the file from the current code. Do that only for an approved, recorded
 /// difference (plan section 7): the point of the file is that it does not move when the implementation does.
+/// </para>
 /// </summary>
 public sealed class MigrationReferenceTests
 {
@@ -347,7 +350,7 @@ public sealed class MigrationReferenceTests
         record.Hurt = [.. EntityCollision.Hurt(entity, actor).Select(h => new RegionRecord(h.Id, Bounds(h.Bounds), V2(h.Pose.Translation), V2(h.Pose.XAxis), h.Pose.IsMirrored))];
         record.Attacks = [.. entity.Actions.Values.Where(a => a.Clip.Id == c.Clip).SelectMany(a => a.Hits.Select(h =>
         {
-            var region = EntityCollision.Attack(entity, actor, h);
+            var region = EntityCollision.Attack(actor, h);
             return new AttackRecord(a.Id, h.Window.Id, h.Start, h.Finish, h.Start <= c.Seconds && c.Seconds < h.Finish, Bounds(region.Bounds), V2(region.Pose.Translation), V2(region.Pose.XAxis), region.Pose.IsMirrored);
         }))];
         if (entity.Equipment.Any(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null))

@@ -1,6 +1,6 @@
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
@@ -357,8 +357,6 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
     public Vector3 Place(Vector3 local) => Placement.At(local);
     public Vector3 ToLocal(Vector3 world) => Placement.ToLocal(world);
     public Vector3 World(string control) => Place(Local.Points[control]);
-    /// <summary>A control's placement in the world: its evaluated frame and layer carried by the actor's placement.</summary>
-    public LayeredFrame2D ControlPlacement(string control) => Local.Placement(control).Then(Placement);
 
     /// <summary>
     /// The carrier a socket attaches to, in actor-local units: its control's point turned by the frame control's angle
@@ -434,12 +432,6 @@ public static class EntityCollision
     public static List<EntityRegion> Hurt(ResolvedEntity entity, ActorPose pose) =>
         [.. entity.Colliders.Where(c => c.Use == ColliderUses.Hurt && c.DefaultEnabled).Select(c => c.Region(pose))];
 
-    /// <summary>
-    /// The 3D frame an attack collider is anchored to: a socket, an equipped prop's named point with the prop's orientation,
-    /// or with neither the actor itself (its offset from the feet, the axis along its facing).
-    /// </summary>
-    public static Frame3D Anchor(ResolvedEntity entity, ActorPose pose, ResolvedHit hit) => hit.Collider.Anchor(pose);
-
     /// <summary>Where a shot leaves: the first equipped prop with a muzzle, and its unit axis in world XY (facing included).</summary>
     public static (Vector3 Point, Vector2 Axis) Muzzle(ResolvedEntity entity, ActorPose pose)
     {
@@ -454,6 +446,6 @@ public static class EntityCollision
     /// origin pushed along the anchor's axis, +X along that axis (the facing when the axis is foreshortened away) and +Y
     /// toward the frame's across direction so mirroring keeps up in the up direction.
     /// </summary>
-    public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit) =>
+    public static EntityRegion Attack(ActorPose pose, ResolvedHit hit) =>
         new(hit.Window.Id, hit.Shape, hit.Collider.Place(pose));
 }

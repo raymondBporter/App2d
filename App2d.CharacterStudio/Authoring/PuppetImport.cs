@@ -100,7 +100,7 @@ public static partial class PuppetImport
         foreach (var motion in converted.Motions)
         {
             var id = Unique(Slug($"{modelId}-{motion.Name}", modelId + "-motion"), used);
-            var clip = PuppetMotionConverter.Convert(converted, motion, model, id, motion.Name, reach ?? CharacterModel.Unit);
+            var clip = PuppetMotionConverter.Convert(motion, model, id, motion.Name, reach ?? CharacterModel.Unit);
             clip.Source = new()
             {
                 Kind = AssetSource.Puppet,

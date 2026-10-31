@@ -1,6 +1,6 @@
-using App2d.Core.Mathematics.Progress;
 using App2d.Core.Animation;
 using App2d.Core.Json;
+using App2d.Core.Mathematics.Progress;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -139,11 +139,6 @@ public sealed class MotionClip
         var clip = AuthoredAsset.Parse<MotionClip>(json, "clip");
         clip.Validate();
         return clip;
-    }
-    public void Save(string path)
-    {
-        Validate();
-        AuthoredAsset.Write(path, ToJson());
     }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message)

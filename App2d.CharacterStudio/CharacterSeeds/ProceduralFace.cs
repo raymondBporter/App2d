@@ -1,8 +1,7 @@
-using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;

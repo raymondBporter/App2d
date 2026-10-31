@@ -48,9 +48,4 @@ public static class ColliderAuthoring
 
         return definition;
     }
-
-    /// <summary>What <see cref="HurtBox"/> declared, for a report.</summary>
-    public static string Describe(PartGeometry hurt) => hurt.Geometry is Rectangle2D box
-        ? $"box {box.Size.X:0.###} x {box.Size.Y:0.###} at offset ({hurt.OffsetX:0.###}, {hurt.OffsetY:0.###})"
-        : hurt.Geometry is Capsule2D capsule ? $"hairline capsule from ({capsule.Start.X:0.###}, {capsule.Start.Y:0.###}) to ({capsule.End.X:0.###}, {capsule.End.Y:0.###})" : hurt.Geometry!.GetType().Name;
 }

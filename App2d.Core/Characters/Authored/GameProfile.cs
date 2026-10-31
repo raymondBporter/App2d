@@ -42,12 +42,6 @@ public sealed class GameProfile
         return profile;
     }
 
-    public void Save(string path)
-    {
-        Validate();
-        AuthoredAsset.Write(path, ToJson());
-    }
-
     /// <summary>Checks the file on its own: ids and every required role assigned. References are checked by the catalog.</summary>
     public void Validate()
     {

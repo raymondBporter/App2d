@@ -1,5 +1,5 @@
-using App2d.Core.Mathematics.Progress;
 using App2d.Core.Animation;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -200,7 +200,7 @@ public static partial class ClipAuthoring
 
         var spec = model.Controls[control];
         var node = model.Nodes[control];
-        if (!Carrier(model, pose, node).TryToLocal(world, out var inCarrier))
+        if (!Carrier(pose, node).TryToLocal(world, out var inCarrier))
         {
             throw new InvalidOperationException("Cannot pose a control through a collapsed parent frame.");
         }
@@ -212,7 +212,7 @@ public static partial class ClipAuthoring
     }
 
     /// <summary>The placement a node's local setup composes onto in this pose: the evaluator's carrier rule.</summary>
-    private static Geometry.LayeredFrame2D Carrier(ResolvedModel model, EvaluatedPose pose, RigNode node)
+    private static Geometry.LayeredFrame2D Carrier(EvaluatedPose pose, RigNode node)
     {
         if (node.Parent is null)
         {
@@ -220,13 +220,6 @@ public static partial class ClipAuthoring
         }
 
         return pose.Placement(node.Parent);
-    }
-
-    /// <summary>Adds <paramref name="radians"/> to a control's rotation at a time.</summary>
-    public static void Rotate(MotionClip clip, string control, float time, float radians)
-    {
-        var channel = new Channel(MotionClip.RotateKind, control);
-        SetKey(clip, channel, time, default, Value(clip, channel, time).Angle + radians);
     }
 
     /// <summary>The contact holding a chain at a time under the runtime's half-open rule.</summary>

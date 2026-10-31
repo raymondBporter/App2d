@@ -1,5 +1,4 @@
 using App2d.Core.Mathematics.Progress;
-using App2d.Core.Animation;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -43,21 +42,6 @@ public static partial class ClipAuthoring
         return spec.Limit is not null
             ? [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.BendKind, control)]
             : [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control)];
-    }
-
-    /// <summary>Keys one vector component while preserving the other sampled components and existing easing.</summary>
-    public static void SetComponentKey(MotionClip clip, Channel channel, float time, int component, float value)
-    {
-        ArgGuard.InRange(component, 0, 2);
-
-        if (channel.Kind == MotionClip.RotateKind)
-        {
-            throw new ArgumentException("Rotation keys use a scalar angle.", nameof(channel));
-        }
-
-        var delta = Value(clip, channel, time).Value;
-        delta[component] = value;
-        SetKey(clip, channel, time, delta);
     }
 
     /// <summary>Recognizes a straight, linear travel cycle without flattening authored curves or depth motion.</summary>

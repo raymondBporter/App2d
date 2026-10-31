@@ -40,8 +40,7 @@ public sealed class ContactResolutionTests
         var ledger = new HitLedger();
         var contacts = new List<AcceptedContact>();
         var scratch = new List<CollisionOverlap2D>();
-        (EntityId2D, bool)? TargetOf(AttachedCollider attack, Collider2D collider) =>
-            collider.UserData is AttachedCollider { Use: ColliderUses.Hurt } a ? (a.Owner, false) : null;
+        (EntityId2D, bool)? TargetOf(AttachedCollider _, Collider2D collider) => collider.UserData is AttachedCollider { Use: ColliderUses.Hurt } a ? (a.Owner, false) : null;
         Assert.Equal(1, CombatContacts.Resolve(attacker, animator.ActionSequence, animator.ActiveHits(), ArenaLayers.Others, ledger, TargetOf, contacts, scratch));
         var contact = Assert.Single(contacts);
         Assert.Equal((target.Owner, "spear-tip", 1, false), (contact.Target, contact.Group, contact.Sequence, contact.Blocked));
@@ -63,16 +62,16 @@ public sealed class ContactResolutionTests
         Assert.Equal(0, CombatContacts.Resolve(attacker, 11, animator.ActiveHits(), ArenaLayers.Others, ledger, TargetOf, contacts, scratch));
         // The guard takes a front contact instead of the hurt geometry it covers: a blocked contact, once.
         attacker.Sync(animator.Pose, animator.ActiveHits(), alive: true);
-        (EntityId2D, bool)? Guarded(AttachedCollider attack, Collider2D collider) =>
+        (EntityId2D, bool)? Guarded(AttachedCollider _, Collider2D collider) =>
             collider.UserData is AttachedCollider { Use: ColliderUses.Hurt } a && a.Owner == target.Owner ? (a.Owner, a.Id == "torso") : null; // the torso collider stands in for a guard here
         Assert.Equal(1, CombatContacts.Resolve(attacker, 12, animator.ActiveHits(), ArenaLayers.Others, ledger, Guarded, contacts, scratch));
         Assert.True(Assert.Single(contacts).Blocked);
         Assert.Equal(0, CombatContacts.Resolve(attacker, 12, animator.ActiveHits(), ArenaLayers.Others, ledger, Guarded, contacts, scratch));
         // Extra (legacy) targets join the same ledger.
         var extra = EntityId2D.Create();
-        Assert.Equal(1, CombatContacts.Resolve(attacker, 13, animator.ActiveHits(), 0u, ledger, TargetOf, contacts, scratch, (h, a, list) => list.Add((extra, a.Bounds.Center))));
+        Assert.Equal(1, CombatContacts.Resolve(attacker, 13, animator.ActiveHits(), 0u, ledger, TargetOf, contacts, scratch, (_, a, list) => list.Add((extra, a.Bounds.Center))));
         Assert.Equal(extra, Assert.Single(contacts).Target);
-        Assert.Equal(0, CombatContacts.Resolve(attacker, 13, animator.ActiveHits(), 0u, ledger, TargetOf, contacts, scratch, (h, a, list) => list.Add((extra, a.Bounds.Center))));
+        Assert.Equal(0, CombatContacts.Resolve(attacker, 13, animator.ActiveHits(), 0u, ledger, TargetOf, contacts, scratch, (_, a, list) => list.Add((extra, a.Bounds.Center))));
     }
 
     [Fact]

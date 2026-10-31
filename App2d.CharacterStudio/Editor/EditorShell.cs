@@ -87,7 +87,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
                 {
                     if (Test.Active)
                     {
-                        Test.Stage(ImGui.GetContentRegionAvail(), LiveTest);
+                        Test.Stage(LiveTest);
                     }
                     else
                     {
