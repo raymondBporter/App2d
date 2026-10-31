@@ -1,5 +1,8 @@
 # Character Studio
 
+For the current vocabulary, architecture, and source folders, start with
+[the character system guide](character-system.md).
+
 Library parts now use the same geometry inspector as model artwork, including mesh placement, fit, layer, material, physical Z and thickness. The browser distinguishes **Part**, **Module**, and named **Study** entries. Whole rig modules open alone; **Preview on wearer (temporary)** places one on the selected wearer for fitting. **Attach** creates the saved instance. Standalone previews use the part's animation clock without changing the wearer or its documents.
 
 Clothing and weapons are now ordinary entries under **Parts**, with the same geometry editor, arbitrary XYZ locations, pivot, size, material and OBJ controls. Weapon tilt/twist remains available in Animate. **Attach** writes a model instance; **Equip on an entity** writes a gameplay equipment binding. Saved meshes keep editable outlines, and undo retains their rebuilt geometry.
@@ -275,7 +278,7 @@ proportions. IK joints are solved with the model's lengths, and any reach shortf
 converted clip is sampled at 30 fps and has no contacts or travel: plant the feet, set travel and check depth in
 Animate. **Show source points** overlays the mapped source at the same time for comparison.
 
-Puppet conversion lives in `App2d.CharacterStudio/Authoring/PuppetImport.cs`; point-library conversion and
+Puppet conversion lives in `App2d.CharacterStudio/Importing/Puppet/PuppetImport.cs`; point-library conversion and
 source lookup live in `App2d.CharacterStudio/Importing` (`LibraryImport`, `SourceLibraries`).
 
 ## Headless renders
@@ -305,7 +308,7 @@ presentation, and `-- --face-smoke <dir>` draws every expression the baked Perso
 | `App2d.CharacterStudio/CharacterSeeds` | Retained generators and diagnostic commands, with their existing `App2d.CharacterSeeds` namespaces. |
 | `App2d.CharacterStudio/Editing` | Documents, workspace, transport, editor session, part picking, appearance edits, behavior inspector metadata and template lookup. No ImGui. |
 | `App2d.CharacterStudio/Importing` | Imported point libraries, library conversion and source lookup. |
-| `App2d.CharacterStudio/CharacterSeeds/PuppetPose.cs` | Prototype pose sampling used by seed generation and reference tests. |
+| `App2d.CharacterStudio/Seeds/Prototype/PuppetPose.cs` | Prototype pose sampling used by seed generation and reference tests. |
 | `App2d.Core/Characters/Drawing` | `PuppetDrawing`, attached part instances (faces among them) and depth-tested submission. |
 | `App2d.CharacterStudio/Editor` | The ImGui shell and workspace views. |
 | `App2d.CharacterStudio/Proof.*.cs` | The headless proof renders. |

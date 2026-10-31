@@ -1,5 +1,9 @@
 # Character resources and migration
 
+For the current vocabulary, runtime/editor flow, and source layout, start with
+[the character system guide](character-system.md). The entries below retain the
+implementation and migration details.
+
 Part consolidation (completed 2026-10-27): `Part` is the shared authored definition and `PartInstance` is one occurrence. Part format **4** stores one `geometry` array of `PartGeometry` entries. An entry has either planar `geometry` (shape/curve; a material can texture a rectangle) or a `mesh` with vertices/triangles and an optional extrusion outline/thickness. Both use the same placement, material, visibility and animation targets. Physical mesh Z is distinct from an entry's drawing-layer `depth` and the instance's `layer`. `CharacterModel.Parts` uses the same entry type within its existing rig schema.
 
 All committed bundles use the current formats. Ordinary open/save rejects old versions and unknown fields. The temporary format converters and their CLI have been removed after verification; Git history retains the conversion code and original files. See [the completed consolidation plan](part-consolidation-plan.md) for the migration ledger.
@@ -48,15 +52,15 @@ orientation continue through their existing frames.
 
 Important code entry points:
 
-- [Model and IK validation](../App2d.Core/Characters/Authored/CharacterModel.cs), [pose evaluation](../App2d.Core/Characters/Authored/PoseEvaluator.cs), [contact anchors](../App2d.Core/Characters/Authored/EntityAnimator.cs).
+- [Model and IK validation](../App2d.Core/Characters/Definitions/Models/CharacterModel.cs), [pose evaluation](../App2d.Core/Characters/Runtime/Poses/PoseEvaluator.cs), [contact anchors](../App2d.Core/Characters/Runtime/Animation/EntityAnimator.cs).
 - [Drawing and the image-only slot restriction](../App2d.Core/Characters/Drawing/PuppetDrawing.cs), [orthographic renderer](../App2d.Core/Rendering/Characters/PointCharacterRenderer.cs), [world submission](../App2d.Core/Rendering/Renderer2D.Characters.cs).
-- [Declared parameters and bindings](../App2d.Core/Characters/Authored/ModelParameter.cs) with their [compiled catalog](../App2d.Core/Characters/Authored/ParameterCatalog.cs); the Person's proportions are seeded as data by [PersonBuild.Declare](../App2d.CharacterStudio/CharacterSeeds/PersonBuild.cs) (P4a; no Core proportion rule remains), [loadout](../App2d.Core/Characters/Authored/PersonLoadout.cs), [player clip bindings](../App2d/Presentation/Persons/PersonAnimationDirector.cs).
+- [Declared parameters and bindings](../App2d.Core/Characters/Definitions/Parameters/ModelParameter.cs) with their [compiled catalog](../App2d.Core/Characters/Runtime/Resolution/ParameterCatalog.cs); the Person's proportions are seeded as data by [PersonBuild.Declare](../App2d.CharacterStudio/Seeds/Templates/PersonBuild.cs) (P4a; no Core proportion rule remains), [loadout](../App2d.Core/Characters/Conventions/PersonLoadout.cs), [player clip bindings](../App2d/Presentation/Persons/PersonAnimationDirector.cs).
 
 Models declare `parameters` and `presets`. Each parameter has a stable ID, units, default, hard/soft ranges and `set`, `scale` or `map` bindings to a control, geometry or attachment property. Validation rejects duplicate writers, unknown targets and dependency cycles. Resolution applies defaults, variant parameter values, bindings, then explicit overrides before deriving rig frames and measures. Pose scale stays uniform; nonuniform artwork dimensions use leaf fitting. `ChannelSemantics` records the supported track meanings.
 
 Character seed generators live together in the `App2d.CharacterSeeds` library: prototype puppets, Person and creature templates, starter content, wardrobe art, fallback templates, player pose scripts, weapon art, spell clips and swing studies. It depends on Core; Studio, the game and tests reference it. Existing namespaces and generation commands are preserved. Core's editor session accepts optional seed factories, supplied by Studio, while authored models and appearance resources take priority. The authored JSON remains under `Assets/Characters/authored`; this reorganization does not regenerate it.
 
-[`Humanoid`](../App2d.Core/Characters/Humanoid.cs) is the built-in humanoid vocabulary: plain string constants for controls, drawing parts, IK chains, groups, reference measures and attachment sockets. For example, `Humanoid.LeftHand`, `Humanoid.LeftForearm` and `Humanoid.HeadSocket` keep those roles explicit. The current humanoid has sockets and no image slots. The generic rig and evaluator continue to accept arbitrary IDs from resources; other anatomies define their own names. `PersonLoadout` retains the weapon, hair and animation marker IDs.
+[`Humanoid`](../App2d.Core/Characters/Conventions/Humanoid.cs) is the built-in humanoid vocabulary: plain string constants for controls, drawing parts, IK chains, groups, reference measures and attachment sockets. For example, `Humanoid.LeftHand`, `Humanoid.LeftForearm` and `Humanoid.HeadSocket` keep those roles explicit. The current humanoid has sockets and no image slots. The generic rig and evaluator continue to accept arbitrary IDs from resources; other anatomies define their own names. `PersonLoadout` retains the weapon, hair and animation marker IDs.
 
 The shared `person` model now draws hands and bare feet on its existing controls. Its `skin` material supplies their
 default color and the head's; variants with custom skin colors override the four extremity parts too. No controls or
@@ -166,7 +170,7 @@ Attach shapes to `beam`, `hinge` or `tool` through the existing part frame bindi
 
 `ResolvedModel.IkConstraints` fixes evaluation order: document order. IDs must be unique. Null/unknown kinds, unknown members, overlapping or nested writers and target frames moved by any constraint are rejected. This layer deliberately rejects dependencies it cannot solve; it does not imply support for an arbitrary iterative constraint graph.
 
-`PoseEvaluator` still samples channels and masks and builds FK. It then supplies typed `RigIkTarget` operations followed by active `RigContactPin` operations to [RigConstraintEvaluator](../App2d.Core/Characters/Authored/RigConstraintEvaluator.cs). Other hosts can use this same graphics-free layer on an evaluated hierarchy. Contact activation remains half-open, with the held non-looping endpoint exception. The existing world-anchor callback runs only for fully held contacts; a masked action releases its pin toward the blended IK target before the solve. There is no persistent simulation state in this evaluator, so seeking and onion skins stay deterministic.
+`PoseEvaluator` still samples channels and masks and builds FK. It then supplies typed `RigIkTarget` operations followed by active `RigContactPin` operations to [RigConstraintEvaluator](../App2d.Core/Characters/Runtime/Rig/RigConstraintEvaluator.cs). Other hosts can use this same graphics-free layer on an evaluated hierarchy. Contact activation remains half-open, with the held non-looping endpoint exception. The existing world-anchor callback runs only for fully held contacts; a masked action releases its pin toward the blended IK target before the solve. There is no persistent simulation state in this evaluator, so seeking and onion skins stay deterministic.
 
 The bone constraint:
 

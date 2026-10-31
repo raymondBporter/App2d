@@ -1,4 +1,26 @@
-# Character geometry and drawing order
+# Characters
+
+Start with [the character system guide](../../docs/character-system.md) for
+shared vocabulary, runtime/editor flows, templates, seeds, and the full source map.
+
+| Folder | Responsibility |
+| --- | --- |
+| `Definitions/` | Saved model/Part/rig/parameter/animation/appearance/behavior data |
+| `Assets/` | Catalog loading, shared file/ID rules, and asset-source metadata |
+| `Runtime/Resolution/` | Prepared models, attachments, entities, geometry, colliders, and parameter layouts |
+| `Runtime/Rig/` | Compiled rig graph and constraint solvers |
+| `Runtime/Poses/` | Pose inputs/results, evaluated controls/Parts, evaluation, and actor placement |
+| `Runtime/Animation/` | Per-actor clocks, actions, contact anchors, events, and reactions |
+| `Runtime/Collision/` | Registered actor colliders, placed query regions, and combat contact handling |
+| `Geometry/` | Character placements, bindings, curves, and contours |
+| `Drawing/` | Mesh/batch construction, paint, and swooshes |
+| `Conventions/` | Humanoid names, equipment points, and Person loadout helpers |
+| `Prototype/` | Retained prototype puppet/import definitions |
+
+Folder organization preserves existing C# namespaces. In particular,
+`Characters.Authored` types now appear under both `Definitions/` and `Runtime/`.
+
+## Character geometry and drawing order
 
 Spatial geometry and compositing order are separate data:
 

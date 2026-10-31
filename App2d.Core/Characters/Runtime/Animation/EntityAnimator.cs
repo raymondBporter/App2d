@@ -1,0 +1,253 @@
+using App2d.Core.Validation;
+using System.Numerics;
+
+namespace App2d.Core.Characters.Authored;
+
+/// <summary>
+/// Gameplay animation state for one actor: locomotion phase, the playing action, world contact anchors and event
+/// dispatch. The controller owns movement; this never moves the actor. Locomotion phase advances by the ground distance
+/// actually covered over the clip's resolved stride. Contacts are captured in world space at touchdown and held until
+/// release; role changes, action starts and ends, facing changes and <see cref="Reset"/> release them deliberately.
+/// A masked action is the exception: it plays over locomotion, which keeps its phase, role changes and contacts, so an
+/// upper-body attack never steals the legs' anchors. Scrubbing is not a thing here: every event is dispatched by
+/// <see cref="Step"/> advancing across its time.
+/// </summary>
+public sealed class EntityAnimator
+{
+    private readonly ContactHold _hold = new();
+    private bool _fresh;
+    private bool _reverseRoleMotion;
+
+    public EntityAnimator(ResolvedEntity entity)
+    {
+        Entity = entity;
+        Role = EntityControllers.Idle;
+        Pose = new(PoseEvaluator.Sample(entity.Model, entity.Clip(Role), 0, true, new()
+        {
+            InPlace = true
+        }), Vector2.Zero, 1);
+    }
+
+    public ResolvedEntity Entity { get; }
+    public string Role { get; private set; }
+    public double RoleTime { get; private set; }
+    public string? Action { get; private set; }
+    public double ActionTime { get; private set; }
+    /// <summary>The action time before the latest step, for window tests that must not miss a window skipped in one step.</summary>
+    public double PreviousActionTime { get; private set; }
+    /// <summary>Increments on every action start; hit deduplication keys on it.</summary>
+    public int ActionSequence { get; private set; }
+    public int Facing { get; private set; } = 1;
+    /// <summary>The actor's own continuous clock: every step adds to it and nothing restarts it, so part layers on a local clock (a blink) never jump with a role change.</summary>
+    public double Clock { get; private set; }
+    public ActorPose Pose { get; private set; }
+    public IReadOnlyDictionary<string, Vector3> Anchors => _hold.Anchors;
+    public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
+    public bool ActionComplete => Current is { } action && ActionTime >= action.Clip.Duration;
+    /// <summary>Whether locomotion is playing: no action, or a masked one layered over it.</summary>
+    public bool Locomoting => Current is null || Current.Mask is not null;
+
+    /// <summary>Starts an enabled action. Unsupported or disabled actions are rejected, never replaced by idle.</summary>
+    public bool TryStart(string action)
+    {
+        if (!Entity.Enabled(action))
+        {
+            return false;
+        }
+
+        Action = action;
+        ActionTime = PreviousActionTime = 0;
+        ActionSequence++;
+        _fresh = true;
+        if (Current!.Mask is null)
+        {
+            _hold.Clear();
+        }
+
+        return true;
+    }
+
+    /// <summary>Ends the playing action (finished or interrupted) and returns to locomotion with fresh contacts.</summary>
+    public void EndAction()
+    {
+        if (Current is not { } action)
+        {
+            return;
+        }
+
+        Action = null;
+        if (action.Mask is null)
+        {
+            _hold.Clear();
+            RoleTime = 0;
+        }
+    }
+
+    /// <summary>
+    /// Switches to a role from its start, even the one already playing, as a reaction restarts on a second hit. Ends any
+    /// action and releases every anchor. A one-shot role then holds its last frame.
+    /// </summary>
+    public void Play(string role, bool reverseHorizontalMotion = false)
+    {
+        if (Entity.Clip(role) is null)
+        {
+            throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role.");
+        }
+
+        Action = null;
+        Role = role;
+        RoleTime = 0;
+        _hold.Clear();
+        _reverseRoleMotion = reverseHorizontalMotion;
+    }
+
+    /// <summary>The ground under the actor moved by <paramref name="delta"/> (model units): planted contacts ride with it.</summary>
+    public void Carry(Vector3 delta) => _hold.Shift(delta);
+
+    /// <summary>The actor left the ground: planted contacts let go, and re-plant where the clip puts them on landing.</summary>
+    public void Lift() => _hold.Clear();
+
+    /// <summary>A teleport or respawn: drop the action, the phase and every anchor.</summary>
+    public void Reset(string role = EntityControllers.Idle)
+    {
+        Action = null;
+        ActionTime = PreviousActionTime = RoleTime = 0;
+        Role = role;
+        _hold.Clear();
+        _reverseRoleMotion = false;
+    }
+
+    /// <summary>
+    /// Advances one fixed step and evaluates the final pose at <paramref name="position"/> (the feet origin). The
+    /// controller picks the locomotion role; <paramref name="groundDistance"/> is how far the actor actually moved along
+    /// the ground this step. <paramref name="hold"/> freezes locomotion, the explicit fallback for states without a role.
+    /// </summary>
+    public void Step(float dt, Vector2 position, int facing, string role, float groundDistance, bool hold, List<AnimationEvent> events, string? expression = null)
+    {
+        if (facing is not (1 or -1))
+        {
+            ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
+        }
+
+        Facing = facing;
+        Clock += dt;
+        if (Current is { } action)
+        {
+            PreviousActionTime = ActionTime;
+            var from = ActionTime;
+            var to = Math.Min(action.Clip.Duration, ActionTime + dt);
+            Cross(action.Clip, from, to, false, _fresh, events, action.Id);
+            foreach (var cue in action.Events)
+            {
+                if (Crosses(cue.Seconds, from, to, _fresh))
+                {
+                    events.Add(new(AnimationEvent.EventKind, cue.Event.Id, cue.Event.Sound, action.Id, ActionSequence));
+                }
+            }
+
+            ActionTime = to;
+            _fresh = false;
+        }
+        if (Locomoting)
+        {
+            if (role != Role)
+            {
+                if (Entity.Clip(role) is null)
+                {
+                    throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role; the controller must choose an assigned role or hold.");
+                }
+
+                Role = role;
+                RoleTime = 0;
+                _hold.Clear();
+                _reverseRoleMotion = false;
+            }
+            var clip = Entity.Clip(Role)!;
+            if (!hold)
+            {
+                var stride = MathF.Abs(PoseEvaluator.CycleTravel(Entity.Model, clip).X);
+                var advance = clip.Loop && stride > 1e-4f ? groundDistance / stride * clip.Duration : dt;
+                var from = RoleTime;
+                var to = RoleTime + advance;
+                Cross(clip, from, to, clip.Loop, from == 0, events, null);
+                RoleTime = clip.Loop ? to : Math.Min(to, clip.Duration);
+            }
+        }
+        Evaluate(position, expression);
+    }
+
+    private void Evaluate(Vector2 position, string? expression)
+    {
+        var action = Current;
+        if (action is null || action.Mask is not null)
+        {
+            var clip = Entity.Clip(Role);
+            var overlay = action is null ? null : new PoseLayer(action.Clip, ActionTime, action.Mask!, action.Weight(ActionTime));
+            Pose = _hold.Evaluate(Entity.Model, clip, RoleTime, clip?.Loop == true, position, Facing,
+                new(expression)
+                {
+                    Overlay = overlay,
+                    ReverseHorizontalMotion = _reverseRoleMotion,
+                    Clock = Clock,
+                });
+            return;
+        }
+        Pose = _hold.Evaluate(Entity.Model, action.Clip, ActionTime, false, position, Facing, new(expression) { Clock = Clock });
+    }
+
+    /// <summary>Hit windows active at any moment of the latest step, including one that opened and closed inside it.</summary>
+    public IEnumerable<ResolvedHit> ActiveHits()
+    {
+        if (Current is not { } action)
+        {
+            yield break;
+        }
+
+        foreach (var hit in action.Hits)
+        {
+            if (hit.Active(PreviousActionTime, ActionTime))
+            {
+                yield return hit;
+            }
+        }
+    }
+
+    private static bool Crosses(float time, double from, double to, bool inclusiveStart) => (time > from || inclusiveStart && time == from) && time <= to;
+
+    /// <summary>Markers in (from, to], or [from, to] on a fresh start; looping clips dispatch every cycle crossed. No advance, no events.</summary>
+    private void Cross(MotionClip clip, double from, double to, bool loop, bool inclusiveStart, List<AnimationEvent> events, string? action)
+    {
+        if (clip.Markers.Count == 0 || to <= from)
+        {
+            return;
+        }
+
+        if (!loop)
+        {
+            foreach (var marker in clip.Markers)
+            {
+                if (Crosses(marker.Time, from, to, inclusiveStart))
+                {
+                    Add(marker.Id);
+                }
+            }
+
+            return;
+        }
+        var duration = clip.Duration;
+        for (var cycle = Math.Floor(from / duration); cycle * duration <= to; cycle++)
+        {
+            foreach (var marker in clip.Markers)
+            {
+                var time = cycle * duration + marker.Time;
+                if ((time > from || inclusiveStart && time == from) && time <= to)
+                {
+                    Add(marker.Id);
+                }
+            }
+        }
+
+        void Add(string id) => events.Add(new(AnimationEvent.MarkerKind, id, null, action, ActionSequence));
+    }
+
+}

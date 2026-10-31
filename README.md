@@ -7,8 +7,10 @@ The solution contains the engine, games, editors, supporting tools, and tests.
 collision, physics, tiles, rendering, audio, authored characters, and the WinForms game
 host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
 level storage, the editor, and the in-game debug tools. `App2d.Tests` holds the game and engine tests.
-`App2d.CharacterStudio` is the character editor and owns the retained character generators,
-rendering smokes and studies in its `CharacterSeeds` folder. Run those commands with
+`App2d.CharacterStudio` is the character editor, with retained character generators in
+`Seeds` and rendering smokes/proofs/studies in `Diagnostics`. The
+[character system guide](docs/character-system.md) explains the shared vocabulary,
+definitions, runtime, Studio, and source layout. Run Studio commands with
 `dotnet run --project App2d.CharacterStudio -- <flag>`. Studio references the game;
 the game does not reference Studio. `App2d.EditorUi` supplies shared editor UI.
 `tools/ClothLab` is a small cape study.
@@ -120,7 +122,7 @@ The engine is grouped by responsibility:
   byte channels. `ColorExtensions` parses and formats RGB/RGBA hex and converts to
   normalized `System.Numerics.Vector4` for float color math, using straight alpha.
 - Appearance palettes are simple source files: [UiTheme](App2d.EditorUi/UiTheme.cs)
-  for shared controls, [StudioTheme](App2d.CharacterStudio/Editor/StudioTheme.cs) for
+  for shared controls, [StudioTheme](App2d.CharacterStudio/Editor/Shell/StudioTheme.cs) for
   editor viewports and timelines, [GameUiTheme](App2d/Presentation/GameUiTheme.cs) for
   the HUD, menus and level-editor overlays, and [DebugTheme](App2d.Core/Rendering/DebugTheme.cs)
   for grids, colliders and diagnostics. Edit their named colors, rebuild and restart.
