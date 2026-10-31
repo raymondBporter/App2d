@@ -190,15 +190,16 @@ public sealed class ColliderAttachmentTests
         Assert.Equal([ally], found.Select(f => f.Owner).Distinct());
         ColliderQueries.Overlap(system, probeShape, EntityId2D.None, ColliderUses.Hurt, found, scratch);
         Assert.Equal(3, found.Select(f => f.Owner).Distinct().Count());
-        // A contact position comes from the hurt colliders as registered; a dead or inactive actor exposes none.
-        Assert.NotNull(own.HurtContact(probeShape.WorldBounds));
+        Assert.Contains(found, collider => collider.Owner == owner);
+        // Dead or inactive actors expose no hurt geometry through the shared collision query.
         own.Sync(new ActorPose(rest, new(0, 0), 1), null, alive: false);
-        Assert.Null(own.HurtContact(probeShape.WorldBounds));
         ColliderQueries.Overlap(system, probeShape, enemy, ColliderUses.Hurt, found, scratch, layerMask: 4 | 2);
         Assert.Equal([ally], found.Select(f => f.Owner).Distinct()); // the dead owner exposes no hurt geometry; the living ally still does
         own.SetActive(false);
         own.Sync(new ActorPose(rest, new(0, 0), 1), null, alive: true);
         Assert.All(own.All, c => Assert.False(c.Enabled));
+        ColliderQueries.Overlap(system, probeShape, enemy, ColliderUses.Hurt, found, scratch, layerMask: 4 | 2);
+        Assert.Equal([ally], found.Select(f => f.Owner).Distinct());
     }
 
     [Fact]

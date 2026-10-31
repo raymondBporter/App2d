@@ -97,12 +97,19 @@ public sealed class AttachedColliderSyncTests
         var hit = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(60, 60));
         hit.Transform.Position = new(head.Bounds.Center.X, (head.Bounds.Center.Y + torso.Bounds.Max.Y) / 2);
         Assert.True(hit.WorldBounds.Intersects(head.Bounds) && hit.WorldBounds.Intersects(torso.Bounds));
-        Assert.True(enemy.OverlapsHurt(hit.WorldBounds));
+        var overlaps = new List<CollisionOverlap2D>();
+        physics.CollisionSystem.Overlap(hit, overlaps, 4);
+        var hurtBounds = overlaps.Where(overlap => overlap.Collider.EntityId == enemy.Id
+                && overlap.Collider.UserData is AttachedCollider { Use: ColliderUses.Hurt })
+            .Select(overlap => overlap.Collider.WorldObject.WorldBounds).ToArray(); // capture before damage moves the pose
+        Assert.Contains(head.Bounds, hurtBounds);
+        Assert.Contains(torso.Bounds, hurtBounds);
         var health = enemy.Health.Current;
-        var contact = enemy.Colliders.HurtContact(hit.WorldBounds); // read before the damage tick moves the pose
         Assert.True(combat.ResolveAttack(hit, player.Id, 7, CombatFaction2D.Player, 4, 1, _ => new(100, 0)));
         Assert.Equal(health - 1, enemy.Health.Current);
-        Assert.Equal(contact, Assert.Single(facts).Contact!.Value.Position);
+        var contact = Assert.Single(facts).Contact!.Value.Position;
+        Assert.Contains(hurtBounds, bounds => contact == (Vector2.Max(bounds.Min, hit.WorldBounds.Min)
+            + Vector2.Min(bounds.Max, hit.WorldBounds.Max)) / 2);
         Assert.False(combat.ResolveAttack(hit, player.Id, 7, CombatFaction2D.Player, 4, 1, _ => new(100, 0)));
         Assert.Single(facts);
         // The damage tick re-synchronized the colliders onto the reaction pose; a lethal hit disables the hurt geometry.
@@ -110,7 +117,9 @@ public sealed class AttachedColliderSyncTests
         Assert.True(combat.ResolveAttack(hit, player.Id, 8, CombatFaction2D.Player, 4, enemy.Health.Current, _ => new(100, 0)));
         Assert.False(enemy.IsAlive);
         Assert.All(enemy.Colliders.OfUse(ColliderUses.Hurt), c => Assert.False(c.Enabled));
-        Assert.False(enemy.OverlapsHurt(hit.WorldBounds));
+        physics.CollisionSystem.Overlap(hit, overlaps, 4);
+        Assert.DoesNotContain(overlaps, overlap => overlap.Collider.EntityId == enemy.Id
+            && overlap.Collider.UserData is AttachedCollider { Use: ColliderUses.Hurt });
         Assert.False(combat.ResolveAttack(hit, player.Id, 9, CombatFaction2D.Player, 4, 1, _ => new(100, 0)));
         // A probe far from the body but on the head finds nothing of the terrain body and still reaches the (living) head.
         var alive = new AuthoredEntityEnemy2D(EntityId2D.Create(), entity, physics, new(300, 40), 1, 4);
@@ -122,7 +131,6 @@ public sealed class AttachedColliderSyncTests
         var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 4));
         probe.Transform.Position = new(top.Center.X, top.Max.Y - 2);
         Assert.False(probe.WorldBounds.Intersects(alive.WorldObject.WorldBounds), "the probe is above the movement body");
-        var overlaps = new List<CollisionOverlap2D>();
         Assert.True(physics.CollisionSystem.Overlap(probe, overlaps, 4) > 0);
         Assert.True(combat.ResolveAttack(probe, player.Id, 10, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero));
     }

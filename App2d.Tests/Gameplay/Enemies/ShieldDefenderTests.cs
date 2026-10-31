@@ -4,6 +4,7 @@ using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
@@ -58,7 +59,10 @@ public sealed class ShieldDefenderTests
         var (enemy, player, combat) = Create(facing);
         var shield = Shell(enemy);
         var box = Box(new(shield.Center.X + facing * 12, shield.Center.Y));
-        Assert.False(enemy.OverlapsHurt(box.WorldBounds));
+        var overlaps = new List<CollisionOverlap2D>();
+        enemy.Colliders.System.Overlap(box, overlaps, 4);
+        Assert.DoesNotContain(overlaps, overlap => overlap.Collider.EntityId == enemy.Id
+            && overlap.Collider.UserData is AttachedCollider { Use: ColliderUses.Hurt });
         var damageFacts = new List<CombatDamage2D>();
         combat.DamageResolved += damageFacts.Add;
         bool Strike() => combat.ResolveAttack(box, player.Id, 1, CombatFaction2D.Player, 4, 2, _ => new(-facing * 200, 0));

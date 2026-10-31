@@ -71,7 +71,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         }
 
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
-        var local = Vector2.Transform(XY(model.Rest[chain.End]), setupInverse) + XY(delta);
+        var local = Vector2.Transform(model.Rest[chain.End].XY, setupInverse) + delta.XY;
         return new(Vector2.Transform(local, frame), point.Z + model.Rest[chain.End].Z - rest.Z + delta.Z);
     }
 
@@ -88,7 +88,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
         Matrix3x2.Invert(frame, out var inverse);
-        var delta = Vector2.Transform(XY(world), inverse) - Vector2.Transform(XY(model.Rest[chain.End]), setupInverse);
+        var delta = Vector2.Transform(world.XY, inverse) - Vector2.Transform(model.Rest[chain.End].XY, setupInverse);
         return new(delta, world.Z - point.Z - model.Rest[chain.End].Z + rest.Z);
     }
 
@@ -117,6 +117,4 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
         return BoneFrameIk.Solve(model, pose, chain, target, bend, _foldDirections[id]);
     }
-
-    private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
 }

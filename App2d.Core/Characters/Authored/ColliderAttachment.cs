@@ -277,36 +277,4 @@ public sealed class ActorColliders
         }
     }
 
-    /// <summary>
-    /// Where an attack landed on the registered hurt geometry: the centre of the overlap of the hit bounds with the closest
-    /// enabled hurt collider's bounds, or null when none overlaps. The same rule the legacy hurt scan used, over the
-    /// colliders as registered.
-    /// </summary>
-    public Vector2? HurtContact(Rect2D hit)
-    {
-        Vector2? closest = null;
-        var distance = float.PositiveInfinity;
-        foreach (var hurt in _hurt)
-        {
-            if (!hurt.Enabled)
-            {
-                continue;
-            }
-
-            var bounds = hurt.Bounds;
-            if (!bounds.Intersects(hit))
-            {
-                continue;
-            }
-
-            var point = (Vector2.Max(bounds.Min, hit.Min) + Vector2.Min(bounds.Max, hit.Max)) / 2;
-            var d = Vector2.DistanceSquared(point, hit.Center);
-            if (d < distance)
-            {
-                distance = d;
-                closest = point;
-            }
-        }
-        return closest;
-    }
 }

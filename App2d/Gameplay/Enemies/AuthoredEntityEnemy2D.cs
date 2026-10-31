@@ -452,8 +452,6 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
     }
 
-    private static EntityRegion ToWorld(EntityRegion region) => region.Scaled(Scale);
-
     public bool TryResolvePlayerHit(Person2D player)
     {
         if (!_enabled)
@@ -480,12 +478,6 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
         return !player.IsAlive;
     }
-
-    /// <summary>Whether a hit box reaches the enemy's enabled registered hurt colliders (diagnostics and tests; the game queries the collision system).</summary>
-    public bool OverlapsHurt(Rect2D hit) => HurtContact(hit) is not null;
-
-    /// <summary>Where a hit box lands on the enemy's registered hurt colliders, or null when it reaches none (or the enemy is disabled or dead).</summary>
-    public Vector2? HurtContact(Rect2D hit) => !_enabled || !IsAlive ? null : Colliders.HurtContact(hit);
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
