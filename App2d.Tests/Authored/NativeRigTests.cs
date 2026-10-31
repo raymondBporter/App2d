@@ -163,6 +163,38 @@ public sealed class NativeRigTests
     }
 
     [Fact]
+    public void HeldAppearanceExcerptsKeepSetupHidingOrderAndExactEndChanges()
+    {
+        var (source, clips) = Scene();
+        var model = ResolvedModel.From(source);
+        var clip = clips[0];
+        clip.Tracks = [];
+        var near = .5f + ClipAuthoring.SameTime / 2;
+        clip.Attachments = [new() { Slot = "front-paint", Keys = [
+            new() { Time = .4f, Attachment = null }, new() { Time = .5f, Attachment = "blue" },
+            new() { Time = near, Attachment = null }, new() { Time = .8f, Attachment = "blue" }] }];
+        clip.DrawOrder = [new() { Time = .4f, Slots = ["front-paint", "rear-paint"] },
+            new() { Time = .5f, Slots = ["rear-paint", "front-paint"] },
+            new() { Time = near, Slots = ["front-paint", "rear-paint"] }];
+        var original = clip.ToJson();
+
+        foreach (var (from, to) in new[] { (0f, .2f), (.3f, .5f), (.45f, near), (.6f, 1f) })
+        {
+            var excerpt = ClipAuthoring.Excerpt(clip, from, to, "held", "Held");
+            excerpt.Validate(model);
+            var times = new[] { from, .4f, .5f, near, .8f, to }.Where(at => at >= from && at <= to);
+            foreach (var at in times)
+            {
+                var expected = PoseEvaluator.Sample(model, clip, at).Slots.Select(s => (s.Slot.Id, s.Part?.Id));
+                var actual = PoseEvaluator.Sample(model, excerpt, at - from).Slots.Select(s => (s.Slot.Id, s.Part?.Id));
+                Assert.Equal(expected, actual);
+            }
+            Assert.Equal(excerpt.ToJson(), MotionClip.FromJson(excerpt.ToJson()).ToJson());
+        }
+        Assert.Equal(original, clip.ToJson());
+    }
+
+    [Fact]
     public void PoseEditingIsTheInverseOfEvaluationAndRestMovesRespectChildChoice()
     {
         var (Model, Animations) = Scene();

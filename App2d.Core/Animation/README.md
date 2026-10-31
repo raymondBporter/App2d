@@ -58,3 +58,7 @@ travel with the copied key. Callers own clip bounds and which lists an edit targ
 Editable keys implement `IEditableTimedKey`, adding a writable time to the read-only sampling contract. Studio uses one
 enumeration of motion, travel, expression, attachment, color, and draw-order keys for key times and retiming; retiming
 updates the existing objects. Markers, events, and contact intervals retain their separate editing semantics.
+`SliceHeld` shares excerpt creation for expression, attachment, and draw-order timelines, including exact end keys.
+Attachments and draw order retain setup state until their first key; expressions retain their first selection before
+its key, with playback waiting for that key. A selection active when the excerpt starts restarts at excerpt time zero,
+as before. Payload copying stays with the caller so draw-order slot lists remain independent.

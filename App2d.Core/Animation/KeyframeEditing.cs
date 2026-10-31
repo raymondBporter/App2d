@@ -37,4 +37,16 @@ public static class KeyframeEditing
 
     public static void DeleteAtTime<T>(this List<T> keys, float time) where T : ITimedKey =>
         keys.RemoveAll(key => SameTime(key.Time, time));
+
+    /// <summary>Copies a held timeline's active key and changes over [from, to], shifting the range to zero.</summary>
+    public static List<T> SliceHeld<T>(this IReadOnlyList<T> keys, float from, float to, Func<T, float, T> atTime,
+        bool holdBeforeFirst = false) where T : class, ITimedKey
+    {
+        var held = KeyframeSampling.Held(keys, from, holdBeforeFirst: false);
+        var cut = keys.Where(key => key.Time > from && key.Time <= to).Select(key => atTime(key, key.Time - from)).ToList();
+        if (held is not null) cut.Insert(0, atTime(held, 0));
+        // A future first key selects its value at elapsed time zero; keep it at the end when the cut precedes it.
+        else if (holdBeforeFirst && cut.Count == 0 && keys.Count > 0) cut.Add(atTime(keys[0], to - from));
+        return cut;
+    }
 }

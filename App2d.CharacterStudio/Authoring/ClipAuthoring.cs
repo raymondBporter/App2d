@@ -535,22 +535,12 @@ public static partial class ClipAuthoring
             .Select(c => new ClipContact { Chain = c.Chain, Start = MathF.Max(0, c.Start - from), Finish = MathF.Min(copy.Duration, c.Finish - from), Target = c.Target })];
         copy.Markers = [.. copy.Markers.Where(m => m.Time >= from - SameTime && m.Time <= to + SameTime).Select(m => new ClipMarker { Id = m.Id, Time = Math.Clamp(m.Time - from, 0, copy.Duration) })];
         foreach (var play in copy.Plays)
-        {
-            var showing = play.Keys.LastOrDefault(k => k.Time <= from + SameTime);
-            play.Keys = [.. (showing is null ? [] : new[] { new ClipPlayKey { Time = 0, Expression = showing.Expression } })
-                .Concat(play.Keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime).Select(k => new ClipPlayKey { Time = k.Time - from, Expression = k.Expression }))];
-        }
+            play.Keys = play.Keys.SliceHeld(from, to, static (key, at) => key with { Time = at }, holdBeforeFirst: true);
         copy.Plays.RemoveAll(p => p.Keys.Count == 0);
         foreach (var track in copy.Attachments)
-        {
-            var showing = track.Keys.LastOrDefault(k => k.Time <= from);
-            track.Keys = [.. (showing is null ? [] : new[] { showing with { Time = 0 } })
-                .Concat(track.Keys.Where(k => k.Time > from && k.Time <= to).Select(k => k with { Time = k.Time - from }))];
-        }
+            track.Keys = track.Keys.SliceHeld(from, to, static (key, at) => key with { Time = at });
         copy.Attachments.RemoveAll(t => t.Keys.Count == 0);
-        var order = copy.DrawOrder.LastOrDefault(k => k.Time <= from);
-        copy.DrawOrder = [.. (order is null ? [] : new[] { order with { Time = 0, Slots = [.. order.Slots] } })
-            .Concat(copy.DrawOrder.Where(k => k.Time > from && k.Time <= to).Select(k => k with { Time = k.Time - from, Slots = [.. k.Slots] }))];
+        copy.DrawOrder = copy.DrawOrder.SliceHeld(from, to, static (key, at) => key with { Time = at, Slots = [.. key.Slots] });
         copy.Events = [.. copy.Events.Where(k => k.Time >= from && k.Time <= to).Select(k => k with { Time = k.Time - from })];
         foreach (var track in copy.Colors)
         {

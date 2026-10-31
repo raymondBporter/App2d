@@ -222,6 +222,37 @@ public sealed class AnimatedPartTests
     }
 
     [Fact]
+    public void ExpressionExcerptsKeepFutureSelectionsPausedAndIncludeExactEndKeys()
+    {
+        var (_, _, model) = Wearer();
+        var clip = ClipAuthoring.New(model, "tail-selections", "Tail selections", duration: 2, loop: false);
+        var first = .5f;
+        var near = first + ClipAuthoring.SameTime / 2;
+        clip.Plays = [new() { Instance = Instance, Keys = [new() { Time = first, Expression = "flick" },
+            new() { Time = near, Expression = "still" }, new() { Time = 1, Expression = "tucked" }] }];
+        var original = clip.ToJson();
+
+        foreach (var (from, to) in new[] { (.1f, .3f), (.2f, near), (.7f, 1f) })
+        {
+            var excerpt = ClipAuthoring.Excerpt(clip, from, to, "tail-range", "Tail range");
+            excerpt.Validate(model);
+            foreach (var at in new[] { from, first, near, to }.Where(at => at >= from && at <= to))
+                Assert.Equal(clip.PlayAt(Instance, at)!.Value.Expression, excerpt.PlayAt(Instance, at - from)!.Value.Expression);
+            Assert.Equal(excerpt.ToJson(), MotionClip.FromJson(excerpt.ToJson()).ToJson());
+        }
+
+        var before = ClipAuthoring.Excerpt(clip, .1f, .3f, "before", "Before");
+        foreach (var time in new[] { 0f, .1f, before.Duration })
+        {
+            var selected = before.PlayAt(Instance, time)!.Value;
+            Assert.Equal(0, Math.Max(0, time - selected.Since));
+            var nested = PoseEvaluator.Sample(model, before, time).Attachments[Instance].Pose;
+            Assert.Equal(0, nested.Placement("mid").ToLocal(nested.World("tip")).X, 5);
+        }
+        Assert.Equal(original, clip.ToJson());
+    }
+
+    [Fact]
     public void ExpressionsResolveFromRequestChannelInstanceAndAssetInThatOrder()
     {
         var (person, tail, resolved) = Wearer();

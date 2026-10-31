@@ -492,13 +492,8 @@ public sealed class MotionClip
     /// <summary>The expression a play track selects for an instance at a time: the last key at or before it, else the first key. Null without a track.</summary>
     public (string Expression, float Since)? PlayAt(string instance, float time)
     {
-        var track = Plays.FirstOrDefault(p => p.Instance == instance);
-        if (track is null || track.Keys.Count == 0)
-        {
-            return null;
-        }
-
-        var key = KeyframeSampling.Held(track.Keys, time)!;
-        return (key.Expression, key.Time);
+        var keys = Plays.FirstOrDefault(p => p.Instance == instance)?.Keys;
+        var key = keys is null ? null : KeyframeSampling.Held(keys, time);
+        return key is null ? null : (key.Expression, key.Time);
     }
 }
