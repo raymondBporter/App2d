@@ -48,7 +48,7 @@ public static class QuadrupedTemplate
         }
         PartGeometry Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IGeometryValue2D? geometry = null)
         {
-            var p = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
+            var p = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Layer = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
             m.Parts.Add(p);
             return p;
         }

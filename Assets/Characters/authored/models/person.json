@@ -953,7 +953,7 @@
       "a": "head",
       "scaleX": 0.56,
       "scaleY": 0.58,
-      "depth": -0.12
+      "layer": -0.12
     },
     {
       "id": "left-hand",
@@ -977,7 +977,7 @@
       },
       "a": "left-hand",
       "b": "left-elbow",
-      "depth": -0.004
+      "layer": -0.004
     },
     {
       "id": "right-hand",
@@ -1001,7 +1001,7 @@
       },
       "a": "right-hand",
       "b": "right-elbow",
-      "depth": -0.004
+      "layer": -0.004
     },
     {
       "id": "left-foot",
@@ -1025,7 +1025,7 @@
       },
       "a": "left-foot",
       "b": "left-knee",
-      "depth": -0.004
+      "layer": -0.004
     },
     {
       "id": "right-foot",
@@ -1049,7 +1049,7 @@
       },
       "a": "right-foot",
       "b": "right-knee",
-      "depth": -0.004
+      "layer": -0.004
     }
   ],
   "materials": {
@@ -1209,7 +1209,7 @@
       "frame": "chest",
       "offsetX": -0.1,
       "offsetY": -0.08,
-      "offsetZ": 0.2,
+      "layer": 0.2,
       "angle": -1.6907964
     },
     {
@@ -1218,7 +1218,7 @@
       "frame": "chest",
       "offsetX": -0.13,
       "offsetY": 0.12,
-      "offsetZ": -0.2,
+      "layer": -0.2,
       "angle": -1.0207963
     },
     {

@@ -96,7 +96,7 @@ internal sealed partial class ProofRenders
                         var placed = new ActorPose(pose, Vector2.Zero, 1);
                         foreach (var (prop, socket) in PersonLoadout.Dressed(clip, at, PersonGear.Sword, entity))
                         {
-                            drawing.AddAttachment(catalog.Parts[prop], placed.Socket(entity.Sockets[socket]));
+                            drawing.AddAttachment(catalog.Parts[prop], placed, entity.Sockets[socket]);
                         }
                     }
                     else
@@ -166,7 +166,7 @@ internal sealed partial class ProofRenders
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
                 foreach (var equipment in thrower.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null || i is 2 or 3 or 4))
                 {
-                    drawing.AddAttachment(equipment.Prop, placed.Socket(equipment.Socket));
+                    drawing.AddAttachment(equipment.Prop, placed, equipment.Socket);
                 }
 
                 foreach (var (ppu, y, facing) in new[] { (125, 380, 1), (48, 440, -1) })
@@ -230,7 +230,7 @@ internal sealed partial class ProofRenders
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
                 foreach (var equipment in subject.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null || at < release))
                 {
-                    drawing.AddAttachment(equipment.Prop, placed.Socket(equipment.Socket));
+                    drawing.AddAttachment(equipment.Prop, placed, equipment.Socket);
                 }
 
                 if (at >= release && action.Projectile is { } shot)
@@ -241,7 +241,7 @@ internal sealed partial class ProofRenders
                     var velocity = (new Vector3(3.8f, .65f, origin.Z) - origin) / flight + new Vector3(0, shot.Gravity * flight / 2, 0);
                     var elapsed = at - release;
                     var centre = origin + velocity * elapsed - new Vector3(0, shot.Gravity * elapsed * elapsed / 2, 0);
-                    var socket = placed.Socket(rock.Socket).WithOrigin(centre + rock.Prop.Point(EquipmentPoints.Grip)!.Value.XYZ);
+                    var socket = placed.Socket(rock.Socket).WithOrigin(centre + rock.Prop.Point(EquipmentPoints.Grip)!.Value.ToVector3());
                     drawing.AddAttachment(rock.Prop, socket);
                 }
                 var charging = subject.Asset.Behavior!.Controller.ChargeSpeed > 0;

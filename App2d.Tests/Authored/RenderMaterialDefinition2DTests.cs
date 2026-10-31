@@ -241,13 +241,13 @@ public sealed class RenderMaterialDefinition2DTests
             {
                 A = PartLocation.Origin, Frame = PartLocation.Origin,
                 Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(1, 0) }.Validated(),
-                Depths = [.1f, .2f], Material = new() { Fill = "#224466", Outline = new() }
+                VertexZ = [.1f, .2f], Material = new() { Fill = "#224466", Outline = new() }
             }]
         };
         prop.Validate();
         var document = AssetDocuments.Of(prop, null);
         document.Edit(() => document.Asset.Geometry[0].Material = document.Asset.Geometry[0].RenderMaterial with { StrokeWidth = .2f });
         document.Undo();
-        Assert.Equal([.1f, .2f], document.Asset.Geometry[0].Depths);
+        Assert.Equal([.1f, .2f], document.Asset.Geometry[0].VertexZ);
     }
 }

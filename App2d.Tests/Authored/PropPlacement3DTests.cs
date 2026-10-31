@@ -22,19 +22,20 @@ public sealed class PropPlacement3DTests
         var planar = LayeredFrame2D.Local(Vector2.One, .4f, new(1, 2), -.15f).Then(LayeredFrame2D.FromRotation(.3f, new(5, 1, .25f)));
         var flat = PartPlacement3D.Lift(planar, Vector3.Zero);
         Assert.Equal(PartPlacement3D.Extend(planar), flat);
-        Assert.Equal(planar.Origin, flat.Origin);
+        Assert.Equal(new Vector3(planar.Frame.Origin, 0), flat.Origin);
         Assert.Equal(Vector3.UnitZ, flat.ZAxis);
-        Assert.Equal(.1f, flat.Origin.Z, 6);
+        Assert.Equal(0, flat.Origin.Z);
+        Assert.Equal(.1f, planar.Layer, 6);
 
         var orientation = new Vector3(.5f, -.8f, .2f);
         var lifted = PartPlacement3D.Lift(planar, orientation);
         // The same frame the socket path built before the bridge: rotate about X, Y, then the planar turn plus Z, at the origin.
         var turn = MathF.Atan2(planar.XAxis.Y, planar.XAxis.X);
-        var expected = Frame3D.FromRotation(new(orientation.X, orientation.Y, turn + orientation.Z), planar.Origin);
+        var expected = Frame3D.FromRotation(new(orientation.X, orientation.Y, turn + orientation.Z), new(planar.Frame.Origin, 0));
         TestModels.Near(expected.XAxis, lifted.XAxis, 1e-5f, "x");
         TestModels.Near(expected.YAxis, lifted.YAxis, 1e-5f, "y");
         TestModels.Near(expected.ZAxis, lifted.ZAxis, 1e-5f, "z");
-        Assert.Equal(planar.Origin, lifted.Origin);
+        Assert.Equal(new Vector3(planar.Frame.Origin, 0), lifted.Origin);
         // Thickness stays physical: a point off the prop's plane leaves the layer by the tilted Z axis.
         Assert.NotEqual(planar.Layer, lifted.TransformPoint(new(0, 0, .3f)).Z);
 
@@ -69,10 +70,10 @@ public sealed class PropPlacement3DTests
         var frame = pose.Socket(hero.Sockets["sword-hand"]);
         Assert.Equal(frame.Origin, PartPlacement3D.Point(frame, sword, sword.Point(EquipmentPoints.Grip)!.Value));
         var tip = PartPlacement3D.Point(frame, sword, sword.Point(EquipmentPoints.Tip)!.Value);
-        TestModels.Near(frame.TransformPoint((sword.Point(EquipmentPoints.Tip)!.Value.XYZ - sword.Point(EquipmentPoints.Grip)!.Value.XYZ) * sword.Scale), tip, 1e-6f, "tip");
+        TestModels.Near(frame.TransformPoint((sword.Point(EquipmentPoints.Tip)!.Value.ToVector3() - sword.Point(EquipmentPoints.Grip)!.Value.ToVector3()) * sword.Scale), tip, 1e-6f, "tip");
         Assert.True(MathF.Abs(tip.Z - frame.Origin.Z) > .05f, "a tilted blade has real depth");
 
-        var at = new PuppetPoint(.3f, .1f, 0);
+        var at = new Vector3f(.3f, .1f, 0);
         var plane = PartPlacement3D.Plane(frame, sword, at);
         Assert.Equal(PartPlacement3D.Point(frame, sword, at).XY, plane.Origin);
         TestModels.Near(new(PartPlacement3D.Point(frame, sword, at with { X = at.X + 1 }).XY, 0), new(plane.TransformPoint(Vector2.UnitX), 0), 1e-5f, "x step");

@@ -358,7 +358,7 @@ public static class StarterContent
         {
             Fill = "#c9e0b8"
         };
-        shell.Depth = -.05f;
+        shell.Layer = -.05f;
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
         model.Validate();

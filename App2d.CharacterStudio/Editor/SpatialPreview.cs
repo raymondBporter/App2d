@@ -23,12 +23,12 @@ internal sealed class SpatialPreview : IDisposable
     private Plane _dragPlane;
     private Vector3 _dragOffset;
 
-    public SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part? sword)
+    public SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part? sword, Part? curve = null)
     {
         _device = device;
         _gui = gui;
         _renderer = new(device);
-        _scene = new(sword);
+        _scene = new(sword, curve);
     }
 
     public void Draw(Vector2 available)

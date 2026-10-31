@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Globalization;
@@ -44,7 +45,7 @@ public static class PartGeometryBuilder
     }
 
     /// <summary>Extrudes a simple XY outline, including concave silhouettes; either winding is accepted. Thickness is centered about Z.</summary>
-    public static PartGeometry Extrude(IEnumerable<PuppetPoint> outline, float thickness, string fill)
+    public static PartGeometry Extrude(IEnumerable<Vector3f> outline, float thickness, string fill)
     {
         var mesh = PartMesh.Extrude(outline, thickness);
         return Entry(mesh, fill);
@@ -82,8 +83,8 @@ public static class PartGeometryBuilder
                     }
 
                     var p = new Vector3(float.Parse(words[1], CultureInfo.InvariantCulture), float.Parse(words[2], CultureInfo.InvariantCulture), float.Parse(words[3], CultureInfo.InvariantCulture)) * scale;
-                    var point = PuppetPoint.From(p);
-                    point.Check("OBJ vertex");
+                    var point = new Vector3f(p);
+                    PartMesh.CheckPoint(point, "OBJ vertex");
                     if (!welded.TryGetValue(p, out var index))
                     {
                         index = mesh.Vertices.Count;

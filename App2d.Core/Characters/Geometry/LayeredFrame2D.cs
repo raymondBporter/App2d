@@ -12,7 +12,8 @@ namespace App2d.Core.Characters.Geometry;
 /// Rotation, scale or reflection in XY never changes a layer, and a plain <see cref="Matrix3x2"/> joins with a zero layer
 /// offset. The default value collapses to the origin at layer 0; <see cref="Identity"/> is the placement that leaves
 /// everything where it is. The layer is draw order, not the physical Z a 3D prop mesh carries; the prop bridge lifts a
-/// placement into that space.
+/// placement into that space without its layer. Methods packing XY and layer into Vector3 are planar rig coordinates,
+/// not spatial points; drawable contours expose physical positions and layer attributes separately.
 /// </summary>
 public readonly record struct LayeredFrame2D(Frame2D Frame, float Layer)
 {

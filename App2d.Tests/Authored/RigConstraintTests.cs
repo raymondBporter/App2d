@@ -30,7 +30,8 @@ public sealed class RigConstraintTests
         TestModels.Near(new(0, .5f, 0), frame.Origin);
         var socket = new ActorPose(pose, Vector2.Zero, 1).Socket(model.Sockets[0]);
         var offset = Rotation2D.Apply(new(.2f, 0), .3f);
-        TestModels.Near(new(1 + offset.X, 1 + offset.Y, .4f), socket.Origin);
+        TestModels.Near(new(1 + offset.X, 1 + offset.Y, 0), socket.Origin);
+        Assert.Equal(.4f, new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(model.Sockets[0]).Layer, 5);
         Assert.All(pose.Chains, c => Assert.True(c.Reached));
         AssertFramesAgree(pose);
         var drawing = new PuppetDrawing();

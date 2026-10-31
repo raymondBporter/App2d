@@ -1,4 +1,7 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters;
+using App2d.Core.Characters.Drawing;
+using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.Transforms;
@@ -10,14 +13,14 @@ using XVector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace App2d.CharacterStudio.Editor;
 
-/// <summary>A transient scene made from the existing sword's physical mesh and a calibration cube. No authored data is changed.</summary>
+/// <summary>A transient scene made from authored spatial geometry and a calibration cube. No authored data is changed.</summary>
 internal sealed class SpatialPreviewScene
 {
     public static readonly Color4b Background = new(16, 23, 35);
     public IReadOnlyList<SpatialPreviewObject> Objects { get; }
     private readonly TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> _ground = Mesh();
 
-    public SpatialPreviewScene(Part? sword)
+    public SpatialPreviewScene(Part? sword, Part? curve = null)
     {
         var triangles = new List<(Triangle3D Triangle, Color4b Color)>();
         foreach (var part in sword?.Geometry.Where(part => !part.Hidden && part.Mesh is not null) ?? [])
@@ -28,7 +31,7 @@ internal sealed class SpatialPreviewScene
             var color = part.Material?.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : new Color4b(156, 187, 205);
             for (var i = 0; i < solid.Triangles.Count; i += 3)
             {
-                Vector3 At(int index) => Vector3.Transform(solid.Vertices[index].XYZ, placement);
+                Vector3 At(int index) => Vector3.Transform(solid.Vertices[index].ToVector3(), placement);
                 triangles.Add((new(At(solid.Triangles[i]), At(solid.Triangles[i + 1]), At(solid.Triangles[i + 2])), color));
             }
         }
@@ -53,7 +56,18 @@ internal sealed class SpatialPreviewScene
         for (var i = 0; i < indices.Length; i += 3)
             Face(cube, corners[indices[i]], corners[indices[i + 1]], corners[indices[i + 2]], colors[i / 6]);
         var calibration = new SpatialPreviewObject("Calibration cube", cube, new(.8f, -.75f, .1f), Vector3.Zero);
-        Objects = swordMesh.Count > 0 ? [new("Sword", swordMesh, new(-.35f, .05f, 0), new(0, -.15f, 1.35f)), calibration] : [calibration];
+        var objects = new List<SpatialPreviewObject>();
+        if (swordMesh.Count > 0) objects.Add(new("Sword", swordMesh, new(-.35f, .05f, 0), new(0, -.15f, 1.35f)));
+        objects.Add(calibration);
+        if (curve is not null)
+        {
+            var drawing = new PuppetDrawing();
+            drawing.Build(curve);
+            var curveMesh = Mesh();
+            drawing.Mesh.CopySpatialTo(curveMesh);
+            objects.Add(new("Spatial Bézier", curveMesh, Vector3.Zero, Vector3.Zero));
+        }
+        Objects = objects;
         const float floor = -1.05f;
         Quad(_ground, new(-3, floor, -3), new(-3, floor, 3), new(3, floor, 3), new(3, floor, -3), new(30, 42, 58));
         for (var i = -12; i <= 12; i++)

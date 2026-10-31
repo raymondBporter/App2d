@@ -54,7 +54,9 @@ public readonly record struct Vector2d(double X, double Y) : IVector<Vector2d, d
     /// <summary>Twice the signed triangle area; positive for a counter-clockwise turn in Y-up coordinates.</summary>
     public double Orientation(Vector2d b, Vector2d c) => (b - this).Cross(c - this);
 
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector2d PerpCcw => new(-Y, X);
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector2d PerpCw => new(Y, -X);
     /// <summary>Transforms a point using Matrix3x2's row-vector convention, with double-precision arithmetic.</summary>
     public static Vector2d Transform(Vector2d point, Matrix3x2 matrix) => new(

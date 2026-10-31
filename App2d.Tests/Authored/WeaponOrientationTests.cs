@@ -21,9 +21,9 @@ public sealed class WeaponOrientationTests
         for (var i = 0; i < mesh.Mesh!.Triangles.Count; i += 3)
         {
             var indices = mesh.Mesh!.Triangles.Skip(i).Take(3).ToArray();
-            var a = mesh.Mesh!.Vertices[indices[0]].XYZ;
-            var b = mesh.Mesh!.Vertices[indices[1]].XYZ;
-            var c = mesh.Mesh!.Vertices[indices[2]].XYZ;
+            var a = mesh.Mesh!.Vertices[indices[0]].ToVector3();
+            var b = mesh.Mesh!.Vertices[indices[1]].ToVector3();
+            var c = mesh.Mesh!.Vertices[indices[2]].ToVector3();
             Assert.True(Vector3.Dot(Vector3.Cross(b - a, c - a), (a + b + c) / 3 - center) > 0);
             for (var j = 0; j < 3; j++)
             {
@@ -34,7 +34,7 @@ public sealed class WeaponOrientationTests
             }
         }
         Assert.All(edges.Values, count => Assert.Equal(2, count));
-        Assert.Equal(new PuppetPoint(.82f, 0, 0), mesh.Mesh!.Vertices.MaxBy(v => v.X));
+        Assert.Equal(new Vector3f(.82f, 0, 0), mesh.Mesh!.Vertices.MaxBy(v => v.X));
     }
 
     private static (ResolvedModel Model, ModelSocket Socket, MotionClip Clip) Setup()
@@ -69,12 +69,12 @@ public sealed class WeaponOrientationTests
         var right = new ActorPose(local, origin, 1).Socket(socket);
         var left = new ActorPose(local, origin, -1).Socket(socket);
         var prop = new Part { Pivot = EquipmentPoints.Grip, Locations = [new() { Id = EquipmentPoints.Grip, X = .2f, Y = -.1f, Z = .03f }], Scale = 2 };
-        foreach (var p in new[] { prop.Point(EquipmentPoints.Grip)!.Value, new PuppetPoint(1, .2f, -.04f), new PuppetPoint(.3f, -.3f, .2f) })
+        foreach (var p in new[] { prop.Point(EquipmentPoints.Grip)!.Value, new Vector3f(1, .2f, -.04f), new Vector3f(.3f, -.3f, .2f) })
         {
             var r = PartPlacement3D.Point(right, prop, p);
             var l = PartPlacement3D.Point(left, prop, p);
             TestModels.Near(new(8 - r.X, r.Y, r.Z), l, 1e-5f);
-            Assert.InRange(Vector3.Distance(r, right.Origin) - Vector3.Distance(p.XYZ, prop.Point(EquipmentPoints.Grip)!.Value.XYZ) * 2, -1e-5f, 1e-5f);
+            Assert.InRange(Vector3.Distance(r, right.Origin) - Vector3.Distance(p.ToVector3(), prop.Point(EquipmentPoints.Grip)!.Value.ToVector3()) * 2, -1e-5f, 1e-5f);
         }
         Assert.True(right.XAxis.XY.Length() < .9f);
     }

@@ -91,7 +91,8 @@ public sealed class HumanoidFootwearTests
                         var item = Assert.Single(entity.Equipment, e => e.Socket.Id == socketId);
                         Assert.Equal(style + "-" + side, item.Prop.Id);
                         var frame = pose.Socket(item.Socket);
-                        TestModels.Near(pose.World(foot), PartPlacement3D.Point(frame, item.Prop, item.Prop.Point(EquipmentPoints.Grip)!.Value));
+                        TestModels.Near(pose.World(foot) with { Z = 0 }, PartPlacement3D.Point(frame, item.Prop, item.Prop.Point(EquipmentPoints.Grip)!.Value));
+                        Assert.Equal(pose.World(foot).Z, pose.SocketPlacement(item.Socket).Layer, 5);
                         var up = pose.World(knee) - pose.World(foot);
                         up.Z = 0;
                         TestModels.Near(Vector3.Normalize(up), frame.YAxis);

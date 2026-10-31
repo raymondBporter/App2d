@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
@@ -5,6 +6,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
+using App2d.Core.Mathematics;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters;
@@ -22,10 +24,14 @@ public sealed record PartGeometry
     public string Id { get; set; } = "part";
     /// <summary>The shape or curve attached to this part.</summary>
     public IGeometryValue2D? Geometry { get; set; }
+    /// <summary>A real spatial curve. Mutually exclusive with planar geometry and mesh geometry.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonConverter(typeof(App2d.Core.Geometry.Serialization.SpatialCurveJsonConverter))]
+    public ICurve<Vector3f, float>? SpatialCurve { get; set; }
     /// <summary>Mesh geometry, mutually exclusive with the planar shape/curve value.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public PartMesh? Mesh { get; set; }
-    [JsonIgnore] public string Kind => Mesh is null ? Geometry?.Kind ?? "?" : "mesh";
+    [JsonIgnore] public string Kind => SpatialCurve is not null ? "spatial-curve" : Mesh is null ? Geometry?.Kind ?? "?" : "mesh";
     /// <summary>Authored drawing style.</summary>
     public RenderMaterialDefinition2D? Material { get; set; }
     public GeometryCollision? Collision { get; set; }
@@ -49,9 +55,10 @@ public sealed record PartGeometry
     public float ScaleY { get; set; } = 1;
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
-    public float Depth { get; set; }
+    /// <summary>Drawing-order offset from the carrier, independent of every physical Z coordinate.</summary>
+    public float Layer { get; set; }
     /// <summary>Optional physical Z for sampled shape/curve vertices, separate from the entry's drawing layer.</summary>
-    public List<float>? Depths { get; set; }
+    public List<float>? VertexZ { get; set; }
 
     /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
     public List<PartPointBinding>? Bindings { get; set; }
@@ -69,8 +76,8 @@ public sealed record PartGeometry
     {
         if (Material is null) return this;
         var material = RenderMaterial.WithOverride(change).Resolve(materials);
-        if (Mesh is not null && material.HasTexture)
-            throw new InvalidDataException("Mesh textures require UV coordinates; use a textured rectangle.");
+        if ((Mesh is not null || SpatialCurve is not null) && material.HasTexture)
+            throw new InvalidDataException("Mesh and spatial curve textures require UV coordinates; use a textured rectangle.");
         return this with { Material = material };
     }
 
@@ -102,16 +109,24 @@ public sealed record PartGeometry
         if (Prop is not null) { AuthoredAsset.RequireId(Prop, "geometry prop"); AuthoredAsset.RequireId(Point, "geometry point"); }
         if (Stretch && B is null) throw new InvalidDataException("Stretch needs a toward control.");
         new Limit(-100, 100).Check(Along, "geometry along");
-        if ((Geometry is null) == (Mesh is null) || Geometry is not null and not IShape2D and not ICurve2D)
+        if ((Geometry is null ? 0 : 1) + (Mesh is null ? 0 : 1) + (SpatialCurve is null ? 0 : 1) != 1 || Geometry is not null and not IShape2D and not ICurve2D)
         {
             throw new InvalidDataException("A geometry entry needs exactly one shape, curve or mesh.");
         }
         Mesh?.Validate();
-        if (Depths is { } depths)
+        if (SpatialCurve is { } spatialCurve)
+        {
+            if (B is not null || Bindings is { Count: > 0 } || VertexZ is not null || Material?.HasTexture == true)
+                throw new InvalidDataException("A spatial curve uses a rigid attachment and its own XYZ control points.");
+            var points = App2d.Core.Geometry.Operations.Curves.SpatialCurveControlPoints.Get(spatialCurve);
+            foreach (var point in points)
+                if (!point.IsFinite()) throw new InvalidDataException("Spatial curve control points must be finite.");
+        }
+        if (VertexZ is { } depths)
         {
             if (Geometry is null || depths.Count != PartContours2D.LocalContour(this).Count)
                 throw new InvalidDataException("Physical depth count must match geometry vertices.");
-            foreach (var z in depths) new Limit(-100, 100).Check(z, "geometry.depths");
+            foreach (var z in depths) new Limit(-100, 100).Check(z, "geometry.vertexZ");
             if (Bindings is { Count: > 0 } || B is not null)
                 throw new InvalidDataException("Physical vertex depths require rigid geometry placement.");
         }
@@ -154,7 +169,7 @@ public sealed record PartGeometry
         new Limit(-1000, 1000).Check(Angle, "part.angle");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX");
         new Limit(-100, 100).Check(OffsetY, "part.offsetY");
-        new Limit(-16, 16).Check(Depth, "part.depth");
+        new Limit(-16, 16).Check(Layer, "part.layer");
         if (Material is null && Collision is null)
         {
             throw new InvalidDataException("A part needs a material.");
@@ -173,7 +188,7 @@ public sealed record PartGeometry
             var pointCount = Geometry switch
             {
                 SimplePolygon2D polygon => polygon.Vertices.Length,
-                ICurve2D bezier => PartCurves2D.ControlPoints(bezier).Count,
+                ICurve2D bezier => CurveControlPoints2D.Get(bezier).Count,
                 _ => throw new InvalidDataException("Point attachments require a cutout or Bézier curve.")
             };
             var seen = new HashSet<int>();

@@ -48,7 +48,7 @@
       },
       "a": "left-eye",
       "frame": "left-eye",
-      "depth": -0.002
+      "layer": -0.002
     },
     {
       "id": "left-dot",
@@ -69,7 +69,7 @@
       },
       "a": "left-gaze",
       "frame": "left-gaze",
-      "depth": -0.004
+      "layer": -0.004
     },
     {
       "id": "left-lid",
@@ -228,7 +228,7 @@
       },
       "a": "right-eye",
       "frame": "right-eye",
-      "depth": -0.002
+      "layer": -0.002
     },
     {
       "id": "right-dot",
@@ -249,7 +249,7 @@
       },
       "a": "right-gaze",
       "frame": "right-gaze",
-      "depth": -0.004
+      "layer": -0.004
     },
     {
       "id": "right-lid",

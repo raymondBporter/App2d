@@ -558,7 +558,7 @@ public static class ModuleConversion
         return differences;
     }
 
-    private static (Vector3 Min, Vector3 Max, Vector3 Centroid, float Area) Silhouette(List<Vector3> contour, Vector3 anchor)
+    private static (Vector3 Min, Vector3 Max, Vector3 Centroid, float Area) Silhouette(PartContour contour, Vector3 anchor)
     {
         var min = new Vector3(float.PositiveInfinity);
         var max = new Vector3(float.NegativeInfinity);
@@ -566,7 +566,8 @@ public static class ModuleConversion
         double area = 0;
         for (var i = 0; i < contour.Count; i++)
         {
-            var p = contour[i] - anchor;
+            // Migration validation compares the fixed-camera drawing, including its separate layer attribute.
+            var p = contour[i] + Vector3.UnitZ * contour.LayerAt(i) - anchor;
             min = Vector3.Min(min, p);
             max = Vector3.Max(max, p);
             sum += p;

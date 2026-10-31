@@ -72,11 +72,20 @@ public static class PartPicking2D
     {
         var p = new Vector2(point.X, point.Y);
         if (part.Hidden) return float.PositiveInfinity;
+        if (part.SpatialCurve is not null)
+        {
+            var path = PartContours2D.Contour(part, world, bone, rest, restBone);
+            if (spatial is { } placed) path = path.TransformedBy(placed, physicalZ);
+            var nearest = float.PositiveInfinity;
+            foreach (var (a, b) in MeshTopology.Edges(path.Count, closed: false))
+                nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, path[a].XY, path[b].XY));
+            return nearest / MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
+        }
         if (part.Mesh is { } solid)
         {
             var frame = PartPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone));
             if (spatial is { } placed) frame = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, bone), placed, physicalZ);
-            var vertices = solid.Vertices.Select(v => frame.TransformPoint(v.XYZ).XY).ToArray();
+            var vertices = solid.Vertices.Select(v => frame.TransformPoint(v.ToVector3()).XY).ToArray();
             var nearest = float.PositiveInfinity;
             foreach (var (ia, ib, ic) in MeshTopology.Triangles(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(solid.Triangles)))
             {
@@ -90,7 +99,7 @@ public static class PartPicking2D
 
         if (spatial is { } projection)
         {
-            var contour = PartPlacement3D.Contour(part, PartContours2D.Contour(part, world, bone, rest, restBone), projection, physicalZ);
+            var contour = PartContours2D.Contour(part, world, bone, rest, restBone).TransformedBy(projection, physicalZ);
             var closed = part.Geometry is IShape2D;
             if (closed)
             {

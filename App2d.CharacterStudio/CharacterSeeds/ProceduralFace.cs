@@ -186,7 +186,7 @@ public static class ProceduralFace
         }
 
         static PartGeometry Oval(string id, string control, float rx, float ry, string fill, float depth = 0) =>
-            new() { Id = id, A = control, Frame = control, Geometry = Ellipse2D.Builder.Create(new(rx, ry)), Material = new() { Fill = fill }, Depth = depth };
+            new() { Id = id, A = control, Frame = control, Geometry = Ellipse2D.Builder.Create(new(rx, ry)), Material = new() { Fill = fill }, Layer = depth };
         static PartGeometry Curve(string id, string a, string bend, string b, float weight) => new()
         {
             Id = id,

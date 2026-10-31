@@ -190,7 +190,8 @@ public sealed class EntityRuntimeTests
             var spear = guard.Equipment[0];
             var frame = pose.Socket(spear.Socket);
             // The grip lands on the hand socket, and the tip is out along the facing direction.
-            TestModels.Near(pose.World("right-hand"), PartPlacement3D.Point(frame, spear.Prop, spear.Prop.Point(EquipmentPoints.Grip)!.Value), 1e-5f);
+            TestModels.Near(pose.World("right-hand") with { Z = 0 }, PartPlacement3D.Point(frame, spear.Prop, spear.Prop.Point(EquipmentPoints.Grip)!.Value), 1e-5f);
+            Assert.Equal(pose.World("right-hand").Z, pose.SocketPlacement(spear.Socket).Layer, 5);
             var tip = PartPlacement3D.Point(frame, spear.Prop, spear.Prop.Point(EquipmentPoints.Tip)!.Value);
             Assert.True((tip.X - pose.World("right-hand").X) * facing > 1, "the spear points the way the guard faces");
             var active = animator.ActiveHits().ToList();

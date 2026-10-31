@@ -55,7 +55,7 @@ internal static partial class PlayerMoves
         {
             if (socket.Id is Humanoid.BackSocket or Humanoid.BackViewSocket)
             {
-                socket.OffsetZ = socket.Id == Humanoid.BackSocket ? .2f : -.2f;
+                socket.Layer = socket.Id == Humanoid.BackSocket ? .2f : -.2f;
             }
         }
 

@@ -422,7 +422,7 @@
       "a": "head",
       "scaleX": 0.56,
       "scaleY": 0.58,
-      "depth": -0.12
+      "layer": -0.12
     },
     {
       "id": "left-hand",
@@ -446,7 +446,7 @@
       },
       "a": "left-hand",
       "b": "left-elbow",
-      "depth": -0.004
+      "layer": -0.004
     },
     {
       "id": "right-hand",
@@ -470,7 +470,7 @@
       },
       "a": "right-hand",
       "b": "right-elbow",
-      "depth": -0.004
+      "layer": -0.004
     }
   ],
   "controls": [

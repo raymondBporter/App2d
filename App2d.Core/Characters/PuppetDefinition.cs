@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters;
 
-/// <summary>Authoring coordinates: Y up. For 2D rig points, serialized Z is character layer order; 3D props use Z as a spatial coordinate.</summary>
+/// <summary>Planar rig authoring coordinates: Y up, serialized Z is drawing layer. Spatial mesh and part points use Vector3f.</summary>
 public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
 {
     [JsonIgnore] public Vector2 XY => new(X, Y);

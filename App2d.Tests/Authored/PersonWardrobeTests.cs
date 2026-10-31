@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.CharacterSeeds;
 using App2d.Core.Characters;
@@ -16,7 +17,7 @@ public sealed class PersonWardrobeTests
     public void ConcaveCutoutsPreserveTheNotchAndHaveClosedOutwardFaces(bool reverse)
     {
         // A square with the upper-right quarter removed. Fan triangulation would fill the notch.
-        PuppetPoint[] outline = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)];
+        Vector3f[] outline = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)];
         var solid = PartGeometryBuilder.Extrude(reverse ? outline.Reverse() : outline, .02f, "#aaaaaa");
         var area = 0f;
         var edges = new Dictionary<(int, int), int>();
@@ -25,9 +26,9 @@ public sealed class PersonWardrobeTests
             var a = solid.Mesh!.Triangles[i];
             var b = solid.Mesh!.Triangles[i + 1];
             var c = solid.Mesh!.Triangles[i + 2];
-            var pa = solid.Mesh!.Vertices[a].XYZ;
-            var pb = solid.Mesh!.Vertices[b].XYZ;
-            var pc = solid.Mesh!.Vertices[c].XYZ;
+            var pa = solid.Mesh!.Vertices[a].ToVector3();
+            var pb = solid.Mesh!.Vertices[b].ToVector3();
+            var pc = solid.Mesh!.Vertices[c].ToVector3();
             if (pa.Z < 0 && pb.Z < 0 && pc.Z < 0)
             {
                 var cross = Vector3.Cross(pb - pa, pc - pa);

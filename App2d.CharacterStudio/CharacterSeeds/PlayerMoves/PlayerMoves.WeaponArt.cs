@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -11,7 +12,7 @@ internal static partial class PlayerMoves
     // Deliberately broad shapes and restrained colors: the character is only about 50 pixels tall in game.
     private const string Steel = "#dce5e7", Brass = "#c5a26b", Leather = "#714b3e", DarkSteel = "#465963";
 
-    private static PartGeometry Plate(string color, float depth, params PuppetPoint[] points) => PartGeometryBuilder.Extrude(points, depth, color);
+    private static PartGeometry Plate(string color, float depth, params Vector3f[] points) => PartGeometryBuilder.Extrude(points, depth, color);
     private static PartGeometry Block(string color, float x0, float x1, float y0, float y1, float depth, float bevel = 0)
         => Plate(color, depth, new(x0 + bevel, y0), new(x1 - bevel, y0), new(x1, y0 + bevel), new(x1, y1 - bevel),
             new(x1 - bevel, y1), new(x0 + bevel, y1), new(x0, y1 - bevel), new(x0, y0 + bevel));

@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -92,7 +93,7 @@ public sealed class PersonMoveSetTests
             var hand = pose.Socket(Person.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
             var back = pose.Socket(Person.Base.Sockets.Single(s => s.Id == Humanoid.BackSocket));
             var sword = Catalog.Parts[PersonLoadout.Sword];
-            foreach (var point in new PuppetPoint[] { new(0, 0, 0), new(sword.Point(EquipmentPoints.Tip)!.Value.X, 0, 0) })
+            foreach (var point in new Vector3f[] { new(0, 0, 0), new(sword.Point(EquipmentPoints.Tip)!.Value.X, 0, 0) })
             {
                 var a = PartPlacement3D.Point(hand, sword, point);
                 var b = PartPlacement3D.Point(back, sword, point);

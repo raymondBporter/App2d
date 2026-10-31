@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -31,7 +32,7 @@ public sealed class PartConsolidationTests
         part.Locations.Add(new() { Id = "mount", X = .4f, Y = .1f, Z = .2f, Layer = .4f });
         var geometry = part.Geometry[0];
         geometry.A = geometry.Frame = "mount";
-        geometry.Depth = .6f;
+        geometry.Layer = .6f;
         part.Validate();
         var sockets = new Dictionary<string, ModelSocket> { ["one"] = new() { Id = "one" }, ["two"] = new() { Id = "two" } };
         ResolvedAttachment Resolve(string id, string socket) => ResolvedAttachment.Resolve(
@@ -47,17 +48,21 @@ public sealed class PartConsolidationTests
         Assert.Equal(3, drawn.Length);
         for (var i = 0; i < 3; i++)
         {
-            var local = geometry.Mesh!.Vertices[i].XYZ + new Vector3(.4f, .1f, .2f);
-            var expected = socketFrame.TransformPoint((local - part.Point(EquipmentPoints.Grip)!.Value.XYZ) * part.Scale)
-                + new Vector3(0, 0, .4f + .6f + .7f);
+            var local = geometry.Mesh!.Vertices[i].ToVector3() + new Vector3(.4f, .1f, .2f);
+            var expected = socketFrame.TransformPoint((local - part.Point(EquipmentPoints.Grip)!.Value.ToVector3()) * part.Scale);
             TestModels.Near(expected, Point(drawn[i].Position), 1e-5f);
+            Assert.Equal(.4f + .6f + .7f, drawn[i].Layer, 5);
         }
         var centre = drawn.Aggregate(Vector3.Zero, (sum, v) => sum + Point(v.Position)) / drawn.Length;
         Assert.Equal(0, PartPicking2D.Distance(first, socketFrame, centre));
         drawing.Clear();
         first.Instance.Layer += 2;
         drawing.AddAttachment(first, socketFrame);
-        for (var i = 0; i < 3; i++) TestModels.Near(Point(drawn[i].Position) + new Vector3(0, 0, 2), Point(drawing.Mesh.Vertices[i].Position), 1e-5f);
+        for (var i = 0; i < 3; i++)
+        {
+            TestModels.Near(Point(drawn[i].Position), Point(drawing.Mesh.Vertices[i].Position), 1e-5f);
+            Assert.Equal(2, drawing.Mesh.Vertices[i].Layer - drawn[i].Layer, 5);
+        }
         Assert.Equal(.7f, second.Instance.Layer);
         Assert.Equal(before, part.ToJson());
         TestModels.Near(socketFrame.Origin, PartPlacement3D.Point(socketFrame, part, part.Point(EquipmentPoints.Grip)!.Value), 1e-5f);
@@ -74,6 +79,6 @@ public sealed class PartConsolidationTests
         collider.Point = "blade-centre";
         var resolved = ResolvedEntity.Compile(entity, catalog.Resolve, catalog.Animations.GetValueOrDefault,
             id => id == spear.Id ? spear : catalog.Parts.GetValueOrDefault(id));
-        Assert.Equal(new PuppetPoint(1.2f, 0, .08f), resolved.Colliders.First(c => c.Id == collider.Id).PropPoint);
+        Assert.Equal(new Vector3f(1.2f, 0, .08f), resolved.Colliders.First(c => c.Id == collider.Id).PropPoint);
     }
 }

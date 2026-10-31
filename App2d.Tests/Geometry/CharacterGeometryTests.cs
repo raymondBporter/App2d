@@ -26,8 +26,8 @@ public sealed class CharacterGeometryTests
             Assert.Equal(1f, part.ScaleX);
             Assert.Equal(1f, part.ScaleY);
             Assert.True(part.RenderMaterial.StrokeWidth > 0);
-            Assert.Equal(rest[part.A] + new Vector3(0, 0, part.Depth), points[0]);
-            Assert.True(Vector3.Distance(rest[part.B!] + new Vector3(0, 0, part.Depth), points[^1]) < 1e-6f);
+            Assert.Equal(rest[part.A] + new Vector3(0, 0, part.Layer), Authored.TestModels.DrawPoint(points, 0));
+            Assert.True(Vector3.Distance(rest[part.B!] + new Vector3(0, 0, part.Layer), Authored.TestModels.DrawPoint(points, points.Count - 1)) < 1e-6f);
         }
     }
 
@@ -116,11 +116,12 @@ public sealed class CharacterGeometryTests
             ScaleY = kind == "ellipse" ? 2 : 1,
             OffsetX = 1,
             OffsetY = 2,
-            Depth = .5f
+            Layer = .5f
         };
         var contour = PartContours2D.Contour(part, World);
         Assert.Equal(count, contour.Count);
-        Assert.All(contour, point => Assert.Equal(3.5f, point.Z));
+        Assert.All(contour, point => Assert.Equal(0, point.Z));
+        Assert.Equal(3.5f, contour.LayerAt(0));
         Assert.True(PartPicking2D.Distance(part, World, new(12, 19, 99)) <= 1);
         Assert.True(PartPicking2D.Distance(part, World, new(12, 17, 0)) <= 1.00001f);
         Assert.True(PartPicking2D.Distance(part, World, new(14, 19, 0)) > 1);
@@ -131,8 +132,8 @@ public sealed class CharacterGeometryTests
 
         if (kind == "ellipse")
         {
-            Assert.True(Vector3.Distance(new(12, 17, 3.5f), contour[0]) < .00001f);
-            Assert.True(Vector3.Distance(new(13, 19, 3.5f), contour[12]) < .00001f);
+            Assert.True(Vector3.Distance(new(12, 17, 0), contour[0]) < .00001f);
+            Assert.True(Vector3.Distance(new(13, 19, 0), contour[12]) < .00001f);
         }
         else
         {
@@ -144,11 +145,14 @@ public sealed class CharacterGeometryTests
     [Fact]
     public void StrokePickingKeepsItsMinimumWidthAndPointLikeSegmentTolerance()
     {
-        var part = new PartGeometry { Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), A = "a", B = "b", Material = new() { StrokeWidth = .01f }, Depth = 2 };
+        var part = new PartGeometry { Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), A = "a", B = "b", Material = new() { StrokeWidth = .01f }, Layer = 2 };
         static Vector3 World(string id) => id == "a" ? default : new(.000001f, 0, 3);
         Assert.Equal(1, PartPicking2D.Distance(part, World, new(0, .06f, 100)), 5);
-        Assert.Equal(new Vector3(0, 0, 2), PartContours2D.Contour(part, World)[0]);
-        Assert.Equal(new Vector3(.000001f, 0, 5), PartContours2D.Contour(part, World)[1]);
+        var contour = PartContours2D.Contour(part, World);
+        Assert.Equal(Vector3.Zero, contour[0]);
+        Assert.Equal(new Vector3(.000001f, 0, 0), contour[1]);
+        Assert.Equal(2, contour.LayerAt(0));
+        Assert.Equal(5, contour.LayerAt(1));
     }
 
     [Fact]

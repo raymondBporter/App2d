@@ -7,14 +7,14 @@ namespace App2d.Core.Characters.Geometry;
 
 /// <summary>
 /// Local geometry placement shared by character drawing, picking and editing. A part is one <see cref="LayeredFrame2D"/>
-/// attachment (scale, rotation, offset, depth) composed onto the carrier its controls define; nothing here composes
+/// attachment (scale, rotation, offset, drawing layer) composed onto the carrier its controls define; nothing here composes
 /// offsets or rotations by hand.
 /// </summary>
 public static class PartAttachment2D
 {
-    /// <summary>The part's own placement on its carrier: scale, then rotation, then offset in the carrier's XY, then depth as a layer offset.</summary>
+    /// <summary>The part's own placement on its carrier: scale, rotation, XY offset and drawing layer.</summary>
     public static LayeredFrame2D Attachment(PartGeometry part) =>
-        LayeredFrame2D.Local(new(part.ScaleX, part.ScaleY), part.Angle, new(part.OffsetX, part.OffsetY), part.Depth);
+        LayeredFrame2D.Local(new(part.ScaleX, part.ScaleY), part.Angle, new(part.OffsetX, part.OffsetY), part.Layer);
 
     /// <summary>
     /// The carrier a part attaches to: its bone's frame placed at control A, or the frame whose +Y runs from A toward B
@@ -47,7 +47,7 @@ public static class PartAttachment2D
             if (span > 1e-6f) stretch = Vector2.Distance(world(part.A).XY, world(toward).XY) / span;
         }
         return LayeredFrame2D.Local(new(part.ScaleX * stretch, part.ScaleY * stretch), part.Angle,
-            new(part.OffsetX + part.Along, part.OffsetY), part.Depth).Then(Carrier(part, world, bone));
+            new(part.OffsetX + part.Along, part.OffsetY), part.Layer).Then(Carrier(part, world, bone));
     }
 
     public static LayeredFrame2D FrameOf(PartGeometry part, ResolvedModel model, EvaluatedPose pose) => FrameOf(part, pose.World, pose.Placement, id => model.Rest[id]);

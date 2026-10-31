@@ -326,7 +326,7 @@ public sealed class MigrationReferenceTests
             // Full bone matrices for the wheel fixture: that is where the inherited reflection and scale live.
             Bones = model.Base.Id == "wheel" ? model.Order.ToDictionary(k => k.Id, k => M(pose.Bones[k.Id]), StringComparer.Ordinal) : null,
             Slots = pose.Slots.Count == 0 ? null : [.. pose.Slots.Select(s => new SlotRecord(s.Slot.Id, s.Part?.Id, [s.Color.X, s.Color.Y, s.Color.Z, s.Color.W]))],
-            Sockets = model.Base.Sockets.ToDictionary(s => s.Id, s => Frame(actor.Socket(s)), StringComparer.Ordinal),
+            Sockets = model.Base.Sockets.ToDictionary(s => s.Id, s => Frame(DrawingFrame(actor, s)), StringComparer.Ordinal),
             Parts = [.. model.Parts.Where(p => !p.Hidden).Select(p => Silhouette(p, pose, model, actor))],
         };
         if (entity is null)
@@ -342,7 +342,7 @@ public sealed class MigrationReferenceTests
                 .Select(d => (Catalog.Parts[d.Prop], entity.Sockets[d.Socket]))];
         }
 
-        record.Props = placements.ToDictionary(p => $"{p.Prop.Id}@{p.Socket.Id}", p => PropPoints(p.Prop, actor.Socket(p.Socket)), StringComparer.Ordinal);
+        record.Props = placements.ToDictionary(p => $"{p.Prop.Id}@{p.Socket.Id}", p => PropPoints(p.Prop, DrawingFrame(actor, p.Socket)), StringComparer.Ordinal);
         record.Movement = Bounds(EntityCollision.Movement(entity, Vector2.Zero, c.Facing).Bounds);
         record.Hurt = [.. EntityCollision.Hurt(entity, actor).Select(h => new RegionRecord(h.Id, Bounds(h.Bounds), V2(h.Pose.Translation), V2(h.Pose.XAxis), h.Pose.IsMirrored))];
         record.Attacks = [.. entity.Actions.Values.Where(a => a.Clip.Id == c.Clip).SelectMany(a => a.Hits.Select(h =>
@@ -353,16 +353,25 @@ public sealed class MigrationReferenceTests
         if (entity.Equipment.Any(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null))
         {
             var (point, axis) = EntityCollision.Muzzle(entity, actor);
-            record.Muzzle = new(V(point), V2(axis));
+            var equipped = entity.Equipment.First(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null);
+            record.Muzzle = new(V(point + Vector3.UnitZ * actor.SocketPlacement(equipped.Socket).Layer), V2(axis));
         }
 
         return record;
     }
 
+    // The stored reference describes fixed-camera draw depth. Keep that reference stable while physical frames shed layers.
+    private static Frame3D DrawingFrame(ActorPose actor, ModelSocket socket)
+    {
+        var spatial = actor.Socket(socket);
+        return spatial.WithOrigin(spatial.Origin + Vector3.UnitZ * actor.SocketPlacement(socket).Layer);
+    }
+
     private static SilhouetteRecord Silhouette(PartGeometry part, EvaluatedPose pose, ResolvedModel model, ActorPose actor)
     {
-        var contour = PartContours2D.Contour(part, model, pose)
-            .ConvertAll(actor.Place);
+        var sampled = PartContours2D.Contour(part, model, pose);
+        var contour = Enumerable.Range(0, sampled.Count)
+            .Select(i => actor.Place(sampled[i] + Vector3.UnitZ * sampled.LayerAt(i))).ToList();
         var min = new Vector3(float.PositiveInfinity);
         var max = new Vector3(float.NegativeInfinity);
         var sum = Vector3.Zero;
@@ -377,7 +386,7 @@ public sealed class MigrationReferenceTests
             area += (double)p.X * q.Y - (double)q.X * p.Y;
         }
 
-        return new(part.Id, part.Depth, contour.Count, V(min), V(max), V(sum / contour.Count), (float)Math.Abs(area / 2), V(contour[0]));
+        return new(part.Id, part.Layer, contour.Count, V(min), V(max), V(sum / contour.Count), (float)Math.Abs(area / 2), V(contour[0]));
     }
 
     private static CombatRecord Fight(Scenario s)
@@ -559,7 +568,7 @@ public sealed class MigrationReferenceTests
 
     private sealed record AttackRecord(string Action, string Window, float Start, float Finish, bool Active, float[][] Bounds, float[] Translation, float[] XAxis, bool Mirrored);
 
-    private sealed record SilhouetteRecord(string Id, float Depth, int Count, float[] Min, float[] Max, float[] Centroid, float Area, float[] First);
+    private sealed record SilhouetteRecord(string Id, [property: System.Text.Json.Serialization.JsonPropertyName("depth")] float Layer, int Count, float[] Min, float[] Max, float[] Centroid, float Area, float[] First);
 
     private sealed record CombatRecord(List<HitRecord> Hits, List<EventRecord> Events, List<ActorRecord> Actors, int Bolts);
 

@@ -1,6 +1,7 @@
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Quaternion = System.Numerics.Quaternion;
@@ -61,11 +62,11 @@ public sealed class BladeSwoosh
     /// <paramref name="Axis"/>. A step in the screen plane has the Z axis and a signed turn; a step through depth has its
     /// own axis and a positive turn.
     /// </summary>
-    private readonly record struct Blade(float Time, Vector3 Guard, Vector3 Tip, float Turn, Vector3 Axis)
+    private readonly record struct Blade(float Time, Vector3 Guard, Vector3 Tip, float Turn, Vector3 Axis, float Layer)
     {
         public bool Planar => Axis == Vector3.UnitZ;
     }
-    private readonly record struct Section(float Time, Vector3 Guard, Vector3 Tip);
+    private readonly record struct Section(float Time, Vector3 Guard, Vector3 Tip, float Layer = 0);
 
     private readonly List<Blade> _history = [];
     private readonly List<Section> _sections = [];
@@ -91,7 +92,7 @@ public sealed class BladeSwoosh
     }
 
     /// <summary>Records the blade at <paramref name="time"/>. A new swing (<paramref name="swinging"/> turning on) starts a fresh trail.</summary>
-    public void Record(float time, Vector3 guard, Vector3 tip, bool swinging)
+    public void Record(float time, Vector3 guard, Vector3 tip, bool swinging, float layer = 0)
     {
         _now = time;
         if (swinging)
@@ -108,7 +109,7 @@ public sealed class BladeSwoosh
             }
 
             var (turn, axis) = _history.Count > 0 ? Turn(_history[^1], guard, tip, Sweep) : (0, Vector3.UnitZ);
-            _history.Add(new(time, guard, tip, turn, axis));
+            _history.Add(new(time, guard, tip, turn, axis, layer));
             var oldest = time - Style.HistorySeconds;
             while (_history.Count > 2 && _history[1].Time <= oldest)
             {
@@ -180,10 +181,10 @@ public sealed class BladeSwoosh
             _edge.Clear();
             foreach (var s in _sections)
             {
-                _edge.Add(s.Tip - new Vector3(0, 0, .0005f));
+                _edge.Add(s.Tip);
             }
 
-            mesh.Path(_edge, ColorExtensions.FromHexRgb(style.Ink).WithAlpha(alpha), 0, style.InkWidth);
+            mesh.Path(new PartContour(_edge, layers: [.. _sections.Select(s => s.Layer - .0005f)]), ColorExtensions.FromHexRgb(style.Ink).WithAlpha(alpha), 0, style.InkWidth);
         }
     }
 
@@ -212,8 +213,8 @@ public sealed class BladeSwoosh
         }
         var (n0, f0) = Edge(a, u0);
         var (n1, f1) = Edge(end, u1);
-        mesh.Triangle(n0, f0, n1, color);
-        mesh.Triangle(f0, f1, n1, color);
+        mesh.Triangle(n0, f0, n1, color, a.Layer, a.Layer, end.Layer);
+        mesh.Triangle(f0, f1, n1, color, a.Layer, end.Layer, end.Layer);
     }
 
     private static float Gap(SwooshStyle style, float u) => u >= style.SplitDepth ? 0 : style.SplitWidth * (1 - u / style.SplitDepth);
@@ -328,6 +329,9 @@ public sealed class BladeSwoosh
 
     /// <summary>The blade a fraction <paramref name="u"/> of the way from <paramref name="a"/> to <paramref name="b"/>, turning about their shared pivot or axis.</summary>
     private static Section Rotate(Blade a, Blade b, float u)
+        => RotateSpatial(a, b, u) with { Layer = float.Lerp(a.Layer, b.Layer, Math.Clamp(u, 0, 1)) };
+
+    private static Section RotateSpatial(Blade a, Blade b, float u)
     {
         u = Math.Clamp(u, 0, 1);
         var time = a.Time + (b.Time - a.Time) * u;
@@ -352,5 +356,5 @@ public sealed class BladeSwoosh
     }
 
     private static Section Lerp(Section a, Section b, float u) =>
-        new(float.Lerp(a.Time, b.Time, u), Vector3.Lerp(a.Guard, b.Guard, u), Vector3.Lerp(a.Tip, b.Tip, u));
+        new(float.Lerp(a.Time, b.Time, u), Vector3.Lerp(a.Guard, b.Guard, u), Vector3.Lerp(a.Tip, b.Tip, u), float.Lerp(a.Layer, b.Layer, u));
 }

@@ -275,7 +275,7 @@
       "scaleY": 0.364,
       "offsetX": -0.245,
       "offsetY": 0.021,
-      "depth": 0.014
+      "layer": 0.014
     },
     {
       "id": "far-hind-upper",
@@ -324,7 +324,7 @@
       "scaleX": 0.161,
       "scaleY": 0.37538493,
       "offsetY": 0.13519245,
-      "depth": -0.0035
+      "layer": -0.0035
     },
     {
       "id": "far-hind-paw",
@@ -366,7 +366,7 @@
       "scaleY": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105
+      "layer": -0.0105
     },
     {
       "id": "far-hind-toe-0",
@@ -393,7 +393,7 @@
       "scaleY": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "far-hind-toe-1",
@@ -420,7 +420,7 @@
       "scaleY": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "far-hind-toe-2",
@@ -447,7 +447,7 @@
       "scaleY": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "far-front-upper",
@@ -496,7 +496,7 @@
       "scaleX": 0.161,
       "scaleY": 0.37538493,
       "offsetY": 0.13519247,
-      "depth": -0.0035
+      "layer": -0.0035
     },
     {
       "id": "far-front-paw",
@@ -538,7 +538,7 @@
       "scaleY": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105
+      "layer": -0.0105
     },
     {
       "id": "far-front-toe-0",
@@ -565,7 +565,7 @@
       "scaleY": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "far-front-toe-1",
@@ -592,7 +592,7 @@
       "scaleY": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "far-front-toe-2",
@@ -619,7 +619,7 @@
       "scaleY": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "near-hind-upper",
@@ -668,7 +668,7 @@
       "scaleX": 0.161,
       "scaleY": 0.37538493,
       "offsetY": 0.13519247,
-      "depth": -0.0035
+      "layer": -0.0035
     },
     {
       "id": "near-hind-paw",
@@ -710,7 +710,7 @@
       "scaleY": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105
+      "layer": -0.0105
     },
     {
       "id": "near-hind-toe-0",
@@ -737,7 +737,7 @@
       "scaleY": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "near-hind-toe-1",
@@ -764,7 +764,7 @@
       "scaleY": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "near-hind-toe-2",
@@ -791,7 +791,7 @@
       "scaleY": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "near-front-upper",
@@ -840,7 +840,7 @@
       "scaleX": 0.161,
       "scaleY": 0.37538493,
       "offsetY": 0.13519245,
-      "depth": -0.0035
+      "layer": -0.0035
     },
     {
       "id": "near-front-paw",
@@ -882,7 +882,7 @@
       "scaleY": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105
+      "layer": -0.0105
     },
     {
       "id": "near-front-toe-0",
@@ -909,7 +909,7 @@
       "scaleY": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "near-front-toe-1",
@@ -936,7 +936,7 @@
       "scaleY": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "near-front-toe-2",
@@ -963,7 +963,7 @@
       "scaleY": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "layer": -0.0175
     },
     {
       "id": "body",
@@ -1151,7 +1151,7 @@
       "scaleY": 0.476,
       "offsetX": 0.084,
       "offsetY": -0.014,
-      "depth": -0.168
+      "layer": -0.168
     },
     {
       "id": "frill",
@@ -1226,7 +1226,7 @@
       "scaleY": 0.966,
       "offsetX": -0.154,
       "offsetY": 0.245,
-      "depth": -0.182
+      "layer": -0.182
     },
     {
       "id": "far-brow-horn",
@@ -1257,7 +1257,7 @@
       "scaleY": 0.2016,
       "offsetX": 0.175,
       "offsetY": 0.329,
-      "depth": -0.1785
+      "layer": -0.1785
     },
     {
       "id": "near-brow-horn",
@@ -1292,7 +1292,7 @@
       "scaleY": 0.2072,
       "offsetX": 0.035,
       "offsetY": 0.336,
-      "depth": -0.203
+      "layer": -0.203
     },
     {
       "id": "nose-horn",
@@ -1323,7 +1323,7 @@
       "scaleY": 0.14,
       "offsetX": 0.378,
       "offsetY": 0.14,
-      "depth": -0.203
+      "layer": -0.203
     },
     {
       "id": "eye",
@@ -1351,7 +1351,7 @@
       "scaleY": 0.1008,
       "offsetX": 0.238,
       "offsetY": 0.007,
-      "depth": -0.217
+      "layer": -0.217
     },
     {
       "id": "brow",
@@ -1388,7 +1388,7 @@
       "scaleY": 0.063,
       "offsetX": 0.231,
       "offsetY": 0.077,
-      "depth": -0.217
+      "layer": -0.217
     },
     {
       "id": "mouth",
@@ -1433,7 +1433,7 @@
       "scaleY": 0.056,
       "offsetX": 0.245,
       "offsetY": -0.119,
-      "depth": -0.217
+      "layer": -0.217
     }
   ],
   "materials": {},

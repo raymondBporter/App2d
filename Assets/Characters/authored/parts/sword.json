@@ -131,7 +131,7 @@
       },
       "a": "origin",
       "frame": "origin",
-      "depths": [
+      "vertexZ": [
         0,
         0
       ]

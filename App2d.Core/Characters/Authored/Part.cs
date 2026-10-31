@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Json;
 using System.Diagnostics.CodeAnalysis;
@@ -118,7 +119,7 @@ public sealed record PartLocation
     public string? Control { get; set; }
 
     [JsonIgnore] public Vector2 Position => new(X, Y);
-    [JsonIgnore] public PuppetPoint Point => new(X, Y, Z);
+    [JsonIgnore] public Vector3f Point => new(X, Y, Z);
 
     public void Validate(string field)
     {
@@ -171,7 +172,7 @@ public sealed record Part
     /// <summary>The local location placed on the instance's socket; origin by default.</summary>
     public string Pivot { get; set; } = PartLocation.Origin;
     public float Scale { get; set; } = 1;
-    public PuppetPoint? Point(string name) => name == PartLocation.Origin ? default(PuppetPoint) : Locations.FirstOrDefault(l => l.Id == name)?.Point;
+    public Vector3f? Point(string name) => name == PartLocation.Origin ? default(Vector3f) : Locations.FirstOrDefault(l => l.Id == name)?.Point;
     /// <summary>One of <see cref="PartPayloads"/>.</summary>
     public string Payload { get; set; } = PartPayloads.Static;
     /// <summary>One of <see cref="PartFittings"/>: what an instance's leaf fit does to this composite asset.</summary>

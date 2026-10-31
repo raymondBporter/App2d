@@ -27,24 +27,11 @@ public readonly partial record struct CubicBezier2D : ICurve2D
     public static CubicBezier2D FromHermite(Vector2 start, Vector2 end, Vector2 startTangent, Vector2 endTangent) =>
         Builder.Create(start, start + startTangent / 3f, end - endTangent / 3f, end);
 
-    public Vector2 Evaluate(float amount)
-    {
-        amount = Clamping.Clamp01(amount);
-        var inverse = 1f - amount;
-        return inverse * inverse * inverse * Start +
-            3f * inverse * inverse * amount * Control1 +
-            3f * inverse * amount * amount * Control2 +
-            amount * amount * amount * End;
-    }
+    public Vector2 Evaluate(float amount) =>
+        BezierMath.Cubic<Vector2f, float>(new(Start), new(Control1), new(Control2), new(End), amount).ToVector2();
 
-    public Vector2 EvaluateDerivative(float amount)
-    {
-        amount = Clamping.Clamp01(amount);
-        var inverse = 1f - amount;
-        return 3f * inverse * inverse * (Control1 - Start) +
-            6f * inverse * amount * (Control2 - Control1) +
-            3f * amount * amount * (End - Control2);
-    }
+    public Vector2 EvaluateDerivative(float amount) =>
+        BezierMath.CubicDerivative<Vector2f, float>(new(Start), new(Control1), new(Control2), new(End), amount).ToVector2();
 
     /// <summary>Splits at a finite parameter in [0, 1], preserving the exact curve on each side.</summary>
     public (CubicBezier2D Left, CubicBezier2D Right) Split(float amount)

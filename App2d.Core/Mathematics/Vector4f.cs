@@ -7,6 +7,7 @@ public readonly record struct Vector4f : IVector<Vector4f, float>
 {
     private readonly Vector4 _value;
 
+    [System.Text.Json.Serialization.JsonConstructor]
     public Vector4f(float x, float y, float z, float w) : this(new Vector4(x, y, z, w)) { }
     public Vector4f(Vector4 value) => _value = value;
     public float X => _value.X;
@@ -36,6 +37,7 @@ public readonly record struct Vector4f : IVector<Vector4f, float>
     public static Vector4f Abs(Vector4f value) => new(Vector4.Abs(value._value));
     public static bool IsFinite(Vector4f value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z) && float.IsFinite(value.W);
 
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector3f XYZ => new(X, Y, Z);
     public Vector4 ToVector4() => _value;
     public Vector4d ToVector4d() => new(X, Y, Z, W);

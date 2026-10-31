@@ -134,7 +134,7 @@ public sealed class GeometryJson2DTests
             Name = "Test prop",
             Geometry =
             [
-                new PartGeometry { A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new PolylineCurve2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }.Validated(), Depths = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },
+                new PartGeometry { A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new PolylineCurve2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }.Validated(), VertexZ = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },
                 new PartGeometry { A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }.Validated(), Material = new() { Fill = "#c8b18a", Outline = new() } }
             ]
         };
@@ -144,7 +144,7 @@ public sealed class GeometryJson2DTests
         Assert.Contains("\"kind\": \"simple-polygon\"", typed);
         var restored = Part.FromJson(typed);
         Assert.Equal(typed, restored.ToJson());
-        Assert.Equal([.1f, .2f, .3f], restored.Geometry[0].Depths);
+        Assert.Equal([.1f, .2f, .3f], restored.Geometry[0].VertexZ);
         Assert.IsType<PolylineCurve2D>(restored.Geometry[0].Geometry);
         Assert.IsType<SimplePolygon2D>(restored.Geometry[1].Geometry);
         var oldField = JsonNode.Parse(typed)!.AsObject();

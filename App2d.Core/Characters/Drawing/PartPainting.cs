@@ -15,7 +15,7 @@ namespace App2d.Core.Characters.Drawing;
 /// <summary>Paint lives in rest artwork coordinates and follows the same triangles as fill, including folding membranes.</summary>
 internal static class PartPainting
 {
-    public static void Add(CharacterMesh mesh, PartGeometry part, LayeredFrame2D frame, IReadOnlyList<Vector3> contour, TriangleMesh2D? triangles, Frame3D? spatial = null, float physicalZ = 0, Color4b? tint = null)
+    public static void Add(CharacterMesh mesh, PartGeometry part, LayeredFrame2D frame, PartContour contour, TriangleMesh2D? triangles, Frame3D? spatial = null, float physicalZ = 0, Color4b? tint = null)
     {
         if (part.RenderMaterial.Paint is not { } paint)
         {
@@ -23,7 +23,7 @@ internal static class PartPainting
         }
 
         Vector3 PlaceSpatial(Vector3 point) => spatial is { } placed
-            ? placed.TransformPoint(new(point.X, point.Y, physicalZ)) + Vector3.UnitZ * point.Z : point;
+            ? placed.TransformPoint(point + Vector3.UnitZ * physicalZ) : point;
         for (var layer = 0; layer < paint.Count; layer++)
         {
             var patch = paint[layer];
@@ -35,8 +35,8 @@ internal static class PartPainting
                 var points = patch.Points.ConvertAll(p => frame.Frame.TransformPoint(bounds.Center + p * new Vector2(bounds.Width, bounds.Height)));
                 var outline = contour.Select(p => p.XY).ToArray();
                 var clipped = PolygonClipping2D.ClipConvex(points, outline);
-                var z = frame.Layer - bias;
-                mesh.Polygon([.. clipped.Select(p => PlaceSpatial(new Vector3(p, z)))], color, null, 0);
+                var points3D = new PartContour([.. clipped.Select(p => PlaceSpatial(new Vector3(p, 0)))], frame.Layer - bias);
+                mesh.Polygon(points3D, color, null, 0);
                 continue;
             }
             foreach (var (ia, ib, ic) in MeshTopology.Triangles(triangles.Indices))
@@ -48,7 +48,7 @@ internal static class PartPainting
                 var ab = b - a;
                 var ac = c - a;
                 var determinant = ab.Cross(ac);
-                Vector3 Place(Vector2 localPoint)
+                (Vector3 Position, float Layer) Place(Vector2 localPoint)
                 {
                     var d = localPoint - a;
                     var u = d.Cross(ac) / determinant;
@@ -56,12 +56,13 @@ internal static class PartPainting
                     var point = contour[ia] * (1 - u - v) + contour[ib] * u + contour[ic] * v;
                     if (spatial is { } placed)
                     {
-                        var z = (part.Depths?[ia] ?? 0) * (1 - u - v) + (part.Depths?[ib] ?? 0) * u + (part.Depths?[ic] ?? 0) * v;
-                        point = placed.TransformPoint(new(point.X, point.Y, physicalZ + z)) + Vector3.UnitZ * (point.Z - z);
+                        point = placed.TransformPoint(point + Vector3.UnitZ * physicalZ);
                     }
-                    return point - new Vector3(0, 0, bias);
+                    var layer = contour.LayerAt(ia) * (1 - u - v) + contour.LayerAt(ib) * u + contour.LayerAt(ic) * v - bias;
+                    return (point, layer);
                 }
-                mesh.Polygon([.. clipped.Select(Place)], color, null, 0);
+                var placedPoints = clipped.Select(Place).ToArray();
+                mesh.Polygon(new PartContour([.. placedPoints.Select(p => p.Position)], layers: [.. placedPoints.Select(p => p.Layer)]), color, null, 0);
             }
         }
     }

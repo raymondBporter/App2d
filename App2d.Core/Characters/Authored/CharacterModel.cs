@@ -65,7 +65,7 @@ public sealed record ModelMeasure
 
 /// <summary>
 /// A named attachment frame for faces, equipment and collision. Its origin is Control plus (OffsetX, OffsetY) turned by
-/// Frame's accumulated rotation, plus OffsetZ in depth. Angle supplies its rest XY direction; orient tracks add local 3D rotation. Not structural.
+/// Frame's accumulated rotation, plus a drawing-layer offset. Angle supplies its rest XY direction; orient tracks add local 3D rotation. Not structural.
 /// </summary>
 public sealed record ModelSocket
 {
@@ -77,7 +77,7 @@ public sealed record ModelSocket
     public string? Toward { get; set; }
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
-    public float OffsetZ { get; set; }
+    public float Layer { get; set; }
     public float Angle { get; set; }
     /// <summary>The slot contract (P10b): the <see cref="Part.Usage"/> of the parts this socket takes; null takes any.</summary>
     public string? Usage { get; set; }
@@ -325,7 +325,7 @@ public sealed class CharacterModel
             }
             new Limit(-100, 100).Check(socket.OffsetX, $"{owner} socket '{socket.Id}' offsetX");
             new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
-            new Limit(-100, 100).Check(socket.OffsetZ, $"{owner} socket '{socket.Id}' offsetZ");
+            new Limit(-100, 100).Check(socket.Layer, $"{owner} socket '{socket.Id}' layer");
             new Limit(-10, 10).Check(socket.Angle, $"{owner} socket '{socket.Id}' angle");
             if (socket.Usage is not null)
             {

@@ -112,14 +112,15 @@ public sealed class PartAttachmentDrawingTests
         var cuff = frame("cuff");
         Assert.InRange(Vector2.Distance(cuff.XAxis, Vector2.Normalize(Vector2.Transform(new(MathF.Cos(.3f), MathF.Sin(.3f)), placement.Frame.Matrix) - placement.Origin.XY) * cuff.XAxis.Length()), 0, 1e-4f);
         var palm = PartContours2D.Contour(attachment.Parts[0], world, frame, world, frame);
-        TestModels.Near(placement.Origin, new(palm.Average(p => p.X), palm.Average(p => p.Y), palm.Average(p => p.Z)), 1e-3f);
+        TestModels.Near(placement.Origin with { Z = 0 }, new(palm.Average(p => p.X), palm.Average(p => p.Y), palm.Average(p => p.Z)), 1e-3f);
+        Assert.Equal(placement.Layer, palm.LayerAt(0));
         var seam = PartContours2D.Contour(attachment.Parts[1], world, frame, world, frame);
-        TestModels.Near(placement.Origin, seam[0], 1e-5f);
-        TestModels.Near(world("cuff"), seam[^1], 1e-5f);
+        TestModels.Near(placement.Origin, TestModels.DrawPoint(seam, 0), 1e-5f);
+        TestModels.Near(world("cuff"), TestModels.DrawPoint(seam, seam.Count - 1), 1e-5f);
         var badge = PartAttachment2D.FrameOf(attachment.Parts[2], world, frame);
         TestModels.Near(world("cuff"), badge.Origin, 1e-5f);
         var lifted = PartPlacement3D.Extend(placement);
-        TestModels.Near(placement.At(new Vector3(.03f, .14f, 0)), lifted.TransformPoint(new(.03f, .14f, 0)), 1e-5f);
+        TestModels.Near(placement.At(new Vector3(.03f, .14f, 0)) with { Z = 0 }, lifted.TransformPoint(new(.03f, .14f, 0)), 1e-5f);
         // The instance's fit and mirror are in the placement: X stretched by 2 × 1.5 and reflected, Y by 1.5.
         Assert.Equal(3, placement.XAxis.Length(), 4);
         Assert.Equal(1.5f, placement.YAxis.Length(), 4);

@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
@@ -12,7 +13,7 @@ internal static class MeshDrawing
 {
     private static readonly Vector3 LightDirection = Vector3.Normalize(new(-.3f, .5f, -1));
 
-    public static void Add(CharacterMesh mesh, PartMesh solid, RenderMaterialDefinition2D material, string inkColor, float lineWidth, Func<PuppetPoint, Vector3> place, Frame3D? frame = null, Color4b? tint = null)
+    public static void Add(CharacterMesh mesh, PartMesh solid, RenderMaterialDefinition2D material, string inkColor, float lineWidth, Func<Vector3f, Vector3> place, Frame3D? frame = null, Color4b? tint = null)
     {
         var handedness = 1;
         if (frame is { } placed && !Orientation3D.TryGetHandedness(placed.XAxis, placed.YAxis, placed.ZAxis, out handedness))
@@ -55,10 +56,12 @@ internal static class MeshDrawing
             return;
         }
 
-        var bias = new Vector3(0, 0, .0005f);
+        var layer = mesh.Layer;
+        mesh.Layer -= .0005f;
         foreach (var edge in analysis.FeatureEdges(-Vector3.UnitZ, .7f, 1e-5f))
         {
-            mesh.Line(vertices[edge.A] - bias, vertices[edge.B] - bias, outlineWidth, PuppetDrawing.Tinted(ink, tint));
+            mesh.Line(vertices[edge.A], vertices[edge.B], outlineWidth, PuppetDrawing.Tinted(ink, tint));
         }
+        mesh.Layer = layer;
     }
 }

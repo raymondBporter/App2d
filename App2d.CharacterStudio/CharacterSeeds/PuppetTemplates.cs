@@ -99,7 +99,7 @@ public static class PuppetTemplates
             A = Humanoid.Head,
             ScaleX = .58f,
             ScaleY = .58f,
-            Depth = -.12f
+            Layer = -.12f
         });
         foreach (var part in puppet.Parts)
         {

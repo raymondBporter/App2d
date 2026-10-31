@@ -107,12 +107,12 @@ internal static class TestModels
         Constraints = [new ModelChain { Id = "rod", Root = "piston", Joint = "rod-elbow", End = "rod-end", Bend = 1 }],
         Parts =
         [
-            new() { Id = "bed", A = "frame", Geometry = Rectangle2D.Builder.FromSize(2.6f, .12f, new(.8f, 0)), Material = new() { Fill = "#8a8f94", Outline = new() }, Depth = .05f },
-            new() { Id = "hub-disc", A = "hub", Geometry = Ellipse2D.Builder.Create(new(.5f, .5f)), Material = new() { Fill = "#c9d3d8", Outline = new() }, Depth = .02f },
-            new() { Id = "crank", A = "hub", B = "crank-pin", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Depth = -.01f },
-            new() { Id = "rod-upper", A = "piston", B = "rod-elbow", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Depth = -.02f },
-            new() { Id = "rod-lower", A = "rod-elbow", B = "rod-end", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Depth = -.02f },
-            new() { Id = "piston-head", A = "piston", Geometry = RoundedRectangle2D.Builder.FromSize(.3f, .3f, .05f), Material = new() { Fill = "#d6c9a5", Outline = new() }, Depth = -.03f },
+            new() { Id = "bed", A = "frame", Geometry = Rectangle2D.Builder.FromSize(2.6f, .12f, new(.8f, 0)), Material = new() { Fill = "#8a8f94", Outline = new() }, Layer = .05f },
+            new() { Id = "hub-disc", A = "hub", Geometry = Ellipse2D.Builder.Create(new(.5f, .5f)), Material = new() { Fill = "#c9d3d8", Outline = new() }, Layer = .02f },
+            new() { Id = "crank", A = "hub", B = "crank-pin", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Layer = -.01f },
+            new() { Id = "rod-upper", A = "piston", B = "rod-elbow", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Layer = -.02f },
+            new() { Id = "rod-lower", A = "rod-elbow", B = "rod-end", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Layer = -.02f },
+            new() { Id = "piston-head", A = "piston", Geometry = RoundedRectangle2D.Builder.FromSize(.3f, .3f, .05f), Material = new() { Fill = "#d6c9a5", Outline = new() }, Layer = -.03f },
         ],
     };
 
@@ -222,6 +222,10 @@ internal static class TestModels
         Loop = true,
         Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
     };
+
+    // Fixed-camera reference comparisons combine the two independent channels at the rendering boundary.
+    public static Vector3 DrawPoint(App2d.Core.Characters.Geometry.PartContour contour, int index) =>
+        contour[index] + Vector3.UnitZ * contour.LayerAt(index);
 
     public static void Near(Vector3 expected, Vector3 actual, float tolerance = 1e-4f, string what = "") =>
         Assert.True(Vector3.Distance(expected, actual) <= tolerance, $"{what}: expected {expected}, found {actual}");

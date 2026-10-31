@@ -44,7 +44,7 @@ internal sealed partial class ProofRenders
                     var placed = new ActorPose(pose, Vector2.Zero, 1);
                     foreach (var (prop, socket) in PersonLoadout.Dressed(clip, at, PersonGear.Sword, catalog.Entities["hero"]))
                     {
-                        drawing.AddAttachment(catalog.Parts[prop], placed.Socket(model.Base.Sockets.First(s => s.Id == socket)));
+                        drawing.AddAttachment(catalog.Parts[prop], placed, model.Base.Sockets.First(s => s.Id == socket));
                     }
 
                     _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(1200, 750, new(column * 200 + 100, row * 375 + 325), 105), Matrix.CreateScale(row == 0 ? 1 : -1, 1, 1));

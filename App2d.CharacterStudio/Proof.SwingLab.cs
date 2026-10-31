@@ -22,7 +22,7 @@ internal sealed partial class ProofRenders
     /// <summary>A little further out than the move review, so an overhead swoosh stays in frame.</summary>
     private const float LabPpu = 120, LabGround = .9f;
     /// <summary>The swoosh sits just behind the blade so the sword always draws over it.</summary>
-    private static readonly Vector3 SwooshDepth = new(0, 0, .01f);
+    private const float SwooshLayerOffset = .01f;
 
     private bool RenderSwingLab()
     {
@@ -54,7 +54,7 @@ internal sealed partial class ProofRenders
             var placed = new ActorPose(pose, Vector2.Zero, 1);
             foreach (var (prop, socket) in PersonLoadout.Dressed(clip, seconds, PersonGear.Sword, catalog.Entities["hero"]))
             {
-                drawing.AddAttachment(worn[prop], placed.Socket(sockets[socket]));
+                drawing.AddAttachment(worn[prop], placed, sockets[socket]);
             }
 
             trail.Clear();
@@ -66,7 +66,7 @@ internal sealed partial class ProofRenders
                 var backhand = index % 2 == 1 || index == 0 && PersonLoadout.Backhand(model, clip, worn[PersonLoadout.Sword], sockets[Humanoid.SwordSocket]);
                 swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary;
                 swoosh.Sweep = backhand ? 1 : -1;
-                swoosh.Record(clock, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(clip, seconds));
+                swoosh.Record(clock, guard, tip, PersonLoadout.Swooshing(clip, seconds), placed.SocketPlacement(sockets[Humanoid.SwordSocket]).Layer + SwooshLayerOffset);
                 swoosh.Build(trail);
             }
             if (shape && ShapesOf(clip).FirstOrDefault(w => seconds >= w.Start - 1e-4f && seconds < w.Finish - 1e-4f).Hull is { } hull)

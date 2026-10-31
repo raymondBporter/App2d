@@ -7,14 +7,8 @@ namespace App2d.Core.Geometry.Curves;
 /// Stroke width, caps, and joins belong to rendering; geometry queries describe the path itself.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Serialization.GeometryJsonConverterFactory))]
-public interface ICurve2D : IGeometryValue2D
+public interface ICurve2D : IGeometryValue2D, ICurve<Vector2, float>
 {
-    /// <summary>Returns the point at <paramref name="amount"/>. Implementations clamp to [0, 1].</summary>
-    Vector2 Evaluate(float amount);
-
-    /// <summary>Returns the first derivative with respect to normalized progress.</summary>
-    Vector2 EvaluateDerivative(float amount);
-
     /// <summary>Returns the nonnegative distance from a point to the finite curve, including its endpoints.</summary>
     float Distance(Vector2 point);
 }

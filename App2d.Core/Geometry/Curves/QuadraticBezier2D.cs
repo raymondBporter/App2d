@@ -20,18 +20,11 @@ public readonly partial record struct QuadraticBezier2D : ICurve2D
     public Vector2 Control { get; init; }
     public Vector2 End { get; init; }
 
-    public Vector2 Evaluate(float amount)
-    {
-        amount = Clamping.Clamp01(amount);
-        var inverse = 1f - amount;
-        return inverse * inverse * Start + 2f * inverse * amount * Control + amount * amount * End;
-    }
+    public Vector2 Evaluate(float amount) =>
+        BezierMath.Quadratic<Vector2f, float>(new(Start), new(Control), new(End), amount).ToVector2();
 
-    public Vector2 EvaluateDerivative(float amount)
-    {
-        amount = Clamping.Clamp01(amount);
-        return 2f * ((1f - amount) * (Control - Start) + amount * (End - Control));
-    }
+    public Vector2 EvaluateDerivative(float amount) =>
+        BezierMath.QuadraticDerivative<Vector2f, float>(new(Start), new(Control), new(End), amount).ToVector2();
 
     public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 64);
 }

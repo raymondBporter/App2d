@@ -80,7 +80,7 @@ public sealed class BehaviorConsolidationTests
         var point = new Vector2(.13f, .09f);
         Assert.True(Vector2.Distance(frame.At(point).XY, collider.Place(placed).TransformPoint(point)) < 1e-5f);
         var before = collider.Region(placed);
-        shape.Depth = -3;
+        shape.Layer = -3;
         Assert.Equal(before.Pose, collider.Region(placed).Pose);
 
         var drawing = new PuppetDrawing();

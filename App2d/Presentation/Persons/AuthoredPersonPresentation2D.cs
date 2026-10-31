@@ -32,7 +32,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     private readonly BladeSwoosh _swoosh = new();
     private readonly Dictionary<MotionClip, bool> _backhands = [];
     /// <summary>The swoosh sits just behind the blade so the sword always draws over it.</summary>
-    private static readonly Vector3 SwooshDepth = new(0, 0, .01f);
+    private const float SwooshLayerOffset = .01f;
     private readonly float _halfHeight, _worldUnitsPerModelUnit;
     private PersonState2D _state;
     private double _clock, _stateClock = double.NaN;
@@ -195,7 +195,8 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         _swoosh.Sweep = backhand ? 1 : -1;
         _swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary;
         var (guard, tip) = PersonLoadout.Blade(pose, sword, socket);
-        _swoosh.Record((float)_clock, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(clip, seconds));
+        var layer = new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(socket).Layer + SwooshLayerOffset;
+        _swoosh.Record((float)_clock, guard, tip, PersonLoadout.Swooshing(clip, seconds), layer);
     }
 
     public void Dispose() => _scene.Remove(_visual);

@@ -25,7 +25,7 @@ public sealed partial class Renderer2D
         var local = new ActorPose(pose, System.Numerics.Vector2.Zero, 1);
         foreach (var (prop, socket) in shader.Props)
         {
-            _authoredDrawing.AddAttachment(prop, local.Socket(socket));
+            _authoredDrawing.AddAttachment(prop, local, socket);
         }
 
         var m = visual.Transform.Matrix * _camera.WorldToDeviceMatrix;

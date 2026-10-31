@@ -3,6 +3,9 @@ using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Curves;
+using App2d.Core.Mathematics;
+using System.Numerics;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using ImGuiNET;
@@ -102,7 +105,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         }
         var materialOverridden = overrides?.Material;
         MaterialAnimationFields.Draw(part, change);
-        if (part.Geometry is ICurve2D)
+        if (part.Geometry is ICurve2D || part.SpatialCurve is not null)
         {
             if (!Marked("Stroke width", materialOverridden?.StrokeWidth is not null, () => overrides!.StripMaterial(m => m with { StrokeWidth = null })))
             {
@@ -224,6 +227,19 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         // Feature inspectors decide their own applicability (plan section 3.10): a part shows a feature's rows only when its payload or geometry has it (a face is a library part instance since P7c).
         if (overrides is null)
         {
+            if (part.SpatialCurve is { } spatialCurve)
+            {
+                var points = SpatialCurveControlPoints.Get(spatialCurve).ToArray();
+                for (var i = 0; i < points.Length; i++)
+                {
+                    var point = points[i].ToVector3();
+                    if (ImGui.DragFloat3($"Curve point {i + 1} XYZ", ref point, .005f))
+                    {
+                        points[i] = new(point);
+                        change(p => p.SpatialCurve = SpatialCurveControlPoints.With(spatialCurve, points));
+                    }
+                }
+            }
             var angle = float.RadiansToDegrees(part.Angle);
             if (Ui.Drag("Angle (degrees)", ref angle, 1, -720, 720)) change(p => p.Angle = float.DegreesToRadians(angle));
             if (part.Mesh is { } mesh)
@@ -242,20 +258,20 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                     for (var i = 0; i < points.Count; i++)
                     {
                         var index = i;
-                        var xy = points[i].XY;
+                        var xy = points[i].XY.ToVector2();
                         if (Ui.Drag2($"Outline point {i + 1}", ref xy, .005f, -100, 100))
                             change(p => p.Mesh!.Outline![index] = p.Mesh.Outline[index] with { X = xy.X, Y = xy.Y });
                         if (ImGui.SmallButton($"Insert after##mesh-{i}"))
-                            change(p => p.Mesh!.Outline!.Insert(index + 1, PuppetPoint.From((points[index].XYZ + points[(index + 1) % points.Count].XYZ) / 2)));
+                            change(p => p.Mesh!.Outline!.Insert(index + 1, (points[index] + points[(index + 1) % points.Count]) / 2));
                         ImGui.SameLine();
                         if (Ui.Button($"Remove##mesh-{i}", points.Count > 3)) change(p => p.Mesh!.Outline!.RemoveAt(index));
                     }
                 }
             }
-            var layer = new CharacterLayer2D(part.Depth);
+            var layer = new CharacterLayer2D(part.Layer);
             if (CharacterUi.CharacterLayer("Geometry layer offset", ref layer, -16, 16, offset: true))
             {
-                change(p => p.Depth = layer.Order);
+                change(p => p.Layer = layer.Order);
             }
 
             Ui.Help("Offsets the shape from its attached control's layer.");

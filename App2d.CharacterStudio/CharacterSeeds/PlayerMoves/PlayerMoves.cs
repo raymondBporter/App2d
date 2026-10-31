@@ -50,7 +50,7 @@ internal static partial class PlayerMoves
             Frame = Humanoid.Chest,
             OffsetX = SheathGrip.X,
             OffsetY = SheathGrip.Y,
-            OffsetZ = .2f,
+            Layer = .2f,
             Angle = SheathAngle
         },
         new ModelSocket()
@@ -60,7 +60,7 @@ internal static partial class PlayerMoves
             Frame = Humanoid.Chest,
             OffsetX = BackViewGrip.X,
             OffsetY = BackViewGrip.Y,
-            OffsetZ = -.2f,
+            Layer = -.2f,
             Angle = BackViewAngle
         },
         new ModelSocket()

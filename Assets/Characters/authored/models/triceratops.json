@@ -806,7 +806,7 @@
       "scaleY": 0.52,
       "offsetX": -0.35,
       "offsetY": 0.03,
-      "depth": 0.02
+      "layer": 0.02
     },
     {
       "id": "far-hind-upper",
@@ -855,7 +855,7 @@
       "scaleX": 0.23,
       "scaleY": 0.5362642,
       "offsetY": 0.19313207,
-      "depth": -0.005
+      "layer": -0.005
     },
     {
       "id": "far-hind-paw",
@@ -897,7 +897,7 @@
       "scaleY": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
-      "depth": -0.015
+      "layer": -0.015
     },
     {
       "id": "far-hind-toe-0",
@@ -924,7 +924,7 @@
       "scaleY": 0.065,
       "offsetX": -0.08,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "far-hind-toe-1",
@@ -951,7 +951,7 @@
       "scaleY": 0.065,
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "far-hind-toe-2",
@@ -978,7 +978,7 @@
       "scaleY": 0.065,
       "offsetX": 0.09,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "far-front-upper",
@@ -1027,7 +1027,7 @@
       "scaleX": 0.23,
       "scaleY": 0.5362642,
       "offsetY": 0.19313209,
-      "depth": -0.005
+      "layer": -0.005
     },
     {
       "id": "far-front-paw",
@@ -1069,7 +1069,7 @@
       "scaleY": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
-      "depth": -0.015
+      "layer": -0.015
     },
     {
       "id": "far-front-toe-0",
@@ -1096,7 +1096,7 @@
       "scaleY": 0.065,
       "offsetX": -0.08,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "far-front-toe-1",
@@ -1123,7 +1123,7 @@
       "scaleY": 0.065,
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "far-front-toe-2",
@@ -1150,7 +1150,7 @@
       "scaleY": 0.065,
       "offsetX": 0.09,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "near-hind-upper",
@@ -1199,7 +1199,7 @@
       "scaleX": 0.23,
       "scaleY": 0.5362642,
       "offsetY": 0.19313209,
-      "depth": -0.005
+      "layer": -0.005
     },
     {
       "id": "near-hind-paw",
@@ -1241,7 +1241,7 @@
       "scaleY": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
-      "depth": -0.015
+      "layer": -0.015
     },
     {
       "id": "near-hind-toe-0",
@@ -1268,7 +1268,7 @@
       "scaleY": 0.065,
       "offsetX": -0.08,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "near-hind-toe-1",
@@ -1295,7 +1295,7 @@
       "scaleY": 0.065,
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "near-hind-toe-2",
@@ -1322,7 +1322,7 @@
       "scaleY": 0.065,
       "offsetX": 0.09,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "near-front-upper",
@@ -1371,7 +1371,7 @@
       "scaleX": 0.23,
       "scaleY": 0.5362642,
       "offsetY": 0.19313207,
-      "depth": -0.005
+      "layer": -0.005
     },
     {
       "id": "near-front-paw",
@@ -1413,7 +1413,7 @@
       "scaleY": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
-      "depth": -0.015
+      "layer": -0.015
     },
     {
       "id": "near-front-toe-0",
@@ -1440,7 +1440,7 @@
       "scaleY": 0.065,
       "offsetX": -0.08,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "near-front-toe-1",
@@ -1467,7 +1467,7 @@
       "scaleY": 0.065,
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "near-front-toe-2",
@@ -1494,7 +1494,7 @@
       "scaleY": 0.065,
       "offsetX": 0.09,
       "offsetY": -0.055,
-      "depth": -0.025
+      "layer": -0.025
     },
     {
       "id": "body",
@@ -1682,7 +1682,7 @@
       "scaleY": 0.68,
       "offsetX": 0.12,
       "offsetY": -0.02,
-      "depth": -0.24
+      "layer": -0.24
     },
     {
       "id": "frill",
@@ -1757,7 +1757,7 @@
       "scaleY": 1.38,
       "offsetX": -0.22,
       "offsetY": 0.35,
-      "depth": -0.26
+      "layer": -0.26
     },
     {
       "id": "far-brow-horn",
@@ -1788,7 +1788,7 @@
       "scaleY": 0.36,
       "offsetX": 0.25,
       "offsetY": 0.47,
-      "depth": -0.255
+      "layer": -0.255
     },
     {
       "id": "near-brow-horn",
@@ -1823,7 +1823,7 @@
       "scaleY": 0.37,
       "offsetX": 0.05,
       "offsetY": 0.48,
-      "depth": -0.29
+      "layer": -0.29
     },
     {
       "id": "nose-horn",
@@ -1854,7 +1854,7 @@
       "scaleY": 0.25,
       "offsetX": 0.54,
       "offsetY": 0.2,
-      "depth": -0.29
+      "layer": -0.29
     },
     {
       "id": "eye",
@@ -1882,7 +1882,7 @@
       "scaleY": 0.12,
       "offsetX": 0.34,
       "offsetY": 0.01,
-      "depth": -0.31
+      "layer": -0.31
     },
     {
       "id": "brow",
@@ -1919,7 +1919,7 @@
       "scaleY": 0.09,
       "offsetX": 0.33,
       "offsetY": 0.11,
-      "depth": -0.31
+      "layer": -0.31
     },
     {
       "id": "mouth",
@@ -1964,7 +1964,7 @@
       "scaleY": 0.08,
       "offsetX": 0.35,
       "offsetY": -0.17,
-      "depth": -0.31
+      "layer": -0.31
     }
   ],
   "materials": {},

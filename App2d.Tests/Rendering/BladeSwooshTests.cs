@@ -6,6 +6,27 @@ namespace App2d.Tests.Rendering;
 
 public sealed class BladeSwooshTests
 {
+    [Fact]
+    public void DrawingLayersDoNotChangeTheRecordedSpatialPath()
+    {
+        CharacterMesh Build(float layer)
+        {
+            var swoosh = new BladeSwoosh();
+            var (firstGuard, firstTip) = At(0);
+            var (lastGuard, lastTip) = At(75);
+            swoosh.Record(0, firstGuard, firstTip, true, layer);
+            swoosh.Record(.1f, lastGuard, lastTip, true, layer + .5f);
+            var mesh = new CharacterMesh();
+            swoosh.Build(mesh);
+            return mesh;
+        }
+        var first = Build(0).Vertices.ToArray();
+        var second = Build(8).Vertices.ToArray();
+        Assert.NotEmpty(first);
+        Assert.Equal(first.Select(v => v.Position), second.Select(v => v.Position));
+        Assert.All(first.Zip(second), pair => Assert.Equal(8, pair.Second.Layer - pair.First.Layer, 4));
+    }
+
     private static (Vector3 Guard, Vector3 Tip) At(float degrees)
     {
         var (s, c) = MathF.SinCos(float.DegreesToRadians(degrees));

@@ -30,7 +30,7 @@ public static class PersonTemplate
         instance.X = .065f;
         instance.FitX = head.ScaleX;
         instance.FitY = head.ScaleY;
-        instance.Layer = head.Depth - .002f;
+        instance.Layer = head.Layer - .002f;
         BindFace(model);
         var looks = LookPreset.ReadFrom(model);
         foreach (var (look, word) in new[] { ("slate", "focused"), ("ember", "determined"), ("night", "smug") })

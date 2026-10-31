@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
@@ -36,7 +37,7 @@ internal static class ModelCurveInspector
         }
 
         Ui.Help("Draw the rest curve here. Follow attaches a point to a normal rig control, preserving its rest offset. Animate those controls in the animation editor.");
-        var points = PartCurves2D.ControlPoints(curve);
+        var points = CurveControlPoints2D.Get(curve);
         for (var i = 0; i < points.Count; i++)
         {
             var index = i;
@@ -47,7 +48,7 @@ internal static class ModelCurveInspector
             {
                 var edited = points.ToArray();
                 edited[index] = point;
-                change(p => p.Geometry = PartCurves2D.WithControlPoints(curve, edited));
+                change(p => p.Geometry = CurveControlPoints2D.With(curve, edited));
             }
             ModelPointBindingInspector.Draw(part, index, controls, change);
             ImGui.PopID();

@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -55,7 +56,7 @@ public static class AppearanceAuthoring
     }
 
     /// <summary>Build and validate before replacing anything, so an invalid outline leaves the last good drawing intact.</summary>
-    public static void Cutout(Part art, int index, IEnumerable<PuppetPoint> points, float thickness)
+    public static void Cutout(Part art, int index, IEnumerable<Vector3f> points, float thickness)
     {
         var old = art.Geometry[index];
         var mesh = PartGeometryBuilder.Extrude(points, thickness, old.RenderMaterial.Fill!);

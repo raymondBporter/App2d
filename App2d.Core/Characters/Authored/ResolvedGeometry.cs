@@ -56,7 +56,7 @@ public class ResolvedGeometry
     public string Binding => Definition.Binding;
     public ModelSocket? Socket { get; }
     public ResolvedEquipment? Equipment { get; }
-    public PuppetPoint PropPoint { get; }
+    public Vector3f PropPoint { get; }
     public float RestSpan { get; }
 
     /// <summary>The composed frame supplies drawing and collision. Depth only affects drawing order.</summary>

@@ -44,8 +44,9 @@ public sealed class CutoutAttachmentTests
         ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3.Zero, MathF.PI / 2);
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
         bound = PartContours2D.Contour(part, pose.World, id => resolved.Rest[id]);
-        Assert.True(Vector3.Distance(new(2, 0, .3f), bound[1]) < 1e-5f);
-        Assert.True(Vector3.Distance(new(1, 0, .3f), bound[2]) < 1e-5f);
+        Assert.True(Vector3.Distance(new(2, 0, .3f), TestModels.DrawPoint(bound, 1)) < 1e-5f);
+        Assert.True(Vector3.Distance(new(1, 0, .3f), TestModels.DrawPoint(bound, 2)) < 1e-5f);
+        Assert.All(bound, p => Assert.Equal(0, p.Z));
         Assert.Equal(rigid[0], bound[0]);
         var original = PartAttachment2D.ArtworkPoint(part, 2, bound[2].XY, pose.World, id => resolved.Rest[id]);
         Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[2], original) < 1e-5f);
@@ -148,7 +149,7 @@ public sealed class CutoutAttachmentTests
     {
         var model = Model();
         var part = model.Parts[0];
-        part.Depth = .1f;
+        part.Layer = .1f;
         if (!bound)
         {
             part.Bindings = null;
@@ -163,7 +164,7 @@ public sealed class CutoutAttachmentTests
         var painted = drawing.Mesh.Vertices.ToArray().Where(v => v.Color.R == 255 && v.Color.G == 0 && v.Color.B == 0).ToArray();
         Assert.NotEmpty(painted);
         Assert.All(painted, vertex => Assert.Equal(
-            .1f + (bound ? .5f * vertex.Position.X : 0) - .00001f, vertex.Position.Z, 5));
+            .1f + (bound ? .5f * vertex.Position.X : 0) - .00001f, vertex.Layer, 5));
     }
 
     [Theory]

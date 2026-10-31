@@ -404,7 +404,7 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
     /// carried by the actor's placement. Clothing, picking and editor handles read this; props lift it to 3D.
     /// </summary>
     public LayeredFrame2D SocketPlacement(ModelSocket socket) =>
-        LayeredFrame2D.Local(Vector2.One, socket.Angle, new(socket.OffsetX, socket.OffsetY), socket.OffsetZ).Then(SocketCarrier(socket)).Then(Placement);
+        LayeredFrame2D.Local(Vector2.One, socket.Angle, new(socket.OffsetX, socket.OffsetY), socket.Layer).Then(SocketCarrier(socket)).Then(Placement);
 
     /// <summary>The socket's screen-plane turn with its animated orientation applied, shared with editor handles.</summary>
     public float SocketTurn(ModelSocket socket)

@@ -73,7 +73,7 @@ public static class AuthoredJson
 
     private static void OmitDefaults(JsonTypeInfo info, bool compactExtrusions)
     {
-        if (info.Kind != JsonTypeInfoKind.Object || info.Type.Namespace?.StartsWith(typeof(AuthoredJson).Namespace!, StringComparison.Ordinal) != true || info.Type.GetConstructor(Type.EmptyTypes) is null)
+        if (info.Kind != JsonTypeInfoKind.Object || info.Type.Namespace?.StartsWith("App2d.", StringComparison.Ordinal) != true || info.Type.GetConstructor(Type.EmptyTypes) is null)
         {
             return;
         }

@@ -33,7 +33,7 @@
       "scaleY": 0.58,
       "offsetX": 0.13,
       "offsetY": 0.02,
-      "depth": -0.24
+      "layer": -0.24
     },
     {
       "id": "eye",
@@ -61,7 +61,7 @@
       "scaleY": 0.12,
       "offsetX": 0.34,
       "offsetY": 0.01,
-      "depth": -0.31
+      "layer": -0.31
     },
     {
       "id": "brow",
@@ -98,7 +98,7 @@
       "scaleY": 0.09,
       "offsetX": 0.33,
       "offsetY": 0.11,
-      "depth": -0.31
+      "layer": -0.31
     },
     {
       "id": "mouth",
@@ -143,7 +143,7 @@
       "scaleY": 0.08,
       "offsetX": 0.35,
       "offsetY": -0.17,
-      "depth": -0.31
+      "layer": -0.31
     }
   ],
   "controls": [

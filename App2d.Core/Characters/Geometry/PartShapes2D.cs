@@ -15,7 +15,7 @@ public static class PartShapes2D
     public static IShape2D Collision(Part asset)
     {
         var pivot = asset.Point(asset.Pivot) ?? throw new InvalidDataException("Unknown part pivot.");
-        var local = Matrix3x2.CreateTranslation(-pivot.XY) * Matrix3x2.CreateScale(asset.Scale);
+        var local = Matrix3x2.CreateTranslation(-pivot.XY.ToVector2()) * Matrix3x2.CreateScale(asset.Scale);
         var rig = asset.IsAnimated ? ResolvedModel.Rig(asset.RigModel()) : null;
         uint? mask = null;
         var shapes = new List<IShape2D>();
@@ -29,7 +29,7 @@ public static class PartShapes2D
                 throw new InvalidDataException("One rigid body's collision entries must share a mask.");
             mask = entry.Collision!.Mask;
             var frame = PartAttachment2D.FrameOf(entry,
-                id => rig is null ? asset.Point(id)!.Value.XYZ : rig.Rest[id],
+                id => rig is null ? asset.LocationFrame(id).Origin : rig.Rest[id],
                 id => rig is null ? asset.LocationFrame(id) : rig.RestPlacement(id));
             var matrix = new Matrix3x2(frame.XAxis.X, frame.XAxis.Y, frame.YAxis.X, frame.YAxis.Y, frame.Origin.X, frame.Origin.Y);
             shapes.Add(Place(shape, matrix * local));

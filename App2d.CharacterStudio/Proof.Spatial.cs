@@ -9,7 +9,8 @@ internal sealed partial class ProofRenders
 {
     private bool RenderSpatialProof()
     {
-        var scene = new SpatialPreviewScene(Part.Load(Path.Combine(_assetRoot, "authored", "parts", "sword.json")));
+        var scene = new SpatialPreviewScene(Part.Load(Path.Combine(_assetRoot, "authored", "parts", "sword.json")),
+            Part.Load(Path.Combine(_assetRoot, "authored", "parts", "spatial-curve-study.json")));
         using var renderer = new Renderer3D(GraphicsDevice);
         using var target = RenderCapture2D.CreateTarget(GraphicsDevice, 1200, 800);
         var position = _smokeIndex == 2 ? new Vector3(3.9f, .2f, .15f) : new Vector3(2f, 1.4f, 3.5f);

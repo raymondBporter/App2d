@@ -22,7 +22,7 @@ public sealed class PartGeometryTests
             Thickness = .1f,
         };
         tuft.OffsetX = .12f;
-        tuft.Depth = -.2f;
+        tuft.Layer = -.2f;
         tail.Validate();
         var original = tail.ToJson();
         var model = PersonTemplate.Model();
@@ -41,7 +41,8 @@ public sealed class PartGeometryTests
         var center = frame.At(Vector2.Zero);
         Assert.Equal(0, PartPicking2D.Distance(fitted, evaluated.World, center, evaluated.Frame), 4);
         var contour = PartContours2D.Contour(fitted, evaluated.World, evaluated.Frame);
-        Assert.All(contour, p => Assert.Equal(frame.Origin.Z + .3f, p.Z, 4));
+        Assert.All(contour, p => Assert.Equal(.3f, p.Z, 4));
+        Assert.Equal(frame.Layer, contour.LayerAt(0));
 
         var drawing = new PuppetDrawing();
         drawing.Build(tail.Ink, tail.LineWidth, [fitted], evaluated.World, evaluated.Frame);

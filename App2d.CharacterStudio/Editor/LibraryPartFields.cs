@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Operations.Curves;
 using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.Editing;
 using App2d.Core.Characters;
@@ -92,7 +93,7 @@ internal sealed class LibraryPartFields(EditorSession session)
         foreach (var location in doc.Asset.Locations.ToArray())
         {
             ImGui.PushID(location.Id);
-            var point = location.Point.XYZ;
+            var point = location.Point.ToVector3();
             if (Ui.Drag3(location.Id + " (local XYZ)", ref point))
                 session.Change(doc, () => { location.X = point.X; location.Y = point.Y; location.Z = point.Z; doc.Asset.Validate(); });
             var layer = location.Layer;
@@ -148,7 +149,7 @@ internal sealed class LibraryPartFields(EditorSession session)
         ImGui.TextDisabled("Progress: " + string.Join(" → ", motion.Progress));
         if (motion.Curve is QuadraticBezier2D or CubicBezier2D or RoundedPolylineCurve2D)
         {
-            var points = PartCurves2D.ControlPoints(motion.Curve);
+            var points = CurveControlPoints2D.Get(motion.Curve);
             for (var i = 0; i < points.Count; i++)
             {
                 var index = i;
@@ -158,7 +159,7 @@ internal sealed class LibraryPartFields(EditorSession session)
                     session.Change(doc, () =>
                     {
                         var changed = points.ToArray(); changed[index] = point;
-                        doc.Asset.Motion = motion with { Curve = PartCurves2D.WithControlPoints(motion.Curve, changed) };
+                        doc.Asset.Motion = motion with { Curve = CurveControlPoints2D.With(motion.Curve, changed) };
                         doc.Asset.Validate();
                     });
                 }

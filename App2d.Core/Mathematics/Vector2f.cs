@@ -7,6 +7,7 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
 {
     private readonly Vector2 _value;
 
+    [System.Text.Json.Serialization.JsonConstructor]
     public Vector2f(float x, float y) : this(new Vector2(x, y)) { }
     public Vector2f(Vector2 value) => _value = value;
     public float X => _value.X;
@@ -34,7 +35,9 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
 
     public float Cross(Vector2f other) => X * other.Y - Y * other.X;
     public float Orientation(Vector2f b, Vector2f c) => (b - this).Cross(c - this);
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector2f PerpCcw => new(-Y, X);
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector2f PerpCw => new(Y, -X);
 
     public static Vector2f FromAngle(float angleRadians)

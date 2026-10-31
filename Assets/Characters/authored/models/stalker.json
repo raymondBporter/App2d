@@ -293,7 +293,7 @@
       "a": "body",
       "scaleX": 0.95,
       "scaleY": 0.38,
-      "depth": -0.05
+      "layer": -0.05
     }
   ],
   "materials": {},

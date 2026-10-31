@@ -46,18 +46,23 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         ArgGuard.Finite(point);
         ArgGuard.Finite(uv);
         EnsureCapacity(Count + 1);
-        _vertices[Count++] = _vertexFactory(point, material, uv);
+        var vertex = _vertexFactory(point, material, uv);
+        _vertices[Count++] = vertex;
         Version++;
         Min = Vector3.Min(Min, point);
         Max = Vector3.Max(Max, point);
     }
 
     public void Triangle(Vector3 a, Vector3 b, Vector3 c, TMaterial material)
+        => Triangle(a, b, c, material, material, material);
+
+    /// <summary>A triangle with independently supplied vertex attributes.</summary>
+    public void Triangle(Vector3 a, Vector3 b, Vector3 c, TMaterial first, TMaterial second, TMaterial third)
     {
         EnsureCapacity(Count + 3);
-        Vertex(a, material);
-        Vertex(b, material);
-        Vertex(c, material);
+        Vertex(a, first);
+        Vertex(b, second);
+        Vertex(c, third);
     }
 
     /// <summary>A flat disk or a depth-rounded dome, centered in XY.</summary>
@@ -111,6 +116,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 
     /// <summary>A constant-width segment with round caps, measured in XY.</summary>
     public void Line(Vector3 start, Vector3 end, float width, TMaterial material)
+        => Line(start, end, width, material, material);
+
+    public void Line(Vector3 start, Vector3 end, float width, TMaterial startMaterial, TMaterial endMaterial)
     {
         ArgGuard.Finite(start);
         ArgGuard.Finite(end);
@@ -126,11 +134,11 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         if (length > 1e-8f)
         {
             var offset = new Vector3(-direction.Y / length * radius, direction.X / length * radius, 0f);
-            Triangle(start + offset, start - offset, end + offset, material);
-            Triangle(start - offset, end - offset, end + offset, material);
+            Triangle(start + offset, start - offset, end + offset, startMaterial, startMaterial, endMaterial);
+            Triangle(start - offset, end - offset, end + offset, startMaterial, endMaterial, endMaterial);
         }
-        Disk(start, radius, material);
-        Disk(end, radius, material);
+        Disk(start, radius, startMaterial);
+        Disk(end, radius, endMaterial);
     }
 
     /// <summary>Fills a perimeter visible from its first vertex using a triangle fan.</summary>
@@ -144,10 +152,12 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     }
 
     /// <summary>A polyline with width changing linearly along its distance.</summary>
-    public void Path(IReadOnlyList<Vector3> points, TMaterial material, float startWidth, float? endWidth = null)
+    public void Path(IReadOnlyList<Vector3> points, TMaterial material, float startWidth, float? endWidth = null, IReadOnlyList<TMaterial>? pointMaterials = null)
     {
         ArgGuard.ThrowIfNull(points);
         ArgGuard.NonNegative(startWidth);
+        if (pointMaterials is not null && pointMaterials.Count != points.Count)
+            throw new ArgumentException("Provide one material per path point.", nameof(pointMaterials));
         if (endWidth is { } end)
         {
             ArgGuard.NonNegative(end);
@@ -165,16 +175,18 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
             var step = Vector3.Distance(points[a], points[b]);
             var width = startWidth + ((endWidth ?? startWidth) - startWidth) *
                 (distance + step * .5f) / MathF.Max(total, 1e-8f);
-            Line(points[a], points[b], width, material);
+            Line(points[a], points[b], width, pointMaterials is null ? material : pointMaterials[a], pointMaterials is null ? material : pointMaterials[b]);
             distance += step;
         }
     }
 
     /// <summary>A constant-width ribbon in XY with shared cross-sections and round end caps. Intended for sampled smooth paths.</summary>
-    public void Ribbon(IReadOnlyList<Vector3> points, TMaterial material, float width)
+    public void Ribbon(IReadOnlyList<Vector3> points, TMaterial material, float width, IReadOnlyList<TMaterial>? pointMaterials = null)
     {
         ArgGuard.RequireNotNull(points);
         ArgGuard.NonNegative(width);
+        if (pointMaterials is not null && pointMaterials.Count != points.Count)
+            throw new ArgumentException("Provide one material per ribbon point.", nameof(pointMaterials));
         if (points.Count == 0 || width == 0) return;
         var radius = width / 2;
         Vector3 Offset(int i)
@@ -190,11 +202,14 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         for (var i = 1; i < points.Count; i++)
         {
             var next = Offset(i);
-            Triangle(points[i - 1] + previous, points[i - 1] - previous, points[i] + next, material);
-            Triangle(points[i - 1] - previous, points[i] - next, points[i] + next, material);
+            var startMaterial = pointMaterials is null ? material : pointMaterials[i - 1];
+            var endMaterial = pointMaterials is null ? material : pointMaterials[i];
+            Triangle(points[i - 1] + previous, points[i - 1] - previous, points[i] + next, startMaterial, startMaterial, endMaterial);
+            Triangle(points[i - 1] - previous, points[i] - next, points[i] + next, startMaterial, endMaterial, endMaterial);
             previous = next;
         }
-        Disk(points[0], radius, material); Disk(points[^1], radius, material);
+        Disk(points[0], radius, pointMaterials is null ? material : pointMaterials[0]);
+        Disk(points[^1], radius, pointMaterials is null ? material : pointMaterials[^1]);
     }
 
     /// <summary>Rounds a center-to-contour sheet into negative Z; the contour is an open sequence.</summary>

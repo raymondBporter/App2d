@@ -71,7 +71,7 @@ internal sealed partial class ProofRenders
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
                 foreach (var (prop, socket) in PersonLoadout.Dressed(upper?.Clip ?? clip, upper?.Seconds ?? seconds, item.Gun ? PersonGear.Gun : PersonGear.Sword, catalog.Entities["hero"]))
                 {
-                    drawing.AddAttachment(props[prop], placed.Socket(sockets[socket]));
+                    drawing.AddAttachment(props[prop], placed, sockets[socket]);
                 }
 
                 var centerX = pose.Locomotion.X + item.ViewX;

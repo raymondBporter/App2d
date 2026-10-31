@@ -46,7 +46,7 @@ public static class PterosaurTemplate
         }
         PartGeometry Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IShape2D? geometry = null)
         {
-            var part = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
+            var part = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Layer = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
             model.Parts.Add(part);
             return part;
         }
@@ -55,7 +55,7 @@ public static class PterosaurTemplate
             Id = key,
             A = a,
             B = b,
-            Depth = depth,
+            Layer = depth,
             Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
             Material = new() { Fill = model.Ink, StrokeWidth = width, Outline = new() },
         });

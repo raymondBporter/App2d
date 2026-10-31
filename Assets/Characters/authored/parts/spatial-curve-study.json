@@ -1,0 +1,22 @@
+{
+  "format": "app2d-part",
+  "version": 4,
+  "id": "spatial-curve-study",
+  "name": "Spatial curve study",
+  "usage": "study",
+  "geometry": [
+    {
+      "id": "curve",
+      "spatialCurve": {
+        "kind": "cubic-bezier",
+        "start": { "x": -1.1, "y": 0.35, "z": -0.65 },
+        "control1": { "x": -0.65, "y": 1.25, "z": 1.1 },
+        "control2": { "x": 0.65, "y": 1.25, "z": -1.1 },
+        "end": { "x": 1.1, "y": 0.35, "z": 0.65 }
+      },
+      "layer": 8,
+      "curveSections": 64,
+      "material": { "fill": "#ed9275", "strokeWidth": 0.035 }
+    }
+  ]
+}

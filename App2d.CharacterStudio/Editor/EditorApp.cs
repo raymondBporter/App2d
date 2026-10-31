@@ -84,7 +84,7 @@ internal sealed class EditorApp : Game
         {
             SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
         }, new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui,
-            new SpatialPreview(GraphicsDevice, _gui, assets.PartOf("sword"))) { Show3DPreview = _start3D };
+            new SpatialPreview(GraphicsDevice, _gui, assets.PartOf("sword"), assets.PartOf("spatial-curve-study"))) { Show3DPreview = _start3D };
         if (_smokePath is null)
         {
             _form = Control.FromHandle(Window.Handle)?.FindForm();

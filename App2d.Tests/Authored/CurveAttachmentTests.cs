@@ -26,7 +26,7 @@ public sealed class CurveAttachmentTests
             ],
             Parts = [new()
             {
-                Id = "stroke", A = "start", B = "end", Depth = -.01f,
+                Id = "stroke", A = "start", B = "end", Layer = -.01f,
                 Geometry = cubic
                     ? new CubicBezier2D { Start = Vector2.Zero, Control1 = new(-.5f, 1f / 3), Control2 = new(-.5f, 2f / 3), End = Vector2.UnitY }.Validated()
                     : new QuadraticBezier2D { Start = Vector2.Zero, Control = new(-.5f, .5f), End = Vector2.UnitY }.Validated(),
@@ -69,10 +69,11 @@ public sealed class CurveAttachmentTests
         var expectedMiddle = cubic
             ? (pose.World("start") + 3 * pose.World("bend") + 3 * pose.World("bend2") + pose.World("end")) / 8
             : (pose.World("start") + 2 * pose.World("bend") + pose.World("end")) / 4;
-        expectedMiddle.Z += part.Depth;
-        TestModels.Near(expectedMiddle, path[16], 1e-6f);
-        TestModels.Near(pose.World("start") + new Vector3(0, 0, part.Depth), path[0], 1e-6f);
-        TestModels.Near(pose.World("end") + new Vector3(0, 0, part.Depth), path[^1], 1e-6f);
+        expectedMiddle.Z += part.Layer;
+        TestModels.Near(expectedMiddle, TestModels.DrawPoint(path, 16), 1e-6f);
+        TestModels.Near(pose.World("start") + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(path, 0), 1e-6f);
+        TestModels.Near(pose.World("end") + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(path, path.Count - 1), 1e-6f);
+        Assert.All(path, p => Assert.Equal(0, p.Z));
 
         // Picking follows the rendered curve, including a moved handle outside the original endpoint frame.
         foreach (var point in path)
@@ -84,7 +85,7 @@ public sealed class CurveAttachmentTests
         var drawing = new PuppetDrawing();
         drawing.Build(resolved, pose);
         Assert.NotEmpty(drawing.Mesh.Vertices.ToArray());
-        Assert.Contains(drawing.Mesh.Vertices.ToArray(), v => MathF.Abs(v.Position.Z - expectedMiddle.Z) < 1e-6f);
+        Assert.Contains(drawing.Mesh.Vertices.ToArray(), v => MathF.Abs(v.Layer - expectedMiddle.Z) < 1e-6f);
     }
 
     [Fact]
@@ -107,7 +108,7 @@ public sealed class CurveAttachmentTests
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
         var path = PartContours2D.Contour(part, pose.World, id => resolved.Rest[id]);
         // Rest artwork handle (1, 1) sits .5 left of its control. That offset turns down.
-        TestModels.Near(new(1.5f, .25f, .39f), path[16], 1e-6f);
+        TestModels.Near(new(1.5f, .25f, .39f), TestModels.DrawPoint(path, 16), 1e-6f);
         Assert.Throws<InvalidOperationException>(() => PartContours2D.Contour(part, pose.World));
         Assert.Throws<InvalidOperationException>(() => ModelAuthoring.RemoveControl(model, "up"));
     }

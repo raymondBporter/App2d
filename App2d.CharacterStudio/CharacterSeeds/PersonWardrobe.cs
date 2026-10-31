@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -46,7 +47,7 @@ public static class PersonWardrobe
                 Id = control,
                 A = control,
                 B = toward,
-                Depth = -.004f,
+                Layer = -.004f,
                 Geometry = new Ellipse2D
                 {
                     Center = hand ? new(0, -.014f) : new(.044f, 0),
@@ -186,7 +187,7 @@ public static class PersonWardrobe
 
     private static void Patch(Part art, string fill, float z, (float X, float Y)[] points, float sx = 1, float sy = 1, float thickness = .008f)
     {
-        var entry = PartGeometryBuilder.Extrude(points.Select(p => new PuppetPoint(p.X * sx, p.Y * sy, z)), thickness, fill);
+        var entry = PartGeometryBuilder.Extrude(points.Select(p => new Vector3f(p.X * sx, p.Y * sy, z)), thickness, fill);
         entry.Id = $"mesh-{art.Geometry.Count + 1}";
         art.Geometry.Add(entry);
     }

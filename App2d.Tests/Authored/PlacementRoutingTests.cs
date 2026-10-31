@@ -29,12 +29,12 @@ public sealed class PlacementRoutingTests
         {
             var frame = PartAttachment2D.FrameOf(part, model, pose);
             Assert.Equal(PartAttachment2D.Attachment(part).Then(PartAttachment2D.Carrier(part, pose.World, pose.Placement)), frame);
-            Assert.Equal(pose.World(part.A).Z + part.Depth, frame.Layer, 6);
+            Assert.Equal(pose.World(part.A).Z + part.Layer, frame.Layer, 6);
             if (part.Geometry is IShape2D shape)
             {
                 var vertices = new Vector2[shape.GetOutlineVertCount(48)];
                 shape.GetOutlineVerts(vertices, 48);
-                Assert.Equal(frame.At(vertices[0]), PartContours2D.Contour(part, model, pose)[0]);
+                Assert.Equal(frame.At(vertices[0]), TestModels.DrawPoint(PartContours2D.Contour(part, model, pose), 0));
                 var inside = frame.At(Vector2.Zero);
                 Assert.True(PartPicking2D.Distance(part, model, pose, inside) <= 1, part.Id);
                 Assert.True(PartAttachment2D.ArtworkPoint(part, 0, inside.XY, model, pose).Length() < 1e-5f, part.Id);
@@ -43,8 +43,8 @@ public sealed class PlacementRoutingTests
             {
                 // A curve's carrier spans A to B, so its first and last samples sit on the controls.
                 var path = PartContours2D.Contour(part, model, pose);
-                TestModels.Near(pose.World(part.A) + new Vector3(0, 0, part.Depth), path[0], 1e-5f, part.Id);
-                TestModels.Near(pose.World(part.B!) + new Vector3(0, 0, part.Depth), path[^1], 1e-4f, part.Id);
+                TestModels.Near(pose.World(part.A) + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(path, 0), 1e-5f, part.Id);
+                TestModels.Near(pose.World(part.B!) + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(path, path.Count - 1), 1e-4f, part.Id);
             }
         }
     }
@@ -79,8 +79,8 @@ public sealed class PlacementRoutingTests
             {
                 var planar = pose.SocketPlacement(socket);
                 var lifted = pose.Socket(socket);
-                TestModels.Near(planar.Origin, lifted.Origin, 1e-6f, socket.Id);
-                Assert.Equal(pose.Local.Points[socket.Control].Z + socket.OffsetZ, planar.Layer, 6);
+                TestModels.Near(new(planar.Frame.Origin, 0), lifted.Origin, 1e-6f, socket.Id);
+                Assert.Equal(pose.Local.Points[socket.Control].Z + socket.Layer, planar.Layer, 6);
                 Assert.Equal(PartPlacement3D.Lift(planar, pose.Local.SocketAngles.GetValueOrDefault(socket.Id)), lifted);
                 Assert.Equal(facing < 0, planar.Frame.Matrix.GetDeterminant() < 0);
                 if (pose.Local.SocketAngles.GetValueOrDefault(socket.Id) == Vector3.Zero)

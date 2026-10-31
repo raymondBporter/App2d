@@ -7,11 +7,12 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
 {
     private readonly Vector3 _value;
 
-    public Vector3f(float x, float y, float z) : this(new Vector3(x, y, z)) { }
+    [System.Text.Json.Serialization.JsonConstructor]
+    public Vector3f(float x, float y, float z = 0) : this(new Vector3(x, y, z)) { }
     public Vector3f(Vector3 value) => _value = value;
-    public float X => _value.X;
-    public float Y => _value.Y;
-    public float Z => _value.Z;
+    public float X { get => _value.X; init => _value = new(value, _value.Y, _value.Z); }
+    public float Y { get => _value.Y; init => _value = new(_value.X, value, _value.Z); }
+    public float Z { get => _value.Z; init => _value = new(_value.X, _value.Y, value); }
     public float this[int index] => _value[index];
 
     public static int Dimension => 3;
@@ -35,8 +36,11 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
     public static bool IsFinite(Vector3f value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z);
 
     public Vector3f Cross(Vector3f other) => new(Vector3.Cross(_value, other._value));
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector2f XY => new(X, Y);
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector2f XZ => new(X, Z);
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector2f YZ => new(Y, Z);
 
     public Vector3 ToVector3() => _value;

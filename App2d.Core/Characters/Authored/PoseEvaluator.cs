@@ -648,7 +648,7 @@ public static class PoseEvaluator
         var socket = mover.Socket;
         var angle = socket.Frame == CharacterModel.Locomotion ? 0 : model.Nodes[socket.Frame ?? socket.Control].RestAngle;
         var carrier = LayeredFrame2D.FromRotation(angle, model.Rest[socket.Control]);
-        return mover.Placement(LayeredFrame2D.Local(Vector2.One, socket.Angle, new(socket.OffsetX, socket.OffsetY), socket.OffsetZ).Then(carrier));
+        return mover.Placement(LayeredFrame2D.Local(Vector2.One, socket.Angle, new(socket.OffsetX, socket.OffsetY), socket.Layer).Then(carrier));
     }
 
     /// <summary>A clip's root travel at a time on a model, cycles included, as the pose's locomotion reads it.</summary>

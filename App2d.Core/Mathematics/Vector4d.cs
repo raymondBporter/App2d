@@ -41,6 +41,7 @@ public readonly record struct Vector4d(double X, double Y, double Z, double W) :
     public static Vector4d Abs(Vector4d value) => new(double.Abs(value.X), double.Abs(value.Y), double.Abs(value.Z), double.Abs(value.W));
     public static bool IsFinite(Vector4d value) => double.IsFinite(value.X) && double.IsFinite(value.Y) && double.IsFinite(value.Z) && double.IsFinite(value.W);
 
+    [System.Text.Json.Serialization.JsonIgnore]
     public Vector3d XYZ => new(X, Y, Z);
     public Vector4 ToVector4() => new((float)X, (float)Y, (float)Z, (float)W);
     public override string ToString() => $"<{X}, {Y}, {Z}, {W}>";
