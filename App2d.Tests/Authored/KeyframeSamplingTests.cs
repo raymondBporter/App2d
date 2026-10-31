@@ -107,6 +107,26 @@ public sealed class KeyframeSamplingTests
     }
 
     [Fact]
+    public void HeldKeysSkipUnusedCurveGeometryAndSelectTheExactNextKey()
+    {
+        // Valid authored handles can overflow when converted to geometry; a held segment never needs that geometry.
+        var curve = new KeyCurve2D { Control1 = new(1f / 3, float.MaxValue), Control2 = new(2f / 3, float.MaxValue) };
+        curve.Validate();
+        List<ClipKey> motion = [new() { Value = -Vector3.One, Angle = -MathF.Tau, Ease = ProgressMapKind.Step, Curve = curve },
+            new() { Time = 1, Value = Vector3.One, Angle = MathF.Tau }];
+        List<SlotColorKey2D> color = [new() { Value = -Vector4.One, Ease = ProgressMapKind.Step, CurveR = curve },
+            new() { Time = 1, Value = Vector4.One }];
+
+        foreach (var time in new[] { -.1f, 0, .25f, .999f })
+        {
+            Assert.Equal((-Vector3.One, -MathF.Tau), PoseEvaluator.Interpolate(motion, time, rotate: true));
+            Assert.Equal(-Vector4.One, SlotColorTrack2D.Sample(color, time));
+        }
+        Assert.Equal((Vector3.One, MathF.Tau), PoseEvaluator.Interpolate(motion, 1, rotate: true));
+        Assert.Equal(Vector4.One, SlotColorTrack2D.Sample(color, 1));
+    }
+
+    [Fact]
     public void EditingSharedHandlesTakesEffectOnTheNextSample()
     {
         var curve = new KeyCurve2D { Control1 = new(.1f, 2), Control2 = new(.6f, -1) };

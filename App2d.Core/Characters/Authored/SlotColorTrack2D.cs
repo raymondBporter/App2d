@@ -58,11 +58,11 @@ public sealed record SlotColorTrack2D
     private readonly struct ColorInterpolation : IKeyframeInterpolation<SlotColorKey2D, Vector4>
     {
         public Vector4 GetValue(SlotColorKey2D key) => key.Value;
+        public bool IsHeld(SlotColorKey2D key) => key.Ease == ProgressMapKind.Step;
 
         public Vector4 Interpolate(SlotColorKey2D a, SlotColorKey2D b, float phase)
         {
             var progressMap = ProgressMaps.FromKind(a.Ease);
-            if (a.Ease == ProgressMapKind.Step) return a.Value;
             var sample = new KeyframeSegmentSampler(phase, progressMap);
             return new(Scalar(a.Value.X, b.Value.X, a.CurveR), Scalar(a.Value.Y, b.Value.Y, a.CurveG),
                 Scalar(a.Value.Z, b.Value.Z, a.CurveB), Scalar(a.Value.W, b.Value.W, a.CurveA));

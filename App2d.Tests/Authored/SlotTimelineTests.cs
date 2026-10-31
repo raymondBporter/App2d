@@ -136,6 +136,104 @@ public sealed class SlotTimelineTests
     }
 
     [Fact]
+    public void ExcerptsPreserveIndependentComponentsAndMultipleRotationTurns()
+    {
+        var (model, clip) = Scene();
+        var relative = new KeyCurve2D { Control1 = new(.1f, .2f), Control2 = new(.85f, .9f) };
+        var absolute = new KeyCurve2D { Absolute = true, Control1 = new(.3f, .8f), Control2 = new(.65f, .1f) };
+        clip.Tracks = [
+            new() { Target = "body", Keys = [
+                new() { Time = .1f, Value = new(.2f, 0, .3f), Curve = relative, CurveY = absolute },
+                new() { Time = .9f, Value = new(.8f, 0, .1f) }] },
+            new() { Target = "shoulder", Kind = MotionClip.RotateKind, Keys = [
+                new() { Time = .1f, Angle = -MathF.Tau, Ease = ProgressMapKind.EaseInOutSine, Curve = relative },
+                new() { Time = .9f, Angle = 3 * MathF.Tau }] }
+        ];
+        clip.Colors = [new() { Slot = "paint", Keys = [
+            new() { Time = .1f, Value = new(.2f, .3f, .4f, .5f), Ease = ProgressMapKind.Smoother,
+                CurveR = relative, CurveG = absolute, CurveB = relative, CurveA = absolute },
+            new() { Time = .9f, Value = new(.8f, .7f, .6f, .5f) }] }];
+        var source = clip.ToJson();
+        var excerpt = ClipAuthoring.Excerpt(clip, .2f, .8f, "components", "Components");
+        excerpt.Validate(model);
+
+        foreach (var time in Enumerable.Range(0, 41).Select(i => .6f * i / 40))
+        {
+            for (var i = 0; i < clip.Tracks.Count; i++)
+            {
+                var expected = PoseEvaluator.Interpolate(clip.Tracks[i], .2f + time);
+                var actual = PoseEvaluator.Interpolate(excerpt.Tracks[i], time);
+                TestModels.Near(expected.Value, actual.Value, 2e-5f);
+                Assert.InRange(MathF.Abs(expected.Angle - actual.Angle), 0, 2e-5f);
+            }
+            Assert.InRange(Vector4.Distance(SlotColorTrack2D.Sample(clip.Colors[0].Keys, .2f + time),
+                SlotColorTrack2D.Sample(excerpt.Colors[0].Keys, time)), 0, 2e-5f);
+        }
+        Assert.Equal(source, clip.ToJson());
+        Assert.Equal(excerpt.ToJson(), MotionClip.FromJson(excerpt.ToJson()).ToJson());
+    }
+
+    [Theory]
+    [InlineData(ProgressMapKind.Linear)]
+    [InlineData(ProgressMapKind.Smooth)]
+    [InlineData(ProgressMapKind.Step)]
+    public void ExcerptsPreserveSetupAndEndpointHoldsForMotionAndColor(ProgressMapKind ease)
+    {
+        var (model, clip) = Scene();
+        clip.Tracks = [new() { Target = "body", SetupBeforeFirst = true, Keys = [
+            new() { Time = .4f, Value = new(.2f), Ease = ease }, new() { Time = .6f, Value = new(.8f) }] }];
+        clip.Colors = [new() { Slot = "paint", Keys = [
+            new() { Time = .4f, Value = new(.2f), Ease = ease }, new() { Time = .6f, Value = new(.8f) }] }];
+        // Visibility is always held, even when a saved key carries an unrelated easing or curve.
+        clip.Tracks.Add(new() { Target = "torso", Kind = MotionClip.ShowKind, Keys = [
+            new() { Value = Vector3.Zero, Ease = ProgressMapKind.EaseInOutSine, Curve = new() },
+            new() { Time = .5f, Value = Vector3.UnitX }] });
+
+        foreach (var (from, to) in new[] { (0f, .2f), (.1f, .8f), (.8f, 1f), (.4f, .6f), (.2f, .4f), (.6f, .9f) })
+        {
+            var excerpt = ClipAuthoring.Excerpt(clip, from, to, "range", "Range");
+            excerpt.Validate(model);
+            foreach (var time in Enumerable.Range(0, 21).Select(i => excerpt.Duration * i / 20))
+            {
+                for (var i = 0; i < clip.Tracks.Count; i++)
+                    TestModels.Near(PoseEvaluator.Interpolate(clip.Tracks[i], from + time).Value,
+                        PoseEvaluator.Interpolate(excerpt.Tracks[i], time).Value, 2e-5f);
+                Assert.InRange(Vector4.Distance(SlotColorTrack2D.Evaluate(clip, model.Base.Slots[0], from + time),
+                    SlotColorTrack2D.Evaluate(excerpt, model.Base.Slots[0], time)), 0, 2e-5f);
+            }
+        }
+    }
+
+    [Fact]
+    public void ExcerptsPreserveDistinctKeysNearTheCutBoundaries()
+    {
+        var (model, clip) = Scene();
+        var firstChange = .5f;
+        var secondChange = firstChange + ClipAuthoring.SameTime / 2;
+        clip.Tracks = [new() { Target = "body", Keys = [
+            new() { Value = new(.2f), Ease = ProgressMapKind.Step },
+            new() { Time = firstChange, Value = new(.8f), Ease = ProgressMapKind.Step },
+            new() { Time = secondChange, Value = new(.3f) }] }];
+        clip.Colors = [new() { Slot = "paint", SetupBeforeFirst = false, Keys = [
+            new() { Value = new(.2f), Ease = ProgressMapKind.Step },
+            new() { Time = firstChange, Value = new(.8f), Ease = ProgressMapKind.Step },
+            new() { Time = secondChange, Value = new(.3f) }] }];
+
+        foreach (var (from, to) in new[] { (firstChange - ClipAuthoring.SameTime / 2, .8f), (.2f, secondChange) })
+        {
+            var excerpt = ClipAuthoring.Excerpt(clip, from, to, "near-keys", "Near keys");
+            excerpt.Validate(model);
+            foreach (var at in new[] { from, firstChange, secondChange, to })
+            {
+                Assert.Equal(PoseEvaluator.Interpolate(clip.Tracks[0], at),
+                    PoseEvaluator.Interpolate(excerpt.Tracks[0], at - from));
+                Assert.Equal(SlotColorTrack2D.Sample(clip.Colors[0].Keys, at),
+                    SlotColorTrack2D.Sample(excerpt.Colors[0].Keys, at - from));
+            }
+        }
+    }
+
+    [Fact]
     public void NormalizedEasingAndIndependentZCurvesRemainEditable()
     {
         var (_, clip) = Scene();

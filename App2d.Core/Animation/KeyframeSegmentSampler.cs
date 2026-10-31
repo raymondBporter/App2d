@@ -8,23 +8,21 @@ namespace App2d.Core.Animation;
 
 /// <summary>
 /// Evaluates scalar channels at one segment phase, sharing up to four Bezier timing solves.
-/// Step maps hold the outgoing value. Exact key selection belongs to KeyframeSampling.
+/// Exact key selection and held segments belong to KeyframeSampling.
 /// </summary>
 internal struct KeyframeSegmentSampler(float phase, IProgressMap progressMap)
 {
     private readonly float _progress = (float)progressMap.Sample(phase);
-    private readonly bool _held = progressMap is ProgressMap { Kind: ProgressMapKind.Step };
     private CurveTimingCache _timings;
     private int _count;
 
     /// <summary>
     /// Interpolates endpoints through the progress map, or evaluates a custom curve whose X coordinates are
     /// normalized segment time and Y coordinates are channel values. A custom curve replaces named easing;
-    /// held segments take precedence over either. Values and intentional overshoot are not clamped.
+    /// values and intentional overshoot are not clamped.
     /// </summary>
     public float Interpolate(float start, float end, CubicBezier2D? curve = null)
     {
-        if (_held) return phase < 1f ? start : end;
         if (curve is not { } geometry) return Interpolation.Lerp(start, end, _progress);
         if (phase <= 0) return start;
         if (phase >= 1) return end;

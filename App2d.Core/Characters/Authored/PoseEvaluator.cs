@@ -802,11 +802,11 @@ public static class PoseEvaluator
     private readonly struct MotionInterpolation(bool rotate) : IKeyframeInterpolation<ClipKey, (Vector3 Value, float Angle)>
     {
         public (Vector3 Value, float Angle) GetValue(ClipKey key) => (key.Value, key.Angle);
+        public bool IsHeld(ClipKey key) => key.Ease == ProgressMapKind.Step;
 
         public (Vector3 Value, float Angle) Interpolate(ClipKey a, ClipKey b, float phase)
         {
             var progressMap = ProgressMaps.FromKind(a.Ease);
-            if (a.Ease == ProgressMapKind.Step) return (a.Value, a.Angle);
             var sample = new KeyframeSegmentSampler(phase, progressMap);
             return (new(Scalar(a.Value.X, b.Value.X, rotate ? null : a.Curve),
                 Scalar(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),

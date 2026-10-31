@@ -12,6 +12,8 @@ public interface ITimedKey
 public interface IKeyframeInterpolation<TKey, TValue>
 {
     TValue GetValue(TKey key);
+    /// <summary>Held segments return their outgoing key without evaluating any component curves.</summary>
+    bool IsHeld(TKey key) => false;
     TValue Interpolate(TKey start, TKey end, float phase);
 }
 
@@ -32,7 +34,8 @@ public static class KeyframeSampling
         where TInterpolation : struct, IKeyframeInterpolation<TKey, TValue>
     {
         if (!TrySegment(keys, time, out var start, out var end, out var phase)) return emptyValue;
-        return ReferenceEquals(start, end) ? interpolation.GetValue(start) : interpolation.Interpolate(start, end, phase);
+        return ReferenceEquals(start, end) || interpolation.IsHeld(start)
+            ? interpolation.GetValue(start) : interpolation.Interpolate(start, end, phase);
     }
 
     public static bool TrySegment<T>(IReadOnlyList<T> keys, float time, [NotNullWhen(true)] out T? start, [NotNullWhen(true)] out T? end, out float phase)

@@ -30,16 +30,12 @@ public sealed class KeyframeSegmentSamplerTests
     }
 
     [Fact]
-    public void CustomCurvesReplaceNamedEasingAndHeldSegmentsOverrideCurves()
+    public void CustomCurvesReplaceNamedEasing()
     {
         var curve = CubicBezier2D.Builder.Create(new(0f, 0f), new(1f / 3, 0f), new(2f / 3, 0f), new(1f, 1f));
         var sample = new KeyframeSegmentSampler(.5f, Easing.Smoother);
         Assert.Equal(.5f, sample.Interpolate(0f, 1f));
         Assert.Equal(.125f, sample.Interpolate(0f, 1f, curve), 6);
-        var held = new KeyframeSegmentSampler(.5f, ProgressMaps.Step);
-        Assert.Equal(2f, held.Interpolate(2f, 8f));
-        Assert.Equal(2f, held.Interpolate(2f, 8f, curve));
-        Assert.Equal(8f, new KeyframeSegmentSampler(1f, ProgressMaps.Step).Interpolate(2f, 8f, curve));
     }
 
     [Theory]

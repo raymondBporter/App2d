@@ -17,8 +17,9 @@ the key's own value is returned without segment interpolation, including for out
 `Held(keys, time, holdBeforeFirst: false)` instead returns no key before the first time; attachment and draw-order
 tracks use this to preserve setup state. A present key with a null value is distinct from having no key yet.
 
-The interpolation policy reads a key's value and interpolates a segment. It owns easing, output range, and value-specific
-rules; the sampler does not clamp or ease values. Motion and color use the same sampler while retaining independent
+The interpolation policy reads a key's value, declares held segments through `IsHeld`, and interpolates other segments.
+The timeline sampler returns held values before any component curves or easing are evaluated. The policy owns easing,
+output range, and value-specific rules; the sampler does not clamp or ease values. Motion and color retain independent
 component curves, absolute handles, authored full rotation turns, and their different empty-track defaults.
 Setup-before-first behavior remains with the owning track, and color clamping remains with color evaluation.
 
@@ -33,11 +34,17 @@ Each channel still evaluates its own value curve, including overshoot between eq
 are solved independently. The four-entry cache lives only for that sample, allocates no managed memory, and cannot
 retain stale handles after editor changes. Named easing is also evaluated once per sample through an `IProgressMap`.
 Maps evaluate in double precision before converting to the channel's float; smooth easing can differ from the former
-float polynomial by float rounding. Custom curves replace named easing and held segments override custom curves.
+float polynomial by float rounding. Custom curves replace named easing. Held segments are handled by the timeline
+sampler before the scalar segment sampler is invoked.
 The segment sampler accepts geometric `CubicBezier2D` values, so Animation does not depend on authored character types.
 The curve editor can replace a preset with an editable cubic. Only Linear and Smooth have the existing exact cubic
 conversion; excerpts through other named presets must cut on key times or first replace that segment with a curve.
 An unsupported interior cut reports an error instead of changing the interpolation silently.
+Studio excerpts share boundary-key creation, original-segment lookup, and time shifting for motion and color. Each
+caller supplies its sampled values and scalar curve mappings; color retains setup-before-first and bounded boundary
+values, motion retains sticky bends, and rotation slices only its active angle curve. Visibility excerpts remain held
+regardless of the key's stored easing or curves. Numeric slicing uses exact times, preserving closely spaced keys and
+the sampled value at each cut; the editor's key-matching tolerance does not snap excerpt boundaries.
 
 Sampling belongs to Animation. Numeric interpolation and progress maps remain in Mathematics; geometric curves remain
 in Geometry. Interpolation computes a value between endpoints; easing maps its progress. Integrating a velocity over

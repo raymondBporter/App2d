@@ -463,7 +463,7 @@ public static partial class ClipAuthoring
                 return null;
             }
 
-            if (MathF.Abs(startTime - a) < SameTime && MathF.Abs(endTime - b) < SameTime)
+            if (startTime == a && endTime == b)
             {
                 return curve;
             }
@@ -473,24 +473,32 @@ public static partial class ClipAuthoring
             curve ??= ease == ProgressMapKind.Smooth ? KeyCurve2D.FromEase(ease) : null;
             return curve?.Slice(Math.Clamp((a - startTime) / (endTime - startTime), 0, 1), Math.Clamp((b - startTime) / (endTime - startTime), 0, 1), start, end);
         }
-        List<ClipKey> Cut(List<ClipKey> keys, ClipTrack? track = null)
+        // Both numeric timelines use the same boundary selection, source segments, and time shift.
+        // Callers supply their sampled values and component-curve mappings.
+        List<T> CutKeys<T>(List<T> keys, float startTime, Func<T?, float, T> boundary, Action<T, T?, T?, float> curves)
+            where T : class, IEditableTimedKey
+        {
+            if (keys.Count == 0 || startTime > to) return [];
+            var cut = new List<T> { boundary(keys.FirstOrDefault(k => k.Time == startTime), startTime) };
+            cut.AddRange(keys.Where(k => k.Time > startTime && k.Time < to)
+                .Select(k => boundary(k, k.Time)));
+            if (to > startTime) cut.Add(boundary(keys.FirstOrDefault(k => k.Time == to), to));
+            for (var i = 0; i + 1 < cut.Count; i++)
+            {
+                var key = cut[i];
+                var index = keys.FindLastIndex(k => k.Time <= key.Time);
+                curves(key, index < 0 ? null : keys[index], index + 1 >= keys.Count ? null : keys[index + 1], cut[i + 1].Time);
+            }
+            foreach (var key in cut) key.Time = Math.Clamp(key.Time - from, 0, copy.Duration);
+            return cut;
+        }
+        List<ClipKey> CutMotion(List<ClipKey> keys, ClipTrack? track = null)
         {
             var rotate = track?.Kind == MotionClip.RotateKind;
-            if (keys.Count == 0)
-            {
-                return keys;
-            }
 
-            ClipKey End(float time)
+            ClipKey End(ClipKey? existing, float time)
             {
-                if (keys.AtTime(time) is { } existing)
-                {
-                    return existing with
-                    {
-                        Time = time
-                    };
-                }
-
+                if (existing is not null) return existing with { Time = time };
                 var (value, angle) = track is null ? PoseEvaluator.Interpolate(keys, time) : PoseEvaluator.Interpolate(track, time);
                 var before = keys.LastOrDefault(k => k.Time < time);
                 return new()
@@ -501,35 +509,28 @@ public static partial class ClipAuthoring
                     Ease = before?.Ease ?? ProgressMapKind.Linear
                 };
             }
-            var first = End(from);
-            first.Bend ??= keys.LastOrDefault(k => k.Time <= from + SameTime && k.Bend is not null)?.Bend;
-            var inside = keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime);
-            var cut = new[] { first }.Concat(inside).Append(End(to)).Select(k => k with { }).ToList();
-            for (var i = 0; i + 1 < cut.Count; i++)
+            void Curves(ClipKey key, ClipKey? start, ClipKey? end, float until)
             {
-                var a = cut[i];
-                var b = cut[i + 1];
-                var index = keys.FindLastIndex(k => k.Time <= a.Time);
-                if (index < 0 || index + 1 >= keys.Count)
+                if (start is null || end is null || track?.Kind == MotionClip.ShowKind)
                 {
-                    a.Ease = ProgressMapKind.Step;
-                    a.Curve = a.CurveY = a.CurveZ = null;
-                    continue;
+                    key.Ease = ProgressMapKind.Step;
+                    key.Curve = key.CurveY = key.CurveZ = null;
+                    return;
                 }
-                var start = keys[index];
-                var end = keys[index + 1];
-                a.Curve = Segment(start.Curve, start.Ease, start.Time, end.Time, a.Time, b.Time, rotate ? start.Angle : start.Value.X, rotate ? end.Angle : end.Value.X);
-                a.CurveY = Segment(start.CurveY ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.Y, end.Value.Y);
-                a.CurveZ = Segment(start.CurveZ ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.Z, end.Value.Z);
+                key.Curve = Segment(start.Curve, start.Ease, start.Time, end.Time, key.Time, until, rotate ? start.Angle : start.Value.X, rotate ? end.Angle : end.Value.X);
+                key.CurveY = rotate ? null : Segment(start.CurveY ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, key.Time, until, start.Value.Y, end.Value.Y);
+                key.CurveZ = rotate ? null : Segment(start.CurveZ ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, key.Time, until, start.Value.Z, end.Value.Z);
             }
-            return [.. cut.Select(k => k with { Time = MathF.Min(copy.Duration, MathF.Max(0, k.Time - from)) })];
+            var cut = CutKeys(keys, from, End, Curves);
+            if (cut.Count > 0) cut[0].Bend ??= keys.LastOrDefault(k => k.Time <= from && k.Bend is not null)?.Bend;
+            return cut;
         }
         foreach (var track in copy.Tracks)
         {
-            track.Keys = Cut(track.Keys, track);
+            track.Keys = CutMotion(track.Keys, track);
         }
 
-        copy.Travel.Keys = Cut(copy.Travel.Keys);
+        copy.Travel.Keys = CutMotion(copy.Travel.Keys);
         copy.Contacts = [.. copy.Contacts.Where(c => c.Finish > from + SameTime && c.Start < to - SameTime)
             .Select(c => new ClipContact { Chain = c.Chain, Start = MathF.Max(0, c.Start - from), Finish = MathF.Min(copy.Duration, c.Finish - from), Target = c.Target })];
         copy.Markers = [.. copy.Markers.Where(m => m.Time >= from - SameTime && m.Time <= to + SameTime).Select(m => new ClipMarker { Id = m.Id, Time = Math.Clamp(m.Time - from, 0, copy.Duration) })];
@@ -554,27 +555,10 @@ public static partial class ClipAuthoring
         foreach (var track in copy.Colors)
         {
             var keys = track.Keys;
-            if (keys.Count == 0)
+            var startTime = track.SetupBeforeFirst && keys.Count > 0 ? MathF.Max(from, keys[0].Time) : from;
+            SlotColorKey2D End(SlotColorKey2D? existing, float at)
             {
-                continue;
-            }
-
-            var startTime = track.SetupBeforeFirst ? MathF.Max(from, keys[0].Time) : from;
-            if (startTime > to)
-            {
-                track.Keys = [];
-                continue;
-            }
-            SlotColorKey2D End(float at)
-            {
-                if (keys.AtTime(at) is { } existing)
-                {
-                    return existing with
-                    {
-                        Time = at
-                    };
-                }
-
+                if (existing is not null) return existing with { Time = at };
                 var value = Vector4.Clamp(SlotColorTrack2D.Sample(keys, at), Vector4.Zero, Vector4.One);
                 return new()
                 {
@@ -583,27 +567,20 @@ public static partial class ClipAuthoring
                     Ease = keys.LastOrDefault(k => k.Time < at)?.Ease ?? ProgressMapKind.Linear
                 };
             }
-            var cut = new[] { End(startTime) }.Concat(keys.Where(k => k.Time > startTime && k.Time < to).Select(k => k with { }))
-                .Concat(to > startTime ? new[] { End(to) } : []).ToList();
-            for (var i = 0; i + 1 < cut.Count; i++)
+            void Curves(SlotColorKey2D key, SlotColorKey2D? start, SlotColorKey2D? end, float until)
             {
-                var a = cut[i];
-                var b = cut[i + 1];
-                var index = keys.FindLastIndex(k => k.Time <= a.Time);
-                if (index < 0 || index + 1 >= keys.Count)
+                if (start is null || end is null)
                 {
-                    a.Ease = ProgressMapKind.Step;
-                    a.CurveR = a.CurveG = a.CurveB = a.CurveA = null;
-                    continue;
+                    key.Ease = ProgressMapKind.Step;
+                    key.CurveR = key.CurveG = key.CurveB = key.CurveA = null;
+                    return;
                 }
-                var start = keys[index];
-                var end = keys[index + 1];
-                a.CurveR = Segment(start.CurveR, start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.X, end.Value.X);
-                a.CurveG = Segment(start.CurveG, start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.Y, end.Value.Y);
-                a.CurveB = Segment(start.CurveB, start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.Z, end.Value.Z);
-                a.CurveA = Segment(start.CurveA, start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.W, end.Value.W);
+                key.CurveR = Segment(start.CurveR, start.Ease, start.Time, end.Time, key.Time, until, start.Value.X, end.Value.X);
+                key.CurveG = Segment(start.CurveG, start.Ease, start.Time, end.Time, key.Time, until, start.Value.Y, end.Value.Y);
+                key.CurveB = Segment(start.CurveB, start.Ease, start.Time, end.Time, key.Time, until, start.Value.Z, end.Value.Z);
+                key.CurveA = Segment(start.CurveA, start.Ease, start.Time, end.Time, key.Time, until, start.Value.W, end.Value.W);
             }
-            track.Keys = [.. cut.Select(k => k with { Time = Math.Clamp(k.Time - from, 0, copy.Duration) })];
+            track.Keys = CutKeys(keys, startTime, End, Curves);
         }
         copy.Colors.RemoveAll(t => t.Keys.Count == 0);
         return copy;

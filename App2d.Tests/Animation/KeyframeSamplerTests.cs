@@ -10,8 +10,9 @@ public sealed class KeyframeSamplerTests
     private readonly struct ScalarInterpolation(float progressScale = 1, bool step = false) : IKeyframeInterpolation<ScalarKey, float>
     {
         public float GetValue(ScalarKey key) => key.Value;
+        public bool IsHeld(ScalarKey key) => step;
         public float Interpolate(ScalarKey start, ScalarKey end, float phase) =>
-            step ? start.Value : Interpolation.Lerp(start.Value, end.Value, phase * progressScale);
+            Interpolation.Lerp(start.Value, end.Value, phase * progressScale);
     }
 
     [Theory]
