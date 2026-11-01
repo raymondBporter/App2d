@@ -18,7 +18,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 {
     private int _drag = -1;
     public Workspace Mode => Workspace.Appearance;
-    public float TimelineHeight => 80 * Ui.Scale;
+    public float TimelineHeight => 80;
     public void Timeline() => TransportBar.Draw(session, true);
 
     public void Outline()

@@ -15,6 +15,7 @@ public sealed class WinFormsImGuiPlatform : IImGuiPlatform
     private readonly HashSet<ImGuiKey> _heldKeys = [];
     private readonly HashSet<int> _heldButtons = [];
     private bool _disposed;
+    private ImGuiMouseCursor _cursor = ImGuiMouseCursor.Arrow;
 
     public WinFormsImGuiPlatform(Control surface)
     {
@@ -35,6 +36,28 @@ public sealed class WinFormsImGuiPlatform : IImGuiPlatform
     }
 
     public float DpiScale => _surface.DeviceDpi / 96f;
+
+    public void SetCursor(ImGuiMouseCursor cursor)
+    {
+        if (cursor == _cursor)
+        {
+            return;
+        }
+
+        _cursor = cursor;
+        _surface.Cursor = cursor switch
+        {
+            ImGuiMouseCursor.TextInput => Cursors.IBeam,
+            ImGuiMouseCursor.ResizeAll => Cursors.SizeAll,
+            ImGuiMouseCursor.ResizeNS => Cursors.SizeNS,
+            ImGuiMouseCursor.ResizeEW => Cursors.SizeWE,
+            ImGuiMouseCursor.ResizeNESW => Cursors.SizeNESW,
+            ImGuiMouseCursor.ResizeNWSE => Cursors.SizeNWSE,
+            ImGuiMouseCursor.Hand => Cursors.Hand,
+            ImGuiMouseCursor.NotAllowed => Cursors.No,
+            _ => Cursors.Default
+        };
+    }
 
     public void UpdateInput(ImGuiIOPtr io)
     {

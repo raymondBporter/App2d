@@ -23,6 +23,85 @@ public sealed class EditorUiTests
     }
 
     [Fact]
+    public void ColumnSplitterSitsFlushBetweenPanelsAndDragsTheirSharedEdge()
+    {
+        using var context = new UiContext();
+        var width = 180f;
+        var dragging = false;
+        Vector2 left = default, right = default;
+        void Frame() => context.Draw(() =>
+        {
+            Ui.Panel("left", () => left = ImGui.GetWindowPos(), size: new(width, 100));
+            dragging = Ui.ColumnSplitter("split", ref width, 100, 100, 300);
+            Ui.Panel("right", () => right = ImGui.GetWindowPos(), size: new(200, 100));
+        });
+        Frame();
+        Assert.Equal(left.Y, right.Y);
+        Assert.Equal(left.X + 180 + Ui.SplitterThickness, right.X);
+
+        var io = ImGui.GetIO();
+        var handle = new Vector2(left.X + 180 + Ui.SplitterThickness / 2, left.Y + 50);
+        io.AddMousePosEvent(handle.X, handle.Y);
+        Frame();
+        Frame();
+        io.AddMouseButtonEvent(0, true);
+        Frame();
+        Assert.True(dragging);
+        io.AddMousePosEvent(handle.X + 40, handle.Y);
+        Frame();
+        Assert.Equal(220f, width);
+        // The panels take the new size on the next frame, when they are drawn from it.
+        Frame();
+        Assert.Equal(left.X + 220 + Ui.SplitterThickness, right.X);
+        io.AddMousePosEvent(handle.X + 400, handle.Y);
+        Frame();
+        Assert.Equal(300f, width);
+        // Coming back from past the limit follows the mouse at once instead of waiting for it to reach the edge again.
+        io.AddMousePosEvent(handle.X + 60, handle.Y);
+        Frame();
+        Assert.Equal(240f, width);
+        io.AddMouseButtonEvent(0, false);
+        Frame();
+        Frame();
+        Assert.False(dragging);
+        Assert.Equal(240f, width);
+    }
+
+    [Fact]
+    public void RowSplitterSitsFlushUnderAPanelAndResizesThePanelBelowIt()
+    {
+        using var context = new UiContext();
+        var below = 120f;
+        Vector2 top = default, bottom = default;
+        void Frame() => context.Draw(() =>
+        {
+            Ui.Panel("top", () => top = ImGui.GetWindowPos(), size: new(300, 100));
+            Ui.RowSplitter("split", ref below, 300, 40, 200, panelBelow: true);
+            Ui.Panel("bottom", () => bottom = ImGui.GetWindowPos(), size: new(300, below));
+        });
+        Frame();
+        Assert.Equal(top.X, bottom.X);
+        Assert.Equal(top.Y + 100 + Ui.SplitterThickness, bottom.Y);
+
+        var io = ImGui.GetIO();
+        var handle = new Vector2(top.X + 150, top.Y + 100 + Ui.SplitterThickness / 2);
+        io.AddMousePosEvent(handle.X, handle.Y);
+        Frame();
+        Frame();
+        io.AddMouseButtonEvent(0, true);
+        Frame();
+        // Dragging the handle down shrinks the panel below it.
+        io.AddMousePosEvent(handle.X, handle.Y + 30);
+        Frame();
+        Assert.Equal(90f, below);
+        io.AddMousePosEvent(handle.X, handle.Y - 100);
+        Frame();
+        Assert.Equal(200f, below);
+        io.AddMouseButtonEvent(0, false);
+        Frame();
+    }
+
+    [Fact]
     public void RepeatedFieldLabelsHaveIndependentIdsInPanelsAndSections()
     {
         using var context = new UiContext();

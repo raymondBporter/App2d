@@ -35,6 +35,7 @@ public sealed class ImGuiSamplingTests
     {
         public float DpiScale => 1;
         public void UpdateInput(ImGuiIOPtr io) { }
+        public void SetCursor(ImGuiMouseCursor cursor) { }
         public void Dispose() { }
     }
 }

@@ -94,6 +94,71 @@ public static class Ui
         }
     }
 
+    /// <summary>The thickness of a drag handle between panels: the same gap the layout leaves between them.</summary>
+    public static float SplitterThickness => 8 * Scale;
+
+    /// <summary>
+    /// A vertical drag handle flush between the previous panel and the next one on the same line. Dragging it moves their shared
+    /// edge: <paramref name="width"/> follows the mouse rightward, or leftward when the sized panel is the one on the right.
+    /// Returns true while the author holds it. Zero <paramref name="height"/> spans the available height.
+    /// </summary>
+    public static bool ColumnSplitter(string id, ref float width, float height, float min, float max, bool panelOnRight = false)
+    {
+        ImGui.SameLine(0, 0);
+        var dragging = Splitter(id, ref width, new(SplitterThickness, height > 0 ? height : ImGui.GetContentRegionAvail().Y), min, max, panelOnRight ? -1 : 1, vertical: true);
+        ImGui.SameLine(0, 0);
+        return dragging;
+    }
+
+    /// <summary>
+    /// A horizontal drag handle flush under the previous panel, with the next panel flush under it. Dragging it moves their shared
+    /// edge: <paramref name="height"/> follows the mouse downward, or upward when the sized panel is the one below.
+    /// Returns true while the author holds it. Zero <paramref name="width"/> spans the available width.
+    /// </summary>
+    public static bool RowSplitter(string id, ref float height, float width, float min, float max, bool panelBelow = false)
+    {
+        // Item spacing would open a gap above and below the handle; it takes the gap's place instead.
+        var spacing = ImGui.GetStyle().ItemSpacing.Y;
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - spacing);
+        var dragging = Splitter(id, ref height, new(width > 0 ? width : ImGui.GetContentRegionAvail().X, SplitterThickness), min, max, panelBelow ? -1 : 1, vertical: false);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - spacing);
+        return dragging;
+    }
+
+    // The size a drag started from. One handle is held at a time, so one value serves every splitter.
+    private static float _splitterStart;
+
+    private static bool Splitter(string id, ref float size, Vector2 extent, float min, float max, float direction, bool vertical)
+    {
+        ImGui.InvisibleButton(id, Vector2.Max(extent, Vector2.One));
+        var active = ImGui.IsItemActive();
+        if (active || ImGui.IsItemHovered())
+        {
+            ImGui.SetMouseCursor(vertical ? ImGuiMouseCursor.ResizeEW : ImGuiMouseCursor.ResizeNS);
+            var lo = ImGui.GetItemRectMin();
+            var hi = ImGui.GetItemRectMax();
+            var center = (lo + hi) / 2;
+            var a = vertical ? new Vector2(center.X - Scale, lo.Y) : new Vector2(lo.X, center.Y - Scale);
+            var b = vertical ? new Vector2(center.X + Scale, hi.Y) : new Vector2(hi.X, center.Y + Scale);
+            ImGui.GetWindowDrawList().AddRectFilled(a, b, ImGui.GetColorU32(active ? ImGuiCol.SeparatorActive : ImGuiCol.SeparatorHovered));
+        }
+
+        if (!active)
+        {
+            return false;
+        }
+
+        if (ImGui.IsItemActivated())
+        {
+            _splitterStart = size;
+        }
+
+        // Measured from where the drag began, so a handle held past its limit follows the mouse straight back.
+        var travel = ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0);
+        size = Math.Clamp(_splitterStart + direction * (vertical ? travel.X : travel.Y), min, MathF.Max(min, max));
+        return true;
+    }
+
     /// <summary>A titled vertical group. Its ID scopes repeated field labels independently from other sections.</summary>
     public static void Section(string title, Action content, string? id = null)
     {

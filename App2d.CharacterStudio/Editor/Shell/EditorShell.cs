@@ -20,11 +20,14 @@ internal interface IWorkspaceView
 
 /// <summary>
 /// One window, one viewport, one document workflow: asset browser and outline on the left, the shared viewport in the middle,
-/// the selection inspector on the right and the timeline below. Model and Animate are views over the same session.
+/// the selection inspector on the right and the timeline below. Model and Animate are views over the same session. Drag
+/// handles between the panels resize them; <paramref name="preferencesChanged"/> hears about a dropped handle or a new UI scale.
 /// </summary>
-internal sealed class EditorShell(EditorSession session, Viewport viewport, ArenaTest test, ImGuiHost gui, SpatialPreview? spatial = null) : IDisposable
+internal sealed class EditorShell(EditorSession session, Viewport viewport, ArenaTest test, ImGuiHost gui, SpatialPreview? spatial = null, EditorLayout? layout = null, Action? preferencesChanged = null) : IDisposable
 {
     private readonly AssetBrowser _browser = new(session);
+    private readonly EditorLayout _layout = layout ?? new();
+    private bool _layoutDirty;
     private readonly IWorkspaceView[] _views =
     [
         new ModelView(session, viewport),
@@ -61,50 +64,82 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
                 StatusLine();
                 return;
             }
-            // Side panels and the timeline keep their design size where there is room, but never crowd out the viewport.
-            var timeline = MathF.Min(view.TimelineHeight * scale, available.Y * .34f);
-            var left = MathF.Min(250 * scale, available.X * .2f);
-            var right = MathF.Min(330 * scale, available.X * .25f);
-            var body = available.Y - timeline - status - 2 * ImGui.GetStyle().ItemSpacing.Y;
+            // Side panels and the timeline keep the author's sizes where there is room, but never crowd out the viewport. The
+            // handles between them take the place of the item spacing, so the dragged sizes are the panels' own.
+            var handle = Ui.SplitterThickness;
+            var minPanel = 100 * scale;
+            var minStage = 200 * scale;
+            var columns = available.X - 2 * handle;
+            var (left, right) = EditorLayout.FitColumns(columns, _layout.LeftWidth * scale, _layout.RightWidth * scale, minPanel, minStage);
+            var stage = MathF.Max(1, columns - left - right);
+            var minTimeline = 32 * scale;
+            var rows = available.Y - status - ImGui.GetStyle().ItemSpacing.Y - handle;
+            var timeline = Math.Clamp(_layout.TimelineHeight(view.Mode, view.TimelineHeight) * scale, minTimeline, MathF.Max(minTimeline, rows - minStage));
+            var body = MathF.Max(1, rows - timeline);
 
-            Ui.Row(
-                () => Ui.Panel("left", content: () =>
+            Ui.Panel("left", content: () =>
+            {
+                var column = ImGui.GetContentRegionAvail();
+                var minHalf = 60 * scale;
+                var browser = Math.Clamp(_layout.BrowserShare * column.Y, minHalf, MathF.Max(minHalf, column.Y - handle - minHalf));
+                Ui.Panel("browser", _browser.Draw, size: new(0, browser));
+                if (Ui.RowSplitter("browser-split", ref browser, 0, minHalf, column.Y - handle - minHalf))
                 {
-                    Ui.Panel("browser", _browser.Draw, size: new(0, body * .5f));
-                    Ui.Panel("outline", () =>
-                    {
-                        if (Test.Active)
-                        {
-                            Test.RosterPanel();
-                        }
-                        else
-                        {
-                            view.Outline();
-                        }
-                    });
-                }, size: new(left, body), border: false),
-                () => Ui.Panel("stage", content: () =>
+                    _layout.BrowserShare = browser / column.Y;
+                    _layoutDirty = true;
+                }
+
+                Ui.Panel("outline", () =>
                 {
                     if (Test.Active)
                     {
-                        Test.Stage(LiveTest);
+                        Test.RosterPanel();
                     }
                     else
                     {
-                        Stage(view);
+                        view.Outline();
                     }
-                }, size: new(Math.Max(200, available.X - left - right - 2 * ImGui.GetStyle().ItemSpacing.X), body), flags: ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse),
-                () => Ui.Panel("inspector", content: () =>
+                });
+            }, size: new(left, body), border: false);
+            if (Ui.ColumnSplitter("left-split", ref left, body, minPanel, columns - right - minStage))
+            {
+                _layout.LeftWidth = left / scale;
+                _layoutDirty = true;
+            }
+
+            Ui.Panel("stage", content: () =>
+            {
+                if (Test.Active)
                 {
-                    if (Test.Active)
-                    {
-                        Test.Inspector();
-                    }
-                    else
-                    {
-                        view.Inspector();
-                    }
-                }, size: new(right, body)));
+                    Test.Stage(LiveTest);
+                }
+                else
+                {
+                    Stage(view);
+                }
+            }, size: new(stage, body), flags: ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+            if (Ui.ColumnSplitter("right-split", ref right, body, minPanel, columns - left - minStage, panelOnRight: true))
+            {
+                _layout.RightWidth = right / scale;
+                _layoutDirty = true;
+            }
+
+            Ui.Panel("inspector", content: () =>
+            {
+                if (Test.Active)
+                {
+                    Test.Inspector();
+                }
+                else
+                {
+                    view.Inspector();
+                }
+            }, size: new(right, body));
+            if (Ui.RowSplitter("timeline-split", ref timeline, 0, minTimeline, rows - minStage, panelBelow: true))
+            {
+                _layout.SetTimelineHeight(view.Mode, timeline / scale);
+                _layoutDirty = true;
+            }
 
             Ui.Panel("timeline", content: () =>
             {
@@ -120,10 +155,16 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
             StatusLine();
             _browser.DrawDialogs();
         });
-        // A widget or drag in progress keeps its transaction open; the moment nothing is active, the step is committed.
+        // A widget or drag in progress keeps its transaction open; the moment nothing is active, the step is committed and a
+        // dropped panel handle is saved.
         if (!ImGui.IsAnyItemActive())
         {
             Session.CommitAll();
+            if (_layoutDirty)
+            {
+                _layoutDirty = false;
+                preferencesChanged?.Invoke();
+            }
         }
     }
 
@@ -239,6 +280,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
                 if (ImGui.Selectable($"{factor:P0}", MathF.Abs(gui.UserScale - factor) < .001f))
                 {
                     gui.UserScale = factor;
+                    preferencesChanged?.Invoke();
                 }
             }
 

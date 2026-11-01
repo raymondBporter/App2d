@@ -122,6 +122,7 @@ public sealed class ImGuiHost : IDisposable
         MakeCurrent();
         ImGui.Render();
         _renderer.Render(ImGui.GetDrawData());
+        _platform.SetCursor(ImGui.GetMouseCursor());
     }
 
     public void Dispose()

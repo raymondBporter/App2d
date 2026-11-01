@@ -36,6 +36,10 @@ dotnet run --project App2d.CharacterStudio
 Requires Windows and .NET 10. ImGui.NET 1.91.6.1 is pinned; MonoGame WindowsDX is the same version as the game. Startup
 exceptions are written to `character-studio-error.log` beside the executable.
 
+Drag the gaps between the panels to resize them: browser over outline, the side panels against the viewport, and the
+timeline under it. The timeline height is remembered per workspace. Panel sizes and the **UI** scale are saved per user in
+`%LocalAppData%\App2d\CharacterStudio\settings.json`; a small window shrinks the panels on screen without changing the saved sizes.
+
 The transport's **Preview end** menu follows the clip's loop setting by default. Hold stops on the final pose,
 Loop wraps to the beginning, and Ping pong plays to the end and back. A ping pong trip from start to end takes
 one clip duration. Preview speed and end mode are session settings; they do not change the saved clip.

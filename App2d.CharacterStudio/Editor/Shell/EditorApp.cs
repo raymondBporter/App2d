@@ -5,7 +5,6 @@ using App2d.Core.Assets;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Text.Json;
 
 namespace App2d.CharacterStudio.Editor;
 
@@ -19,6 +18,7 @@ internal sealed class EditorApp : Game
     private readonly string _authoredRoot;
     private readonly string? _smokePath;
     private readonly string _settingsPath = UserDataLocations.ForCurrentUser().CharacterStudioSettings;
+    private StudioSettings _settings = new();
     private ImGuiHost _gui = null!;
     private PointCharacterRenderer _renderer = null!;
     private EditorShell _shell = null!;
@@ -55,21 +55,13 @@ internal sealed class EditorApp : Game
 
     protected override void LoadContent()
     {
-        var scale = 1f;
-        if (_smokePath is null && File.Exists(_settingsPath))
+        // Smoke frames keep the design layout so captures compare across machines.
+        if (_smokePath is null)
         {
-            try
-            {
-                using var settings = JsonDocument.Parse(File.ReadAllText(_settingsPath));
-                if (settings.RootElement.TryGetProperty("uiScale", out var value) && value.TryGetSingle(out var s) && float.IsFinite(s))
-                {
-                    scale = Math.Clamp(s, .75f, 2);
-                }
-            }
-            catch (Exception ex) when (ex is IOException or JsonException) { }
+            _settings = StudioSettings.Load(_settingsPath);
         }
 
-        _gui = new(GraphicsDevice, new MonoGameImGuiPlatform(this), scale);
+        _gui = new(GraphicsDevice, new MonoGameImGuiPlatform(this), _settings.UiScale);
         _renderer = new(GraphicsDevice);
         var root = _authoredRoot;
         if (_smokePath is not null)
@@ -84,7 +76,7 @@ internal sealed class EditorApp : Game
         {
             SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
         }, new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui,
-            new SpatialPreview(GraphicsDevice, _gui, assets.PartOf("sword"), assets.PartOf("spatial-curve-study")))
+            new SpatialPreview(GraphicsDevice, _gui, assets.PartOf("sword"), assets.PartOf("spatial-curve-study")), _settings.Layout, _smokePath is null ? SaveSettings : null)
         { Show3DPreview = _start3D };
         if (_smokePath is null)
         {
@@ -139,6 +131,13 @@ internal sealed class EditorApp : Game
             _smoke.Capture(_capture!);
         }
         base.Draw(time);
+    }
+
+    /// <summary>Writes the preferences the shell reports changed: a new UI scale or a dropped panel handle.</summary>
+    private void SaveSettings()
+    {
+        _settings.UiScale = _gui.UserScale;
+        _settings.Save(_settingsPath);
     }
 
     private void ConfirmClose(object? sender, FormClosingEventArgs e)

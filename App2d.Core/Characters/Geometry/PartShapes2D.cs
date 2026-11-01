@@ -21,12 +21,9 @@ public static class PartShapes2D
         var shapes = new List<IShape2D>();
         foreach (var entry in asset.Geometry.Where(g => g.Collision is { Enabled: true }))
         {
-            if (entry.Geometry is not IShape2D shape || entry.Bindings is { Count: > 0 })
-                throw new InvalidDataException("Body collision entries need rigid shapes.");
-            if (entry.Socket is not null || entry.Prop is not null)
-                throw new InvalidDataException("Body collision entries must attach within their own Part.");
-            if (mask is { } previous && previous != entry.Collision!.Mask)
-                throw new InvalidDataException("One rigid body's collision entries must share a mask.");
+            if (entry.Geometry is not IShape2D shape || entry.Bindings is { Count: > 0 }) throw new InvalidDataException("Body collision entries need rigid shapes.");
+            if (entry.Socket is not null || entry.Prop is not null) throw new InvalidDataException("Body collision entries must attach within their own Part.");
+            if (mask is { } previous && previous != entry.Collision!.Mask) throw new InvalidDataException("One rigid body's collision entries must share a mask.");
             mask = entry.Collision!.Mask;
             var frame = PartAttachment2D.FrameOf(entry,
                 id => rig is null ? asset.LocationFrame(id).Origin : rig.Rest[id],
@@ -50,10 +47,8 @@ public static class PartShapes2D
     private static IShape2D Place(IShape2D shape, Matrix3x2 matrix)
     {
         shape.Validate();
-        if (!ShapeBounds2D.Calculate(shape).IsFinite)
-            throw new InvalidDataException("A world part needs finite collision geometry.");
-        if (!Similarity2D.TryFromMatrix(matrix, out var pose))
-            throw new InvalidDataException("Rigid collision needs uniform geometry scale.");
+        if (!ShapeBounds2D.Calculate(shape).IsFinite) throw new InvalidDataException("A world part needs finite collision geometry.");
+        if (!Similarity2D.TryFromMatrix(matrix, out var pose)) throw new InvalidDataException("Rigid collision needs uniform geometry scale.");
         return matrix == Matrix3x2.Identity ? shape : ShapeTransforms2D.Posed(shape, pose);
     }
 }

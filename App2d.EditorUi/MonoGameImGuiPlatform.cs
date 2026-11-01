@@ -13,6 +13,7 @@ public sealed class MonoGameImGuiPlatform : IImGuiPlatform
     private readonly Game _game;
     private readonly Queue<char> _characters = [];
     private int _wheel;
+    private ImGuiMouseCursor _cursor = ImGuiMouseCursor.Arrow;
 
     public MonoGameImGuiPlatform(Game game)
     {
@@ -66,6 +67,28 @@ public sealed class MonoGameImGuiPlatform : IImGuiPlatform
                 io.AddInputCharacterUTF16(character);
             }
         }
+    }
+
+    public void SetCursor(ImGuiMouseCursor cursor)
+    {
+        if (cursor == _cursor)
+        {
+            return;
+        }
+
+        _cursor = cursor;
+        Mouse.SetCursor(cursor switch
+        {
+            ImGuiMouseCursor.TextInput => MouseCursor.IBeam,
+            ImGuiMouseCursor.ResizeAll => MouseCursor.SizeAll,
+            ImGuiMouseCursor.ResizeNS => MouseCursor.SizeNS,
+            ImGuiMouseCursor.ResizeEW => MouseCursor.SizeWE,
+            ImGuiMouseCursor.ResizeNESW => MouseCursor.SizeNESW,
+            ImGuiMouseCursor.ResizeNWSE => MouseCursor.SizeNWSE,
+            ImGuiMouseCursor.Hand => MouseCursor.Hand,
+            ImGuiMouseCursor.NotAllowed => MouseCursor.No,
+            _ => MouseCursor.Arrow
+        });
     }
 
     public void Dispose()

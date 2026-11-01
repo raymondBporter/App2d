@@ -7,6 +7,31 @@
   <Project Path="App2d.ImageLab/App2d.ImageLab.csproj" />
   <Project Path="App2d/App2d.csproj" />
   <Project Path="App2d.Tests/App2d.Tests.csproj" />
+  <Folder Name="/docs/">
+    <File Path="docs/baby-triceratops.md" />
+    <File Path="docs/character-studio.md" />
+    <File Path="docs/character-system.md" />
+    <File Path="docs/club-caveman.md" />
+    <File Path="docs/combat-contact.md" />
+    <File Path="docs/enemy-template.md" />
+    <File Path="docs/enemy-workflow.md" />
+    <File Path="docs/falling-and-landings.md" />
+    <File Path="docs/game-design.md" />
+    <File Path="docs/generator-settings.json" />
+    <File Path="docs/level-generation.md" />
+    <File Path="docs/music-and-zones.md" />
+    <File Path="docs/player-spells.md" />
+    <File Path="docs/point-character-pipeline.md" />
+    <File Path="docs/prehistoric-enemies.md" />
+    <File Path="docs/pterosaur.md" />
+    <File Path="docs/rendering-passes.md" />
+    <File Path="docs/rock-thrower.md" />
+    <File Path="docs/session-architecture.md" />
+    <File Path="docs/shape-analyzer.md" />
+    <File Path="docs/shield-defender.md" />
+    <File Path="docs/wolf-animation-mapping.md" />
+    <File Path="docs/world-maps.md" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
