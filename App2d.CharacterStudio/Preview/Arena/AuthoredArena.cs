@@ -100,7 +100,7 @@ public sealed class AuthoredArena
     public AuthoredArena(IEnumerable<ResolvedEntity> entities)
     {
         var list = entities.ToList();
-        ArgGuard.ThrowIf(list.Count == 0, "The arena needs at least one entity.", nameof(entities));
+        Ensure.ThrowIf(list.Count == 0, "The arena needs at least one entity.", nameof(entities));
         for (var i = 0; i < list.Count; i++)
         {
             var actor = new Actor(i, list[i], new(i == 0 ? -6 : -2 + 3.2f * i, 0), i == 0 ? 1 : -1, Collision);

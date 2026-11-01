@@ -66,7 +66,7 @@ public static class Rotation2D
     public static Vector2 InterpolateArc(Vector2 from, Vector2 to, float radians, float fraction)
     {
         ValidateArc(from, to, radians);
-        ArgGuard.Finite(fraction);
+        Ensure.Finite(fraction);
         if (fraction <= 0f)
         {
             return from;
@@ -97,8 +97,8 @@ public static class Rotation2D
 
     private static void ValidateArc(Vector2 from, Vector2 to, float radians)
     {
-        ArgGuard.Finite(from);
-        ArgGuard.Finite(to);
-        ArgGuard.Finite(radians);
+        Ensure.Finite(from);
+        Ensure.Finite(to);
+        Ensure.Finite(radians);
     }
 }

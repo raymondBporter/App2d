@@ -14,31 +14,31 @@ public sealed class TriangleMesh2D
 
     public TriangleMesh2D(IEnumerable<Vector2> vertices, IEnumerable<int> indices)
     {
-        ArgGuard.ThrowIfNull(vertices);
-        ArgGuard.ThrowIfNull(indices);
+        Ensure.ThrowIfNull(vertices);
+        Ensure.ThrowIfNull(indices);
         _vertices = [.. vertices];
         _indices = [.. indices];
-        ArgGuard.ThrowIf(_vertices.Length < 3, "A triangle mesh needs at least three vertices.", nameof(vertices));
-        ArgGuard.ThrowIf(_indices.Length == 0 || _indices.Length % 3 != 0,
+        Ensure.ThrowIf(_vertices.Length < 3, "A triangle mesh needs at least three vertices.", nameof(vertices));
+        Ensure.ThrowIf(_indices.Length == 0 || _indices.Length % 3 != 0,
             "Triangle indices must form complete triples.", nameof(indices));
         foreach (var vertex in _vertices)
         {
-            ArgGuard.Finite(vertex, nameof(vertices));
+            Ensure.Finite(vertex, nameof(vertices));
         }
 
         foreach (var index in _indices)
         {
-            ArgGuard.Index(index, _vertices.Length, nameof(indices));
+            Ensure.Index(index, _vertices.Length, nameof(indices));
         }
 
         var area = 0d;
         foreach (var (a, b, c) in Triangles)
         {
             var twice = new Vector2d(a).Orientation(new(b), new(c));
-            ArgGuard.ThrowIf(twice == 0, "Triangle vertices must not be collinear.", nameof(indices));
+            Ensure.NonZero(twice);
             area += Math.Abs(twice) / 2;
         }
-        ArgGuard.ThrowIf(area > float.MaxValue, "Triangle mesh area is too large.", nameof(vertices));
+        Ensure.LessThanOrEqual(area, float.MaxValue);
         Area = (float)area;
         Bounds = Rect2D.FromPoints(_vertices);
     }
@@ -57,7 +57,7 @@ public sealed class TriangleMesh2D
 
     public Triangle<Vector2> TriangleAt(int index)
     {
-        ArgGuard.Index(index, TriangleCount);
+        Ensure.Index(index, TriangleCount);
 
         var i = index * 3;
         return new(_vertices[_indices[i]], _vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
@@ -66,8 +66,8 @@ public sealed class TriangleMesh2D
     /// <summary>Contains a point when it lies in any triangle, including an edge.</summary>
     public bool ContainsPoint(Vector2 point, double edgeTolerance = 0)
     {
-        ArgGuard.Finite(point);
-        ArgGuard.NonNegative(edgeTolerance);
+        Ensure.Finite(point);
+        Ensure.NonNegative(edgeTolerance);
         if (edgeTolerance == 0 && !Bounds.Contains(point))
         {
             return false;

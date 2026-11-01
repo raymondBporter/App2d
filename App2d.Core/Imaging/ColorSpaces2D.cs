@@ -13,7 +13,7 @@ public static class ColorSpaces2D
     /// </summary>
     public static Vector3 SrgbToHsv(Vector3 srgb)
     {
-        ArgGuard.InRange(srgb, Vector3.Zero, Vector3.One);
+        Ensure.InRange(srgb, Vector3.Zero, Vector3.One);
         var value = MathF.Max(srgb.X, MathF.Max(srgb.Y, srgb.Z));
         var chroma = value - MathF.Min(srgb.X, MathF.Min(srgb.Y, srgb.Z));
         if (chroma == 0)
@@ -33,7 +33,7 @@ public static class ColorSpaces2D
     /// </summary>
     public static Vector3 SrgbToOklab(Vector3 srgb)
     {
-        ArgGuard.InRange(srgb, Vector3.Zero, Vector3.One);
+        Ensure.InRange(srgb, Vector3.Zero, Vector3.One);
         var r = Decode(srgb.X);
         var g = Decode(srgb.Y);
         var b = Decode(srgb.Z);
@@ -52,7 +52,7 @@ public static class ColorSpaces2D
     /// </summary>
     public static Vector3 OklabToSrgb(Vector3 oklab)
     {
-        ArgGuard.Finite(oklab);
+        Ensure.Finite(oklab);
         var l = oklab.X + .3963377774f * oklab.Y + .2158037573f * oklab.Z;
         var m = oklab.X - .1055613458f * oklab.Y - .0638541728f * oklab.Z;
         var s = oklab.X - .0894841775f * oklab.Y - 1.2914855480f * oklab.Z;

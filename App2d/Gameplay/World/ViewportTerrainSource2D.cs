@@ -22,7 +22,7 @@ internal sealed class ViewportTerrainSource2D : IDisposable
 
     public ViewportTerrainSource2D(IChunkedTileMap2D map)
     {
-        _map = ArgGuard.RequireNotNull(map);
+        _map = Ensure.RequireNotNull(map);
         if (map is IChangingTileMap2D editable)
         {
             editable.ChunkChanged += Invalidate;
@@ -33,7 +33,7 @@ internal sealed class ViewportTerrainSource2D : IDisposable
     {
         if (!visibleBounds.IsFinite || visibleBounds.Size.X < 0f || visibleBounds.Size.Y < 0f)
         {
-            ArgGuard.ThrowOutOfRange(visibleBounds, "Viewport bounds must be finite and ordered.");
+            Ensure.ThrowOutOfRange(visibleBounds, "Viewport bounds must be finite and ordered.");
         }
 
         // Include a tile beyond each edge for terrain artwork that overhangs its cell.

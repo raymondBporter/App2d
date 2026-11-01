@@ -241,10 +241,7 @@ public static partial class ClipAuthoring
 
         var next = clip.Contacts.Where(c => c.Chain == chain && c.Start > time).Select(c => c.Start).DefaultIfEmpty(clip.Duration).Min();
         var finish = MathF.Min(next, MathF.Min(clip.Duration, time + length));
-        if (finish - time < SameTime)
-        {
-            throw new InvalidOperationException($"No room to plant '{chain}' at {time:F3}s.");
-        }
+        Ensure.GreaterThanOrEqual(finish - time, SameTime);
 
         var ratio = Ratio(model, clip, spec.Scale);
         var local = pose.World(spec.End) - TravelAt(model, clip, 0) - model.Rest[spec.End];
@@ -371,7 +368,7 @@ public static partial class ClipAuthoring
 
     public static void SetCurve(MotionClip clip, Channel channel, float time, int component, KeyCurve2D? curve)
     {
-        ArgGuard.InRange(component, 0, 2);
+        Ensure.InRange(component, 0, 2);
 
         curve?.Validate();
         var key = Track(clip, channel)?.Keys.AtTime(time)
@@ -437,7 +434,7 @@ public static partial class ClipAuthoring
     {
         if (from < -SameTime || to > clip.Duration + SameTime || to - from < .05f)
         {
-            ArgGuard.ThrowOutOfRange(to, $"'{clip.Id}': excerpt {from:F3}..{to:F3} is outside 0..{clip.Duration:F3} or too short.");
+            Ensure.ThrowOutOfRange(to, $"'{clip.Id}': excerpt {from:F3}..{to:F3} is outside 0..{clip.Duration:F3} or too short.");
         }
 
         var copy = Duplicate(clip, id, name);

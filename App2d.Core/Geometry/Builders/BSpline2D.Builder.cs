@@ -9,9 +9,9 @@ public readonly partial record struct BSpline2D
 {
     public void Validate()
     {
-        ArgGuard.Positive(Degree, "degree");
-        ArgGuard.ThrowIf(ControlPoints.Length <= Degree, $"A degree-{Degree} B-spline needs at least {(long)Degree + 1} control points.", "controlPoints");
-        foreach (var point in ControlPoints) ArgGuard.Finite(point, "controlPoints");
+        Ensure.Positive(Degree, "degree");
+        Ensure.ThrowIf(ControlPoints.Length <= Degree, $"A degree-{Degree} B-spline needs at least {(long)Degree + 1} control points.", "controlPoints");
+        foreach (var point in ControlPoints) Ensure.Finite(point, "controlPoints");
     }
     public static class Builder
     {

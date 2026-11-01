@@ -6,8 +6,8 @@ public sealed record PlayerSave2D
 {
     public PlayerSave2D(long savePointId, int hitPoints)
     {
-        StateGuard.ThrowIf(savePointId <= 0, "A saved save-point ID must be positive.");
-        ArgGuard.Positive(hitPoints);
+        Ensure.Positive(savePointId);
+        Ensure.Positive(hitPoints);
 
         SavePointId = savePointId;
         HitPoints = hitPoints;

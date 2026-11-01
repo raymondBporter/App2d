@@ -76,7 +76,7 @@ public sealed class PersonPresentation2D : IDisposable
 
     public void Advance(float deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         if (!_hasState)
         {
             return;
@@ -101,9 +101,9 @@ public sealed class PersonPresentation2D : IDisposable
         TextureCache2D textures,
         TraversalMetrics2D traversal)
     {
-        _scene = ArgGuard.RequireNotNull(scene);
-        _textures = ArgGuard.RequireNotNull(textures);
-        ArgGuard.ThrowIfNull(traversal);
+        _scene = Ensure.RequireNotNull(scene);
+        _textures = Ensure.RequireNotNull(textures);
+        Ensure.ThrowIfNull(traversal);
 
         _visualOffset = traversal.PlayerVisualOffset;
         _hardLandingSpeed = traversal.HardLandingSpeed;
@@ -193,7 +193,7 @@ public sealed class PersonPresentation2D : IDisposable
         bool isShieldBlocking,
         bool isMeleeAttackActive)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         if (!person.IsAlive)
         {
             if (!ReferenceEquals(_animation.Clip, _deathAnimation))
@@ -455,7 +455,7 @@ public sealed class PersonPresentation2D : IDisposable
         AnimationClip2D<Texture2D> animation,
         float durationSeconds)
     {
-        ArgGuard.Positive(durationSeconds);
+        Ensure.Positive(durationSeconds);
         _animation.Play(animation, restart: true);
         _animation.PlaybackSpeed = animation.Duration / durationSeconds;
     }

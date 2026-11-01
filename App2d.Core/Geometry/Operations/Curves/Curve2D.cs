@@ -18,14 +18,14 @@ public static class Curve2D
     /// <summary>Returns the left and right parameter intervals. Concrete curves may provide their own typed subdivision.</summary>
     public static (CurveSlice2D<TCurve> Left, CurveSlice2D<TCurve> Right) Split<TCurve>(this TCurve curve, float amount) where TCurve : ICurve2D
     {
-        ArgGuard.InRange(amount, 0f, 1f);
+        Ensure.InRange(amount, 0f, 1f);
         return (new(curve, 0f, amount), new(curve, amount, 1f));
     }
 
     /// <summary>Returns a unit tangent, or zero when the curve is locally degenerate.</summary>
     public static Vector2 Tangent(ICurve2D curve, float amount)
     {
-        ArgGuard.ThrowIfNull(curve);
+        Ensure.ThrowIfNull(curve);
         amount = Clamping.Clamp01(amount);
         var derivative = curve.EvaluateDerivative(amount);
         if (derivative.LengthSquared() <= DerivativeEpsilon * DerivativeEpsilon)
@@ -49,8 +49,8 @@ public static class Curve2D
     /// <summary>Samples both endpoints and the requested number of equal parameter-space segments.</summary>
     public static Vector2[] Sample(ICurve2D curve, int segmentCount)
     {
-        ArgGuard.ThrowIfNull(curve);
-        ArgGuard.Positive(segmentCount);
+        Ensure.ThrowIfNull(curve);
+        Ensure.Positive(segmentCount);
         var points = new Vector2[segmentCount + 1];
         Sample(curve, points);
         return points;
@@ -63,16 +63,16 @@ public static class Curve2D
     /// </summary>
     public static PolylineCurve2D ToPolyline(ICurve2D curve, float maximumSegmentLength = 12f, float maximumDeviation = 0.05f)
     {
-        ArgGuard.ThrowIfNull(curve);
-        ArgGuard.Positive(maximumSegmentLength);
-        ArgGuard.Positive(maximumDeviation);
+        Ensure.ThrowIfNull(curve);
+        Ensure.Positive(maximumSegmentLength);
+        Ensure.Positive(maximumDeviation);
         var segments = curve switch
         {
             BSpline2D spline => spline.ControlPoints.Length - spline.Degree,
             PolylineCurve2D polyline => polyline.Points.Length - 1,
             _ => 16
         };
-        ArgGuard.Positive(segments);
+        Ensure.Positive(segments);
         var points = new List<Vector2> { curve.Evaluate(0f) };
         for (var segment = 0; segment < segments; segment++)
         {
@@ -84,21 +84,22 @@ public static class Curve2D
 
         void Append(float from, float to, Vector2 start, Vector2 end, int depth)
         {
-            ArgGuard.Finite(start);
-            ArgGuard.Finite(end);
+            Ensure.Finite(start);
+            Ensure.Finite(end);
             var middle = (from + to) * 0.5f;
             var midpoint = curve.Evaluate(middle);
             var needsSplit = Vector2.Distance(start, end) > maximumSegmentLength;
             for (var sample = 1; sample <= 3; sample++)
             {
                 var point = sample == 2 ? midpoint : curve.Evaluate(float.Lerp(from, to, sample / 4f));
-                ArgGuard.Finite(point);
+                Ensure.Finite(point);
                 needsSplit |= Distance2D.DistanceSquaredToSegment(point, start, end) > maximumDeviation * maximumDeviation;
             }
             if (needsSplit)
             {
-                if (depth >= 20 || middle == from || middle == to)
-                    throw new InvalidOperationException("Curve sampling could not meet the requested segment length and deviation.");
+                Ensure.LessThan(depth, 20);
+                Ensure.NotEqual(middle, from);
+                Ensure.NotEqual(middle, to);
                 Append(from, middle, start, midpoint, depth + 1);
                 Append(middle, to, midpoint, end, depth + 1);
             }
@@ -117,7 +118,7 @@ public static class Curve2D
             throw new ArgumentNullException(nameof(curve));
         }
 
-        ArgGuard.ThrowIfTooShort(points, 2);
+        Ensure.ThrowIfTooShort(points, 2);
         var segmentCount = points.Length - 1;
         for (var index = 0; index < points.Length; index++)
         {
@@ -128,9 +129,9 @@ public static class Curve2D
     /// <summary>A unit-height Gaussian profile centered at <paramref name="center"/>.</summary>
     public static float Gaussian(float amount, float center, float sigma)
     {
-        ArgGuard.Finite(amount);
-        ArgGuard.Finite(center);
-        ArgGuard.Positive(sigma);
+        Ensure.Finite(amount);
+        Ensure.Finite(center);
+        Ensure.Positive(sigma);
         var distance = amount - center;
         return MathF.Exp(-(distance * distance) / (2f * sigma * sigma));
     }

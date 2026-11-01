@@ -22,9 +22,9 @@ public static class ColliderQueries
     /// </summary>
     public static int Overlap(CollisionSystem2D system, SpatialObject2D query, EntityId2D owner, string use, List<AttachedCollider> results, List<CollisionOverlap2D> scratch, uint layerMask = uint.MaxValue, Func<AttachedCollider, bool>? accept = null, Collider2D? excluded = null, uint? queryLayer = null)
     {
-        ArgGuard.ThrowIfNull(system);
-        ArgGuard.ThrowIfNull(results);
-        ArgGuard.ThrowIfNull(scratch);
+        Ensure.ThrowIfNull(system);
+        Ensure.ThrowIfNull(results);
+        Ensure.ThrowIfNull(scratch);
         results.Clear();
         system.Overlap(query, scratch, layerMask, includeSensors: true, excluded, queryLayer);
         foreach (var overlap in scratch)
@@ -41,7 +41,7 @@ public static class ColliderQueries
     /// <summary>The same query from a registered collider: it is excluded itself, its owner's colliders are skipped, its mask and layer are the query's.</summary>
     public static int Overlap(AttachedCollider query, string use, List<AttachedCollider> results, List<CollisionOverlap2D> scratch, uint layerMask = uint.MaxValue, Func<AttachedCollider, bool>? accept = null)
     {
-        ArgGuard.ThrowIfNull(query);
+        Ensure.ThrowIfNull(query);
         return Overlap(query.Collider.System, query.Object, query.Owner, use, results, scratch, layerMask & query.Collider.CollisionMask, accept, query.Collider, query.Collider.CollisionLayer);
     }
 }

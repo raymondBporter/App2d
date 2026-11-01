@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -162,10 +163,8 @@ public static class ModuleConversion
 
         var resolved = ResolvedModel.Rig(model);
         var origin = resolved.Rest[plan.Anchor];
-        if (resolved.RestTransforms[plan.Anchor].M11 != 1 || resolved.RestTransforms[plan.Anchor].M12 != 0)
-        {
-            throw new InvalidDataException($"Model '{model.Id}': '{plan.Anchor}' is not axis-aligned at rest; the conversion re-expresses positions by translation only.");
-        }
+        Ensure.Equal(resolved.RestTransforms[plan.Anchor].M11, 1);
+        Ensure.Equal(resolved.RestTransforms[plan.Anchor].M12, 0);
 
         var asset = new Part
         {

@@ -13,7 +13,7 @@ public sealed class WorldObject2D(IShape2D shape, IShader2D shader) : SpatialObj
 
     internal event Action? ZIndexChanged;
 
-    public IShader2D Shader { get; set; } = ArgGuard.RequireNotNull(shader);
+    public IShader2D Shader { get; set; } = Ensure.RequireNotNull(shader);
     public bool IsVisible { get; set; } = true;
 
     /// <summary>

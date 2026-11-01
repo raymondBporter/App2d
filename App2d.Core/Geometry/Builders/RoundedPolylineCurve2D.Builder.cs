@@ -10,13 +10,15 @@ public readonly partial record struct RoundedPolylineCurve2D
     public void Validate()
     {
         var points = Points;
-        ArgGuard.ThrowIf(points.Length < 2, "A rounded polyline needs at least two points.", "points");
+        Ensure.ThrowIf(points.Length < 2, "A rounded polyline needs at least two points.", "points");
         foreach (var point in points)
         {
-            ArgGuard.Finite(point, "points");
+            Ensure.Finite(point, "points");
         }
 
-        ArgGuard.ThrowIf(!float.IsFinite(Softness) || Softness < 0 || Softness > 1, "Softness must be between 0 and 1.", "softness");
+        Ensure.Finite(Softness);
+        Ensure.NonNegative(Softness);
+        Ensure.LessThanOrEqual(Softness, 1);
     }
 
     /// <summary>Stateless validated construction.</summary>

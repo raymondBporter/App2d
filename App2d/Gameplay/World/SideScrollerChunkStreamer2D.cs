@@ -16,8 +16,8 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
     private const int VerticalChunkRadius = 1;
     private const float OneWaySurfaceThickness = 8f;
 
-    private readonly PhysicsWorld2D _physics = ArgGuard.RequireNotNull(physics);
-    private readonly IChunkedTileMap2D _tileMap = ArgGuard.RequireNotNull(tileMap);
+    private readonly PhysicsWorld2D _physics = Ensure.RequireNotNull(physics);
+    private readonly IChunkedTileMap2D _tileMap = Ensure.RequireNotNull(tileMap);
     private readonly Dictionary<TileChunk2D, LoadedChunk> _loadedChunks = [];
     private readonly List<SpatialObject2D> _platforms = [];
     private readonly List<TileChunk2D> _unloadBuffer = [];
@@ -67,7 +67,7 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
 
     public void Update(Vector2 focus)
     {
-        ArgGuard.Finite(focus);
+        Ensure.Finite(focus);
         var center = _tileMap.WorldToChunk(focus);
         var minimumX = Math.Max(0, center.X - HorizontalChunkRadius);
         var maximumX = Math.Min(_tileMap.ChunkColumns - 1, center.X + HorizontalChunkRadius);

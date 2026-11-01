@@ -13,10 +13,10 @@ public sealed class TraversalMetrics2D
 
     public static TraversalMetrics2D FromGeometry(Vector2 visualSize, float footAnchorYFraction, Vector2 standingColliderSize, float colliderCenterOffsetX)
     {
-        ArgGuard.Positive(visualSize);
-        ArgGuard.Positive(standingColliderSize);
-        ArgGuard.Finite(colliderCenterOffsetX);
-        ArgGuard.InRange(footAnchorYFraction, 0f, 1f, bounds: RangeBounds.Open);
+        Ensure.Positive(visualSize);
+        Ensure.Positive(standingColliderSize);
+        Ensure.Finite(colliderCenterOffsetX);
+        Ensure.InRange(footAnchorYFraction, 0f, 1f, bounds: RangeBounds.Open);
         return new TraversalMetrics2D
         {
             PlayerColliderSize = standingColliderSize,
@@ -125,43 +125,43 @@ public sealed class TraversalMetrics2D
 
     public void ValidateScaleContract()
     {
-        ArgGuard.Positive(TileSize);
-        ArgGuard.Positive(LadderClimbSpeed);
-        ArgGuard.Positive(LadderGrabGrace);
-        ArgGuard.Positive(LadderAlignSpeed);
-        ArgGuard.Positive(LadderRelatchDelay);
-        ArgGuard.Positive(PlayerColliderSize);
-        ArgGuard.Finite(PlayerColliderCenterOffsetX);
-        ArgGuard.Positive(PlayerVisualSize);
-        ArgGuard.Finite(PlayerVisualOffset);
-        ArgGuard.Positive(AirJumpSpeedMultiplier);
-        ArgGuard.Positive(DownAttackBounceSpeed);
-        ArgGuard.Positive(MaximumJumpCount);
-        ArgGuard.Positive(OneWayDropSpeed);
-        ArgGuard.Positive(WallGripProbeDistance);
-        ArgGuard.Positive(WallGripMinimumOverlap);
-        ArgGuard.Positive(WallJumpHorizontalSpeed);
-        ArgGuard.Positive(WallJumpRelatchDelay);
-        ArgGuard.Positive(DashSpeed);
-        ArgGuard.Positive(DashDuration);
-        ArgGuard.Positive(DashCooldown);
-        ArgGuard.Positive(MaximumFallSpeed);
-        StateGuard.ThrowIfNot(NumericValidation.IsInRange(FallDragStartFraction, 0f, 0.95f, bounds: RangeBounds.Open), "Fall drag must begin between zero and the hard-landing speed fraction (0.95).");
-        StateGuard.ThrowIfNot(NumericValidation.IsInRange(BalanceOverhangFraction, 0f, 0.5f, bounds: RangeBounds.Open), "The balance overhang must be a fraction between zero and one half.");
-        StateGuard.ThrowIf(AirJumpSpeedMultiplier >= 1f, "The air-jump speed multiplier must be less than one.");
-        StateGuard.ThrowIfNot(NumericValidation.IsInRange(PlayerSpriteFootYFraction, 0f, 1f, bounds: RangeBounds.Open), "The player sprite foot anchor must be a fraction between zero and one.");
-        StateGuard.ThrowIf(!IsDesignUnitMultiple(TileSize) || !IsHalfDesignUnitMultiple(PlayerColliderSize.Y),
+        Ensure.Positive(TileSize);
+        Ensure.Positive(LadderClimbSpeed);
+        Ensure.Positive(LadderGrabGrace);
+        Ensure.Positive(LadderAlignSpeed);
+        Ensure.Positive(LadderRelatchDelay);
+        Ensure.Positive(PlayerColliderSize);
+        Ensure.Finite(PlayerColliderCenterOffsetX);
+        Ensure.Positive(PlayerVisualSize);
+        Ensure.Finite(PlayerVisualOffset);
+        Ensure.Positive(AirJumpSpeedMultiplier);
+        Ensure.Positive(DownAttackBounceSpeed);
+        Ensure.Positive(MaximumJumpCount);
+        Ensure.Positive(OneWayDropSpeed);
+        Ensure.Positive(WallGripProbeDistance);
+        Ensure.Positive(WallGripMinimumOverlap);
+        Ensure.Positive(WallJumpHorizontalSpeed);
+        Ensure.Positive(WallJumpRelatchDelay);
+        Ensure.Positive(DashSpeed);
+        Ensure.Positive(DashDuration);
+        Ensure.Positive(DashCooldown);
+        Ensure.Positive(MaximumFallSpeed);
+        Ensure.InRange(FallDragStartFraction, 0f, 0.95f, bounds: RangeBounds.Open);
+        Ensure.InRange(BalanceOverhangFraction, 0f, 0.5f, bounds: RangeBounds.Open);
+        Ensure.LessThan(AirJumpSpeedMultiplier, 1f);
+        Ensure.InRange(PlayerSpriteFootYFraction, 0f, 1f, bounds: RangeBounds.Open);
+        Ensure.ThrowIf(!IsDesignUnitMultiple(TileSize) || !IsHalfDesignUnitMultiple(PlayerColliderSize.Y),
             $"Tile and player collider heights must use half increments of the {DesignUnit:0}-unit design grid.");
-        StateGuard.ThrowIf(StandingClearance < DesignUnit, $"The minimum whole-tile standing passage must leave at least {DesignUnit:0} units of clearance.");
-        ArgGuard.Positive(ReliableJumpRiseTiles);
+        Ensure.GreaterThanOrEqual(StandingClearance, DesignUnit);
+        Ensure.Positive(ReliableJumpRiseTiles);
         var requiredJumpHeight = TileSize * ReliableJumpRiseTiles + DesignUnit;
         var standingJump = MeasureJump(0f);
-        StateGuard.ThrowIf(standingJump.ApexHeight < requiredJumpHeight, $"A held jump must clear {ReliableJumpRiseTiles} tiles plus {DesignUnit:0} units of margin.");
+        Ensure.GreaterThanOrEqual(standingJump.ApexHeight, requiredJumpHeight);
     }
 
     public JumpProfile2D MeasureJump(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
     {
-        ArgGuard.Positive(fixedDeltaSeconds);
+        Ensure.Positive(fixedDeltaSeconds);
 
         var position = Vector2.Zero;
         var velocity = new Vector2(initialHorizontalSpeed, JumpSpeed);
@@ -191,12 +191,12 @@ public sealed class TraversalMetrics2D
             }
         }
 
-        throw StateGuard.Create("Jump simulation did not return to its starting height.");
+        throw Ensure.Create("Jump simulation did not return to its starting height.");
     }
 
     public Vector2[] BuildJumpArc(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
     {
-        ArgGuard.Positive(fixedDeltaSeconds);
+        Ensure.Positive(fixedDeltaSeconds);
 
         var points = new List<Vector2> { Vector2.Zero };
         var position = Vector2.Zero;

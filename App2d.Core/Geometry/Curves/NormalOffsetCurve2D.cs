@@ -15,8 +15,8 @@ public sealed class NormalOffsetCurve2D : ICurve2D
 
     public NormalOffsetCurve2D(ICurve2D source, Func<float, float> offset)
     {
-        ArgGuard.ThrowIfNull(source);
-        ArgGuard.ThrowIfNull(offset);
+        Ensure.ThrowIfNull(source);
+        Ensure.ThrowIfNull(offset);
         _source = source;
         _offset = offset;
     }

@@ -46,8 +46,8 @@ public static class FarthestDistance2D
     /// </summary>
     public static float BetweenConvex(IConvexSupport2D first, IConvexSupport2D second)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
         var best = 0d;
         Support Sample(double angle)
         {

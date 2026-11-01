@@ -12,9 +12,9 @@ public static class PhysicsRaycastQueries2D
         public bool Raycast(Ray2D ray, float maxDistance, out RaycastHit2D<RigidBody2D> hit, uint layerMask = uint.MaxValue, bool includeSensors = true,
             RayQueryFilter2D<RigidBody2D>? filter = null)
         {
-            ArgGuard.ThrowIfNull(world);
+            Ensure.ThrowIfNull(world);
             ray.Validate();
-            ArgGuard.NonNegative(maxDistance, allowInfinity: true);
+            Ensure.NonNegative(maxDistance, allowInfinity: true);
 
             var found = false;
             var nearestDistance = maxDistance;
@@ -42,9 +42,9 @@ public static class PhysicsRaycastQueries2D
         public int RaycastAll(Ray2D ray, float maxDistance, Span<RaycastHit2D<RigidBody2D>> hits, uint layerMask = uint.MaxValue, bool includeSensors = true,
             RayQueryFilter2D<RigidBody2D>? filter = null)
         {
-            ArgGuard.ThrowIfNull(world);
+            Ensure.ThrowIfNull(world);
             ray.Validate();
-            ArgGuard.NonNegative(maxDistance, allowInfinity: true);
+            Ensure.NonNegative(maxDistance, allowInfinity: true);
             if (hits.IsEmpty)
             {
                 return 0;

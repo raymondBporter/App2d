@@ -32,7 +32,7 @@ public static class Easing
     /// <summary>x raised to a positive integer power, paired with n * x^(n-1).</summary>
     public static ProgressMap EaseInPower(int power)
     {
-        ArgGuard.Positive(power);
+        Ensure.Positive(power);
         return power == 1 ? Linear : new(x => Math.Pow(x, power), x => power * Math.Pow(x, power - 1),
             travel: EasingTravel.Forward, isContinuous: true);
     }

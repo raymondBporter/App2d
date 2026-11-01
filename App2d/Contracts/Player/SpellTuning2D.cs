@@ -17,15 +17,15 @@ public sealed record SpellTuning2D
 
     public SpellTuning2D Validate()
     {
-        ArgGuard.Positive(MaximumEnergy);
-        ArgGuard.InRange(StartingEnergy, 0, MaximumEnergy);
-        ArgGuard.NonNegative(EnergyPerSecond);
-        ArgGuard.InRange(ShotCost, 1, MaximumEnergy);
-        ArgGuard.InRange(HealCost, 1, MaximumEnergy);
-        ArgGuard.Positive(ShotChargeSeconds);
-        ArgGuard.Positive(ShotRecoverySeconds);
-        ArgGuard.Positive(HealSeconds);
-        ArgGuard.InRange(HealFraction, 0f, 1f, bounds: RangeBounds.OpenClosed);
+        Ensure.Positive(MaximumEnergy);
+        Ensure.InRange(StartingEnergy, 0, MaximumEnergy);
+        Ensure.NonNegative(EnergyPerSecond);
+        Ensure.InRange(ShotCost, 1, MaximumEnergy);
+        Ensure.InRange(HealCost, 1, MaximumEnergy);
+        Ensure.Positive(ShotChargeSeconds);
+        Ensure.Positive(ShotRecoverySeconds);
+        Ensure.Positive(HealSeconds);
+        Ensure.InRange(HealFraction, 0f, 1f, bounds: RangeBounds.OpenClosed);
         return this;
     }
 }

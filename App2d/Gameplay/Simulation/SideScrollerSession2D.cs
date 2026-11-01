@@ -37,8 +37,8 @@ public sealed class SideScrollerSession2D : IDisposable
     public void TravelForPlaytesting(Vector2 destination)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        StateGuard.ThrowIf(_advancing, "Travel requires a completed simulation tick.");
-        ArgGuard.InRange(destination, _world.Bounds.Min, _world.Bounds.Max, bounds: RangeBounds.ClosedOpen);
+        Ensure.ThrowIf(_advancing, "Travel requires a completed simulation tick.");
+        Ensure.InRange(destination, _world.Bounds.Min, _world.Bounds.Max, bounds: RangeBounds.ClosedOpen);
 
         _pendingPlaygroundTravel = destination;
     }
@@ -51,15 +51,15 @@ public sealed class SideScrollerSession2D : IDisposable
         RespawnState2D respawn,
         CombatSystem2D? combat = null)
     {
-        _physics = ArgGuard.RequireNotNull(physics);
+        _physics = Ensure.RequireNotNull(physics);
         _combat = combat;
-        _world = ArgGuard.RequireNotNull(world);
-        ArgGuard.ThrowIfNull(player);
-        ArgGuard.ThrowIfNull(actions);
-        ArgGuard.Finite(respawn.Position);
-        ArgGuard.InRange(respawn.HitPoints, 1, player.Health.Maximum, nameof(respawn));
-        StateGuard.ThrowIf(!physics.Bodies.Contains(player.Body), "The player must belong to the session's physics world.");
-        StateGuard.ThrowIf(!ReferenceEquals(player.Actions, actions), "The session actions must be attached to the player.");
+        _world = Ensure.RequireNotNull(world);
+        Ensure.ThrowIfNull(player);
+        Ensure.ThrowIfNull(actions);
+        Ensure.Finite(respawn.Position);
+        Ensure.InRange(respawn.HitPoints, 1, player.Health.Maximum, nameof(respawn));
+        Ensure.ThrowIf(!physics.Bodies.Contains(player.Body), "The player must belong to the session's physics world.");
+        Ensure.ThrowIf(!ReferenceEquals(player.Actions, actions), "The session actions must be attached to the player.");
 
         var participant = new Participant(player, actions, respawn);
         _players.Add(participant);
@@ -85,14 +85,14 @@ public sealed class SideScrollerSession2D : IDisposable
     public SessionFrame2D CaptureSnapshot()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        StateGuard.ThrowIf(_advancing, "Snapshots require a completed simulation tick.");
+        Ensure.ThrowIf(_advancing, "Snapshots require a completed simulation tick.");
         return new(Tick, CapturePlayers(), CaptureContent(), CaptureWorld(), CaptureEnemies(), []);
     }
 
     public void SetPaused(bool paused)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        StateGuard.ThrowIf(_advancing, "Pause changes require a completed simulation tick.");
+        Ensure.ThrowIf(_advancing, "Pause changes require a completed simulation tick.");
         if (paused == IsPaused)
         {
             return;
@@ -116,27 +116,27 @@ public sealed class SideScrollerSession2D : IDisposable
     public SessionFrame2D Advance(params ReadOnlySpan<PlayerInput2D> inputs)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        StateGuard.ThrowIf(IsPaused, "A paused session cannot advance.");
-        StateGuard.ThrowIf(_advancing, "Session stepping cannot be reentered.");
+        Ensure.ThrowIf(IsPaused, "A paused session cannot advance.");
+        Ensure.ThrowIf(_advancing, "Session stepping cannot be reentered.");
         // Reject the entire batch before changing simulation state.
         for (var i = 0; i < inputs.Length; i++)
         {
             var input = inputs[i];
             if (FindParticipant(input.EntityId) is null)
             {
-                throw ArgGuard.CreateInvalid($"Player {input.EntityId.Value} is not in this session.", nameof(inputs));
+                throw Ensure.CreateInvalid($"Player {input.EntityId.Value} is not in this session.", nameof(inputs));
             }
 
             if (!IsValidMovement(input.Command))
             {
-                throw ArgGuard.CreateInvalid($"Input for player {input.EntityId.Value} has an invalid movement.", nameof(inputs));
+                throw Ensure.CreateInvalid($"Input for player {input.EntityId.Value} has an invalid movement.", nameof(inputs));
             }
 
             for (var j = 0; j < i; j++)
             {
                 if (inputs[j].EntityId == input.EntityId)
                 {
-                    throw ArgGuard.CreateInvalid($"Player {input.EntityId.Value} has more than one input this tick.", nameof(inputs));
+                    throw Ensure.CreateInvalid($"Player {input.EntityId.Value} has more than one input this tick.", nameof(inputs));
                 }
             }
         }

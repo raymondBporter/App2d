@@ -10,23 +10,20 @@ public static class CircleConstruction2D
     /// <summary>The circumcircle through three finite non-collinear points.</summary>
     public static (Vector2 Center, float Radius) ThroughPoints(Vector2 a, Vector2 b, Vector2 c)
     {
-        ArgGuard.Finite(a);
-        ArgGuard.Finite(b);
-        ArgGuard.Finite(c);
+        Ensure.Finite(a);
+        Ensure.Finite(b);
+        Ensure.Finite(c);
         var origin = a.ToVector2d();
         var u = b.ToVector2d() - origin;
         var v = c.ToVector2d() - origin;
         var cross = u.Cross(v);
-        if (cross == 0)
-        {
-            throw new ArgumentException("Points are collinear.");
-        }
+        Ensure.NonZero(cross);
 
         var offset = (v.LengthSquared() * u - u.LengthSquared() * v).PerpCcw / (2 * cross);
         var center = (origin + offset).ToVector2();
         var radius = (float)offset.Length();
-        ArgGuard.Finite(center);
-        ArgGuard.Positive(radius);
+        Ensure.Finite(center);
+        Ensure.Positive(radius);
         return (center, radius);
     }
 }

@@ -70,9 +70,9 @@ internal static class ThingTypeRegistry2D
     /// <summary>An object thing becomes a placement whose id is the world-wide thing id, so placements stay unique across maps.</summary>
     public static ObjectPlacement2D ToPlacement(PositionThingRecord2D record, Part asset, long worldThingId)
     {
-        ArgGuard.ThrowIfNull(record);
-        ArgGuard.ThrowIfNull(asset);
-        StateGuard.ThrowIf(!Require(record.TypeKey).IsObject, $"Thing type '{record.TypeKey}' is not an object.");
+        Ensure.ThrowIfNull(record);
+        Ensure.ThrowIfNull(asset);
+        Ensure.ThrowIf(!Require(record.TypeKey).IsObject, $"Thing type '{record.TypeKey}' is not an object.");
         return new ObjectPlacement2D(worldThingId.ToString(CultureInfo.InvariantCulture), asset, new Vector2(record.X, record.Y));
     }
 

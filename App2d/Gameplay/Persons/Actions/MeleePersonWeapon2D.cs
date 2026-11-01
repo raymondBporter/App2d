@@ -25,10 +25,10 @@ internal abstract class MeleePersonWeapon2D(
     Action<float> attackStarted,
     Action<WeaponEvent2D> publish, AuthoredHero2D? authored = null) : PersonWeapon2DBase(kind)
 {
-    private readonly RigidBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
-    private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
-    private readonly Action<float> _attackStarted = ArgGuard.RequireNotNull(attackStarted);
-    private readonly Action<WeaponEvent2D> _publish = ArgGuard.RequireNotNull(publish);
+    private readonly RigidBody2D _ownerBody = Ensure.RequireNotNull(ownerBody);
+    private readonly CombatSystem2D _combat = Ensure.RequireNotNull(combat);
+    private readonly Action<float> _attackStarted = Ensure.RequireNotNull(attackStarted);
+    private readonly Action<WeaponEvent2D> _publish = Ensure.RequireNotNull(publish);
     private readonly MeleeAttack2D _attack = new(attackSourceId, new SpatialObject2D(hitboxShape), attackProfile);
     private float _attackDirection = 1f;
     private float _bufferedAttackDirection = 1f;

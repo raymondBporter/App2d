@@ -19,7 +19,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
     public WheelJoint2D(RigidBody2D first, RigidBody2D second, Vector2 firstLocalAnchor, Vector2 secondLocalAnchor, Vector2 firstLocalAxis)
     {
         JointMath2D.Validate(first, second, firstLocalAnchor, secondLocalAnchor);
-        ArgGuard.NonZero(firstLocalAxis);
+        Ensure.NonZero(firstLocalAxis);
         First = first;
         Second = second;
         FirstLocalAnchor = firstLocalAnchor;
@@ -45,22 +45,22 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
     public float RestTranslation
     {
         get => _restTranslation;
-        set => _restTranslation = ArgGuard.Finite(value, nameof(RestTranslation));
+        set => _restTranslation = Ensure.Finite(value, nameof(RestTranslation));
     }
     public float FrequencyHertz
     {
         get => _frequencyHertz;
-        set => _frequencyHertz = ArgGuard.Positive(value, nameof(FrequencyHertz));
+        set => _frequencyHertz = Ensure.Positive(value, nameof(FrequencyHertz));
     }
     public float DampingRatio
     {
         get => _dampingRatio;
-        set => _dampingRatio = ArgGuard.NonNegative(value, nameof(DampingRatio));
+        set => _dampingRatio = Ensure.NonNegative(value, nameof(DampingRatio));
     }
 
     public void PrepareVelocity(float deltaSeconds)
     {
-        ArgGuard.Positive(deltaSeconds);
+        Ensure.Positive(deltaSeconds);
         _springImpulse = _lowerImpulse = _upperImpulse = 0f;
         if (!IsEnabled) return;
         _axial = CreateAxis(WorldAxis);

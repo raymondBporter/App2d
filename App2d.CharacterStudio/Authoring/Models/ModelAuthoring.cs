@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -924,10 +925,7 @@ public static class ModelAuthoring
         var rotation = node.CharacterOriented ? angle : (parent?.Handedness ?? 1) * (angle - (parent?.RestAngle ?? 0));
         // The frame's X axis carries the inherited uniform scale, so the tip lands exactly.
         var unit = Vector2.TransformNormal(Vector2.UnitX, node.RestFrame).Length();
-        if (unit <= 1e-6f)
-        {
-            throw new InvalidOperationException($"'{id}' has a collapsed frame; its tip cannot be placed.");
-        }
+        Ensure.GreaterThan(unit, 1e-6f);
 
         var changes = new List<PropertyOverride>();
         if (MathF.Abs(rotation - node.Setup.Rotation) > 1e-6f)

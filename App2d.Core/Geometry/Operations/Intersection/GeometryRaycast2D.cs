@@ -25,9 +25,7 @@ public static class GeometryRaycast2D
         float maxDistance, out RayHit2D hit)
     {
         ray.Validate();
-        ArgGuard.Finite(localToWorld);
-        ArgGuard.ThrowIf(!Matrix3x2.Invert(localToWorld, out var inverse) || !inverse.IsFinite(),
-            "The geometry pose must have a finite inverse.", nameof(localToWorld));
+        Ensure.Invertible(localToWorld, out var inverse);
         var origin = Vector2.Transform(ray.Origin, inverse);
         // Keep the unnormalized transformed direction: its parameter is still the world ray distance.
         var direction = Vector2.TransformNormal(ray.Direction, inverse);
@@ -46,11 +44,11 @@ public static class GeometryRaycast2D
     /// <summary>Distance is the parameter of the supplied, possibly unnormalized direction.</summary>
     public static bool TryIntersect(Vector2 origin, Vector2 direction, IGeometryValue2D geometry, float maxDistance, out RayHit2D hit)
     {
-        ArgGuard.ThrowIfNull(geometry);
-        ArgGuard.Finite(origin);
-        ArgGuard.Finite(direction);
-        ArgGuard.ThrowIf(direction == Vector2.Zero, "Ray direction must be nonzero.", nameof(direction));
-        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
+        Ensure.ThrowIfNull(geometry);
+        Ensure.Finite(origin);
+        Ensure.Finite(direction);
+        Ensure.NonZero(direction);
+        Ensure.NonNegative(maxDistance, allowInfinity: true);
         return geometry switch
         {
             IShape2D shape => ShapeRaycast2D.TryIntersect(origin, direction, shape, maxDistance, out hit),

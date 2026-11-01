@@ -8,7 +8,7 @@ namespace App2d.Presentation.Player;
 
 public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 {
-    private readonly TraversalMetrics2D _traversal = ArgGuard.RequireNotNull(traversal);
+    private readonly TraversalMetrics2D _traversal = Ensure.RequireNotNull(traversal);
     private readonly Vector2[] _runningJumpArc = traversal.BuildJumpArc(traversal.RunSpeed);
     private readonly Vector2[] _standingJumpArc = traversal.BuildJumpArc(0f);
     private readonly JumpProfile2D _runningJumpProfile = traversal.MeasureJump(traversal.RunSpeed);
@@ -16,7 +16,7 @@ public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 
     public void DrawWorldDebug(Renderer2D renderer, Vector2 playerPosition, float facing)
     {
-        ArgGuard.ThrowIfNull(renderer);
+        Ensure.ThrowIfNull(renderer);
         Span<Vector2> runningArc = stackalloc Vector2[_runningJumpArc.Length];
         Span<Vector2> standingArc = stackalloc Vector2[_standingJumpArc.Length];
         for (var i = 0; i < runningArc.Length; i++)
@@ -34,7 +34,7 @@ public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 
     public void DrawUI(Renderer2D renderer)
     {
-        ArgGuard.ThrowIfNull(renderer);
+        Ensure.ThrowIfNull(renderer);
         renderer.DrawScreenLabel(
             $"GRID {TraversalMetrics2D.DesignUnit:0}u  |  BODY {_traversal.PlayerColliderSize.X / _traversal.TileSize:0.00}t x {_traversal.PlayerColliderSize.Y / _traversal.TileSize:0.00}t  |  " +
             $"PASSAGE {_traversal.StandingPassageTiles}t + {_traversal.StandingClearance:0}u  |  " +

@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 
@@ -22,10 +23,7 @@ public readonly record struct Limit(float Min, float Max, float SoftMin, float S
     public Limit Soft(float min, float max) => this with { SoftMin = min, SoftMax = max };
     public void Check(float value, string field)
     {
-        if (!float.IsFinite(value) || value < Min || value > Max)
-        {
-            throw new InvalidDataException($"{field} must be between {Min} and {Max}; found {value}.");
-        }
+        Ensure.InRange(value, Min, Max, field);
     }
     public static void Color(string? value, string field)
     {

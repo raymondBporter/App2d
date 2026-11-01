@@ -11,9 +11,9 @@ public readonly partial record struct CompositeShape2D
 {
     public void Validate()
     {
-        ArgGuard.ThrowIfTooShort(Parts, 1, "parts");
-        ArgGuard.ThrowIfContainsNull(Parts, "parts");
-        ArgGuard.ThrowIf(AreaOutlineSegments < 3, "Curved outlines need at least three samples.", "areaOutlineSegments");
+        Ensure.ThrowIfTooShort(Parts, 1, "parts");
+        Ensure.ThrowIfContainsNull(Parts, "parts");
+        Ensure.GreaterThanOrEqual(AreaOutlineSegments, 3);
         foreach (var part in Parts)
         {
             if (part is not IConvexShape2D) throw new InvalidOperationException("Composite parts must be convex.");
@@ -23,6 +23,6 @@ public readonly partial record struct CompositeShape2D
     public static class Builder
     {
         public static CompositeShape2D Create(IEnumerable<IConvexShape2D> parts, bool includeOverlap = true, int areaOutlineSegments = ShapeArea2D.DefaultOutlineSegments) =>
-            new CompositeShape2D([.. ArgGuard.RequireNotNull(parts)], includeOverlap, areaOutlineSegments).Validated();
+            new CompositeShape2D([.. Ensure.RequireNotNull(parts)], includeOverlap, areaOutlineSegments).Validated();
     }
 }

@@ -29,9 +29,9 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
         uint targetLayer,
         CombatSystem2D combat)
     {
-        ArgGuard.ThrowIfNull(ids);
-        _ownerBody = ArgGuard.RequireNotNull(ownerBody);
-        _combat = ArgGuard.RequireNotNull(combat);
+        Ensure.ThrowIfNull(ids);
+        _ownerBody = Ensure.RequireNotNull(ownerBody);
+        _combat = Ensure.RequireNotNull(combat);
         _ownerFaction = ownerFaction;
         _targetLayer = targetLayer;
         _punch = new Attack(

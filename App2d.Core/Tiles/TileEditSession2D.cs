@@ -8,7 +8,7 @@ namespace App2d.Core.Tiles;
 /// </summary>
 public sealed class TileEditSession2D(EditableTileMap2D map)
 {
-    private readonly EditableTileMap2D _map = ArgGuard.RequireNotNull(map);
+    private readonly EditableTileMap2D _map = Ensure.RequireNotNull(map);
     private readonly List<TileEdit2D> _currentStroke = [];
     private readonly List<TileEdit2D[]> _undoStack = [];
 
@@ -33,7 +33,7 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     /// <summary>Paints one tile's collision type and visual tileset as one undoable value.</summary>
     public void Paint(int x, int y, TileCell2D tile)
     {
-        StateGuard.ThrowIf(!IsStrokeActive, "Begin a stroke before painting.");
+        Ensure.ThrowIf(!IsStrokeActive, "Begin a stroke before painting.");
 
         if (x < 0 || x >= _map.Width || y < 0 || y >= _map.Height)
         {
@@ -61,7 +61,7 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
 
     public void PaintLine(int fromX, int fromY, int toX, int toY, TileCell2D tile)
     {
-        StateGuard.ThrowIf(!IsStrokeActive, "Begin a stroke before painting.");
+        Ensure.ThrowIf(!IsStrokeActive, "Begin a stroke before painting.");
 
         var deltaX = Math.Abs(toX - fromX);
         var deltaY = Math.Abs(toY - fromY);
@@ -100,7 +100,7 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     /// </summary>
     public void FloodFill(int startX, int startY, TileCell2D replacement)
     {
-        StateGuard.ThrowIf(!IsStrokeActive, "Begin a stroke before filling.");
+        Ensure.ThrowIf(!IsStrokeActive, "Begin a stroke before filling.");
         if (startX < 0 || startX >= _map.Width || startY < 0 || startY >= _map.Height)
         {
             return;
@@ -153,7 +153,7 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     /// </summary>
     public IReadOnlyCollection<TileChunk2D> EndStroke()
     {
-        StateGuard.ThrowIf(!IsStrokeActive, "No stroke is in progress.");
+        Ensure.ThrowIf(!IsStrokeActive, "No stroke is in progress.");
         IsStrokeActive = false;
 
         if (_currentStroke.Count == 0)
@@ -173,7 +173,7 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     /// </summary>
     public IReadOnlyCollection<TileChunk2D> Undo()
     {
-        StateGuard.ThrowIf(IsStrokeActive, "Finish the stroke before undoing.");
+        Ensure.ThrowIf(IsStrokeActive, "Finish the stroke before undoing.");
         if (_undoStack.Count == 0)
         {
             return [];

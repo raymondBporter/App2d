@@ -3,8 +3,13 @@ using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Validation;
 
-public static partial class ArgGuard
+public static partial class Ensure
 {
+    [DoesNotReturn]
+    public static void Throw(string message) => throw Create(message);
+
+    public static InvalidOperationException Create(string message) => new(message);
+
     // These cold helpers allocate a fresh exception only on failure. Never cache exception instances.
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]

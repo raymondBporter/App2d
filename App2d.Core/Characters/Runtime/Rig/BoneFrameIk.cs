@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Constraints;
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
@@ -35,18 +36,16 @@ internal static class BoneFrameIk
         var (x, y, _) = frame.GetRows();
         var size = x.LengthSquared();
         var length = bone.Length * MathF.Sqrt(size);
-        if (!float.IsFinite(length) || length < .01f || !float.IsFinite(y.LengthSquared())
-            || MathF.Abs(size - y.LengthSquared()) > size * 1e-4f || MathF.Abs(Vector2.Dot(x, y)) > size * 1e-4f)
-        {
-            throw new InvalidDataException($"Bone constraint '{chain.Id}': '{bone.Id}' needs a uniform, unsheared frame and a world segment of at least 0.01; collapsed or nonuniform animated scales are unsupported.");
-        }
+        Ensure.Finite(length);
+        Ensure.GreaterThanOrEqual(length, .01f);
+        Ensure.Finite(y.LengthSquared());
+        Ensure.LessThanOrEqual(MathF.Abs(size - y.LengthSquared()), size * 1e-4f);
+        Ensure.LessThanOrEqual(MathF.Abs(Vector2.Dot(x, y)), size * 1e-4f);
 
         var tip = Vector2.Transform(new(bone.Length, 0), frame);
         var actual = child.Translation;
-        if (!actual.IsFinite() || Vector2.Distance(tip, actual) > MathF.Max(1e-5f, length * 1e-4f))
-        {
-            throw new InvalidDataException($"Bone constraint '{chain.Id}': the child of '{bone.Id}' must sit at its +X tip (length {bone.Length}); move the child or change the bone length.");
-        }
+        Ensure.Finite(actual);
+        Ensure.LessThanOrEqual(Vector2.Distance(tip, actual), MathF.Max(1e-5f, length * 1e-4f));
 
         return length;
     }

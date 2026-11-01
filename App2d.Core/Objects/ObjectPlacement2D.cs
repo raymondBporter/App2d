@@ -12,11 +12,11 @@ public sealed record ObjectSurface2D
 
     public void Validate()
     {
-        ArgGuard.NonNegative(OneWaySlop);
+        Ensure.NonNegative(OneWaySlop);
         if (OneWayNormal is { } normal)
         {
-            ArgGuard.Finite(normal);
-            ArgGuard.Positive(normal.Length(), nameof(OneWayNormal));
+            Ensure.Finite(normal);
+            Ensure.Positive(normal.Length(), nameof(OneWayNormal));
         }
     }
 }
@@ -26,9 +26,9 @@ public sealed record ObjectPlacement2D(string Id, Part Asset, Vector2 Position)
 {
     public void Validate()
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(Id);
-        ArgGuard.ThrowIfNull(Asset);
-        ArgGuard.Finite(Position);
+        Ensure.ThrowIfNullOrWhiteSpace(Id);
+        Ensure.ThrowIfNull(Asset);
+        Ensure.Finite(Position);
         Asset.Validate();
     }
 }

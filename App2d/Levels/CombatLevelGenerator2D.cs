@@ -41,11 +41,11 @@ public static class CombatLevelGenerator2D
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(tilesets);
-        ArgGuard.InRange(settings.Beats, 6, 60);
-        ArgGuard.InRange(settings.JumpRiseTiles, 1, 4);
-        ArgGuard.InRange(settings.Difficulty, 0f, 1f);
-        ArgGuard.InRange(settings.Exploration, 0f, 1f);
-        ArgGuard.Index(settings.TilesetIndex, tilesets.Count);
+        Ensure.InRange(settings.Beats, 6, 60);
+        Ensure.InRange(settings.JumpRiseTiles, 1, 4);
+        Ensure.InRange(settings.Difficulty, 0f, 1f);
+        Ensure.InRange(settings.Exploration, 0f, 1f);
+        Ensure.Index(settings.TilesetIndex, tilesets.Count);
 
         ValidateRoster(settings.MeleeEnemies, MeleeTypes);
         ValidateRoster(settings.RangedEnemies, RangedTypes);

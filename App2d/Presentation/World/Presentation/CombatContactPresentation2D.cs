@@ -49,7 +49,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
 
     public void Advance(float dt)
     {
-        ArgGuard.NonNegative(dt);
+        Ensure.NonNegative(dt);
         foreach (var burst in _bursts)
         {
             burst.Age += dt;

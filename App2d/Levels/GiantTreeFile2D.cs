@@ -16,7 +16,7 @@ public static class GiantTreeFile2D
 
     public static ImmutableArray<GiantTree2D> Load(string path, IChunkedTileMap2D map)
     {
-        ArgGuard.ThrowIfNull(map);
+        Ensure.ThrowIfNull(map);
         if (!File.Exists(path))
         {
             return [];
@@ -42,9 +42,9 @@ public static class GiantTreeFile2D
                     throw new InvalidDataException("A tree entry cannot be null.");
                 }
 
-                ArgGuard.InRange(entry.XTiles, 0f, map.Width - 1f, "xTiles");
+                Ensure.InRange(entry.XTiles, 0f, map.Width - 1f, "xTiles");
                 var ground = entry.RootYTiles ?? TileGroundHeights2D.AtColumn(map, (int)entry.XTiles);
-                ArgGuard.InRange(ground, 0f, map.Height, "rootYTiles");
+                Ensure.InRange(ground, 0f, map.Height, "rootYTiles");
                 var root = map.Origin + new Vector2(entry.XTiles, ground) * map.TileSize;
                 trees.Add(new(root, new()
                 {
@@ -72,8 +72,8 @@ public static class GiantTreeFile2D
         }
 
         var range = new Interval<float>(values[0] * tileSize, values[1] * tileSize);
-        ArgGuard.Positive(range.Min, name);
-        ArgGuard.AtLeast(range.Max, range.Min, name);
+        Ensure.Positive(range.Min, name);
+        Ensure.GreaterThanOrEqual(range.Max, range.Min, name);
         return range;
     }
 

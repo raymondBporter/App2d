@@ -10,7 +10,7 @@ public sealed partial class Renderer2D
     public void Draw(ParallaxBackground2D background)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNull(background);
+        Ensure.ThrowIfNull(background);
         foreach (var layer in background.GetDrawOrder())
         {
             Draw(layer);
@@ -20,7 +20,7 @@ public sealed partial class Renderer2D
     public void Draw(ParallaxLayer2D layer)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNull(layer);
+        Ensure.ThrowIfNull(layer);
         var gameCamera = _camera;
         var gameBounds = _visibleWorldBounds;
         var view = layer.GetView(gameCamera);
@@ -44,7 +44,7 @@ public sealed partial class Renderer2D
                 }
 
                 var bounds = item.WorldBounds;
-                StateGuard.ThrowIfNot(bounds.IsFinite, "Horizontally repeated parallax objects need finite bounds.");
+                Ensure.ThrowIfNot(bounds.IsFinite, "Horizontally repeated parallax objects need finite bounds.");
                 var first = Math.Ceiling(((double)visible.Left - bounds.Right) / width);
                 var last = Math.Floor(((double)visible.Right - bounds.Left) / width);
                 for (var repeat = first; repeat <= last; repeat++)

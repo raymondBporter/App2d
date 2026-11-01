@@ -37,7 +37,7 @@ public sealed class BSplineHeightField2D : IHeightField2D
     public float SlopeAt(float x)
     {
         var derivative = Curve.EvaluateDerivative(ParameterAt(x));
-        return ArgGuard.Finite(derivative.Y / derivative.X);
+        return Ensure.Finite(derivative.Y / derivative.X);
     }
 
     private float ParameterAt(float x)

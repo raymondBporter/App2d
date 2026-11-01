@@ -14,10 +14,10 @@ public sealed class CombatantRegistry2D
 
     public void Register(ICombatant2D combatant)
     {
-        ArgGuard.ThrowIfNull(combatant);
-        StateGuard.ThrowIf(!combatant.Id.IsValid, "A combatant must have a valid entity ID.");
-        StateGuard.ThrowIf(combatant.Body.EntityId != combatant.Id, "The body must identify its owning combatant.");
-        StateGuard.ThrowIf(!_combatants.TryAdd(combatant.Id, combatant), "The combatant ID is already registered.");
+        Ensure.ThrowIfNull(combatant);
+        Ensure.ThrowIf(!combatant.Id.IsValid, "A combatant must have a valid entity ID.");
+        Ensure.ThrowIf(combatant.Body.EntityId != combatant.Id, "The body must identify its owning combatant.");
+        Ensure.ThrowIf(!_combatants.TryAdd(combatant.Id, combatant), "The combatant ID is already registered.");
     }
 
     internal IEnumerable<EntityId2D> Ids => _combatants.Keys;

@@ -29,7 +29,7 @@ public sealed class PlayerInputMapper2D
 
     public PersonCommand2D Capture(InputState input)
     {
-        ArgGuard.ThrowIfNull(input);
+        Ensure.ThrowIfNull(input);
         if (input.IsSuppressed)
         {
             Reset();

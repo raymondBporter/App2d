@@ -17,11 +17,11 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
     public SoftPointJoint2D(RigidBody2D first, RigidBody2D second,
         Vector2 firstLocalAnchor, Vector2 secondLocalAnchor)
     {
-        First = ArgGuard.RequireNotNull(first);
-        Second = ArgGuard.RequireNotNull(second);
-        ArgGuard.ThrowIfSameReference(first, second, "A point joint requires two different bodies.");
-        ArgGuard.Finite(firstLocalAnchor);
-        ArgGuard.Finite(secondLocalAnchor);
+        First = Ensure.RequireNotNull(first);
+        Second = Ensure.RequireNotNull(second);
+        Ensure.ThrowIfSameReference(first, second, "A point joint requires two different bodies.");
+        Ensure.Finite(firstLocalAnchor);
+        Ensure.Finite(secondLocalAnchor);
         FirstLocalAnchor = firstLocalAnchor;
         SecondLocalAnchor = secondLocalAnchor;
     }
@@ -38,19 +38,19 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
     public float FrequencyHertz
     {
         get => _frequencyHertz;
-        set => _frequencyHertz = ArgGuard.Positive(value, nameof(FrequencyHertz));
+        set => _frequencyHertz = Ensure.Positive(value, nameof(FrequencyHertz));
     }
 
     /// <summary>0 is undamped, below 1 oscillates, 1 is critically damped, above 1 settles more slowly.</summary>
     public float DampingRatio
     {
         get => _dampingRatio;
-        set => _dampingRatio = ArgGuard.NonNegative(value, nameof(DampingRatio));
+        set => _dampingRatio = Ensure.NonNegative(value, nameof(DampingRatio));
     }
 
     public void PrepareVelocity(float deltaSeconds)
     {
-        ArgGuard.Positive(deltaSeconds);
+        Ensure.Positive(deltaSeconds);
         _impulse = Vector2.Zero;
         _massXX = _massXY = _massYY = 0f;
         if (!IsEnabled || First.InverseMass + Second.InverseMass <= 0f) return;

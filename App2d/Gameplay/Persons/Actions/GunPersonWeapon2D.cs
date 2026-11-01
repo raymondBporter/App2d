@@ -58,15 +58,15 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
         _spendEnergy = spendEnergy;
         _shot = shot ?? DefaultShot;
         _projectileIds = new EntityIdSequence2D(ids, ProjectileIdCapacity);
-        _ownerBody = ArgGuard.RequireNotNull(ownerBody);
-        _collision = ArgGuard.RequireNotNull(collision);
+        _ownerBody = Ensure.RequireNotNull(ownerBody);
+        _collision = Ensure.RequireNotNull(collision);
         _worldLayer = worldLayer;
         _targetLayer = targetLayer;
         _ownerFaction = ownerFaction;
-        _combat = ArgGuard.RequireNotNull(combat);
-        _shotStarted = ArgGuard.RequireNotNull(shotStarted);
-        _publish = ArgGuard.RequireNotNull(publish);
-        ArgGuard.Finite(muzzleOffset);
+        _combat = Ensure.RequireNotNull(combat);
+        _shotStarted = Ensure.RequireNotNull(shotStarted);
+        _publish = Ensure.RequireNotNull(publish);
+        Ensure.Finite(muzzleOffset);
         _muzzleOffset = muzzleOffset;
         _authoredMuzzle = muzzle;
         _barrelPath = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(

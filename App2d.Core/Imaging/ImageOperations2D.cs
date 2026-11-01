@@ -9,8 +9,8 @@ public static class ImageOperations2D
     public static Image2D<TResult> Map<T, TResult>(this Image2D<T> source, Func<T, TResult> map)
         where T : unmanaged where TResult : unmanaged
     {
-        ArgGuard.ThrowIfNull(source);
-        ArgGuard.ThrowIfNull(map);
+        Ensure.ThrowIfNull(source);
+        Ensure.ThrowIfNull(map);
         var result = new Image2D<TResult>(source.Width, source.Height);
         var input = source.AsSpan();
         var output = result.AsSpan();
@@ -24,8 +24,8 @@ public static class ImageOperations2D
     /// <summary>Replaces each pixel in place. Use for arithmetic, clamping, powers, or other value transforms.</summary>
     public static void Transform<T>(this Image2D<T> image, Func<T, T> transform) where T : unmanaged
     {
-        ArgGuard.ThrowIfNull(image);
-        ArgGuard.ThrowIfNull(transform);
+        Ensure.ThrowIfNull(image);
+        Ensure.ThrowIfNull(transform);
         var pixels = image.AsSpan();
         for (var i = 0; i < pixels.Length; i++)
         {

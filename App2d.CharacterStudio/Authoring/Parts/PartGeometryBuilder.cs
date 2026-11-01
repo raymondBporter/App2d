@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
@@ -55,10 +56,8 @@ public static class PartGeometryBuilder
     /// The caller chooses scale, grip and color. Export with +X along the weapon and +Y across its broad face.</summary>
     public static PartGeometry ImportObj(string text, float scale = 1, string fill = "#c8b18a")
     {
-        if (!float.IsFinite(scale) || scale <= 0)
-        {
-            throw new InvalidDataException("OBJ scale must be positive.");
-        }
+        Ensure.Finite(scale);
+        Ensure.Positive(scale);
 
         var positions = new List<int>();
         var welded = new Dictionary<Vector3, int>();

@@ -21,9 +21,9 @@ public sealed partial class Renderer2D
     public void DrawShape(IShape2D shape, Matrix3x2 localToWorld, Color4b? fillColor = null, Color4b? outlineColor = null, float screenStrokeWidth = 2f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
-        ArgGuard.Finite(localToWorld);
+        Ensure.Finite(localToWorld);
         var bounds = ShapeBounds2D.Calculate(shape);
         var matrix = localToWorld * _camera.WorldToDeviceMatrix;
         DrawShapeCore(shape, matrix, bounds, fillColor, outlineColor, screenStrokeWidth);
@@ -34,7 +34,7 @@ public sealed partial class Renderer2D
         float screenStrokeWidth = 2f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNull(item);
+        Ensure.ThrowIfNull(item);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
         if (IsCulled(item))
         {
@@ -70,9 +70,9 @@ public sealed partial class Renderer2D
         Color4b? outlineColor = null, float screenStrokeWidth = 2f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNull(mesh);
+        Ensure.ThrowIfNull(mesh);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
-        ArgGuard.Finite(localToWorld);
+        Ensure.Finite(localToWorld);
         SelectBatch(null, null);
         var matrix = localToWorld * _camera.WorldToDeviceMatrix;
         if (fillColor is { } fill)
@@ -96,9 +96,9 @@ public sealed partial class Renderer2D
         float screenStrokeWidth = 2f, LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
-        ArgGuard.Finite(start);
-        ArgGuard.Finite(end);
-        ArgGuard.Positive(screenStrokeWidth);
+        Ensure.Finite(start);
+        Ensure.Finite(end);
+        Ensure.Positive(screenStrokeWidth);
         ValidateLineCap(cap);
         SelectBatch(null, null);
         Line(_camera.WorldToDevice(start), _camera.WorldToDevice(end), color, screenStrokeWidth, cap, cap);
@@ -114,10 +114,10 @@ public sealed partial class Renderer2D
         Color4b color, LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
     {
         RequireFrame();
-        ArgGuard.Finite(start);
-        ArgGuard.Finite(end);
-        ArgGuard.Positive(startWorldWidth);
-        ArgGuard.Positive(endWorldWidth);
+        Ensure.Finite(start);
+        Ensure.Finite(end);
+        Ensure.Positive(startWorldWidth);
+        Ensure.Positive(endWorldWidth);
         ValidateLineCap(startCap);
         ValidateLineCap(endCap);
         SelectBatch(null, null);
@@ -135,7 +135,7 @@ public sealed partial class Renderer2D
             throw new ArgumentException("The line needs a valid direction.", nameof(line));
         }
 
-        ArgGuard.Positive(screenStrokeWidth);
+        Ensure.Positive(screenStrokeWidth);
         var deviceLine = new Line2D(_camera.WorldToDevice(line.Origin),
             Vector2.TransformNormal(line.Direction, _camera.WorldToDeviceMatrix));
         if (!deviceLine.TryClipToRectangle(PaddedDeviceBounds(screenStrokeWidth), out var start, out var end))
@@ -157,7 +157,7 @@ public sealed partial class Renderer2D
             throw new ArgumentException("The ray needs a valid direction.", nameof(ray));
         }
 
-        ArgGuard.Positive(screenStrokeWidth);
+        Ensure.Positive(screenStrokeWidth);
         ValidateLineCap(originCap);
         var deviceOrigin = _camera.WorldToDevice(ray.Origin);
         var bounds = PaddedDeviceBounds(screenStrokeWidth);
@@ -187,7 +187,7 @@ public sealed partial class Renderer2D
 
         if (outlineColor is not null)
         {
-            ArgGuard.Positive(width);
+            Ensure.Positive(width);
         }
     }
 

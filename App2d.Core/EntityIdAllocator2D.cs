@@ -10,7 +10,7 @@ public sealed class EntityIdAllocator2D
 {
     public EntityIdAllocator2D(long next = 1)
     {
-        ArgGuard.Positive(next);
+        Ensure.Positive(next);
         Next = next;
     }
 
@@ -27,7 +27,7 @@ public sealed class EntityIdAllocator2D
     /// <summary>Reserves <paramref name="count"/> consecutive values and returns the first.</summary>
     public long ReserveRange(long count)
     {
-        ArgGuard.Positive(count);
+        Ensure.Positive(count);
         var start = Next;
         Next = checked(Next + count);
         return start;

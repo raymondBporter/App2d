@@ -40,11 +40,11 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public SideScrollerLevel2D(TraversalMetrics2D traversal, IChunkedTileMap2D tileMap, IReadOnlyList<WorldThingSpec2D>? worldThings = null, IEnumerable<WorldZone2D>? zones = null, IEnumerable<GiantTree2D>? giantTrees = null, IReadOnlyList<ObjectPlacement2D>? objects = null)
     {
-        ArgGuard.ThrowIfNull(traversal);
-        ArgGuard.ThrowIfNull(tileMap);
+        Ensure.ThrowIfNull(traversal);
+        Ensure.ThrowIfNull(tileMap);
         _traversal = traversal;
         _tileSize = traversal.TileSize;
-        ArgGuard.Positive(_tileSize);
+        Ensure.Positive(_tileSize);
         _worldThingSpecs = worldThings ?? [];
         _objectPlacements = ValidatePlacements(objects ?? []);
         TileMap = tileMap;
@@ -57,10 +57,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             editable.ChunkChanged += OnMapChanged;
         }
 
-        StateGuard.ThrowIf(
-            tileMap.TileSize != _tileSize,
-            $"The loaded map's tile size ({tileMap.TileSize}) does not match " +
-            $"the traversal metrics' tile size ({_tileSize}).");
+        Ensure.Equal(tileMap.TileSize, _tileSize);
         var authoredSpawn = _worldThingSpecs
             .FirstOrDefault(thing => thing.Enabled && thing.Kind == WorldThingKind2D.PlayerSpawn);
         if (authoredSpawn is not null)
@@ -108,7 +105,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     {
         if (!actorBounds.IsFinite)
         {
-            ArgGuard.ThrowOutOfRange(
+            Ensure.ThrowOutOfRange(
                 actorBounds,
                 "Bounds must be finite.");
         }
@@ -148,10 +145,10 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         uint playerLayer,
         uint enemyLayer)
     {
-        ArgGuard.ThrowIfNull(collision);
-        ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNull(ids);
-        StateGuard.ThrowIf(_environment is not null, "The level simulation has already been created.");
+        Ensure.ThrowIfNull(collision);
+        Ensure.ThrowIfNull(physics);
+        Ensure.ThrowIfNull(ids);
+        Ensure.ThrowIf(_environment is not null, "The level simulation has already been created.");
         var streamer = new SideScrollerChunkStreamer2D(physics, TileMap, worldLayer, worldLayer | playerLayer | enemyLayer);
         _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
@@ -187,7 +184,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Rect2D playerBounds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         foreach (var savePoint in _savePoints)
         {
             if (savePoint.Update(deltaSeconds, playerBounds))
@@ -209,14 +206,14 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public void UpdateWorldMotion(float deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         foreach (var item in _objects) item.Update(deltaSeconds);
     }
 
     /// <summary>Replaces every placed object; existing objects are disposed and content gets a new revision.</summary>
     public void ReloadObjects(IReadOnlyList<ObjectPlacement2D> placements)
     {
-        ArgGuard.ThrowIfNull(placements);
+        Ensure.ThrowIfNull(placements);
         ValidatePlacements(placements);
         _definitionRevision++;
         foreach (var item in _objects) item.Dispose();
@@ -228,7 +225,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private static IReadOnlyList<ObjectPlacement2D> ValidatePlacements(IReadOnlyList<ObjectPlacement2D> placements)
     {
         foreach (var placement in placements) placement.Validate();
-        ArgGuard.ThrowIf(placements.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != placements.Count, "Object placements need unique IDs.", nameof(placements));
+        Ensure.ThrowIf(placements.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != placements.Count, "Object placements need unique IDs.", nameof(placements));
         return placements;
     }
 
@@ -248,7 +245,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public void UpdateStreaming(Vector2 focus)
     {
-        ArgGuard.Finite(focus);
+        Ensure.Finite(focus);
         var environment = RequireEnvironment();
         var previousVersion = environment.Streamer.Version;
         environment.Streamer.Update(focus);
@@ -278,7 +275,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public void CreateAuthoredWorldThings(
         CombatSystem2D combat, AuthoredCatalog? authored = null)
     {
-        StateGuard.ThrowIf(
+        Ensure.ThrowIf(
             _authoredWorldThingsCreated,
             "The authored world things have already been created.");
         var environment = RequireEnvironment();
@@ -302,7 +299,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     private LevelEnvironment RequireEnvironment() =>
-        StateGuard.RequireNotNull(_environment, "Create the level simulation before using it.");
+        Ensure.RequireNotNull(_environment, message: "Create the level simulation before using it.");
 
     private void CreateSavePoints()
     {

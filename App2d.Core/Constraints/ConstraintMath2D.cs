@@ -19,9 +19,9 @@ public static class ConstraintMath2D
 
     public static DistanceConstraintEvaluation2D EvaluateDistance(Vector2 first, Vector2 second, Interval<float> limits, float activationTolerance = 0f, Vector2 fallbackDirection = default)
     {
-        ArgGuard.Finite(first);
-        ArgGuard.Finite(second);
-        ArgGuard.Finite(fallbackDirection);
+        Ensure.Finite(first);
+        Ensure.Finite(second);
+        Ensure.Finite(fallbackDirection);
         ValidateDistanceLimits(limits);
 
         var delta = second - first;
@@ -52,9 +52,9 @@ public static class ConstraintMath2D
 
     public static AxisConstraintEvaluation2D EvaluateAxis(Vector2 anchor, Vector2 requestedPoint, Vector2 axis, Interval<float> translationLimits, float activationTolerance = 0f)
     {
-        ArgGuard.Finite(anchor);
-        ArgGuard.Finite(requestedPoint);
-        ArgGuard.NonZero(axis);
+        Ensure.Finite(anchor);
+        Ensure.Finite(requestedPoint);
+        Ensure.NonZero(axis);
         axis = Vector2.Normalize(axis);
         var translation = Vector2.Dot(requestedPoint - anchor, axis);
         var limit = ConstraintMath1D.EvaluateLimit(translationLimits, translation, activationTolerance);
@@ -69,10 +69,10 @@ public static class ConstraintMath2D
     /// </summary>
     public static Vector2 ProjectPointToPolarArc(Vector2 anchor, Vector2 requestedPoint, float radius, Interval<float> angleLimits, float fallbackAngle = 0f)
     {
-        ArgGuard.Finite(anchor);
-        ArgGuard.Finite(requestedPoint);
-        ArgGuard.Positive(radius);
-        ArgGuard.Finite(fallbackAngle);
+        Ensure.Finite(anchor);
+        Ensure.Finite(requestedPoint);
+        Ensure.Positive(radius);
+        Ensure.Finite(fallbackAngle);
         var delta = requestedPoint - anchor;
         var angle = delta.LengthSquared() > MinimumDirectionLengthSquared ? delta.AngleRadians : fallbackAngle;
         angle = angleLimits.Clamp(angle);
@@ -83,12 +83,12 @@ public static class ConstraintMath2D
     {
         if (limits.IsBoundedBelow && limits.Min < 0f)
         {
-            ArgGuard.ThrowOutOfRange(limits, "A distance minimum cannot be negative.");
+            Ensure.ThrowOutOfRange(limits, "A distance minimum cannot be negative.");
         }
 
         if (limits.IsBoundedAbove && limits.Max < 0f)
         {
-            ArgGuard.ThrowOutOfRange(limits, "A distance maximum cannot be negative.");
+            Ensure.ThrowOutOfRange(limits, "A distance maximum cannot be negative.");
         }
     }
 }

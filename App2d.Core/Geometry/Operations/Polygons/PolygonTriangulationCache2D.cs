@@ -22,9 +22,9 @@ public static class PolygonTriangulationCache2D
     /// <summary>Projects arbitrary authored vertices or vertex-buffer entries into XY before comparing or triangulating.</summary>
     public static TriangleMesh2D Get<TPoint>(IReadOnlyList<TPoint> perimeter, Func<TPoint, Vector2> xy, double tolerance = 0)
     {
-        ArgGuard.ThrowIfNull(perimeter);
-        ArgGuard.ThrowIfNull(xy);
-        ArgGuard.NonNegative(tolerance);
+        Ensure.ThrowIfNull(perimeter);
+        Ensure.ThrowIfNull(xy);
+        Ensure.NonNegative(tolerance);
         var entry = Entries.GetValue(perimeter, static _ => new());
         lock (entry)
         {
@@ -56,7 +56,7 @@ public static class PolygonTriangulationCache2D
     /// <summary>Installs a triangulation constructed with a known topology, such as monotone terrain strips.</summary>
     internal static void StorePrepared(IReadOnlyList<Vector2> perimeter, TriangleMesh2D mesh, double tolerance)
     {
-        StateGuard.ThrowIfNot(Matches(perimeter, mesh.Vertices, static point => point));
+        Ensure.ThrowIfNot(Matches(perimeter, mesh.Vertices, static point => point));
         var entry = Entries.GetValue(perimeter, static _ => new());
         lock (entry)
         {

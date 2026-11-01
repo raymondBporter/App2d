@@ -36,7 +36,7 @@ public static class ShapeVertices2D
     /// </summary>
     public static int GetVertCount(this IShape2D shape)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         return shape switch
         {
             Circle2D => 1,
@@ -64,12 +64,9 @@ public static class ShapeVertices2D
     public static ReadOnlySpan<Vector2> GetVerts(this IShape2D shape, Span<Vector2> vertices, out float radius)
     {
         var count = shape.GetVertCount();
-        if (count == 0)
-        {
-            throw new NotSupportedException($"A {shape.GetKind()} has no exact finite polygonal convex core.");
-        }
+        Ensure.NonZero(count);
 
-        ArgGuard.ThrowIfTooShort(vertices, count);
+        Ensure.ThrowIfTooShort(vertices, count);
         radius = 0f;
         switch (shape)
         {
@@ -110,9 +107,9 @@ public static class ShapeVertices2D
     /// <param name="roundSegments">At least three samples around a circle or ellipse; capsules use half per cap.</param>
     public static int GetOutlineVertCount(this IShape2D shape, int roundSegments = 32, int cornerSegments = 8)
     {
-        ArgGuard.ThrowIfNull(shape);
-        ArgGuard.ThrowIf(roundSegments < 3, "Round shapes need at least three segments.", nameof(roundSegments));
-        ArgGuard.Positive(cornerSegments);
+        Ensure.ThrowIfNull(shape);
+        Ensure.GreaterThanOrEqual(roundSegments, 3);
+        Ensure.Positive(cornerSegments);
         return shape switch
         {
             Circle2D or Ellipse2D => roundSegments,
@@ -137,12 +134,9 @@ public static class ShapeVertices2D
     public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Span<Vector2> vertices, int roundSegments = 32, int cornerSegments = 8)
     {
         var count = shape.GetOutlineVertCount(roundSegments, cornerSegments);
-        if (count == 0)
-        {
-            throw new NotSupportedException($"A {shape.GetKind()} has no single finite outline.");
-        }
+        Ensure.NonZero(count);
 
-        ArgGuard.ThrowIfTooShort(vertices, count);
+        Ensure.ThrowIfTooShort(vertices, count);
         switch (shape)
         {
             case Circle2D circle:

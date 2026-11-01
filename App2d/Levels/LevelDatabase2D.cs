@@ -25,7 +25,7 @@ public sealed partial class LevelDatabase2D : IDisposable
     /// <summary>Opens a current level for editing, or creates the current schema in an empty database.</summary>
     public static LevelDatabase2D Open(string path)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(path);
+        Ensure.ThrowIfNullOrWhiteSpace(path);
         var directory = Path.GetDirectoryName(Path.GetFullPath(path));
         if (!string.IsNullOrEmpty(directory))
         {
@@ -60,8 +60,8 @@ public sealed partial class LevelDatabase2D : IDisposable
     /// </summary>
     public static LevelDatabase2D OpenRead(string path)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(path);
-        StateGuard.ThrowIf(!File.Exists(path), $"The level file '{path}' does not exist.");
+        Ensure.ThrowIfNullOrWhiteSpace(path);
+        Ensure.ThrowIf(!File.Exists(path), $"The level file '{path}' does not exist.");
 
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
@@ -86,7 +86,7 @@ public sealed partial class LevelDatabase2D : IDisposable
 
     public void Save(EditableTileMap2D map, ulong sourceSeed)
     {
-        ArgGuard.ThrowIfNull(map);
+        Ensure.ThrowIfNull(map);
 
         using var transaction = _connection.BeginTransaction();
         WriteMeta("width", map.Width);
@@ -130,7 +130,7 @@ public sealed partial class LevelDatabase2D : IDisposable
     /// </summary>
     public void SaveChunks(EditableTileMap2D map, ReadOnlySpan<TileChunk2D> chunks)
     {
-        ArgGuard.ThrowIfNull(map);
+        Ensure.ThrowIfNull(map);
         var buffer = new TileCell2D[map.ChunkSize * map.ChunkSize];
         using var transaction = _connection.BeginTransaction();
         WriteTilesetCatalog(map.TilesetIds);
@@ -180,7 +180,7 @@ public sealed partial class LevelDatabase2D : IDisposable
     }
 
     private static void RequireCurrentVersion(long version) =>
-        StateGuard.ThrowIf(version != CurrentFormatVersion,
+        Ensure.ThrowIf(version != CurrentFormatVersion,
             $"Unsupported level format version {version}; expected {CurrentFormatVersion}.");
 
     private static void Initialize(SqliteConnection connection)
@@ -286,10 +286,8 @@ public sealed partial class LevelDatabase2D : IDisposable
     private string[] ReadTilesetCatalog()
     {
         var count = int.Parse(RequireMeta("tileset_count"), CultureInfo.InvariantCulture);
-        if (count <= 0 || count > TileCell2D.MaximumTilesetCount)
-        {
-            throw new InvalidDataException($"Level tileset count {count} is outside the supported range.");
-        }
+        Ensure.Positive(count);
+        Ensure.LessThanOrEqual(count, TileCell2D.MaximumTilesetCount);
 
         var ids = new string[count];
         for (var index = 0; index < count; index++)
@@ -305,7 +303,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         using var command = _connection.CreateCommand();
         command.CommandText = "SELECT value FROM meta WHERE key = $key;";
         command.Parameters.AddWithValue("$key", key);
-        return StateGuard.RequireNotNull(command.ExecuteScalar() as string, $"The level file is missing required metadata '{key}'.");
+        return Ensure.RequireNotNull(command.ExecuteScalar() as string, $"The level file is missing required metadata '{key}'.");
     }
 
     private long RequireMetaLong(string key) => long.Parse(RequireMeta(key), CultureInfo.InvariantCulture);

@@ -9,9 +9,9 @@ public readonly partial record struct QuadraticBezier2D
 {
     public void Validate()
     {
-        ArgGuard.Finite(Start, "start");
-        ArgGuard.Finite(Control, "control");
-        ArgGuard.Finite(End, "end");
+        Ensure.Finite(Start, "start");
+        Ensure.Finite(Control, "control");
+        Ensure.Finite(End, "end");
     }
 
     /// <summary>Stateless validated construction.</summary>

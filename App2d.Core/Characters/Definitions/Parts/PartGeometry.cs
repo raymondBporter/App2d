@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
@@ -120,7 +121,7 @@ public sealed record PartGeometry
                 throw new InvalidDataException("A spatial curve uses a rigid attachment and its own XYZ control points.");
             var points = App2d.Core.Geometry.Operations.Curves.SpatialCurveControlPoints.Get(spatialCurve);
             foreach (var point in points)
-                if (!point.IsFinite()) throw new InvalidDataException("Spatial curve control points must be finite.");
+                Ensure.Finite(point);
         }
         if (VertexZ is { } depths)
         {
@@ -145,10 +146,7 @@ public sealed record PartGeometry
             _ = curve.Validated();
         }
 
-        if (CurveSections is < 2 or > 128)
-        {
-            throw new InvalidDataException("Curve sections must be between 2 and 128.");
-        }
+        Ensure.InRange(CurveSections, 2, 128);
 
         if (Geometry is RoundedPolylineCurve2D rounded && rounded.Points.Length > 64)
         {
@@ -178,10 +176,8 @@ public sealed record PartGeometry
         Material?.Validate("part.material");
         if (Collision is not null && (Geometry is not IShape2D || Bindings is { Count: > 0 } || ScaleX <= 0 || ScaleX != ScaleY))
             throw new InvalidDataException("Collision requires rigid shape geometry with positive uniform scale.");
-        if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY))
-        {
-            throw new InvalidDataException("Part scale must be finite.");
-        }
+        Ensure.Finite(ScaleX);
+        Ensure.Finite(ScaleY);
 
         if (Bindings is { Count: > 0 })
         {

@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using NVorbis;
 using System.Collections.Immutable;
 
@@ -101,10 +102,9 @@ internal sealed class MusicStream2D : IDisposable
                 while (read < samples)
                 {
                     var count = _stems[i].Read(_buffers[i], read, samples - read);
-                    if (count <= 0 || count > samples - read || count % 2 != 0)
-                    {
-                        throw new InvalidDataException($"Music stem {i} ended before its declared loop boundary.");
-                    }
+                    Ensure.Positive(count);
+                    Ensure.LessThanOrEqual(count, samples - read);
+                    Ensure.Equal(count % 2, 0);
 
                     read += count;
                 }

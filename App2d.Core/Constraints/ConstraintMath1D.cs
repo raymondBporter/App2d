@@ -28,8 +28,8 @@ public static class ConstraintMath1D
     /// </summary>
     public static ConstraintLimitEvaluation1D EvaluateLimit(Interval<float> limits, float coordinate, float activationTolerance = 0f)
     {
-        ArgGuard.Finite(coordinate);
-        ArgGuard.NonNegative(activationTolerance);
+        Ensure.Finite(coordinate);
+        Ensure.NonNegative(activationTolerance);
         var target = limits.Clamp(coordinate);
         var state = ConstraintLimitState1D.Inactive;
         if (limits.IsSingleton)

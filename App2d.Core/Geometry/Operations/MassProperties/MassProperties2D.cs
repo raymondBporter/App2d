@@ -13,15 +13,15 @@ public readonly record struct MassProperties2D(
     /// <summary>Preserves geometry and changes the uniform density to obtain the requested total mass.</summary>
     public MassProperties2D WithMass(double mass)
     {
-        ArgGuard.Positive(mass);
-        var inertia = ArgGuard.Positive(MomentOfInertia * (mass / Mass));
+        Ensure.Positive(mass);
+        var inertia = Ensure.Positive(MomentOfInertia * (mass / Mass));
         return this with { Mass = mass, MomentOfInertia = inertia };
     }
 
     /// <summary>Parallel-axis theorem: I(point) = I(centroid) + mass * distance squared.</summary>
     public double MomentOfInertiaAbout(Vector2d point)
     {
-        ArgGuard.ThrowIf(!point.IsFinite(), "The reference point must be finite.", nameof(point));
-        return ArgGuard.Positive(MomentOfInertia + Mass * (point - CenterOfMass).LengthSquared());
+        Ensure.Finite(point);
+        return Ensure.Positive(MomentOfInertia + Mass * (point - CenterOfMass).LengthSquared());
     }
 }

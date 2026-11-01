@@ -36,7 +36,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <returns>True when the regions share at least a point.</returns>
     public bool Overlaps(EntityRegion other, Vector2 position = default, Vector2 otherPosition = default)
     {
-        ArgGuard.ThrowIfNull(other);
+        Ensure.ThrowIfNull(other);
         return ShapeCollision2D.Overlaps(Shape, Pose.Translated(position), other.Shape, other.Pose.Translated(otherPosition));
     }
 
@@ -46,7 +46,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <returns>True when the region and the object share at least a point.</returns>
     public bool Overlaps(SpatialObject2D other, Vector2 position = default)
     {
-        ArgGuard.ThrowIfNull(other);
+        Ensure.ThrowIfNull(other);
         var pose = Pose.Translated(position);
         if (!ShapeBounds2D.CalculateTransformed(Shape, pose.ToMatrix()).Intersects(other.WorldBounds))
         {

@@ -33,7 +33,7 @@ public sealed class ContactHold
     {
         if (facing is not (1 or -1))
         {
-            ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
+            Ensure.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
         }
 
         if (facing != _facing)

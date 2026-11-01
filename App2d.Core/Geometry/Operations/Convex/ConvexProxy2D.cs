@@ -21,9 +21,9 @@ public readonly ref struct ConvexProxy2D
     /// <summary>Creates a local vertex core and pose. Vertices need not have a particular winding.</summary>
     public ConvexProxy2D(ReadOnlySpan<Vector2> vertices, Similarity2D pose, float radius = 0f)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 1);
-        ArgGuard.Positive(pose.Scale);
-        ArgGuard.NonNegative(radius);
+        Ensure.ThrowIfTooShort(vertices, 1);
+        Ensure.Positive(pose.Scale);
+        Ensure.NonNegative(radius);
         this.vertices = vertices;
         this.pose = pose;
         support = null;
@@ -33,9 +33,9 @@ public readonly ref struct ConvexProxy2D
     /// <summary>Creates an analytic core and pose, optionally expanded by a local round radius.</summary>
     public ConvexProxy2D(IConvexSupport2D support, Similarity2D pose, float radius = 0f)
     {
-        ArgGuard.ThrowIfNull(support);
-        ArgGuard.Positive(pose.Scale);
-        ArgGuard.NonNegative(radius);
+        Ensure.ThrowIfNull(support);
+        Ensure.Positive(pose.Scale);
+        Ensure.NonNegative(radius);
         this.support = support;
         this.pose = pose;
         vertices = default;
@@ -48,7 +48,7 @@ public readonly ref struct ConvexProxy2D
     internal int VertexCount => vertices.Length;
     internal Vector2 Vertex(int index, Vector2 origin) => pose.TransformDirection(vertices[index]) + (pose.Translation - origin);
 
-    internal void Validate() => ArgGuard.ThrowIf(support is null && vertices.IsEmpty, "A convex proxy must have a vertex core or support mapping.");
+    internal void Validate() => Ensure.ThrowIf(support is null && vertices.IsEmpty, "A convex proxy must have a vertex core or support mapping.");
 
     internal Vector2 Support(Vector2 worldDirection, Vector2 origin)
     {

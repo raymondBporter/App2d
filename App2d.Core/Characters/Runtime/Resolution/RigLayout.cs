@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>
@@ -96,10 +97,7 @@ internal sealed class RigLayout
 
     public void Set(PropertyRef property, float value)
     {
-        if (!float.IsFinite(value))
-        {
-            throw new InvalidDataException($"{property}: the bound value is not finite.");
-        }
+        Ensure.Finite(value);
 
         // A binding at its identity (a multiplier of 1) leaves the authored value, and the node, untouched.
         if (value == Get(property))

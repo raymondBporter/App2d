@@ -40,7 +40,7 @@ public sealed class CollisionSystem2D
         get => _grid.CellSize.Width;
         set
         {
-            ArgGuard.Positive(value);
+            Ensure.Positive(value);
             if (CellSize == value)
             {
                 return;
@@ -54,9 +54,9 @@ public sealed class CollisionSystem2D
 
     public Collider2D AddCollider(SpatialObject2D worldObject, ColliderMobility2D mobility = ColliderMobility2D.Static, int? restoredId = null)
     {
-        ArgGuard.ThrowIfNull(worldObject);
+        Ensure.ThrowIfNull(worldObject);
         var id = restoredId ?? _nextColliderId;
-        StateGuard.ThrowIf(id <= 0 || id == int.MaxValue || (restoredId.HasValue && _colliders.Any(c => c.Id == id)), "Invalid or duplicate collider ID.");
+        Ensure.ThrowIf(id <= 0 || id == int.MaxValue || (restoredId.HasValue && _colliders.Any(c => c.Id == id)), "Invalid or duplicate collider ID.");
         _nextColliderId = Math.Max(_nextColliderId, id + 1);
         var collider = new Collider2D(this, id, worldObject, mobility);
         _colliders.Add(collider);
@@ -85,7 +85,7 @@ public sealed class CollisionSystem2D
 
     public void CollectContacts(List<CollisionPair2D> contacts, IPairFilter2D<Collider2D>? additionalFilter = null)
     {
-        ArgGuard.ThrowIfNull(contacts);
+        Ensure.ThrowIfNull(contacts);
         contacts.Clear();
         _candidatePairs.Clear();
         SynchronizeIndexes();
@@ -140,7 +140,7 @@ public sealed class CollisionSystem2D
 
     public bool TryGetContact(SpatialObject2D query, Collider2D collider, out Contacts.CollisionContact2D contact)
     {
-        ArgGuard.ThrowIfNull(query);
+        Ensure.ThrowIfNull(query);
         RequireOwned(collider);
         if (!collider.IsEnabled || !query.WorldBounds.Intersects(collider.WorldObject.WorldBounds))
         {
@@ -160,7 +160,7 @@ public sealed class CollisionSystem2D
     /// </summary>
     public int QueryBounds(Rect2D bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null, uint? queryLayer = null)
     {
-        ArgGuard.ThrowIfNull(results);
+        Ensure.ThrowIfNull(results);
         if (excluded is not null)
         {
             RequireOwned(excluded);
@@ -188,8 +188,8 @@ public sealed class CollisionSystem2D
     /// <summary>Narrow-phase contacts of a placed shape against the colliders <see cref="QueryBounds"/> accepts, with the same filter.</summary>
     public int Overlap(SpatialObject2D query, List<CollisionOverlap2D> overlaps, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null, uint? queryLayer = null)
     {
-        ArgGuard.ThrowIfNull(query);
-        ArgGuard.ThrowIfNull(overlaps);
+        Ensure.ThrowIfNull(query);
+        Ensure.ThrowIfNull(overlaps);
         overlaps.Clear();
         QueryBounds(query.WorldBounds, _queryCandidates, layerMask, includeSensors, excluded, queryLayer);
 
@@ -376,8 +376,8 @@ public sealed class CollisionSystem2D
 
     private void RequireOwned(Collider2D collider)
     {
-        ArgGuard.ThrowIfNull(collider);
-        StateGuard.ThrowIf(!ReferenceEquals(collider.System, this), "The collider belongs to a different collision system.");
+        Ensure.ThrowIfNull(collider);
+        Ensure.ThrowIf(!ReferenceEquals(collider.System, this), "The collider belongs to a different collision system.");
     }
 
     private sealed class CombinedPairFilter : IPairFilter2D<Collider2D>

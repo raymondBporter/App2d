@@ -17,10 +17,10 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
     public PatrolEnemy2D(EntityId2D id,
         SpatialObject2D worldObject, RigidBody2D body, float patrolMinX, float patrolMaxX, float speed, int health)
     {
-        ArgGuard.ThrowIf(!id.IsValid, "An enemy requires a valid entity ID.", nameof(id));
+        Ensure.ThrowIf(!id.IsValid, "An enemy requires a valid entity ID.", nameof(id));
         Id = id;
-        ArgGuard.LessThan(patrolMinX, patrolMaxX);
-        ArgGuard.Positive(speed);
+        Ensure.LessThan(patrolMinX, patrolMaxX);
+        Ensure.Positive(speed);
 
         WorldObject = worldObject;
         Body = body;
@@ -63,7 +63,7 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 
     public bool TryRegisterHit(EntityId2D attackSourceId, int attackId, string? hitGroup = null)
     {
-        ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
+        Ensure.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
         var key = (attackSourceId, hitGroup ?? "");
         if (_lastAttackIds.TryGetValue(key, out var lastAttackId) &&
             lastAttackId == attackId)

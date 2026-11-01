@@ -14,9 +14,9 @@ public static class RaycastQueries2D
         RayQueryFilter2D<T>? filter = null)
         where T : SpatialObject2D
     {
-        ArgGuard.ThrowIfNull(worldObjects);
+        Ensure.ThrowIfNull(worldObjects);
         ray.Validate();
-        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
+        Ensure.NonNegative(maxDistance, allowInfinity: true);
 
         var found = false;
         var nearestDistance = maxDistance;
@@ -49,9 +49,9 @@ public static class RaycastQueries2D
         RayQueryFilter2D<T>? filter = null)
         where T : SpatialObject2D
     {
-        ArgGuard.ThrowIfNull(worldObjects);
+        Ensure.ThrowIfNull(worldObjects);
         ray.Validate();
-        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
+        Ensure.NonNegative(maxDistance, allowInfinity: true);
         if (hits.IsEmpty)
         {
             return 0;

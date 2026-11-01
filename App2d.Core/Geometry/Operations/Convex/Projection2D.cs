@@ -14,7 +14,7 @@ public static class Projection2D
     /// <returns>The [min, max] range of the dot products.</returns>
     public static Interval<float> Polygon(ReadOnlySpan<Vector2> vertices, Vector2 axis, Vector2 offset = default)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 1);
+        Ensure.ThrowIfTooShort(vertices, 1);
         var min = Vector2.Dot(vertices[0] + offset, axis);
         var max = min;
         foreach (var point in vertices[1..])
@@ -33,8 +33,8 @@ public static class Projection2D
     /// <returns>The [min, max] range of the dot products.</returns>
     public static Interval<float> Polygon(IReadOnlyList<Vector2> vertices, Vector2 axis, Vector2 offset = default)
     {
-        ArgGuard.ThrowIfNull(vertices);
-        ArgGuard.ThrowIf(vertices.Count == 0, "At least one vertex is required.", nameof(vertices));
+        Ensure.ThrowIfNull(vertices);
+        Ensure.ThrowIf(vertices.Count == 0, "At least one vertex is required.", nameof(vertices));
         var min = Vector2.Dot(vertices[0] + offset, axis);
         var max = min;
         for (var i = 1; i < vertices.Count; i++)

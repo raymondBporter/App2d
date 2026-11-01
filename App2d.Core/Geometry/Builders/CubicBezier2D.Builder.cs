@@ -9,10 +9,10 @@ public readonly partial record struct CubicBezier2D
 {
     public void Validate()
     {
-        ArgGuard.Finite(Start, "start");
-        ArgGuard.Finite(Control1, "control1");
-        ArgGuard.Finite(Control2, "control2");
-        ArgGuard.Finite(End, "end");
+        Ensure.Finite(Start, "start");
+        Ensure.Finite(Control1, "control1");
+        Ensure.Finite(Control2, "control2");
+        Ensure.Finite(End, "end");
     }
 
     /// <summary>Stateless validated construction.</summary>

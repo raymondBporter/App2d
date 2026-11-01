@@ -12,10 +12,10 @@ public readonly partial record struct Rectangle2D
 {
     public void Validate()
     {
-        ArgGuard.Finite(Center);
-        ArgGuard.Finite(HalfSize);
+        Ensure.Finite(Center);
+        Ensure.Finite(HalfSize);
         // Positive half extents are the ordered-corner rule of every rectangle, so the same guard and exception apply.
-        ArgGuard.LessThan(-HalfSize, HalfSize);
+        Ensure.LessThan(-HalfSize, HalfSize);
         OrientedFrame2D.ValidateAxis(Axis, "axis");
     }
 

@@ -64,11 +64,11 @@ internal sealed class SideScrollerTerrainTileset2D
         _oneWayVisualHeight = manifest.OneWayVisualHeight;
         _spikeVisualHeight = manifest.SpikeVisualHeight > 0f ? manifest.SpikeVisualHeight : manifest.OneWayVisualHeight;
         _fillPeriod = manifest.FillPeriod > 0f ? manifest.FillPeriod : tileSize;
-        ArgGuard.Positive(_surfaceThickness);
-        ArgGuard.Positive(_outerCornerSize);
-        ArgGuard.Positive(_innerCornerSize);
-        ArgGuard.Positive(_oneWayVisualHeight);
-        ArgGuard.Positive(_spikeVisualHeight);
+        Ensure.Positive(_surfaceThickness);
+        Ensure.Positive(_outerCornerSize);
+        Ensure.Positive(_innerCornerSize);
+        Ensure.Positive(_oneWayVisualHeight);
+        Ensure.Positive(_spikeVisualHeight);
 
         _fill = textures.Load(Path.Combine(relativeRoot, "fill.png"));
         var horizontal = new Vector2(tileSize, _surfaceThickness);
@@ -99,9 +99,9 @@ internal sealed class SideScrollerTerrainTileset2D
 
     public static SideScrollerTerrainTileset2D Load(TextureCache2D textures, string tilesetId, float tileSize)
     {
-        ArgGuard.ThrowIfNull(textures);
+        Ensure.ThrowIfNull(textures);
         AssetId2D.Validate(tilesetId);
-        ArgGuard.Positive(tileSize);
+        Ensure.Positive(tileSize);
         var relativeRoot = Path.Combine("environments", "tilesets", tilesetId);
         var manifestPath = Path.Combine(textures.ContentRoot, relativeRoot, "tileset.json");
         if (!File.Exists(manifestPath))
@@ -115,10 +115,7 @@ internal sealed class SideScrollerTerrainTileset2D
         {
             throw new InvalidDataException($"Tileset manifest ID '{manifest.Id}' must match its folder '{tilesetId}': {manifestPath}");
         }
-        if (MathF.Abs(manifest.TileSize - tileSize) > 0.001f)
-        {
-            throw new InvalidDataException($"Tileset '{tilesetId}' uses tile size {manifest.TileSize}, but the level uses {tileSize}.");
-        }
+        Ensure.LessThanOrEqual(MathF.Abs(manifest.TileSize - tileSize), 0.001f);
         return new SideScrollerTerrainTileset2D(textures, relativeRoot, tilesetId, tileSize, manifest);
     }
 
@@ -141,7 +138,7 @@ internal sealed class SideScrollerTerrainTileset2D
             TileSurface2D.Right => CreateVisual(new Vector2(_surfaceThickness, tileBounds.Size.Y), new Vector2(tileBounds.Max.X - _surfaceThickness / 2f, tileBounds.Center.Y), grippable ? _rightGripShader : _rightShader),
             TileSurface2D.Bottom => CreateVisual(new Vector2(tileBounds.Size.X, _surfaceThickness), new Vector2(tileBounds.Center.X, tileBounds.Min.Y + _surfaceThickness / 2f), _bottomShader),
             TileSurface2D.Left => CreateVisual(new Vector2(_surfaceThickness, tileBounds.Size.Y), new Vector2(tileBounds.Min.X + _surfaceThickness / 2f, tileBounds.Center.Y), grippable ? _leftGripShader : _leftShader),
-            _ => throw ArgGuard.CreateInvalid("Create one surface visual at a time.", nameof(surface))
+            _ => throw Ensure.CreateInvalid("Create one surface visual at a time.", nameof(surface))
         };
 
     public WorldObject2D CreateCorner(Rect2D tileBounds, TileCorner2D corner)
@@ -156,7 +153,7 @@ internal sealed class SideScrollerTerrainTileset2D
             TileCorner2D.InnerBottomRight => new Vector2(tileBounds.Max.X, tileBounds.Min.Y),
             TileCorner2D.InnerBottomLeft => tileBounds.Min,
             TileCorner2D.InnerTopLeft => new Vector2(tileBounds.Min.X, tileBounds.Max.Y),
-            _ => throw ArgGuard.CreateInvalid("Create one corner visual at a time.", nameof(corner))
+            _ => throw Ensure.CreateInvalid("Create one corner visual at a time.", nameof(corner))
         };
         var isOuter = corner <= TileCorner2D.OuterTopLeft;
         return CreateVisual(new Vector2(isOuter ? _outerCornerSize : _innerCornerSize), position, isOuter ? _outerCornerShader : _innerCornerShader);
@@ -170,7 +167,7 @@ internal sealed class SideScrollerTerrainTileset2D
             OneWayTilePart2D.Left => _oneWayLeftShader,
             OneWayTilePart2D.Middle => _oneWayMiddleShader,
             OneWayTilePart2D.Right => _oneWayRightShader,
-            _ => throw ArgGuard.CreateInvalid("Unknown one-way tile part.", nameof(part))
+            _ => throw Ensure.CreateInvalid("Unknown one-way tile part.", nameof(part))
         };
         return CreateVisual(new Vector2(tileBounds.Size.X, _oneWayVisualHeight), new Vector2(tileBounds.Center.X, tileBounds.Max.Y - _oneWayVisualHeight / 2f), shader);
     }
@@ -183,7 +180,7 @@ internal sealed class SideScrollerTerrainTileset2D
             SpikeTilePart2D.Left => _spikeLeftShader,
             SpikeTilePart2D.Middle => _spikeMiddleShader,
             SpikeTilePart2D.Right => _spikeRightShader,
-            _ => throw ArgGuard.CreateInvalid("Unknown spike tile part.", nameof(part))
+            _ => throw Ensure.CreateInvalid("Unknown spike tile part.", nameof(part))
         };
         return CreateVisual(
             new Vector2(tileBounds.Size.X, _spikeVisualHeight),
@@ -230,11 +227,11 @@ internal sealed class SideScrollerTerrainTileset2D
 
 internal sealed class SideScrollerTerrainTilesetResolver2D(Func<int, int, SideScrollerTerrainTileset2D> resolve)
 {
-    private readonly Func<int, int, SideScrollerTerrainTileset2D> _resolve = ArgGuard.RequireNotNull(resolve);
+    private readonly Func<int, int, SideScrollerTerrainTileset2D> _resolve = Ensure.RequireNotNull(resolve);
 
     public SideScrollerTerrainTileset2D GetTileset(int tileX, int tileY)
     {
-        return StateGuard.RequireNotNull(_resolve(tileX, tileY), "The terrain tileset resolver returned no tileset.");
+        return Ensure.RequireNotNull(_resolve(tileX, tileY), message: "The terrain tileset resolver returned no tileset.");
     }
 
     public bool UsesSameTileset(int firstTileX, int firstTileY, int secondTileX, int secondTileY)

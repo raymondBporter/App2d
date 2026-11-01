@@ -53,7 +53,7 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
         }
         set
         {
-            ArgGuard.InRange(value, 0f, 1f);
+            Ensure.InRange(value, 0f, 1f);
             lock (_controlSync)
             {
                 _volume = value;

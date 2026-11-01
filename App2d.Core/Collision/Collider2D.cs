@@ -10,7 +10,7 @@ public sealed class Collider2D
     {
         System = system;
         Id = id;
-        WorldObject = ArgGuard.RequireNotNull(worldObject);
+        WorldObject = Ensure.RequireNotNull(worldObject);
         _mobility = mobility;
         WorldObject.Transform.Changed += HandleTransformChanged;
     }

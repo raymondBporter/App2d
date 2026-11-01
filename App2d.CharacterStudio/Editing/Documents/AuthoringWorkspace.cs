@@ -139,7 +139,7 @@ public sealed class AuthoringWorkspace
             ModelVariant variant => AssetDocuments.Of(variant, null),
             MotionClip clip => AssetDocuments.Of(clip, null),
             Part part => AssetDocuments.Of(part, null),
-            _ => throw ArgGuard.CreateInvalid($"Not an authored asset: {typeof(T).Name}."),
+            _ => throw Ensure.CreateInvalid($"Not an authored asset: {typeof(T).Name}."),
         };
         AuthoredAsset.RequireId(document.Id, AssetKinds.Label(document.Kind) + " id");
         if (Exists(document.Id))

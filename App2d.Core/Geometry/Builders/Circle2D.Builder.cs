@@ -11,8 +11,8 @@ public readonly partial record struct Circle2D
 {
     public void Validate()
     {
-        ArgGuard.Positive(Radius, "radius");
-        ArgGuard.Finite(Center, "center");
+        Ensure.Positive(Radius, "radius");
+        Ensure.Finite(Center, "center");
     }
 
     /// <summary>Stateless validated construction.</summary>

@@ -18,8 +18,7 @@ public sealed record IndexedMesh3D(IReadOnlyList<Vector3> Vertices, IReadOnlyLis
             throw new InvalidDataException("Mesh triangle index outside vertices.");
         for (var i = 0; i < Triangles.Count; i += 3)
         {
-            if (new Triangle3D(Vertices[Triangles[i]], Vertices[Triangles[i + 1]], Vertices[Triangles[i + 2]]).DoubleArea <= 1e-8d)
-                throw new InvalidDataException("Mesh has a degenerate triangle.");
+            Ensure.GreaterThan(new Triangle3D(Vertices[Triangles[i]], Vertices[Triangles[i + 1]], Vertices[Triangles[i + 2]]).DoubleArea, 1e-8d);
         }
     }
 }
@@ -33,7 +32,8 @@ public static class MeshGenerators3D
     /// </summary>
     public static IndexedMesh3D Extrude(IReadOnlyList<Vector3> outline, float thickness)
     {
-        ArgGuard.ThrowIf(outline.Count < 3 || thickness <= 0, "An extrusion needs an outline and positive thickness.");
+        Ensure.ThrowIf(outline.Count < 3, "An extrusion needs an outline.");
+        Ensure.Positive(thickness);
         var points = CounterClockwise(outline);
         var triangles = PolygonTriangulation2D.Triangulate(points.Select(p => new Vector2(p.X, p.Y)), 1e-8);
         var n = points.Count;

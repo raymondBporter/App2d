@@ -6,7 +6,7 @@ public sealed class Health2D
 {
     public Health2D(int maximum)
     {
-        ArgGuard.Positive(maximum);
+        Ensure.Positive(maximum);
 
         Maximum = maximum;
         Current = maximum;
@@ -18,7 +18,7 @@ public sealed class Health2D
 
     public int Heal(int amount)
     {
-        ArgGuard.Positive(amount);
+        Ensure.Positive(amount);
         if (!IsAlive)
         {
             return 0;
@@ -31,7 +31,7 @@ public sealed class Health2D
 
     public bool Damage(int amount)
     {
-        ArgGuard.Positive(amount);
+        Ensure.Positive(amount);
         if (!IsAlive)
         {
             return false;
@@ -45,7 +45,7 @@ public sealed class Health2D
 
     public void Reset(int current)
     {
-        ArgGuard.InRange(current, 1, Maximum);
+        Ensure.InRange(current, 1, Maximum);
 
         Current = current;
     }

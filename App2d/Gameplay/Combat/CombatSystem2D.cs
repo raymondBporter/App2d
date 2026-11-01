@@ -11,10 +11,10 @@ namespace App2d.Gameplay.Combat;
 
 public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistry2D combatants)
 {
-    private readonly CollisionSystem2D _collision = ArgGuard.RequireNotNull(collision);
+    private readonly CollisionSystem2D _collision = Ensure.RequireNotNull(collision);
     private readonly List<CollisionOverlap2D> _overlaps = [];
 
-    public CombatantRegistry2D Combatants { get; } = ArgGuard.RequireNotNull(combatants);
+    public CombatantRegistry2D Combatants { get; } = Ensure.RequireNotNull(combatants);
     public int DefeatedEnemies { get; private set; }
     public event Action<CombatDamage2D>? DamageResolved;
 
@@ -37,9 +37,9 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         EntityId2D attackerId = default,
         string? hitGroup = null)
     {
-        ArgGuard.ThrowIfNull(hitbox);
-        ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
-        ArgGuard.ThrowIfNull(knockback);
+        Ensure.ThrowIfNull(hitbox);
+        Ensure.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
+        Ensure.ThrowIfNull(knockback);
 
         var hitAny = false;
         _collision.Overlap(hitbox, _overlaps, targetLayer, includeSensors: true);
@@ -100,8 +100,8 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         int damage,
         Func<ICombatant2D, Vector2> knockback)
     {
-        ArgGuard.ThrowIfNull(hitbox);
-        ArgGuard.ThrowIfNull(knockback);
+        Ensure.ThrowIfNull(hitbox);
+        Ensure.ThrowIfNull(knockback);
 
         _collision.Overlap(hitbox, _overlaps, targetLayer, includeSensors: true);
         foreach (var (combatant, hurtCollider) in Candidates(_overlaps, GetCombatant))

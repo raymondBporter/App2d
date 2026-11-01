@@ -11,17 +11,17 @@ public static class PolygonTriangulation2D
     /// <summary>Ear-clips a simple, unclosed polygon. Indices refer to the input vertices and retain its winding.</summary>
     public static TriangleMesh2D Triangulate(IEnumerable<Vector2> perimeter, double tolerance = 0)
     {
-        ArgGuard.ThrowIfNull(perimeter);
-        ArgGuard.NonNegative(tolerance);
+        Ensure.ThrowIfNull(perimeter);
+        Ensure.NonNegative(tolerance);
         Vector2[] points = [.. perimeter];
-        ArgGuard.ThrowIf(points.Length < 3, "A polygon needs at least three vertices.", nameof(perimeter));
+        Ensure.ThrowIf(points.Length < 3, "A polygon needs at least three vertices.", nameof(perimeter));
         foreach (var point in points)
         {
-            ArgGuard.Finite(point, nameof(perimeter));
+            Ensure.Finite(point, nameof(perimeter));
         }
 
         var twiceArea = PolygonGeometry2D.SignedAreaTwiceDouble(points);
-        ArgGuard.ThrowIf(Math.Abs(twiceArea) <= tolerance, "The polygon needs nonzero area.", nameof(perimeter));
+        Ensure.GreaterThan(Math.Abs(twiceArea), tolerance);
         var winding = Math.Sign(twiceArea);
         var remaining = Enumerable.Range(0, points.Length).ToList();
         var indices = new List<int>((points.Length - 2) * 3);
@@ -54,10 +54,9 @@ public static class PolygonTriangulation2D
                 found = true;
                 break;
             }
-            ArgGuard.ThrowIf(!found, "The polygon must be simple and have nondegenerate ears.", nameof(perimeter));
+            Ensure.ThrowIf(!found, "The polygon must be simple and have nondegenerate ears.", nameof(perimeter));
         }
-        ArgGuard.ThrowIf(winding * new Vector2d(points[remaining[0]]).Orientation(new(points[remaining[1]]), new(points[remaining[2]])) <= tolerance,
-            "The polygon has a degenerate final triangle.", nameof(perimeter));
+        Ensure.GreaterThan(winding * new Vector2d(points[remaining[0]]).Orientation(new(points[remaining[1]]), new(points[remaining[2]])), tolerance);
         indices.AddRange(remaining);
         return new TriangleMesh2D(points, indices);
     }

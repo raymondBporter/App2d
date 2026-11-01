@@ -13,7 +13,7 @@ public readonly record struct EntityId2D
 
     public EntityId2D(long value)
     {
-        ArgGuard.Positive(value);
+        Ensure.Positive(value);
         Value = value;
     }
 
@@ -25,7 +25,7 @@ public readonly record struct EntityId2D
     public static EntityId2D Create()
     {
         var value = Interlocked.Increment(ref _lastValue);
-        StateGuard.ThrowIf(value <= 0, "Runtime entity IDs have been exhausted.");
+        Ensure.Positive(value);
         return new EntityId2D(value);
     }
 }

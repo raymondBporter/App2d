@@ -9,7 +9,7 @@ public static class AtomicFile
     /// <summary>Writes UTF-8 text without a BOM, then replaces the destination using a sibling temporary file.</summary>
     public static void WriteAllText(string path, string text)
     {
-        ArgGuard.ThrowIfNull(text);
+        Ensure.ThrowIfNull(text);
         Write(path, stream =>
         {
             using var writer = new StreamWriter(stream, new UTF8Encoding(false, true), leaveOpen: true);
@@ -24,8 +24,8 @@ public static class AtomicFile
     /// </summary>
     public static void Write(string path, Action<Stream> write)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(path);
-        ArgGuard.ThrowIfNull(write);
+        Ensure.ThrowIfNullOrWhiteSpace(path);
+        Ensure.ThrowIfNull(write);
         var destination = Path.GetFullPath(path);
         var directory = Path.GetDirectoryName(destination)!;
         var temporary = Path.Combine(directory, $".{Path.GetFileName(destination)}.{Guid.NewGuid():N}.tmp");

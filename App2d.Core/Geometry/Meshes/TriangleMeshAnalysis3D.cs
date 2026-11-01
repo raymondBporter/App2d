@@ -9,8 +9,9 @@ public readonly record struct IndexedEdge3D
 {
     public IndexedEdge3D(int first, int second)
     {
-        ArgGuard.ThrowIf(first < 0 || second < 0 || first == second,
-            "An edge needs two distinct nonnegative indices.", nameof(first));
+        Ensure.NonNegative(first);
+        Ensure.NonNegative(second);
+        Ensure.NotEqual(first, second);
         A = Math.Min(first, second);
         B = Math.Max(first, second);
     }
@@ -29,13 +30,13 @@ public sealed class TriangleMeshAnalysis3D
     /// <param name="handedness">+1 for winding normals or -1 when a reflected placement reverses winding.</param>
     public TriangleMeshAnalysis3D(IReadOnlyList<Vector3> vertices, IReadOnlyList<int> triangleIndices, int handedness = 1)
     {
-        ArgGuard.ThrowIfNull(vertices);
-        ArgGuard.ThrowIfNull(triangleIndices);
-        ArgGuard.ThrowIf(triangleIndices.Count % 3 != 0, "Triangle indices must form complete triples.", nameof(triangleIndices));
-        ArgGuard.ThrowIf(handedness is not (1 or -1), "Handedness must be +1 or -1.", nameof(handedness));
+        Ensure.ThrowIfNull(vertices);
+        Ensure.ThrowIfNull(triangleIndices);
+        Ensure.ThrowIf(triangleIndices.Count % 3 != 0, "Triangle indices must form complete triples.", nameof(triangleIndices));
+        Ensure.ThrowIf(handedness is not (1 or -1), "Handedness must be +1 or -1.", nameof(handedness));
         foreach (var vertex in vertices)
         {
-            ArgGuard.Finite(vertex, nameof(vertices));
+            Ensure.Finite(vertex, nameof(vertices));
         }
 
         _faceNormals = new Vector3[triangleIndices.Count / 3];
@@ -46,7 +47,7 @@ public sealed class TriangleMeshAnalysis3D
             var a = triangleIndices[i];
             var b = triangleIndices[i + 1];
             var c = triangleIndices[i + 2];
-            ArgGuard.ThrowIf((uint)a >= (uint)vertices.Count || (uint)b >= (uint)vertices.Count ||
+            Ensure.ThrowIf((uint)a >= (uint)vertices.Count || (uint)b >= (uint)vertices.Count ||
                 (uint)c >= (uint)vertices.Count, "Triangle index is outside the vertices.", nameof(triangleIndices));
             if (!new Triangle3D(vertices[a], vertices[b], vertices[c]).TryGetUnitNormal(out var normal))
             {
@@ -66,7 +67,7 @@ public sealed class TriangleMeshAnalysis3D
     /// <summary>Returns false and zero for a degenerate face.</summary>
     public bool TryGetFaceNormal(int faceIndex, out Vector3 normal)
     {
-        ArgGuard.Index(faceIndex, _faceNormals.Length);
+        Ensure.Index(faceIndex, _faceNormals.Length);
 
         normal = _faceNormals[faceIndex];
         return _validFaces[faceIndex];
@@ -79,9 +80,9 @@ public sealed class TriangleMeshAnalysis3D
     public IEnumerable<IndexedEdge3D> FeatureEdges(Vector3 viewDirection, float creaseCosine,
         float frontFacingThreshold = 0f)
     {
-        ArgGuard.NonZero(viewDirection);
-        ArgGuard.InRange(creaseCosine, -1f, 1f);
-        ArgGuard.NonNegative(frontFacingThreshold);
+        Ensure.NonZero(viewDirection);
+        Ensure.InRange(creaseCosine, -1f, 1f);
+        Ensure.NonNegative(frontFacingThreshold);
         var wideView = viewDirection.ToVector3d();
         var view = (wideView / wideView.Length()).ToVector3();
 

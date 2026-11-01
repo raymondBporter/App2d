@@ -171,7 +171,7 @@ public static class Rect2DExtensions
         /// <returns>The translated rectangle.</returns>
         public Rect2D TranslatedBy(Vector2 offset)
         {
-            ArgGuard.Finite(offset);
+            Ensure.Finite(offset);
             return new(rectangle.Min + offset, rectangle.Max + offset);
         }
 
@@ -186,8 +186,8 @@ public static class Rect2DExtensions
         /// <returns>The inflated rectangle.</returns>
         public Rect2D InflatedBy(float x, float y)
         {
-            ArgGuard.NonNegative(x);
-            ArgGuard.NonNegative(y);
+            Ensure.NonNegative(x);
+            Ensure.NonNegative(y);
             var amount = new Vector2(x, y);
             return new(rectangle.Min - amount, rectangle.Max + amount);
         }
@@ -198,8 +198,8 @@ public static class Rect2DExtensions
         /// <returns>The inset rectangle.</returns>
         public Rect2D InsetBy(float x, float y)
         {
-            ArgGuard.NonNegative(x);
-            ArgGuard.NonNegative(y);
+            Ensure.NonNegative(x);
+            Ensure.NonNegative(y);
             var amount = Vector2.Min(new(x, y), rectangle.HalfSize);
             return new(rectangle.Min + amount, rectangle.Max - amount);
         }

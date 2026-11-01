@@ -9,7 +9,7 @@ public static class RandomExtensions
     public static float NextFloat(this Random random, float maximum)
     {
         ArgumentNullException.ThrowIfNull(random);
-        ArgGuard.NonNegative(maximum);
+        Ensure.NonNegative(maximum);
 
         return random.NextSingle() * maximum;
     }
@@ -18,9 +18,9 @@ public static class RandomExtensions
     public static float NextFloat(this Random random, float minimum, float maximum)
     {
         ArgumentNullException.ThrowIfNull(random);
-        ArgGuard.Finite(minimum);
+        Ensure.Finite(minimum);
 
-        var range = ArgGuard.NonNegative(maximum - minimum, nameof(maximum));
+        var range = Ensure.NonNegative(maximum - minimum, nameof(maximum));
 
         return minimum + random.NextSingle() * range;
     }

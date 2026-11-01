@@ -23,11 +23,11 @@ public static class CurveRaycast2D
     /// <summary>Queries a curve with any finite nonzero direction; Distance is the original ray parameter.</summary>
     public static bool TryIntersect(Vector2 origin, Vector2 direction, ICurve2D curve, float maxDistance, out RayHit2D hit)
     {
-        ArgGuard.ThrowIfNull(curve);
-        ArgGuard.Finite(origin);
-        ArgGuard.Finite(direction);
-        ArgGuard.ThrowIf(direction == Vector2.Zero, "Ray direction must be nonzero.", nameof(direction));
-        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
+        Ensure.ThrowIfNull(curve);
+        Ensure.Finite(origin);
+        Ensure.Finite(direction);
+        Ensure.NonZero(direction);
+        Ensure.NonNegative(maxDistance, allowInfinity: true);
         return Query(origin, direction, curve, 0, 1, maxDistance, out hit);
     }
 

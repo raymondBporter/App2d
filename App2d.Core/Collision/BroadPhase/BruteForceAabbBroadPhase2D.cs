@@ -14,15 +14,15 @@ public sealed class BruteForceAabbBroadPhase2D<T> : IBroadPhase2D<T>
 
     public BruteForceAabbBroadPhase2D(Func<T, Rect2D> getBounds)
     {
-        ArgGuard.ThrowIfNull(getBounds);
+        Ensure.ThrowIfNull(getBounds);
         _getBounds = getBounds;
     }
 
     public void CollectPairs(IReadOnlyList<T> items, IPairFilter2D<T> pairFilter, List<BroadPhasePair2D<T>> pairs)
     {
-        ArgGuard.ThrowIfNull(items);
-        ArgGuard.ThrowIfNull(pairFilter);
-        ArgGuard.ThrowIfNull(pairs);
+        Ensure.ThrowIfNull(items);
+        Ensure.ThrowIfNull(pairFilter);
+        Ensure.ThrowIfNull(pairs);
 
         pairs.Clear();
         _worldBounds.Clear();

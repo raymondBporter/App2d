@@ -16,7 +16,7 @@ public sealed class FunctionHeightField2D : IHeightField2D
         Func<float, float>? slope = null, float yMax = float.PositiveInfinity)
     {
         HeightField2D.ValidateDomain(xMin, xMax, yMin, yMax);
-        _height = ArgGuard.RequireNotNull(height);
+        _height = Ensure.RequireNotNull(height);
         _slope = slope;
         XMin = xMin;
         XMax = xMax;
@@ -40,6 +40,6 @@ public sealed class FunctionHeightField2D : IHeightField2D
     public float SlopeAt(float x)
     {
         HeightField2D.ValidateX(this, x);
-        return _slope is null ? HeightField2D.EstimateSlope(this, x) : ArgGuard.Finite(_slope(x));
+        return _slope is null ? HeightField2D.EstimateSlope(this, x) : Ensure.Finite(_slope(x));
     }
 }

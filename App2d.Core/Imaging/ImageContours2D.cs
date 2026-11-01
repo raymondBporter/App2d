@@ -16,7 +16,7 @@ public static class ImageContours2D
     /// </summary>
     public static Vector2i[][] TraceBoundaryLoops(this Image2D<bool> source)
     {
-        ArgGuard.ThrowIfNull(source);
+        Ensure.ThrowIfNull(source);
         var outgoing = new Dictionary<Vector2i, byte>();
         for (var y = 0; y < source.Height; y++)
         {

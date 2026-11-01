@@ -126,7 +126,7 @@ public sealed class EntityAnimator
     {
         if (facing is not (1 or -1))
         {
-            ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
+            Ensure.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
         }
 
         Facing = facing;

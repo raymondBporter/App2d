@@ -19,7 +19,7 @@ internal sealed class SavePointPresentation2D : IDisposable
 
     public SavePointPresentation2D(Scene2D scene, CheckpointPlacement2D placement)
     {
-        ArgGuard.ThrowIfNull(scene);
+        Ensure.ThrowIfNull(scene);
         _scene = scene;
         _basePosition = placement.BasePosition;
 
@@ -77,7 +77,7 @@ internal sealed class SavePointPresentation2D : IDisposable
 
     public void Update(float deltaSeconds, bool isActive)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         SetActive(isActive);
         _animationSeconds += deltaSeconds;
 

@@ -11,20 +11,20 @@ public sealed class CurveMotion2D : IKinematicMotion2D
 {
     public CurveMotion2D(ICurve2D curve, double periodSeconds, IProgressMap progress, Vector2 origin = default, bool repeat = true)
     {
-        Curve = ArgGuard.RequireNotNull(curve);
-        Progress = ArgGuard.RequireNotNull(progress);
-        ArgGuard.ThrowIf(progress is ProgressMap { IsContinuous: false }, "Motion paths require a continuous progress map.", nameof(progress));
-        PeriodSeconds = ArgGuard.Positive(periodSeconds);
-        ArgGuard.Finite(origin);
+        Curve = Ensure.RequireNotNull(curve);
+        Progress = Ensure.RequireNotNull(progress);
+        Ensure.ThrowIf(progress is ProgressMap { IsContinuous: false }, "Motion paths require a continuous progress map.", nameof(progress));
+        PeriodSeconds = Ensure.Positive(periodSeconds);
+        Ensure.Finite(origin);
         Origin = origin;
         Repeat = repeat;
 
         var beginning = Curve.Evaluate(CheckedProgress(Progress.Sample(0d)));
         var ending = Curve.Evaluate(CheckedProgress(Progress.Sample(1d)));
-        ArgGuard.Finite(beginning);
-        ArgGuard.Finite(ending);
+        Ensure.Finite(beginning);
+        Ensure.Finite(ending);
         var tolerance = 0.001f + MathF.Max(beginning.Length(), ending.Length()) * 0.000001f;
-        ArgGuard.ThrowIf(repeat && Vector2.Distance(beginning, ending) > tolerance,
+        Ensure.ThrowIf(repeat && Vector2.Distance(beginning, ending) > tolerance,
             "A repeating motion must return to its starting position.", nameof(progress));
     }
 
@@ -42,7 +42,7 @@ public sealed class CurveMotion2D : IKinematicMotion2D
         if (!Repeat && seconds >= PeriodSeconds) return Vector2.Zero;
         var progress = CheckedProgress(Progress.Sample(phase));
         var derivative = Progress.Derivative(phase);
-        ArgGuard.Finite(derivative, nameof(Progress));
+        Ensure.Finite(derivative, nameof(Progress));
         return Curve.EvaluateDerivative(progress) * (float)(derivative / PeriodSeconds);
     }
 
@@ -53,7 +53,7 @@ public sealed class CurveMotion2D : IKinematicMotion2D
 
     private static float CheckedProgress(double progress)
     {
-        ArgGuard.InRange(progress, 0d, 1d);
+        Ensure.InRange(progress, 0d, 1d);
         return (float)progress;
     }
 }

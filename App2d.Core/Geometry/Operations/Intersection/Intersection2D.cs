@@ -84,10 +84,10 @@ public static class Intersection2D
     /// <returns>True when no edge normal separates the perimeters.</returns>
     public static bool ConvexPolygonsOverlap(IReadOnlyList<Vector2> first, IReadOnlyList<Vector2> second, Vector2 firstOffset = default, Vector2 secondOffset = default)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
-        ArgGuard.ThrowIf(first.Count < 3, "A convex perimeter requires at least three vertices.", nameof(first));
-        ArgGuard.ThrowIf(second.Count < 3, "A convex perimeter requires at least three vertices.", nameof(second));
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
+        Ensure.ThrowIf(first.Count < 3, "A convex perimeter requires at least three vertices.", nameof(first));
+        Ensure.ThrowIf(second.Count < 3, "A convex perimeter requires at least three vertices.", nameof(second));
         return !Separated(first) && !Separated(second);
 
         bool Separated(IReadOnlyList<Vector2> perimeter)
@@ -123,7 +123,7 @@ public static class Intersection2D
     /// <returns>True when the swept circle touches the rectangle.</returns>
     public static bool TrySweptCircleRectangle<TRect>(Vector2 start, Vector2 end, float radius, TRect rectangle, out SweptCircleHit2D hit) where TRect : IRect2D
     {
-        ArgGuard.NonNegative(radius);
+        Ensure.NonNegative(radius);
         if (!rectangle.IsFinite)
         {
             hit = default;
@@ -165,8 +165,8 @@ public static class Intersection2D
             throw new ArgumentException("The line or ray needs a valid direction.", nameof(direction));
         }
 
-        ArgGuard.ThrowIfNull(rectangle);
-        ArgGuard.ThrowIf(!rectangle.IsFinite || rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y, "Rectangle bounds must be finite and ordered.", nameof(rectangle));
+        Ensure.ThrowIfNull(rectangle);
+        Ensure.ThrowIf(!rectangle.IsFinite || rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y, "Rectangle bounds must be finite and ordered.", nameof(rectangle));
 
         var min = forwardOnly ? 0d : double.NegativeInfinity;
         var max = double.PositiveInfinity;
@@ -197,8 +197,8 @@ public static class Intersection2D
 
     private static bool Intersects(Vector2 firstOrigin, Vector2 firstDirection, bool firstIsRay, Vector2 secondOrigin, Vector2 secondDirection, bool secondIsRay)
     {
-        ArgGuard.NonZero(firstDirection);
-        ArgGuard.NonZero(secondDirection);
+        Ensure.NonZero(firstDirection);
+        Ensure.NonZero(secondDirection);
         var delta = secondOrigin.ToVector2d() - firstOrigin.ToVector2d();
         var firstAxis = firstDirection.ToVector2d();
         var secondAxis = secondDirection.ToVector2d();

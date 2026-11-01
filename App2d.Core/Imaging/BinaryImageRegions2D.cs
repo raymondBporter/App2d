@@ -13,7 +13,7 @@ public static class BinaryImageRegions2D
     /// </summary>
     public static (Image2D<int> Labels, int[] PixelCounts) LabelComponents(this Image2D<bool> source, bool eightConnected = true)
     {
-        ArgGuard.ThrowIfNull(source);
+        Ensure.ThrowIfNull(source);
         var labels = new Image2D<int>(source.Width, source.Height);
         var counts = new List<int> { 0 };
         var pending = new Queue<int>();
@@ -76,7 +76,7 @@ public static class BinaryImageRegions2D
     /// </summary>
     public static Image2D<bool> FillHoles(this Image2D<bool> source)
     {
-        ArgGuard.ThrowIfNull(source);
+        Ensure.ThrowIfNull(source);
         var (Labels, PixelCounts) = source.Map(static foreground => !foreground).LabelComponents(eightConnected: false);
         var exterior = new bool[PixelCounts.Length];
         for (var x = 0; x < source.Width && source.Height > 0; x++)

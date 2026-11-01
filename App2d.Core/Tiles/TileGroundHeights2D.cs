@@ -15,7 +15,7 @@ public static class TileGroundHeights2D
 {
     public static int[] Derive(ISolidTileMap2D map)
     {
-        ArgGuard.ThrowIfNull(map);
+        Ensure.ThrowIfNull(map);
 
         var heights = new int[map.Width];
         for (var x = 0; x < map.Width; x++)
@@ -28,8 +28,8 @@ public static class TileGroundHeights2D
 
     public static int AtColumn(ISolidTileMap2D map, int x)
     {
-        ArgGuard.ThrowIfNull(map);
-        ArgGuard.Index(x, map.Width);
+        Ensure.ThrowIfNull(map);
+        Ensure.Index(x, map.Width);
 
         var y = 0;
         while (y < map.Height && map.IsSolid(x, y))

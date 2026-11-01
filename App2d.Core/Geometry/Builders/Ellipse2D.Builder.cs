@@ -12,8 +12,8 @@ public readonly partial record struct Ellipse2D
 {
     public void Validate()
     {
-        ArgGuard.Positive(Radii, "radii");
-        ArgGuard.Finite(Center, "center");
+        Ensure.Positive(Radii, "radii");
+        Ensure.Finite(Center, "center");
         OrientedFrame2D.ValidateAxis(Axis, "axis");
     }
 

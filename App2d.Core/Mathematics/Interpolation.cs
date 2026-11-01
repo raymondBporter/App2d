@@ -13,14 +13,14 @@ public static class Interpolation
     /// <summary>Interpolates after mapping progress through a function.</summary>
     public static float Lerp(float start, float end, float progress, Func<float, float> progressMapping)
     {
-        ArgGuard.ThrowIfNull(progressMapping);
+        Ensure.ThrowIfNull(progressMapping);
         return Lerp(start, end, progressMapping(progress));
     }
 
     /// <summary>Interpolates through a progress map, preserving intentional overshoot.</summary>
     public static float Lerp(float start, float end, double progress, IProgressMap progressMapping)
     {
-        ArgGuard.ThrowIfNull(progressMapping);
+        Ensure.ThrowIfNull(progressMapping);
         return Lerp(start, end, (float)progressMapping.Sample(progress));
     }
 
@@ -29,13 +29,13 @@ public static class Interpolation
 
     public static Vector2 Lerp(Vector2 start, Vector2 end, float progress, Func<float, float> progressMapping)
     {
-        ArgGuard.ThrowIfNull(progressMapping);
+        Ensure.ThrowIfNull(progressMapping);
         return Lerp(start, end, progressMapping(progress));
     }
 
     public static Vector2 Lerp(Vector2 start, Vector2 end, double progress, IProgressMap progressMapping)
     {
-        ArgGuard.ThrowIfNull(progressMapping);
+        Ensure.ThrowIfNull(progressMapping);
         return Lerp(start, end, (float)progressMapping.Sample(progress));
     }
 

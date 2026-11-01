@@ -40,10 +40,10 @@ public sealed partial class PersonLocomotion2D
         TraversalMetrics2D metrics,
         IChunkedTileMap2D? tileMap = null)
     {
-        ArgGuard.ThrowIfNull(collision);
-        ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNull(body);
-        ArgGuard.ThrowIfNull(metrics);
+        Ensure.ThrowIfNull(collision);
+        Ensure.ThrowIfNull(physics);
+        Ensure.ThrowIfNull(body);
+        Ensure.ThrowIfNull(metrics);
 
         _collision = collision;
         _physics = physics;

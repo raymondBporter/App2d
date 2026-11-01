@@ -25,8 +25,8 @@ public readonly record struct SoundEffectVoice2D
 
     public void SetVolumeScale(float volumeScale, float rampSeconds = 0f)
     {
-        ArgGuard.InRange(volumeScale, 0f, 1f);
-        ArgGuard.NonNegative(rampSeconds);
+        Ensure.InRange(volumeScale, 0f, 1f);
+        Ensure.NonNegative(rampSeconds);
         if (_voice is not null)
         {
             _voice.SetVolumeScale(volumeScale, rampSeconds);
@@ -40,13 +40,13 @@ public readonly record struct SoundEffectVoice2D
     /// <summary>Moves a spatial voice's source; non-spatial voices ignore this.</summary>
     public void SetPosition(Vector2 position)
     {
-        ArgGuard.Finite(position);
+        Ensure.Finite(position);
         _voice?.SetPosition(position);
     }
 
     public void Stop(float fadeOutSeconds = 0f)
     {
-        ArgGuard.NonNegative(fadeOutSeconds);
+        Ensure.NonNegative(fadeOutSeconds);
         if (_voice is not null)
         {
             _voice.Stop(fadeOutSeconds);

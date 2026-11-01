@@ -12,12 +12,13 @@ public sealed class Camera3D
 
     public Camera3D(Matrix4x4 view, Matrix4x4 projection)
     {
-        ArgGuard.ThrowIf(!view.IsFinite() || !projection.IsFinite(), "Camera matrices must be finite.");
+        Ensure.Finite(view);
+        Ensure.Finite(projection);
         View = view;
         Projection = projection;
         ViewProjection = view * projection;
-        ArgGuard.ThrowIf(!Matrix4x4.Invert(ViewProjection, out _inverse) || !_inverse.IsFinite(), "Camera matrices must have a finite inverse.");
-        ArgGuard.ThrowIf(!Matrix4x4.Invert(view, out var world) || !world.IsFinite(), "The view must have a finite inverse.");
+        Ensure.Invertible(ViewProjection, out _inverse);
+        Ensure.Invertible(view, out var world);
         Position = world.Translation;
         Forward = Vector3.Normalize(new(-world.M31, -world.M32, -world.M33));
     }
@@ -32,9 +33,9 @@ public sealed class Camera3D
         float verticalFieldOfView = MathF.PI / 4, float near = .05f, float far = 1000f)
     {
         ValidateView(position, target, up);
-        ArgGuard.Positive(aspectRatio);
-        ArgGuard.GreaterThan(verticalFieldOfView, 0f);
-        ArgGuard.LessThan(verticalFieldOfView, MathF.PI);
+        Ensure.Positive(aspectRatio);
+        Ensure.GreaterThan(verticalFieldOfView, 0f);
+        Ensure.LessThan(verticalFieldOfView, MathF.PI);
         ValidateDepth(near, far);
         return new(Matrix4x4.CreateLookAt(position, target, up), Matrix4x4.CreatePerspectiveFieldOfView(verticalFieldOfView, aspectRatio, near, far));
     }
@@ -43,8 +44,8 @@ public sealed class Camera3D
         float near = .05f, float far = 1000f)
     {
         ValidateView(position, target, up);
-        ArgGuard.Positive(width);
-        ArgGuard.Positive(height);
+        Ensure.Positive(width);
+        Ensure.Positive(height);
         ValidateDepth(near, far);
         return new(Matrix4x4.CreateLookAt(position, target, up), Matrix4x4.CreateOrthographic(width, height, near, far));
     }
@@ -52,8 +53,8 @@ public sealed class Camera3D
     /// <summary>Projects a world point to pixels and depth [0,1]. False when behind the camera or outside its depth range.</summary>
     public bool TryProject(Vector3 world, Vector2 viewportSize, out Vector3 screen)
     {
-        ArgGuard.Finite(world);
-        ArgGuard.Positive(viewportSize);
+        Ensure.Finite(world);
+        Ensure.Positive(viewportSize);
         var clip = Vector4.Transform(new Vector4(world, 1), ViewProjection);
         screen = default;
         if (!(clip.W > 0)) return false;
@@ -66,8 +67,8 @@ public sealed class Camera3D
     /// <summary>Unprojects a pixel to a ray starting on the near clipping plane. Works with either projection mode.</summary>
     public Ray3D ScreenRay(Vector2 screen, Vector2 viewportSize)
     {
-        ArgGuard.Finite(screen);
-        ArgGuard.Positive(viewportSize);
+        Ensure.Finite(screen);
+        Ensure.Positive(viewportSize);
         var x = 2f * screen.X / viewportSize.X - 1f;
         var y = 1f - 2f * screen.Y / viewportSize.Y;
         var near = Unproject(new(x, y, 0, 1));
@@ -83,16 +84,16 @@ public sealed class Camera3D
 
     private static void ValidateView(Vector3 position, Vector3 target, Vector3 up)
     {
-        ArgGuard.Finite(position);
-        ArgGuard.Finite(target);
-        ArgGuard.NonZero(up);
-        ArgGuard.NonZero(target - position);
-        ArgGuard.NonZero(Vector3.Cross(target - position, up));
+        Ensure.Finite(position);
+        Ensure.Finite(target);
+        Ensure.NonZero(up);
+        Ensure.NonZero(target - position);
+        Ensure.NonZero(Vector3.Cross(target - position, up));
     }
 
     private static void ValidateDepth(float near, float far)
     {
-        ArgGuard.Positive(near);
-        ArgGuard.GreaterThan(far, near);
+        Ensure.Positive(near);
+        Ensure.GreaterThan(far, near);
     }
 }

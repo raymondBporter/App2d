@@ -16,8 +16,8 @@ public sealed class TextureShader2D(Texture2D texture, Vector2 tileSize,
     Vector2? imageOrigin = null) : IShader2D
 {
     public Vector2? ImageOrigin { get; } = imageOrigin;
-    public Texture2D Texture { get; } = ArgGuard.RequireNotNull(texture);
-    public Vector2 TileSize { get; } = ArgGuard.Positive(tileSize);
+    public Texture2D Texture { get; } = Ensure.RequireNotNull(texture);
+    public Vector2 TileSize { get; } = Ensure.Positive(tileSize);
     public TextureAddressMode TileModeX { get; } = tileModeX;
     public TextureAddressMode TileModeY { get; } = tileModeY;
     public TextureFilter FilterMode { get; } = filterMode;

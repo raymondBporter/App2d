@@ -12,8 +12,8 @@ public static class ShapeHalfSpaceQuery2D
     /// <summary>The normal points out of the half-space; negative distance measures the convex shape's escape depth.</summary>
     public static ConvexQueryResult2D Query(IConvexShape2D shape, Similarity2D pose, HalfSpace2D halfSpace, Similarity2D halfSpacePose)
     {
-        ArgGuard.ThrowIfNull(shape);
-        ArgGuard.ThrowIfNull(halfSpace);
+        Ensure.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(halfSpace);
         var (normal, offset) = ShapeTransforms2D.HalfSpace(halfSpace, halfSpacePose);
         var deepest = pose.TransformPoint(shape.GetSupportPoint(-pose.TransposeTransformDirection(normal)));
         var distance = Distance2D.SignedDistanceToHalfSpace(deepest, normal, offset);

@@ -43,8 +43,8 @@ public sealed class VegetationPatch2D
         VegetationStyle2D style,
         int seed)
     {
-        ArgGuard.GreaterThan(endX, startX);
-        ArgGuard.Finite(groundY);
+        Ensure.GreaterThan(endX, startX);
+        Ensure.Finite(groundY);
         style.Validate();
 
         _style = style;
@@ -187,10 +187,10 @@ public sealed class VegetationPatch2D
     {
         if (cutHeight is { } height)
         {
-            ArgGuard.NonNegative(height);
+            Ensure.NonNegative(height);
         }
 
-        ArgGuard.InRange(cutRoughness, 0f, 1f);
+        Ensure.InRange(cutRoughness, 0f, 1f);
 
         if (layer == VegetationLayer2D.Back)
         {
@@ -262,8 +262,8 @@ public sealed class VegetationPatch2D
     public IEnumerable<VegetationBladeTip2D> CreateClippings(float cutHeight, VegetationWind2D wind,
         float cutRoughness = 0f)
     {
-        ArgGuard.NonNegative(cutHeight);
-        ArgGuard.InRange(cutRoughness, 0f, 1f);
+        Ensure.NonNegative(cutHeight);
+        Ensure.InRange(cutRoughness, 0f, 1f);
         foreach (var blade in _blades)
         {
             var start = CutWeight(blade, cutHeight, cutRoughness);
@@ -451,17 +451,17 @@ public readonly record struct VegetationStyle2D(
 {
     internal void Validate()
     {
-        ArgGuard.Positive(MinimumHeight);
-        ArgGuard.Positive(BladeWidth);
-        ArgGuard.Positive(Spacing);
-        ArgGuard.AtLeast(MaximumHeight, MinimumHeight);
-        ArgGuard.AtLeast(TallHeight, MaximumHeight);
-        ArgGuard.InRange(TallChance, 0f, 1f);
-        ArgGuard.InRange(FrontChance, 0f, 1f);
-        ArgGuard.InRange(FlowerChance, 0f, 1f);
-        ArgGuard.InRange(Coverage, 0f, 1f);
-        ArgGuard.Positive(PatchWidth);
-        ArgGuard.InRange(SprigChance, 0f, 1f);
+        Ensure.Positive(MinimumHeight);
+        Ensure.Positive(BladeWidth);
+        Ensure.Positive(Spacing);
+        Ensure.GreaterThanOrEqual(MaximumHeight, MinimumHeight);
+        Ensure.GreaterThanOrEqual(TallHeight, MaximumHeight);
+        Ensure.InRange(TallChance, 0f, 1f);
+        Ensure.InRange(FrontChance, 0f, 1f);
+        Ensure.InRange(FlowerChance, 0f, 1f);
+        Ensure.InRange(Coverage, 0f, 1f);
+        Ensure.Positive(PatchWidth);
+        Ensure.InRange(SprigChance, 0f, 1f);
     }
 }
 

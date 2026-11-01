@@ -16,9 +16,9 @@ public static class PlayerHud2D
         int maximumHealth,
         Texture2D weaponTexture, SpellState2D spells = default, bool charging = false)
     {
-        ArgGuard.ThrowIfNull(renderer);
-        ArgGuard.Positive(maximumHealth);
-        ArgGuard.ThrowIfNull(weaponTexture);
+        Ensure.ThrowIfNull(renderer);
+        Ensure.Positive(maximumHealth);
+        Ensure.ThrowIfNull(weaponTexture);
 
         const float left = 24f;
         const float top = 24f;

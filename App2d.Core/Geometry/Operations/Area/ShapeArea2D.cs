@@ -22,9 +22,9 @@ public static class ShapeArea2D
     /// <param name="outlineSegments">At least three samples for polygonized curves or custom support mappings.</param>
     public static float Union(ReadOnlySpan<IConvexShape2D> parts, int outlineSegments = DefaultOutlineSegments)
     {
-        ArgGuard.ThrowIfTooShort(parts, 1);
-        ArgGuard.ThrowIfContainsNull(parts);
-        ArgGuard.ThrowIf(outlineSegments < 3, "Curved outlines need at least three samples.", nameof(outlineSegments));
+        Ensure.ThrowIfTooShort(parts, 1);
+        Ensure.ThrowIfContainsNull(parts);
+        Ensure.GreaterThanOrEqual(outlineSegments, 3);
         if (parts.Length == 1)
         {
             return parts[0].Area;
@@ -55,7 +55,7 @@ public static class ShapeArea2D
     {
         ArgumentNullException.ThrowIfNull(first);
         ArgumentNullException.ThrowIfNull(second);
-        ArgGuard.ThrowIf(outlineSegments < 3, "Curved outlines need at least three samples.", nameof(outlineSegments));
+        Ensure.GreaterThanOrEqual(outlineSegments, 3);
         if (first is IRect2D firstRect && second is IRect2D secondRect)
         {
             return Area2D.RectangleIntersection(firstRect.Min, firstRect.Max, secondRect.Min, secondRect.Max);
@@ -111,7 +111,7 @@ public static class ShapeArea2D
                 for (var j = 0; j < vertices.Length; j++)
                 {
                     vertices[j] = shape.GetSupportPoint(Polar2D.Direction(MathF.Tau * j / vertices.Length));
-                    ArgGuard.Finite(vertices[j], nameof(shape));
+                    Ensure.Finite(vertices[j], nameof(shape));
                 }
             }
         }

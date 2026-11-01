@@ -9,13 +9,13 @@ public readonly record struct GridCellRange2D
 
     public GridCellRange2D(Vector2i minimum, Vector2i maximum)
     {
-        ArgGuard.AtLeast(maximum.X, minimum.X, nameof(maximum));
-        ArgGuard.AtLeast(maximum.Y, minimum.Y, nameof(maximum));
+        Ensure.GreaterThanOrEqual(maximum.X, minimum.X, nameof(maximum));
+        Ensure.GreaterThanOrEqual(maximum.Y, minimum.Y, nameof(maximum));
         var width = (long)maximum.X - minimum.X + 1;
         var height = (long)maximum.Y - minimum.Y + 1;
         if (width > long.MaxValue / height)
         {
-            ArgGuard.ThrowOutOfRange(maximum, "The cell count must fit a signed 64-bit integer.");
+            Ensure.ThrowOutOfRange(maximum, "The cell count must fit a signed 64-bit integer.");
         }
 
         Minimum = minimum;

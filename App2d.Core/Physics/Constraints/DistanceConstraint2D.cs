@@ -23,9 +23,9 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         RigidBody2D second,
         Interval<float> limits)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
-        ArgGuard.ThrowIfSameReference(first, second, "A distance constraint requires two different bodies.");
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
+        Ensure.ThrowIfSameReference(first, second, "A distance constraint requires two different bodies.");
 
         First = first;
         Second = second;
@@ -42,7 +42,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         {
             if (value.IsBoundedBelow && value.Min < 0f || value.IsBoundedAbove && value.Max < 0f)
             {
-                ArgGuard.ThrowOutOfRange(value, "Distance limits cannot be negative.");
+                Ensure.ThrowOutOfRange(value, "Distance limits cannot be negative.");
             }
 
             _limits = value;
@@ -55,7 +55,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _positionStrength;
         set
         {
-            ArgGuard.InRange(value, 0f, 1f, nameof(PositionStrength));
+            Ensure.InRange(value, 0f, 1f, nameof(PositionStrength));
             _positionStrength = value;
         }
     }
@@ -66,7 +66,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _velocityStrength;
         set
         {
-            ArgGuard.InRange(value, 0f, 1f, nameof(VelocityStrength));
+            Ensure.InRange(value, 0f, 1f, nameof(VelocityStrength));
             _velocityStrength = value;
         }
     }
@@ -76,7 +76,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _positionTolerance;
         set
         {
-            ArgGuard.NonNegative(value, nameof(PositionTolerance));
+            Ensure.NonNegative(value, nameof(PositionTolerance));
             _positionTolerance = value;
         }
     }

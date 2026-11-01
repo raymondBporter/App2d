@@ -21,11 +21,10 @@ public static class HeightField2D
     public static HeightFieldShape2D ToClippedShape(this IHeightField2D field, float bottom,
         float maximumSegmentLength = 12f, float maximumDeviation = 0.05f)
     {
-        ArgGuard.ThrowIfNull(field);
-        ArgGuard.Finite(bottom);
-        ArgGuard.ThrowIf(bottom < field.YMin, "Clipping cannot extend a heightfield below its supplied YMin.", nameof(bottom));
-        ArgGuard.Positive(maximumSegmentLength);
-        ArgGuard.Positive(maximumDeviation);
+        Ensure.ThrowIfNull(field);
+        Ensure.InRange(bottom, field.YMin, float.PositiveInfinity);
+        Ensure.Positive(maximumSegmentLength);
+        Ensure.Positive(maximumDeviation);
         var surface = field is PolylineHeightField2D polyline
             ? polyline.Curve : field.ToPolyline(maximumSegmentLength, maximumDeviation);
         return HeightFieldShape2D.Builder.Create(surface.Points.ToArray(), bottom);
@@ -37,11 +36,11 @@ public static class HeightField2D
     /// </summary>
     public static CompositeShape2D ToConvexPieces(this PolylineHeightField2D field)
     {
-        ArgGuard.ThrowIfNull(field);
-        ArgGuard.Finite(field.YMin);
+        Ensure.ThrowIfNull(field);
+        Ensure.Finite(field.YMin);
         var points = field.Curve.Points;
         foreach (var point in points)
-            ArgGuard.ThrowIf(point.Y <= field.YMin, "The bottom must be strictly below the surface.");
+            Ensure.GreaterThan(point.Y, field.YMin);
         var pieces = new List<IConvexShape2D>();
         var start = 0;
         for (var index = 1; index < points.Length - 1; index++)
@@ -75,7 +74,7 @@ public static class HeightField2D
     /// <summary>Conservative bounds; infinite when the bottom or the supplied upper bound is infinite.</summary>
     public static Rect2D Bounds(this IHeightField2D field)
     {
-        ArgGuard.ThrowIfNull(field);
+        Ensure.ThrowIfNull(field);
         ValidateDomain(field.XMin, field.XMax, field.YMin, field.YMax);
         return new(new(field.XMin, field.YMin), new(field.XMax, field.YMax));
     }
@@ -83,7 +82,7 @@ public static class HeightField2D
     /// <summary>Includes the top, flat bottom and vertical end caps. Points beyond XMin/XMax are outside.</summary>
     public static bool ContainsPoint(this IHeightField2D field, Vector2 point)
     {
-        ArgGuard.ThrowIfNull(field);
+        Ensure.ThrowIfNull(field);
         return float.IsFinite(point.X) && float.IsFinite(point.Y)
             && point.X >= field.XMin && point.X <= field.XMax
             && point.Y >= field.YMin && point.Y <= field.HeightAt(point.X);
@@ -92,9 +91,9 @@ public static class HeightField2D
     /// <summary>The outward unit normal of the top: normalize((-dy/dx, 1)). End-cap normals are separate.</summary>
     public static Vector2 NormalAt(this IHeightField2D field, float x)
     {
-        ArgGuard.ThrowIfNull(field);
+        Ensure.ThrowIfNull(field);
         ValidateX(field, x);
-        var slope = ArgGuard.Finite(field.SlopeAt(x));
+        var slope = Ensure.Finite(field.SlopeAt(x));
         var inverseLength = (float)(1d / Math.Sqrt(1d + (double)slope * slope));
         return new(-slope * inverseLength, inverseLength);
     }
@@ -102,12 +101,12 @@ public static class HeightField2D
     /// <summary>Finite differences in world X, using one-sided differences at the domain endpoints.</summary>
     public static float EstimateSlope(IHeightField2D field, float x)
     {
-        ArgGuard.ThrowIfNull(field);
+        Ensure.ThrowIfNull(field);
         ValidateX(field, x);
         var step = (field.XMax - field.XMin) * 0.0001f;
         var lower = MathF.Max(field.XMin, MathF.Min(x - step, float.BitDecrement(x)));
         var upper = MathF.Min(field.XMax, MathF.Max(x + step, float.BitIncrement(x)));
-        return ArgGuard.Finite((float)(((double)field.HeightAt(upper) - field.HeightAt(lower)) / ((double)upper - lower)));
+        return Ensure.Finite((float)(((double)field.HeightAt(upper) - field.HeightAt(lower)) / ((double)upper - lower)));
     }
 
     /// <summary>
@@ -117,7 +116,7 @@ public static class HeightField2D
     /// </summary>
     public static PolylineCurve2D ToPolyline(this IHeightField2D field, float maximumSegmentLength = 12f, float maximumDeviation = 0.05f)
     {
-        ArgGuard.ThrowIfNull(field);
+        Ensure.ThrowIfNull(field);
         ValidateDomain(field.XMin, field.XMax, field.YMin, field.YMax);
         ICurve2D curve = field switch
         {
@@ -134,9 +133,8 @@ public static class HeightField2D
     /// <summary>Bakes a finite solid for the existing shape collision system; YMin must be strictly below the sampled top.</summary>
     public static SimplePolygon2D ToPolygon(this IHeightField2D field, float maximumSegmentLength = 12f, float maximumDeviation = 0.05f)
     {
-        ArgGuard.ThrowIfNull(field);
-        if (!float.IsFinite(field.YMin))
-            throw new InvalidOperationException("An infinite heightfield cannot become a finite polygon. Use ToClippedPolygon with an explicit finite bottom.");
+        Ensure.ThrowIfNull(field);
+        Ensure.Finite(field.YMin);
         return SimplePolygon2D.Builder.BelowPolyline(field.ToPolyline(maximumSegmentLength, maximumDeviation).Points, field.YMin);
     }
 
@@ -147,39 +145,38 @@ public static class HeightField2D
     public static SimplePolygon2D ToClippedPolygon(this IHeightField2D field, float bottom,
         float maximumSegmentLength = 12f, float maximumDeviation = 0.05f)
     {
-        ArgGuard.ThrowIfNull(field);
-        ArgGuard.Finite(bottom);
-        ArgGuard.ThrowIf(bottom < field.YMin, "Clipping cannot extend a heightfield below its supplied YMin.", nameof(bottom));
+        Ensure.ThrowIfNull(field);
+        Ensure.InRange(bottom, field.YMin, float.PositiveInfinity);
         return SimplePolygon2D.Builder.BelowPolyline(field.ToPolyline(maximumSegmentLength, maximumDeviation).Points, bottom);
     }
 
     internal static void ValidateDomain(float xMin, float xMax, float yMin, float yMax)
     {
-        ArgGuard.Finite(xMin);
-        ArgGuard.Finite(xMax);
-        ArgGuard.ThrowIf(xMax <= xMin || !float.IsFinite(xMax - xMin), "Heightfields need a positive finite X interval.", nameof(xMax));
-        ArgGuard.ThrowIf(float.IsNaN(yMin) || yMin == float.PositiveInfinity, "YMin must be finite or negative infinity.", nameof(yMin));
-        ArgGuard.ThrowIf(float.IsNaN(yMax) || yMax == float.NegativeInfinity || yMax < yMin,
-            "YMax must be at least YMin, and finite or positive infinity.", nameof(yMax));
+        Ensure.Finite(xMin);
+        Ensure.Finite(xMax);
+        Ensure.GreaterThan(xMax, xMin);
+        Ensure.Finite(xMax - xMin);
+        Ensure.LessThan(yMin, float.PositiveInfinity, allowInfinity: true);
+        Ensure.GreaterThan(yMax, float.NegativeInfinity, allowInfinity: true);
+        Ensure.GreaterThanOrEqual(yMax, yMin, allowInfinity: true);
     }
 
     internal static void ValidateX(IHeightField2D field, float x)
     {
-        ArgGuard.Finite(x);
-        ArgGuard.InRange(x, field.XMin, field.XMax);
+        Ensure.Finite(x);
+        Ensure.InRange(x, field.XMin, field.XMax);
     }
 
     internal static float ValidateHeight(IHeightField2D field, float height)
     {
-        ArgGuard.Finite(height);
-        ArgGuard.ThrowIf(height < field.YMin || height > field.YMax, "Surface height must remain within the supplied YMin/YMax bounds.", nameof(height));
+        Ensure.InRange(height, field.YMin, field.YMax);
         return height;
     }
 
     internal static void ValidateIncreasingX(ReadOnlySpan<Vector2> points)
     {
         for (var index = 1; index < points.Length; index++)
-            ArgGuard.ThrowIf(points[index].X <= points[index - 1].X, "Heightfields must run strictly left to right.", nameof(points));
+            Ensure.GreaterThan(points[index].X, points[index - 1].X);
     }
 
     private sealed class FunctionCurve(IHeightField2D field) : ICurve2D

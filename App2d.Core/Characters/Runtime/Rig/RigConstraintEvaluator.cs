@@ -40,7 +40,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
     public void Apply(RigContactPin pin)
     {
-        ArgGuard.InRange(pin.Release, 0f, 1f, nameof(pin));
+        Ensure.InRange(pin.Release, 0f, 1f, nameof(pin));
 
         if (!_targets.TryGetValue(pin.Constraint, out var goal))
         {
@@ -105,10 +105,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
     private ChainResult Solve(string id, Vector3 target, int bend)
     {
-        if (!target.IsFinite())
-        {
-            throw new InvalidDataException($"Constraint '{id}': target must be finite.");
-        }
+        Ensure.Finite(target);
 
         if (!model.Chains.TryGetValue(id, out var chain))
         {

@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
@@ -262,10 +263,7 @@ public sealed class ResolvedEntity
             {
                 var start = Seconds(hit.Start, $"hit '{hit.Id}' start");
                 var finish = Seconds(hit.Finish, $"hit '{hit.Id}' finish");
-                if (finish <= start)
-                {
-                    throw new InvalidDataException($"{field} hit '{hit.Id}': finish must follow start.");
-                }
+                Ensure.GreaterThan(finish, start);
 
                 hits.Add(new(hit, start, finish, windowColliders[(action.Id, hit.Id)], StrikeOf(hit.Id)));
             }
@@ -296,10 +294,7 @@ public sealed class ResolvedEntity
                     throw new InvalidDataException($"{field}: a jump moves the whole body and cannot be masked.");
                 }
 
-                if (action.BlendIn + action.BlendOut > clip.Duration + 1e-4f)
-                {
-                    throw new InvalidDataException($"{field}: blend in and out ({action.BlendIn + action.BlendOut:0.###}s) exceed the clip ({clip.Duration:0.###}s).");
-                }
+                Ensure.LessThanOrEqual(action.BlendIn + action.BlendOut, clip.Duration + 1e-4f);
             }
             var recovery = action.Recovery is { } recoveryId ? Clip(recoveryId, field + " recovery") : null;
             actions[action.Id] = new(action.Id, clip, source, hits, events)
@@ -325,10 +320,8 @@ public sealed class ResolvedEntity
             {
                 var moment = swoop.Events.SingleOrDefault(e => e.Event.Id == phase)
                     ?? throw new InvalidDataException($"{owner}: flight attack needs '{phase}' event.");
-                if (moment.Seconds <= previous || moment.Seconds >= swoop.Clip.Duration)
-                {
-                    throw new InvalidDataException($"{owner}: flight phases must be ordered commit, rush, brake, low, reset before action end.");
-                }
+                Ensure.GreaterThan(moment.Seconds, previous);
+                Ensure.LessThan(moment.Seconds, swoop.Clip.Duration);
 
                 previous = moment.Seconds;
             }

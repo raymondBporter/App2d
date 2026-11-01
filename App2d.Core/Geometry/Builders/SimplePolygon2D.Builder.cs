@@ -15,7 +15,7 @@ public readonly partial record struct SimplePolygon2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static SimplePolygon2D Create(IEnumerable<Vector2> vertices) => new SimplePolygon2D([.. ArgGuard.RequireNotNull(vertices)]).Validated();
+        public static SimplePolygon2D Create(IEnumerable<Vector2> vertices) => new SimplePolygon2D([.. Ensure.RequireNotNull(vertices)]).Validated();
 
         /// <summary>
         /// Fills beneath a strictly left-to-right polyline down to a horizontal bottom. Builds a strip mesh
@@ -23,16 +23,16 @@ public readonly partial record struct SimplePolygon2D
         /// </summary>
         public static SimplePolygon2D BelowPolyline(ReadOnlySpan<Vector2> surface, float bottom)
         {
-            ArgGuard.ThrowIfTooShort(surface, 2);
-            ArgGuard.Finite(bottom);
+            Ensure.ThrowIfTooShort(surface, 2);
+            Ensure.Finite(bottom);
             var count = surface.Length;
             var perimeter = new Vector2[count * 2];
             var indices = new int[(count - 1) * 6];
             for (var index = 0; index < count; index++)
             {
-                ArgGuard.Finite(surface[index]);
-                ArgGuard.ThrowIf(surface[index].Y <= bottom, "Terrain bottom must be below every surface point.");
-                ArgGuard.ThrowIf(index > 0 && surface[index].X <= surface[index - 1].X, "Terrain must run strictly left to right.");
+                Ensure.Finite(surface[index]);
+                Ensure.GreaterThan(surface[index].Y, bottom);
+                Ensure.ThrowIf(index > 0 && surface[index].X <= surface[index - 1].X, "Terrain must run strictly left to right.");
                 perimeter[index] = surface[index];
                 perimeter[2 * count - 1 - index] = new(surface[index].X, bottom);
                 if (index == count - 1) continue;

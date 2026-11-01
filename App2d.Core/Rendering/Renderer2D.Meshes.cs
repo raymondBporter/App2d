@@ -39,9 +39,9 @@ public sealed partial class Renderer2D
     public void DrawMesh(TriangleMesh2D mesh, IShader2D material, Matrix3x2 localToWorld)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNull(mesh);
-        ArgGuard.ThrowIfNull(material);
-        ArgGuard.Finite(localToWorld);
+        Ensure.ThrowIfNull(mesh);
+        Ensure.ThrowIfNull(material);
+        Ensure.Finite(localToWorld);
         SelectMaterial(material);
         DrawMeshCore(mesh, localToWorld * _camera.WorldToDeviceMatrix, mesh.Bounds, material);
     }

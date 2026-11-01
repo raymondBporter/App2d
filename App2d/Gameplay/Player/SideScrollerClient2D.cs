@@ -51,8 +51,8 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public SideScrollerClient2D(SessionFrame2D initial, EntityId2D playerId, Scene2D scene, Camera2D camera, SideScrollerCamera2D cameraController, TextureCache2D textures, SoundEffectBank2D<SoundEffect2D> sounds, TraversalMetrics2D traversal, PersonMoves moves)
     {
-        ArgGuard.ThrowIfNull(initial);
-        ArgGuard.ThrowIf(!playerId.IsValid, "A player identity is required.", nameof(playerId));
+        Ensure.ThrowIfNull(initial);
+        Ensure.ThrowIf(!playerId.IsValid, "A player identity is required.", nameof(playerId));
         _playerId = playerId;
         _frame = initial;
         State = Observe(initial);
@@ -115,7 +115,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     /// <summary>Presents the frame the session's Advance returned. The host applies each frame once, so events are presented once.</summary>
     public void Apply(SessionFrame2D frame)
     {
-        ArgGuard.ThrowIfNull(frame);
+        Ensure.ThrowIfNull(frame);
         State = Observe(frame);
         _frame = frame;
         _world.ApplyState(frame.Content, frame.World);
@@ -221,11 +221,11 @@ internal sealed class SideScrollerClient2D : IDisposable
         _presentation.ApplyState(State.Person, _frame.Tick);
     }
 
-    private PlayerState2D Observe(SessionFrame2D frame) => frame.FindPlayer(_playerId) ?? throw ArgGuard.CreateInvalid("The frame does not observe this player.", nameof(frame));
+    private PlayerState2D Observe(SessionFrame2D frame) => frame.FindPlayer(_playerId) ?? throw Ensure.CreateInvalid("The frame does not observe this player.", nameof(frame));
 
     public void AdvancePresentation(float deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         _world.Advance(deltaSeconds);
         Ballistics.Advance(deltaSeconds);
         _enemies.Advance(deltaSeconds);

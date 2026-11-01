@@ -12,7 +12,7 @@ public static class TraversalMetricsLoader2D
 
     public static TraversalMetrics2D Load(string contentRoot)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(contentRoot);
+        Ensure.ThrowIfNullOrWhiteSpace(contentRoot);
 
         var path = Path.Combine(contentRoot, "characters", "player-geometry.json");
         if (!File.Exists(path))
@@ -55,31 +55,19 @@ public static class TraversalMetricsLoader2D
             manifest.StandingCollider.Size.Width,
             manifest.StandingCollider.Size.Height);
 
-        if (!NumericValidation.IsPositive(canvasSize) ||
-            !NumericValidation.IsPositive(visualSize) ||
-            !NumericValidation.IsPositive(standingSize))
-        {
-            throw new InvalidDataException($"Player canvas, visual, and collider sizes must be positive: {path}");
-        }
+        Ensure.Positive(canvasSize);
+        Ensure.Positive(visualSize);
+        Ensure.Positive(standingSize);
 
         var canvasAspect = canvasSize.X / canvasSize.Y;
         var visualAspect = visualSize.X / visualSize.Y;
-        if (MathF.Abs(canvasAspect - visualAspect) > 0.001f)
-        {
-            throw new InvalidDataException($"Player visual size must preserve the authored canvas aspect ratio: {path}");
-        }
+        Ensure.LessThanOrEqual(MathF.Abs(canvasAspect - visualAspect), 0.001f);
 
-        if (!float.IsFinite(manifest.FootAnchorYFraction) ||
-            manifest.FootAnchorYFraction <= 0f ||
-            manifest.FootAnchorYFraction >= 1f)
-        {
-            throw new InvalidDataException($"Player foot anchor must be a fraction between zero and one: {path}");
-        }
+        Ensure.Finite(manifest.FootAnchorYFraction);
+        Ensure.Positive(manifest.FootAnchorYFraction);
+        Ensure.LessThan(manifest.FootAnchorYFraction, 1f);
 
-        if (!float.IsFinite(manifest.StandingCollider.CenterOffsetX))
-        {
-            throw new InvalidDataException($"Player collider center offset must be finite: {path}");
-        }
+        Ensure.Finite(manifest.StandingCollider.CenterOffsetX);
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(

@@ -21,7 +21,7 @@ public sealed class Image2D<T> where T : unmanaged
     /// <summary>Copies pixels in row-major order; later edits do not affect the supplied storage.</summary>
     public Image2D(int width, int height, ReadOnlySpan<T> pixels) : this(width, height)
     {
-        ArgGuard.ThrowIf(pixels.Length != Count, "Pixel count must equal width times height.", nameof(pixels));
+        Ensure.ThrowIf(pixels.Length != Count, "Pixel count must equal width times height.", nameof(pixels));
         pixels.CopyTo(_pixels);
     }
 
@@ -35,7 +35,7 @@ public sealed class Image2D<T> where T : unmanaged
 
     public Span<T> GetRowSpan(int y)
     {
-        ArgGuard.Index(y, Height);
+        Ensure.Index(y, Height);
         return _pixels.AsSpan(y * Width, Width);
     }
 

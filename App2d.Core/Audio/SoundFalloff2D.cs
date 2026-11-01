@@ -9,8 +9,8 @@ public sealed class SoundFalloff2D
 {
     public SoundFalloff2D(float innerRadius, float outerRadius)
     {
-        ArgGuard.NonNegative(innerRadius);
-        ArgGuard.GreaterThan(outerRadius, innerRadius);
+        Ensure.NonNegative(innerRadius);
+        Ensure.GreaterThan(outerRadius, innerRadius);
         InnerRadius = innerRadius;
         OuterRadius = outerRadius;
     }
@@ -20,8 +20,8 @@ public sealed class SoundFalloff2D
 
     public float Evaluate(Vector2 source, Vector2 listener)
     {
-        ArgGuard.Finite(source);
-        ArgGuard.Finite(listener);
+        Ensure.Finite(source);
+        Ensure.Finite(listener);
         var distance = Vector2.Distance(source, listener);
         var t = Math.Clamp((distance - InnerRadius) / (OuterRadius - InnerRadius), 0f, 1f);
         return 1f - Progress.SmoothStepUnclamped(t);

@@ -18,7 +18,7 @@ public class SpatialObject2D(IShape2D shape)
     private int _collisionPoseVersion = -1;
 
     public Affine2D Transform { get; } = new();
-    public IShape2D Shape { get; } = ArgGuard.RequireNotNull(shape);
+    public IShape2D Shape { get; } = Ensure.RequireNotNull(shape);
 
     /// <summary>Calculated once when the immutable shape is attached; independent of this object's transform.</summary>
     public Rect2D LocalBounds { get; } = ShapeBounds2D.Calculate(shape);
@@ -53,7 +53,7 @@ public class SpatialObject2D(IShape2D shape)
                 return _collisionPose;
             }
 
-            StateGuard.ThrowIf(!Similarity2D.TryFromMatrix(Transform.Matrix, out _collisionPose), "Collision requires a uniform, non-zero scale and orthogonal axes on the transform.");
+            Ensure.ThrowIf(!Similarity2D.TryFromMatrix(Transform.Matrix, out _collisionPose), "Collision requires a uniform, non-zero scale and orthogonal axes on the transform.");
             _collisionPoseVersion = Transform.Version;
             return _collisionPose;
         }

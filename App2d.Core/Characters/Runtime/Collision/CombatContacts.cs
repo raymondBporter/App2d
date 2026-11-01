@@ -51,10 +51,10 @@ public static class CombatContacts
         Func<AttachedCollider, Collider2D, (EntityId2D Target, bool Guard)?> targetOf, List<AcceptedContact> results,
         List<CollisionOverlap2D> scratch, Action<ResolvedHit, AttachedCollider, List<(EntityId2D Target, Vector2 Position)>>? extraTargets = null)
     {
-        ArgGuard.ThrowIfNull(attacker);
-        ArgGuard.ThrowIfNull(ledger);
-        ArgGuard.ThrowIfNull(results);
-        ArgGuard.ThrowIfNull(scratch);
+        Ensure.ThrowIfNull(attacker);
+        Ensure.ThrowIfNull(ledger);
+        Ensure.ThrowIfNull(results);
+        Ensure.ThrowIfNull(scratch);
         results.Clear();
         var seen = new List<(EntityId2D Target, Vector2 Position, string? Collider, bool Blocked)>();
         var extra = new List<(EntityId2D Target, Vector2 Position)>();
@@ -124,9 +124,9 @@ public static class CombatContacts
     public static (EntityId2D Target, Vector2 Position, bool Blocked)? Probe(CollisionSystem2D system, SpatialObject2D probe, uint targetMask, uint queryLayer,
         Func<Collider2D, (EntityId2D Target, bool Guard)?> targetOf, List<CollisionOverlap2D> scratch, Func<EntityId2D, int>? order = null)
     {
-        ArgGuard.ThrowIfNull(system);
-        ArgGuard.ThrowIfNull(probe);
-        ArgGuard.ThrowIfNull(scratch);
+        Ensure.ThrowIfNull(system);
+        Ensure.ThrowIfNull(probe);
+        Ensure.ThrowIfNull(scratch);
         system.Overlap(probe, scratch, targetMask, includeSensors: true);
         (EntityId2D Target, Vector2 Position, bool Blocked)? best = null;
         var bestOrder = int.MaxValue;

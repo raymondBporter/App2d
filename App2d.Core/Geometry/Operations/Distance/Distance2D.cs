@@ -215,7 +215,7 @@ public static partial class Distance2D
     /// <returns>The nonnegative squared distance.</returns>
     public static float DistanceSquaredToConvexPolygon(Vector2 point, ReadOnlySpan<Vector2> vertices)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 3);
+        Ensure.ThrowIfTooShort(vertices, 3);
         return Containment2D.ConvexPolygon(point, vertices, 0f) ? 0f : Vector2.DistanceSquared(point, ClosestPoint2D.OnPolygonPerimeter(point, vertices));
     }
 
@@ -225,7 +225,7 @@ public static partial class Distance2D
     /// <returns>The squared distance to the nearest edge.</returns>
     public static float DistanceSquaredToPolygonPerimeter(Vector2 point, ReadOnlySpan<Vector2> vertices)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 1);
+        Ensure.ThrowIfTooShort(vertices, 1);
         return Vector2.DistanceSquared(point, ClosestPoint2D.OnPolygonPerimeter(point, vertices));
     }
 
@@ -240,7 +240,7 @@ public static partial class Distance2D
     /// <returns>Negative inside, zero on the boundary, positive outside.</returns>
     public static float SignedDistanceToConvexPolygon(Vector2 point, ReadOnlySpan<Vector2> vertices, out Vector2 closestPoint, out int edgeIndex, float collinearEpsilon = 0f)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 3);
+        Ensure.ThrowIfTooShort(vertices, 3);
         closestPoint = ClosestPoint2D.OnPolygonPerimeter(point, vertices, out edgeIndex);
         var distance = Vector2.Distance(point, closestPoint);
         return Containment2D.ConvexPolygon(point, vertices, collinearEpsilon) ? -distance : distance;

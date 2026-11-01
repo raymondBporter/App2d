@@ -24,7 +24,7 @@ public static class ShapeBounds2D
     /// <exception cref="NotSupportedException">The shape is an unknown non-convex type.</exception>
     public static Rect2D Calculate(IShape2D shape)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         return shape switch
         {
             Circle2D circle => Rect2D.FromCircle(circle.Center, circle.Radius),
@@ -50,7 +50,7 @@ public static class ShapeBounds2D
     /// </summary>
     public static Rect2D CalculateTransformed(IShape2D shape, Matrix3x2 transform)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         return TryCalculateTransformed(shape, transform, out var bounds) ? bounds : Calculate(shape).TransformedBy(transform);
     }
 
@@ -83,7 +83,7 @@ public static class ShapeBounds2D
     /// <returns>The local center and radius; a half-space reports an infinite radius.</returns>
     public static (Vector2 Center, float Radius) CalculateBoundingCircle(IShape2D shape)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         switch (shape)
         {
             case Circle2D circle:

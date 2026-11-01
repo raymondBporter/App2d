@@ -59,9 +59,9 @@ internal sealed class TileEditor2D : IDisposable
         Func<LevelDatabase2D> openDatabase,
         Camera2D camera)
     {
-        _map = ArgGuard.RequireNotNull(map);
-        _openDatabase = ArgGuard.RequireNotNull(openDatabase);
-        _camera = ArgGuard.RequireNotNull(camera);
+        _map = Ensure.RequireNotNull(map);
+        _openDatabase = Ensure.RequireNotNull(openDatabase);
+        _camera = Ensure.RequireNotNull(camera);
         _session = new TileEditSession2D(map);
         SelectedKind = TileKind2D.Solid;
         InspectorView = new ThingEditorInspector2D(this);
@@ -144,7 +144,7 @@ internal sealed class TileEditor2D : IDisposable
     public IReadOnlyList<ThingDefinitionRecord2D> ThingDefinitions => _thingDefinitions;
     public IReadOnlyList<PositionThingRecord2D> PositionThings => _positionThings;
     /// <summary>The configured world's object asset files; configure maps with a world root first.</summary>
-    public ObjectAssetCatalog2D ObjectAssets => StateGuard.RequireNotNull(_objectAssets, "Configure maps with a world root before using object assets.");
+    public ObjectAssetCatalog2D ObjectAssets => Ensure.RequireNotNull(_objectAssets, message: "Configure maps with a world root before using object assets.");
     public IReadOnlyList<string> ObjectAssetPaths => _objectAssets?.Paths ?? [];
     /// <summary>The current map's enabled object things as placements with world-wide ids, rebuilt whenever things reload.</summary>
     public IReadOnlyList<ObjectPlacement2D> ObjectPlacements => _objectPlacements;
@@ -267,7 +267,7 @@ internal sealed class TileEditor2D : IDisposable
     {
         if (index < 0 || index >= _map.TilesetIds.Count)
         {
-            ArgGuard.ThrowOutOfRange(index, "Tileset selection must exist in the map catalog.");
+            Ensure.ThrowOutOfRange(index, "Tileset selection must exist in the map catalog.");
         }
 
         SelectedTilesetIndex = (byte)index;
@@ -286,7 +286,7 @@ internal sealed class TileEditor2D : IDisposable
 
     internal void SelectDefinition(long definitionId)
     {
-        StateGuard.ThrowIf(_thingDefinitions.All(item => item.DefinitionId != definitionId), $"Thing definition {definitionId} is not loaded.");
+        Ensure.ThrowIf(_thingDefinitions.All(item => item.DefinitionId != definitionId), $"Thing definition {definitionId} is not loaded.");
         SelectedDefinitionId = definitionId;
         SelectedThingId = null;
         _isPlacingThing = false;
@@ -294,7 +294,7 @@ internal sealed class TileEditor2D : IDisposable
 
     internal void BeginThingPlacement()
     {
-        StateGuard.ThrowIf(SelectedDefinitionId is null, "Select a thing definition before placing it.");
+        Ensure.ThrowIf(SelectedDefinitionId is null, "Select a thing definition before placing it.");
         SelectedThingId = null;
         _isPlacingThing = true;
         InspectorView.RefreshFromEditor();
@@ -302,9 +302,9 @@ internal sealed class TileEditor2D : IDisposable
 
     internal void ApplyPositionDefinition(long? definitionId, string typeKey, PositionThingDefinitionProperties2D properties, string? asset = null)
     {
-        ArgGuard.ThrowIfNull(properties);
+        Ensure.ThrowIfNull(properties);
         var descriptor = ThingTypeRegistry2D.Require(typeKey);
-        StateGuard.ThrowIf(descriptor.WorldKind is null && !descriptor.IsObject, $"Thing type '{typeKey}' is not position-only.");
+        Ensure.ThrowIf(descriptor.WorldKind is null && !descriptor.IsObject, $"Thing type '{typeKey}' is not position-only.");
         if (descriptor.IsObject && !string.IsNullOrWhiteSpace(asset))
         {
             RequireLoadableAsset(asset);
@@ -345,7 +345,7 @@ internal sealed class TileEditor2D : IDisposable
 
     internal void ApplyPositionThing(long thingId, PositionThingInstanceProperties2D properties)
     {
-        ArgGuard.ThrowIfNull(properties);
+        Ensure.ThrowIfNull(properties);
         var old = _positionThings.SingleOrDefault(item => item.ThingId == thingId) ??
             throw new InvalidOperationException($"Position thing {thingId} is not loaded.");
         var updated = old with
@@ -681,7 +681,7 @@ internal sealed class TileEditor2D : IDisposable
     }
 
     private LevelDatabase2D RequireDatabase() =>
-        StateGuard.RequireNotNull(_database, "Thing editing requires an open level database.");
+        Ensure.RequireNotNull(_database, message: "Thing editing requires an open level database.");
 
     private void EndStrokeIfActive()
     {
@@ -738,7 +738,7 @@ internal sealed class TileEditor2D : IDisposable
             return;
         }
 
-        StateGuard.RequireNotNull(_database, "A stroke committed with no open editing database.")
+        Ensure.RequireNotNull(_database, message: "A stroke committed with no open editing database.")
             .SaveChunks(_map, chunks.ToArray());
     }
 

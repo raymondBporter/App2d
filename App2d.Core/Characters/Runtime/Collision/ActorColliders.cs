@@ -78,9 +78,9 @@ public sealed class ActorColliders
     /// </summary>
     public ActorColliders(ResolvedEntity entity, CollisionSystem2D system, EntityId2D owner, uint layer, float scale = 1, bool movement = false)
     {
-        ArgGuard.ThrowIfNull(entity);
-        ArgGuard.ThrowIfNull(system);
-        ArgGuard.Positive(scale);
+        Ensure.ThrowIfNull(entity);
+        Ensure.ThrowIfNull(system);
+        Ensure.Positive(scale);
         Entity = entity;
         System = system;
         Owner = owner;
@@ -138,8 +138,8 @@ public sealed class ActorColliders
     /// </summary>
     public void Sync(ActorPose pose, IEnumerable<ResolvedHit>? activeHits, bool alive, bool guardUp = true)
     {
-        ArgGuard.ThrowIfNull(pose);
-        StateGuard.ThrowIf(!Attached, "The colliders were detached.");
+        Ensure.ThrowIfNull(pose);
+        Ensure.ThrowIf(!Attached, "The colliders were detached.");
         if (Movement is { } movement)
         {
             movement.Place(Similarity2D.FromAxis(pose.Position * Scale, new(pose.Facing, 0), mirror: pose.Facing < 0, Scale));

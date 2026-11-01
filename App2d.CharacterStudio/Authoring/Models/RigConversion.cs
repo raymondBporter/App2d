@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
@@ -43,10 +44,7 @@ public static class RigConversion
                 throw new InvalidOperationException($"'{id}' is a {control.Node} node; only point controls convert.");
             }
 
-            if (control.RestAngle != 0)
-            {
-                throw new InvalidOperationException($"'{id}' has a rest angle; a bone's direction is its own, so clear the rest angle first.");
-            }
+            Ensure.Equal(control.RestAngle, 0);
 
             if (run.Count > 0 && control.Parent != run[^1].Id)
             {
@@ -98,10 +96,8 @@ public static class RigConversion
                 : $"{control.Id}: bone bound to the tip of {control.Parent}, rotation {setup.Rotation:0.####} layer {setup.Layer:0.####}, length {length:0.####}");
             // Later controls in the run measure from this one's new frame.
             nodes = RigGraph.Compile(model);
-            if (Vector2.Distance(new(nodes[control.Id].Rest.X, nodes[control.Id].Rest.Y), new(node.Rest.X, node.Rest.Y)) > 1e-4f || MathF.Abs(nodes[control.Id].Rest.Z - node.Rest.Z) > 1e-4f)
-            {
-                throw new InvalidOperationException($"'{control.Id}' did not reproduce its rest after conversion; the model is left unsaved.");
-            }
+            Ensure.LessThanOrEqual(Vector2.Distance(new(nodes[control.Id].Rest.X, nodes[control.Id].Rest.Y), new(node.Rest.X, node.Rest.Y)), 1e-4f);
+            Ensure.LessThanOrEqual(MathF.Abs(nodes[control.Id].Rest.Z - node.Rest.Z), 1e-4f);
         }
         // A parameter that scaled a child's offset from its parent now scales the parent's length (P4a).
         for (var i = 1; i < run.Count; i++)

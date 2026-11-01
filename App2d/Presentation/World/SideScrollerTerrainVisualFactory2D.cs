@@ -9,9 +9,9 @@ namespace App2d.Presentation.World;
 
 internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunkedTileMap2D tileMap, SideScrollerTerrainTilesetResolver2D tilesets)
 {
-    private readonly Scene2D _scene = ArgGuard.RequireNotNull(scene);
-    private readonly IChunkedTileMap2D _tileMap = ArgGuard.RequireNotNull(tileMap);
-    private readonly SideScrollerTerrainTilesetResolver2D _tilesets = ArgGuard.RequireNotNull(tilesets);
+    private readonly Scene2D _scene = Ensure.RequireNotNull(scene);
+    private readonly IChunkedTileMap2D _tileMap = Ensure.RequireNotNull(tileMap);
+    private readonly SideScrollerTerrainTilesetResolver2D _tilesets = Ensure.RequireNotNull(tilesets);
     private readonly float _tileSize = tileMap.TileSize;
 
     public List<WorldObject2D> CreateSolidFill(Rect2D bounds)

@@ -29,7 +29,7 @@ internal static class AuthoredRenderingSmoke2D
         RunEntities(view, scene, renderer, target, directory);
         RunPlayer(device, textures, target, directory);
         view.ApplyState([], [], 62);
-        StateGuard.ThrowIfNot(!scene.Any());
+        Ensure.ThrowIfNot(!scene.Any());
     }
 
     /// <summary>

@@ -9,7 +9,7 @@ public sealed class ShapeMaterialShader2D : IShader2D
 {
     public ShapeMaterialShader2D(RenderMaterialDefinition2D material, Texture2D? texture = null)
     {
-        ArgGuard.ThrowIfNull(material);
+        Ensure.ThrowIfNull(material);
         material.Validate("material");
         Material = material;
         Texture = texture;

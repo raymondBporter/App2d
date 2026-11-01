@@ -13,7 +13,7 @@ internal static class CharacterAnimationAssets2D
 
     public static AnimationClip2D<Texture2D> LoadClip(TextureCache2D textures, string characterId, string animationId)
     {
-        ArgGuard.ThrowIfNull(textures);
+        Ensure.ThrowIfNull(textures);
         AssetId2D.Validate(characterId);
         AssetId2D.Validate(animationId);
 
@@ -49,7 +49,7 @@ internal static class CharacterAnimationAssets2D
 
     public static float LoadHorizontalRootOffsetFraction(TextureCache2D textures, string characterId, string animationId, string facingId)
     {
-        ArgGuard.ThrowIfNull(textures);
+        Ensure.ThrowIfNull(textures);
         AssetId2D.Validate(characterId);
         AssetId2D.Validate(animationId);
         AssetId2D.Validate(facingId);

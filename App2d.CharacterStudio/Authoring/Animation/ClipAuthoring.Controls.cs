@@ -56,7 +56,7 @@ public static partial class ClipAuthoring
     /// <summary>Sets the distance of a steady travel cycle; rejects a curve that the simple control cannot represent.</summary>
     public static void SetSteadyTravel(MotionClip clip, float distance)
     {
-        ArgGuard.Finite(distance);
+        Ensure.Finite(distance);
 
         if (!TryGetSteadyTravel(clip, out _))
         {

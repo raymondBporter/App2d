@@ -13,7 +13,7 @@ public static class ImageGradients2D
     /// </summary>
     public static Image2D<Vector2> Sobel(this Image2D<float> source)
     {
-        ArgGuard.ThrowIfNull(source);
+        Ensure.ThrowIfNull(source);
         var result = new Image2D<Vector2>(source.Width, source.Height);
         for (var y = 0; y < source.Height; y++)
         {
@@ -45,7 +45,7 @@ public static class ImageGradients2D
     /// </summary>
     public static Image2D<float> SobelMagnitude(this Image2D<Vector3> source)
     {
-        ArgGuard.ThrowIfNull(source);
+        Ensure.ThrowIfNull(source);
         var result = new Image2D<float>(source.Width, source.Height);
         for (var y = 0; y < source.Height; y++)
         {

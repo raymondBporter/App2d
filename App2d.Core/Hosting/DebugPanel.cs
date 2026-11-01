@@ -11,7 +11,7 @@ public sealed class DebugPanel
     /// <summary>The section with this title, created on first use so a game can extend an engine section.</summary>
     public DebugSection Section(string title)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(title);
+        Ensure.ThrowIfNullOrWhiteSpace(title);
         var section = _sections.Find(existing => existing.Title == title);
         if (section is null)
         {
@@ -40,8 +40,8 @@ public sealed class DebugSection
 
     private DebugSection Add(DebugControl control)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(control.Label);
-        StateGuard.ThrowIf(_controls.Any(existing => existing.Label == control.Label), $"Section '{Title}' already has a control labelled '{control.Label}'.");
+        Ensure.ThrowIfNullOrWhiteSpace(control.Label);
+        Ensure.ThrowIf(_controls.Any(existing => existing.Label == control.Label), $"Section '{Title}' already has a control labelled '{control.Label}'.");
         _controls.Add(control);
         return this;
     }

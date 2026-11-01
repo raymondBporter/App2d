@@ -157,7 +157,7 @@ Collision and physics namespaces follow their Core folders: `App2d.Core.Collisio
 and `App2d.Core.Physics`, including their subnamespaces. Both compile into
 `App2d.Core.dll`; consumers need only the Core project reference for these types.
 
-`App2d.Core/Validation` separates reusable `NumericValidation` predicates, `ArgGuard`
+`App2d.Core/Validation` separates reusable `NumericValidation` predicates, `Ensure`
 checks, and shared exception helpers. Numeric guards support integer and floating-point
 types plus `Vector2`, `Vector3`, and `Vector4`. Plain comparisons check their named
 condition; explicit `ThrowIfNotFiniteOr...` variants also reject NaN and infinity.
@@ -166,7 +166,7 @@ checks do not allocate. Unbounded rays retain a separate guard that permits posi
 infinity. See [the validation API](App2d.Core/Validation/README.md) for naming, vector
 semantics, range checks, and examples.
 
-`StateGuard` performs the corresponding checks for invalid engine state while preserving
+`Ensure` performs the corresponding checks for invalid engine state while preserving
 `InvalidOperationException` semantics. Physics iteration settings, collapsed transforms,
 and renderer lifecycle checks therefore do not masquerade as caller argument failures.
 

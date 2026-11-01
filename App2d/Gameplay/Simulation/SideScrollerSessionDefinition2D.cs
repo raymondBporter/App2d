@@ -43,23 +43,23 @@ public sealed record SideScrollerSessionDefinition2D(TraversalMetrics2D Traversa
 
     public SideScrollerSessionDefinition2D Validate()
     {
-        ArgGuard.ThrowIfNull(Traversal);
-        ArgGuard.ThrowIfNull(TileMap);
-        ArgGuard.ThrowIfNull(WorldThings);
-        ArgGuard.ThrowIfNull(Objects);
+        Ensure.ThrowIfNull(Traversal);
+        Ensure.ThrowIfNull(TileMap);
+        Ensure.ThrowIfNull(WorldThings);
+        Ensure.ThrowIfNull(Objects);
         foreach (var placement in Objects) placement.Validate();
-        ArgGuard.ThrowIf(Objects.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != Objects.Count, "Object placements need unique IDs.", nameof(Objects));
-        ArgGuard.ThrowIf(GiantTrees.IsDefault || GiantTrees.Any(tree => tree is null), "Trees must be initialized and non-null.", nameof(GiantTrees));
+        Ensure.ThrowIf(Objects.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != Objects.Count, "Object placements need unique IDs.", nameof(Objects));
+        Ensure.ThrowIf(GiantTrees.IsDefault || GiantTrees.Any(tree => tree is null), "Trees must be initialized and non-null.", nameof(GiantTrees));
         if (Zones.IsDefault || Zones.Any(z => z is null) || Zones.Select(z => z.Id).Distinct(StringComparer.Ordinal).Count() != Zones.Length)
         {
             throw new ArgumentException("Zones must be initialized and have unique IDs.", nameof(Zones));
         }
 
-        ArgGuard.Positive(PlayerMaximumHealth);
-        ArgGuard.ThrowIfNull(Spells);
+        Ensure.Positive(PlayerMaximumHealth);
+        Ensure.ThrowIfNull(Spells);
         Spells.Validate();
-        ArgGuard.Positive(PositionIterations);
-        ArgGuard.Positive(VelocityIterations);
+        Ensure.Positive(PositionIterations);
+        Ensure.Positive(VelocityIterations);
         return this;
     }
 }

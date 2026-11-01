@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using NAudio.Wave;
 
 namespace App2d.Core.Audio;
@@ -9,10 +10,7 @@ public sealed class AudioClip2D
     internal AudioClip2D(string path, int expectedSampleRate)
     {
         using var reader = new AudioFileReader(path);
-        if (reader.WaveFormat.SampleRate != expectedSampleRate)
-        {
-            throw new NotSupportedException($"'{path}' uses {reader.WaveFormat.SampleRate} Hz; sound effects must use {expectedSampleRate} Hz.");
-        }
+        Ensure.Equal(reader.WaveFormat.SampleRate, expectedSampleRate);
 
         WaveFormat = reader.WaveFormat;
         if (reader.Length % sizeof(float) != 0)

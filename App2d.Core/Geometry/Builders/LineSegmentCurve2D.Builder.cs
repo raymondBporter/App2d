@@ -9,8 +9,8 @@ public readonly partial record struct LineSegmentCurve2D
 {
     public void Validate()
     {
-        ArgGuard.Finite(Start, "start");
-        ArgGuard.Finite(End, "end");
+        Ensure.Finite(Start, "start");
+        Ensure.Finite(End, "end");
     }
 
     /// <summary>Stateless validated construction.</summary>

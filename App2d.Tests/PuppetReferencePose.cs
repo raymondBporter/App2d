@@ -16,7 +16,7 @@ internal sealed class PuppetReferencePose(PuppetPose pose)
 
     public static PuppetReferencePose Sample(PuppetDefinition definition, PuppetMotion motion, double seconds, bool repeat = false)
     {
-        ArgGuard.NonNegative(seconds);
+        Ensure.NonNegative(seconds);
         var pose = PuppetPose.Rest(definition);
         var result = new PuppetReferencePose(pose);
         var cycles = repeat && motion.Loop ? Math.Floor(seconds / motion.Duration) : 0;

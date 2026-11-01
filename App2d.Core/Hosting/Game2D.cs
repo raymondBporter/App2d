@@ -70,7 +70,7 @@ public abstract class Game2D : IDisposable
 
     protected void AttachPhysicsWorld(PhysicsWorld2D physicsWorld)
     {
-        ArgGuard.ThrowIfNull(physicsWorld);
+        Ensure.ThrowIfNull(physicsWorld);
         if (PhysicsWorld is not null && !ReferenceEquals(PhysicsWorld, physicsWorld))
         {
             throw new InvalidOperationException("A game can attach only one physics world.");
@@ -81,7 +81,7 @@ public abstract class Game2D : IDisposable
 
     protected void RegisterDebugAttackShapes(Func<IEnumerable<SpatialObject2D>> provider)
     {
-        ArgGuard.ThrowIfNull(provider);
+        Ensure.ThrowIfNull(provider);
         if (!_debugAttackShapeProviders.Contains(provider))
         {
             _debugAttackShapeProviders.Add(provider);

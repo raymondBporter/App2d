@@ -12,7 +12,7 @@ namespace App2d.Diagnostics;
 /// </summary>
 internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 {
-    private readonly TraversalMetrics2D _traversal = ArgGuard.RequireNotNull(traversal);
+    private readonly TraversalMetrics2D _traversal = Ensure.RequireNotNull(traversal);
     private float _speed = 10f;
     private float _angle = 45f;
     private float _referenceGravity = 10f;
@@ -23,7 +23,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         get => _speed;
         set
         {
-            ArgGuard.InRange(value, 0.1f, 100f);
+            Ensure.InRange(value, 0.1f, 100f);
             _speed = value;
         }
     }
@@ -33,7 +33,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         get => _angle;
         set
         {
-            ArgGuard.InRange(value, 1f, 90f);
+            Ensure.InRange(value, 1f, 90f);
             _angle = value;
         }
     }
@@ -43,7 +43,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         get => _referenceGravity;
         set
         {
-            ArgGuard.InRange(value, 0.1f, 200f);
+            Ensure.InRange(value, 0.1f, 200f);
             _referenceGravity = value;
         }
     }
@@ -54,8 +54,8 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 
     public void Launch(Vector2 origin, float facing)
     {
-        ArgGuard.Finite(origin);
-        ArgGuard.NonZero(facing);
+        Ensure.Finite(origin);
+        Ensure.NonZero(facing);
 
         var angle = float.DegreesToRadians(_angle);
         var velocity = _speed * _traversal.TileSize * new Vector2(
@@ -73,7 +73,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 
     public void Advance(float deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         if (Reference is { } reference && World is { } world)
         {
             _elapsed = Math.Min(_elapsed + deltaSeconds, Math.Max(reference.FlightSeconds, world.FlightSeconds));

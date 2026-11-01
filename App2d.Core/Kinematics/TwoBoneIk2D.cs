@@ -22,12 +22,12 @@ public static class TwoBoneIk2D
     /// </summary>
     public static TwoBoneIkPose2D SolveExact(Vector2 root, Vector2 target, float firstLength, float secondLength, int bendDirection, Vector2? zeroTargetDirection = null)
     {
-        ArgGuard.Finite(root);
-        ArgGuard.Finite(target);
-        ArgGuard.Positive(firstLength);
-        ArgGuard.Positive(secondLength);
-        ArgGuard.NonZero(bendDirection);
-        var fallback = ArgGuard.NonZero(zeroTargetDirection ?? Vector2.UnitX, nameof(zeroTargetDirection));
+        Ensure.Finite(root);
+        Ensure.Finite(target);
+        Ensure.Positive(firstLength);
+        Ensure.Positive(secondLength);
+        Ensure.NonZero(bendDirection);
+        var fallback = Ensure.NonZero(zeroTargetDirection ?? Vector2.UnitX, nameof(zeroTargetDirection));
         var fallbackLength = fallback.ToVector2d().Length();
 
         var delta = target.ToVector2d() - root.ToVector2d();
@@ -54,8 +54,8 @@ public static class TwoBoneIk2D
         var height = Math.Sqrt(Math.Max(0, first * first - along * along)) * Math.Sign(bendDirection);
         var joint = (root.ToVector2d() + direction * along + direction.PerpCcw * height).ToVector2();
         var end = (root.ToVector2d() + direction * reach).ToVector2();
-        ArgGuard.Finite(joint);
-        ArgGuard.Finite(end);
+        Ensure.Finite(joint);
+        Ensure.Finite(end);
         return new(root, joint, end, (joint - root).AngleRadians, (end - joint).AngleRadians, Math.Abs(distance - reach) <= .01);
     }
 
@@ -66,11 +66,11 @@ public static class TwoBoneIk2D
         float secondLength,
         int bendDirection)
     {
-        ArgGuard.Finite(root);
-        ArgGuard.Finite(target);
-        ArgGuard.Positive(firstLength);
-        ArgGuard.Positive(secondLength);
-        ArgGuard.NonZero(bendDirection);
+        Ensure.Finite(root);
+        Ensure.Finite(target);
+        Ensure.Positive(firstLength);
+        Ensure.Positive(secondLength);
+        Ensure.NonZero(bendDirection);
 
         var toTarget = target - root;
         var targetDistance = toTarget.Length();

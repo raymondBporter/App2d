@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
@@ -93,10 +94,7 @@ internal static class SpellRenderingSmoke2D
                 });
             }
 
-            if (person.CaptureState().Spells.Energy != 60)
-            {
-                throw new InvalidOperationException("Shot failed to spend energy.");
-            }
+            Ensure.Equal(person.CaptureState().Spells.Energy, 60);
 
             Save($"shot-release-{facing}.png", "SHOT / RELEASE");
             for (var i = 0; i < 30; i++)
@@ -121,10 +119,7 @@ internal static class SpellRenderingSmoke2D
                 });
             }
 
-            if (person.Health.Current != 24)
-            {
-                throw new InvalidOperationException("Healing did not complete.");
-            }
+            Ensure.Equal(person.Health.Current, 24);
 
             for (var i = 0; i < 8; i++)
             {

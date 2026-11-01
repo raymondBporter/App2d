@@ -8,7 +8,7 @@ public readonly record struct Frame2D
 {
     public Frame2D(Matrix3x2 matrix)
     {
-        ArgGuard.Finite(matrix);
+        Ensure.Finite(matrix);
         Matrix = matrix;
     }
 

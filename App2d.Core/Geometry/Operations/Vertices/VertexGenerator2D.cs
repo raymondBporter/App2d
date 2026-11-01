@@ -43,9 +43,9 @@ public static class VertexGenerator2D
     /// <returns>The number of vertices written, equal to the buffer length.</returns>
     public static int WriteEllipse(Span<Vector2> vertices, Vector2 center, Vector2 radii)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 3);
-        ArgGuard.Finite(center);
-        ArgGuard.NonNegative(radii);
+        Ensure.ThrowIfTooShort(vertices, 3);
+        Ensure.Finite(center);
+        Ensure.NonNegative(radii);
         for (var i = 0; i < vertices.Length; i++)
         {
             vertices[i] = PointOnEllipse(center, radii, i * MathF.Tau / vertices.Length);
@@ -70,11 +70,11 @@ public static class VertexGenerator2D
     /// <returns>The number of vertices written, equal to the buffer length.</returns>
     public static int WriteArc(Span<Vector2> vertices, Vector2 center, Vector2 radii, float startAngle, float sweepAngle)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 2);
-        ArgGuard.Finite(center);
-        ArgGuard.NonNegative(radii);
-        ArgGuard.Finite(startAngle);
-        ArgGuard.Finite(sweepAngle);
+        Ensure.ThrowIfTooShort(vertices, 2);
+        Ensure.Finite(center);
+        Ensure.NonNegative(radii);
+        Ensure.Finite(startAngle);
+        Ensure.Finite(sweepAngle);
         for (var i = 0; i < vertices.Length; i++)
         {
             vertices[i] = PointOnEllipse(center, radii, startAngle + i * sweepAngle / (vertices.Length - 1));
@@ -90,8 +90,8 @@ public static class VertexGenerator2D
     /// <returns>Four.</returns>
     public static int WriteRectangle(Span<Vector2> vertices, Vector2 min, Vector2 max)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 4);
-        ArgGuard.AtLeast(max, min);
+        Ensure.ThrowIfTooShort(vertices, 4);
+        Ensure.GreaterThanOrEqual(max, min);
         vertices[0] = min;
         vertices[1] = new(max.X, min.Y);
         vertices[2] = max;
@@ -112,11 +112,11 @@ public static class VertexGenerator2D
     /// <returns>The number of vertices written.</returns>
     public static int WriteRoundedRectangle(Span<Vector2> vertices, Vector2 min, Vector2 max, float radius, int segmentsPerCorner = 8)
     {
-        ArgGuard.Positive(segmentsPerCorner);
+        Ensure.Positive(segmentsPerCorner);
         var count = checked(4 * (segmentsPerCorner + 1));
-        ArgGuard.ThrowIfTooShort(vertices, count);
-        ArgGuard.AtLeast(max, min);
-        ArgGuard.NonNegative(radius);
+        Ensure.ThrowIfTooShort(vertices, count);
+        Ensure.GreaterThanOrEqual(max, min);
+        Ensure.NonNegative(radius);
         radius = Math.Min(radius, Math.Min(max.X - min.X, max.Y - min.Y) * 0.5f);
         for (var corner = 0; corner < 4; corner++)
         {
@@ -135,13 +135,13 @@ public static class VertexGenerator2D
     /// <returns>The number of vertices written.</returns>
     public static int WriteCapsule(Span<Vector2> vertices, Vector2 start, Vector2 end, float radius, int segmentsPerCap)
     {
-        ArgGuard.Positive(segmentsPerCap);
+        Ensure.Positive(segmentsPerCap);
         var capCount = checked(segmentsPerCap + 1);
         var count = checked(2 * capCount);
-        ArgGuard.ThrowIfTooShort(vertices, count);
-        ArgGuard.Finite(start);
-        ArgGuard.Finite(end);
-        ArgGuard.NonNegative(radius);
+        Ensure.ThrowIfTooShort(vertices, count);
+        Ensure.Finite(start);
+        Ensure.Finite(end);
+        Ensure.NonNegative(radius);
         var angle = (end - start).AngleRadians;
         WriteArc(vertices[..capCount], end, new(radius), angle - MathF.PI / 2f, MathF.PI);
         WriteArc(vertices.Slice(capCount, capCount), start, new(radius), angle + MathF.PI / 2f, MathF.PI);

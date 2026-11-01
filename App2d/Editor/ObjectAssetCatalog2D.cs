@@ -18,7 +18,7 @@ internal sealed class ObjectAssetCatalog2D
 
     public ObjectAssetCatalog2D(string worldRoot)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(worldRoot);
+        Ensure.ThrowIfNullOrWhiteSpace(worldRoot);
         _worldRoot = Path.GetFullPath(worldRoot);
         Refresh();
     }
@@ -29,7 +29,7 @@ internal sealed class ObjectAssetCatalog2D
     /// <summary>A file that fails to load is remembered as failed until <see cref="Refresh"/>: the editor asks every frame.</summary>
     public Part Load(string relativePath)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(relativePath);
+        Ensure.ThrowIfNullOrWhiteSpace(relativePath);
         var resolved = WorldFile2D.ResolveObjectAssetPath(_worldRoot, relativePath);
         if (_loaded.TryGetValue(resolved, out var asset))
         {

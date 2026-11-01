@@ -19,13 +19,13 @@ public static class PaletteQuantization2D
     /// </remarks>
     public static (Vector3[] Palette, Image2D<int> Indices) QuantizePalette(this Image2D<Vector3> source, int colorCount, int maxIterations = 32)
     {
-        ArgGuard.ThrowIfNull(source);
-        ArgGuard.Positive(colorCount);
-        ArgGuard.Positive(maxIterations);
+        Ensure.ThrowIfNull(source);
+        Ensure.Positive(colorCount);
+        Ensure.Positive(maxIterations);
         var pixels = source.AsSpan();
         foreach (var pixel in pixels)
         {
-            ArgGuard.Finite(pixel, nameof(source));
+            Ensure.Finite(pixel, nameof(source));
         }
 
         var indices = new Image2D<int>(source.Width, source.Height);

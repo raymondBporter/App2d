@@ -98,7 +98,7 @@ public static partial class ClipAuthoring
     /// <summary>Sets one outgoing tint curve without changing the other components.</summary>
     public static void SetColorCurve(MotionClip clip, string slot, string kind, float time, int component, KeyCurve2D? curve)
     {
-        ArgGuard.InRange(component, 0, 3);
+        Ensure.InRange(component, 0, 3);
 
         curve?.Validate();
         var key = ColorKey(clip, slot, kind, time);

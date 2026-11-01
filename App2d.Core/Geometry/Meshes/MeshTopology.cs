@@ -10,7 +10,7 @@ public static class MeshTopology
     /// <remarks>The span is borrowed, not copied. Vertex-index bounds are the caller's responsibility.</remarks>
     public static TriangleEnumerable Triangles(ReadOnlySpan<int> indices)
     {
-        ArgGuard.ThrowIf(indices.Length % 3 != 0, "Triangle indices must form complete triples.", nameof(indices));
+        Ensure.ThrowIf(indices.Length % 3 != 0, "Triangle indices must form complete triples.", nameof(indices));
         return new(indices, indices.Length / 3, fan: false);
     }
 
@@ -18,7 +18,7 @@ public static class MeshTopology
     /// <remarks>This describes a fan, not general polygon triangulation. The perimeter must be visible from vertex zero.</remarks>
     public static TriangleEnumerable TriangleFan(int vertexCount)
     {
-        ArgGuard.NonNegative(vertexCount);
+        Ensure.NonNegative(vertexCount);
         return new(default, Math.Max(0, vertexCount - 2), fan: true);
     }
 
@@ -26,7 +26,7 @@ public static class MeshTopology
     /// <remarks>An empty sequence has no edges; a closed one-vertex sequence has the self-edge (0, 0).</remarks>
     public static EdgeEnumerable Edges(int vertexCount, bool closed = true)
     {
-        ArgGuard.NonNegative(vertexCount);
+        Ensure.NonNegative(vertexCount);
         return new(vertexCount, closed);
     }
 
@@ -40,7 +40,7 @@ public static class MeshTopology
     /// <summary>A packed triangle buffer: every three consecutive vertices form one triangle.</summary>
     public static IndexedTriangleEnumerable<T> TriangleList<T>(ReadOnlySpan<T> vertices)
     {
-        ArgGuard.ThrowIf(vertices.Length % 3 != 0, "Triangle vertices must form complete triples.", nameof(vertices));
+        Ensure.ThrowIf(vertices.Length % 3 != 0, "Triangle vertices must form complete triples.", nameof(vertices));
         return new(vertices, new(default, vertices.Length / 3, fan: false, list: true));
     }
 

@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
@@ -147,10 +148,7 @@ internal static class CombatContactStudy2D
                 }
                 contacts.Enabled = true;
             }
-            if (hits != (name == "miss" ? 0 : 1))
-            {
-                throw new InvalidOperationException($"{name}: expected {(name == "miss" ? 0 : 1)} confirmed hit, got {hits}.");
-            }
+            Ensure.Equal(hits, (name == "miss" ? 0 : 1));
 
             if (name == "run" && game.Player.Position.X <= -368 || name == "reverse" && (game.Player.Position.X >= -368 || game.Player.Facing != -1))
             {

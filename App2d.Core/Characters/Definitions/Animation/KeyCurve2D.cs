@@ -19,11 +19,10 @@ public sealed record KeyCurve2D
 
     public void Validate()
     {
-        if (!NumericValidation.IsFinite(Control1) || !NumericValidation.IsFinite(Control2) ||
-            !NumericValidation.IsInRange(Control1.X, 0f, 1f) || !NumericValidation.IsInRange(Control2.X, 0f, 1f))
-        {
-            throw new InvalidDataException("Invalid keyframe Bezier curve.");
-        }
+        Ensure.Finite(Control1);
+        Ensure.Finite(Control2);
+        Ensure.InRange(Control1.X, 0f, 1f);
+        Ensure.InRange(Control2.X, 0f, 1f);
     }
 
     /// <summary>Creates the continuous cubic for a named ease; held steps have no continuous equivalent.</summary>
@@ -31,7 +30,7 @@ public sealed record KeyCurve2D
     {
         ProgressMapKind.Linear => new() { Control1 = new(1f / 3, 1f / 3), Control2 = new(2f / 3, 2f / 3) },
         ProgressMapKind.Smooth => new() { Control1 = new(1f / 3, 0), Control2 = new(2f / 3, 1) },
-        _ => throw ArgGuard.CreateInvalid("The ease must have a continuous cubic equivalent.", nameof(ease))
+        _ => throw Ensure.CreateInvalid("The ease must have a continuous cubic equivalent.", nameof(ease))
     };
 
     public float Evaluate(float time, float start, float end)
@@ -67,8 +66,8 @@ public sealed record KeyCurve2D
     /// <summary>Restricts normalized time to an interval, keeping value handles in channel units.</summary>
     public KeyCurve2D Slice(float from, float to, float start, float end)
     {
-        ArgGuard.InRange(from, 0f, 1f);
-        ArgGuard.InRange(to, from, 1f);
+        Ensure.InRange(from, 0f, 1f);
+        Ensure.InRange(to, from, 1f);
         var curve = ToCurve(start, end);
         return FromSegment(curve.Slice(curve.ParameterAtX(from), curve.ParameterAtX(to)), from, to);
     }

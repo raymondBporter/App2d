@@ -40,17 +40,17 @@ public sealed partial class Renderer2D : IDisposable
 
     public Renderer2D(Camera2D camera, GraphicsDevice device)
     {
-        _camera = ArgGuard.RequireNotNull(camera);
-        _device = ArgGuard.RequireNotNull(device);
+        _camera = Ensure.RequireNotNull(camera);
+        _device = Ensure.RequireNotNull(device);
         _effect = new BasicEffect(device) { VertexColorEnabled = true, World = XnaMatrix.Identity, View = XnaMatrix.Identity };
     }
 
     public void BeginFrame(int width, int height, FrameTime time)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        StateGuard.ThrowIf(_frameActive, "EndFrame must be called before beginning another frame.");
-        ArgGuard.Positive(width);
-        ArgGuard.Positive(height);
+        Ensure.ThrowIf(_frameActive, "EndFrame must be called before beginning another frame.");
+        Ensure.Positive(width);
+        Ensure.Positive(height);
         _camera.SetViewport(width, height);
         _visibleWorldBounds = _camera.VisibleWorldBounds;
         _device.Viewport = new Viewport(0, 0, width, height);
@@ -130,7 +130,7 @@ public sealed partial class Renderer2D : IDisposable
         var bounds = worldObject.LocalBounds.IsFinite ? worldObject.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)
         {
-            StateGuard.ThrowIf(!worldObject.LocalBounds.IsFinite, "Sprites require finite local bounds.");
+            Ensure.ThrowIf(!worldObject.LocalBounds.IsFinite, "Sprites require finite local bounds.");
         }
 
         SelectMaterial(worldObject.Shader);
@@ -342,8 +342,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawScreenRoundedRectangle(ScreenRectangle2D bounds, float radius, Color4b color, float strokeWidth = 0f)
     {
         RequireFrame();
-        ArgGuard.NonNegative(radius);
-        ArgGuard.NonNegative(strokeWidth);
+        Ensure.NonNegative(radius);
+        Ensure.NonNegative(strokeWidth);
         if (bounds.Width <= 0 || bounds.Height <= 0)
         {
             return;
@@ -369,7 +369,7 @@ public sealed partial class Renderer2D : IDisposable
 
     public void DrawScreenLabel(string text, Vector2 topLeft)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(text);
+        Ensure.ThrowIfNullOrWhiteSpace(text);
         DrawScreenRoundedRectangle(new(topLeft.X, topLeft.Y, topLeft.X + _font.Measure(text) + 28f, topLeft.Y + _font.LineHeight + 18f),
             9f, DebugTheme.LabelBackground);
         DrawScreenText(text, topLeft + new Vector2(14, 9 + _font.Ascent), DebugTheme.LabelText);
@@ -378,8 +378,8 @@ public sealed partial class Renderer2D : IDisposable
     /// <summary>Measures the widest line in device pixels at the requested atlas scale.</summary>
     public float MeasureScreenText(string text, float scale = 1f)
     {
-        ArgGuard.ThrowIfNull(text);
-        ArgGuard.Positive(scale);
+        Ensure.ThrowIfNull(text);
+        Ensure.Positive(scale);
         return _font.Measure(text) * scale;
     }
 
@@ -392,10 +392,10 @@ public sealed partial class Renderer2D : IDisposable
     /// </summary>
     public string WrapScreenText(string text, float width, float scale = 1f, int maxLines = int.MaxValue)
     {
-        ArgGuard.ThrowIfNull(text);
-        ArgGuard.Positive(width);
-        ArgGuard.Positive(scale);
-        ArgGuard.Positive(maxLines);
+        Ensure.ThrowIfNull(text);
+        Ensure.Positive(width);
+        Ensure.Positive(scale);
+        Ensure.Positive(maxLines);
         return ScreenTextWrapping2D.Wrap(text, width / scale, maxLines, _font.Advance);
     }
 
@@ -412,8 +412,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawScreenText(string text, Vector2 baseline, Color4b color, float scale)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNullOrWhiteSpace(text);
-        ArgGuard.Positive(scale);
+        Ensure.ThrowIfNullOrWhiteSpace(text);
+        Ensure.Positive(scale);
         SelectTexture(_font.Texture, new(TextureAddressMode.Clamp, TextureAddressMode.Clamp, TextureFilter.Linear));
         var cursor = baseline - new Vector2(4, _font.Ascent + 4) * scale;
         foreach (var character in text)
@@ -434,7 +434,7 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawScreenTexture(Texture2D texture, ScreenRectangle2D bounds)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNull(texture);
+        Ensure.ThrowIfNull(texture);
         SelectTexture(texture, new(TextureAddressMode.Clamp, TextureAddressMode.Clamp, TextureFilter.Linear));
         TexturedQuad(bounds, new(0, 0, texture.Width, texture.Height), texture.Width, texture.Height, Color4b.White);
     }
@@ -448,7 +448,7 @@ public sealed partial class Renderer2D : IDisposable
         Color4b? outlineColor = null, float worldStrokeWidth = 0f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfTooShort(points, 3);
+        Ensure.ThrowIfTooShort(points, 3);
         if (fillColor is null && outlineColor is null)
         {
             throw new ArgumentException("Provide a fill color, an outline color, or both.", nameof(fillColor));
@@ -456,7 +456,7 @@ public sealed partial class Renderer2D : IDisposable
 
         foreach (var point in points)
         {
-            ArgGuard.Finite(point, nameof(points));
+            Ensure.Finite(point, nameof(points));
         }
 
         SelectBatch(null, null);
@@ -496,8 +496,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawWorldCircle(Vector2 center, float radius, Color4b color, float strokeWidth = 2f)
     {
         RequireFrame();
-        ArgGuard.NonNegative(radius);
-        ArgGuard.Positive(strokeWidth);
+        Ensure.NonNegative(radius);
+        Ensure.Positive(strokeWidth);
         SelectBatch(null, null);
         Span<Vector2> points = stackalloc Vector2[128];
         var segments = ShapeTessellation2D.CurveSegments(radius, _camera.WorldToDeviceMatrix);
@@ -509,7 +509,7 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawWorldThickCircle(Vector2 center, float radius, Color4b color, float worldStrokeWidth)
     {
         RequireFrame();
-        ArgGuard.Positive(worldStrokeWidth);
+        Ensure.Positive(worldStrokeWidth);
         var screenWidth = Math.Max(1f, worldStrokeWidth * _camera.PixelsPerWorldUnit);
         DrawWorldCircle(center, radius, color, screenWidth);
     }
@@ -518,11 +518,11 @@ public sealed partial class Renderer2D : IDisposable
         LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
-        ArgGuard.Positive(strokeWidth);
+        Ensure.Positive(strokeWidth);
         ValidateLineCap(cap);
         foreach (var point in points)
         {
-            ArgGuard.Finite(point, nameof(points));
+            Ensure.Finite(point, nameof(points));
         }
 
         SelectBatch(null, null);
@@ -539,7 +539,7 @@ public sealed partial class Renderer2D : IDisposable
         LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
-        ArgGuard.Positive(worldStrokeWidth);
+        Ensure.Positive(worldStrokeWidth);
         ValidateLineCap(cap);
         var screenWidth = Math.Max(1f, worldStrokeWidth * _camera.PixelsPerWorldUnit);
         DrawWorldPolyline(points, color, screenWidth, cap);
@@ -548,8 +548,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
     {
         RequireFrame();
-        ArgGuard.Positive(spacing);
-        ArgGuard.Positive(majorLineEvery);
+        Ensure.Positive(spacing);
+        Ensure.Positive(majorLineEvery);
         SelectBatch(null, null);
         var visible = _camera.VisibleWorldBounds;
         for (var x = (int)MathF.Floor(visible.Left / spacing); x <= (int)MathF.Ceiling(visible.Right / spacing); x++)
@@ -618,7 +618,7 @@ public sealed partial class Renderer2D : IDisposable
     {
         if (!Matrix3x2.Invert(matrix, out var inverse))
         {
-            StateGuard.Throw("Cannot render a shape with a singular transform.");
+            Ensure.Throw("Cannot render a shape with a singular transform.");
         }
 
         return new Rect2D(Vector2.Zero, _camera.ViewportSize).TransformedBy(inverse);
@@ -626,7 +626,7 @@ public sealed partial class Renderer2D : IDisposable
     private void RequireFrame()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        StateGuard.ThrowIf(!_frameActive, "BeginFrame must be called before drawing.");
+        Ensure.ThrowIf(!_frameActive, "BeginFrame must be called before drawing.");
     }
 
     private void ReleaseTexture(Texture2D texture)

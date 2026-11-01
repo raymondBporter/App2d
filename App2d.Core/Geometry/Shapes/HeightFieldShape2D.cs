@@ -47,13 +47,13 @@ public readonly record struct HeightFieldShape2D : IShape2D, IHeightField2D
     {
         get
         {
-            ArgGuard.ThrowIfNull(_surface, "surface");
+            Ensure.ThrowIfNull(_surface, "surface");
             var entries = PreparedShapes.GetValue(_surface, static _ => []);
             lock (entries)
             {
                 if (!entries.TryGetValue(YMin, out var data))
                 {
-                    ArgGuard.Finite(YMin);
+                    Ensure.Finite(YMin);
                     var profile = new PolylineHeightField2D(_surface, YMin);
                     var polygon = SimplePolygon2D.Builder.BelowPolyline(_surface, YMin);
                     data = new(profile, polygon, profile.ToConvexPieces());
@@ -75,11 +75,10 @@ public readonly record struct HeightFieldShape2D : IShape2D, IHeightField2D
         public static HeightFieldShape2D FromHeightField(IHeightField2D field,
             float maximumSegmentLength = 12f, float maximumDeviation = 0.05f)
         {
-            ArgGuard.ThrowIfNull(field);
-            if (!float.IsFinite(field.YMin))
-                throw new InvalidOperationException("A heightfield shape needs a finite bottom. Use ToClippedShape with an explicit cutoff.");
-            ArgGuard.Positive(maximumSegmentLength);
-            ArgGuard.Positive(maximumDeviation);
+            Ensure.ThrowIfNull(field);
+            Ensure.Finite(field.YMin);
+            Ensure.Positive(maximumSegmentLength);
+            Ensure.Positive(maximumDeviation);
             var surface = field switch
             {
                 HeightFieldShape2D shape => shape.Surface.ToArray(),

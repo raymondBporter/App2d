@@ -10,21 +10,21 @@ public readonly record struct Ray3D
 {
     public Ray3D(Vector3 origin, Vector3 direction)
     {
-        Origin = ArgGuard.Finite(origin);
-        ArgGuard.NonZero(direction);
+        Origin = Ensure.Finite(origin);
+        Ensure.NonZero(direction);
         var wide = direction.ToVector3d();
         Direction = (wide / wide.Length()).ToVector3();
     }
 
     public Vector3 Origin { get; }
     public Vector3 Direction { get; }
-    public Vector3 At(float distance) => Origin + Direction * ArgGuard.NonNegative(distance);
+    public Vector3 At(float distance) => Origin + Direction * Ensure.NonNegative(distance);
 
     /// <summary>Intersects a plane Normal dot point + D = 0. Parallel rays and hits behind the origin return false.</summary>
     public bool TryIntersect(Plane plane, out float distance)
     {
-        ArgGuard.Finite(plane.Normal);
-        ArgGuard.Finite(plane.D);
+        Ensure.Finite(plane.Normal);
+        Ensure.Finite(plane.D);
         distance = 0;
         var normal = plane.Normal.ToVector3d();
         var denominator = normal.Dot(Direction.ToVector3d());

@@ -22,8 +22,7 @@ public readonly record struct Rect2D : IRect2D
     [JsonConstructor]
     public Rect2D(Vector2 min, Vector2 max)
     {
-        ArgGuard.ThrowIf(!NumericValidation.IsComponentWiseLessThanOrEqual(min, max),
-            "Rectangle bounds must be ordered and cannot contain NaN.", nameof(max));
+        Ensure.LessThanOrEqual(min, max, allowInfinity: true);
         Min = min;
         Max = max;
     }
@@ -40,8 +39,8 @@ public readonly record struct Rect2D : IRect2D
     /// <returns>The rectangle spanning half the size on each side of the center.</returns>
     public static Rect2D FromSize(Vector2 size, Vector2 center = default)
     {
-        ArgGuard.NonNegative(size);
-        ArgGuard.Finite(center);
+        Ensure.NonNegative(size);
+        Ensure.Finite(center);
         var halfSize = size / 2f;
         return new(center - halfSize, center + halfSize);
     }
@@ -49,17 +48,17 @@ public readonly record struct Rect2D : IRect2D
     /// <summary>Creates a rectangle of positive size around a center.</summary>
     public static Rect2D FromSize(Size2D size, Vector2 center = default)
     {
-        ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
+        Ensure.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
         return FromSize(size.ToVector2(), center);
     }
 
     /// <summary>Creates a rectangle from its minimum corner and positive size.</summary>
     public static Rect2D FromMinAndSize(Vector2 min, Size2D size)
     {
-        ArgGuard.Finite(min);
-        ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
+        Ensure.Finite(min);
+        Ensure.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
         var max = min + size.ToVector2();
-        ArgGuard.Finite(max);
+        Ensure.Finite(max);
         return new(min, max);
     }
 
@@ -69,8 +68,8 @@ public readonly record struct Rect2D : IRect2D
     /// <returns>The smallest rectangle containing both points.</returns>
     public static Rect2D FromPoints(Vector2 first, Vector2 second)
     {
-        ArgGuard.Finite(first);
-        ArgGuard.Finite(second);
+        Ensure.Finite(first);
+        Ensure.Finite(second);
         return new(Vector2.Min(first, second), Vector2.Max(first, second));
     }
 
@@ -80,7 +79,7 @@ public readonly record struct Rect2D : IRect2D
     /// <exception cref="ArgumentOutOfRangeException">The span is empty.</exception>
     public static Rect2D FromPoints(ReadOnlySpan<Vector2> points)
     {
-        ArgGuard.ThrowIfTooShort(points, 1);
+        Ensure.ThrowIfTooShort(points, 1);
         var min = points[0];
         var max = points[0];
         foreach (var point in points[1..])
@@ -94,9 +93,9 @@ public readonly record struct Rect2D : IRect2D
     /// <summary>The bounding box of a nonempty point sequence, read once without copying it.</summary>
     public static Rect2D FromPoints(IEnumerable<Vector2> points)
     {
-        ArgGuard.ThrowIfNull(points);
+        Ensure.ThrowIfNull(points);
         using var enumerator = points.GetEnumerator();
-        ArgGuard.ThrowIf(!enumerator.MoveNext(), "At least one point is required.", nameof(points));
+        Ensure.ThrowIf(!enumerator.MoveNext(), "At least one point is required.", nameof(points));
         var min = enumerator.Current;
         var max = min;
         while (enumerator.MoveNext())
@@ -110,9 +109,9 @@ public readonly record struct Rect2D : IRect2D
     /// <summary>Bounds of projected items. A static selector and explicit state avoid iterator and closure allocations.</summary>
     public static Rect2D FromPoints<T, TState>(IReadOnlyList<T> items, TState state, Func<T, TState, Vector2> pointOf)
     {
-        ArgGuard.ThrowIfNull(items);
-        ArgGuard.ThrowIfNull(pointOf);
-        ArgGuard.ThrowIf(items.Count == 0, "At least one point is required.", nameof(items));
+        Ensure.ThrowIfNull(items);
+        Ensure.ThrowIfNull(pointOf);
+        Ensure.ThrowIf(items.Count == 0, "At least one point is required.", nameof(items));
         var min = pointOf(items[0], state);
         var max = min;
         for (var i = 1; i < items.Count; i++)
@@ -130,8 +129,8 @@ public readonly record struct Rect2D : IRect2D
     /// <returns>The square of side 2 * radius around the center.</returns>
     public static Rect2D FromCircle(Vector2 center, float radius)
     {
-        ArgGuard.Finite(center);
-        ArgGuard.NonNegative(radius);
+        Ensure.Finite(center);
+        Ensure.NonNegative(radius);
         var extent = new Vector2(radius);
         return new(center - extent, center + extent);
     }
@@ -143,9 +142,9 @@ public readonly record struct Rect2D : IRect2D
     /// <returns>The box around the spine expanded by the radius on every side.</returns>
     public static Rect2D FromCapsule(Vector2 start, Vector2 end, float radius)
     {
-        ArgGuard.Finite(start);
-        ArgGuard.Finite(end);
-        ArgGuard.NonNegative(radius);
+        Ensure.Finite(start);
+        Ensure.Finite(end);
+        Ensure.NonNegative(radius);
         var extent = new Vector2(radius);
         return new(Vector2.Min(start, end) - extent, Vector2.Max(start, end) + extent);
     }

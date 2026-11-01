@@ -13,10 +13,10 @@ public sealed class ParallaxLayer2D(float depth)
         get;
         set
         {
-            ArgGuard.NonNegative(value);
+            Ensure.NonNegative(value);
             field = value;
         }
-    } = ArgGuard.NonNegative(depth);
+    } = Ensure.NonNegative(depth);
 
     public float ScrollFactor => 1f / (1f + Depth);
     public Scene2D Scene { get; } = [];
@@ -29,7 +29,7 @@ public sealed class ParallaxLayer2D(float depth)
         {
             if (value is { } width)
             {
-                ArgGuard.Positive(width);
+                Ensure.Positive(width);
             }
             field = value;
         }

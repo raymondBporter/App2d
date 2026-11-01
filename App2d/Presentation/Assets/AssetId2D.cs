@@ -9,8 +9,8 @@ internal static class AssetId2D
         string id,
         [CallerArgumentExpression(nameof(id))] string? paramName = null)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(id, paramName);
-        ArgGuard.ThrowIf(id[0] == '-' ||
+        Ensure.ThrowIfNullOrWhiteSpace(id, paramName);
+        Ensure.ThrowIf(id[0] == '-' ||
             id[^1] == '-' ||
             id.Contains("--", StringComparison.Ordinal) ||
             id.Any(character =>

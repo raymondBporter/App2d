@@ -13,8 +13,8 @@ public static class SpatialDistance2D
     /// <returns>The gap when separated, or the negated minimum escape translation when overlapping.</returns>
     public static float SignedDistance(SpatialObject2D first, SpatialObject2D second)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
         return ShapeDistance2D.SignedDistance(first.Shape, first.CollisionPose, second.Shape, second.CollisionPose);
     }
 
@@ -24,8 +24,8 @@ public static class SpatialDistance2D
     /// <returns>The nonnegative gap.</returns>
     public static float Distance(SpatialObject2D first, SpatialObject2D second)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
         return ShapeDistance2D.Distance(first.Shape, first.CollisionPose, second.Shape, second.CollisionPose);
     }
 
@@ -35,7 +35,7 @@ public static class SpatialDistance2D
     /// <returns>Negative inside, zero on the boundary, positive outside.</returns>
     public static float SignedDistance(Vector2 worldPoint, SpatialObject2D shape)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         var pose = shape.CollisionPose;
         return ShapeDistance2D.SignedDistance(pose.InverseTransformPoint(worldPoint), shape.Shape) * pose.Scale;
     }
@@ -46,7 +46,7 @@ public static class SpatialDistance2D
     /// <returns>The nonnegative distance.</returns>
     public static float Distance(Vector2 worldPoint, SpatialObject2D shape)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         var pose = shape.CollisionPose;
         return ShapeDistance2D.Distance(pose.InverseTransformPoint(worldPoint), shape.Shape) * pose.Scale;
     }

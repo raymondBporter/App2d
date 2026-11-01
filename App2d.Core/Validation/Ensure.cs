@@ -4,10 +4,10 @@ using System.Runtime.CompilerServices;
 namespace App2d.Core.Validation;
 
 /// <summary>
-/// Argument validation with caller names and rejected values. Numeric predicates live in NumericValidation;
-/// Numeric checks require finite values by default and return the validated value for use in initializers.
+/// Shared validation for inputs and live values. Numeric rules live in NumericValidation;
+/// checks return the validated value for use in initializers.
 /// </summary>
-public static partial class ArgGuard
+public static partial class Ensure
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNull<T>([NotNull] T? value,
@@ -21,9 +21,9 @@ public static partial class ArgGuard
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T RequireNotNull<T>([NotNull] T? value,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : class
+        [CallerArgumentExpression(nameof(value))] string? paramName = null, string? message = null) where T : class
     {
-        ThrowIfNull(value, paramName);
+        if (value is null) throw new ArgumentNullException(paramName, message);
         return value;
     }
 

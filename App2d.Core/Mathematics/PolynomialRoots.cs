@@ -21,25 +21,25 @@ public static class PolynomialRoots
     /// <remarks>The identically zero polynomial has infinitely many roots and is rejected.</remarks>
     public static int FindRealRoots(ReadOnlySpan<double> coefficients, double minimum, double maximum, Span<double> roots)
     {
-        ArgGuard.ThrowIfTooShort(coefficients, 1);
-        ArgGuard.Finite(minimum);
-        ArgGuard.Finite(maximum);
-        ArgGuard.ThrowIf(maximum < minimum, "The interval must be ordered.", nameof(maximum));
+        Ensure.ThrowIfTooShort(coefficients, 1);
+        Ensure.Finite(minimum);
+        Ensure.Finite(maximum);
+        Ensure.GreaterThanOrEqual(maximum, minimum);
         var scale = 0d;
         foreach (var coefficient in coefficients)
         {
-            ArgGuard.Finite(coefficient, nameof(coefficients));
+            Ensure.Finite(coefficient, nameof(coefficients));
             scale = Math.Max(scale, Math.Abs(coefficient));
         }
-        ArgGuard.ThrowIf(scale == 0d, "The zero polynomial has infinitely many roots.", nameof(coefficients));
+        Ensure.NonZero(scale);
         var degree = coefficients.Length - 1;
         while (degree > 0 && coefficients[degree] == 0d)
         {
             degree--;
         }
 
-        ArgGuard.ThrowIf(degree > 4, "The degree must be at most four.", nameof(coefficients));
-        ArgGuard.ThrowIf(roots.Length < degree, "The root buffer must hold at least the polynomial degree.", nameof(roots));
+        Ensure.LessThanOrEqual(degree, 4);
+        Ensure.ThrowIf(roots.Length < degree, "The root buffer must hold at least the polynomial degree.", nameof(roots));
         if (degree == 0)
         {
             return 0;

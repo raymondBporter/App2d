@@ -10,10 +10,10 @@ public readonly partial record struct PolylineCurve2D
     public void Validate()
     {
         var points = Points;
-        ArgGuard.ThrowIf(points.Length < 2, "A polyline needs at least two points.", "points");
+        Ensure.ThrowIf(points.Length < 2, "A polyline needs at least two points.", "points");
         foreach (var point in points)
         {
-            ArgGuard.Finite(point, "points");
+            Ensure.Finite(point, "points");
         }
     }
 

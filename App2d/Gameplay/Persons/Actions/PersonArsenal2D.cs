@@ -32,10 +32,10 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         AuthoredHero2D? hero = null, Func<float, Vector2>? muzzle = null,
         Health2D? health = null, SpellTuning2D? spells = null)
     {
-        ArgGuard.ThrowIfNull(ids);
-        ArgGuard.ThrowIfNull(ownerBody);
-        ArgGuard.ThrowIfNull(collision);
-        ArgGuard.ThrowIfNull(combat);
+        Ensure.ThrowIfNull(ids);
+        Ensure.ThrowIfNull(ownerBody);
+        Ensure.ThrowIfNull(collision);
+        Ensure.ThrowIfNull(combat);
         _spellHealth = health ?? (combat.Combatants.Find(ownerBody.EntityId) as Person2D)?.Health;
         _spellTuning = (spells ?? new SpellTuning2D()).Validate();
         _spellPosition = () => ownerBody.WorldObject.Transform.Position;

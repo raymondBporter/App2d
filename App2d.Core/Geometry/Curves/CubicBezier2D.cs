@@ -34,7 +34,7 @@ public readonly partial record struct CubicBezier2D : ICurve2D
     /// <summary>Splits at a finite parameter in [0, 1], preserving the exact curve on each side.</summary>
     public (CubicBezier2D Left, CubicBezier2D Right) Split(float amount)
     {
-        ArgGuard.InRange(amount, 0f, 1f);
+        Ensure.InRange(amount, 0f, 1f);
         var a = Vector2.Lerp(Start, Control1, amount);
         var b = Vector2.Lerp(Control1, Control2, amount);
         var c = Vector2.Lerp(Control2, End, amount);
@@ -47,7 +47,9 @@ public readonly partial record struct CubicBezier2D : ICurve2D
     /// <summary>Restricts the curve to ordered parameters in [0, 1], then maps that interval to [0, 1]. Equal parameters produce a point.</summary>
     public CubicBezier2D Slice(float from, float to)
     {
-        ArgGuard.ThrowIf(!(from >= 0 && to <= 1 && from <= to), "The parameter interval must be ordered within [0, 1].", nameof(to));
+        Ensure.NonNegative(from);
+        Ensure.LessThanOrEqual(to, 1);
+        Ensure.LessThanOrEqual(from, to);
         if (from == to)
         {
             var point = Evaluate(from);
@@ -68,8 +70,8 @@ public readonly partial record struct CubicBezier2D : ICurve2D
     /// <exception cref="InvalidOperationException">The entire curve has this X coordinate, so infinitely many parameters match.</exception>
     public int FindParametersAtX(float x, Span<double> parameters)
     {
-        ArgGuard.Finite(x);
-        ArgGuard.ThrowIfTooShort(parameters, 3);
+        Ensure.Finite(x);
+        Ensure.ThrowIfTooShort(parameters, 3);
         var start = (double)Start.X;
         var first = Control1.X - start;
         var second = (double)Control2.X - Control1.X;
@@ -86,7 +88,7 @@ public readonly partial record struct CubicBezier2D : ICurve2D
     /// <exception cref="InvalidOperationException">There is no intersection, or more than one parameter matches.</exception>
     public float ParameterAtX(float x)
     {
-        ArgGuard.Finite(x);
+        Ensure.Finite(x);
         var width = (double)End.X - Start.X;
         if (width != 0)
         {

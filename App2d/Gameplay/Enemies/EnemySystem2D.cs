@@ -24,8 +24,8 @@ public sealed class EnemySystem2D
 
     public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
     {
-        ArgGuard.ThrowIfNull(actor);
-        StateGuard.ThrowIf(_combatants.Any(item => item.Id == actor.Combatant.Id), "The enemy combatant is already registered.");
+        Ensure.ThrowIfNull(actor);
+        Ensure.ThrowIf(_combatants.Any(item => item.Id == actor.Combatant.Id), "The enemy combatant is already registered.");
 
         actor.SetSimulationEnabled(false);
         _registeredEnemies.Add(new RegisteredEnemy(actor, actor as IEnemyAttackSource2D, homeChunk));
@@ -34,7 +34,7 @@ public sealed class EnemySystem2D
 
     public void UpdateStreaming(Func<TileChunk2D, bool> isChunkActive)
     {
-        ArgGuard.ThrowIfNull(isChunkActive);
+        Ensure.ThrowIfNull(isChunkActive);
 
         foreach (var registered in _registeredEnemies)
         {
@@ -51,8 +51,8 @@ public sealed class EnemySystem2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.NonNegative(deltaSeconds);
-        ArgGuard.Finite(targetPosition);
+        Ensure.NonNegative(deltaSeconds);
+        Ensure.Finite(targetPosition);
 
         foreach (var registered in _registeredEnemies)
         {
@@ -76,7 +76,7 @@ public sealed class EnemySystem2D
 
     public bool TryResolvePlayerHits(Person2D player)
     {
-        ArgGuard.ThrowIfNull(player);
+        Ensure.ThrowIfNull(player);
 
         var playerDefeated = false;
         foreach (var registered in _registeredEnemies)

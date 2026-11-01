@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters.Authored;
@@ -126,10 +127,9 @@ public sealed record ModelParameter
             throw new InvalidDataException($"{field}: unknown units '{Units}'.");
         }
 
-        if (!float.IsFinite(Min) || !float.IsFinite(Max) || Min >= Max)
-        {
-            throw new InvalidDataException($"{field}: the range needs min below max.");
-        }
+        Ensure.Finite(Min);
+        Ensure.Finite(Max);
+        Ensure.LessThan(Min, Max);
 
         new Limit(Min, Max).Check(Default, field + " default");
         if (SoftMin is { } softMin)
@@ -142,10 +142,7 @@ public sealed record ModelParameter
             new Limit(Min, Max).Check(softMax, field + " softMax");
         }
 
-        if ((SoftMin ?? Min) >= (SoftMax ?? Max))
-        {
-            throw new InvalidDataException($"{field}: the suggested range needs softMin below softMax.");
-        }
+        Ensure.LessThan((SoftMin ?? Min), (SoftMax ?? Max));
 
         if (Bindings is null)
         {

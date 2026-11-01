@@ -93,8 +93,8 @@ public static class Containment2D
     /// <summary>Point containment for a validated simple polygon in either winding, including its boundary.</summary>
     public static bool SimplePolygon(Vector2 point, ReadOnlySpan<Vector2> vertices)
     {
-        ArgGuard.Finite(point);
-        ArgGuard.ThrowIfTooShort(vertices, 3);
+        Ensure.Finite(point);
+        Ensure.ThrowIfTooShort(vertices, 3);
         var winding = 0;
         for (var index = 0; index < vertices.Length; index++)
         {

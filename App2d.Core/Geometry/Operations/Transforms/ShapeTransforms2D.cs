@@ -94,8 +94,8 @@ public static class ShapeTransforms2D
     /// <exception cref="NotSupportedException">The shape is not a built-in convex type.</exception>
     public static IConvexShape2D Scaled(IConvexShape2D shape, float scale)
     {
-        ArgGuard.ThrowIfNull(shape);
-        ArgGuard.Positive(scale);
+        Ensure.ThrowIfNull(shape);
+        Ensure.Positive(scale);
         return shape switch
         {
             Circle2D circle => Circle2D.Builder.Create(circle.Radius * scale, circle.Center * scale),
@@ -132,8 +132,8 @@ public static class ShapeTransforms2D
     /// <exception cref="NotSupportedException">The shape is a height field, an unknown type, or an axis-aligned rectangle under a rotating pose.</exception>
     public static IShape2D Posed(IShape2D shape, Similarity2D pose)
     {
-        ArgGuard.ThrowIfNull(shape);
-        ArgGuard.ThrowIf(!pose.IsFinite || pose.Scale <= 0f, "The pose must be finite with a positive scale.", nameof(pose));
+        Ensure.ThrowIfNull(shape);
+        Ensure.ThrowIf(!pose.IsFinite || pose.Scale <= 0f, "The pose must be finite with a positive scale.", nameof(pose));
         switch (shape)
         {
             case Circle2D circle:

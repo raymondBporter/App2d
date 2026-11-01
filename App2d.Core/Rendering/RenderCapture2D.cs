@@ -12,18 +12,18 @@ public static class RenderCapture2D
     /// <summary>Creates a colour target with a 24-bit depth buffer and 4x multisampling whose contents are discarded between binds.</summary>
     public static RenderTarget2D CreateTarget(GraphicsDevice device, int width, int height, DepthFormat depthFormat = DepthFormat.Depth24, int multiSampleCount = 4)
     {
-        ArgGuard.ThrowIfNull(device);
-        ArgGuard.Positive(width);
-        ArgGuard.Positive(height);
-        ArgGuard.NonNegative(multiSampleCount);
+        Ensure.ThrowIfNull(device);
+        Ensure.Positive(width);
+        Ensure.Positive(height);
+        Ensure.NonNegative(multiSampleCount);
         return new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, depthFormat, multiSampleCount, RenderTargetUsage.DiscardContents);
     }
 
     /// <summary>Binds the target, optionally clearing it, until the scope is disposed; disposal restores the targets bound before.</summary>
     public static Scope UseRenderTarget(this GraphicsDevice device, RenderTarget2D target, Color4b? clearColor = null)
     {
-        ArgGuard.ThrowIfNull(device);
-        ArgGuard.ThrowIfNull(target);
+        Ensure.ThrowIfNull(device);
+        Ensure.ThrowIfNull(target);
         var previous = device.GetRenderTargets();
         device.SetRenderTarget(target);
         if (clearColor is { } color)
@@ -37,8 +37,8 @@ public static class RenderCapture2D
     /// <summary>Writes the target as a PNG at its own size. A bound target is unbound first so multisampled content resolves.</summary>
     public static void SavePng(this RenderTarget2D target, string path)
     {
-        ArgGuard.ThrowIfNull(target);
-        ArgGuard.ThrowIfNullOrWhiteSpace(path);
+        Ensure.ThrowIfNull(target);
+        Ensure.ThrowIfNullOrWhiteSpace(path);
         var device = target.GraphicsDevice;
         foreach (var binding in device.GetRenderTargets())
         {
@@ -56,8 +56,8 @@ public static class RenderCapture2D
     /// <summary>Clears the target, runs the draw calls into it, restores the previous targets and writes the PNG.</summary>
     public static void SavePng(this RenderTarget2D target, string path, Color4b clearColor, Action draw)
     {
-        ArgGuard.ThrowIfNull(target);
-        ArgGuard.ThrowIfNull(draw);
+        Ensure.ThrowIfNull(target);
+        Ensure.ThrowIfNull(draw);
         using (target.GraphicsDevice.UseRenderTarget(target, clearColor))
         {
             draw();

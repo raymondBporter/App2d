@@ -12,10 +12,10 @@ public readonly partial record struct RoundedRectangle2D
 {
     public void Validate()
     {
-        ArgGuard.Finite(Center);
-        ArgGuard.Finite(HalfSize);
-        ArgGuard.LessThan(-HalfSize, HalfSize);
-        ArgGuard.InRange((double)Radius, 0, Math.Min((double)HalfSize.X, (double)HalfSize.Y), "radius");
+        Ensure.Finite(Center);
+        Ensure.Finite(HalfSize);
+        Ensure.LessThan(-HalfSize, HalfSize);
+        Ensure.InRange((double)Radius, 0, Math.Min((double)HalfSize.X, (double)HalfSize.Y), "radius");
         OrientedFrame2D.ValidateAxis(Axis, "axis");
     }
 

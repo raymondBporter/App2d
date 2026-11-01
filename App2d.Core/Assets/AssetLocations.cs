@@ -12,11 +12,11 @@ public sealed class AssetLocations(string runtime, string authored, string chara
 {
 
     /// <summary>Generated art and copied runtime inputs. Assets/Runtime in a source checkout; disposable.</summary>
-    public string Runtime { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(runtime));
+    public string Runtime { get; } = Path.GetFullPath(Ensure.RequireNotNullOrWhiteSpace(runtime));
     /// <summary>Durable content such as levels and music. Assets/Static in a source checkout.</summary>
-    public string Authored { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(authored));
+    public string Authored { get; } = Path.GetFullPath(Ensure.RequireNotNullOrWhiteSpace(authored));
     /// <summary>Character source libraries and authored documents. Assets/Characters in a source checkout.</summary>
-    public string CharacterLibrary { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(characterLibrary));
+    public string CharacterLibrary { get; } = Path.GetFullPath(Ensure.RequireNotNullOrWhiteSpace(characterLibrary));
     public string AuthoredCharacters => FilePaths.ResolveUnderRoot(CharacterLibrary, "authored");
     public string Levels => FilePaths.ResolveUnderRoot(Authored, "levels");
     public string Music => FilePaths.ResolveUnderRoot(Authored, "audio/music");
@@ -58,7 +58,7 @@ public sealed class AssetLocations(string runtime, string authored, string chara
 
     private static string? FindAncestorDirectory(string start, string relativePath)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(start);
+        Ensure.ThrowIfNullOrWhiteSpace(start);
         for (var directory = new DirectoryInfo(Path.GetFullPath(start)); directory is not null; directory = directory.Parent)
         {
             var candidate = FilePaths.ResolveUnderRoot(directory.FullName, relativePath);

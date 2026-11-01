@@ -54,7 +54,7 @@ public sealed class AirJumpCloud2D : IDisposable
 
     public void Advance(float dt, Vector2 feet)
     {
-        ArgGuard.NonNegative(dt);
+        Ensure.NonNegative(dt);
         var previousAge = _age;
         _age = Math.Min(Duration, _age + dt);
         for (var i = 0; i < WispBirths.Length; i++)

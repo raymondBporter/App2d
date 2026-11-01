@@ -84,7 +84,7 @@ a translation, rotation, uniform scale and optional mirror and returns a shape o
 share `IntervalMath<T>` operations without converting structs to interfaces. Physics and rig limits use `Interval<float>`.
 `Interval<T>` validates ordered, non-NaN endpoints and allows negative/positive infinity for an unbounded lower/upper end.
 Use `new Interval<float>(min, max)` for a bounded range and `Interval<T>.Singleton(value)` for a single value.
-The floating-point factories `Interval.Entire<float>()`, `Interval.AtLeast(2f)` and `Interval.AtMost(8f)` construct
+The floating-point factories `Interval.Entire<float>()`, `Interval.GreaterThanOrEqual(2f)` and `Interval.LessThanOrEqual(8f)` construct
 unbounded ranges; `IsBoundedBelow`, `IsBoundedAbove`, `IsEntire` and `IsSingleton` describe their bounds.
 Interval clamping follows the shared numeric arithmetic, including NaN propagation. Constraint-specific finite-coordinate
 validation, activation tolerance and active-side reporting live in `ConstraintMath1D.EvaluateLimit`.

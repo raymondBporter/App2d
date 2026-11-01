@@ -29,8 +29,8 @@ internal sealed class SideScrollerThingSpawner2D(
 {
     public void Create(IReadOnlyList<WorldThingSpec2D> things, CombatSystem2D combat, AuthoredCatalog? authored = null)
     {
-        ArgGuard.ThrowIfNull(things);
-        ArgGuard.ThrowIfNull(combat);
+        Ensure.ThrowIfNull(things);
+        Ensure.ThrowIfNull(combat);
 
         foreach (var thing in things)
         {

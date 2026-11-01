@@ -9,7 +9,7 @@ public static class CurveDistance2D
 {
     public static float Distance(Vector2 point, ICurve2D curve)
     {
-        ArgGuard.ThrowIfNull(curve);
+        Ensure.ThrowIfNull(curve);
         return curve.Distance(point);
     }
 
@@ -18,8 +18,8 @@ public static class CurveDistance2D
     /// <summary>Polyline approximation in parameter space; callers can increase segments for tighter results.</summary>
     public static float SampledDistance<TCurve>(Vector2 point, TCurve curve, int segmentCount) where TCurve : ICurve2D
     {
-        ArgGuard.ThrowIfNull(curve);
-        ArgGuard.Positive(segmentCount);
+        Ensure.ThrowIfNull(curve);
+        Ensure.Positive(segmentCount);
         var previous = curve.Evaluate(0f);
         var nearestSquared = float.PositiveInfinity;
         for (var i = 1; i <= segmentCount; i++)

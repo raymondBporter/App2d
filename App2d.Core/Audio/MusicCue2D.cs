@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Json;
 using System.Collections.Immutable;
 using System.Text.Json;
@@ -38,10 +39,8 @@ public sealed class MusicCue2D
 
         var bar = SampleRate * 60d / data.Bpm * data.BeatsPerBar;
         var barFrames = checked((int)Math.Round(bar));
-        if (Math.Abs(bar - barFrames) > .0001 || data.LoopEndFrame % barFrames != 0)
-        {
-            throw new InvalidDataException("Music bars and loops must align to whole sample frames.");
-        }
+        Ensure.LessThanOrEqual(Math.Abs(bar - barFrames), .0001);
+        Ensure.Equal(data.LoopEndFrame % barFrames, 0);
 
         var directory = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
         var ids = new HashSet<string>(StringComparer.Ordinal);

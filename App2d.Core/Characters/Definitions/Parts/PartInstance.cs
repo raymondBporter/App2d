@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Json;
 using App2d.Core.Mathematics;
@@ -60,10 +61,8 @@ public sealed record PartInstance
         new Limit(-16, 16).Check(Layer, field + " layer");
         new Limit(-100, 100).Check(FitX, field + " fitX");
         new Limit(-100, 100).Check(FitY, field + " fitY");
-        if (FitX == 0 || FitY == 0)
-        {
-            throw new InvalidDataException($"{field}: a zero fit collapses the artwork.");
-        }
+        Ensure.NonZero(FitX);
+        Ensure.NonZero(FitY);
 
         if (Expression is not null)
         {

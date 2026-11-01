@@ -41,7 +41,7 @@ public sealed class EnemyPresentation2D(
 
     public void Advance(float deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         _secondsSinceState += deltaSeconds;
         RenderStates(_states, [], deltaSeconds, _tick + (long)(_secondsSinceState * 120f), extrapolate: true);
     }
@@ -49,7 +49,7 @@ public sealed class EnemyPresentation2D(
     public void Update(ImmutableArray<EnemyState2D> states,
         IEnumerable<EnemyEvent2D> events, float dt, long tick)
     {
-        ArgGuard.NonNegative(dt);
+        Ensure.NonNegative(dt);
         _states = states.IsDefault ? [] : states;
         _tick = tick;
         _secondsSinceState = 0f;
@@ -125,7 +125,7 @@ public sealed class EnemyPresentation2D(
                         {
                             EnemyKind2D.Shieldback => new ShieldbackView(scene, textures),
                             EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
-                            _ => throw ArgGuard.CreateInvalid("An authored enemy needs its resolved entity.", nameof(states))
+                            _ => throw Ensure.CreateInvalid("An authored enemy needs its resolved entity.", nameof(states))
                         };
                     _views.Add(state.Id, view);
                 }

@@ -34,12 +34,12 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         {
             var map = sources[i];
             var offset = (map.Origin - Origin) / TileSize;
-            if (map.TileSize != TileSize || map.ChunkSize != ChunkSize ||
-                !float.IsFinite(offset.X) || !float.IsFinite(offset.Y) ||
-                offset.X != MathF.Floor(offset.X) || offset.Y != MathF.Floor(offset.Y))
-            {
-                throw new ArgumentException("World maps must share tile/chunk sizes and align to the same tile grid.", nameof(maps));
-            }
+            Ensure.Equal(map.TileSize, TileSize);
+            Ensure.Equal(map.ChunkSize, ChunkSize);
+            Ensure.Finite(offset.X);
+            Ensure.Finite(offset.Y);
+            Ensure.Equal(offset.X, MathF.Floor(offset.X));
+            Ensure.Equal(offset.Y, MathF.Floor(offset.Y));
 
             for (var j = 0; j < i; j++)
             {
@@ -96,8 +96,8 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
 
     public IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(TileChunk2D chunk)
     {
-        ArgGuard.Index(chunk.X, ChunkColumns, nameof(chunk));
-        ArgGuard.Index(chunk.Y, ChunkRows, nameof(chunk));
+        Ensure.Index(chunk.X, ChunkColumns, nameof(chunk));
+        Ensure.Index(chunk.Y, ChunkRows, nameof(chunk));
 
         var x = chunk.X * ChunkSize;
         var y = chunk.Y * ChunkSize;

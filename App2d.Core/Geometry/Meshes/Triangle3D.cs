@@ -10,9 +10,9 @@ public readonly record struct Triangle3D : ITriangle<Triangle3D, Vector3>
 {
     public Triangle3D(Vector3 a, Vector3 b, Vector3 c)
     {
-        ArgGuard.Finite(a);
-        ArgGuard.Finite(b);
-        ArgGuard.Finite(c);
+        Ensure.Finite(a);
+        Ensure.Finite(b);
+        Ensure.Finite(c);
         A = a;
         B = b;
         C = c;

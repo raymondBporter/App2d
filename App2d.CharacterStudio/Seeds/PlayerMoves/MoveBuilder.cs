@@ -37,7 +37,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     {
         if (time < 0 || time > duration + 1e-4f)
         {
-            ArgGuard.ThrowOutOfRange(time, $"{id}: key at {time} is outside 0..{duration}.");
+            Ensure.ThrowOutOfRange(time, $"{id}: key at {time} is outside 0..{duration}.");
         }
 
         pose(new PoseKey(this, MathF.Min(time, duration), ease));

@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
@@ -85,10 +86,7 @@ public static class PartContours2D
         {
             var shape = typed;
             var count = shape.GetOutlineVertCount(48);
-            if (count == 0)
-            {
-                throw new NotSupportedException($"A {typed.GetKind()} has no drawable outline.");
-            }
+            Ensure.NonZero(count);
 
             Span<Vector2> buffer = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
             var outline = shape.GetOutlineVerts(buffer, 48);

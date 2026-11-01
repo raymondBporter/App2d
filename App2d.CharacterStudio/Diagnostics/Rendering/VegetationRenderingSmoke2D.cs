@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Assets;
@@ -64,10 +65,7 @@ internal static class VegetationRenderingSmoke2D
                 Save($"vegetation-flight-{i - cutFrame:000}.png");
             }
         }
-        if (cutFrame < 0)
-        {
-            throw new InvalidOperationException("The authored sword never cut the grass.");
-        }
+        Ensure.NonNegative(cutFrame);
 
         Save("vegetation-after.png");
 

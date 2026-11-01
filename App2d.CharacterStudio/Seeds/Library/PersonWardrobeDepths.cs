@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
@@ -27,10 +28,8 @@ public readonly record struct PersonWardrobeDepths(float NearArm, float FrontDet
         var nearLeg = MathF.Min(Z(Humanoid.LeftHip), Z(Humanoid.RightHip));
         var farLeg = MathF.Max(Z(Humanoid.LeftHip), Z(Humanoid.RightHip));
         var gap = nearLeg - nearArm;
-        if (gap < .01f || farArm - farLeg < .01f)
-        {
-            throw new InvalidDataException("The wardrobe needs separated arm and hip depth lanes.");
-        }
+        Ensure.GreaterThanOrEqual(gap, .01f);
+        Ensure.GreaterThanOrEqual(farArm - farLeg, .01f);
         // Reserve space in front of the detail face for its outline and the entire near arm.
         return new(nearArm, float.Lerp(nearLeg, nearArm, .82f), float.Lerp(nearLeg, nearArm, .60f),
             nearLeg, farLeg, float.Lerp(farLeg, farArm, .60f), farArm, gap * .08f);

@@ -15,7 +15,7 @@ public static class Skeletonization2D
     /// </remarks>
     public static Image2D<bool> Skeletonize(this Image2D<bool> source)
     {
-        ArgGuard.ThrowIfNull(source);
+        Ensure.ThrowIfNull(source);
         var skeleton = source.Clone();
         if (skeleton.Count == 0)
         {

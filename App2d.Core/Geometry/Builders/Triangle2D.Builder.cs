@@ -11,16 +11,13 @@ public readonly partial record struct Triangle2D
 {
     private double SignedAreaTwice()
     {
-        ArgGuard.Finite(A, "a");
-        ArgGuard.Finite(B, "b");
-        ArgGuard.Finite(C, "c");
+        Ensure.Finite(A, "a");
+        Ensure.Finite(B, "b");
+        Ensure.Finite(C, "c");
         var twice = new Vector2d(A).Orientation(new(B), new(C));
-        if (twice == 0d)
-        {
-            throw new ArgumentException("Triangle vertices must not be collinear.", "c");
-        }
+        Ensure.NonZero(twice);
 
-        ArgGuard.Positive((float)(Math.Abs(twice) * .5), "area");
+        Ensure.Positive((float)(Math.Abs(twice) * .5), "area");
         return twice;
     }
     public void Validate() => SignedAreaTwice();

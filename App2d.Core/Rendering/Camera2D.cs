@@ -26,7 +26,7 @@ public sealed class Camera2D
         get;
         set
         {
-            ArgGuard.Finite(value);
+            Ensure.Finite(value);
             field = value;
             Position = Position;
         }
@@ -40,7 +40,7 @@ public sealed class Camera2D
         get;
         set
         {
-            ArgGuard.ThrowIf(value is not { } bounds || !bounds.IsFinite || bounds.Min.X > bounds.Max.X || bounds.Min.Y > bounds.Max.Y, "World bounds must be finite and ordered.", nameof(value));
+            Ensure.ThrowIf(value is not { } bounds || !bounds.IsFinite || bounds.Min.X > bounds.Max.X || bounds.Min.Y > bounds.Max.Y, "World bounds must be finite and ordered.", nameof(value));
             field = value;
             Position = Position;
         }
@@ -57,7 +57,7 @@ public sealed class Camera2D
         {
             if (value is { } height)
             {
-                ArgGuard.Positive(height);
+                Ensure.Positive(height);
             }
 
             field = value;
@@ -76,7 +76,7 @@ public sealed class Camera2D
         get;
         set
         {
-            ArgGuard.Positive(value);
+            Ensure.Positive(value);
             field = Math.Clamp(value, MinZoom, MaxZoom);
             Position = Position;
         }
@@ -107,8 +107,8 @@ public sealed class Camera2D
     /// <summary>Constrain a desired center, with optional room for render effects such as shake.</summary>
     public Vector2 ClampToWorld(Vector2 desiredPosition, float padding = 0f)
     {
-        ArgGuard.Finite(desiredPosition);
-        ArgGuard.NonNegative(padding);
+        Ensure.Finite(desiredPosition);
+        Ensure.NonNegative(padding);
         if (WorldBounds is not { } bounds)
         {
             return desiredPosition;

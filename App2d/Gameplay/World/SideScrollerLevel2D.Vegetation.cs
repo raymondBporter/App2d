@@ -14,7 +14,7 @@ public sealed partial class SideScrollerLevel2D
     {
         if (!strike.IsFinite || strike.Size.X < 0f || strike.Size.Y < 0f)
         {
-            ArgGuard.ThrowOutOfRange(strike, "Grass cutting bounds must be finite and ordered.");
+            Ensure.ThrowOutOfRange(strike, "Grass cutting bounds must be finite and ordered.");
         }
 
         var streamer = RequireEnvironment().Streamer;

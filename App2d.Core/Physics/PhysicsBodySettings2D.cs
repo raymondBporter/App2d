@@ -19,19 +19,19 @@ public sealed record PhysicsBodySettings2D
 
     public void Validate()
     {
-        ArgGuard.ThrowIf(!Enum.IsDefined(MotionType), "Unknown body motion type.", nameof(MotionType));
-        ArgGuard.Positive(Mass, nameof(Mass));
-        ArgGuard.Positive(MomentOfInertia, nameof(MomentOfInertia));
-        ArgGuard.Finite(GravityScale, nameof(GravityScale));
-        ArgGuard.NonNegative(Friction, nameof(Friction));
-        ArgGuard.InRange(Restitution, 0f, 1f, nameof(Restitution));
+        Ensure.ThrowIf(!Enum.IsDefined(MotionType), "Unknown body motion type.", nameof(MotionType));
+        Ensure.Positive(Mass, nameof(Mass));
+        Ensure.Positive(MomentOfInertia, nameof(MomentOfInertia));
+        Ensure.Finite(GravityScale, nameof(GravityScale));
+        Ensure.NonNegative(Friction, nameof(Friction));
+        Ensure.InRange(Restitution, 0f, 1f, nameof(Restitution));
     }
 
     /// <summary>Validates before registering anything. Identity and collision layers belong to the spawning world.</summary>
     public RigidBody2D CreateBody(PhysicsWorld2D world, SpatialObject2D worldObject)
     {
-        ArgGuard.ThrowIfNull(world);
-        ArgGuard.ThrowIfNull(worldObject);
+        Ensure.ThrowIfNull(world);
+        Ensure.ThrowIfNull(worldObject);
         Validate();
         var body = world.AddBody(worldObject, MotionType);
         ApplyTo(body);
@@ -41,7 +41,7 @@ public sealed record PhysicsBodySettings2D
     /// <summary>Applies settings to an existing body, including a path-driven kinematic body.</summary>
     public void ApplyTo(RigidBody2D body)
     {
-        ArgGuard.ThrowIfNull(body);
+        Ensure.ThrowIfNull(body);
         Validate();
         body.MotionType = MotionType;
         body.Mass = Mass;

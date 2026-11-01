@@ -9,7 +9,7 @@ namespace App2d.Core.Shapes;
 [System.Text.Json.Serialization.JsonConverter(typeof(GeometryJsonConverterFactory))]
 public readonly partial record struct AxisAlignedRectangle2D
 {
-    public void Validate() => ArgGuard.LessThan(Min, Max);
+    public void Validate() => Ensure.LessThan(Min, Max);
 
     /// <summary>Stateless validated construction.</summary>
     public static class Builder

@@ -8,7 +8,7 @@ public sealed class ParallaxBackground2D : IEnumerable<ParallaxLayer2D>
 {
     private readonly List<ParallaxLayer2D> _layers = [];
 
-    public void Add(ParallaxLayer2D layer) => _layers.Add(ArgGuard.RequireNotNull(layer));
+    public void Add(ParallaxLayer2D layer) => _layers.Add(Ensure.RequireNotNull(layer));
     public bool Remove(ParallaxLayer2D layer) => _layers.Remove(layer);
 
     internal IOrderedEnumerable<ParallaxLayer2D> GetDrawOrder() => _layers.OrderByDescending(layer => layer.Depth);

@@ -24,7 +24,7 @@ public sealed class DirtyChunkTracker2D
 
     public void Flush(Action<TileChunk2D> rebuild)
     {
-        ArgGuard.ThrowIfNull(rebuild);
+        Ensure.ThrowIfNull(rebuild);
         if (_dirty.Count == 0)
         {
             return;

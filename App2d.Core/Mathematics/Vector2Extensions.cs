@@ -26,8 +26,8 @@ public static class Vector2Extensions
         /// </summary>
         public static bool TryRefract(Vector2 direction, Vector2 incidentNormal, float fromIndex, float toIndex, out Vector2 transmitted)
         {
-            Validation.ArgGuard.Positive(fromIndex);
-            Validation.ArgGuard.Positive(toIndex);
+            Validation.Ensure.Positive(fromIndex);
+            Validation.Ensure.Positive(toIndex);
             // Rejection is shared vector math. Widen before applying the ratio so extreme valid indices
             // do not turn a normal-incidence zero tangent into 0 * infinity, or overflow its squared length.
             var tangent = Vector2.Reject(direction, incidentNormal).ToVector2d() * ((double)fromIndex / toIndex);

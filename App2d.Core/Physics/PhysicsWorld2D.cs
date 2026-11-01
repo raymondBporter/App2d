@@ -29,7 +29,7 @@ public sealed class PhysicsWorld2D
 
     public PhysicsWorld2D(CollisionSystem2D collisionSystem)
     {
-        CollisionSystem = ArgGuard.RequireNotNull(collisionSystem);
+        CollisionSystem = Ensure.RequireNotNull(collisionSystem);
         _physicsColliderPairFilter = new PhysicsColliderPairFilter(this);
     }
 
@@ -64,7 +64,7 @@ public sealed class PhysicsWorld2D
 
     public bool RemoveBody(RigidBody2D body)
     {
-        ArgGuard.ThrowIfNull(body);
+        Ensure.ThrowIfNull(body);
         if (!_bodies.Remove(body))
         {
             return false;
@@ -79,8 +79,8 @@ public sealed class PhysicsWorld2D
     /// <summary>Pair eligibility using the same collider and physics filters as detection; contact callbacks run later.</summary>
     public bool CanCollide(RigidBody2D first, RigidBody2D second)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
         return !ReferenceEquals(first, second) && first.IsCollider && second.IsCollider &&
             CollisionSystem.PairFilter.ShouldTest(first.Collider, second.Collider) &&
             PairFilter.ShouldTest(first, second);
@@ -88,13 +88,13 @@ public sealed class PhysicsWorld2D
 
     public void Step(float deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         if (deltaSeconds == 0f)
         {
             return;
         }
 
-        StateGuard.ThrowIf(_isStepping, "A physics world cannot be stepped recursively from a collision callback.");
+        Ensure.ThrowIf(_isStepping, "A physics world cannot be stepped recursively from a collision callback.");
         _isStepping = true;
         try
         {
@@ -108,9 +108,9 @@ public sealed class PhysicsWorld2D
 
     private void StepCore(float deltaSeconds)
     {
-        StateGuard.ThrowIfNot(NumericValidation.IsPositive(MaxSubstepSeconds));
-        StateGuard.ThrowIfNot(PositionIterations >= 1);
-        StateGuard.ThrowIfNot(VelocityIterations >= 1);
+        Ensure.Positive(MaxSubstepSeconds);
+        Ensure.GreaterThanOrEqual(PositionIterations, 1);
+        Ensure.GreaterThanOrEqual(VelocityIterations, 1);
 
         TransferContactMotion(deltaSeconds);
         foreach (var body in _bodies)

@@ -35,10 +35,10 @@ public sealed class SideScrollerCamera2D
 
     public SideScrollerCamera2D(Camera2D camera, Rect2D levelBounds, Vector2 initialPlayerPosition)
     {
-        _camera = ArgGuard.RequireNotNull(camera);
+        _camera = Ensure.RequireNotNull(camera);
         if (!levelBounds.IsFinite)
         {
-            ArgGuard.ThrowOutOfRange(levelBounds, "Value must be finite.");
+            Ensure.ThrowOutOfRange(levelBounds, "Value must be finite.");
         }
 
         _camera.WorldBounds = levelBounds;
@@ -84,7 +84,7 @@ public sealed class SideScrollerCamera2D
 
     public void Shake(float strength, bool stabilizeVerticalFollow = false)
     {
-        ArgGuard.Positive(strength);
+        Ensure.Positive(strength);
         _shakeStrength = MathF.Min(MaximumShakeStrength, MathF.Max(_shakeStrength, strength));
         _shakeTime = 0f;
         if (stabilizeVerticalFollow)

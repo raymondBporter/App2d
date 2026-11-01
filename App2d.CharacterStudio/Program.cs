@@ -83,7 +83,7 @@ namespace App2d.CharacterStudio
                             return 0;
                         }
                     default:
-                        throw ArgGuard.CreateInvalid(Usage + Environment.NewLine + SeedCommands.Usage);
+                        throw Ensure.CreateInvalid(Usage + Environment.NewLine + SeedCommands.Usage);
                 }
             }
             catch (Exception ex)

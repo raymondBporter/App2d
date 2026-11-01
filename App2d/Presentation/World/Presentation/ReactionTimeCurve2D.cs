@@ -11,10 +11,10 @@ public sealed class ReactionTimeCurve2D
 {
     public ReactionTimeCurve2D(float minimumSpeed, float slowdownSeconds, float recoveryPeak, float holdSeconds = 0)
     {
-        ArgGuard.InRange(minimumSpeed, 0f, 1f);
-        ArgGuard.Positive(slowdownSeconds);
-        ArgGuard.GreaterThan(recoveryPeak, 1f);
-        ArgGuard.NonNegative(holdSeconds);
+        Ensure.InRange(minimumSpeed, 0f, 1f);
+        Ensure.Positive(slowdownSeconds);
+        Ensure.GreaterThan(recoveryPeak, 1f);
+        Ensure.NonNegative(holdSeconds);
 
         MinimumSpeed = minimumSpeed;
         SlowdownSeconds = slowdownSeconds;
@@ -34,7 +34,7 @@ public sealed class ReactionTimeCurve2D
 
     public double Sample(double elapsed)
     {
-        ArgGuard.NonNegative(elapsed);
+        Ensure.NonNegative(elapsed);
 
         if (elapsed >= Duration || MinimumSpeed == 1)
         {

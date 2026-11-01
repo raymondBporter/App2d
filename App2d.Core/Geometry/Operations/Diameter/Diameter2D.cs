@@ -27,7 +27,7 @@ public static class Diameter2D
     /// <summary>The farthest vertex pair, valid for convex or concave polygons in either winding.</summary>
     public static float Polygon(ReadOnlySpan<Vector2> vertices)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 1);
+        Ensure.ThrowIfTooShort(vertices, 1);
         var squared = 0d;
         for (var i = 0; i < vertices.Length; i++)
         {

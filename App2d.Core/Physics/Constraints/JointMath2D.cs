@@ -10,11 +10,11 @@ internal static class JointMath2D
 
     internal static void Validate(RigidBody2D first, RigidBody2D second, Vector2 firstAnchor, Vector2 secondAnchor)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
-        ArgGuard.ThrowIfSameReference(first, second, "A joint requires two different bodies.");
-        ArgGuard.Finite(firstAnchor);
-        ArgGuard.Finite(secondAnchor);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
+        Ensure.ThrowIfSameReference(first, second, "A joint requires two different bodies.");
+        Ensure.Finite(firstAnchor);
+        Ensure.Finite(secondAnchor);
     }
 
     internal static Vector2 Anchor(RigidBody2D body, Vector2 local) => Vector2.Transform(local, body.WorldObject.Transform.Matrix);

@@ -57,7 +57,7 @@ public static class PoseEvaluator
     {
         var restOnly = clip is null;
         clip ??= Still;
-        ArgGuard.NonNegative(seconds);
+        Ensure.NonNegative(seconds);
         var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
         var time = (float)PlaybackClock.SampleTime(seconds, clip.Duration, repeat && clip.Loop ? PlaybackEndMode.Loop : PlaybackEndMode.Hold);
         float Ratio(string scale) => scale == CharacterModel.Unit ? 1 : model.Measure(scale) / clip.Reference[scale];

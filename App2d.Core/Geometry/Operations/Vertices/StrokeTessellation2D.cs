@@ -21,11 +21,11 @@ public static class StrokeTessellation2D
     public static int WriteSegment(Span<Vector2> vertices, Vector2 start, Vector2 end, float startWidth, float endWidth,
         LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt, int capSegments = DefaultCapSegments)
     {
-        ArgGuard.Finite(start);
-        ArgGuard.Finite(end);
-        ArgGuard.Positive(startWidth);
-        ArgGuard.Positive(endWidth);
-        ArgGuard.Positive(capSegments);
+        Ensure.Finite(start);
+        Ensure.Finite(end);
+        Ensure.Positive(startWidth);
+        Ensure.Positive(endWidth);
+        Ensure.Positive(capSegments);
         ValidateCap(startCap);
         ValidateCap(endCap);
         var axis = end - start;
@@ -34,7 +34,7 @@ public static class StrokeTessellation2D
             ? startCap == LineCap2D.Round || endCap == LineCap2D.Round ? checked(capSegments * 6)
                 : startCap == LineCap2D.Square || endCap == LineCap2D.Square ? 6 : 0
             : checked(6 + (startCap == LineCap2D.Round ? capSegments * 3 : 0) + (endCap == LineCap2D.Round ? capSegments * 3 : 0));
-        ArgGuard.ThrowIfTooShort(vertices, count);
+        Ensure.ThrowIfTooShort(vertices, count);
         var startRadius = startWidth * .5f;
         var endRadius = endWidth * .5f;
         if (collapsed)

@@ -12,8 +12,8 @@ public readonly record struct Polar2D
 {
     public Polar2D(float radius, float angleRadians)
     {
-        ArgGuard.NonNegative(radius);
-        ArgGuard.Finite(angleRadians);
+        Ensure.NonNegative(radius);
+        Ensure.Finite(angleRadians);
         Radius = radius;
         AngleRadians = angleRadians;
     }
@@ -35,7 +35,7 @@ public readonly record struct Polar2D
     /// <summary>Returns the unit direction at a finite angle. Zero radians points along +X.</summary>
     public static Vector2 Direction(float angleRadians)
     {
-        ArgGuard.Finite(angleRadians);
+        Ensure.Finite(angleRadians);
         var (sin, cos) = MathF.SinCos(angleRadians);
         return new(cos, sin);
     }
@@ -46,7 +46,7 @@ public readonly record struct Polar2D
     /// </summary>
     public static float AngleOf(Vector2 direction)
     {
-        ArgGuard.Finite(direction);
+        Ensure.Finite(direction);
         return direction == Vector2.Zero ? 0f : MathF.Atan2(direction.Y, direction.X);
     }
 
@@ -56,9 +56,9 @@ public readonly record struct Polar2D
     /// </summary>
     public static Polar2D FromCartesian(Vector2 value)
     {
-        ArgGuard.Finite(value);
+        Ensure.Finite(value);
         var radius = (float)value.ToVector2d().Length();
-        ArgGuard.Finite(radius, nameof(value));
+        Ensure.Finite(radius, nameof(value));
         return new(radius, AngleOf(value));
     }
 }

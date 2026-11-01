@@ -48,7 +48,7 @@ public readonly partial record struct Triangle2D : IConvexShape2D, ITriangle<Tri
     /// <inheritdoc/>
     public Vector2 GetSupportPoint(Vector2 localDirection)
     {
-        ArgGuard.Finite(localDirection);
+        Ensure.Finite(localDirection);
         var direction = localDirection.ToVector2d();
         var best = A;
         var projection = A.ToVector2d().Dot(direction);

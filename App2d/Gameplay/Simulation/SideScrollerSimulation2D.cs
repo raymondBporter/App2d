@@ -52,7 +52,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
 
     public static SideScrollerSimulation2D Create(SideScrollerSessionDefinition2D definition)
     {
-        ArgGuard.ThrowIfNull(definition);
+        Ensure.ThrowIfNull(definition);
         definition.Validate();
         var traversal = definition.Traversal;
         traversal.ValidateScaleContract();

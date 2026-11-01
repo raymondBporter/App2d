@@ -17,7 +17,7 @@ public static class ShapeTessellation2D
     public static IndexedTriangleEnumerable<Vector2> Triangles(this IShape2D shape, Span<Vector2> scratch,
         int roundSegments = 32, int cornerSegments = 8, Rect2D? clipBounds = null)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         if (shape is SimplePolygon2D polygon) return polygon.Mesh.Triangles;
         if (shape is HeightFieldShape2D field) return field.Polygon.Mesh.Triangles;
         if (shape is HalfSpace2D halfSpace)
@@ -32,10 +32,10 @@ public static class ShapeTessellation2D
     public static SegmentVertexEnumerable<Segment<Vector2>, Vector2> OutlineSegments(this IShape2D shape, Span<Vector2> scratch,
         int roundSegments = 32, int cornerSegments = 8, Rect2D? clipBounds = null)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         if (shape is HalfSpace2D halfSpace)
         {
-            ArgGuard.ThrowIfTooShort(scratch, 2);
+            Ensure.ThrowIfTooShort(scratch, 2);
             var boundary = new Line2D(halfSpace.Normal * halfSpace.Offset, new(-halfSpace.Normal.Y, halfSpace.Normal.X));
             var count = 0;
             if (boundary.TryClipToRectangle(RequireClipBounds(clipBounds), out var start, out var end))
@@ -68,8 +68,8 @@ public static class ShapeTessellation2D
 
     public static int CurveSegments(float radius, Matrix3x2 localToView)
     {
-        ArgGuard.NonNegative(radius);
-        ArgGuard.Finite(localToView);
+        Ensure.NonNegative(radius);
+        Ensure.Finite(localToView);
         if (radius == 0) return 16;
         var scale = Math.Max(localToView.X.Length(), localToView.Y.Length());
         var segments = MathF.Ceiling(MathF.PI * MathF.Sqrt(Math.Max(1f, radius * scale) * 2f));

@@ -40,7 +40,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
     /// <summary>Use camera-selected terrain instead of the simulation's active terrain set.</summary>
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain)
     {
-        ArgGuard.ThrowIf(terrain.IsDefault, "Terrain must be initialized.", nameof(terrain));
+        Ensure.ThrowIf(terrain.IsDefault, "Terrain must be initialized.", nameof(terrain));
         if (_visibleTerrain == terrain)
         {
             return;
@@ -63,9 +63,9 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     public void Update(LevelContent2D content, WorldState2D state, float dt)
     {
-        ArgGuard.NonNegative(dt);
-        ArgGuard.ThrowIfNull(content);
-        ArgGuard.ThrowIfNull(state);
+        Ensure.NonNegative(dt);
+        Ensure.ThrowIfNull(content);
+        Ensure.ThrowIfNull(state);
         _state = state;
         _vegetation.Advance(dt);
         if (!ReferenceEquals(content, _content) || _appliedContentRevision != content.Revision)

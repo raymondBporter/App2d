@@ -17,8 +17,8 @@ public sealed class SoundEffectBank2D<TEffect> : ISoundEffectSink2D<TEffect>, ID
     /// <summary>Loads every cue's <c>{stem}.wav</c> from the root path.</summary>
     public SoundEffectBank2D(string rootPath, IReadOnlyDictionary<TEffect, SoundCue2D> cues)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(rootPath);
-        ArgGuard.ThrowIfNull(cues);
+        Ensure.ThrowIfNullOrWhiteSpace(rootPath);
+        Ensure.ThrowIfNull(cues);
         _mixer = new AudioMixer2D();
         try
         {
@@ -45,10 +45,10 @@ public sealed class SoundEffectBank2D<TEffect> : ISoundEffectSink2D<TEffect>, ID
 
     public SoundEffectVoice2D Begin(TEffect effect, float initialVolumeScale = 1f)
     {
-        ArgGuard.InRange(initialVolumeScale, 0f, 1f);
+        Ensure.InRange(initialVolumeScale, 0f, 1f);
         if (!_cues.TryGetValue(effect, out var cue))
         {
-            throw ArgGuard.CreateOutOfRange(effect, "Unknown sound effect.");
+            throw Ensure.CreateOutOfRange(effect, "Unknown sound effect.");
         }
 
         var fullVolume = cue.Volume * Random.Shared.NextFloat(MinimumVolumeScale, MaximumVolumeScale);
@@ -60,9 +60,9 @@ public sealed class SoundEffectBank2D<TEffect> : ISoundEffectSink2D<TEffect>, ID
 
     private LoadedCue Load(string rootPath, SoundCue2D cue)
     {
-        ArgGuard.ThrowIfNull(cue);
-        ArgGuard.ThrowIf(cue.Stems.IsDefaultOrEmpty, "A cue needs at least one stem.", nameof(cue));
-        ArgGuard.InRange(cue.Volume, 0f, 1f);
+        Ensure.ThrowIfNull(cue);
+        Ensure.ThrowIf(cue.Stems.IsDefaultOrEmpty, "A cue needs at least one stem.", nameof(cue));
+        Ensure.InRange(cue.Volume, 0f, 1f);
         var clips = new AudioClip2D[cue.Stems.Length];
         for (var i = 0; i < clips.Length; i++)
         {

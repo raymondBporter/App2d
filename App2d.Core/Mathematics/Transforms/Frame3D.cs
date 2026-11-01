@@ -8,10 +8,10 @@ public readonly record struct Frame3D
 {
     public Frame3D(Vector3 origin, Vector3 xAxis, Vector3 yAxis, Vector3 zAxis)
     {
-        ArgGuard.Finite(origin);
-        ArgGuard.Finite(xAxis);
-        ArgGuard.Finite(yAxis);
-        ArgGuard.Finite(zAxis);
+        Ensure.Finite(origin);
+        Ensure.Finite(xAxis);
+        Ensure.Finite(yAxis);
+        Ensure.Finite(zAxis);
         Origin = origin;
         XAxis = xAxis;
         YAxis = yAxis;
@@ -22,8 +22,10 @@ public readonly record struct Frame3D
         : this(matrix.Translation, new(matrix.M11, matrix.M12, matrix.M13),
             new(matrix.M21, matrix.M22, matrix.M23), new(matrix.M31, matrix.M32, matrix.M33))
     {
-        ArgGuard.ThrowIf(matrix.M14 != 0 || matrix.M24 != 0 || matrix.M34 != 0 || matrix.M44 != 1,
-            "A coordinate frame needs an affine matrix without perspective.", nameof(matrix));
+        Ensure.Equal(matrix.M14, 0);
+        Ensure.Equal(matrix.M24, 0);
+        Ensure.Equal(matrix.M34, 0);
+        Ensure.Equal(matrix.M44, 1);
     }
 
     public static Frame3D Identity { get; } = new(Matrix4x4.Identity);
@@ -41,7 +43,7 @@ public readonly record struct Frame3D
     /// <summary>Rotates about local X, then Y, then Z, in radians, before placing the origin.</summary>
     public static Frame3D FromRotation(Vector3 radians, Vector3 origin = default)
     {
-        ArgGuard.Finite(radians);
+        Ensure.Finite(radians);
         var matrix = Matrix4x4.CreateRotationX(radians.X) * Matrix4x4.CreateRotationY(radians.Y) * Matrix4x4.CreateRotationZ(radians.Z);
         matrix.Translation = origin;
         return new(matrix);

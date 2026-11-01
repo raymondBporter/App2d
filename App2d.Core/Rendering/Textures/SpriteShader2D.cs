@@ -9,8 +9,8 @@ public sealed class SpriteShader2D(Texture2D texture, TextureFilter filterMode =
     public Texture2D Texture
     {
         get;
-        set => field = ArgGuard.RequireNotNull(value);
-    } = ArgGuard.RequireNotNull(texture);
+        set => field = Ensure.RequireNotNull(value);
+    } = Ensure.RequireNotNull(texture);
 
     public TextureFilter FilterMode { get; } = filterMode;
     public bool FlipX { get; set; }

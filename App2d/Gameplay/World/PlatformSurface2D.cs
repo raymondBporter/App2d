@@ -19,16 +19,16 @@ public sealed class PlatformSurface2D
                 _oneWaySurfaceNormal = null;
                 return;
             }
-            ArgGuard.Finite(normal);
-            var length = ArgGuard.Positive(normal.Length(), nameof(OneWaySurfaceNormal));
-            _oneWaySurfaceNormal = ArgGuard.Finite(normal / length);
+            Ensure.Finite(normal);
+            var length = Ensure.Positive(normal.Length(), nameof(OneWaySurfaceNormal));
+            _oneWaySurfaceNormal = Ensure.Finite(normal / length);
         }
     }
 
     public float OneWaySlop
     {
         get;
-        set => field = ArgGuard.NonNegative(value);
+        set => field = Ensure.NonNegative(value);
     } = 2f;
 
     public bool IsWallGrippable { get; set; }

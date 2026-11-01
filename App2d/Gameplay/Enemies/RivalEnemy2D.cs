@@ -36,13 +36,13 @@ public sealed class RivalEnemy2D : IEnemyActor2D
         uint playerLayer,
         uint enemyLayer)
     {
-        ArgGuard.ThrowIfNull(ids);
-        ArgGuard.ThrowIfNull(collision);
-        ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNull(traversal);
-        ArgGuard.ThrowIfNull(combat);
-        ArgGuard.Finite(position);
-        ArgGuard.LessThan(minimumX, maximumX);
+        Ensure.ThrowIfNull(ids);
+        Ensure.ThrowIfNull(collision);
+        Ensure.ThrowIfNull(physics);
+        Ensure.ThrowIfNull(traversal);
+        Ensure.ThrowIfNull(combat);
+        Ensure.Finite(position);
+        Ensure.LessThan(minimumX, maximumX);
         Person = new Person2D(
             ids.Allocate(),
             collision,
@@ -80,8 +80,8 @@ public sealed class RivalEnemy2D : IEnemyActor2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.NonNegative(deltaSeconds);
-        ArgGuard.Finite(targetPosition);
+        Ensure.NonNegative(deltaSeconds);
+        Ensure.Finite(targetPosition);
         _lastDeltaSeconds = deltaSeconds;
         Person.BeginFrame(deltaSeconds);
 

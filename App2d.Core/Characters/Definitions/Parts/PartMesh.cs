@@ -40,7 +40,8 @@ public sealed record PartMesh
     public static PartMesh Extrude(IEnumerable<Vector3f> outline, float thickness)
     {
         var points = outline.Select(p => p.ToVector3()).ToList();
-        ArgGuard.ThrowIf(points.Count < 3 || thickness <= 0, "An extrusion needs an outline and positive thickness.");
+        Ensure.ThrowIf(points.Count < 3, "An extrusion needs an outline.");
+        Ensure.Positive(thickness);
         points = MeshGenerators3D.CounterClockwise(points);
         IndexedMesh3D solid;
         try

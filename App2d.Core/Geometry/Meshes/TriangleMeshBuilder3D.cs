@@ -16,9 +16,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 
     public TriangleMeshBuilder3D(Func<Vector3, TMaterial, Vector2, TVertex> vertexFactory, int initialCapacity = 64)
     {
-        _vertexFactory = ArgGuard.RequireNotNull(vertexFactory);
-        ArgGuard.ThrowIf(initialCapacity < 0 || initialCapacity > MaximumVertexCount,
-            "Initial capacity must fit within the mesh limit.", nameof(initialCapacity));
+        _vertexFactory = Ensure.RequireNotNull(vertexFactory);
+        Ensure.NonNegative(initialCapacity);
+        Ensure.LessThanOrEqual(initialCapacity, MaximumVertexCount);
         _vertices = new TVertex[Math.Max(3, initialCapacity)];
         Clear();
     }
@@ -43,8 +43,8 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 
     public void Vertex(Vector3 point, TMaterial material, Vector2 uv = default)
     {
-        ArgGuard.Finite(point);
-        ArgGuard.Finite(uv);
+        Ensure.Finite(point);
+        Ensure.Finite(uv);
         EnsureCapacity(Count + 1);
         var vertex = _vertexFactory(point, material, uv);
         _vertices[Count++] = vertex;
@@ -68,8 +68,8 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>A flat disk or a depth-rounded dome, centered in XY.</summary>
     public void Disk(Vector3 center, float radius, TMaterial material, bool dome = false)
     {
-        ArgGuard.Finite(center);
-        ArgGuard.NonNegative(radius);
+        Ensure.Finite(center);
+        Ensure.NonNegative(radius);
         if (radius == 0f)
         {
             return;
@@ -101,10 +101,10 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     public void Ellipse(Vector2 center, Vector2 radii, Func<Vector2, Vector3> place,
         TMaterial material, int segments = 24)
     {
-        ArgGuard.Finite(center);
-        ArgGuard.NonNegative(radii);
-        ArgGuard.ThrowIfNull(place);
-        ArgGuard.ThrowIf(segments < 3, "An ellipse needs at least three segments.", nameof(segments));
+        Ensure.Finite(center);
+        Ensure.NonNegative(radii);
+        Ensure.ThrowIfNull(place);
+        Ensure.GreaterThanOrEqual(segments, 3);
         var placedCenter = place(center);
         for (var index = 0; index < segments; index++)
         {
@@ -120,9 +120,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 
     public void Line(Vector3 start, Vector3 end, float width, TMaterial startMaterial, TMaterial endMaterial)
     {
-        ArgGuard.Finite(start);
-        ArgGuard.Finite(end);
-        ArgGuard.NonNegative(width);
+        Ensure.Finite(start);
+        Ensure.Finite(end);
+        Ensure.NonNegative(width);
         if (width == 0f)
         {
             return;
@@ -144,7 +144,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>Fills a perimeter visible from its first vertex using a triangle fan.</summary>
     public void TriangleFan(IReadOnlyList<Vector3> perimeter, TMaterial material)
     {
-        ArgGuard.ThrowIfNull(perimeter);
+        Ensure.ThrowIfNull(perimeter);
         foreach (var (a, b, c) in MeshTopology.TriangleFan(perimeter.Count))
         {
             Triangle(perimeter[a], perimeter[b], perimeter[c], material);
@@ -154,13 +154,13 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>A polyline with width changing linearly along its distance.</summary>
     public void Path(IReadOnlyList<Vector3> points, TMaterial material, float startWidth, float? endWidth = null, IReadOnlyList<TMaterial>? pointMaterials = null)
     {
-        ArgGuard.ThrowIfNull(points);
-        ArgGuard.NonNegative(startWidth);
+        Ensure.ThrowIfNull(points);
+        Ensure.NonNegative(startWidth);
         if (pointMaterials is not null && pointMaterials.Count != points.Count)
             throw new ArgumentException("Provide one material per path point.", nameof(pointMaterials));
         if (endWidth is { } end)
         {
-            ArgGuard.NonNegative(end);
+            Ensure.NonNegative(end);
         }
 
         var total = 0f;
@@ -183,8 +183,8 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>A constant-width ribbon in XY with shared cross-sections and round end caps. Intended for sampled smooth paths.</summary>
     public void Ribbon(IReadOnlyList<Vector3> points, TMaterial material, float width, IReadOnlyList<TMaterial>? pointMaterials = null)
     {
-        ArgGuard.RequireNotNull(points);
-        ArgGuard.NonNegative(width);
+        Ensure.RequireNotNull(points);
+        Ensure.NonNegative(width);
         if (pointMaterials is not null && pointMaterials.Count != points.Count)
             throw new ArgumentException("Provide one material per ribbon point.", nameof(pointMaterials));
         if (points.Count == 0 || width == 0) return;
@@ -215,9 +215,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>Rounds a center-to-contour sheet into negative Z; the contour is an open sequence.</summary>
     public void Shell(Vector3 center, IReadOnlyList<Vector3> contour, float depth, TMaterial material)
     {
-        ArgGuard.Finite(center);
-        ArgGuard.ThrowIfNull(contour);
-        ArgGuard.NonNegative(depth);
+        Ensure.Finite(center);
+        Ensure.ThrowIfNull(contour);
+        Ensure.NonNegative(depth);
         Vector3 At(float radius, int index) => Vector3.Lerp(center, contour[index], radius) -
             new Vector3(0f, 0f, depth * MathF.Sqrt(MathF.Max(0f, 1f - radius * radius)));
         for (var ring = 1; ring <= 5; ring++)
@@ -236,8 +236,8 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>Places an indexed 2D mesh on a 3D surface without exposing its index format.</summary>
     public void Add(TriangleMesh2D mesh, Func<Vector2, Vector3> place, TMaterial material)
     {
-        ArgGuard.ThrowIfNull(mesh);
-        ArgGuard.ThrowIfNull(place);
+        Ensure.ThrowIfNull(mesh);
+        Ensure.ThrowIfNull(place);
         foreach (var (a, b, c) in mesh.Triangles)
         {
             Triangle(place(a), place(b), place(c), material);
@@ -246,10 +246,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 
     private void EnsureCapacity(int required)
     {
-        if (required > MaximumVertexCount)
-        {
-            throw new InvalidOperationException("Triangle mesh capacity exceeded.");
-        }
+        Ensure.LessThanOrEqual(required, MaximumVertexCount);
 
         if (required > _vertices.Length)
         {

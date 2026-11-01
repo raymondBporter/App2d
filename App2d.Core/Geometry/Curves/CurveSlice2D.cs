@@ -18,9 +18,9 @@ public readonly record struct CurveSlice2D<TCurve> : ICurveSlice2D where TCurve 
 {
     public CurveSlice2D(TCurve source, float from, float to)
     {
-        ArgGuard.ThrowIfNull(source);
-        ArgGuard.InRange(from, 0f, 1f);
-        ArgGuard.InRange(to, from, 1f);
+        Ensure.ThrowIfNull(source);
+        Ensure.InRange(from, 0f, 1f);
+        Ensure.InRange(to, from, 1f);
         Source = source;
         From = from;
         To = to;

@@ -21,16 +21,16 @@ public sealed class AnimationPlayer2D<TFrame>
         get => (float)_clock.Speed;
         set
         {
-            ArgGuard.NonNegative(value, nameof(PlaybackSpeed));
+            Ensure.NonNegative(value, nameof(PlaybackSpeed));
             _clock.Speed = value;
         }
     }
 
-    public TFrame CurrentFrame => StateGuard.RequireNotNull(Clip, "Play a clip before reading its current frame.")[CurrentFrameIndex];
+    public TFrame CurrentFrame => Ensure.RequireNotNull(Clip, message: "Play a clip before reading its current frame.")[CurrentFrameIndex];
 
     public void Play(AnimationClip2D<TFrame> clip, bool restart = false, PlaybackEndMode? endMode = null)
     {
-        ArgGuard.ThrowIfNull(clip);
+        Ensure.ThrowIfNull(clip);
         var mode = endMode ?? (clip.IsLooping ? PlaybackEndMode.Loop : PlaybackEndMode.Hold);
 
         if (ReferenceEquals(Clip, clip) && !restart && IsPlaying && _clock.EndMode == mode)
@@ -67,7 +67,7 @@ public sealed class AnimationPlayer2D<TFrame>
 
     public void Update(float deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         if (!IsPlaying || Clip is null || deltaSeconds == 0f || PlaybackSpeed == 0f)
         {
             return;

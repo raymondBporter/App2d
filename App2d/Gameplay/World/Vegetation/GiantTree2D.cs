@@ -18,22 +18,22 @@ public sealed record GiantTreeSettings2D
 
     public void Validate()
     {
-        ArgGuard.Positive(Height);
-        ArgGuard.Positive(TrunkWidth);
-        ArgGuard.Positive(BranchThickness);
+        Ensure.Positive(Height);
+        Ensure.Positive(TrunkWidth);
+        Ensure.Positive(BranchThickness);
         ValidateRange(BranchLength, nameof(BranchLength));
         ValidateRange(BranchGap, nameof(BranchGap));
         ValidateRange(FoliageRadius, nameof(FoliageRadius));
-        ArgGuard.ThrowIf(BranchThickness >= BranchGap.Min, "Branches must be thinner than their minimum spacing.", nameof(BranchThickness));
-        ArgGuard.ThrowIf(Height * 0.9 <= BranchGap.Max, "The tree must be taller than its first branch.", nameof(Height));
-        ArgGuard.ThrowIf((double)Height / BranchGap.Min > 256, "Use wider branch spacing; a tree supports at most 256 branch levels.", nameof(BranchGap));
+        Ensure.LessThan(BranchThickness, BranchGap.Min);
+        Ensure.GreaterThan(Height * 0.9, BranchGap.Max);
+        Ensure.LessThanOrEqual((double)Height / BranchGap.Min, 256);
     }
 
     private static void ValidateRange(Interval<float> range, string name)
     {
-        ArgGuard.Positive(range.Min, name);
-        ArgGuard.AtLeast(range.Max, range.Min, name);
-        ArgGuard.Finite(range.Length, name);
+        Ensure.Positive(range.Min, name);
+        Ensure.GreaterThanOrEqual(range.Max, range.Min, name);
+        Ensure.Finite(range.Length, name);
     }
 }
 
@@ -48,8 +48,8 @@ public sealed class GiantTree2D
 {
     public GiantTree2D(Vector2 root, GiantTreeSettings2D settings, int seed)
     {
-        ArgGuard.Finite(root);
-        ArgGuard.ThrowIfNull(settings);
+        Ensure.Finite(root);
+        Ensure.ThrowIfNull(settings);
         settings.Validate();
         Root = root;
         Settings = settings;
@@ -61,7 +61,7 @@ public sealed class GiantTree2D
             crownRadius * 1.8f) + 12f;
         Bounds = new(root - new Vector2(reach, settings.FoliageRadius.Max * 0.6f + 12f),
             root + new Vector2(reach, settings.Height + crownRadius * 1.1f + 12f));
-        ArgGuard.ThrowIf(!Bounds.IsFinite || !TrunkBounds.IsFinite, "Tree geometry must fit in finite world coordinates.", nameof(root));
+        Ensure.ThrowIf(!Bounds.IsFinite || !TrunkBounds.IsFinite, "Tree geometry must fit in finite world coordinates.", nameof(root));
 
         var random = new Random(seed);
         var branches = ImmutableArray.CreateBuilder<GiantTreeBranch2D>();

@@ -28,9 +28,9 @@ public sealed partial class SideScrollerLevel2D
 
     private static ImmutableArray<GiantTree2D> ValidateTrees(IEnumerable<GiantTree2D> trees)
     {
-        ArgGuard.ThrowIfNull(trees);
+        Ensure.ThrowIfNull(trees);
         var result = trees.ToImmutableArray();
-        ArgGuard.ThrowIfContainsNull(result.AsSpan(), nameof(trees));
+        Ensure.ThrowIfContainsNull(result.AsSpan(), nameof(trees));
         return result;
     }
 

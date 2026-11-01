@@ -47,12 +47,12 @@ public readonly record struct TileCell2D
     {
         if (((byte)kind & ~KindMask) != 0)
         {
-            ArgGuard.ThrowOutOfRange(kind, "Tile kind must fit in four bits.");
+            Ensure.ThrowOutOfRange(kind, "Tile kind must fit in four bits.");
         }
 
         if (tilesetIndex >= MaximumTilesetCount)
         {
-            ArgGuard.ThrowOutOfRange(tilesetIndex, "Tileset index must fit in four bits.");
+            Ensure.ThrowOutOfRange(tilesetIndex, "Tileset index must fit in four bits.");
         }
 
         Packed = (byte)((tilesetIndex << 4) | (byte)kind);

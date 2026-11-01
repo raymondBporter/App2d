@@ -27,7 +27,7 @@ public static class ShapeDistance2D
     /// <exception cref="NotSupportedException">The shape is a composite or an unknown type.</exception>
     public static float SignedDistance(Vector2 point, IShape2D shape)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         return shape switch
         {
             Circle2D circle => Distance2D.SignedDistanceToCircle(point, circle.Center, circle.Radius),
@@ -56,7 +56,7 @@ public static class ShapeDistance2D
     /// <returns>The nonnegative distance to the filled shape.</returns>
     public static float Distance(Vector2 point, IShape2D shape)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         if (shape is not CompositeShape2D composite)
         {
             return Math.Max(0f, SignedDistance(point, shape));
@@ -101,8 +101,8 @@ public static class ShapeDistance2D
     /// <exception cref="NotSupportedException">Composite shapes, half-space pairs and unknown shape types.</exception>
     public static float SignedDistance(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
         if (first is SimplePolygon2D)
         {
             throw Unsupported(first);
@@ -144,8 +144,8 @@ public static class ShapeDistance2D
     /// <returns>The nonnegative gap.</returns>
     public static float Distance(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
         if (first is HeightFieldShape2D firstField)
             return Distance(firstField.ConvexPieces, firstPose, second, secondPose);
         if (second is HeightFieldShape2D secondField)

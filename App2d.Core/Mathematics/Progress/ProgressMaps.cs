@@ -57,7 +57,7 @@ public static class ProgressMaps
     /// <summary>Named maps with the requested travel, optionally restricted to continuous maps.</summary>
     public static IReadOnlyList<ProgressMapKind> ForTravel(EasingTravel travel, bool continuousOnly = false)
     {
-        ArgGuard.ThrowIf(!Enum.IsDefined(travel), "Unknown easing travel.", nameof(travel));
+        Ensure.ThrowIf(!Enum.IsDefined(travel), "Unknown easing travel.", nameof(travel));
         return Array.AsReadOnly(Enum.GetValues<ProgressMapKind>()
             .Where(kind => FromKind(kind).Travel == travel && (!continuousOnly || FromKind(kind).IsContinuous == true)).ToArray());
     }
@@ -65,7 +65,7 @@ public static class ProgressMaps
     /// <summary>Apply named maps left to right, including their analytic derivatives.</summary>
     public static IProgressMap Compose(IEnumerable<ProgressMapKind> kinds)
     {
-        ArgGuard.ThrowIfNull(kinds);
+        Ensure.ThrowIfNull(kinds);
         IProgressMap? result = null;
         foreach (var kind in kinds)
             result = result is null ? FromKind(kind) : Compose(result, FromKind(kind));
@@ -75,7 +75,7 @@ public static class ProgressMaps
     /// <summary>Reflects an ease-in map in both axes: 1 - easeIn(1 - phase).</summary>
     public static ProgressMap EaseOut(IProgressMap easeIn)
     {
-        ArgGuard.ThrowIfNull(easeIn);
+        Ensure.ThrowIfNull(easeIn);
         return new(
             phase => 1d - easeIn.Sample(1d - phase),
             phase => easeIn.Derivative(1d - phase),
@@ -86,7 +86,7 @@ public static class ProgressMaps
     /// <summary>Fits ease-in into the first half and its reflection into the second half.</summary>
     public static ProgressMap EaseInOut(IProgressMap easeIn)
     {
-        ArgGuard.ThrowIfNull(easeIn);
+        Ensure.ThrowIfNull(easeIn);
         return new(
             phase => phase < 0.5d ? easeIn.Sample(2d * phase) / 2d : 1d - easeIn.Sample(2d * (1d - phase)) / 2d,
             phase => easeIn.Derivative(phase < 0.5d ? 2d * phase : 2d * (1d - phase)),
@@ -97,8 +97,8 @@ public static class ProgressMaps
     /// <summary>Apply <paramref name="first"/> and then <paramref name="second"/>.</summary>
     public static ProgressMap Compose(IProgressMap first, IProgressMap second)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
         return new ProgressMap(
             phase => second.Sample(first.Sample(phase)),
             phase => second.Derivative(first.Sample(phase)) * first.Derivative(phase),

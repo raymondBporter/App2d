@@ -23,10 +23,10 @@ public sealed class AuthoredObject2D : IDisposable
 
     public AuthoredObject2D(EntityId2D id, ObjectPlacement2D placement, PhysicsWorld2D physics, uint layer, uint mask)
     {
-        ArgGuard.ThrowIf(!id.IsValid, "An object needs a valid entity id.", nameof(id));
-        ArgGuard.ThrowIfNull(placement);
+        Ensure.ThrowIf(!id.IsValid, "An object needs a valid entity id.", nameof(id));
+        Ensure.ThrowIfNull(placement);
         placement.Validate();
-        _physics = ArgGuard.RequireNotNull(physics);
+        _physics = Ensure.RequireNotNull(physics);
         Id = id;
         Placement = placement;
         var asset = placement.Asset;
@@ -58,7 +58,7 @@ public sealed class AuthoredObject2D : IDisposable
     public void Update(float dt)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgGuard.NonNegative(dt);
+        Ensure.NonNegative(dt);
         if (!IsEnabled) return;
         _time += dt;
         if (_motion is null) return;
@@ -94,9 +94,9 @@ public sealed class AuthoredObject2D : IDisposable
     public void RestoreState(ObjectState2D state)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgGuard.ThrowIf(state.Id != Id, "State belongs to another object.", nameof(state));
-        ArgGuard.Finite(state.Position); ArgGuard.Finite(state.Rotation);
-        ArgGuard.Finite(state.LinearVelocity); ArgGuard.Finite(state.AngularVelocity); ArgGuard.NonNegative(state.Time);
+        Ensure.ThrowIf(state.Id != Id, "State belongs to another object.", nameof(state));
+        Ensure.Finite(state.Position); Ensure.Finite(state.Rotation);
+        Ensure.Finite(state.LinearVelocity); Ensure.Finite(state.AngularVelocity); Ensure.NonNegative(state.Time);
         SetSimulationEnabled(true);
         WorldObject.Transform.Position = state.Position;
         WorldObject.Transform.Rotation = state.Rotation;

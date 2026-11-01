@@ -9,10 +9,10 @@ public sealed record WorldZone2D
 {
     public WorldZone2D(string id, string name, Rect2D bounds, int priority = 0)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(id);
-        ArgGuard.ThrowIfNullOrWhiteSpace(name);
-        ArgGuard.Finite(bounds.Min, nameof(bounds));
-        ArgGuard.Positive(bounds.Size, nameof(bounds));
+        Ensure.ThrowIfNullOrWhiteSpace(id);
+        Ensure.ThrowIfNullOrWhiteSpace(name);
+        Ensure.Finite(bounds.Min, nameof(bounds));
+        Ensure.Positive(bounds.Size, nameof(bounds));
 
         Id = id;
         Name = name;
@@ -32,7 +32,7 @@ public sealed record WorldZone2D
     /// <summary>Highest priority wins; equal priorities use ordinal ID, independent of file order.</summary>
     public static WorldZone2D? FindAt(ReadOnlySpan<WorldZone2D> zones, Vector2 point)
     {
-        ArgGuard.Finite(point);
+        Ensure.Finite(point);
         WorldZone2D? result = null;
         foreach (var zone in zones)
         {

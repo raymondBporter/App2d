@@ -11,21 +11,21 @@ public readonly partial record struct ConvexPolygon2D
 {
     private static void ValidateVertices(ReadOnlySpan<Vector2> vertices)
     {
-        ArgGuard.ThrowIfTooShort(vertices, 3);
+        Ensure.ThrowIfTooShort(vertices, 3);
         for (var i = 0; i < vertices.Length; i++)
         {
             var current = vertices[i];
             var next = vertices[(i + 1) % vertices.Length];
 
-            ArgGuard.Finite(current, nameof(vertices));
+            Ensure.Finite(current, nameof(vertices));
             if (Vector2.DistanceSquared(current, next) <= Epsilon * Epsilon)
             {
-                ArgGuard.ThrowInvalid("Adjacent polygon vertices must be distinct.", nameof(vertices));
+                Ensure.ThrowInvalid("Adjacent polygon vertices must be distinct.", nameof(vertices));
             }
         }
         if (!PolygonGeometry2D.IsConvexPerimeter(vertices, Epsilon))
         {
-            ArgGuard.ThrowInvalid("Vertices must form a convex polygon in perimeter order with nonzero area.", nameof(vertices));
+            Ensure.ThrowInvalid("Vertices must form a convex polygon in perimeter order with nonzero area.", nameof(vertices));
         }
     }
     public void Validate() => ValidateVertices(Vertices);
@@ -33,6 +33,6 @@ public readonly partial record struct ConvexPolygon2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static ConvexPolygon2D Create(IEnumerable<Vector2> vertices) => new ConvexPolygon2D([.. ArgGuard.RequireNotNull(vertices)]).Validated();
+        public static ConvexPolygon2D Create(IEnumerable<Vector2> vertices) => new ConvexPolygon2D([.. Ensure.RequireNotNull(vertices)]).Validated();
     }
 }

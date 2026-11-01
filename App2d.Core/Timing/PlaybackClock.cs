@@ -48,8 +48,8 @@ public sealed class PlaybackClock
     /// <summary>Pure playhead mapping for seeking and sampling; does not advance a clock or dispatch events.</summary>
     public static double SampleTime(double seconds, double duration, PlaybackEndMode mode)
     {
-        ArgGuard.NonNegative(seconds);
-        ArgGuard.Positive(duration);
+        Ensure.NonNegative(seconds);
+        Ensure.Positive(duration);
         return mode switch
         {
             PlaybackEndMode.Hold => Math.Min(seconds, duration),
@@ -83,7 +83,7 @@ public sealed class PlaybackClock
         get => _speed;
         set
         {
-            ArgGuard.NonNegative(value);
+            Ensure.NonNegative(value);
             _speed = value;
         }
     }
@@ -93,7 +93,7 @@ public sealed class PlaybackClock
     {
         if (durationSeconds is { } duration)
         {
-            ArgGuard.Positive(duration);
+            Ensure.Positive(duration);
         }
 
         if (!Enum.IsDefined(endMode))
@@ -152,7 +152,7 @@ public sealed class PlaybackClock
     /// <summary>Seeks within the first trip and discards completed cycles. The exact end remains sampleable.</summary>
     public void Seek(double seconds)
     {
-        ArgGuard.NonNegative(seconds);
+        Ensure.NonNegative(seconds);
         _elapsedSeconds = DurationSeconds is { } duration ? Math.Min(seconds, duration) : seconds;
         _seekedToEnd = DurationSeconds is { } end && seconds >= end;
         IsComplete = false;
@@ -160,13 +160,13 @@ public sealed class PlaybackClock
 
     public void Advance(double deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         if (!IsPlaying || deltaSeconds == 0 || Speed == 0)
         {
             return;
         }
 
-        _elapsedSeconds = ArgGuard.Finite(_elapsedSeconds + deltaSeconds * Speed, nameof(deltaSeconds));
+        _elapsedSeconds = Ensure.Finite(_elapsedSeconds + deltaSeconds * Speed, nameof(deltaSeconds));
         _seekedToEnd = false;
         if (EndMode == PlaybackEndMode.Hold && DurationSeconds is { } duration && _elapsedSeconds >= duration)
         {

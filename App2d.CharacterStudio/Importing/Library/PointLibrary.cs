@@ -97,10 +97,8 @@ public sealed class PointClip
 
         for (var i = 1; i < _times.Length; i++)
         {
-            if (!double.IsFinite(_times[i]) || _times[i] <= _times[i - 1])
-            {
-                throw new InvalidDataException($"Invalid timestamps in {id}.");
-            }
+            Ensure.Finite(_times[i]);
+            Ensure.GreaterThan(_times[i], _times[i - 1]);
         }
 
         if (samples.ValueKind != JsonValueKind.Object || samples.EnumerateObject().Count() != PointCount)
@@ -133,8 +131,8 @@ public sealed class PointClip
 
     public void Sample(double seconds, Span<Vector3> output, bool holdEnd = false)
     {
-        ArgGuard.Finite(seconds);
-        ArgGuard.ThrowIf(output.Length != PointCount, "Wrong pose size.", nameof(output));
+        Ensure.Finite(seconds);
+        Ensure.ThrowIf(output.Length != PointCount, "Wrong pose size.", nameof(output));
         var t = Loop && !holdEnd ? ((seconds % Duration) + Duration) % Duration : Math.Clamp(seconds, 0, Duration);
         if (t == 0 || ((!Loop || holdEnd) && seconds >= Duration))
         {
@@ -169,8 +167,8 @@ public sealed class PointClip
 
     public Vector3 Read(int sample, int point)
     {
-        ArgGuard.Index(sample, SampleCount);
-        ArgGuard.Index(point, PointCount);
+        Ensure.Index(sample, SampleCount);
+        Ensure.Index(point, PointCount);
         return _points[sample * PointCount + point];
     }
 }

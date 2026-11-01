@@ -16,8 +16,8 @@ public sealed class RigidBody2D
 
     internal RigidBody2D(SpatialObject2D worldObject, BodyMotionType2D motionType, Collider2D collider)
     {
-        WorldObject = ArgGuard.RequireNotNull(worldObject);
-        Collider = ArgGuard.RequireNotNull(collider);
+        WorldObject = Ensure.RequireNotNull(worldObject);
+        Collider = Ensure.RequireNotNull(collider);
         _motionType = motionType;
         Collider.Mobility = ToColliderMobility(motionType);
         PreviousPosition = worldObject.Transform.Position;
@@ -64,7 +64,7 @@ public sealed class RigidBody2D
         get => _friction;
         set
         {
-            ArgGuard.NonNegative(value, nameof(Friction));
+            Ensure.NonNegative(value, nameof(Friction));
             _friction = value;
         }
     }
@@ -108,7 +108,7 @@ public sealed class RigidBody2D
         get => _mass;
         set
         {
-            ArgGuard.Positive(value, nameof(Mass));
+            Ensure.Positive(value, nameof(Mass));
             _mass = value;
         }
     }
@@ -119,7 +119,7 @@ public sealed class RigidBody2D
         get => _momentOfInertia;
         set
         {
-            ArgGuard.Positive(value, nameof(MomentOfInertia));
+            Ensure.Positive(value, nameof(MomentOfInertia));
             _momentOfInertia = value;
         }
     }
@@ -134,7 +134,7 @@ public sealed class RigidBody2D
     /// </summary>
     public void SetMassFromDensity(float density = 1f)
     {
-        ArgGuard.Positive(density);
+        Ensure.Positive(density);
         var properties = ShapeMassProperties2D.Calculate(WorldObject.Shape, density);
         var scale = (double)WorldObject.CollisionPose.Scale;
         ApplyMassProperties(properties, properties.Mass * scale * scale,
@@ -144,7 +144,7 @@ public sealed class RigidBody2D
     /// <summary>Sets a chosen total mass and derives the uniform-solid centroid and inertia at the current uniform scale.</summary>
     public void SetMassFromShape(float mass)
     {
-        ArgGuard.Positive(mass);
+        Ensure.Positive(mass);
         var properties = ShapeMassProperties2D.Calculate(WorldObject.Shape).WithMass(mass);
         var scale = (double)WorldObject.CollisionPose.Scale;
         ApplyMassProperties(properties, mass, properties.MomentOfInertia * scale * scale);
@@ -153,16 +153,16 @@ public sealed class RigidBody2D
     private void ApplyMassProperties(MassProperties2D properties, double mass, double inertia)
     {
         // Validate every conversion before changing the body, so unsupported or oversized shapes leave it intact.
-        var nextMass = ArgGuard.Positive((float)mass);
-        var nextInertia = ArgGuard.Positive((float)inertia);
+        var nextMass = Ensure.Positive((float)mass);
+        var nextInertia = Ensure.Positive((float)inertia);
         var nextCenter = properties.CenterOfMass.ToVector2();
-        ArgGuard.Finite(nextCenter);
+        Ensure.Finite(nextCenter);
         var nextWorldCenter = Vector2.Transform(nextCenter, WorldObject.Transform.Matrix);
-        ArgGuard.Finite(nextWorldCenter);
+        Ensure.Finite(nextWorldCenter);
         // Preserve the velocity field when the reference point changes on an already spinning body.
         var offset = nextWorldCenter - WorldCenterOfMass;
         var nextVelocity = LinearVelocity + AngularVelocity * new Vector2(-offset.Y, offset.X);
-        ArgGuard.Finite(nextVelocity);
+        Ensure.Finite(nextVelocity);
         Mass = nextMass;
         MomentOfInertia = nextInertia;
         LocalCenterOfMass = nextCenter;

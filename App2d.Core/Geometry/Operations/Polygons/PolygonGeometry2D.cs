@@ -49,12 +49,12 @@ public static class PolygonGeometry2D
     /// <returns>The hull vertices in counter-clockwise order.</returns>
     public static Vector2[] ConvexHull(IEnumerable<Vector2> source)
     {
-        ArgGuard.ThrowIfNull(source);
+        Ensure.ThrowIfNull(source);
         var input = source.ToArray();
-        ArgGuard.ThrowIf(input.Any(point => !NumericValidation.IsFinite(point)), "Hull points must be finite.", nameof(source));
+        Ensure.ThrowIf(input.Any(point => !NumericValidation.IsFinite(point)), "Hull points must be finite.", nameof(source));
 
         var points = input.Distinct().OrderBy(point => point.X).ThenBy(point => point.Y).ToArray();
-        ArgGuard.ThrowIf(points.Length < 3, "A convex hull requires at least three distinct points.", nameof(source));
+        Ensure.ThrowIf(points.Length < 3, "A convex hull requires at least three distinct points.", nameof(source));
 
         var hull = new List<Vector2>(points.Length * 2);
         foreach (var point in points)
@@ -80,7 +80,7 @@ public static class PolygonGeometry2D
         }
 
         hull.RemoveAt(hull.Count - 1);
-        ArgGuard.ThrowIf(hull.Count < 3, "A convex hull requires three non-collinear points.", nameof(source));
+        Ensure.ThrowIf(hull.Count < 3, "A convex hull requires three non-collinear points.", nameof(source));
         return [.. hull];
     }
 

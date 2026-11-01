@@ -38,32 +38,32 @@ public sealed class SpringDamperJoint2D : IPhysicsConstraint2D
     public float RestLength
     {
         get => _restLength;
-        set => _restLength = ArgGuard.Positive(value, nameof(RestLength));
+        set => _restLength = Ensure.Positive(value, nameof(RestLength));
     }
     public Interval<float> LengthLimits
     {
         get => _lengthLimits;
         set
         {
-            ArgGuard.ThrowIf(value.IsBoundedBelow && value.Min < 0f || value.IsBoundedAbove && value.Max < 0f,
-                "Shock length limits cannot be negative.");
+            if (value.IsBoundedBelow) Ensure.NonNegative(value.Min);
+            if (value.IsBoundedAbove) Ensure.NonNegative(value.Max);
             _lengthLimits = value;
         }
     }
     public float FrequencyHertz
     {
         get => _frequencyHertz;
-        set => _frequencyHertz = ArgGuard.Positive(value, nameof(FrequencyHertz));
+        set => _frequencyHertz = Ensure.Positive(value, nameof(FrequencyHertz));
     }
     public float DampingRatio
     {
         get => _dampingRatio;
-        set => _dampingRatio = ArgGuard.NonNegative(value, nameof(DampingRatio));
+        set => _dampingRatio = Ensure.NonNegative(value, nameof(DampingRatio));
     }
 
     public void PrepareVelocity(float deltaSeconds)
     {
-        ArgGuard.Positive(deltaSeconds);
+        Ensure.Positive(deltaSeconds);
         _springImpulse = _lowerImpulse = _upperImpulse = 0f;
         if (!IsEnabled) return;
         _axis = CreateAxis();

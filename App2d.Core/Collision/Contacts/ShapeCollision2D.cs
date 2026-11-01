@@ -25,8 +25,8 @@ public static partial class ShapeCollision2D
     /// <summary>Finds the deepest penetrating contact directly from shapes and their placements, without registering objects.</summary>
     public static bool TryGetContact(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose, out CollisionContact2D contact)
     {
-        ArgGuard.ThrowIfNull(first);
-        ArgGuard.ThrowIfNull(second);
+        Ensure.ThrowIfNull(first);
+        Ensure.ThrowIfNull(second);
         var result = Dispatch(first, firstPose, second, secondPose);
         contact = result.Contact;
         return result.HasContact;

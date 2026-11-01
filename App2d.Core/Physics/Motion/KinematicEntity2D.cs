@@ -18,13 +18,13 @@ public sealed class KinematicEntity2D : IDisposable
     public KinematicEntity2D(EntityId2D id, PhysicsWorld2D physics, IShape2D shape,
         IKinematicMotion2D motion, uint collisionLayer, uint collisionMask)
     {
-        ArgGuard.ThrowIf(!id.IsValid, "A kinematic entity requires a valid entity ID.", nameof(id));
+        Ensure.ThrowIf(!id.IsValid, "A kinematic entity requires a valid entity ID.", nameof(id));
         Id = id;
-        _physics = ArgGuard.RequireNotNull(physics);
-        Motion = ArgGuard.RequireNotNull(motion);
-        WorldObject = new SpatialObject2D(ArgGuard.RequireNotNull(shape));
+        _physics = Ensure.RequireNotNull(physics);
+        Motion = Ensure.RequireNotNull(motion);
+        WorldObject = new SpatialObject2D(Ensure.RequireNotNull(shape));
         var start = motion.Position(0d);
-        ArgGuard.Finite(start);
+        Ensure.Finite(start);
         WorldObject.Transform.Position = start;
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Kinematic);
         Body.EntityId = id;
@@ -45,7 +45,7 @@ public sealed class KinematicEntity2D : IDisposable
     public Vector2 Update(float deltaSeconds)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         if (deltaSeconds == 0f)
         {
             Body.LinearVelocity = Vector2.Zero;
@@ -55,19 +55,19 @@ public sealed class KinematicEntity2D : IDisposable
         var nextTime = TimeSeconds + deltaSeconds;
         var target = Motion.Position(nextTime);
         var pathVelocity = Motion.Velocity(nextTime);
-        ArgGuard.Finite(target);
-        ArgGuard.Finite(pathVelocity);
+        Ensure.Finite(target);
+        Ensure.Finite(pathVelocity);
         var displacement = target - WorldObject.Transform.Position;
-        ArgGuard.Finite(displacement);
+        Ensure.Finite(displacement);
         Body.LinearVelocity = displacement / deltaSeconds;
-        ArgGuard.Finite(Body.LinearVelocity);
+        Ensure.Finite(Body.LinearVelocity);
         TimeSeconds = nextTime;
         return displacement;
     }
 
     internal void RestoreTime(double seconds)
     {
-        ArgGuard.NonNegative(seconds);
+        Ensure.NonNegative(seconds);
         TimeSeconds = seconds;
     }
 

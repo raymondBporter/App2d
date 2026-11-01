@@ -22,8 +22,8 @@ public static class TriangleMath2D
     internal static bool Contains<TTriangle>(TTriangle triangle, Vector2 point, double edgeTolerance, int winding)
         where TTriangle : ITriangle<TTriangle, Vector2>
     {
-        ArgGuard.Finite(point);
-        ArgGuard.NonNegative(edgeTolerance);
+        Ensure.Finite(point);
+        Ensure.NonNegative(edgeTolerance);
         var a = new Vector2d(triangle.A);
         var b = new Vector2d(triangle.B);
         var c = new Vector2d(triangle.C);
@@ -42,7 +42,7 @@ public static class TriangleMath2D
     public static void WriteVertices<TTriangle>(this TTriangle triangle, Span<Vector2> vertices)
         where TTriangle : ITriangle<TTriangle, Vector2>
     {
-        ArgGuard.ThrowIfTooShort(vertices, 3);
+        Ensure.ThrowIfTooShort(vertices, 3);
         vertices[0] = triangle.A;
         vertices[1] = triangle.B;
         vertices[2] = triangle.C;

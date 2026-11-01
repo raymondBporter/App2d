@@ -10,7 +10,7 @@ internal static class TileCellRunCodec2D
 {
     public static byte[] Encode(ReadOnlySpan<TileCell2D> tiles)
     {
-        ArgGuard.Positive(tiles.Length);
+        Ensure.Positive(tiles.Length);
         var encoded = new List<byte>(16);
         var index = 0;
         while (index < tiles.Length)
@@ -33,7 +33,7 @@ internal static class TileCellRunCodec2D
     {
         if (encoded.Length % 2 != 0)
         {
-            ArgGuard.ThrowInvalid("Encoded tile runs must be whole [cell][count] pairs.", nameof(encoded));
+            Ensure.ThrowInvalid("Encoded tile runs must be whole [cell][count] pairs.", nameof(encoded));
         }
 
         var written = 0;
@@ -42,12 +42,12 @@ internal static class TileCellRunCodec2D
             var count = encoded[pair + 1];
             if (count == 0)
             {
-                ArgGuard.ThrowInvalid("Encoded tile runs must have a positive count.", nameof(encoded));
+                Ensure.ThrowInvalid("Encoded tile runs must have a positive count.", nameof(encoded));
             }
 
             if (written + count > tiles.Length)
             {
-                ArgGuard.ThrowOutOfRange(count, "Encoded tile runs overflow the destination.");
+                Ensure.ThrowOutOfRange(count, "Encoded tile runs overflow the destination.");
             }
 
             tiles.Slice(written, count).Fill(new TileCell2D(encoded[pair]));
@@ -56,7 +56,7 @@ internal static class TileCellRunCodec2D
 
         if (written != tiles.Length)
         {
-            ArgGuard.ThrowOutOfRange(written, "Encoded tile runs do not fill the destination.");
+            Ensure.ThrowOutOfRange(written, "Encoded tile runs do not fill the destination.");
         }
     }
 }

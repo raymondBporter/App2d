@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Contracts.World;
 using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
@@ -31,10 +32,8 @@ public sealed class WorldMapAsset2D
     // Stable across manifest reordering; namespace zero preserves existing save-point IDs.
     public long WorldThingId(long localId)
     {
-        if (localId <= 0 || localId > uint.MaxValue)
-        {
-            throw new InvalidDataException($"Map '{Id}' has a thing ID outside the supported positive 32-bit range.");
-        }
+        Ensure.Positive(localId);
+        Ensure.LessThanOrEqual(localId, uint.MaxValue);
 
         return ((long)Identity << 32) | localId;
     }
@@ -124,10 +123,7 @@ public static class WorldFile2D
             if (file.StartMapId is not null)
             {
                 var index = maps.FindIndex(m => m.Id == file.StartMapId);
-                if (index < 0)
-                {
-                    throw new InvalidDataException($"Start map '{file.StartMapId}' does not exist.");
-                }
+                Ensure.NonNegative(index);
 
                 var start = maps[index];
                 maps.RemoveAt(index);

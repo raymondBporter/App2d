@@ -34,11 +34,11 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
     }
 
     /// <summary>Installs once per world, preserving any existing pair filter and collision callbacks.</summary>
-    public static PlatformCollisionRules2D Attach(PhysicsWorld2D world) => Rules.GetValue(ArgGuard.RequireNotNull(world), static world => new(world));
+    public static PlatformCollisionRules2D Attach(PhysicsWorld2D world) => Rules.GetValue(Ensure.RequireNotNull(world), static world => new(world));
 
     public PlatformSurface2D Surface(RigidBody2D body)
     {
-        ArgGuard.ThrowIfNull(body);
+        Ensure.ThrowIfNull(body);
         if (!_surfaces.TryGetValue(body, out var surface))
         {
             RequireOwned(body);
@@ -51,7 +51,7 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
     {
         RequireOwned(actor);
         RequireOwned(platform);
-        ArgGuard.ThrowIfSameReference(actor, platform, "A body cannot ignore itself as a platform.");
+        Ensure.ThrowIfSameReference(actor, platform, "A body cannot ignore itself as a platform.");
         if (!_ignored.TryGetValue(actor, out var ignored))
         {
             _ignored.Add(actor, ignored = []);
@@ -67,7 +67,7 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
 
     public void RemoveIgnoredPlatformsWhere(RigidBody2D actor, Predicate<RigidBody2D> match)
     {
-        ArgGuard.ThrowIfNull(match);
+        Ensure.ThrowIfNull(match);
         if (_ignored.TryGetValue(actor, out var ignored))
         {
             ignored.RemoveWhere(match);
@@ -104,8 +104,8 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
 
     private void RequireOwned(RigidBody2D body)
     {
-        ArgGuard.ThrowIfNull(body);
-        ArgGuard.ThrowIf(!_world.Bodies.Contains(body), "The body must belong to this platform-rules world.", nameof(body));
+        Ensure.ThrowIfNull(body);
+        Ensure.ThrowIf(!_world.Bodies.Contains(body), "The body must belong to this platform-rules world.", nameof(body));
     }
 
     private void RemoveBody(RigidBody2D body)

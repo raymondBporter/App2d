@@ -9,10 +9,10 @@ public readonly partial record struct Arc2D
 {
     public void Validate()
     {
-        ArgGuard.Finite(Center, "center");
-        ArgGuard.NonNegative(Radius, "radius");
-        ArgGuard.Finite(StartAngleRadians, "startAngleRadians");
-        ArgGuard.Finite(SweepAngleRadians, "sweepAngleRadians");
+        Ensure.Finite(Center, "center");
+        Ensure.NonNegative(Radius, "radius");
+        Ensure.Finite(StartAngleRadians, "startAngleRadians");
+        Ensure.Finite(SweepAngleRadians, "sweepAngleRadians");
     }
 
     /// <summary>Stateless validated construction.</summary>

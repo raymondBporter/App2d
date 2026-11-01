@@ -115,7 +115,7 @@ public sealed record RigLimit
     /// <summary>A quarter turn either way, for a limit the author has just added.</summary>
     public static RigLimit Starter => new();
 
-    [JsonIgnore] public Interval<float> Interval => new(ArgGuard.Finite(Min), ArgGuard.Finite(Max));
+    [JsonIgnore] public Interval<float> Interval => new(Ensure.Finite(Min), Ensure.Finite(Max));
     [JsonIgnore] public float Span => Max - Min;
 
     public bool Contains(float rotation) => rotation >= Min && rotation <= Max;
@@ -155,9 +155,6 @@ public sealed record RigLimit
     {
         Range.Check(Min, field + ".min");
         Range.Check(Max, field + ".max");
-        if (Min > Max)
-        {
-            throw new InvalidDataException($"{field}: min must not exceed max.");
-        }
+        Ensure.LessThanOrEqual(Min, Max);
     }
 }

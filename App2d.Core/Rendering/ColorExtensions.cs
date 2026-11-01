@@ -10,7 +10,7 @@ public static class ColorExtensions
     /// <summary>Replaces alpha with a normalized value, preserving RGB.</summary>
     public static Color4b WithAlpha(this Color4b color, float alpha)
     {
-        ArgGuard.Finite(alpha);
+        Ensure.Finite(alpha);
         color.A = (byte)MathF.Round(Math.Clamp(alpha, 0f, 1f) * 255f);
         return color;
     }
@@ -18,7 +18,7 @@ public static class ColorExtensions
     /// <summary>Scales the existing alpha by a normalized opacity, preserving RGB.</summary>
     public static Color4b ScaleAlpha(this Color4b color, float opacity)
     {
-        ArgGuard.Finite(opacity);
+        Ensure.Finite(opacity);
         color.A = (byte)(color.A * Math.Clamp(opacity, 0f, 1f));
         return color;
     }
@@ -26,7 +26,7 @@ public static class ColorExtensions
     /// <summary>Scales RGB channels, preserving alpha. Results are clamped to byte range and truncated.</summary>
     public static Color4b ScaleRgb(this Color4b color, float factor)
     {
-        ArgGuard.Finite(factor);
+        Ensure.Finite(factor);
         color.R = (byte)Math.Clamp(color.R * factor, 0f, 255f);
         color.G = (byte)Math.Clamp(color.G * factor, 0f, 255f);
         color.B = (byte)Math.Clamp(color.B * factor, 0f, 255f);
@@ -40,14 +40,14 @@ public static class ColorExtensions
     /// <summary>Parses an opaque #RRGGBB color.</summary>
     public static Color4b FromHexRgb(string hex)
     {
-        ArgGuard.ThrowIfNull(hex);
+        Ensure.ThrowIfNull(hex);
         return TryParseRgb(hex, out var color) ? color : throw new FormatException("Expected a #RRGGBB color.");
     }
 
     /// <summary>Parses eight RGBA hexadecimal digits.</summary>
     public static Color4b FromHexRgba(string hex)
     {
-        ArgGuard.ThrowIfNull(hex);
+        Ensure.ThrowIfNull(hex);
         return TryParseRgba(hex, out var color) ? color : throw new FormatException("Expected eight RGBA hexadecimal digits.");
     }
 
@@ -82,7 +82,7 @@ public static class ColorExtensions
     /// <summary>Clamps normalized System.Numerics components and rounds them to the nearest byte without premultiplying alpha.</summary>
     public static Color4b FromVector4(Vector4 color)
     {
-        ArgGuard.Finite(color);
+        Ensure.Finite(color);
         color = Vector4.Clamp(color, Vector4.Zero, Vector4.One);
         return new((byte)MathF.Round(color.X * 255), (byte)MathF.Round(color.Y * 255),
             (byte)MathF.Round(color.Z * 255), (byte)MathF.Round(color.W * 255));

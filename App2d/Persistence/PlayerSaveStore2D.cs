@@ -12,7 +12,7 @@ public sealed class PlayerSaveStore2D
 
     public PlayerSaveStore2D(string path)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(path);
+        Ensure.ThrowIfNullOrWhiteSpace(path);
         Path = System.IO.Path.GetFullPath(path);
     }
 
@@ -40,7 +40,7 @@ public sealed class PlayerSaveStore2D
 
     public bool TrySave(PlayerSave2D save)
     {
-        ArgGuard.ThrowIfNull(save);
+        Ensure.ThrowIfNull(save);
         try
         {
             AtomicFile.WriteAllText(Path, JsonSerializer.Serialize(save, JsonProfiles.CamelCaseInsensitive));

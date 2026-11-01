@@ -45,13 +45,13 @@ public sealed class Person2D : ICombatant2D
         float mass = 1f,
         IChunkedTileMap2D? tileMap = null)
     {
-        ArgGuard.ThrowIfNull(collision);
-        ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNull(traversal);
-        ArgGuard.Finite(spawnPoint);
-        ArgGuard.Positive(maximumHealth);
-        ArgGuard.Positive(mass);
-        ArgGuard.ThrowIf(!id.IsValid, "A person requires a valid entity ID.", nameof(id));
+        Ensure.ThrowIfNull(collision);
+        Ensure.ThrowIfNull(physics);
+        Ensure.ThrowIfNull(traversal);
+        Ensure.Finite(spawnPoint);
+        Ensure.Positive(maximumHealth);
+        Ensure.Positive(mass);
+        Ensure.ThrowIf(!id.IsValid, "A person requires a valid entity ID.", nameof(id));
         Id = id;
 
         WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(
@@ -120,7 +120,7 @@ public sealed class Person2D : ICombatant2D
 
     public void BeginFrame(float deltaSeconds)
     {
-        ArgGuard.NonNegative(deltaSeconds);
+        Ensure.NonNegative(deltaSeconds);
         LandingSpeedThisFrame = 0f;
         DownAttackBouncedThisFrame = false;
         InvulnerabilitySeconds = Math.Max(0f, InvulnerabilitySeconds - deltaSeconds);
@@ -129,8 +129,8 @@ public sealed class Person2D : ICombatant2D
 
     public void AttachActions(IPersonActionSet2D actions)
     {
-        ArgGuard.ThrowIfNull(actions);
-        StateGuard.ThrowIf(
+        Ensure.ThrowIfNull(actions);
+        Ensure.ThrowIf(
             _actions is not null,
             "The person already has an action set.");
         _actions = actions;
@@ -246,7 +246,7 @@ public sealed class Person2D : ICombatant2D
 
     public bool TryRegisterHit(EntityId2D attackSourceId, int attackId, string? hitGroup = null)
     {
-        ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
+        Ensure.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
         var key = (attackSourceId, hitGroup ?? "");
         if (_lastAttackIds.TryGetValue(key, out var lastAttackId) &&
             lastAttackId == attackId)
@@ -260,8 +260,8 @@ public sealed class Person2D : ICombatant2D
 
     public bool TakeDamage(int damage, Vector2 knockback)
     {
-        ArgGuard.Positive(damage);
-        ArgGuard.Finite(knockback);
+        Ensure.Positive(damage);
+        Ensure.Finite(knockback);
         if (IsDashing || InvulnerabilitySeconds > 0f || !IsAlive)
         {
             return false;
@@ -289,10 +289,10 @@ public sealed class Person2D : ICombatant2D
         float horizontalKnockback = DefaultDamageKnockbackX,
         float verticalKnockback = DefaultDamageKnockbackY)
     {
-        ArgGuard.Positive(damage);
-        ArgGuard.Finite(sourceX);
-        ArgGuard.Positive(horizontalKnockback);
-        ArgGuard.Positive(verticalKnockback);
+        Ensure.Positive(damage);
+        Ensure.Finite(sourceX);
+        Ensure.Positive(horizontalKnockback);
+        Ensure.Positive(verticalKnockback);
 
         float direction = MathF.Sign(Position.X - sourceX);
         if (direction == 0f)
@@ -324,7 +324,7 @@ public sealed class Person2D : ICombatant2D
     public void Reset(Vector2 spawnPoint, int? hitPoints = null)
     {
         DownAttackBouncedThisFrame = false;
-        ArgGuard.Finite(spawnPoint);
+        Ensure.Finite(spawnPoint);
         if (hitPoints is { } savedHitPoints)
         {
             Health.Reset(savedHitPoints);

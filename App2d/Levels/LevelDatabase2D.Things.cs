@@ -95,8 +95,8 @@ public sealed partial class LevelDatabase2D
     /// <summary>An <c>object</c> definition names the asset file it places; every other type takes none.</summary>
     public ThingDefinitionRecord2D CreateThingDefinition(string typeKey, string name, string? asset = null)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(typeKey);
-        ArgGuard.ThrowIfNullOrWhiteSpace(name);
+        Ensure.ThrowIfNullOrWhiteSpace(typeKey);
+        Ensure.ThrowIfNullOrWhiteSpace(name);
         var normalizedAsset = NormalizeAsset(typeKey.Trim(), asset);
         using var transaction = _connection.BeginTransaction();
         long definitionId;
@@ -118,9 +118,9 @@ public sealed partial class LevelDatabase2D
 
     public ThingDefinitionRecord2D UpdateThingDefinition(ThingDefinitionRecord2D record)
     {
-        ArgGuard.ThrowIfNull(record);
-        ArgGuard.ThrowIfNullOrWhiteSpace(record.TypeKey);
-        ArgGuard.ThrowIfNullOrWhiteSpace(record.Name);
+        Ensure.ThrowIfNull(record);
+        Ensure.ThrowIfNullOrWhiteSpace(record.TypeKey);
+        Ensure.ThrowIfNullOrWhiteSpace(record.Name);
         var normalizedAsset = NormalizeAsset(record.TypeKey, record.Asset);
         using var transaction = _connection.BeginTransaction();
         using (var command = _connection.CreateCommand())
@@ -132,7 +132,7 @@ public sealed partial class LevelDatabase2D
             command.Parameters.AddWithValue("$name", record.Name.Trim());
             command.Parameters.AddWithValue("$definition_id", record.DefinitionId);
             command.Parameters.AddWithValue("$type_key", record.TypeKey);
-            StateGuard.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing definition {record.DefinitionId} of type '{record.TypeKey}' does not exist.");
+            Ensure.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing definition {record.DefinitionId} of type '{record.TypeKey}' does not exist.");
         }
         WriteObjectReference(record.DefinitionId, normalizedAsset);
         transaction.Commit();
@@ -148,11 +148,11 @@ public sealed partial class LevelDatabase2D
         var isObject = string.Equals(typeKey, ObjectTypeKey, StringComparison.Ordinal);
         if (isObject && string.IsNullOrWhiteSpace(asset))
         {
-            throw ArgGuard.CreateInvalid("An object definition needs an asset file.", nameof(asset));
+            throw Ensure.CreateInvalid("An object definition needs an asset file.", nameof(asset));
         }
         if (!isObject && !string.IsNullOrWhiteSpace(asset))
         {
-            throw ArgGuard.CreateInvalid($"Thing type '{typeKey}' does not take an asset file.", nameof(asset));
+            throw Ensure.CreateInvalid($"Thing type '{typeKey}' does not take an asset file.", nameof(asset));
         }
         return isObject ? asset!.Trim() : null;
     }
@@ -181,12 +181,12 @@ public sealed partial class LevelDatabase2D
         using var command = _connection.CreateCommand();
         command.CommandText = "DELETE FROM thing_definitions WHERE definition_id = $definition_id;";
         command.Parameters.AddWithValue("$definition_id", definitionId);
-        StateGuard.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing definition {definitionId} does not exist.");
+        Ensure.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing definition {definitionId} does not exist.");
     }
 
     public PositionThingRecord2D CreatePositionThing(NewPositionThing2D input)
     {
-        ArgGuard.ThrowIfNull(input);
+        Ensure.ThrowIfNull(input);
         ValidateTransform(input.X, input.Y, input.Rotation);
         using var transaction = _connection.BeginTransaction();
         var definition = RequireThingDefinition(input.DefinitionId);
@@ -228,11 +228,11 @@ public sealed partial class LevelDatabase2D
 
     public PositionThingRecord2D UpdatePositionThing(PositionThingRecord2D record)
     {
-        ArgGuard.ThrowIfNull(record);
+        Ensure.ThrowIfNull(record);
         ValidateTransform(record.X, record.Y, record.Rotation);
         using var transaction = _connection.BeginTransaction();
         var definition = RequireThingDefinition(record.DefinitionId);
-        StateGuard.ThrowIf(
+        Ensure.ThrowIf(
             !string.Equals(definition.TypeKey, record.TypeKey, StringComparison.Ordinal),
             $"Thing definition {record.DefinitionId} has type '{definition.TypeKey}', not '{record.TypeKey}'.");
         using (var thing = _connection.CreateCommand())
@@ -242,7 +242,7 @@ public sealed partial class LevelDatabase2D
             thing.Parameters.AddWithValue("$enabled", record.Enabled ? 1 : 0);
             thing.Parameters.AddWithValue("$thing_id", record.ThingId);
             thing.Parameters.AddWithValue("$definition_id", record.DefinitionId);
-            StateGuard.ThrowIf(thing.ExecuteNonQuery() != 1, $"Thing {record.ThingId} does not exist.");
+            Ensure.ThrowIf(thing.ExecuteNonQuery() != 1, $"Thing {record.ThingId} does not exist.");
         }
         using (var transform = _connection.CreateCommand())
         {
@@ -251,7 +251,7 @@ public sealed partial class LevelDatabase2D
             transform.Parameters.AddWithValue("$y", record.Y);
             transform.Parameters.AddWithValue("$rotation", record.Rotation);
             transform.Parameters.AddWithValue("$thing_id", record.ThingId);
-            StateGuard.ThrowIf(transform.ExecuteNonQuery() != 1, $"Thing {record.ThingId} is missing transforms.");
+            Ensure.ThrowIf(transform.ExecuteNonQuery() != 1, $"Thing {record.ThingId} is missing transforms.");
         }
         transaction.Commit();
         return record with
@@ -265,17 +265,17 @@ public sealed partial class LevelDatabase2D
     public PositionThingRecord2D DeletePositionThing(long thingId)
     {
         var record = LoadPositionThings().SingleOrDefault(item => item.ThingId == thingId);
-        StateGuard.ThrowIf(record is null, $"Position thing {thingId} does not exist.");
+        Ensure.ThrowIf(record is null, $"Position thing {thingId} does not exist.");
         using var command = _connection.CreateCommand();
         command.CommandText = "DELETE FROM things WHERE thing_id = $thing_id;";
         command.Parameters.AddWithValue("$thing_id", thingId);
-        StateGuard.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing {thingId} does not exist.");
+        Ensure.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing {thingId} does not exist.");
         return record!;
     }
 
     public void RestorePositionThing(PositionThingRecord2D record)
     {
-        ArgGuard.ThrowIfNull(record);
+        Ensure.ThrowIfNull(record);
         ValidateTransform(record.X, record.Y, record.Rotation);
         using var transaction = _connection.BeginTransaction();
         RequireThingDefinition(record.DefinitionId);
@@ -306,16 +306,16 @@ public sealed partial class LevelDatabase2D
 
     private static void ValidateTransform(float x, float y, float rotation)
     {
-        ArgGuard.Finite(x);
-        ArgGuard.Finite(y);
-        ArgGuard.Finite(rotation);
+        Ensure.Finite(x);
+        Ensure.Finite(y);
+        Ensure.Finite(rotation);
     }
 
     private static string? NormalizeOptionalName(string? name) =>
         string.IsNullOrWhiteSpace(name) ? null : name.Trim();
 
     private static void RequireThingPiece(SqliteDataReader reader, int ordinal, long thingId, string table, string typeKey) =>
-        StateGuard.ThrowIf(
+        Ensure.ThrowIf(
             reader.IsDBNull(ordinal),
             $"Thing {thingId} of type '{typeKey}' is missing required piece '{table}'.");
 }

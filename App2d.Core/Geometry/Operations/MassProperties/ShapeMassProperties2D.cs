@@ -14,8 +14,8 @@ public static class ShapeMassProperties2D
     /// <exception cref="NotSupportedException">The shape is unbounded, unknown, or requests overlap-counted-once union mass.</exception>
     public static MassProperties2D Calculate(IShape2D shape, double density = 1d)
     {
-        ArgGuard.ThrowIfNull(shape);
-        ArgGuard.Positive(density);
+        Ensure.ThrowIfNull(shape);
+        Ensure.Positive(density);
         shape.Validate();
         return shape switch
         {
@@ -142,13 +142,13 @@ public static class ShapeMassProperties2D
         {
             inertia += part.MomentOfInertiaAbout(center);
         }
-        return new(ArgGuard.Positive(area), ArgGuard.Positive(mass), center, ArgGuard.Positive(inertia));
+        return new(Ensure.Positive(area), Ensure.Positive(mass), center, Ensure.Positive(inertia));
     }
 
     private static MassProperties2D Create(double area, Vector2d center, double polarMomentOfArea, double density)
     {
-        ArgGuard.Positive(area);
-        ArgGuard.ThrowIf(!center.IsFinite(), "The centroid must be finite.", nameof(center));
-        return new(area, ArgGuard.Positive(area * density), center, ArgGuard.Positive(polarMomentOfArea * density));
+        Ensure.Positive(area);
+        Ensure.Finite(center);
+        return new(area, Ensure.Positive(area * density), center, Ensure.Positive(polarMomentOfArea * density));
     }
 }

@@ -20,9 +20,9 @@ public static class PolygonClipping2D
     /// <returns>The number of vertices written.</returns>
     public static int ClipRectangleToHalfSpace<TRect>(TRect rectangle, Vector2 unitNormal, float offset, Span<Vector2> output) where TRect : IRect2D
     {
-        ArgGuard.ThrowIfNull(rectangle);
-        ArgGuard.ThrowIf(!rectangle.IsFinite || rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y, "Rectangle bounds must be finite and ordered.", nameof(rectangle));
-        ArgGuard.ThrowIf(output.Length < 5, "Output needs room for five vertices.", nameof(output));
+        Ensure.ThrowIfNull(rectangle);
+        Ensure.ThrowIf(!rectangle.IsFinite || rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y, "Rectangle bounds must be finite and ordered.", nameof(rectangle));
+        Ensure.ThrowIf(output.Length < 5, "Output needs room for five vertices.", nameof(output));
         Span<Vector2> corners = stackalloc Vector2[4];
         VertexGenerator2D.WriteRectangle(corners, rectangle.Min, rectangle.Max);
         return ClipConvexToHalfSpace(corners, unitNormal, offset, output);
@@ -39,18 +39,18 @@ public static class PolygonClipping2D
     /// <returns>The number of vertices written.</returns>
     public static int ClipConvexToHalfSpace(ReadOnlySpan<Vector2> subject, Vector2 unitNormal, float offset, Span<Vector2> output)
     {
-        ArgGuard.NonZero(unitNormal);
-        ArgGuard.Finite(offset);
+        Ensure.NonZero(unitNormal);
+        Ensure.Finite(offset);
         if (subject.IsEmpty)
         {
             return 0;
         }
 
-        ArgGuard.ThrowIf(output.Length < subject.Length + 1, "Output needs room for one more vertex than the subject.", nameof(output));
-        ArgGuard.ThrowIf(subject.Overlaps(output), "Input and output must not overlap.", nameof(output));
+        Ensure.ThrowIf(output.Length < subject.Length + 1, "Output needs room for one more vertex than the subject.", nameof(output));
+        Ensure.ThrowIf(subject.Overlaps(output), "Input and output must not overlap.", nameof(output));
         foreach (var point in subject)
         {
-            ArgGuard.Finite(point, nameof(subject));
+            Ensure.Finite(point, nameof(subject));
         }
 
         var count = 0;
@@ -91,16 +91,16 @@ public static class PolygonClipping2D
 
     private static List<T> Clip<T>(IReadOnlyList<T> subject, IReadOnlyList<T> clip, Func<T, Vector2> xy, Func<T, T, float, T> lerp)
     {
-        ArgGuard.ThrowIfNull(subject);
-        ArgGuard.ThrowIfNull(clip);
-        ArgGuard.ThrowIf(clip.Count < 3, "The clipping polygon needs at least three vertices.", nameof(clip));
+        Ensure.ThrowIfNull(subject);
+        Ensure.ThrowIfNull(clip);
+        Ensure.ThrowIf(clip.Count < 3, "The clipping polygon needs at least three vertices.", nameof(clip));
         var twiceArea = 0d;
         for (var i = 0; i < clip.Count; i++)
         {
             twiceArea += new Vector2d(xy(clip[i])).Cross(new(xy(clip[(i + 1) % clip.Count])));
         }
 
-        ArgGuard.ThrowIf(twiceArea == 0, "The clipping polygon needs nonzero area.", nameof(clip));
+        Ensure.NonZero(twiceArea);
         var winding = Math.Sign(twiceArea);
         var points = subject.ToList();
         for (var edge = 0; edge < clip.Count && points.Count > 0; edge++)

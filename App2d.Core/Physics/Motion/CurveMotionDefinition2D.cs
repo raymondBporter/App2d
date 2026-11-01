@@ -15,10 +15,10 @@ public sealed record CurveMotionDefinition2D
 
     public CurveMotion2D CreateMotion(Vector2 origin = default)
     {
-        ArgGuard.ThrowIfNull(Curve);
+        Ensure.ThrowIfNull(Curve);
         Curve.Validate();
-        ArgGuard.ThrowIfNull(Progress);
-        ArgGuard.ThrowIf(Progress.Any(kind => ProgressMaps.FromKind(kind).IsContinuous != true),
+        Ensure.ThrowIfNull(Progress);
+        Ensure.ThrowIf(Progress.Any(kind => ProgressMaps.FromKind(kind).IsContinuous != true),
             "Motion paths require continuous progress maps.", nameof(Progress));
         return new(Curve, PeriodSeconds, ProgressMaps.Compose(Progress), origin, Repeat);
     }

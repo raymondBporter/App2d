@@ -24,7 +24,7 @@ internal sealed class MeleeAttack2D(EntityId2D sourceId, SpatialObject2D worldOb
     // Identity belongs to this action source, not its owner: punch and kick
     // can have the same attack sequence number without suppressing each other.
     public EntityId2D SourceId { get; } = sourceId.IsValid ? sourceId
-        : throw ArgGuard.CreateInvalid("A melee attack requires a valid source ID.", nameof(sourceId));
+        : throw Ensure.CreateInvalid("A melee attack requires a valid source ID.", nameof(sourceId));
     public int AttackId { get; private set; }
     public float DurationSeconds => Profile.DurationSeconds;
     public float ElapsedSeconds => _elapsedSeconds;
@@ -52,9 +52,9 @@ internal sealed class MeleeAttack2D(EntityId2D sourceId, SpatialObject2D worldOb
     /// </summary>
     public bool Update(float deltaSeconds, Vector2 ownerPosition, float facing)
     {
-        ArgGuard.NonNegative(deltaSeconds);
-        ArgGuard.Finite(ownerPosition);
-        ArgGuard.Finite(facing);
+        Ensure.NonNegative(deltaSeconds);
+        Ensure.Finite(ownerPosition);
+        Ensure.Finite(facing);
 
         _inputBufferSeconds = Math.Max(0f, _inputBufferSeconds - deltaSeconds);
         IsDamageActive = false;
@@ -124,14 +124,14 @@ internal readonly record struct MeleeAttackProfile2D
 {
     public MeleeAttackProfile2D(float durationSeconds, float damageStartSeconds, float damageEndSeconds, float inputBufferSeconds, float forwardOffset, float verticalOffset = 0f)
     {
-        ArgGuard.Positive(durationSeconds);
-        ArgGuard.NonNegative(damageStartSeconds);
-        ArgGuard.LessThan(damageStartSeconds, durationSeconds);
-        ArgGuard.GreaterThan(damageEndSeconds, damageStartSeconds);
-        ArgGuard.AtMost(damageEndSeconds, durationSeconds);
-        ArgGuard.NonNegative(inputBufferSeconds);
-        ArgGuard.Finite(forwardOffset);
-        ArgGuard.Finite(verticalOffset);
+        Ensure.Positive(durationSeconds);
+        Ensure.NonNegative(damageStartSeconds);
+        Ensure.LessThan(damageStartSeconds, durationSeconds);
+        Ensure.GreaterThan(damageEndSeconds, damageStartSeconds);
+        Ensure.LessThanOrEqual(damageEndSeconds, durationSeconds);
+        Ensure.NonNegative(inputBufferSeconds);
+        Ensure.Finite(forwardOffset);
+        Ensure.Finite(verticalOffset);
 
         DurationSeconds = durationSeconds;
         DamageStartSeconds = damageStartSeconds;

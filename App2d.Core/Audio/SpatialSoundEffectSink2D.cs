@@ -6,9 +6,9 @@ namespace App2d.Core.Audio;
 /// <summary>Adds listener-relative falloff to a sink; the falloff function says how each cue carries. Update once per game frame.</summary>
 public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect> sounds, Func<Vector2> listenerPosition, Func<TEffect, SoundFalloff2D> falloff) : ISoundEffectSink2D<TEffect> where TEffect : struct, Enum
 {
-    private readonly ISoundEffectSink2D<TEffect> _sounds = ArgGuard.RequireNotNull(sounds);
-    private readonly Func<Vector2> _listenerPosition = ArgGuard.RequireNotNull(listenerPosition);
-    private readonly Func<TEffect, SoundFalloff2D> _falloff = ArgGuard.RequireNotNull(falloff);
+    private readonly ISoundEffectSink2D<TEffect> _sounds = Ensure.RequireNotNull(sounds);
+    private readonly Func<Vector2> _listenerPosition = Ensure.RequireNotNull(listenerPosition);
+    private readonly Func<TEffect, SoundFalloff2D> _falloff = Ensure.RequireNotNull(falloff);
     private readonly List<SpatialVoice> _voices = [];
 
     // Global/UI cues intentionally bypass spatial attenuation.
@@ -28,7 +28,7 @@ public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect
 
     public SoundEffectVoice2D BeginAt(TEffect effect, Vector2 position, float initialVolumeScale = 1f)
     {
-        ArgGuard.InRange(initialVolumeScale, 0f, 1f);
+        Ensure.InRange(initialVolumeScale, 0f, 1f);
         var falloff = GetFalloff(effect);
         // Controllable voices keep their timeline even when initially out of range.
         return BeginSpatial(effect, position, initialVolumeScale, falloff, falloff.Evaluate(position, _listenerPosition()));
@@ -37,7 +37,7 @@ public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect
     public void Update()
     {
         var listener = _listenerPosition();
-        ArgGuard.Finite(listener);
+        Ensure.Finite(listener);
         for (var i = _voices.Count - 1; i >= 0; i--)
         {
             var voice = _voices[i];

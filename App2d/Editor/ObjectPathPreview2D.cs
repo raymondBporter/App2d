@@ -9,8 +9,8 @@ internal static class ObjectPathPreview2D
 {
     public static Vector2[] Sample(Part asset, Vector2 origin, int count = 32)
     {
-        ArgGuard.ThrowIfNull(asset);
-        ArgGuard.Positive(count);
+        Ensure.ThrowIfNull(asset);
+        Ensure.Positive(count);
         if (asset.Motion is not { } definition)
         {
             return [];

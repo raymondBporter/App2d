@@ -21,7 +21,7 @@ public sealed class Grid2D<T>
 
     public Grid2D(GridSize2D size, GridGeometry2D geometry)
     {
-        ArgGuard.ThrowIf(!geometry.IsValid, "Grid geometry must be initialized.", nameof(geometry));
+        Ensure.ThrowIf(!geometry.IsValid, "Grid geometry must be initialized.", nameof(geometry));
         Size = size;
         Geometry = geometry;
         WorldBounds = geometry.GetBounds(size);
@@ -44,7 +44,7 @@ public sealed class Grid2D<T>
     public Span<T> AsSpan() => _values;
     public Span<T> GetRowSpan(int y)
     {
-        ArgGuard.InRange(y, 0, Height - 1);
+        Ensure.InRange(y, 0, Height - 1);
         return _values.AsSpan(y * Width, Width);
     }
 
@@ -54,7 +54,7 @@ public sealed class Grid2D<T>
     {
         if (!Size.Contains(cell))
         {
-            ArgGuard.ThrowOutOfRange(cell, "Cell must be inside the grid.");
+            Ensure.ThrowOutOfRange(cell, "Cell must be inside the grid.");
         }
 
         return Geometry.GetCellBounds(cell);

@@ -44,7 +44,7 @@ public readonly record struct Similarity2D
     /// <returns>A translation-only pose.</returns>
     public static Similarity2D FromTranslation(Vector2 translation)
     {
-        ArgGuard.Finite(translation);
+        Ensure.Finite(translation);
         return new Similarity2D(Vector2.UnitX, Vector2.UnitY, translation, 1f);
     }
 
@@ -59,9 +59,9 @@ public readonly record struct Similarity2D
     /// <returns>The pose.</returns>
     public static Similarity2D FromAxis(Vector2 translation, Vector2 xAxis, bool mirror = false, float scale = 1f)
     {
-        ArgGuard.Finite(translation);
-        ArgGuard.NonZero(xAxis);
-        ArgGuard.Positive(scale);
+        Ensure.Finite(translation);
+        Ensure.NonZero(xAxis);
+        Ensure.Positive(scale);
         var x = new Direction2D(xAxis).Vector * scale;
         return new Similarity2D(x, mirror ? x.PerpCw : x.PerpCcw, translation, scale);
     }
@@ -94,7 +94,7 @@ public readonly record struct Similarity2D
     /// <returns>The moved pose.</returns>
     public Similarity2D Translated(Vector2 offset)
     {
-        ArgGuard.Finite(offset);
+        Ensure.Finite(offset);
         return new Similarity2D(XAxis, YAxis, Translation + offset, Scale);
     }
 
@@ -103,7 +103,7 @@ public readonly record struct Similarity2D
     /// <returns>The scaled pose.</returns>
     public Similarity2D ScaledBy(float factor)
     {
-        ArgGuard.Positive(factor);
+        Ensure.Positive(factor);
         return new Similarity2D(XAxis * factor, YAxis * factor, Translation * factor, Scale * factor);
     }
 

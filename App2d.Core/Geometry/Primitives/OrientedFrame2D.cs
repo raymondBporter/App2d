@@ -74,7 +74,11 @@ public readonly record struct OrientedFrame2D(Vector2 Center, Vector2 Axis)
     public static Vector2 AxisFromAngle(float angleRadians) => angleRadians == 0f ? Vector2.UnitX : Polar2D.Direction(angleRadians);
 
     /// <summary>Rejects an axis that is not finite or not within <see cref="AxisTolerance"/> of unit length.</summary>
-    public static void ValidateAxis(Vector2 axis, string name) => ArgGuard.ThrowIf(!axis.IsFinite() || MathF.Abs(axis.Length() - 1f) > AxisTolerance, "The axis must be a finite unit vector.", name);
+    public static void ValidateAxis(Vector2 axis, string name)
+    {
+        Ensure.Finite(axis, name);
+        Ensure.LessThanOrEqual(MathF.Abs(axis.Length() - 1f), AxisTolerance, name);
+    }
 
     private static float Square(float value) => value * value;
 }

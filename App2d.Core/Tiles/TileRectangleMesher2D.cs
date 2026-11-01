@@ -15,10 +15,10 @@ public static class TileRectangleMesher2D
     /// </summary>
     public static void Mesh(int width, int height, KindAt getKind, List<TileCellRectangle2D> results)
     {
-        ArgGuard.Positive(width);
-        ArgGuard.Positive(height);
-        ArgGuard.ThrowIfNull(getKind);
-        ArgGuard.ThrowIfNull(results);
+        Ensure.Positive(width);
+        Ensure.Positive(height);
+        Ensure.ThrowIfNull(getKind);
+        Ensure.ThrowIfNull(results);
 
         var consumed = new bool[width * height];
         for (var y = 0; y < height; y++)

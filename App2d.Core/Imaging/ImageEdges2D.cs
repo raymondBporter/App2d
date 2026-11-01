@@ -12,8 +12,8 @@ public static class ImageEdges2D
     /// </summary>
     public static Image2D<float> GaussianBlur(this Image2D<float> source, float sigma)
     {
-        ArgGuard.ThrowIfNull(source);
-        ArgGuard.InRange(sigma, 0, 20);
+        Ensure.ThrowIfNull(source);
+        Ensure.InRange(sigma, 0, 20);
         if (sigma == 0 || source.Count == 0)
         {
             return source.Clone();
@@ -119,9 +119,9 @@ public static class ImageEdges2D
     /// </summary>
     public static Image2D<bool> HysteresisThreshold(this Image2D<float> strengths, float lowThreshold, float highThreshold)
     {
-        ArgGuard.ThrowIfNull(strengths);
-        ArgGuard.NonNegative(lowThreshold);
-        ArgGuard.AtLeast(highThreshold, lowThreshold);
+        Ensure.ThrowIfNull(strengths);
+        Ensure.NonNegative(lowThreshold);
+        Ensure.GreaterThanOrEqual(highThreshold, lowThreshold);
         var result = new Image2D<bool>(strengths.Width, strengths.Height);
         var input = strengths.AsSpan();
         var output = result.AsSpan();
@@ -133,7 +133,7 @@ public static class ImageEdges2D
             var value = input[i];
             if (!float.IsFinite(value) || value < 0)
             {
-                ArgGuard.NonNegative(value, nameof(strengths));
+                Ensure.NonNegative(value, nameof(strengths));
             }
             if (value > 0 && value >= highThreshold)
             {
@@ -176,9 +176,9 @@ public static class ImageEdges2D
     public static Image2D<bool> CannyEdges(this Image2D<float> source,
         float lowThreshold = .01f, float highThreshold = .03f, float sigma = 1.2f)
     {
-        ArgGuard.ThrowIfNull(source);
-        ArgGuard.NonNegative(lowThreshold);
-        ArgGuard.AtLeast(highThreshold, lowThreshold);
+        Ensure.ThrowIfNull(source);
+        Ensure.NonNegative(lowThreshold);
+        Ensure.GreaterThanOrEqual(highThreshold, lowThreshold);
         return source.CannyEdgeStrengths(sigma).HysteresisThreshold(lowThreshold, highThreshold);
     }
 
@@ -189,10 +189,10 @@ public static class ImageEdges2D
     /// </summary>
     public static Image2D<float> CannyEdgeStrengths(this Image2D<float> source, float sigma = 1.2f)
     {
-        ArgGuard.ThrowIfNull(source);
+        Ensure.ThrowIfNull(source);
         foreach (var value in source.AsSpan())
         {
-            ArgGuard.Finite(value, nameof(source));
+            Ensure.Finite(value, nameof(source));
         }
         var gradients = source.GaussianBlur(sigma).Sobel();
         var magnitudes = gradients.Map(static gradient => gradient.Length());

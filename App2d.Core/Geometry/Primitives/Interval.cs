@@ -15,13 +15,13 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
     [JsonConstructor]
     public Interval(T min, T max)
     {
-        ArgGuard.Number(min);
-        ArgGuard.Number(max);
+        Ensure.Number(min);
+        Ensure.Number(max);
         if (T.IsPositiveInfinity(min))
-            ArgGuard.ThrowOutOfRange(min, "The minimum must be finite or negative infinity.");
+            Ensure.ThrowOutOfRange(min, "The minimum must be finite or negative infinity.");
         if (T.IsNegativeInfinity(max))
-            ArgGuard.ThrowOutOfRange(max, "The maximum must be finite or positive infinity.");
-        ArgGuard.ThrowIf(min > max, "The minimum cannot exceed the maximum.", nameof(max));
+            Ensure.ThrowOutOfRange(max, "The maximum must be finite or positive infinity.");
+        Ensure.ThrowIf(min > max, "The minimum cannot exceed the maximum.", nameof(max));
         Min = min;
         Max = max;
     }
@@ -76,9 +76,9 @@ public static class Interval
 
     /// <summary>The interval from a finite lower endpoint to positive infinity.</summary>
     public static Interval<T> AtLeast<T>(T min) where T : IFloatingPointIeee754<T> =>
-        new(ArgGuard.Finite(min), T.PositiveInfinity);
+        new(Ensure.Finite(min), T.PositiveInfinity);
 
     /// <summary>The interval from negative infinity to a finite upper endpoint.</summary>
     public static Interval<T> AtMost<T>(T max) where T : IFloatingPointIeee754<T> =>
-        new(T.NegativeInfinity, ArgGuard.Finite(max));
+        new(T.NegativeInfinity, Ensure.Finite(max));
 }

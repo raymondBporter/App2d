@@ -13,8 +13,8 @@ public sealed class EntityIdSequence2D
 
     public EntityIdSequence2D(EntityIdAllocator2D ids, int capacity)
     {
-        ArgGuard.ThrowIfNull(ids);
-        ArgGuard.Positive(capacity);
+        Ensure.ThrowIfNull(ids);
+        Ensure.Positive(capacity);
         _rangeStart = ids.ReserveRange(capacity);
         _capacity = capacity;
     }
@@ -23,7 +23,7 @@ public sealed class EntityIdSequence2D
 
     public EntityId2D Next()
     {
-        StateGuard.ThrowIf(Position == _capacity, "The entity creation sequence is exhausted.");
+        Ensure.NotEqual(Position, _capacity);
         return new EntityId2D(_rangeStart + Position++);
     }
 }

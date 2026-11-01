@@ -19,8 +19,8 @@ public static partial class Distance2D
     /// <returns>The gap when separated, or the negated minimum escape translation when overlapping.</returns>
     public static float SignedDistanceBetweenConvexPolygons(ReadOnlySpan<Vector2> first, ReadOnlySpan<Vector2> second, float firstRadius = 0f, float secondRadius = 0f)
     {
-        ArgGuard.ThrowIfTooShort(first, 1);
-        ArgGuard.ThrowIfTooShort(second, 1);
+        Ensure.ThrowIfTooShort(first, 1);
+        Ensure.ThrowIfTooShort(second, 1);
         return Gjk2D.SignedDistance(new ConvexProxy2D(first, firstRadius), new ConvexProxy2D(second, secondRadius));
     }
 

@@ -21,7 +21,7 @@ public sealed class SemiImplicitEulerIntegrator2D : IPhysicsIntegrator2D
                 IntegrateTransform(body, deltaSeconds);
                 return;
             default:
-                throw ArgGuard.CreateOutOfRange(
+                throw Ensure.CreateOutOfRange(
                     body.MotionType,
                     "Unknown body motion type.");
         }

@@ -14,7 +14,7 @@ public static class ShapeDiameter2D
     /// <summary>Built-in shapes use analytic formulas or exact vertex pairs; custom convex support mappings use bounded numerical refinement.</summary>
     public static float Calculate(IShape2D shape)
     {
-        ArgGuard.ThrowIfNull(shape);
+        Ensure.ThrowIfNull(shape);
         return shape switch
         {
             Circle2D circle => circle.Diameter,

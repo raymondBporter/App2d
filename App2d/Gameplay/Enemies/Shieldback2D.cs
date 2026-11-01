@@ -8,7 +8,7 @@ namespace App2d.Gameplay.Enemies;
 public sealed class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
 {
     private bool _simulationEnabled = true;
-    public PatrolEnemy2D Enemy { get; } = ArgGuard.RequireNotNull(enemy);
+    public PatrolEnemy2D Enemy { get; } = Ensure.RequireNotNull(enemy);
     public ICombatant2D Combatant => Enemy;
     public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.Shieldback,
         Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, Enemy.Facing,
@@ -25,8 +25,8 @@ public sealed class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.NonNegative(deltaSeconds);
-        ArgGuard.Finite(targetPosition);
+        Ensure.NonNegative(deltaSeconds);
+        Ensure.Finite(targetPosition);
         if (_simulationEnabled)
         {
             Enemy.Update(deltaSeconds);
