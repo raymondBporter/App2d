@@ -19,6 +19,61 @@ public sealed class RenderMaterialDefinition2DTests
     private static readonly Func<string, Part?> Parts = AuthoredCatalog.Load(TestModels.AuthoredRoot).Parts.GetValueOrDefault;
 
     [Fact]
+    public void InkIsAssignedExplicitlyAndMissingSurfacesDoNotDraw()
+    {
+        var collision = new PartGeometry { Geometry = Circle2D.Builder.Create(1), Collision = new() };
+        var stroke = new PartGeometry
+        {
+            A = "root",
+            B = "tip",
+            Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
+            Material = RenderMaterialDefinition2D.Ink
+        };
+        static Vector3 World(string id) => id == "tip" ? Vector3.UnitY : Vector3.Zero;
+        var drawing = new PuppetDrawing();
+        drawing.Build([stroke], World);
+        var visible = drawing.Mesh.Vertices.ToArray();
+        Assert.NotEmpty(visible);
+        drawing.Build([stroke, collision], World);
+        Assert.Equal(visible, drawing.Mesh.Vertices.ToArray());
+        Assert.Null(collision.Material);
+
+        stroke.Material = new();
+        drawing.Build([stroke], World);
+        Assert.Equal(0, drawing.Mesh.Count);
+        collision.Material = new();
+        drawing.Build([collision], World);
+        Assert.Equal(0, drawing.Mesh.Count);
+        collision.Material = new() { Outline = RenderOutlineDefinition2D.Ink };
+        drawing.Build([collision], World);
+        Assert.True(drawing.Mesh.Count > 0);
+        Assert.Null(collision.Material.Fill);
+    }
+
+    [Fact]
+    public void ShippedGeometryDeclaresItsCurveAndOutlineStyles()
+    {
+        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
+        Assert.Empty(catalog.Errors);
+        var geometry = catalog.Models.Keys.Concat(catalog.Variants.Keys).SelectMany(id => catalog.Resolve(id).Parts)
+            .Concat(catalog.Parts.Values.SelectMany(p => p.Geometry.Select(g => g.ResolveMaterial(p.Materials))));
+        foreach (var part in geometry.Where(p => p.Material is not null))
+        {
+            var material = part.RenderMaterial;
+            if (part.Geometry is ICurve2D || part.SpatialCurve is not null)
+            {
+                Assert.NotNull(material.Fill);
+                Assert.True(material.StrokeWidth > 0, part.Id);
+            }
+            if (material.Outline is { } outline)
+            {
+                Assert.NotNull(outline.Color);
+                Assert.NotNull(outline.Width);
+            }
+        }
+    }
+
+    [Fact]
     public void StrokeWidthInheritsFromNamedMaterialAndSurvivesVariantEditing()
     {
         var model = TestModels.Creature();
@@ -150,7 +205,7 @@ public sealed class RenderMaterialDefinition2DTests
             }
         };
         var drawing = new PuppetDrawing();
-        drawing.Build("#000000", .02f, [part], _ => Vector3.Zero);
+        drawing.Build([part], _ => Vector3.Zero);
         var colors = drawing.Mesh.Vertices.ToArray().Select(vertex => vertex.Color).ToArray();
         Assert.Contains(ColorExtensions.FromHexRgb("#123456"), colors);
         Assert.Contains(ColorExtensions.FromHexRgb("#abcdef"), colors);
@@ -241,7 +296,7 @@ public sealed class RenderMaterialDefinition2DTests
             {
                 A = PartLocation.Origin, Frame = PartLocation.Origin,
                 Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(1, 0) }.Validated(),
-                VertexZ = [.1f, .2f], Material = new() { Fill = "#224466", Outline = new() }
+                VertexZ = [.1f, .2f], Material = new() { Fill = "#224466", Outline = RenderOutlineDefinition2D.Ink }
             }]
         };
         prop.Validate();

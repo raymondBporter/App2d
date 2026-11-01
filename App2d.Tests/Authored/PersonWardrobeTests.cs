@@ -131,7 +131,7 @@ public sealed class PersonWardrobeTests
             },
         };
         var drawing = new PuppetDrawing();
-        drawing.Build("#000000", .04f, [part], _ => Vector3.Zero);
+        drawing.Build([part], _ => Vector3.Zero);
         var red = drawing.Mesh.Vertices.ToArray().Where(v => v.Color.R == 255 && v.Color.G == 0).ToArray();
         Assert.NotEmpty(red);
         foreach (var vertex in red)
@@ -141,7 +141,7 @@ public sealed class PersonWardrobeTests
             Assert.InRange(p.Z, -.0001f, 0);
         }
         // Resizing the body also resizes the paint, without changing a clothing socket or prop scale.
-        drawing.Build("#000000", .04f, [part with { ScaleX = 4 }], _ => Vector3.Zero);
+        drawing.Build([part with { ScaleX = 4 }], _ => Vector3.Zero);
         Assert.InRange(drawing.Mesh.Max.X, 1.999f, 2.001f);
     }
 
@@ -164,8 +164,7 @@ public sealed class PersonWardrobeTests
             }
 
             Assert.DoesNotContain(entity.Equipment, e => e.Prop.Id.EndsWith("-tunic", StringComparison.Ordinal));
-            Assert.Null(entity.Model.Parts.Single(p => p.Id == "head").RenderMaterial.Outline?.Width);
-            Assert.All(entity.Equipment.Where(e => e.Prop.Usage != "prop"), e => Assert.Equal(entity.Model.Base.LineWidth, e.Prop.LineWidth));
+            Assert.Equal(RenderOutlineDefinition2D.Ink.Width, entity.Model.Parts.Single(p => p.Id == "head").RenderMaterial.Outline?.Width);
             var wrap = entity.Equipment.Single(e => e.Prop.Id.EndsWith("-hide-wrap", StringComparison.Ordinal));
             var shell = wrap.Prop.Geometry[0].Mesh!;
             var layers = PersonWardrobeDepths.From(entity.Model);

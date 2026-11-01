@@ -150,8 +150,6 @@ public static class PersonTemplate
         {
             Id = Id,
             Name = "Person",
-            Ink = study.Ink,
-            LineWidth = study.LineWidth,
             Controls = [.. study.Controls.Select(c => new ModelControl { Id = c.Id, Parent = parents.GetValueOrDefault(c.Id), Rest = c.Rest, Scale = ScaleOf(c.Id) })],
             Constraints = [.. study.Chains.Select(RigConstraint (c) =>
             {

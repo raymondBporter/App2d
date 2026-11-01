@@ -35,7 +35,7 @@ public static class PuppetTemplates
                     Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(),
                     A = from,
                     B = to,
-                    Material = new() { StrokeWidth = .045f }
+                    Material = RenderMaterialDefinition2D.Ink
                 });
             }
         }
@@ -89,7 +89,7 @@ public static class PuppetTemplates
             Material = new()
             {
                 Fill = "#d8e9db",
-                Outline = new()
+                Outline = RenderOutlineDefinition2D.Ink
             }
         });
         puppet.Parts.Add(new()
@@ -99,13 +99,9 @@ public static class PuppetTemplates
             A = Humanoid.Head,
             ScaleX = .58f,
             ScaleY = .58f,
+            Material = new() { Fill = "#fff8e7", Outline = RenderOutlineDefinition2D.Ink },
             Layer = -.12f
         });
-        foreach (var part in puppet.Parts)
-        {
-            part.Material ??= part.Geometry is ICurve2D ? new RenderMaterialDefinition2D()
-                : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
-        }
         puppet.Motions[0].Name = "Pose study";
         puppet.Validate();
         return puppet;

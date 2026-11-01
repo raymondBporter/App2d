@@ -1,11 +1,9 @@
 {
   "format": "app2d-model",
-  "version": 12,
+  "version": 13,
   "id": "pterosaur",
   "name": "Pterosaur",
   "structureRevision": 1,
-  "ink": "#302632",
-  "lineWidth": 0.028,
   "parameters": [
     {
       "id": "wings",
@@ -666,7 +664,10 @@
           }
         ],
         "fill": "#9e5f7e",
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "body",
       "b": "body-up",
@@ -716,7 +717,10 @@
       "material": {
         "fill": "#302632",
         "strokeWidth": 0.025,
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "far-leg",
       "b": "far-foot",
@@ -738,7 +742,10 @@
       "material": {
         "fill": "#302632",
         "strokeWidth": 0.021,
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "far-foot",
       "b": "far-toe-0",
@@ -760,7 +767,10 @@
       "material": {
         "fill": "#302632",
         "strokeWidth": 0.021,
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "far-foot",
       "b": "far-toe-1",
@@ -782,7 +792,10 @@
       "material": {
         "fill": "#302632",
         "strokeWidth": 0.021,
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "far-foot",
       "b": "far-toe-2",
@@ -846,7 +859,10 @@
           }
         ],
         "fill": "#b56e8b",
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "body",
       "b": "body-up",
@@ -896,7 +912,10 @@
       "material": {
         "fill": "#302632",
         "strokeWidth": 0.025,
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "near-leg",
       "b": "near-foot",
@@ -918,7 +937,10 @@
       "material": {
         "fill": "#302632",
         "strokeWidth": 0.021,
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "near-foot",
       "b": "near-toe-0",
@@ -940,7 +962,10 @@
       "material": {
         "fill": "#302632",
         "strokeWidth": 0.021,
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "near-foot",
       "b": "near-toe-1",
@@ -962,7 +987,10 @@
       "material": {
         "fill": "#302632",
         "strokeWidth": 0.021,
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "near-foot",
       "b": "near-toe-2",
@@ -989,7 +1017,10 @@
       },
       "material": {
         "fill": "#805473",
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "body",
       "b": "body-up",
@@ -1015,7 +1046,10 @@
       },
       "material": {
         "fill": "#805473",
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "body",
       "b": "body-up",
@@ -1045,7 +1079,10 @@
       },
       "material": {
         "fill": "#e4b364",
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "head",
       "b": "head-up",
@@ -1071,7 +1108,10 @@
       },
       "material": {
         "fill": "#ba829d",
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "head",
       "b": "head-up",
@@ -1102,7 +1142,10 @@
       },
       "material": {
         "fill": "#edbd71",
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "head",
       "b": "head-up",
@@ -1133,7 +1176,10 @@
       },
       "material": {
         "fill": "#d99a54",
-        "outline": {}
+        "outline": {
+          "color": "#302632",
+          "width": 0.028
+        }
       },
       "a": "jaw",
       "b": "jaw-up",

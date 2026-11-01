@@ -175,8 +175,6 @@ public static class ProceduralFace
             Usage = "face",
             Payload = PartPayloads.Animated,
             Fitting = PartFittings.Stretch,
-            Ink = Ink,
-            LineWidth = Stroke,
             Expression = "relaxed",
         };
         foreach (var (id, position) in rest.Controls.OrderBy(c => c.Key, StringComparer.Ordinal))

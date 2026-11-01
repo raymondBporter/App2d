@@ -107,7 +107,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         {
             if (!Marked("Stroke width", materialOverridden?.StrokeWidth is not null, () => overrides!.StripMaterial(m => m with { StrokeWidth = null })))
             {
-                var width = part.RenderMaterial.StrokeWidth ?? owner?.LineWidth ?? structure?.LineWidth ?? .045f;
+                var width = part.RenderMaterial.StrokeWidth ?? .045f;
                 ImGui.SetNextItemWidth(-1);
                 if (ImGui.SliderFloat("##stroke-width", ref width, .001f, 2, "%.3f"))
                 {
@@ -124,7 +124,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         }
         if (!Marked("Fill", materialOverridden?.Fill is not null, () => overrides!.StripMaterial(m => m with { Fill = null })))
         {
-            var fill = part.RenderMaterial.Fill ?? (part.Geometry is ICurve2D ? owner?.Ink ?? structure?.Ink ?? "#222b32" : "#fff8e7");
+            var fill = part.RenderMaterial.Fill ?? (part.Geometry is ICurve2D ? "#222b32" : "#fff8e7");
             if (Ui.ColorHex("##fill", ref fill))
             {
                 change(p => p.Material = p.RenderMaterial with { Fill = fill });
@@ -134,7 +134,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
         {
             var outlined = part.RenderMaterial.Outline is not null;
             if (ImGui.Checkbox("Outline", ref outlined))
-                change(p => p.Material = p.RenderMaterial with { Outline = outlined ? p.RenderMaterial.Outline ?? new() : null });
+                change(p => p.Material = p.RenderMaterial with { Outline = outlined ? RenderOutlineDefinition2D.Ink : null });
         }
         if (!Marked("Outline width", materialOverridden?.Outline?.Width is not null, () => overrides!.StripMaterial(m => m with { Outline = m.Outline is null ? null : m.Outline with { Width = null } })))
         {
@@ -142,22 +142,18 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
             ImGui.SetNextItemWidth(-1);
             if (ImGui.SliderFloat("##outline-width", ref outlineWidth, 0, .15f, "%.3f"))
             {
-                change(p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = outlineWidth } });
+                change(p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? RenderOutlineDefinition2D.Ink) with { Width = outlineWidth } });
             }
         }
         if (part.RenderMaterial.Outline is not null && !Marked("Outline color", materialOverridden?.Outline?.Color is not null,
             () => overrides!.StripMaterial(m => m with { Outline = m.Outline is null ? null : m.Outline with { Color = null } })))
         {
-            var outlineColor = part.RenderMaterial.Outline?.Color ?? owner?.Ink ?? structure?.Ink ?? "#222b32";
+            var outlineColor = part.RenderMaterial.Outline?.Color ?? "#222b32";
             if (Ui.ColorHex("##outline-color", ref outlineColor))
             {
                 change(p => p.Material = p.RenderMaterial with { Outline = p.RenderMaterial.Outline! with { Color = outlineColor } });
             }
 
-            if (part.RenderMaterial.Outline?.Color is not null && ImGui.SmallButton("Use model ink"))
-            {
-                change(p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new()) with { Color = null } });
-            }
         }
         overrides?.Note(RigProperties.Material);
 

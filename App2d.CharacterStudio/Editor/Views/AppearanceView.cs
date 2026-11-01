@@ -70,7 +70,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         {
             session.Edit(doc, () =>
             {
-                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("shape", doc.Asset.Geometry.Select(p => p.Id)), A = origin, Frame = origin, Geometry = RoundedRectangle2D.Builder.FromSize(.12f, .1f, .02f), Material = new() { Fill = "#b97549", Outline = new() } });
+                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("shape", doc.Asset.Geometry.Select(p => p.Id)), A = origin, Frame = origin, Geometry = RoundedRectangle2D.Builder.FromSize(.12f, .1f, .02f), Material = new() { Fill = "#b97549", Outline = RenderOutlineDefinition2D.Ink } });
                 doc.Asset.Validate();
                 _partPiece = doc.Asset.Geometry.Count - 1;
             });
@@ -86,7 +86,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
                     doc.Asset.Locations.Add(new() { Id = "end", Y = .2f });
                 }
 
-                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("curve", doc.Asset.Geometry.Select(p => p.Id)), A = origin, B = doc.Asset.IsAnimated ? doc.Asset.Controls[1].Id : doc.Asset.Locations[0].Id, Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = new() { StrokeWidth = .03f } });
+                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("curve", doc.Asset.Geometry.Select(p => p.Id)), A = origin, B = doc.Asset.IsAnimated ? doc.Asset.Controls[1].Id : doc.Asset.Locations[0].Id, Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .03f } });
                 doc.Asset.Validate();
                 _partPiece = doc.Asset.Geometry.Count - 1;
             });
@@ -97,7 +97,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         {
             session.Edit(doc, () =>
             {
-                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("mesh", doc.Asset.Geometry.Select(p => p.Id)), A = origin, Frame = origin, Material = new() { Fill = "#8c4d2c", Outline = new() }, Mesh = new() { Outline = [new(-.08f, 0), new(.08f, 0), new(.08f, .12f), new(-.08f, .12f)], Thickness = .02f } });
+                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("mesh", doc.Asset.Geometry.Select(p => p.Id)), A = origin, Frame = origin, Material = new() { Fill = "#8c4d2c", Outline = RenderOutlineDefinition2D.Ink }, Mesh = new() { Outline = [new(-.08f, 0), new(.08f, 0), new(.08f, .12f), new(-.08f, .12f)], Thickness = .02f } });
                 doc.Asset.Validate();
                 _partPiece = doc.Asset.Geometry.Count - 1;
             });
@@ -128,18 +128,6 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         _partFields.Import(doc);
         _partFields.Physics(doc);
         _partFields.Motion(doc);
-
-        var ink = asset.Ink;
-        if (Ui.ColorHex("Ink", ref ink))
-        {
-            session.Change(doc, () => doc.Asset.Ink = ink);
-        }
-
-        var line = asset.LineWidth;
-        if (Ui.Drag("Line width", ref line, .001f, .001f, .2f))
-        {
-            session.Change(doc, () => doc.Asset.LineWidth = Math.Clamp(line, .001f, .2f));
-        }
 
         Ui.Header(asset.IsModule ? "Whole rig module preview" : "Part preview");
         var onWearer = session.PreviewPartOnWearer;

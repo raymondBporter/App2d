@@ -1,10 +1,9 @@
 {
   "format": "app2d-model",
-  "version": 12,
+  "version": 13,
   "id": "quadruped",
   "name": "Quadruped",
   "structureRevision": 2,
-  "ink": "#242a29",
   "parameters": [
     {
       "id": "legs",
@@ -686,7 +685,10 @@
       },
       "material": {
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "tail",
       "b": "tail-up",
@@ -712,7 +714,10 @@
       },
       "material": {
         "fill": "#527f78",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "far-hind-root",
       "b": "far-hind-joint",
@@ -736,7 +741,10 @@
       },
       "material": {
         "fill": "#527f78",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "far-hind-joint",
       "b": "far-hind-foot",
@@ -778,7 +786,10 @@
       },
       "material": {
         "fill": "#527f78",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "far-hind-foot",
       "scaleX": 0.36,
@@ -804,6 +815,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -831,6 +843,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -858,6 +871,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -884,7 +898,10 @@
       },
       "material": {
         "fill": "#527f78",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "far-front-root",
       "b": "far-front-joint",
@@ -908,7 +925,10 @@
       },
       "material": {
         "fill": "#527f78",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "far-front-joint",
       "b": "far-front-foot",
@@ -950,7 +970,10 @@
       },
       "material": {
         "fill": "#527f78",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "far-front-foot",
       "scaleX": 0.36,
@@ -976,6 +999,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1003,6 +1027,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1030,6 +1055,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1056,7 +1082,10 @@
       },
       "material": {
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "near-hind-root",
       "b": "near-hind-joint",
@@ -1080,7 +1109,10 @@
       },
       "material": {
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "near-hind-joint",
       "b": "near-hind-foot",
@@ -1122,7 +1154,10 @@
       },
       "material": {
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "near-hind-foot",
       "scaleX": 0.36,
@@ -1148,6 +1183,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1175,6 +1211,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1202,6 +1239,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1228,7 +1266,10 @@
       },
       "material": {
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "near-front-root",
       "b": "near-front-joint",
@@ -1252,7 +1293,10 @@
       },
       "material": {
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "near-front-joint",
       "b": "near-front-foot",
@@ -1294,7 +1338,10 @@
       },
       "material": {
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "near-front-foot",
       "scaleX": 0.36,
@@ -1320,6 +1367,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1347,6 +1395,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1374,6 +1423,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {
+          "color": "#242a29",
           "width": 0.012
         }
       },
@@ -1512,7 +1562,10 @@
           }
         ],
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "body",
       "b": "body-up",
@@ -1537,7 +1590,10 @@
       },
       "material": {
         "fill": "#79bdb0",
-        "outline": {}
+        "outline": {
+          "color": "#242a29",
+          "width": 0.045
+        }
       },
       "a": "head",
       "b": "head-up",
@@ -1564,6 +1620,7 @@
       "material": {
         "fill": "#242a29",
         "outline": {
+          "color": "#242a29",
           "width": 0
         }
       },
@@ -1601,6 +1658,7 @@
       "material": {
         "fill": "#242a29",
         "outline": {
+          "color": "#242a29",
           "width": 0
         }
       },
@@ -1646,6 +1704,7 @@
       "material": {
         "fill": "#242a29",
         "outline": {
+          "color": "#242a29",
           "width": 0
         }
       },

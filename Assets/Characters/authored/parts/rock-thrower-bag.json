@@ -1,13 +1,11 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "rock-thrower-bag",
   "name": "Hide stone bag with teal sling",
   "usage": "clothing",
   "attachment": "body-art",
   "pivot": "grip",
-  "ink": "#30373a",
-  "lineWidth": 0.025,
   "materials": {},
   "locations": [
     {
@@ -57,9 +55,11 @@
       },
       "material": {
         "fill": "#987347",
-        "outline": {}
+        "outline": {
+          "color": "#30373a",
+          "width": 0.025
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -91,9 +91,11 @@
       },
       "material": {
         "fill": "#538e89",
-        "outline": {}
+        "outline": {
+          "color": "#30373a",
+          "width": 0.025
+        }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

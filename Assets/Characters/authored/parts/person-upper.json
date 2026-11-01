@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "person-upper",
   "name": "Person upper body",
   "usage": "upper-body",
@@ -134,11 +134,17 @@
         }
       ],
       "fill": "#b97549",
-      "outline": {}
+      "outline": {
+        "color": "#222b32",
+        "width": 0.045
+      }
     },
     "skin": {
       "fill": "#fff8e7",
-      "outline": {}
+      "outline": {
+        "color": "#222b32",
+        "width": 0.045
+      }
     }
   },
   "locations": [],
@@ -157,6 +163,7 @@
         }
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "chest",
@@ -183,6 +190,7 @@
         "softness": 1
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "left-shoulder",
@@ -222,6 +230,7 @@
         "softness": 1
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "right-shoulder",
@@ -393,7 +402,10 @@
       },
       "material": {
         "fill": "#d8e9db",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
       "a": "waist",
       "b": "chest",

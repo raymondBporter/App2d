@@ -33,12 +33,12 @@ public sealed class PartAssetTests : IDisposable
         Id = id,
         Name = "Glove",
         Usage = "glove",
-        Materials = { ["leather"] = new() { Fill = fill, Outline = new() } },
+        Materials = { ["leather"] = new() { Fill = fill, Outline = RenderOutlineDefinition2D.Ink } },
         Locations = [new() { Id = "cuff", Y = .12f, Layer = -.01f }],
         Geometry =
         [
             new() { Id = "palm", A = PartLocation.Origin, Geometry = Ellipse2D.Builder.Create(new(.06f, .05f)), Material = new() { Asset = "leather" } },
-            new() { Id = "cuff-line", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = new() { StrokeWidth = .02f } },
+            new() { Id = "cuff-line", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .02f } },
             new() { Id = "cuff-mesh", A = PartLocation.Origin, Frame = PartLocation.Origin, Material = new() { Fill = fill }, Mesh = new() { Outline = [new(-.03f, .1f), new(.03f, .1f), new(.03f, .14f), new(-.03f, .14f)], Thickness = .02f } },
         ],
 

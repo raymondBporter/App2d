@@ -65,8 +65,7 @@ public sealed class PuppetAuthoringTests
 
         var stroke = ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "root", "tip");
         ModelAuthoring.SetPartGeometry(model, stroke.Id, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f));
-        Assert.NotNull(stroke.RenderMaterial.Fill);
-        Assert.NotNull(stroke.RenderMaterial.Outline);
+        Assert.Equal(RenderMaterialDefinition2D.Ink, stroke.RenderMaterial);
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public sealed class PuppetAuthoringTests
     {
         var empty = PuppetDefinition.FromJson(new PuppetDefinition().ToJson());
         var drawing = new PuppetDrawing();
-        drawing.Build(empty.Ink, empty.LineWidth, empty.Parts, _ => Vector3.Zero, rest: id => empty.Controls.First(c => c.Id == id).Rest.XYZ);
+        drawing.Build(empty.Parts, _ => Vector3.Zero, rest: id => empty.Controls.First(c => c.Id == id).Rest.XYZ);
         Assert.Equal(0, drawing.Mesh.Count);
     }
 
@@ -252,7 +251,7 @@ public sealed class PuppetAuthoringTests
         var drawing = new PuppetDrawing();
         for (var i = 0; i <= 30; i++)
         {
-            drawing.Build(puppet.Ink, puppet.LineWidth, puppet.Parts, PuppetReferencePose.Sample(puppet, puppet.Motions[0], i * .04).World, rest: id => puppet.Controls.First(c => c.Id == id).Rest.XYZ);
+            drawing.Build(puppet.Parts, PuppetReferencePose.Sample(puppet, puppet.Motions[0], i * .04).World, rest: id => puppet.Controls.First(c => c.Id == id).Rest.XYZ);
             Assert.True(drawing.Mesh.TriangleCount > 100);
             Assert.True(float.IsFinite(drawing.Mesh.Min.X) && float.IsFinite(drawing.Mesh.Max.Y));
         }

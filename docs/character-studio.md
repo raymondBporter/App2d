@@ -190,7 +190,7 @@ Use **New > Appearance: hair / clothing** to start from hair, beard, skirt, or a
 Right-click an existing appearance asset to duplicate it. The **Appearance** workspace previews the
 selected asset on a wearer; choose the socket and drag the gold silhouette points, or edit their
 coordinates. Each piece has fill, outline, depth and thickness controls. The waist depth guide shows
-where the arms, legs, belt and wrap surfaces sit. **Match body ink** copies the model's stroke style.
+where the arms, legs, belt and wrap surfaces sit. Stroke and outline styles belong to each piece's material.
 **Equip on wearer** adds the asset; remove the old style under **Entity > Equipment** when replacing it.
 **Save all** saves both artwork and equipment. Undo/redo covers both. The player reads its appearance
 from the Hero's equipment, including an optional back-view asset, independently of carried weapons.

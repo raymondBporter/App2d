@@ -14,7 +14,7 @@ public static class PartGeometryBuilder
         A = PartLocation.Origin,
         Frame = PartLocation.Origin,
         Mesh = mesh,
-        Material = new() { Fill = fill, Outline = new() }
+        Material = new() { Fill = fill, Outline = RenderOutlineDefinition2D.Ink }
     };
 
     /// <summary>Assign stable entry IDs when constructing a new asset from geometry helpers.</summary>

@@ -817,11 +817,10 @@ public sealed class EditorSession
 
     public bool NewAppearance(string id, string name, string template) => Attempt(() =>
     {
-        var model = Assets.Resolve(SubjectId);
         // A new hair starts from the game profile's hair gear when the workspace carries the profile (P9c/P11c), else the built-in default.
         var profile = Path.Combine(Assets.Root, "profiles", GameProfile.GameId + ".json");
         var hair = File.Exists(profile) ? GameProfile.FromJson(File.ReadAllText(profile)).Gear.Hair : null;
-        Assets.Create(AppearanceAuthoring.New(id, name, template, model?.Base.Ink ?? "#222b32", model?.Base.LineWidth ?? .045f,
+        Assets.Create(AppearanceAuthoring.New(id, name, template,
             source => Assets.Part(source)?.Asset ?? SeedAppearance?.Invoke(source), hair));
         Open(id);
     }, $"Created appearance '{id}'. Edit the outline, then equip it on an entity and save all.");
@@ -829,15 +828,12 @@ public sealed class EditorSession
     /// <summary>A new library part with one shape in its local frame.</summary>
     public bool NewPart(string id, string name) => Attempt(() =>
     {
-        var model = Assets.Resolve(SubjectId);
         var part = new Part
         {
             Id = id,
             Name = name,
-            Ink = model?.Base.Ink ?? "#222b32",
-            LineWidth = model?.Base.LineWidth ?? .045f,
             Geometry = [new() { Id = "shape", A = PartLocation.Origin, Frame = PartLocation.Origin,
-                Geometry = Core.Shapes.RoundedRectangle2D.Builder.FromSize(.16f, .12f, .03f), Material = new() { Fill = "#b97549", Outline = new() } }],
+                Geometry = Core.Shapes.RoundedRectangle2D.Builder.FromSize(.16f, .12f, .03f), Material = new() { Fill = "#b97549", Outline = RenderOutlineDefinition2D.Ink } }],
         };
         part.Validate();
         Assets.Create(part);

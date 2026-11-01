@@ -19,7 +19,7 @@ public static class PterosaurTemplate
 
     public static CharacterModel Model(string id = "pterosaur", string name = "Pterosaur")
     {
-        var model = new CharacterModel { Id = id, Name = name, Ink = "#302632", LineWidth = .028f };
+        var model = new CharacterModel { Id = id, Name = name };
         void Control(string key, string? parent, float x, float y, float z = 0) => model.Controls.Add(new()
         {
             Id = key,
@@ -46,7 +46,7 @@ public static class PterosaurTemplate
         }
         PartGeometry Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IShape2D? geometry = null)
         {
-            var part = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Layer = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
+            var part = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Layer = depth, Material = new() { Fill = fill, Outline = RenderOutlineDefinition2D.Ink with { Color = "#302632", Width = .028f } }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
             model.Parts.Add(part);
             return part;
         }
@@ -57,7 +57,7 @@ public static class PterosaurTemplate
             B = b,
             Layer = depth,
             Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
-            Material = new() { Fill = model.Ink, StrokeWidth = width, Outline = new() },
+            Material = new() { Fill = "#302632", StrokeWidth = width, Outline = RenderOutlineDefinition2D.Ink with { Color = "#302632", Width = .028f } },
         });
         PartGeometry Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
             => Shape(key, a, a + "-up", w, h, x, y, depth, fill, new SimplePolygon2D { Vertices = [.. points] }.Validated());
@@ -87,13 +87,13 @@ public static class PterosaurTemplate
         Shape("head", "head", "head-up", .33f, .29f, .015f, .015f, -.16f, "#ba829d");
         Cutout("beak", "head", .35f, .23f, .30f, -.015f, -.17f, "#edbd71", new(-.5f, .5f), new(.5f, -.5f), new(-.5f, -.22f));
         Cutout("lower-beak", "jaw", .26f, .075f, .10f, -.025f, -.18f, "#d99a54", new(-.5f, .5f), new(.5f, -.4f), new(-.5f, -.5f));
-        Shape("eye", "head", "head-up", .048f, .069f, .079f, .019f, -.19f, model.Ink).Material = new()
+        Shape("eye", "head", "head-up", .048f, .069f, .079f, .019f, -.19f, "#302632").Material = new()
         {
-            Fill = model.Ink
+            Fill = "#302632"
         };
-        Cutout("brow", "head", .10f, .035f, .075f, .092f, -.19f, model.Ink, new(-.5f, .5f), new(.5f, -.10f), new(.40f, -.5f), new(-.5f, .12f)).Material = new()
+        Cutout("brow", "head", .10f, .035f, .075f, .092f, -.19f, "#302632", new(-.5f, .5f), new(.5f, -.10f), new(.40f, -.5f), new(-.5f, .12f)).Material = new()
         {
-            Fill = model.Ink
+            Fill = "#302632"
         };
         model.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
         model.Groups = [new() { Id = "wings", Targets = ["near-shoulder", "near-bend", "near-tip", "far-shoulder", "far-bend", "far-tip"] }];

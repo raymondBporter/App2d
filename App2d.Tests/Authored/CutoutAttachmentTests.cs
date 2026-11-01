@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.CharacterStudio.Authoring;
 using App2d.CharacterStudio.CharacterSeeds;
 using App2d.CharacterStudio.Editing;
@@ -21,7 +22,7 @@ public sealed class CutoutAttachmentTests
         Controls = [new() { Id = "root" }, new() { Id = "tip", Rest = new(1, 0, .2f) }, new() { Id = "direction", Parent = "tip", Rest = new(1, 1, .2f) }],
         Parts = [new() { Id = "membrane", A = "root", ScaleX = 1, ScaleY = 1,
             Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }.Validated(),
-            Material = new() { Fill = "#fff8e7", Outline = new(),
+            Material = new() { Fill = "#fff8e7", Outline = RenderOutlineDefinition2D.Ink,
                 Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(.6f, .2f), new(.9f, .2f), new(.9f, .8f), new(.6f, .8f)] }] },
             Bindings = [new() { Point = 1, Control = "tip", Toward = "direction" }, new() { Point = 2, Control = "tip", Toward = "direction" }] }]
     };

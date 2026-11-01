@@ -138,7 +138,6 @@ public sealed class WeaponOrientationTests
         {
             Id = "blade",
             Name = "Blade",
-            LineWidth = .008f,
             Geometry = [PartGeometryBuilder.Extrude([new(0, -.1f), new(1, -.1f), new(1, .1f), new(0, .1f)], .02f, "#cccccc")]
         };
         var drawing = new PuppetDrawing();
@@ -166,7 +165,7 @@ public sealed class WeaponOrientationTests
             Name = "Triangle",
             Geometry = [new PartGeometry
             {
-                Material = new() { Fill = "#c8b18a", Outline = new() },
+                Material = new() { Fill = "#c8b18a", Outline = RenderOutlineDefinition2D.Ink with { Width = .008f } },
                 A = PartLocation.Origin, Frame = PartLocation.Origin,
                 Mesh = new() { Vertices = [new(0, 0), new(1, 0), new(0, 1)], Triangles = [0, 1, 2] }
             }]

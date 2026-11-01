@@ -1,10 +1,9 @@
 {
   "format": "app2d-model",
-  "version": 12,
+  "version": 13,
   "id": "centaur",
   "name": "Centaur study",
   "structureRevision": 1,
-  "ink": "#242a29",
   "parameters": [
     {
       "id": "legs",

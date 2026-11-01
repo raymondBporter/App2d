@@ -41,7 +41,7 @@ public sealed class PartCutoverTests
         part.Geometry[0].OffsetX = 1;
         part.Geometry[0].Collision!.Mask = 3;
         part.Geometry.Add(new() { Id = "disabled", Geometry = Circle2D.Builder.Create(100), Collision = new() { Enabled = false, Mask = 16 } });
-        part.Geometry.Add(new() { Id = "decoration", Frame = "origin", Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(100, 100)), Material = new() { StrokeWidth = .1f } });
+        part.Geometry.Add(new() { Id = "decoration", Frame = "origin", Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(100, 100)), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .1f } });
         var physics = new PhysicsWorld2D();
         using var body = new AuthoredObject2D(EntityId2D.Create(), new("mixed", part, Vector2.Zero), physics, 1, 6);
         var bounds = ShapeBounds2D.Calculate(body.WorldObject.Shape);

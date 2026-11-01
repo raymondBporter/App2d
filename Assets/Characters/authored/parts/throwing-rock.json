@@ -1,12 +1,10 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "throwing-rock",
   "name": "Throwing rock",
   "usage": "prop",
   "pivot": "grip",
-  "ink": "#30373a",
-  "lineWidth": 0.025,
   "materials": {},
   "locations": [
     {
@@ -66,9 +64,11 @@
       },
       "material": {
         "fill": "#858b86",
-        "outline": {}
+        "outline": {
+          "color": "#30373a",
+          "width": 0.025
+        }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

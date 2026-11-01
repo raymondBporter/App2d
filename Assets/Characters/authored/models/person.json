@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 12,
+  "version": 13,
   "id": "person",
   "name": "Person",
   "structureRevision": 2,
@@ -610,6 +610,7 @@
         }
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "chest",
@@ -636,6 +637,7 @@
         "softness": 1
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "left-shoulder",
@@ -675,6 +677,7 @@
         "softness": 1
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "left-hip",
@@ -714,6 +717,7 @@
         "softness": 1
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "right-shoulder",
@@ -753,6 +757,7 @@
         "softness": 1
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "right-hip",
@@ -924,7 +929,10 @@
       },
       "material": {
         "fill": "#d8e9db",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
       "a": "hips",
       "b": "chest",
@@ -1181,11 +1189,17 @@
         }
       ],
       "fill": "#b97549",
-      "outline": {}
+      "outline": {
+        "color": "#222b32",
+        "width": 0.045
+      }
     },
     "skin": {
       "fill": "#fff8e7",
-      "outline": {}
+      "outline": {
+        "color": "#222b32",
+        "width": 0.045
+      }
     }
   },
   "slots": [],

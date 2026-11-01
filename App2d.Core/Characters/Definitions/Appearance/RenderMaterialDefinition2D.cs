@@ -4,16 +4,19 @@ using System.Numerics;
 
 namespace App2d.Core.Characters;
 
-/// <summary>Serializable appearance for an authored shape or curve. Colors are #rrggbb; null outline values inherit the asset's ink style.</summary>
+/// <summary>Serializable appearance for authored geometry. Colors are #rrggbb; a null fill or outline does not draw that surface.</summary>
 public sealed record RenderMaterialDefinition2D
 {
+    /// <summary>A ready-to-use dark stroke. Assign explicitly to geometry that should render.</summary>
+    public static RenderMaterialDefinition2D Ink { get; } = new() { Fill = "#222b32", StrokeWidth = .045f };
+
     /// <summary>Named material on the owning model. Inline values override its defaults.</summary>
     public string? Asset { get; init; }
     /// <summary>Surface artwork in normalized shape coordinates; null inherits, an empty list clears it.</summary>
     public List<PartPaint>? Paint { get; init; }
-    /// <summary>Solid fill for a shape, or the center color of a thick curve. A null curve fill uses the asset's ink.</summary>
+    /// <summary>Solid fill for a shape, or the center color of a thick curve.</summary>
     public string? Fill { get; init; }
-    /// <summary>Curve thickness in world units. Null inherits the owning asset's line width.</summary>
+    /// <summary>Curve thickness in world units.</summary>
     public float? StrokeWidth { get; init; }
     public RenderOutlineDefinition2D? Outline { get; init; }
     /// <summary>Image path relative to the authored asset root.</summary>
@@ -109,9 +112,12 @@ public sealed record RenderMaterialDefinition2D
     }
 }
 
-/// <summary>World-unit outline style. Null color or width inherits the owning model or prop's ink setting.</summary>
+/// <summary>World-unit outline style. Partial values can override a named material's outline.</summary>
 public sealed record RenderOutlineDefinition2D
 {
+    /// <summary>A ready-to-use dark outline. Assign explicitly to materials that should have an outline.</summary>
+    public static RenderOutlineDefinition2D Ink { get; } = new() { Color = "#222b32", Width = .045f };
+
     public string? Color { get; init; }
     public float? Width { get; init; }
 

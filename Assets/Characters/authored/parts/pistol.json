@@ -1,11 +1,10 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "pistol",
   "name": "Pistol",
   "usage": "prop",
   "pivot": "grip",
-  "lineWidth": 0.011,
   "materials": {},
   "locations": [
     {
@@ -52,9 +51,11 @@
       },
       "material": {
         "fill": "#714b3e",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.011
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -96,9 +97,11 @@
       },
       "material": {
         "fill": "#465963",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.011
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -150,9 +153,11 @@
       },
       "material": {
         "fill": "#dce5e7",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.011
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -204,9 +209,11 @@
       },
       "material": {
         "fill": "#c5a26b",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.011
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -258,9 +265,11 @@
       },
       "material": {
         "fill": "#293941",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.011
+        }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

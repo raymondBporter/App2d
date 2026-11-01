@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 12,
+  "version": 13,
   "id": "stalker",
   "name": "Stalker",
   "structureRevision": 2,
@@ -172,6 +172,7 @@
         }
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "hip-0",
@@ -191,6 +192,7 @@
         }
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "knee-0",
@@ -210,6 +212,7 @@
         }
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "hip-1",
@@ -229,6 +232,7 @@
         }
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "knee-1",
@@ -248,6 +252,7 @@
         }
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "hip-2",
@@ -267,6 +272,7 @@
         }
       },
       "material": {
+        "fill": "#222b32",
         "strokeWidth": 0.045
       },
       "a": "knee-2",
@@ -288,7 +294,10 @@
       },
       "material": {
         "fill": "#c9e0b8",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
       "a": "body",
       "scaleX": 0.95,

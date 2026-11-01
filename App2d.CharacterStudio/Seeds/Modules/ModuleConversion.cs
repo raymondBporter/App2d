@@ -173,8 +173,6 @@ public static class ModuleConversion
             Usage = plan.Usage,
             Payload = PartPayloads.Animated,
             Fitting = plan.Fitting,
-            Ink = model.Ink,
-            LineWidth = model.LineWidth,
             Connection = plan.Anchor,
             Materials = model.Materials.ToDictionary(m => m.Key, m => m.Value, StringComparer.Ordinal),
         };

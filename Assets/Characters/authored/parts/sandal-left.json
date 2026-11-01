@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "sandal-left",
   "name": "Leather sandal / left",
   "usage": "clothing",
@@ -51,10 +51,10 @@
       "material": {
         "fill": "#68432e",
         "outline": {
+          "color": "#222b32",
           "width": 0.008
         }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -87,10 +87,10 @@
       "material": {
         "fill": "#bc8853",
         "outline": {
+          "color": "#222b32",
           "width": 0.008
         }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -123,10 +123,10 @@
       "material": {
         "fill": "#bc8853",
         "outline": {
+          "color": "#222b32",
           "width": 0.008
         }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

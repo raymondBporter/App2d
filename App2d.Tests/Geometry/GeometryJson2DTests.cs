@@ -134,8 +134,8 @@ public sealed class GeometryJson2DTests
             Name = "Test prop",
             Geometry =
             [
-                new PartGeometry { A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new PolylineCurve2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }.Validated(), VertexZ = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },
-                new PartGeometry { A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }.Validated(), Material = new() { Fill = "#c8b18a", Outline = new() } }
+                new PartGeometry { A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new PolylineCurve2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }.Validated(), VertexZ = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = RenderOutlineDefinition2D.Ink } },
+                new PartGeometry { A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }.Validated(), Material = new() { Fill = "#c8b18a", Outline = RenderOutlineDefinition2D.Ink } }
             ]
         };
         PartGeometryBuilder.Named(prop);

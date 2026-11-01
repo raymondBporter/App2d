@@ -28,18 +28,6 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
             session.Change(document, () => document.Asset.Name = name);
         }
 
-        var ink = model.Ink;
-        if (Ui.ColorHex("Ink", ref ink))
-        {
-            session.Change(document, () => document.Asset.Ink = ink);
-        }
-
-        var line = model.LineWidth;
-        if (Ui.Slider("Outline width", ref line, .005f, .12f))
-        {
-            session.Change(document, () => document.Asset.LineWidth = line);
-        }
-
         _parameters.Draw(document, Resolved);
         Dependents(document);
         MotionSets(document);

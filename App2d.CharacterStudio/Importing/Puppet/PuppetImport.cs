@@ -69,8 +69,6 @@ public static partial class PuppetImport
         {
             Id = modelId,
             Name = modelName,
-            Ink = puppet.Ink,
-            LineWidth = puppet.LineWidth,
             Controls = [.. puppet.Controls.Select(c => new ModelControl { Id = ids[c.Id], Parent = parents.GetValueOrDefault(ids[c.Id]), Rest = c.Rest })],
             Constraints = [.. chains],
             Measures = measures,
@@ -88,8 +86,6 @@ public static partial class PuppetImport
         var converted = new PuppetDefinition
         {
             Name = puppet.Name,
-            Ink = puppet.Ink,
-            LineWidth = puppet.LineWidth,
             Motions = [.. puppet.Motions.Select(m => m with
             {
                 Keys = [.. m.Keys.Select(k => k with { Points = k.Points.ToDictionary(p => ids[p.Key], p => p.Value, StringComparer.Ordinal) })],

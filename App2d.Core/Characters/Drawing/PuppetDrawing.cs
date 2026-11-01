@@ -46,7 +46,7 @@ public sealed class PuppetDrawing
         TextureRoot = model.TextureRoot;
         var managed = model.Base.Skins.SelectMany(s => s.Attachments.Values).SelectMany(a => a.Values).ToHashSet(StringComparer.Ordinal);
         // The pose's part channels (P7a): a show track hides a part for its span, a fit track multiplies its leaf scale.
-        Add(model.Base.Ink, model.Base.LineWidth, model.Parts.Where(p => !managed.Contains(p.Id) && pose.Visible(p)).Select(pose.Drawn), pose.World,
+        Add(model.Parts.Where(p => !managed.Contains(p.Id) && pose.Visible(p)).Select(pose.Drawn), pose.World,
             pose.Placement, id => model.Rest[id], model.RestPlacement);
         for (var i = 0; i < pose.Slots.Count; i++)
         {
@@ -58,7 +58,7 @@ public sealed class PuppetDrawing
 
             // A slot's attachment is an ordinary part with the slot's color and blend: an image keeps the slot order as its
             // depth, geometry draws at its own layer through the shared path.
-            Add(model.Base.Ink, model.Base.LineWidth, [pose.Drawn(part)], pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement,
+            Add([pose.Drawn(part)], pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement,
                 ColorExtensions.FromVector4(slot.Color), slot.Slot.Blend, -i * .001f);
         }
         AddAttachments(model, pose);
@@ -103,7 +103,7 @@ public sealed class PuppetDrawing
         }
 
         var attachment = evaluated.Attachment;
-        Add(attachment.Asset.Ink, attachment.Asset.LineWidth, evaluated.DrawnParts(), evaluated.World, evaluated.Frame, evaluated.Rest, evaluated.RestFrame);
+        Add(evaluated.DrawnParts(), evaluated.World, evaluated.Frame, evaluated.Rest, evaluated.RestFrame);
     }
 
     /// <summary>
@@ -126,7 +126,7 @@ public sealed class PuppetDrawing
         {
             if (geometry.Binding is ColliderBindings.Actor or ColliderBindings.Control)
             {
-                Add(entity.Asset.Ink, entity.Asset.LineWidth, [geometry.Definition.ResolveMaterial(entity.Asset.Materials)], World, Bone, Rest, RestBone, seconds: local.SampleSeconds);
+                Add([geometry.Definition.ResolveMaterial(entity.Asset.Materials)], World, Bone, Rest, RestBone, seconds: local.SampleSeconds);
                 continue;
             }
             var frame = geometry.Frame(placed);
@@ -146,7 +146,7 @@ public sealed class PuppetDrawing
                 Along = 0,
                 Stretch = false,
             };
-            Add(entity.Asset.Ink, entity.Asset.LineWidth, [drawing], _ => frame.Origin, _ => frame, seconds: local.SampleSeconds);
+            Add([drawing], _ => frame.Origin, _ => frame, seconds: local.SampleSeconds);
         }
     }
 
@@ -177,28 +177,28 @@ public sealed class PuppetDrawing
             var evaluated = PoseEvaluator.Preview(attachment, LayeredFrame2D.Identity, seconds);
             if (!evaluated.Hidden)
             {
-                Add(attachment.Asset.Ink, attachment.Asset.LineWidth, evaluated.DrawnParts(), evaluated.World,
+                Add(evaluated.DrawnParts(), evaluated.World,
                     evaluated.Frame, evaluated.Rest, evaluated.RestFrame, spatial: spatial, layer: layer);
             }
 
             return;
         }
         var (world, frame) = attachment.Lookups(LayeredFrame2D.Identity);
-        Add(attachment.Asset.Ink, attachment.Asset.LineWidth, attachment.Parts, world, frame, world, frame, spatial: spatial, physicalDepth: id => attachment.Asset.Point(id)?.Z ?? 0, seconds: seconds, layer: layer);
+        Add(attachment.Parts, world, frame, world, frame, spatial: spatial, physicalDepth: id => attachment.Asset.Point(id)?.Z ?? 0, seconds: seconds, layer: layer);
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup, replacing the drawing. The only drawing path for both prototype and authored models.</summary>
-    public void Build(string inkColor, float lineWidth, IEnumerable<PartGeometry> parts, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
+    public void Build(IEnumerable<PartGeometry> parts, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         Clear();
-        Add(inkColor, lineWidth, parts, world, bone, rest, restBone);
+        Add(parts, world, bone, rest, restBone);
     }
 
     /// <summary>
     /// Appends parts over a world-position lookup. <paramref name="tint"/> multiplies every fill and stroke (a slot's color);
     /// <paramref name="blend"/> and <paramref name="imageDepth"/> apply to image parts, which a slot orders by depth.
     /// </summary>
-    public void Add(string inkColor, float lineWidth, IEnumerable<PartGeometry> parts, Func<string, Vector3> world,
+    public void Add(IEnumerable<PartGeometry> parts, Func<string, Vector3> world,
         Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Color4b? tint = null, string blend = "normal", float? imageDepth = null, Frame3D? spatial = null, Func<string, float>? physicalDepth = null, double seconds = 0, float layer = 0)
     {
         foreach (var source in parts)
@@ -212,7 +212,6 @@ public sealed class PuppetDrawing
             var part = ReferenceEquals(material, source.Material) ? source : source with { Material = material };
             var colorMultiplier = material.AnimatedTint * new Vector4(1, 1, 1, material.Alpha ?? 1);
             var surfaceTint = Tinted(Tinted(tint ?? Color4b.White, ColorExtensions.FromHexRgba(material.Tint ?? "ffffffff")), ColorExtensions.FromVector4(colorMultiplier));
-            var ink = Tinted(ColorExtensions.FromHexRgb(inkColor), surfaceTint);
             if (material.Texture is not null)
             {
                 AddImage(part, PartAttachment2D.FrameOf(part, world, bone, rest), surfaceTint, blend, imageDepth, spatial, physicalDepth?.Invoke(part.A) ?? 0);
@@ -224,28 +223,28 @@ public sealed class PuppetDrawing
                 var lifted = PartPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone, rest));
                 if (spatial is { } meshFrame) lifted = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, bone, rest), meshFrame, physicalDepth?.Invoke(part.A) ?? 0);
                 Mesh.Layer += PartAttachment2D.FrameOf(part, world, bone, rest).Layer;
-                MeshDrawing.Add(Mesh, mesh, material, inkColor, lineWidth, point => lifted.TransformPoint(point.ToVector3()), tint: surfaceTint);
+                MeshDrawing.Add(Mesh, mesh, material, point => lifted.TransformPoint(point.ToVector3()), tint: surfaceTint);
                 if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
                 continue;
             }
             var outline = material.Outline;
-            var outlineWidth = outline?.Width ?? lineWidth;
-            var outlineColor = outline?.Color is { } color ? Tinted(ColorExtensions.FromHexRgb(color), surfaceTint) : ink;
+            var outlineWidth = outline?.Width ?? 0;
+            var outlineColor = outline?.Color is { } color ? Tinted(ColorExtensions.FromHexRgb(color), surfaceTint) : (Color4b?)null;
             if (part.Geometry is ICurve2D || part.SpatialCurve is not null)
             {
                 var path = PartContours2D.Contour(part, world, bone, rest, restBone);
                 if (spatial is { } curveFrame) path = path.TransformedBy(curveFrame, physicalDepth?.Invoke(part.A) ?? 0);
-                var strokeColor = material.Fill is { } fill ? Tinted(ColorExtensions.FromHexRgb(fill), surfaceTint) : ink;
+                var strokeColor = material.Fill is { } fill ? Tinted(ColorExtensions.FromHexRgb(fill), surfaceTint) : (Color4b?)null;
+                var strokeWidth = material.StrokeWidth ?? 0;
                 if (part.Geometry is RoundedPolylineCurve2D)
                 {
                     // One ribbon with shared cross-sections: no seams at the fillets and fewer triangles than per-segment lines.
-                    var strokeWidth = material.StrokeWidth ?? lineWidth;
-                    if (outline is not null && outlineWidth > 0)
+                    if (outlineColor is { } edgeColor && outlineWidth > 0)
                     {
-                        Mesh.Ribbon(path, outlineColor, strokeWidth + outlineWidth * 2);
+                        Mesh.Ribbon(path, edgeColor, strokeWidth + outlineWidth * 2);
                     }
 
-                    Mesh.Ribbon(path, strokeColor, strokeWidth);
+                    if (strokeColor is { } centerColor && strokeWidth > 0) Mesh.Ribbon(path, centerColor, strokeWidth);
                     if (Mesh.Count > start)
                     {
                         Batches.Add(new(start, Mesh.Count - start));
@@ -255,12 +254,13 @@ public sealed class PuppetDrawing
                 }
                 for (var i = 1; i < path.Count; i++)
                 {
-                    if (outline is not null && outlineWidth > 0)
+                    if (outlineColor is { } edgeColor && outlineWidth > 0)
                     {
-                        Mesh.Line(path[i - 1], path[i], (material.StrokeWidth ?? lineWidth) + outlineWidth * 2, outlineColor, path.LayerAt(i - 1), path.LayerAt(i));
+                        Mesh.Line(path[i - 1], path[i], strokeWidth + outlineWidth * 2, edgeColor, path.LayerAt(i - 1), path.LayerAt(i));
                     }
 
-                    Mesh.Line(path[i - 1], path[i], material.StrokeWidth ?? lineWidth, strokeColor, path.LayerAt(i - 1), path.LayerAt(i));
+                    if (strokeColor is { } centerColor && strokeWidth > 0)
+                        Mesh.Line(path[i - 1], path[i], strokeWidth, centerColor, path.LayerAt(i - 1), path.LayerAt(i));
                 }
                 if (Mesh.Count > start)
                 {
@@ -295,9 +295,9 @@ public sealed class PuppetDrawing
                 }
             }
             PartPainting.Add(Mesh, part, frame, localContour, triangles, spatial, physicalDepth?.Invoke(part.A) ?? 0, surfaceTint);
-            if (outline is not null && outlineWidth > 0)
+            if (outlineColor is { } shapeEdge && outlineWidth > 0)
             {
-                Mesh.Polygon(contour, null, outlineColor, outlineWidth);
+                Mesh.Polygon(contour, null, shapeEdge, outlineWidth);
             }
 
             if (Mesh.Count > start)

@@ -516,8 +516,8 @@ public static class ModelAuthoring
             Geometry = geometry,
             A = a,
             B = b,
-            Material = geometry is ICurve2D ? new RenderMaterialDefinition2D()
-                : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() }
+            Material = geometry is ICurve2D ? RenderMaterialDefinition2D.Ink
+                : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = RenderOutlineDefinition2D.Ink }
         };
         model.Parts.Add(part);
         model.Validate();
@@ -573,9 +573,11 @@ public static class ModelAuthoring
 
         part.Geometry = geometry;
         part.Mesh = null;
+        if (geometry is ICurve2D && part.Material is { } material && material.Resolve(model.Materials).StrokeWidth is null)
+            part.Material = material with { StrokeWidth = RenderMaterialDefinition2D.Ink.StrokeWidth };
         if (part.Geometry is IShape2D && part.Material is { Fill: null, Outline: null })
         {
-            part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
+            part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = RenderOutlineDefinition2D.Ink };
         }
 
         model.Validate();

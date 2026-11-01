@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "lift",
   "name": "Path lift",
   "usage": "world",

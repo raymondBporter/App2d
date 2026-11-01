@@ -13,7 +13,7 @@ internal static class MeshDrawing
 {
     private static readonly Vector3 LightDirection = Vector3.Normalize(new(-.3f, .5f, -1));
 
-    public static void Add(CharacterMesh mesh, PartMesh solid, RenderMaterialDefinition2D material, string inkColor, float lineWidth, Func<Vector3f, Vector3> place, Frame3D? frame = null, Color4b? tint = null)
+    public static void Add(CharacterMesh mesh, PartMesh solid, RenderMaterialDefinition2D material, Func<Vector3f, Vector3> place, Frame3D? frame = null, Color4b? tint = null)
     {
         var handedness = 1;
         if (frame is { } placed && !Orientation3D.TryGetHandedness(placed.XAxis, placed.YAxis, placed.ZAxis, out handedness))
@@ -35,8 +35,8 @@ internal static class MeshDrawing
         var analysis = new TriangleMeshAnalysis3D(vertices, solid.Triangles, handedness);
         var fill = material.Fill is { } fillHex ? ColorExtensions.FromHexRgb(fillHex) : (Color4b?)null;
         var outline = material.Outline;
-        var ink = outline?.Color is { } outlineHex ? ColorExtensions.FromHexRgb(outlineHex) : ColorExtensions.FromHexRgb(inkColor);
-        var outlineWidth = outline?.Width ?? lineWidth;
+        var ink = outline?.Color is { } outlineHex ? ColorExtensions.FromHexRgb(outlineHex) : (Color4b?)null;
+        var outlineWidth = outline?.Width ?? 0;
         var face = 0;
         foreach (var (a, b, c) in MeshTopology.Triangles(CollectionsMarshal.AsSpan(solid.Triangles)))
         {
@@ -51,7 +51,7 @@ internal static class MeshDrawing
                 mesh.Triangle(vertices[a], vertices[b], vertices[c], PuppetDrawing.Tinted(color.ScaleRgb(light), tint));
             }
         }
-        if (outline is null || outlineWidth <= 0)
+        if (ink is null || outlineWidth <= 0)
         {
             return;
         }
@@ -60,7 +60,7 @@ internal static class MeshDrawing
         mesh.Layer -= .0005f;
         foreach (var edge in analysis.FeatureEdges(-Vector3.UnitZ, .7f, 1e-5f))
         {
-            mesh.Line(vertices[edge.A], vertices[edge.B], outlineWidth, PuppetDrawing.Tinted(ink, tint));
+            mesh.Line(vertices[edge.A], vertices[edge.B], outlineWidth, PuppetDrawing.Tinted(ink.Value, tint));
         }
         mesh.Layer = layer;
     }

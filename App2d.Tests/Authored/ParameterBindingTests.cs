@@ -315,7 +315,7 @@ public sealed class ParameterBindingTests
         Assert.Contains("\"about\": 0.025", json);
         Assert.DoesNotContain("\"build\"", json);
         Assert.Equal(json, CharacterModel.FromJson(json).ToJson());
-        // The file on disk is at the current version (12, P11c) and is what the asset writes.
+        // The file on disk is at the current version and is what the asset writes.
         var file = File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
         Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", file);
         Assert.Equal(json, file);

@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "boot-right",
   "name": "Short leather boot / right",
   "usage": "clothing",
@@ -66,10 +66,10 @@
       "material": {
         "fill": "#754c38",
         "outline": {
+          "color": "#222b32",
           "width": 0.01
         }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -102,10 +102,10 @@
       "material": {
         "fill": "#3d302b",
         "outline": {
+          "color": "#222b32",
           "width": 0.01
         }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -138,10 +138,10 @@
       "material": {
         "fill": "#b98a59",
         "outline": {
+          "color": "#222b32",
           "width": 0.01
         }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

@@ -150,7 +150,7 @@ public sealed record PartLocation
 public sealed record Part
 {
     public const string FormatId = "app2d-part";
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 5;
     /// <summary>The expression word that hides an animated instance for its span: a back view, a cleared face.</summary>
     public const string None = "none";
     /// <summary>Separates an instance ID from a target inside it in a wearer's clip (<c>face/left-brow</c>).</summary>
@@ -177,8 +177,6 @@ public sealed record Part
     public string Payload { get; set; } = PartPayloads.Static;
     /// <summary>One of <see cref="PartFittings"/>: what an instance's leaf fit does to this composite asset.</summary>
     public string Fitting { get; set; } = PartFittings.Stretch;
-    public string Ink { get; set; } = "#222b32";
-    public float LineWidth { get; set; } = .045f;
     /// <summary>Shared surfaces the payload selects through <c>material.asset</c>, like a model's.</summary>
     public Dictionary<string, RenderMaterialDefinition2D> Materials { get; set; } = [];
     public List<PartLocation> Locations { get; set; } = [];
@@ -282,8 +280,6 @@ public sealed record Part
         {
             Id = Id,
             Name = Name,
-            Ink = Ink,
-            LineWidth = LineWidth,
             Controls = Controls,
             Constraints = Constraints,
             Groups = Groups,
@@ -335,8 +331,6 @@ public sealed record Part
         AuthoredAsset.RequireId(Usage, owner + " usage");
         Require(PartPayloads.All.Contains(Payload, StringComparer.Ordinal), $"{owner}: unknown payload '{Payload}'.");
         Require(PartFittings.All.Contains(Fitting, StringComparer.Ordinal), $"{owner}: unknown fitting '{Fitting}' (one of {string.Join(", ", PartFittings.All)}).");
-        Limit.Color(Ink, owner + " ink");
-        new Limit(.001f, 1).Check(LineWidth, owner + " lineWidth");
         Require(Materials is not null && Locations is not null && Geometry is not null, $"{owner}: collections cannot be null.");
         Require(Controls is not null && Constraints is not null && Groups is not null && Exposed is not null && Layers is not null && Clips is not null && Expressions is not null, $"{owner}: collections cannot be null.");
         Require(Parameters is not null && Presets is not null && Measures is not null, $"{owner}: collections cannot be null.");

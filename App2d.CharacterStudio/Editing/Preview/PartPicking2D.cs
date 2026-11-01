@@ -21,7 +21,7 @@ public static class PartPicking2D
 
     /// <summary>The picking score of a part in an evaluated pose of a resolved model, with the pose's animated artwork fit applied.</summary>
     public static float Distance(PartGeometry part, ResolvedModel model, EvaluatedPose pose, Vector3 point) =>
-        Distance(pose.Fitted(part), pose.World, point, pose.Placement, id => model.Rest[id], model.RestPlacement, model.Base.LineWidth);
+        Distance(pose.Fitted(part), pose.World, point, pose.Placement, id => model.Rest[id], model.RestPlacement);
 
     /// <summary>The picking score of an evaluated animated instance (P7a): the best of its visible pieces in their nested pose.</summary>
     public static float Distance(EvaluatedAttachment attachment, Vector3 point)
@@ -34,7 +34,7 @@ public static class PartPicking2D
         var best = float.PositiveInfinity;
         foreach (var part in attachment.DrawnParts())
         {
-            best = MathF.Min(best, Distance(part, attachment.World, point, attachment.Frame, attachment.Rest, attachment.RestFrame, attachment.Attachment.Asset.LineWidth));
+            best = MathF.Min(best, Distance(part, attachment.World, point, attachment.Frame, attachment.Rest, attachment.RestFrame));
         }
 
         return best;
@@ -52,7 +52,7 @@ public static class PartPicking2D
     {
         if (attachment.Instance.Hidden) return float.PositiveInfinity;
         var (world, frame) = attachment.Lookups(LayeredFrame2D.Identity);
-        return attachment.Parts.Select(part => Distance(part, world, point, frame, world, frame, attachment.Asset.LineWidth,
+        return attachment.Parts.Select(part => Distance(part, world, point, frame, world, frame,
             spatial, attachment.Asset.Point(part.A)?.Z ?? 0)).DefaultIfEmpty(float.PositiveInfinity).Min();
     }
 
@@ -60,7 +60,7 @@ public static class PartPicking2D
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
-    public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, float lineWidth = .045f, Frame3D? spatial = null, float physicalZ = 0)
+    public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Frame3D? spatial = null, float physicalZ = 0)
     {
         var p = new Vector2(point.X, point.Y);
         if (part.Hidden) return float.PositiveInfinity;
@@ -71,7 +71,7 @@ public static class PartPicking2D
             var nearest = float.PositiveInfinity;
             foreach (var (a, b) in MeshTopology.Edges(path.Count, closed: false))
                 nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, path[a].XY, path[b].XY));
-            return nearest / MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
+            return nearest / MathF.Max(part.Material?.StrokeWidth ?? 0, .06f);
         }
         if (part.Mesh is { } solid)
         {
@@ -108,12 +108,12 @@ public static class PartPicking2D
             var nearest = float.PositiveInfinity;
             foreach (var (a, b) in MeshTopology.Edges(contour.Count, closed))
                 nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, contour[a].XY, contour[b].XY));
-            return nearest / MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
+            return nearest / MathF.Max(part.Material?.StrokeWidth ?? 0, .06f);
         }
 
         if (part.Geometry is ICurve2D curve)
         {
-            var pickWidth = MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
+            var pickWidth = MathF.Max(part.Material?.StrokeWidth ?? 0, .06f);
             if (part.Frame is not null || part.Bindings is { Count: > 0 } || part.ScaleX != part.ScaleY)
             {
                 var path = PartContours2D.Contour(part, world, bone, rest, restBone);

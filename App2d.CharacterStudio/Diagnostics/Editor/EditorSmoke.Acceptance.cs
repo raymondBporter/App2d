@@ -528,7 +528,7 @@ internal sealed partial class EditorSmoke
         {
             var s = shell.Session; s.Compare.Clear();
             const string lower = "lower", upper = "upper";
-            var model = new CharacterModel { Id = "my-centaur", Name = "My centaur", Ink = "#242a29", LineWidth = .045f };
+            var model = new CharacterModel { Id = "my-centaur", Name = "My centaur" };
             model.Controls.Add(new() { Id = "root", Rest = new(0, .92f, 0) });
             model.Parts.Add(new() { Id = "root-mark", A = "root", Geometry = Ellipse2D.Builder.Create(new(.02f, .02f)), Material = new() { Fill = "#000000" }, Hidden = true });
             model.Sockets.Add(new() { Id = "mount", Control = "root", Frame = CharacterModel.Locomotion, Usage = ModulePlans.LowerBody });

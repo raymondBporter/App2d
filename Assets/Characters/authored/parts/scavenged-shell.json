@@ -1,12 +1,10 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "scavenged-shell",
   "name": "Scavenged shell shield",
   "usage": "prop",
   "pivot": "grip",
-  "ink": "#303b32",
-  "lineWidth": 0.03,
   "materials": {},
   "locations": [
     {
@@ -76,9 +74,11 @@
       },
       "material": {
         "fill": "#4b6653",
-        "outline": {}
+        "outline": {
+          "color": "#303b32",
+          "width": 0.03
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -140,9 +140,11 @@
       },
       "material": {
         "fill": "#91a276",
-        "outline": {}
+        "outline": {
+          "color": "#303b32",
+          "width": 0.03
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -179,9 +181,11 @@
       },
       "material": {
         "fill": "#738e65",
-        "outline": {}
+        "outline": {
+          "color": "#303b32",
+          "width": 0.03
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -218,9 +222,11 @@
       },
       "material": {
         "fill": "#738e65",
-        "outline": {}
+        "outline": {
+          "color": "#303b32",
+          "width": 0.03
+        }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

@@ -9,7 +9,7 @@ public static class AppearanceAuthoring
     public static readonly string[] Templates = ["hair", "beard", "skirt", "sandal", "boot", "blank"];
 
     /// <param name="hair">The hair prop the "hair" template starts from: the game profile's hair gear when the caller knows the profile, else the built-in default.</param>
-    public static Part New(string id, string name, string template, string ink, float lineWidth, Func<string, Part?>? findTemplate = null, string? hair = null)
+    public static Part New(string id, string name, string template, Func<string, Part?>? findTemplate = null, string? hair = null)
     {
         var source = template switch
         {
@@ -32,8 +32,6 @@ public static class AppearanceAuthoring
         art.Id = id;
         art.Name = name;
         foreach (var clip in art.Clips) clip.Model = id;
-        art.Ink = ink;
-        art.LineWidth = lineWidth;
         art.BackView = null;
         if (source is null)
         {

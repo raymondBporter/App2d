@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "brute-hair",
   "name": "brute / wild hair",
   "usage": "hair",
@@ -90,9 +90,11 @@
       },
       "material": {
         "fill": "#69402a",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -204,9 +206,11 @@
       },
       "material": {
         "fill": "#69402a",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

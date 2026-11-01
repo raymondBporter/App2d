@@ -19,7 +19,7 @@ public static class CentaurStudy
 
     public static CharacterModel Model()
     {
-        var model = new CharacterModel { Id = Id, Name = "Centaur study", Ink = "#242a29", LineWidth = .045f };
+        var model = new CharacterModel { Id = Id, Name = "Centaur study" };
         model.Controls.Add(new() { Id = "root", Rest = new(0, .92f, 0) });
         // A model carries at least one drawing part; the root's mark is hidden, the modules draw everything.
         model.Parts.Add(new() { Id = "root-mark", A = "root", Geometry = Core.Shapes.Ellipse2D.Builder.Create(new(.02f, .02f)), Material = new() { Fill = "#000000" }, Hidden = true });

@@ -45,7 +45,7 @@ public sealed class PartGeometryTests
         Assert.Equal(frame.Layer, contour.LayerAt(0));
 
         var drawing = new PuppetDrawing();
-        drawing.Build(tail.Ink, tail.LineWidth, [fitted], evaluated.World, evaluated.Frame);
+        drawing.Build([fitted], evaluated.World, evaluated.Frame);
         Assert.True(drawing.Mesh.Count > 0);
         // A physical thickness of .1 survives the planar drawing-layer offset and the X-only fit.
         var depths = drawing.Mesh.Vertices.ToArray().Select(v => v.Position.Z).ToArray();

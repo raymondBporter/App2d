@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
@@ -27,7 +28,7 @@ public static class PersonWardrobe
     {
         var head = model.Parts.FindIndex(p => p.Id == Head);
         var headMaterial = model.Parts[head].RenderMaterial;
-        if (model.Materials.TryAdd("skin", new() { Fill = headMaterial.Resolve(model.Materials).Fill ?? "#fff8e7", Outline = new() }) && headMaterial.Asset is null)
+        if (model.Materials.TryAdd("skin", new() { Fill = headMaterial.Resolve(model.Materials).Fill ?? "#fff8e7", Outline = RenderOutlineDefinition2D.Ink }) && headMaterial.Asset is null)
         {
             model.Parts[head] = model.Parts[head] with
             {
@@ -144,8 +145,6 @@ public static class PersonWardrobe
                 Name = name + " / " + side,
                 Usage = "clothing",
                 Attachment = socket,
-
-                LineWidth = .045f
             };
             var sandal = Shoe("sandal", "Leather sandal");
             Patch(sandal, "#68432e", 0,
@@ -156,7 +155,7 @@ public static class PersonWardrobe
             Patch(sandal, "#bc8853", -.038f,
                 [(.054f, .003f), (.079f, .003f), (.06f, .038f), (.037f, .033f)], thickness: .009f);
             foreach (var solid in sandal.Geometry)
-                solid.Material = solid.RenderMaterial with { Outline = new() { Width = .008f } };
+                solid.Material = solid.RenderMaterial with { Outline = RenderOutlineDefinition2D.Ink with { Width = .008f } };
             yield return sandal;
 
             var boot = Shoe("boot", "Short leather boot");
@@ -168,7 +167,7 @@ public static class PersonWardrobe
             Patch(boot, "#b98a59", -.048f,
                 [(-.052f, .135f), (.045f, .135f), (.045f, .163f), (-.052f, .163f)], thickness: .008f);
             foreach (var solid in boot.Geometry)
-                solid.Material = solid.RenderMaterial with { Outline = new() { Width = .01f } };
+                solid.Material = solid.RenderMaterial with { Outline = RenderOutlineDefinition2D.Ink with { Width = .01f } };
             yield return boot;
         }
     }
@@ -177,9 +176,6 @@ public static class PersonWardrobe
     {
         Id = id,
         Name = name,
-        Ink = "#222b32",
-        LineWidth = .045f,
-
         Usage = id.EndsWith("-hide-wrap", StringComparison.Ordinal) ? "clothing" : "hair",
         Attachment = id.EndsWith("-hide-wrap", StringComparison.Ordinal) ? BodySocket : HeadSocket,
     };

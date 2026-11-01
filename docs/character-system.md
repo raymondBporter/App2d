@@ -222,7 +222,15 @@ real 3D orientation for equipment. See the
 coordinate conventions.
 
 Materials share fill, stroke/outline, paint, tint, alpha, images, and timed texture
-frames. A texture source region is an `AxisAlignedRectangle2D`; UV creation and
+frames. Geometry has no material by default: `Material = null` keeps collision-only
+entries invisible. Visible geometry receives an explicit material. The reusable
+`RenderMaterialDefinition2D.Ink` stroke and `RenderOutlineDefinition2D.Ink` outline
+are authoring presets, assigned where wanted; they are never renderer fallbacks.
+Models and Parts have no separate ink color or line width. Missing fill or outline
+does not draw that surface; partial named-material overrides still inherit from
+their selected material.
+
+A texture source region is an `AxisAlignedRectangle2D`; UV creation and
 validation belong to that rectangle's API. The world-space image rectangle and its
 UV source region have independent sizes. Concrete geometry JSON omits the kind
 tag; interface-typed geometry retains the tag needed to select its concrete type.

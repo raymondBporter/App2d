@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "hair-short",
   "name": "Short tousled hair",
   "usage": "hair",
@@ -51,9 +51,11 @@
       },
       "material": {
         "fill": "#654334",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -165,9 +167,11 @@
       },
       "material": {
         "fill": "#654334",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

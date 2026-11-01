@@ -18,7 +18,7 @@ public static class QuadrupedTemplate
 
     public static CharacterModel Model(string id = "quadruped", string name = "Quadruped", bool triceratops = false)
     {
-        var m = new CharacterModel { Id = id, Name = name, Ink = "#242a29", LineWidth = .045f };
+        var m = new CharacterModel { Id = id, Name = name };
         void Control(string key, string? parent, float x, float y, float z = 0) => m.Controls.Add(new()
         {
             Id = key,
@@ -48,7 +48,7 @@ public static class QuadrupedTemplate
         }
         PartGeometry Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IGeometryValue2D? geometry = null)
         {
-            var p = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Layer = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
+            var p = new PartGeometry { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Layer = depth, Material = new() { Fill = fill, Outline = RenderOutlineDefinition2D.Ink with { Color = "#242a29" } }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
             m.Parts.Add(p);
             return p;
         }
@@ -98,9 +98,9 @@ public static class QuadrupedTemplate
             Shape("head", "head", "head-up", .74f, .58f, .13f, .02f, -.24f, skin);
         }
 
-        SetOutlineWidth(Shape("eye", "head", "head-up", .09f, .12f, .34f, .01f, -.31f, m.Ink), 0);
-        SetOutlineWidth(Cutout("brow", "head", .16f, .09f, .33f, .11f, -.31f, m.Ink, new(-.5f, .5f), new(.5f, -.08f), new(.35f, -.5f), new(-.5f, .1f)), 0);
-        SetOutlineWidth(Cutout("mouth", "head", .23f, .08f, .35f, -.17f, -.31f, m.Ink, new(-.5f, -.3f), new(-.1f, .5f), new(.5f, -.35f), new(.44f, -.5f), new(-.1f, .10f), new(-.42f, -.5f)), 0);
+        SetOutlineWidth(Shape("eye", "head", "head-up", .09f, .12f, .34f, .01f, -.31f, "#242a29"), 0);
+        SetOutlineWidth(Cutout("brow", "head", .16f, .09f, .33f, .11f, -.31f, "#242a29", new(-.5f, .5f), new(.5f, -.08f), new(.35f, -.5f), new(-.5f, .1f)), 0);
+        SetOutlineWidth(Cutout("mouth", "head", .23f, .08f, .35f, -.17f, -.31f, "#242a29", new(-.5f, -.3f), new(-.1f, .5f), new(.5f, -.35f), new(.44f, -.5f), new(-.1f, .10f), new(-.42f, -.5f)), 0);
         m.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
         m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.IkChains.Select(c => c.Id)] }];
         m.MotionSets = [new()

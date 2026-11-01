@@ -57,12 +57,10 @@ public sealed class PuppetDefinition
 {
     public const string FormatId = "app2d-puppet";
     /// <summary>The current prototype puppet schema; other versions are refused.</summary>
-    public const int CurrentVersion = 5;
+    public const int CurrentVersion = 6;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Name { get; set; } = "New character";
-    public string Ink { get; set; } = "#222b32";
-    public float LineWidth { get; set; } = .045f;
     public List<PuppetControl> Controls { get; set; } = [];
     public List<PuppetBone> Bones { get; set; } = [];
     public List<PuppetChain> Chains { get; set; } = [];
@@ -98,8 +96,6 @@ public sealed class PuppetDefinition
         Require(!string.IsNullOrWhiteSpace(Name), "A character name is required.");
         Require(Controls is not null && Bones is not null && Chains is not null && Parts is not null && Motions is not null, "Puppet collections cannot be null.");
         Require(Controls.Count <= 256 && Parts.Count <= 512 && Motions.Count is > 0 and <= 128, "Puppet capacity exceeded or no motions defined.");
-        Limit.Color(Ink, "ink");
-        Number(LineWidth, .001f, 1, "lineWidth");
         var controls = new Dictionary<string, PuppetControl>(StringComparer.Ordinal);
         foreach (var control in Controls)
         {

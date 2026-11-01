@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Constraints;
@@ -36,7 +37,7 @@ public sealed class JointLimitTests
         ],
         // Bend -1 puts the elbow on the side where its local rotation is positive, the side its limits below allow.
         Constraints = ik ? [new ModelChain { Id = "reach", Root = "upper", Joint = "fore", End = "hand", Bend = -1 }] : [],
-        Parts = [new() { Id = "fore-art", A = "fore", Frame = "fore", OffsetX = .25f, Geometry = Rectangle2D.Builder.FromSize(.5f, .1f), Material = new() { Fill = "#cccccc", Outline = new() } }],
+        Parts = [new() { Id = "fore-art", A = "fore", Frame = "fore", OffsetX = .25f, Geometry = Rectangle2D.Builder.FromSize(.5f, .1f), Material = new() { Fill = "#cccccc", Outline = RenderOutlineDefinition2D.Ink } }],
     };
 
     private static float Local(EvaluatedPose pose, ResolvedModel model, string id)

@@ -41,15 +41,13 @@ public sealed class CharacterModel
     /// The current model schema: point or bone controls, bone constraints, typed parameters and Part attachments.
     /// Other versions are refused rather than translated.
     /// </summary>
-    public const int CurrentVersion = 12;
+    public const int CurrentVersion = 13;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     /// <summary>Changes when controls, parents, chains or frames change; proportions and appearance never change it.</summary>
     public int StructureRevision { get; set; } = 1;
-    public string Ink { get; set; } = "#222b32";
-    public float LineWidth { get; set; } = .045f;
     /// <summary>
     /// The exposed parameters (plan section 3.5): stable IDs with units, defaults, ranges and simple bindings onto bone
     /// lengths, layout dimensions, part fitting and link positions. A variant stores values by ID; anatomy needs no code rule.
@@ -120,8 +118,6 @@ public sealed class CharacterModel
         Require(Controls is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && Attachments is not null && MotionSets is not null && Groups is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
-        Limit.Color(Ink, "ink");
-        new Limit(.001f, 1).Check(LineWidth, "lineWidth");
         Source?.Validate(owner);
 
         var controls = new Dictionary<string, ModelControl>(StringComparer.Ordinal);

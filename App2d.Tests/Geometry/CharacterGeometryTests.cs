@@ -66,7 +66,7 @@ public sealed class CharacterGeometryTests
             Angle = MathF.PI / 2,
             OffsetX = 1,
             OffsetY = .25f,
-            Material = new() { StrokeWidth = .1f },
+            Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .1f },
         };
         static Vector3 World(string id) => id == "a" ? new(3, 4, 0) : new(3, 6, 0);
         var points = PartContours2D.Contour(part, World);
@@ -80,9 +80,9 @@ public sealed class CharacterGeometryTests
         Assert.True(PartPicking2D.Distance(part, World, probe) > 1);
         Assert.True(PartPicking2D.Distance(thick, World, probe) < 1);
         var drawing = new PuppetDrawing();
-        drawing.Build("#000000", .045f, [part], World);
+        drawing.Build([part], World);
         var thinHeight = drawing.Mesh.Max.Y - drawing.Mesh.Min.Y;
-        drawing.Build("#000000", .045f, [thick], World);
+        drawing.Build([thick], World);
         Assert.True(drawing.Mesh.Max.Y - drawing.Mesh.Min.Y > thinHeight * 5);
     }
 
@@ -93,7 +93,7 @@ public sealed class CharacterGeometryTests
         {
             A = "a",
             B = "b",
-            Material = new() { StrokeWidth = .2f },
+            Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .2f },
             Geometry = new LineSegmentCurve2D { Start = new(.5f, 0), End = new(.5f, 1) }.Validated()
         };
         static Vector3 World(string id) => id == "a" ? new(2, 3, 0) : new(2, 5, 0);
@@ -145,7 +145,7 @@ public sealed class CharacterGeometryTests
     [Fact]
     public void StrokePickingKeepsItsMinimumWidthAndPointLikeSegmentTolerance()
     {
-        var part = new PartGeometry { Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), A = "a", B = "b", Material = new() { StrokeWidth = .01f }, Layer = 2 };
+        var part = new PartGeometry { Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), A = "a", B = "b", Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .01f }, Layer = 2 };
         static Vector3 World(string id) => id == "a" ? default : new(.000001f, 0, 3);
         Assert.Equal(1, PartPicking2D.Distance(part, World, new(0, .06f, 100)), 5);
         var contour = PartContours2D.Contour(part, World);

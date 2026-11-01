@@ -1,11 +1,10 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "face-person",
   "name": "Person face",
   "usage": "face",
   "payload": "animated",
-  "lineWidth": 0.027000003,
   "materials": {},
   "locations": [],
   "geometry": [

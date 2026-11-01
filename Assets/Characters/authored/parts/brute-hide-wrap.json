@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "brute-hide-wrap",
   "name": "Ochre ragged hide wrap",
   "usage": "clothing",
@@ -70,9 +70,11 @@
       },
       "material": {
         "fill": "#d7a348",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -104,9 +106,11 @@
       },
       "material": {
         "fill": "#705039",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -154,7 +158,6 @@
       "material": {
         "fill": "#765033"
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -202,7 +205,6 @@
       "material": {
         "fill": "#765033"
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

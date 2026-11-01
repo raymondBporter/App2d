@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
@@ -23,7 +24,7 @@ public sealed class RigGraphTests
             new() { Id = "flag", Parent = "hub", Node = RigNodeKinds.Bone, Link = new() { T = 1, Orientation = RigLinkOrientations.Character }, Local = new() { Rotation = .1f } },
             new() { Id = "tip", Parent = "pin", Node = RigNodeKinds.Bone, Link = new() },
         ],
-        Parts = [new() { Id = "arm", A = "hub", Frame = "hub", OffsetX = hubLength / 2, Geometry = RoundedRectangle2D.Builder.FromSize(hubLength, .1f, .02f), Material = new() { Fill = "#fff8e7", Outline = new() } }],
+        Parts = [new() { Id = "arm", A = "hub", Frame = "hub", OffsetX = hubLength / 2, Geometry = RoundedRectangle2D.Builder.FromSize(hubLength, .1f, .02f), Material = new() { Fill = "#fff8e7", Outline = RenderOutlineDefinition2D.Ink } }],
     };
 
     private static MotionClip Turn(ResolvedModel model, float hubTurn, float pinTurn = 0)

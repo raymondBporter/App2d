@@ -23,12 +23,12 @@ public sealed class PartAttachmentDrawingTests
     {
         Id = "mixed",
         Name = "Mixed",
-        Materials = { ["leather"] = new() { Fill = "#c9a27a", Outline = new() } },
+        Materials = { ["leather"] = new() { Fill = "#c9a27a", Outline = RenderOutlineDefinition2D.Ink } },
         Locations = [new() { Id = "cuff", Y = .2f, Angle = .3f, Layer = -.02f }],
         Geometry =
         [
             new() { Id = "palm", A = PartLocation.Origin, Geometry = Ellipse2D.Builder.Create(new(.08f, .06f)), Material = new() { Asset = "leather" } },
-            new() { Id = "seam", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = new() { StrokeWidth = .02f } },
+            new() { Id = "seam", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .02f } },
             new() { Id = "badge", A = "cuff", Geometry = Rectangle2D.Builder.FromSize(.1f, .1f), Material = new() { Texture = "images/badge.png" } },
             new() { Id = "cuff-mesh", A = PartLocation.Origin, Frame = PartLocation.Origin, Material = new() { Fill = "#333333" }, Mesh = new() { Outline = [new(-.03f, .1f), new(.03f, .1f), new(.03f, .14f), new(-.03f, .14f)], Thickness = .02f } },
         ],

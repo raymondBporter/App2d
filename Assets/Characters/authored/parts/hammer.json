@@ -1,11 +1,10 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "hammer",
   "name": "Hammer",
   "usage": "prop",
   "pivot": "grip",
-  "lineWidth": 0.016,
   "materials": {},
   "locations": [
     {
@@ -66,9 +65,11 @@
       },
       "material": {
         "fill": "#866344",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.016
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -120,9 +121,11 @@
       },
       "material": {
         "fill": "#714b3e",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.016
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -174,9 +177,11 @@
       },
       "material": {
         "fill": "#c5a26b",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.016
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -228,9 +233,11 @@
       },
       "material": {
         "fill": "#798c96",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.016
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -282,9 +289,11 @@
       },
       "material": {
         "fill": "#dce5e7",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.016
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -336,9 +345,11 @@
       },
       "material": {
         "fill": "#dce5e7",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.016
+        }
       },
-      "a": "origin",
       "frame": "origin"
     },
     {
@@ -390,9 +401,11 @@
       },
       "material": {
         "fill": "#465963",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.016
+        }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],

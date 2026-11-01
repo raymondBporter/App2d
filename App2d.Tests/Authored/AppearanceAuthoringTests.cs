@@ -92,7 +92,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
     [Fact]
     public void DuplicateKeepsIndependentGeometry()
     {
-        var original = AppearanceAuthoring.New("original", "Original", "skirt", "#222b32", .045f,
+        var original = AppearanceAuthoring.New("original", "Original", "skirt",
             id => PersonWardrobe.Props().Single(p => p.Id == id));
         var copy = AppearanceAuthoring.Duplicate(original, "copy", "Copy");
         copy.Geometry[0].Mesh!.Outline![0] = new(4, 4);

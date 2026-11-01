@@ -305,21 +305,26 @@ public static class StarterContent
         return clip;
     }
 
-    public static Part SpearProp() => PartGeometryBuilder.Named(new()
+    public static Part SpearProp()
     {
-        Id = Spear,
-        Name = "Spear",
-        Usage = "prop",
-        Locations = [new() { Id = EquipmentPoints.Grip }, new() { Id = EquipmentPoints.Tip, X = 1.38f, Y = 0 }, new() { Id = EquipmentPoints.SecondGrip, X = -.3f, Y = 0 }],
-        LineWidth = .013f,
-        Geometry =
-        [
-            PartGeometryBuilder.Extrude([new(-.5f, -.024f), new(1.12f, -.021f), new(1.12f, .021f), new(-.5f, .024f)], .039f, "#876646"),
-            PartGeometryBuilder.Extrude([new(-.5f, -.031f), new(-.41f, -.031f), new(-.41f, .031f), new(-.5f, .031f)], .05f, "#465963"),
-            PartGeometryBuilder.Extrude([new(1.035f, -.039f), new(1.115f, -.039f), new(1.115f, .039f), new(1.035f, .039f)], .064f, "#c5a26b"),
-            PartGeometryBuilder.Blade(1.1f, 1.17f, 1.38f, .076f, .022f, "#dce5e7"),
-        ],
-    });
+        var part = new Part
+        {
+            Id = Spear,
+            Name = "Spear",
+            Usage = "prop",
+            Locations = [new() { Id = EquipmentPoints.Grip }, new() { Id = EquipmentPoints.Tip, X = 1.38f, Y = 0 }, new() { Id = EquipmentPoints.SecondGrip, X = -.3f, Y = 0 }],
+            Geometry =
+            [
+                PartGeometryBuilder.Extrude([new(-.5f, -.024f), new(1.12f, -.021f), new(1.12f, .021f), new(-.5f, .024f)], .039f, "#876646"),
+                PartGeometryBuilder.Extrude([new(-.5f, -.031f), new(-.41f, -.031f), new(-.41f, .031f), new(-.5f, .031f)], .05f, "#465963"),
+                PartGeometryBuilder.Extrude([new(1.035f, -.039f), new(1.115f, -.039f), new(1.115f, .039f), new(1.035f, .039f)], .064f, "#c5a26b"),
+                PartGeometryBuilder.Blade(1.1f, 1.17f, 1.38f, .076f, .022f, "#dce5e7"),
+            ],
+        };
+        foreach (var geometry in part.Geometry)
+            geometry.Material = geometry.RenderMaterial with { Outline = RenderOutlineDefinition2D.Ink with { Width = .013f } };
+        return PartGeometryBuilder.Named(part);
+    }
 
     // ---- Stalker --------------------------------------------------------------------------------------------------
 

@@ -29,7 +29,6 @@ internal static partial class PlayerMoves
             Name = "Sword",
             Usage = "prop",
             Locations = [new() { Id = EquipmentPoints.Grip }, new() { Id = EquipmentPoints.Tip, X = 1.02f, Y = .03f }],
-            LineWidth = .02f,
             // A narrow, round-ended stroke keeps the grip as simple as the character's hand.
             Geometry =
         [
@@ -37,8 +36,8 @@ internal static partial class PlayerMoves
             Plate(Steel, .03f, new(.065f, -.075f), new(.88f, -.075f), new(1.02f, .03f), new(.96f, .075f), new(.065f, .075f)),
         ],
         };
-        prop.Geometry.Add(new() { Id = "shape-1", A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new LineSegmentCurve2D { Start = new(-.055f, 0), End = new(.025f, 0) }.Validated(), Material = new() { Fill = Leather, StrokeWidth = .006f, Outline = new() } });
-        return PartGeometryBuilder.Named(prop);
+        prop.Geometry.Add(new() { Id = "shape-1", A = PartLocation.Origin, Frame = PartLocation.Origin, Geometry = new LineSegmentCurve2D { Start = new(-.055f, 0), End = new(.025f, 0) }.Validated(), Material = new() { Fill = Leather, StrokeWidth = .006f, Outline = RenderOutlineDefinition2D.Ink } });
+        return Weapon(prop, .02f);
     }
 
     private static Part SheathArt()
@@ -49,7 +48,6 @@ internal static partial class PlayerMoves
             Name = "Sheath",
             Usage = "prop",
             Locations = [new() { Id = EquipmentPoints.Grip }, new() { Id = EquipmentPoints.Tip, X = .85f, Y = 0 }],
-            LineWidth = .012f,
             Geometry =
             [
                 Plate("#344b53", .064f, new(.075f, -.056f), new(.68f, -.043f), new(.85f, 0), new(.68f, .043f), new(.075f, .056f)),
@@ -64,16 +62,15 @@ internal static partial class PlayerMoves
             solid.Mesh.Vertices = [.. solid.Mesh.Vertices.Select(p => p with { Z = p.Z - .022f })];
         }
 
-        return PartGeometryBuilder.Named(prop);
+        return Weapon(prop, .012f);
     }
 
-    private static Part PistolArt() => PartGeometryBuilder.Named(new()
+    private static Part PistolArt() => Weapon(new()
     {
         Id = Pistol,
         Name = "Pistol",
         Usage = "prop",
         Locations = [new() { Id = EquipmentPoints.Grip }, new() { Id = EquipmentPoints.Tip, X = .26f, Y = .06f }, new() { Id = EquipmentPoints.Muzzle, X = .26f, Y = .06f }],
-        LineWidth = .011f,
         Geometry =
         [
             Plate(Leather, .067f, new(-.063f, -.123f), new(-.005f, -.116f), new(.031f, .036f), new(-.045f, .041f)),
@@ -83,15 +80,14 @@ internal static partial class PlayerMoves
             Block(Brass, -.069f, -.004f, -.128f, -.108f, .074f, .004f),
             Block("#293941", .195f, .26f, .03f, .089f, .089f, .006f),
         ],
-    });
+    }, .011f);
 
-    private static Part HammerArt() => PartGeometryBuilder.Named(new()
+    private static Part HammerArt() => Weapon(new()
     {
         Id = "hammer",
         Name = "Hammer",
         Usage = "prop",
         Locations = [new() { Id = EquipmentPoints.Grip }, new() { Id = EquipmentPoints.Tip, X = .8f, Y = 0 }],
-        LineWidth = .016f,
         Geometry =
         [
             Block("#866344", -.14f, .74f, -.028f, .028f, .049f, .012f),
@@ -102,5 +98,13 @@ internal static partial class PlayerMoves
             Block(Steel, .64f, .96f, .12f, .193f, .25f, .022f),
             Block(DarkSteel, .756f, .844f, -.115f, .115f, .247f, .012f),
         ],
-    });
+    }, .016f);
+
+    private static Part Weapon(Part part, float outlineWidth)
+    {
+        foreach (var geometry in part.Geometry)
+            if (geometry.Material is { Outline: { } outline } material)
+                geometry.Material = material with { Outline = outline with { Width = outlineWidth } };
+        return PartGeometryBuilder.Named(part);
+    }
 }

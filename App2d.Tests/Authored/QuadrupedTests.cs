@@ -56,7 +56,6 @@ public sealed class QuadrupedTests
             Material = new()
             {
                 Fill = "#fff8e7",
-                Outline = new(),
                 Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }]
             }
         };
@@ -67,7 +66,7 @@ public sealed class QuadrupedTests
         var mesh = PolygonTriangulation2D.Triangulate(points);
         Assert.Equal(.51f, mesh.Area, 5);
         var drawing = new PuppetDrawing();
-        drawing.Build("#000000", 0, [part], _ => Vector3.Zero);
+        drawing.Build([part], _ => Vector3.Zero);
         foreach (var vertex in drawing.Mesh.Vertices)
         {
             Assert.True(vertex.Position.X <= .30001f || vertex.Position.Y <= .30001f, "Fill or paint spills across the notch.");

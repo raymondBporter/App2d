@@ -1,6 +1,6 @@
 {
   "format": "app2d-part",
-  "version": 4,
+  "version": 5,
   "id": "rock-thrower-beard",
   "name": "Rock thrower / beard",
   "usage": "hair",
@@ -135,9 +135,11 @@
       },
       "material": {
         "fill": "#69402a",
-        "outline": {}
+        "outline": {
+          "color": "#222b32",
+          "width": 0.045
+        }
       },
-      "a": "origin",
       "frame": "origin"
     }
   ],
