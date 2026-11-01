@@ -713,8 +713,8 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         foreach (var binding in equipment.ToArray())
         {
             ImGui.PushID(binding.Prop);
-            ImGui.TextUnformatted(session.Assets.Part(binding.Prop)?.Name ?? binding.Prop + " (missing)");
-            if (session.Assets.Part(binding.Prop)?.Asset.Usage is "hair" or "clothing")
+            ImGui.TextUnformatted(session.Assets.Find(binding.Prop)?.Name ?? binding.Prop + " (missing)");
+            if (session.Assets.Piece(binding.Prop) is not null || session.Assets.Part(binding.Prop)?.Asset.Usage is "hair" or "clothing")
             {
                 if (ImGui.SmallButton("Edit appearance"))
                 {

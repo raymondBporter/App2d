@@ -135,7 +135,9 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
             }
             else
             {
-                _drawings[i].Build(subject.Model, subject.Pose);
+                _drawings[i].Build(subject.Model, subject.Pose, session.PreviewEquipmentArtworkOn(subject.Model));
+                foreach (var equipment in session.PreviewEquipmentOn(subject.Model))
+                    _drawings[i].AddAttachment(equipment, new ActorPose(subject.Pose, Vector2.Zero, 1));
                 if (session.Mode == Workspace.Appearance && session.Entity is { } wearer && wearer.Model.Id == subject.Model.Id)
                 {
                     foreach (var item in wearer.Equipment.Where(e => e.Prop.Id != session.PreviewPart))

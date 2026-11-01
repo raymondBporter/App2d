@@ -1275,6 +1275,18 @@
       "id": "right-foot-art",
       "control": "right-foot",
       "toward": "right-knee"
+    },
+    {
+      "id": "left-shin-art",
+      "control": "left-foot",
+      "toward": "left-knee",
+      "layer": -0.01
+    },
+    {
+      "id": "right-shin-art",
+      "control": "right-foot",
+      "toward": "right-knee",
+      "layer": -0.01
     }
   ],
   "attachments": [

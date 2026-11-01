@@ -3,6 +3,7 @@ using App2d.CharacterStudio.Importing;
 using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Drawing;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
@@ -66,6 +67,8 @@ public sealed class EditorSession
     private (string Id, int Revision, ResolvedModel Model, CurveMotion2D? Motion)? _partPreview;
     private (string Id, int Revision, MotionClip? Clip)? _partTimeline;
     public AssetDocument<Part>? PartDocument => Assets.Part(PreviewPart);
+    public string? LibraryAssetId { get; private set; }
+    public AssetDocument? LibraryDocument => Assets.Find(LibraryAssetId);
     public bool PreviewWeapon { get; set; }
     public bool EditWeapon { get; set; }
     public string? Skin { get; set; }
@@ -89,7 +92,7 @@ public sealed class EditorSession
     public string Message { get; private set; } = "";
     public bool MessageIsError { get; private set; }
 
-    public AssetDocument? ActiveDocument => Mode switch { Workspace.Model => Assets.Find(SubjectId), Workspace.Animate => Assets.Find(ClipId), Workspace.Appearance => PartDocument, _ => Assets.Find(EntityId) };
+    public AssetDocument? ActiveDocument => Mode switch { Workspace.Model => Assets.Find(SubjectId), Workspace.Animate => Assets.Find(ClipId), Workspace.Appearance => PartDocument, Workspace.Library => LibraryDocument, _ => Assets.Find(EntityId) };
     public AssetDocument<Part>? EntityDocument => Assets.Entity(EntityId);
     /// <summary>The open entity compiled against the drafts, or null with <see cref="EntityError"/> saying why.</summary>
     public ResolvedEntity? Entity => Assets.CompileEntity(EntityId, out _);
@@ -114,6 +117,17 @@ public sealed class EditorSession
         CommitAll();
         switch (Assets.Find(id))
         {
+            case AssetDocument primitive when primitive.Kind is AssetKind.Geometry or AssetKind.RenderMaterial or AssetKind.Piece:
+                Mode = Workspace.Library;
+                LibraryAssetId = id;
+                PreviewPart = primitive.Kind == AssetKind.Piece ? id : null;
+                PreviewPartOnWearer = false;
+                PreviewMirror = false;
+                PreviewWeapon = EditWeapon = false;
+                Selection.Clear();
+                if (primitive is AssetDocument<Piece> piece && Assets.Resolve(SubjectId) is { } host)
+                    PreviewSocket = host.Base.Sockets.FirstOrDefault(s => s.Id == piece.Asset.Attachment)?.Id ?? host.Base.Sockets.FirstOrDefault()?.Id ?? "";
+                break;
             case AssetDocument<MotionClip> clip:
                 Mode = Workspace.Animate;
                 SetClip(clip.Id);
@@ -678,6 +692,12 @@ public sealed class EditorSession
         {
             yield return active;
         }
+        if (Mode == Workspace.Library && LibraryDocument is AssetDocument<Piece>)
+        {
+            if (SubjectModel is { } model) yield return model;
+            else if (SubjectVariant is { } build && Assets.Model(build.Asset.Base) is { } baseModel) yield return baseModel;
+            if (EntityDocument is { } entity) yield return entity;
+        }
 
         if (Mode == Workspace.Appearance && EntityDocument is { } wearer)
         {
@@ -815,6 +835,40 @@ public sealed class EditorSession
 
     // ---- New assets ----------------------------------------------------------------------------------------------
 
+    public bool NewGeometry(string id, string name, string kind) => Attempt(() =>
+    {
+        var geometry = new GeometryAsset2D { Id = id, Name = name, Geometry = Core.Geometry.Serialization.GeometryJson2D.CreateDefault(kind) };
+        geometry.Validate();
+        Assets.Create(geometry);
+        Open(id);
+    }, $"Created geometry '{id}'. Edit it in its own local coordinates, then save.");
+
+    public bool NewRenderMaterial(string id, string name) => Attempt(() =>
+    {
+        Assets.Create(new RenderMaterialAsset2D { Id = id, Name = name });
+        Open(id);
+    }, $"Created render material '{id}'.");
+
+    public bool NewPiece(string id, string name) => Attempt(() =>
+    {
+        Assets.Create(new Piece { Id = id, Name = name });
+        Open(id);
+    }, $"Created piece '{id}'. Choose geometry and material, then attach it directly.");
+
+    /// <summary>Explicitly creates a socket on an existing rig control; no anatomy or pose data is generated.</summary>
+    public bool AddPieceSocket(string id, string control, string? toward) => Attempt(() =>
+    {
+        var doc = SubjectModel ?? Assets.Model(SubjectVariant?.Asset.Base) ?? throw new InvalidDataException("Choose a wearer first.");
+        AuthoredAsset.RequireId(id, "socket id");
+        doc.Edit(() =>
+        {
+            if (doc.Asset.Sockets.Any(s => s.Id == id)) throw new InvalidDataException($"Socket '{id}' already exists.");
+            doc.Asset.Sockets.Add(new() { Id = id, Control = control, Frame = control, Toward = toward });
+            doc.Asset.Validate();
+        });
+        PreviewSocket = id;
+    }, $"Created attachment socket '{id}'.");
+
     public bool NewAppearance(string id, string name, string template) => Attempt(() =>
     {
         // A new hair starts from the game profile's hair gear when the workspace carries the profile (P9c/P11c), else the built-in default.
@@ -851,7 +905,7 @@ public sealed class EditorSession
     /// <summary>Instances the open part on the subject's base model at a socket. A variant subject attaches on its base: instances are structure, overrides are the variant's.</summary>
     public bool AttachPart(string partId, string socketId, bool mirror = false) => Attempt(() =>
     {
-        if (Assets.Part(partId) is null)
+        if (Assets.PartOf(partId) is null)
         {
             throw new InvalidDataException("Choose a library part first.");
         }
@@ -873,7 +927,8 @@ public sealed class EditorSession
     /// </summary>
     public ResolvedAttachment? PreviewAttachmentOn(ResolvedModel model)
     {
-        if (Mode != Workspace.Appearance || !PreviewPartOnWearer || PartDocument is not { } part || model.Attachments.Any(a => a.Asset.Id == part.Id))
+        if (Mode == Workspace.Library && Assets.Piece(LibraryAssetId)?.Asset.Game?.Equipment is not null) return null;
+        if (Mode is not (Workspace.Appearance or Workspace.Library) || !PreviewPartOnWearer || PreviewPart is not { } partId || model.Attachments.Any(a => a.Asset.Id == partId))
         {
             return null;
         }
@@ -886,7 +941,7 @@ public sealed class EditorSession
 
         try
         {
-            return ResolvedAttachment.Resolve(new() { Id = "preview", Asset = part.Id, Socket = PreviewSocket, Mirror = PreviewMirror }, Assets.PartOf, sockets, "Preview");
+            return ResolvedAttachment.Resolve(new() { Id = "preview", Asset = partId, Socket = PreviewSocket, Mirror = PreviewMirror }, Assets.PartOf, sockets, "Preview");
         }
         catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException)
         {
@@ -894,10 +949,25 @@ public sealed class EditorSession
         }
     }
 
+    public IReadOnlyList<ResolvedAttachment> PreviewEquipmentOn(ResolvedModel model)
+    {
+        if (Mode != Workspace.Library || !PreviewPartOnWearer || Assets.Piece(LibraryAssetId)?.Asset.Game?.Equipment is not { } equipment) return [];
+        try
+        {
+            var asset = Assets.PartOf(LibraryAssetId!)!;
+            return PersonEquipment.Placements(asset, equipment, model.Base.Sockets.ToDictionary(s => s.Id, StringComparer.Ordinal));
+        }
+        catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex)) { return []; }
+    }
+
+    public CharacterArtworkOverrides? PreviewEquipmentArtworkOn(ResolvedModel model) =>
+        Mode == Workspace.Library && PreviewPartOnWearer && Assets.Piece(LibraryAssetId)?.Asset.Game?.Equipment is { } equipment && PreviewEquipmentOn(model).Count > 0
+            ? PersonEquipment.Replacements(model, [equipment]) : null;
+
     public bool EquipAppearance(string entityId, string propId, string socketId) => Attempt(() =>
     {
         var entity = Assets.Entity(entityId) ?? throw new InvalidDataException("Choose an entity first.");
-        var prop = Assets.Part(propId) ?? throw new InvalidDataException("Choose an appearance first.");
+        var prop = Assets.PartOf(propId) ?? throw new InvalidDataException("Choose an appearance first.");
         var model = Assets.Resolve(entity.Asset.Model) ?? throw new InvalidDataException("The entity's model is invalid.");
         if (model.Base.Sockets.All(s => s.Id != socketId))
         {
@@ -1056,7 +1126,7 @@ public sealed class EditorSession
             asset.Behavior!.Colliders.Add(definition.Id, use);
             asset.Validate();
             // Compile against the drafts now (the cached compile is keyed on the revision the edit has not bumped yet), so a dangling binding refuses the edit by name.
-            ResolvedEntity.Compile(asset, model => Assets.Resolve(model, out var problem) ?? throw new InvalidDataException(problem), clip => Assets.Clip(clip)?.Asset, prop => Assets.Part(prop)?.Asset);
+            ResolvedEntity.Compile(asset, model => Assets.Resolve(model, out var problem) ?? throw new InvalidDataException(problem), clip => Assets.Clip(clip)?.Asset, Assets.PartOf);
         }, $"Added {use} collider '{definition.Id}'.");
     }
 

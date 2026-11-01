@@ -56,6 +56,22 @@ public sealed class AssetLocations(string runtime, string authored, string chara
             throw new DirectoryNotFoundException("Assets/Characters/authored was not found beside the executable or above the working directory.");
     }
 
+    /// <summary>Authoring prefers the source checkout even when Studio is launched directly from bin or Explorer.</summary>
+    public static string FindCharacterAuthoringLibrary(string baseDirectory, string workingDirectory)
+    {
+        foreach (var start in new[] { workingDirectory, baseDirectory })
+        {
+            for (var directory = new DirectoryInfo(Path.GetFullPath(start)); directory is not null; directory = directory.Parent)
+            {
+                var library = Path.Combine(directory.FullName, "Assets", "Characters");
+                if (File.Exists(Path.Combine(directory.FullName, "App2d.CharacterStudio", "App2d.CharacterStudio.csproj")) &&
+                    Directory.Exists(Path.Combine(library, "authored")))
+                    return library;
+            }
+        }
+        return FindCharacterLibrary(baseDirectory, workingDirectory);
+    }
+
     private static string? FindAncestorDirectory(string start, string relativePath)
     {
         Ensure.ThrowIfNullOrWhiteSpace(start);

@@ -53,6 +53,8 @@ public static class Humanoid
     public const string RightHandSocket = "right-hand-art";
     public const string LeftFootSocket = "left-foot-art";
     public const string RightFootSocket = "right-foot-art";
+    public const string LeftShinSocket = "left-shin-art";
+    public const string RightShinSocket = "right-shin-art";
     public const string LeftGripSocket = "left-grip";
     public const string RightGripSocket = "right-grip";
     public const string BackSocket = "back";

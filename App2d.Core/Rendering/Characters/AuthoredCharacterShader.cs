@@ -14,6 +14,8 @@ public sealed class AuthoredCharacterShader(ResolvedModel model) : IShader2D
     public EvaluatedPose? Pose { get; set; }
     public int Facing { get; set; } = 1;
     public IReadOnlyList<(Part Prop, ModelSocket Socket)> Props { get; set; } = [];
+    public IReadOnlyList<ResolvedAttachment> Equipment { get; set; } = [];
+    public CharacterArtworkOverrides? Artwork { get; set; }
     /// <summary>A live blade trail in the pose's actor space, drawn behind the character.</summary>
     public BladeSwoosh? Swoosh { get; set; }
     public Color4b BaseColor => Color4b.White;

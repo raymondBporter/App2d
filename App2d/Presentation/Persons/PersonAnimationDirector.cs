@@ -39,13 +39,14 @@ public sealed class PersonMoves
     public const string GunWallShot = PersonRoles.GunWallShot;
     public static IReadOnlyList<string> All => PersonRoles.All;
 
-    private PersonMoves(GameProfile profile, ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, Part> props)
+    private PersonMoves(GameProfile profile, ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, Part> props, Dictionary<string, EquipmentSettings> equipment)
     {
         Profile = profile;
         Model = model;
         Hero = hero;
         Clips = clips;
         Props = props;
+        Equipment = equipment;
     }
 
     /// <summary>The profile the bindings came from.</summary>
@@ -60,6 +61,7 @@ public sealed class PersonMoves
     /// <summary>Clips by role, and the hero's action and recovery clips by id.</summary>
     public IReadOnlyDictionary<string, MotionClip> Clips { get; }
     public IReadOnlyDictionary<string, Part> Props { get; }
+    public IReadOnlyDictionary<string, EquipmentSettings> Equipment { get; }
     public MotionClip this[string id] => Clips[id];
 
     /// <summary>The move set the catalog's player profile binds. Every role, the hero entity and every gear prop must resolve, by name.</summary>
@@ -112,7 +114,9 @@ public sealed class PersonMoves
             }
         }
 
-        return new(profile, resolved, hero, clips, catalog.Parts.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
+        var equipment = catalog.Pieces.Values.Where(p => p.Game?.Equipment is not null)
+            .ToDictionary(p => p.Id, p => p.Game!.Equipment! with { }, StringComparer.Ordinal);
+        return new(profile, resolved, hero, clips, catalog.Parts.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal), equipment);
     }
 }
 

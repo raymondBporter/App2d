@@ -45,10 +45,18 @@ public sealed class AuthoringWorkspace
     public IEnumerable<AssetDocument<Part>> Entities => Parts.Where(p => p.Asset.Behavior is not null);
     /// <summary>Library part assets (P5a): shared by every wearer that instances them.</summary>
     public IEnumerable<AssetDocument<Part>> Parts => _documents.Values.OfType<AssetDocument<Part>>();
+    public IEnumerable<AssetDocument<GeometryAsset2D>> Geometries => _documents.Values.OfType<AssetDocument<GeometryAsset2D>>();
+    public IEnumerable<AssetDocument<RenderMaterialAsset2D>> RenderMaterials => _documents.Values.OfType<AssetDocument<RenderMaterialAsset2D>>();
+    public IEnumerable<AssetDocument<Piece>> Pieces => _documents.Values.OfType<AssetDocument<Piece>>();
+    public IEnumerable<AssetDocument> Attachables => Parts.Where(p => p.Asset.Behavior is null).Cast<AssetDocument>().Concat(Pieces);
     /// <summary>Changes whenever any part document changes, is added or discarded: the transitive dependency every wearer's resolution carries.</summary>
-    public int PartsRevision => _discarded + Parts.Sum(p => p.Version + 1);
+    public int PartsRevision => _discarded + Parts.Sum(p => p.Version + 1) + Geometries.Sum(p => p.Version + 1) + RenderMaterials.Sum(p => p.Version + 1) + Pieces.Sum(p => p.Version + 1);
     /// <summary>The library lookup resolution reads: current part drafts, so a shared edit reaches every dependent preview.</summary>
-    public Part? PartOf(string id) => Part(id)?.Asset;
+    public Part? PartOf(string id)
+    {
+        if (Part(id) is { } part) return part.Asset;
+        return Piece(id) is { } piece ? piece.Asset.Resolve(key => Geometry(key)?.Asset, key => RenderMaterial(key)?.Asset) with { TextureRoot = Root } : null;
+    }
     /// <summary>JSON recipes for creating independent models and animation bundles from this workspace's resources.</summary>
     public IReadOnlyDictionary<string, ModelTemplate> ModelTemplates { get; private set; } = new Dictionary<string, ModelTemplate>();
 
@@ -64,9 +72,12 @@ public sealed class AuthoringWorkspace
         var templates = ModelTemplateCatalog.Load(root);
         workspace.ModelTemplates = templates.Entries;
         // Only unreadable files are load errors; reference problems stay visible on their documents.
-        var loaded = catalog.Parts.Keys.Concat(catalog.Models.Keys).Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Select(catalog.PathOf).ToList();
+        var loaded = catalog.Parts.Keys.Concat(catalog.Pieces.Keys).Concat(catalog.Geometries.Keys).Concat(catalog.RenderMaterials.Keys).Concat(catalog.Models.Keys).Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Select(catalog.PathOf).ToList();
         workspace.LoadErrors = [.. catalog.Errors.Where(e => !loaded.Any(path => e.StartsWith(path + ":", StringComparison.Ordinal))), .. templates.Errors];
-        foreach (var part in catalog.Parts.Values)
+        foreach (var geometry in catalog.Geometries.Values) workspace.Add(AssetDocuments.Of(geometry, catalog.PathOf(geometry.Id)));
+        foreach (var material in catalog.RenderMaterials.Values) workspace.Add(AssetDocuments.Of(material, catalog.PathOf(material.Id)));
+        foreach (var piece in catalog.Pieces.Values) workspace.Add(AssetDocuments.Of(piece, catalog.PathOf(piece.Id)));
+        foreach (var part in catalog.Parts.Values.Where(p => !catalog.Pieces.ContainsKey(p.Id)))
         {
             workspace.Add(AssetDocuments.Of(part, catalog.PathOf(part.Id)));
         }
@@ -104,6 +115,9 @@ public sealed class AuthoringWorkspace
     public AssetDocument<MotionClip>? Clip(string? id) => Find(id) as AssetDocument<MotionClip>;
     public AssetDocument<Part>? Entity(string? id) => Part(id) is { Asset.Behavior: not null } part ? part : null;
     public AssetDocument<Part>? Part(string? id) => Find(id) as AssetDocument<Part>;
+    public AssetDocument<GeometryAsset2D>? Geometry(string? id) => Find(id) as AssetDocument<GeometryAsset2D>;
+    public AssetDocument<RenderMaterialAsset2D>? RenderMaterial(string? id) => Find(id) as AssetDocument<RenderMaterialAsset2D>;
+    public AssetDocument<Piece>? Piece(string? id) => Find(id) as AssetDocument<Piece>;
     /// <summary>Whether an ID is taken: by a document, or by a file of that name that did not load and must not be overwritten.</summary>
     public bool Exists(string id) => _documents.ContainsKey(id) || FileIds().Contains(id);
 
@@ -135,6 +149,9 @@ public sealed class AuthoringWorkspace
     {
         AssetDocument document = asset switch
         {
+            GeometryAsset2D geometry => AssetDocuments.Of(geometry, null),
+            RenderMaterialAsset2D material => AssetDocuments.Of(material, null),
+            Piece piece => AssetDocuments.Of(piece, null),
             CharacterModel model => AssetDocuments.Of(model, null),
             ModelVariant variant => AssetDocuments.Of(variant, null),
             MotionClip clip => AssetDocuments.Of(clip, null),
@@ -267,7 +284,7 @@ public sealed class AuthoringWorkspace
         {
             entity = ResolvedEntity.Compile(document.Asset,
                 model => Find(model) is null ? throw new KeyNotFoundException(model) : Resolve(model, out var problem) ?? throw new InvalidDataException(problem),
-                clip => Clip(clip)?.Asset, prop => Part(prop)?.Asset);
+                clip => Clip(clip)?.Asset, PartOf);
         }
         catch (Exception ex) when (IsAssetError(ex))
         {
@@ -305,6 +322,11 @@ public sealed class AuthoringWorkspace
         }
         var clips = Clips.Select(c => Copy(c, MotionClip.FromJson)).OfType<MotionClip>().ToDictionary(c => c.Id, StringComparer.Ordinal);
         var parts = Parts.Select(p => Copy(p, Authored.Part.FromJson)).OfType<Part>().ToDictionary(p => p.Id, StringComparer.Ordinal);
+        foreach (var piece in Pieces)
+        {
+            try { parts[piece.Id] = Authored.Part.FromJson(PartOf(piece.Id)!.ToJson()); }
+            catch (Exception ex) when (IsAssetError(ex)) { problems.Add($"{piece.Id}: {ex.Message}"); }
+        }
         var resolved = new Dictionary<string, ResolvedModel>(StringComparer.Ordinal);
         ResolvedModel ResolveCopy(string id)
         {
@@ -358,6 +380,10 @@ public sealed class AuthoringWorkspace
         var uses = new List<AssetReference>();
         switch (Find(id))
         {
+            case AssetDocument<Piece> piece:
+                if (piece.Asset.Geometry is { } geometry) uses.Add(new(geometry, "geometry"));
+                if (piece.Asset.Material.Asset is { } material) uses.Add(new(material, "render material"));
+                break;
             case AssetDocument<ModelVariant> variant:
                 uses.Add(new(variant.Asset.Base, "base"));
                 foreach (var change in variant.Asset.Overrides.Where(o => o.Selection is not null).OrderBy(o => o.Key, StringComparer.Ordinal))
@@ -489,6 +515,15 @@ public sealed class AuthoringWorkspace
         }
         switch (document)
         {
+            case AssetDocument<GeometryAsset2D> geometry:
+                Try(geometry.Asset.Validate);
+                break;
+            case AssetDocument<RenderMaterialAsset2D> material:
+                Try(material.Asset.Validate);
+                break;
+            case AssetDocument<Piece> piece:
+                Try(() => PartOf(piece.Id));
+                break;
             case AssetDocument<CharacterModel> model:
                 Try(model.Asset.Validate);
                 if (problems.Count == 0) Try(() => LookPreset.Validate(model.Asset));
@@ -565,6 +600,15 @@ public sealed class AuthoringWorkspace
         var updated = new List<AssetDocument>();
         switch (document)
         {
+            case AssetDocument<GeometryAsset2D> geometry:
+                geometry.Asset.Validate();
+                break;
+            case AssetDocument<RenderMaterialAsset2D> material:
+                material.Asset.Validate();
+                break;
+            case AssetDocument<Piece> piece:
+                piece.Asset.Validate();
+                break;
             case AssetDocument<CharacterModel> model:
                 model.Asset.Validate();
                 LookPreset.Validate(model.Asset);

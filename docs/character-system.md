@@ -81,6 +81,9 @@ The authored library is [Assets/Characters/authored](../Assets/Characters/author
 
 | Asset folder | Definition | Responsibility |
 | --- | --- | --- |
+| `geometry/` | `GeometryAsset2D` | Named local shape, curve or mesh without material or attachment |
+| `render-materials/` | `RenderMaterialAsset2D` | Independently reusable rendering surface |
+| `pieces/` | `Piece` | One drawable: geometry/material references or inline data, local transform, groups, default attachment |
 | `models/` | `CharacterModel` | Rig, dimensions, artwork, sockets, attachments, motion sets |
 | `variants/` | `ModelVariant` | A particular build of a base model |
 | `animations/` | `MotionClip` | Standalone clips for model rigs |
@@ -90,6 +93,20 @@ The authored library is [Assets/Characters/authored](../Assets/Characters/author
 
 Animated Parts can also own clips within their own file. Their IDs and targets
 belong to that Part's rig rather than the standalone model clip catalog.
+
+A static **Piece** attaches directly through the existing `PartInstance` placement
+path. Catalog/workspace resolution prepares its geometry and material into the shared
+runtime Part representation; this never creates a wrapper Part file or copies the
+resources into the saved wearer. Source Piece definitions retain their references.
+The workspace tracks geometry/material dependencies and invalidates wearer/entity
+previews after changes or undo. Runtime catalogs also expose prepared Pieces through
+the Part lookup used by equipment and attachment resolution.
+
+`Piece.Game.Equipment` opts a static Piece into the game's standard Person inventory.
+Its slot maps to two mounts; `Replace` selects overlay versus per-player artwork
+replacement. `PersonEquipment` owns the humanoid conventions, while the renderer
+accepts anatomy-independent `CharacterArtworkOverrides` and ordinary resolved
+attachments. No model or evaluated pose is mutated to equip or unequip an item.
 
 [AuthoredCatalog](../App2d.Core/Characters/Assets/AuthoredCatalog.cs) reads the
 runtime definitions, checks references, caches model resolutions, and compiles
@@ -113,6 +130,7 @@ the relevant library or rig.
 | `Rig/` | Controls, bone setup/link/limit declarations, constraints, sockets, planar authored points |
 | `Parameters/` | Parameter bindings/presets, property references, overrides, and the property registry |
 | `Parts/` | Part assets and saved instances, geometry entries, meshes, paint, point bindings |
+| `Library/` | Independently saved geometry, render materials, and static Pieces |
 | `Appearance/` | Materials, texture frames, slots/skins, held appearance keys |
 | `Animation/` | Motion clips, numeric/color keys, curves, and channel meanings |
 | `Behavior/` | Behavior/action definitions, collider vocabulary, game-profile bindings |

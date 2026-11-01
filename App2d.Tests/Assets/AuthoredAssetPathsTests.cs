@@ -87,6 +87,30 @@ public sealed class AuthoredAssetPathsTests : IDisposable
         Assert.Equal(packaged, AssetLocations.FindCharacterLibrary(output, working));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void StudioAuthoringFindsSourceWhenLaunchedFromBuildOutputOrAnUnrelatedWorkingDirectory(bool workingInOutput)
+    {
+        var project = Path.Combine(_root, "App2d.CharacterStudio");
+        Directory.CreateDirectory(project);
+        File.WriteAllText(Path.Combine(project, "App2d.CharacterStudio.csproj"), "<Project />");
+        var characters = Path.Combine(_root, "Assets", "Characters");
+        Directory.CreateDirectory(Path.Combine(characters, "authored"));
+        var output = Path.Combine(project, "bin", "Debug", "net10.0");
+        Directory.CreateDirectory(Path.Combine(output, "Assets", "Characters", "authored"));
+        Assert.Equal(characters, AssetLocations.FindCharacterAuthoringLibrary(output, workingInOutput ? output : Path.GetTempPath()));
+    }
+
+    [Fact]
+    public void DeployedStudioCanStillEditItsPackagedLibraryWithoutASourceCheckout()
+    {
+        var output = Path.Combine(_root, "studio");
+        var characters = Path.Combine(output, "Assets", "Characters");
+        Directory.CreateDirectory(Path.Combine(characters, "authored"));
+        Assert.Equal(characters, AssetLocations.FindCharacterAuthoringLibrary(output, Path.GetTempPath()));
+    }
+
     [Fact]
     public void AuthoredContentDoesNotRequireGeneratedArtAndMissingStudioAssetsAreReported()
     {

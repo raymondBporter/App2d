@@ -21,6 +21,7 @@ public static class PersonWardrobe
         new() { Id = RightHandSocket, Control = RightHand, Toward = RightElbow },
         new() { Id = LeftFootSocket, Control = LeftFoot, Toward = LeftKnee },
         new() { Id = RightFootSocket, Control = RightFoot, Toward = RightKnee },
+        .. PersonEquipment.ShinSockets(),
     ];
 
     /// <summary>Visible extremities on the existing controls. Adding artwork does not change animation structure.</summary>

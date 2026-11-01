@@ -171,6 +171,8 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         _shader.Facing = facing;
         var seconds = (float)Math.Min(frame.PropSeconds, frame.PropClip.Duration);
         _shader.Props = Wardrobe.Dress(frame.PropClip, seconds, frame.Gear);
+        _shader.Equipment = Wardrobe.Attachments;
+        _shader.Artwork = Wardrobe.Artwork;
         RecordSwoosh(frame, seconds, pose.Local);
         _visual.Transform.Position = Feet(s);
         _visual.IsVisible = _enabled && Visible();

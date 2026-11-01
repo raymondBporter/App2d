@@ -125,14 +125,7 @@ namespace App2d.CharacterStudio
         {
             if (preferSource)
             {
-                for (var folder = new DirectoryInfo(Environment.CurrentDirectory); folder is not null; folder = folder.Parent)
-                {
-                    var root = Path.Combine(folder.FullName, "Assets", "Characters");
-                    if (Directory.Exists(Path.Combine(root, "authored")))
-                    {
-                        return root;
-                    }
-                }
+                return AssetLocations.FindCharacterAuthoringLibrary(AppContext.BaseDirectory, Environment.CurrentDirectory);
             }
 
             return AssetLocations.FindCharacterLibrary(AppContext.BaseDirectory, Environment.CurrentDirectory);

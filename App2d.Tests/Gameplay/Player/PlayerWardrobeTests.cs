@@ -79,8 +79,8 @@ public sealed class PlayerWardrobeTests
                     (Humanoid.LeftHandSocket, Humanoid.LeftHand), (Humanoid.RightHandSocket, Humanoid.RightHand)
                 })
                 {
-                    var item = Assert.Single(props, p => p.Socket.Id == socket);
-                    var origin = PartPlacement3D.Point(actor.Socket(item.Socket), item.Prop, item.Prop.Point(item.Prop.Pivot)!.Value);
+                    var item = Assert.Single(wardrobe.Attachments, p => p.Socket.Id == socket);
+                    var origin = PartPlacement3D.Point(actor.Socket(item.Socket), item.Asset, item.Asset.Point(item.Asset.Pivot)!.Value);
                     var limb = actor.World(control);
                     TestModels.Near(limb with { Z = 0 }, origin with { Z = 0 });
                 }
@@ -88,6 +88,7 @@ public sealed class PlayerWardrobeTests
             drawing.Build(moves.Model, local);
             var bare = drawing.Mesh.Count;
             foreach (var (prop, socket) in props) drawing.AddAttachment(prop, new ActorPose(local, Vector2.Zero, 1), socket);
+            foreach (var attachment in wardrobe.Attachments) drawing.AddAttachment(attachment, new ActorPose(local, Vector2.Zero, 1));
             Assert.True(drawing.Mesh.Count > bare);
             Assert.Contains(props, p => p.Prop.Id == moves.Gear.Sword);
         }

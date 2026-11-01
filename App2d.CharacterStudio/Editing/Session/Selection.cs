@@ -14,7 +14,7 @@ namespace App2d.CharacterStudio.Editing;
 /// <summary>Model edits rest geometry and appearance; Animate edits motion; Entity edits what a character does in the game.</summary>
 public enum Workspace
 {
-    Model, Animate, Entity, Appearance
+    Model, Animate, Entity, Appearance, Library
 }
 
 /// <summary>What the author has picked. Session state, never saved into assets.</summary>

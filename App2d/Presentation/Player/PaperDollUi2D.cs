@@ -33,6 +33,12 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
     private static readonly Color4b Gold = new(239, 204, 137), WrongSlot = new(230, 126, 114);
 
     public bool IsOpen { get; private set; }
+    public void Open()
+    {
+        IsOpen = true;
+        _pressed = null;
+        _dragging = false;
+    }
 
     /// <returns>Whether a shortcut was consumed, including Escape when closing.</returns>
     public bool Draw(GraphicsDevice device, ImGuiHost gui, FrameTime time, bool canOpen)
@@ -87,8 +93,11 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         _hovered = null;
         DrawCell(draw, new(0, WardrobeSlot2D.Gloves), At(48, 264), 78, "GLOVES");
         DrawCell(draw, new(0, WardrobeSlot2D.Shoes), At(432, 442), 78, "SHOES");
-        Text(draw, At(46, 563), "Gloves  /  " + (wardrobe.Equipped(WardrobeSlot2D.Gloves)?.Name ?? "Bare hands"), 14, Muted);
-        Text(draw, At(46, 586), "Shoes   /  " + (wardrobe.Equipped(WardrobeSlot2D.Shoes)?.Name ?? "Bare feet"), 14, Muted);
+        DrawCell(draw, new(0, WardrobeSlot2D.Shins), At(48, 442), 78, "SHINS");
+        draw.AddLine(At(127, 481), At(228, 454), Border.PackedValue, _scale);
+        Text(draw, At(46, 550), "Gloves / " + (wardrobe.Equipped(WardrobeSlot2D.Gloves)?.Name ?? "Bare hands"), 14, Muted);
+        Text(draw, At(46, 573), "Shoes  / " + (wardrobe.Equipped(WardrobeSlot2D.Shoes)?.Name ?? "Bare feet"), 14, Muted);
+        Text(draw, At(46, 596), "Shins  / " + (wardrobe.Equipped(WardrobeSlot2D.Shins)?.Name ?? "Bare shins"), 14, Muted);
 
         Text(draw, At(570, 111), "Inventory", 23, Color4b.White);
         Text(draw, At(570, 143), "Drop a pair onto its matching slot.", 14, Muted);
@@ -152,7 +161,8 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         {
             ImGui.BeginTooltip();
             ImGui.TextUnformatted(item.Name);
-            ImGui.TextDisabled(item.Slot == WardrobeSlot2D.Shoes ? "Shoes / equips both feet" : "Gloves / equips both hands");
+            ImGui.TextDisabled(item.Slot switch { WardrobeSlot2D.Shoes => "Shoes / both feet", WardrobeSlot2D.Gloves => "Gloves / both hands", _ => "Shins / both legs" });
+            ImGui.TextDisabled(item.Settings.Replace ? "Replaces base artwork while equipped" : "Worn over base artwork");
             ImGui.EndTooltip();
         }
     }
@@ -206,10 +216,11 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         var moves = wardrobe.Moves;
         var idle = moves[PersonMoves.Idle];
         var pose = PoseEvaluator.Sample(moves.Model, idle, _clock, repeat: true, new("relaxed") { InPlace = true, Clock = _clock });
-        _drawing.Build(moves.Model, pose);
+        _drawing.Build(moves.Model, pose, wardrobe.Artwork);
         var actor = new ActorPose(pose, Vector2.Zero, 1);
         foreach (var (prop, socket) in wardrobe.Dress(idle, (float)(_clock % idle.Duration), PersonGear.None))
             _drawing.AddAttachment(prop, actor, socket);
+        foreach (var attachment in wardrobe.Attachments) _drawing.AddAttachment(attachment, actor);
         RenderDrawing(device, _preview, _drawing, .91f);
     }
 

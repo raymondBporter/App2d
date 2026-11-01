@@ -39,13 +39,14 @@ public sealed class PuppetDrawing
     /// The model's parts over the evaluated pose, then its slot attachments and library part instances through the same
     /// per-part path (P5b): any payload kind, one placement. A face is an animated instance like any other (P7c).
     /// </summary>
-    public void Build(ResolvedModel model, EvaluatedPose pose)
+    public void Build(ResolvedModel model, EvaluatedPose pose, CharacterArtworkOverrides? artwork = null)
     {
         Clear();
         TextureRoot = model.TextureRoot;
         var managed = model.Base.Skins.SelectMany(s => s.Attachments.Values).SelectMany(a => a.Values).ToHashSet(StringComparer.Ordinal);
         // The pose's part channels (P7a): a show track hides a part for its span, a fit track multiplies its leaf scale.
-        Add(model.Parts.Where(p => !managed.Contains(p.Id) && pose.Visible(p)).Select(pose.Drawn), pose.World,
+        var parts = artwork is null ? model.Parts : model.Parts.Select(artwork.Apply).OfType<PartGeometry>();
+        Add(parts.Where(p => !managed.Contains(p.Id) && pose.Visible(p)).Select(pose.Drawn), pose.World,
             pose.Placement, id => model.Rest[id], model.RestPlacement);
         for (var i = 0; i < pose.Slots.Count; i++)
         {
@@ -54,20 +55,25 @@ public sealed class PuppetDrawing
             {
                 continue;
             }
+            if (artwork is not null)
+            {
+                if (artwork.Apply(part) is not { } replacement) continue;
+                part = replacement;
+            }
 
             // A slot's attachment is an ordinary part with the slot's color and blend: an image keeps the slot order as its
             // depth, geometry draws at its own layer through the shared path.
             Add([pose.Drawn(part)], pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement,
                 ColorExtensions.FromVector4(slot.Color), slot.Slot.Blend, -i * .001f);
         }
-        AddAttachments(model, pose);
+        AddAttachments(model, pose, artwork?.HiddenSockets);
     }
 
     /// <summary>
     /// Every visible library part instance on its socket (P5b): the instance placement on the socket's evaluated placement
     /// carries its locations. Every geometry entry uses the shared drawing path; meshes lift that entry's planar frame into physical 3D.
     /// </summary>
-    public void AddAttachments(ResolvedModel model, EvaluatedPose pose)
+    public void AddAttachments(ResolvedModel model, EvaluatedPose pose, IReadOnlySet<string>? hiddenSockets = null)
     {
         if (model.Attachments.Count == 0)
         {
@@ -77,7 +83,7 @@ public sealed class PuppetDrawing
         var actor = new ActorPose(pose, Vector2.Zero, 1);
         foreach (var attachment in model.Attachments)
         {
-            if (attachment.Instance.Hidden)
+            if (attachment.Instance.Hidden || hiddenSockets?.Contains(attachment.Socket.Id) == true)
             {
                 continue;
             }

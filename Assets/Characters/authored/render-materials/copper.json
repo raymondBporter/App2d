@@ -1,0 +1,9 @@
+{
+  "format": "app2d-render-material",
+  "version": 1,
+  "id": "copper",
+  "name": "copper",
+  "material": {
+    "fill": "#856d43"
+  }
+}

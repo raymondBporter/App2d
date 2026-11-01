@@ -21,12 +21,13 @@ public sealed partial class Renderer2D
 
         _characterRenderer ??= new(_device);
         _authoredDrawing ??= new();
-        _authoredDrawing.Build(shader.Model, pose);
+        _authoredDrawing.Build(shader.Model, pose, shader.Artwork);
         var local = new ActorPose(pose, System.Numerics.Vector2.Zero, 1);
         foreach (var (prop, socket) in shader.Props)
         {
             _authoredDrawing.AddAttachment(prop, local, socket);
         }
+        foreach (var attachment in shader.Equipment) _authoredDrawing.AddAttachment(attachment, local);
 
         var m = visual.Transform.Matrix * _camera.WorldToDeviceMatrix;
         var world = Matrix.CreateScale(shader.Facing, 1, 1) * ToXnaMatrix(m);

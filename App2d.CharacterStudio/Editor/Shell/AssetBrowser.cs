@@ -19,11 +19,13 @@ internal sealed partial class AssetBrowser(EditorSession session)
     private enum Create
     {
         None, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, ImportPuppet, ImportClip,
-        Part, DuplicatePart
+        Part, DuplicatePart, Geometry, RenderMaterial, Piece
     }
     private string _appearanceTemplate = "hair";
     private string _templatePreset = "";
-    private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Parts", "Sources"];
+    private static readonly string[] Filters = ["All", "Geometry", "Materials", "Pieces", "Models", "Variants", "Animations", "Entities", "Parts", "Sources"];
+    private string _geometryKind = "simple-polygon";
+    private string _groupBy = "None";
     private string _search = "", _filter = "All";
     private Create _create;
     private string _name = "", _id = "", _source = "", _preset = "", _template = EntityAuthoring.Guard;
@@ -47,6 +49,10 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
         if (ImGui.BeginPopup("new-asset"))
         {
+            if (ImGui.MenuItem("Geometry...")) Start(Create.Geometry, "", "New geometry");
+            if (ImGui.MenuItem("Render material...")) Start(Create.RenderMaterial, "", "New render material");
+            if (ImGui.MenuItem("Piece: geometry + material...")) Start(Create.Piece, "", "New piece");
+            ImGui.Separator();
             if (ImGui.MenuItem("Appearance: hair / clothing..."))
             {
                 Start(Create.Appearance, "", "New appearance");
@@ -103,19 +109,21 @@ internal sealed partial class AssetBrowser(EditorSession session)
         ImGui.SameLine();
         ImGui.SetNextItemWidth(-1);
         ImGui.InputTextWithHint("##search", "Search names and ids", ref _search, 64);
-        for (var i = 0; i < Filters.Length; i++)
+        ImGui.SetNextItemWidth(-1);
+        if (ImGui.BeginCombo("##asset-filter", "Show: " + _filter))
         {
-            if (ImGui.RadioButton(Filters[i], _filter == Filters[i]))
-            {
-                _filter = Filters[i];
-            }
-
-            if (i % 2 == 0)
-            {
-                ImGui.SameLine();
-            }
+            foreach (var filter in Filters)
+                if (ImGui.Selectable(filter, _filter == filter)) _filter = filter;
+            ImGui.EndCombo();
         }
         RefreshProblems();
+        ImGui.SetNextItemWidth(-1);
+        if (ImGui.BeginCombo("##asset-group", "Group by: " + _groupBy))
+        {
+            foreach (var groupBy in new[] { "None", "Group", "Default attachment", "Group / attachment", "Attachment / group" })
+                if (ImGui.Selectable(groupBy, _groupBy == groupBy)) _groupBy = groupBy;
+            ImGui.EndCombo();
+        }
         ImGui.BeginChild("assets");
         if (_filter == "Sources")
         {
@@ -123,8 +131,20 @@ internal sealed partial class AssetBrowser(EditorSession session)
             ImGui.EndChild();
             return;
         }
-        if (_filter == "All" && _search.Length == 0)
+        if (_groupBy != "None")
         {
+            var entries = session.Assets.Documents.Where(Matches).SelectMany(d => GroupKeys(d).Select(key => (Key: key, Document: d)));
+            GroupedRows(entries.Select(e => (Segments: e.Key.Split('/', StringSplitOptions.TrimEntries), e.Document)).ToArray(), 0);
+        }
+        else if (_filter == "All" && _search.Length == 0)
+        {
+            foreach (var kind in new[] { AssetKind.Geometry, AssetKind.RenderMaterial, AssetKind.Piece })
+            {
+                var primitives = session.Assets.Documents.Where(d => d.Kind == kind).OrderBy(d => d.Name).ToArray();
+                if (primitives.Length == 0) continue;
+                Ui.Header(AssetKinds.Label(kind));
+                foreach (var primitive in primitives) Row(primitive, 0);
+            }
             if (session.Assets.Parts.Any())
             {
                 Ui.Header("Library parts");
@@ -270,13 +290,53 @@ internal sealed partial class AssetBrowser(EditorSession session)
     private bool Matches(AssetDocument document) =>
         (_filter == "All" || _filter == document.Kind switch
         {
+            AssetKind.Geometry => "Geometry",
+            AssetKind.RenderMaterial => "Materials",
+            AssetKind.Piece => "Pieces",
             AssetKind.Model => "Models",
             AssetKind.Variant => "Variants",
             AssetKind.Animation => "Animations",
             AssetKind.Part => document is AssetDocument<Part> { Asset.Behavior: not null } ? "Entities" : "Parts",
             _ => "Props"
         }) &&
-        (document.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || document.Id.Contains(_search, StringComparison.OrdinalIgnoreCase));
+        (document.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || document.Id.Contains(_search, StringComparison.OrdinalIgnoreCase)
+            || document is AssetDocument<Piece> p && (p.Asset.Groups.Any(g => g.Contains(_search, StringComparison.OrdinalIgnoreCase)) || p.Asset.Attachment?.Contains(_search, StringComparison.OrdinalIgnoreCase) == true
+                || p.Asset.Game?.Equipment?.Slot.Contains(_search, StringComparison.OrdinalIgnoreCase) == true));
+
+    private void GroupedRows((string[] Segments, AssetDocument Document)[] entries, int level)
+    {
+        foreach (var entry in entries.Where(e => e.Segments.Length == level).OrderBy(e => e.Document.Name)) Row(entry.Document, 0);
+        foreach (var group in entries.Where(e => e.Segments.Length > level).GroupBy(e => e.Segments[level], StringComparer.OrdinalIgnoreCase).OrderBy(g => g.Key))
+        {
+            if (!ImGui.TreeNode(group.Key)) continue;
+            GroupedRows(group.ToArray(), level + 1);
+            ImGui.TreePop();
+        }
+    }
+
+    private IEnumerable<string> GroupKeys(AssetDocument document)
+    {
+        string[] groups;
+        string attachment;
+        if (document is AssetDocument<Piece> piece)
+        {
+            groups = piece.Asset.Groups.Count == 0 ? ["Ungrouped"] : piece.Asset.Groups.ToArray();
+            attachment = piece.Asset.Game?.Equipment?.Slot ?? piece.Asset.Attachment ?? "No default attachment";
+        }
+        else if (document is AssetDocument<Part> part)
+        {
+            groups = [part.Asset.Usage];
+            attachment = part.Asset.Attachment ?? "No default attachment";
+        }
+        else return [AssetKinds.Label(document.Kind)];
+        return _groupBy switch
+        {
+            "Group" => groups,
+            "Default attachment" => [attachment],
+            "Group / attachment" => groups.Select(g => g + " / " + attachment),
+            _ => groups.Select(g => attachment + " / " + g),
+        };
+    }
 
     private void RefreshProblems()
     {
@@ -300,6 +360,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
         var problems = _problems.GetValueOrDefault(document.Id) ?? [];
         var tag = document.Kind switch
         {
+            AssetKind.Geometry => "[Geometry]",
+            AssetKind.RenderMaterial => "[Material]",
+            AssetKind.Piece => "[Piece]",
             AssetKind.Model => "[M]",
             AssetKind.Variant => "[V]",
             AssetKind.Animation => "[A]",
@@ -311,7 +374,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
         var selected = document.Id == session.SubjectId && session.Mode == Workspace.Model || document.Id == session.ClipId && session.Mode == Workspace.Animate
             || document.Id == session.EntityId && session.Mode == Workspace.Entity
             || document.Id == session.PreviewProp && session.Mode == Workspace.Appearance
-            || document.Id == session.PreviewPart && session.Mode == Workspace.Appearance;
+            || document.Id == session.PreviewPart && session.Mode == Workspace.Appearance
+            || document.Id == session.LibraryAssetId && session.Mode == Workspace.Library;
         if (problems.Count > 0)
         {
             ImGui.PushStyleColor(ImGuiCol.Text, UiTheme.Warning);
@@ -479,6 +543,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
         }
         ImGui.TextColored(UiTheme.Accent, _create switch
         {
+            Create.Geometry => "New geometry",
+            Create.RenderMaterial => "New render material",
+            Create.Piece => "New piece",
             Create.Appearance => "New hair or clothing",
             Create.Part => "New library part",
             Create.DuplicatePart => "Duplicate library part " + _source,
@@ -508,6 +575,16 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
         switch (_create)
         {
+            case Create.Geometry:
+                if (Ui.Combo("Geometry kind", _geometryKind, Core.Geometry.Serialization.GeometryJson2D.DrawableKinds) is { } geometryKind) _geometryKind = geometryKind;
+                Ui.Help("A named shape in local coordinates. Edit it alone with an origin, grid and point handles.");
+                break;
+            case Create.RenderMaterial:
+                Ui.Help("A shared render surface. Pieces reference it by ID; editing it updates every user.");
+                break;
+            case Create.Piece:
+                Ui.Help("Choose geometry and a material in the Piece editor. Attach it directly to a rig socket; no Part asset is needed.");
+                break;
             case Create.TemplateModel:
                 var recipe = session.Assets.ModelTemplates[_source];
                 if (recipe.Description.Length > 0)
@@ -587,6 +664,11 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
         if (ImGui.Button("Create") && Commit())
         {
+            if (session.ActiveDocument?.Kind is AssetKind.Geometry or AssetKind.RenderMaterial or AssetKind.Piece)
+            {
+                _filter = session.ActiveDocument.Kind switch { AssetKind.Geometry => "Geometry", AssetKind.RenderMaterial => "Materials", _ => "Pieces" };
+                _search = "";
+            }
             _create = Create.None;
             ImGui.CloseCurrentPopup();
         }
@@ -659,6 +741,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
     private bool Commit() => _create switch
     {
+        Create.Geometry => session.NewGeometry(_id, _name, _geometryKind),
+        Create.RenderMaterial => session.NewRenderMaterial(_id, _name),
+        Create.Piece => session.NewPiece(_id, _name),
         Create.Appearance => session.NewAppearance(_id, _name, _appearanceTemplate),
         Create.Part => session.NewPart(_id, _name),
         Create.DuplicatePart => session.DuplicatePart(_source, _id, _name),

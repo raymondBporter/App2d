@@ -27,8 +27,8 @@ internal sealed class AttachmentInspector(EditorSession session)
         Ui.Header($"Attachment {id}");
         ImGui.TextDisabled("Instance on this character: every variant wears it unless it overrides this instance.");
         PartInstance Live() => document.Asset.Attachments.First(a => a.Id == id);
-        var assets = session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
-        if (Ui.Combo("Library part", instance.Asset, assets, a => session.Assets.Part(a)?.Name is { } n ? $"{n} ({a})" : a) is { } asset)
+        var assets = session.Assets.Attachables.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
+        if (Ui.Combo("Piece / Part", instance.Asset, assets, a => session.Assets.Find(a)?.Name is { } n ? $"{n} ({a})" : a) is { } asset)
         {
             session.Edit(document, () => ModelAuthoring.SetAttachmentAsset(document.Asset, id, asset, session.Assets.PartOf));
         }
@@ -240,12 +240,12 @@ internal sealed class AttachmentInspector(EditorSession session)
                 session.Change(document, () => ModelAuthoring.EditAttachmentOverride(document.Asset, resolved, id, set));
             }
         }
-        var assets = session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
+        var assets = session.Assets.Attachables.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
         if (Ui.OverrideLabel("Library part", Overridden(RigProperties.Asset)))
         {
             Reset(RigProperties.Asset);
         }
-        else if (Ui.Combo("##attachment-asset", shown.Asset, assets, a => session.Assets.Part(a)?.Name is { } n ? $"{n} ({a})" : a) is { } asset)
+        else if (Ui.Combo("##attachment-asset", shown.Asset, assets, a => session.Assets.Find(a)?.Name is { } n ? $"{n} ({a})" : a) is { } asset)
         {
             Set(i => i.Asset = asset, true);
         }

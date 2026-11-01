@@ -1,0 +1,21 @@
+{
+  "format": "app2d-piece",
+  "version": 1,
+  "id": "copper-greaves",
+  "name": "copper-greaves",
+  "geometry": "greaves",
+  "material": {
+    "asset": "copper"
+  },
+  "groups": [
+    "Armor"
+  ],
+  "game": {
+    "equipment": {
+      "slot": "shins"
+    }
+  },
+  "y": 0.3,
+  "scaleX": -0.5,
+  "scaleY": 0.5
+}

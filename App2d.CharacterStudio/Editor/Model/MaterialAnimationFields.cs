@@ -16,7 +16,9 @@ internal static class MaterialAnimationFields
         if (Ui.Slider("Material alpha", ref alpha, 0, 1)) change(p => p.Material = p.RenderMaterial with { Alpha = alpha });
         var tint = ColorExtensions.FromHexRgba(material.Tint ?? "ffffffff").ToNumericsVector4();
         var rgb = new Vector3(tint.X, tint.Y, tint.Z);
-        if (ImGui.ColorEdit3("Material tint", ref rgb))
+        ImGui.TextUnformatted("Material tint");
+        ImGui.SetNextItemWidth(-1);
+        if (ImGui.ColorEdit3("##material-tint", ref rgb))
         {
             var color = ColorExtensions.FromVector4(new(rgb, tint.W));
             change(p => p.Material = p.RenderMaterial with { Tint = $"{color.R:x2}{color.G:x2}{color.B:x2}{color.A:x2}" });
@@ -24,7 +26,9 @@ internal static class MaterialAnimationFields
         if (part.Geometry is not Rectangle2D) return;
         Ui.Header("Texture");
         var texture = material.Texture ?? "";
-        if (ImGui.InputText("Image path (Enter)", ref texture, 512, ImGuiInputTextFlags.EnterReturnsTrue))
+        ImGui.TextUnformatted("Image path (Enter)");
+        ImGui.SetNextItemWidth(-1);
+        if (ImGui.InputText("##image-path", ref texture, 512, ImGuiInputTextFlags.EnterReturnsTrue))
             change(p => p.Material = p.RenderMaterial with { Texture = string.IsNullOrWhiteSpace(texture) ? null : texture.Trim() });
         Region("Image region", material.Source, region => change(p => p.Material = p.RenderMaterial with { Source = region }));
         if (material.TextureAnimation is not { Frames.Count: > 0 } animation)

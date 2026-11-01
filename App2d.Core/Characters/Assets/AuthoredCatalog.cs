@@ -13,6 +13,12 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<string, GameProfile> _profiles = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Part> _parts = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, GeometryAsset2D> _geometries = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, RenderMaterialAsset2D> _materials = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Piece> _pieces = new(StringComparer.Ordinal);
+    public IReadOnlyDictionary<string, GeometryAsset2D> Geometries => _geometries;
+    public IReadOnlyDictionary<string, RenderMaterialAsset2D> RenderMaterials => _materials;
+    public IReadOnlyDictionary<string, Piece> Pieces => _pieces;
     private string _textureRoot = Environment.CurrentDirectory;
     /// <summary>Library parts (P5a), loaded before the models that instance them.</summary>
     public IReadOnlyDictionary<string, Part> Parts => _parts;
@@ -29,6 +35,11 @@ public sealed class AuthoredCatalog
     public static AuthoredCatalog Load(string root)
     {
         var catalog = new AuthoredCatalog { _textureRoot = Path.GetFullPath(root) };
+        catalog.Scan(root, "geometry", GeometryAsset2D.FromJson, catalog._geometries, g => g.Id);
+        catalog.Scan(root, "render-materials", RenderMaterialAsset2D.FromJson, catalog._materials, m => m.Id);
+        catalog.Scan(root, "pieces", Piece.FromJson, catalog._pieces, p => p.Id);
+        foreach (var piece in catalog._pieces.Values)
+            catalog.Check(piece.Id, () => catalog._parts[piece.Id] = piece.Resolve(catalog._geometries.GetValueOrDefault, catalog._materials.GetValueOrDefault) with { TextureRoot = catalog._textureRoot });
         catalog.Scan(root, "parts", json => Part.FromJson(json) with { TextureRoot = catalog._textureRoot }, catalog._parts, p => p.Id);
         catalog.Scan(root, "models", CharacterModel.FromJson, catalog._models, m => m.Id);
         foreach (var id in catalog._models.Keys)

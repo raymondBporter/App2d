@@ -1,5 +1,73 @@
 # Character Studio
 
+## Geometry, render materials and Pieces
+
+Use **New > Geometry**, **New > Render material**, and **New > Piece** to build
+assets manually from the bottom up. These open in **Library**, independently of
+the selected character. Nothing generates finished clothing as part of this flow.
+
+1. Create geometry and choose its kind. **simple-polygon** starts with four points;
+   select a point, then **Insert after selected point** to add vertices. Drag numbered
+   points or edit their coordinates. The canvas has a visible origin, grid, snapping,
+   zoom and pan. **Open geometry in its own window** gives it a separate resizable
+   editing window. Point transforms rotate/scale around the origin and then translate.
+   Bézier control polygons expose the handles. Closed outlines can be extruded to
+   meshes; mesh outlines and XYZ values remain editable, and OBJ import is available.
+2. Name and save the geometry. Create and save a render material using its independent
+   form. Its swatch previews fill, outline, tint and alpha; image/texture settings are
+   available in the form and render on supported geometry in the character preview.
+3. Create a Piece. Choose the geometry and render material by ID, or use inline
+   geometry/material for simple content. Set its local transform, **Groups** (comma
+   separated paths such as `Clothes/Armor`) and **Default attachment** (a socket ID).
+   Shared asset editing is labelled explicitly; the **Used by** links navigate back
+   to dependent Pieces.
+4. Choose a wearer and socket. **Preview on wearer (temporary)** enables fitting and
+   the existing animation transport. **Attach** saves an instance directly on the
+   model; no additional Part file is created. A second instance can be mirrored for
+   the other leg. Instance transforms and color overrides are edited under Model.
+   Attaching while viewing a variant edits its base model, as the inspector explains.
+   **Equip on an entity** instead edits that entity's equipment.
+5. If the rig lacks the mount you need, expand **Create a socket on a rig control**.
+   Choose a socket ID and carrier control, plus an optional control to point toward.
+   This is an explicit model edit and participates in undo from the Piece editor.
+
+The browser filters **Geometry**, **Materials**, and **Pieces** and can group Pieces
+by nested group paths, default attachment, or both in either order. Search also
+matches a Piece's groups and attachment. Saved definitions live in `geometry/`,
+`render-materials/`, and `pieces/`; changing shared assets refreshes dependent previews.
+Ordinary Part assets remain available for multiple geometry entries, local rigs, animation and
+behavior. Boolean/composite shape construction and a physics-material library are
+separate work from this initial primitive editing flow.
+
+## Person equipment items
+
+A Piece can be an inventory item directly. Open it in **Library**, click
+**Equipment settings**, enable **Equippable item**, and choose **shoes**, **gloves**
+or **shins**. The saved `game.equipment` block declares a slot, **Replace base
+artwork**, and **Mirror right side**. Groups such as `Armor` remain browsing labels.
+
+Each standard slot uses left/right mounts. Shin mounts use the ankle as the local
+origin with +Y toward the knee, matching existing foot-fitted artwork. The same
+Piece is placed twice; its local size/offset/material stay shared. There is no Part
+wrapper to create, and equipment does not add attachments to the shared Person model.
+
+- **Replace off** draws the item over the original artwork.
+- **Replace on** suppresses the slot's original artwork and mounted attachments
+  while equipped. Shin replacement trims the Person's combined leg paths to their
+  thighs. Unequip restores the full original drawing. Rig controls, animation and
+  collision are unchanged.
+
+**Preview equipped pair (temporary)** previews both placements and the replacement
+setting in Studio. **Save this asset**, restart the game, and press **F7**. This
+prototype starts the inventory with the four existing shoes/gloves and all saved
+equippable Pieces, up to the existing 36-cell inventory capacity. Drag or double-click
+an item to equip it. Right-click its equipment slot to return it to inventory.
+Equipping another item in the same slot swaps the pair; it never stacks another pair.
+
+Equipment follows the animated mounts and the character's world scale. Automatic
+artwork fitting to changed bone lengths is not part of this first standard Person pass;
+adjust the Piece's authored size and offset for the intended fit.
+
 For the current vocabulary, architecture, and source folders, start with
 [the character system guide](character-system.md).
 

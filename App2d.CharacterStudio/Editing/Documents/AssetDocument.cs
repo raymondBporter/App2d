@@ -5,13 +5,16 @@ namespace App2d.CharacterStudio.Editing;
 /// <summary>Ordered so saving everything writes what others depend on first.</summary>
 public enum AssetKind
 {
-    Part, Model, Variant, Animation
+    Geometry, RenderMaterial, Piece, Part, Model, Variant, Animation
 }
 
 public static class AssetKinds
 {
     public static string Folder(AssetKind kind) => kind switch
     {
+        AssetKind.Geometry => "geometry",
+        AssetKind.RenderMaterial => "render-materials",
+        AssetKind.Piece => "pieces",
         AssetKind.Part => "parts",
         AssetKind.Model => "models",
         AssetKind.Variant => "variants",
@@ -20,6 +23,9 @@ public static class AssetKinds
     };
     public static string Label(AssetKind kind) => kind switch
     {
+        AssetKind.Geometry => "Geometry",
+        AssetKind.RenderMaterial => "Render material",
+        AssetKind.Piece => "Piece",
         AssetKind.Part => "Part",
         AssetKind.Model => "Model",
         AssetKind.Variant => "Variant",
@@ -175,6 +181,9 @@ public sealed class AssetDocument<T> : AssetDocument where T : class
 
 internal static class AssetDocuments
 {
+    public static AssetDocument<GeometryAsset2D> Of(GeometryAsset2D asset, string? path) => new(AssetKind.Geometry, asset, asset.Id, path, g => g.ToJson(), g => g.Name);
+    public static AssetDocument<RenderMaterialAsset2D> Of(RenderMaterialAsset2D asset, string? path) => new(AssetKind.RenderMaterial, asset, asset.Id, path, m => m.ToJson(), m => m.Name);
+    public static AssetDocument<Piece> Of(Piece asset, string? path) => new(AssetKind.Piece, asset, asset.Id, path, p => p.ToJson(), p => p.Name);
     public static AssetDocument<CharacterModel> Of(CharacterModel model, string? path) =>
         new(AssetKind.Model, model, model.Id, path, m => m.ToJson(), m => m.Name, CharacterModel.FromDraftJson);
     public static AssetDocument<ModelVariant> Of(ModelVariant variant, string? path) => new(AssetKind.Variant, variant, variant.Id, path, v => v.ToJson(), v => v.Name);

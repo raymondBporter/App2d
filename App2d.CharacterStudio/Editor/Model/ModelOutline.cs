@@ -119,7 +119,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
     private void Attachments(CharacterModel structure)
     {
         var resolved = Resolved;
-        if (structure.Attachments.Count > 0 || session.Assets.Parts.Any())
+        if (structure.Attachments.Count > 0 || session.Assets.Attachables.Any())
         {
             Ui.Header("Library parts");
         }
@@ -129,26 +129,26 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
             var shown = resolved?.Attachment(instance.Id);
             var asset = shown?.Asset.Id ?? instance.Asset;
             var swapped = shown is not null && shown.Asset.Id != instance.Asset;
-            var label = $"{instance.Id}  ({session.Assets.Part(asset)?.Name ?? asset + " (missing)"} on {instance.Socket}{(shown?.Instance.Mirror ?? instance.Mirror ? ", mirrored" : "")}{(swapped ? ", overridden" : "")}{(shown?.Instance.Hidden ?? instance.Hidden ? ", hidden" : "")})";
+            var label = $"{instance.Id}  ({session.Assets.Find(asset)?.Name ?? asset + " (missing)"} on {instance.Socket}{(shown?.Instance.Mirror ?? instance.Mirror ? ", mirrored" : "")}{(swapped ? ", overridden" : "")}{(shown?.Instance.Hidden ?? instance.Hidden ? ", hidden" : "")})";
             if (ImGui.Selectable(label, session.Selection.Attachment == instance.Id))
             {
                 session.Selection.Select(attachment: instance.Id);
             }
         }
-        if (Base is not { } document || !session.Assets.Parts.Any() || structure.Sockets.Count == 0)
+        if (Base is not { } document || !session.Assets.Attachables.Any() || structure.Sockets.Count == 0)
         {
             if (Variant is not null && structure.Attachments.Count > 0)
             {
                 Ui.Help("Select an instance to swap or restyle it on this variant; the base owns the instances.");
             }
-            else if (Base is not null && structure.Sockets.Count == 0 && session.Assets.Parts.Any())
+            else if (Base is not null && structure.Sockets.Count == 0 && session.Assets.Attachables.Any())
             {
                 Ui.Help("Add a socket to attach library parts.");
             }
 
             return;
         }
-        var assets = session.Assets.Parts.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
+        var assets = session.Assets.Attachables.Select(p => p.Id).Order(StringComparer.Ordinal).ToArray();
         var sockets = structure.Sockets.Select(s => s.Id).ToArray();
         if (!assets.Contains(_attachAsset))
         {
@@ -161,7 +161,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
         }
 
         ImGui.SetNextItemWidth(120 * Ui.Scale);
-        if (Ui.Combo("##attach-asset", _attachAsset, assets, a => session.Assets.Part(a)?.Name ?? a) is { } chosen)
+        if (Ui.Combo("##attach-asset", _attachAsset, assets, a => session.Assets.Find(a)?.Name ?? a) is { } chosen)
         {
             _attachAsset = chosen;
         }

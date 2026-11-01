@@ -7,6 +7,10 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Presentation.Player;
+using App2d.Presentation.Persons;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
@@ -42,6 +46,11 @@ internal static class EditorSurfaceSmoke
             SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
         };
         var slotClip = CreateSlotPreview(assets);
+        // In-memory fixtures only: exercise the manual primitive tools without adding shipped assets.
+        var localGeometry = assets.Create(new GeometryAsset2D { Id = "surface-polygon", Name = "Local polygon", Geometry = GeometryJson2D.CreateDefault(ShapeKinds2D.SimplePolygon) });
+        localGeometry.Replace(GeometryAssetEditing.InsertAfter(GeometryAssetEditing.InsertAfter(localGeometry.Asset, 0), 2));
+        assets.Create(new RenderMaterialAsset2D { Id = "surface-material", Name = "Library surface" });
+        assets.Create(new Piece { Id = "surface-piece", Name = "Library piece", Geometry = localGeometry.Id, Material = new() { Asset = "surface-material" }, Groups = ["Clothes/Armor"], Attachment = Humanoid.LeftFootSocket });
         using var shell = new EditorShell(session, new Viewport(device, gui, renderer), new ArenaTest(assets, device, gui, renderer), gui);
         session.Open("person-walk");
         session.Pin("tall-thin");
@@ -65,12 +74,12 @@ internal static class EditorSurfaceSmoke
             });
             gui.UserScale = scale;
             using var target = RenderCapture2D.CreateTarget(device, width, height, DepthFormat.None, 0);
-            void Capture(string name)
+            void Capture(string name, Action? draw = null)
             {
                 for (var frame = 0; frame < 4; frame++)
                 {
                     gui.Begin(1f / 60);
-                    shell.Draw();
+                    if (draw is null) shell.Draw(); else draw();
                     using (device.UseRenderTarget(target, StudioTheme.ApplicationBackground))
                     {
                         gui.Render();
@@ -78,6 +87,52 @@ internal static class EditorSurfaceSmoke
                 }
                 target.SavePng(Path.Combine(outputDirectory, $"{name}-{width}x{height}.png"));
             }
+
+            session.Open(localGeometry.Id);
+            Capture("library-geometry");
+            shell.LibraryInspector.ShowGeometryWindow(localGeometry.Id);
+            Capture("library-geometry-window");
+            shell.LibraryInspector.CloseGeometryWindow();
+            session.Open("surface-material");
+            Capture("library-render-material");
+            session.Open("surface-piece");
+            Capture("library-piece");
+            var equipmentPiece = assets.Piece("surface-piece")!;
+            equipmentPiece.Edit(() =>
+            {
+                equipmentPiece.Asset.Game = new() { Equipment = new() { Slot = PersonEquipmentSlots.Shins } };
+                equipmentPiece.Asset.ScaleX = .1f;
+                equipmentPiece.Asset.ScaleY = .22f;
+                equipmentPiece.Asset.Y = .18f;
+            });
+            session.SetSubject("person");
+            session.Compare.Clear();
+            session.PreviewPartOnWearer = true;
+            shell.LibraryInspector.FocusEquipment();
+            Capture("equipment-overlay-preview");
+            equipmentPiece.Edit(() => equipmentPiece.Asset.Game!.Equipment!.Replace = true);
+            shell.LibraryInspector.FocusEquipment();
+            Capture("equipment-replacement-preview");
+            session.PreviewPartOnWearer = false;
+            equipmentPiece.Edit(() =>
+            {
+                equipmentPiece.Asset.Game = null;
+                equipmentPiece.Asset.ScaleX = equipmentPiece.Asset.ScaleY = 1;
+                equipmentPiece.Asset.Y = 0;
+            });
+            var (wardrobe, doll) = EquipmentPreview(authoredRoot, outputDirectory);
+            try
+            {
+                var cell = Enumerable.Range(0, wardrobe.Inventory.Count).Single(i => wardrobe.Inventory[i]?.Id == "surface-test-equipment");
+                wardrobe.Equip(cell, WardrobeSlot2D.Shins);
+                doll.Open();
+                Capture("equipment-inventory-pair", () => doll.Draw(device, gui, new(1f / 60, 0, 0), canOpen: false));
+                wardrobe.Unequip(WardrobeSlot2D.Shins);
+                Capture("equipment-inventory-unequipped", () => doll.Draw(device, gui, new(1f / 60, 0, 0), canOpen: false));
+            }
+            finally { doll.ReleaseDevice(gui); }
+            session.Pin("tall-thin");
+            session.Pin("short-broad");
 
             session.Open("person-walk");
             session.EditRig = false;
@@ -198,6 +253,28 @@ internal static class EditorSurfaceSmoke
             }
         }
         Console.WriteLine("Animation settings, controls, weapon and slot inspectors, model views and curve facial studies rendered at two sizes and scales.");
+    }
+
+    private static (PlayerWardrobe2D Wardrobe, PaperDollUi2D Doll) EquipmentPreview(string authoredRoot, string outputDirectory)
+    {
+        var root = Path.Combine(outputDirectory, "equipment-fixture");
+        foreach (var path in Directory.EnumerateFiles(authoredRoot, "*.json", SearchOption.AllDirectories))
+        {
+            var target = Path.Combine(root, Path.GetRelativePath(authoredRoot, path));
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(path, target, overwrite: true);
+        }
+        var fixture = new Piece
+        {
+            Id = "surface-test-equipment", Name = "QA shin guard",
+            InlineGeometry = new() { Id = "inline", Name = "QA geometry", Geometry = Rectangle2D.Builder.FromSize(.09f, .22f, new(0, .18f)) },
+            Material = new() { Fill = "#927044" },
+            Game = new() { Equipment = new() { Slot = PersonEquipmentSlots.Shins } },
+        };
+        Directory.CreateDirectory(Path.Combine(root, "pieces"));
+        AuthoredAsset.Write(Path.Combine(root, "pieces", fixture.Id + ".json"), fixture.ToJson());
+        var wardrobe = new PlayerWardrobe2D(PersonMoves.From(AuthoredCatalog.Load(root)));
+        return (wardrobe, new(wardrobe));
     }
 
     private static string CreateSlotPreview(AuthoringWorkspace assets)

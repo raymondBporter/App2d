@@ -28,12 +28,14 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     private readonly AssetBrowser _browser = new(session);
     private readonly EditorLayout _layout = layout ?? new();
     private bool _layoutDirty;
+    private string? _inspectorFor, _outlineFor;
     private readonly IWorkspaceView[] _views =
     [
         new ModelView(session, viewport),
         new AnimateView(session, viewport),
         new EntityView(session),
-        new AppearanceView(session)
+        new AppearanceView(session),
+        new LibraryView(session, viewport)
     ];
 
     public EditorSession Session { get; } = session;
@@ -46,6 +48,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     private IWorkspaceView View => _views.First(v => v.Mode == Session.Mode);
     /// <summary>The Entity workspace's view, for the smokes to frame an inspector section.</summary>
     public EntityView EntityInspector => _views.OfType<EntityView>().First();
+    public LibraryView LibraryInspector => _views.OfType<LibraryView>().First();
 
     public void Draw()
     {
@@ -91,6 +94,8 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
 
                 Ui.Panel("outline", () =>
                 {
+                    var key = $"{Session.Mode}/{Session.ActiveDocument?.Id}";
+                    if (_outlineFor != key) { ImGui.SetScrollY(0); _outlineFor = key; }
                     if (Test.Active)
                     {
                         Test.RosterPanel();
@@ -126,6 +131,8 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
 
             Ui.Panel("inspector", content: () =>
             {
+                var key = $"{Session.Mode}/{Session.ActiveDocument?.Id}";
+                if (_inspectorFor != key) { ImGui.SetScrollY(0); _inspectorFor = key; }
                 if (Test.Active)
                 {
                     Test.Inspector();
@@ -155,11 +162,13 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
             StatusLine();
             _browser.DrawDialogs();
         });
+        _views.OfType<LibraryView>().First().DrawWindows();
         // A widget or drag in progress keeps its transaction open; the moment nothing is active, the step is committed and a
         // dropped panel handle is saved.
         if (!ImGui.IsAnyItemActive())
         {
-            Session.CommitAll();
+            if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) Session.EndDrag();
+            else Session.CommitAll();
             if (_layoutDirty)
             {
                 _layoutDirty = false;
@@ -174,7 +183,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         var rightEdge = ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X;
         ImGui.TextColored(UiTheme.Accent, "CHARACTER EDITOR");
         ImGui.SameLine();
-        foreach (var mode in new[] { Workspace.Model, Workspace.Animate, Workspace.Entity, Workspace.Appearance })
+        foreach (var mode in new[] { Workspace.Library, Workspace.Model, Workspace.Animate, Workspace.Entity, Workspace.Appearance })
         {
             var active = !Show3DPreview && Session.Mode == mode;
             if (active)
@@ -231,9 +240,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
             ImGui.SetTooltip("Play the entity arena from a snapshot of the current drafts, unsaved edits included.");
         }
 
-        ImGui.SameLine();
-        ImGui.TextDisabled("|");
-        ImGui.SameLine();
+        ImGui.Separator();
         if (Ui.Button("Save", document is not null))
         {
             Session.Save(document);
@@ -290,6 +297,9 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
 
     private string Describe(AssetDocument document) => document switch
     {
+        AssetDocument<GeometryAsset2D> => "shared geometry",
+        AssetDocument<RenderMaterialAsset2D> => "shared render material",
+        AssetDocument<Piece> => "shared piece",
         AssetDocument<ModelVariant> v => "variant of " + (Session.Assets.Model(v.Asset.Base)?.Name ?? v.Asset.Base + " (missing)"),
         AssetDocument<MotionClip> c => "animation for " + (Session.Assets.Model(c.Asset.Model)?.Name ?? c.Asset.Model + " (missing)"),
         AssetDocument<Part> e when e.Asset.Behavior is not null => "entity on " + (Session.Assets.Find(e.Asset.Model)?.Name ?? e.Asset.Model + " (missing)"),
@@ -299,6 +309,11 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
 
     private void Stage(IWorkspaceView view)
     {
+        if (view is LibraryView library)
+        {
+            library.Stage();
+            return;
+        }
         ViewportToolbar();
         var frame = Viewport.Draw(ImGui.GetContentRegionAvail(), Session.Scene(), Session);
         frame.Draw.PushClipRect(frame.Origin, frame.Origin + frame.Size, true);
@@ -457,17 +472,19 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
             }
             else
             {
-                Session.Save(Session.ActiveDocument);
+                Session.Save(LibraryInspector.FocusedWindow ?? Session.ActiveDocument);
             }
         }
         if (io.KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.Z))
         {
-            Session.Undo();
+            if (LibraryInspector.FocusedWindow is { } geometry) geometry.Undo();
+            else Session.Undo();
         }
 
         if (io.KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.Y))
         {
-            Session.Redo();
+            if (LibraryInspector.FocusedWindow is { } geometry) geometry.Redo();
+            else Session.Redo();
         }
 
         if (!Test.Active && !ImGui.IsAnyItemActive() && ImGui.IsKeyPressed(ImGuiKey.Space, false))
