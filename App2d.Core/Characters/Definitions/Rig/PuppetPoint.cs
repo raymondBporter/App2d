@@ -13,9 +13,7 @@ public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
 {
     [JsonIgnore] public Vector2 XY => new(X, Y);
     [JsonIgnore] public Vector3 XYZ => new(X, Y, Z);
-    [JsonIgnore] public LayeredPoint2D Layered => new(XY, new(Z));
     public static PuppetPoint From(Vector3 p) => new(p.X, p.Y, p.Z);
-    public static PuppetPoint From(LayeredPoint2D p) => new(p.Position.X, p.Position.Y, p.Layer.Order);
     public static PuppetPoint Lerp(PuppetPoint a, PuppetPoint b, float t) => From(Vector3.Lerp(a.XYZ, b.XYZ, t));
     public void Check(string field)
     {

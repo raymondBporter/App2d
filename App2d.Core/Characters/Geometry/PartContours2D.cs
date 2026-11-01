@@ -6,6 +6,7 @@ using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -18,14 +19,14 @@ public static class PartContours2D
         ((SimplePolygon2D)part.Geometry!).VertexList;
 
     /// <summary>A part's outline in an evaluated pose of a resolved model, with the pose's animated artwork fit applied (P7a).</summary>
-    public static PartContour Contour(PartGeometry part, ResolvedModel model, EvaluatedPose pose) =>
+    public static LayeredContour Contour(PartGeometry part, ResolvedModel model, EvaluatedPose pose) =>
         Contour(pose.Fitted(part), pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement);
 
     /// <summary>A piece's outline inside an evaluated animated instance, in the wearer's frame.</summary>
-    public static PartContour Contour(PartGeometry part, EvaluatedAttachment attachment) =>
+    public static LayeredContour Contour(PartGeometry part, EvaluatedAttachment attachment) =>
         Contour(attachment.Pose.Fitted(part), attachment.World, attachment.Frame, attachment.Rest, attachment.RestFrame);
 
-    public static PartContour Contour(PartGeometry part, ResolvedAttachment attachment, Frame3D socket)
+    public static LayeredContour Contour(PartGeometry part, ResolvedAttachment attachment, Frame3D socket)
     {
         var (world, frame) = attachment.Lookups(LayeredFrame2D.Identity);
         var spatial = PartPlacement3D.Placement(attachment, socket);
@@ -39,7 +40,7 @@ public static class PartContours2D
     }
 
     /// <summary>A shape's closed outline or a curve's sampled open stroke.</summary>
-    public static PartContour Contour(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
+    public static LayeredContour Contour(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         if (part.SpatialCurve is { } spatialCurve)
         {

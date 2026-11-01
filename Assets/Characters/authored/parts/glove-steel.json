@@ -1,0 +1,30 @@
+{
+  "format": "app2d-part",
+  "version": 5,
+  "id": "glove-steel",
+  "name": "Blue steel gauntlets",
+  "usage": "glove",
+  "geometry": [
+    {
+      "id": "palm",
+      "frame": "origin",
+      "layer": -0.016,
+      "geometry": { "kind": "ellipse", "center": { "x": 0, "y": -0.018 }, "radii": { "x": 0.058, "y": 0.071 } },
+      "material": { "fill": "#679fb8", "outline": { "color": "#24384c", "width": 0.011 } }
+    },
+    {
+      "id": "cuff",
+      "frame": "origin",
+      "layer": -0.018,
+      "geometry": { "kind": "rectangle", "center": { "x": 0, "y": 0.045 }, "size": { "x": 0.124, "y": 0.055 } },
+      "material": { "fill": "#365b79", "outline": { "color": "#24384c", "width": 0.009 } }
+    },
+    {
+      "id": "plate",
+      "frame": "origin",
+      "layer": -0.02,
+      "geometry": { "kind": "rectangle", "center": { "x": 0, "y": -0.014 }, "size": { "x": 0.073, "y": 0.018 } },
+      "material": { "fill": "#c6e4e9", "outline": { "color": "#365b79", "width": 0.004 } }
+    }
+  ]
+}

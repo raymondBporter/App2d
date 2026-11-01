@@ -294,12 +294,12 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                         : "Bone node: parent-local setup; rest is derived");
                     if (node is not null)
                     {
-                        var origin = LayeredPoint2D.From(node.Rest);
+                        var origin = node.Rest;
                         if (control.Link is null)
                         {
                             if (CharacterUi.LayeredPoint("Origin (character)", ref origin))
                             {
-                                session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, origin.ToVector3(), session.MoveChildren));
+                                session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, origin, session.MoveChildren));
                             }
                         }
                         else
@@ -442,10 +442,10 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
             default:
                 {
                     ImGui.TextDisabled("Point control: character-frame rest; its parent-local setup is derived when the model resolves.");
-                    var rest = control.Rest.Layered;
+                    var rest = control.Rest.XYZ;
                     if (CharacterUi.LayeredPoint("Rest (character)", ref rest))
                     {
-                        session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
+                        session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest, session.MoveChildren));
                     }
 
                     if (control.Length > 0)

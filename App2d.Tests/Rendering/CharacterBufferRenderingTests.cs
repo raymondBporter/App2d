@@ -1,3 +1,4 @@
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -10,7 +11,7 @@ public sealed class CharacterBufferRenderingTests
 {
     private static readonly Matrix Projection = PointCharacterRenderer.Projection(128, 128, new(64), 1);
 
-    private static void AddTriangle(CharacterMesh mesh, Color4b color) =>
+    private static void AddTriangle(LayeredMesh mesh, Color4b color) =>
         mesh.Triangle(new(-12, -12, 0), new(12, -12, 0), new(0, 12, 0), color);
 
     [Fact]
@@ -32,7 +33,7 @@ public sealed class CharacterBufferRenderingTests
         Assert.Equal(Color4b.Magenta, pixels[64 * 128 + 40]);
         Assert.Equal(Color4b.Magenta, pixels[64 * 128 + 88]);
 
-        var other = new CharacterMesh(3);
+        var other = new LayeredMesh(3);
         AddTriangle(other, Color4b.Lime);
         renderer.Draw(other, Projection, Matrix.Identity, writeDepth: false);
         renderer.Draw(drawing, Projection, Matrix.Identity);
@@ -44,7 +45,7 @@ public sealed class CharacterBufferRenderingTests
     {
         using var graphics = new GraphicsTestContext();
         using var renderer = new PointCharacterRenderer(graphics.Device);
-        var mesh = new CharacterMesh(3);
+        var mesh = new LayeredMesh(3);
         AddTriangle(mesh, Color4b.Red);
         var version = mesh.Version;
         graphics.Device.Clear(Color4b.Transparent);
@@ -67,7 +68,7 @@ public sealed class CharacterBufferRenderingTests
     {
         using var graphics = new GraphicsTestContext();
         using var renderer = new PointCharacterRenderer(graphics.Device);
-        var mesh = new CharacterMesh(3);
+        var mesh = new LayeredMesh(3);
         renderer.Draw(mesh, Projection, Matrix.Identity);
         Assert.Equal(0, renderer.MeshUploadCount);
         AddTriangle(mesh, Color4b.Red);
@@ -90,7 +91,7 @@ public sealed class CharacterBufferRenderingTests
         using var texture = new Texture2D(graphics.Device, 1, 1);
         texture.SetData([new Color4b(255, 0, 0, 128)]);
         using var renderer = new PointCharacterRenderer(graphics.Device);
-        var mesh = new CharacterMesh(3);
+        var mesh = new LayeredMesh(3);
         // Near opaque green, then farther textured red: depth read must keep the near triangle.
         mesh.Triangle(new(-12, -12, -1), new(12, -12, -1), new(0, 12, -1), Color4b.Lime);
         mesh.Triangle(new(-12, -12, 1), new(12, -12, 1), new(0, 12, 1), Color4b.White);
@@ -120,7 +121,7 @@ public sealed class CharacterBufferRenderingTests
     {
         using var graphics = new GraphicsTestContext();
         using var renderer = new PointCharacterRenderer(graphics.Device);
-        var mesh = new CharacterMesh();
+        var mesh = new LayeredMesh();
         for (var triangle = 0; triangle < 8192; triangle++)
         {
             mesh.Triangle(new(-40, -12, 0), new(-16, -12, 0), new(-28, 12, 0), Color4b.Red);
@@ -140,7 +141,7 @@ public sealed class CharacterBufferRenderingTests
     {
         using var graphics = new GraphicsTestContext();
         using var renderer = new PointCharacterRenderer(graphics.Device);
-        var mesh = new CharacterMesh(3);
+        var mesh = new LayeredMesh(3);
         AddTriangle(mesh, Color4b.Red);
         renderer.Draw(mesh, Projection, Matrix.Identity);
         Assert.True(renderer.CachedMeshBytes > 0);

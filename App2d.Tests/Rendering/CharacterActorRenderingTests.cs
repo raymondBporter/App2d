@@ -51,12 +51,12 @@ public sealed class CharacterActorRenderingTests
         puppet.Mesh.Triangle(new(-44, -12, 0), new(-20, -12, 0), new(-32, 12, 0), Color4b.Red);
         puppet.Mesh.Triangle(new(20, -12, 10), new(44, -12, 10), new(32, 12, 10), Color4b.Blue);
         puppet.Batches.Add(new(0, 6));
-        var swoosh = new CharacterMesh(3);
+        var swoosh = new LayeredMesh(3);
         swoosh.Triangle(new(-60, -20, 5), new(60, -20, 5), new(0, 40, 5), Color4b.Lime);
         using (graphics.Device.UseRenderTarget(target, Color4b.White))
         {
             renderer.DrawActor(puppet, Projection, Matrix.Identity, swoosh);
-            renderer.DrawActor(Puppet(0, 0, Color4b.Red), Projection, Matrix.Identity, new CharacterMesh(3));
+            renderer.DrawActor(Puppet(0, 0, Color4b.Red), Projection, Matrix.Identity, new LayeredMesh(3));
         }
 
         var pixels = new Color4b[128 * 128];
@@ -72,9 +72,9 @@ public sealed class CharacterActorRenderingTests
         using var graphics = new GraphicsTestContext();
         using var target = RenderCapture2D.CreateTarget(graphics.Device, 128, 128, DepthFormat.Depth24, 0);
         using var renderer = new PointCharacterRenderer(graphics.Device);
-        var near = new CharacterMesh(3);
+        var near = new LayeredMesh(3);
         near.Triangle(new(-12, -12, 0), new(12, -12, 0), new(0, 12, 0), Color4b.Red);
-        var far = new CharacterMesh(3);
+        var far = new LayeredMesh(3);
         far.Triangle(new(-12, -12, 10), new(12, -12, 10), new(0, 12, 10), Color4b.Blue);
         using (graphics.Device.UseRenderTarget(target, Color4b.White))
         {

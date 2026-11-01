@@ -3,6 +3,7 @@ using App2d.CharacterStudio.Editor;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
 using Matrix = Microsoft.Xna.Framework.Matrix;
@@ -35,7 +36,7 @@ internal sealed record ArenaActorFrame(ResolvedEntity Entity, ActorPose Pose, En
 internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 {
     private readonly PuppetDrawing _drawing = new();
-    private readonly CharacterMesh _overlay = new(16384);
+    private readonly LayeredMesh _overlay = new(16384);
 
     public void Draw(IReadOnlyList<ArenaActorFrame> actors, Matrix projection, float ppu, float centerX, bool overlays)
     {

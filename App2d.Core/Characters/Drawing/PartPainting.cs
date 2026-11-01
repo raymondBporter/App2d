@@ -7,7 +7,6 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
-using App2d.Core.Rendering.Characters;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Drawing;
@@ -15,19 +14,18 @@ namespace App2d.Core.Characters.Drawing;
 /// <summary>Paint lives in rest artwork coordinates and follows the same triangles as fill, including folding membranes.</summary>
 internal static class PartPainting
 {
-    public static void Add(CharacterMesh mesh, PartGeometry part, LayeredFrame2D frame, PartContour contour, TriangleMesh2D? triangles, Frame3D? spatial = null, float physicalZ = 0, Color4b? tint = null)
+    public static void Add(LayeredMesh mesh, PartGeometry part, LayeredFrame2D frame, LayeredContour contour, TriangleMesh2D? triangles, Frame3D? spatial = null, float physicalZ = 0, Color4b? tint = null)
     {
         if (part.RenderMaterial.Paint is not { } paint)
         {
             return;
         }
 
-        Vector3 PlaceSpatial(Vector3 point) => spatial is { } placed
-            ? placed.TransformPoint(point + Vector3.UnitZ * physicalZ) : point;
+        Vector3 PlaceSpatial(Vector3 point) => spatial is { } placed ? placed.TransformPoint(point + Vector3.UnitZ * physicalZ) : point;
         for (var layer = 0; layer < paint.Count; layer++)
         {
             var patch = paint[layer];
-            var color = PuppetDrawing.Tinted(ColorExtensions.FromHexRgb(patch.Material!.Fill!), tint);
+            var color = ColorExtensions.FromHexRgb(patch.Material!.Fill!).Multiply(tint);
             var bias = .00001f * (layer + 1);
             if (triangles is null)
             {
@@ -35,7 +33,7 @@ internal static class PartPainting
                 var points = patch.Points.ConvertAll(p => frame.Frame.TransformPoint(bounds.Center + p * new Vector2(bounds.Width, bounds.Height)));
                 var outline = contour.Select(p => p.XY).ToArray();
                 var clipped = PolygonClipping2D.ClipConvex(points, outline);
-                var points3D = new PartContour([.. clipped.Select(p => PlaceSpatial(new Vector3(p, 0)))], frame.Layer - bias);
+                var points3D = new LayeredContour([.. clipped.Select(p => PlaceSpatial(new Vector3(p, 0)))], frame.Layer - bias);
                 mesh.Polygon(points3D, color, null, 0);
                 continue;
             }
@@ -62,7 +60,7 @@ internal static class PartPainting
                     return (point, layer);
                 }
                 var placedPoints = clipped.Select(Place).ToArray();
-                mesh.Polygon(new PartContour([.. placedPoints.Select(p => p.Position)], layers: [.. placedPoints.Select(p => p.Layer)]), color, null, 0);
+                mesh.Polygon(new LayeredContour([.. placedPoints.Select(p => p.Position)], layers: [.. placedPoints.Select(p => p.Layer)]), color, null, 0);
             }
         }
     }

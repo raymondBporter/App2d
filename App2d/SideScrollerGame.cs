@@ -46,6 +46,7 @@ public sealed class SideScrollerGame : Game2D
     private readonly ViewportTerrainSource2D _terrainSource;
     private readonly Levels.WorldAsset2D _loadedWorld;
     private readonly LevelPicker2D _levelPicker;
+    private bool _paperDollWasOpen;
 
     public SideScrollerGame(string? worldManifest = null)
     {
@@ -118,7 +119,6 @@ public sealed class SideScrollerGame : Game2D
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
         _resources.Get<Levels.WorldAsset2D>("level/cavern", "editor");
-        _editorUi = new(_editor, Textures, DebugPanel);
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ConfigureMaps(loadedLevel.Maps, loadedLevel.Root);
         _editor.ObjectsChanged += objects =>
@@ -136,6 +136,7 @@ public sealed class SideScrollerGame : Game2D
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored));
+        _editorUi = new(_editor, Textures, DebugPanel, _client.Wardrobe);
         _resources.Register("audio/soundtrack", () => WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones),
             Path.Combine(AssetPaths.Current.Music, "soundtrack.json"));
         var soundtrack = _resources.GetLoad<WorldSoundtrack2D>("audio/soundtrack", "music");
@@ -179,6 +180,17 @@ public sealed class SideScrollerGame : Game2D
     public override void Update(FrameTime time, InputState input)
     {
         _isControllerConnected = input.Gamepad.IsConnected;
+        if (_paperDollWasOpen != _editorUi.IsPaperDollOpen)
+        {
+            _paperDollWasOpen = _editorUi.IsPaperDollOpen;
+            input.CancelButtons();
+        }
+        if (_editorUi.IsPaperDollOpen)
+        {
+            _session.SetPaused(true);
+            _client.Suspend();
+            return;
+        }
         if (!_editor.IsActive)
         {
             var wasOpen = _levelPicker.IsOpen;
@@ -239,7 +251,7 @@ public sealed class SideScrollerGame : Game2D
     {
         _musicDirector.Update(_client.Content, _client.State.Person.Position, time.DeltaSeconds);
         _client.UpdateFeedback(time.DeltaSeconds);
-        if (!_editor.IsActive && !_levelPicker.IsOpen)
+        if (!_editor.IsActive && !_levelPicker.IsOpen && !_editorUi.IsPaperDollOpen)
         {
             _client.AdvancePresentation(time.DeltaSeconds);
         }

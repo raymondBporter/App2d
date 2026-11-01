@@ -33,6 +33,10 @@ public static class ColorExtensions
         return color;
     }
 
+    /// <summary>Multiplies every channel, alpha included, by a tint; a missing tint leaves the color unchanged.</summary>
+    public static Color4b Multiply(this Color4b color, Color4b? tint) => tint is not { } t ? color
+        : new((byte)(color.R * t.R / 255), (byte)(color.G * t.G / 255), (byte)(color.B * t.B / 255), (byte)(color.A * t.A / 255));
+
     /// <summary>Parses an opaque #RRGGBB color.</summary>
     public static Color4b FromHexRgb(string hex)
     {

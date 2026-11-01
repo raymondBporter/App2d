@@ -67,7 +67,7 @@ internal sealed class LevelPicker2D(IReadOnlyList<WorldMapAsset2D> maps)
 
     public void Draw(Renderer2D renderer)
     {
-        renderer.DrawScreenText("F2  Levels   |   F1  Edit", new(32, 54), GameUiTheme.Text);
+        renderer.DrawScreenText("F2  Levels   |   F1  Edit   |   F7  Equipment", new(32, 170), GameUiTheme.Text);
         if (!IsOpen)
         {
             return;

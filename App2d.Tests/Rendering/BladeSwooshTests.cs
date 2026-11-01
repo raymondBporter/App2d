@@ -1,5 +1,5 @@
 using App2d.Core.Characters.Authored;
-using App2d.Core.Rendering.Characters;
+using App2d.Core.Rendering;
 using System.Numerics;
 
 namespace App2d.Tests.Rendering;
@@ -9,14 +9,14 @@ public sealed class BladeSwooshTests
     [Fact]
     public void DrawingLayersDoNotChangeTheRecordedSpatialPath()
     {
-        static CharacterMesh Build(float layer)
+        static LayeredMesh Build(float layer)
         {
             var swoosh = new BladeSwoosh();
             var (firstGuard, firstTip) = At(0);
             var (lastGuard, lastTip) = At(75);
             swoosh.Record(0, firstGuard, firstTip, true, layer);
             swoosh.Record(.1f, lastGuard, lastTip, true, layer + .5f);
-            var mesh = new CharacterMesh();
+            var mesh = new LayeredMesh();
             swoosh.Build(mesh);
             return mesh;
         }
@@ -33,17 +33,21 @@ public sealed class BladeSwooshTests
         return (new(c * .1f, s * .1f, 0), new(c * .9f, s * .9f, 0));
     }
 
-    private static CharacterMesh Swing(params (float Time, float Degrees, bool On)[] frames) => Swing(0, frames);
+    private static LayeredMesh Swing(params (float Time, float Degrees, bool On)[] frames) => Swing(0, frames);
 
-    private static CharacterMesh Swing(int sweep, params (float Time, float Degrees, bool On)[] frames)
+    private static LayeredMesh Swing(int sweep, params (float Time, float Degrees, bool On)[] frames)
     {
-        var swoosh = new BladeSwoosh { Style = SwooshStyle.Primary with { InkWidth = 0 }, Sweep = sweep };
+        var swoosh = new BladeSwoosh
+        {
+            Style = SwooshStyle.Primary with { Material = SwooshStyle.Primary.Material with { Outline = null } },
+            Sweep = sweep
+        };
         foreach (var (time, degrees, on) in frames)
         {
             var (g, t) = At(degrees);
             swoosh.Record(time, g, t, on);
         }
-        var mesh = new CharacterMesh();
+        var mesh = new LayeredMesh();
         swoosh.Build(mesh);
         return mesh;
     }
@@ -74,8 +78,8 @@ public sealed class BladeSwooshTests
     public void ASweepHintSendsAFirstStepOverTheTopInsteadOfUnderneath()
     {
         // 200 degrees back (pointing down-back) to 10 degrees in one step: the shorter way (170) passes underneath.
-        static bool Under(CharacterMesh mesh) => mesh.Vertices.ToArray().Any(v => v.Position.Y < -.5f);
-        static bool Over(CharacterMesh mesh) => mesh.Vertices.ToArray().Any(v => v.Position.Y > .5f);
+        static bool Under(LayeredMesh mesh) => mesh.Vertices.ToArray().Any(v => v.Position.Y < -.5f);
+        static bool Over(LayeredMesh mesh) => mesh.Vertices.ToArray().Any(v => v.Position.Y > .5f);
         var guessed = Swing((0, 200, true), (1 / 60f, 10, true));
         Assert.True(Under(guessed) && !Over(guessed));
         var hinted = Swing(-1, (0, 200, true), (1 / 60f, 10, true));
@@ -88,7 +92,10 @@ public sealed class BladeSwooshTests
         // A blade turning about the vertical axis from pointing back to pointing forward, in two steps through pointing at
         // the camera (-Z). In the screen plane that is back, a short stub, forward: the trail must stay near the guard's
         // height rather than sweep a half circle over the top or underneath.
-        var swoosh = new BladeSwoosh { Style = SwooshStyle.Primary with { InkWidth = 0 } };
+        var swoosh = new BladeSwoosh
+        {
+            Style = SwooshStyle.Primary with { Material = SwooshStyle.Primary.Material with { Outline = null } }
+        };
         static (Vector3, Vector3) Yaw(float degrees)
         {
             var (s, c) = MathF.SinCos(float.DegreesToRadians(degrees));
@@ -99,7 +106,7 @@ public sealed class BladeSwooshTests
             var (g, t) = Yaw(degrees);
             swoosh.Record(time, g, t, true);
         }
-        var mesh = new CharacterMesh();
+        var mesh = new LayeredMesh();
         swoosh.Build(mesh);
         Assert.True(mesh.Count > 0);
         Assert.All(mesh.Vertices.ToArray(), v => Assert.InRange(v.Position.Y, -.01f, .01f));

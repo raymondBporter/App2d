@@ -10,6 +10,7 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using App2d.Presentation.World.Presentation;
+using App2d.Presentation.Player;
 using System.Numerics;
 
 namespace App2d.Presentation.Persons;
@@ -66,10 +67,15 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         };
         _visual.Transform.Scale = new(_worldUnitsPerModelUnit);
         scene.Add(_visual);
+        Wardrobe = new(moves);
+        Wardrobe.Changed += RefreshWardrobe;
     }
 
     public PersonAnimationDirector Director { get; }
     public ActorPose? Pose { get; private set; }
+    internal PlayerWardrobe2D Wardrobe { get; }
+
+    private void RefreshWardrobe() => Update();
 
     /// <summary>The top of the rest pose's drawn shapes above the feet.</summary>
     public static float RestHeight(ResolvedModel model) => model.DrawnHeight();
@@ -161,12 +167,10 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
             Clock = _clock,
         }, frame.Planted);
         Pose = pose;
-        var model = Director.Moves.Model;
-        var sockets = model.Base.Sockets;
         _shader.Pose = pose.Local;
         _shader.Facing = facing;
         var seconds = (float)Math.Min(frame.PropSeconds, frame.PropClip.Duration);
-        _shader.Props = [.. PersonLoadout.Dressed(frame.PropClip, seconds, frame.Gear, Director.Moves.Hero, Director.Moves.Gear).Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
+        _shader.Props = Wardrobe.Dress(frame.PropClip, seconds, frame.Gear);
         RecordSwoosh(frame, seconds, pose.Local);
         _visual.Transform.Position = Feet(s);
         _visual.IsVisible = _enabled && Visible();

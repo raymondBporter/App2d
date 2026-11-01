@@ -26,7 +26,7 @@ public sealed record PartGeometry
     public IGeometryValue2D? Geometry { get; set; }
     /// <summary>A real spatial curve. Mutually exclusive with planar geometry and mesh geometry.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonConverter(typeof(App2d.Core.Geometry.Serialization.SpatialCurveJsonConverter))]
+    [JsonConverter(typeof(Core.Geometry.Serialization.SpatialCurveJsonConverter))]
     public ICurve<Vector3f, float>? SpatialCurve { get; set; }
     /// <summary>Mesh geometry, mutually exclusive with the planar shape/curve value.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

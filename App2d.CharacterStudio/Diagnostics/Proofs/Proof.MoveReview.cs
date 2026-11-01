@@ -52,7 +52,7 @@ internal sealed partial class ProofRenders
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
         using var target = RenderCapture2D.CreateTarget(GraphicsDevice, ReviewWidth, ReviewHeight);
         var drawing = new PuppetDrawing();
-        var scenery = new CharacterMesh(8192);
+        var scenery = new LayeredMesh(8192);
         var items = ReviewItems(catalog);
         var manifest = new List<object>();
         var report = new List<string>();
@@ -216,7 +216,7 @@ internal sealed partial class ProofRenders
         };
     }
 
-    private static void BuildScenery(CharacterMesh mesh, string scene, float centerX, float seconds)
+    private static void BuildScenery(LayeredMesh mesh, string scene, float centerX, float seconds)
     {
         mesh.Clear();
         var ink = new Color4b(150, 162, 152);

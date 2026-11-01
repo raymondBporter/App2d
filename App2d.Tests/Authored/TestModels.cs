@@ -3,6 +3,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -223,7 +224,7 @@ internal static class TestModels
     };
 
     // Fixed-camera reference comparisons combine the two independent channels at the rendering boundary.
-    public static Vector3 DrawPoint(App2d.Core.Characters.Geometry.PartContour contour, int index) =>
+    public static Vector3 DrawPoint(Core.Rendering.LayeredContour contour, int index) =>
         contour[index] + Vector3.UnitZ * contour.LayerAt(index);
 
     public static void Near(Vector3 expected, Vector3 actual, float tolerance = 1e-4f, string what = "") =>

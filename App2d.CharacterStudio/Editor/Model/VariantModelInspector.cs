@@ -170,10 +170,10 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
         });
         if (node.Link is null)
         {
-            var rest = LayeredPoint2D.From(resolved.Rest[id]);
+            var rest = resolved.Rest[id];
             if (CharacterUi.LayeredPoint("Rest (character)", ref rest))
             {
-                session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, id, rest.ToVector3(), session.MoveChildren));
+                session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, id, rest, session.MoveChildren));
             }
 
             var children = session.MoveChildren;

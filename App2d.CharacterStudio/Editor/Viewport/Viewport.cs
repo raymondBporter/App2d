@@ -50,7 +50,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
 {
     private const float GamePpu = 48; // arena scale at 1280x720
     private readonly List<PuppetDrawing> _drawings = [];
-    private readonly CharacterMesh _ground = new(8192);
+    private readonly LayeredMesh _ground = new(8192);
     private RenderTarget2D? _target, _inset;
     private nint _targetId, _insetId;
     private float _span = 3.2f;

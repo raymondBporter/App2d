@@ -6,7 +6,7 @@ using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.World;
 using App2d.Gameplay.World.Vegetation;
-
+using System.Collections.Immutable;
 namespace App2d.Gameplay.Simulation;
 
 /// <summary>Collision layers shared by every session participant.</summary>
@@ -31,10 +31,11 @@ public sealed record SideScrollerSessionDefinition2D(TraversalMetrics2D Traversa
     public AuthoredCatalog? AuthoredCharacters { get; init; }
     public IReadOnlyList<ObjectPlacement2D> Objects { get; init; } = [];
     /// <summary>Rectangular regions shared by simulation and presentation consumers.</summary>
-    public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; init; } = [];
-    public System.Collections.Immutable.ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
+    public ImmutableArray<WorldZone2D> Zones { get; init; } = [];
+    public ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
     public int PlayerMaximumHealth { get; init; } = 5;
     public SpellTuning2D Spells { get; init; } = new();
+
     /// <summary>Resume point; ignored when it names a missing checkpoint or invalid health.</summary>
     public SavedProgress2D? SavedProgress { get; init; }
     public int PositionIterations { get; init; } = 3;
@@ -47,8 +48,7 @@ public sealed record SideScrollerSessionDefinition2D(TraversalMetrics2D Traversa
         ArgGuard.ThrowIfNull(WorldThings);
         ArgGuard.ThrowIfNull(Objects);
         foreach (var placement in Objects) placement.Validate();
-        ArgGuard.ThrowIf(Objects.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != Objects.Count,
-            "Object placements need unique IDs.", nameof(Objects));
+        ArgGuard.ThrowIf(Objects.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != Objects.Count, "Object placements need unique IDs.", nameof(Objects));
         ArgGuard.ThrowIf(GiantTrees.IsDefault || GiantTrees.Any(tree => tree is null), "Trees must be initialized and non-null.", nameof(GiantTrees));
         if (Zones.IsDefault || Zones.Any(z => z is null) || Zones.Select(z => z.Id).Distinct(StringComparer.Ordinal).Count() != Zones.Length)
         {

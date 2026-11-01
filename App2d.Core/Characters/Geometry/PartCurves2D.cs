@@ -2,6 +2,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Mathematics;
+using App2d.Core.Rendering;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;
@@ -9,7 +10,7 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>Resolves character bindings, then delegates curve and attribute evaluation to geometry.</summary>
 public static class PartCurves2D
 {
-    internal static PartContour Contour(PartGeometry part, Func<string, Vector3> world, Func<string, Vector3>? rest)
+    internal static LayeredContour Contour(PartGeometry part, Func<string, Vector3> world, Func<string, Vector3>? rest)
     {
         var curve = (ICurve2D)part.Geometry!;
         var a = world(part.A);
@@ -65,11 +66,11 @@ public static class PartCurves2D
             else if (controls is not null)
             {
                 positions[i] = controls.Length == 3
-                    ? BezierMath.Quadratic<Vector3f, float>(controls[0], controls[1], controls[2], t).ToVector3()
-                    : BezierMath.Cubic<Vector3f, float>(controls[0], controls[1], controls[2], controls[3], t).ToVector3();
+                    ? BezierMath.Quadratic(controls[0], controls[1], controls[2], t).ToVector3()
+                    : BezierMath.Cubic(controls[0], controls[1], controls[2], controls[3], t).ToVector3();
                 order[i] = controls.Length == 3
-                    ? BezierMath.Quadratic<float, float>(layers![0], layers[1], layers[2], t)
-                    : BezierMath.Cubic<float, float>(layers![0], layers[1], layers[2], layers[3], t);
+                    ? BezierMath.Quadratic(layers![0], layers[1], layers[2], t)
+                    : BezierMath.Cubic(layers![0], layers[1], layers[2], layers[3], t);
             }
             else
             {

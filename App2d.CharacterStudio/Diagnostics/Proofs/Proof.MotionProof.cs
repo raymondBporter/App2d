@@ -18,7 +18,7 @@ internal sealed partial class ProofRenders
     private AuthoredCatalog? _proofCatalog;
     private RenderTarget2D? _proofTarget;
     private readonly PuppetDrawing[] _proofDrawings = [new(), new(), new()];
-    private readonly CharacterMesh _proofGround = new(8192);
+    private readonly LayeredMesh _proofGround = new(8192);
 
     private AuthoredCatalog ProofCatalog()
     {

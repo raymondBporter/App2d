@@ -58,10 +58,10 @@ internal sealed class AnimationControlInspector(EditorSession session)
             ImGui.TextDisabled("  units are authored lengths (no measure scaling).");
         }
         var (value, _) = ClipAuthoring.Value(clip, channel.Value, time);
-        var layered = LayeredPoint2D.From(value);
+        var layered = value;
         if (CharacterUi.LayeredPoint("Delta from rest (reference units)", ref layered, layerIsOffset: true))
         {
-            session.Change(document, () => ClipAuthoring.SetKey(document.Asset, channel.Value, time, layered.ToVector3()));
+            session.Change(document, () => ClipAuthoring.SetKey(document.Asset, channel.Value, time, layered));
         }
 
         if (channel.Value.Kind == MotionClip.TranslateKind)

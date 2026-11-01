@@ -34,15 +34,16 @@ internal static class CharacterUi
         return changed;
     }
 
-    public static bool LayeredPoint(string label, ref LayeredPoint2D point, bool layerIsOffset = false)
+    /// <summary>A rig point: X/Y position and its Z drawing layer.</summary>
+    public static bool LayeredPoint(string label, ref System.Numerics.Vector3 point, bool layerIsOffset = false)
     {
-        var xy = point.Position;
+        var xy = new System.Numerics.Vector2(point.X, point.Y);
         var moved = Ui.Drag2(label + " X / Y", ref xy);
-        var layer = point.Layer;
+        var layer = new CharacterLayer2D(point.Z);
         var reordered = CharacterLayer(label + " layer", ref layer, offset: layerIsOffset);
         if (moved || reordered)
         {
-            point = new(xy, layer);
+            point = new(xy, layer.Order);
         }
 
         return moved || reordered;

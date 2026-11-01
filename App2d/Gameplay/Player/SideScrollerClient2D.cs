@@ -80,6 +80,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     }
 
     public PlayerState2D State { get; private set; }
+    public PlayerWardrobe2D Wardrobe => _presentation.Wardrobe;
     public LevelContent2D Content => _frame.Content;
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain) => _world.SetVisibleTerrain(terrain);
     public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);

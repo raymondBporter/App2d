@@ -19,7 +19,7 @@ public sealed class TextureRenderingAllocationTests(ITestOutputHelper output)
         using var characters = new Core.Rendering.Characters.PointCharacterRenderer(graphics.Device);
         var mesh = new Core.Geometry.Meshes.TriangleMesh2D(
             [new(-8, -8), new(8, -8), new(0, 8)], [0, 1, 2]);
-        var character = new Core.Rendering.Characters.CharacterMesh(3);
+        var character = new Core.Rendering.LayeredMesh(3);
         character.Triangle(new(-8, -8, 0), new(8, -8, 0), new(0, 8, 0), Color4b.White);
         var material = new SolidColorShader(Color4b.White);
         var projection = Core.Rendering.Characters.PointCharacterRenderer.Projection(128, 128, new(64), 1);

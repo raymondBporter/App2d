@@ -8,7 +8,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
-using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -17,7 +16,7 @@ namespace App2d.Core.Characters.Drawing;
 /// <summary>Plain primitives over an evaluated pose; independent of source clips and anatomy names.</summary>
 public sealed class PuppetDrawing
 {
-    public CharacterMesh Mesh { get; } = new();
+    public LayeredMesh Mesh { get; } = new();
     public List<CharacterDrawBatch2D> Batches { get; } = [];
     public string TextureRoot { get; private set; } = Environment.CurrentDirectory;
 
@@ -211,7 +210,7 @@ public sealed class PuppetDrawing
             Mesh.Layer = layer;
             var part = ReferenceEquals(material, source.Material) ? source : source with { Material = material };
             var colorMultiplier = material.AnimatedTint * new Vector4(1, 1, 1, material.Alpha ?? 1);
-            var surfaceTint = Tinted(Tinted(tint ?? Color4b.White, ColorExtensions.FromHexRgba(material.Tint ?? "ffffffff")), ColorExtensions.FromVector4(colorMultiplier));
+            var surfaceTint = (tint ?? Color4b.White).Multiply(ColorExtensions.FromHexRgba(material.Tint ?? "ffffffff")).Multiply(ColorExtensions.FromVector4(colorMultiplier));
             if (material.Texture is not null)
             {
                 AddImage(part, PartAttachment2D.FrameOf(part, world, bone, rest), surfaceTint, blend, imageDepth, spatial, physicalDepth?.Invoke(part.A) ?? 0);
@@ -223,18 +222,19 @@ public sealed class PuppetDrawing
                 var lifted = PartPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone, rest));
                 if (spatial is { } meshFrame) lifted = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, bone, rest), meshFrame, physicalDepth?.Invoke(part.A) ?? 0);
                 Mesh.Layer += PartAttachment2D.FrameOf(part, world, bone, rest).Layer;
-                MeshDrawing.Add(Mesh, mesh, material, point => lifted.TransformPoint(point.ToVector3()), tint: surfaceTint);
+                Mesh.Solid(mesh.ToIndexedMesh(), lifted, material.Fill is { } solidFill ? ColorExtensions.FromHexRgb(solidFill) : null,
+                    material.Outline?.Color is { } solidInk ? ColorExtensions.FromHexRgb(solidInk) : null, material.Outline?.Width ?? 0, DirectionalLight3D.Props, surfaceTint);
                 if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
                 continue;
             }
             var outline = material.Outline;
             var outlineWidth = outline?.Width ?? 0;
-            var outlineColor = outline?.Color is { } color ? Tinted(ColorExtensions.FromHexRgb(color), surfaceTint) : (Color4b?)null;
+            var outlineColor = outline?.Color is { } color ? ColorExtensions.FromHexRgb(color).Multiply(surfaceTint) : (Color4b?)null;
             if (part.Geometry is ICurve2D || part.SpatialCurve is not null)
             {
                 var path = PartContours2D.Contour(part, world, bone, rest, restBone);
                 if (spatial is { } curveFrame) path = path.TransformedBy(curveFrame, physicalDepth?.Invoke(part.A) ?? 0);
-                var strokeColor = material.Fill is { } fill ? Tinted(ColorExtensions.FromHexRgb(fill), surfaceTint) : (Color4b?)null;
+                var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill).Multiply(surfaceTint) : (Color4b?)null;
                 var strokeWidth = material.StrokeWidth ?? 0;
                 if (part.Geometry is RoundedPolylineCurve2D)
                 {
@@ -281,7 +281,7 @@ public sealed class PuppetDrawing
             var frame = PartAttachment2D.FrameOf(part, world, bone, rest);
             if (material.Fill is { } shapeFill)
             {
-                var fillColor = Tinted(ColorExtensions.FromHexRgb(shapeFill), surfaceTint);
+                var fillColor = ColorExtensions.FromHexRgb(shapeFill).Multiply(surfaceTint);
                 if (triangles is not null)
                 {
                     foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
@@ -307,15 +307,12 @@ public sealed class PuppetDrawing
         }
     }
 
-    internal static Color4b Tinted(Color4b color, Color4b? tint) => tint is not { } t ? color
-        : new((byte)(color.R * t.R / 255), (byte)(color.G * t.G / 255), (byte)(color.B * t.B / 255), (byte)(color.A * t.A / 255));
-
     private void AddImage(PartGeometry part, LayeredFrame2D frame, Color4b color, string blend, float? depth, Frame3D? spatial = null, float physicalZ = 0)
     {
         var material = part.RenderMaterial;
         var fill = material.Fill is null ? Color4b.White : ColorExtensions.FromHexRgb(material.Fill);
         var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
-        color = Tinted(color, fill);
+        color = color.Multiply(fill);
         Vector3 At(float x, float y)
         {
             var p = new Vector3(frame.Frame.TransformPoint(bounds.Center + new Vector2(x * bounds.Width, y * bounds.Height)), physicalZ);

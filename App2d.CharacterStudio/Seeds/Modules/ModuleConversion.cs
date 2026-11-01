@@ -2,6 +2,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Rendering;
 using System.Numerics;
 using System.Text.Json;
 
@@ -556,7 +557,7 @@ public static class ModuleConversion
         return differences;
     }
 
-    private static (Vector3 Min, Vector3 Max, Vector3 Centroid, float Area) Silhouette(PartContour contour, Vector3 anchor)
+    private static (Vector3 Min, Vector3 Max, Vector3 Centroid, float Area) Silhouette(LayeredContour contour, Vector3 anchor)
     {
         var min = new Vector3(float.PositiveInfinity);
         var max = new Vector3(float.NegativeInfinity);

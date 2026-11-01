@@ -1,0 +1,30 @@
+{
+  "format": "app2d-part",
+  "version": 5,
+  "id": "glove-leather",
+  "name": "Russet leather gloves",
+  "usage": "glove",
+  "geometry": [
+    {
+      "id": "palm",
+      "frame": "origin",
+      "layer": -0.016,
+      "geometry": { "kind": "ellipse", "center": { "x": 0, "y": -0.018 }, "radii": { "x": 0.053, "y": 0.068 } },
+      "material": { "fill": "#b7593f", "outline": { "color": "#402d32", "width": 0.01 } }
+    },
+    {
+      "id": "cuff",
+      "frame": "origin",
+      "layer": -0.018,
+      "geometry": { "kind": "rectangle", "center": { "x": 0, "y": 0.034 }, "size": { "x": 0.114, "y": 0.032 } },
+      "material": { "fill": "#e6b87a", "outline": { "color": "#402d32", "width": 0.008 } }
+    },
+    {
+      "id": "stitch",
+      "frame": "origin",
+      "layer": -0.02,
+      "geometry": { "kind": "rectangle", "center": { "x": 0, "y": -0.012 }, "size": { "x": 0.058, "y": 0.009 } },
+      "material": { "fill": "#e6b87a" }
+    }
+  ]
+}

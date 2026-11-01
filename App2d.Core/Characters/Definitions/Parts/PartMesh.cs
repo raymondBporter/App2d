@@ -1,8 +1,6 @@
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
-using System.Runtime.InteropServices;
 
 namespace App2d.Core.Characters;
 
@@ -29,51 +27,37 @@ public sealed record PartMesh
     public void Validate()
     {
         Rebuild();
-        if (Vertices is not { Count: >= 3 } || Triangles is not { Count: >= 3 } || Triangles.Count % 3 != 0)
-            throw new InvalidDataException("A mesh needs indexed triangles.");
+        if (Vertices is null || Triangles is null) throw new InvalidDataException("A mesh needs indexed triangles.");
         if (Vertices.Count > 32768 || Triangles.Count > 196608) throw new InvalidDataException("Mesh is too large.");
         foreach (var point in Vertices) CheckPoint(point, "mesh.vertex");
-        if (Triangles.Any(i => i < 0 || i >= Vertices.Count))
-            throw new InvalidDataException("Mesh triangle index outside vertices.");
-        foreach (var (a, b, c) in MeshTopology.Triangles(CollectionsMarshal.AsSpan(Triangles)))
-        {
-            if (new Triangle3D(Vertices[a].ToVector3(), Vertices[b].ToVector3(), Vertices[c].ToVector3()).DoubleArea <= 1e-8d)
-                throw new InvalidDataException("Mesh has a degenerate triangle.");
-        }
+        ToIndexedMesh().Validate();
     }
+
+    /// <summary>The geometry as a plain indexed mesh, with no outline or thickness.</summary>
+    public IndexedMesh3D ToIndexedMesh() => new([.. Vertices.Select(v => v.ToVector3())], Triangles);
+
     /// <summary>Extrudes an XY outline around its physical Z; the resulting geometry owns no material.</summary>
     public static PartMesh Extrude(IEnumerable<Vector3f> outline, float thickness)
     {
-        var points = outline.ToList();
+        var points = outline.Select(p => p.ToVector3()).ToList();
         ArgGuard.ThrowIf(points.Count < 3 || thickness <= 0, "An extrusion needs an outline and positive thickness.");
-        var area = PolygonGeometry2D.SignedAreaTwiceDouble([.. points.Select(p => p.XY.ToVector2())]);
-        if (area < 0)
-        {
-            points.Reverse();
-        }
-
-        TriangleMesh2D triangles;
+        points = MeshGenerators3D.CounterClockwise(points);
+        IndexedMesh3D solid;
         try
         {
-            triangles = PolygonTriangulation2D.Triangulate(points.Select(p => p.XY.ToVector2()), 1e-8);
+            solid = MeshGenerators3D.Extrude(points, thickness);
         }
         catch (ArgumentException ex)
         {
             throw new InvalidDataException("The mesh outline must be simple and have nonzero area.", ex);
         }
-        var n = points.Count;
-        var mesh = new PartMesh { Outline = [.. points], Thickness = thickness };
-        mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z - thickness / 2 }));
-        mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z + thickness / 2 }));
-        foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
+        return new()
         {
-            mesh.Triangles.AddRange([a, c, b, n + a, n + b, n + c]);
-        }
-        foreach (var (i, j) in MeshTopology.Edges(n))
-        {
-            mesh.Triangles.AddRange([i, j, n + j, i, n + j, n + i]);
-        }
-        return mesh;
+            Outline = [.. points.Select(p => new Vector3f(p))],
+            Thickness = thickness,
+            Vertices = [.. solid.Vertices.Select(v => new Vector3f(v))],
+            Triangles = [.. solid.Triangles],
+        };
     }
 
     public static void CheckPoint(Vector3f point, string field)

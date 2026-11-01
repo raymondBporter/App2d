@@ -3,7 +3,6 @@ using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
-using App2d.Core.Rendering.Characters;
 using Quaternion = System.Numerics.Quaternion;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = System.Numerics.Vector3;
@@ -33,10 +32,12 @@ public sealed record SwooshStyle
     public float SplitPosition { get; init; } = .55f;
     /// <summary>Where the inner tongue starts, as a fraction of the split's depth; it tapers to a point there.</summary>
     public float InnerStart { get; init; } = .45f;
-    public string Fill { get; init; } = "#ffffff";
-    /// <summary>Outline along the tip's path, the reach cue; zero width draws none.</summary>
-    public string Ink { get; init; } = "#222b32";
-    public float InkWidth { get; init; } = .018f;
+    /// <summary>Sheet fill and tip-path outline; missing surfaces are not drawn, and zero width disables the outline.</summary>
+    public RenderMaterialDefinition2D Material { get; init; } = new()
+    {
+        Fill = "#ffffff",
+        Outline = new() { Color = "#222b32", Width = .018f }
+    };
     /// <summary>Longest step between sections along the tip path, in model units.</summary>
     public float Spacing { get; init; } = .035f;
 
@@ -124,7 +125,7 @@ public sealed class BladeSwoosh
     }
 
     /// <summary>Appends the trail's triangles to <paramref name="mesh"/>. Draw it before the character so the blade and body sit on top.</summary>
-    public void Build(CharacterMesh mesh)
+    public void Build(LayeredMesh mesh)
     {
         if (!IsVisible)
         {
@@ -161,22 +162,27 @@ public sealed class BladeSwoosh
         }
 
         var alpha = 1 - Progress.SmoothStep(Interpolation.InverseLerpClamped(.55f, 1f, clear));
-        var fill = ColorExtensions.FromHexRgb(style.Fill).WithAlpha(alpha);
-        float Split(float u) => style.SplitPosition - Gap(style, u) / 2;
-        float InnerEdge(float u) => style.SplitPosition + Gap(style, u) / 2;
-        for (var i = 1; i < _sections.Count; i++)
+        if (style.Material.Fill is { } color)
         {
-            var u0 = _distance[i - 1] / length;
-            var u1 = _distance[i] / length;
-            // Main band: the whole sheet past the split, the outer tongue inside it.
-            Band(mesh, i, u0, u1, _ => 0, u => u >= style.SplitDepth ? 1 : Split(u), fill);
-            // Inner tongue: starts at a point part-way along the split and widens until it closes with the outer tongue.
-            if (u0 < style.SplitDepth)
+            var fill = ColorExtensions.FromHexRgb(color).WithAlpha(alpha);
+            float Split(float u) => style.SplitPosition - Gap(style, u) / 2;
+            float InnerEdge(float u) => style.SplitPosition + Gap(style, u) / 2;
+            for (var i = 1; i < _sections.Count; i++)
             {
-                Band(mesh, i, u0, MathF.Min(u1, style.SplitDepth), InnerEdge, u => InnerEdge(u) + (1 - InnerEdge(u)) * Inner(style, u), fill);
+                var u0 = _distance[i - 1] / length;
+                var u1 = _distance[i] / length;
+                // Main band: the whole sheet past the split, the outer tongue inside it.
+                Band(mesh, i, u0, u1, _ => 0, u => u >= style.SplitDepth ? 1 : Split(u), fill);
+                // Inner tongue: starts at a point part-way along the split and widens until it closes with the outer tongue.
+                if (u0 < style.SplitDepth)
+                {
+                    Band(mesh, i, u0, MathF.Min(u1, style.SplitDepth), InnerEdge, u => InnerEdge(u) + (1 - InnerEdge(u)) * Inner(style, u), fill);
+                }
             }
         }
-        if (style.InkWidth > 0)
+        var outline = style.Material.Outline;
+        var outlineWidth = outline?.Width ?? 0;
+        if (outline?.Color is { } ink && outlineWidth > 0)
         {
             _edge.Clear();
             foreach (var s in _sections)
@@ -184,7 +190,7 @@ public sealed class BladeSwoosh
                 _edge.Add(s.Tip);
             }
 
-            mesh.Path(new PartContour(_edge, layers: [.. _sections.Select(s => s.Layer - .0005f)]), ColorExtensions.FromHexRgb(style.Ink).WithAlpha(alpha), 0, style.InkWidth);
+            mesh.Path(new LayeredContour(_edge, layers: [.. _sections.Select(s => s.Layer - .0005f)]), ColorExtensions.FromHexRgb(ink).WithAlpha(alpha), 0, outlineWidth);
         }
     }
 
@@ -192,7 +198,7 @@ public sealed class BladeSwoosh
     /// One strip of the sheet from section i-1 (trail fraction <paramref name="u0"/>) to trail fraction <paramref name="u1"/>,
     /// between the fractions across the sheet that <paramref name="near"/> and <paramref name="far"/> give at each point.
     /// </summary>
-    private void Band(CharacterMesh mesh, int i, float u0, float u1, Func<float, float> near, Func<float, float> far, Color4b color)
+    private void Band(LayeredMesh mesh, int i, float u0, float u1, Func<float, float> near, Func<float, float> far, Color4b color)
     {
         if (u1 <= u0)
         {

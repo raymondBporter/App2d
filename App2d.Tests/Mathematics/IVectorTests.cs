@@ -141,9 +141,9 @@ public sealed class IVectorTests
 
         var segment = new Segment<TVector>(TVector.Zero, value);
         Assert.Equal(expectedLength, IVectorExtensions.Distance<TVector, TReal>(segment.Start, segment.End));
-        Assert.Equal(TVector.Zero, IVectorExtensions.Lerp<TVector, TReal>(segment.Start, segment.End, TReal.Zero));
-        Assert.Equal(value, IVectorExtensions.Lerp<TVector, TReal>(segment.Start, segment.End, TReal.One));
-        Assert.Equal(value * TReal.CreateChecked(2), IVectorExtensions.Lerp<TVector, TReal>(segment.Start, segment.End, TReal.CreateChecked(2)));
+        Assert.Equal(TVector.Zero, IVectorExtensions.Lerp(segment.Start, segment.End, TReal.Zero));
+        Assert.Equal(value, IVectorExtensions.Lerp(segment.Start, segment.End, TReal.One));
+        Assert.Equal(value * TReal.CreateChecked(2), IVectorExtensions.Lerp(segment.Start, segment.End, TReal.CreateChecked(2)));
 
         var normalized = IVectorExtensions.Normalize<TVector, TReal>(value);
         var error = TReal.Abs(IVectorExtensions.Length<TVector, TReal>(normalized) - TReal.One);

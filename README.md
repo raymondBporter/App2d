@@ -722,7 +722,14 @@ Developer / editor controls:
   mouse to painting (left button paints or selects from the right sidebar, right erases,
   middle-drag pans, wheel zooms, and `Ctrl+Z` undoes an edit)
 - F5: open or close the debug panel
-- Escape: close
+- F7: open or close equipment; gameplay pauses while the paper doll is open.
+  Drag boots, sandals, leather gloves, or steel gauntlets from the 6×6 inventory
+  onto Shoes or Gloves to equip both feet or hands. Replacing a pair returns the
+  previous pair to the source cell. Drag equipped items back to inventory or
+  right-click a slot to remove them; double-click inventory items to equip them.
+  Equipment changes the preview and player immediately and lasts for this play
+  session. The glove artwork is editable under `Assets/Characters/authored/parts`.
+- Escape: close equipment when open; otherwise close the game
 
 Input ownership stays small: `InputState` reads keyboard/mouse events, and
 `App2d/Input/XboxControllerInput2D` reads controller state. Default gameplay bindings

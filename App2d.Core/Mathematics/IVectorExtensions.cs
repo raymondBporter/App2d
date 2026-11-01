@@ -79,7 +79,7 @@ public static class FloatVectorExtensions
         public static TVector Normalize(TVector vector) => IVectorExtensions.Normalize<TVector, float>(vector);
         public static float DistanceSquared(TVector first, TVector second) => IVectorExtensions.DistanceSquared<TVector, float>(first, second);
         public static float Distance(TVector first, TVector second) => IVectorExtensions.Distance<TVector, float>(first, second);
-        public static TVector Lerp(TVector first, TVector second, float amount) => IVectorExtensions.Lerp<TVector, float>(first, second, amount);
+        public static TVector Lerp(TVector first, TVector second, float amount) => IVectorExtensions.Lerp(first, second, amount);
         public static TVector Project(TVector vector, TVector unitNormal) => IVectorExtensions.Project<TVector, float>(vector, unitNormal);
         public static TVector Reject(TVector vector, TVector unitNormal) => IVectorExtensions.Reject<TVector, float>(vector, unitNormal);
         public static TVector Reflect(TVector vector, TVector unitNormal) => IVectorExtensions.Reflect<TVector, float>(vector, unitNormal);
@@ -99,7 +99,7 @@ public static class DoubleVectorExtensions
         public static TVector Normalize(TVector vector) => IVectorExtensions.Normalize<TVector, double>(vector);
         public static double DistanceSquared(TVector first, TVector second) => IVectorExtensions.DistanceSquared<TVector, double>(first, second);
         public static double Distance(TVector first, TVector second) => IVectorExtensions.Distance<TVector, double>(first, second);
-        public static TVector Lerp(TVector first, TVector second, double amount) => IVectorExtensions.Lerp<TVector, double>(first, second, amount);
+        public static TVector Lerp(TVector first, TVector second, double amount) => IVectorExtensions.Lerp(first, second, amount);
         public static TVector Project(TVector vector, TVector unitNormal) => IVectorExtensions.Project<TVector, double>(vector, unitNormal);
         public static TVector Reject(TVector vector, TVector unitNormal) => IVectorExtensions.Reject<TVector, double>(vector, unitNormal);
         public static TVector Reflect(TVector vector, TVector unitNormal) => IVectorExtensions.Reflect<TVector, double>(vector, unitNormal);

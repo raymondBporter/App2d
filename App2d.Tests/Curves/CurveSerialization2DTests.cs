@@ -37,7 +37,7 @@ public sealed class CurveSerialization2DTests
     public void TaggedValuesRoundTripIntoEquivalentRuntimeCurves(string kind)
     {
         var original = CreateCurve(kind);
-        var json = original.ToJson<ICurve2D>();
+        var json = original.ToJson();
         using var document = JsonDocument.Parse(json);
         Assert.Equal(kind, document.RootElement.GetProperty("kind").GetString());
         var restored = GeometryJson2D.CurveFromJson(json).Validated();

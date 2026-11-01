@@ -44,8 +44,8 @@ internal sealed partial class ProofRenders
             shapes.TryGetValue(clip, out var found) ? found : shapes[clip] = HitShapes(model, clip, props, sockets);
         using var target = RenderCapture2D.CreateTarget(GraphicsDevice, ReviewWidth, ReviewHeight);
         var drawing = new PuppetDrawing();
-        var scenery = new CharacterMesh(8192);
-        var trail = new CharacterMesh(8192);
+        var scenery = new LayeredMesh(8192);
+        var trail = new LayeredMesh(8192);
         var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .45f, ReviewHeight * LabGround), LabPpu);
         void Frame(string path, MotionClip clip, float seconds, Dictionary<string, Part> worn, BladeSwoosh? swoosh, bool shape, float clock = 0)
         {

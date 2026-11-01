@@ -3,13 +3,14 @@ using App2d.Core.Hosting;
 using App2d.Core.Rendering.Textures;
 using App2d.Diagnostics;
 using App2d.EditorUi;
+using App2d.Presentation.Player;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace App2d.Editor;
 
 /// <summary>Shared ImGui host for the map palette, thing inspector and debug panel. The editor owns all editing commands.</summary>
-internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures, DebugPanel debug) : IGameToolUi2D
+internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures, DebugPanel debug, PlayerWardrobe2D? wardrobe = null) : IGameToolUi2D
 {
     private Control? _surface;
     private WinFormsImGuiPlatform? _platform;
@@ -18,9 +19,11 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
     private readonly Dictionary<string, nint> _textureIds = [];
     private readonly List<Microsoft.Xna.Framework.Graphics.Texture2D> _previews = [];
     private GraphicsDevice? _device;
+    private readonly PaperDollUi2D? _paperDoll = wardrobe is null ? null : new(wardrobe);
+    public bool IsPaperDollOpen => _paperDoll?.IsOpen == true;
     public DebugPanelUi2D DebugPanel { get; } = new(debug);
-    public bool CaptureMouse => _gui?.WantCaptureMouse == true || (editor.IsActive && editor.IsPointerOverUi);
-    public bool CaptureKeyboard => _shortcutCaptured || _gui?.WantCaptureKeyboard == true;
+    public bool CaptureMouse => IsPaperDollOpen || _gui?.WantCaptureMouse == true || (editor.IsActive && editor.IsPointerOverUi);
+    public bool CaptureKeyboard => IsPaperDollOpen || _shortcutCaptured || _gui?.WantCaptureKeyboard == true;
     public ImGuiHost Gui => _gui ?? throw new InvalidOperationException("The map UI has not begun a frame.");
     public void Attach(Control surface)
     {
@@ -42,7 +45,8 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
         }
 
         DebugPanel.Draw();
-        if (!editor.IsActive)
+        _shortcutCaptured |= _paperDoll?.Draw(device, Gui, time, canOpen: !editor.IsActive) ?? false;
+        if (IsPaperDollOpen || !editor.IsActive)
         {
             return;
         }
@@ -102,6 +106,7 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
     public void Render() => _gui?.Render();
     public void ReleaseDevice()
     {
+        _paperDoll?.ReleaseDevice(_gui);
         _gui?.Dispose();
         _gui = null;
         _platform?.Dispose();

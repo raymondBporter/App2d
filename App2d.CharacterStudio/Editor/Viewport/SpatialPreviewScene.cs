@@ -14,6 +14,8 @@ namespace App2d.CharacterStudio.Editor;
 internal sealed class SpatialPreviewScene
 {
     public static readonly Color4b Background = new(16, 23, 35);
+    /// <summary>Stronger contrast than in-game props, so the calibration cube's faces read apart from any angle.</summary>
+    private static readonly DirectionalLight3D Light = new(new(.35f, .8f, 1), .5f, .5f);
     public IReadOnlyList<SpatialPreviewObject> Objects { get; }
     private readonly TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> _ground = Mesh();
 
@@ -46,12 +48,10 @@ internal sealed class SpatialPreviewScene
         }
 
         var cube = Mesh();
-        Vector3[] corners = [new(-.3f, -.3f, -.3f), new(.3f, -.3f, -.3f), new(.3f, .3f, -.3f), new(-.3f, .3f, -.3f),
-            new(-.3f, -.3f, .3f), new(.3f, -.3f, .3f), new(.3f, .3f, .3f), new(-.3f, .3f, .3f)];
-        int[] indices = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5, 3, 7, 6, 3, 6, 2, 0, 1, 5, 0, 5, 4];
+        var box = MeshGenerators3D.Box(new(.3f));
         Color4b[] colors = [new(71, 129, 203), new(57, 185, 202), new(104, 103, 194), new(54, 146, 186), new(238, 178, 85), new(75, 91, 123)];
-        for (var i = 0; i < indices.Length; i += 3)
-            Face(cube, corners[indices[i]], corners[indices[i + 1]], corners[indices[i + 2]], colors[i / 6]);
+        for (var i = 0; i < box.Triangles.Count; i += 3)
+            Face(cube, box.Vertices[box.Triangles[i]], box.Vertices[box.Triangles[i + 1]], box.Vertices[box.Triangles[i + 2]], colors[i / 6]);
         var calibration = new SpatialPreviewObject("Calibration cube", cube, new(.8f, -.75f, .1f), Vector3.Zero);
         var objects = new List<SpatialPreviewObject>();
         if (swordMesh.Count > 0) objects.Add(new("Sword", swordMesh, new(-.35f, .05f, 0), new(0, -.15f, 1.35f)));
@@ -83,7 +83,7 @@ internal sealed class SpatialPreviewScene
     private static void Face(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh, Vector3 a, Vector3 b, Vector3 c, Color4b color)
     {
         var triangle = new Triangle3D(a, b, c);
-        var light = triangle.TryGetUnitNormal(out var normal) ? .5f + .5f * MathF.Max(0, Vector3.Dot(normal, Vector3.Normalize(new(.35f, .8f, 1)))) : 1f;
+        var light = triangle.TryGetUnitNormal(out var normal) ? Light.Shade(normal) : 1f;
         mesh.Triangle(a, b, c, color.ScaleRgb(light));
     }
 

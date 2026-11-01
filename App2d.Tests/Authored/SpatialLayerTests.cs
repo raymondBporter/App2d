@@ -5,6 +5,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
@@ -62,7 +63,7 @@ public sealed class SpatialLayerTests
     [Fact]
     public void PhysicalDepthRotatesWhileLayerIsAnIndependentAttribute()
     {
-        var contour = new PartContour([new(1, 2, 3), new(4, 5, -2)], layers: [.25f, -.5f]);
+        var contour = new LayeredContour([new(1, 2, 3), new(4, 5, -2)], layers: [.25f, -.5f]);
         var frame = Frame3D.FromRotation(new(0, MathF.PI / 2, 0), new(7, 8, 9));
         var transformed = contour.TransformedBy(frame);
         Assert.Equal(frame.TransformPoint(contour[0]), transformed[0]);

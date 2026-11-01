@@ -10,7 +10,7 @@ public sealed partial class Renderer2D
 {
     private PointCharacterRenderer? _characterRenderer;
     private PuppetDrawing? _authoredDrawing;
-    private CharacterMesh? _swooshMesh;
+    private LayeredMesh? _swooshMesh;
 
     private void DrawAuthored(WorldObject2D visual, AuthoredCharacterShader shader)
     {
@@ -31,7 +31,7 @@ public sealed partial class Renderer2D
         var m = visual.Transform.Matrix * _camera.WorldToDeviceMatrix;
         var world = Matrix.CreateScale(shader.Facing, 1, 1) * ToXnaMatrix(m);
         var projection = PointCharacterRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height);
-        CharacterMesh? swoosh = null;
+        LayeredMesh? swoosh = null;
         if (shader.Swoosh is { IsVisible: true } visible)
         {
             (_swooshMesh ??= new(4096)).Clear();

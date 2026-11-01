@@ -10,7 +10,7 @@ public sealed class PointCharacterRenderer : IDisposable
     private readonly GraphicsDevice _device;
     private readonly BasicEffect _effect;
     private readonly Dictionary<string, Texture2D> _images = new(StringComparer.OrdinalIgnoreCase);
-    private readonly MeshBufferCache<CharacterMesh> _meshes = new();
+    private readonly MeshBufferCache<LayeredMesh> _meshes = new();
     private bool _disposed;
 
     /// <summary>Maximum resident vertex-buffer bytes; least recently drawn meshes are released after submission.</summary>
@@ -63,7 +63,7 @@ public sealed class PointCharacterRenderer : IDisposable
     }
 
     /// <summary>Draws one actor layered against itself only: a new depth layer, the swoosh (if any) behind, then the puppet.</summary>
-    public void DrawActor(PuppetDrawing drawing, Matrix projection, Matrix world, CharacterMesh? swoosh = null)
+    public void DrawActor(PuppetDrawing drawing, Matrix projection, Matrix world, LayeredMesh? swoosh = null)
     {
         ArgumentNullException.ThrowIfNull(drawing);
         ClearDepth();
@@ -104,7 +104,7 @@ public sealed class PointCharacterRenderer : IDisposable
             Draw(drawing.Mesh, projection, world, texture, writeDepth: batch.WriteDepth, start: batch.Start, count: batch.Count, additive: batch.Blend == "additive");
         }
     }
-    public void Draw(CharacterMesh mesh, Matrix projection, Matrix world, Texture2D? texture = null, bool writeDepth = true, int start = 0, int? count = null, bool additive = false)
+    public void Draw(LayeredMesh mesh, Matrix projection, Matrix world, Texture2D? texture = null, bool writeDepth = true, int start = 0, int? count = null, bool additive = false)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(mesh);
@@ -159,7 +159,7 @@ public sealed class PointCharacterRenderer : IDisposable
         }
     }
 
-    private MeshBuffers GetMeshBuffers(CharacterMesh mesh)
+    private MeshBuffers GetMeshBuffers(LayeredMesh mesh)
     {
         if (!_meshes.TryGet(mesh, out var buffers) || buffers.Vertices.VertexCount < mesh.Count)
         {
