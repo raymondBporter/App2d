@@ -178,7 +178,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                             change(p => p.Material = p.RenderMaterial with { Paint = patches });
                         }
                     }
-                    catch (InvalidDataException) { /* Keep the last valid convex patch during a drag. */ }
+                    catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException) { /* Keep the last valid convex patch during a drag. */ }
                 }
                 if (ImGui.Button("Add paint patch"))
                 {

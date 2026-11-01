@@ -41,7 +41,7 @@ public sealed class IndexedMesh3DTests
         Vector3[] points = [Vector3.Zero, Vector3.UnitX, Vector3.UnitY];
         Assert.Contains("indexed triangles", Assert.Throws<InvalidDataException>(() => new IndexedMesh3D(points, [0, 1]).Validate()).Message);
         Assert.Contains("outside vertices", Assert.Throws<InvalidDataException>(() => new IndexedMesh3D(points, [0, 1, 3]).Validate()).Message);
-        Assert.Contains("degenerate", Assert.Throws<InvalidDataException>(() => new IndexedMesh3D(points, [0, 1, 1]).Validate()).Message);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new IndexedMesh3D(points, [0, 1, 1]).Validate());
     }
 
     [Fact]

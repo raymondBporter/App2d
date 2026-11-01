@@ -184,7 +184,7 @@ public sealed class PartAnimationTests
         Assert.Equal("still.png", still.Sample(20, Vector4.One).Texture);
         Assert.Empty(still.TextureAnimation!.Frames);
         Assert.Throws<InvalidDataException>(() => (material with { TextureAnimation = new() { Frames = [new() { Texture = "../outside.png" }] } }).Validate("test"));
-        Assert.Throws<InvalidDataException>(() => (material with { TextureAnimation = new() { Frames = [new() { Texture = "valid.png", Seconds = 0 }] } }).Validate("test"));
+        Assert.Throws<ArgumentOutOfRangeException>(() => (material with { TextureAnimation = new() { Frames = [new() { Texture = "valid.png", Seconds = 0 }] } }).Validate("test"));
         Assert.Throws<InvalidDataException>(() => (material with { Source = AxisAlignedRectangle2D.Builder.Create(new(.5f, 0), new(1.3f, 1)) }).Validate("test"));
         part.Clips[0].Tracks.First(t => t.Kind == MotionClip.AlphaKind).Keys[0].Value = new(1.1f, 0, 0);
         Assert.Throws<InvalidDataException>(part.Validate);

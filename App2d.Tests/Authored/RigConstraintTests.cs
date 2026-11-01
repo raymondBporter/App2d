@@ -184,7 +184,10 @@ public sealed class RigConstraintTests
                 model.IkChains.Single().Frame = "beam";
                 break;
         }
-        Assert.Contains("reach", Assert.Throws<InvalidDataException>(model.Validate).Message);
+        var message = edit == "detached"
+            ? Assert.Throws<ArgumentOutOfRangeException>(model.Validate).Message
+            : Assert.Throws<InvalidDataException>(model.Validate).Message;
+        Assert.Contains("reach", message);
     }
 
     [Theory, InlineData(-1, -1), InlineData(-.99999f, -.99999f)]
@@ -194,7 +197,7 @@ public sealed class RigConstraintTests
         var clip = Aim(resolved, new(1, 1, .2f));
         ClipAuthoring.SetKey(clip, new(MotionClip.ScaleKind, "carrier"), 0, new(x, y, 0));
         clip.Validate(resolved);
-        Assert.Contains("reach", Assert.Throws<InvalidDataException>(() => PoseEvaluator.Sample(resolved, clip, 0)).Message);
+        Assert.Contains("reach", Assert.Throws<ArgumentOutOfRangeException>(() => PoseEvaluator.Sample(resolved, clip, 0)).Message);
     }
 
     [Fact]

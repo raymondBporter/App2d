@@ -53,8 +53,8 @@ public sealed class WorldTileMapTests
     public void OverlapAndMisalignedMapsAreRejected()
     {
         var first = new EditableTileMap2D(4, 4, 32, 2);
-        Assert.Throws<ArgumentException>(() => new WorldTileMap2D([first, new(4, 4, 32, 2, new(64, 0))]));
-        Assert.Throws<ArgumentException>(() => new WorldTileMap2D([first, new(4, 4, 32, 2, new(129, 0))]));
-        Assert.Throws<ArgumentException>(() => new WorldTileMap2D([first, new(4, 4, 16, 2, new(128, 0))]));
+        Assert.ThrowsAny<ArgumentException>(() => new WorldTileMap2D([first, new(4, 4, 32, 2, new(64, 0))]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new WorldTileMap2D([first, new(4, 4, 32, 2, new(129, 0))]));
+        Assert.ThrowsAny<ArgumentException>(() => new WorldTileMap2D([first, new(4, 4, 16, 2, new(128, 0))]));
     }
 }

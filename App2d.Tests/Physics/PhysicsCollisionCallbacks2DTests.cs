@@ -73,7 +73,7 @@ public sealed class PhysicsCollisionCallbacks2DTests
         {
             AfterAction = contact =>
             {
-                Assert.Throws<InvalidOperationException>(() => world.Step(1f / 60f));
+                Assert.Throws<ArgumentException>(() => world.Step(1f / 60f));
                 var dynamicBody = contact.First.MotionType == BodyMotionType2D.Dynamic ? contact.First : contact.Second;
                 Assert.True(world.RemoveBody(dynamicBody));
             }

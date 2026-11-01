@@ -20,6 +20,6 @@ public sealed class TerrainPolygonTests
     {
         Assert.Throws<ArgumentException>(() => SimplePolygon2D.Builder.BelowPolyline([new(0, 0), new(0, 1)], -10f));
         Assert.Throws<ArgumentException>(() => SimplePolygon2D.Builder.BelowPolyline([new(0, 0), new(-1, 1)], -10f));
-        Assert.Throws<ArgumentException>(() => SimplePolygon2D.Builder.BelowPolyline([new(0, 0), new(1, -10)], -10f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SimplePolygon2D.Builder.BelowPolyline([new(0, 0), new(1, -10)], -10f));
     }
 }

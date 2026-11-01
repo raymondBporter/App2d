@@ -29,6 +29,9 @@ public readonly record struct Frame3D
     }
 
     public static Frame3D Identity { get; } = new(Matrix4x4.Identity);
+
+    /// <summary>A planar frame embedded at Z = 0, keeping Z unscaled: its XY axes act in the plane and Z passes through.</summary>
+    public static Frame3D FromPlanar(Frame2D frame) => new(new(frame.Origin, 0), new(frame.XAxis, 0), new(frame.YAxis, 0), Vector3.UnitZ);
     public Matrix4x4 Matrix => new(XAxis.X, XAxis.Y, XAxis.Z, 0,
         YAxis.X, YAxis.Y, YAxis.Z, 0, ZAxis.X, ZAxis.Y, ZAxis.Z, 0,
         Origin.X, Origin.Y, Origin.Z, 1);

@@ -178,7 +178,7 @@ public sealed class ResolvedModel
         {
             nodes = RigGraph.Compile(order, layout);
         }
-        catch (InvalidDataException ex) when (variant is not null)
+        catch (Exception ex) when (variant is not null && ex is InvalidDataException or ArgumentException)
         {
             throw new InvalidDataException($"{owner}: {ex.Message}", ex);
         }

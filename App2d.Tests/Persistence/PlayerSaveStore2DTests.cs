@@ -35,7 +35,7 @@ public sealed class PlayerSaveStore2DTests : IDisposable
     [Fact]
     public void InvalidSaveValuesAreRejected()
     {
-        Assert.Throws<InvalidOperationException>(() => new PlayerSave2D(0, 5));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new PlayerSave2D(0, 5));
         Assert.Throws<ArgumentOutOfRangeException>(() => new PlayerSave2D(1, 0));
     }
 

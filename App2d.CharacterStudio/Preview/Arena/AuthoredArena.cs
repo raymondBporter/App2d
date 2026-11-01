@@ -173,7 +173,7 @@ public sealed class AuthoredArena
                         if (target != attacker && target.Alive && !target.Colliders.HasHurt && target.Index == 0 != (attacker.Index == 0)
                             && target.Hurt.FirstOrDefault(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero)) is { } legacy)
                         {
-                            extra.Add((target.Id, LegacyContact(region.Bounds, legacy.Bounds)));
+                            extra.Add((target.Id, region.Bounds.OverlapCenter(legacy.Bounds)));
                         }
                     }
                 });
@@ -209,8 +209,6 @@ public sealed class AuthoredArena
             _ => null,
         };
     }
-
-    private static Vector2 LegacyContact(Rect2D attack, Rect2D hurt) => (Vector2.Max(attack.Min, hurt.Min) + Vector2.Min(attack.Max, hurt.Max)) / 2;
 
     /// <summary>The first opposing actor whose hurt geometry (or front guard) a placed shape meets: registered colliders through the broad phase, or the legacy boxes.</summary>
     private (Actor Target, bool Blocked)? HurtTarget(int owner, SpatialObject2D probe, EntityRegion region)

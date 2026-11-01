@@ -121,9 +121,9 @@ public sealed class CubicBezierOperationsTests
         Assert.Equal("amount", error.ParamName);
         Assert.Equal(-.1f, error.ActualValue);
         Assert.Throws<ArgumentOutOfRangeException>(() => Example.Split(float.NaN));
-        Assert.Throws<ArgumentException>(() => Example.Slice(.7f, .2f));
-        Assert.Throws<ArgumentException>(() => Example.Slice(0, 1.1f));
-        Assert.Throws<ArgumentException>(() => Example.Slice(float.NaN, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Example.Slice(.7f, .2f));
+        Assert.ThrowsAny<ArgumentException>(() => Example.Slice(0, 1.1f));
+        Assert.ThrowsAny<ArgumentException>(() => Example.Slice(float.NaN, 1));
         var buffer = new double[] { 99, 99 };
         Assert.Throws<ArgumentOutOfRangeException>(() => Example.FindParametersAtX(0, buffer));
         Assert.Equal([99, 99], buffer);

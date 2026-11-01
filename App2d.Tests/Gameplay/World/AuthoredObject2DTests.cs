@@ -49,7 +49,7 @@ public sealed class AuthoredObject2DTests
     [InlineData("progress-name", typeof(JsonException))]
     [InlineData("empty-progress", typeof(ArgumentException))]
     [InlineData("period", typeof(ArgumentOutOfRangeException))]
-    [InlineData("shape", typeof(ArgumentException))]
+    [InlineData("shape", typeof(InvalidDataException))]
     [InlineData("dynamic-path", typeof(InvalidDataException))]
     [InlineData("normal", typeof(ArgumentOutOfRangeException))]
     [InlineData("unknown-field", typeof(JsonException))]

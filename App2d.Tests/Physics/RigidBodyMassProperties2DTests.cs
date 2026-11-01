@@ -126,7 +126,7 @@ public sealed class RigidBodyMassProperties2DTests
 
         var nonuniform = Disk(new(3f, 0f));
         nonuniform.WorldObject.Transform.Scale = new(2f, 1f);
-        Assert.Throws<InvalidOperationException>(() => nonuniform.SetMassFromShape(2f));
+        Assert.Throws<ArgumentException>(() => nonuniform.SetMassFromShape(2f));
         Assert.Equal(1f, nonuniform.Mass);
         Assert.Equal(1f, nonuniform.MomentOfInertia);
         Assert.Equal(Vector2.Zero, nonuniform.LocalCenterOfMass);

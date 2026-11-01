@@ -151,7 +151,7 @@ public sealed class ResolvedEntity
             {
                 clip.Validate(model);
             }
-            catch (InvalidDataException ex)
+            catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
             {
                 throw new InvalidDataException($"{field}: {ex.Message}");
             }

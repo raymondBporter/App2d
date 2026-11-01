@@ -61,7 +61,10 @@ public sealed class GiantTree2D
             crownRadius * 1.8f) + 12f;
         Bounds = new(root - new Vector2(reach, settings.FoliageRadius.Max * 0.6f + 12f),
             root + new Vector2(reach, settings.Height + crownRadius * 1.1f + 12f));
-        Ensure.ThrowIf(!Bounds.IsFinite || !TrunkBounds.IsFinite, "Tree geometry must fit in finite world coordinates.", nameof(root));
+        Ensure.Finite(Bounds.Min);
+        Ensure.Finite(Bounds.Max);
+        Ensure.Finite(TrunkBounds.Min);
+        Ensure.Finite(TrunkBounds.Max);
 
         var random = new Random(seed);
         var branches = ImmutableArray.CreateBuilder<GiantTreeBranch2D>();

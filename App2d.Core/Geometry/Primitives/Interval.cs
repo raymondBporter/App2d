@@ -21,7 +21,7 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
             Ensure.ThrowOutOfRange(min, "The minimum must be finite or negative infinity.");
         if (T.IsNegativeInfinity(max))
             Ensure.ThrowOutOfRange(max, "The maximum must be finite or positive infinity.");
-        Ensure.ThrowIf(min > max, "The minimum cannot exceed the maximum.", nameof(max));
+        Ensure.LessThanOrEqual(min, max, allowInfinity: true);
         Min = min;
         Max = max;
     }

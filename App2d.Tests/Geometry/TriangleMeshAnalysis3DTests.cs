@@ -59,6 +59,6 @@ public sealed class TriangleMeshAnalysis3DTests
     public void IndexedEdgesHaveStableUndirectedIdentity()
     {
         Assert.Equal(new IndexedEdge3D(2, 5), new IndexedEdge3D(5, 2));
-        Assert.Throws<ArgumentException>(() => new IndexedEdge3D(2, 2));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new IndexedEdge3D(2, 2));
     }
 }

@@ -1,66 +1,77 @@
 # Validation
 
-`Ensure` validates arguments. `Ensure` validates engine state. All types are in `App2d.Core.Validation`.
+`Ensure` is the shared throwing API for inputs and live values. `NumericValidation`
+provides its numeric predicates without throwing. The methods have the same names
+(predicates add `Is`) and the same order: scalars, vectors, matrices.
 
 ```csharp
 Ensure.Finite(position);
-Ensure.Positive(radius);                         // finite and > 0
-Ensure.NonNegative(holdSeconds);                  // finite and >= 0
-Ensure.NonZero(direction);                        // finite, whole vector != zero
-Ensure.GreaterThan(recoveryPeak, 1f);              // finite and > 1
-Ensure.InRange(minimumSpeed, 0f, 1f);              // finite, [0, 1]
-Ensure.Index(index, TriangleCount);               // [0, TriangleCount)
+Ensure.Positive(radius);
+Ensure.NonNegative(seconds);
+Ensure.NonZero(direction);
+Ensure.LessThanOrEqual(alpha, 1f);
+Ensure.GreaterThanOrEqual(iterations, 1);
+Ensure.InRange(fraction, 0f, 1f, bounds: RangeBounds.Open);
+Ensure.Invertible(localToWorld, out var inverse);
 
-// Checks return the value, so initializers need no separate Require API.
+// Checks return the original value and capture its expression on failure.
 public Vector2 TileSize { get; } = Ensure.Positive(tileSize);
 
-// Endpoint choices are exact; no epsilon tricks or extra method families.
-Ensure.InRange(fraction, 0f, 1f, bounds: RangeBounds.Open);       // (0, 1)
-Ensure.InRange(fraction, 0f, 1f, bounds: RangeBounds.ClosedOpen); // [0, 1)
-Ensure.InRange(fraction, 0f, 1f, bounds: RangeBounds.OpenClosed); // (0, 1]
-
-// Unusual or domain-specific rules use ordinary C# expressions.
-Ensure.ThrowIfNot(!scene.Any());
-Ensure.ThrowIfNot(Math.Abs(a - b) < epsilon);
-Ensure.ThrowIfNot(clip.IsReady, "Load the clip before playing it.");
+// Nonthrowing consumers use the same predicates.
+if (NumericValidation.IsPositive(radius)) { /* use the radius */ }
 ```
 
-## Small numeric vocabulary
+## Numeric vocabulary
 
 | Check | Requirement |
 | --- | --- |
 | `Number` | Not NaN; infinity is allowed |
 | `Finite` | Neither NaN nor infinity |
-| `Positive` | Finite and `> 0` |
-| `Negative` | Finite and `< 0` |
-| `NonNegative` | Finite and `>= 0` |
+| `Positive`, `Negative` | Finite and `> 0`, `< 0` |
+| `NonNegative`, `NonPositive` | Finite and `>= 0`, `<= 0` |
 | `NonZero` | Finite and not zero |
-| `AtLeast`, `GreaterThan`, `AtMost`, `LessThan` | Finite value satisfying `>=`, `>`, `<=`, `<` |
-| `InRange` | Finite value between ordered bounds, with explicit endpoint inclusion |
-| `Index` | Integer index in `[0, count)`; handles empty collections |
+| `Equal`, `NotEqual` | Finite scalar operands satisfying `==`, `!=` |
+| `LessThan`, `LessThanOrEqual` | Finite operands satisfying `<`, `<=` |
+| `GreaterThan`, `GreaterThanOrEqual` | Finite operands satisfying `>`, `>=` |
+| `InRange` | Finite value between ordered bounds |
+| `Invertible` | Finite matrix with a finite inverse |
 
-Scalars use generic math without conversion to float: `int`, `long`, `float`, `double`, `decimal`, and other `INumber<T>` types share the implementation. Every numeric guard rejects NaN. Keep tolerance formulas explicit in custom conditions.
+Scalars use generic math without conversion to float or double. This supports
+integers, unsigned integers, `Int128`, `Half`, `float`, `double`, `decimal`,
+`BigInteger`, and other types implementing the required numeric interface.
+Negative zero is zero. Comparisons are exact; tolerance formulas remain explicit.
 
-`Positive` always means greater than zero. Use `NonNegative` when zero is valid. Signed negative zero is zero. Null is a separate concern: validate an optional numeric value only when it is present.
+`Vector2`, `Vector3`, and `Vector4` have component-wise sign, ordering, and range
+checks. `NonZero` checks the whole vector, so `(1, 0)` is a valid direction.
+The engine's float/double vector structs also support `Number`, `Finite`, and
+`NonZero` without narrowing their coordinates. `Matrix3x2` and `Matrix4x4`
+support `Number`, `Finite`, and `Invertible`. A finite singular matrix is valid
+for `Finite`; use `Invertible` when an inverse is required.
 
-## Vectors and matrices
+## Bounds and infinity
 
-`Vector2`, `Vector3`, and `Vector4` use the same method names. Sign checks, comparisons, and ranges apply to **every component**, with matching vector bounds. `NonZero` checks the whole vector: `(1, 0)` is a valid direction but is not positive on every axis. Validate a single component directly when only that axis has a rule. No magnitude calculation or epsilon is used, so tiny directions and large finite components are supported.
+`RangeBounds` selects `[min, max]`, `(min, max)`, `[min, max)`, or `(min, max]`.
+Range bounds may be infinite, but the checked value must be finite. Only a closed
+range may collapse to one value.
 
-`Finite(Matrix3x2)` checks all six entries and accepts finite singular matrices. Vector and matrix failures report the entire original value.
+Intentional infinity is explicit on throwing checks:
 
-## Intentional infinity
+```csharp
+Ensure.NonNegative(maxDistance, allowInfinity: true);
+Ensure.Negative(lowerBound, allowNegativeInfinity: true);
+Ensure.LessThanOrEqual(minimum, maximum, allowInfinity: true);
+```
 
-Checked values are finite by default, while range **bounds** may be infinite. One-sided comparisons require both operands to be finite. `InRange(x, 0f, float.PositiveInfinity, bounds: RangeBounds.Open)` requires a finite `x > 0`; `Positive(x)` is the shorter spelling. Bounds must not contain NaN and must describe a nonempty range; only a closed range may collapse to one value.
+The ordering predicates use ordinary comparisons, allowing infinity and rejecting
+NaN. Throwing ordering checks require finite operands unless opted in. This keeps
+unbounded rectangles and heightfields valid while rejecting accidental infinities
+in ordinary values.
 
-Unlimited ray distances use `NonNegative(maxDistance, allowInfinity: true)`. This explicit opt-in still rejects NaN and negative infinity. `Negative(value, allowNegativeInfinity: true)` accepts negative infinity while still rejecting NaN, zero, and positive values. Constraint bounds use `Number` because infinity disables a limit. Unbounded rectangles retain their domain-specific ordering rule. `NumericValidation.Is...` predicates follow ordinary comparisons and support that sentinel policy.
+## Other existing checks
 
-## Exceptions and caller expressions
-
-Numeric checks throw `ArgumentOutOfRangeException` with a generic requirement, the rejected value, and the caller's expression as `ParamName`. An explicit name such as `Ensure.Positive(value, nameof(Radius))` overrides it. Invalid comparison operands and range bounds report the bound's own caller expression. `Index` reports the rejected index even when `count == 0`.
-
-`ThrowIf` and `ThrowIfNot` on both guard classes capture the actual C# condition using `CallerArgumentExpression`. Without a custom message, a failed `Ensure.ThrowIfNot(!scene.Any())` reports `Condition must be true: !scene.Any().` Custom messages remain available when they explain a domain rule. Argument conditions throw `ArgumentException`; state conditions throw `InvalidOperationException`. Nullable flow annotations are preserved.
-
-`NumericValidation` provides the same finite sign, nonzero, and range rules without throwing, for editors and other consumers. Exception construction, formatting, and boxing happen only on failure. Successful numeric checks allocate nothing; exception factories create a fresh exception each time.
-
-Keep validation at the boundary that owns the rule. Use common numeric guards directly; retain domain validation routines that combine real rules such as convexity or animation ordering. Null, text, collection, and type checks keep their existing helpers.
+The existing null, string, collection, type, and custom-condition helpers are
+available on `Ensure`. Their rules remain separate from the numeric vocabulary.
+Use `ThrowIf` / `ThrowIfNot` for domain conditions that do not fit a named check.
+Numeric checks throw `ArgumentOutOfRangeException`; custom conditions throw
+`ArgumentException`. Caller expressions and rejected values are retained. Successful
+numeric checks allocate nothing, and exception instances are created on failure.

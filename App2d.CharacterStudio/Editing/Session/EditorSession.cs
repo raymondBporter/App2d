@@ -352,7 +352,7 @@ public sealed class EditorSession
                     _partPreview = (part.Id, Assets.PartsRevision, ResolvedModel.From(preview, partOf: Assets.PartOf), part.Asset.Motion?.CreateMotion());
                     _partPreview.Value.Model.TextureRoot = Assets.Root;
                 }
-                catch (InvalidDataException) { return []; }
+                catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException) { return []; }
             }
             var model = _partPreview.Value.Model;
             var time = ShowRest ? 0 : Transport.Time;
@@ -888,7 +888,7 @@ public sealed class EditorSession
         {
             return ResolvedAttachment.Resolve(new() { Id = "preview", Asset = part.Id, Socket = PreviewSocket, Mirror = PreviewMirror }, Assets.PartOf, sockets, "Preview");
         }
-        catch (InvalidDataException)
+        catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException)
         {
             return null;
         }

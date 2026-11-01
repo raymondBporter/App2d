@@ -56,7 +56,6 @@ public static class PartGeometryBuilder
     /// The caller chooses scale, grip and color. Export with +X along the weapon and +Y across its broad face.</summary>
     public static PartGeometry ImportObj(string text, float scale = 1, string fill = "#c8b18a")
     {
-        Ensure.Finite(scale);
         Ensure.Positive(scale);
 
         var positions = new List<int>();

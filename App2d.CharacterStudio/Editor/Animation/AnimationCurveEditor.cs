@@ -1,4 +1,5 @@
 using App2d.CharacterStudio.Editing;
+using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;

@@ -130,7 +130,8 @@ public sealed partial class Renderer2D : IDisposable
         var bounds = worldObject.LocalBounds.IsFinite ? worldObject.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)
         {
-            Ensure.ThrowIf(!worldObject.LocalBounds.IsFinite, "Sprites require finite local bounds.");
+            Ensure.Finite(worldObject.LocalBounds.Min);
+            Ensure.Finite(worldObject.LocalBounds.Max);
         }
 
         SelectMaterial(worldObject.Shader);

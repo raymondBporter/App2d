@@ -38,10 +38,10 @@ public sealed class TriangleMesh2DTests
     [Fact]
     public void MeshRejectsBadIndicesAndDegenerateTriangles()
     {
-        Assert.Throws<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 1]));
+        Assert.ThrowsAny<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 1]));
         Assert.Throws<ArgumentOutOfRangeException>(() => new TriangleMesh2D(Notched, [0, 1, 9]));
-        Assert.Throws<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 0, 1]));
-        Assert.Throws<ArgumentException>(() => PolygonTriangulation2D.Triangulate(
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TriangleMesh2D(Notched, [0, 0, 1]));
+        Assert.ThrowsAny<ArgumentException>(() => PolygonTriangulation2D.Triangulate(
             [new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 1), new Vector2(1, 0)]));
     }
 

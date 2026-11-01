@@ -67,7 +67,7 @@ public sealed class MusicStreamTests
     {
         using var stream = new MusicStream2D(Cue(), [new FakeStem(16, _ => 1), new FakeStem(3, _ => 1)]);
         stream.Restart("explore");
-        Assert.Throws<InvalidDataException>(() => stream.Read(new float[12]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => stream.Read(new float[12]));
     }
 
     [Fact]

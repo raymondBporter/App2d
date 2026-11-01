@@ -1,4 +1,5 @@
 using System.Numerics;
+using App2d.Core.Validation;
 
 namespace App2d.ImageLab;
 
@@ -38,10 +39,7 @@ internal sealed class RasterPixelStroke : IRasterStroke
 
     public bool MoveTo(Vector2 point)
     {
-        if (!float.IsFinite(point.X) || !float.IsFinite(point.Y))
-        {
-            throw new ArgumentOutOfRangeException(nameof(point));
-        }
+        Ensure.Finite(point);
         if (!_line && (point.X < 0 || point.Y < 0 || point.X >= Frame.Width || point.Y >= Frame.Height))
         {
             _previous = null;

@@ -436,7 +436,7 @@ public sealed class ShapeArea2DTests
 
         Assert.Equal(64, shape.SupportReads);
         Assert.Equal(MathF.PI, ShapeArea2D.Union([new PointShape(), Circle2D.Builder.Create(1)]), 5);
-        Assert.Throws<ArgumentException>(() => CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1)], areaOutlineSegments: 2));
+        Assert.Throws<ArgumentOutOfRangeException>(() => CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1)], areaOutlineSegments: 2));
         Assert.Throws<ArgumentException>(() => CompositeShape2D.Builder.Create([null!]));
     }
 

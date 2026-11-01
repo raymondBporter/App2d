@@ -211,12 +211,12 @@ public sealed class Affine2DTests
         bounds = placed.WorldBounds;
         placed.Transform.ShearY = .4f;
         Assert.NotEqual(bounds, placed.WorldBounds);
-        Assert.Throws<InvalidOperationException>(() => placed.CollisionPose);
+        Assert.Throws<ArgumentException>(() => placed.CollisionPose);
         placed.Transform.ShearY = 0;
         placed.Transform.ScaleX = 0;
         Assert.False(placed.Transform.TryInverse(out _));
         Assert.False(placed.ContainsWorldPoint(new(3, 0)));
-        Assert.Throws<InvalidOperationException>(() => placed.CollisionPose);
+        Assert.ThrowsAny<ArgumentException>(() => placed.CollisionPose);
     }
 
     [Fact]

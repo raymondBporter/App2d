@@ -13,7 +13,7 @@ public readonly partial record struct HalfSpace2D
     {
         Ensure.NonZero(Normal, "outwardNormal");
         Ensure.Finite(Offset, "offset");
-        Ensure.ThrowIf(Math.Abs(Normal.ToVector2d().Length() - 1) > 1e-6, "The half-space normal must be normalized; use Builder.Create.", "outwardNormal");
+        Ensure.LessThanOrEqual(Math.Abs(Normal.ToVector2d().Length() - 1), 1e-6, "outwardNormal");
     }
 
     public static class Builder

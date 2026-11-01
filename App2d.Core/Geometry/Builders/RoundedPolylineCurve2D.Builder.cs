@@ -16,9 +16,7 @@ public readonly partial record struct RoundedPolylineCurve2D
             Ensure.Finite(point, "points");
         }
 
-        Ensure.Finite(Softness);
-        Ensure.NonNegative(Softness);
-        Ensure.LessThanOrEqual(Softness, 1);
+        Ensure.InRange(Softness, 0f, 1f, "softness");
     }
 
     /// <summary>Stateless validated construction.</summary>

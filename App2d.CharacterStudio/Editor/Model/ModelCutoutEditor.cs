@@ -35,7 +35,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
                     ModelAuthoring.CheckCutout(points);
                     change(p => ModelAuthoring.SetCutout(p, points));
                 }
-                catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
+                catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException) { /* Keep the last valid perimeter while editing. */ }
             }
             for (var i = 0; i < vertices.Count; i++)
             {
@@ -60,7 +60,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
                     {
                         change(p => ModelAuthoring.RemoveCutoutPoint(p, index));
                     }
-                    catch (InvalidDataException) { }
+                    catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException) { }
                 }
                 ImGui.PopID();
             }
@@ -110,7 +110,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
         {
             ModelAuthoring.CheckCutout(edited);
         }
-        catch (InvalidDataException)
+        catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException)
         {
             return;
         }

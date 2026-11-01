@@ -22,7 +22,7 @@ public sealed partial class Renderer2D
         get;
         set
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            Ensure.NonNegative(value);
             field = value;
         }
     } = 32 * 1024 * 1024;

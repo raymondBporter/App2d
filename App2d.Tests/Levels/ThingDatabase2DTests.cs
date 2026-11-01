@@ -109,7 +109,7 @@ public sealed class ThingDatabase2DTests : IDisposable
         using (var database = LevelDatabase2D.Open(path)) database.Save(new EditableTileMap2D(4, 4, 32, 4), 0);
         Execute(path, "DELETE FROM meta WHERE key LIKE 'tileset_%';");
         using var reader = LevelDatabase2D.OpenRead(path);
-        Assert.Contains("tileset_count", Assert.Throws<InvalidOperationException>(() => reader.Load()).Message);
+        Assert.Contains("tileset_count", Assert.Throws<ArgumentNullException>(() => reader.Load()).Message);
     }
 
     [Theory]
@@ -123,8 +123,8 @@ public sealed class ThingDatabase2DTests : IDisposable
         using (var database = LevelDatabase2D.Open(path)) database.Save(new EditableTileMap2D(4, 4, 32, 4), 0);
         Execute(path, $"PRAGMA user_version = {version};");
         var before = ReadBytes(path);
-        Assert.Contains($"version {version}", Assert.Throws<InvalidOperationException>(() => LevelDatabase2D.Open(path)).Message);
-        Assert.Contains($"version {version}", Assert.Throws<InvalidOperationException>(() => LevelDatabase2D.OpenRead(path)).Message);
+        Assert.Contains($"version {version}", Assert.Throws<ArgumentException>(() => LevelDatabase2D.Open(path)).Message);
+        Assert.Contains($"version {version}", Assert.ThrowsAny<ArgumentException>(() => LevelDatabase2D.OpenRead(path)).Message);
         Assert.Equal(before, ReadBytes(path));
     }
 

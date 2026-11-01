@@ -72,7 +72,7 @@ public sealed class Frame3DTests
     {
         var perspective = Matrix4x4.Identity;
         perspective.M14 = .5f;
-        Assert.Throws<ArgumentException>(() => new Frame3D(perspective));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Frame3D(perspective));
         Assert.Throws<ArgumentOutOfRangeException>(() => Frame3D.FromRotation(new(float.NaN)));
         Assert.Throws<ArgumentOutOfRangeException>(() => Frame3D.Identity.WithOrigin(new(float.PositiveInfinity)));
     }

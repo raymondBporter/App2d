@@ -218,7 +218,7 @@ public sealed class LevelDatabase2DTests : IDisposable
             command.ExecuteNonQuery();
         }
 
-        Assert.Throws<InvalidOperationException>(() => LevelDatabase2D.Open(path));
+        Assert.Throws<ArgumentException>(() => LevelDatabase2D.Open(path));
     }
 
     [Fact]
@@ -227,7 +227,7 @@ public sealed class LevelDatabase2DTests : IDisposable
         var path = NewPath();
         using var database = LevelDatabase2D.Open(path);
 
-        Assert.Throws<InvalidOperationException>(() => database.Load());
+        Assert.Throws<ArgumentNullException>(() => database.Load());
     }
 
     [Fact]
@@ -332,7 +332,7 @@ public sealed class LevelDatabase2DTests : IDisposable
         Directory.CreateDirectory(_directory);
         var missing = Path.Combine(_directory, "does-not-exist.db");
 
-        Assert.Throws<InvalidOperationException>(() => LevelDatabase2D.OpenRead(missing));
+        Assert.Throws<ArgumentException>(() => LevelDatabase2D.OpenRead(missing));
     }
 
     [Fact]

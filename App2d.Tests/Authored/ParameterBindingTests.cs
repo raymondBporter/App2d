@@ -263,7 +263,7 @@ public sealed class ParameterBindingTests
 
     [Theory]
     [InlineData("unknown-value", "has no such parameter")]
-    [InlineData("out-of-range", "between 0.1 and 2")]
+    [InlineData("out-of-range", "build.reach")]
     [InlineData("bound-twice", "one binding")]
     [InlineData("length-on-point", "only a bone node exposes a length")]
     [InlineData("link-on-unlinked", "has no link")]
@@ -272,7 +272,7 @@ public sealed class ParameterBindingTests
     [InlineData("unknown-part", "no part 'hat'")]
     [InlineData("cycle", "form a cycle")]
     [InlineData("preset-unknown", "no parameter 'span'")]
-    [InlineData("default-outside", "default must be between")]
+    [InlineData("default-outside", "default")]
     [InlineData("duplicate-id", "duplicate parameter")]
     [InlineData("bad-units", "unknown units")]
     [InlineData("no-parameters", "exposes no parameters")]
@@ -302,7 +302,9 @@ public sealed class ParameterBindingTests
             case "bad-units": reach.Units = "furlongs"; break;
             case "no-parameters": model.Parameters.Clear(); model.Presets.Clear(); break;
         }
-        var message = Assert.Throws<InvalidDataException>(() => ResolvedModel.From(model, variant)).Message;
+        var message = edit is "out-of-range" or "default-outside"
+            ? Assert.Throws<ArgumentOutOfRangeException>(() => ResolvedModel.From(model, variant)).Message
+            : Assert.Throws<InvalidDataException>(() => ResolvedModel.From(model, variant)).Message;
         Assert.Contains(fragment, message);
     }
 

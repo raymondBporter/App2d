@@ -77,7 +77,7 @@ public sealed class PointCharacterTests
     [Fact]
     public void RejectsInvalidTimingAndSampleArguments()
     {
-        Assert.Throws<InvalidDataException>(() => Library(times: [0, 0, 1]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Library(times: [0, 0, 1]));
         Assert.Throws<InvalidDataException>(() => Library(times: [0, .25, .9]));
         Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Sample(double.NaN, new Vector3[1]));
         Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Read(3, 0));

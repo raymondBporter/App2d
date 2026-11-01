@@ -32,6 +32,21 @@ public static class TriangleMath2D
             winding * b.Orientation(c, p) >= -edgeTolerance && winding * c.Orientation(a, p) >= -edgeTolerance;
     }
 
+    /// <summary>
+    /// Weights of <paramref name="a"/>, <paramref name="b"/> and <paramref name="c"/> that rebuild <paramref name="point"/>; they sum to 1 and
+    /// interpolate any per-corner value. Points outside the triangle get a negative weight. A degenerate triangle gives non-finite weights.
+    /// </summary>
+    public static Vector3 Barycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 point)
+    {
+        var ab = b - a;
+        var ac = c - a;
+        var determinant = ab.Cross(ac);
+        var d = point - a;
+        var u = d.Cross(ac) / determinant;
+        var v = ab.Cross(d) / determinant;
+        return new(1 - u - v, u, v);
+    }
+
     public static TTriangle Reversed<TTriangle>(this TTriangle triangle)
         where TTriangle : ITriangle<TTriangle, Vector2> => TTriangle.Create(triangle.A, triangle.C, triangle.B);
 

@@ -1,9 +1,7 @@
-using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
-using Quaternion = System.Numerics.Quaternion;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = System.Numerics.Vector3;
 
@@ -58,15 +56,8 @@ public sealed record SwooshStyle
 /// </summary>
 public sealed class BladeSwoosh
 {
-    /// <summary>
-    /// A recorded blade and the turn that carried the previous one onto it: <paramref name="Turn"/> radians about
-    /// <paramref name="Axis"/>. A step in the screen plane has the Z axis and a signed turn; a step through depth has its
-    /// own axis and a positive turn.
-    /// </summary>
-    private readonly record struct Blade(float Time, Vector3 Guard, Vector3 Tip, float Turn, Vector3 Axis, float Layer)
-    {
-        public bool Planar => Axis == Vector3.UnitZ;
-    }
+    /// <summary>A recorded blade and the turn that carried the previous one onto it.</summary>
+    private readonly record struct Blade(float Time, Vector3 Guard, Vector3 Tip, SegmentTurn3D Turn, float Layer);
     private readonly record struct Section(float Time, Vector3 Guard, Vector3 Tip, float Layer = 0);
 
     private readonly List<Blade> _history = [];
@@ -109,8 +100,8 @@ public sealed class BladeSwoosh
                 _history.RemoveAt(_history.Count - 1);
             }
 
-            var (turn, axis) = _history.Count > 0 ? Turn(_history[^1], guard, tip, Sweep) : (0, Vector3.UnitZ);
-            _history.Add(new(time, guard, tip, turn, axis, layer));
+            var turn = _history.Count > 0 ? SegmentTurn3D.Between(_history[^1].Guard, _history[^1].Tip, guard, tip, _history[^1].Turn, Sweep) : SegmentTurn3D.None;
+            _history.Add(new(time, guard, tip, turn, layer));
             var oldest = time - Style.HistorySeconds;
             while (_history.Count > 2 && _history[1].Time <= oldest)
             {
@@ -243,7 +234,7 @@ public sealed class BladeSwoosh
                 continue;
             }
 
-            var steps = Math.Clamp((int)MathF.Ceiling(ArcLength(a, b) / Style.Spacing), 1, 64);
+            var steps = Math.Clamp((int)MathF.Ceiling(b.Turn.ArcLength(a.Tip, b.Tip) / Style.Spacing), 1, 64);
             for (var k = 0; k <= steps; k++)
             {
                 var time = a.Time + (b.Time - a.Time) * k / steps;
@@ -284,81 +275,12 @@ public sealed class BladeSwoosh
         return null;
     }
 
-    private static float ArcLength(Blade a, Blade b)
-    {
-        var turn = b.Turn;
-        var chord = Vector3.Distance(a.Tip, b.Tip);
-        var half = MathF.Abs(turn) / 2;
-        return half < 5e-4f ? chord : chord * half / MathF.Sin(half);
-    }
-
-    /// <summary>
-    /// The turn from <paramref name="previous"/> to a new blade. In the screen plane it is signed about Z, and the shorter
-    /// way round is right unless the step goes against the swing: past 150 degrees against the way the blade was already
-    /// turning (a fast swing can pass that in one frame), or, on the first step, past a quarter turn against
-    /// <paramref name="sweep"/>. Through depth it turns about the axis the two blades share, with the same 150 degree rule
-    /// against the previous step's axis.
-    /// </summary>
-    private static (float Turn, Vector3 Axis) Turn(Blade previous, Vector3 guard, Vector3 tip, int sweep)
-    {
-        var a = previous.Tip - previous.Guard;
-        var b = tip - guard;
-        if (a.LengthSquared() < 1e-12f || b.LengthSquared() < 1e-12f)
-        {
-            return (0, Vector3.UnitZ);
-        }
-
-        var cross = Vector3.Cross(Vector3.Normalize(a), Vector3.Normalize(b));
-        var planar = cross.LengthSquared() < 1e-10f || MathF.Abs(cross.Z) > .97f * cross.Length();
-        if (planar)
-        {
-            var d0 = a.XY;
-            var d1 = b.XY;
-            var turn = MathF.Atan2(d0.Cross(d1), Vector2.Dot(d0, d1));
-            var (expected, limit) = previous.Turn != 0 && previous.Planar ? (MathF.Sign(previous.Turn), 2.6f) : (Math.Sign(sweep), MathF.PI / 2);
-            if (expected != 0 && MathF.Sign(turn) != expected && MathF.Abs(turn) > limit)
-            {
-                turn -= MathF.Sign(turn) * MathF.Tau;
-            }
-
-            return (turn, Vector3.UnitZ);
-        }
-        var axis = Vector3.Normalize(cross);
-        var angle = MathF.Atan2(cross.Length(), Vector3.Dot(Vector3.Normalize(a), Vector3.Normalize(b)));
-        if (previous.Turn != 0 && !previous.Planar && Vector3.Dot(axis, previous.Axis) < 0 && angle > 2.6f)
-        {
-            (axis, angle) = (-axis, MathF.Tau - angle);
-        }
-
-        return (angle, axis);
-    }
-
     /// <summary>The blade a fraction <paramref name="u"/> of the way from <paramref name="a"/> to <paramref name="b"/>, turning about their shared pivot or axis.</summary>
     private static Section Rotate(Blade a, Blade b, float u)
-        => RotateSpatial(a, b, u) with { Layer = float.Lerp(a.Layer, b.Layer, Math.Clamp(u, 0, 1)) };
-
-    private static Section RotateSpatial(Blade a, Blade b, float u)
     {
         u = Math.Clamp(u, 0, 1);
-        var time = a.Time + (b.Time - a.Time) * u;
-        if (!b.Planar)
-        {
-            // Through depth: the guard moves straight between the two, the blade turns about the step's axis.
-            var along = a.Tip - a.Guard;
-            var length = float.Lerp(along.Length(), (b.Tip - b.Guard).Length(), u);
-            var direction = Vector3.Transform(Vector3.Normalize(along), Quaternion.CreateFromAxisAngle(b.Axis, b.Turn * u));
-            var at = Vector3.Lerp(a.Guard, b.Guard, u);
-            return new(time, at, at + direction * length);
-        }
-        var z = float.Lerp(a.Guard.Z, b.Guard.Z, u);
-        var tipZ = float.Lerp(a.Tip.Z, b.Tip.Z, u);
-        var d0 = (a.Tip - a.Guard).XY;
-        var d1 = (b.Tip - b.Guard).XY;
-        var flatLength = float.Lerp(d0.Length(), d1.Length(), u);
-        var turn = b.Turn;
-        var guard = Rotation2D.InterpolateArc(a.Guard.XY, b.Guard.XY, turn, u);
-        var flat = Rotation2D.Apply(d0.Length() > 1e-6f ? Vector2.Normalize(d0) : Vector2.UnitX, turn * u);
-        return new(time, new(guard, z), new(guard + flat * flatLength, tipZ));
+        var (guard, tip) = b.Turn.Interpolate(a.Guard, a.Tip, b.Guard, b.Tip, u);
+        return new(a.Time + (b.Time - a.Time) * u, guard, tip, float.Lerp(a.Layer, b.Layer, u));
     }
 
     private static Section Lerp(Section a, Section b, float u) =>

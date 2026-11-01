@@ -15,8 +15,7 @@ namespace App2d.Core.Characters.Geometry;
 public static class PartPlacement3D
 {
     /// <summary>A planar placement embedded in physical Z=0. Drawing layers never enter a spatial frame.</summary>
-    public static Frame3D Extend(LayeredFrame2D placement) =>
-        new(new(placement.Frame.Origin, 0), new(placement.XAxis, 0), new(placement.YAxis, 0), Vector3.UnitZ);
+    public static Frame3D Extend(LayeredFrame2D placement) => Frame3D.FromPlanar(placement.Frame);
 
     /// <summary>
     /// Lifts a planar placement into the frame a prop's vertices use. The orientation tilts about local X, twists about

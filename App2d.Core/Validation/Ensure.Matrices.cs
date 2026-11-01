@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 

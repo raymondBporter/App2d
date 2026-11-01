@@ -101,7 +101,7 @@ public sealed class ProportionExtremesTests
         Assert.Equal(legs.Max, PersonBuild.Stilted.Legs);
         Assert.Equal(legs.Min, PersonBuild.Squat.Legs);
         Assert.True(PersonBuild.Stilted.Legs > legs.Range.SoftMax);
-        Assert.Contains("legs", Assert.Throws<InvalidDataException>(() => new PersonBuild { Legs = 2.5f }.Apply(Person, "giant", "Giant")).Message);
+        Assert.Contains("legs", Assert.Throws<ArgumentOutOfRangeException>(() => new PersonBuild { Legs = 2.5f }.Apply(Person, "giant", "Giant")).Message);
 
         // Every track kind maps to a declared channel semantics with units the inspector can show, including the normalized bend.
         foreach (var kind in MotionClip.TrackKinds)

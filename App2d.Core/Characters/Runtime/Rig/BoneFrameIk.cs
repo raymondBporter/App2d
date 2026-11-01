@@ -36,16 +36,15 @@ internal static class BoneFrameIk
         var (x, y, _) = frame.GetRows();
         var size = x.LengthSquared();
         var length = bone.Length * MathF.Sqrt(size);
-        Ensure.Finite(length);
-        Ensure.GreaterThanOrEqual(length, .01f);
-        Ensure.Finite(y.LengthSquared());
-        Ensure.LessThanOrEqual(MathF.Abs(size - y.LengthSquared()), size * 1e-4f);
-        Ensure.LessThanOrEqual(MathF.Abs(Vector2.Dot(x, y)), size * 1e-4f);
+        Ensure.GreaterThanOrEqual(length, .01f, chain.Id);
+        Ensure.Finite(y.LengthSquared(), chain.Id);
+        Ensure.LessThanOrEqual(MathF.Abs(size - y.LengthSquared()), size * 1e-4f, chain.Id);
+        Ensure.LessThanOrEqual(MathF.Abs(Vector2.Dot(x, y)), size * 1e-4f, chain.Id);
 
         var tip = Vector2.Transform(new(bone.Length, 0), frame);
         var actual = child.Translation;
-        Ensure.Finite(actual);
-        Ensure.LessThanOrEqual(Vector2.Distance(tip, actual), MathF.Max(1e-5f, length * 1e-4f));
+        Ensure.Finite(actual, chain.Id);
+        Ensure.LessThanOrEqual(Vector2.Distance(tip, actual), MathF.Max(1e-5f, length * 1e-4f), chain.Id);
 
         return length;
     }

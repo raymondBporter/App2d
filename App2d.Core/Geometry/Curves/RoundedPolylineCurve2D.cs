@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Mathematics;
 using System.Numerics;
@@ -173,7 +174,7 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
     /// <summary>Uniform base samples plus exact span/fillet boundaries and corner midpoints.</summary>
     public float[] SampleParameters(int sections)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sections);
+        Ensure.Positive(sections);
         var samples = new SortedSet<float>(Enumerable.Range(0, sections + 1).Select(i => i / (float)sections));
         if (Length > 1e-8f)
         {

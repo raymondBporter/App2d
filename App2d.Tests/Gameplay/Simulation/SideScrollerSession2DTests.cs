@@ -114,7 +114,7 @@ public sealed class SideScrollerSession2DTests
         game.Session.SetPaused(true);
         game.Session.SetPaused(true);
         Assert.Equal(1, game.Actions.Interruptions);
-        Assert.Throws<InvalidOperationException>(() => game.Step());
+        Assert.Throws<ArgumentException>(() => game.Step());
         Assert.Equal(0, game.Session.Tick);
         game.Session.SetPaused(false);
         Assert.Equal(1, game.Step().Tick);

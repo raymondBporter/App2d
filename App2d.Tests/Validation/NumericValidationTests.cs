@@ -160,7 +160,7 @@ public sealed class NumericValidationTests
         Assert.False(unbounded.IsFinite);
         Assert.True(unbounded.Contains(Vector2.Zero));
         Assert.Equal(default, Rect2D.FromSize(Vector2.Zero));
-        Assert.Throws<ArgumentException>(() => new Rect2D(new(float.NaN, 0), Vector2.One));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2D(new(float.NaN, 0), Vector2.One));
         Assert.Throws<ArgumentOutOfRangeException>(() => Circle2D.Builder.Create(float.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => Rectangle2D.Builder.CreateFromSize(float.PositiveInfinity, 1));
     }

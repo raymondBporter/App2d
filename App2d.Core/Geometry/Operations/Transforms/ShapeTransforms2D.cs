@@ -133,7 +133,10 @@ public static class ShapeTransforms2D
     public static IShape2D Posed(IShape2D shape, Similarity2D pose)
     {
         Ensure.ThrowIfNull(shape);
-        Ensure.ThrowIf(!pose.IsFinite || pose.Scale <= 0f, "The pose must be finite with a positive scale.", nameof(pose));
+        Ensure.Finite(pose.XAxis);
+        Ensure.Finite(pose.YAxis);
+        Ensure.Finite(pose.Translation);
+        Ensure.Positive(pose.Scale);
         switch (shape)
         {
             case Circle2D circle:

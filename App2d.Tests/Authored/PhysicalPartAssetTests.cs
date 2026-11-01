@@ -39,7 +39,8 @@ public sealed class PhysicalPartAssetTests
         var json = JsonNode.Parse(DumbbellJson)!;
         json["geometry"]![1]!["geometry"]!["radius"] = 0;
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => Part.FromJson(json.ToJsonString()));
+        var error = Assert.Throws<InvalidDataException>(() => Part.FromJson(json.ToJsonString()));
+        Assert.IsType<ArgumentOutOfRangeException>(error.InnerException);
     }
 
     [Fact]

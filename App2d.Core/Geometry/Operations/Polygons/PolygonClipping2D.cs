@@ -21,7 +21,9 @@ public static class PolygonClipping2D
     public static int ClipRectangleToHalfSpace<TRect>(TRect rectangle, Vector2 unitNormal, float offset, Span<Vector2> output) where TRect : IRect2D
     {
         Ensure.ThrowIfNull(rectangle);
-        Ensure.ThrowIf(!rectangle.IsFinite || rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y, "Rectangle bounds must be finite and ordered.", nameof(rectangle));
+        Ensure.Finite(rectangle.Min);
+        Ensure.Finite(rectangle.Max);
+        Ensure.LessThanOrEqual(rectangle.Min, rectangle.Max);
         Ensure.ThrowIf(output.Length < 5, "Output needs room for five vertices.", nameof(output));
         Span<Vector2> corners = stackalloc Vector2[4];
         VertexGenerator2D.WriteRectangle(corners, rectangle.Min, rectangle.Max);

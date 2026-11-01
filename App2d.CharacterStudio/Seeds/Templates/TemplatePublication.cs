@@ -87,7 +87,7 @@ public static class TemplatePublication
             {
                 clip.Validate(after, exactRevision: false);
             }
-            catch (InvalidDataException ex)
+            catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
             {
                 differences.Add($"clip '{clip.Id}' no longer validates: {ex.Message}");
                 continue;
@@ -122,7 +122,7 @@ public static class TemplatePublication
                 var built = ResolvedModel.From(declared, variant, partOf);
                 report.Add($"preset '{preset}' resolves: {string.Join(", ", built.Measures.Select(m => $"{m.Key} {m.Value:0.###}"))}");
             }
-            catch (InvalidDataException ex)
+            catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
             {
                 differences.Add($"preset '{preset}' does not resolve: {ex.Message}");
             }

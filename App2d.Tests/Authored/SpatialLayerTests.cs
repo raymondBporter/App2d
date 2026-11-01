@@ -81,6 +81,6 @@ public sealed class SpatialLayerTests
         var part = Asset().Geometry[0];
         Assert.Throws<InvalidDataException>(() => (part with { B = "other" }).Validate(_ => true));
         Assert.Throws<InvalidDataException>(() => (part with { Mesh = new() }).Validate(_ => true));
-        Assert.Throws<InvalidDataException>(() => (part with { SpatialCurve = new QuadraticBezier<Vector3f, float>(new(float.NaN, 0, 0), default, default) }).Validate(_ => true));
+        Assert.Throws<ArgumentOutOfRangeException>(() => (part with { SpatialCurve = new QuadraticBezier<Vector3f, float>(new(float.NaN, 0, 0), default, default) }).Validate(_ => true));
     }
 }

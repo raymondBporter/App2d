@@ -177,6 +177,6 @@ public sealed class ShapeVertices2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => rectangle.GetVerts(shortBuffer, out _));
         Assert.All(shortBuffer, point => Assert.Equal(new Vector2(123), point));
         Assert.Throws<ArgumentOutOfRangeException>(() => rectangle.GetOutlineVerts(shortBuffer));
-        Assert.Throws<ArgumentException>(() => rectangle.GetOutlineVertCount(2));
+        Assert.Throws<ArgumentOutOfRangeException>(() => rectangle.GetOutlineVertCount(2));
     }
 }

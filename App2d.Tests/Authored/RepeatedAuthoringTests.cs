@@ -93,7 +93,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Assert.Contains("mask: 'person' has no control group 'tail'", Assert.Throws<InvalidDataException>(() => Compile(catalog, unknown)).Message);
         var tooLong = SkirmishingGuard();
         tooLong.Behavior!.Actions[0].BlendIn = 2;
-        Assert.Contains("exceed the clip", Assert.Throws<InvalidDataException>(() => Compile(catalog, tooLong)).Message);
+        Assert.Throws<ArgumentOutOfRangeException>(() => Compile(catalog, tooLong));
         var jump = StarterContent.PlayerEntity();
         jump.Behavior!.Actions.Single(a => a.Id == "jump").Mask = Humanoid.UpperGroup;
         Assert.Contains("cannot be masked", Assert.Throws<InvalidDataException>(() => Compile(catalog, jump)).Message);

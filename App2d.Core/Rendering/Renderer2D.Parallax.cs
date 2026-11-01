@@ -44,7 +44,8 @@ public sealed partial class Renderer2D
                 }
 
                 var bounds = item.WorldBounds;
-                Ensure.ThrowIfNot(bounds.IsFinite, "Horizontally repeated parallax objects need finite bounds.");
+                Ensure.Finite(bounds.Min);
+                Ensure.Finite(bounds.Max);
                 var first = Math.Ceiling(((double)visible.Left - bounds.Right) / width);
                 var last = Math.Floor(((double)visible.Right - bounds.Left) / width);
                 for (var repeat = first; repeat <= last; repeat++)

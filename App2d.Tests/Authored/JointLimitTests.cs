@@ -297,8 +297,11 @@ public sealed class JointLimitTests
                 model.Controls[2].Limit = new() { Min = 2, Max = 0 };
                 break;
         }
-        var message = Assert.Throws<InvalidDataException>(model.Validate).Message;
-        Assert.Contains(failure switch { "point" => "belong to bone nodes", "rest" => "outside its joint limits", _ => "must not exceed" }, message);
+        var message = failure == "inverted"
+            ? Assert.Throws<ArgumentOutOfRangeException>(model.Validate).Message
+            : Assert.Throws<InvalidDataException>(model.Validate).Message;
+        if (failure != "inverted")
+            Assert.Contains(failure == "point" ? "belong to bone nodes" : "outside its joint limits", message);
         if (failure == "point")
         {
             // The authoring command refuses by name and leaves the model valid.

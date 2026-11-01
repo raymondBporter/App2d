@@ -95,9 +95,9 @@ public sealed class Clipping2DTests
     public void ClippingRejectsUnboundedRectanglesAndShortOutput()
     {
         var unbounded = new Rect2D(new(float.NegativeInfinity, -1), new(float.PositiveInfinity, 1));
-        Assert.Throws<ArgumentException>(() => new Line2D(Vector2.Zero, Vector2.UnitX)
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(Vector2.Zero, Vector2.UnitX)
             .TryClipToRectangle(unbounded, out _, out _));
-        Assert.Throws<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(unbounded, Vector2.UnitX, 0, new Vector2[5]));
-        Assert.Throws<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, Vector2.UnitX, 0, new Vector2[4]));
+        Assert.ThrowsAny<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(unbounded, Vector2.UnitX, 0, new Vector2[5]));
+        Assert.ThrowsAny<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, Vector2.UnitX, 0, new Vector2[4]));
     }
 }

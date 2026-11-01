@@ -121,12 +121,12 @@ public sealed class HeightFieldShape2DTests
     public void InfiniteSourcesNeedAnExplicitCutoffAndRawInvalidDataWaitsForValidation()
     {
         var infinite = new FunctionHeightField2D(0f, 100f, float.NegativeInfinity, _ => 0f);
-        Assert.Throws<InvalidOperationException>(() => infinite.ToShape());
+        Assert.Throws<ArgumentOutOfRangeException>(() => infinite.ToShape());
         var shape = infinite.ToClippedShape(-100f);
         Assert.True(shape.ContainsPoint(new(50, -100)));
         Assert.False(shape.ContainsPoint(new(50, -101)));
         Assert.True(infinite.ContainsPoint(new(50, -101)));
         var invalid = GeometryJson2D.ShapeFromJson("{\"kind\":\"height-field\",\"surface\":[{\"x\":1,\"y\":1},{\"x\":0,\"y\":1}],\"yMin\":-10}");
-        Assert.Throws<ArgumentException>(invalid.Validate);
+        Assert.ThrowsAny<ArgumentException>(invalid.Validate);
     }
 }

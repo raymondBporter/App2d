@@ -132,13 +132,13 @@ public sealed class PolynomialRootsTests
     public void InvalidInputsAndInsufficientBuffersAreRejected()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([], -1, 1, new double[4]));
-        Assert.Throws<ArgumentException>(() => PolynomialRoots.FindRealRoots([0, 0], -1, 1, new double[4]));
-        Assert.Throws<ArgumentException>(() => PolynomialRoots.FindRealRoots([1, 1, 1, 1, 1, 1], -1, 1, new double[5]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([0, 0], -1, 1, new double[4]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([1, 1, 1, 1, 1, 1], -1, 1, new double[5]));
         Assert.Throws<ArgumentException>(() => PolynomialRoots.FindRealRoots([1, 0, 1], -1, 1, new double[1]));
         Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([double.NaN, 1], -1, 1, new double[4]));
         Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([1, double.PositiveInfinity], -1, 1, new double[4]));
         Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([1, 1], double.NegativeInfinity, 1, new double[4]));
-        Assert.Throws<ArgumentException>(() => PolynomialRoots.FindRealRoots([1, 1], 1, -1, new double[4]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([1, 1], 1, -1, new double[4]));
     }
 
     private static void AssertRelativeRoots(double[] coefficients, double[] expected)

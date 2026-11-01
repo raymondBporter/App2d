@@ -89,8 +89,8 @@ public sealed class IntervalTests
     [Fact]
     public void EndpointsRemainValidatedAcrossNumericTypesAndJson()
     {
-        Assert.Throws<ArgumentException>(() => new Interval<int>(2, 1));
-        Assert.Throws<ArgumentException>(() => new Interval<decimal>(2m, 1m));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Interval<int>(2, 1));
+        Assert.ThrowsAny<ArgumentException>(() => new Interval<decimal>(2m, 1m));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Interval<double>(double.NaN, 1d));
         Assert.Throws<ArgumentOutOfRangeException>(() => Interval<double>.Singleton(double.PositiveInfinity));
 
@@ -99,7 +99,7 @@ public sealed class IntervalTests
         Assert.Equal(2f, min);
         Assert.Equal(8f, max);
         Assert.Equal(interval, JsonSerializer.Deserialize<Interval<float>>(JsonSerializer.Serialize(interval)));
-        Assert.Throws<ArgumentException>(() => JsonSerializer.Deserialize<Interval<float>>("{\"Min\":8,\"Max\":2}"));
+        Assert.ThrowsAny<ArgumentException>(() => JsonSerializer.Deserialize<Interval<float>>("{\"Min\":8,\"Max\":2}"));
     }
 
     [Fact]

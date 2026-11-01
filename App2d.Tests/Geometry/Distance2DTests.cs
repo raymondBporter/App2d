@@ -180,7 +180,7 @@ public sealed class Distance2DTests
         circle.Transform.Position = new(15, 22);
         Assert.Equal(-1f, SpatialDistance2D.SignedDistance(box, circle), 4); // pose cache refreshes
         box.Transform.Scale = new(2, 1);
-        Assert.Throws<InvalidOperationException>(() => SpatialDistance2D.Distance(box, circle));
+        Assert.Throws<ArgumentException>(() => SpatialDistance2D.Distance(box, circle));
     }
 
     [Fact]

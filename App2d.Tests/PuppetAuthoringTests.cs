@@ -181,7 +181,7 @@ public sealed class PuppetAuthoringTests
         Assert.Contains("overlap", Assert.Throws<InvalidDataException>(puppet.Validate).Message);
         puppet = PuppetTemplates.StickFigure();
         puppet.Controls.Find(c => c.Id == "left-knee")!.Rest = puppet.Controls.Find(c => c.Id == "left-hip")!.Rest;
-        Assert.Contains("length", Assert.Throws<InvalidDataException>(puppet.Validate).Message);
+        Assert.Contains("length", Assert.Throws<ArgumentOutOfRangeException>(puppet.Validate).Message);
     }
 
     [Fact]

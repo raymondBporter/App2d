@@ -127,8 +127,6 @@ public sealed record ModelParameter
             throw new InvalidDataException($"{field}: unknown units '{Units}'.");
         }
 
-        Ensure.Finite(Min);
-        Ensure.Finite(Max);
         Ensure.LessThan(Min, Max);
 
         new Limit(Min, Max).Check(Default, field + " default");

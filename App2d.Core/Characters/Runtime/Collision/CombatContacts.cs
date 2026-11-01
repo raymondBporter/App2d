@@ -142,7 +142,7 @@ public static class CombatContacts
             {
                 if (found.Guard && !current.Blocked)
                 {
-                    best = (found.Target, Centre(probe.WorldBounds, overlap.Collider.WorldObject.WorldBounds), true);
+                    best = (found.Target, probe.WorldBounds.OverlapCenter(overlap.Collider.WorldObject.WorldBounds), true);
                 }
 
                 continue;
@@ -150,15 +150,13 @@ public static class CombatContacts
 
             if (best is null || rank < bestOrder)
             {
-                best = (found.Target, Centre(probe.WorldBounds, overlap.Collider.WorldObject.WorldBounds), found.Guard);
+                best = (found.Target, probe.WorldBounds.OverlapCenter(overlap.Collider.WorldObject.WorldBounds), found.Guard);
                 bestOrder = rank;
             }
         }
 
         return best;
     }
-
-    private static Vector2 Centre(Rect2D a, Rect2D b) => (Vector2.Max(a.Min, b.Min) + Vector2.Min(a.Max, b.Max)) / 2;
 
     /// <summary>Whether an attack from <paramref name="attackerX"/> meets a guard facing <paramref name="facing"/> from the front.</summary>
     public static bool FromFront(float attackerX, float targetX, int facing) => (attackerX - targetX) * facing > 0;

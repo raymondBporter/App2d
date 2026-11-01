@@ -45,7 +45,7 @@ public sealed class AppearanceAndBuildTests
         {
             ["legs"] = 5
         };
-        Assert.Contains("build.legs", Assert.Throws<InvalidDataException>(() => ResolvedModel.From(Person, variant)).Message);
+        Assert.Contains("build.legs", Assert.Throws<ArgumentOutOfRangeException>(() => ResolvedModel.From(Person, variant)).Message);
         Assert.Throws<InvalidDataException>(() => ResolvedModel.From(TestModels.Creature(), new ModelVariant { Id = "x", Name = "X", Base = "creature", Parameters = { ["legs"] = 1.1f } }));
     }
 
@@ -146,7 +146,7 @@ public sealed class AppearanceAndBuildTests
         var clip = new MotionClip { Id = "c", Name = "C", Model = "person", Markers = [new() { Id = "step", Time = .2f }, new() { Id = "step", Time = .4f }] };
         Assert.Contains("duplicate marker", Assert.Throws<InvalidDataException>(clip.Validate).Message);
         clip.Markers = [new() { Id = "late", Time = 3 }];
-        Assert.Throws<InvalidDataException>(clip.Validate);
+        Assert.Throws<ArgumentOutOfRangeException>(clip.Validate);
         clip.Markers = [];
         clip.Plays = [new() { Instance = "face", Keys = [new() { Expression = "Grinning!" }] }];
         Assert.Contains("expression", Assert.Throws<InvalidDataException>(clip.Validate).Message);

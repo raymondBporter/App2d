@@ -149,7 +149,7 @@ public sealed class Grid2DTests
         Assert.False(geometry.TryGetCellRange(Rect2D.Unbounded, out _));
         Assert.False(geometry.TryGetCellRange(new BackwardsRect(Vector2.One, Vector2.Zero), out _));
         Assert.False(default(GridGeometry2D).TryWorldToCell(Vector2.Zero, out _));
-        Assert.Throws<InvalidOperationException>(() => default(GridGeometry2D).WorldToCell(Vector2.Zero));
+        Assert.Throws<ArgumentException>(() => default(GridGeometry2D).WorldToCell(Vector2.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => geometry.WorldToCell(new(float.MaxValue)));
         Assert.Throws<ArgumentOutOfRangeException>(() => new GridGeometry2D(float.MaxValue).GetCellBounds(new(2, 0)));
     }

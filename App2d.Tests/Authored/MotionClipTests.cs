@@ -146,7 +146,9 @@ public sealed class MotionClipTests
                 clip.Tracks = null!;
                 break;
         }
-        var error = Assert.Throws<InvalidDataException>(() => clip.Validate(Model));
+        Exception error = edit == "key-beyond"
+            ? Assert.Throws<ArgumentOutOfRangeException>(() => clip.Validate(Model))
+            : Assert.Throws<InvalidDataException>(() => clip.Validate(Model));
         Assert.Contains(fragment, error.Message);
     }
 

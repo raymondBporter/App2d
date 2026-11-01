@@ -65,7 +65,7 @@ public sealed class Camera3DTests
     [Fact]
     public void InvalidOrSingularCamerasAreRejected()
     {
-        Assert.Throws<ArgumentException>(() => new Camera3D(default, Matrix4x4.Identity));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Camera3D(default, Matrix4x4.Identity));
         Assert.Throws<ArgumentOutOfRangeException>(() => Camera3D.Perspective(Vector3.Zero, Vector3.Zero, Vector3.UnitY, 1f));
         Assert.Throws<ArgumentOutOfRangeException>(() => Camera3D.Perspective(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1f));
         Assert.Throws<ArgumentOutOfRangeException>(() => Camera3D.Perspective(Vector3.UnitZ, Vector3.Zero, Vector3.UnitY, 0f));

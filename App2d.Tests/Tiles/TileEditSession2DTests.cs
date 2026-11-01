@@ -169,7 +169,7 @@ public sealed class TileEditSession2DTests
         var map = NewMap();
         var session = new TileEditSession2D(map);
 
-        Assert.Throws<InvalidOperationException>(() => session.Paint(0, 0, TileKind2D.Solid));
+        Assert.Throws<ArgumentException>(() => session.Paint(0, 0, TileKind2D.Solid));
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public sealed class TileEditSession2DTests
         var session = new TileEditSession2D(map);
         session.BeginStroke();
 
-        Assert.Throws<InvalidOperationException>(() => session.Undo());
+        Assert.Throws<ArgumentException>(() => session.Undo());
     }
 
     [Fact]

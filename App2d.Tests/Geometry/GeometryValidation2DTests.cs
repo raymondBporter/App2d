@@ -146,6 +146,6 @@ public sealed class GeometryValidation2DTests
         Assert.Equal(circle.Center, reversed.Center);
         foreach (var point in new[] { a, b, c })
             Assert.InRange(MathF.Abs(Vector2.Distance(point, circle.Center) - circle.Radius), 0, .000001f);
-        Assert.Throws<ArgumentException>(() => Circle2D.Builder.FromPoints(Vector2.Zero, Vector2.One, new(2, 2)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Circle2D.Builder.FromPoints(Vector2.Zero, Vector2.One, new(2, 2)));
     }
 }

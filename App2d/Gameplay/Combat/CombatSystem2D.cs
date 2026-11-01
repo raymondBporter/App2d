@@ -70,7 +70,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
                 continue;
             }
 
-            var position = hurtCollider is { } reached ? Centre(hitbox.WorldBounds, reached.WorldObject.WorldBounds)
+            var position = hurtCollider is { } reached ? hitbox.WorldBounds.OverlapCenter(reached.WorldObject.WorldBounds)
                 : Vector2.Clamp(hitbox.WorldBounds.Center, combatant.WorldObject.WorldBounds.Min, combatant.WorldObject.WorldBounds.Max);
             var contact = new CombatContact2D(attackSourceId, attackId, position, direction, impactKind)
             {
@@ -130,8 +130,6 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
     }
 
     private ICombatant2D? GetCombatant(Collider2D collider) => Combatants.Find(collider.EntityId);
-
-    private static Vector2 Centre(Rect2D a, Rect2D b) => (Vector2.Max(a.Min, b.Min) + Vector2.Min(a.Max, b.Max)) / 2;
 
     /// <summary>
     /// The combatants an attack shape reaches, each once, with the registered hurt collider it reached when there is one:

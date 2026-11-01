@@ -76,7 +76,7 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
         {
             return false;
         }
-        catch (InvalidDataException)
+        catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException)
         {
             return false;
         }

@@ -105,7 +105,7 @@ public sealed class ParallaxRenderingTests
         world.Transform.Position = camera.Position;
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
-        Assert.Throws<InvalidOperationException>(() => renderer.Draw(layer));
+        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.Draw(layer));
         renderer.Draw(world);
         renderer.EndFrame();
         Assert.Equal(Color4b.Lime, At(graphics.ReadPixels(), 64, 64));

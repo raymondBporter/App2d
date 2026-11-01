@@ -58,8 +58,8 @@ public sealed class OrientedFrame2DTests
     [Fact]
     public void ValidateAxisRejectsNonUnit()
     {
-        Assert.Throws<ArgumentException>(() => OrientedFrame2D.ValidateAxis(new(2, 0), "axis"));
-        Assert.Throws<ArgumentException>(() => OrientedFrame2D.ValidateAxis(new(float.NaN, 0), "axis"));
+        Assert.Throws<ArgumentOutOfRangeException>(() => OrientedFrame2D.ValidateAxis(new(2, 0), "axis"));
+        Assert.ThrowsAny<ArgumentException>(() => OrientedFrame2D.ValidateAxis(new(float.NaN, 0), "axis"));
         OrientedFrame2D.ValidateAxis(OrientedFrame2D.AxisFromAngle(1.3f), "axis");
     }
 }

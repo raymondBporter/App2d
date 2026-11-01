@@ -157,18 +157,12 @@ Collision and physics namespaces follow their Core folders: `App2d.Core.Collisio
 and `App2d.Core.Physics`, including their subnamespaces. Both compile into
 `App2d.Core.dll`; consumers need only the Core project reference for these types.
 
-`App2d.Core/Validation` separates reusable `NumericValidation` predicates, `Ensure`
-checks, and shared exception helpers. Numeric guards support integer and floating-point
-types plus `Vector2`, `Vector3`, and `Vector4`. Plain comparisons check their named
-condition; explicit `ThrowIfNotFiniteOr...` variants also reject NaN and infinity.
-Caller names and rejected values are preserved, including whole vectors, and successful
-checks do not allocate. Unbounded rays retain a separate guard that permits positive
-infinity. See [the validation API](App2d.Core/Validation/README.md) for naming, vector
-semantics, range checks, and examples.
-
-`Ensure` performs the corresponding checks for invalid engine state while preserving
-`InvalidOperationException` semantics. Physics iteration settings, collapsed transforms,
-and renderer lifecycle checks therefore do not masquerade as caller argument failures.
+`App2d.Core/Validation` provides `NumericValidation` predicates and the shared `Ensure`
+throwing API. Numeric checks use matching vocabulary and order for scalar, vector,
+and matrix values. Checks require finite values by default; intentional infinity is
+explicit. Caller expressions and rejected values are preserved, and successful numeric
+checks do not allocate. See [the validation API](App2d.Core/Validation/README.md) for
+the comparison names, supported types, range endpoints, and examples.
 
 Gameplay combatants now expose an `EntityId2D`, independent of their object reference.
 Their bodies and colliders carry that owner ID; combat and contact damage resolve it

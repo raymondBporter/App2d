@@ -1,3 +1,4 @@
+using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics.Progress;
 using System.Numerics;
@@ -105,7 +106,10 @@ public sealed class SlotTimelineTests
                 });
                 break;
         }
-        Assert.Throws<InvalidDataException>(() => clip.Validate(model));
+        if (problem is "invalid-value" or "invalid-time" or "invalid-curve")
+            Assert.Throws<ArgumentOutOfRangeException>(() => clip.Validate(model));
+        else
+            Assert.Throws<InvalidDataException>(() => clip.Validate(model));
     }
 
     [Fact]

@@ -35,7 +35,7 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.ChunkSizeTiles,
             SideScrollerLevel2D.WorldOrigin);
 
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => new SideScrollerLevel2D(DefaultTraversal(), map));
     }
 

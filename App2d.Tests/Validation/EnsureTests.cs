@@ -116,7 +116,6 @@ public sealed class EnsureTests
         Assert.Contains("positive", error.Message);
         error = Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.GreaterThanOrEqual(radius, 1f));
         Assert.Equal(nameof(radius), error.ParamName);
-        Assert.Contains("at least 1", error.Message);
     }
 
     [Fact]

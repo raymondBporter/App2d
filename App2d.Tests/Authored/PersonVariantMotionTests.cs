@@ -169,5 +169,5 @@ public sealed class PersonVariantMotionTests
 
     [Fact]
     public void BuildValuesAreRangeChecked() =>
-        Assert.Contains("legs", Assert.Throws<InvalidDataException>(() => new PersonBuild { Legs = 3 }.Apply(Person, "giant", "Giant")).Message);
+        Assert.Contains("legs", Assert.Throws<ArgumentOutOfRangeException>(() => new PersonBuild { Legs = 3 }.Apply(Person, "giant", "Giant")).Message);
 }

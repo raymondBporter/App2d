@@ -102,7 +102,10 @@ public sealed class VariantOverrideTests : IDisposable
         string Refusal(PropertyOverride change)
         {
             var odd = new ModelVariant { Id = "odd", Name = "Odd", Base = person.Id, Overrides = [change] };
-            return Assert.Throws<InvalidDataException>(() => ResolvedModel.From(person, odd)).Message;
+            var error = Record.Exception(() => ResolvedModel.From(person, odd));
+            Assert.NotNull(error);
+            Assert.True(error is InvalidDataException or ArgumentException, error.ToString());
+            return error.Message;
         }
         Assert.Contains("no control 'tail'", Refusal(PropertyOverride.Of(PropertyRef.OfControl("tail", RigProperties.LocalX), 1)));
         Assert.Contains("only a bone node exposes a length", Refusal(PropertyOverride.Of(PropertyRef.OfControl(Humanoid.RightShoulder, RigProperties.Length), 1)));
@@ -113,7 +116,7 @@ public sealed class VariantOverrideTests : IDisposable
         Assert.Contains("no part property 'girth'", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, "girth"), 2)));
         Assert.Contains("cannot be cleared", Refusal(PropertyOverride.Cleared(PropertyRef.OfPart(Humanoid.Head, RigProperties.Material))));
         Assert.Contains("assigns role 'fly'", Refusal(PropertyOverride.Of(PropertyRef.OfRole("fly"), "person-walk")));
-        Assert.Contains("between", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.OffsetX), 500)));
+        Assert.Contains("offsetX", Refusal(PropertyOverride.Of(PropertyRef.OfPart(Humanoid.Head, RigProperties.OffsetX), 500)));
         Assert.Contains("exactly one of value", Assert.Throws<InvalidDataException>(() => variant.Set(new() { Target = Forearm, Value = 1, Flag = true })).Message);
         var twice = new ModelVariant { Id = "twice", Name = "Twice", Base = person.Id, Overrides = [PropertyOverride.Of(Forearm, 1), PropertyOverride.Of(Forearm, 2)] };
         Assert.Contains("overridden twice", Assert.Throws<InvalidDataException>(twice.Validate).Message);

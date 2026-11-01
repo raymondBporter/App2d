@@ -131,6 +131,9 @@ public static class Rect2DExtensions
             return true;
         }
 
+        /// <summary>The center of the shared rectangle, a natural contact point; for disjoint rectangles, the middle of the gap between them.</summary>
+        public Vector2 OverlapCenter<TOther>(TOther other) where TOther : IRect2D => (Vector2.Max(rectangle.Min, other.Min) + Vector2.Min(rectangle.Max, other.Max)) / 2;
+
         /// <summary>The smallest rectangle containing both operands.</summary>
         /// <param name="other">The other rectangle.</param>
         /// <returns>The bounding box of both rectangles.</returns>

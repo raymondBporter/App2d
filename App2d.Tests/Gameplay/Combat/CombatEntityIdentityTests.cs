@@ -40,7 +40,7 @@ public sealed class CombatEntityIdentityTests
         Assert.Equal(enemy.Id, enemy.Body.EntityId);
         Assert.Equal(enemy.Id, enemy.Body.Collider.EntityId);
         Assert.Same(enemy, _registry.Find(new EntityId2D(enemy.Id.Value)));
-        Assert.Throws<InvalidOperationException>(() => _registry.Register(enemy));
+        Assert.Throws<ArgumentException>(() => _registry.Register(enemy));
         Assert.Null(_registry.Find(EntityId2D.None));
         Assert.Null(new CombatantRegistry2D().Find(enemy.Id));
     }

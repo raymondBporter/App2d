@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 
+using App2d.Core.Validation;
+
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>The value kinds an exposed property can hold (character-system migration, P6a). Overrides, inspectors and conversions switch on this once.</summary>
@@ -95,10 +97,7 @@ public sealed record PropertyOverride
             throw new InvalidDataException($"{field} {Target}: an override holds exactly one of value, flag, selection or material, or clears the property.");
         }
 
-        if (Value is { } value && !float.IsFinite(value))
-        {
-            throw new InvalidDataException($"{field} {Target}: the value is not finite.");
-        }
+        if (Value is { } value) Ensure.Finite(value, field);
 
         Material?.Validate($"{field} {Target} material");
     }

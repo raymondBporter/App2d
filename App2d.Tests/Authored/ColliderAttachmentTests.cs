@@ -155,7 +155,7 @@ public sealed class ColliderAttachmentTests
         colliders.Detach();
         Assert.Empty(system.Colliders);
         Assert.False(colliders.Attached);
-        Assert.Throws<InvalidOperationException>(() => colliders.Sync(animator.Pose, null, true));
+        Assert.Throws<ArgumentException>(() => colliders.Sync(animator.Pose, null, true));
     }
 
     [Fact]

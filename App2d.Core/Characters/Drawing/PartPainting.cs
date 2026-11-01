@@ -43,20 +43,15 @@ internal static class PartPainting
                 var b = triangles.Vertices[ib];
                 var c = triangles.Vertices[ic];
                 var clipped = PolygonClipping2D.ClipConvex(patch.Points, [a, b, c]);
-                var ab = b - a;
-                var ac = c - a;
-                var determinant = ab.Cross(ac);
                 (Vector3 Position, float Layer) Place(Vector2 localPoint)
                 {
-                    var d = localPoint - a;
-                    var u = d.Cross(ac) / determinant;
-                    var v = ab.Cross(d) / determinant;
-                    var point = contour[ia] * (1 - u - v) + contour[ib] * u + contour[ic] * v;
+                    var w = TriangleMath2D.Barycentric(a, b, c, localPoint);
+                    var point = contour[ia] * w.X + contour[ib] * w.Y + contour[ic] * w.Z;
                     if (spatial is { } placed)
                     {
                         point = placed.TransformPoint(point + Vector3.UnitZ * physicalZ);
                     }
-                    var layer = contour.LayerAt(ia) * (1 - u - v) + contour.LayerAt(ib) * u + contour.LayerAt(ic) * v - bias;
+                    var layer = contour.LayerAt(ia) * w.X + contour.LayerAt(ib) * w.Y + contour.LayerAt(ic) * w.Z - bias;
                     return (point, layer);
                 }
                 var placedPoints = clipped.Select(Place).ToArray();

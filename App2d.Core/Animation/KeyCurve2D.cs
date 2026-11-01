@@ -4,7 +4,7 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.Core.Animation;
 
 /// <summary>
 /// Interpolation handles for the segment between two keyframes. The two dimensions are time and scalar value.

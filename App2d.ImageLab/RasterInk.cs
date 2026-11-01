@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 namespace App2d.ImageLab;
 
 // Retain the actual scalar when sampling: the display's byte gray is only a swatch.
@@ -26,7 +27,7 @@ internal readonly record struct RasterInk(Color4b Color, float Scalar)
 
     public static RasterInk[] Palette(RasterFrame frame, int maximum = 24)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximum, 1);
+        Ensure.Positive(maximum);
         if (frame.Mask is not null)
         {
             return [.. new[] { Black, White }.Take(maximum)];

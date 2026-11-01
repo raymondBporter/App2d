@@ -1,4 +1,5 @@
 using App2d.Core.Imaging;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.ImageLab;
@@ -17,21 +18,14 @@ internal sealed class RasterBrushStroke : IRasterStroke
 
     public RasterBrushStroke(Image2D<bool> source, float radius, bool foreground)
     {
-        if (!float.IsFinite(radius) || radius <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(radius));
-        }
-        Radius = radius;
+        Radius = Ensure.Positive(radius);
         _foreground = foreground;
         Frame = new(source.Clone(), "Manually cleaned mask");
     }
 
     public bool MoveTo(Vector2 point)
     {
-        if (!float.IsFinite(point.X) || !float.IsFinite(point.Y))
-        {
-            throw new ArgumentOutOfRangeException(nameof(point));
-        }
+        Ensure.Finite(point);
         var from = _previous ?? point;
         _previous = point;
         var mask = Frame.Mask!;

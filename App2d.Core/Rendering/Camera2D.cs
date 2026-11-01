@@ -40,7 +40,11 @@ public sealed class Camera2D
         get;
         set
         {
-            Ensure.ThrowIf(value is not { } bounds || !bounds.IsFinite || bounds.Min.X > bounds.Max.X || bounds.Min.Y > bounds.Max.Y, "World bounds must be finite and ordered.", nameof(value));
+            Ensure.ThrowIf(value is null, "World bounds must be specified.", nameof(value));
+            var bounds = value.GetValueOrDefault();
+            Ensure.Finite(bounds.Min);
+            Ensure.Finite(bounds.Max);
+            Ensure.LessThanOrEqual(bounds.Min, bounds.Max);
             field = value;
             Position = Position;
         }

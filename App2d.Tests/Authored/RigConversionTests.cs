@@ -190,6 +190,6 @@ public sealed class RigConversionTests
         Assert.Contains("not a child", Assert.Throws<InvalidOperationException>(() => RigConversion.ToBoneChain(model, ["hub", "piston"])).Message);
         Assert.Contains("at least two", Assert.Throws<InvalidOperationException>(() => RigConversion.ToBoneChain(model, ["hub"])).Message);
         model.Controls.Single(c => c.Id == "hub").RestAngle = .2f;
-        Assert.Contains("rest angle", Assert.Throws<InvalidOperationException>(() => RigConversion.ToBoneChain(model, ["hub", "crank-pin"])).Message);
+        Assert.Throws<ArgumentOutOfRangeException>(() => RigConversion.ToBoneChain(model, ["hub", "crank-pin"]));
     }
 }

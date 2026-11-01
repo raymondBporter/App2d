@@ -96,7 +96,7 @@ public sealed class ShapeContactCharacterizationTests
         squashed.Transform.Scale = new Vector2(2f, 1f);
         var other = At(Circle2D.Builder.Create(1f), new Vector2(1f, 0f));
 
-        Assert.Throws<InvalidOperationException>(() => Provider.TryGetContact(squashed, other, out _));
+        Assert.Throws<ArgumentException>(() => Provider.TryGetContact(squashed, other, out _));
     }
 
     [Fact]

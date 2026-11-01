@@ -74,7 +74,7 @@ public sealed record ResolvedAttachment(PartInstance Instance, Part Asset, Model
                 var inputs = instance.Inputs.Count == 0 ? null : new ModelVariant { Id = instance.Id, Name = instance.Id, Base = asset.Id, Parameters = new(instance.Inputs, StringComparer.Ordinal) };
                 rig = ResolvedModel.From(asset.RigModel(parts), inputs);
             }
-            catch (InvalidDataException ex)
+            catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
             {
                 throw new InvalidDataException($"{owner} attachment '{instance.Id}' (part '{asset.Id}'): {ex.Message}", ex);
             }

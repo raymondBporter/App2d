@@ -166,7 +166,9 @@ public static class Intersection2D
         }
 
         Ensure.ThrowIfNull(rectangle);
-        Ensure.ThrowIf(!rectangle.IsFinite || rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y, "Rectangle bounds must be finite and ordered.", nameof(rectangle));
+        Ensure.Finite(rectangle.Min);
+        Ensure.Finite(rectangle.Max);
+        Ensure.LessThanOrEqual(rectangle.Min, rectangle.Max);
 
         var min = forwardOnly ? 0d : double.NegativeInfinity;
         var max = double.PositiveInfinity;

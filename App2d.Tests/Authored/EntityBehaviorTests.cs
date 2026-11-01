@@ -18,7 +18,7 @@ public sealed class EntityBehaviorTests
         {
             asset.Validate();
         }
-        catch (InvalidDataException ex)
+        catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
         {
             return ex.Message;
         }

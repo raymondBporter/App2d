@@ -127,7 +127,7 @@ public sealed class WeaponOrientationTests
         Assert.Equal(new[] { 0, 2, 1 }, mesh.Mesh!.Triangles);
         Assert.Equal(2, mesh.Mesh!.Vertices[1].X);
         Assert.Throws<InvalidDataException>(() => PartGeometryBuilder.ImportObj("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3 1"));
-        Assert.Throws<InvalidDataException>(() => PartGeometryBuilder.ImportObj("v NaN 0 0"));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PartGeometryBuilder.ImportObj("v NaN 0 0"));
         Assert.Throws<InvalidDataException>(() => PartGeometryBuilder.ImportObj("v 0 0 0\nf 1 1 1"));
     }
 

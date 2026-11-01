@@ -1,4 +1,5 @@
 using App2d.Core.Animation;
+using App2d.Core.Validation;
 using App2d.Core.Json;
 using App2d.Core.Mathematics.Progress;
 using System.Diagnostics.CodeAnalysis;
@@ -178,10 +179,12 @@ public sealed class MotionClip
             var previous = -1f;
             foreach (var key in track.Keys)
             {
-                if (key is null || !float.IsFinite(key.Time) || key.Time < 0 || key.Time > Duration || key.Time <= previous)
+                if (key is null)
                 {
                     throw new InvalidDataException($"{owner}: invalid attachment key time.");
                 }
+                Ensure.InRange(key.Time, 0f, Duration);
+                Ensure.GreaterThan(key.Time, previous);
 
                 Require(key.Attachment is null || !string.IsNullOrWhiteSpace(key.Attachment), $"{owner}: attachment names cannot be empty.");
                 previous = key.Time;
@@ -204,7 +207,7 @@ public sealed class MotionClip
             {
                 Require(key is not null, $"{owner}: null color key.");
                 new Limit(0, Duration).Check(key.Time, $"{owner} color key time");
-                Require(key.Time > previous, $"{owner}: color key times must be strictly increasing.");
+                Ensure.GreaterThan(key.Time, previous);
                 previous = key.Time;
                 foreach (var value in new[] { key.Value.X, key.Value.Y, key.Value.Z, key.Value.W })
                 {
@@ -221,19 +224,23 @@ public sealed class MotionClip
         var previousOrder = -1f;
         foreach (var key in DrawOrder)
         {
-            if (key is null || key.Slots is null || !float.IsFinite(key.Time) || key.Time < 0 || key.Time > Duration || key.Time <= previousOrder)
+            if (key is null || key.Slots is null)
             {
                 throw new InvalidDataException($"{owner}: invalid draw order key.");
             }
+            Ensure.InRange(key.Time, 0f, Duration);
+            Ensure.GreaterThan(key.Time, previousOrder);
 
             previousOrder = key.Time;
         }
         foreach (var key in Events)
         {
-            if (key is null || string.IsNullOrWhiteSpace(key.Name) || !float.IsFinite(key.Time) || key.Time < 0 || key.Time > Duration || !float.IsFinite(key.Float))
+            if (key is null || string.IsNullOrWhiteSpace(key.Name))
             {
                 throw new InvalidDataException($"{owner}: invalid event.");
             }
+            Ensure.InRange(key.Time, 0f, Duration);
+            Ensure.Finite(key.Float);
         }
 
         foreach (var (measure, length) in Reference)

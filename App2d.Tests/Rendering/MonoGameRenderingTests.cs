@@ -65,7 +65,7 @@ public sealed class MonoGameRenderingTests
             renderer.Draw(item);
         }
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             renderer.Draw(new WorldObject2D(halfSpace, new SpriteShader2D(texture, TextureFilter.Point))));
         renderer.EndFrame();
 

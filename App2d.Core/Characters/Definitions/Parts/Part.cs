@@ -385,7 +385,7 @@ public sealed record Part
                 {
                     part.Validate(id => locations.Contains(id) || Model is not null);
                 }
-                catch (InvalidDataException ex)
+                catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
                 {
                     throw new InvalidDataException($"{owner} part '{part.Id}': {ex.Message}", ex);
                 }
@@ -418,7 +418,7 @@ public sealed record Part
         {
             rig = ResolvedModel.From(RigModel());
         }
-        catch (InvalidDataException ex)
+        catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
         {
             throw new InvalidDataException($"{owner} rig: {ex.Message}", ex);
         }
@@ -444,7 +444,7 @@ public sealed record Part
             {
                 clip.Validate(rig);
             }
-            catch (InvalidDataException ex)
+            catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
             {
                 throw new InvalidDataException($"{owner} clip '{clip.Id}': {ex.Message}", ex);
             }

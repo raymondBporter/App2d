@@ -52,8 +52,8 @@ public sealed class Triangle2DTests
     [Fact]
     public void InvalidOrDegenerateTrianglesAreRejected()
     {
-        Assert.Throws<ArgumentException>(() => Triangle2D.Builder.Create(default, Vector2.One, new(2, 2)));
-        Assert.Throws<ArgumentException>(() => Triangle2D.Builder.Create(default, default, Vector2.UnitX));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, Vector2.One, new(2, 2)));
+        Assert.ThrowsAny<ArgumentException>(() => Triangle2D.Builder.Create(default, default, Vector2.UnitX));
         Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(new(float.NaN, 0), Vector2.UnitX, Vector2.UnitY));
         Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.PositiveInfinity, 0), Vector2.UnitY));
         Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.MaxValue, 0), new(0, float.MaxValue)));
@@ -103,5 +103,18 @@ public sealed class Triangle2DTests
             Assert.Equal(forward.PenetrationDepth, reverse.PenetrationDepth, 4);
             Assert.True(Vector2.Distance(-forward.Normal, reverse.Normal) < .0001f, shape.GetType().Name);
         }
+    }
+
+    [Fact]
+    public void BarycentricWeightsRebuildThePointAndMarkTheCorners()
+    {
+        Vector2 a = new(1, 1), b = new(5, 2), c = new(2, 6);
+        Assert.Equal(Vector3.UnitX, TriangleMath2D.Barycentric(a, b, c, a));
+        Assert.Equal(Vector3.UnitZ, TriangleMath2D.Barycentric(a, b, c, c));
+        var point = new Vector2(2.5f, 3);
+        var w = TriangleMath2D.Barycentric(a, b, c, point);
+        Assert.Equal(1, w.X + w.Y + w.Z, 5);
+        Assert.True(Vector2.Distance(point, a * w.X + b * w.Y + c * w.Z) < 1e-5f);
+        Assert.True(TriangleMath2D.Barycentric(a, b, c, new(-5, -5)).X > 1);
     }
 }

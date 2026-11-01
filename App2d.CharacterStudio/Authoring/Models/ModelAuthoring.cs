@@ -329,7 +329,7 @@ public static class ModelAuthoring
         {
             model.Validate();
         }
-        catch (InvalidDataException)
+        catch (Exception validationError) when (validationError is InvalidDataException or ArgumentException)
         {
             control.Limit = before;
             throw;

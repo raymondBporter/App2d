@@ -50,7 +50,7 @@ public sealed class DebugPanelTests
     {
         var section = new DebugPanel().Section("Draw").Toggle("Grid", () => false, _ => { });
 
-        Assert.Throws<InvalidOperationException>(() => section.Toggle("Grid", () => true, _ => { }));
+        Assert.Throws<ArgumentException>(() => section.Toggle("Grid", () => true, _ => { }));
         Assert.Throws<ArgumentException>(() => section.Toggle(" ", () => true, _ => { }));
     }
 

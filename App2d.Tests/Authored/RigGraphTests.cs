@@ -184,6 +184,9 @@ public sealed class RigGraphTests
                 hub.Local!.Scale = 0;
                 break;
         }
-        Assert.Contains(fragment, Assert.Throws<InvalidDataException>(model.Validate).Message);
+        var message = edit == "zero-scale"
+            ? Assert.Throws<ArgumentOutOfRangeException>(model.Validate).Message
+            : Assert.Throws<InvalidDataException>(model.Validate).Message;
+        Assert.Contains(fragment, message);
     }
 }

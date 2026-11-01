@@ -110,7 +110,7 @@ public sealed class HeightField2DTests
         Assert.Equal(new(-20f, float.NegativeInfinity), field.Bounds().Min);
         Assert.True(field.ContainsPoint(new(0f, -1e20f)));
         Assert.False(field.ContainsPoint(new(-21f, -1e20f)));
-        Assert.Throws<InvalidOperationException>(() => field.ToPolygon());
+        Assert.Throws<ArgumentOutOfRangeException>(() => field.ToPolygon());
         var clipped = field.ToClippedPolygon(-100f, maximumSegmentLength: 1f, maximumDeviation: 0.001f);
         Assert.True(clipped.ContainsPoint(new(0f, -100f)));
         Assert.True(clipped.ContainsPoint(new(-20f, -50f)));
@@ -155,16 +155,16 @@ public sealed class HeightField2DTests
     [Fact]
     public void RejectsBacktrackingAndProfilesThatViolateTheirSuppliedBounds()
     {
-        Assert.Throws<ArgumentException>(() => new PolylineHeightField2D([new(0, 0), new(0, 1)], -10f));
-        Assert.Throws<ArgumentException>(() => new PolylineHeightField2D([new(0, 0), new(2, 1), new(1, 0)], -10f));
-        Assert.Throws<ArgumentException>(() => new PolylineHeightField2D([new(0, 0), new(1, -11)], -10f));
-        Assert.Throws<ArgumentException>(() => new BSplineHeightField2D(
+        Assert.Throws<ArgumentOutOfRangeException>(() => new PolylineHeightField2D([new(0, 0), new(0, 1)], -10f));
+        Assert.ThrowsAny<ArgumentException>(() => new PolylineHeightField2D([new(0, 0), new(2, 1), new(1, 0)], -10f));
+        Assert.ThrowsAny<ArgumentException>(() => new PolylineHeightField2D([new(0, 0), new(1, -11)], -10f));
+        Assert.ThrowsAny<ArgumentException>(() => new BSplineHeightField2D(
             BSpline2D.Builder.Create([new(0, 0), new(2, 0), new(1, 0), new(3, 0)]), -10f));
         var belowBottom = new FunctionHeightField2D(0f, 1f, 0f, x => x == 0.5f ? -1f : 1f);
-        Assert.Throws<ArgumentException>(() => belowBottom.HeightAt(0.5f));
-        Assert.Throws<ArgumentException>(() => belowBottom.ToPolygon());
+        Assert.ThrowsAny<ArgumentException>(() => belowBottom.HeightAt(0.5f));
+        Assert.ThrowsAny<ArgumentException>(() => belowBottom.ToPolygon());
         var aboveBound = new FunctionHeightField2D(0f, 1f, -10f, x => x == 0.5f ? 11f : 1f, yMax: 10f);
-        Assert.Throws<ArgumentException>(() => aboveBound.HeightAt(0.5f));
+        Assert.ThrowsAny<ArgumentException>(() => aboveBound.HeightAt(0.5f));
         Assert.ThrowsAny<ArgumentException>(() => new FunctionHeightField2D(0f, 1f, -10f, _ => float.NaN));
         Assert.Throws<ArgumentNullException>(() => new FunctionHeightField2D(0f, 1f, -10f, null!));
     }

@@ -217,8 +217,8 @@ public sealed class Rect2DTests
     [Fact]
     public void ConstructionAndInsetsRejectInvalidInputs()
     {
-        Assert.Throws<ArgumentException>(() => new Rect2D(Vector2.One, Vector2.Zero));
-        Assert.Throws<ArgumentException>(() => new Rect2D(new(float.NaN, 0), Vector2.One));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2D(Vector2.One, Vector2.Zero));
+        Assert.ThrowsAny<ArgumentException>(() => new Rect2D(new(float.NaN, 0), Vector2.One));
         Assert.Throws<ArgumentOutOfRangeException>(() => Rect2D.FromSize(new Vector2(-1, 2)));
         Assert.Throws<ArgumentOutOfRangeException>(() => Sample.InflatedBy(-1, 2));
         Assert.Throws<ArgumentOutOfRangeException>(() => Sample.InsetBy(1, float.NaN));
@@ -257,6 +257,14 @@ public sealed class Rect2DTests
             return rectangle.Contains(rectangle.Center) && rectangle.TryIntersect(rectangle, out var overlap)
                 ? overlap.Area + rectangle.Width + rectangle.TopLeft.Y : 0;
         }
+    }
+
+    [Fact]
+    public void OverlapCenterIsTheSharedRectanglesCenterOrTheGapsMiddle()
+    {
+        var a = new Rect2D(new(0, 0), new(4, 4));
+        Assert.Equal(new Vector2(3, 2), a.OverlapCenter(new Rect2D(new(2, -1), new(6, 5))));
+        Assert.Equal(new Vector2(5, 2), a.OverlapCenter(new Rect2D(new(6, 0), new(8, 4))));
     }
 
     private readonly record struct CustomValue(Vector2 Min, Vector2 Max) : IRect2D;

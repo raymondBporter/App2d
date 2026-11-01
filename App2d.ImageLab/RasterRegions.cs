@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Imaging;
 using System.Numerics;
 
@@ -18,7 +19,7 @@ internal sealed class RasterRegions
 
     public RasterFrame Filter(int largestCount, int minimumPixels, bool largestOnly, bool eightConnected)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(largestCount, 1);
+        Ensure.Positive(largestCount);
         var keep = new bool[PixelCounts.Length];
         if (largestOnly)
         {
@@ -35,7 +36,7 @@ internal sealed class RasterRegions
             }
         }
         var kept = keep.Count(static value => value);
-        return new(Labels.Map(id => keep[id]), $"Kept {kept} of {Count} regions Â· {(eightConnected ? 8 : 4)}-neighbor");
+        return new(Labels.Map(id => keep[id]), $"Kept {kept} of {Count} regions · {(eightConnected ? 8 : 4)}-neighbor");
     }
 
     public int PickRegion(Vector2 point, int radius, Image2D<bool> visibleMask)
