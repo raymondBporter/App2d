@@ -11,10 +11,12 @@ namespace App2d.Core.Validation;
 /// </summary>
 public static class NumericValidation
 {
+    public static bool IsNumber<T>(T value) where T : INumberBase<T> => !T.IsNaN(value);
     public static bool IsFinite<T>(T value) where T : INumberBase<T> => T.IsFinite(value);
-    public static bool IsFinite(Matrix3x2 value) => value.IsFinite();
     public static bool IsPositive<T>(T value) where T : INumber<T> => IsFinite(value) && value > T.Zero;
+    public static bool IsNegative<T>(T value) where T : INumber<T> => IsFinite(value) && value < T.Zero;
     public static bool IsNonNegative<T>(T value) where T : INumber<T> => IsFinite(value) && value >= T.Zero;
+    public static bool IsNonPositive<T>(T value) where T : INumber<T> => IsFinite(value) && value <= T.Zero;
     public static bool IsNonZero<T>(T value) where T : INumberBase<T> => IsFinite(value) && value != T.Zero;
 
     public static bool IsInRange<T>(T value, T minimum, T maximum, RangeBounds bounds = RangeBounds.Closed) where T : INumber<T> =>
@@ -67,4 +69,6 @@ public static class NumericValidation
         IsInRange(value.Y, minimum.Y, maximum.Y, bounds) &&
         IsInRange(value.Z, minimum.Z, maximum.Z, bounds) &&
         IsInRange(value.W, minimum.W, maximum.W, bounds);
+
+    public static bool IsFinite(Matrix3x2 value) => value.IsFinite();
 }

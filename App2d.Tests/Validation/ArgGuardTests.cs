@@ -16,6 +16,7 @@ public sealed class ArgGuardTests
             v => ArgGuard.Finite(v, "input"),
             v => ArgGuard.NonZero(v, "input"),
             v => ArgGuard.Positive(v, "input"),
+            v => ArgGuard.Negative(v, "input"),
             v => ArgGuard.NonNegative(v, "input"),
             v => ArgGuard.AtLeast(v, 0f, "input"),
             v => ArgGuard.GreaterThan(v, 0f, "input"),
@@ -127,6 +128,23 @@ public sealed class ArgGuardTests
         Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.NonNegative(float.NegativeInfinity, allowInfinity: true));
         Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.NonNegative(float.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.Positive(float.PositiveInfinity));
+    }
+
+    [Fact]
+    public void NegativeGuardRequiresStrictlyNegativeValuesWithExplicitInfinityOptIn()
+    {
+        Assert.Equal(int.MinValue, ArgGuard.Negative(int.MinValue));
+        Assert.Equal(-double.Epsilon, ArgGuard.Negative(-double.Epsilon));
+        Assert.Equal(decimal.MinValue, ArgGuard.Negative(decimal.MinValue));
+        Assert.Equal(float.NegativeInfinity, ArgGuard.Negative(float.NegativeInfinity, allowNegativeInfinity: true));
+
+        foreach (var value in new[] { -0f, 0f, 1f, float.NaN, float.PositiveInfinity })
+        {
+            var error = Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.Negative(value));
+            Assert.Equal(nameof(value), error.ParamName);
+            Assert.Equal(value, Assert.IsType<float>(error.ActualValue));
+            Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.Negative(value, allowNegativeInfinity: true));
+        }
     }
 
     [Fact]

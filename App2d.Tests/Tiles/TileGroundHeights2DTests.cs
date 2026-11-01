@@ -4,6 +4,19 @@ namespace App2d.Tests.Tiles;
 
 public sealed class TileGroundHeights2DTests
 {
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(2)]
+    public void ColumnQueryRejectsColumnsOutsideTheMap(int x)
+    {
+        var map = new EditableTileMap2D(2, 8, 32f, 4);
+
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() => TileGroundHeights2D.AtColumn(map, x));
+
+        Assert.Equal(nameof(x), error.ParamName);
+        Assert.Equal(x, Assert.IsType<int>(error.ActualValue));
+    }
+
     [Fact]
     public void GroundHeightIsTheLowestNonSolidRow()
     {

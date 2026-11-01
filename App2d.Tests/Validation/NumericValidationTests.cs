@@ -18,6 +18,19 @@ public sealed class NumericValidationTests
         Assert.True(NumericValidation.IsNonZero(-1));
         Assert.True(NumericValidation.IsInRange(1d, 0d, 1d));
         Assert.False(NumericValidation.IsInRange(1d, 0d, 1d, bounds: RangeBounds.Open));
+        Assert.True(NumericValidation.IsNumber(float.PositiveInfinity));
+        Assert.True(NumericValidation.IsNumber(float.NegativeInfinity));
+        Assert.False(NumericValidation.IsNumber(float.NaN));
+        Assert.True(NumericValidation.IsNegative(-1));
+        Assert.False(NumericValidation.IsNegative(-0f));
+        Assert.True(NumericValidation.IsNonPositive(-1));
+        Assert.True(NumericValidation.IsNonPositive(-0f));
+        Assert.False(NumericValidation.IsNonPositive(1));
+        foreach (var nonfinite in new[] { float.NaN, float.NegativeInfinity, float.PositiveInfinity })
+        {
+            Assert.False(NumericValidation.IsNegative(nonfinite));
+            Assert.False(NumericValidation.IsNonPositive(nonfinite));
+        }
     }
 
     [Fact]

@@ -29,13 +29,13 @@ public static class TileGroundHeights2D
     public static int AtColumn(ISolidTileMap2D map, int x)
     {
         ArgGuard.ThrowIfNull(map);
-        ArgGuard.ThrowIf(x < 0 || x >= map.Width, "Column must lie within the map.", nameof(x));
+        ArgGuard.Index(x, map.Width);
+
         var y = 0;
         while (y < map.Height && map.IsSolid(x, y))
         {
             y++;
         }
-
         return Math.Max(1, y);
     }
 }

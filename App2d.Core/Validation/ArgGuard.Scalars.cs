@@ -29,6 +29,13 @@ public static partial class ArgGuard
                 : "Value must be finite and nonnegative (>= 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Negative<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowNegativeInfinity = false) where T : INumber<T> =>
+        (allowNegativeInfinity ? value < T.Zero : NumericValidation.IsNegative(value))
+            ? value : throw CreateOutOfRange(value, allowNegativeInfinity
+                ? "Value must be negative (< 0) and not NaN."
+                : "Value must be finite and negative (< 0).", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T AtLeast<T>(T value, T minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null) where T : INumber<T>
     {
@@ -76,7 +83,8 @@ public static partial class ArgGuard
         if (!(bounds == RangeBounds.Closed ? minimum <= maximum : minimum < maximum))
             ThrowOutOfRange(maximum, "Bounds must be ordered and describe a nonempty range.", maximumParamName);
         return NumericValidation.IsInRange(value, minimum, maximum, bounds)
-            ? value : throw CreateRangeException(value, minimum, maximum, bounds, paramName);
+            ? value
+            : throw CreateRangeException(value, minimum, maximum, bounds, paramName);
     }
 
     /// <summary>Requires an index in [0, count), including when the collection is empty.</summary>

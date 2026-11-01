@@ -32,13 +32,14 @@ StateGuard.ThrowIfNot(clip.IsReady, "Load the clip before playing it.");
 | `Number` | Not NaN; infinity is allowed |
 | `Finite` | Neither NaN nor infinity |
 | `Positive` | Finite and `> 0` |
+| `Negative` | Finite and `< 0` |
 | `NonNegative` | Finite and `>= 0` |
 | `NonZero` | Finite and not zero |
 | `AtLeast`, `GreaterThan`, `AtMost`, `LessThan` | Finite value satisfying `>=`, `>`, `<=`, `<` |
 | `InRange` | Finite value between ordered bounds, with explicit endpoint inclusion |
 | `Index` | Integer index in `[0, count)`; handles empty collections |
 
-Scalars use generic math without conversion to float: `int`, `long`, `float`, `double`, `decimal`, and other `INumber<T>` types share the implementation. Every numeric guard rejects NaN. There are no plain/finite duplicate families or separate negative and epsilon variants. Use `LessThan(x, 0f)` for a finite negative value; keep tolerance formulas explicit in custom conditions.
+Scalars use generic math without conversion to float: `int`, `long`, `float`, `double`, `decimal`, and other `INumber<T>` types share the implementation. Every numeric guard rejects NaN. Keep tolerance formulas explicit in custom conditions.
 
 `Positive` always means greater than zero. Use `NonNegative` when zero is valid. Signed negative zero is zero. Null is a separate concern: validate an optional numeric value only when it is present.
 
@@ -52,7 +53,7 @@ Scalars use generic math without conversion to float: `int`, `long`, `float`, `d
 
 Checked values are finite by default, while range **bounds** may be infinite. One-sided comparisons require both operands to be finite. `InRange(x, 0f, float.PositiveInfinity, bounds: RangeBounds.Open)` requires a finite `x > 0`; `Positive(x)` is the shorter spelling. Bounds must not contain NaN and must describe a nonempty range; only a closed range may collapse to one value.
 
-Unlimited ray distances use `NonNegative(maxDistance, allowInfinity: true)`. This explicit opt-in still rejects NaN and negative infinity. Constraint bounds use `Number` because infinity disables a limit. Unbounded rectangles retain their domain-specific ordering rule. `NumericValidation.IsComponentWise...` predicates follow ordinary comparisons and support that sentinel policy.
+Unlimited ray distances use `NonNegative(maxDistance, allowInfinity: true)`. This explicit opt-in still rejects NaN and negative infinity. `Negative(value, allowNegativeInfinity: true)` accepts negative infinity while still rejecting NaN, zero, and positive values. Constraint bounds use `Number` because infinity disables a limit. Unbounded rectangles retain their domain-specific ordering rule. `NumericValidation.IsComponentWise...` predicates follow ordinary comparisons and support that sentinel policy.
 
 ## Exceptions and caller expressions
 
