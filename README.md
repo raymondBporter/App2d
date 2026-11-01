@@ -559,7 +559,7 @@ in an arena from the current drafts. The game's player (`hero`) and every enemy 
 The 759 imported point-animation clips (Person, Quadruped, Blob, Flying and creature studies) are read-only sources
 under **Sources**: converting one onto a model, or importing a `.puppet.json`, is an explicit step that records its
 source. See [Character Studio](docs/character-studio.md) for the workflow and headless renders, and
-[the replacement design](docs/character-editor-replacement.md) for the design and what remains.
+[the character system guide](docs/character-system.md) for the architecture and source map.
 
 Startup currently runs `SideScrollerGame`. It is the composition root and explicit
 fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of

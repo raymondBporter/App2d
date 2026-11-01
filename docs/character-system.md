@@ -1,8 +1,7 @@
 # Character system: vocabulary, flow, and source map
 
 This is the current system guide. Start here to understand how the saved assets,
-runtime, Studio, generators, and diagnostics fit together. The migration plans
-record how the system reached this point; they are historical design records.
+runtime, Studio, generators, and diagnostics fit together.
 
 The source organization separates **definitions**, **resolution**, **evaluation**,
 **live state**, and **authoring tools**. This organization pass preserves the C#
@@ -170,8 +169,9 @@ own the game's movement or a per-actor event history.
 graph, hierarchy compilation, constraint evaluation, and the two-bone solver.
 Authored point controls and bone controls share the evaluated placement path.
 Bone setup uses uniform scale/reflection; nonuniform artwork fit is a separate
-leaf operation. See [character resources](character-resources.md) for the detailed
-constraint and parameter rules.
+leaf operation. The [constraint evaluator](../App2d.Core/Characters/Runtime/Rig/RigConstraintEvaluator.cs)
+and [parameter catalog](../App2d.Core/Characters/Runtime/Resolution/ParameterCatalog.cs)
+own the current constraint and parameter rules.
 
 ## Live actors, behavior, and collision
 

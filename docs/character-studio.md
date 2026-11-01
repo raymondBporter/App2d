@@ -11,17 +11,13 @@ Characters now use the same Part document with optional **Behavior**, a model re
 
 The shared geometry inspector now edits material alpha/tint, image paths and timed texture frames, including atlas regions. Enter a rectangle's image path, choose **Animate texture**, then edit frame paths and durations. In **Animate**, select its **geometry** row to key tint/alpha, fit or visibility with the existing timeline and curve editor. Exposed pieces on animated Part instances use the same channels. Texture changes retain the rectangle's world size and anchor.
 
-**Appearance > Path motion** edits a Part's existing motion definition. A standalone preview uses the same transport to scrub its path and texture frames without stepping physics. A physical path-driven Part requires a kinematic body. See [Part consolidation plan](part-consolidation-plan.md) for the completed cutover.
+**Appearance > Path motion** edits a Part's existing motion definition. A standalone preview uses the same transport to scrub its path and texture frames without stepping physics. A physical path-driven Part requires a kinematic body.
 
 **Appearance > Physics body** edits motion type, mass, rotational inertia, gravity, friction, restitution and contact carrying. On a piece, **Collision geometry** opts its shape into collision, **Collision enabled** controls participation, and **Rendered** controls its material. Invisible collision shapes stay visible as editor outlines. A rigid body combines enabled entries in their bind pose; all use the same mask and one mass. Decorative curves/meshes can coexist without contributing collision. Path motion requires a kinematic body. These edits use the same Part save and undo as appearance edits.
 
-The completed staged simplification of rigs, parts, variants, animation, collision and Studio is documented in [Character system and Studio migration plan](character-system-migration-plan.md). The workflow below describes the current implementation.
-
 The studio is the character editor: one window, one viewport and one document workflow over the authored assets in
-`Assets/Characters/authored`, which the game plays. Its design and history are in
-[Character editor replacement](character-editor-replacement.md).
+`Assets/Characters/authored`, which the game plays.
 
-The reusable resource boundaries and staged migration are described in [Character resources and migration](character-resources.md).
 Model templates come from `Assets/Characters/authored/templates/*.json` and from nowhere else. The New menu discovers their names and copies
 the referenced model and animations into independent drafts. Add a recipe and its source assets, then reopen Studio;
 no C# menu entry is needed. Person includes seven starter clips, Quadruped and Triceratops eight each, Pterosaur nine and Stalker five.
@@ -72,8 +68,8 @@ and game-scale figures. The report includes triangle counts.
 Model controls, variant rest positions, appearance attachment origins, and animation translations are edited as
 screen-plane X/Y plus a **character layer**. Front, Middle, and Back are quick order presets. The numeric order lets
 shapes fit between other shapes or move between layers during an animation; smaller values draw closer to the viewer.
-Each shape has a layer offset from its attached control. The existing `z` and `depth` fields in saved assets keep their
-exact values, so opening and saving an older character does not rearrange its artwork.
+Each shape has a layer offset from its attached control. These values are saved with the asset; the current field and coordinate conventions are described in
+[the character geometry guide](../App2d.Core/Characters/README.md#character-geometry-and-drawing-order).
 
 These layers order parts **within one character**. The game's scene `ZIndex` still orders the character as one world
 object. Solid weapon meshes and their socket orientation continue to use three-dimensional coordinates.
@@ -153,7 +149,6 @@ Detach points before deleting their controls or changing the cutout into a primi
 
 Surface paint follows membrane deformation through the same rest triangles as the fill. Neither paint nor picking
 retriangulates the folded screen silhouette. Ordinary rigid cutouts and clothing retain their existing authoring path.
-The design boundary and acceptance criteria are recorded in [Creature-driven editor design](character-editor-replacement.md#creature-driven-editor-design-2026-10-01).
 
 ```powershell
 dotnet run --project App2d.CharacterStudio -- --smoke-pterosaur artifacts/pterosaur-review
@@ -218,7 +213,7 @@ In **Model → Edit rig**, **Add root bone** creates a bone with an origin, rest
 
 To add bone IK, create a root, child and endpoint, select the endpoint and press **Make IK constraint**. The first two bones supply the segment lengths; the endpoint may itself have artwork and child bones. Bone children must meet their parent's +X tip. The new constraint appears under **IK constraints**, with a bend direction, target frame and reference measure. In **Animate**, drag the endpoint to key the constraint's target. Both segments turn, carrying attached shapes and descendants. The root still has translation and uniform-scale channels; its rotation belongs to IK. On a run of point controls **Make IK constraint** converts the run to bone nodes as it makes the constraint (P11c); there is no position-only solver.
 
-Choose the **locomotion** target frame to use the existing **Plant** contact controls. Contacts pin any endpoint; they are not restricted to feet. A free control frame makes a bone target follow that frame's translation, rotation, scale and reflection. A constrained frame cannot drive another constraint. Bone length edits carry the connected IK joint to the new tip. Since P3c a control's inspector shows its declared node kind: a point control's character-frame rest, a bone node's derived origin, direction, length, local setup (rotation, uniform scale, reflect, layer offset) and link (position t along the parent, offset, orientation, bind/unbind); a bound origin refuses a drag with its reason, and **Convert to bone chain** turns a run of point controls into bone nodes without moving any rest position. Uniform scale and reflection are supported; collapsed, sheared or nonuniform segment frames produce a named diagnostic, including when encountered during animation. Floor/wall queries, self-collision and stateful physics remain later extensions. See [constraint resources and compatibility](character-resources.md#second-migration-typed-ik-and-contact-evaluation).
+Choose the **locomotion** target frame to use the existing **Plant** contact controls. Contacts pin any endpoint; they are not restricted to feet. A free control frame makes a bone target follow that frame's translation, rotation, scale and reflection. A constrained frame cannot drive another constraint. Bone length edits carry the connected IK joint to the new tip. Since P3c a control's inspector shows its declared node kind: a point control's character-frame rest, a bone node's derived origin, direction, length, local setup (rotation, uniform scale, reflect, layer offset) and link (position t along the parent, offset, orientation, bind/unbind); a bound origin refuses a drag with its reason, and **Convert to bone chain** turns a run of point controls into bone nodes without moving any rest position. Uniform scale and reflection are supported; collapsed, sheared or nonuniform segment frames produce a named diagnostic, including when encountered during animation. Floor/wall queries, self-collision and stateful physics remain later extensions. See the [current rig evaluation path](character-system.md#animation-and-poses).
 
 - **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, groups and looks on a base
   model, and its declared **Parameters** (P4a: units, default, ranges, bindings; add a parameter, bind a property of the
