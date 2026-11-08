@@ -3,7 +3,7 @@ using App2d.Core.Mathematics;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.CharacterStudio.Importing;
+namespace App2d.CharacterStudio.Importing.Library;
 
 /// <summary>
 /// Converts one imported library clip onto a native model through an explicit point mapping. Motion is transferred as offsets

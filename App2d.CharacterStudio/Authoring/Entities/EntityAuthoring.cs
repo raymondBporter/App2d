@@ -1,10 +1,11 @@
+using App2d.CharacterStudio.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Authoring;
+namespace App2d.CharacterStudio.Authoring.Entities;
 
 /// <summary>A starting point for a new entity: gameplay defaults it copies, never a live parent.</summary>
 public sealed record EntityTemplate(string Id, string Name, string Description);

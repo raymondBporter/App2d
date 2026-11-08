@@ -1,5 +1,7 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
+using System.Numerics;
 
 namespace App2d.Core.Geometry.Meshes;
 
@@ -44,18 +46,23 @@ public static class MeshTopology
         return new(vertices, new(default, vertices.Length / 3, fan: false, list: true));
     }
 
-    public static SegmentVertexEnumerable<Segment<T>, T> Segments<T>(ReadOnlySpan<T> vertices, bool closed = true) => new(vertices, closed);
+    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> Segments(ReadOnlySpan<Vector2> vertices, bool closed = true) =>
+        Segments<Segment<Vector2f, float>, Vector2f>(Vector2f.Wrap(vertices), closed);
 
     public static SegmentVertexEnumerable<TSegment, T> Segments<TSegment, T>(ReadOnlySpan<T> vertices, bool closed = true)
         where TSegment : ISegment<TSegment, T> => new(vertices, closed);
 
-    public static SegmentVertexEnumerable<Segment<T>, T> IndexedSegments<T>(ReadOnlySpan<T> vertices, ReadOnlySpan<Segment<int>> indices) => new(vertices, indices);
+    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> IndexedSegments(ReadOnlySpan<Vector2> vertices, ReadOnlySpan<(int Start, int End)> indices) =>
+        IndexedSegments<Segment<Vector2f, float>, Vector2f>(Vector2f.Wrap(vertices), indices);
+
+    public static SegmentVertexEnumerable<TSegment, T> IndexedSegments<TSegment, T>(ReadOnlySpan<T> vertices, ReadOnlySpan<(int Start, int End)> indices)
+        where TSegment : ISegment<TSegment, T> => new(vertices, indices);
 
     /// <summary>Finds edges used exactly once, preserving their first directed winding. Shared/internal edges are omitted.</summary>
     /// <remarks>Allocates topology storage; immutable meshes cache the result. Coincident positions with different indices are not welded.</remarks>
-    public static Segment<int>[] BoundaryEdges(ReadOnlySpan<int> indices)
+    public static (int Start, int End)[] BoundaryEdges(ReadOnlySpan<int> indices)
     {
-        var edges = new Dictionary<(int, int), (Segment<int> Edge, int Count)>();
+        var edges = new Dictionary<(int, int), ((int Start, int End) Edge, int Count)>();
         foreach (var (a, b, c) in Triangles(indices))
         {
             CountEdge(a, b);
@@ -68,7 +75,7 @@ public static class MeshTopology
         {
             var key = a < b ? (a, b) : (b, a);
             edges.TryGetValue(key, out var entry);
-            edges[key] = entry.Count == 0 ? (new(a, b), 1) : (entry.Edge, entry.Count + 1);
+            edges[key] = entry.Count == 0 ? ((a, b), 1) : (entry.Edge, entry.Count + 1);
         }
     }
 

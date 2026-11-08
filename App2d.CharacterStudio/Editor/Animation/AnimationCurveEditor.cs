@@ -1,4 +1,6 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Authoring.Animation;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
@@ -62,12 +64,9 @@ internal static class AnimationCurveEditor
         else
         {
             var absolute = curve.Absolute;
-            if (ImGui.Checkbox("Value controls in channel units", ref absolute))
+            if (ImGui.Checkbox("Value controls in channel units", ref absolute) && curve.TryConvertValueControls(absolute, start, end, out var converted))
             {
-                if (curve.TryConvertValueControls(absolute, start, end, out var converted))
-                {
-                    set(converted);
-                }
+                set(converted);
             }
             var x = new Vector2(curve.Control1.X, curve.Control2.X);
             if (Ui.Drag2("Time controls (0–1)", ref x, .005f, 0, 1))

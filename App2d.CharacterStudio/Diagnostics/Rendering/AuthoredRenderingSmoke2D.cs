@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
 using App2d.Core;
@@ -16,7 +17,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Immutable;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Rendering;
 
 internal static class AuthoredRenderingSmoke2D
 {

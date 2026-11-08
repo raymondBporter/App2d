@@ -2,7 +2,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Json;
 using System.Text.Json;
 
-namespace App2d.CharacterStudio.Authoring;
+namespace App2d.CharacterStudio.Templates;
 
 /// <summary>
 /// A part slot a template publishes (character-system migration, P10a): a socket of the model with the usage category of

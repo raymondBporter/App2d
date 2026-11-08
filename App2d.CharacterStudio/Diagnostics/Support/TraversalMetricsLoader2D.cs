@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Contracts.Player;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Json;
@@ -5,7 +6,7 @@ using App2d.Core.Validation;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Support;
 
 public static class TraversalMetricsLoader2D
 {

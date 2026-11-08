@@ -7,9 +7,8 @@ using System.Numerics;
 
 namespace App2d.Presentation.World;
 
-internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunkedTileMap2D tileMap, SideScrollerTerrainTilesetResolver2D tilesets)
+internal sealed class SideScrollerTerrainVisualFactory2D(IChunkedTileMap2D tileMap, SideScrollerTerrainTilesetResolver2D tilesets)
 {
-    private readonly Scene2D _scene = Ensure.RequireNotNull(scene);
     private readonly IChunkedTileMap2D _tileMap = Ensure.RequireNotNull(tileMap);
     private readonly SideScrollerTerrainTilesetResolver2D _tilesets = Ensure.RequireNotNull(tilesets);
     private readonly float _tileSize = tileMap.TileSize;
@@ -75,7 +74,7 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
     private void AddFillVisual(List<WorldObject2D> visuals, FillRun run, int startY, int endY)
     {
         var runBounds = new Rect2D(new Vector2(TileToWorldX(run.StartX), TileToWorldY(startY)), new Vector2(TileToWorldX(run.EndX), TileToWorldY(endY)));
-        AddVisual(visuals, run.Tileset.CreateSolidFill(runBounds));
+        visuals.Add(run.Tileset.CreateSolidFill(runBounds));
     }
 
     public List<WorldObject2D> CreateSurfaceVisuals(TileChunk2D chunk)
@@ -93,21 +92,21 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
                 var kind = _tileMap.GetTileKind(x, y);
                 if (kind.IsLadder())
                 {
-                    AddVisual(visuals, _tilesets.GetTileset(x, y).CreateLadder(
+                    visuals.Add(_tilesets.GetTileset(x, y).CreateLadder(
                         GetTileBounds(x, y), !_tileMap.GetTileKind(x, y + 1).IsLadder()));
                     continue;
                 }
                 if (kind.IsSpikes())
                 {
                     var spikeBounds = GetTileBounds(x, y);
-                    AddVisual(visuals, _tilesets.GetTileset(x, y).CreateSpikes(spikeBounds, GetSpikePart(x, y)));
+                    visuals.Add(_tilesets.GetTileset(x, y).CreateSpikes(spikeBounds, GetSpikePart(x, y)));
                     continue;
                 }
 
                 if (kind.IsOneWay())
                 {
                     var oneWayBounds = GetTileBounds(x, y);
-                    AddVisual(visuals, _tilesets.GetTileset(x, y).CreateOneWay(oneWayBounds, GetOneWayPart(x, y)));
+                    visuals.Add(_tilesets.GetTileset(x, y).CreateOneWay(oneWayBounds, GetOneWayPart(x, y)));
                     continue;
                 }
 
@@ -122,22 +121,22 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
                 var grippable = kind.IsGrippable();
                 if (surfaces.HasFlag(TileSurface2D.Top))
                 {
-                    AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Top));
+                    visuals.Add(tileset.CreateSurface(tileBounds, TileSurface2D.Top));
                 }
 
                 if (surfaces.HasFlag(TileSurface2D.Right))
                 {
-                    AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Right, grippable));
+                    visuals.Add(tileset.CreateSurface(tileBounds, TileSurface2D.Right, grippable));
                 }
 
                 if (surfaces.HasFlag(TileSurface2D.Bottom))
                 {
-                    AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Bottom));
+                    visuals.Add(tileset.CreateSurface(tileBounds, TileSurface2D.Bottom));
                 }
 
                 if (surfaces.HasFlag(TileSurface2D.Left))
                 {
-                    AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Left, grippable));
+                    visuals.Add(tileset.CreateSurface(tileBounds, TileSurface2D.Left, grippable));
                 }
             }
         }
@@ -164,49 +163,43 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         var tileset = _tilesets.GetTileset(tileX, tileY);
         if (corners.HasFlag(TileCorner2D.OuterTopRight))
         {
-            AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.OuterTopRight));
+            visuals.Add(tileset.CreateCorner(tileBounds, TileCorner2D.OuterTopRight));
         }
 
         if (corners.HasFlag(TileCorner2D.OuterBottomRight))
         {
-            AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.OuterBottomRight));
+            visuals.Add(tileset.CreateCorner(tileBounds, TileCorner2D.OuterBottomRight));
         }
 
         if (corners.HasFlag(TileCorner2D.OuterBottomLeft))
         {
-            AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.OuterBottomLeft));
+            visuals.Add(tileset.CreateCorner(tileBounds, TileCorner2D.OuterBottomLeft));
         }
 
         if (corners.HasFlag(TileCorner2D.OuterTopLeft))
         {
-            AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.OuterTopLeft));
+            visuals.Add(tileset.CreateCorner(tileBounds, TileCorner2D.OuterTopLeft));
         }
 
         if (corners.HasFlag(TileCorner2D.InnerTopRight))
         {
-            AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.InnerTopRight));
+            visuals.Add(tileset.CreateCorner(tileBounds, TileCorner2D.InnerTopRight));
         }
 
         if (corners.HasFlag(TileCorner2D.InnerBottomRight))
         {
-            AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.InnerBottomRight));
+            visuals.Add(tileset.CreateCorner(tileBounds, TileCorner2D.InnerBottomRight));
         }
 
         if (corners.HasFlag(TileCorner2D.InnerBottomLeft))
         {
-            AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.InnerBottomLeft));
+            visuals.Add(tileset.CreateCorner(tileBounds, TileCorner2D.InnerBottomLeft));
         }
 
         if (corners.HasFlag(TileCorner2D.InnerTopLeft))
         {
-            AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.InnerTopLeft));
+            visuals.Add(tileset.CreateCorner(tileBounds, TileCorner2D.InnerTopLeft));
         }
-    }
-
-    private void AddVisual(List<WorldObject2D> visuals, WorldObject2D visual)
-    {
-        _scene.Add(visual);
-        visuals.Add(visual);
     }
 
     private OneWayTilePart2D GetOneWayPart(int x, int y)

@@ -25,7 +25,7 @@ internal sealed partial class ProofRenders
                     var (twist, tilt) = angles[column];
                     var rotation = Matrix4x4.CreateRotationX(float.DegreesToRadians(twist)) * Matrix4x4.CreateRotationY(float.DegreesToRadians(tilt));
                     drawing.AddAttachment(catalog.Parts[props[row]], new(Vector3.Zero, Vector3.Transform(Vector3.UnitX, rotation), Vector3.Transform(Vector3.UnitY, rotation), Vector3.Transform(Vector3.UnitZ, rotation)));
-                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(1200, 750, new(column * 200 + 65, row * 150 + 75), 90), Matrix.Identity);
+                    _renderer.DrawActor(drawing, LayeredMeshRenderer.Projection(1200, 750, new(column * 200 + 65, row * 150 + 75), 90), Matrix.Identity);
                 }
             }
         });
@@ -47,7 +47,7 @@ internal sealed partial class ProofRenders
                         drawing.AddAttachment(catalog.Parts[prop], placed, model.Base.Sockets.First(s => s.Id == socket));
                     }
 
-                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(1200, 750, new(column * 200 + 100, row * 375 + 325), 105), Matrix.CreateScale(row == 0 ? 1 : -1, 1, 1));
+                    _renderer.DrawActor(drawing, LayeredMeshRenderer.Projection(1200, 750, new(column * 200 + 100, row * 375 + 325), 105), Matrix.CreateScale(row == 0 ? 1 : -1, 1, 1));
                 }
             }
         });

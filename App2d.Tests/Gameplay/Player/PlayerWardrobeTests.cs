@@ -1,6 +1,5 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
 using App2d.Core.Characters.Geometry;
 using App2d.Presentation.Persons;
 using App2d.Presentation.Player;
@@ -13,9 +12,9 @@ public sealed class PlayerWardrobeTests
 {
     private static PersonMoves Moves() => PersonMoves.From(AuthoredCatalog.Load(TestModels.AuthoredRoot));
 
-    private static string[] Owned(PlayerWardrobe2D wardrobe) => wardrobe.Inventory
+    private static string[] Owned(PlayerWardrobe2D wardrobe) => [.. wardrobe.Inventory
         .Concat(Enum.GetValues<WardrobeSlot2D>().Select(wardrobe.Equipped))
-        .OfType<WardrobeItem2D>().Select(i => i.Id).Order().ToArray();
+        .OfType<WardrobeItem2D>().Select(i => i.Id).Order()];
 
     [Fact]
     public void EquippingSwappingAndRemovingKeepEveryItemExactlyOnce()

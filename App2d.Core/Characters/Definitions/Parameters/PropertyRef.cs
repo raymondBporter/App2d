@@ -18,7 +18,7 @@ public sealed record PropertyRef
 
     [JsonIgnore] public string Owner => Control ?? Part ?? Attachment ?? Role ?? "";
     [JsonIgnore] public string OwnerKind => Control is not null ? ControlKind : Part is not null ? PartKind : Attachment is not null ? AttachmentKind : RoleKind;
-    [JsonIgnore] public string Key => OwnerKind + ":" + Owner + "." + Property;
+    [JsonIgnore] public string Key => $"{OwnerKind}:{Owner}.{Property}";
     public const string ControlKind = "control", PartKind = "part", AttachmentKind = "attachment", RoleKind = "role";
     public override string ToString() => $"{OwnerKind} '{Owner}' {Property}";
 

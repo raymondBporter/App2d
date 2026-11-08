@@ -210,8 +210,11 @@ unloads, and disposal.
 `WorldPresentation2D` consumes those observations. It owns terrain visuals,
 platform rectangles, checkpoint animation/glow, and the goal flag. It rebuilds
 only chunks with new revisions and removes visuals missing from a complete
-snapshot. The offline editor refreshes world and enemy observations with zero
-elapsed simulation time after its dirty-chunk flush. Presentation neither advances
+snapshot. When the local game supplies a terrain source, drawing queries its
+chunk grid and reuses terrain visuals by revision. Tree placement reads local
+neighboring tiles independently of the camera query. The offline editor refreshes
+world and enemy observations with zero elapsed simulation time after its dirty-chunk
+flush. Presentation neither advances
 platforms nor triggers checkpoints, and rendering an old snapshot cannot mutate
 physics or save state.
 

@@ -1,9 +1,8 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Authoring.Models;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using System.Numerics;
 

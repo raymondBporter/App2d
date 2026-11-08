@@ -10,6 +10,7 @@ namespace App2d.Core.Vegetation;
 /// <summary>Seeded, bounded branching geometry with small wind-driven leaf motion.</summary>
 public sealed class ProceduralTree2D
 {
+    private const float LeafWindResponse = 0.14f;
     private readonly List<Branch> _branches = [];
     private readonly List<Crown> _crowns = [];
     private readonly Vector2 _root;
@@ -22,9 +23,15 @@ public sealed class ProceduralTree2D
         Ensure.Positive(height);
         _root = root;
         _height = height;
-        Bounds = new(root - new Vector2(height, 0f), root + new Vector2(height, height * 1.5f));
+        Bounds = EstimateBounds(root, height);
         Grow(root, MathF.PI / 2f, height * 0.42f, height * 0.075f, 3, new Random(seed));
     }
+
+    /// <summary>A conservative draw bound for a tree of the given height.</summary>
+    public static Rect2D EstimateBounds(Vector2 root, float height) =>
+        new(root - new Vector2(height, 0f), root + new Vector2(height, height * 1.5f));
+
+    public static float MaximumSway(VegetationWind2D wind) => wind.MaximumOffset(LeafWindResponse);
 
     private void Grow(Vector2 start, float angle, float length, float width, int depth, Random random)
     {
@@ -67,7 +74,7 @@ public sealed class ProceduralTree2D
         Span<Vector2> leaves = stackalloc Vector2[10];
         foreach (var crown in _crowns)
         {
-            var center = crown.Center + new Vector2(wind.Offset(_root.X, 1f, crown.Phase, 0.14f), 0f);
+            var center = crown.Center + new Vector2(wind.Offset(_root.X, 1f, crown.Phase, LeafWindResponse), 0f);
             for (var i = 0; i < leaves.Length; i++)
             {
                 var angle = i * MathF.Tau / leaves.Length + crown.Phase;

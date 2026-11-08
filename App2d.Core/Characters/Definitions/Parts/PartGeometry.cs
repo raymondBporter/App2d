@@ -1,4 +1,3 @@
-using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
@@ -8,6 +7,7 @@ using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
+using App2d.Core.Validation;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters;
@@ -119,7 +119,7 @@ public sealed record PartGeometry
         {
             if (B is not null || Bindings is { Count: > 0 } || VertexZ is not null || Material?.HasTexture == true)
                 throw new InvalidDataException("A spatial curve uses a rigid attachment and its own XYZ control points.");
-            var points = App2d.Core.Geometry.Operations.Curves.SpatialCurveControlPoints.Get(spatialCurve);
+            var points = SpatialCurveControlPoints.Get(spatialCurve);
             foreach (var point in points)
                 Ensure.Finite(point);
         }

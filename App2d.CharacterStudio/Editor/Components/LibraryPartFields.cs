@@ -1,5 +1,6 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Authoring.Parts;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
@@ -9,7 +10,7 @@ using App2d.Core.Physics;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Components;
 
 internal sealed class LibraryPartFields(EditorSession session)
 {

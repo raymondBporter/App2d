@@ -2,6 +2,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -55,11 +56,14 @@ public sealed class PrimitiveBufferViewTests
         Span<Vector2> points = [new(1, 2), new(4, 6), new(7, 8)];
         var outline = MeshTopology.Segments(points);
         points[0] = new(1, 3);
-        var edges = new List<Segment<Vector2>>();
+        var edges = new List<Segment<Vector2f, float>>();
         foreach (var edge in outline) edges.Add(edge);
         Assert.Equal(3, edges.Count);
-        Assert.Equal(new Segment<Vector2>(points[2], points[0]), edges[2]);
-        Assert.Equal(new Segment<Vector2>(points[0], points[2]), edges[2].Reversed());
+        Assert.Equal(Vector2.Distance(points[0], points[1]), edges[0].Length());
+        Assert.Equal(new Vector2f(2.5f, 4.5f), edges[0].PointAt(.5f));
+        Assert.Equal(new Vector2f(6, 9), edges[0].TransformedBy(Matrix3x2.CreateTranslation(5, 6)).Start);
+        Assert.Equal(new Segment<Vector2f, float>(points[2].ToVector2f(), points[0].ToVector2f()), edges[2]);
+        Assert.Equal(new Segment<Vector2f, float>(points[0].ToVector2f(), points[2].ToVector2f()), edges[2].Reversed());
 
         var curves = MeshTopology.Segments<LineSegmentCurve2D, Vector2>(points, closed: false);
         Assert.Equal(2, curves.Count);
@@ -68,8 +72,8 @@ public sealed class PrimitiveBufferViewTests
         Assert.Equal(Vector2.Distance(points[0], points[1]), cursor.Current.Length());
         Assert.Equal((points[0] + points[1]) / 2, cursor.Current.PointAt(.5f));
         Assert.Equal(points[0] + new Vector2(5, 6), cursor.Current.TransformedBy(Matrix3x2.CreateTranslation(5, 6)).Start);
-        Assert.Equal(0, MeshTopology.Segments<Vector2>([], closed: false).Count);
-        Assert.Equal(0, MeshTopology.Segments<Vector2>([]).Count);
+        Assert.Equal(0, MeshTopology.Segments([], closed: false).Count);
+        Assert.Equal(0, MeshTopology.Segments([]).Count);
         Assert.Equal(1, MeshTopology.Segments([Vector2.Zero]).Count);
     }
 
@@ -77,12 +81,12 @@ public sealed class PrimitiveBufferViewTests
     public void MeshBoundaryOmitsSharedEdgesAndPreservesDirectedWinding()
     {
         var mesh = new TriangleMesh2D([Vector2.Zero, Vector2.UnitX, Vector2.One, Vector2.UnitY], [0, 1, 2, 0, 2, 3]);
-        Assert.Equal([new(0, 1), new(1, 2), new(2, 3), new(3, 0)], mesh.BoundaryEdges.ToArray());
-        var edges = new List<Segment<Vector2>>();
+        Assert.Equal([(0, 1), (1, 2), (2, 3), (3, 0)], mesh.BoundaryEdges.ToArray());
+        var edges = new List<Segment<Vector2f, float>>();
         foreach (var edge in mesh.BoundarySegments) edges.Add(edge);
         Assert.Equal(4, edges.Count);
-        Assert.DoesNotContain(new Segment<Vector2>(Vector2.Zero, Vector2.One), edges);
-        Assert.Equal(new Segment<Vector2>(Vector2.UnitY, Vector2.Zero), edges[^1]);
+        Assert.DoesNotContain(new Segment<Vector2f, float>(Vector2f.Zero, Vector2f.One), edges);
+        Assert.Equal(new Segment<Vector2f, float>(Vector2f.UnitY, Vector2f.Zero), edges[^1]);
     }
 
     [Fact]
@@ -94,7 +98,7 @@ public sealed class PrimitiveBufferViewTests
         Assert.Equal(8, mesh.BoundaryEdges.Length);
         Assert.False(mesh.ContainsPoint(Vector2.Zero));
         Assert.True(mesh.ContainsPoint(new(1.5f, 0)));
-        Assert.Contains(new Segment<int>(5, 4), mesh.BoundaryEdges.ToArray());
+        Assert.Contains((5, 4), mesh.BoundaryEdges.ToArray());
     }
 
     [Fact]

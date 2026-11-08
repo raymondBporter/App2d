@@ -66,9 +66,28 @@ public sealed class Camera2DTests
         var devicePoint = camera.WorldToDevice(point);
         Assert.InRange(Vector2.Distance(point, camera.DeviceToWorld(devicePoint)), 0f, 0.001f);
 
+        var view = camera.GetFrameView();
+        Assert.Equal(new Rect2D(Vector2.Zero, new(960, 540)), view.TargetBounds);
+        Assert.Equal(camera.VisibleWorldBounds, view.VisibleWorldBounds);
+        Assert.Equal(devicePoint, view.WorldToDevice(point));
+        Assert.InRange(Vector2.Distance(point, view.DeviceToWorld(devicePoint)), 0f, 0.001f);
+
         var drag = new Vector2(75f, -20f);
         camera.Position -= Vector2.TransformNormal(drag, camera.DeviceToWorldMatrix);
         Assert.InRange(Vector2.Distance(devicePoint + drag, camera.WorldToDevice(point)), 0f, 0.001f);
+        Assert.Equal(devicePoint, view.WorldToDevice(point));
+    }
+
+    [Fact]
+    public void AnchoredViewUsesTheSameProjectionAsTheLayeredPreview()
+    {
+        var anchor = new Vector2(157f, 101f);
+        var view = FrameView2D.FromAnchor(new(640, 480), anchor, 32f);
+
+        Assert.Equal(anchor, view.WorldToDevice(Vector2.Zero));
+        Assert.Equal(anchor + new Vector2(32f, -32f), view.WorldToDevice(Vector2.One));
+        Assert.Equal(Vector2.One, view.DeviceToWorld(view.WorldToDevice(Vector2.One)));
+        Assert.Equal(LayeredMeshRenderer.Projection(640, 480, anchor, 32f), LayeredMeshRenderer.Projection(view));
     }
 
     [Fact]

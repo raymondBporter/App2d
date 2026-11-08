@@ -1,8 +1,8 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.Core.Timing;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Components;
 
 /// <summary>The one transport: clip choice, play, scrub and preview speed. Speed is a preview setting, never clip duration.</summary>
 internal static class TransportBar

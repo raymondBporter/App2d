@@ -1,7 +1,6 @@
-using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-namespace App2d.CharacterStudio.Editing;
+namespace App2d.CharacterStudio.Authoring.Parts;
 
 /// <summary>Library part templates and cutout editing, using the shared geometry and document path.</summary>
 public static class AppearanceAuthoring

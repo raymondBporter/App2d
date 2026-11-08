@@ -1,6 +1,6 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Session;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Shell;
 
 /// <summary>
 /// The author's panel sizes, in unscaled pixels so they follow the UI scale as the design sizes do. The shell scales them and

@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Preview.Arena;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
@@ -36,7 +36,7 @@ internal sealed partial class ProofRenders
                 (new Viewport(0, EntityPanelHeight, EntityWidth, EntityHeight - EntityPanelHeight), EntityGamePpu, (EntityHeight - EntityPanelHeight) * .85f) })
             {
                 GraphicsDevice.Viewport = viewport;
-                var projection = PointCharacterRenderer.Projection(viewport.Width, viewport.Height, new(viewport.Width * .5f - centerX * ppu, anchorY), ppu);
+                var projection = LayeredMeshRenderer.Projection(viewport.Width, viewport.Height, new(viewport.Width * .5f - centerX * ppu, anchorY), ppu);
                 arena.Draw(actors, projection, ppu, centerX, ppu == EntityPpu);
             }
         });

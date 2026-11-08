@@ -1,5 +1,7 @@
+using App2d.CharacterStudio.Authoring.Parts;
+using App2d.CharacterStudio.Seeds;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters;
-using App2d.CharacterStudio.Authoring;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
@@ -7,7 +9,7 @@ using App2d.Core.Shapes;
 using static App2d.Core.Characters.Authored.PersonLoadout;
 using static App2d.Core.Characters.Humanoid;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Library;
 
 /// <summary>Humanoid hand/foot art, painted torso materials and socket-mounted wardrobe. Uses the existing rig.</summary>
 public static class PersonWardrobe

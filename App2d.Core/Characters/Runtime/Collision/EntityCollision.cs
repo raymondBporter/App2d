@@ -1,6 +1,4 @@
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 

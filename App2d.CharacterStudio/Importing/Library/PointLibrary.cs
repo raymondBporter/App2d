@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.CharacterStudio.Importing;
+namespace App2d.CharacterStudio.Importing.Library;
 
 /// <summary>Shared motion loaded from editable JSON. Sampling interpolates stored poses without allocating.</summary>
 public sealed class PointLibrary

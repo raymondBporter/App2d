@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Assets;
@@ -22,7 +23,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Studies;
 
 /// <summary>
 /// Real simulation and renderer: the player and an enemy standing on authored lifts, exported as frames. Planted feet

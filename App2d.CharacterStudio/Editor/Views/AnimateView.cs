@@ -1,7 +1,9 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.CharacterStudio.Editor.Animation;
+using App2d.CharacterStudio.Editor.Shell;
+using App2d.CharacterStudio.Editor.Viewport;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Views;
 
 /// <summary>Connects the animation outline, inspector, viewport, and timeline to the shared editor shell.</summary>
 internal sealed class AnimateView : IWorkspaceView
@@ -11,7 +13,7 @@ internal sealed class AnimateView : IWorkspaceView
     private readonly AnimationViewport _viewport;
     private readonly AnimationTimeline _timeline;
 
-    public AnimateView(EditorSession session, Viewport viewport)
+    public AnimateView(EditorSession session, App2d.CharacterStudio.Editor.Viewport.Viewport viewport)
     {
         var weapons = new AnimationWeaponEditor(session);
         _viewport = new(session, viewport, weapons);

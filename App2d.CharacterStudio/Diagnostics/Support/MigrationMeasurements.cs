@@ -4,7 +4,7 @@ using App2d.Core.Characters.Authored;
 using System.Diagnostics;
 using System.Text;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Support;
 
 /// <summary>
 /// The character-system migration's closing measurements (P11c, plan section 7): catalog load and rig compilation time,

@@ -63,14 +63,14 @@ public sealed class NumericValidationTests
             Assert.Equal(vector, Assert.IsType<Vector2>(error.ActualValue));
             Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.Positive(vector));
         }
-        foreach (var vector in new Vector3[] { new(bad, 1, 1), new(1, bad, 1), new(1, 1, bad) })
+        foreach (var vector in stackalloc Vector3[] { new(bad, 1, 1), new(1, bad, 1), new(1, 1, bad) })
         {
             Assert.False(vector.IsFinite());
             Assert.False(NumericValidation.IsFinite(vector));
             Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonZero(vector));
             Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.Positive(vector));
         }
-        foreach (var vector in new Vector4[] { new(bad, 1, 1, 1), new(1, bad, 1, 1), new(1, 1, bad, 1), new(1, 1, 1, bad) })
+        foreach (var vector in stackalloc Vector4[] { new(bad, 1, 1, 1), new(1, bad, 1, 1), new(1, 1, bad, 1), new(1, 1, 1, bad) })
         {
             Assert.False(vector.IsFinite());
             Assert.False(NumericValidation.IsFinite(vector));

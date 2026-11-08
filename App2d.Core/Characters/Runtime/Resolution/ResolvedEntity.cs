@@ -1,9 +1,5 @@
-using App2d.Core.Validation;
-using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
-using App2d.Core.Mathematics.Transforms;
-using System.Numerics;
+using App2d.Core.Validation;
 
 namespace App2d.Core.Characters.Authored;
 

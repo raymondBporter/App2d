@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Objects;
@@ -9,37 +9,12 @@ using App2d.Core.Tiles;
 using App2d.Gameplay.World;
 using App2d.Presentation.World.Presentation;
 using App2d.Tests.Gameplay.World;
-using System.Collections.Immutable;
 using System.Numerics;
 
 namespace App2d.Tests.Presentation.World;
 
 public sealed class WorldPresentationTests
 {
-    [Fact]
-    public void CameraTerrainSurvivesSimulationStreamingChangesAndUnloadsWhenOutOfView()
-    {
-        var map = CreateMap();
-        map.SetTileKind(4, 4, TileKind2D.Solid);
-        using var textures = new TextureCache2D(TestAssetPath.Root);
-        var scene = new Scene2D();
-        using var view = new WorldPresentation2D(scene, textures);
-        ImmutableArray<TerrainChunkState2D> visible =
-            [TerrainChunkState2D.Capture(map, new TileChunk2D(0, 0), 1)];
-        view.SetVisibleTerrain(visible);
-        var visuals = scene.ToArray();
-        Assert.NotEmpty(visuals);
-        view.ApplyState(LevelContent2D.Empty, WorldState2D.Empty);
-        view.ApplyState(LevelContent2D.Empty with
-        {
-            Revision = 2
-        }, WorldState2D.Empty);
-        view.SetVisibleTerrain(visible);
-        Assert.Equal(visuals, [.. scene]);
-        view.SetVisibleTerrain([]);
-        Assert.Empty(scene);
-    }
-
     [Fact]
     public void WorldViewsStayIndependentUntilNewStateArrivesAndRemoveReplacedPlatforms()
     {

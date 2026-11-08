@@ -22,7 +22,7 @@ public sealed class ConcreteGeometryJsonTests
         var json = JsonSerializer.Serialize(original, type, GeometryJson2D.JsonOptions);
         using var document = JsonDocument.Parse(json);
         Assert.False(document.RootElement.TryGetProperty("kind", out _));
-        var restored = Assert.IsAssignableFrom<IGeometryValue2D>(JsonSerializer.Deserialize(json, type, GeometryJson2D.JsonOptions));
+        var restored = Assert.IsType<IGeometryValue2D>(JsonSerializer.Deserialize(json, type, GeometryJson2D.JsonOptions), exactMatch: false);
         restored.Validate();
         Assert.Equal(type, restored.GetType());
         Assert.Equal(original.ToJson(), restored.ToJson());

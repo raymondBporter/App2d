@@ -1,9 +1,3 @@
-using App2d.Core.Characters.Geometry;
-using App2d.Core.Json;
-using App2d.Core.Mathematics.Transforms;
-using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters.Authored;

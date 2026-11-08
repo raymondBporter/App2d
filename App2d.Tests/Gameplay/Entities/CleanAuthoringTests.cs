@@ -1,7 +1,9 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
-using App2d.CharacterStudio.Editing;
-using App2d.CharacterStudio.Importing;
+using App2d.CharacterStudio.Authoring.Entities;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Diagnostics.Support;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Importing.Library;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;

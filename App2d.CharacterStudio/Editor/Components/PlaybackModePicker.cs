@@ -1,9 +1,9 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Timing;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Components;
 
 /// <summary>Preview-only end behavior; choosing one does not change the authored clip.</summary>
 internal static class PlaybackModePicker

@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Assets;
@@ -5,7 +6,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Vegetation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Presentation.Persons;
@@ -15,7 +15,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Studies;
 
 /// <summary>Exports the real grove and a real player standing halfway up a generated branch.</summary>
 internal static class GiantTreeStudy2D
@@ -44,9 +44,9 @@ internal static class GiantTreeStudy2D
         var scene = new Scene2D();
         var background = new ParallaxBackground2D();
         SideScrollerBackground2D.AddTo(background);
-        using var world = new WorldPresentation2D(scene, textures);
-        using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
         using var terrain = new ViewportTerrainSource2D(loaded.TileMap);
+        using var world = new WorldPresentation2D(scene, textures, terrain);
+        using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
         var camera = new Camera2D();
         using var renderer = new Renderer2D(camera, device);
         using var target = RenderCapture2D.CreateTarget(device, 1280, 720, DepthFormat.None, 0);
@@ -79,13 +79,8 @@ internal static class GiantTreeStudy2D
             target.SavePng(Path.Combine(directory, name), new Color4b(172, 204, 180), () =>
             {
                 renderer.BeginFrame(1280, 720, default);
-                world.SetVisibleTerrain(terrain.Capture(camera.VisibleWorldBounds));
                 renderer.Draw(background);
-                world.DrawTrees(renderer, camera.VisibleWorldBounds);
-                renderer.Draw(scene, int.MinValue, 0);
-                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
-                renderer.Draw(scene, 1, int.MaxValue);
-                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
+                world.Draw(renderer);
                 renderer.DrawScreenLabel(caption, new(24, 20));
                 renderer.EndFrame();
             });

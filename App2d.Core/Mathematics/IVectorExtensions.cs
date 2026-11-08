@@ -39,6 +39,28 @@ public static class IVectorExtensions
         where TVector : unmanaged, IVector<TVector, TReal>
         where TReal : unmanaged, IFloatingPointIeee754<TReal> => first * (TReal.One - amount) + second * amount;
 
+    /// <summary>Computes the midpoint without overflowing on finite coordinates.</summary>
+    public static TVector Midpoint<TVector, TReal>(TVector first, TVector second)
+        where TVector : unmanaged, IVector<TVector, TReal>
+        where TReal : unmanaged, IFloatingPointIeee754<TReal>
+    {
+        var two = TReal.One + TReal.One;
+        var sum = first + second;
+        if (TVector.IsFinite(sum)) return sum / two;
+
+        // Only halve the inputs first on axes whose sum is infinite. Other axes can contain subnormals.
+        var dimension = TVector.Dimension;
+        Span<TReal> coordinates = dimension <= 16 ? stackalloc TReal[dimension] : new TReal[dimension];
+        for (var axis = 0; axis < dimension; axis++)
+        {
+            var coordinate = sum[axis];
+            coordinates[axis] = TReal.IsInfinity(coordinate)
+                ? first[axis] / two + second[axis] / two
+                : coordinate / two;
+        }
+        return TVector.FromCoordinates(coordinates);
+    }
+
     /// <summary>The component parallel to a unit normal. The normal must already be normalized.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TVector Project<TVector, TReal>(TVector value, TVector unitNormal)

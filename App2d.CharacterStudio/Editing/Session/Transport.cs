@@ -1,7 +1,7 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Timing;
 
-namespace App2d.CharacterStudio.Editing;
+namespace App2d.CharacterStudio.Editing.Session;
 
 /// <summary>
 /// The one playback clock: session state, never an asset field. Preview speed is separate from clip duration. A looping clip

@@ -1,13 +1,11 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Authoring.Entities;
+using App2d.CharacterStudio.Authoring.Parts;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
-using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -40,7 +38,8 @@ public sealed class PrimitiveLibraryTests : IDisposable
     {
         session.Assets.Create(new CharacterModel
         {
-            Id = "wearer", Name = "Test wearer",
+            Id = "wearer",
+            Name = "Test wearer",
             Controls = [new() { Id = "root" }, new() { Id = "tip", Rest = new(0, 1, 0) }],
             Sockets = [new() { Id = "mount", Control = "root", Toward = "tip" }],
         });

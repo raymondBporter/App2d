@@ -1,11 +1,15 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Shell;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Onion skin, source comparison, control handles, and animation viewport input.</summary>
-internal sealed class AnimationViewport(EditorSession session, Viewport viewport, AnimationWeaponEditor weapons)
+internal sealed class AnimationViewport(EditorSession session, App2d.CharacterStudio.Editor.Viewport.Viewport viewport, AnimationWeaponEditor weapons)
 {
     private readonly AnimationControlDrag _controls = new(session, viewport);
     private readonly SourceMotionPreview _source = new(session.Sources);

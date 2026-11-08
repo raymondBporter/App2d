@@ -1,4 +1,9 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Components;
+using App2d.CharacterStudio.Editor.Shell;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;

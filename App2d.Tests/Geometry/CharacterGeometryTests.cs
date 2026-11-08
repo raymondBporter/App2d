@@ -1,5 +1,5 @@
-using App2d.CharacterStudio.CharacterSeeds;
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;

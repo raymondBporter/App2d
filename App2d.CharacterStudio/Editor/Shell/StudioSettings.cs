@@ -1,7 +1,7 @@
 using App2d.Core.Json;
 using System.Text.Json;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Shell;
 
 /// <summary>
 /// The author's preferences for the editor window: the UI scale and the panel sizes. They live per user, outside the authored

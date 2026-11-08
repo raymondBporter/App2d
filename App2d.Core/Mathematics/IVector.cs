@@ -20,6 +20,9 @@ public interface IVector<TSelf, TReal> :
     static abstract TSelf Zero { get; }
     static TSelf IAdditiveIdentity<TSelf, TSelf>.AdditiveIdentity => TSelf.Zero;
 
+    /// <summary>Reads the first <see cref="Dimension"/> coordinates in axis order.</summary>
+    static abstract TSelf FromCoordinates(ReadOnlySpan<TReal> coordinates);
+
     /// <summary>Reads a coordinate in axis order. An invalid index throws.</summary>
     TReal this[int index] { get; }
 

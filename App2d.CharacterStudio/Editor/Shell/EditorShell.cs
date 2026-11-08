@@ -1,9 +1,13 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Viewport;
+using App2d.CharacterStudio.Editor.Views;
+using App2d.CharacterStudio.Preview.Arena;
 using App2d.Core.Characters.Authored;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Shell;
 
 /// <summary>What each workspace contributes to the shared layout. The shell owns the frame; a view fills its regions.</summary>
 internal interface IWorkspaceView
@@ -23,7 +27,7 @@ internal interface IWorkspaceView
 /// the selection inspector on the right and the timeline below. Model and Animate are views over the same session. Drag
 /// handles between the panels resize them; <paramref name="preferencesChanged"/> hears about a dropped handle or a new UI scale.
 /// </summary>
-internal sealed class EditorShell(EditorSession session, Viewport viewport, ArenaTest test, ImGuiHost gui, SpatialPreview? spatial = null, EditorLayout? layout = null, Action? preferencesChanged = null) : IDisposable
+internal sealed class EditorShell(EditorSession session, App2d.CharacterStudio.Editor.Viewport.Viewport viewport, ArenaTest test, ImGuiHost gui, SpatialPreview? spatial = null, EditorLayout? layout = null, Action? preferencesChanged = null) : IDisposable
 {
     private readonly AssetBrowser _browser = new(session);
     private readonly EditorLayout _layout = layout ?? new();
@@ -39,7 +43,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     ];
 
     public EditorSession Session { get; } = session;
-    public Viewport Viewport { get; } = viewport;
+    public App2d.CharacterStudio.Editor.Viewport.Viewport Viewport { get; } = viewport;
     /// <summary>The arena test. Shell state: entering and leaving it never changes the session's documents or selection.</summary>
     public ArenaTest Test { get; } = test;
     /// <summary>False while a smoke run drives the arena itself.</summary>

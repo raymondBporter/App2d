@@ -1,4 +1,5 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Importing.Puppet;
 using System.Text.RegularExpressions;
 
 namespace App2d.Core.Characters.Authored;

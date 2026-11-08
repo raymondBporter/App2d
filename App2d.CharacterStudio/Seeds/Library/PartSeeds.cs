@@ -4,7 +4,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Library;
 
 /// <summary>
 /// Proof library parts for the character-system migration. <see cref="Tail"/> (P7a) is the small non-face animated

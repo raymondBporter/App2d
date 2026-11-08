@@ -1,4 +1,4 @@
-using App2d.Core.Validation;
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
@@ -9,6 +9,7 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Tiles;
+using App2d.Core.Validation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Presentation.Audio;
@@ -17,7 +18,7 @@ using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Studies;
 
 /// <summary>Real simulation and renderer, exported at 60 fps for an effects-on/off contact comparison.</summary>
 internal static class CombatContactStudy2D

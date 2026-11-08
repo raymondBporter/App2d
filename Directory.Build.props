@@ -1,4 +1,9 @@
 <Project>
+  <PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevelPerformance>latest-all</AnalysisLevelPerformance>
+  </PropertyGroup>
+
   <!-- Share the byte-color alias across projects that reference MonoGame. -->
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'App2d.Analyzers' and '$(MSBuildProjectName)' != 'App2d.Analyzers.CodeFixes'">
     <Using Include="Microsoft.Xna.Framework.Color" Alias="Color4b" />

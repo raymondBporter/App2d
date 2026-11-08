@@ -1,8 +1,10 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Shell;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
-using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using ImGuiNET;
@@ -10,19 +12,17 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Viewport;
 
 /// <summary>A subject placed in the viewport. Compare pins sit side by side at one world scale.</summary>
 internal sealed record SubjectView(Subject Subject, Vector3 Offset);
 
 /// <summary>One frame of the viewport as the workspace views see it: where things are on screen and what the mouse is doing.</summary>
-internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, Vector2 size, Vector2 anchor, float ppu, IReadOnlyList<SubjectView> subjects, bool hovered)
+internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, FrameView2D view, IReadOnlyList<SubjectView> subjects, bool hovered)
 {
-    private readonly Frame2D _coordinates = new(origin + anchor, new(ppu, 0), new(0, -ppu));
-
     public ImDrawListPtr Draw { get; } = draw;
     public Vector2 Origin { get; } = origin;
-    public Vector2 Size { get; } = size;
+    public Vector2 Size => view.TargetBounds.Size;
     public IReadOnlyList<SubjectView> Subjects { get; } = subjects;
     public SubjectView? Primary => Subjects.Count > 0 ? Subjects[0] : null;
     public bool Hovered { get; } = hovered;
@@ -31,14 +31,14 @@ internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, Vector2 
     public Vector2 Screen(Vector3 world, int subject = 0)
     {
         var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        return _coordinates.TransformPoint(world.XY + offset.XY);
+        return Origin + view.WorldToDevice(world.XY + offset.XY);
     }
 
     /// <summary>The world position under a screen point, in a subject's own space, keeping <paramref name="z"/>.</summary>
     public Vector3 World(Vector2 screen, float z = 0, int subject = 0)
     {
         var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        return new(_coordinates.ToLocal(screen) - offset.XY, z);
+        return new(view.DeviceToWorld(screen - Origin) - offset.XY, z);
     }
 }
 
@@ -167,7 +167,8 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 }
             }
         }
-        Render(_target!, width, height, anchor, ppu, views, centerX);
+        var view = FrameView2D.FromAnchor(new(width, height), anchor, ppu);
+        Render(_target!, view, views, centerX);
 
         var start = ImGui.GetCursorScreenPos();
         var size = new Vector2(width, height);
@@ -193,7 +194,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 Pan += io.MouseDelta;
             }
         }
-        return new(draw, start, size, anchor, ppu, views, hovered);
+        return new(draw, start, view, views, hovered);
     }
 
     private void DrawInset(ImDrawListPtr draw, Vector2 start, Vector2 size, SubjectView[] views, float centerX)
@@ -206,18 +207,19 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         }
 
         Ensure(ref _inset, ref _insetId, width, height);
-        Render(_inset!, width, height, new(width / 2f - centerX * GamePpu, height * .85f), GamePpu, views, centerX);
+        var view = FrameView2D.FromAnchor(new(width, height), new(width / 2f - centerX * GamePpu, height * .85f), GamePpu);
+        Render(_inset!, view, views, centerX);
         var min = start + size - new Vector2(width + 8, height + 8);
         draw.AddImage(_insetId, min, min + new Vector2(width, height));
         draw.AddRect(min, min + new Vector2(width, height), StudioTheme.MutedText.PackedValue, 0, ImDrawFlags.None, 1);
         draw.AddText(min + new Vector2(6, 4), StudioTheme.MutedText.PackedValue, "game size");
     }
 
-    private void Render(RenderTarget2D target, int width, int height, Vector2 anchor, float ppu, SubjectView[] views, float centerX)
+    private void Render(RenderTarget2D target, FrameView2D view, SubjectView[] views, float centerX)
     {
         using var bound = device.UseRenderTarget(target, StudioTheme.ViewportBackground);
-        var projection = PointCharacterRenderer.Projection(width, height, anchor, ppu);
-        BuildGround(centerX, width / ppu, ppu);
+        var projection = LayeredMeshRenderer.Projection(view);
+        BuildGround(centerX, view.TargetBounds.Width / view.PixelsPerWorldUnit, view.PixelsPerWorldUnit);
         renderer.Draw(_ground, projection, Matrix.Identity, writeDepth: false);
         for (var i = 0; i < views.Length; i++)
         {

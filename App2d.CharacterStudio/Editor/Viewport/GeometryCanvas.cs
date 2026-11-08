@@ -1,16 +1,15 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Authoring.Parts;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Polygons;
-using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Viewport;
 
 /// <summary>A local-coordinate canvas, independent of the character viewport and its current pose or socket.</summary>
 internal sealed class GeometryCanvas(EditorSession session)

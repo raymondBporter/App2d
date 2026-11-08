@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.CharacterSeeds;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Authored;

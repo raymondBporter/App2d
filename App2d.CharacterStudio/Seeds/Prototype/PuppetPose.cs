@@ -2,7 +2,7 @@ using App2d.Core.Characters;
 using App2d.Core.Kinematics;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Prototype;
 
 /// <summary>A pose used to author the prototype puppet studies before importing their motion.</summary>
 public sealed class PuppetPose

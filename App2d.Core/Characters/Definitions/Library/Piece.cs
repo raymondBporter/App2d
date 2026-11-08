@@ -1,5 +1,5 @@
-using System.Text.Json;
 using App2d.Core.Json;
+using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;
 

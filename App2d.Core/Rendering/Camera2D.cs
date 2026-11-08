@@ -108,6 +108,8 @@ public sealed class Camera2D
 
     public Vector2 DeviceToWorld(Vector2 devicePoint) => Vector2.Transform(devicePoint, DeviceToWorldMatrix);
 
+    public FrameView2D GetFrameView() => new(ViewportSize, WorldToDeviceMatrix, PixelsPerWorldUnit);
+
     /// <summary>Constrain a desired center, with optional room for render effects such as shake.</summary>
     public Vector2 ClampToWorld(Vector2 desiredPosition, float padding = 0f)
     {

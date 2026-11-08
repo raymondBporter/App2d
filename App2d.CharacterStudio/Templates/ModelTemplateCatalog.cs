@@ -1,7 +1,6 @@
-using App2d.CharacterStudio.Authoring;
 using System.Text.Json;
 
-namespace App2d.CharacterStudio.Editing;
+namespace App2d.CharacterStudio.Templates;
 
 /// <summary>Read-only recipes under an authored root's templates folder. Template IDs have their own namespace.</summary>
 public sealed class ModelTemplateCatalog

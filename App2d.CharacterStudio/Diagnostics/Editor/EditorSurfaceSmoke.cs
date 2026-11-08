@@ -1,20 +1,24 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.CharacterSeeds;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Authoring.Parts;
 using App2d.CharacterStudio.Editing;
-using App2d.CharacterStudio.Importing;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editor.Shell;
+using App2d.CharacterStudio.Importing.Library;
+using App2d.CharacterStudio.Seeds.Library;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
-using App2d.Core.Geometry.Serialization;
-using App2d.Core.Geometry.Shapes;
-using App2d.Presentation.Player;
 using App2d.Presentation.Persons;
+using App2d.Presentation.Player;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Diagnostics.Editor;
 
 /// <summary>Renders the real editor on a hidden WinForms surface without constructing a MonoGame Game.</summary>
 internal static class EditorSurfaceSmoke
@@ -266,7 +270,8 @@ internal static class EditorSurfaceSmoke
         }
         var fixture = new Piece
         {
-            Id = "surface-test-equipment", Name = "QA shin guard",
+            Id = "surface-test-equipment",
+            Name = "QA shin guard",
             InlineGeometry = new() { Id = "inline", Name = "QA geometry", Geometry = Rectangle2D.Builder.FromSize(.09f, .22f, new(0, .18f)) },
             Material = new() { Fill = "#927044" },
             Game = new() { Equipment = new() { Slot = PersonEquipmentSlots.Shins } },

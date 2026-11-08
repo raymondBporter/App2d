@@ -1,16 +1,20 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.Importing;
+using App2d.CharacterStudio.Authoring.Entities;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Authoring.Parts;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Importing.Library;
+using App2d.CharacterStudio.Templates;
 using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics.Motion;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editing;
+namespace App2d.CharacterStudio.Editing.Session;
 
 /// <summary>
 /// One editing session over a workspace: the open subject and clip, the active workspace, the transport, selection and
@@ -614,7 +618,7 @@ public sealed class EditorSession
         Attempt(() =>
         {
             var clip = ClipDocument ?? throw new InvalidOperationException("Choose an animation first.");
-            var channel = new Channel(MotionClip.OrientKind, PreviewSocket);
+            var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.OrientKind, PreviewSocket);
             var time = Transport.Time;
             if (AutoKey)
             {

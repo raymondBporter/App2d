@@ -1,6 +1,10 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Authoring.Parts;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Components;
 using App2d.CharacterStudio.Editor.Model;
+using App2d.CharacterStudio.Editor.Shell;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -12,10 +16,10 @@ using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Views;
 
 /// <summary>Independent Geometry, Material and Piece documents. Character fitting is an explicit Piece preview.</summary>
-internal sealed class LibraryView(EditorSession session, Viewport viewport) : IWorkspaceView
+internal sealed class LibraryView(EditorSession session, App2d.CharacterStudio.Editor.Viewport.Viewport viewport) : IWorkspaceView
 {
     private readonly GeometryCanvas _canvas = new(session), _windowCanvas = new(session);
     private string? _windowGeometry;

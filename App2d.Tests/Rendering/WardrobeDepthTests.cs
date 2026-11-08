@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.CharacterSeeds;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering.Characters;
@@ -28,7 +28,7 @@ public sealed class WardrobeDepthTests
         using var target = new RenderTarget2D(graphics.Device, 128, 128, false, SurfaceFormat.Color, DepthFormat.Depth24);
         using var renderer = new PointCharacterRenderer(graphics.Device);
         var hips = pose.World("hips");
-        var projection = PointCharacterRenderer.Projection(128, 128, new(64, 48), 240);
+        var projection = Core.Rendering.LayeredMeshRenderer.Projection(128, 128, new(64, 48), 240);
         var world = Matrix.CreateTranslation(-hips.X, -hips.Y, 0) * Matrix.CreateScale(facing, 1, 1);
         var drawing = new PuppetDrawing();
         drawing.Build(entity, pose);
@@ -68,7 +68,7 @@ public sealed class WardrobeDepthTests
         using var target = new RenderTarget2D(graphics.Device, 128, 128, false, SurfaceFormat.Color, DepthFormat.Depth24);
         using var renderer = new PointCharacterRenderer(graphics.Device);
         var hips = pose.World("hips");
-        var projection = PointCharacterRenderer.Projection(128, 128, new(64, 48), 160);
+        var projection = Core.Rendering.LayeredMeshRenderer.Projection(128, 128, new(64, 48), 160);
         var world = Matrix.CreateTranslation(-hips.X, -hips.Y, 0) * Matrix.CreateScale(facing, 1, 1);
         var drawing = new PuppetDrawing();
         Color4b[] Render(bool dressed)

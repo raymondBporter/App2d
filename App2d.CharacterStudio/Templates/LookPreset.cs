@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace App2d.CharacterStudio.Authoring;
+namespace App2d.CharacterStudio.Templates;
 
 /// <summary>One part's material and visibility in a saved look. Null leaves the variant's value alone.</summary>
 public sealed record LookAppearance

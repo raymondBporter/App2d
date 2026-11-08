@@ -1,9 +1,7 @@
 using App2d.Core.Animation;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Constraints;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
-using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Timing;
 using App2d.Core.Validation;
 using System.Numerics;

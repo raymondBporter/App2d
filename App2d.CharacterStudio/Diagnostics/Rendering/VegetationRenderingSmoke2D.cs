@@ -1,4 +1,4 @@
-using App2d.Core.Validation;
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Assets;
@@ -6,6 +6,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Tiles;
+using App2d.Core.Validation;
 using App2d.Core.Vegetation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
@@ -14,7 +15,7 @@ using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Rendering;
 
 /// <summary>Exercises actual authored sword damage and captures the resulting foliage.</summary>
 internal static class VegetationRenderingSmoke2D

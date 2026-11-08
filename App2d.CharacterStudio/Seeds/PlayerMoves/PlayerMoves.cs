@@ -1,6 +1,8 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.CharacterSeeds;
-using App2d.CharacterStudio.CharacterSeeds.PlayerMoves;
+using App2d.CharacterStudio.Authoring.Entities;
+using App2d.CharacterStudio.Seeds;
+using App2d.CharacterStudio.Seeds.Library;
+using App2d.CharacterStudio.Seeds.PlayerMoves;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;

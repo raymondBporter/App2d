@@ -5,7 +5,7 @@ using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.PlayerMoves;
+namespace App2d.CharacterStudio.Seeds.PlayerMoves;
 
 /// <summary>
 /// Swing experiments for the player's sword, authored arc first: each key says where the hand sits on a circle round the

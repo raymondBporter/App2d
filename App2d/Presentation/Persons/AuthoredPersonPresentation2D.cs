@@ -9,8 +9,8 @@ using App2d.Core.Characters.Drawing;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
-using App2d.Presentation.World.Presentation;
 using App2d.Presentation.Player;
+using App2d.Presentation.World.Presentation;
 using System.Numerics;
 
 namespace App2d.Presentation.Persons;

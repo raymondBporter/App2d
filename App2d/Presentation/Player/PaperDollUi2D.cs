@@ -39,7 +39,9 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         _pressed = null;
         _dragging = false;
     }
-
+    /// <summary>
+    /// Draws the paper doll and handles drag/drop and double-click to equip, right-click to unequip. F7 or Esc closes the window.
+    /// </summary>
     /// <returns>Whether a shortcut was consumed, including Escape when closing.</returns>
     public bool Draw(GraphicsDevice device, ImGuiHost gui, FrameTime time, bool canOpen)
     {
@@ -66,8 +68,13 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 14 * _scale);
         ImGui.PushStyleColor(ImGuiCol.WindowBg, Panel.PackedValue);
-        var flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove |
-            ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
+        const ImGuiWindowFlags flags = ImGuiWindowFlags.NoTitleBar |
+                                        ImGuiWindowFlags.NoResize |
+                                        ImGuiWindowFlags.NoMove |
+                                        ImGuiWindowFlags.NoCollapse |
+                                        ImGuiWindowFlags.NoSavedSettings |
+                                        ImGuiWindowFlags.NoScrollbar |
+                                        ImGuiWindowFlags.NoScrollWithMouse;
         ImGui.Begin("Equipment###PaperDoll", flags);
         var draw = ImGui.GetWindowDrawList();
         Text(draw, At(28, 19), "Equipment", 30, Color4b.White);
@@ -153,9 +160,9 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
             else wardrobe.Equip(cell.Index, item.Slot);
             _pressed = null;
         }
-        if (hovered && cell.Slot is { } worn && ImGui.IsMouseClicked(ImGuiMouseButton.Right))
+        if (hovered && cell.Slot is { } worn && ImGui.IsMouseClicked(ImGuiMouseButton.Right) && wardrobe.Unequip(worn))
         {
-            if (wardrobe.Unequip(worn)) _message = "Returned to inventory.";
+            _message = "Returned to inventory.";
         }
         if (hovered && !_dragging && item is not null)
         {
@@ -231,7 +238,7 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         var ppu = MathF.Min(target.Width / MathF.Max(.01f, max.X - min.X), target.Height / MathF.Max(.01f, max.Y - min.Y)) * fit;
         var anchor = new Vector2(target.Width / 2f - (min.X + max.X) / 2 * ppu, target.Height / 2f + (min.Y + max.Y) / 2 * ppu);
         using var bound = device.UseRenderTarget(target, Color4b.Transparent);
-        _renderer!.DrawActor(drawing, PointCharacterRenderer.Projection(target.Width, target.Height, anchor, ppu), Matrix.Identity);
+        _renderer!.DrawActor(drawing, LayeredMeshRenderer.Projection(target.Width, target.Height, anchor, ppu), Matrix.Identity);
     }
 
     public void ReleaseDevice(ImGuiHost? gui)

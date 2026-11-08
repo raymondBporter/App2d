@@ -88,7 +88,7 @@ public static partial class Raycast2D
 
         void Side(Vector2 start, Vector2 end, Vector2 normal)
         {
-            if (TrySegment(localOrigin, localDirection, new(start, end), maxDistance, out var candidate))
+            if (TrySegment(localOrigin, localDirection, start.ToVector2d(), end.ToVector2d(), maxDistance, out var candidate))
                 Keep(candidate with { Normal = normal });
         }
 

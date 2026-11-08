@@ -29,9 +29,9 @@ public sealed partial class Renderer2D
         }
         foreach (var attachment in shader.Equipment) _authoredDrawing.AddAttachment(attachment, local);
 
-        var m = visual.Transform.Matrix * _camera.WorldToDeviceMatrix;
-        var world = Matrix.CreateScale(shader.Facing, 1, 1) * ToXnaMatrix(m);
-        var projection = PointCharacterRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height);
+        var m = visual.Transform.Matrix * View.WorldToDeviceMatrix;
+        var world = Matrix.CreateScale(shader.Facing, 1, 1) * LayeredMeshRenderer.ToXnaMatrix(m);
+        var projection = LayeredMeshRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height);
         LayeredMesh? swoosh = null;
         if (shader.Swoosh is { IsVisible: true } visible)
         {

@@ -25,7 +25,7 @@ public sealed partial class Renderer2D
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
         Ensure.Finite(localToWorld);
         var bounds = ShapeBounds2D.Calculate(shape);
-        var matrix = localToWorld * _camera.WorldToDeviceMatrix;
+        var matrix = localToWorld * View.WorldToDeviceMatrix;
         DrawShapeCore(shape, matrix, bounds, fillColor, outlineColor, screenStrokeWidth);
     }
 
@@ -41,7 +41,7 @@ public sealed partial class Renderer2D
             return;
         }
 
-        var matrix = item.Transform.Matrix * _camera.WorldToDeviceMatrix;
+        var matrix = item.Transform.Matrix * View.WorldToDeviceMatrix;
         DrawShapeCore(item.Shape, matrix, item.LocalBounds, fillColor, outlineColor, screenStrokeWidth);
     }
 
@@ -74,7 +74,7 @@ public sealed partial class Renderer2D
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
         Ensure.Finite(localToWorld);
         SelectBatch(null, null);
-        var matrix = localToWorld * _camera.WorldToDeviceMatrix;
+        var matrix = localToWorld * View.WorldToDeviceMatrix;
         if (fillColor is { } fill)
         {
             DrawMeshCore(mesh, matrix, mesh.Bounds, new SolidColorShader(fill));
@@ -86,8 +86,7 @@ public sealed partial class Renderer2D
 
         foreach (var edge in mesh.BoundarySegments)
         {
-            Line(Vector2.Transform(edge.Start, matrix), Vector2.Transform(edge.End, matrix),
-                outline, screenStrokeWidth);
+            StrokeSegment(edge, matrix, outline, screenStrokeWidth);
         }
     }
 
@@ -101,7 +100,7 @@ public sealed partial class Renderer2D
         Ensure.Positive(screenStrokeWidth);
         ValidateLineCap(cap);
         SelectBatch(null, null);
-        Line(_camera.WorldToDevice(start), _camera.WorldToDevice(end), color, screenStrokeWidth, cap, cap);
+        Line(View.WorldToDevice(start), View.WorldToDevice(end), color, screenStrokeWidth, cap, cap);
     }
 
     /// <summary>Draws a segment with width specified in world units, scaling with camera zoom.</summary>
@@ -121,8 +120,8 @@ public sealed partial class Renderer2D
         ValidateLineCap(startCap);
         ValidateLineCap(endCap);
         SelectBatch(null, null);
-        var ppu = _camera.PixelsPerWorldUnit;
-        Line(_camera.WorldToDevice(start), _camera.WorldToDevice(end), color,
+        var ppu = View.PixelsPerWorldUnit;
+        Line(View.WorldToDevice(start), View.WorldToDevice(end), color,
             Math.Max(1f, startWorldWidth * ppu), Math.Max(1f, endWorldWidth * ppu), startCap, endCap);
     }
 
@@ -136,8 +135,8 @@ public sealed partial class Renderer2D
         }
 
         Ensure.Positive(screenStrokeWidth);
-        var deviceLine = new Line2D(_camera.WorldToDevice(line.Origin),
-            Vector2.TransformNormal(line.Direction, _camera.WorldToDeviceMatrix));
+        var deviceLine = new Line2D(View.WorldToDevice(line.Origin),
+            Vector2.TransformNormal(line.Direction, View.WorldToDeviceMatrix));
         if (!deviceLine.TryClipToRectangle(PaddedDeviceBounds(screenStrokeWidth), out var start, out var end))
         {
             return;
@@ -159,10 +158,10 @@ public sealed partial class Renderer2D
 
         Ensure.Positive(screenStrokeWidth);
         ValidateLineCap(originCap);
-        var deviceOrigin = _camera.WorldToDevice(ray.Origin);
+        var deviceOrigin = View.WorldToDevice(ray.Origin);
         var bounds = PaddedDeviceBounds(screenStrokeWidth);
         var deviceRay = new Ray2D(deviceOrigin,
-            Vector2.TransformNormal(ray.Direction, _camera.WorldToDeviceMatrix));
+            Vector2.TransformNormal(ray.Direction, View.WorldToDeviceMatrix));
         if (!deviceRay.TryClipToRectangle(bounds, out var start, out var end))
         {
             return;
@@ -175,7 +174,7 @@ public sealed partial class Renderer2D
     private Rect2D PaddedDeviceBounds(float width)
     {
         var padding = width * 0.5f + 1f;
-        return new Rect2D(new(-padding), _camera.ViewportSize + new Vector2(padding));
+        return new Rect2D(View.TargetBounds.Min - new Vector2(padding), View.TargetBounds.Max + new Vector2(padding));
     }
 
     private static void ValidateShapeStyle(Color4b? fillColor, Color4b? outlineColor, float width)

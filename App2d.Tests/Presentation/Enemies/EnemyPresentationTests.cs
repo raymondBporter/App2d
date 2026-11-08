@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
 using App2d.Core;

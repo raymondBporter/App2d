@@ -8,7 +8,7 @@ namespace App2d.Tests.Rendering;
 [Collection("Graphics")]
 public sealed class CharacterActorRenderingTests
 {
-    private static readonly Matrix Projection = PointCharacterRenderer.Projection(128, 128, new(64), 1);
+    private static readonly Matrix Projection = LayeredMeshRenderer.Projection(128, 128, new(64), 1);
 
     /// <summary>A one-batch puppet: a triangle centred on x at depth z. Smaller z is nearer the camera.</summary>
     private static PuppetDrawing Puppet(float x, float z, Color4b color)

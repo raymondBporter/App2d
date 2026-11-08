@@ -3,7 +3,7 @@ using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Components;
 
 /// <summary>Edits the source parameters of shape values, shared by collision and drawing editors.</summary>
 internal static class ShapeInspector

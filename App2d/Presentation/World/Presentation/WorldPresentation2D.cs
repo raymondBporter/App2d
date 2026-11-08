@@ -8,6 +8,7 @@ using App2d.Core.Shapes;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Core.Vegetation;
+using App2d.Gameplay.World;
 using App2d.Rendering;
 using System.Collections.Immutable;
 using System.Numerics;
@@ -15,12 +16,14 @@ using System.Numerics;
 namespace App2d.Presentation.World.Presentation;
 
 /// <summary>
-/// Draws level content and per-tick world observations without reading simulation objects or
-/// the editable map. Content-derived visuals rebuild when their content changes;
-/// camera-selected terrain can be supplied independently of simulation streaming.
+/// Draws level content and per-tick world observations. A local terrain source supplies a spatial
+/// query and revisioned visuals independently of simulation streaming.
 /// </summary>
-public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) : IDisposable
+public sealed class WorldPresentation2D : IDisposable
 {
+    private readonly Scene2D _scene;
+    private readonly TextureCache2D _textures;
+    private readonly ViewportTerrainSource2D? _terrainSource;
     private readonly Dictionary<EntityId2D, (ObjectDefinition2D Definition, WorldObject2D Visual)> _objects = [];
     private readonly Dictionary<long, CheckpointView> _checkpoints = [];
     private readonly Dictionary<TileChunk2D, ChunkView> _chunks = [];
@@ -30,33 +33,44 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
     private LevelContent2D _content = LevelContent2D.Empty;
     private WorldState2D _state = WorldState2D.Empty;
     private long? _appliedContentRevision;
-    private ImmutableArray<TerrainChunkState2D>? _visibleTerrain;
-    private readonly VegetationPresentation2D _vegetation = new();
+    private readonly VegetationPresentation2D _vegetation;
+
+    public WorldPresentation2D(Scene2D scene, TextureCache2D textures) : this(scene, textures, null) { }
+
+    internal WorldPresentation2D(Scene2D scene, TextureCache2D textures, ViewportTerrainSource2D? terrainSource)
+    {
+        _scene = scene;
+        _textures = textures;
+        _terrainSource = terrainSource;
+        _vegetation = new(terrainSource);
+        if (_terrainSource is not null)
+            _terrainSource.ChunkChanged += InvalidateTerrain;
+    }
 
     public void DrawTrees(Renderer2D renderer, Rect2D visible) => _vegetation.DrawTrees(renderer, visible);
     public void DrawGrass(Renderer2D renderer, Rect2D visible, VegetationLayer2D layer) =>
         _vegetation.DrawGrass(renderer, visible, layer);
 
-    /// <summary>Use camera-selected terrain instead of the simulation's active terrain set.</summary>
-    public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain)
+    public void Draw(Renderer2D renderer)
     {
-        Ensure.ThrowIf(terrain.IsDefault, "Terrain must be initialized.", nameof(terrain));
-        if (_visibleTerrain == terrain)
+        var visible = renderer.View.VisibleWorldBounds;
+        DrawTrees(renderer, visible);
+        renderer.Draw(_scene, int.MinValue, 0);
+        if (_terrainSource is { } terrain)
         {
-            return;
-        }
-        // Separate sources can assign the same revision to different chunk observations.
-        if (_visibleTerrain is null)
-        {
-            foreach (var chunk in _chunks.Keys.ToArray())
+            foreach (var cell in terrain.QueryTerrain(visible))
             {
-                RemoveChunk(chunk);
+                var snapshot = terrain.GetChunk(new(cell.X, cell.Y));
+                foreach (var visual in GetTerrainVisuals(snapshot))
+                    renderer.Draw(visual);
             }
         }
-
-        _visibleTerrain = terrain;
-        ApplyTerrain(terrain);
+        DrawGrass(renderer, visible, VegetationLayer2D.Back);
+        renderer.Draw(_scene, 1, int.MaxValue);
+        DrawGrass(renderer, visible, VegetationLayer2D.Front);
     }
+
+    private void InvalidateTerrain(TileChunk2D chunk) => _chunks.Remove(chunk);
 
     public void ApplyState(LevelContent2D content, WorldState2D state) => Update(content, state, 0f);
     public void Advance(float deltaSeconds) => Update(_content, _state, deltaSeconds);
@@ -105,7 +119,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         var objectIds = content.Objects.Select(o => o.Id).ToHashSet();
         foreach (var id in _objects.Keys.Where(id => !objectIds.Contains(id)).ToArray())
         {
-            scene.Remove(_objects[id].Visual);
+            _scene.Remove(_objects[id].Visual);
             _objects.Remove(id);
         }
         foreach (var item in content.Objects)
@@ -113,13 +127,13 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             if (_objects.TryGetValue(item.Id, out var existing))
             {
                 if (existing.Definition == item) continue;
-                scene.Remove(existing.Visual);
+                _scene.Remove(existing.Visual);
                 _objects.Remove(item.Id);
             }
             if (!item.Part.Geometry.Any(g => !g.Hidden && g.Material is not null)) continue;
             var shader = new PartShader2D(item.Part) { TextureRoot = item.TextureRoot };
             var visual = new WorldObject2D(shader.BoundsShape(), shader) { ZIndex = 1 };
-            scene.Add(visual);
+            _scene.Add(visual);
             _objects.Add(item.Id, (item, visual));
         }
         _vegetation.SetGiantTrees(content.GiantTrees);
@@ -138,16 +152,17 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
             view?.Visual.Dispose();
             _checkpoints[checkpoint.ThingId] = new CheckpointView(
-                new SavePointPresentation2D(scene, checkpoint), checkpoint.BasePosition);
+                new SavePointPresentation2D(_scene, checkpoint), checkpoint.BasePosition);
         }
 
-        ApplyTerrain(_visibleTerrain ?? content.Terrain);
+        if (_terrainSource is null)
+            ApplyTerrain(content.Terrain);
 
         if (_goalPosition != content.GoalPosition)
         {
             foreach (var visual in _goal)
             {
-                scene.Remove(visual);
+                _scene.Remove(visual);
             }
 
             _goal.Clear();
@@ -176,28 +191,36 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             }
 
             RemoveChunk(chunk.Chunk);
-            var catalog = chunk.TilesetIds.Select(id => GetTileset(id, chunk.TileSize)).ToArray();
-            var resolver = new SideScrollerTerrainTilesetResolver2D((x, y) => catalog[chunk.GetTilesetIndex(x, y)]);
-            var factory = new SideScrollerTerrainVisualFactory2D(scene, chunk, resolver);
-            var visuals = new List<WorldObject2D>();
-            foreach (var collision in chunk.Collisions)
-            {
-                if (collision.Kind.IsSolid())
-                {
-                    visuals.AddRange(factory.CreateSolidFill(collision.Bounds));
-                }
-            }
-
-            visuals.AddRange(factory.CreateSurfaceVisuals(chunk.Chunk));
-            _chunks.Add(chunk.Chunk, new ChunkView(chunk.Revision, visuals));
+            foreach (var visual in GetTerrainVisuals(chunk))
+                _scene.Add(visual);
         }
+    }
+
+    internal List<WorldObject2D> GetTerrainVisuals(TerrainChunkState2D chunk)
+    {
+        if (_chunks.TryGetValue(chunk.Chunk, out var loaded) && loaded.Revision == chunk.Revision)
+            return loaded.Visuals;
+
+        var catalog = chunk.TilesetIds.Select(id => GetTileset(id, chunk.TileSize)).ToArray();
+        var resolver = new SideScrollerTerrainTilesetResolver2D((x, y) => catalog[chunk.GetTilesetIndex(x, y)]);
+        var factory = new SideScrollerTerrainVisualFactory2D(chunk, resolver);
+        var visuals = new List<WorldObject2D>();
+        foreach (var collision in chunk.Collisions)
+        {
+            if (collision.Kind.IsSolid())
+                visuals.AddRange(factory.CreateSolidFill(collision.Bounds));
+        }
+
+        visuals.AddRange(factory.CreateSurfaceVisuals(chunk.Chunk));
+        _chunks[chunk.Chunk] = new ChunkView(chunk.Revision, visuals);
+        return visuals;
     }
 
     private SideScrollerTerrainTileset2D GetTileset(string id, float size)
     {
         if (!_tilesets.TryGetValue((id, size), out var tileset))
         {
-            tileset = SideScrollerTerrainTileset2D.Load(textures, id, size);
+            tileset = SideScrollerTerrainTileset2D.Load(_textures, id, size);
             _tilesets.Add((id, size), tileset);
         }
         return tileset;
@@ -212,7 +235,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
         foreach (var visual in view.Visuals)
         {
-            scene.Remove(visual);
+            _scene.Remove(visual);
         }
     }
 
@@ -227,34 +250,40 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         flag.Transform.Position = position + new Vector2(0f, 185f);
         _goal.Add(pole);
         _goal.Add(flag);
-        scene.Add(pole);
-        scene.Add(flag);
+        _scene.Add(pole);
+        _scene.Add(flag);
     }
 
     public void Dispose()
     {
-        foreach (var (Definition, Visual) in _objects.Values) scene.Remove(Visual);
+        foreach (var (Definition, Visual) in _objects.Values) _scene.Remove(Visual);
         _objects.Clear();
         foreach (var checkpoint in _checkpoints.Values)
         {
             checkpoint.Visual.Dispose();
         }
 
-        foreach (var chunk in _chunks.Keys.ToArray())
+        _vegetation.Dispose();
+        if (_terrainSource is not null)
         {
-            RemoveChunk(chunk);
+            _terrainSource.ChunkChanged -= InvalidateTerrain;
+            _chunks.Clear();
+        }
+        else
+        {
+            foreach (var chunk in _chunks.Keys.ToArray())
+                RemoveChunk(chunk);
         }
 
         foreach (var visual in _goal)
         {
-            scene.Remove(visual);
+            _scene.Remove(visual);
         }
 
         _checkpoints.Clear();
         _goal.Clear();
         _goalPosition = null;
         _appliedContentRevision = null;
-        _visibleTerrain = null;
     }
 
     private sealed record CheckpointView(SavePointPresentation2D Visual, Vector2 BasePosition);

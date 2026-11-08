@@ -9,7 +9,7 @@ namespace App2d.Tests.Rendering;
 [Collection("Graphics")]
 public sealed class CharacterBufferRenderingTests
 {
-    private static readonly Matrix Projection = PointCharacterRenderer.Projection(128, 128, new(64), 1);
+    private static readonly Matrix Projection = LayeredMeshRenderer.Projection(128, 128, new(64), 1);
 
     private static void AddTriangle(LayeredMesh mesh, Color4b color) =>
         mesh.Triangle(new(-12, -12, 0), new(12, -12, 0), new(0, 12, 0), color);

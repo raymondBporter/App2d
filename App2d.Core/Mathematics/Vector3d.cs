@@ -11,6 +11,7 @@ public readonly record struct Vector3d(double X, double Y, double Z) : IVector<V
     public Vector3d(Vector3 value) : this(value.X, value.Y, value.Z) { }
 
     public static int Dimension => 3;
+    public static Vector3d FromCoordinates(ReadOnlySpan<double> coordinates) => new(coordinates[0], coordinates[1], coordinates[2]);
     public static Vector3d Zero => default;
     public static Vector3d One => new(1, 1, 1);
     public static Vector3d UnitX => new(1, 0, 0);

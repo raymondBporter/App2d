@@ -1,4 +1,4 @@
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Shell;
 
 /// <summary>Character editor viewports, handles, and timelines. Edit these byte RGBA colors and rebuild.</summary>
 internal static class StudioTheme

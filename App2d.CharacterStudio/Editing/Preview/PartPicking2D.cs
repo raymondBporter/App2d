@@ -13,7 +13,7 @@ using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editing;
+namespace App2d.CharacterStudio.Editing.Preview;
 
 /// <summary>Normalized character-part picking scores using the same attachment and cutout outlines as drawing.</summary>
 public static class PartPicking2D

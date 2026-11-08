@@ -1,8 +1,8 @@
-using App2d.Core.Validation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Validation;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Library;
 
 /// <summary>
 /// Local Z slots for the Person's waist, derived from its built rest pose. Positive Z is away from the camera.

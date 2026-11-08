@@ -8,8 +8,7 @@ namespace App2d.Core.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    private static CollisionResult CircleVsSimplePolygon(Circle2D circle, Similarity2D circlePose,
-        SimplePolygon2D polygon, Similarity2D polygonPose)
+    private static CollisionResult CircleVsSimplePolygon(Circle2D circle, Similarity2D circlePose, SimplePolygon2D polygon, Similarity2D polygonPose)
     {
         var center = polygonPose.InverseTransformPoint(circlePose.TransformPoint(circle.Center));
         var radius = circle.Radius * circlePose.Scale / polygonPose.Scale;

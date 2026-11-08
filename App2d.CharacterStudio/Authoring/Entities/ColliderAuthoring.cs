@@ -5,7 +5,7 @@ using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Authoring;
+namespace App2d.CharacterStudio.Authoring.Entities;
 
 /// <summary>
 /// Collider definitions authored from a model's rest pose (P8c, P11b): the one derivation the seeds, the entity template and

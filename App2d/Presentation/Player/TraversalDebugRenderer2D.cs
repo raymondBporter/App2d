@@ -36,12 +36,11 @@ public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
     {
         Ensure.ThrowIfNull(renderer);
         renderer.DrawScreenLabel(
-            $"GRID {TraversalMetrics2D.DesignUnit:0}u  |  BODY {_traversal.PlayerColliderSize.X / _traversal.TileSize:0.00}t x {_traversal.PlayerColliderSize.Y / _traversal.TileSize:0.00}t  |  " +
+            $"GRID {TraversalMetrics2D.DesignUnit:0}u  |  " +
+            $"BODY {_traversal.PlayerColliderSize.X / _traversal.TileSize:0.00}t x {_traversal.PlayerColliderSize.Y / _traversal.TileSize:0.00}t  |  " +
             $"PASSAGE {_traversal.StandingPassageTiles}t + {_traversal.StandingClearance:0}u  |  " +
-            $"RUN JUMP {_runningJumpProfile.HorizontalDistance / _traversal.TileSize:0.00}t x {_runningJumpProfile.ApexHeight / _traversal.TileSize:0.00}t  |  " +
-            $"STAND {_standingJumpProfile.HorizontalDistance / _traversal.TileSize:0.00}t  |  " +
-            $"AIR {_runningJumpProfile.Airtime:0.000}s  |  COYOTE {_traversal.RunSpeed * _traversal.CoyoteDuration / _traversal.TileSize:0.00}t  |  " +
-            $"AIR JUMP {_traversal.AirJumpSpeedMultiplier:P0} power",
+            $"RUN JUMP {_runningJumpProfile.HorizontalDistance / _traversal.TileSize:0.00}t x {_runningJumpProfile.ApexHeight / _traversal.TileSize:0.00}t  |  STAND {_standingJumpProfile.HorizontalDistance / _traversal.TileSize:0.00}t  |  " +
+            $"AIR {_runningJumpProfile.Airtime:0.000}s  |  COYOTE {_traversal.RunSpeed * _traversal.CoyoteDuration / _traversal.TileSize:0.00}t  |  AIR JUMP {_traversal.AirJumpSpeedMultiplier:P0} power",
             new Vector2(24f, 88f));
     }
 }

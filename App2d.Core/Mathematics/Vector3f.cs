@@ -16,6 +16,7 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
     public float this[int index] => _value[index];
 
     public static int Dimension => 3;
+    public static Vector3f FromCoordinates(ReadOnlySpan<float> coordinates) => new(coordinates[0], coordinates[1], coordinates[2]);
     public static Vector3f Zero => default;
     public static Vector3f One => new(Vector3.One);
     public static Vector3f UnitX => new(Vector3.UnitX);

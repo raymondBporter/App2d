@@ -1,6 +1,9 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.Editing;
-using App2d.CharacterStudio.Importing;
+using App2d.CharacterStudio.Authoring.Entities;
+using App2d.CharacterStudio.Authoring.Parts;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Importing.Library;
+using App2d.CharacterStudio.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using ImGuiNET;
@@ -18,23 +21,50 @@ internal sealed partial class AssetBrowser(EditorSession session)
 {
     private enum Create
     {
-        None, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, ImportPuppet, ImportClip,
-        Part, DuplicatePart, Geometry, RenderMaterial, Piece
+        None,
+        EmptyModel,
+        TemplateModel,
+        Variant,
+        DuplicateVariant,
+        Independent,
+        Animation,
+        DuplicateAnimation,
+        Entity,
+        DuplicateEntity,
+        Appearance,
+        ImportPuppet,
+        ImportClip,
+        Part,
+        DuplicatePart,
+        Geometry,
+        RenderMaterial,
+        Piece
     }
+
     private string _appearanceTemplate = "hair";
     private string _templatePreset = "";
     private static readonly string[] Filters = ["All", "Geometry", "Materials", "Pieces", "Models", "Variants", "Animations", "Entities", "Parts", "Sources"];
     private string _geometryKind = "simple-polygon";
     private string _groupBy = "None";
-    private string _search = "", _filter = "All";
+    private string _search = "";
+    private string _filter = "All";
     private Create _create;
-    private string _name = "", _id = "", _source = "", _preset = "", _template = EntityAuthoring.Guard;
-    private bool _idEdited, _open, _loop = true;
+    private string _name = "";
+    private string _id = "";
+    private string _source = "";
+    private string _preset = "";
+    private string _template = EntityAuthoring.Guard;
+    private bool _idEdited;
+    private bool _open;
+    private bool _loop = true;
     private float _duration = 1;
     private int _problemsFor = -1;
     private readonly Dictionary<string, IReadOnlyList<string>> _problems = [];
     // Import dialogs: the library clip, the model it goes onto, its reference clip and the control -> source points mapping.
-    private string _library = "", _clip = "", _target = "", _rest = "";
+    private string _library = "";
+    private string _clip = "";
+    private string _target = "";
+    private string  _rest = "";
     private Dictionary<string, List<string>> _mapping = [];
     private PuppetDefinition? _puppet;
 
@@ -134,7 +164,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (_groupBy != "None")
         {
             var entries = session.Assets.Documents.Where(Matches).SelectMany(d => GroupKeys(d).Select(key => (Key: key, Document: d)));
-            GroupedRows(entries.Select(e => (Segments: e.Key.Split('/', StringSplitOptions.TrimEntries), e.Document)).ToArray(), 0);
+            GroupedRows([.. entries.Select(e => (Segments: e.Key.Split('/', StringSplitOptions.TrimEntries), e.Document))], 0);
         }
         else if (_filter == "All" && _search.Length == 0)
         {
@@ -305,11 +335,11 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
     private void GroupedRows((string[] Segments, AssetDocument Document)[] entries, int level)
     {
-        foreach (var entry in entries.Where(e => e.Segments.Length == level).OrderBy(e => e.Document.Name)) Row(entry.Document, 0);
+        foreach (var (Segments, Document) in entries.Where(e => e.Segments.Length == level).OrderBy(e => e.Document.Name)) Row(Document, 0);
         foreach (var group in entries.Where(e => e.Segments.Length > level).GroupBy(e => e.Segments[level], StringComparer.OrdinalIgnoreCase).OrderBy(g => g.Key))
         {
             if (!ImGui.TreeNode(group.Key)) continue;
-            GroupedRows(group.ToArray(), level + 1);
+            GroupedRows([.. group], level + 1);
             ImGui.TreePop();
         }
     }
@@ -320,7 +350,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         string attachment;
         if (document is AssetDocument<Piece> piece)
         {
-            groups = piece.Asset.Groups.Count == 0 ? ["Ungrouped"] : piece.Asset.Groups.ToArray();
+            groups = piece.Asset.Groups.Count == 0 ? ["Ungrouped"] : [.. piece.Asset.Groups];
             attachment = piece.Asset.Game?.Equipment?.Slot ?? piece.Asset.Attachment ?? "No default attachment";
         }
         else if (document is AssetDocument<Part> part)

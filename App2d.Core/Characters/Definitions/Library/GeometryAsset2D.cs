@@ -1,7 +1,7 @@
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Mathematics;
 using App2d.Core.Json;
+using App2d.Core.Mathematics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -23,9 +23,13 @@ public sealed record GeometryAsset2D
     /// <summary>A fresh placed entry; resolving or rebuilding it cannot mutate the library mesh.</summary>
     public PartGeometry Entry(RenderMaterialDefinition2D material) => new()
     {
-        Id = Id, Geometry = Geometry, SpatialCurve = SpatialCurve,
+        Id = Id,
+        Geometry = Geometry,
+        SpatialCurve = SpatialCurve,
         Mesh = Mesh is null ? null : Mesh with { Vertices = [.. Mesh.Vertices], Triangles = [.. Mesh.Triangles], Outline = Mesh.Outline is null ? null : [.. Mesh.Outline] },
-        A = PartLocation.Origin, Frame = PartLocation.Origin, Material = material,
+        A = PartLocation.Origin,
+        Frame = PartLocation.Origin,
+        Material = material,
     };
 
     public void Validate()

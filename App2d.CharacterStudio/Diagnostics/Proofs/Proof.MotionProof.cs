@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.CharacterSeeds;
+using App2d.CharacterStudio.Seeds.Library;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
@@ -60,13 +60,13 @@ internal sealed partial class ProofRenders
                 _proofDrawings[i].Build(model, pose);
                 // Close-up: the view follows this subject's travel, so ground ticks scroll past a planted foot.
                 GraphicsDevice.Viewport = new(i * panel, 0, panel, ProofPanelHeight);
-                var close = PointCharacterRenderer.Projection(panel, ProofPanelHeight, new(panel * .5f - pose.Locomotion.X * ProofPpu, ProofPanelHeight * .92f), ProofPpu);
+                var close = LayeredMeshRenderer.Projection(panel, ProofPanelHeight, new(panel * .5f - pose.Locomotion.X * ProofPpu, ProofPanelHeight * .92f), ProofPpu);
                 BuildProofGround(pose, pose.Locomotion.X, ProofPpu);
                 _renderer.Draw(_proofGround, close, Matrix.Identity, writeDepth: false);
                 _renderer.DrawActor(_proofDrawings[i], close, Matrix.Identity);
                 // Game scale: a fixed camera at arena size, so travel and readability show at player size.
                 GraphicsDevice.Viewport = new(0, ProofPanelHeight, ProofWidth, band);
-                var game = PointCharacterRenderer.Projection(ProofWidth, band, new(ProofWidth * .12f + i * 11 * GamePpu, band * .85f), GamePpu);
+                var game = LayeredMeshRenderer.Projection(ProofWidth, band, new(ProofWidth * .12f + i * 11 * GamePpu, band * .85f), GamePpu);
                 BuildProofGround(pose, 5, GamePpu);
                 _renderer.Draw(_proofGround, game, Matrix.Identity, writeDepth: false);
                 _renderer.DrawActor(_proofDrawings[i], game, Matrix.Identity);

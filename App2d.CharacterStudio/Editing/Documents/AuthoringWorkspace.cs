@@ -1,11 +1,12 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Templates;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Json;
 using App2d.Core.Validation;
 using System.Text.Json;
 using Authored = App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterStudio.Editing;
+namespace App2d.CharacterStudio.Editing.Documents;
 
 /// <summary>What a save wrote, which other drafts it changed and what still needs repair.</summary>
 public sealed record SaveReport(string Path, IReadOnlyList<AssetDocument> Updated, IReadOnlyList<string> Problems);

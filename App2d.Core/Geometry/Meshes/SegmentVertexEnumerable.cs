@@ -7,7 +7,7 @@ public readonly ref struct SegmentVertexEnumerable<TSegment, TPoint>
     where TSegment : ISegment<TSegment, TPoint>
 {
     private readonly ReadOnlySpan<TPoint> _vertices;
-    private readonly ReadOnlySpan<Segment<int>> _indices;
+    private readonly ReadOnlySpan<(int Start, int End)> _indices;
     private readonly bool _indexed;
 
     internal SegmentVertexEnumerable(ReadOnlySpan<TPoint> vertices, bool closed)
@@ -18,7 +18,7 @@ public readonly ref struct SegmentVertexEnumerable<TSegment, TPoint>
         Count = closed ? vertices.Length : Math.Max(0, vertices.Length - 1);
     }
 
-    internal SegmentVertexEnumerable(ReadOnlySpan<TPoint> vertices, ReadOnlySpan<Segment<int>> indices)
+    internal SegmentVertexEnumerable(ReadOnlySpan<TPoint> vertices, ReadOnlySpan<(int Start, int End)> indices)
     {
         _vertices = vertices;
         _indices = indices;
@@ -32,12 +32,12 @@ public readonly ref struct SegmentVertexEnumerable<TSegment, TPoint>
     public ref struct Enumerator
     {
         private readonly ReadOnlySpan<TPoint> _vertices;
-        private readonly ReadOnlySpan<Segment<int>> _indices;
+        private readonly ReadOnlySpan<(int Start, int End)> _indices;
         private readonly bool _indexed;
         private readonly int _count;
         private int _current;
 
-        internal Enumerator(ReadOnlySpan<TPoint> vertices, ReadOnlySpan<Segment<int>> indices, bool indexed, int count)
+        internal Enumerator(ReadOnlySpan<TPoint> vertices, ReadOnlySpan<(int Start, int End)> indices, bool indexed, int count)
         {
             _vertices = vertices;
             _indices = indices;
@@ -51,7 +51,7 @@ public readonly ref struct SegmentVertexEnumerable<TSegment, TPoint>
             get
             {
                 var (start, end) = _indexed ? _indices[_current]
-                    : new Segment<int>(_current, _current + 1 == _vertices.Length ? 0 : _current + 1);
+                    : (_current, _current + 1 == _vertices.Length ? 0 : _current + 1);
                 return TSegment.Create(_vertices[start], _vertices[end]);
             }
         }

@@ -1,3 +1,5 @@
+using App2d.CharacterStudio.Seeds.Library;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
@@ -6,7 +8,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Rendering;
 
 /// <summary>Every face expression the baked face part binds, on the authored Person's head instance, through the game's drawing path, labelled.</summary>
 internal static class FaceRenderingSmoke2D
@@ -32,7 +34,7 @@ internal static class FaceRenderingSmoke2D
                 drawing.Build(person, pose);
                 var head = pose.World("head");
                 device.Viewport = new Viewport(i % 4 * 320, i / 4 * 290, 320, 225);
-                var projection = PointCharacterRenderer.Projection(320, 225, new(160, 112), 260);
+                var projection = LayeredMeshRenderer.Projection(320, 225, new(160, 112), 260);
                 renderer.DrawActor(drawing, projection, Matrix.CreateTranslation(-head.X, -head.Y, 0));
             }
             device.Viewport = new Viewport(0, 0, 1280, 1450);

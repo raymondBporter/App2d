@@ -1,7 +1,8 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Seeds.Templates;
+using App2d.CharacterStudio.Templates;
 using App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Modules;
 
 /// <summary>
 /// The centaur study (character-system migration, P10c): a character composed entirely from library modules and resources.

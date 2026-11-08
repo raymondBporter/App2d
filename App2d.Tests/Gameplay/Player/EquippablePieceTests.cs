@@ -1,6 +1,5 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
@@ -30,7 +29,8 @@ public sealed class EquippablePieceTests : IDisposable
     {
         var piece = new Piece
         {
-            Id = id, Name = id,
+            Id = id,
+            Name = id,
             InlineGeometry = new() { Id = "inline", Name = "Test geometry", Geometry = Rectangle2D.Builder.FromSize(.12f, .3f) },
             Material = new() { Fill = "#806040" },
             Game = new() { Equipment = new() { Slot = slot, Replace = replace, MirrorRight = mirror } },
@@ -155,23 +155,23 @@ public sealed class EquippablePieceTests : IDisposable
         var wardrobe = new PlayerWardrobe2D(moves);
         wardrobe.Equip(Cell(wardrobe, "test-shins"), WardrobeSlot2D.Shins);
         foreach (var clip in new[] { moves[PersonMoves.Idle], moves[PersonMoves.Run], moves.Swing(null).Clip })
-        foreach (var facing in new[] { -1, 1 })
-        {
-            var pose = PoseEvaluator.Sample(moves.Model, clip, clip.Duration / 2);
-            var actor = new ActorPose(pose, new(3, 2), facing);
-            foreach (var attachment in wardrobe.Attachments)
+            foreach (var facing in new[] { -1, 1 })
             {
-                var left = attachment.Socket.Id == Humanoid.LeftShinSocket;
-                var foot = actor.World(left ? Humanoid.LeftFoot : Humanoid.RightFoot);
-                var knee = actor.World(left ? Humanoid.LeftKnee : Humanoid.RightKnee);
-                var placement = PartPlacement3D.Placement(attachment, actor.Socket(attachment.Socket));
-                var origin = placement.TransformPoint(Vector3.Zero);
-                TestModels.Near(foot with { Z = 0 }, origin with { Z = 0 });
-                var axis = Vector2.Normalize(new(placement.YAxis.X, placement.YAxis.Y));
-                var direction = Vector2.Normalize(new(knee.X - foot.X, knee.Y - foot.Y));
-                Assert.True(Vector2.Dot(axis, direction) > .999f);
+                var pose = PoseEvaluator.Sample(moves.Model, clip, clip.Duration / 2);
+                var actor = new ActorPose(pose, new(3, 2), facing);
+                foreach (var attachment in wardrobe.Attachments)
+                {
+                    var left = attachment.Socket.Id == Humanoid.LeftShinSocket;
+                    var foot = actor.World(left ? Humanoid.LeftFoot : Humanoid.RightFoot);
+                    var knee = actor.World(left ? Humanoid.LeftKnee : Humanoid.RightKnee);
+                    var placement = PartPlacement3D.Placement(attachment, actor.Socket(attachment.Socket));
+                    var origin = placement.TransformPoint(Vector3.Zero);
+                    TestModels.Near(foot with { Z = 0 }, origin with { Z = 0 });
+                    var axis = Vector2.Normalize(new(placement.YAxis.X, placement.YAxis.Y));
+                    var direction = Vector2.Normalize(new(knee.X - foot.X, knee.Y - foot.Y));
+                    Assert.True(Vector2.Dot(axis, direction) > .999f);
+                }
             }
-        }
     }
 
     [Fact]

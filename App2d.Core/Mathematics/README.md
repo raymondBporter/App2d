@@ -203,7 +203,7 @@ large integers may round. Existing graphics APIs continue to accept `System.Nume
 
 The six floating-point vector types implement `IVector<TSelf, TReal>`, with `TReal` constrained to
 `IFloatingPointIeee754<TReal>`. Keep the concrete vector type in storage and generic arguments,
-for example `Segment<Vector3d>`. Do not store an `IVector<...>` interface value: converting a struct
+for example `Segment<Vector3d, double>`. Do not store an `IVector<...>` interface value: converting a struct
 to an interface boxes it. The integer vector, unit directions, and validated sizes have different
 arithmetic contracts and do not implement this interface.
 
@@ -218,13 +218,12 @@ double distance = Vector3d.Distance(Vector3d.Zero, offset);
 Vector3d halfway = Vector3d.Lerp(Vector3d.Zero, offset, .5);
 ```
 
-Code generic over both the vector and scalar uses the same functions explicitly:
+`Segment<TVector, TReal>` carries both types, so calling its shared math needs no extra type arguments:
 
 ```csharp
-static TReal SegmentLength<TVector, TReal>(Segment<TVector> segment)
-    where TVector : unmanaged, IVector<TVector, TReal>
-    where TReal : unmanaged, IFloatingPointIeee754<TReal> =>
-    IVectorExtensions.Distance<TVector, TReal>(segment.Start, segment.End);
+var segment = new Segment<Vector3d, double>(Vector3d.Zero, offset);
+double length = segment.Length();
+Vector3d midpoint = segment.Midpoint;
 ```
 
 The primitives remain concrete: float arithmetic forwards to `System.Numerics`, and `Vector2d` /

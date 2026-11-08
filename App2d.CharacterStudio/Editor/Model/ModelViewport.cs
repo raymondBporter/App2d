@@ -1,11 +1,13 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Shapes;
 using ImGuiNET;
 
 namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Coordinates model overlays, part picking, and the active viewport drag tool.</summary>
-internal sealed class ModelViewport(EditorSession session, Viewport viewport, ModelCutoutEditor cutout)
+internal sealed class ModelViewport(EditorSession session, App2d.CharacterStudio.Editor.Viewport.Viewport viewport, ModelCutoutEditor cutout)
 {
     private readonly ModelControlDrag _controls = new(session);
 

@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.CharacterSeeds.PlayerMoves;
+using App2d.CharacterStudio.Seeds.PlayerMoves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Json;
@@ -77,7 +77,7 @@ internal sealed partial class ProofRenders
 
                 var centerX = pose.Locomotion.X + item.ViewX;
                 BuildScenery(scenery, item.Scene, centerX, seconds);
-                var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .5f - centerX * ReviewPpu, ReviewHeight * .84f), ReviewPpu);
+                var projection = LayeredMeshRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .5f - centerX * ReviewPpu, ReviewHeight * .84f), ReviewPpu);
                 target.SavePng(Path.Combine(folder, $"{f:D3}.png"), new Color4b(241, 240, 232), () =>
                 {
                     _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);

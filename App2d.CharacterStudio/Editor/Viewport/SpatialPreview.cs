@@ -4,7 +4,7 @@ using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Viewport;
 
 /// <summary>Orbit, mesh picking and plane dragging over a transient scene, using the generic Core 3D path.</summary>
 internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part? sword, Part? curve = null) : IDisposable

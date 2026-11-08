@@ -1,6 +1,6 @@
 using App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterStudio.Editing;
+namespace App2d.CharacterStudio.Editing.Documents;
 
 /// <summary>Ordered so saving everything writes what others depend on first.</summary>
 public enum AssetKind

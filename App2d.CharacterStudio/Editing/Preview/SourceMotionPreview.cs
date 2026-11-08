@@ -1,8 +1,8 @@
-using App2d.CharacterStudio.Importing;
+using App2d.CharacterStudio.Importing.Library;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editing;
+namespace App2d.CharacterStudio.Editing.Preview;
 
 /// <summary>Maps an imported clip's source points into a preview model's space, caching the sampler and reference fit.</summary>
 public sealed class SourceMotionPreview(SourceLibraries sources)

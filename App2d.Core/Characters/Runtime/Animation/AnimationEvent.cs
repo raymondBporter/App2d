@@ -1,6 +1,3 @@
-using App2d.Core.Validation;
-using System.Numerics;
-
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>A clip marker crossed ("marker") or an action event reached ("event"), dispatched once when time advances across it.</summary>

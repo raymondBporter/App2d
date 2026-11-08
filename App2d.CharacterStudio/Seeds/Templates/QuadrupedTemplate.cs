@@ -1,4 +1,5 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Seeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
@@ -7,7 +8,7 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Templates;
 
 /// <summary>Four planted IK feet and independently posed head/tail, with editable cutout artwork.</summary>
 public static class QuadrupedTemplate

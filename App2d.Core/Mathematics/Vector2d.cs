@@ -12,6 +12,7 @@ public readonly record struct Vector2d(double X, double Y) : IVector<Vector2d, d
     public Vector2d(Vector2 value) : this(value.X, value.Y) { }
 
     public static int Dimension => 2;
+    public static Vector2d FromCoordinates(ReadOnlySpan<double> coordinates) => new(coordinates[0], coordinates[1]);
     public static Vector2d Zero => default;
     public static Vector2d One => new(1, 1);
     public static Vector2d UnitX => new(1, 0);

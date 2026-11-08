@@ -11,7 +11,6 @@ using App2d.Core.Input;
 using App2d.Core.Json;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Vegetation;
 using App2d.Editor;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
@@ -134,8 +133,8 @@ public sealed class SideScrollerGame : Game2D
             return $"Loaded {trees.Length} giant trees with {trees.Sum(tree => tree.Branches.Length)} branch platforms.";
         }, "Reload giant-trees.json: positions and dimensions are in tiles; ranges are [min, max].");
 
-        _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
-            cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored));
+        _client = new SideScrollerClient2D(snapshot, playerId, Scene,
+            cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored), _terrainSource);
         _editorUi = new(_editor, Textures, DebugPanel, _client.Wardrobe);
         _resources.Register("audio/soundtrack", () => WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones),
             Path.Combine(AssetPaths.Current.Music, "soundtrack.json"));
@@ -259,21 +258,7 @@ public sealed class SideScrollerGame : Game2D
         _client.WorldSounds.Update();
     }
 
-    public override void Render(Renderer2D renderer)
-    {
-        // BeginFrame has set the actual viewport; include the final camera position and shake.
-        // Keep off-screen roots loaded while their canopies can still enter the camera.
-        var foliageMargin = new Vector2(_simulation.Level.TileMap.TileSize * 10f);
-        var visible = Camera.VisibleWorldBounds;
-        _client.SetVisibleTerrain(_terrainSource.Capture(new(visible.Min - foliageMargin, visible.Max + foliageMargin)));
-        _client.DrawTrees(renderer);
-        // Terrain sits at z 0 and characters above it, so back grass slots in between.
-        renderer.Draw(Scene, int.MinValue, 0);
-        _client.DrawGrass(renderer, VegetationLayer2D.Back);
-        renderer.Draw(Scene, 1, int.MaxValue);
-        _client.DrawGrass(renderer, VegetationLayer2D.Front);
-        _client.DrawWorldEffects(renderer);
-    }
+    public override void Render(Renderer2D renderer) => _client.DrawWorld(renderer);
 
     public override void RenderWorldDebug(Renderer2D renderer)
     {
@@ -321,9 +306,9 @@ public sealed class SideScrollerGame : Game2D
 
     public override void Dispose()
     {
+        _client.Dispose();
         _terrainSource.Dispose();
         _simulation.Dispose();
-        _client.Dispose();
         _editor.Dispose();
         _editorUi.Dispose();
         _music.Dispose();

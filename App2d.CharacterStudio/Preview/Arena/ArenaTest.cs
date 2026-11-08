@@ -1,6 +1,6 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.CharacterSeeds;
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editor.Shell;
+using App2d.CharacterStudio.Seeds.Library;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
@@ -8,7 +8,7 @@ using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Preview.Arena;
 
 /// <summary>
 /// Test: plays the authored arena in the shared stage from an explicit snapshot of the current drafts. The first roster
@@ -165,7 +165,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
             {
                 var ppu = MathF.Min(height / 4.2f, width / 11f);
                 var centerX = Arena.Player.Position.X;
-                var projection = PointCharacterRenderer.Projection(width, height, new(width / 2f - centerX * ppu, height * .86f), ppu);
+                var projection = LayeredMeshRenderer.Projection(width, height, new(width / 2f - centerX * ppu, height * .86f), ppu);
                 _drawing.Draw(ArenaActorFrame.Capture(Arena), projection, ppu, centerX, Overlays);
             }
         }

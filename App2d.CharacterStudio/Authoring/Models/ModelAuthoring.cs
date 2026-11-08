@@ -1,4 +1,3 @@
-using App2d.Core.Validation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -8,9 +7,10 @@ using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
+using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Authoring;
+namespace App2d.CharacterStudio.Authoring.Models;
 
 /// <summary>
 /// Graphics-free edits to a base model and a variant. Each structural edit validates the whole model before returning; callers

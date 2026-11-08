@@ -1,4 +1,4 @@
-using App2d.Core.Validation;
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
@@ -13,6 +13,7 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
+using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
@@ -24,7 +25,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Rendering;
 
 /// <summary>Reproducible spell samples driven by real simulation, authored poses, HUD and effect rendering.</summary>
 internal static class SpellRenderingSmoke2D

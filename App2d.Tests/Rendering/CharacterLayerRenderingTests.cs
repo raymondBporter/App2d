@@ -25,7 +25,7 @@ public sealed class CharacterLayerRenderingTests
         using var target = RenderCapture2D.CreateTarget(graphics.Device, 128, 128, DepthFormat.Depth24, 0);
         using var renderer = new PointCharacterRenderer(graphics.Device);
         using (graphics.Device.UseRenderTarget(target, Color4b.White))
-            renderer.Draw(drawing, PointCharacterRenderer.Projection(128, 128, new(64), 1), Matrix.Identity);
+            renderer.Draw(drawing, LayeredMeshRenderer.Projection(128, 128, new(64), 1), Matrix.Identity);
         var pixels = new Color4b[128 * 128];
         target.GetData(pixels);
         Assert.Equal(Color4b.Red, pixels[64 * 128 + 64]);

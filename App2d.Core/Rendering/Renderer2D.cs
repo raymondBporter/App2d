@@ -3,6 +3,7 @@ using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Rendering.Textures;
@@ -22,7 +23,7 @@ namespace App2d.Rendering;
 /// <summary>Ordered GPU triangle batches using MonoGame's XNA graphics API.</summary>
 public sealed partial class Renderer2D : IDisposable
 {
-    private Camera2D _camera;
+    private readonly Camera2D _camera;
     private readonly GraphicsDevice _device;
     private readonly BasicEffect _effect;
     private readonly FontAtlas2D _font = new();
@@ -36,7 +37,9 @@ public sealed partial class Renderer2D : IDisposable
     private long _textureBytes;
     private bool _frameActive;
     private bool _disposed;
-    private Rect2D _visibleWorldBounds;
+
+    /// <summary>The view captured at the start of the frame, or the current parallax view while drawing a layer.</summary>
+    public FrameView2D View { get; private set; }
 
     public Renderer2D(Camera2D camera, GraphicsDevice device)
     {
@@ -52,7 +55,7 @@ public sealed partial class Renderer2D : IDisposable
         Ensure.Positive(width);
         Ensure.Positive(height);
         _camera.SetViewport(width, height);
-        _visibleWorldBounds = _camera.VisibleWorldBounds;
+        View = _camera.GetFrameView();
         _device.Viewport = new Viewport(0, 0, width, height);
         _effect.Projection = XnaMatrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
         _frameActive = true;
@@ -82,7 +85,7 @@ public sealed partial class Renderer2D : IDisposable
     }
 
     /// <summary>Device pixels per world unit for the current camera, for strokes that should scale with zoom.</summary>
-    public float PixelsPerWorldUnit => _camera.PixelsPerWorldUnit;
+    public float PixelsPerWorldUnit => _frameActive ? View.PixelsPerWorldUnit : _camera.PixelsPerWorldUnit;
 
     public void Draw(Scene2D scene)
     {
@@ -116,8 +119,8 @@ public sealed partial class Renderer2D : IDisposable
         {
             Flush();
             _characterRenderer ??= new(_device);
-            var transform = worldObject.Transform.Matrix * _camera.WorldToDeviceMatrix;
-            _characterRenderer.Draw(part.Drawing, PointCharacterRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height), ToXnaMatrix(transform));
+            var transform = worldObject.Transform.Matrix * View.WorldToDeviceMatrix;
+            _characterRenderer.Draw(part.Drawing, LayeredMeshRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height), LayeredMeshRenderer.ToXnaMatrix(transform));
             return;
         }
         if (worldObject.Shader is AuthoredCharacterShader authored)
@@ -126,7 +129,7 @@ public sealed partial class Renderer2D : IDisposable
             DrawAuthored(worldObject, authored);
             return;
         }
-        var matrix = worldObject.Transform.Matrix * _camera.WorldToDeviceMatrix;
+        var matrix = worldObject.Transform.Matrix * View.WorldToDeviceMatrix;
         var bounds = worldObject.LocalBounds.IsFinite ? worldObject.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)
         {
@@ -461,7 +464,7 @@ public sealed partial class Renderer2D : IDisposable
         }
 
         SelectBatch(null, null);
-        var matrix = _camera.WorldToDeviceMatrix;
+        var matrix = View.WorldToDeviceMatrix;
         if (fillColor is { } fill)
         {
             foreach (var triangle in MeshTopology.TriangleFan(points))
@@ -475,7 +478,7 @@ public sealed partial class Renderer2D : IDisposable
 
         if (outlineColor is { } outline && worldStrokeWidth > 0f)
         {
-            var screenWidth = Math.Max(1f, worldStrokeWidth * _camera.PixelsPerWorldUnit);
+            var screenWidth = Math.Max(1f, worldStrokeWidth * View.PixelsPerWorldUnit);
             for (var i = 0; i < points.Length; i++)
             {
                 var next = (i + 1) % points.Length;
@@ -501,9 +504,9 @@ public sealed partial class Renderer2D : IDisposable
         Ensure.Positive(strokeWidth);
         SelectBatch(null, null);
         Span<Vector2> points = stackalloc Vector2[128];
-        var segments = ShapeTessellation2D.CurveSegments(radius, _camera.WorldToDeviceMatrix);
+        var segments = ShapeTessellation2D.CurveSegments(radius, View.WorldToDeviceMatrix);
         VertexGenerator2D.WriteCircle(points[..segments], center, radius);
-        StrokePolygon(points[..segments], _camera.WorldToDeviceMatrix, color, strokeWidth);
+        StrokePolygon(points[..segments], View.WorldToDeviceMatrix, color, strokeWidth);
     }
 
     /// <summary>Draws a world circle with stroke width specified in world units, scaling with camera zoom.</summary>
@@ -511,7 +514,7 @@ public sealed partial class Renderer2D : IDisposable
     {
         RequireFrame();
         Ensure.Positive(worldStrokeWidth);
-        var screenWidth = Math.Max(1f, worldStrokeWidth * _camera.PixelsPerWorldUnit);
+        var screenWidth = Math.Max(1f, worldStrokeWidth * View.PixelsPerWorldUnit);
         DrawWorldCircle(center, radius, color, screenWidth);
     }
 
@@ -529,7 +532,7 @@ public sealed partial class Renderer2D : IDisposable
         SelectBatch(null, null);
         for (var i = 1; i < points.Length; i++)
         {
-            Line(_camera.WorldToDevice(points[i - 1]), _camera.WorldToDevice(points[i]), color, strokeWidth,
+            Line(View.WorldToDevice(points[i - 1]), View.WorldToDevice(points[i]), color, strokeWidth,
                 i == 1 ? cap : LineCap2D.Butt,
                 i == points.Length - 1 ? cap : LineCap2D.Butt);
         }
@@ -542,7 +545,7 @@ public sealed partial class Renderer2D : IDisposable
         RequireFrame();
         Ensure.Positive(worldStrokeWidth);
         ValidateLineCap(cap);
-        var screenWidth = Math.Max(1f, worldStrokeWidth * _camera.PixelsPerWorldUnit);
+        var screenWidth = Math.Max(1f, worldStrokeWidth * View.PixelsPerWorldUnit);
         DrawWorldPolyline(points, color, screenWidth, cap);
     }
 
@@ -552,16 +555,16 @@ public sealed partial class Renderer2D : IDisposable
         Ensure.Positive(spacing);
         Ensure.Positive(majorLineEvery);
         SelectBatch(null, null);
-        var visible = _camera.VisibleWorldBounds;
+        var visible = View.VisibleWorldBounds;
         for (var x = (int)MathF.Floor(visible.Left / spacing); x <= (int)MathF.Ceiling(visible.Right / spacing); x++)
         {
-            Line(_camera.WorldToDevice(new(x * spacing, visible.Bottom)), _camera.WorldToDevice(new(x * spacing, visible.Top)),
+            Line(View.WorldToDevice(new(x * spacing, visible.Bottom)), View.WorldToDevice(new(x * spacing, visible.Top)),
                 x == 0 ? DebugTheme.GridAxis : x % majorLineEvery == 0 ? DebugTheme.GridMajor : DebugTheme.GridMinor, x == 0 ? 2 : 1);
         }
 
         for (var y = (int)MathF.Floor(visible.Bottom / spacing); y <= (int)MathF.Ceiling(visible.Top / spacing); y++)
         {
-            Line(_camera.WorldToDevice(new(visible.Left, y * spacing)), _camera.WorldToDevice(new(visible.Right, y * spacing)),
+            Line(View.WorldToDevice(new(visible.Left, y * spacing)), View.WorldToDevice(new(visible.Right, y * spacing)),
                 y == 0 ? DebugTheme.GridAxis : y % majorLineEvery == 0 ? DebugTheme.GridMajor : DebugTheme.GridMinor, y == 0 ? 2 : 1);
         }
     }
@@ -587,7 +590,7 @@ public sealed partial class Renderer2D : IDisposable
         foreach (var segment in shape.OutlineSegments(points, shape.RoundSegmentsFor(matrix),
             clipBounds: bounds.IsFinite ? bounds : GetVisibleLocalBounds(matrix)))
         {
-            Line(Vector2.Transform(segment.Start, matrix), Vector2.Transform(segment.End, matrix), color, width);
+            StrokeSegment(segment, matrix, color, width);
         }
     }
 
@@ -595,8 +598,14 @@ public sealed partial class Renderer2D : IDisposable
     {
         foreach (var segment in MeshTopology.Segments(points))
         {
-            Line(Vector2.Transform(segment.Start, matrix), Vector2.Transform(segment.End, matrix), color, width);
+            StrokeSegment(segment, matrix, color, width);
         }
+    }
+
+    private void StrokeSegment(Segment<Vector2f, float> segment, Matrix3x2 matrix, Color4b color, float width)
+    {
+        var (start, end) = segment.TransformedBy(matrix);
+        Line(start.ToVector2(), end.ToVector2(), color, width);
     }
 
     private void Line(Vector2 start, Vector2 end, Color4b color, float width,
@@ -614,7 +623,7 @@ public sealed partial class Renderer2D : IDisposable
         }
     }
 
-    private bool IsCulled(SpatialObject2D item) => item.WorldBounds.IsFinite && !item.WorldBounds.Intersects(_visibleWorldBounds);
+    private bool IsCulled(SpatialObject2D item) => item.WorldBounds.IsFinite && !item.WorldBounds.Intersects(View.VisibleWorldBounds);
     private Rect2D GetVisibleLocalBounds(Matrix3x2 matrix)
     {
         if (!Matrix3x2.Invert(matrix, out var inverse))
@@ -622,7 +631,7 @@ public sealed partial class Renderer2D : IDisposable
             Ensure.Throw("Cannot render a shape with a singular transform.");
         }
 
-        return new Rect2D(Vector2.Zero, _camera.ViewportSize).TransformedBy(inverse);
+        return View.TargetBounds.TransformedBy(inverse);
     }
     private void RequireFrame()
     {

@@ -1,4 +1,9 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Authoring.Entities;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Authoring.Parts;
+using App2d.CharacterStudio.Seeds;
+using App2d.CharacterStudio.Seeds.Templates;
+using App2d.CharacterStudio.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
@@ -9,7 +14,7 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Library;
 
 /// <summary>
 /// The phase 3 starter content, written as ordinary authored assets: Person idle/thrust/jump clips, a spear, a stalker

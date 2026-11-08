@@ -21,15 +21,14 @@ public sealed partial class Renderer2D
     {
         RequireFrame();
         Ensure.ThrowIfNull(layer);
-        var gameCamera = _camera;
-        var gameBounds = _visibleWorldBounds;
-        var view = layer.GetView(gameCamera);
+        var gameView = View;
+        var view = layer.GetView(_camera);
         var position = view.Position;
-        var visible = view.VisibleWorldBounds;
+        var layerView = view.GetFrameView();
+        var visible = layerView.VisibleWorldBounds;
         try
         {
-            _camera = view;
-            _visibleWorldBounds = visible;
+            View = layerView;
             foreach (var item in layer.Scene.GetDrawOrder())
             {
                 if (!item.IsVisible)
@@ -52,18 +51,17 @@ public sealed partial class Renderer2D
                 {
                     // Moving only the view draws every visible copy, including when zoomed out.
                     view.Position = position - new Vector2((float)(repeat * width), 0f);
-                    _visibleWorldBounds = view.VisibleWorldBounds;
+                    View = view.GetFrameView();
                     Draw(item);
                 }
 
                 view.Position = position;
-                _visibleWorldBounds = visible;
+                View = layerView;
             }
         }
         finally
         {
-            _camera = gameCamera;
-            _visibleWorldBounds = gameBounds;
+            View = gameView;
         }
     }
 }

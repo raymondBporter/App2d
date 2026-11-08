@@ -1,5 +1,9 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Components;
+using App2d.CharacterStudio.Editor.Shell;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -11,7 +15,7 @@ using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Views;
 
 /// <summary>Reusable cutout art, edited on its wearer with the same sockets and character layers as the game.</summary>
 internal sealed class AppearanceView(EditorSession session) : IWorkspaceView

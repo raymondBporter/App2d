@@ -1,6 +1,6 @@
 using App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds;
 
 /// <summary>
 /// How explicit generation writes into an authored tree (character-system migration, P11b): a file that does not exist is

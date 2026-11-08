@@ -1,13 +1,13 @@
-using App2d.Core.Validation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
+using App2d.Core.Validation;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Modules;
 
 /// <summary>
 /// Extracts a rig module from a model (character-system migration, P10b): the subtree beneath an anchor control becomes an

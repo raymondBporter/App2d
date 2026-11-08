@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
-namespace App2d.CharacterStudio.Importing;
+namespace App2d.CharacterStudio.Importing.Library;
 
 /// <summary>The imported point libraries listed in the characters catalog, loaded on first use and kept read-only.</summary>
 public sealed class SourceLibraries

@@ -1,5 +1,5 @@
-using App2d.CharacterStudio.Editing;
-using App2d.CharacterStudio.Editor;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Shell;
 
 namespace App2d.Tests.Authored;
 

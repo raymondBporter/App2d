@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Simulation;
 using App2d.Core;
 using App2d.Core.Assets;
@@ -16,7 +17,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Rendering;
 
 /// <summary>
 /// Renders a ground + wall tileset pair through the real terrain renderer on a fixed sample

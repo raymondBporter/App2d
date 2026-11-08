@@ -1,4 +1,7 @@
-using App2d.CharacterStudio.CharacterSeeds;
+using App2d.CharacterStudio.Diagnostics.Editor;
+using App2d.CharacterStudio.Seeds;
+using App2d.CharacterStudio.Seeds.Library;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Assets;
 using App2d.Core.Validation;
 
@@ -36,7 +39,7 @@ namespace App2d.CharacterStudio
                     case ["--write-pterosaur", var flyingRoot, .. var flyingFlags] when Flags(flyingFlags):
                         return Report(report => PterosaurTemplate.Write(Path.GetFullPath(flyingRoot), report), flyingFlags);
                     case ["--smoke-editor-surface", var surfaceOutput]:
-                        Editor.EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput));
+                        EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput));
                         return 0;
                     case ["--write-quadrupeds", var quadRoot, .. var quadFlags] when Flags(quadFlags):
                         return Report(report => QuadrupedTemplate.Write(Path.GetFullPath(quadRoot), report), quadFlags);

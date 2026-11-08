@@ -96,11 +96,10 @@ Rectangles expose `XInterval` and `YInterval` while retaining their existing vec
 
 `ISegment<TSelf, TPoint>` supplies `Start`/`End` and a static abstract `Create` factory.
 `LineSegmentCurve2D` and Noodle's bone segment implement it with `Vector2` endpoints.
-`SegmentMath2D` adds the computed `segment.Midpoint` property, `segment.Length()`,
-clamped `segment.PointAt(amount)`, and `segment.Reversed()` for `Vector2` endpoints.
-The midpoint uses double intermediates to avoid overflow or underflow at finite float extremes.
-These operations need no additional vector interface. Reversing calls the concrete
-type's factory and returns that same type.
+`Segment<TVector, TReal>` provides `Midpoint`, `Length()`, and clamped `PointAt(amount)` through
+`IVector<TVector, TReal>` for any supported dimension and precision. `SegmentMath2D` exposes those
+same calculations to segment types with `Vector2` endpoints and handles `Matrix3x2` transforms.
+Reversing a segment returns the same concrete type with its endpoints swapped.
 
 `GiantTree2D(root, settings, seed)` creates immutable, seeded tree-level geometry. `GiantTreeSettings2D`
 uses world units; `Branches` gives exact flat-topped platform bounds. `GiantTreeVisual2D` adds bark, moss,

@@ -7,7 +7,7 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Templates;
 
 /// <summary>A flying starter built entirely from ordinary controls, cutouts, point attachments and motion clips.</summary>
 public static class PterosaurTemplate
@@ -41,7 +41,7 @@ public static class PterosaurTemplate
             Control(side + "-foot", side + "-leg", sign * .09f, .32f, z);
             for (var i = 0; i < 3; i++)
             {
-                Control(side + "-toe-" + i, side + "-foot", sign * .09f + (i - 1) * .045f, .27f + (i == 1 ? -.015f : 0), z);
+                Control($"{side}-toe-{i}", side + "-foot", sign * .09f + (i - 1) * .045f, .27f + (i == 1 ? -.015f : 0), z);
             }
         }
         PartGeometry Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IShape2D? geometry = null)

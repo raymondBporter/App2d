@@ -10,8 +10,8 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Validation;
-using App2d.Core.Vegetation;
 using App2d.Diagnostics;
+using App2d.Gameplay.World;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using App2d.Presentation.Persons.Presentation;
@@ -33,7 +33,6 @@ internal sealed class SideScrollerClient2D : IDisposable
     private readonly PlayerInputMapper2D _input = new();
     private readonly AuthoredPersonPresentation2D _presentation;
     private readonly SideScrollerCamera2D _cameraController;
-    private readonly Camera2D _camera;
     private readonly SoundEffectBank2D<SoundEffect2D> _sounds;
     private readonly TraversalMetrics2D _traversal;
     private readonly TraversalDebugRenderer2D _traversalDebug;
@@ -49,7 +48,8 @@ internal sealed class SideScrollerClient2D : IDisposable
     private bool _lastSaveSucceeded;
     private bool _shieldPose;
 
-    public SideScrollerClient2D(SessionFrame2D initial, EntityId2D playerId, Scene2D scene, Camera2D camera, SideScrollerCamera2D cameraController, TextureCache2D textures, SoundEffectBank2D<SoundEffect2D> sounds, TraversalMetrics2D traversal, PersonMoves moves)
+    public SideScrollerClient2D(SessionFrame2D initial, EntityId2D playerId, Scene2D scene, SideScrollerCamera2D cameraController,
+        TextureCache2D textures, SoundEffectBank2D<SoundEffect2D> sounds, TraversalMetrics2D traversal, PersonMoves moves, ViewportTerrainSource2D terrain)
     {
         Ensure.ThrowIfNull(initial);
         Ensure.ThrowIf(!playerId.IsValid, "A player identity is required.", nameof(playerId));
@@ -57,13 +57,12 @@ internal sealed class SideScrollerClient2D : IDisposable
         _frame = initial;
         State = Observe(initial);
         var initialState = State;
-        _camera = camera;
         _cameraController = cameraController;
         _sounds = sounds;
         _traversal = traversal;
         _traversalDebug = new TraversalDebugRenderer2D(traversal);
         Ballistics = new BallisticsDebug2D(traversal);
-        _world = new WorldPresentation2D(scene, textures);
+        _world = new WorldPresentation2D(scene, textures, terrain);
         _world.ApplyState(initial.Content, initial.World);
         _presentation = new AuthoredPersonPresentation2D(scene, moves, traversal);
         _presentation.Equip(initialState.Equipment);
@@ -82,9 +81,6 @@ internal sealed class SideScrollerClient2D : IDisposable
     public PlayerState2D State { get; private set; }
     public PlayerWardrobe2D Wardrobe => _presentation.Wardrobe;
     public LevelContent2D Content => _frame.Content;
-    public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain) => _world.SetVisibleTerrain(terrain);
-    public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);
-    public void DrawGrass(Renderer2D renderer, VegetationLayer2D layer) => _world.DrawGrass(renderer, _camera.VisibleWorldBounds, layer);
     public bool ShowTraversalDebug { get; set; }
     public BallisticsDebug2D Ballistics { get; }
     public SpatialSoundEffectSink2D<SoundEffect2D> WorldSounds { get; }
@@ -270,8 +266,9 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public string WeaponName => _weapons.WeaponName;
 
-    public void DrawWorldEffects(Renderer2D renderer)
+    public void DrawWorld(Renderer2D renderer)
     {
+        _world.Draw(renderer);
         _spells.Draw(renderer);
         if (_saveFeedbackSeconds > 0f)
         {

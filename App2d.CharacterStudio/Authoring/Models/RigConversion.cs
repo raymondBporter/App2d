@@ -1,9 +1,9 @@
-using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Authoring;
+namespace App2d.CharacterStudio.Authoring.Models;
 
 /// <summary>
 /// Explicit conversions between rig representations (character-system migration, P3b). A conversion is a deliberate

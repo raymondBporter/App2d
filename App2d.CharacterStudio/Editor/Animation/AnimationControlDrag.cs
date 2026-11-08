@@ -1,4 +1,6 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Characters.Authored;
 using ImGuiNET;
 using System.Numerics;
@@ -7,7 +9,7 @@ using Vector3 = System.Numerics.Vector3;
 namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Pointer picking and grab offsets; EditorSession performs pose edits and autokey transactions.</summary>
-internal sealed class AnimationControlDrag(EditorSession session, Viewport viewport)
+internal sealed class AnimationControlDrag(EditorSession session, App2d.CharacterStudio.Editor.Viewport.Viewport viewport)
 {
     private string? _dragging;
     private Vector3 _grab;

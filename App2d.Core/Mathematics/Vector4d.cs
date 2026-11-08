@@ -9,6 +9,7 @@ public readonly record struct Vector4d(double X, double Y, double Z, double W) :
     public Vector4d(Vector4 value) : this(value.X, value.Y, value.Z, value.W) { }
 
     public static int Dimension => 4;
+    public static Vector4d FromCoordinates(ReadOnlySpan<double> coordinates) => new(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
     public static Vector4d Zero => default;
     public static Vector4d One => new(1, 1, 1, 1);
     public static Vector4d UnitX => new(1, 0, 0, 0);

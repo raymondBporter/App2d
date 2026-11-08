@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>

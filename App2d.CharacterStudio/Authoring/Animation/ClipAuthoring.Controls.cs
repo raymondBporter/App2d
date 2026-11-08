@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring.Animation;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Numerics;

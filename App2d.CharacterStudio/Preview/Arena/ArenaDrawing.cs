@@ -1,5 +1,4 @@
-using App2d.CharacterStudio.Authoring;
-using App2d.CharacterStudio.Editor;
+using App2d.CharacterStudio.Editor.Shell;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
@@ -8,7 +7,7 @@ using App2d.Core.Rendering.Characters;
 using System.Numerics;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
-namespace App2d.CharacterStudio;
+namespace App2d.CharacterStudio.Preview.Arena;
 
 /// <summary>A registered collider as the arena's collision system holds it after a step: its use, placed region and enabled state.</summary>
 internal sealed record ArenaColliderFrame(string Id, string Use, EntityRegion Region, bool Enabled);

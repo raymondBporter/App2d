@@ -75,7 +75,7 @@ internal sealed partial class ProofRenders
                     var x = col * 600 + version * 300 + 150;
                     foreach (var (ppu, baseline) in new[] { (100f, 265f), (40f, 387f) })
                     {
-                        var projection = PointCharacterRenderer.Projection(width, height, new(x - facing * pose.Locomotion.X * ppu, row * 400 + baseline), ppu);
+                        var projection = LayeredMeshRenderer.Projection(width, height, new(x - facing * pose.Locomotion.X * ppu, row * 400 + baseline), ppu);
                         _renderer.DrawActor(drawing, projection, Matrix.CreateScale(facing, 1, 1));
                     }
                     report.Add($"{clip.Id}, {(version == 0 ? "segmented" : "rounded")}: {drawing.Mesh.TriangleCount} triangles");

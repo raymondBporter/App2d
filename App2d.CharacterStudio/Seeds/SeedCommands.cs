@@ -1,6 +1,10 @@
-using App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+using App2d.CharacterStudio.Diagnostics.Rendering;
+using App2d.CharacterStudio.Diagnostics.Support;
+using App2d.CharacterStudio.Seeds.Library;
+using App2d.CharacterStudio.Seeds.Modules;
+using App2d.CharacterStudio.Seeds.Templates;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds;
 
 /// <summary>Runs the rendering smokes and studies against the game's real assets and simulation. Studio references the game; the game does not reference Studio.</summary>
 internal static class SeedCommands

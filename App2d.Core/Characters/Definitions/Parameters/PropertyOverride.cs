@@ -1,6 +1,5 @@
-using System.Text.Json.Serialization;
-
 using App2d.Core.Validation;
+using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters.Authored;
 

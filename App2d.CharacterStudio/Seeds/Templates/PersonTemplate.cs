@@ -1,8 +1,12 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Authoring.Models;
+using App2d.CharacterStudio.Importing.Puppet;
+using App2d.CharacterStudio.Seeds.Library;
+using App2d.CharacterStudio.Seeds.Prototype;
+using App2d.CharacterStudio.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Templates;
 
 /// <summary>The Person starting template, with the shared short-legged proportions. A template, not an engine category.</summary>
 public static class PersonTemplate

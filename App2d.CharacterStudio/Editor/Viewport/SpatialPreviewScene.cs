@@ -8,7 +8,7 @@ using System.Numerics;
 using XVector2 = Microsoft.Xna.Framework.Vector2;
 using XVector3 = Microsoft.Xna.Framework.Vector3;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Viewport;
 
 /// <summary>A transient scene made from authored spatial geometry and a calibration cube. No authored data is changed.</summary>
 internal sealed class SpatialPreviewScene

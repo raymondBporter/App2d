@@ -1,4 +1,5 @@
 using App2d.CharacterStudio.Editor;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Rendering;
 using System.Numerics;
 

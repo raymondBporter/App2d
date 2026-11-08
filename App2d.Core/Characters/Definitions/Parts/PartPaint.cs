@@ -1,10 +1,5 @@
 using App2d.Core.Geometry.Operations.Polygons;
-using App2d.Core.IO;
-using App2d.Core.Json;
-using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters;
 

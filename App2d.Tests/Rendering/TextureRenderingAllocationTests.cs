@@ -22,7 +22,7 @@ public sealed class TextureRenderingAllocationTests(ITestOutputHelper output)
         var character = new Core.Rendering.LayeredMesh(3);
         character.Triangle(new(-8, -8, 0), new(8, -8, 0), new(0, 8, 0), Color4b.White);
         var material = new SolidColorShader(Color4b.White);
-        var projection = Core.Rendering.Characters.PointCharacterRenderer.Projection(128, 128, new(64), 1);
+        var projection = LayeredMeshRenderer.Projection(128, 128, new(64), 1);
         void Draw()
         {
             for (var iteration = 0; iteration < 300; iteration++)

@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.CharacterSeeds.PlayerMoves;
+using App2d.CharacterStudio.Seeds.PlayerMoves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Json;
@@ -46,7 +46,7 @@ internal sealed partial class ProofRenders
         var drawing = new PuppetDrawing();
         var scenery = new LayeredMesh(8192);
         var trail = new LayeredMesh(8192);
-        var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .45f, ReviewHeight * LabGround), LabPpu);
+        var projection = LayeredMeshRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .45f, ReviewHeight * LabGround), LabPpu);
         void Frame(string path, MotionClip clip, float seconds, Dictionary<string, Part> worn, BladeSwoosh? swoosh, bool shape, float clock = 0)
         {
             var pose = PoseEvaluator.Sample(model, clip, seconds);
@@ -240,13 +240,18 @@ internal sealed partial class ProofRenders
         var hold = PoseEvaluator.Sample(model, clip, MathF.Min(clip.Duration, strike + 6 * frame));
         var crossesTorso = LabBlade(model, clip, MathF.Min(clip.Duration, strike + 6 * frame), props, sockets) is var (g, t) &&
             Crosses(new(g.X, g.Y), new(t.X, t.Y), new(hold.Points[Humanoid.Hips].X, hold.Points[Humanoid.Hips].Y), new(hold.Points[Humanoid.Chest].X, hold.Points[Humanoid.Chest].Y));
-        return $"{variant.Id}: swoosh {swoosh * 1000:F0}-{swooshEnd * 1000:F0} ms, strike {strike * 1000:F0} ms, tip fastest at {times[peak] * 1000:F0} ms ({(times[peak] - strike) / frame:+0.0;-0.0;0.0} frames from strike), " +
-            $"brakes {brake * 100:F0}% within 2 frames, tip path turn reversals {reversals}, sword arm short of target {overreach}/{times.Length} samples, held pose blade over torso {(crossesTorso ? "yes" : "no")}, " +
-            $"grip {grips.Min():F0}-{grips.Max():F0} deg across the forearm with {grips.Count(g => g is < 40 or > 140)}/{grips.Length} frames outside 40-140" +
-            (grips.Any(g => g is < 40 or > 140) ? $" (at {string.Join(", ", gripTimes.Where((_, i) => grips[i] is < 40 or > 140).Select(t => $"{t * 1000:F0}"))} ms)" : "") + ", " +
+        return $"{variant.Id}: swoosh {swoosh * 1000:F0}-{swooshEnd * 1000:F0} ms, " +
+            $"strike {strike * 1000:F0} ms, " +
+            $"tip fastest at {times[peak] * 1000:F0} ms ({(times[peak] - strike) / frame:+0.0;-0.0;0.0} frames from strike), " +
+            $"brakes {brake * 100:F0}% within 2 frames, tip path turn reversals {reversals}, " +
+            $"sword arm short of target {overreach}/{times.Length} samples, " +
+            $"held pose blade over torso {(crossesTorso ? "yes" : "no")}, " +
+            $"grip {grips.Min():F0}-{grips.Max():F0} deg across the forearm with {grips.Count(g => g is < 40 or > 140)}/{grips.Length} frames outside 40-140{(grips.Any(g => g is < 40 or > 140) ? $" (at {string.Join(", ", gripTimes.Where((_, i) => grips[i] is < 40 or > 140).Select(t => $"{t * 1000:F0}"))} ms)" : "")}, " +
             $"elbow bend {Bend(strike):F0} deg at contact and {Bend(strike + 6 * frame):F0} deg held, " +
-            (shape is null ? "no hit shape" : $"hit rectangle x {shape.Min(p => p.X):F2} to {shape.Max(p => p.X):F2}, y {shape.Min(p => p.Y):F2} to {shape.Max(p => p.Y):F2} " +
-                $"({(shape.Min(p => p.Y) < HalfHeight(model) ? "reaches" : "misses")} an enemy half the player's height, top at {HalfHeight(model):F2})");
+            $"{(shape is null ? "no hit shape" : $"hit rectangle x {shape.Min(p => p.X):F2} to {shape.Max(p => p.X):F2}, " +
+            $"y {shape.Min(p => p.Y):F2} to {shape.Max(p => p.Y):F2} " +
+                $"({(shape.Min(p => p.Y) < HalfHeight(model) ? "reaches" : "misses")} an enemy half the player's height, " +
+                $"top at {HalfHeight(model):F2})")}";
     }
 
     /// <summary>Half the Person's standing height: with no duck, an enemy this tall must be hittable.</summary>

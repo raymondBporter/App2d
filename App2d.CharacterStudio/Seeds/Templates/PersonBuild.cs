@@ -1,8 +1,8 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Authoring.Models;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
-namespace App2d.CharacterStudio.CharacterSeeds;
+namespace App2d.CharacterStudio.Seeds.Templates;
 
 /// <summary>
 /// The Person's five proportion parameters as typed values, and the seed that declares them on a Person-structured model.

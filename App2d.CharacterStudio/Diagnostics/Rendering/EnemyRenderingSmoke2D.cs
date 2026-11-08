@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Diagnostics.Support;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
@@ -15,7 +16,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Immutable;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.CharacterSeeds.Diagnostics;
+namespace App2d.CharacterStudio.Diagnostics.Rendering;
 
 /// <summary>Exercises all enemy views using only client observations.</summary>
 internal static class EnemyRenderingSmoke2D

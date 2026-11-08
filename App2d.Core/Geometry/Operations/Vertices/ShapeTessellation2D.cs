@@ -3,6 +3,7 @@ using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -29,7 +30,7 @@ public static class ShapeTessellation2D
     }
 
     /// <summary>Returns true perimeter segments. A half-space contributes only its boundary line, never the clip rectangle's edges.</summary>
-    public static SegmentVertexEnumerable<Segment<Vector2>, Vector2> OutlineSegments(this IShape2D shape, Span<Vector2> scratch,
+    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> OutlineSegments(this IShape2D shape, Span<Vector2> scratch,
         int roundSegments = 32, int cornerSegments = 8, Rect2D? clipBounds = null)
     {
         Ensure.ThrowIfNull(shape);

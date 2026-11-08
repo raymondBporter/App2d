@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -58,6 +59,15 @@ public class LayeredMeshRenderer : IDisposable
     /// <summary>A fixed camera on a target of the given size: <see cref="View"/> over <see cref="DeviceProjection"/>.</summary>
     public static Matrix Projection(int width, int height, System.Numerics.Vector2 anchor, float pixelsPerUnit)
         => View(anchor, pixelsPerUnit) * DeviceProjection(width, height);
+
+    public static Matrix Projection(FrameView2D view) => ToXnaMatrix(view.WorldToDeviceMatrix) *
+        DeviceProjection((int)view.TargetBounds.Width, (int)view.TargetBounds.Height);
+
+    internal static Matrix ToXnaMatrix(System.Numerics.Matrix3x2 matrix) => new(
+        matrix.M11, matrix.M12, 0, 0,
+        matrix.M21, matrix.M22, 0, 0,
+        0, 0, 1, 0,
+        matrix.M31, matrix.M32, 0, 1);
 
     /// <summary>Starts a new depth layer: later draws no longer test against anything drawn before.</summary>
     public void ClearDepth()

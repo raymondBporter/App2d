@@ -1,7 +1,21 @@
+using App2d.Core.Mathematics;
+using System.Numerics;
+
 namespace App2d.Core.Geometry.Primitives;
 
-/// <summary>A lightweight directed endpoint pair. Validity belongs to the owning geometry.</summary>
-public readonly record struct Segment<TPoint>(TPoint Start, TPoint End) : ISegment<Segment<TPoint>, TPoint>
+/// <summary>A lightweight directed pair of floating-point vectors. Validity belongs to the owning geometry.</summary>
+public readonly record struct Segment<TVector, TReal>(TVector Start, TVector End) : ISegment<Segment<TVector, TReal>, TVector>
+    where TVector : unmanaged, IVector<TVector, TReal>
+    where TReal : unmanaged, IFloatingPointIeee754<TReal>
 {
-    public static Segment<TPoint> Create(TPoint start, TPoint end) => new(start, end);
+    public static Segment<TVector, TReal> Create(TVector start, TVector end) => new(start, end);
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public TVector Midpoint => IVectorExtensions.Midpoint<TVector, TReal>(Start, End);
+    public TReal Length() => IVectorExtensions.Distance<TVector, TReal>(Start, End);
+
+    /// <summary>Samples the segment, clamping the amount to [0, 1].</summary>
+    public TVector PointAt(TReal amount) => IVectorExtensions.Lerp(Start, End, Clamping.Clamp01(amount));
+
+    public Segment<TVector, TReal> Reversed() => new(End, Start);
 }

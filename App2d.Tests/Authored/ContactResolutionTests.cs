@@ -1,4 +1,4 @@
-using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Preview.Arena;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;

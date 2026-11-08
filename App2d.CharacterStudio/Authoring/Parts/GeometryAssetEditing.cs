@@ -1,4 +1,3 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
@@ -6,7 +5,7 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Authoring;
+namespace App2d.CharacterStudio.Authoring.Parts;
 
 /// <summary>Point edits construct candidates before validation, preserving the last valid polygon during a drag.</summary>
 public static class GeometryAssetEditing

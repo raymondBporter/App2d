@@ -1,5 +1,6 @@
-using App2d.CharacterStudio.CharacterSeeds;
-using App2d.CharacterStudio.Importing;
+using App2d.CharacterStudio.Importing.Library;
+using App2d.CharacterStudio.Seeds.Prototype;
+using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 using static App2d.Tests.Authored.TestModels;

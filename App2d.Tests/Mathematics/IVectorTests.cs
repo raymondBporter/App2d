@@ -139,10 +139,11 @@ public sealed class IVectorTests
         Assert.Equal(expectedLength, IVectorExtensions.Length<TVector, TReal>(value));
         Assert.Equal(expectedLength * expectedLength, IVectorExtensions.LengthSquared<TVector, TReal>(value));
 
-        var segment = new Segment<TVector>(TVector.Zero, value);
-        Assert.Equal(expectedLength, IVectorExtensions.Distance<TVector, TReal>(segment.Start, segment.End));
-        Assert.Equal(TVector.Zero, IVectorExtensions.Lerp(segment.Start, segment.End, TReal.Zero));
-        Assert.Equal(value, IVectorExtensions.Lerp(segment.Start, segment.End, TReal.One));
+        var segment = new Segment<TVector, TReal>(TVector.Zero, value);
+        Assert.Equal(expectedLength, segment.Length());
+        Assert.Equal(value / (TReal.One + TReal.One), segment.Midpoint);
+        Assert.Equal(TVector.Zero, segment.PointAt(-TReal.One));
+        Assert.Equal(value, segment.PointAt(TReal.One + TReal.One));
         Assert.Equal(value * TReal.CreateChecked(2), IVectorExtensions.Lerp(segment.Start, segment.End, TReal.CreateChecked(2)));
 
         var normalized = IVectorExtensions.Normalize<TVector, TReal>(value);
@@ -168,6 +169,13 @@ public sealed class IVectorTests
         var maximum = TReal.BitDecrement(TReal.PositiveInfinity);
         Assert.True(TVector.IsFinite(axis * maximum));
         Assert.True(TReal.IsPositiveInfinity(IVectorExtensions.Length<TVector, TReal>(axis * maximum)));
+
+        // Overflow on the first axis must not halve the subnormal inputs on the second axis separately.
+        var coordinates = new TReal[dimension];
+        coordinates[0] = maximum;
+        coordinates[1] = TReal.Epsilon;
+        var mixed = TVector.FromCoordinates(coordinates);
+        Assert.Equal(mixed, new Segment<TVector, TReal>(mixed, mixed).Midpoint);
     }
 
     private static TVector AdditiveZero<TVector>() where TVector : IAdditiveIdentity<TVector, TVector> => TVector.AdditiveIdentity;

@@ -78,8 +78,8 @@ internal sealed class PlayerWardrobe2D
     {
         if (!Enum.IsDefined(slot)) return false;
         if (cell == -1) cell = Array.FindIndex(_inventory, item => item is null);
-        if (!ValidCell(cell) || _equipped[(int)slot] is not { } worn ||
-            (_inventory[cell] is { } replacement && replacement.Slot != slot)) return false;
+        if (!ValidCell(cell) || _equipped[(int)slot] is not { } worn || (_inventory[cell] is { } replacement && replacement.Slot != slot))
+            return false;
         (_inventory[cell], _equipped[(int)slot]) = (worn, _inventory[cell]);
         Refresh();
         return true;

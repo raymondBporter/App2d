@@ -1,4 +1,5 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Characters.Authored;
 using ImGuiNET;
 using System.Numerics;

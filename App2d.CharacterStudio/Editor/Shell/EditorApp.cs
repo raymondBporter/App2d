@@ -1,12 +1,13 @@
-using App2d.CharacterStudio.CharacterSeeds;
-using App2d.CharacterStudio.Editing;
-using App2d.CharacterStudio.Importing;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Importing.Library;
+using App2d.CharacterStudio.Seeds.Library;
 using App2d.Core.Assets;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Shell;
 
 /// <summary>
 /// Host for the character editor: window, GPU, ImGui and the frame loop. Everything the author sees comes from

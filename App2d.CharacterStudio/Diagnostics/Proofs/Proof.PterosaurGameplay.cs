@@ -46,7 +46,7 @@ internal sealed partial class ProofRenders
                 // A standing player collider shows attack reach and the sampled target without adding another animation.
                 batch.Draw(pixel, new Microsoft.Xna.Framework.Rectangle(430, 372, 40, 78), new Color4b(195, 195, 182));
                 batch.End();
-                _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(900, 500,
+                _renderer.DrawActor(drawing, LayeredMeshRenderer.Projection(900, 500,
                     new(450 + root.X * 40 * zoom, 450 - root.Y * 40 * zoom), (int)(40 * zoom)), Matrix.CreateScale(enemy.Pose.Facing, 1, 1));
             });
         }

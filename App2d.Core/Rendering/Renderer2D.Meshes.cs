@@ -43,7 +43,7 @@ public sealed partial class Renderer2D
         Ensure.ThrowIfNull(material);
         Ensure.Finite(localToWorld);
         SelectMaterial(material);
-        DrawMeshCore(mesh, localToWorld * _camera.WorldToDeviceMatrix, mesh.Bounds, material);
+        DrawMeshCore(mesh, localToWorld * View.WorldToDeviceMatrix, mesh.Bounds, material);
     }
 
     public void DrawMesh(TriangleMesh2D mesh, IShader2D material) => DrawMesh(mesh, material, Matrix3x2.Identity);
@@ -74,7 +74,7 @@ public sealed partial class Renderer2D
         try
         {
             SetMaterialState();
-            _effect.World = ToXnaMatrix(localToDevice);
+            _effect.World = LayeredMeshRenderer.ToXnaMatrix(localToDevice);
             if (material is SolidColorShader solid)
             {
                 // BasicEffect premultiplies diffuse RGB by Alpha before applying vertex colors.
@@ -163,12 +163,6 @@ public sealed partial class Renderer2D
         };
         return material is SolidColorShader or SpriteShader2D or TextureShader2D or LinearGradientShader;
     }
-
-    private static XnaMatrix ToXnaMatrix(Matrix3x2 matrix) => new(
-        matrix.M11, matrix.M12, 0, 0,
-        matrix.M21, matrix.M22, 0, 0,
-        0, 0, 1, 0,
-        matrix.M31, matrix.M32, 0, 1);
 
     /// <summary>Releases retained mesh buffers. Later draws upload them again.</summary>
     public void ClearMeshCache()

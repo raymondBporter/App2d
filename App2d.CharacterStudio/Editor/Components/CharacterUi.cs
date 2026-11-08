@@ -1,8 +1,9 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.Core.Characters;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Components;
 
 /// <summary>Character-specific inspector fields, composed from shared editor widgets.</summary>
 internal static class CharacterUi

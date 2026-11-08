@@ -473,6 +473,10 @@ public readonly record struct VegetationWind2D(
     float SpatialFrequency,
     float Gust)
 {
+    /// <summary>Maximum absolute displacement at full height for the given wind response.</summary>
+    public float MaximumOffset(float response) =>
+        MathF.Abs(Strength * response * (1f + Gust * 1.8f)) * (1.28f + MathF.Abs(0.16f + Gust * 0.55f));
+
     public float Offset(float worldX, float heightWeight, float phase, float response)
     {
         var time = (float)TotalSeconds;

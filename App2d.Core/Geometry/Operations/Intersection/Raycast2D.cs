@@ -21,17 +21,20 @@ public static partial class Raycast2D
     /// <param name="segment">The finite segment endpoints.</param>
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The crossing, normal and ray parameter.</param>
-    public static bool TrySegment(Vector2 origin, Vector2 direction, Segment<Vector2> segment, float maxDistance, out RayHit2D hit)
+    public static bool TrySegment(Vector2 origin, Vector2 direction, Segment<Vector2f, float> segment, float maxDistance, out RayHit2D hit) =>
+        TrySegment(origin, direction, segment.Start.ToVector2d(), segment.End.ToVector2d(), maxDistance, out hit);
+
+    private static bool TrySegment(Vector2 origin, Vector2 direction, Vector2d start, Vector2d end, float maxDistance, out RayHit2D hit)
     {
         // Double intermediates avoid cancellation when a ray has just left a nearby optical surface.
-        var edge = segment.End.ToVector2d() - segment.Start.ToVector2d();
+        var edge = end - start;
         var axis = direction.ToVector2d();
         var denominator = axis.Cross(edge);
         if (Math.Abs(denominator) < 1e-12 || edge.LengthSquared() == 0)
         {
             return Miss(out hit);
         }
-        var offset = segment.Start.ToVector2d() - origin.ToVector2d();
+        var offset = start - origin.ToVector2d();
         var distance = offset.Cross(edge) / denominator;
         var fraction = offset.Cross(axis) / denominator;
         if (distance < 0 || distance > maxDistance || fraction < 0 || fraction > 1)

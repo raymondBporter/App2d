@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace App2d.Core.Mathematics;
 
@@ -19,6 +20,7 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
     public static Vector2f One => new(Vector2.One);
     public static Vector2f UnitX => new(Vector2.UnitX);
     public static Vector2f UnitY => new(Vector2.UnitY);
+    public static Vector2f FromCoordinates(ReadOnlySpan<float> coordinates) => new(coordinates[0], coordinates[1]);
 
     public static Vector2f operator +(Vector2f left, Vector2f right) => new(left._value + right._value);
     public static Vector2f operator -(Vector2f left, Vector2f right) => new(left._value - right._value);
@@ -32,6 +34,7 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
     public static Vector2f Max(Vector2f left, Vector2f right) => new(Vector2.Max(left._value, right._value));
     public static Vector2f Abs(Vector2f value) => new(Vector2.Abs(value._value));
     public static bool IsFinite(Vector2f value) => float.IsFinite(value.X) && float.IsFinite(value.Y);
+    public static Vector2f Transform(Vector2f point, Matrix3x2 matrix) => new(Vector2.Transform(point._value, matrix));
 
     public float Cross(Vector2f other) => X * other.Y - Y * other.X;
     public float Orientation(Vector2f b, Vector2f c) => (b - this).Cross(c - this);
@@ -48,5 +51,9 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
 
     public Vector2 ToVector2() => _value;
     public Vector2d ToVector2d() => new(X, Y);
+
+    // This borrowed view relies on Vector2f storing exactly one Vector2.
+    internal static ReadOnlySpan<Vector2f> Wrap(ReadOnlySpan<Vector2> values) => MemoryMarshal.Cast<Vector2, Vector2f>(values);
+
     public override string ToString() => _value.ToString();
 }

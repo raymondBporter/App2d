@@ -1,7 +1,10 @@
-using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Components;
 using App2d.CharacterStudio.Editor.Model;
+using App2d.CharacterStudio.Editor.Shell;
+using App2d.CharacterStudio.Editor.Viewport;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Views;
 
 /// <summary>Connects the model outline, inspectors, and viewport to the shared editor shell.</summary>
 internal sealed class ModelView : IWorkspaceView
@@ -12,7 +15,7 @@ internal sealed class ModelView : IWorkspaceView
     private readonly VariantModelInspector _variantInspector;
     private readonly ModelViewport _viewport;
 
-    public ModelView(EditorSession session, Viewport viewport)
+    public ModelView(EditorSession session, App2d.CharacterStudio.Editor.Viewport.Viewport viewport)
     {
         _session = session;
         var structural = new ModelStructuralEdits(session);

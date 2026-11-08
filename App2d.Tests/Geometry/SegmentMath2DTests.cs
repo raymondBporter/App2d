@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -49,16 +50,17 @@ public sealed class SegmentMath2DTests
     }
 
     [Fact]
-    public void PlainSegmentsGetMidpointWithoutASeparateVectorInterface()
+    public void VectorSegmentsPreserveMidpointsAtFloatExtremes()
     {
-        var segment = new Segment<Vector2>(new(-3, 7), new(8, -2));
-        Assert.Equal(new Vector2(2.5f, 2.5f), segment.Midpoint);
-        var large = new Segment<Vector2>(new(float.MaxValue), new(float.MaxValue));
-        Assert.Equal(new Vector2(float.MaxValue), large.Midpoint);
-        var opposite = new Segment<Vector2>(new(float.MaxValue), new(-float.MaxValue));
-        Assert.Equal(Vector2.Zero, opposite.Midpoint);
-        var tiny = new Segment<Vector2>(new(float.Epsilon, 2 * float.Epsilon), new(float.Epsilon, 4 * float.Epsilon));
-        Assert.Equal(new Vector2(float.Epsilon, 3 * float.Epsilon), tiny.Midpoint);
+        var segment = new Segment<Vector2f, float>(new(-3, 7), new(8, -2));
+        Assert.Equal(new Vector2f(2.5f, 2.5f), segment.Midpoint);
+        var maximum = new Vector2f(float.MaxValue, float.MaxValue);
+        var large = new Segment<Vector2f, float>(maximum, maximum);
+        Assert.Equal(maximum, large.Midpoint);
+        var opposite = new Segment<Vector2f, float>(maximum, -maximum);
+        Assert.Equal(Vector2f.Zero, opposite.Midpoint);
+        var tiny = new Segment<Vector2f, float>(new(float.Epsilon, 2 * float.Epsilon), new(float.Epsilon, 4 * float.Epsilon));
+        Assert.Equal(new Vector2f(float.Epsilon, 3 * float.Epsilon), tiny.Midpoint);
     }
 
     private readonly record struct FactorySegment(Vector2 Start, Vector2 End, bool CreatedByFactory = false)
