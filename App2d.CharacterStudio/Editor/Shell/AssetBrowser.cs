@@ -64,7 +64,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
     private string _library = "";
     private string _clip = "";
     private string _target = "";
-    private string  _rest = "";
+    private string _rest = "";
     private Dictionary<string, List<string>> _mapping = [];
     private PuppetDefinition? _puppet;
 

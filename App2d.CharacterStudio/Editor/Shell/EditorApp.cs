@@ -1,6 +1,8 @@
 using App2d.CharacterStudio.Editing.Documents;
 using App2d.CharacterStudio.Editing.Session;
+using App2d.CharacterStudio.Editor.Viewport;
 using App2d.CharacterStudio.Importing.Library;
+using App2d.CharacterStudio.Preview.Arena;
 using App2d.CharacterStudio.Seeds.Library;
 using App2d.Core.Assets;
 using App2d.Core.Rendering.Characters;
@@ -76,8 +78,11 @@ internal sealed class EditorApp : Game
         _shell = new(new EditorSession(assets, sources)
         {
             SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
-        }, new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui,
-            new SpatialPreview(GraphicsDevice, _gui, assets.PartOf("sword"), assets.PartOf("spatial-curve-study")), _settings.Layout, _smokePath is null ? SaveSettings : null)
+        },
+        new App2d.CharacterStudio.Editor.Viewport.Viewport(GraphicsDevice, _gui, _renderer),
+        new ArenaTest(assets, GraphicsDevice, _gui, _renderer),
+        _gui,
+        new SpatialPreview(GraphicsDevice, _gui, assets.PartOf("sword"), assets.PartOf("spatial-curve-study")), _settings.Layout, _smokePath is null ? SaveSettings : null)
         { Show3DPreview = _start3D };
         if (_smokePath is null)
         {
