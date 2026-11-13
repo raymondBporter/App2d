@@ -1,4 +1,6 @@
 using App2d.CharacterStudio.Editing;
+using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.CharacterStudio.Importing.Library;
 using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Animation;
@@ -104,7 +106,7 @@ public sealed class AnimationEditingTests
     public void ControlChannelGroupsRespectIkEndsAndSolvedJoints()
     {
         var (model, _) = Scene();
-        Assert.Equal([new Channel(MotionClip.TargetKind, "arm")], ClipAuthoring.ChannelsForControl(model, "hand"));
+        Assert.Equal([new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TargetKind, "arm")], ClipAuthoring.ChannelsForControl(model, "hand"));
         Assert.Empty(ClipAuthoring.ChannelsForControl(model, "elbow"));
         // A canonical node has a uniform pose scale; shear is the legacy affine adapter's channel.
         Assert.Equal([MotionClip.TranslateKind, MotionClip.RotateKind, MotionClip.ScaleKind],

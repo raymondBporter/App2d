@@ -65,7 +65,7 @@ public sealed class EquippablePieceTests : IDisposable
         var owned = Owned(wardrobe);
         Assert.Single(wardrobe.Inventory, i => i?.Id == "test-item");
         Assert.True(wardrobe.Equip(Cell(wardrobe, "test-item"), wardrobeSlot));
-        Assert.Equal(new[] { left, right }, wardrobe.Attachments.Select(a => a.Socket.Id));
+        Assert.Equal([left, right], wardrobe.Attachments.Select(a => a.Socket.Id));
         Assert.Same(wardrobe.Attachments[0].Asset, wardrobe.Attachments[1].Asset);
         Assert.False(wardrobe.Attachments[0].Instance.Mirror);
         Assert.True(wardrobe.Attachments[1].Instance.Mirror);

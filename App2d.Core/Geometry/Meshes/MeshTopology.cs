@@ -48,7 +48,6 @@ public static class MeshTopology
 
     public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> Segments(ReadOnlySpan<Vector2> vertices, bool closed = true) =>
         Segments<Segment<Vector2f, float>, Vector2f>(Vector2f.Wrap(vertices), closed);
-
     public static SegmentVertexEnumerable<TSegment, T> Segments<TSegment, T>(ReadOnlySpan<T> vertices, bool closed = true)
         where TSegment : ISegment<TSegment, T> => new(vertices, closed);
 

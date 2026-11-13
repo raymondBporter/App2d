@@ -153,9 +153,9 @@ public sealed class AnimatedPartTests
         // The pose inverse on a nested control writes the namespaced key that puts it at the asked world position.
         var target = evaluated.World("tip") + new Vector3(.03f, -.05f, 0);
         var channel = ClipAuthoring.Pose(resolved, clip, pose, .3f, "tail/tip", target);
-        Assert.Equal(new Channel(MotionClip.TranslateKind, "tail/tip"), channel);
+        Assert.Equal(new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TranslateKind, "tail/tip"), channel);
         TestModels.Near(target, PoseEvaluator.Sample(resolved, clip, .3).Attachments[Instance].World("tip"), 1e-4f);
-        Assert.Equal([new Channel(MotionClip.TranslateKind, "tail/tip"), new(MotionClip.RotateKind, "tail/tip"), new(MotionClip.ScaleKind, "tail/tip")], ClipAuthoring.ChannelsForControl(resolved, "tail/tip"));
+        Assert.Equal([new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TranslateKind, "tail/tip"), new(MotionClip.RotateKind, "tail/tip"), new(MotionClip.ScaleKind, "tail/tip")], ClipAuthoring.ChannelsForControl(resolved, "tail/tip"));
         // A fit and a show key on the exposed piece reach the nested part.
         ClipAuthoring.SetKey(clip, new(MotionClip.FitKind, "tail/tuft"), 0, new(1, -1, 0));
         ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "tail/tuft"), 0, new(0, 0, 0));
@@ -192,7 +192,7 @@ public sealed class AnimatedPartTests
     {
         var (_, _, model) = Wearer();
         var clip = ClipAuthoring.New(model, "edited-tail", "Edited tail", duration: 2);
-        var channel = new Channel(MotionClip.TranslateKind, "tail/tip");
+        var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TranslateKind, "tail/tip");
         ClipAuthoring.SetKey(clip, channel, .5f, new(.1f, 0, 0));
         ClipAuthoring.SetPlay(clip, Instance, .25f, "flick");
         ClipAuthoring.SetPlay(clip, Instance, 1.5f, "still");

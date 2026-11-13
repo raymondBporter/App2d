@@ -1,6 +1,7 @@
 using App2d.CharacterStudio.Authoring.Parts;
 using App2d.CharacterStudio.Editing;
 using App2d.CharacterStudio.Editing.Documents;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -84,7 +85,7 @@ public sealed class WeaponOrientationTests
     public void FullTurnsInterpolateThroughHalfATurnAndRoundTripWithTimelineEdits()
     {
         var (model, socket, clip) = Setup();
-        var channel = new Channel(MotionClip.OrientKind, socket.Id);
+        var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.OrientKind, socket.Id);
         ClipAuthoring.SetKey(clip, channel, 0, Vector3.Zero);
         ClipAuthoring.SetKey(clip, channel, 1, new(MathF.Tau, 0, 0));
         clip = MotionClip.FromJson(clip.ToJson());
@@ -101,7 +102,7 @@ public sealed class WeaponOrientationTests
     public void SocketOrientationBlendsWithTheArmLayerAndRejectsMissingSockets()
     {
         var (model, socket, clip) = Setup();
-        var channel = new Channel(MotionClip.OrientKind, socket.Id);
+        var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.OrientKind, socket.Id);
         ClipAuthoring.SetKey(clip, channel, 0, new(.2f, 0, 0));
         var overlay = ClipAuthoring.Duplicate(clip, "overlay", "Overlay");
         ClipAuthoring.SetKey(overlay, channel, 0, new(1, 0, 0));

@@ -1,6 +1,7 @@
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.CharacterStudio.Editing.Documents;
 using App2d.CharacterStudio.Editing.Preview;
+using App2d.CharacterStudio.Editing.Session;
 using App2d.CharacterStudio.Seeds.Library;
 using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters;

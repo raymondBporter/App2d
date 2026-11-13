@@ -1,4 +1,5 @@
 using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Preview.Arena;
 using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
 using System.Diagnostics;

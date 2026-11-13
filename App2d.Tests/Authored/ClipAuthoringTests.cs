@@ -156,7 +156,7 @@ public sealed class ClipAuthoringTests
     {
         var clip = TestModels.Clip(Model);
         var curve = new KeyCurve2D { Absolute = true, Control1 = new(1f / 3, 2), Control2 = new(2f / 3, 2) };
-        var channel = new Channel(MotionClip.TargetKind, "arm");
+        var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TargetKind, "arm");
         clip.Tracks = [new() { Kind = channel.Kind, Target = channel.Target, Keys = [
             new() { Curve = curve, Bend = -1 }, new() { Time = .5f, Value = Vector3.One }, new() { Time = 1 } ] }];
 
@@ -175,7 +175,7 @@ public sealed class ClipAuthoringTests
     public void NearbyKeyEditsReplaceTheValueAndKeepItsCurve()
     {
         var clip = TestModels.Clip(Model);
-        var channel = new Channel(MotionClip.TranslateKind, "body");
+        var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TranslateKind, "body");
         var curve = new KeyCurve2D { Absolute = true, Control1 = new(.2f, 2), Control2 = new(.8f, -1) };
         ClipAuthoring.SetKey(clip, channel, .5f, Vector3.Zero);
         ClipAuthoring.SetCurve(clip, channel, .5f, 0, curve);
@@ -192,7 +192,7 @@ public sealed class ClipAuthoringTests
     public void KeyTimesUseTheSameToleranceAsKeyEditing()
     {
         var clip = TestModels.Clip(Model);
-        var channel = new Channel(MotionClip.TranslateKind, "body");
+        var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TranslateKind, "body");
         ClipAuthoring.SetKey(clip, channel, ClipAuthoring.SameTime, Vector3.UnitX);
         ClipAuthoring.SetKey(clip, channel, 0, Vector3.Zero);
         Assert.Equal([0, ClipAuthoring.SameTime], ClipAuthoring.KeyTimes(clip));

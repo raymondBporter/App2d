@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Authoring.Animation;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;

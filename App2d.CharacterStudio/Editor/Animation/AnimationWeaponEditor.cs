@@ -67,7 +67,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
             return;
         }
         var time = session.Transport.Time;
-        var channel = new Channel(MotionClip.OrientKind, weapon.Socket.Id);
+        var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.OrientKind, weapon.Socket.Id);
         var angles = subject.Pose.SocketAngles.GetValueOrDefault(weapon.Socket.Id);
         Ui.Header(weapon.Prop.Name + " rotation");
         Ui.Help("Rotation follows the attachment frame. Turn aims in the screen; tilt points toward/away; twist rolls the blade onto its edge.");

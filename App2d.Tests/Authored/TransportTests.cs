@@ -10,7 +10,7 @@ public sealed class TransportTests
     public void LoopAccumulatesTravelWhilePlayingAndDropsCyclesWhenPaused()
     {
         var clip = new MotionClip { Duration = 1, Loop = true };
-        var transport = new Transport { Speed = 2 };
+        var transport = new App2d.CharacterStudio.Editing.Session.Transport { Speed = 2 };
         transport.Play(clip);
         transport.Advance(clip, .625f);
         Assert.Equal(.25f, transport.Time, 5);
@@ -27,7 +27,7 @@ public sealed class TransportTests
     public void OneShotHoldsTheEndAndPingPongCanPreviewABoneClip()
     {
         var clip = new MotionClip { Duration = 1 };
-        var transport = new Transport();
+        var transport = new App2d.CharacterStudio.Editing.Session.Transport();
         transport.Play(clip);
         transport.Advance(clip, 2);
         Assert.False(transport.Playing);

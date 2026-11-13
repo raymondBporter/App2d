@@ -1,4 +1,5 @@
 using App2d.CharacterStudio.Authoring;
+using App2d.CharacterStudio.Preview.Arena;
 using App2d.CharacterStudio.Seeds.Library;
 using App2d.Core.Characters.Authored;
 

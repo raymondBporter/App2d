@@ -1,4 +1,5 @@
 using App2d.CharacterStudio.Diagnostics.Editor;
+using App2d.CharacterStudio.Editor.Shell;
 using App2d.CharacterStudio.Seeds;
 using App2d.CharacterStudio.Seeds.Library;
 using App2d.CharacterStudio.Seeds.Templates;
@@ -24,7 +25,7 @@ namespace App2d.CharacterStudio
                 switch (args)
                 {
                     case ["--preview-3d"]:
-                        using (var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), null, start3D: true)) editor.Run();
+                        using (var editor = new EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), null, start3D: true)) editor.Run();
                         return 0;
                     case ["--smoke-3d", var spatialOutput]:
                         using (var proofs = new ProofRenders(FindAssets(preferSource: true), Path.GetFullPath(spatialOutput), ProofRenders.Mode.Spatial)) proofs.Run();
@@ -58,13 +59,13 @@ namespace App2d.CharacterStudio
                     case ["--smoke-acceptance", var acceptanceOutput]:
                         {
                             // P11c: the migration plan's section 6 reference workflow on a scratch copy, a frame per step.
-                            using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(acceptanceOutput), acceptance: true);
+                            using var editor = new EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(acceptanceOutput), acceptance: true);
                             editor.Run();
                             return 0;
                         }
                     case [] or ["--editor"] or ["--smoke-editor", _]:
                         {
-                            using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
+                            using var editor = new EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
                             editor.Run();
                             return 0;
                         }
