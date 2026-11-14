@@ -33,7 +33,7 @@ public sealed class Affine2DTests
     [Fact]
     public void FiniteChannelsAllowCollapseAndAreDistinctFromAnEvaluatedMatrixOverflow()
     {
-        var collapsed = new Affine2D { Scale = Vector2.Zero };
+        var collapsed = new Affine2D { Scale = Vector2f.Zero };
         Assert.True(collapsed.IsFinite);
         collapsed.Validate("collapsed");
         Assert.False(collapsed.TryInverse(out _));
@@ -52,7 +52,7 @@ public sealed class Affine2DTests
         var scale = new Affine2D { Scale = new(2, 1) };
         var composed = rotation.Then(scale);
         Assert.NotEqual(0, composed.ShearY);
-        var point = new Vector2(3, -2);
+        var point = new Vector2f(3, -2);
         Near(scale.TransformPoint(rotation.TransformPoint(point)), composed.TransformPoint(point));
         Assert.True(composed.TryInverse(out var inverse));
         Near(point, inverse.TransformPoint(composed.TransformPoint(point)));
@@ -68,12 +68,12 @@ public sealed class Affine2DTests
         transform.ShearY = .3f;
         var parent = new Affine2D { Position = new(7, 2), Rotation = -1.1f, Scale = new(.8f, 1.4f), ShearY = -.4f };
         var composed = transform.Then(parent);
-        var point = new Vector2(1.2f, -.8f);
+        var point = new Vector2f(1.2f, -.8f);
         Near(parent.TransformPoint(transform.TransformPoint(point)), composed.TransformPoint(point));
-        Near(Vector2.TransformNormal(point, transform.Matrix), transform.TransformDirection(point));
+        Near(Vector2f.TransformNormal(point, transform.Matrix), transform.TransformDirection(point));
         Assert.True(composed.TryInverse(out var inverse));
         Near(point, inverse.TransformPoint(composed.TransformPoint(point)));
-        Near(Vector2.Zero, Affine2D.Identity.TransformPoint(Vector2.Zero));
+        Near(Vector2f.Zero, Affine2D.Identity.TransformPoint(Vector2f.Zero));
     }
 
     public static TheoryData<float, float, float, float, float, float> Matrices => new()
@@ -98,7 +98,7 @@ public sealed class Affine2DTests
         var restored = new Affine2D();
         restored.CopyFrom(affine);
         Assert.Equal(matrix, restored.Matrix);
-        Near(Vector2.Transform(new(2, -3), matrix), affine.TransformPoint(new(2, -3)));
+        Near(Vector2f.Transform(new(2, -3), matrix), affine.TransformPoint(new(2, -3)));
         Assert.Equal(matrix.GetDeterminant() != 0, affine.TryInverse(out _));
         var fromChannels = new Affine2D
         {
@@ -115,10 +115,10 @@ public sealed class Affine2DTests
     public void DirectChannelEvaluationAppliesScaleRotationThenTranslationAndAllowsCollapse()
     {
         var matrix = Affine2D.CreateMatrix(new(10, 20), MathF.PI / 2, new(2, 3));
-        Near(new(4, 22), Vector2.Transform(new(1, 2), matrix));
-        Near(new(-6, 2), Vector2.TransformNormal(new(1, 2), matrix));
+        Near(new(4, 22), Vector2f.Transform(new(1, 2), matrix));
+        Near(new(-6, 2), Vector2f.TransformNormal(new(1, 2), matrix));
         var collapsed = Affine2D.CreateMatrix(new(10, 20), 0, new(0, 3));
-        Near(new(10, 26), Vector2.Transform(new(100, 2), collapsed));
+        Near(new(10, 26), Vector2f.Transform(new(100, 2), collapsed));
         Assert.Equal(0, collapsed.GetDeterminant());
     }
 
@@ -145,7 +145,7 @@ public sealed class Affine2DTests
         var transform = new Affine2D { X = 1, ShearY = .1f };
         transform.X = negativeZero;
         var expected = transform with { X = 0, Y = 2, ShearY = .2f };
-        var actual = transform.EvaluateMatrix(new(0, 2), 0, Vector2.One, new(0, .2f));
+        var actual = transform.EvaluateMatrix(new(0, 2), 0, Vector2f.One, new(0, .2f));
         Assert.Equal(expected.Matrix, actual);
         Assert.Equal(int.MinValue, BitConverter.SingleToInt32Bits(actual.M31));
     }
@@ -186,7 +186,7 @@ public sealed class Affine2DTests
             ShearX = .4f
         };
         Assert.Equal(0, notifications);
-        Assert.Equal(new Vector2(2, 3), transform.Position);
+        Assert.Equal(new Vector2f(2, 3), transform.Position);
         transform.CopyFrom(other);
         Assert.Equal(1, notifications);
         Assert.Equal(other, transform);
@@ -241,10 +241,10 @@ public sealed class Affine2DTests
     {
         var transform = new Affine2D { Scale = new(scale) };
         Assert.True(transform.TryInverse(out var inverse));
-        var point = new Vector2(1, -2);
+        var point = new Vector2f(1, -2);
         Near(point, inverse.TransformPoint(transform.TransformPoint(point)));
     }
 
-    private static void Near(Vector2 expected, Vector2 actual) =>
-        Assert.True(Vector2.Distance(expected, actual) < 2e-5f, $"Expected {expected}, found {actual}.");
+    private static void Near(Vector2f  expected, Vector2f  actual) =>
+        Assert.True(Vector2f.Distance(expected, actual) < 2e-5f, $"Expected {expected}, found {actual}.");
 }

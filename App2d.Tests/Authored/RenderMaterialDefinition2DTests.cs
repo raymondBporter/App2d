@@ -27,7 +27,7 @@ public sealed class RenderMaterialDefinition2DTests
         {
             A = "root",
             B = "tip",
-            Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
+            Geometry = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.UnitY),
             Material = RenderMaterialDefinition2D.Ink
         };
         static Vector3 World(string id) => id == "tip" ? Vector3.UnitY : Vector3.Zero;
@@ -194,7 +194,7 @@ public sealed class RenderMaterialDefinition2DTests
             A = "root",
             ScaleX = 1,
             ScaleY = 1,
-            Geometry = Rectangle2D.Builder.FromSize(Vector2.One),
+            Geometry = Rectangle2D.Builder.FromSize(Vector2f.One),
             Material = new()
             {
                 Fill = "#123456",

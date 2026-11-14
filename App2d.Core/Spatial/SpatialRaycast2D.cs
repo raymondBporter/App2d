@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -50,7 +51,7 @@ public static class SpatialRaycast2D
             return false;
         }
 
-        hit = new RayHit2D(ray.PointAt(localHit.Distance), Vector2.Normalize(worldNormal), localHit.Distance);
+        hit = new RayHit2D(ray.PointAt(localHit.Distance), Vector2f.Normalize(worldNormal), localHit.Distance);
         return true;
     }
 

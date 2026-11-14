@@ -124,11 +124,11 @@ public sealed class RepeatedAuthoringTests : IDisposable
         var animator = new EntityAnimator(entity);
         var walk = entity.Clip("walk")!;
         var speed = PoseEvaluator.CycleTravel(entity.Model, walk).X / walk.Duration;
-        var position = Vector2.Zero;
+        var position = Vector2f.Zero;
         var events = new List<AnimationEvent>();
         void Step()
         {
-            position.X += speed * Dt;
+                position = position with { X = position.X + speed * Dt };
             animator.Step(Dt, position, 1, "walk", speed * Dt, false, events);
         }
         for (var i = 0; i < 90; i++)
@@ -182,7 +182,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         var standing = new EntityAnimator(catalog.Entities["spear-guard"]);
         for (var i = 0; i < 30; i++)
         {
-            standing.Step(Dt, Vector2.Zero, 1, "idle", 0, false, []);
+            standing.Step(Dt, Vector2f.Zero, 1, "idle", 0, false, []);
         }
 
         Assert.NotEmpty(standing.Anchors);

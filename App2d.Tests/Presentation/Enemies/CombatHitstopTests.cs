@@ -22,9 +22,9 @@ public sealed class CombatHitstopTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
     private static readonly PersonMoves Moves = PersonMoves.From(Catalog);
-    private static CombatDamage2D Hit(bool kill = false) => new(new(2), CombatFaction2D.Enemy, Vector2.Zero, kill)
+    private static CombatDamage2D Hit(bool kill = false) => new(new(2), CombatFaction2D.Enemy, Vector2f.Zero, kill)
     {
-        Contact = new CombatContact2D(new(77), 4, Vector2.Zero, Vector2.UnitX, CombatImpactKind2D.Sword) { AttackerId = new(1) }
+        Contact = new CombatContact2D(new(77), 4, Vector2f.Zero, Vector2f.UnitX, CombatImpactKind2D.Sword) { AttackerId = new(1) }
     };
     private static PersonFrame Swing(double seconds) => new(Moves.Swing(null).Clip.Id, Moves.Swing(null).Clip, seconds, false, null, PersonGear.Sword);
 
@@ -89,7 +89,7 @@ public sealed class CombatHitstopTests
         var entity = Catalog.Entities["spear-guard"];
         var role = kill ? EntityControllers.Death : EntityControllers.Hit;
         var clip = entity.Clip(role)!;
-        var root = new Vector2(8, 2);
+        var root = new Vector2f(8, 2);
         var live = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, .05), root, 1);
         var state = new EnemyState2D(new(2), EnemyKind2D.Authored, new(200, 100), new(150, 20), 0, 1, true, !kill)
         {
@@ -127,7 +127,7 @@ public sealed class CombatHitstopTests
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new SilentSounds());
         var entity = Catalog.Entities["spear-guard"];
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, entity.Clip(EntityControllers.Hit), .03), new(3, 2), 1);
-        var state = new EnemyState2D(new(2), EnemyKind2D.Authored, new(200, 100), Vector2.Zero, 0, 1, true, true)
+        var state = new EnemyState2D(new(2), EnemyKind2D.Authored, new(200, 100), Vector2f.Zero, 0, 1, true, true)
         {
             ActionId = EntityControllers.Hit,
             ActionSeconds = .03f,

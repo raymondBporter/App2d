@@ -254,7 +254,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                     for (var i = 0; i < points.Count; i++)
                     {
                         var index = i;
-                        var xy = points[i].XY.ToVector2();
+                        var xy = points[i].XY;
                         if (Ui.Drag2($"Outline point {i + 1}", ref xy, .005f, -100, 100))
                             change(p => p.Mesh!.Outline![index] = p.Mesh.Outline[index] with { X = xy.X, Y = xy.Y });
                         if (ImGui.SmallButton($"Insert after##mesh-{i}"))

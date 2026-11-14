@@ -40,7 +40,7 @@ public static class Rect2DExtensions
         public float Height => rectangle.Max.Y - rectangle.Min.Y;
 
         /// <summary>The extents along both axes.</summary>
-        public Vector2 Size => rectangle.Max - rectangle.Min;
+        public Vector2f Size => rectangle.Max - rectangle.Min;
 
         /// <summary>Returns a typed size when both extents are finite and strictly positive.</summary>
         public bool TryGetPositiveSize(out Size2D size)
@@ -57,13 +57,13 @@ public static class Rect2DExtensions
         }
 
         /// <summary>Half the extents along both axes.</summary>
-        public Vector2 HalfSize => (rectangle.Max - rectangle.Min) / 2f;
+        public Vector2f HalfSize => (rectangle.Max - rectangle.Min) / 2f;
 
         /// <summary>Width times height.</summary>
         public float Area => Area2D.Rectangle(rectangle.Min, rectangle.Max);
 
         /// <summary>The midpoint of the rectangle; undefined for infinite bounds.</summary>
-        public Vector2 Center => new(rectangle.MidX, rectangle.MidY);
+        public Vector2f Center => new(rectangle.MidX, rectangle.MidY);
 
         /// <summary>The midpoint along X.</summary>
         public float MidX => (float)(((double)rectangle.Min.X + rectangle.Max.X) / 2);
@@ -72,28 +72,28 @@ public static class Rect2DExtensions
         public float MidY => (float)(((double)rectangle.Min.Y + rectangle.Max.Y) / 2);
 
         /// <summary>The (Min.X, Max.Y) corner.</summary>
-        public Vector2 TopLeft => new(rectangle.Min.X, rectangle.Max.Y);
+        public Vector2f TopLeft => new(rectangle.Min.X, rectangle.Max.Y);
 
         /// <summary>The midpoint of the top edge.</summary>
-        public Vector2 TopCenter => new(rectangle.MidX, rectangle.Max.Y);
+        public Vector2f TopCenter => new(rectangle.MidX, rectangle.Max.Y);
 
         /// <summary>The Max corner.</summary>
-        public Vector2 TopRight => rectangle.Max;
+        public Vector2f TopRight => rectangle.Max;
 
         /// <summary>The midpoint of the left edge.</summary>
-        public Vector2 CenterLeft => new(rectangle.Min.X, rectangle.MidY);
+        public Vector2f CenterLeft => new(rectangle.Min.X, rectangle.MidY);
 
         /// <summary>The midpoint of the right edge.</summary>
-        public Vector2 CenterRight => new(rectangle.Max.X, rectangle.MidY);
+        public Vector2f CenterRight => new(rectangle.Max.X, rectangle.MidY);
 
         /// <summary>The Min corner.</summary>
-        public Vector2 BottomLeft => rectangle.Min;
+        public Vector2f BottomLeft => rectangle.Min;
 
         /// <summary>The midpoint of the bottom edge.</summary>
-        public Vector2 BottomCenter => new(rectangle.MidX, rectangle.Min.Y);
+        public Vector2f BottomCenter => new(rectangle.MidX, rectangle.Min.Y);
 
         /// <summary>The (Max.X, Min.Y) corner.</summary>
-        public Vector2 BottomRight => new(rectangle.Max.X, rectangle.Min.Y);
+        public Vector2f BottomRight => new(rectangle.Max.X, rectangle.Min.Y);
 
         /// <summary>True when every coordinate is finite.</summary>
         public bool IsFinite => NumericValidation.IsFinite(rectangle.Min) && NumericValidation.IsFinite(rectangle.Max);
@@ -101,10 +101,10 @@ public static class Rect2DExtensions
         /// <summary>Tests whether a point lies inside, including all four edges.</summary>
         /// <param name="point">The point to test.</param>
         /// <returns>True when the point is in or on the rectangle.</returns>
-        public bool Contains(Vector2 point) => Containment2D.Rectangle(point, rectangle.Min, rectangle.Max);
+        public bool Contains(Vector2f point) => Containment2D.Rectangle(point, rectangle.Min, rectangle.Max);
 
         /// <summary>Tests the open interior; points on any edge or corner are excluded.</summary>
-        public bool ContainsInterior(Vector2 point) => Containment2D.RectangleInterior(point, rectangle.Min, rectangle.Max);
+        public bool ContainsInterior(Vector2f point) => Containment2D.RectangleInterior(point, rectangle.Min, rectangle.Max);
 
         /// <summary>Tests whether another rectangle lies entirely inside this one, shared edges included.</summary>
         /// <param name="other">The rectangle to test.</param>
@@ -127,37 +127,37 @@ public static class Rect2DExtensions
                 result = default;
                 return false;
             }
-            result = new(Vector2.Max(rectangle.Min, other.Min), Vector2.Min(rectangle.Max, other.Max));
+            result = new(Vector2f.Max(rectangle.Min, other.Min), Vector2f.Min(rectangle.Max, other.Max));
             return true;
         }
 
         /// <summary>The center of the shared rectangle, a natural contact point; for disjoint rectangles, the middle of the gap between them.</summary>
-        public Vector2 OverlapCenter<TOther>(TOther other) where TOther : IRect2D => (Vector2.Max(rectangle.Min, other.Min) + Vector2.Min(rectangle.Max, other.Max)) / 2;
+        public Vector2f OverlapCenter<TOther>(TOther other) where TOther : IRect2D => (Vector2f.Max(rectangle.Min, other.Min) + Vector2f.Min(rectangle.Max, other.Max)) / 2;
 
         /// <summary>The smallest rectangle containing both operands.</summary>
         /// <param name="other">The other rectangle.</param>
         /// <returns>The bounding box of both rectangles.</returns>
-        public Rect2D Union<TOther>(TOther other) where TOther : IRect2D => new(Vector2.Min(rectangle.Min, other.Min), Vector2.Max(rectangle.Max, other.Max));
+        public Rect2D Union<TOther>(TOther other) where TOther : IRect2D => new(Vector2f.Min(rectangle.Min, other.Min), Vector2f.Max(rectangle.Max, other.Max));
 
         /// <summary>The closest point in or on this rectangle; interior points are returned unchanged.</summary>
         /// <param name="point">The query point.</param>
         /// <returns>The point clamped to the rectangle.</returns>
-        public Vector2 ClosestPoint(Vector2 point) => ClosestPoint2D.OnRectangle(point, rectangle.Min, rectangle.Max);
+        public Vector2f ClosestPoint(Vector2f point) => ClosestPoint2D.OnRectangle(point, rectangle.Min, rectangle.Max);
 
         /// <summary>The distance from a finite point to the filled rectangle; zero inside.</summary>
         /// <param name="point">The query point.</param>
         /// <returns>The nonnegative distance.</returns>
-        public float DistanceTo(Vector2 point) => Distance2D.DistanceToRectangle(point, rectangle.Min, rectangle.Max);
+        public float DistanceTo(Vector2f point) => Distance2D.DistanceToRectangle(point, rectangle.Min, rectangle.Max);
 
         /// <summary>The squared distance from a finite point to the filled rectangle; zero inside.</summary>
         /// <param name="point">The query point.</param>
         /// <returns>The nonnegative squared distance.</returns>
-        public float DistanceSquaredTo(Vector2 point) => Distance2D.DistanceSquaredToRectangle(point, rectangle.Min, rectangle.Max);
+        public float DistanceSquaredTo(Vector2f point) => Distance2D.DistanceSquaredToRectangle(point, rectangle.Min, rectangle.Max);
 
         /// <summary>The signed distance from a finite point: positive outside, zero on the boundary, negative inside.</summary>
         /// <param name="point">The query point.</param>
         /// <returns>The signed distance to the boundary.</returns>
-        public float SignedDistanceTo(Vector2 point) => Distance2D.SignedDistanceToRectangle(point, rectangle.Min, rectangle.Max);
+        public float SignedDistanceTo(Vector2f point) => Distance2D.SignedDistanceToRectangle(point, rectangle.Min, rectangle.Max);
 
         /// <summary>The distance between two filled rectangles; zero when touching or overlapping.</summary>
         /// <param name="other">The other rectangle.</param>
@@ -172,7 +172,7 @@ public static class Rect2DExtensions
         /// <summary>Moves the rectangle by a finite offset.</summary>
         /// <param name="offset">The translation to apply.</param>
         /// <returns>The translated rectangle.</returns>
-        public Rect2D TranslatedBy(Vector2 offset)
+        public Rect2D TranslatedBy(Vector2f offset)
         {
             Ensure.Finite(offset);
             return new(rectangle.Min + offset, rectangle.Max + offset);
@@ -191,7 +191,7 @@ public static class Rect2DExtensions
         {
             Ensure.NonNegative(x);
             Ensure.NonNegative(y);
-            var amount = new Vector2(x, y);
+            var amount = new Vector2f(x, y);
             return new(rectangle.Min - amount, rectangle.Max + amount);
         }
 
@@ -203,7 +203,7 @@ public static class Rect2DExtensions
         {
             Ensure.NonNegative(x);
             Ensure.NonNegative(y);
-            var amount = Vector2.Min(new(x, y), rectangle.HalfSize);
+            var amount = Vector2f.Min(new(x, y), rectangle.HalfSize);
             return new(rectangle.Min + amount, rectangle.Max - amount);
         }
 
@@ -227,16 +227,17 @@ public static class Rect2DExtensions
 
             if (transform.M12 == 0f && transform.M21 == 0f)
             {
-                var scale = new Vector2(transform.M11, transform.M22);
-                var first = rectangle.Min * scale + transform.Translation;
-                var second = rectangle.Max * scale + transform.Translation;
-                return new(Vector2.Min(first, second), Vector2.Max(first, second));
+                var scale = new Vector2f(transform.M11, transform.M22);
+                var translation = new Vector2f(transform.Translation);
+                var first = rectangle.Min * scale + translation;
+                var second = rectangle.Max * scale + translation;
+                return new(Vector2f.Min(first, second), Vector2f.Max(first, second));
             }
-            Span<Vector2> corners = stackalloc Vector2[4];
+            Span<Vector2f> corners = stackalloc Vector2f[4];
             rectangle.WriteCorners(corners);
             for (var i = 0; i < corners.Length; i++)
             {
-                corners[i] = Vector2.Transform(corners[i], transform);
+                corners[i] = Vector2f.Transform(corners[i], transform);
             }
 
             return Rect2D.FromPoints(corners);
@@ -244,6 +245,6 @@ public static class Rect2DExtensions
 
         /// <summary>Writes the four finite corners counter-clockwise from Min, leaving extra entries untouched.</summary>
         /// <param name="corners">A buffer of at least four entries.</param>
-        public void WriteCorners(Span<Vector2> corners) => VertexGenerator2D.WriteRectangle(corners, rectangle.Min, rectangle.Max);
+        public void WriteCorners(Span<Vector2f> corners) => VertexGenerator2D.WriteRectangle(corners, rectangle.Min, rectangle.Max);
     }
 }

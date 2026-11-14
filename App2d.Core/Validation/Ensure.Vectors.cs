@@ -7,35 +7,35 @@ namespace App2d.Core.Validation;
 public static partial class Ensure
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 Number(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector2f Number(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNumber(value) ? value : throw CreateOutOfRange(value, "Value must not be NaN.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 Finite(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector2f Finite(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsFinite(value) ? value : throw CreateOutOfRange(value, "Value must be finite.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 Positive(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector2f Positive(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsPositive(value) ? value : throw CreateOutOfRange(value, "Value must be finite and positive (> 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 Negative(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowNegativeInfinity = false) =>
+    public static Vector2f Negative(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowNegativeInfinity = false) =>
         NumericValidation.IsNegative(value, allowNegativeInfinity) ? value : throw CreateOutOfRange(value, "Value must be negative (< 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 NonNegative(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowInfinity = false) =>
+    public static Vector2f NonNegative(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowInfinity = false) =>
         NumericValidation.IsNonNegative(value, allowInfinity) ? value : throw CreateOutOfRange(value, "Value must be nonnegative (>= 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 NonPositive(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector2f NonPositive(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNonPositive(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonpositive (<= 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 NonZero(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector2f NonZero(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNonZero(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonzero.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 LessThan(Vector2 value, Vector2 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector2f LessThan(Vector2f value, Vector2f maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null, bool allowInfinity = false)
     {
         if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
@@ -45,7 +45,7 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 LessThanOrEqual(Vector2 value, Vector2 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector2f LessThanOrEqual(Vector2f value, Vector2f maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null, bool allowInfinity = false)
     {
         if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
@@ -55,7 +55,7 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 GreaterThan(Vector2 value, Vector2 minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector2f GreaterThan(Vector2f value, Vector2f minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null, bool allowInfinity = false)
     {
         if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
@@ -65,7 +65,7 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 GreaterThanOrEqual(Vector2 value, Vector2 minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector2f GreaterThanOrEqual(Vector2f value, Vector2f minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null, bool allowInfinity = false)
     {
         if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
@@ -75,7 +75,7 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 InRange(Vector2 value, Vector2 minimum, Vector2 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector2f InRange(Vector2f value, Vector2f minimum, Vector2f maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         RangeBounds bounds = RangeBounds.Closed,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null)
@@ -269,18 +269,6 @@ public static partial class Ensure
         return NumericValidation.IsInRange(value, minimum, maximum, bounds)
             ? value : throw CreateRangeException(value, minimum, maximum, bounds, paramName);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2f Number(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
-        NumericValidation.IsNumber(value) ? value : throw CreateOutOfRange(value, "Value must not be NaN.", paramName);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2f Finite(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
-        NumericValidation.IsFinite(value) ? value : throw CreateOutOfRange(value, "Value must be finite.", paramName);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2f NonZero(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
-        NumericValidation.IsNonZero(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonzero.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Number(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>

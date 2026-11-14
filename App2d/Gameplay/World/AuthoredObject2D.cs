@@ -16,7 +16,7 @@ public sealed class AuthoredObject2D : IDisposable
 {
     private readonly PhysicsWorld2D _physics;
     private readonly CurveMotion2D? _motion;
-    private Vector2 _pausedVelocity;
+    private Vector2f _pausedVelocity;
     private float _pausedSpin;
     private double _time;
     private bool _disposed;
@@ -63,7 +63,7 @@ public sealed class AuthoredObject2D : IDisposable
         _time += dt;
         if (_motion is null) return;
         var target = _motion.Position(_time);
-        if (Body is not null) Body.LinearVelocity = dt == 0 ? Vector2.Zero : (target - WorldObject.Transform.Position) / dt;
+        if (Body is not null) Body.LinearVelocity = dt == 0 ? Vector2f.Zero : (target - WorldObject.Transform.Position) / dt;
         else WorldObject.Transform.Position = target;
     }
 
@@ -76,7 +76,7 @@ public sealed class AuthoredObject2D : IDisposable
             if (!enabled) { _pausedVelocity = Body.LinearVelocity; _pausedSpin = Body.AngularVelocity; }
             Body.IsCollider = enabled;
             Body.MotionType = enabled ? Placement.Asset.Physics!.MotionType : BodyMotionType2D.Static;
-            Body.LinearVelocity = enabled ? _pausedVelocity : Vector2.Zero;
+            Body.LinearVelocity = enabled ? _pausedVelocity : Vector2f.Zero;
             Body.AngularVelocity = enabled ? _pausedSpin : 0;
         }
         IsEnabled = enabled;
@@ -85,7 +85,7 @@ public sealed class AuthoredObject2D : IDisposable
     public ObjectDefinition2D CaptureDefinition() => new(Id, Placement.Id, Placement.Asset);
     public ObjectState2D CaptureState() => new(Id, WorldObject.Transform.Position, WorldObject.Transform.Rotation)
     {
-        LinearVelocity = IsEnabled ? Body?.LinearVelocity ?? Vector2.Zero : _pausedVelocity,
+        LinearVelocity = IsEnabled ? Body?.LinearVelocity ?? Vector2f.Zero : _pausedVelocity,
         AngularVelocity = IsEnabled ? Body?.AngularVelocity ?? 0 : _pausedSpin,
         Time = _time,
         IsEnabled = IsEnabled

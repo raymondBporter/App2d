@@ -16,7 +16,7 @@ public sealed record ResolvedAttachment(PartInstance Instance, Part Asset, Model
     /// <summary>Whether the instance's fit stretches the artwork in the placement (else it repositions the asset's layout).</summary>
     public bool Stretches => Asset.Fitting == PartFittings.Stretch;
     /// <summary>The fit the asset's layout repositions by: the instance fit under the layout policy, none under stretch.</summary>
-    public Vector2 LayoutFit => Stretches ? Vector2.One : new(Instance.FitX, Instance.FitY);
+    public Vector2f LayoutFit => Stretches ? Vector2f.One : new(Instance.FitX, Instance.FitY);
 
     /// <summary>The instance's placement in the frame its socket placement is given in (actor-local or world).</summary>
     public LayeredFrame2D Placement(LayeredFrame2D socketPlacement) => Instance.Placement(Stretches).Then(socketPlacement);
@@ -26,7 +26,7 @@ public sealed record ResolvedAttachment(PartInstance Instance, Part Asset, Model
     {
         var fit = LayoutFit;
         var frame = Asset.LocationFrame(location);
-        return fit == Vector2.One ? frame.Then(placement) : frame.WithOrigin(new(frame.Origin.X * fit.X, frame.Origin.Y * fit.Y, frame.Origin.Z)).Then(placement);
+        return fit == Vector2f.One ? frame.Then(placement) : frame.WithOrigin(new(frame.Origin.X * fit.X, frame.Origin.Y * fit.Y, frame.Origin.Z)).Then(placement);
     }
 
     /// <summary>The static payload's drawing inputs for an instance placement: each location's origin and frame, as the shared part drawing expects.</summary>

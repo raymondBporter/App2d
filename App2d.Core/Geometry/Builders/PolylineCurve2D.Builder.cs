@@ -20,6 +20,6 @@ public readonly partial record struct PolylineCurve2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static PolylineCurve2D Create(IEnumerable<Vector2> points) => new PolylineCurve2D(points).Validated();
+        public static PolylineCurve2D Create(IEnumerable<Vector2f> points) => new PolylineCurve2D(points).Validated();
     }
 }

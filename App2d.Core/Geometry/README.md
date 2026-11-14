@@ -162,7 +162,7 @@ using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 var curve = QuadraticBezier2D.Builder.Create(new(0, 0), new(1, 2), new(2, 0));
-var ray = new Ray2D(new(-1, .75f), Vector2.UnitX);
+var ray = new Ray2D(new(-1, .75f), Vector2f.UnitX);
 if (GeometryRaycast2D.TryIntersect(ray, curve, 10f, out var hit))
 {
     // Nearest point is (.5, .75); hit.Normal is the curve's directed unit normal.
@@ -318,8 +318,8 @@ settings and preserves the existing `{ "x": ..., "y": ... }` coordinate format. 
 `ShapeVertices2D` exposes exact local convex cores and sampled drawing outlines without allocating:
 
 ```csharp
-Span<Vector2> buffer = stackalloc Vector2[shape.GetVertCount()];
-ReadOnlySpan<Vector2> core = shape.GetVerts(buffer, out float radius);
+Span<Vector2f> buffer = stackalloc Vector2f[shape.GetVertCount()];
+ReadOnlySpan<Vector2f> core = shape.GetVerts(buffer, out float radius);
 ```
 
 The core is a point for circles, a segment for capsules, inset corners for rounded rectangles (possibly collapsing

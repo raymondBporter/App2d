@@ -28,15 +28,15 @@ internal sealed class TileEditor2D : IDisposable
     private TileEditSession2D _session;
 
     private LevelDatabase2D? _database;
-    private Vector2 _cameraFocus;
-    private Vector2 _savedCameraPosition;
+    private Vector2f _cameraFocus;
+    private Vector2f _savedCameraPosition;
     private float _savedCameraZoom;
-    private Vector2 _panAnchorDevice;
-    private Vector2 _panAnchorFocus;
+    private Vector2f _panAnchorDevice;
+    private Vector2f _panAnchorFocus;
     private bool _isPanning;
     private bool _toggleRequested;
     public bool IsPointerOverUi { get; internal set; }
-    private Vector2 _lastMouseDevice;
+    private Vector2f _lastMouseDevice;
     private int _lastPaintedX;
     private int _lastPaintedY;
     private bool _hasLastPainted;
@@ -131,13 +131,13 @@ internal sealed class TileEditor2D : IDisposable
     public byte SelectedTilesetIndex { get; private set; }
     public string SelectedTilesetId => _map.TilesetIds[SelectedTilesetIndex];
     public IReadOnlyList<string> TilesetIds => _map.TilesetIds;
-    public Vector2 MouseDevicePosition => _lastMouseDevice;
-    public Vector2 CameraFocus => _cameraFocus;
+    public Vector2f MouseDevicePosition => _lastMouseDevice;
+    public Vector2f CameraFocus => _cameraFocus;
     public Rect2D VisibleWorldBounds => _camera.VisibleWorldBounds;
     public Rect2D MapBounds => _map.WorldBounds;
     public GridGeometry2D GridGeometry => _map.GridGeometry;
     public float TileSize => _map.TileSize;
-    public Vector2 VisibleDeviceSize => _camera.ViewportSize;
+    public Vector2f VisibleDeviceSize => _camera.ViewportSize;
     public float Zoom => _camera.Zoom;
     public float PixelsToWorldUnits(float pixels) => _camera.PixelsToWorldUnits(pixels);
     public ThingEditorInspector2D InspectorView { get; }
@@ -376,7 +376,7 @@ internal sealed class TileEditor2D : IDisposable
         ReloadThings(notifyRuntime: touchesObjects);
     }
 
-    internal bool TryGetPositionPlacementPreview(out ThingDefinitionRecord2D definition, out Vector2 position)
+    internal bool TryGetPositionPlacementPreview(out ThingDefinitionRecord2D definition, out Vector2f position)
     {
         definition = null!;
         position = default;
@@ -421,7 +421,7 @@ internal sealed class TileEditor2D : IDisposable
             var deviceDelta = input.Mouse.PositionDevice - _panAnchorDevice;
             // Transform a displacement without translation, accounting for viewport scale,
             // zoom, rotation, and the device-to-world Y flip.
-            _cameraFocus = _panAnchorFocus - Vector2.TransformNormal(deviceDelta, _camera.DeviceToWorldMatrix);
+            _cameraFocus = _panAnchorFocus - Vector2f.TransformNormal(deviceDelta, _camera.DeviceToWorldMatrix);
         }
 
         if (input.Mouse.WheelDelta != 0f)
@@ -543,7 +543,7 @@ internal sealed class TileEditor2D : IDisposable
         var handleRadiusSquared = handleRadius * handleRadius;
         foreach (var thing in _positionThings.AsEnumerable().Reverse())
         {
-            var position = new Vector2(thing.X, thing.Y);
+            var position = new Vector2f(thing.X, thing.Y);
             bool hit;
             if (TryGetObjectAsset(thing.Asset, out var asset))
             {
@@ -553,7 +553,7 @@ internal sealed class TileEditor2D : IDisposable
             }
             else
             {
-                hit = Vector2.DistanceSquared(world, position) <= handleRadiusSquared * 2.25f;
+                hit = Vector2f.DistanceSquared(world, position) <= handleRadiusSquared * 2.25f;
             }
 
             if (hit)
@@ -624,7 +624,7 @@ internal sealed class TileEditor2D : IDisposable
         ReloadThings(notifyRuntime: touchesObjects);
     }
 
-    private Vector2 SnapToGrid(Vector2 world) => GridGeometry.SnapToNearestCorner(world);
+    private Vector2f SnapToGrid(Vector2f world) => GridGeometry.SnapToNearestCorner(world);
 
     private void ReloadThings(bool notifyRuntime)
     {

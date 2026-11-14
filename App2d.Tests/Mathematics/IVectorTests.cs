@@ -2,6 +2,7 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace App2d.Tests.Mathematics;
 
@@ -67,6 +68,8 @@ public sealed class IVectorTests
             Assert.Equal(a3 - b3, (new Vector3f(a3) - new Vector3f(b3)).ToVector3());
             Assert.Equal(a * scale, (new Vector4f(a) * scale).ToVector4());
             Assert.Equal(a2 / scale, (new Vector2f(a2) / scale).ToVector2());
+            Assert.Equal(a2 * b2, (new Vector2f(a2) * new Vector2f(b2)).ToVector2());
+            Assert.Equal(a2 / b2, (new Vector2f(a2) / new Vector2f(b2)).ToVector2());
             Assert.Equal(a3 / scale, (new Vector3f(a3) / scale).ToVector3());
             Assert.Equal(a / scale, (new Vector4f(a) / scale).ToVector4());
             Assert.Equal(Vector2.Dot(a2, b2), Vector2f.Dot(new(a2), new(b2)));
@@ -105,8 +108,20 @@ public sealed class IVectorTests
         Assert.Equal(new Vector4d(16_777_217, 3, -16_777_217, 1), wide);
         Assert.Equal(value, wide.ToVector4());
         Assert.Equal(value, value.ToVector4f().ToVector4());
-        Assert.Equal(new Vector2(1, 2), new Vector2(1, 2).ToVector2f().ToVector2());
+        Assert.Equal(new Vector2(1, 2), new Vector2f(1, 2).ToVector2());
         Assert.Equal(new Vector3(1, 2, 3), new Vector3(1, 2, 3).ToVector3f().ToVector3());
+    }
+
+    [Fact]
+    public void Float2DAliasSharesTheNumericsMeshSpanLayout()
+    {
+        Vector2f[] vertices = [new(2, -3), new(5, 7)];
+        var wrapped = MemoryMarshal.Cast<Vector2f, Vector2>(vertices.AsSpan());
+
+        Assert.Equal(new Vector2(2, -3), wrapped[0]);
+        Assert.Equal(new Vector2(5, 7), wrapped[1]);
+        vertices[0] = new(11, 13);
+        Assert.Equal(new Vector2(11, 13), wrapped[0]);
     }
 
     [Fact]

@@ -29,10 +29,10 @@ public static class PartPlacement3D
     /// A lifted frame's X axis back in gameplay XY: the unit projection, or the facing when the axis points straight
     /// at or away from the viewer. Foreshortening never changes a projectile's speed or a region's axis length.
     /// </summary>
-    public static Vector2 ProjectAxis(Frame3D frame, int facing)
+    public static Vector2f  ProjectAxis(Frame3D frame, int facing)
     {
         var projected = frame.XAxis.XY;
-        return projected.LengthSquared() > 1e-8f ? Vector2.Normalize(projected) : new Vector2(facing, 0);
+        return projected.LengthSquared() > 1e-8f ? Vector2f.Normalize(projected) : new Vector2f(facing, 0);
     }
 
     /// <summary>Asset coordinates relative to its chosen pivot, in authored units.</summary>
@@ -46,7 +46,7 @@ public static class PartPlacement3D
 
     /// <summary>A geometry frame carried in 3D. Physical Z rotates with the geometry; layer order does not enter the frame.</summary>
     public static Frame3D GeometryFrame(LayeredFrame2D local, Frame3D spatial, float physicalZ = 0) =>
-        Extend(local).WithOrigin(new(local.Frame.Origin, physicalZ)).Then(spatial);
+        Extend(local).WithOrigin(new(local.Frame.Origin.ToVector2(), physicalZ)).Then(spatial);
 
     /// <summary>A prop's local point in the world, with its grip on the frame's origin. The one transform art, hits and muzzles share.</summary>
     public static Vector3 Point(Frame3D frame, Part prop, Vector3f local) =>

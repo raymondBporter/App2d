@@ -68,7 +68,7 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 
         void Outline(EntityRegion region, Color4b color, float width)
         {
-            var points = region.Outline().Select(p => new Vector3(p, -6)).ToList();
+            var points = region.Outline().Select(p => new Vector3(p.ToVector2(), -6)).ToList();
             for (var i = 0; i < points.Count; i++)
             {
                 mesh.Line(points[i], points[(i + 1) % points.Count], width * pixel, color);
@@ -95,7 +95,7 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 
             foreach (var region in actor.Attacks)
             {
-                mesh.Polygon([.. region.Outline().Select(q => new Vector3(q, -6.1f))], new Color4b(235, 60, 50, 90), new Color4b(220, 40, 30), 3 * pixel);
+                mesh.Polygon([.. region.Outline().Select(q => new Vector3(q.ToVector2(), -6.1f))], new Color4b(235, 60, 50, 90), new Color4b(220, 40, 30), 3 * pixel);
             }
 
             foreach (var equipment in actor.Entity.Equipment)

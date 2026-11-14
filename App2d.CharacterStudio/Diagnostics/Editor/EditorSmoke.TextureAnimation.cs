@@ -103,7 +103,7 @@ internal sealed partial class EditorSmoke
         Check(s.Edit(doc, () =>
         {
             doc.Asset.Geometry = [new() { Id = "panel", A = PartLocation.Origin, Geometry = Rectangle2D.Builder.FromSize(1.5f, .8f), Material = new() { TextureAnimation = _textureProof } }];
-            doc.Asset.Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(0, 1), new(1, 1), new(1, 0)), PeriodSeconds = 2 };
+            doc.Asset.Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2f.Zero, new(0, 1), new(1, 1), new(1, 0)), PeriodSeconds = 2 };
         }), s);
         s.PreviewPartOnWearer = false;
         s.ShowRest = false;

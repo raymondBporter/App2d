@@ -11,15 +11,15 @@ public sealed class BallisticsDebug2DTests
     public void TenMetersPerSecondAtFortyFiveDegreesHasKnownReferenceArc()
     {
         var diagnostic = Create();
-        var origin = new Vector2(300f, 80f);
+        var origin = new Vector2f(300f, 80f);
         diagnostic.Launch(origin, 1f);
         var shot = diagnostic.Reference!.Value;
 
         Assert.Equal(2.5f, shot.Rise / 32f, 4);
         Assert.Equal(10f, shot.Range / 32f, 4);
         Assert.Equal(MathF.Sqrt(2f), shot.FlightSeconds, 4);
-        AssertClose(origin + new Vector2(160f, 80f), shot.PositionAt(shot.FlightSeconds / 2f));
-        AssertClose(origin + new Vector2(320f, 0f), shot.PositionAt(shot.FlightSeconds));
+        AssertClose(origin + new Vector2f(160f, 80f), shot.PositionAt(shot.FlightSeconds / 2f));
+        AssertClose(origin + new Vector2f(320f, 0f), shot.PositionAt(shot.FlightSeconds));
 
         var world = diagnostic.World!.Value;
         Assert.Equal(1900f, world.Gravity);
@@ -31,16 +31,16 @@ public sealed class BallisticsDebug2DTests
     public void ChangingSettingsDoesNotAlterAnAlreadyLaunchedShotAndFacingMirrorsRange()
     {
         var diagnostic = Create();
-        diagnostic.Launch(new Vector2(60f, 120f), -1f);
+        diagnostic.Launch(new Vector2f(60f, 120f), -1f);
         var original = diagnostic.Reference!.Value;
         diagnostic.SpeedTilesPerSecond = 20f;
         diagnostic.AngleDegrees = 90f;
         diagnostic.ReferenceGravityTilesPerSecondSquared = 20f;
         Assert.Equal(original, diagnostic.Reference!.Value);
-        AssertClose(original.Origin + new Vector2(-320f, 0f), original.PositionAt(original.FlightSeconds));
+        AssertClose(original.Origin + new Vector2f(-320f, 0f), original.PositionAt(original.FlightSeconds));
 
         diagnostic.Advance(0.5f);
-        diagnostic.Launch(Vector2.Zero, 1f);
+        diagnostic.Launch(Vector2f.Zero, 1f);
         Assert.Equal(0f, diagnostic.ElapsedSeconds);
         Assert.Equal(640f, diagnostic.Reference!.Value.Gravity);
         Assert.Equal(640f, diagnostic.Reference.Value.Velocity.Y, 3);
@@ -51,8 +51,8 @@ public sealed class BallisticsDebug2DTests
     {
         var smallSteps = Create();
         var largeStep = Create();
-        smallSteps.Launch(Vector2.Zero, 1f);
-        largeStep.Launch(Vector2.Zero, 1f);
+        smallSteps.Launch(Vector2f.Zero, 1f);
+        largeStep.Launch(Vector2f.Zero, 1f);
         for (var i = 0; i < 60; i++)
         {
             smallSteps.Advance(1f / 120f);
@@ -84,8 +84,8 @@ public sealed class BallisticsDebug2DTests
     }
 
     private static BallisticsDebug2D Create() => new(TraversalMetrics2D.FromGeometry(
-        new Vector2(138f), 0.635f, new Vector2(22f, 56f), 0f));
+        new Vector2f(138f), 0.635f, new Vector2f(22f, 56f), 0f));
 
-    private static void AssertClose(Vector2 expected, Vector2 actual) =>
-        Assert.True(Vector2.Distance(expected, actual) < 0.001f, $"Expected {expected}, got {actual}.");
+    private static void AssertClose(Vector2f  expected, Vector2f  actual) =>
+        Assert.True(Vector2f.Distance(expected, actual) < 0.001f, $"Expected {expected}, got {actual}.");
 }

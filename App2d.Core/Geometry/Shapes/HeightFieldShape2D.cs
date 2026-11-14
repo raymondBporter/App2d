@@ -16,17 +16,17 @@ namespace App2d.Core.Geometry.Shapes;
 [System.Text.Json.Serialization.JsonConverter(typeof(GeometryJsonConverterFactory))]
 public readonly record struct HeightFieldShape2D : IShape2D, IHeightField2D
 {
-    private readonly Vector2[]? _surface;
-    private static readonly ConditionalWeakTable<Vector2[], Dictionary<float, Prepared>> PreparedShapes = [];
+    private readonly Vector2f[]? _surface;
+    private static readonly ConditionalWeakTable<Vector2f[], Dictionary<float, Prepared>> PreparedShapes = [];
 
     /// <summary>Snapshots source data without validating, consistent with other shape constructors. Prefer Builder.</summary>
-    public HeightFieldShape2D(IEnumerable<Vector2> surface, float yMin)
+    public HeightFieldShape2D(IEnumerable<Vector2f> surface, float yMin)
     {
         _surface = surface?.ToArray();
         YMin = yMin;
     }
 
-    public ReadOnlySpan<Vector2> Surface { get => _surface; init => _surface = value.ToArray(); }
+    public ReadOnlySpan<Vector2f> Surface { get => _surface; init => _surface = value.ToArray(); }
     public float YMin { get; init; }
     public float XMin => Profile.XMin;
     public float XMax => Profile.XMax;
@@ -40,7 +40,7 @@ public readonly record struct HeightFieldShape2D : IShape2D, IHeightField2D
     internal SimplePolygon2D Polygon => Data.Polygon;
     public float HeightAt(float x) => Profile.HeightAt(x);
     public float SlopeAt(float x) => Profile.SlopeAt(x);
-    public bool ContainsPoint(Vector2 point) => Profile.ContainsPoint(point);
+    public bool ContainsPoint(Vector2f point) => Profile.ContainsPoint(point);
     public void Validate() => _ = Data;
 
     private Prepared Data
@@ -69,7 +69,7 @@ public readonly record struct HeightFieldShape2D : IShape2D, IHeightField2D
     public static class Builder
     {
         /// <summary>Preserves the authored polyline exactly, with no curve sampling or general polygon splitting.</summary>
-        public static HeightFieldShape2D Create(IEnumerable<Vector2> surface, float yMin) => new HeightFieldShape2D(surface, yMin).Validated();
+        public static HeightFieldShape2D Create(IEnumerable<Vector2f> surface, float yMin) => new HeightFieldShape2D(surface, yMin).Validated();
 
         /// <summary>Freezes a finite heightfield into a shape. Polyline sources keep their original vertices.</summary>
         public static HeightFieldShape2D FromHeightField(IHeightField2D field,

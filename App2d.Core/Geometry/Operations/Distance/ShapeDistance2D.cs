@@ -18,20 +18,20 @@ namespace App2d.Core.Geometry.Operations.Distance;
 /// </summary>
 public static class ShapeDistance2D
 {
-    private static readonly Similarity2D IdentityPose = Similarity2D.FromTranslation(Vector2.Zero);
+    private static readonly Similarity2D IdentityPose = Similarity2D.FromTranslation(Vector2f.Zero);
 
     /// <summary>Signed distance from a point to a shape in the same coordinate space.</summary>
     /// <param name="point">The query point.</param>
     /// <param name="shape">A circle, ellipse, capsule, rectangle, triangle, convex polygon or half-space.</param>
     /// <returns>Negative inside, zero on the boundary, positive outside.</returns>
     /// <exception cref="NotSupportedException">The shape is a composite or an unknown type.</exception>
-    public static float SignedDistance(Vector2 point, IShape2D shape)
+    public static float SignedDistance(Vector2f point, IShape2D shape)
     {
         Ensure.ThrowIfNull(shape);
         return shape switch
         {
             Circle2D circle => Distance2D.SignedDistanceToCircle(point, circle.Center, circle.Radius),
-            Ellipse2D ellipse => Distance2D.SignedDistanceToEllipse(ellipse.Frame.ToFrame(point), Vector2.Zero, ellipse.Radii),
+            Ellipse2D ellipse => Distance2D.SignedDistanceToEllipse(ellipse.Frame.ToFrame(point), Vector2f.Zero, ellipse.Radii),
             Capsule2D capsule => Distance2D.SignedDistanceToCapsule(point, capsule.Start, capsule.End, capsule.Radius),
             RoundedRectangle2D rounded => Distance2D.SignedDistanceToRectangle(rounded.Frame.ToFrame(point), -rounded.InnerHalfSize, rounded.InnerHalfSize) - rounded.Radius,
             Rectangle2D rectangle => Distance2D.SignedDistanceToRectangle(rectangle.Frame.ToFrame(point), -rectangle.HalfSize, rectangle.HalfSize),
@@ -48,13 +48,13 @@ public static class ShapeDistance2D
     /// <param name="shape">The shape.</param>
     /// <param name="point">The query point.</param>
     /// <returns>Negative inside, zero on the boundary, positive outside.</returns>
-    public static float SignedDistance(IShape2D shape, Vector2 point) => SignedDistance(point, shape);
+    public static float SignedDistance(IShape2D shape, Vector2f point) => SignedDistance(point, shape);
 
     /// <summary>Distance from a point to a filled shape; zero inside. Composites take the minimum over their parts.</summary>
     /// <param name="point">The query point.</param>
     /// <param name="shape">Any built-in shape, including composites.</param>
     /// <returns>The nonnegative distance to the filled shape.</returns>
-    public static float Distance(Vector2 point, IShape2D shape)
+    public static float Distance(Vector2f point, IShape2D shape)
     {
         Ensure.ThrowIfNull(shape);
         if (shape is not CompositeShape2D composite)
@@ -75,7 +75,7 @@ public static class ShapeDistance2D
     /// <param name="shape">Any built-in shape, including composites.</param>
     /// <param name="point">The query point.</param>
     /// <returns>The nonnegative distance to the filled shape.</returns>
-    public static float Distance(IShape2D shape, Vector2 point) => Distance(point, shape);
+    public static float Distance(IShape2D shape, Vector2f point) => Distance(point, shape);
 
     /// <summary>Signed distance between two shapes expressed in the same coordinate space.</summary>
     /// <param name="first">The first shape.</param>
@@ -183,15 +183,15 @@ public static class ShapeDistance2D
         return Math.Max(0f, SignedDistance(first, firstPose, second, secondPose));
     }
 
-    private static float SignedDistanceToPerimeter(Vector2 point, IShape2D shape)
+    private static float SignedDistanceToPerimeter(Vector2f point, IShape2D shape)
     {
         var count = shape.GetOutlineVertCount();
-        Span<Vector2> vertices = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
+        Span<Vector2f> vertices = count <= 64 ? stackalloc Vector2f[count] : new Vector2f[count];
         shape.GetOutlineVerts(vertices);
         return Distance2D.SignedDistanceToConvexPolygon(point, vertices);
     }
 
-    private static float SignedDistanceToSimplePolygon(Vector2 point, SimplePolygon2D polygon)
+    private static float SignedDistanceToSimplePolygon(Vector2f point, SimplePolygon2D polygon)
     {
         var vertices = polygon.Vertices;
         var distance = float.PositiveInfinity;

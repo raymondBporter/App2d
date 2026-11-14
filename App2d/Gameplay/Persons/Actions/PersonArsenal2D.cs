@@ -22,14 +22,14 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
     public PersonArsenal2D(
         EntityIdAllocator2D ids,
         RigidBody2D ownerBody,
-        Vector2 muzzleOffset,
+        Vector2f muzzleOffset,
         CollisionSystem2D collision,
         uint worldLayer,
         uint targetLayer,
         CombatFaction2D ownerFaction,
         CombatSystem2D combat,
         Func<Rect2D, bool>? overlapsSpikes = null,
-        AuthoredHero2D? hero = null, Func<float, Vector2>? muzzle = null,
+        AuthoredHero2D? hero = null, Func<float, Vector2f>? muzzle = null,
         Health2D? health = null, SpellTuning2D? spells = null)
     {
         Ensure.ThrowIfNull(ids);

@@ -10,7 +10,7 @@ internal static class LinearGeometry2D
     internal const float DefaultPointTolerance = 0.00001f;
 
     /// <summary>The closest point on a line or forward ray, in double precision.</summary>
-    internal static Vector2d ClosestPoint(Vector2 point, Vector2 origin, Vector2 direction, bool forwardOnly)
+    internal static Vector2d ClosestPoint(Vector2f point, Vector2f origin, Vector2f direction, bool forwardOnly)
     {
         Ensure.Finite(point);
         Ensure.Finite(origin);
@@ -27,7 +27,7 @@ internal static class LinearGeometry2D
     }
 
     /// <summary>The squared distance to a line or forward ray, in double precision.</summary>
-    internal static double DistanceSquared(Vector2 point, Vector2 origin, Vector2 direction, bool forwardOnly)
+    internal static double DistanceSquared(Vector2f point, Vector2f origin, Vector2f direction, bool forwardOnly)
     {
         Ensure.Finite(point);
         Ensure.Finite(origin);
@@ -44,6 +44,6 @@ internal static class LinearGeometry2D
     }
 
     /// <summary>The distance to a line or forward ray, in double precision.</summary>
-    internal static double Distance(Vector2 point, Vector2 origin, Vector2 direction, bool forwardOnly)
+    internal static double Distance(Vector2f point, Vector2f origin, Vector2f direction, bool forwardOnly)
         => Math.Sqrt(DistanceSquared(point, origin, direction, forwardOnly));
 }

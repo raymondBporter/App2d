@@ -23,13 +23,13 @@ public sealed class ObservationRoundTripTests
     [Fact]
     public void CompleteObservationAndEveryOccurrenceCanCrossAValueOnlyBoundary()
     {
-        var map = new EditableTileMap2D(8, 4, 16f, 4, new Vector2(-50f, 20f), ["stone", "grass"]);
+        var map = new EditableTileMap2D(8, 4, 16f, 4, new Vector2f(-50f, 20f), ["stone", "grass"]);
         map.SetTile(3, 1, new TileCell2D(TileKind2D.Solid, 1));
         map.SetTile(4, 1, new TileCell2D(TileKind2D.Ladder, 1)); // Adjacent chunk's halo.
         var terrain = TerrainChunkState2D.Capture(map, new(0, 0), 7);
         var playerId = new EntityId2D(100);
         var enemyId = new EntityId2D(101);
-        var position = new Vector2(24f, -3f);
+        var position = new Vector2f(24f, -3f);
         var person = new PersonState2D
         {
             Id = playerId,
@@ -98,7 +98,7 @@ public sealed class ObservationRoundTripTests
             new GoalReached2D(stamp), new CheckpointActivated2D(stamp, 42, 3, position),
             new AttackStarted2D(stamp, PlayerAttackKind2D.Downward, 0.4f, true),
             new CombatDamageOccurred2D(stamp, new(enemyId, CombatFaction2D.Enemy, position, true)
-                { Contact = new CombatContact2D(new(777), 17, position + Vector2.UnitX, -Vector2.UnitX, CombatImpactKind2D.Sword) { AttackerId = playerId } })
+                { Contact = new CombatContact2D(new(777), 17, position + Vector2f.UnitX, -Vector2f.UnitX, CombatImpactKind2D.Sword) { AttackerId = playerId } })
         };
         EnemyEvent2D[] enemyEvents = [new EntityCue2D(enemyId, position, "heavy"),
             new RivalAttackStarted2D(enemyId, position, UnarmedAttackKind2D.Kick, 0.3f),
@@ -116,9 +116,9 @@ public sealed class ObservationRoundTripTests
     public void TerrainConstructorRejectsIncompleteHaloAndUnresolvableTileset()
     {
         Assert.Throws<ArgumentException>(() => new TerrainChunkState2D(new(0, 0), 1, 4, 4, 4, 16f,
-            Vector2.Zero, ["stone"], [], [0]));
+            Vector2f.Zero, ["stone"], [], [0]));
         Assert.Throws<ArgumentException>(() => new TerrainChunkState2D(new(0, 0), 1, 4, 4, 4, 16f,
-            Vector2.Zero, ["stone"], [], [.. Enumerable.Repeat(new TileCell2D(TileKind2D.Solid, 1).Packed, 36)]));
+            Vector2f.Zero, ["stone"], [], [.. Enumerable.Repeat(new TileCell2D(TileKind2D.Solid, 1).Packed, 36)]));
     }
 
     private static T RoundTrip<T>(T value, JsonSerializerOptions options)

@@ -35,7 +35,7 @@ public sealed class ColliderAttachmentTests
         // The seed's own hurt boxes give way to these; its spear-tip attack collider stays.
         guard.RemoveColliders(ColliderUses.Hurt);
         guard.AddCollider(new() { Id = "head", A = Humanoid.Head, Frame = CharacterModel.Locomotion, Geometry = Rectangle2D.Builder.FromSize(.6f, .6f) });
-        guard.AddCollider(new() { Id = "torso", A = Humanoid.Hips, B = Humanoid.Chest, Stretch = true, Geometry = Capsule2D.Builder.Create(Vector2.Zero, new(0, .5f), .2f) });
+        guard.AddCollider(new() { Id = "torso", A = Humanoid.Hips, B = Humanoid.Chest, Stretch = true, Geometry = Capsule2D.Builder.Create(Vector2f.Zero, new(0, .5f), .2f) });
         guard.AddCollider(new() { Id = "legs", A = Humanoid.LeftHip, Frame = CharacterModel.Locomotion, OffsetY = -.4f, Geometry = Rectangle2D.Builder.FromSize(.5f, .9f) });
         guard.AddCollider(new() { Id = "reach", Prop = StarterContent.Spear, Point = EquipmentPoints.Tip, Geometry = Circle2D.Builder.Create(.5f) }, ColliderUses.Trigger);
         // The attack collider last, as the P8a-era fixture listed its implied window collider after the explicit ones.
@@ -96,13 +96,13 @@ public sealed class ColliderAttachmentTests
                 // The registered collider (through the affine transform) is the placement value, and that is the legacy region.
                 var placed = hit.Collider.Place(pose);
                 var view = registered.Region;
-                TestModels.Near(new(placed.Translation, 0), new(view.Pose.Translation, 0), 1e-5f, $"{id} translation at {t}");
-                TestModels.Near(new(placed.XAxis, 0), new(view.Pose.XAxis, 0), 1e-5f, $"{id} axis at {t}");
+                TestModels.Near(new(placed.Translation.ToVector2(), 0), new(view.Pose.Translation.ToVector2(), 0), 1e-5f, $"{id} translation at {t}");
+                TestModels.Near(new(placed.XAxis.ToVector2(), 0), new(view.Pose.XAxis.ToVector2(), 0), 1e-5f, $"{id} axis at {t}");
                 Assert.Equal(placed.IsMirrored, view.Pose.IsMirrored);
                 Assert.Equal(facing < 0, placed.IsMirrored);
                 var legacy = EntityCollision.Attack(pose, hit);
                 Assert.Equal(legacy.Pose, placed);
-                Assert.True(Vector2.Distance(legacy.Bounds.Min, view.Bounds.Min) < 1e-5f && Vector2.Distance(legacy.Bounds.Max, view.Bounds.Max) < 1e-5f);
+                Assert.True(Vector2f.Distance(legacy.Bounds.Min, view.Bounds.Min) < 1e-5f && Vector2f.Distance(legacy.Bounds.Max, view.Bounds.Max) < 1e-5f);
                 // A prop-anchored window keeps the weapon's tip inside its registered collider: tip, collider and art agree.
                 if (hit.Collider.Binding == ColliderBindings.Prop)
                 {
@@ -130,12 +130,12 @@ public sealed class ColliderAttachmentTests
         var instances = colliders.All.Select(c => c.Collider).ToArray();
         var ids = instances.Select(c => c.Id).ToArray();
         var animator = new EntityAnimator(entity);
-        var position = new Vector2(1, 0);
+        var position = new Vector2f(1, 0);
         var moved = 0;
         var before = colliders.Find("head")!.Bounds;
         for (var step = 0; step < 240; step++)
         {
-            position.X += .9f * Dt;
+                position = position with { X = position.X + .9f * Dt };
             if (step == 10)
             {
                 Assert.True(animator.TryStart("attack"));
@@ -209,7 +209,7 @@ public sealed class ColliderAttachmentTests
     public void SensorsCauseNoPushbackAndTheMovementBodyStaysStable()
     {
         var entity = Compile(GuardWithHurtColliders());
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var box = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(20, 60));
         box.Transform.Position = new(0, 30);
         var body = physics.AddBody(box, BodyMotionType2D.Dynamic);
@@ -218,7 +218,7 @@ public sealed class ColliderAttachmentTests
         body.Restitution = 0;
         var colliders = new ActorColliders(entity, physics.CollisionSystem, EntityId2D.Create(), 4, scale: 40);
         var animator = new EntityAnimator(entity);
-        animator.Step(0, Vector2.Zero, 1, "idle", 0, false, []);
+        animator.Step(0, Vector2f.Zero, 1, "idle", 0, false, []);
         colliders.Sync(animator.Pose, animator.ActiveHits(), alive: true);
         Assert.Contains(colliders.All, c => c.Enabled && c.Bounds.Intersects(box.WorldBounds));
         var pairs = 0;
@@ -227,8 +227,8 @@ public sealed class ColliderAttachmentTests
             physics.Step(Dt);
             pairs += physics.LastCandidatePairCount;
         }
-        Assert.Equal(new Vector2(0, 30), box.Transform.Position);
-        Assert.Equal(Vector2.Zero, body.LinearVelocity);
+        Assert.Equal(new Vector2f(0, 30), box.Transform.Position);
+        Assert.Equal(Vector2f.Zero, body.LinearVelocity);
         Assert.Empty(physics.LastContacts);
         Assert.Equal(0, pairs); // sensors without a body never reach the physics pair list
         Assert.Equal(entity.Colliders.Count + 1, physics.CollisionSystem.Colliders.Count);

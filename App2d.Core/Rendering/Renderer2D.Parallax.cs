@@ -50,7 +50,7 @@ public sealed partial class Renderer2D
                 for (var repeat = first; repeat <= last; repeat++)
                 {
                     // Moving only the view draws every visible copy, including when zoomed out.
-                    view.Position = position - new Vector2((float)(repeat * width), 0f);
+                    view.Position = position - new Vector2f((float)(repeat * width), 0f);
                     View = view.GetFrameView();
                     Draw(item);
                 }

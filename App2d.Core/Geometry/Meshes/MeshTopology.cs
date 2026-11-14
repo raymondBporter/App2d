@@ -46,13 +46,13 @@ public static class MeshTopology
         return new(vertices, new(default, vertices.Length / 3, fan: false, list: true));
     }
 
-    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> Segments(ReadOnlySpan<Vector2> vertices, bool closed = true) =>
-        Segments<Segment<Vector2f, float>, Vector2f>(Vector2f.Wrap(vertices), closed);
+    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> Segments(ReadOnlySpan<Vector2f> vertices, bool closed = true) =>
+        Segments<Segment<Vector2f, float>, Vector2f>(vertices, closed);
     public static SegmentVertexEnumerable<TSegment, T> Segments<TSegment, T>(ReadOnlySpan<T> vertices, bool closed = true)
         where TSegment : ISegment<TSegment, T> => new(vertices, closed);
 
-    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> IndexedSegments(ReadOnlySpan<Vector2> vertices, ReadOnlySpan<(int Start, int End)> indices) =>
-        IndexedSegments<Segment<Vector2f, float>, Vector2f>(Vector2f.Wrap(vertices), indices);
+    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> IndexedSegments(ReadOnlySpan<Vector2f> vertices, ReadOnlySpan<(int Start, int End)> indices) =>
+        IndexedSegments<Segment<Vector2f, float>, Vector2f>(vertices, indices);
 
     public static SegmentVertexEnumerable<TSegment, T> IndexedSegments<TSegment, T>(ReadOnlySpan<T> vertices, ReadOnlySpan<(int Start, int End)> indices)
         where TSegment : ISegment<TSegment, T> => new(vertices, indices);

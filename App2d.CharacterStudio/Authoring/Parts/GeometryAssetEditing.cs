@@ -10,8 +10,8 @@ namespace App2d.CharacterStudio.Authoring.Parts;
 /// <summary>Point edits construct candidates before validation, preserving the last valid polygon during a drag.</summary>
 public static class GeometryAssetEditing
 {
-    public static IReadOnlyList<Vector2> Points(GeometryAsset2D asset) => asset.Mesh is { } mesh
-        ? [.. (mesh.Outline ?? mesh.Vertices).Select(p => p.XY.ToVector2())]
+    public static IReadOnlyList<Vector2f> Points(GeometryAsset2D asset) => asset.Mesh is { } mesh
+        ? [.. (mesh.Outline ?? mesh.Vertices).Select(p => p.XY)]
         : asset.Geometry switch
         {
             SimplePolygon2D p => p.Vertices.ToArray(),
@@ -26,7 +26,7 @@ public static class GeometryAssetEditing
             _ => [],
         };
 
-    public static GeometryAsset2D WithPoints(GeometryAsset2D asset, IReadOnlyList<Vector2> points)
+    public static GeometryAsset2D WithPoints(GeometryAsset2D asset, IReadOnlyList<Vector2f> points)
     {
         if (asset.Mesh is { } mesh)
         {
@@ -65,7 +65,7 @@ public static class GeometryAssetEditing
     {
         if (!CanInsert(asset)) throw new InvalidDataException("This geometry has a fixed number of points.");
         var points = Points(asset).ToList();
-        var next = index + 1 < points.Count ? points[index + 1] : asset.Geometry is ICurve2D or HeightFieldShape2D ? points[index] + new Vector2(.1f, 0) : points[0];
+        var next = index + 1 < points.Count ? points[index + 1] : asset.Geometry is ICurve2D or HeightFieldShape2D ? points[index] + new Vector2f(.1f, 0) : points[0];
         points.Insert(index + 1, (points[index] + next) / 2);
         return WithPoints(asset, points);
     }
@@ -78,5 +78,5 @@ public static class GeometryAssetEditing
         return WithPoints(asset, points);
     }
 
-    public static GeometryAsset2D TransformPoints(GeometryAsset2D asset, Matrix3x2 transform) => WithPoints(asset, [.. Points(asset).Select(p => Vector2.Transform(p, transform))]);
+    public static GeometryAsset2D TransformPoints(GeometryAsset2D asset, Matrix3x2 transform) => WithPoints(asset, [.. Points(asset).Select(p => Vector2f.Transform(p, transform))]);
 }

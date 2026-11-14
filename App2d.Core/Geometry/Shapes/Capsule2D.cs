@@ -15,7 +15,7 @@ public readonly partial record struct Capsule2D : IConvexShape2D
     /// <param name="start">The finite spine start; may equal <paramref name="end"/> for a circle.</param>
     /// <param name="end">The finite spine end.</param>
     /// <param name="radius">The finite, positive radius.</param>
-    public Capsule2D(Vector2 start, Vector2 end, float radius)
+    public Capsule2D(Vector2f start, Vector2f end, float radius)
     {
         Start = start;
         End = end;
@@ -23,13 +23,13 @@ public readonly partial record struct Capsule2D : IConvexShape2D
     }
 
     /// <summary>The spine start.</summary>
-    public Vector2 Start { get; init; }
+    public Vector2f Start { get; init; }
 
     /// <summary>The spine end.</summary>
-    public Vector2 End { get; init; }
+    public Vector2f End { get; init; }
 
     /// <summary>The center of the capsule's spine, in either endpoint order.</summary>
-    public Vector2 Center => Rect2D.FromPoints(Start, End).Center;
+    public Vector2f Center => Rect2D.FromPoints(Start, End).Center;
 
     /// <summary>The radius around the spine.</summary>
     public float Radius { get; init; }
@@ -41,8 +41,8 @@ public readonly partial record struct Capsule2D : IConvexShape2D
     public float Diameter => Diameter2D.Capsule(Start, End, Radius);
 
     /// <inheritdoc/>
-    public bool ContainsPoint(Vector2 localPoint) => Containment2D.Capsule(localPoint, Start, End, Radius);
+    public bool ContainsPoint(Vector2f localPoint) => Containment2D.Capsule(localPoint, Start, End, Radius);
 
     /// <inheritdoc/>
-    public Vector2 GetSupportPoint(Vector2 localDirection) => SupportPoint2D.Capsule(localDirection, Start, End, Radius);
+    public Vector2f GetSupportPoint(Vector2f localDirection) => SupportPoint2D.Capsule(localDirection, Start, End, Radius);
 }

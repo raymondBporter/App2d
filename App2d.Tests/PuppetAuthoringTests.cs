@@ -29,7 +29,7 @@ public sealed class PuppetAuthoringTests
         Assert.True(PartPicking2D.Distance(part, World, new(.9f, .6f, 0)) < 1);
         Assert.True(PartPicking2D.Distance(part with
         {
-            Geometry = Rectangle2D.Builder.FromSize(Vector2.One)
+            Geometry = Rectangle2D.Builder.FromSize(Vector2f.One)
         }, World, new(.9f, .9f, 0)) < 1);
     }
 
@@ -54,7 +54,7 @@ public sealed class PuppetAuthoringTests
         var part = ModelAuthoring.AddPart(model, GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse), "root");
         var id = part.Id;
 
-        ModelAuthoring.SetPartGeometry(model, id, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated());
+        ModelAuthoring.SetPartGeometry(model, id, new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated());
         Assert.Equal(id, part.Id);
         Assert.IsType<LineSegmentCurve2D>(part.Geometry);
         Assert.Equal("tip", part.B);
@@ -64,7 +64,7 @@ public sealed class PuppetAuthoringTests
         Assert.IsType<SimplePolygon2D>(restored.Parts.Single().Geometry);
         Assert.Equal(id, restored.Parts.Single().Id);
 
-        var stroke = ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "root", "tip");
+        var stroke = ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), "root", "tip");
         ModelAuthoring.SetPartGeometry(model, stroke.Id, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f));
         Assert.Equal(RenderMaterialDefinition2D.Ink, stroke.RenderMaterial);
     }
@@ -299,9 +299,9 @@ public sealed class PuppetAuthoringTests
         {
             foreach (var (a, b) in new[] { (chain.Root, chain.Joint), (chain.Joint, chain.End) })
             {
-                var rest = Vector2.Distance(puppet.Controls.Single(c => c.Id == a).Rest.XY, puppet.Controls.Single(c => c.Id == b).Rest.XY);
+                var rest = Vector2f.Distance(puppet.Controls.Single(c => c.Id == a).Rest.XY, puppet.Controls.Single(c => c.Id == b).Rest.XY);
                 var posed = pose.Points[a] - pose.Points[b];
-                Assert.InRange(MathF.Abs(new Vector2(posed.X, posed.Y).Length() - rest), 0, .00001f);
+                Assert.InRange(MathF.Abs(new Vector2f(posed.X, posed.Y).Length() - rest), 0, .00001f);
             }
         }
     }

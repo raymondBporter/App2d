@@ -18,10 +18,10 @@ public sealed class PropPlacement3DTests
     [Fact]
     public void LiftExtendsThePlanarFrameAndAppliesTiltTwistTurnBeforeIt()
     {
-        var planar = LayeredFrame2D.Local(Vector2.One, .4f, new(1, 2), -.15f).Then(LayeredFrame2D.FromRotation(.3f, new(5, 1, .25f)));
+        var planar = LayeredFrame2D.Local(Vector2f.One, .4f, new(1, 2), -.15f).Then(LayeredFrame2D.FromRotation(.3f, new(5, 1, .25f)));
         var flat = PartPlacement3D.Lift(planar, Vector3.Zero);
         Assert.Equal(PartPlacement3D.Extend(planar), flat);
-        Assert.Equal(new Vector3(planar.Frame.Origin, 0), flat.Origin);
+        Assert.Equal(new Vector3(planar.Frame.Origin.ToVector2(), 0), flat.Origin);
         Assert.Equal(Vector3.UnitZ, flat.ZAxis);
         Assert.Equal(0, flat.Origin.Z);
         Assert.Equal(.1f, planar.Layer, 6);
@@ -30,16 +30,16 @@ public sealed class PropPlacement3DTests
         var lifted = PartPlacement3D.Lift(planar, orientation);
         // The same frame the socket path built before the bridge: rotate about X, Y, then the planar turn plus Z, at the origin.
         var turn = MathF.Atan2(planar.XAxis.Y, planar.XAxis.X);
-        var expected = Frame3D.FromRotation(new(orientation.X, orientation.Y, turn + orientation.Z), new(planar.Frame.Origin, 0));
+        var expected = Frame3D.FromRotation(new(orientation.X, orientation.Y, turn + orientation.Z), new(planar.Frame.Origin.ToVector2(), 0));
         TestModels.Near(expected.XAxis, lifted.XAxis, 1e-5f, "x");
         TestModels.Near(expected.YAxis, lifted.YAxis, 1e-5f, "y");
         TestModels.Near(expected.ZAxis, lifted.ZAxis, 1e-5f, "z");
-        Assert.Equal(new Vector3(planar.Frame.Origin, 0), lifted.Origin);
+        Assert.Equal(new Vector3(planar.Frame.Origin.ToVector2(), 0), lifted.Origin);
         // Thickness stays physical: a point off the prop's plane leaves the layer by the tilted Z axis.
         Assert.NotEqual(planar.Layer, lifted.TransformPoint(new(0, 0, .3f)).Z);
 
         // A mirrored planar frame mirrors the lifted prop, as the facing does for a whole actor.
-        var mirrored = PartPlacement3D.Lift(planar.Then(new ActorPose(new EvaluatedPose(), Vector2.Zero, -1).Placement), orientation);
+        var mirrored = PartPlacement3D.Lift(planar.Then(new ActorPose(new EvaluatedPose(), Vector2f.Zero, -1).Placement), orientation);
         TestModels.Near(lifted.XAxis with { X = -lifted.XAxis.X }, mirrored.XAxis, 1e-5f, "mirrored x");
         TestModels.Near(lifted.Origin with { X = -lifted.Origin.X }, mirrored.Origin, 1e-5f, "mirrored origin");
         Assert.Equal(lifted.Origin.Z, mirrored.Origin.Z);
@@ -51,10 +51,10 @@ public sealed class PropPlacement3DTests
         var tilted = Frame3D.FromRotation(new(0, .7f, .4f));
         var axis = PartPlacement3D.ProjectAxis(tilted, 1);
         Assert.Equal(1, axis.Length(), 5);
-        TestModels.Near(new(Vector2.Normalize(tilted.XAxis.XY), 0), new(axis, 0), 1e-6f, "projection");
+        TestModels.Near(new(Vector2f.Normalize(tilted.XAxis.XY).ToVector2(), 0), new(axis.ToVector2(), 0), 1e-6f, "projection");
         foreach (var facing in new[] { 1, -1 })
         {
-            Assert.Equal(new Vector2(facing, 0), PartPlacement3D.ProjectAxis(Frame3D.FromRotation(new(0, MathF.PI / 2, 0)), facing));
+            Assert.Equal(new Vector2f(facing, 0), PartPlacement3D.ProjectAxis(Frame3D.FromRotation(new(0, MathF.PI / 2, 0)), facing));
         }
     }
 

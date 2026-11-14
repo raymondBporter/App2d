@@ -21,7 +21,7 @@ public sealed class BabyTriceratopsTests
     private static (AuthoredEntityEnemy2D Enemy, PhysicsWorld2D Physics, Person2D Player) Create(int facing = 1, float floorWidth = 1000)
     {
         Assert.True(Catalog.Errors.Count == 0, string.Join("\n", Catalog.Errors));
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(floorWidth, 20));
         floor.Transform.Position = new(0, -10);
         physics.AddBody(floor, BodyMotionType2D.Static).CollisionLayer = 1;
@@ -30,7 +30,7 @@ public sealed class BabyTriceratopsTests
         var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(facing * 140, 26), 2, 1, CombatFaction2D.Player, 30);
         return (enemy, physics, player);
     }
-    private static void Tick(AuthoredEntityEnemy2D enemy, PhysicsWorld2D physics, Vector2 target, int count)
+    private static void Tick(AuthoredEntityEnemy2D enemy, PhysicsWorld2D physics, Vector2f  target, int count)
     {
         for (var i = 0; i < count; i++)
         {
@@ -66,7 +66,7 @@ public sealed class BabyTriceratopsTests
         {
             if (dodge && i == 90)
             {
-                player.WorldObject.Transform.Position += new Vector2(0, 120);
+                player.WorldObject.Transform.Position += new Vector2f(0, 120);
             }
 
             Tick(enemy, physics, player.Position, 1);

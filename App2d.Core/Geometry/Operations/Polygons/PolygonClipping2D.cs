@@ -18,14 +18,14 @@ public static class PolygonClipping2D
     /// <param name="offset">The signed boundary offset along the normal.</param>
     /// <param name="output">A buffer of at least five vertices.</param>
     /// <returns>The number of vertices written.</returns>
-    public static int ClipRectangleToHalfSpace<TRect>(TRect rectangle, Vector2 unitNormal, float offset, Span<Vector2> output) where TRect : IRect2D
+    public static int ClipRectangleToHalfSpace<TRect>(TRect rectangle, Vector2f unitNormal, float offset, Span<Vector2f> output) where TRect : IRect2D
     {
         Ensure.ThrowIfNull(rectangle);
         Ensure.Finite(rectangle.Min);
         Ensure.Finite(rectangle.Max);
         Ensure.LessThanOrEqual(rectangle.Min, rectangle.Max);
         Ensure.ThrowIf(output.Length < 5, "Output needs room for five vertices.", nameof(output));
-        Span<Vector2> corners = stackalloc Vector2[4];
+        Span<Vector2f> corners = stackalloc Vector2f[4];
         VertexGenerator2D.WriteRectangle(corners, rectangle.Min, rectangle.Max);
         return ClipConvexToHalfSpace(corners, unitNormal, offset, output);
     }
@@ -39,7 +39,7 @@ public static class PolygonClipping2D
     /// <param name="offset">The signed boundary offset along the normal.</param>
     /// <param name="output">A buffer of at least subject.Length + 1 vertices.</param>
     /// <returns>The number of vertices written.</returns>
-    public static int ClipConvexToHalfSpace(ReadOnlySpan<Vector2> subject, Vector2 unitNormal, float offset, Span<Vector2> output)
+    public static int ClipConvexToHalfSpace(ReadOnlySpan<Vector2f> subject, Vector2f unitNormal, float offset, Span<Vector2f> output)
     {
         Ensure.NonZero(unitNormal);
         Ensure.Finite(offset);
@@ -63,7 +63,7 @@ public static class PolygonClipping2D
             var after = SignedSide(current, unitNormal, offset);
             if ((before < 0 && after > 0) || (before > 0 && after < 0))
             {
-                output[count++] = Vector2.Lerp(previous, current, (float)(before / (before - after)));
+                output[count++] = Vector2f.Lerp(previous, current, (float)(before / (before - after)));
             }
 
             if (after <= 0)
@@ -81,17 +81,17 @@ public static class PolygonClipping2D
     /// <param name="subject">The polygon to clip.</param>
     /// <param name="clip">A convex polygon with at least three vertices and nonzero area.</param>
     /// <returns>The clipped perimeter, possibly empty.</returns>
-    public static List<Vector2> ClipConvex(IReadOnlyList<Vector2> subject, IReadOnlyList<Vector2> clip) => Clip(subject, clip, static point => point, static (a, b, t) => Vector2.Lerp(a, b, t));
+    public static List<Vector2f> ClipConvex(IReadOnlyList<Vector2f> subject, IReadOnlyList<Vector2f> clip) => Clip(subject, clip, static point => point, static (a, b, t) => Vector2f.Lerp(a, b, t));
 
     /// <summary>Clips in XY while interpolating Z as a carried vertex attribute.</summary>
     /// <param name="subject">The polygon to clip, with Z carried through.</param>
     /// <param name="clip">A convex polygon with at least three vertices and nonzero XY area; its Z is ignored.</param>
     /// <returns>The clipped perimeter with interpolated Z, possibly empty.</returns>
-    public static List<Vector3> ClipConvexXY(IReadOnlyList<Vector3> subject, IReadOnlyList<Vector3> clip) => Clip(subject, clip, static point => new Vector2(point.X, point.Y), static (a, b, t) => Vector3.Lerp(a, b, t));
+    public static List<Vector3> ClipConvexXY(IReadOnlyList<Vector3> subject, IReadOnlyList<Vector3> clip) => Clip(subject, clip, static point => new Vector2f(point.X, point.Y), static (a, b, t) => Vector3.Lerp(a, b, t));
 
-    private static double SignedSide(Vector2 point, Vector2 normal, float offset) => point.ToVector2d().Dot(normal.ToVector2d()) - offset;
+    private static double SignedSide(Vector2f point, Vector2f normal, float offset) => point.ToVector2d().Dot(normal.ToVector2d()) - offset;
 
-    private static List<T> Clip<T>(IReadOnlyList<T> subject, IReadOnlyList<T> clip, Func<T, Vector2> xy, Func<T, T, float, T> lerp)
+    private static List<T> Clip<T>(IReadOnlyList<T> subject, IReadOnlyList<T> clip, Func<T, Vector2f> xy, Func<T, T, float, T> lerp)
     {
         Ensure.ThrowIfNull(subject);
         Ensure.ThrowIfNull(clip);
@@ -109,7 +109,7 @@ public static class PolygonClipping2D
         {
             var a = xy(clip[edge]);
             var b = xy(clip[(edge + 1) % clip.Count]);
-            if (Vector2.DistanceSquared(a, b) < 1e-12f)
+            if (Vector2f.DistanceSquared(a, b) < 1e-12f)
             {
                 continue;
             }

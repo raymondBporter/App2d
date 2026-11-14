@@ -23,7 +23,7 @@ public sealed class PersonJumpPowerTests
         var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var physics = new PhysicsWorld2D(collision)
         {
-            Gravity = new Vector2(0f, -traversal.Gravity),
+            Gravity = new Vector2f(0f, -traversal.Gravity),
             MaxSubstepSeconds = 1f / 120f,
             PositionIterations = 3,
             VelocityIterations = 2
@@ -33,7 +33,7 @@ public sealed class PersonJumpPowerTests
             collision,
             physics,
             traversal,
-            new Vector2(0f, traversal.PlayerColliderSize.Y * 0.5f),
+            new Vector2f(0f, traversal.PlayerColliderSize.Y * 0.5f),
             PlayerLayer,
             WorldLayer,
             CombatFaction2D.Player);
@@ -74,7 +74,7 @@ public sealed class PersonJumpPowerTests
     {
         var groundObject = new SpatialObject2D(
             AxisAlignedRectangle2D.Builder.CreateFromSize(600f, 20f));
-        groundObject.Transform.Position = new Vector2(0f, -10f);
+        groundObject.Transform.Position = new Vector2f(0f, -10f);
         var ground = physics.AddBody(groundObject, BodyMotionType2D.Static);
         ground.CollisionLayer = WorldLayer;
         ground.CollisionMask = PlayerLayer;

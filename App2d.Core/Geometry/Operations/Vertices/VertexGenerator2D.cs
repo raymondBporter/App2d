@@ -12,20 +12,20 @@ public static class VertexGenerator2D
 {
     /// <summary>Divisible by the common 12, 24, 48, 60, 80 and 120 segment counts.</summary>
     public const int UnitCircleSegments = 240;
-    private static readonly Vector2[] CircleSamples = CreateUnitCircle();
+    private static readonly Vector2f[] CircleSamples = CreateUnitCircle();
 
     /// <summary>
     /// Shared unit-circle directions, including the closing sample at 2π. A resolution that divides
     /// <see cref="UnitCircleSegments"/> samples this span at an exact stride. For other resolutions,
     /// calculate directions directly instead of rounding the stride.
     /// </summary>
-    public static ReadOnlySpan<Vector2> UnitCircle => CircleSamples;
+    public static ReadOnlySpan<Vector2f> UnitCircle => CircleSamples;
 
-    private static Vector2[] CreateUnitCircle()
+    private static Vector2f[] CreateUnitCircle()
     {
-        var samples = new Vector2[UnitCircleSegments + 1];
+        var samples = new Vector2f[UnitCircleSegments + 1];
         for (var i = 0; i <= UnitCircleSegments; i++)
-            samples[i] = PointOnEllipse(Vector2.Zero, Vector2.One, i / (float)UnitCircleSegments * MathF.Tau);
+            samples[i] = PointOnEllipse(Vector2f.Zero, Vector2f.One, i / (float)UnitCircleSegments * MathF.Tau);
         return samples;
     }
 
@@ -34,14 +34,14 @@ public static class VertexGenerator2D
     /// <param name="radii">The half-extents along X and Y.</param>
     /// <param name="angle">The parametric angle in radians; zero is the +X extreme.</param>
     /// <returns>Center + (cos, sin) scaled by the radii.</returns>
-    public static Vector2 PointOnEllipse(Vector2 center, Vector2 radii, float angle) => center + Polar2D.Direction(angle) * radii;
+    public static Vector2f  PointOnEllipse(Vector2f center, Vector2f radii, float angle) => center + Polar2D.Direction(angle) * radii;
 
     /// <summary>Writes a full ellipse; the buffer length selects the number of segments, starting on local +X.</summary>
     /// <param name="vertices">A buffer of at least three entries; every entry is written.</param>
     /// <param name="center">The finite center.</param>
     /// <param name="radii">Finite, nonnegative half-extents.</param>
     /// <returns>The number of vertices written, equal to the buffer length.</returns>
-    public static int WriteEllipse(Span<Vector2> vertices, Vector2 center, Vector2 radii)
+    public static int WriteEllipse(Span<Vector2f> vertices, Vector2f center, Vector2f radii)
     {
         Ensure.ThrowIfTooShort(vertices, 3);
         Ensure.Finite(center);
@@ -59,7 +59,7 @@ public static class VertexGenerator2D
     /// <param name="center">The finite center.</param>
     /// <param name="radius">The finite, nonnegative radius.</param>
     /// <returns>The number of vertices written, equal to the buffer length.</returns>
-    public static int WriteCircle(Span<Vector2> vertices, Vector2 center, float radius) => WriteEllipse(vertices, center, new(radius));
+    public static int WriteCircle(Span<Vector2f> vertices, Vector2f center, float radius) => WriteEllipse(vertices, center, new(radius));
 
     /// <summary>Writes an elliptical arc including both endpoints; the buffer length selects the sample count.</summary>
     /// <param name="vertices">A buffer of at least two entries; every entry is written.</param>
@@ -68,7 +68,7 @@ public static class VertexGenerator2D
     /// <param name="startAngle">The finite parametric start angle in radians.</param>
     /// <param name="sweepAngle">The finite signed sweep in radians; negative sweeps run clockwise.</param>
     /// <returns>The number of vertices written, equal to the buffer length.</returns>
-    public static int WriteArc(Span<Vector2> vertices, Vector2 center, Vector2 radii, float startAngle, float sweepAngle)
+    public static int WriteArc(Span<Vector2f> vertices, Vector2f center, Vector2f radii, float startAngle, float sweepAngle)
     {
         Ensure.ThrowIfTooShort(vertices, 2);
         Ensure.Finite(center);
@@ -88,7 +88,7 @@ public static class VertexGenerator2D
     /// <param name="min">The finite lower-left corner.</param>
     /// <param name="max">The finite upper-right corner, component-wise at least <paramref name="min"/>.</param>
     /// <returns>Four.</returns>
-    public static int WriteRectangle(Span<Vector2> vertices, Vector2 min, Vector2 max)
+    public static int WriteRectangle(Span<Vector2f> vertices, Vector2f min, Vector2f max)
     {
         Ensure.ThrowIfTooShort(vertices, 4);
         Ensure.GreaterThanOrEqual(max, min);
@@ -110,7 +110,7 @@ public static class VertexGenerator2D
     /// <param name="radius">The finite, nonnegative corner radius.</param>
     /// <param name="segmentsPerCorner">The positive number of segments per quarter arc.</param>
     /// <returns>The number of vertices written.</returns>
-    public static int WriteRoundedRectangle(Span<Vector2> vertices, Vector2 min, Vector2 max, float radius, int segmentsPerCorner = 8)
+    public static int WriteRoundedRectangle(Span<Vector2f> vertices, Vector2f min, Vector2f max, float radius, int segmentsPerCorner = 8)
     {
         Ensure.Positive(segmentsPerCorner);
         var count = checked(4 * (segmentsPerCorner + 1));
@@ -120,7 +120,7 @@ public static class VertexGenerator2D
         radius = Math.Min(radius, Math.Min(max.X - min.X, max.Y - min.Y) * 0.5f);
         for (var corner = 0; corner < 4; corner++)
         {
-            var center = new Vector2(corner is 0 or 3 ? max.X - radius : min.X + radius, corner < 2 ? max.Y - radius : min.Y + radius);
+            var center = new Vector2f(corner is 0 or 3 ? max.X - radius : min.X + radius, corner < 2 ? max.Y - radius : min.Y + radius);
             WriteArc(vertices.Slice(corner * (segmentsPerCorner + 1), segmentsPerCorner + 1), center, new(radius), corner * MathF.PI / 2f, MathF.PI / 2f);
         }
         return count;
@@ -133,7 +133,7 @@ public static class VertexGenerator2D
     /// <param name="radius">The finite, nonnegative radius.</param>
     /// <param name="segmentsPerCap">The positive number of segments per semicircle.</param>
     /// <returns>The number of vertices written.</returns>
-    public static int WriteCapsule(Span<Vector2> vertices, Vector2 start, Vector2 end, float radius, int segmentsPerCap)
+    public static int WriteCapsule(Span<Vector2f> vertices, Vector2f start, Vector2f end, float radius, int segmentsPerCap)
     {
         Ensure.Positive(segmentsPerCap);
         var capCount = checked(segmentsPerCap + 1);

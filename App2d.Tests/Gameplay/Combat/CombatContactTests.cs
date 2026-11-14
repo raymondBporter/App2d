@@ -4,6 +4,7 @@ using App2d.Contracts.Enemies;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
@@ -19,9 +20,9 @@ public sealed class CombatContactTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
 
-    private static (AuthoredEntityEnemy2D Enemy, Person2D Player, CombatSystem2D Combat, PhysicsWorld2D Physics) Create(string entityId, Vector2 at)
+    private static (AuthoredEntityEnemy2D Enemy, Person2D Player, CombatSystem2D Combat, PhysicsWorld2D Physics) Create(string entityId, Vector2f  at)
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var enemy = new AuthoredEntityEnemy2D(EntityId2D.Create(), Catalog.Entities[entityId], physics, at, 1, 4);
         enemy.SetSimulationEnabled(true);
         enemy.Update(0, new(-400, at.Y));
@@ -33,9 +34,9 @@ public sealed class CombatContactTests
         return (enemy, player, new CombatSystem2D(physics.CollisionSystem, registry), physics);
     }
 
-    private static SpatialObject2D Box(Vector2 position, float size = 6)
+    private static SpatialObject2D Box(Vector2f  position, float size = 6)
     {
-        var box = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(size)));
+        var box = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2f(size)));
         box.Transform.Position = position;
         return box;
     }
@@ -49,21 +50,21 @@ public sealed class CombatContactTests
         var head = enemy.Colliders.Find("head")!;
         var headBounds = head.Bounds; // before the reaction pose moves it
         var box = Box(headBounds.Center);
-        Assert.True(combat.ResolveAttack(box, player.Id, 5, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero, hitGroup: "blade"));
-        Assert.False(combat.ResolveAttack(box, player.Id, 5, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero, hitGroup: "blade")); // repeated overlap of the same group
-        Assert.True(combat.ResolveAttack(box, player.Id, 5, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero, hitGroup: "pommel")); // an intended second pulse
-        Assert.False(combat.ResolveAttack(box, player.Id, 5, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero, hitGroup: "pommel"));
-        Assert.True(combat.ResolveAttack(box, player.Id, 6, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero, hitGroup: "blade")); // the next instance: the third hit kills the guard (health 3)
+        Assert.True(combat.ResolveAttack(box, player.Id, 5, CombatFaction2D.Player, 4, 1, _ => Vector2f.Zero, hitGroup: "blade"));
+        Assert.False(combat.ResolveAttack(box, player.Id, 5, CombatFaction2D.Player, 4, 1, _ => Vector2f.Zero, hitGroup: "blade")); // repeated overlap of the same group
+        Assert.True(combat.ResolveAttack(box, player.Id, 5, CombatFaction2D.Player, 4, 1, _ => Vector2f.Zero, hitGroup: "pommel")); // an intended second pulse
+        Assert.False(combat.ResolveAttack(box, player.Id, 5, CombatFaction2D.Player, 4, 1, _ => Vector2f.Zero, hitGroup: "pommel"));
+        Assert.True(combat.ResolveAttack(box, player.Id, 6, CombatFaction2D.Player, 4, 1, _ => Vector2f.Zero, hitGroup: "blade")); // the next instance: the third hit kills the guard (health 3)
         Assert.Equal(3, facts.Count);
         Assert.Equal(Catalog.Entities["spear-guard"].Damage.Health - 3, enemy.Health.Current);
         Assert.False(enemy.IsAlive);
         Assert.True(facts[2].WasKilled);
         // The contact position is the overlap of the attack with the head collider, not the body's centre.
-        var expected = (Vector2.Max(box.WorldBounds.Min, headBounds.Min) + Vector2.Min(box.WorldBounds.Max, headBounds.Max)) / 2;
-        Assert.True(Vector2.Distance(expected, facts[0].Contact!.Value.Position) < 1e-3f, $"contact {facts[0].Contact!.Value.Position} expected {expected}");
+        var expected = (Vector2f.Max(box.WorldBounds.Min, headBounds.Min) + Vector2f.Min(box.WorldBounds.Max, headBounds.Max)) / 2;
+        Assert.True(Vector2f.Distance(expected, facts[0].Contact!.Value.Position) < 1e-3f, $"contact {facts[0].Contact!.Value.Position} expected {expected}");
         Assert.True(headBounds.Max.Y > enemy.WorldObject.WorldBounds.Max.Y - 1e-3f, "the head sits above the terrain body");
         // A box above the terrain body that meets only the dead enemy's hurt geometry produces nothing: a rejected contact.
-        Assert.False(combat.ResolveAttack(box, player.Id, 8, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero, hitGroup: "blade"));
+        Assert.False(combat.ResolveAttack(box, player.Id, 8, CombatFaction2D.Player, 4, 1, _ => Vector2f.Zero, hitGroup: "blade"));
         Assert.Equal(3, facts.Count);
     }
 
@@ -84,7 +85,7 @@ public sealed class CombatContactTests
         Assert.False(combat.ResolveAttack(box, player.Id, 1, CombatFaction2D.Player, 4, 2, _ => new(-100, 0), attackerId: player.Id, hitGroup: "blade"));
         Assert.Empty(defender.DrainEvents()); // a repeated overlap of the blocked group produces nothing more
         // The enemy's own strike on an invulnerable player is a rejected contact: no damage, no cue.
-        player.TakeDamage(1, Vector2.Zero);
+        player.TakeDamage(1, Vector2f.Zero);
         Assert.True(player.InvulnerabilitySeconds > 0);
         var before = player.Health.Current;
         var attacker = defender;

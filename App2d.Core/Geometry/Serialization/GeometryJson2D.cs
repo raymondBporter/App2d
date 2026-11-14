@@ -19,14 +19,14 @@ public static class GeometryJson2D
     {
         ShapeKinds2D.Capsule => new Capsule2D { Start = new(0, -.25f), End = new(0, .25f), Radius = .25f }.Validated(),
         ShapeKinds2D.RoundedRectangle => RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f),
-        CurveKinds2D.Line => new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(),
-        CurveKinds2D.Polyline => new PolylineCurve2D { Points = [Vector2.Zero, new(.25f, .5f), Vector2.UnitY] }.Validated(),
-        CurveKinds2D.RoundedPolyline => new RoundedPolylineCurve2D { Points = [Vector2.Zero, new(.25f, .5f), Vector2.UnitY] }.Validated(),
+        CurveKinds2D.Line => new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(),
+        CurveKinds2D.Polyline => new PolylineCurve2D { Points = [Vector2f.Zero, new(.25f, .5f), Vector2f.UnitY] }.Validated(),
+        CurveKinds2D.RoundedPolyline => new RoundedPolylineCurve2D { Points = [Vector2f.Zero, new(.25f, .5f), Vector2f.UnitY] }.Validated(),
         CurveKinds2D.Arc => new Arc2D { Center = new(0, .5f), Radius = .5f, StartAngleRadians = -MathF.PI / 2, SweepAngleRadians = MathF.PI }.Validated(),
-        CurveKinds2D.QuadraticBezier => new QuadraticBezier2D { Start = Vector2.Zero, Control = new(.25f, .5f), End = Vector2.UnitY }.Validated(),
-        CurveKinds2D.CubicBezier => new CubicBezier2D { Start = Vector2.Zero, Control1 = new(.25f, 1f / 3), Control2 = new(-.25f, 2f / 3), End = Vector2.UnitY }.Validated(),
-        CurveKinds2D.BSpline => new BSpline2D { ControlPoints = [Vector2.Zero, new(.25f, 1f / 3), new(-.25f, 2f / 3), Vector2.UnitY] }.Validated(),
-        _ => new Ellipse2D { Center = Vector2.Zero, Radii = new(.5f, .5f) }.Validated().WithKind(kind)
+        CurveKinds2D.QuadraticBezier => new QuadraticBezier2D { Start = Vector2f.Zero, Control = new(.25f, .5f), End = Vector2f.UnitY }.Validated(),
+        CurveKinds2D.CubicBezier => new CubicBezier2D { Start = Vector2f.Zero, Control1 = new(.25f, 1f / 3), Control2 = new(-.25f, 2f / 3), End = Vector2f.UnitY }.Validated(),
+        CurveKinds2D.BSpline => new BSpline2D { ControlPoints = [Vector2f.Zero, new(.25f, 1f / 3), new(-.25f, 2f / 3), Vector2f.UnitY] }.Validated(),
+        _ => new Ellipse2D { Center = Vector2f.Zero, Radii = new(.5f, .5f) }.Validated().WithKind(kind)
     };
 
     public static JsonSerializerOptions JsonOptions => JsonProfiles.Geometry;

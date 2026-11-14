@@ -41,8 +41,8 @@ public static class ShapeEditing2D
             ShapeKinds2D.Circle => new Circle2D { Center = center, Radius = MathF.Min(size.X, size.Y) / 2f }.Validated(),
             ShapeKinds2D.Ellipse => new Ellipse2D { Center = center, Radii = size / 2f }.Validated(),
             ShapeKinds2D.Capsule => size.X >= size.Y
-                ? new Capsule2D { Start = center - new Vector2(reach, 0f), End = center + new Vector2(reach, 0f), Radius = size.Y / 2f }.Validated()
-                : new Capsule2D { Start = center - new Vector2(0f, reach), End = center + new Vector2(0f, reach), Radius = size.X / 2f }.Validated(),
+                ? new Capsule2D { Start = center - new Vector2f(reach, 0f), End = center + new Vector2f(reach, 0f), Radius = size.Y / 2f }.Validated()
+                : new Capsule2D { Start = center - new Vector2f(0f, reach), End = center + new Vector2f(0f, reach), Radius = size.X / 2f }.Validated(),
             ShapeKinds2D.Triangle => new Triangle2D { A = bounds.BottomLeft, B = bounds.BottomRight, C = bounds.TopCenter }.Validated(),
             ShapeKinds2D.ConvexPolygon => new ConvexPolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),
             ShapeKinds2D.SimplePolygon => new SimplePolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),

@@ -19,7 +19,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
     private readonly float RecoverySeconds;
     private readonly Func<bool>? _spendEnergy;
     /// <summary>A bolt's size, speed (pixels) and lifetime, and its damage; from the authored hero's shot when it has one.</summary>
-    internal readonly record struct Shot(Vector2 Size, float Speed, float Lifetime, int Damage);
+    internal readonly record struct Shot(Vector2f Size, float Speed, float Lifetime, int Damage);
     private static readonly Shot DefaultShot = new(new(30f, 10f), 1250f, 1.5f, 2);
     private readonly Shot _shot;
     private float BoltWidth => _shot.Size.X;
@@ -35,8 +35,8 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
     private readonly List<Projectile2D> _bullets = [];
     private readonly List<CollisionOverlap2D> _overlaps = [];
     private readonly SpatialObject2D _barrelPath;
-    private readonly Vector2 _muzzleOffset;
-    private readonly Func<float, Vector2>? _authoredMuzzle;
+    private readonly Vector2f _muzzleOffset;
+    private readonly Func<float, Vector2f>? _authoredMuzzle;
     private readonly EntityIdSequence2D _projectileIds;
     private float _chargeTime;
     private float _direction = 1f;
@@ -47,9 +47,9 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
 
     public GunPersonWeapon2D(
         EntityIdAllocator2D ids,
-        RigidBody2D ownerBody, Vector2 muzzleOffset, CollisionSystem2D collision,
+        RigidBody2D ownerBody, Vector2f muzzleOffset, CollisionSystem2D collision,
         uint worldLayer, uint targetLayer, CombatFaction2D ownerFaction,
-        CombatSystem2D combat, Action shotStarted, Action<WeaponEvent2D> publish, Func<float, Vector2>? muzzle = null, Shot? shot = null,
+        CombatSystem2D combat, Action shotStarted, Action<WeaponEvent2D> publish, Func<float, Vector2f>? muzzle = null, Shot? shot = null,
         float chargeSeconds = .6f, float recoverySeconds = .06f, Func<bool>? spendEnergy = null)
         : base(EquipmentKind2D.Gun)
     {
@@ -171,8 +171,8 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
         }
     }
 
-    private Vector2 MuzzlePosition => _ownerBody.WorldObject.Transform.Position +
-        (_authoredMuzzle?.Invoke(_direction) ?? new Vector2(_direction * _muzzleOffset.X, _muzzleOffset.Y));
+    private Vector2f MuzzlePosition => _ownerBody.WorldObject.Transform.Position +
+        (_authoredMuzzle?.Invoke(_direction) ?? new Vector2f(_direction * _muzzleOffset.X, _muzzleOffset.Y));
 
     private void Fire()
     {
@@ -192,7 +192,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
         var owner = _ownerBody.WorldObject.Transform.Position;
         var offset = muzzle - owner;
         var barrel = _authoredMuzzle is null ? _barrelPath : new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(Math.Abs(offset.X) + BoltWidth, 4));
-        barrel.Transform.Position = owner + new Vector2(_authoredMuzzle is null ? _direction * (_muzzleOffset.X + BoltWidth) * .5f : offset.X * .5f, offset.Y);
+        barrel.Transform.Position = owner + new Vector2f(_authoredMuzzle is null ? _direction * (_muzzleOffset.X + BoltWidth) * .5f : offset.X * .5f, offset.Y);
         if (_collision.Overlap(barrel, _overlaps, _worldLayer, includeSensors: false) > 0)
         {
             _publish(new ProjectileImpact2D(muzzle, EntityId2D.None));
@@ -206,8 +206,8 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
                 continue;
             }
 
-            projectile.Launch(muzzle + new Vector2(_direction * BoltWidth * 0.5f, 0f),
-                new Vector2(_direction * _shot.Speed, 0f), lifetime: _shot.Lifetime, origin: muzzle, id: _projectileIds.Next());
+            projectile.Launch(muzzle + new Vector2f(_direction * BoltWidth * 0.5f, 0f),
+                new Vector2f(_direction * _shot.Speed, 0f), lifetime: _shot.Lifetime, origin: muzzle, id: _projectileIds.Next());
             ResolveHit(projectile);
             break;
         }
@@ -217,7 +217,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
     {
         var direction = MathF.Sign(projectile.Velocity.X);
         var hit = _combat.TryDamageFirst(projectile.WorldObject, _ownerFaction,
-            _targetLayer, damage: _shot.Damage, _ => new Vector2(direction * 450f, 140f));
+            _targetLayer, damage: _shot.Damage, _ => new Vector2f(direction * 450f, 140f));
         if (!hit)
         {
             hit = _collision.Overlap(projectile.WorldObject, _overlaps,

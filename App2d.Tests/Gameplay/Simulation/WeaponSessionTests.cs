@@ -24,7 +24,7 @@ public sealed class WeaponSessionTests
         using var game = new Fixture();
         game.Fire();
         game.Session.SetPaused(true);
-        var destination = new Vector2(9500, 500);
+        var destination = new Vector2f(9500, 500);
         game.Session.TravelForPlaytesting(destination);
         Assert.NotEqual(destination, game.Player.Position);
         game.Session.SetPaused(false);
@@ -91,7 +91,7 @@ public sealed class WeaponSessionTests
     {
         using var game = new Fixture();
         var target = new Person2D(EntityId2D.Create(), game.Physics.CollisionSystem, game.Physics, game.Metrics,
-            game.Metrics.GunMuzzleOffset + new Vector2(15f, 0f), 4, 0, CombatFaction2D.Enemy, maximumHealth: 2);
+            game.Metrics.GunMuzzleOffset + new Vector2f(15f, 0f), 4, 0, CombatFaction2D.Enemy, maximumHealth: 2);
         target.Body.MotionType = BodyMotionType2D.Static;
         game.Registry.Register(target);
         var frame = game.Fire();
@@ -136,14 +136,14 @@ public sealed class WeaponSessionTests
     private sealed class Fixture : IDisposable
     {
         public TraversalMetrics2D Metrics { get; } = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        public PhysicsWorld2D Physics { get; } = new() { Gravity = Vector2.Zero };
+        public PhysicsWorld2D Physics { get; } = new() { Gravity = Vector2f.Zero };
         public CombatantRegistry2D Registry { get; } = new();
         public Person2D Player { get; }
         public SideScrollerSession2D Session { get; }
 
         public Fixture()
         {
-            Player = new Person2D(EntityId2D.Create(), Physics.CollisionSystem, Physics, Metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
+            Player = new Person2D(EntityId2D.Create(), Physics.CollisionSystem, Physics, Metrics, Vector2f.Zero, 2, 1, CombatFaction2D.Player);
             Registry.Register(Player);
             var combat = new CombatSystem2D(Physics.CollisionSystem, Registry);
             var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), Player.Body, Metrics.GunMuzzleOffset,
@@ -155,7 +155,7 @@ public sealed class WeaponSessionTests
                 });
             Player.AttachActions(arsenal);
             Session = new SideScrollerSession2D(Physics, Player, arsenal, new EmptyWorld(),
-                new RespawnState2D(Vector2.Zero, Player.Health.Maximum), combat);
+                new RespawnState2D(Vector2f.Zero, Player.Health.Maximum), combat);
         }
 
         public SessionFrame2D Fire()
@@ -175,15 +175,15 @@ public sealed class WeaponSessionTests
 
     private sealed class EmptyWorld : ISideScrollerSessionWorld2D
     {
-        public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
+        public Rect2D Bounds => new(new Vector2f(-10000f), new Vector2f(10000f));
         public float GoalX => 9000f;
-        public void UpdateStreaming(Vector2 position)
+        public void UpdateStreaming(Vector2f position)
         {
         }
         public void UpdateWorldMotion(float dt)
         {
         }
-        public void UpdateEnemies(float dt, Vector2 position)
+        public void UpdateEnemies(float dt, Vector2f position)
         {
         }
         public void SyncEnemiesAfterPhysics()

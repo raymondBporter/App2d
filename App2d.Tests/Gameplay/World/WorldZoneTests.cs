@@ -18,14 +18,14 @@ public sealed class WorldZoneTests
         var left = new WorldZone2D("left", "Left", new(new(-10, -10), new(0, 10)));
         var right = new WorldZone2D("right", "Right", new(new(0, -10), new(10, 10)));
         Assert.Same(left, WorldZone2D.FindAt([left, right], new(-.01f, 0)));
-        Assert.Same(right, WorldZone2D.FindAt([left, right], Vector2.Zero));
+        Assert.Same(right, WorldZone2D.FindAt([left, right], Vector2f.Zero));
         Assert.Null(WorldZone2D.FindAt([left, right], new(10, 0)));
         Assert.Null(WorldZone2D.FindAt([left, right], new(0, 10)));
         var special = new WorldZone2D("special", "Special", new(new(-2, -2), new(2, 2)), 10);
-        Assert.Same(special, WorldZone2D.FindAt([special, right, left], Vector2.Zero));
-        Assert.Same(special, WorldZone2D.FindAt([left, right, special], Vector2.Zero));
+        Assert.Same(special, WorldZone2D.FindAt([special, right, left], Vector2f.Zero));
+        Assert.Same(special, WorldZone2D.FindAt([left, right, special], Vector2f.Zero));
         var tie = new WorldZone2D("a", "Tie", special.Bounds, 10);
-        Assert.Same(tie, WorldZone2D.FindAt([special, tie], Vector2.Zero));
+        Assert.Same(tie, WorldZone2D.FindAt([special, tie], Vector2f.Zero));
     }
 
     [Theory]
@@ -34,7 +34,7 @@ public sealed class WorldZoneTests
     [InlineData(1, float.NaN)]
     [InlineData(float.PositiveInfinity, 1)]
     public void DegenerateAndNonFiniteZonesAreRejected(float x, float y) =>
-        Assert.ThrowsAny<ArgumentException>(() => new WorldZone2D("test", "Test", new(Vector2.Zero, new(x, y))));
+        Assert.ThrowsAny<ArgumentException>(() => new WorldZone2D("test", "Test", new(Vector2f.Zero, new(x, y))));
 
     [Fact]
     public void ZoneFileRejectsDuplicatesAndInvalidBoundsButOldLevelsMayHaveNoFile()

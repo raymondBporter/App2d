@@ -11,7 +11,7 @@ namespace App2d.Editor;
 internal sealed class LevelPicker2D(IReadOnlyList<WorldMapAsset2D> maps)
 {
     private int _selected;
-    private Vector2 _mouse;
+    private Vector2f _mouse;
     public bool IsOpen { get; private set; }
     private const int PageSize = 5;
     private int First => _selected / PageSize * PageSize;

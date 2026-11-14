@@ -5,7 +5,7 @@ namespace App2d.Core.Physics.Integration;
 
 public sealed class SemiImplicitEulerIntegrator2D : IPhysicsIntegrator2D
 {
-    public void Integrate(RigidBody2D body, Vector2 gravity, float deltaSeconds)
+    public void Integrate(RigidBody2D body, Vector2f gravity, float deltaSeconds)
     {
         switch (body.MotionType)
         {
@@ -29,7 +29,7 @@ public sealed class SemiImplicitEulerIntegrator2D : IPhysicsIntegrator2D
 
     private static void IntegrateTransform(RigidBody2D body, float deltaSeconds)
     {
-        if (body.LocalCenterOfMass != Vector2.Zero && body.AngularVelocity != 0f)
+        if (body.LocalCenterOfMass != Vector2f.Zero && body.AngularVelocity != 0f)
         {
             var center = body.WorldCenterOfMass + body.LinearVelocity * deltaSeconds;
             body.WorldObject.Transform.Rotation += body.AngularVelocity * deltaSeconds;

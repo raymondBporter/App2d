@@ -33,7 +33,7 @@ public sealed class PersonFaceTests
         var falling = Standing with
         {
             IsGrounded = false,
-            LinearVelocity = new Vector2(0, -100)
+            LinearVelocity = new Vector2f(0, -100)
         };
         face.Update(falling, .3f);
         Assert.Equal("surprised", face.Expression);

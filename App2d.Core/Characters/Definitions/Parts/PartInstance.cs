@@ -39,9 +39,9 @@ public sealed record PartInstance
     /// <summary>The placement with the fit in the frame (<see cref="PartFittings.Stretch"/>) or left to the asset's layout (<see cref="PartFittings.Layout"/>).</summary>
     public LayeredFrame2D Placement(bool stretch)
     {
-        var fit = stretch ? new Vector2(FitX, FitY) : Vector2.One;
+        var fit = stretch ? new Vector2f(FitX, FitY) : Vector2f.One;
         var local = LayeredFrame2D.Local(fit * Scale, Angle, new(X, Y), Layer);
-        return Mirror ? local.Then(LayeredFrame2D.Local(new(-1, 1), 0, Vector2.Zero, 0)) : local;
+        return Mirror ? local.Then(LayeredFrame2D.Local(new(-1, 1), 0, Vector2f.Zero, 0)) : local;
     }
 
     public void Validate(string field)

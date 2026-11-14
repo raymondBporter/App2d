@@ -6,18 +6,18 @@ using System.Numerics;
 namespace App2d.Core.Constraints;
 
 public readonly record struct DistanceConstraintEvaluation2D(
-    Vector2 Direction,
+    Vector2f Direction,
     float Distance,
     ConstraintLimitEvaluation1D Limit);
 
-public readonly record struct AxisConstraintEvaluation2D(Vector2 Axis, float Translation, ConstraintLimitEvaluation1D Limit, Vector2 ProjectedPoint);
+public readonly record struct AxisConstraintEvaluation2D(Vector2f Axis, float Translation, ConstraintLimitEvaluation1D Limit, Vector2f ProjectedPoint);
 
 /// <summary>Pure geometric constraint calculations with no bodies or solver state.</summary>
 public static class ConstraintMath2D
 {
     private const float MinimumDirectionLengthSquared = 1e-8f;
 
-    public static DistanceConstraintEvaluation2D EvaluateDistance(Vector2 first, Vector2 second, Interval<float> limits, float activationTolerance = 0f, Vector2 fallbackDirection = default)
+    public static DistanceConstraintEvaluation2D EvaluateDistance(Vector2f first, Vector2f second, Interval<float> limits, float activationTolerance = 0f, Vector2f fallbackDirection = default)
     {
         Ensure.Finite(first);
         Ensure.Finite(second);
@@ -27,7 +27,7 @@ public static class ConstraintMath2D
         var delta = second - first;
         var lengthSquared = delta.LengthSquared();
         float distance;
-        Vector2 direction;
+        Vector2f direction;
         if (lengthSquared > MinimumDirectionLengthSquared)
         {
             distance = MathF.Sqrt(lengthSquared);
@@ -37,37 +37,37 @@ public static class ConstraintMath2D
         {
             distance = MathF.Sqrt(lengthSquared);
             direction = fallbackDirection.LengthSquared() > MinimumDirectionLengthSquared
-                ? Vector2.Normalize(fallbackDirection)
-                : Vector2.UnitX;
+                ? Vector2f.Normalize(fallbackDirection)
+                : Vector2f.UnitX;
         }
 
         return new DistanceConstraintEvaluation2D(direction, distance, ConstraintMath1D.EvaluateLimit(limits, distance, activationTolerance));
     }
 
-    public static Vector2 ProjectPointToDistance(Vector2 anchor, Vector2 requestedPoint, Interval<float> limits, Vector2 fallbackDirection = default)
+    public static Vector2f  ProjectPointToDistance(Vector2f anchor, Vector2f requestedPoint, Interval<float> limits, Vector2f fallbackDirection = default)
     {
         var evaluation = EvaluateDistance(anchor, requestedPoint, limits, fallbackDirection: fallbackDirection);
         return anchor + evaluation.Direction * evaluation.Limit.Target;
     }
 
-    public static AxisConstraintEvaluation2D EvaluateAxis(Vector2 anchor, Vector2 requestedPoint, Vector2 axis, Interval<float> translationLimits, float activationTolerance = 0f)
+    public static AxisConstraintEvaluation2D EvaluateAxis(Vector2f anchor, Vector2f requestedPoint, Vector2f axis, Interval<float> translationLimits, float activationTolerance = 0f)
     {
         Ensure.Finite(anchor);
         Ensure.Finite(requestedPoint);
         Ensure.NonZero(axis);
-        axis = Vector2.Normalize(axis);
-        var translation = Vector2.Dot(requestedPoint - anchor, axis);
+        axis = Vector2f.Normalize(axis);
+        var translation = Vector2f.Dot(requestedPoint - anchor, axis);
         var limit = ConstraintMath1D.EvaluateLimit(translationLimits, translation, activationTolerance);
         return new AxisConstraintEvaluation2D(axis, translation, limit, anchor + axis * limit.Target);
     }
 
-    public static Vector2 ProjectPointToAxis(Vector2 anchor, Vector2 requestedPoint, Vector2 axis, Interval<float> translationLimits) => EvaluateAxis(anchor, requestedPoint, axis, translationLimits).ProjectedPoint;
+    public static Vector2f  ProjectPointToAxis(Vector2f anchor, Vector2f requestedPoint, Vector2f axis, Interval<float> translationLimits) => EvaluateAxis(anchor, requestedPoint, axis, translationLimits).ProjectedPoint;
 
     /// <summary>
     /// Projects a point onto a fixed-radius arc. Angles are unwrapped radians
     /// relative to +X; wrapping intervals across -PI/PI are intentionally not inferred.
     /// </summary>
-    public static Vector2 ProjectPointToPolarArc(Vector2 anchor, Vector2 requestedPoint, float radius, Interval<float> angleLimits, float fallbackAngle = 0f)
+    public static Vector2f  ProjectPointToPolarArc(Vector2f anchor, Vector2f requestedPoint, float radius, Interval<float> angleLimits, float fallbackAngle = 0f)
     {
         Ensure.Finite(anchor);
         Ensure.Finite(requestedPoint);

@@ -152,7 +152,7 @@ public sealed class PersonFaceConversionTests : IDisposable
         Assert.Equal("happy", smiling.Expressions[PersonTemplate.FaceInstance]);
         Assert.NotEqual(PoseEvaluator.Rest(hero.Model).Points[Humanoid.LeftFoot], smiling.Points[Humanoid.LeftFoot]);
         // Happy mutes the blink (only relaxed, focused and worried blink, as the old presentation did); relaxed blinks at the same instant.
-        Assert.True(smiling.Attachments[PersonTemplate.FaceInstance].Pose.Fits.GetValueOrDefault("left-pupil", Vector2.One).Y > .5f);
+        Assert.True(smiling.Attachments[PersonTemplate.FaceInstance].Pose.Fits.GetValueOrDefault("left-pupil", Vector2f.One).Y > .5f);
         Assert.Equal(0, PoseEvaluator.Sample(hero.Model, walk, .3, repeat: true, new("relaxed") { Clock = 3.62 }).Attachments[PersonTemplate.FaceInstance].Pose.Fits["left-pupil"].Y, 4);
     }
 }

@@ -27,13 +27,13 @@ public sealed class SideScrollerCamera2D
     private float _lookAhead;
     private float _fallDuration;
     private float _fallBlend;
-    private Vector2 _followPosition;
+    private Vector2f _followPosition;
     private float _shakeStrength;
     private float _shakeTime;
     private float _verticalFollowSuppression;
     private float _lastGroundedPlayerY;
 
-    public SideScrollerCamera2D(Camera2D camera, Rect2D levelBounds, Vector2 initialPlayerPosition)
+    public SideScrollerCamera2D(Camera2D camera, Rect2D levelBounds, Vector2f initialPlayerPosition)
     {
         _camera = Ensure.RequireNotNull(camera);
         if (!levelBounds.IsFinite)
@@ -46,7 +46,7 @@ public sealed class SideScrollerCamera2D
         Reset(initialPlayerPosition);
     }
 
-    public void Update(Vector2 playerPosition, Vector2 playerVelocity, bool isGrounded, float deltaSeconds)
+    public void Update(Vector2f playerPosition, Vector2f playerVelocity, bool isGrounded, float deltaSeconds)
     {
         if (deltaSeconds <= 0f)
         {
@@ -62,20 +62,21 @@ public sealed class SideScrollerCamera2D
         UpdateLookAhead(playerVelocity.X, halfView.X, deltaSeconds);
         UpdateVerticalFraming(playerVelocity.Y, isGrounded, deltaSeconds);
 
-        var focus = new Vector2(playerPosition.X + _lookAhead, GetVerticalFocus(playerPosition));
-        var target = _followPosition;
-        target.X = KeepInsideDeadZone(target.X, focus.X, halfView.X * HorizontalDeadZoneViewportRatio);
-        target.Y = KeepInsideDeadZone(target.Y, focus.Y, halfView.Y * float.Lerp(VerticalDeadZoneViewportRatio, FallingVerticalDeadZoneViewportRatio, _fallBlend));
+        var focus = new Vector2f(playerPosition.X + _lookAhead, GetVerticalFocus(playerPosition));
+        var verticalDeadZone = halfView.Y * float.Lerp(VerticalDeadZoneViewportRatio, FallingVerticalDeadZoneViewportRatio, _fallBlend);
+        var target = new Vector2f(
+            KeepInsideDeadZone(_followPosition.X, focus.X, halfView.X * HorizontalDeadZoneViewportRatio),
+            KeepInsideDeadZone(_followPosition.Y, focus.Y, verticalDeadZone));
         target = ClampToLevel(target);
 
-        var distance = Vector2.Abs(target - _followPosition);
+        var distance = Vector2f.Abs(target - _followPosition);
         var horizontalRate = CatchUpRate(distance.X, halfView.X, 4.5f, 11f);
         var followingDownward = target.Y < _followPosition.Y;
         var verticalRate = followingDownward
             ? CatchUpRate(distance.Y, halfView.Y, float.Lerp(3.2f, 7f, _fallBlend), float.Lerp(8f, 16f, _fallBlend))
             : CatchUpRate(distance.Y, halfView.Y, 3.2f, 8f);
         verticalRate *= float.Lerp(1f, MinimumVerticalFollowRateScale, _verticalFollowSuppression);
-        _followPosition = new Vector2(Damp(_followPosition.X, target.X, horizontalRate, deltaSeconds), Damp(_followPosition.Y, target.Y, verticalRate, deltaSeconds));
+        _followPosition = new Vector2f(Damp(_followPosition.X, target.X, horizontalRate, deltaSeconds), Damp(_followPosition.Y, target.Y, verticalRate, deltaSeconds));
         _followPosition = ClampToLevel(_followPosition);
         _verticalFollowSuppression = Damp(_verticalFollowSuppression, 0f, VerticalFollowSuppressionRate, deltaSeconds);
         _camera.Position = _followPosition;
@@ -93,7 +94,7 @@ public sealed class SideScrollerCamera2D
         }
     }
 
-    public void Reset(Vector2 playerPosition)
+    public void Reset(Vector2f playerPosition)
     {
         _lookAhead = 0f;
         _fallDuration = 0f;
@@ -102,15 +103,15 @@ public sealed class SideScrollerCamera2D
         _shakeTime = 0f;
         _verticalFollowSuppression = 0f;
         _lastGroundedPlayerY = playerPosition.Y;
-        _followPosition = ClampToLevel(new Vector2(playerPosition.X, GetVerticalFocus(playerPosition)));
+        _followPosition = ClampToLevel(new Vector2f(playerPosition.X, GetVerticalFocus(playerPosition)));
         _camera.Position = _followPosition;
     }
 
-    private Vector2 UpdateShake(float deltaSeconds)
+    private Vector2f UpdateShake(float deltaSeconds)
     {
         if (_shakeStrength <= 0f)
         {
-            return Vector2.Zero;
+            return Vector2f.Zero;
         }
 
         _shakeTime += deltaSeconds;
@@ -118,17 +119,17 @@ public sealed class SideScrollerCamera2D
         if (_shakeStrength < MinimumShakeStrength)
         {
             _shakeStrength = 0f;
-            return Vector2.Zero;
+            return Vector2f.Zero;
         }
 
         // Two mismatched waves keep the motion from looking mechanical without
         // introducing random jitter or frame-rate-dependent camera drift.
-        return new Vector2(
+        return new Vector2f(
             MathF.Sin(_shakeTime * ShakeFrequency),
             MathF.Sin(_shakeTime * ShakeFrequency * 1.37f + 1.1f)) * _shakeStrength;
     }
 
-    private float GetVerticalFocus(Vector2 playerPosition)
+    private float GetVerticalFocus(Vector2f playerPosition)
     {
         var playerFocus = playerPosition.Y + float.Lerp(GroundedVerticalOffset, FallingVerticalOffset, _fallBlend);
         var floorAnchoredFocus = MathF.Max(playerFocus, _lastGroundedPlayerY + GroundedVerticalOffset);
@@ -166,7 +167,7 @@ public sealed class SideScrollerCamera2D
         _lookAhead = Damp(_lookAhead, target, response, deltaSeconds);
     }
 
-    private Vector2 ClampToLevel(Vector2 position)
+    private Vector2f ClampToLevel(Vector2f position)
     {
         // Leave enough room for the largest shake so its render-only offset can
         // never expose space beyond the authored level at any viewport edge.

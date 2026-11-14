@@ -10,7 +10,7 @@ public sealed partial class PersonArsenal2D
 {
     private readonly Health2D? _spellHealth;
     private readonly SpellTuning2D _spellTuning;
-    private readonly Func<Vector2> _spellPosition;
+    private readonly Func<Vector2f> _spellPosition;
     private int _energy;
     private double _energyRecharge;
     private float _healElapsed;

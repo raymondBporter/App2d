@@ -130,8 +130,8 @@ public sealed class PuppetDefinition
             Require(chain.Bend is -1 or 1, "IK bend must be -1 or 1.");
             Require(parents.GetValueOrDefault(chain.Joint) == chain.Root && parents.GetValueOrDefault(chain.End) == chain.Joint, "IK needs two connected bones.");
             Require(solvedControls.Add(chain.Joint) && solvedControls.Add(chain.End), "IK chains cannot share solved controls.");
-            Number(Vector2.Distance(controls[chain.Root].Rest.XY, controls[chain.Joint].Rest.XY), .01f, 100, "IK first length");
-            Number(Vector2.Distance(controls[chain.Joint].Rest.XY, controls[chain.End].Rest.XY), .01f, 100, "IK second length");
+            Number(Vector2f.Distance(controls[chain.Root].Rest.XY, controls[chain.Joint].Rest.XY), .01f, 100, "IK first length");
+            Number(Vector2f.Distance(controls[chain.Joint].Rest.XY, controls[chain.End].Rest.XY), .01f, 100, "IK second length");
         }
         foreach (var chain in Chains)
         {

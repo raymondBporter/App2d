@@ -18,7 +18,7 @@ public sealed class WeaponPresentationTests
         var scene = new Scene2D();
         var sounds = new RecordingSink();
         using var view = new WeaponPresentation2D(scene, textures, sounds);
-        view.ApplyState(WeaponState2D.Empty, EquipmentKind2D.Gun, [new GunFired2D(Vector2.Zero)]);
+        view.ApplyState(WeaponState2D.Empty, EquipmentKind2D.Gun, [new GunFired2D(Vector2f.Zero)]);
         Assert.Contains(scene, item => item.IsVisible);
         for (var i = 0; i < 10; i++)
         {
@@ -38,17 +38,17 @@ public sealed class WeaponPresentationTests
         var scene = new Scene2D();
         var sounds = new RecordingSink();
         using var view = new WeaponPresentation2D(scene, textures, sounds);
-        var charging = new WeaponState2D(true, 0.5f, new Vector2(40f, 5f), []);
+        var charging = new WeaponState2D(true, 0.5f, new Vector2f(40f, 5f), []);
         view.Update(charging, EquipmentKind2D.Gun, [], 0f);
         var voice = Assert.Single(sounds.Voices);
         Assert.True(voice.IsPlaying);
         Assert.Equal(charging.MuzzlePosition, voice.Position);
         view.Update(charging with
         {
-            MuzzlePosition = new Vector2(80f, 5f)
+            MuzzlePosition = new Vector2f(80f, 5f)
         }, EquipmentKind2D.Gun, [], 0.01f);
         Assert.Single(sounds.Voices);
-        Assert.Equal(new Vector2(80f, 5f), voice.Position);
+        Assert.Equal(new Vector2f(80f, 5f), voice.Position);
         view.Suspend();
         Assert.False(voice.IsPlaying);
         Assert.DoesNotContain(scene, item => item.IsVisible);
@@ -64,15 +64,15 @@ public sealed class WeaponPresentationTests
         var scene = new Scene2D();
         var sounds = new RecordingSink();
         var view = new WeaponPresentation2D(scene, textures, sounds);
-        var first = new ProjectileState2D(EntityId2D.Create(), new Vector2(100f, 0f), new Vector2(1250f, 0f), Vector2.Zero);
+        var first = new ProjectileState2D(EntityId2D.Create(), new Vector2f(100f, 0f), new Vector2f(1250f, 0f), Vector2f.Zero);
         var boltTexture = textures.Load("effects/gun/bolt.png");
-        var state = new WeaponState2D(false, 0f, Vector2.Zero, [first]);
+        var state = new WeaponState2D(false, 0f, Vector2f.Zero, [first]);
         view.Update(state, EquipmentKind2D.Gun, [], 0f);
         Assert.Equal(2, scene.Count(item => item.IsVisible)); // Bolt and trail.
         var second = first with
         {
             Id = EntityId2D.Create(),
-            Position = new Vector2(20f, 0f)
+            Position = new Vector2f(20f, 0f)
         };
         view.Update(state with
         {
@@ -85,10 +85,10 @@ public sealed class WeaponPresentationTests
             Projectiles = [second]
         }, EquipmentKind2D.Gun, [], 0.06f);
         Assert.Equal(2, scene.Count(item => item.IsVisible));
-        view.Update(WeaponState2D.Empty, EquipmentKind2D.Gun, [new GunFired2D(Vector2.Zero),
-            new ProjectileImpact2D(new Vector2(40f, 0f), EntityId2D.Create())], 0.01f);
+        view.Update(WeaponState2D.Empty, EquipmentKind2D.Gun, [new GunFired2D(Vector2f.Zero),
+            new ProjectileImpact2D(new Vector2f(40f, 0f), EntityId2D.Create())], 0.01f);
         Assert.Equal(2, sounds.Played.Count(p => p.Effect == SoundEffect2D.GunImpact));
-        Assert.Contains((SoundEffect2D.GunFire, Vector2.Zero), sounds.Played);
+        Assert.Contains((SoundEffect2D.GunFire, Vector2f.Zero), sounds.Played);
         view.Update(WeaponState2D.Empty, EquipmentKind2D.Gun, [], 0.1f);
         Assert.DoesNotContain(scene, item => item.IsVisible);
         view.Dispose();
@@ -98,10 +98,10 @@ public sealed class WeaponPresentationTests
     private sealed class RecordingSink : ISoundEffectSink2D<SoundEffect2D>
     {
         public List<Voice> Voices { get; } = [];
-        public List<(SoundEffect2D Effect, Vector2 Position)> Played { get; } = [];
-        public void Play(SoundEffect2D effect) => Played.Add((effect, Vector2.Zero));
-        public void PlayAt(SoundEffect2D effect, Vector2 position) => Played.Add((effect, position));
-        public SoundEffectVoice2D BeginAt(SoundEffect2D effect, Vector2 position, float initialVolumeScale = 1f)
+        public List<(SoundEffect2D Effect, Vector2f Position)> Played { get; } = [];
+        public void Play(SoundEffect2D effect) => Played.Add((effect, Vector2f.Zero));
+        public void PlayAt(SoundEffect2D effect, Vector2f position) => Played.Add((effect, position));
+        public SoundEffectVoice2D BeginAt(SoundEffect2D effect, Vector2f position, float initialVolumeScale = 1f)
         {
             var voice = new Voice();
             voice.SetPosition(position);
@@ -113,8 +113,8 @@ public sealed class WeaponPresentationTests
     private sealed class Voice : ISoundEffectVoice2D
     {
         public bool IsPlaying { get; private set; } = true;
-        public Vector2 Position { get; private set; }
-        public void SetPosition(Vector2 position) => Position = position;
+        public Vector2f Position { get; private set; }
+        public void SetPosition(Vector2f position) => Position = position;
         public void SetVolumeScale(float volume, float seconds)
         {
         }

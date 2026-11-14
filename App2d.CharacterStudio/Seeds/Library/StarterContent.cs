@@ -346,8 +346,8 @@ public static class StarterContent
             ModelAuthoring.AddControl(model, $"hip-{i}", new(x + .15f, .4f, z), $"knee-{i}");
             ModelAuthoring.AddControl(model, $"knee-{i}", new(x, 0, z), $"foot-{i}");
             ModelAuthoring.AddIkOverPoints(model, $"foot-{i}");
-            ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"hip-{i}", $"knee-{i}");
-            ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
+            ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), $"hip-{i}", $"knee-{i}");
+            ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
         }
         ModelAuthoring.AddMeasure(model, "leg", ["hip-1", "knee-1", "foot-1"]);
         foreach (var chain in model.IkChains)

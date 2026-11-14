@@ -22,12 +22,12 @@ public sealed class EnemyPresentationTests
     {
         var entity = Catalog.Entities["rock-thrower"];
         var pose = new ActorPose(
-            PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2.Zero, 1);
+            PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2f.Zero, 1);
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
         var sounds = new RecordingSounds();
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
-        var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, Vector2.Zero, Vector2.Zero, 0, 1, true, true)
+        var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, Vector2f.Zero, Vector2f.Zero, 0, 1, true, true)
         {
             TypeId = entity.Id,
             AuthoredEntity = entity,
@@ -43,7 +43,7 @@ public sealed class EnemyPresentationTests
             ActionSeconds = 1.2f,
             Bolts = [new(new(70, 80), new(100, 120), new(14.4f), 3) { Gravity = 600 }]
         };
-        view.ApplyState([state], [new EntityCue2D(state.Id, Vector2.Zero, "rock-throw")], 2);
+        view.ApplyState([state], [new EntityCue2D(state.Id, Vector2f.Zero, "rock-throw")], 2);
         Assert.DoesNotContain(shader.Props, p => p.Prop.Id == "throwing-rock");
         Assert.Contains(scene, o => o.Shape is Core.Shapes.ConvexPolygon2D);
         Assert.Contains(sounds.Played, cue => cue.Item1 == SoundEffect2D.SwordSwing);
@@ -81,7 +81,7 @@ public sealed class EnemyPresentationTests
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
         var id = EntityId2D.Create();
-        var state = new EnemyState2D(id, EnemyKind2D.Rival, Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
+        var state = new EnemyState2D(id, EnemyKind2D.Rival, Vector2f.Zero, Vector2f.Zero, 0f, 1f, true, true)
         {
             Person = default(Contracts.Persons.PersonState2D) with
             {
@@ -108,8 +108,8 @@ public sealed class EnemyPresentationTests
         var sounds = new RecordingSounds();
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
-        var state = AuthoredAttack(entityId, .55f, new Vector2(100f, 0f), -1);
-        var position = new Vector2(38f, -10f);
+        var state = AuthoredAttack(entityId, .55f, new Vector2f(100f, 0f), -1);
+        var position = new Vector2f(38f, -10f);
         view.Update([state], [new EntityCue2D(state.Id, position, "heavy")], 3f, 1);
         var visual = Assert.Single(scene);
         var shader = Assert.IsType<AuthoredCharacterShader>(visual.Shader);
@@ -134,7 +134,7 @@ public sealed class EnemyPresentationTests
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Shieldback,
-            new Vector2(100f, 0f), new Vector2(118f, 0f), 0f, -1f, true, true)
+            new Vector2f(100f, 0f), new Vector2f(118f, 0f), 0f, -1f, true, true)
         { MoveSpeed = 118f };
 
         view.ApplyState([state], [], 1);
@@ -142,17 +142,17 @@ public sealed class EnemyPresentationTests
         var shader = Assert.IsType<SpriteShader2D>(visual.Shader);
         Assert.Same(textures.Load("characters/shieldback/animations/walk/frame-0001.png"), shader.Texture);
         Assert.True(shader.FlipX);
-        Assert.Equal(new Vector2(100f, 10f), visual.Transform.Position);
+        Assert.Equal(new Vector2f(100f, 10f), visual.Transform.Position);
         view.ApplyState([state with { IsEnabled = false }], [], 2);
         Assert.False(visual.IsVisible);
         view.ApplyState([], [], 3);
         Assert.Empty(scene);
     }
 
-    private static EnemyState2D AuthoredAttack(string entityId, float seconds, Vector2 position = default, int facing = 1)
+    private static EnemyState2D AuthoredAttack(string entityId, float seconds, Vector2f position = default, int facing = 1)
     {
         var entity = Catalog.Entities[entityId];
-        return new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, position, Vector2.Zero, 0, facing, true, true)
+        return new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, position, Vector2f.Zero, 0, facing, true, true)
         {
             TypeId = entityId,
             AuthoredEntity = entity,
@@ -166,8 +166,8 @@ public sealed class EnemyPresentationTests
 
     private sealed class RecordingSounds : ISoundEffectSink2D<SoundEffect2D>
     {
-        public List<(SoundEffect2D, Vector2)> Played { get; } = [];
+        public List<(SoundEffect2D, Vector2f)> Played { get; } = [];
         public void Play(SoundEffect2D effect) => Assert.Fail("Enemy sounds require an occurrence position.");
-        public void PlayAt(SoundEffect2D effect, Vector2 position) => Played.Add((effect, position));
+        public void PlayAt(SoundEffect2D effect, Vector2f position) => Played.Add((effect, position));
     }
 }

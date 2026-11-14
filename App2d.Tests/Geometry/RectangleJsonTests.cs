@@ -20,15 +20,15 @@ public sealed class RectangleJsonTests
         Assert.False(JsonDocument.Parse(json).RootElement.TryGetProperty("kind", out _));
         var back = JsonSerializer.Deserialize<Rectangle2D>(json, GeometryJson2D.JsonOptions).Validated();
         Assert.Equal(.5f, back.AngleRadians, 5);
-        Assert.Equal(new Vector2(4, 2), back.Size, Near);
+        Assert.Equal(new Vector2f(4, 2), back.Size, Near);
     }
 
     [Fact]
     public void MinMaxSpellingReadsAxisAligned()
     {
         var box = Assert.IsType<Rectangle2D>(GeometryJson2D.ShapeFromJson("{\"kind\":\"rectangle\",\"min\":{\"x\":-1,\"y\":-2},\"max\":{\"x\":3,\"y\":1}}").Validated());
-        Assert.Equal(new Vector2(1, -.5f), box.Center);
-        Assert.Equal(new Vector2(2, 1.5f), box.HalfSize);
+        Assert.Equal(new Vector2f(1, -.5f), box.Center);
+        Assert.Equal(new Vector2f(2, 1.5f), box.HalfSize);
         Assert.True(box.IsAxisAligned);
     }
 
@@ -36,8 +36,8 @@ public sealed class RectangleJsonTests
     public void MinMaxSpellingAcceptsAnAngle()
     {
         var box = Assert.IsType<Rectangle2D>(GeometryJson2D.ShapeFromJson("{\"kind\":\"rectangle\",\"min\":{\"x\":-1,\"y\":-2},\"max\":{\"x\":3,\"y\":1},\"angleRadians\":1.5707963}").Validated());
-        Assert.Equal(new Vector2(1, -.5f), box.Center);
-        Assert.Equal(Vector2.UnitY, box.Axis, Near);
+        Assert.Equal(new Vector2f(1, -.5f), box.Center);
+        Assert.Equal(Vector2f.UnitY, box.Axis, Near);
     }
 
     [Fact]

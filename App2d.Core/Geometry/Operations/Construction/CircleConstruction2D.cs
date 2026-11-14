@@ -8,7 +8,7 @@ namespace App2d.Core.Geometry.Operations.Construction;
 public static class CircleConstruction2D
 {
     /// <summary>The circumcircle through three finite non-collinear points.</summary>
-    public static (Vector2 Center, float Radius) ThroughPoints(Vector2 a, Vector2 b, Vector2 c)
+    public static (Vector2f  Center, float Radius) ThroughPoints(Vector2f  a, Vector2f  b, Vector2f  c)
     {
         Ensure.Finite(a);
         Ensure.Finite(b);
@@ -20,7 +20,7 @@ public static class CircleConstruction2D
         Ensure.NonZero(cross);
 
         var offset = (v.LengthSquared() * u - u.LengthSquared() * v).PerpCcw / (2 * cross);
-        var center = (origin + offset).ToVector2();
+        var center = (origin + offset).ToVector2f();
         var radius = (float)offset.Length();
         Ensure.Finite(center);
         Ensure.Positive(radius);

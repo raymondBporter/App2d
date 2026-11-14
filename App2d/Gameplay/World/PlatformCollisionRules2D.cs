@@ -116,10 +116,10 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
     }
 
     private static bool AllowsOneWaySurface(RigidBody2D surface, RigidBody2D other, PlatformSurface2D settings,
-        Vector2 surfaceNormal, Vector2 otherSeparationNormal, CollisionContact2D geometry)
+        Vector2f surfaceNormal, Vector2f otherSeparationNormal, CollisionContact2D geometry)
     {
         // Rounded corner contacts must pass through just like vertical platform sides.
-        if (Vector2.Dot(otherSeparationNormal, surfaceNormal) < 0.999999f)
+        if (Vector2f.Dot(otherSeparationNormal, surfaceNormal) < 0.999999f)
         {
             return false;
         }
@@ -129,7 +129,7 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
         }
 
         var face = MaximumProjection(surface.WorldObject, surfaceNormal);
-        if (MathF.Abs(Vector2.Dot(geometry.Point, surfaceNormal) - face) > settings.OneWaySlop + geometry.PenetrationDepth)
+        if (MathF.Abs(Vector2f.Dot(geometry.Point, surfaceNormal) - face) > settings.OneWaySlop + geometry.PenetrationDepth)
         {
             return false;
         }
@@ -137,27 +137,27 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
         var pose = other.WorldObject.CollisionPose;
         var rotation = Matrix3x2.CreateRotation(other.PreviousRotation - other.WorldObject.Transform.Rotation);
         var previousPose = Similarity2D.FromAxis(other.PreviousPosition,
-            Vector2.TransformNormal(pose.XAxis, rotation), pose.IsMirrored, pose.Scale);
+            Vector2f.TransformNormal(pose.XAxis, rotation), pose.IsMirrored, pose.Scale);
         var previousNearSide = -MaximumProjection(other.WorldObject.Shape, previousPose, -surfaceNormal);
         if (previousNearSide < face - settings.OneWaySlop)
         {
             return false;
         }
-        var relativeMotion = Vector2.Dot(
+        var relativeMotion = Vector2f.Dot(
             other.WorldObject.Transform.Position - other.PreviousPosition -
             (surface.WorldObject.Transform.Position - surface.PreviousPosition), surfaceNormal);
-        return relativeMotion <= 0f && Vector2.Dot(other.LinearVelocity - surface.LinearVelocity, surfaceNormal) <= 0f;
+        return relativeMotion <= 0f && Vector2f.Dot(other.LinearVelocity - surface.LinearVelocity, surfaceNormal) <= 0f;
     }
 
-    private static float MaximumProjection(SpatialObject2D worldObject, Vector2 normal) =>
+    private static float MaximumProjection(SpatialObject2D worldObject, Vector2f normal) =>
         MaximumProjection(worldObject.Shape, worldObject.CollisionPose, normal);
 
-    private static float MaximumProjection(IShape2D shape, Similarity2D pose, Vector2 normal)
+    private static float MaximumProjection(IShape2D shape, Similarity2D pose, Vector2f normal)
     {
         if (shape is IConvexShape2D convex)
         {
             var point = pose.TransformPoint(convex.GetSupportPoint(pose.TransposeTransformDirection(normal)));
-            return Vector2.Dot(point, normal);
+            return Vector2f.Dot(point, normal);
         }
         if (shape is CompositeShape2D composite)
         {
@@ -167,6 +167,6 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
             return maximum;
         }
         var bounds = ShapeBounds2D.CalculateTransformed(shape, pose.ToMatrix());
-        return Vector2.Dot(bounds.Center, normal) + (MathF.Abs(normal.X) * bounds.Size.X + MathF.Abs(normal.Y) * bounds.Size.Y) * 0.5f;
+        return Vector2f.Dot(bounds.Center, normal) + (MathF.Abs(normal.X) * bounds.Size.X + MathF.Abs(normal.Y) * bounds.Size.Y) * 0.5f;
     }
 }

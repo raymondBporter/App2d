@@ -10,7 +10,7 @@ public sealed class ShapeContactCharacterizationTests
 {
     private static readonly ShapeCollisionContactProvider2D Provider = new();
 
-    private static SpatialObject2D At(IShape2D shape, Vector2 position, float rotation = 0f)
+    private static SpatialObject2D At(IShape2D shape, Vector2f position, float rotation = 0f)
     {
         var worldObject = new SpatialObject2D(shape);
         worldObject.Transform.Position = position;
@@ -21,8 +21,8 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void RectangleVsHalfSpaceReportsUpNormalAndDepth()
     {
-        var box = At(Rectangle2D.Builder.CreateFromSize(10f, 10f), new Vector2(0f, -3f));
-        var ground = At(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f), Vector2.Zero);
+        var box = At(Rectangle2D.Builder.CreateFromSize(10f, 10f), new Vector2f(0f, -3f));
+        var ground = At(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f), Vector2f.Zero);
 
         Assert.True(Provider.TryGetContact(box, ground, out var contact));
         Assert.Equal(1f, contact.Normal.Y, 3);
@@ -36,8 +36,8 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void CapsuleVsHalfSpaceReportsDepthFromDeepestPoint()
     {
-        var capsule = At(Capsule2D.Builder.Create(new Vector2(0f, -2f), new Vector2(0f, 2f), 1f), new Vector2(0f, 1f));
-        var ground = At(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f), Vector2.Zero);
+        var capsule = At(Capsule2D.Builder.Create(new Vector2f(0f, -2f), new Vector2f(0f, 2f), 1f), new Vector2f(0f, 1f));
+        var ground = At(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f), Vector2f.Zero);
 
         Assert.True(Provider.TryGetContact(capsule, ground, out var contact));
         Assert.Equal(1f, contact.Normal.Y, 3);
@@ -47,8 +47,8 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void CircleVsHalfSpaceContactPointLiesOnTheBoundary()
     {
-        var circle = At(Circle2D.Builder.Create(2f), new Vector2(5f, 1f));
-        var ground = At(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f), Vector2.Zero);
+        var circle = At(Circle2D.Builder.Create(2f), new Vector2f(5f, 1f));
+        var ground = At(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f), Vector2f.Zero);
 
         Assert.True(Provider.TryGetContact(circle, ground, out var contact));
         Assert.Equal(0f, contact.Point.Y, 3);
@@ -58,8 +58,8 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void OverlappingCapsulesResolveAlongTheShortestAxis()
     {
-        var first = At(Capsule2D.Builder.Create(new Vector2(-2f, 0f), new Vector2(2f, 0f), 1f), Vector2.Zero);
-        var second = At(Capsule2D.Builder.Create(new Vector2(-2f, 0f), new Vector2(2f, 0f), 1f), new Vector2(0f, 1.5f));
+        var first = At(Capsule2D.Builder.Create(new Vector2f(-2f, 0f), new Vector2f(2f, 0f), 1f), Vector2f.Zero);
+        var second = At(Capsule2D.Builder.Create(new Vector2f(-2f, 0f), new Vector2f(2f, 0f), 1f), new Vector2f(0f, 1.5f));
 
         Assert.True(Provider.TryGetContact(first, second, out var contact));
         Assert.Equal(0f, contact.Normal.X, 3);
@@ -70,9 +70,9 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void MirroredCapsuleStillCollides()
     {
-        var capsule = At(Capsule2D.Builder.Create(new Vector2(-1f, -2f), new Vector2(-1f, 2f), 1f), Vector2.Zero);
-        capsule.Transform.Scale = new Vector2(-1f, 1f); // player facing flip
-        var wall = At(Rectangle2D.Builder.CreateFromSize(2f, 10f), new Vector2(2.5f, 0f));
+        var capsule = At(Capsule2D.Builder.Create(new Vector2f(-1f, -2f), new Vector2f(-1f, 2f), 1f), Vector2f.Zero);
+        capsule.Transform.Scale = new Vector2f(-1f, 1f); // player facing flip
+        var wall = At(Rectangle2D.Builder.CreateFromSize(2f, 10f), new Vector2f(2.5f, 0f));
 
         Assert.True(Provider.TryGetContact(capsule, wall, out var contact));
         Assert.True(contact.PenetrationDepth > 0.4f);
@@ -81,9 +81,9 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void UniformlyScaledCircleUsesScaledRadius()
     {
-        var circle = At(Circle2D.Builder.Create(1f), Vector2.Zero);
-        circle.Transform.Scale = new Vector2(3f, 3f);
-        var other = At(Circle2D.Builder.Create(1f), new Vector2(3.5f, 0f));
+        var circle = At(Circle2D.Builder.Create(1f), Vector2f.Zero);
+        circle.Transform.Scale = new Vector2f(3f, 3f);
+        var other = At(Circle2D.Builder.Create(1f), new Vector2f(3.5f, 0f));
 
         Assert.True(Provider.TryGetContact(circle, other, out var contact));
         Assert.Equal(0.5f, contact.PenetrationDepth, 3);
@@ -92,9 +92,9 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void NonUniformScaleOnACollidableThrows()
     {
-        var squashed = At(Circle2D.Builder.Create(1f), Vector2.Zero);
-        squashed.Transform.Scale = new Vector2(2f, 1f);
-        var other = At(Circle2D.Builder.Create(1f), new Vector2(1f, 0f));
+        var squashed = At(Circle2D.Builder.Create(1f), Vector2f.Zero);
+        squashed.Transform.Scale = new Vector2f(2f, 1f);
+        var other = At(Circle2D.Builder.Create(1f), new Vector2f(1f, 0f));
 
         Assert.Throws<ArgumentException>(() => Provider.TryGetContact(squashed, other, out _));
     }
@@ -102,8 +102,8 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void RotatedRectangleVsRectangleFindsMtv()
     {
-        var first = At(Rectangle2D.Builder.CreateFromSize(4f, 4f), Vector2.Zero);
-        var second = At(Rectangle2D.Builder.CreateFromSize(4f, 4f), new Vector2(3.5f, 0f), MathF.PI / 4f);
+        var first = At(Rectangle2D.Builder.CreateFromSize(4f, 4f), Vector2f.Zero);
+        var second = At(Rectangle2D.Builder.CreateFromSize(4f, 4f), new Vector2f(3.5f, 0f), MathF.PI / 4f);
 
         Assert.True(Provider.TryGetContact(first, second, out var contact));
         Assert.True(contact.PenetrationDepth > 0f);

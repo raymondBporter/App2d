@@ -1,4 +1,5 @@
 using App2d.Core.Collision.Contacts;
+using App2d.Core.Mathematics;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Physics.Integration;
@@ -23,15 +24,15 @@ public sealed class RigidBodyMassProperties2DTests
 
         Assert.Equal(48f * MathF.PI, body.Mass, 4);
         Assert.Equal(384f * MathF.PI, body.MomentOfInertia, 3);
-        Assert.Equal(new Vector2(3f, -1f), body.LocalCenterOfMass);
+        Assert.Equal(new Vector2f(3f, -1f), body.LocalCenterOfMass);
         Near(new(12f, 14f), body.WorldCenterOfMass);
-        Assert.Equal(new Vector2(10f, 20f), body.WorldObject.Transform.Position);
+        Assert.Equal(new Vector2f(10f, 20f), body.WorldObject.Transform.Position);
     }
 
     [Fact]
     public void ChosenMassKeepsMassFixedWhileInertiaGrowsWithScaleSquared()
     {
-        var body = Disk(Vector2.Zero);
+        var body = Disk(Vector2f.Zero);
         body.SetMassFromShape(3f);
         Assert.Equal(3f, body.Mass);
         Assert.Equal(6f, body.MomentOfInertia);
@@ -52,7 +53,7 @@ public sealed class RigidBodyMassProperties2DTests
         body.AngularVelocity = MathF.PI / 2f;
         body.LinearVelocity = new(4f, -2f);
 
-        new SemiImplicitEulerIntegrator2D().Integrate(body, Vector2.Zero, 1f);
+        new SemiImplicitEulerIntegrator2D().Integrate(body, Vector2f.Zero, 1f);
 
         Near(new(20f, 18f), body.WorldCenterOfMass);
         Near(new(20f, 12f), body.WorldObject.Transform.Position);
@@ -71,9 +72,9 @@ public sealed class RigidBodyMassProperties2DTests
         body.FreezeRotation = false;
         body.Restitution = 0f;
         body.LinearVelocity = new(0f, -5f);
-        var ground = world.AddBody(new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f)), BodyMotionType2D.Static);
+        var ground = world.AddBody(new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f)), BodyMotionType2D.Static);
         var contact = new PhysicsContact2D(body, ground,
-            new CollisionContact2D(new(4f + contactOffset, 0f), Vector2.UnitY, 0f));
+            new CollisionContact2D(new(4f + contactOffset, 0f), Vector2f.UnitY, 0f));
 
         new ImpulseVelocitySolver2D().Solve(contact);
 
@@ -86,14 +87,14 @@ public sealed class RigidBodyMassProperties2DTests
     {
         var first = Disk(new(4f, 0f));
         first.SetMassFromShape(1f);
-        var second = Disk(Vector2.Zero);
+        var second = Disk(Vector2f.Zero);
         second.WorldObject.Transform.Position = new(10f, 0f);
         second.MotionType = BodyMotionType2D.Static;
         var constraint = new DistanceConstraint2D(first, second, 4f);
 
         constraint.SolvePosition(1f / 120f);
 
-        Assert.Equal(4f, Vector2.Distance(first.WorldCenterOfMass, second.WorldCenterOfMass), 5);
+        Assert.Equal(4f, Vector2f.Distance(first.WorldCenterOfMass, second.WorldCenterOfMass), 5);
     }
 
     [Fact]
@@ -102,8 +103,8 @@ public sealed class RigidBodyMassProperties2DTests
         var body = Disk(new(4f, 0f));
         body.AngularVelocity = 0.5f;
         body.SetMassFromShape(1f);
-        Assert.Equal(new Vector2(0f, 2f), body.LinearVelocity);
-        Assert.Equal(Vector2.Zero, body.WorldObject.Transform.Position);
+        Assert.Equal(new Vector2f(0f, 2f), body.LinearVelocity);
+        Assert.Equal(Vector2f.Zero, body.WorldObject.Transform.Position);
         Assert.Equal(0f, body.WorldObject.Transform.Rotation);
     }
 
@@ -111,7 +112,7 @@ public sealed class RigidBodyMassProperties2DTests
     public void UnsupportedOrUnrepresentablePropertiesCannotPartiallyChangeTheBody()
     {
         var world = new PhysicsWorld2D();
-        var infinite = world.AddBody(new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f)), BodyMotionType2D.Static);
+        var infinite = world.AddBody(new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f)), BodyMotionType2D.Static);
         infinite.Mass = 3f;
         infinite.MomentOfInertia = 7f;
         Assert.Throws<NotSupportedException>(() => infinite.SetMassFromDensity());
@@ -122,14 +123,14 @@ public sealed class RigidBodyMassProperties2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => huge.SetMassFromDensity());
         Assert.Equal(1f, huge.Mass);
         Assert.Equal(1f, huge.MomentOfInertia);
-        Assert.Equal(Vector2.Zero, huge.LocalCenterOfMass);
+        Assert.Equal(Vector2f.Zero, huge.LocalCenterOfMass);
 
         var nonuniform = Disk(new(3f, 0f));
         nonuniform.WorldObject.Transform.Scale = new(2f, 1f);
         Assert.Throws<ArgumentException>(() => nonuniform.SetMassFromShape(2f));
         Assert.Equal(1f, nonuniform.Mass);
         Assert.Equal(1f, nonuniform.MomentOfInertia);
-        Assert.Equal(Vector2.Zero, nonuniform.LocalCenterOfMass);
+        Assert.Equal(Vector2f.Zero, nonuniform.LocalCenterOfMass);
     }
 
     [Fact]
@@ -140,13 +141,13 @@ public sealed class RigidBodyMassProperties2DTests
         var body = new PhysicsBodySettings2D { Mass = 3f, MomentOfInertia = 7f }.CreateBody(world, spatial);
         Assert.Equal(3f, body.Mass);
         Assert.Equal(7f, body.MomentOfInertia);
-        Assert.Equal(Vector2.Zero, body.LocalCenterOfMass);
+        Assert.Equal(Vector2f.Zero, body.LocalCenterOfMass);
         Assert.True(body.FreezeRotation);
     }
 
-    private static RigidBody2D Disk(Vector2 center) => new PhysicsWorld2D().AddBody(
+    private static RigidBody2D Disk(Vector2f center) => new PhysicsWorld2D().AddBody(
         new SpatialObject2D(Circle2D.Builder.Create(2f, center)), BodyMotionType2D.Dynamic);
 
-    private static void Near(Vector2 expected, Vector2 actual) =>
-        Assert.InRange(Vector2.Distance(expected, actual), 0f, 0.00001f);
+    private static void Near(Vector2f expected, Vector2f actual) =>
+        Assert.InRange(Vector2f.Distance(expected, actual), 0f, 0.00001f);
 }

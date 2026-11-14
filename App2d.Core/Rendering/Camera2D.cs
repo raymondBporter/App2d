@@ -1,6 +1,8 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
+using System.Text.Json.Serialization;
 
 namespace App2d.Core.Rendering;
 
@@ -15,7 +17,7 @@ public sealed class Camera2D
     const float MinZoom = 0.05f;
     const float MaxZoom = 20f;
 
-    public Vector2 Position
+    public Vector2f  Position
     {
         get;
         set => field = ClampToWorld(value);
@@ -32,7 +34,7 @@ public sealed class Camera2D
         }
     }
 
-    public Vector2 ViewportSize { get; private set; } = new(InitialSizeX, InitialSizeY);
+    public Vector2f  ViewportSize { get; private set; } = new(InitialSizeX, InitialSizeY);
 
     /// <summary>Optional world limit for the viewport center and its visible area.</summary>
     public Rect2D? WorldBounds
@@ -86,11 +88,14 @@ public sealed class Camera2D
         }
     } = InitialZoom;
 
-    public Matrix3x2 WorldToDeviceMatrix =>
-        Matrix3x2.CreateTranslation(-Position) *
-        Matrix3x2.CreateRotation(-Rotation) *
-        Matrix3x2.CreateScale(PixelsPerWorldUnit, -PixelsPerWorldUnit) *
-        Matrix3x2.CreateTranslation(ViewportSize / 2f);
+    [JsonIgnore]
+    public Matrix2x3f WorldToDeviceTransform =>
+        Matrix2x3f.CreateTranslation(-Position)
+            .Then(Matrix2x3f.CreateRotation(-Rotation))
+            .Then(Matrix2x3f.CreateScale(new(PixelsPerWorldUnit, -PixelsPerWorldUnit)))
+            .Then(Matrix2x3f.CreateTranslation(ViewportSize / 2f));
+
+    public Matrix3x2 WorldToDeviceMatrix => WorldToDeviceTransform.ToNumerics();
 
     public Matrix3x2 DeviceToWorldMatrix
     {
@@ -102,16 +107,16 @@ public sealed class Camera2D
     }
 
     /// <summary>The world-space bounding box of everything the viewport can see.</summary>
-    public Rect2D VisibleWorldBounds => new Rect2D(Vector2.Zero, ViewportSize).TransformedBy(DeviceToWorldMatrix);
+    public Rect2D VisibleWorldBounds => new Rect2D(Vector2f.Zero, ViewportSize).TransformedBy(DeviceToWorldMatrix);
 
-    public Vector2 WorldToDevice(Vector2 worldPoint) => Vector2.Transform(worldPoint, WorldToDeviceMatrix);
+    public Vector2f  WorldToDevice(Vector2f  worldPoint) => WorldToDeviceTransform.TransformPoint(worldPoint);
 
-    public Vector2 DeviceToWorld(Vector2 devicePoint) => Vector2.Transform(devicePoint, DeviceToWorldMatrix);
+    public Vector2f  DeviceToWorld(Vector2f  devicePoint) => Vector2f.Transform(devicePoint, DeviceToWorldMatrix);
 
     public FrameView2D GetFrameView() => new(ViewportSize, WorldToDeviceMatrix, PixelsPerWorldUnit);
 
     /// <summary>Constrain a desired center, with optional room for render effects such as shake.</summary>
-    public Vector2 ClampToWorld(Vector2 desiredPosition, float padding = 0f)
+    public Vector2f  ClampToWorld(Vector2f  desiredPosition, float padding = 0f)
     {
         Ensure.Finite(desiredPosition);
         Ensure.NonNegative(padding);
@@ -120,8 +125,8 @@ public sealed class Camera2D
             return desiredPosition;
         }
 
-        var halfView = VisibleWorldBounds.Size / 2f + new Vector2(padding);
-        return new Vector2(
+        var halfView = VisibleWorldBounds.Size / 2f + new Vector2f(padding);
+        return new Vector2f(
             ClampCenter(desiredPosition.X, bounds.Min.X, bounds.Max.X, halfView.X),
             ClampCenter(desiredPosition.Y, bounds.Min.Y, bounds.Max.Y, halfView.Y));
     }
@@ -131,7 +136,7 @@ public sealed class Camera2D
 
     public void SetViewport(int width, int height)
     {
-        ViewportSize = new Vector2(Math.Max(width, MinSizeX), Math.Max(height, MinSizeY));
+        ViewportSize = new Vector2f(Math.Max(width, MinSizeX), Math.Max(height, MinSizeY));
         Position = Position;
     }
 }

@@ -19,15 +19,15 @@ public sealed class StalkerPresentationTests
     public void DrawsTheAuthoredPoseAndFollowsStreamingAndRemoval()
     {
         var scene = new Scene2D();
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var authored = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
-        var dinosaur = new AuthoredEntityEnemy2D(EntityId2D.Create(), authored.Entities["stalker-pest"], physics, Vector2.Zero, 1, 4);
+        var dinosaur = new AuthoredEntityEnemy2D(EntityId2D.Create(), authored.Entities["stalker-pest"], physics, Vector2f.Zero, 1, 4);
         dinosaur.SetSimulationEnabled(true);
         using var textures = new TextureCache2D(TestAssetPath.Root);
 
         using var presentation = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), new SilentSounds());
-        dinosaur.Update(0.2f, new Vector2(400f, 0f));
+        dinosaur.Update(0.2f, new Vector2f(400f, 0f));
         physics.Step(0.2f);
         dinosaur.SyncAfterPhysics();
         Assert.Empty(scene);

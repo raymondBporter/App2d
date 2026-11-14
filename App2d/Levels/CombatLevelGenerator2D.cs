@@ -36,8 +36,7 @@ public static class CombatLevelGenerator2D
         JsonSerializer.Deserialize<CombatLevelSettings2D>(File.ReadAllText(path), JsonProfiles.StrictCamelCase)
         ?? throw new InvalidDataException("Generator settings are null.");
 
-    public static CombatLevelDraft2D Generate(CombatLevelSettings2D settings, IReadOnlyList<string> tilesets,
-        System.Numerics.Vector2? origin = null)
+    public static CombatLevelDraft2D Generate(CombatLevelSettings2D settings, IReadOnlyList<string> tilesets, Vector2f? origin = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(tilesets);
@@ -160,8 +159,7 @@ public static class CombatLevelGenerator2D
     }
 
     /// <summary>Writes to a new directory. Rerolls use another directory so editor changes survive.</summary>
-    public static string Create(string directory, CombatLevelSettings2D settings, IReadOnlyList<string> tilesets,
-        System.Numerics.Vector2? origin = null)
+    public static string Create(string directory, CombatLevelSettings2D settings, IReadOnlyList<string> tilesets, Vector2f? origin = null)
     {
         var draft = Generate(settings, tilesets, origin);
         var root = Path.GetFullPath(directory);

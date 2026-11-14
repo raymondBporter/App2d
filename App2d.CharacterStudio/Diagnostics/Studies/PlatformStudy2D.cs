@@ -38,7 +38,7 @@ internal static class PlatformStudy2D
         var camera = new Camera2D { Zoom = 2.2f };
         using var renderer = new Renderer2D(camera, device);
         using var target = RenderCapture2D.CreateTarget(device, 400, 300);
-        var scenarios = new (string Name, Vector2 Focus, ObjectPlacement2D Lift, bool Enemy)[]
+        var scenarios = new (string Name, Vector2f Focus, ObjectPlacement2D Lift, bool Enemy)[]
         {
             ("player-sinking", new(-300, 70), Lift("player-sinking", new(-300, 90), new(0, -80), 120, 70), false),
             ("player-sideways", new(-240, 70), Lift("player-sideways", new(-300, 60), new(140, 0), 120, 90), false),
@@ -53,10 +53,10 @@ internal static class PlatformStudy2D
                 map.SetTileKind(x, 19, TileKind2D.Solid);
             }
 
-            var things = new List<WorldThingSpec2D> { new(1, WorldThingKind2D.PlayerSpawn, null, true, withEnemy ? new(-600, 40) : lift.Position + new Vector2(0, 90)) };
+            var things = new List<WorldThingSpec2D> { new(1, WorldThingKind2D.PlayerSpawn, null, true, withEnemy ? new(-600, 40) : lift.Position + new Vector2f(0, 90)) };
             if (withEnemy)
             {
-                things.Add(new(2, WorldThingKind2D.Shieldback, null, true, lift.Position + new Vector2(0, 110)));
+                things.Add(new(2, WorldThingKind2D.Shieldback, null, true, lift.Position + new Vector2f(0, 110)));
             }
 
             using var game = SideScrollerSimulation2D.Create(new(traversal, map, things)
@@ -97,17 +97,17 @@ internal static class PlatformStudy2D
     }
 
     /// <summary>A kinematic one-way lift, 12 units tall, ping-ponging along <paramref name="travel"/> at the August platform's pace.</summary>
-    private static ObjectPlacement2D Lift(string id, Vector2 position, Vector2 travel, float width, float speed) =>
+    private static ObjectPlacement2D Lift(string id, Vector2f position, Vector2f travel, float width, float speed) =>
         new(id, new Part
         {
             Id = id,
             Name = id,
             Geometry = [new() { Id = "shape", A = "origin", Frame = "origin", Collision = new(), Geometry = Rectangle2D.Builder.Create(new(-width / 2f, -6f), new(width / 2f, 6f)), Material = new RenderMaterialDefinition2D { Fill = "#25d2be" }, }],
             Physics = new PhysicsBodySettings2D { MotionType = BodyMotionType2D.Kinematic, Restitution = 0f, TransfersContactMotion = true },
-            Surface = new ObjectSurface2D { OneWayNormal = Vector2.UnitY },
+            Surface = new ObjectSurface2D { OneWayNormal = Vector2f.UnitY },
             Motion = new CurveMotionDefinition2D
             {
-                Curve = LineSegmentCurve2D.Builder.Create(Vector2.Zero, travel),
+                Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, travel),
                 PeriodSeconds = 2 * travel.Length() / speed,
                 Progress = [ProgressMapKind.PingPong, ProgressMapKind.Smooth]
             }

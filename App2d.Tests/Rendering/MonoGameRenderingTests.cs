@@ -52,7 +52,7 @@ public sealed class MonoGameRenderingTests
         using var texture = CreateTexture();
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
-        var halfSpace = HalfSpace2D.Builder.Create(Vector2.UnitY, 0);
+        var halfSpace = HalfSpace2D.Builder.Create(Vector2f.UnitY, 0);
         var item = new WorldObject2D(halfSpace, new SolidColorShader(Color4b.Blue));
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
@@ -153,7 +153,7 @@ public sealed class MonoGameRenderingTests
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
         renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64),
-            new TextureShader2D(texture, new Vector2(32), filterMode: TextureFilter.Point)));
+            new TextureShader2D(texture, new Vector2f(32), filterMode: TextureFilter.Point)));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
         Assert.Equal(Color4b.Blue, pixels[40 * 128 + 40]);
@@ -170,7 +170,7 @@ public sealed class MonoGameRenderingTests
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
         renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64),
-            new TextureShader2D(texture, new Vector2(64), filterMode: TextureFilter.Point, imageOrigin: new Vector2(-32, 32))));
+            new TextureShader2D(texture, new Vector2f(64), filterMode: TextureFilter.Point, imageOrigin: new Vector2f(-32, 32))));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
         Assert.Equal(Color4b.Red, pixels[40 * 128 + 40]);
@@ -217,7 +217,7 @@ public sealed class MonoGameRenderingTests
         renderer.DrawScreenRoundedRectangle(new(4, 4, 40, 40), 8, Color4b.Red);
         renderer.DrawScreenText("HUD — 120", new(4, 80), Color4b.White);
         renderer.EndFrame();
-        Assert.Equal(new Vector2(64, 96), camera.ViewportSize);
+        Assert.Equal(new Vector2f(64, 96), camera.ViewportSize);
         Assert.Equal(Color4b.Red, graphics.ReadPixels()[20 * 128 + 20]);
         Assert.Throws<ObjectDisposedException>(() => texture.CopyPixels());
     }

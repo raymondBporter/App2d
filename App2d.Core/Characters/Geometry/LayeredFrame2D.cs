@@ -7,8 +7,7 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>
 /// The evaluated placement of something inside a character: a planar coordinate frame plus a relative drawing layer
 /// (<see cref="CharacterLayer2D"/>: smaller is nearer the viewer). This is the one value controls, artwork, sockets and
-/// editor handles place through. It composes by multiplying the frames and adding the layers:
-/// <c>combined.Frame = local.Frame * parent.Frame</c>, <c>combined.Layer = local.Layer + parent.Layer</c>.
+/// editor handles place through. Composing local.Then(parent) applies the local frame first and adds both layers.
 /// Rotation, scale or reflection in XY never changes a layer, and a plain <see cref="Matrix3x2"/> joins with a zero layer
 /// offset. The default value collapses to the origin at layer 0; <see cref="Identity"/> is the placement that leaves
 /// everything where it is. The layer is draw order, not the physical Z a 3D prop mesh carries; the prop bridge lifts a
@@ -27,18 +26,18 @@ public readonly record struct LayeredFrame2D(Frame2D Frame, float Layer)
     public static LayeredFrame2D FromRotation(float radians, Vector3 origin) => new(Frame2D.FromRotation(radians, origin.XY), origin.Z);
 
     /// <summary>The frame whose +Y is the given axis (its clockwise perpendicular is +X), at an origin whose Z is the layer. The axis is not normalized.</summary>
-    public static LayeredFrame2D FromYAxis(Vector3 origin, Vector2 yAxis) => new(Frame2D.FromYAxis(origin.XY, yAxis), origin.Z);
+    public static LayeredFrame2D FromYAxis(Vector3 origin, Vector2f yAxis) => new(Frame2D.FromYAxis(origin.XY, yAxis), origin.Z);
 
     /// <summary>
     /// An attachment's own placement on its carrier: scale first, then rotation, then the offset in the carrier's XY, with
     /// a layer offset. This is the one way artwork, sockets and other attachments express offset-and-rotation.
     /// </summary>
-    public static LayeredFrame2D Local(Vector2 scale, float radians, Vector2 offset, float layer) =>
-        new(new(Matrix3x2.CreateScale(scale) * Matrix3x2.CreateRotation(radians) * Matrix3x2.CreateTranslation(offset)), layer);
+    public static LayeredFrame2D Local(Vector2f scale, float radians, Vector2f offset, float layer) =>
+        new(new(Affine2D.CreateMatrix(offset, radians, scale)), layer);
 
-    public Vector3 Origin => new(Frame.Origin, Layer);
-    public Vector2 XAxis => Frame.XAxis;
-    public Vector2 YAxis => Frame.YAxis;
+    public Vector3 Origin => new(Frame.Origin.ToVector2(), Layer);
+    public Vector2f XAxis => Frame.XAxis;
+    public Vector2f YAxis => Frame.YAxis;
 
     /// <summary>Applies this placement first, then the parent: frames multiply, layers add.</summary>
     public LayeredFrame2D Then(LayeredFrame2D parent) => new(Frame.Then(parent.Frame), Layer + parent.Layer);
@@ -47,15 +46,15 @@ public readonly record struct LayeredFrame2D(Frame2D Frame, float Layer)
     public LayeredFrame2D WithOrigin(Vector3 origin) => new(Frame.WithOrigin(origin.XY), origin.Z);
 
     /// <summary>A local XY point placed on this placement's layer.</summary>
-    public Vector3 At(Vector2 local) => new(Frame.TransformPoint(local), Layer);
+    public Vector3 At(Vector2f local) => new(Frame.TransformPoint(local).ToVector2(), Layer);
 
     /// <summary>A local point whose Z is a further layer offset.</summary>
-    public Vector3 At(Vector3 local) => new(Frame.TransformPoint(local.XY), Layer + local.Z);
+    public Vector3 At(Vector3 local) => new(Frame.TransformPoint(local.XY).ToVector2(), Layer + local.Z);
 
-    public Vector2 Direction(Vector2 local) => Frame.TransformDirection(local);
+    public Vector2f Direction(Vector2f local) => Frame.TransformDirection(local);
 
     /// <summary>The local XY of a point, ignoring layers. False when the frame is collapsed.</summary>
-    public bool TryToLocal(Vector2 point, out Vector2 local) => Frame.TryToLocal(point, out local);
+    public bool TryToLocal(Vector2f point, out Vector2f local) => Frame.TryToLocal(point, out local);
 
     /// <summary>The local point whose Z is the layer offset from this placement. False when the frame is collapsed.</summary>
     public bool TryToLocal(Vector3 point, out Vector3 local)
@@ -66,7 +65,7 @@ public readonly record struct LayeredFrame2D(Frame2D Frame, float Layer)
             return false;
         }
 
-        local = new(xy, point.Z - Layer);
+        local = new(xy.ToVector2(), point.Z - Layer);
         return true;
     }
 

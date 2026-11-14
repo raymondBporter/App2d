@@ -59,13 +59,13 @@ public class SpatialObject2D(IShape2D shape)
         }
     }
 
-    public bool ContainsWorldPoint(Vector2 worldPoint)
+    public bool ContainsWorldPoint(Vector2f worldPoint)
     {
         if (!Matrix3x2.Invert(Transform.Matrix, out var worldToLocal))
         {
             return false;
         }
 
-        return Shape.ContainsPoint(Vector2.Transform(worldPoint, worldToLocal));
+        return Shape.ContainsPoint(Vector2f.Transform(worldPoint, worldToLocal));
     }
 }

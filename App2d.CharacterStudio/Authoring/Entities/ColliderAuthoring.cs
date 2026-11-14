@@ -36,7 +36,7 @@ public static class ColliderAuthoring
         var definition = new PartGeometry { Id = id, A = anchor, Frame = CharacterModel.Locomotion, Collision = new() };
         if (bounds.Width > 0 && bounds.Height > 0)
         {
-            definition.Geometry = Rectangle2D.Builder.FromSize(new Vector2(MathF.Round(bounds.Width, 5), MathF.Round(bounds.Height, 5)));
+            definition.Geometry = Rectangle2D.Builder.FromSize(new Vector2f(MathF.Round(bounds.Width, 5), MathF.Round(bounds.Height, 5)));
             var offset = bounds.Center - anchorRest;
             definition.OffsetX = MathF.Round(offset.X, 5);
             definition.OffsetY = MathF.Round(offset.Y, 5);

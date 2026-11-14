@@ -74,8 +74,8 @@ public sealed class SideScrollerSimulation2DTests
         Assert.Equal(fresh.Level.SpawnPoint, freshPlayer.Person.Position);
     }
 
-    private static readonly Vector2 Spawn = new(-368f, 40f);
-    private static readonly Vector2 Checkpoint = new(-150f, 40f);
+    private static readonly Vector2f Spawn = new(-368f, 40f);
+    private static readonly Vector2f Checkpoint = new(-150f, 40f);
 
     private static SideScrollerSessionDefinition2D Definition()
     {
@@ -90,10 +90,10 @@ public sealed class SideScrollerSimulation2DTests
         [
             new(1, WorldThingKind2D.PlayerSpawn, null, true, Spawn),
             new(2, WorldThingKind2D.SavePoint, null, true, Checkpoint),
-            new(3, WorldThingKind2D.Goal, null, true, new Vector2(6000f, 0f)),
-            new(4, WorldThingKind2D.Shieldback, null, true, new Vector2(-100f, 50f)),
-            new(5, WorldThingKind2D.BoilerBrute, null, true, new Vector2(100f, 50f)),
-            new(6, WorldThingKind2D.Rival, null, true, new Vector2(300f, 50f)),
+            new(3, WorldThingKind2D.Goal, null, true, new Vector2f(6000f, 0f)),
+            new(4, WorldThingKind2D.Shieldback, null, true, new Vector2f(-100f, 50f)),
+            new(5, WorldThingKind2D.BoilerBrute, null, true, new Vector2f(100f, 50f)),
+            new(6, WorldThingKind2D.Rival, null, true, new Vector2f(300f, 50f)),
         ];
         var authored = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
         return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, things)

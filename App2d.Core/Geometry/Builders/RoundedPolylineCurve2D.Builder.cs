@@ -22,6 +22,6 @@ public readonly partial record struct RoundedPolylineCurve2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static RoundedPolylineCurve2D Create(IEnumerable<Vector2> points, float softness = 1) => new RoundedPolylineCurve2D(points, softness).Validated();
+        public static RoundedPolylineCurve2D Create(IEnumerable<Vector2f> points, float softness = 1) => new RoundedPolylineCurve2D(points, softness).Validated();
     }
 }

@@ -27,35 +27,35 @@ public sealed class Triangle2DTests
         Assert.True(triangle.ContainsPoint(new(0, 3)));
         Assert.False(triangle.ContainsPoint(new(3, 2)));
         Assert.False(triangle.ContainsPoint(new(-.1f, 1)));
-        Assert.Equal(new Vector2(4, 0), triangle.GetSupportPoint(Vector2.UnitX));
-        Assert.Equal(new Vector2(0, 3), triangle.GetSupportPoint(Vector2.UnitY));
+        Assert.Equal(new Vector2f(4, 0), triangle.GetSupportPoint(Vector2f.UnitX));
+        Assert.Equal(new Vector2f(0, 3), triangle.GetSupportPoint(Vector2f.UnitY));
         Assert.Equal(new Rect2D(default, new(4, 3)), ShapeBounds2D.Calculate(triangle));
         Assert.Equal(new Rect2D(default, new(4, 3)), new SpatialObject2D(triangle).LocalBounds);
-        Assert.Equal(-1f, ShapeDistance2D.SignedDistance(new Vector2(1, 1), triangle), 5);
-        Assert.Equal(1f, ShapeDistance2D.Distance(new Vector2(5, 0), triangle), 5);
+        Assert.Equal(-1f, ShapeDistance2D.SignedDistance(new Vector2f(1, 1), triangle), 5);
+        Assert.Equal(1f, ShapeDistance2D.Distance(new Vector2f(5, 0), triangle), 5);
     }
 
     [Fact]
     public void VerticesAreWrittenWithoutAnArrayOwnedByTheShape()
     {
         var triangle = RightTriangle();
-        Span<Vector2> buffer = stackalloc Vector2[4];
+        Span<Vector2f> buffer = stackalloc Vector2f[4];
         buffer[3] = new(99, 99);
         triangle.WriteVertices(buffer);
-        Assert.Equal(new Vector2(0, 0), buffer[0]);
-        Assert.Equal(new Vector2(4, 0), buffer[1]);
-        Assert.Equal(new Vector2(0, 3), buffer[2]);
-        Assert.Equal(new Vector2(99, 99), buffer[3]);
-        Assert.Throws<ArgumentOutOfRangeException>(() => triangle.WriteVertices(new Vector2[2]));
+        Assert.Equal(new Vector2f(0, 0), buffer[0]);
+        Assert.Equal(new Vector2f(4, 0), buffer[1]);
+        Assert.Equal(new Vector2f(0, 3), buffer[2]);
+        Assert.Equal(new Vector2f(99, 99), buffer[3]);
+        Assert.Throws<ArgumentOutOfRangeException>(() => triangle.WriteVertices(new Vector2f[2]));
     }
 
     [Fact]
     public void InvalidOrDegenerateTrianglesAreRejected()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, Vector2.One, new(2, 2)));
-        Assert.ThrowsAny<ArgumentException>(() => Triangle2D.Builder.Create(default, default, Vector2.UnitX));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(new(float.NaN, 0), Vector2.UnitX, Vector2.UnitY));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.PositiveInfinity, 0), Vector2.UnitY));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, Vector2f.One, new(2, 2)));
+        Assert.ThrowsAny<ArgumentException>(() => Triangle2D.Builder.Create(default, default, Vector2f.UnitX));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(new(float.NaN, 0), Vector2f.UnitX, Vector2f.UnitY));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.PositiveInfinity, 0), Vector2f.UnitY));
         Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.MaxValue, 0), new(0, float.MaxValue)));
         Assert.Throws<ArgumentOutOfRangeException>(() => RightTriangle().ContainsPoint(new(float.NaN, 0)));
         Assert.Throws<ArgumentOutOfRangeException>(() => RightTriangle().GetSupportPoint(new(float.NaN, 0)));
@@ -71,13 +71,13 @@ public sealed class Triangle2DTests
             : Triangle2D.Builder.Create(new(0, -1), new(2, -1), new(0, 1));
         var item = new SpatialObject2D(local);
         item.Transform.Position = new(10, 0);
-        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2.UnitX), item, 20, out var hit));
+        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2f.UnitX), item, 20, out var hit));
         Assert.Equal(10f, hit.Distance, 5);
-        Assert.Equal(new Vector2(10, 0), hit.Point);
-        Assert.Equal(-Vector2.UnitX, hit.Normal);
-        Assert.False(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2.UnitX), item, 9, out _));
+        Assert.Equal(new Vector2f(10, 0), hit.Point);
+        Assert.Equal(-Vector2f.UnitX, hit.Normal);
+        Assert.False(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2f.UnitX), item, 9, out _));
         item.Transform.Rotation = MathF.PI / 2;
-        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(10, -5), Vector2.UnitY), item, 20, out _));
+        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(10, -5), Vector2f.UnitY), item, 20, out _));
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class Triangle2DTests
             Rectangle2D.Builder.Create(new(.5f, .5f), new(2, 1.5f)),
             Triangle2D.Builder.Create(new(.5f, .5f), new(2, .5f), new(.5f, 2)),
             ConvexPolygon2D.Builder.Create([new(.5f, .5f), new(2, .5f), new(2, 1.5f), new(.5f, 1.5f)]),
-            HalfSpace2D.Builder.Create(Vector2.UnitY, 1),
+            HalfSpace2D.Builder.Create(Vector2f.UnitY, 1),
             CompositeShape2D.Builder.Create([Circle2D.Builder.Create(.4f, new(1, 1)), Circle2D.Builder.Create(.4f, new(10, 10))]),
         ];
         foreach (var shape in others)
@@ -101,20 +101,20 @@ public sealed class Triangle2DTests
             Assert.True(ShapeCollision2D.TryGetContact(other, triangle, out var reverse), shape.GetType().Name);
             Assert.True(forward.PenetrationDepth > 0f, shape.GetType().Name);
             Assert.Equal(forward.PenetrationDepth, reverse.PenetrationDepth, 4);
-            Assert.True(Vector2.Distance(-forward.Normal, reverse.Normal) < .0001f, shape.GetType().Name);
+            Assert.True(Vector2f.Distance(-forward.Normal, reverse.Normal) < .0001f, shape.GetType().Name);
         }
     }
 
     [Fact]
     public void BarycentricWeightsRebuildThePointAndMarkTheCorners()
     {
-        Vector2 a = new(1, 1), b = new(5, 2), c = new(2, 6);
+        Vector2f a = new(1, 1), b = new(5, 2), c = new(2, 6);
         Assert.Equal(Vector3.UnitX, TriangleMath2D.Barycentric(a, b, c, a));
         Assert.Equal(Vector3.UnitZ, TriangleMath2D.Barycentric(a, b, c, c));
-        var point = new Vector2(2.5f, 3);
+        var point = new Vector2f(2.5f, 3);
         var w = TriangleMath2D.Barycentric(a, b, c, point);
         Assert.Equal(1, w.X + w.Y + w.Z, 5);
-        Assert.True(Vector2.Distance(point, a * w.X + b * w.Y + c * w.Z) < 1e-5f);
+        Assert.True(Vector2f.Distance(point, a * w.X + b * w.Y + c * w.Z) < 1e-5f);
         Assert.True(TriangleMath2D.Barycentric(a, b, c, new(-5, -5)).X > 1);
     }
 }

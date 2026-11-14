@@ -56,9 +56,9 @@ public sealed class CurveSubdivisionTests
     [Fact]
     public void NestedSlicesComposeAndDistanceUsesOnlyTheRestrictedGeometry()
     {
-        var line = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(10, 0));
+        var line = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0));
         var piece = line.Slice(.4f, .6f);
-        Assert.Equal(4f, piece.Distance(Vector2.Zero), 5);
+        Assert.Equal(4f, piece.Distance(Vector2f.Zero), 5);
         Assert.Equal(2f, line.Slice(.5f, .5f).Distance(new(5, 2)), 5);
         var nested = piece.Slice(.25f, .75f);
         Near(new(4.5f, 0), nested.Evaluate(0));
@@ -71,10 +71,10 @@ public sealed class CurveSubdivisionTests
     [Fact]
     public void HermiteConstructionPreservesEndpointValuesAndTangents()
     {
-        var start = new Vector2(2, -3);
-        var end = new Vector2(-1, 4);
-        var first = new Vector2(6, 9);
-        var last = new Vector2(-3, 6);
+        var start = new Vector2f(2, -3);
+        var end = new Vector2f(-1, 4);
+        var first = new Vector2f(6, 9);
+        var last = new Vector2f(-3, 6);
         var curve = CubicBezier2D.FromHermite(start, end, first, last);
         Near(start, curve.Evaluate(0));
         Near(end, curve.Evaluate(1));
@@ -91,5 +91,5 @@ public sealed class CurveSubdivisionTests
         }
     }
 
-    private static void Near(Vector2 expected, Vector2 actual) => Assert.InRange(Vector2.Distance(expected, actual), 0, 2e-5f);
+    private static void Near(Vector2f  expected, Vector2f  actual) => Assert.InRange(Vector2f.Distance(expected, actual), 0, 2e-5f);
 }

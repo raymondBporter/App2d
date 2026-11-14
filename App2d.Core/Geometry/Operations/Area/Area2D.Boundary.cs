@@ -435,9 +435,9 @@ public static partial class Area2D
         private readonly bool _hasArea;
         private Vector2d _vertexOrigin;
 
-        internal BoundaryPart(Vector2 center, float radius) : this(center, new Vector2(radius), Vector2.UnitX) { }
+        internal BoundaryPart(Vector2f center, float radius) : this(center, new Vector2f(radius), Vector2f.UnitX) { }
 
-        internal BoundaryPart(Vector2 center, Vector2 radii, Vector2 axis)
+        internal BoundaryPart(Vector2f center, Vector2f radii, Vector2f axis)
         {
             Center = new(center);
             Vertices = [];
@@ -477,7 +477,7 @@ public static partial class Area2D
             _min = _max * -1d;
         }
 
-        internal BoundaryPart(ReadOnlySpan<Vector2> vertices) : this(ToPoints(vertices), new Vector2d(vertices[0])) { }
+        internal BoundaryPart(ReadOnlySpan<Vector2f> vertices) : this(ToPoints(vertices), new Vector2d(vertices[0])) { }
 
         internal BoundaryPart(Vector2d[] vertices, Vector2d origin = default)
         {
@@ -561,7 +561,7 @@ public static partial class Area2D
             return FromFrame(new(Radii.X * cos, Radii.Y * sin));
         }
 
-        private static Vector2d[] ToPoints(ReadOnlySpan<Vector2> vertices)
+        private static Vector2d[] ToPoints(ReadOnlySpan<Vector2f> vertices)
         {
             var points = new Vector2d[vertices.Length];
             var origin = new Vector2d(vertices[0]);

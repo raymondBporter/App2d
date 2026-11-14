@@ -75,7 +75,7 @@ public sealed class IIntervalTests
     [Fact]
     public void RectangleAxesExposeIntervalOperations()
     {
-        var rectangle = new Rect2D(new Vector2(2, -3), new Vector2(8, 5));
+        var rectangle = new Rect2D(new Vector2f(2, -3), new Vector2f(8, 5));
 
         Assert.Equal(new Interval<float>(2, 8), rectangle.XInterval);
         Assert.Equal(new Interval<float>(-3, 5), rectangle.YInterval);

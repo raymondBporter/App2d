@@ -21,7 +21,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public const int WorldWidthTiles = 640;
     public const int WorldHeightTiles = 96;
     public const int ChunkSizeTiles = 32;
-    public static Vector2 WorldOrigin { get; } = new(-512f, -640f);
+    public static Vector2f  WorldOrigin { get; } = new(-512f, -640f);
 
     private readonly float _tileSize;
     private readonly TraversalMetrics2D _traversal;
@@ -69,7 +69,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             // An empty authored layer must still boot into the editor. This is a safety
             // fallback, not persisted example content; placing a player-spawn replaces it.
             var fallbackSpawnTileX = Math.Min(4, TileMap.Width - 1);
-            SpawnPoint = new Vector2(
+            SpawnPoint = new Vector2f(
                 TileCenterX(fallbackSpawnTileX),
                 TileMap.Origin.Y + TileGroundHeights2D.AtColumn(TileMap, fallbackSpawnTileX) * _tileSize +
                 traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
@@ -83,7 +83,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public IChunkedTileMap2D TileMap { get; }
     public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; }
-    public Vector2 SpawnPoint { get; }
+    public Vector2f SpawnPoint { get; }
     public float GoalX { get; }
     public float GoalGroundY { get; }
     public WorldThingSpec2D? GoalThing { get; }
@@ -122,8 +122,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
             var tileMin = TileMap.GridGeometry.GetCellBounds(cell).Min;
             var spikeBounds = new Rect2D(
-                tileMin + new Vector2(horizontalInset, 0f),
-                tileMin + new Vector2(_tileSize - horizontalInset, _tileSize * 0.9f));
+                tileMin + new Vector2f(horizontalInset, 0f),
+                tileMin + new Vector2f(_tileSize - horizontalInset, _tileSize * 0.9f));
             if (!actorBounds.Intersects(spikeBounds))
             {
                 continue;
@@ -243,7 +243,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             item.SetSimulationEnabled(RequireEnvironment().Streamer.IsChunkActive(TileMap.WorldToChunk(item.WorldObject.Transform.Position)));
     }
 
-    public void UpdateStreaming(Vector2 focus)
+    public void UpdateStreaming(Vector2f focus)
     {
         Ensure.Finite(focus);
         var environment = RequireEnvironment();

@@ -115,7 +115,7 @@ internal static class TilesetRenderingSmoke2D
         var scene = new Scene2D();
         using var world = new WorldPresentation2D(scene, textures);
         using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
-        var center = new Vector2(origin.X + (Left + Layout[0].Length / 2f) * 32f, origin.Y + (Bottom + Layout.Length / 2f) * 32f);
+        var center = new Vector2f(origin.X + (Left + Layout[0].Length / 2f) * 32f, origin.Y + (Bottom + Layout.Length / 2f) * 32f);
         // Zoom 1.35 shows world pixels at the size the game camera gives them on a 1080p screen.
         var camera = new Camera2D { Zoom = 1.35f, Position = center };
         using var renderer = new Renderer2D(camera, device);

@@ -44,9 +44,9 @@ public sealed class MassProperties2DTests
     [InlineData(true)]
     public void TriangleIntegralAcceptsBothWindings(bool reverse)
     {
-        var a = new Vector2(0f, 0f);
-        var b = new Vector2(6f, 0f);
-        var c = new Vector2(0f, 3f);
+        var a = new Vector2f(0f, 0f);
+        var b = new Vector2f(6f, 0f);
+        var c = new Vector2f(0f, 3f);
         var triangle = Triangle2D.Builder.Create(a, reverse ? c : b, reverse ? b : c);
         var result = ShapeMassProperties2D.Calculate(triangle, 2d);
         Close(9d, result.Area);
@@ -82,7 +82,7 @@ public sealed class MassProperties2DTests
     [InlineData(true)]
     public void SmallPolygonFarFromTheOriginKeepsItsCentroidalInertia(bool reverse)
     {
-        Vector2[] vertices = [new(100_000_000f, -100_000_000f), new(100_000_032f, -100_000_000f),
+        Vector2f[] vertices = [new(100_000_000f, -100_000_000f), new(100_000_032f, -100_000_000f),
             new(100_000_032f, -99_999_984f), new(100_000_000f, -99_999_984f)];
         if (reverse) Array.Reverse(vertices);
         var polygon = ConvexPolygon2D.Builder.Create(vertices);
@@ -103,7 +103,7 @@ public sealed class MassProperties2DTests
         Assert.Equal(new Vector2d(3d, 0d), horizontal.CenterOfMass);
         Assert.Equal(new Vector2d(0d, 3d), vertical.CenterOfMass);
 
-        var point = new Vector2(5f, -2f);
+        var point = new Vector2f(5f, -2f);
         Assert.Equal(ShapeMassProperties2D.Calculate(Circle2D.Builder.Create(2f, point)),
             ShapeMassProperties2D.Calculate(Capsule2D.Builder.Create(point, point, 2f)));
     }
@@ -140,7 +140,7 @@ public sealed class MassProperties2DTests
         {
             for (var x = 0; x < samples; x++)
             {
-                var point = new Vector2(bounds.Left + (x + 0.5f) * stepX, bounds.Bottom + (y + 0.5f) * stepY);
+                var point = new Vector2f(bounds.Left + (x + 0.5f) * stepX, bounds.Bottom + (y + 0.5f) * stepY);
                 if (!shape.ContainsPoint(point)) continue;
                 var relative = new Vector2d(point) - origin;
                 count++;
@@ -178,7 +178,7 @@ public sealed class MassProperties2DTests
         Close(single.MomentOfInertia * 2d, added.MomentOfInertia);
         Assert.Throws<NotSupportedException>(() => ShapeMassProperties2D.Calculate(
             CompositeShape2D.Builder.Create([disk, disk], includeOverlap: false)));
-        Assert.Throws<NotSupportedException>(() => ShapeMassProperties2D.Calculate(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f)));
+        Assert.Throws<NotSupportedException>(() => ShapeMassProperties2D.Calculate(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f)));
     }
 
     [Theory]

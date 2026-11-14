@@ -34,7 +34,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <param name="position">Where this region's actor origin sits in the common space.</param>
     /// <param name="otherPosition">Where the other region's actor origin sits in the common space.</param>
     /// <returns>True when the regions share at least a point.</returns>
-    public bool Overlaps(EntityRegion other, Vector2 position = default, Vector2 otherPosition = default)
+    public bool Overlaps(EntityRegion other, Vector2f position = default, Vector2f otherPosition = default)
     {
         Ensure.ThrowIfNull(other);
         return ShapeCollision2D.Overlaps(Shape, Pose.Translated(position), other.Shape, other.Pose.Translated(otherPosition));
@@ -44,7 +44,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <param name="other">The placed object, tested in world space.</param>
     /// <param name="position">Where this region's actor origin sits in world space.</param>
     /// <returns>True when the region and the object share at least a point.</returns>
-    public bool Overlaps(SpatialObject2D other, Vector2 position = default)
+    public bool Overlaps(SpatialObject2D other, Vector2f position = default)
     {
         Ensure.ThrowIfNull(other);
         var pose = Pose.Translated(position);
@@ -64,7 +64,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <summary>A drawable perimeter of the placed region in the actor's XY space.</summary>
     /// <param name="roundSegments">Samples around a circle; a capsule uses half per cap.</param>
     /// <returns>The outline vertices in perimeter order.</returns>
-    public Vector2[] Outline(int roundSegments = 24) => Shape.Outline(Pose, roundSegments);
+    public Vector2f[] Outline(int roundSegments = 24) => Shape.Outline(Pose, roundSegments);
 
     /// <summary>A placed object carrying this region's shape and pose, for queries that want a spatial object.</summary>
     /// <returns>A new spatial object whose transform reproduces <see cref="Pose"/>.</returns>
@@ -80,14 +80,14 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <param name="center">The box center.</param>
     /// <param name="size">The finite, positive width and height.</param>
     /// <returns>A rectangle region.</returns>
-    public static EntityRegion Box(string id, Vector2 center, Vector2 size) => new(id, Rectangle2D.Builder.CreateFromSize(size, center));
+    public static EntityRegion Box(string id, Vector2f center, Vector2f size) => new(id, Rectangle2D.Builder.CreateFromSize(size, center));
 
     /// <summary>A circular region in the actor's XY space.</summary>
     /// <param name="id">The region name.</param>
     /// <param name="center">The circle center.</param>
     /// <param name="radius">The finite, positive radius.</param>
     /// <returns>A circle region.</returns>
-    public static EntityRegion Circle(string id, Vector2 center, float radius) => new(id, Circle2D.Builder.Create(radius, center));
+    public static EntityRegion Circle(string id, Vector2f center, float radius) => new(id, Circle2D.Builder.Create(radius, center));
 
     /// <summary>A capsule region in the actor's XY space; the endpoints may coincide.</summary>
     /// <param name="id">The region name.</param>
@@ -95,5 +95,5 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <param name="end">The other spine endpoint.</param>
     /// <param name="radius">The finite, positive radius.</param>
     /// <returns>A capsule region.</returns>
-    public static EntityRegion Capsule(string id, Vector2 start, Vector2 end, float radius) => new(id, Capsule2D.Builder.Create(start, end, radius));
+    public static EntityRegion Capsule(string id, Vector2f start, Vector2f end, float radius) => new(id, Capsule2D.Builder.Create(start, end, radius));
 }

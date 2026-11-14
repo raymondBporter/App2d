@@ -302,7 +302,7 @@ public sealed class CharacterModel
     /// <summary>Checks lengths that depend on rest geometry, so a variant's overrides are held to the same rules as its base.</summary>
     public static void CheckGeometry(CharacterModel model, IReadOnlyDictionary<string, Vector3> rest, string owner)
     {
-        float Length(string a, string b) => Vector2.Distance(new(rest[a].X, rest[a].Y), new(rest[b].X, rest[b].Y));
+        float Length(string a, string b) => Vector2f.Distance(new(rest[a].X, rest[a].Y), new(rest[b].X, rest[b].Y));
         foreach (var measure in model.Measures)
         {
             Require(measure.Path.Zip(measure.Path.Skip(1)).Sum(p => Length(p.First, p.Second)) >= .001f, $"{owner}: measure '{measure.Id}' has no length.");

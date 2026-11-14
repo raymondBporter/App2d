@@ -96,8 +96,8 @@ public static class WorldFile2D
                     throw new InvalidDataException("Zones need unique IDs, names, and at least one map.");
                 }
 
-                var min = new Vector2(float.PositiveInfinity);
-                var max = new Vector2(float.NegativeInfinity);
+                var min = new Vector2f(float.PositiveInfinity);
+                var max = new Vector2f(float.NegativeInfinity);
                 foreach (var map in zone.Maps)
                 {
                     if (map is null || string.IsNullOrWhiteSpace(map.Id) || string.IsNullOrWhiteSpace(map.Name) ||
@@ -115,8 +115,8 @@ public static class WorldFile2D
 
                     var loaded = LoadMap(databasePath, map.Id, map.Name, zone.Id, map.Identity, root);
                     maps.Add(loaded);
-                    min = Vector2.Min(min, loaded.TileMap.WorldBounds.Min);
-                    max = Vector2.Max(max, loaded.TileMap.WorldBounds.Max);
+                    min = Vector2f.Min(min, loaded.TileMap.WorldBounds.Min);
+                    max = Vector2f.Max(max, loaded.TileMap.WorldBounds.Max);
                 }
                 zones.Add(new(zone.Id, zone.Name, new Rect2D(min, max), zone.Priority));
             }

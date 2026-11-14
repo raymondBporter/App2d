@@ -4,10 +4,10 @@ using System.Numerics;
 namespace App2d.Core.Audio;
 
 /// <summary>Adds listener-relative falloff to a sink; the falloff function says how each cue carries. Update once per game frame.</summary>
-public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect> sounds, Func<Vector2> listenerPosition, Func<TEffect, SoundFalloff2D> falloff) : ISoundEffectSink2D<TEffect> where TEffect : struct, Enum
+public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect> sounds, Func<Vector2f> listenerPosition, Func<TEffect, SoundFalloff2D> falloff) : ISoundEffectSink2D<TEffect> where TEffect : struct, Enum
 {
     private readonly ISoundEffectSink2D<TEffect> _sounds = Ensure.RequireNotNull(sounds);
-    private readonly Func<Vector2> _listenerPosition = Ensure.RequireNotNull(listenerPosition);
+    private readonly Func<Vector2f> _listenerPosition = Ensure.RequireNotNull(listenerPosition);
     private readonly Func<TEffect, SoundFalloff2D> _falloff = Ensure.RequireNotNull(falloff);
     private readonly List<SpatialVoice> _voices = [];
 
@@ -15,7 +15,7 @@ public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect
     public void Play(TEffect effect) => _sounds.Play(effect);
     public SoundEffectVoice2D Begin(TEffect effect, float initialVolumeScale = 1f) => _sounds.Begin(effect, initialVolumeScale);
 
-    public void PlayAt(TEffect effect, Vector2 position)
+    public void PlayAt(TEffect effect, Vector2f position)
     {
         var falloff = GetFalloff(effect);
         var attenuation = falloff.Evaluate(position, _listenerPosition());
@@ -26,7 +26,7 @@ public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect
         }
     }
 
-    public SoundEffectVoice2D BeginAt(TEffect effect, Vector2 position, float initialVolumeScale = 1f)
+    public SoundEffectVoice2D BeginAt(TEffect effect, Vector2f position, float initialVolumeScale = 1f)
     {
         Ensure.InRange(initialVolumeScale, 0f, 1f);
         var falloff = GetFalloff(effect);
@@ -52,7 +52,7 @@ public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect
         }
     }
 
-    private SoundEffectVoice2D BeginSpatial(TEffect effect, Vector2 position, float volumeScale, SoundFalloff2D falloff, float attenuation)
+    private SoundEffectVoice2D BeginSpatial(TEffect effect, Vector2f position, float volumeScale, SoundFalloff2D falloff, float attenuation)
     {
         var playback = _sounds.Begin(effect, volumeScale * attenuation);
         if (!playback.IsPlaying)
@@ -67,16 +67,16 @@ public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect
 
     private SoundFalloff2D GetFalloff(TEffect effect) => _falloff(effect) ?? throw new InvalidOperationException($"No falloff was supplied for {effect}.");
 
-    private sealed class SpatialVoice(SoundEffectVoice2D playback, Vector2 position, float volumeScale, SoundFalloff2D falloff, float attenuation) : ISoundEffectVoice2D
+    private sealed class SpatialVoice(SoundEffectVoice2D playback, Vector2f position, float volumeScale, SoundFalloff2D falloff, float attenuation) : ISoundEffectVoice2D
     {
         private const float VolumeRampSeconds = 0.02f;
-        private Vector2 _position = position;
+        private Vector2f _position = position;
         private float _volumeScale = volumeScale;
         private float _attenuation = attenuation;
         private bool _stopping;
 
         public bool IsPlaying => playback.IsPlaying;
-        public void SetPosition(Vector2 position) => _position = position;
+        public void SetPosition(Vector2f position) => _position = position;
 
         public void SetVolumeScale(float volumeScale, float rampSeconds)
         {
@@ -89,7 +89,7 @@ public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect
             playback.SetVolumeScale(_volumeScale * _attenuation, rampSeconds);
         }
 
-        public void Update(Vector2 listener)
+        public void Update(Vector2f listener)
         {
             if (_stopping)
             {

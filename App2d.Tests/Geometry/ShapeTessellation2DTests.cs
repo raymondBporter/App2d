@@ -14,18 +14,18 @@ public sealed class ShapeTessellation2DTests
     [
         Circle2D.Builder.Create(2), Ellipse2D.Builder.Create(new(2, 1)),
         Capsule2D.Builder.Create(new(-1, 0), new(1, 0), 1),
-        Rectangle2D.Builder.Create(Vector2.Zero, new(4, 3)), AxisAlignedRectangle2D.Builder.Create(Vector2.Zero, new(4, 3)),
-        RoundedRectangle2D.Builder.Create(Vector2.Zero, new(4, 3), .5f),
-        Triangle2D.Builder.Create(Vector2.Zero, new(4, 0), new(0, 3)),
-        ConvexPolygon2D.Builder.Create([Vector2.Zero, new(2, 0), new(3, 1), new(0, 2)]),
-        SimplePolygon2D.Builder.Create([Vector2.Zero, new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)])
+        Rectangle2D.Builder.Create(Vector2f.Zero, new(4, 3)), AxisAlignedRectangle2D.Builder.Create(Vector2f.Zero, new(4, 3)),
+        RoundedRectangle2D.Builder.Create(Vector2f.Zero, new(4, 3), .5f),
+        Triangle2D.Builder.Create(Vector2f.Zero, new(4, 0), new(0, 3)),
+        ConvexPolygon2D.Builder.Create([Vector2f.Zero, new(2, 0), new(3, 1), new(0, 2)]),
+        SimplePolygon2D.Builder.Create([Vector2f.Zero, new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)])
     ];
 
     [Theory]
     [MemberData(nameof(FiniteShapes))]
     public void ShapeTriangleAndSegmentViewsAgreeWithItsAreaAndOutline(IShape2D shape)
     {
-        Span<Vector2> buffer = stackalloc Vector2[260];
+        Span<Vector2f> buffer = stackalloc Vector2f[260];
         var area = 0d;
         foreach (var triangle in shape.Triangles(buffer, 64)) area += triangle.GetArea();
         Assert.InRange(area, shape.Area * .98, shape.Area * 1.001);
@@ -41,7 +41,7 @@ public sealed class ShapeTessellation2DTests
     [Fact]
     public void ConcaveTrianglesReuseTopologyAndLeaveTheNotchEmpty()
     {
-        IShape2D shape = SimplePolygon2D.Builder.Create([Vector2.Zero, new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)]);
+        IShape2D shape = SimplePolygon2D.Builder.Create([Vector2f.Zero, new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)]);
         foreach (var triangle in shape.Triangles([])) Assert.False(triangle.Contains(new(2, 2)));
         Assert.Equal(4, shape.Triangles([]).Count);
         Assert.Equal(6, shape.OutlineSegments([]).Count);
@@ -54,13 +54,13 @@ public sealed class ShapeTessellation2DTests
     [InlineData(16)]
     public void RoundedCornerSamplingIsConfigurableAndRespectsCallerStorage(int segments)
     {
-        IShape2D shape = RoundedRectangle2D.Builder.Create(Vector2.Zero, new(4, 3), .5f);
+        IShape2D shape = RoundedRectangle2D.Builder.Create(Vector2f.Zero, new(4, 3), .5f);
         var count = shape.GetOutlineVertCount(cornerSegments: segments);
         Assert.Equal(4 * (segments + 1), count);
-        var buffer = Enumerable.Repeat(new Vector2(99), count + 1).ToArray();
+        var buffer = Enumerable.Repeat(new Vector2f(99), count + 1).ToArray();
         var outline = shape.GetOutlineVerts(buffer, cornerSegments: segments);
         Assert.Equal(count, outline.Length);
-        Assert.Equal(new Vector2(99), buffer[^1]);
+        Assert.Equal(new Vector2f(99), buffer[^1]);
         Assert.Equal(count - 2, shape.Triangles(buffer, cornerSegments: segments).Count);
         Assert.Equal(count, shape.OutlineSegments(buffer, cornerSegments: segments).Count);
     }
@@ -71,9 +71,9 @@ public sealed class ShapeTessellation2DTests
     [InlineData(10, 0, 24d)]
     public void ClippedHalfSpaceFillAndTrueBoundaryStaySeparate(float offset, int boundaryCount, double expectedArea)
     {
-        IShape2D shape = HalfSpace2D.Builder.Create(Vector2.UnitY, offset);
+        IShape2D shape = HalfSpace2D.Builder.Create(Vector2f.UnitY, offset);
         var bounds = new Rect2D(new(-3, -2), new(3, 2));
-        Span<Vector2> buffer = stackalloc Vector2[5];
+        Span<Vector2f> buffer = stackalloc Vector2f[5];
         var area = 0d;
         foreach (var triangle in shape.Triangles(buffer, clipBounds: bounds)) area += triangle.GetArea();
         Assert.Equal(expectedArea, area, 6);
@@ -85,8 +85,8 @@ public sealed class ShapeTessellation2DTests
             Assert.Equal(offset, segment.End.Y);
             Assert.Equal(6f, segment.Length());
         }
-        Assert.Throws<ArgumentException>(() => shape.Triangles(new Vector2[5]));
-        Assert.Throws<ArgumentException>(() => shape.OutlineSegments(new Vector2[5]));
+        Assert.Throws<ArgumentException>(() => shape.Triangles(new Vector2f[5]));
+        Assert.Throws<ArgumentException>(() => shape.OutlineSegments(new Vector2f[5]));
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public sealed class ShapeTessellation2DTests
     public void RectangleInterfaceShapesUseTheSharedOutlineAndTrianglePath()
     {
         IShape2D rectangle = new CustomRectangle();
-        Span<Vector2> scratch = stackalloc Vector2[4];
+        Span<Vector2f> scratch = stackalloc Vector2f[4];
         Assert.Equal(4, rectangle.GetVertCount());
         Assert.Equal(4, rectangle.OutlineSegments(scratch).Count);
         var area = 0d;
@@ -117,20 +117,20 @@ public sealed class ShapeTessellation2DTests
     [InlineData(LineCap2D.Round, 23.09d)]
     public void ThickSegmentsProduceReusablePackedTriangles(LineCap2D cap, double expectedArea)
     {
-        Span<Vector2> buffer = stackalloc Vector2[StrokeTessellation2D.MaximumSegmentVertices + 1];
+        Span<Vector2f> buffer = stackalloc Vector2f[StrokeTessellation2D.MaximumSegmentVertices + 1];
         buffer.Fill(new(99));
-        var count = StrokeTessellation2D.WriteSegment(buffer, Vector2.Zero, new(10, 0), 2, cap, cap);
+        var count = StrokeTessellation2D.WriteSegment(buffer, Vector2f.Zero, new(10, 0), 2, cap, cap);
         var area = 0d;
         foreach (var triangle in MeshTopology.TriangleList(buffer[..count])) area += triangle.GetArea();
         Assert.InRange(area, expectedArea - .01, expectedArea + .01);
-        Assert.Equal(new Vector2(99), buffer[count]);
+        Assert.Equal(new Vector2f(99), buffer[count]);
     }
 
     [Fact]
     public void TaperedSegmentsProduceTrapezoidPackedTriangles()
     {
-        Span<Vector2> buffer = stackalloc Vector2[StrokeTessellation2D.MaximumSegmentVertices];
-        var count = StrokeTessellation2D.WriteSegment(buffer, Vector2.Zero, new(10, 0), startWidth: 2, endWidth: 4, LineCap2D.Butt, LineCap2D.Butt);
+        Span<Vector2f> buffer = stackalloc Vector2f[StrokeTessellation2D.MaximumSegmentVertices];
+        var count = StrokeTessellation2D.WriteSegment(buffer, Vector2f.Zero, new(10, 0), startWidth: 2, endWidth: 4, LineCap2D.Butt, LineCap2D.Butt);
         Assert.Equal(6, count);
         var area = 0d;
         foreach (var triangle in MeshTopology.TriangleList(buffer[..count])) area += triangle.GetArea();
@@ -143,8 +143,8 @@ public sealed class ShapeTessellation2DTests
     [InlineData(LineCap2D.Round, 60)]
     public void CollapsedSegmentsFollowCapPolicy(LineCap2D cap, int expectedVertices)
     {
-        Span<Vector2> buffer = stackalloc Vector2[StrokeTessellation2D.MaximumSegmentVertices];
-        Assert.Equal(expectedVertices, StrokeTessellation2D.WriteSegment(buffer, Vector2.One, Vector2.One, 2, cap, cap));
+        Span<Vector2f> buffer = stackalloc Vector2f[StrokeTessellation2D.MaximumSegmentVertices];
+        Assert.Equal(expectedVertices, StrokeTessellation2D.WriteSegment(buffer, Vector2f.One, Vector2f.One, 2, cap, cap));
     }
 
     [Fact]
@@ -161,11 +161,11 @@ public sealed class ShapeTessellation2DTests
 
         static double Sum(IShape2D shape)
         {
-            Span<Vector2> scratch = stackalloc Vector2[128];
+            Span<Vector2f> scratch = stackalloc Vector2f[128];
             var sum = 0d;
             foreach (var triangle in shape.Triangles(scratch)) sum += triangle.GetArea();
             foreach (var segment in shape.OutlineSegments(scratch)) sum += segment.Length();
-            var count = StrokeTessellation2D.WriteSegment(scratch, Vector2.Zero, Vector2.One, 1, LineCap2D.Round, LineCap2D.Round);
+            var count = StrokeTessellation2D.WriteSegment(scratch, Vector2f.Zero, Vector2f.One, 1, LineCap2D.Round, LineCap2D.Round);
             foreach (var triangle in MeshTopology.TriangleList(scratch[..count])) sum += triangle.GetArea();
             return sum;
         }
@@ -174,7 +174,7 @@ public sealed class ShapeTessellation2DTests
     [Fact]
     public void CachedTriangulationTracksEditedListsAndToleranceWithoutReturningStaleGeometry()
     {
-        List<Vector2> points = [Vector2.Zero, new(2, 0), new(2, 2), new(0, 2)];
+        List<Vector2f> points = [Vector2f.Zero, new(2, 0), new(2, 2), new(0, 2)];
         var original = PolygonTriangulationCache2D.Get(points);
         Assert.Same(original, PolygonTriangulationCache2D.Get(points));
         points[1] = new(3, 0);
@@ -203,9 +203,9 @@ public sealed class ShapeTessellation2DTests
     private readonly record struct CustomRectangle : IShape2D, IRect2D
     {
         public string GetKind() => "test-rectangle";
-        public Vector2 Min => Vector2.Zero;
-        public Vector2 Max => new(3, 2);
+        public Vector2f Min => Vector2f.Zero;
+        public Vector2f Max => new(3, 2);
         public float Area => 6;
-        public bool ContainsPoint(Vector2 point) => this.Contains(point);
+        public bool ContainsPoint(Vector2f point) => this.Contains(point);
     }
 }

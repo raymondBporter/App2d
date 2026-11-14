@@ -44,7 +44,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private readonly WorldPresentation2D _world;
     private SoundEffectVoice2D _jumpSound;
     private float _saveFeedbackSeconds;
-    private Vector2 _saveFeedbackCenter;
+    private Vector2f  _saveFeedbackCenter;
     private bool _lastSaveSucceeded;
     private bool _shieldPose;
 
@@ -144,7 +144,7 @@ internal sealed class SideScrollerClient2D : IDisposable
                     _jumpSound = _sounds.Begin(SoundEffect2D.PlayerJump, 0.3f);
                     break;
                 case AirJumpStarted2D jump when isMine:
-                    _jumpCloud.Present(jump.Position - new Vector2(0, _traversal.PlayerColliderSize.Y * .5f));
+                    _jumpCloud.Present(jump.Position - new Vector2f (0, _traversal.PlayerColliderSize.Y * .5f));
                     break;
                 case Landed2D landed when isMine:
                     EndJumpSound();
@@ -227,7 +227,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _enemies.Advance(deltaSeconds);
         _contacts.Advance(deltaSeconds);
         _jumpCloud.Advance(deltaSeconds,
-            State.Person.Position - new Vector2(0, _traversal.PlayerColliderSize.Y * .5f));
+            State.Person.Position - new Vector2f (0, _traversal.PlayerColliderSize.Y * .5f));
         _weapons.Advance(deltaSeconds);
         _spells.Advance(deltaSeconds);
         _presentation.Advance(deltaSeconds);
@@ -245,7 +245,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     public void UpdateFeedback(float dt) =>
         _saveFeedbackSeconds = Math.Max(0f, _saveFeedbackSeconds - dt);
 
-    public void ShowSaveResult(bool succeeded, Vector2 position)
+    public void ShowSaveResult(bool succeeded, Vector2f  position)
     {
         _lastSaveSucceeded = succeeded;
         _saveFeedbackCenter = position;
@@ -295,7 +295,7 @@ internal sealed class SideScrollerClient2D : IDisposable
             _weapons.HudTexture, State.Person.Spells, State.Weapons.IsCharging);
         if (_saveFeedbackSeconds > 0f)
         {
-            renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 198f));
+            renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2f (24f, 198f));
         }
 
         if (ShowTraversalDebug)

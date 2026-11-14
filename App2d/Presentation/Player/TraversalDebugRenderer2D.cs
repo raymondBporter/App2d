@@ -9,23 +9,23 @@ namespace App2d.Presentation.Player;
 public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 {
     private readonly TraversalMetrics2D _traversal = Ensure.RequireNotNull(traversal);
-    private readonly Vector2[] _runningJumpArc = traversal.BuildJumpArc(traversal.RunSpeed);
-    private readonly Vector2[] _standingJumpArc = traversal.BuildJumpArc(0f);
+    private readonly Vector2f[] _runningJumpArc = traversal.BuildJumpArc(traversal.RunSpeed);
+    private readonly Vector2f[] _standingJumpArc = traversal.BuildJumpArc(0f);
     private readonly JumpProfile2D _runningJumpProfile = traversal.MeasureJump(traversal.RunSpeed);
     private readonly JumpProfile2D _standingJumpProfile = traversal.MeasureJump(0f);
 
-    public void DrawWorldDebug(Renderer2D renderer, Vector2 playerPosition, float facing)
+    public void DrawWorldDebug(Renderer2D renderer, Vector2f playerPosition, float facing)
     {
         Ensure.ThrowIfNull(renderer);
-        Span<Vector2> runningArc = stackalloc Vector2[_runningJumpArc.Length];
-        Span<Vector2> standingArc = stackalloc Vector2[_standingJumpArc.Length];
+        Span<Vector2f> runningArc = stackalloc Vector2f[_runningJumpArc.Length];
+        Span<Vector2f> standingArc = stackalloc Vector2f[_standingJumpArc.Length];
         for (var i = 0; i < runningArc.Length; i++)
         {
-            runningArc[i] = playerPosition + new Vector2(_runningJumpArc[i].X * facing, _runningJumpArc[i].Y);
+            runningArc[i] = playerPosition + new Vector2f(_runningJumpArc[i].X * facing, _runningJumpArc[i].Y);
         }
         for (var i = 0; i < standingArc.Length; i++)
         {
-            standingArc[i] = playerPosition + new Vector2(_standingJumpArc[i].X * facing, _standingJumpArc[i].Y);
+            standingArc[i] = playerPosition + new Vector2f(_standingJumpArc[i].X * facing, _standingJumpArc[i].Y);
         }
 
         renderer.DrawWorldPolyline(runningArc, DebugTheme.RunningJump, 3f);
@@ -41,6 +41,6 @@ public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
             $"PASSAGE {_traversal.StandingPassageTiles}t + {_traversal.StandingClearance:0}u  |  " +
             $"RUN JUMP {_runningJumpProfile.HorizontalDistance / _traversal.TileSize:0.00}t x {_runningJumpProfile.ApexHeight / _traversal.TileSize:0.00}t  |  STAND {_standingJumpProfile.HorizontalDistance / _traversal.TileSize:0.00}t  |  " +
             $"AIR {_runningJumpProfile.Airtime:0.000}s  |  COYOTE {_traversal.RunSpeed * _traversal.CoyoteDuration / _traversal.TileSize:0.00}t  |  AIR JUMP {_traversal.AirJumpSpeedMultiplier:P0} power",
-            new Vector2(24f, 88f));
+            new Vector2f(24f, 88f));
     }
 }

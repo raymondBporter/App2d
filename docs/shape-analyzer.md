@@ -8,11 +8,11 @@ declaration can be a struct; it simply lets the shape and its nested builder liv
 
 ```csharp
 // Before: APP2D001
-var circle = new Circle2D(12f, new Vector2(4, 8));
+var circle = new Circle2D(12f, new Vector2f(4, 8));
 Circle2D other = new(6f);
 
 // After applying "Use Circle2D.Builder.Create"
-var circle = Circle2D.Builder.Create(12f, new Vector2(4, 8));
+var circle = Circle2D.Builder.Create(12f, new Vector2f(4, 8));
 Circle2D other = Circle2D.Builder.Create(6f);
 
 // Editable construction data is also supported.

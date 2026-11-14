@@ -64,7 +64,7 @@ public sealed class EasingTravelTests
     [Fact]
     public void PhysicalMotionRefusesDiscontinuousMaps()
     {
-        var curve = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitX);
+        var curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.UnitX);
         var definition = new CurveMotionDefinition2D { Curve = curve, Repeat = false, Progress = [ProgressMapKind.Step] };
         Assert.Throws<ArgumentException>(definition.Validate);
         Assert.Throws<ArgumentException>(() => new CurveMotion2D(curve, 1d, ProgressMaps.Step, repeat: false));

@@ -47,13 +47,13 @@ public sealed class AuthoredEntityGameTests
         Assert.Equal(cut.Markers.Single(m => m.Id == "recover").Time, hero.Attack.Hits[0].Finish, 4);
         Assert.Equal(EntityControllers.Attack, Swing()); // the first swing draws from the back
         // The hit box is fixed to the player while it is live: ahead of the body, the entity's size, the same every tick.
-        Vector2? Box() => game.Arsenal.GetActiveAttackHitboxes().Select(h => (Vector2?)(h.WorldBounds.Center - game.Player.Body.WorldObject.Transform.Position)).FirstOrDefault();
+        Vector2f? Box() => game.Arsenal.GetActiveAttackHitboxes().Select(h => (h.WorldBounds.Center - game.Player.Body.WorldObject.Transform.Position)).FirstOrDefault();
         Tick((int)MathF.Ceiling(hero.Attack.Hits[0].Start * 120) + 1);
         var first = Box() ?? throw new Xunit.Sdk.XunitException("no live hit box at the strike");
         Assert.True(first.X > 20, $"hit box ahead of the player: {first}");
         Tick(2);
-        Assert.True(Box() is { } later && Vector2.Distance(first, later) < .01f, $"the box stays put on the player: {first} then {Box()}");
-        Assert.True(Vector2.Distance(new SpatialObject2D(hero.Shape()).LocalBounds.Size, game.Arsenal.GetActiveAttackHitboxes().First().WorldBounds.Size) < .01f, "the box is the entity's size");
+        Assert.True(Box() is { } later && Vector2f.Distance(first, later) < .01f, $"the box stays put on the player: {first} then {Box()}");
+        Assert.True(Vector2f.Distance(new SpatialObject2D(hero.Shape()).LocalBounds.Size, game.Arsenal.GetActiveAttackHitboxes().First().WorldBounds.Size) < .01f, "the box is the entity's size");
         // Pressing again during a swing queues the next one in the combo; it starts as the last ends.
         game.Arsenal.UsePrimary(1);
         Tick((int)MathF.Ceiling(cut.Duration * 120));

@@ -275,7 +275,7 @@ public sealed class SideScrollerGame : Game2D
                     continue;
                 }
 
-                Span<Vector2> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
+                Span<Vector2f> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
                 renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? DebugTheme.ActiveZone : DebugTheme.ZoneOutline, 2f);
             }
         }

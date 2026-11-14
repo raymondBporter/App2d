@@ -11,7 +11,7 @@ public sealed class TraversalMetrics2D
     {
     }
 
-    public static TraversalMetrics2D FromGeometry(Vector2 visualSize, float footAnchorYFraction, Vector2 standingColliderSize, float colliderCenterOffsetX)
+    public static TraversalMetrics2D FromGeometry(Vector2f  visualSize, float footAnchorYFraction, Vector2f  standingColliderSize, float colliderCenterOffsetX)
     {
         Ensure.Positive(visualSize);
         Ensure.Positive(standingColliderSize);
@@ -27,15 +27,15 @@ public sealed class TraversalMetrics2D
     }
 
     public float TileSize { get; init; } = DesignUnit * 4f;
-    public Vector2 PlayerColliderSize { get; private init; }
+    public Vector2f  PlayerColliderSize { get; private init; }
     public float PlayerColliderCenterOffsetX { get; private init; }
-    public Vector2 PlayerVisualSize { get; private init; }
+    public Vector2f  PlayerVisualSize { get; private init; }
     public float PlayerSpriteFootYFraction { get; private init; }
-    public Vector2 PlayerVisualOffset => new(0f, PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) - PlayerColliderSize.Y * 0.5f);
+    public Vector2f  PlayerVisualOffset => new(0f, PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) - PlayerColliderSize.Y * 0.5f);
 
     // Authored pistol socket (418, 206) in the 512px standing frame.
     // Load this configuration once; weapon simulation receives only the world offset.
-    public Vector2 GunMuzzleOffset => new((418f / 512f - 0.5f) * PlayerVisualSize.X, (PlayerSpriteFootYFraction - 206f / 512f) * PlayerVisualSize.Y - PlayerColliderSize.Y * 0.5f);
+    public Vector2f  GunMuzzleOffset => new((418f / 512f - 0.5f) * PlayerVisualSize.X, (PlayerSpriteFootYFraction - 206f / 512f) * PlayerVisualSize.Y - PlayerColliderSize.Y * 0.5f);
     public float RunSpeed { get; init; } = 430f;
     public float LadderClimbSpeed { get; init; } = 180f;
     public float LadderGrabGrace { get; init; } = DesignUnit;
@@ -163,19 +163,19 @@ public sealed class TraversalMetrics2D
     {
         Ensure.Positive(fixedDeltaSeconds);
 
-        var position = Vector2.Zero;
-        var velocity = new Vector2(initialHorizontalSpeed, JumpSpeed);
+        var position = Vector2f.Zero;
+        var velocity = new Vector2f(initialHorizontalSpeed, JumpSpeed);
         var apexHeight = 0f;
         var timeToApex = 0f;
         var elapsed = 0f;
 
         for (var step = 0; step < 1_200; step++)
         {
-            velocity.X = MoveTowards(velocity.X, RunSpeed, AirAcceleration * fixedDeltaSeconds);
+            var horizontalSpeed = MoveTowards(velocity.X, RunSpeed, AirAcceleration * fixedDeltaSeconds);
             var gravityScale = MathF.Abs(velocity.Y) < ApexVelocityThreshold
                 ? ApexGravityScale
                 : 1f;
-            velocity.Y = AdvanceVerticalSpeed(velocity.Y, Gravity * gravityScale, fixedDeltaSeconds);
+            velocity = new(horizontalSpeed, AdvanceVerticalSpeed(velocity.Y, Gravity * gravityScale, fixedDeltaSeconds));
             position += velocity * fixedDeltaSeconds;
             elapsed += fixedDeltaSeconds;
 
@@ -194,21 +194,21 @@ public sealed class TraversalMetrics2D
         throw Ensure.Create("Jump simulation did not return to its starting height.");
     }
 
-    public Vector2[] BuildJumpArc(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
+    public Vector2f[] BuildJumpArc(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
     {
         Ensure.Positive(fixedDeltaSeconds);
 
-        var points = new List<Vector2> { Vector2.Zero };
-        var position = Vector2.Zero;
-        var velocity = new Vector2(initialHorizontalSpeed, JumpSpeed);
+        var points = new List<Vector2f> { Vector2f.Zero };
+        var position = Vector2f.Zero;
+        var velocity = new Vector2f(initialHorizontalSpeed, JumpSpeed);
 
         for (var step = 0; step < 1_200; step++)
         {
-            velocity.X = MoveTowards(velocity.X, RunSpeed, AirAcceleration * fixedDeltaSeconds);
+            var horizontalSpeed = MoveTowards(velocity.X, RunSpeed, AirAcceleration * fixedDeltaSeconds);
             var gravityScale = MathF.Abs(velocity.Y) < ApexVelocityThreshold
                 ? ApexGravityScale
                 : 1f;
-            velocity.Y = AdvanceVerticalSpeed(velocity.Y, Gravity * gravityScale, fixedDeltaSeconds);
+            velocity = new(horizontalSpeed, AdvanceVerticalSpeed(velocity.Y, Gravity * gravityScale, fixedDeltaSeconds));
             position += velocity * fixedDeltaSeconds;
 
             if (step % 2 == 1)

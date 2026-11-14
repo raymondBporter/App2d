@@ -615,7 +615,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                             session.Edit(document, () => Collider().Stretch = stretch);
                         }
                     }
-                    var offset = new Vector2(collider.OffsetX, collider.OffsetY);
+                    var offset = new Vector2f(collider.OffsetX, collider.OffsetY);
                     if (Ui.Drag2("Offset in the frame", ref offset))
                     {
                         session.Change(document, () =>
@@ -636,7 +636,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 }
             default:
                 {
-                    var offset = new Vector2(collider.OffsetX, collider.OffsetY);
+                    var offset = new Vector2f(collider.OffsetX, collider.OffsetY);
                     if (Ui.Drag2("Centre ahead / above the feet", ref offset))
                     {
                         session.Change(document, () =>
@@ -892,7 +892,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
 
             if (action.Mask is not null)
             {
-                var blend = new Vector2(action.BlendIn, action.BlendOut);
+                var blend = new Vector2f(action.BlendIn, action.BlendOut);
                 if (Ui.Drag2("Blend in / out (seconds)", ref blend, .002f, 0, 5))
                 {
                     session.Change(document, () =>
@@ -1106,7 +1106,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
 
         var draw = frame.Draw;
-        Vector2 Screen(Vector2 p) => frame.Screen(new(p, 0));
+        Vector2 Screen(Vector2f p) => frame.Screen(new(p.ToVector2(), 0));
         void Outline(EntityRegion region, uint color, float width)
         {
             var points = region.Outline().Select(Screen).ToArray();

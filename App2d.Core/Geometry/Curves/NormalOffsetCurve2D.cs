@@ -21,20 +21,20 @@ public sealed class NormalOffsetCurve2D : ICurve2D
         _offset = offset;
     }
 
-    public Vector2 Evaluate(float amount) => EvaluateCore(Clamping.Clamp01(amount));
+    public Vector2f Evaluate(float amount) => EvaluateCore(Clamping.Clamp01(amount));
 
-    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 128);
+    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
 
-    public Vector2 EvaluateDerivative(float amount)
+    public Vector2f EvaluateDerivative(float amount)
     {
         amount = Clamping.Clamp01(amount);
         var lower = MathF.Max(0f, amount - DerivativeSampleDistance);
         var upper = MathF.Min(1f, amount + DerivativeSampleDistance);
         return upper == lower
-            ? Vector2.Zero
+            ? Vector2f.Zero
             : (EvaluateCore(upper) - EvaluateCore(lower)) / (upper - lower);
     }
 
-    private Vector2 EvaluateCore(float amount) =>
+    private Vector2f EvaluateCore(float amount) =>
         _source.Evaluate(amount) + Curve2D.Normal(_source, amount) * _offset(amount);
 }

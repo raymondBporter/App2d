@@ -72,8 +72,8 @@ public sealed class GeometryJson2DTests
     public void PolylinePreservesEachAuthoredPoint()
     {
         var curve = PolylineCurve2D.Builder.Create([new(0, 0), new(1, 2), new(2, 0)]);
-        Assert.Equal(new Vector2(1, 2), curve.Evaluate(.5f));
-        Assert.Equal(new Vector2(2, 0), curve.Evaluate(1));
+        Assert.Equal(new Vector2f(1, 2), curve.Evaluate(.5f));
+        Assert.Equal(new Vector2f(2, 0), curve.Evaluate(1));
         Assert.IsType<PolylineCurve2D>(curve);
     }
 
@@ -87,14 +87,14 @@ public sealed class GeometryJson2DTests
         Assert.True(polygon.ContainsPoint(new(0.5f, 2.5f)));
         Assert.False(polygon.ContainsPoint(new(2.5f, 2.5f)));
         Assert.Equal(5f, polygon.Area, 5);
-        Assert.Equal(new Vector2(3, 3), ShapeBounds2D.Calculate(polygon).Max);
-        Assert.Equal(1.5f, ShapeDistance2D.Distance(new Vector2(2.5f, 2.5f), polygon), 5);
-        Assert.Equal(0f, ShapeDistance2D.Distance(new Vector2(.5f, 2.5f), polygon), 5);
+        Assert.Equal(new Vector2f(3, 3), ShapeBounds2D.Calculate(polygon).Max);
+        Assert.Equal(1.5f, ShapeDistance2D.Distance(new Vector2f(2.5f, 2.5f), polygon), 5);
+        Assert.Equal(0f, ShapeDistance2D.Distance(new Vector2f(.5f, 2.5f), polygon), 5);
         Assert.True(ShapeDistance2D.Distance(polygon, Circle2D.Builder.Create(.25f, new(2.5f, 2.5f))) > 1f);
-        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(.5f, .5f), Vector2.UnitX),
+        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(.5f, .5f), Vector2f.UnitX),
             new SpatialObject2D(polygon), 10, out var exit));
         Assert.Equal(2.5f, exit.Distance, 5);
-        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(2, 2), -Vector2.UnitX),
+        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(2, 2), -Vector2f.UnitX),
             new SpatialObject2D(polygon), 10, out var notch));
         Assert.Equal(1f, notch.Distance, 5);
     }

@@ -32,7 +32,7 @@ public sealed class LadderTerrainTests
         using var textures = new TextureCache2D(TestAssetPath.Root);
         level.CreateSimulation(collision, physics, new EntityIdAllocator2D(), 1u, 2u, 4u);
         using var presentation = new WorldPresentation2D(scene, textures);
-        level.UpdateStreaming(map.Origin + new Vector2(4f, 31f) * 32f);
+        level.UpdateStreaming(map.Origin + new Vector2f(4f, 31f) * 32f);
 
         presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         var top = textures.Load(LadderAssets2D.ResolvePath(textures, tilesetId, true));
@@ -51,7 +51,7 @@ public sealed class LadderTerrainTests
         level.UpdateStreaming(map.WorldBounds.Max);
         presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.Empty(scene);
-        level.UpdateStreaming(map.Origin + new Vector2(4f, 31f) * 32f);
+        level.UpdateStreaming(map.Origin + new Vector2f(4f, 31f) * 32f);
         presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.Single(scene);
         Assert.Same(top, ShaderAt(31).Texture);
@@ -59,6 +59,6 @@ public sealed class LadderTerrainTests
 
         SpriteShader2D ShaderAt(int y) => Assert.IsType<SpriteShader2D>(
             Assert.Single(scene, visual => visual.Transform.Position ==
-                map.Origin + new Vector2(4.5f, y + 0.5f) * 32f).Shader);
+                map.Origin + new Vector2f(4.5f, y + 0.5f) * 32f).Shader);
     }
 }

@@ -23,18 +23,18 @@ public readonly partial record struct Rectangle2D
     public static class Builder
     {
         /// <summary>An axis-aligned rectangle from ordered corners.</summary>
-        public static Rectangle2D Create(Vector2 min, Vector2 max) => new Rectangle2D((min + max) / 2f, (max - min) / 2f, Vector2.UnitX).Validated();
+        public static Rectangle2D Create(Vector2f min, Vector2f  max) => new Rectangle2D((min + max) / 2f, (max - min) / 2f, Vector2f.UnitX).Validated();
 
         /// <summary>A rectangle whose local +X follows any finite nonzero direction; its length is ignored.</summary>
-        public static Rectangle2D Create(Vector2 center, Vector2 halfSize, Vector2 axis) => new Rectangle2D(center, halfSize, new Direction2D(axis).Vector).Validated();
-        public static Rectangle2D FromSize(float width, float height, Vector2 center = default, float angleRadians = 0f) => FromSize(new Vector2(width, height), center, angleRadians);
-        public static Rectangle2D Create(float width, float height, Vector2 center = default, float angleRadians = 0f) => FromSize(width, height, center, angleRadians);
-        public static Rectangle2D CreateFromSize(float width, float height, Vector2 center = default) => Create(width, height, center);
-        public static Rectangle2D FromSize(Vector2 size, Vector2 center = default, float angleRadians = 0f) => new Rectangle2D(center, size / 2f, OrientedFrame2D.AxisFromAngle(angleRadians)).Validated();
-        public static Rectangle2D FromDimensions(Size2D size, Vector2 center = default) => FromSize(size.ToVector2(), center);
-        public static Rectangle2D FromMinAndSize(Vector2 min, Size2D size) => Create(min, min + size.ToVector2());
-        public static Rectangle2D CreateFromSize(Vector2 size, Vector2 center = default) => FromSize(size, center);
-        public static Rectangle2D CreateFromSize(Size2D size, Vector2 center = default) => FromDimensions(size, center);
-        public static Rectangle2D CreateFromMinAndSize(Vector2 min, Size2D size) => FromMinAndSize(min, size);
+        public static Rectangle2D Create(Vector2f  center, Vector2f  halfSize, Vector2f  axis) => new Rectangle2D(center, halfSize, new Direction2D(axis).Vector).Validated();
+        public static Rectangle2D FromSize(float width, float height, Vector2f  center = default, float angleRadians = 0f) => FromSize(new Vector2f(width, height), center, angleRadians);
+        public static Rectangle2D Create(float width, float height, Vector2f  center = default, float angleRadians = 0f) => FromSize(width, height, center, angleRadians);
+        public static Rectangle2D CreateFromSize(float width, float height, Vector2f  center = default) => Create(width, height, center);
+        public static Rectangle2D FromSize(Vector2f  size, Vector2f  center = default, float angleRadians = 0f) => new Rectangle2D(center, size / 2f, OrientedFrame2D.AxisFromAngle(angleRadians)).Validated();
+        public static Rectangle2D FromDimensions(Size2D size, Vector2f  center = default) => FromSize(size.ToVector2(), center);
+        public static Rectangle2D FromMinAndSize(Vector2f  min, Size2D size) => Create(min, min + size.ToVector2());
+        public static Rectangle2D CreateFromSize(Vector2f  size, Vector2f  center = default) => FromSize(size, center);
+        public static Rectangle2D CreateFromSize(Size2D size, Vector2f  center = default) => FromDimensions(size, center);
+        public static Rectangle2D CreateFromMinAndSize(Vector2f  min, Size2D size) => FromMinAndSize(min, size);
     }
 }

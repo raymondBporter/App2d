@@ -9,8 +9,8 @@ namespace App2d.Contracts.Persons;
 /// </summary>
 public readonly record struct PersonState2D(
     EntityId2D Id,
-    Vector2 Position,
-    Vector2 LinearVelocity,
+    Vector2f Position,
+    Vector2f LinearVelocity,
     float Facing,
     int HitPoints,
     int MaximumHitPoints,
@@ -29,6 +29,6 @@ public readonly record struct PersonState2D(
     public SpellState2D Spells { get; init; }
 
     /// <summary>The velocity of the ground under the person, in pixels per second: a moving platform's, else zero.</summary>
-    public Vector2 GroundVelocity { get; init; }
+    public Vector2f GroundVelocity { get; init; }
     public bool IsAlive => HitPoints > 0;
 }

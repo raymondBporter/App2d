@@ -49,8 +49,10 @@ public static class AuthoredJson
     {
         Components<ClipKey>(info, nameof(ClipKey.Value), ["x", "y", "z"], static (key, i) => key.Value[i], static (key, i, component) => { var value = key.Value; value[i] = component; key.Value = value; });
         Components<SlotColorKey2D>(info, nameof(SlotColorKey2D.Value), ["r", "g", "b", "a"], static (key, i) => key.Value[i], static (key, i, component) => { var value = key.Value; value[i] = component; key.Value = value; });
-        Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control1), ["x1", "y1"], static (curve, i) => curve.Control1[i], static (curve, i, component) => { var value = curve.Control1; value[i] = component; curve.Control1 = value; });
-        Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control2), ["x2", "y2"], static (curve, i) => curve.Control2[i], static (curve, i, component) => { var value = curve.Control2; value[i] = component; curve.Control2 = value; });
+        Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control1), ["x1", "y1"], static (curve, i) => curve.Control1[i],
+            static (curve, i, component) => curve.Control1 = WithComponent(curve.Control1, i, component));
+        Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control2), ["x2", "y2"], static (curve, i) => curve.Control2[i],
+            static (curve, i, component) => curve.Control2 = WithComponent(curve.Control2, i, component));
         Components<ModelSocket>(info, nameof(ModelSocket.Transform), ["offsetX", "offsetY", "angle"],
             static (socket, i) => i == 2 ? socket.Transform.Rotation : socket.Transform.Translation[i],
             static (socket, i, component) =>
@@ -62,9 +64,7 @@ public static class AuthoredJson
                 }
                 else
                 {
-                    var offset = transform.Translation;
-                    offset[i] = component;
-                    transform = transform with { Translation = offset };
+                    transform = transform with { Translation = WithComponent(transform.Translation, i, component) };
                 }
                 socket.Transform = transform;
             });
@@ -77,6 +77,9 @@ public static class AuthoredJson
             info.Properties.Insert(info.Properties.IndexOf(layer) + 1, angle);
         }
     }
+
+    private static Vector2f WithComponent(Vector2f value, int index, float component) =>
+        index == 0 ? value with { X = component } : value with { Y = component };
 
     private static void Components<T>(JsonTypeInfo info, string vectorName, string[] names,
         Func<T, int, float> get, Action<T, int, float> set)

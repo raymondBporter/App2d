@@ -47,7 +47,7 @@ public readonly partial record struct CompositeShape2D : IShape2D
         }
     }
     public float Diameter => ShapeDiameter2D.Calculate(this);
-    public bool ContainsPoint(Vector2 point)
+    public bool ContainsPoint(Vector2f point)
     {
         foreach (var part in Parts) if (part.ContainsPoint(point)) return true;
         return false;

@@ -70,7 +70,7 @@ public static class LibraryImport
     public static Func<Vector3, Vector3> Units(PointLibrary library)
     {
         var drawing = library.Drawing;
-        var pivot = drawing.TryGetProperty("pivot", out var p) ? new Vector2(p[0].GetSingle(), p[1].GetSingle()) : Vector2.Zero;
+        var pivot = drawing.TryGetProperty("pivot", out var p) ? new Vector2f(p[0].GetSingle(), p[1].GetSingle()) : Vector2f.Zero;
         var ppu = drawing.TryGetProperty("pixelsPerUnit", out var u) && u.ValueKind == JsonValueKind.Number ? u.GetSingle() : 1;
         return raw => new((raw.X - pivot.X) / ppu, (pivot.Y - raw.Y) / ppu, raw.Z / ppu);
     }
@@ -119,7 +119,7 @@ public static class LibraryImport
         foreach (var chain in model.IkChains)
         {
             // A bone constraint turns its root; the solved bone beneath a pivot (P11a) sits at its parent's origin and gets no channel.
-            if (resolved.Controls[chain.Root].Parent is { } parent && Vector2.Distance(new(resolved.Rest[chain.Root].X, resolved.Rest[chain.Root].Y), new(resolved.Rest[parent].X, resolved.Rest[parent].Y)) < 1e-6f)
+            if (resolved.Controls[chain.Root].Parent is { } parent && Vector2f.Distance(new(resolved.Rest[chain.Root].X, resolved.Rest[chain.Root].Y), new(resolved.Rest[parent].X, resolved.Rest[parent].Y)) < 1e-6f)
             {
                 solved.Add(chain.Root);
             }
@@ -211,7 +211,7 @@ public static class LibraryImport
         var ratios = new Dictionary<string, float>(StringComparer.Ordinal);
         foreach (var measure in model.Base.Measures.Where(m => m.Path.All(reference.ContainsKey)))
         {
-            var length = measure.Path.Zip(measure.Path.Skip(1)).Sum(p => Vector2.Distance(reference[p.First].XY, reference[p.Second].XY));
+            var length = measure.Path.Zip(measure.Path.Skip(1)).Sum(p => Vector2f.Distance(reference[p.First].XY, reference[p.Second].XY));
             if (length > .001f)
             {
                 ratios[measure.Id] = model.Measures[measure.Id] / length;

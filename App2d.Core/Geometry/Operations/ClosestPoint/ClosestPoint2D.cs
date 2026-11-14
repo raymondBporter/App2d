@@ -9,7 +9,7 @@ namespace App2d.Core.Geometry.Operations.ClosestPoint;
 /// <param name="Second">The closest point on the second segment.</param>
 /// <param name="FirstParameter">The position of <paramref name="First"/> along the first segment, in [0, 1].</param>
 /// <param name="SecondParameter">The position of <paramref name="Second"/> along the second segment, in [0, 1].</param>
-public readonly record struct SegmentClosestPoints2D(Vector2 First, Vector2 Second, float FirstParameter, float SecondParameter);
+public readonly record struct SegmentClosestPoints2D(Vector2f First, Vector2f Second, float FirstParameter, float SecondParameter);
 
 /// <summary>Closest points on raw primitives. Inputs are finite; a query point inside a filled primitive is returned unchanged only where documented.</summary>
 public static class ClosestPoint2D
@@ -19,9 +19,9 @@ public static class ClosestPoint2D
     /// <param name="origin">A point on the line.</param>
     /// <param name="direction">A finite, nonzero direction; unit length is not required.</param>
     /// <returns>The perpendicular foot of the point on the line.</returns>
-    public static Vector2 OnLine(Vector2 point, Vector2 origin, Vector2 direction)
+    public static Vector2f  OnLine(Vector2f point, Vector2f origin, Vector2f direction)
     {
-        return LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: false).ToVector2();
+        return LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: false).ToVector2f();
     }
 
     /// <summary>The closest point on a forward ray, clamped at its origin.</summary>
@@ -29,9 +29,9 @@ public static class ClosestPoint2D
     /// <param name="origin">The ray origin.</param>
     /// <param name="direction">A finite, nonzero direction; unit length is not required.</param>
     /// <returns>The nearest point on the ray.</returns>
-    public static Vector2 OnRay(Vector2 point, Vector2 origin, Vector2 direction)
+    public static Vector2f  OnRay(Vector2f point, Vector2f origin, Vector2f direction)
     {
-        return LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: true).ToVector2();
+        return LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: true).ToVector2f();
     }
 
     /// <summary>The closest point on a segment, including its endpoints. A point-like segment returns its start.</summary>
@@ -39,7 +39,7 @@ public static class ClosestPoint2D
     /// <param name="start">The segment start.</param>
     /// <param name="end">The segment end.</param>
     /// <returns>The nearest point on the segment.</returns>
-    public static Vector2 OnSegment(Vector2 point, Vector2 start, Vector2 end)
+    public static Vector2f  OnSegment(Vector2f point, Vector2f start, Vector2f end)
     {
         var segment = end - start;
         var lengthSquared = segment.LengthSquared();
@@ -48,7 +48,7 @@ public static class ClosestPoint2D
             return start;
         }
 
-        var t = Clamping.Clamp01(Vector2.Dot(point - start, segment) / lengthSquared);
+        var t = Clamping.Clamp01(Vector2f.Dot(point - start, segment) / lengthSquared);
         return start + segment * t;
     }
 
@@ -57,18 +57,18 @@ public static class ClosestPoint2D
     /// <param name="min">The lower-left corner.</param>
     /// <param name="max">The upper-right corner.</param>
     /// <returns>The point clamped to the rectangle.</returns>
-    public static Vector2 OnRectangle(Vector2 point, Vector2 min, Vector2 max) => Vector2.Clamp(point, min, max);
+    public static Vector2f  OnRectangle(Vector2f point, Vector2f  min, Vector2f  max) => Vector2f.Clamp(point, min, max);
 
     /// <summary>The closest point on the perimeter of a circle. The center itself maps to the +X extreme.</summary>
     /// <param name="point">The query point.</param>
     /// <param name="center">The circle center.</param>
     /// <param name="radius">The circle radius.</param>
     /// <returns>The nearest point on the circle boundary.</returns>
-    public static Vector2 OnCirclePerimeter(Vector2 point, Vector2 center, float radius)
+    public static Vector2f  OnCirclePerimeter(Vector2f point, Vector2f  center, float radius)
     {
         var offset = point - center;
         var length = offset.Length();
-        return length <= float.Epsilon ? center + new Vector2(radius, 0f) : center + offset * (radius / length);
+        return length <= float.Epsilon ? center + new Vector2f(radius, 0f) : center + offset * (radius / length);
     }
 
     /// <summary>
@@ -79,7 +79,7 @@ public static class ClosestPoint2D
     /// <param name="center">The ellipse center.</param>
     /// <param name="radii">The positive half-extents along X and Y.</param>
     /// <returns>The nearest point on the ellipse boundary.</returns>
-    public static Vector2 OnEllipsePerimeter(Vector2 point, Vector2 center, Vector2 radii)
+    public static Vector2f  OnEllipsePerimeter(Vector2f point, Vector2f center, Vector2f radii)
     {
         var delta = point.ToVector2d() - center.ToVector2d();
         var swapped = radii.X < radii.Y;
@@ -171,7 +171,7 @@ public static class ClosestPoint2D
     /// <param name="vertices">At least one vertex; edges wrap from the last vertex to the first.</param>
     /// <param name="edgeIndex">The index of the edge (from vertex i to i + 1) holding the result.</param>
     /// <returns>The nearest point on the perimeter.</returns>
-    public static Vector2 OnPolygonPerimeter(Vector2 point, ReadOnlySpan<Vector2> vertices, out int edgeIndex)
+    public static Vector2f  OnPolygonPerimeter(Vector2f point, ReadOnlySpan<Vector2f> vertices, out int edgeIndex)
     {
         var closest = vertices[0];
         var bestDistanceSquared = float.PositiveInfinity;
@@ -179,7 +179,7 @@ public static class ClosestPoint2D
         foreach (var (a, b) in MeshTopology.Edges(vertices.Length))
         {
             var candidate = OnSegment(point, vertices[a], vertices[b]);
-            var distanceSquared = Vector2.DistanceSquared(point, candidate);
+            var distanceSquared = Vector2f.DistanceSquared(point, candidate);
             if (distanceSquared < bestDistanceSquared)
             {
                 closest = candidate;
@@ -194,7 +194,7 @@ public static class ClosestPoint2D
     /// <param name="point">The query point.</param>
     /// <param name="vertices">At least one vertex; edges wrap from the last vertex to the first.</param>
     /// <returns>The nearest point on the perimeter.</returns>
-    public static Vector2 OnPolygonPerimeter(Vector2 point, ReadOnlySpan<Vector2> vertices) => OnPolygonPerimeter(point, vertices, out _);
+    public static Vector2f  OnPolygonPerimeter(Vector2f point, ReadOnlySpan<Vector2f> vertices) => OnPolygonPerimeter(point, vertices, out _);
 
     /// <summary>The closest points between two segments, including parallel, crossing and point-like segments.</summary>
     /// <param name="firstStart">The first segment start.</param>
@@ -202,7 +202,7 @@ public static class ClosestPoint2D
     /// <param name="secondStart">The second segment start.</param>
     /// <param name="secondEnd">The second segment end.</param>
     /// <returns>Both closest points and their parameters; the points coincide when the segments cross.</returns>
-    public static SegmentClosestPoints2D BetweenSegments(Vector2 firstStart, Vector2 firstEnd, Vector2 secondStart, Vector2 secondEnd)
+    public static SegmentClosestPoints2D BetweenSegments(Vector2f firstStart, Vector2f firstEnd, Vector2f secondStart, Vector2f secondEnd)
     {
         var firstDirection = firstEnd - firstStart;
         var secondDirection = secondEnd - secondStart;
@@ -220,18 +220,18 @@ public static class ClosestPoint2D
         else if (firstLengthSquared <= float.Epsilon)
         {
             firstParameter = 0f;
-            secondParameter = Clamping.Clamp01(Vector2.Dot(secondDirection, startDelta) / secondLengthSquared);
+            secondParameter = Clamping.Clamp01(Vector2f.Dot(secondDirection, startDelta) / secondLengthSquared);
         }
         else if (secondLengthSquared <= float.Epsilon)
         {
             secondParameter = 0f;
-            firstParameter = Clamping.Clamp01(-Vector2.Dot(firstDirection, startDelta) / firstLengthSquared);
+            firstParameter = Clamping.Clamp01(-Vector2f.Dot(firstDirection, startDelta) / firstLengthSquared);
         }
         else
         {
-            var firstDotDelta = Vector2.Dot(firstDirection, startDelta);
-            var directionsDot = Vector2.Dot(firstDirection, secondDirection);
-            var secondDotDelta = Vector2.Dot(secondDirection, startDelta);
+            var firstDotDelta = Vector2f.Dot(firstDirection, startDelta);
+            var directionsDot = Vector2f.Dot(firstDirection, secondDirection);
+            var secondDotDelta = Vector2f.Dot(secondDirection, startDelta);
             // In 2D the closest points of two non-parallel lines is their crossing; cross products keep precision near parallel.
             var determinant = new Vector2d(firstDirection).Cross(new(secondDirection));
             var numerator = new Vector2d(secondDirection).Cross(new(startDelta));

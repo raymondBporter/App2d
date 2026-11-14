@@ -29,7 +29,7 @@ public sealed class ContactHold
 
     /// <summary>Samples in place at <paramref name="position"/> (the feet origin) and returns the placed final pose.</summary>
     /// <remarks>With <paramref name="hold"/> false every anchor is released and contacts follow the clip.</remarks>
-    public ActorPose Evaluate(ResolvedModel model, MotionClip? clip, double seconds, bool repeat, Vector2 position, int facing, PoseInput input, bool hold = true)
+    public ActorPose Evaluate(ResolvedModel model, MotionClip? clip, double seconds, bool repeat, Vector2f  position, int facing, PoseInput input, bool hold = true)
     {
         if (facing is not (1 or -1))
         {

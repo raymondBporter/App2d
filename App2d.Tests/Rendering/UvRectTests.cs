@@ -29,8 +29,8 @@ public sealed class UvRectTests
         var restored = JsonSerializer.Deserialize<RenderMaterialDefinition2D>(json, AuthoredJson.Options)!.Resolve(materials);
         Assert.Equal(AxisAlignedRectangle2D.UnitRect, restored.Source);
         Assert.Equal("sheet.png", restored.Texture);
-        Assert.Equal(Vector2.Zero, restored.Source!.Value.Min);
-        Assert.Equal(Vector2.One, restored.Source.Value.Size);
+        Assert.Equal(Vector2f.Zero, restored.Source!.Value.Min);
+        Assert.Equal(Vector2f.One, restored.Source.Value.Size);
     }
 
     [Theory]

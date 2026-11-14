@@ -147,7 +147,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
     private readonly float _walkStride = MathF.Abs(PoseEvaluator.CycleTravel(moves.Model, moves[PersonMoves.Walk]).X);
     private readonly float _runStride = MathF.Abs(PoseEvaluator.CycleTravel(moves.Model, moves[PersonMoves.Run]).X);
     private PersonState2D _state;
-    private Vector2 _position;
+    private Vector2f _position;
     private bool _hasState;
     private double _clock, _sinceState, _keyStart, _reactionStart = double.NegativeInfinity, _celebrateStart = double.NegativeInfinity;
     private double _climbStart = double.NegativeInfinity, _climbEnd = double.NegativeInfinity, _airStart, _landUntil = double.NegativeInfinity;
@@ -187,7 +187,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
     }
 
     /// <summary>A new authoritative state; <paramref name="feet"/> is its feet position in model units.</summary>
-    public void ApplyState(PersonState2D state, Vector2 feet, double clock)
+    public void ApplyState(PersonState2D state, Vector2f feet, double clock)
     {
         if (_hasState)
         {

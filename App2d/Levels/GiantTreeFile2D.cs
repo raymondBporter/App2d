@@ -45,7 +45,7 @@ public static class GiantTreeFile2D
                 Ensure.InRange(entry.XTiles, 0f, map.Width - 1f, "xTiles");
                 var ground = entry.RootYTiles ?? TileGroundHeights2D.AtColumn(map, (int)entry.XTiles);
                 Ensure.InRange(ground, 0f, map.Height, "rootYTiles");
-                var root = map.Origin + new Vector2(entry.XTiles, ground) * map.TileSize;
+                var root = map.Origin + new Vector2f(entry.XTiles, ground) * map.TileSize;
                 trees.Add(new(root, new()
                 {
                     Height = entry.HeightTiles * map.TileSize,

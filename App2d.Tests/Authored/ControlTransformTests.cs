@@ -21,7 +21,7 @@ public sealed class ControlTransformTests
         Assert.Equal(frame, bones["hand"]);
         Assert.Equal(new Vector3(1, 2, -.2f), points["hand"]);
         Assert.Equal(angle, angles["hand"]);
-        Assert.Equal(new Vector2(1, 2), pose.Controls["hand"].Position);
+        Assert.Equal(new Vector2f(1, 2), pose.Controls["hand"].Position);
         Assert.Equal(-.2f, pose.Controls["hand"].Layer);
 
         pose.Place("hand", new(pose.Controls["hand"].Frame.WithOrigin(new(7, 8)), .6f), angle);

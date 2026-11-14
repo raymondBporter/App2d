@@ -52,13 +52,13 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
     public Shot? World { get; private set; }
     public float ElapsedSeconds => _elapsed;
 
-    public void Launch(Vector2 origin, float facing)
+    public void Launch(Vector2f origin, float facing)
     {
         Ensure.Finite(origin);
         Ensure.NonZero(facing);
 
         var angle = float.DegreesToRadians(_angle);
-        var velocity = _speed * _traversal.TileSize * new Vector2(
+        var velocity = _speed * _traversal.TileSize * new Vector2f(
             MathF.Cos(angle) * MathF.Sign(facing), MathF.Sin(angle));
         Reference = new Shot(origin, velocity, _referenceGravity * _traversal.TileSize);
         World = new Shot(origin, velocity, _traversal.Gravity);
@@ -103,10 +103,10 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         var speed = reference.Velocity.Length() / _traversal.TileSize;
         var angle = float.RadiansToDegrees(MathF.Atan2(reference.Velocity.Y, MathF.Abs(reference.Velocity.X)));
         renderer.DrawScreenLabel($"F4 FIRE / F6 CLEAR | BALLISTICS {speed:0.0} tiles/s @ {angle:0} deg | 1 tile = 1 m (reference only)",
-            new Vector2(24f, 220f));
-        renderer.DrawScreenLabel(Describe("YELLOW reference", reference), new Vector2(24f, 260f));
-        renderer.DrawScreenLabel(Describe("PINK world", world), new Vector2(24f, 300f));
-        renderer.DrawScreenLabel("FREE FLIGHT: ignores terrain; stops at launch height", new Vector2(24f, 340f));
+            new Vector2f(24f, 220f));
+        renderer.DrawScreenLabel(Describe("YELLOW reference", reference), new Vector2f(24f, 260f));
+        renderer.DrawScreenLabel(Describe("PINK world", world), new Vector2f(24f, 300f));
+        renderer.DrawScreenLabel("FREE FLIGHT: ignores terrain; stops at launch height", new Vector2f(24f, 340f));
     }
 
     private string Describe(string label, Shot shot) =>
@@ -116,7 +116,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
     private void DrawShot(Renderer2D renderer, Shot shot, Color4b color)
     {
         var elapsed = Math.Min(_elapsed, shot.FlightSeconds);
-        Span<Vector2> trail = stackalloc Vector2[97];
+        Span<Vector2f> trail = stackalloc Vector2f[97];
         for (var i = 0; i < trail.Length; i++)
         {
             trail[i] = shot.PositionAt(elapsed * i / (trail.Length - 1));
@@ -132,7 +132,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         renderer.DrawWorldCircle(end, _traversal.TileSize * 0.08f, color);
     }
 
-    internal readonly record struct Shot(Vector2 Origin, Vector2 Velocity, float Gravity)
+    internal readonly record struct Shot(Vector2f Origin, Vector2f Velocity, float Gravity)
     {
         public float FlightSeconds => 2f * Velocity.Y / Gravity;
         public float Rise => Velocity.Y * Velocity.Y / (2f * Gravity);
@@ -140,6 +140,6 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 
         // Exact constant-acceleration trajectory: no integration error, drag, fall cap,
         // inherited player velocity, apex assistance, or collision response.
-        public Vector2 PositionAt(float seconds) => Origin + Velocity * seconds - new Vector2(0f, 0.5f * Gravity * seconds * seconds);
+        public Vector2f PositionAt(float seconds) => Origin + Velocity * seconds - new Vector2f(0f, 0.5f * Gravity * seconds * seconds);
     }
 }

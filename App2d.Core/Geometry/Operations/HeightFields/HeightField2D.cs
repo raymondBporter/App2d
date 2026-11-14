@@ -52,9 +52,9 @@ public static class HeightField2D
         Append(start, points.Length - 1, points);
         return CompositeShape2D.Builder.Create(pieces);
 
-        void Append(int from, int to, ReadOnlySpan<Vector2> surface)
+        void Append(int from, int to, ReadOnlySpan<Vector2f> surface)
         {
-            var vertices = new List<Vector2>(to - from + 3);
+            var vertices = new List<Vector2f>(to - from + 3);
             for (var index = from; index <= to; index++)
             {
                 // Exact collinearity only: removing these points does not change the boundary.
@@ -68,7 +68,7 @@ public static class HeightField2D
         }
     }
 
-    private static double Turn(Vector2 a, Vector2 b, Vector2 c) =>
+    private static double Turn(Vector2f a, Vector2f b, Vector2f c) =>
         ((double)b.X - a.X) * ((double)c.Y - b.Y) - ((double)b.Y - a.Y) * ((double)c.X - b.X);
 
     /// <summary>Conservative bounds; infinite when the bottom or the supplied upper bound is infinite.</summary>
@@ -80,7 +80,7 @@ public static class HeightField2D
     }
 
     /// <summary>Includes the top, flat bottom and vertical end caps. Points beyond XMin/XMax are outside.</summary>
-    public static bool ContainsPoint(this IHeightField2D field, Vector2 point)
+    public static bool ContainsPoint(this IHeightField2D field, Vector2f point)
     {
         Ensure.ThrowIfNull(field);
         return float.IsFinite(point.X) && float.IsFinite(point.Y)
@@ -89,7 +89,7 @@ public static class HeightField2D
     }
 
     /// <summary>The outward unit normal of the top: normalize((-dy/dx, 1)). End-cap normals are separate.</summary>
-    public static Vector2 NormalAt(this IHeightField2D field, float x)
+    public static Vector2f NormalAt(this IHeightField2D field, float x)
     {
         Ensure.ThrowIfNull(field);
         ValidateX(field, x);
@@ -173,7 +173,7 @@ public static class HeightField2D
         return height;
     }
 
-    internal static void ValidateIncreasingX(ReadOnlySpan<Vector2> points)
+    internal static void ValidateIncreasingX(ReadOnlySpan<Vector2f> points)
     {
         for (var index = 1; index < points.Length; index++)
             Ensure.GreaterThan(points[index].X, points[index - 1].X);
@@ -181,19 +181,19 @@ public static class HeightField2D
 
     private sealed class FunctionCurve(IHeightField2D field) : ICurve2D
     {
-        public Vector2 Evaluate(float amount)
+        public Vector2f Evaluate(float amount)
         {
             var x = float.Lerp(field.XMin, field.XMax, Math.Clamp(amount, 0f, 1f));
             return new(x, field.HeightAt(x));
         }
 
-        public Vector2 EvaluateDerivative(float amount)
+        public Vector2f EvaluateDerivative(float amount)
         {
             var x = float.Lerp(field.XMin, field.XMax, Math.Clamp(amount, 0f, 1f));
             var width = field.XMax - field.XMin;
             return new(width, width * field.SlopeAt(x));
         }
 
-        public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 256);
+        public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 256);
     }
 }

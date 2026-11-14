@@ -8,7 +8,7 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A cubic Bezier curve with normalized parameter range [0, 1].</summary>
 public readonly partial record struct CubicBezier2D : ICurve2D
 {
-    public CubicBezier2D(Vector2 start, Vector2 control1, Vector2 control2, Vector2 end)
+    public CubicBezier2D(Vector2f start, Vector2f control1, Vector2f control2, Vector2f end)
     {
         Start = start;
         Control1 = control1;
@@ -16,31 +16,31 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         End = end;
     }
 
-    public Vector2 Start { get; init; }
-    public Vector2 Control1 { get; init; }
-    public Vector2 Control2 { get; init; }
-    public Vector2 End { get; init; }
+    public Vector2f Start { get; init; }
+    public Vector2f Control1 { get; init; }
+    public Vector2f Control2 { get; init; }
+    public Vector2f End { get; init; }
 
     /// <summary>Creates a cubic from endpoints and tangents with respect to its normalized parameter.</summary>
-    public static CubicBezier2D FromHermite(Vector2 start, Vector2 end, Vector2 startTangent, Vector2 endTangent) =>
+    public static CubicBezier2D FromHermite(Vector2f start, Vector2f end, Vector2f startTangent, Vector2f endTangent) =>
         Builder.Create(start, start + startTangent / 3f, end - endTangent / 3f, end);
 
-    public Vector2 Evaluate(float amount) =>
-        BezierMath.Cubic<Vector2f, float>(new(Start), new(Control1), new(Control2), new(End), amount).ToVector2();
+    public Vector2f Evaluate(float amount) =>
+        BezierMath.Cubic<Vector2f, float>(Start, Control1, Control2, End, amount);
 
-    public Vector2 EvaluateDerivative(float amount) =>
-        BezierMath.CubicDerivative<Vector2f, float>(new(Start), new(Control1), new(Control2), new(End), amount).ToVector2();
+    public Vector2f EvaluateDerivative(float amount) =>
+        BezierMath.CubicDerivative<Vector2f, float>(Start, Control1, Control2,End, amount);
 
     /// <summary>Splits at a finite parameter in [0, 1], preserving the exact curve on each side.</summary>
     public (CubicBezier2D Left, CubicBezier2D Right) Split(float amount)
     {
         Ensure.InRange(amount, 0f, 1f);
-        var a = Vector2.Lerp(Start, Control1, amount);
-        var b = Vector2.Lerp(Control1, Control2, amount);
-        var c = Vector2.Lerp(Control2, End, amount);
-        var d = Vector2.Lerp(a, b, amount);
-        var e = Vector2.Lerp(b, c, amount);
-        var point = Vector2.Lerp(d, e, amount);
+        var a = Vector2f.Lerp(Start, Control1, amount);
+        var b = Vector2f.Lerp(Control1, Control2, amount);
+        var c = Vector2f.Lerp(Control2, End, amount);
+        var d = Vector2f.Lerp(a, b, amount);
+        var e = Vector2f.Lerp(b, c, amount);
+        var point = Vector2f.Lerp(d, e, amount);
         return (new(Start, a, d, point), new(point, e, c, End));
     }
 
@@ -144,5 +144,5 @@ public readonly partial record struct CubicBezier2D : ICurve2D
             : throw new InvalidOperationException("The curve must have exactly one parameter at the requested X coordinate.");
     }
 
-    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 128);
+    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
 }

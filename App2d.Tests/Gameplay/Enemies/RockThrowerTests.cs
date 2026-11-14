@@ -23,14 +23,14 @@ public sealed class RockThrowerTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
     private static (AuthoredEntityEnemy2D Enemy, PhysicsWorld2D Physics, Person2D Player) Create(int facing = 1)
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var enemy = new AuthoredEntityEnemy2D(EntityId2D.Create(), Catalog.Entities["rock-thrower"], physics, new(0, 40), 1, 4);
         enemy.SetSimulationEnabled(true);
         var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(facing * 200, 26), 2, 1, CombatFaction2D.Player, 30);
         return (enemy, physics, player);
     }
 
-    private static void Tick(AuthoredEntityEnemy2D enemy, Vector2 target, int ticks)
+    private static void Tick(AuthoredEntityEnemy2D enemy, Vector2f target, int ticks)
     {
         for (var i = 0; i < ticks; i++)
         {
@@ -50,8 +50,8 @@ public sealed class RockThrowerTests
         Tick(enemy, new(-facing * 200, 26), 8);
         var rock = Assert.Single(enemy.CaptureState().Bolts);
         Assert.Equal(600, rock.Gravity);
-        var landing = rock.Position + rock.Velocity * .85f + new Vector2(0, -rock.Gravity * .85f * .85f / 2);
-        Assert.InRange(Vector2.Distance(landing, player.Position), 0, .01f);
+        var landing = rock.Position + rock.Velocity * .85f + new Vector2f(0, -rock.Gravity * .85f * .85f / 2);
+        Assert.InRange(Vector2f.Distance(landing, player.Position), 0, .01f);
         Assert.Contains(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "rock-throw");
     }
 
@@ -72,7 +72,7 @@ public sealed class RockThrowerTests
         var (enemy, _, player) = Create(facing);
         Tick(enemy, player.Position, 140);
         Assert.Single(enemy.CaptureState().Bolts);
-        enemy.TakeDamage(6, Vector2.Zero);
+        enemy.TakeDamage(6, Vector2f.Zero);
         for (var i = 0; i < 180; i++)
         {
             Tick(enemy, player.Position, 1);
@@ -98,10 +98,10 @@ public sealed class RockThrowerTests
             }
             else
             {
-                player.WorldObject.Transform.Position += new Vector2(150, 0);
+                player.WorldObject.Transform.Position += new Vector2f(150, 0);
             }
 
-            enemy.TakeDamage(6, Vector2.Zero);
+            enemy.TakeDamage(6, Vector2f.Zero);
             for (var i = 0; i < 400; i++)
             {
                 Tick(enemy, player.Position, 1);

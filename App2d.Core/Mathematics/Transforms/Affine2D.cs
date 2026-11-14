@@ -6,7 +6,8 @@ namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>
 /// Editable affine transform: translation, rotation, independent axis scales and shear. Angles are radians.
-/// Row-vector convention: local * parent. Reflections and singular transforms are allowed; inversion is explicit.
+/// The Matrix property exposes the System.Numerics representation. Then applies transforms in the named order.
+/// Reflections and singular transforms are allowed; inversion is explicit.
 /// </summary>
 public sealed record Affine2D
 {
@@ -82,7 +83,7 @@ public sealed record Affine2D
     }
 
     [JsonIgnore]
-    public Vector2 Position
+    public Vector2f Position
     {
         get => new(X, Y);
         set
@@ -99,7 +100,7 @@ public sealed record Affine2D
     }
 
     [JsonIgnore]
-    public Vector2 Scale
+    public Vector2f Scale
     {
         get => new(ScaleX, ScaleY);
         set
@@ -136,9 +137,10 @@ public sealed record Affine2D
     /// Evaluates absolute channels directly, without allocating an editable transform. Scale precedes rotation and
     /// translation; shear values are the additional angles of the two local axes. Singular maps are allowed.
     /// </summary>
-    public static Matrix3x2 CreateMatrix(Vector2 position, float rotation, Vector2 scale, Vector2 shear = default) =>
+    public static Matrix3x2 CreateMatrix(Vector2f position, float rotation, Vector2f scale, Vector2f shear = default) =>
         shear.X == 0 && shear.Y == 0
-            ? Matrix3x2.CreateScale(scale) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position)
+            ? Matrix2x3f.CreateScale(scale).Then(Matrix2x3f.CreateRotation(rotation))
+                .Then(Matrix2x3f.CreateTranslation(position)).ToNumerics()
             : new(MathF.Cos(rotation + shear.X) * scale.X, MathF.Sin(rotation + shear.X) * scale.X,
                 -MathF.Sin(rotation + shear.Y) * scale.Y, MathF.Cos(rotation + shear.Y) * scale.Y, position.X, position.Y);
 
@@ -146,7 +148,7 @@ public sealed record Affine2D
     /// Evaluates proposed absolute channels without editing this transform or notifying its owner. Unchanged channels
     /// retain their stored values, and a wholly unchanged proposal retains the exact cached matrix from FromMatrix.
     /// </summary>
-    public Matrix3x2 EvaluateMatrix(Vector2 position, float rotation, Vector2 scale, Vector2 shear)
+    public Matrix3x2 EvaluateMatrix(Vector2f position, float rotation, Vector2f scale, Vector2f shear)
     {
         var changed = false;
         position = new(Channel(X, position.X), Channel(Y, position.Y));
@@ -164,15 +166,15 @@ public sealed record Affine2D
         }
     }
 
-    public Vector2 TransformPoint(Vector2 point) => Vector2.Transform(point, Matrix);
-    public Vector2 TransformDirection(Vector2 direction) => Vector2.TransformNormal(direction, Matrix);
-    public Vector2 TransposeTransformDirection(Vector2 direction) => Matrix.TransposeTransformDirection(direction);
+    public Vector2f TransformPoint(Vector2f point) => Vector2f.Transform(point, Matrix);
+    public Vector2f TransformDirection(Vector2f direction) => Vector2f.TransformNormal(direction, Matrix);
+    public Vector2f TransposeTransformDirection(Vector2f direction) => Matrix.TransposeTransformDirection(direction);
 
     /// <summary>Apply this transform, then the next transform. Composition may introduce shear.</summary>
     public Affine2D Then(Affine2D next)
     {
         ArgumentNullException.ThrowIfNull(next);
-        return FromMatrix(Matrix * next.Matrix);
+        return FromMatrix(Matrix.Then(next.Matrix));
     }
 
     /// <summary>Returns false for singular transforms or inverses that cannot be represented with finite channels.</summary>

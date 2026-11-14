@@ -39,7 +39,7 @@ public sealed partial class PersonLocomotion2D
         if (IsClimbingLadder && jumpOff)
         {
             DetachFromLadder();
-            _body.LinearVelocity = new Vector2(_intent.MoveX * Metrics.RunSpeed, Metrics.JumpSpeed);
+            _body.LinearVelocity = new Vector2f(_intent.MoveX * Metrics.RunSpeed, Metrics.JumpSpeed);
             _jumpInitialSpeed = Metrics.JumpSpeed;
             _jumpBufferTime = _wallJumpBufferTime = _coyoteTime = 0f;
             IsGrounded = false;
@@ -63,7 +63,8 @@ public sealed partial class PersonLocomotion2D
         // ladder, only if this step is clear. Climbing retains solid collision.
         var bounds = _body.WorldObject.WorldBounds;
         var position = _body.WorldObject.Transform.Position;
-        position.X += MoveTowards(bounds.Center.X, ladder.Center.X, Metrics.LadderAlignSpeed * deltaSeconds) - bounds.Center.X;
+        var offset = MoveTowards(bounds.Center.X, ladder.Center.X, Metrics.LadderAlignSpeed * deltaSeconds) - bounds.Center.X;
+        position = position with { X = position.X + offset };
         if (!CanOccupy(position))
         {
             DetachFromLadder();
@@ -85,7 +86,7 @@ public sealed partial class PersonLocomotion2D
             speed = Math.Min(speed, Math.Max(0f, (ladder.Top - bounds.Center.Y) / deltaSeconds));
         }
 
-        _body.LinearVelocity = new Vector2(0f, speed);
+        _body.LinearVelocity = new Vector2f(0f, speed);
         _body.GravityScale = 0f;
         return true;
     }
@@ -135,7 +136,7 @@ public sealed partial class PersonLocomotion2D
                     top++;
                 }
 
-                ladder = new Rect2D(origin + new Vector2(x, bottom) * size, origin + new Vector2(x + 1, top + 1) * size);
+                ladder = new Rect2D(origin + new Vector2f(x, bottom) * size, origin + new Vector2f(x + 1, top + 1) * size);
                 nearestDistance = distance;
                 break;
             }

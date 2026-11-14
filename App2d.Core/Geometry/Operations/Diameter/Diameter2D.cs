@@ -8,15 +8,15 @@ namespace App2d.Core.Geometry.Operations.Diameter;
 public static class Diameter2D
 {
     public static float Circle(float radius) => 2 * radius;
-    public static float Ellipse(Vector2 radii) => 2 * MathF.Max(radii.X, radii.Y);
-    public static float Capsule(Vector2 start, Vector2 end, float radius) => (float)(Vector2d.Distance(start.ToVector2d(), end.ToVector2d()) + 2d * radius);
-    public static float Rectangle(Vector2 min, Vector2 max) => (float)Vector2d.Distance(min.ToVector2d(), max.ToVector2d());
+    public static float Ellipse(Vector2f radii) => 2 * MathF.Max(radii.X, radii.Y);
+    public static float Capsule(Vector2f start, Vector2f end, float radius) => (float)(Vector2d.Distance(start.ToVector2d(), end.ToVector2d()) + 2d * radius);
+    public static float Rectangle(Vector2f min, Vector2f max) => (float)Vector2d.Distance(min.ToVector2d(), max.ToVector2d());
 
     /// <summary>The diagonal of the inner rectangle plus a full corner-circle diameter.</summary>
-    public static float RoundedRectangle(Vector2 innerMin, Vector2 innerMax, float radius) =>
+    public static float RoundedRectangle(Vector2f innerMin, Vector2f innerMax, float radius) =>
         (float)(Vector2d.Distance(innerMin.ToVector2d(), innerMax.ToVector2d()) + 2d * radius);
 
-    public static float Triangle(Vector2 a, Vector2 b, Vector2 c)
+    public static float Triangle(Vector2f a, Vector2f b, Vector2f c)
     {
         var ab = b.ToVector2d() - a.ToVector2d();
         var bc = c.ToVector2d() - b.ToVector2d();
@@ -25,7 +25,7 @@ public static class Diameter2D
     }
 
     /// <summary>The farthest vertex pair, valid for convex or concave polygons in either winding.</summary>
-    public static float Polygon(ReadOnlySpan<Vector2> vertices)
+    public static float Polygon(ReadOnlySpan<Vector2f> vertices)
     {
         Ensure.ThrowIfTooShort(vertices, 1);
         var squared = 0d;

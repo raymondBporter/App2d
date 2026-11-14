@@ -18,8 +18,8 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 {
     private readonly Dictionary<string, (RigIkTarget Target, int Index)> _targets = new(StringComparer.Ordinal);
     // A target exactly at the root has no direction. Retain the FK axis so reflection and repeated pins are stable.
-    private readonly Dictionary<string, Vector2> _foldDirections = model.IkConstraints
-        .ToDictionary(c => c.Id, c => pose.Bones[c.Root].X, StringComparer.Ordinal);
+    private readonly Dictionary<string, Vector2f> _foldDirections = model.IkConstraints
+        .ToDictionary(c => c.Id, c => new Vector2f(pose.Bones[c.Root].X), StringComparer.Ordinal);
 
     public void Apply(RigIkTarget target)
     {
@@ -71,8 +71,8 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         }
 
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
-        var local = Vector2.Transform(model.Rest[chain.End].XY, setupInverse) + delta.XY;
-        return new(Vector2.Transform(local, frame), point.Z + model.Rest[chain.End].Z - rest.Z + delta.Z);
+        var local = Vector2f.Transform(model.Rest[chain.End].XY, setupInverse) + delta.XY;
+        return new(Vector2f.Transform(local, frame).ToVector2(), point.Z + model.Rest[chain.End].Z - rest.Z + delta.Z);
     }
 
     /// <summary>Inverse of TargetPosition, before reference-measure scaling. Used by dragging as well as other authoring hosts.</summary>
@@ -88,8 +88,8 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
         Matrix3x2.Invert(frame, out var inverse);
-        var delta = Vector2.Transform(world.XY, inverse) - Vector2.Transform(model.Rest[chain.End].XY, setupInverse);
-        return new(delta, world.Z - point.Z - model.Rest[chain.End].Z + rest.Z);
+        var delta = Vector2f.Transform(world.XY, inverse) - Vector2f.Transform(model.Rest[chain.End].XY, setupInverse);
+        return new(delta.ToVector2(), world.Z - point.Z - model.Rest[chain.End].Z + rest.Z);
     }
 
     private static (Matrix3x2 SetupInverse, Matrix3x2 Frame) TargetFrames(ResolvedModel model, EvaluatedPose pose, ModelChain chain)

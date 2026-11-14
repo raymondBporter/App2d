@@ -8,7 +8,7 @@ internal static class JointMath2D
 {
     internal const float PositionTolerance = 0.01f;
 
-    internal static void Validate(RigidBody2D first, RigidBody2D second, Vector2 firstAnchor, Vector2 secondAnchor)
+    internal static void Validate(RigidBody2D first, RigidBody2D second, Vector2f firstAnchor, Vector2f secondAnchor)
     {
         Ensure.ThrowIfNull(first);
         Ensure.ThrowIfNull(second);
@@ -17,17 +17,17 @@ internal static class JointMath2D
         Ensure.Finite(secondAnchor);
     }
 
-    internal static Vector2 Anchor(RigidBody2D body, Vector2 local) => Vector2.Transform(local, body.WorldObject.Transform.Matrix);
-    internal static float Cross(Vector2 a, Vector2 b) => a.X * b.Y - a.Y * b.X;
-    internal static Vector2 Perpendicular(Vector2 v) => new(-v.Y, v.X);
-    internal static Vector2 PointVelocity(RigidBody2D body, Vector2 arm) => body.LinearVelocity + body.AngularVelocity * Perpendicular(arm);
+    internal static Vector2f Anchor(RigidBody2D body, Vector2f local) => Vector2f.Transform(local, body.WorldObject.Transform.Matrix);
+    internal static float Cross(Vector2f a, Vector2f b) => a.X * b.Y - a.Y * b.X;
+    internal static Vector2f Perpendicular(Vector2f v) => new(-v.Y, v.X);
+    internal static Vector2f PointVelocity(RigidBody2D body, Vector2f arm) => body.LinearVelocity + body.AngularVelocity * Perpendicular(arm);
 
     // Point velocity changes by K * impulse. Angular inertia adds the lever-arm terms.
     // Inverting this 2x2 matrix gives the effective mass of a coincident-anchor constraint.
-    internal static Vector2 SolvePointMass(RigidBody2D first, RigidBody2D second, Vector2 firstArm, Vector2 secondArm, Vector2 value)
+    internal static Vector2f SolvePointMass(RigidBody2D first, RigidBody2D second, Vector2f firstArm, Vector2f secondArm, Vector2f value)
     {
         var inverseMass = first.InverseMass + second.InverseMass;
-        if (inverseMass <= 0f) return Vector2.Zero;
+        if (inverseMass <= 0f) return Vector2f.Zero;
         var ia = first.EffectiveInverseInertia;
         var ib = second.EffectiveInverseInertia;
         var xx = inverseMass + ia * firstArm.Y * firstArm.Y + ib * secondArm.Y * secondArm.Y;
@@ -35,12 +35,12 @@ internal static class JointMath2D
         var yy = inverseMass + ia * firstArm.X * firstArm.X + ib * secondArm.X * secondArm.X;
         var determinant = (double)xx * yy - (double)xy * xy;
         return determinant > 0d
-            ? new Vector2((float)((yy * (double)value.X - xy * (double)value.Y) / determinant),
+            ? new Vector2f((float)((yy * (double)value.X - xy * (double)value.Y) / determinant),
                 (float)((xx * (double)value.Y - xy * (double)value.X) / determinant))
-            : Vector2.Zero;
+            : Vector2f.Zero;
     }
 
-    internal static void ApplyVelocity(RigidBody2D first, RigidBody2D second, Vector2 impulse, float firstAngularImpulse, float secondAngularImpulse)
+    internal static void ApplyVelocity(RigidBody2D first, RigidBody2D second, Vector2f impulse, float firstAngularImpulse, float secondAngularImpulse)
     {
         first.LinearVelocity -= impulse * first.InverseMass;
         first.AngularVelocity -= firstAngularImpulse * first.EffectiveInverseInertia;
@@ -48,7 +48,7 @@ internal static class JointMath2D
         second.AngularVelocity += secondAngularImpulse * second.EffectiveInverseInertia;
     }
 
-    internal static bool ApplyPosition(RigidBody2D first, RigidBody2D second, Vector2 impulse, float firstAngularImpulse, float secondAngularImpulse)
+    internal static bool ApplyPosition(RigidBody2D first, RigidBody2D second, Vector2f impulse, float firstAngularImpulse, float secondAngularImpulse)
     {
         var firstAngle = -firstAngularImpulse * first.EffectiveInverseInertia;
         var secondAngle = secondAngularImpulse * second.EffectiveInverseInertia;
@@ -56,12 +56,12 @@ internal static class JointMath2D
         var scale = Math.Min(1f, 0.2f / Math.Max(0.2f, Math.Max(Math.Abs(firstAngle), Math.Abs(secondAngle))));
         Move(first, -impulse * (first.InverseMass * scale), firstAngle * scale);
         Move(second, impulse * (second.InverseMass * scale), secondAngle * scale);
-        return impulse != Vector2.Zero;
+        return impulse != Vector2f.Zero;
     }
 
-    private static void Move(RigidBody2D body, Vector2 translation, float rotation)
+    private static void Move(RigidBody2D body, Vector2f translation, float rotation)
     {
-        if (translation == Vector2.Zero && rotation == 0f) return;
+        if (translation == Vector2f.Zero && rotation == 0f) return;
         var center = body.WorldCenterOfMass + translation;
         body.WorldObject.Transform.Rotation += rotation;
         body.WorldObject.Transform.Position += center - body.WorldCenterOfMass;
@@ -69,7 +69,7 @@ internal static class JointMath2D
 }
 
 /// <summary>One scalar constraint direction, including its angular lever arms about both centers of mass.</summary>
-internal readonly record struct JointAxis2D(RigidBody2D First, RigidBody2D Second, Vector2 Direction, float FirstLever, float SecondLever)
+internal readonly record struct JointAxis2D(RigidBody2D First, RigidBody2D Second, Vector2f Direction, float FirstLever, float SecondLever)
 {
     internal float EffectiveMass
     {
@@ -82,7 +82,7 @@ internal readonly record struct JointAxis2D(RigidBody2D First, RigidBody2D Secon
         }
     }
 
-    internal float Speed => Vector2.Dot(Direction, Second.LinearVelocity - First.LinearVelocity)
+    internal float Speed => Vector2f.Dot(Direction, Second.LinearVelocity - First.LinearVelocity)
         + SecondLever * Second.AngularVelocity - FirstLever * First.AngularVelocity;
 
     internal void ApplyVelocity(float impulse) => JointMath2D.ApplyVelocity(First, Second,

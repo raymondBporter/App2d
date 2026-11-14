@@ -35,7 +35,7 @@ public sealed class SideScrollerSession2DTests
         Assert.Equal(21, game.Actions.BeginFrames);
         Assert.Equal(SideScrollerSession2D.FixedDeltaSeconds, game.World.LastDelta);
         Assert.Equal(position, first.Players[0].Person.Position);
-        Assert.Equal(Vector2.Zero, original.Person.Position);
+        Assert.Equal(Vector2f.Zero, original.Person.Position);
         Assert.True(game.Session.CapturePlayers()[0].Person.Position.X > position.X);
     }
 
@@ -49,7 +49,7 @@ public sealed class SideScrollerSession2DTests
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Command = Command() with { ClimbY = float.PositiveInfinity } }));
         Assert.Equal(0, game.Session.Tick);
         Assert.Equal(0, game.World.PlatformUpdates);
-        Assert.Equal(Vector2.Zero, game.Person.Position);
+        Assert.Equal(Vector2f.Zero, game.Person.Position);
         game.Session.Advance(valid);
         Assert.Equal(1, game.Session.Tick);
     }
@@ -124,7 +124,7 @@ public sealed class SideScrollerSession2DTests
     public void CheckpointDeathAndRespawnAreSessionDecisionsWithValueEvents()
     {
         using var game = new Fixture();
-        var checkpointPosition = new Vector2(200f, 50f);
+        var checkpointPosition = new Vector2f(200f, 50f);
         game.World.PendingCheckpoint = new WorldThingSpec2D(7, WorldThingKind2D.SavePoint,
             "test", true, checkpointPosition);
         var checkpointFrame = game.Step();
@@ -219,17 +219,17 @@ public sealed class SideScrollerSession2DTests
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
             var physics = new PhysicsWorld2D
             {
-                Gravity = new Vector2(0f, -metrics.Gravity),
+                Gravity = new Vector2f(0f, -metrics.Gravity),
                 MaxSubstepSeconds = SideScrollerSession2D.FixedDeltaSeconds
             };
-            Person = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2.Zero,
+            Person = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2f.Zero,
                 2, 1, CombatFaction2D.Player);
             var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10000f, 20f));
-            floor.Transform.Position = new Vector2(0f, Person.WorldObject.WorldBounds.Bottom - 10f);
+            floor.Transform.Position = new Vector2f(0f, Person.WorldObject.WorldBounds.Bottom - 10f);
             physics.AddBody(floor, BodyMotionType2D.Static).CollisionLayer = 1;
             Person.AttachActions(Actions);
             Session = new SideScrollerSession2D(physics, Person, Actions, World,
-                new RespawnState2D(Vector2.Zero, Person.Health.Maximum));
+                new RespawnState2D(Vector2f.Zero, Person.Health.Maximum));
         }
         public SessionFrame2D Step(PersonCommand2D command = default) => Session.Advance(new PlayerInput2D(Person.Id, command));
         public void Dispose() => Session.Dispose();
@@ -237,14 +237,14 @@ public sealed class SideScrollerSession2DTests
 
     private sealed class TestWorld : ISideScrollerSessionWorld2D
     {
-        public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
+        public Rect2D Bounds => new(new Vector2f(-10000f), new Vector2f(10000f));
         public float GoalX { get; set; } = 9000f;
         public int PlatformUpdates { get; private set; }
         public int EnemyUpdates { get; private set; }
         public float LastDelta { get; private set; }
         public int DamageNextStep { get; set; }
         public WorldThingSpec2D? PendingCheckpoint { get; set; }
-        public void UpdateStreaming(Vector2 focus)
+        public void UpdateStreaming(Vector2f focus)
         {
         }
         public void UpdateWorldMotion(float dt)
@@ -252,7 +252,7 @@ public sealed class SideScrollerSession2DTests
             PlatformUpdates++;
             LastDelta = dt;
         }
-        public void UpdateEnemies(float dt, Vector2 target) => EnemyUpdates++;
+        public void UpdateEnemies(float dt, Vector2f target) => EnemyUpdates++;
         public void SyncEnemiesAfterPhysics()
         {
         }
@@ -263,7 +263,7 @@ public sealed class SideScrollerSession2DTests
                 return;
             }
 
-            player.TakeDamage(DamageNextStep, Vector2.Zero);
+            player.TakeDamage(DamageNextStep, Vector2f.Zero);
             DamageNextStep = 0;
         }
         public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds)

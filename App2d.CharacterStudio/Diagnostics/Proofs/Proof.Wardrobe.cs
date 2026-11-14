@@ -93,7 +93,7 @@ internal sealed partial class ProofRenders
                     if (column == 0)
                     {
                         drawing.Build(entity.Model, pose);
-                        var placed = new ActorPose(pose, Vector2.Zero, 1);
+                        var placed = new ActorPose(pose, Vector2f.Zero, 1);
                         foreach (var (prop, socket) in PersonLoadout.Dressed(clip, at, PersonGear.Sword, entity))
                         {
                             drawing.AddAttachment(catalog.Parts[prop], placed, entity.Sockets[socket]);
@@ -163,7 +163,7 @@ internal sealed partial class ProofRenders
                     InPlace = true
                 });
                 drawing.Build(thrower.Model, pose);
-                var placed = new ActorPose(pose, Vector2.Zero, 1);
+                var placed = new ActorPose(pose, Vector2f.Zero, 1);
                 foreach (var equipment in thrower.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null || i is 2 or 3 or 4))
                 {
                     drawing.AddAttachment(equipment.Prop, placed, equipment.Socket);
@@ -218,7 +218,7 @@ internal sealed partial class ProofRenders
             var releasePose = new ActorPose(PoseEvaluator.Sample(subject.Model, action.Clip, Math.Min(release, action.Clip.Duration), false, new()
             {
                 InPlace = true
-            }), Vector2.Zero, 1);
+            }), Vector2f.Zero, 1);
             for (var frame = 0; frame < (int)Math.Ceiling(action.Clip.Duration * 24); frame++)
             {
                 var at = frame / 24f;
@@ -227,7 +227,7 @@ internal sealed partial class ProofRenders
                     InPlace = true
                 });
                 drawing.Build(subject.Model, pose);
-                var placed = new ActorPose(pose, Vector2.Zero, 1);
+                var placed = new ActorPose(pose, Vector2f.Zero, 1);
                 foreach (var equipment in subject.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null || at < release))
                 {
                     drawing.AddAttachment(equipment.Prop, placed, equipment.Socket);

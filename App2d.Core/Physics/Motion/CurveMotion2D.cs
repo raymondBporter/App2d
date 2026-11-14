@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Timing;
 using App2d.Core.Validation;
@@ -9,7 +10,7 @@ namespace App2d.Core.Physics.Motion;
 /// <summary>Repeating or one-shot translation composed from a geometric curve and a normalized progress map.</summary>
 public sealed class CurveMotion2D : IKinematicMotion2D
 {
-    public CurveMotion2D(ICurve2D curve, double periodSeconds, IProgressMap progress, Vector2 origin = default, bool repeat = true)
+    public CurveMotion2D(ICurve2D curve, double periodSeconds, IProgressMap progress, Vector2f origin = default, bool repeat = true)
     {
         Curve = Ensure.RequireNotNull(curve);
         Progress = Ensure.RequireNotNull(progress);
@@ -24,22 +25,22 @@ public sealed class CurveMotion2D : IKinematicMotion2D
         Ensure.Finite(beginning);
         Ensure.Finite(ending);
         var tolerance = 0.001f + MathF.Max(beginning.Length(), ending.Length()) * 0.000001f;
-        Ensure.ThrowIf(repeat && Vector2.Distance(beginning, ending) > tolerance,
+        Ensure.ThrowIf(repeat && Vector2f.Distance(beginning, ending) > tolerance,
             "A repeating motion must return to its starting position.", nameof(progress));
     }
 
     public ICurve2D Curve { get; }
     public IProgressMap Progress { get; }
     public double PeriodSeconds { get; }
-    public Vector2 Origin { get; }
+    public Vector2f Origin { get; }
     public bool Repeat { get; }
 
-    public Vector2 Position(double seconds) => Origin + Curve.Evaluate(CheckedProgress(Progress.Sample(Phase(seconds))));
+    public Vector2f Position(double seconds) => Origin + Curve.Evaluate(CheckedProgress(Progress.Sample(Phase(seconds))));
 
-    public Vector2 Velocity(double seconds)
+    public Vector2f Velocity(double seconds)
     {
         var phase = Phase(seconds);
-        if (!Repeat && seconds >= PeriodSeconds) return Vector2.Zero;
+        if (!Repeat && seconds >= PeriodSeconds) return Vector2f.Zero;
         var progress = CheckedProgress(Progress.Sample(phase));
         var derivative = Progress.Derivative(phase);
         Ensure.Finite(derivative, nameof(Progress));

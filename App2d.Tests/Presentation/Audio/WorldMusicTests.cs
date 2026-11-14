@@ -17,7 +17,7 @@ public sealed class WorldMusicTests
         var content = LevelContent2D.Empty with
         {
             Zones = [
-            new("a", "A", new(Vector2.Zero, new(10, 10))),
+            new("a", "A", new(Vector2f.Zero, new(10, 10))),
             new("b", "B", new(new(10, 0), new(20, 10)))]
         };
         var initial = new MusicSelection2D("orchestra", "explore");
@@ -28,8 +28,8 @@ public sealed class WorldMusicTests
             new Dictionary<string, MusicSelection2D> { ["a"] = initial, ["b"] = target });
         var requests = new List<MusicSelection2D>();
         var director = new WorldMusicDirector2D(soundtrack, (p, m) => requests.Add(new(p, m)));
-        var home = new Vector2(9.99f, 1);
-        var across = new Vector2(change == "fallback" ? -.01f : 10.01f, 1);
+        var home = new Vector2f(9.99f, 1);
+        var across = new Vector2f(change == "fallback" ? -.01f : 10.01f, 1);
         director.Update(content, home, 0);
 
         // Almost a minute in the candidate region in total, but never 0.75s
@@ -63,7 +63,7 @@ public sealed class WorldMusicTests
         var content = LevelContent2D.Empty with
         {
             Zones = [
-            new("a", "A", new(Vector2.Zero, new(10, 10))),
+            new("a", "A", new(Vector2f.Zero, new(10, 10))),
             new("b", "B", new(new(10, 0), new(20, 10)))]
         };
         var soundtrack = new WorldSoundtrack2D(new Dictionary<string, MusicCue2D> { ["orchestra"] = MusicStreamTests.Cue() },
@@ -81,7 +81,7 @@ public sealed class WorldMusicTests
     [Fact]
     public void ZoneDwellAvoidsBoundaryChatterAndFallbackAndOverridesWork()
     {
-        var a = new WorldZone2D("a", "A", new(Vector2.Zero, new(10, 10)));
+        var a = new WorldZone2D("a", "A", new(Vector2f.Zero, new(10, 10)));
         var b = new WorldZone2D("b", "B", new(new(10, 0), new(20, 10)));
         var content = LevelContent2D.Empty with
         {

@@ -135,7 +135,7 @@ public sealed class PhysicsCollisionCallbacks2DTests
         return (world, actor, ground);
     }
 
-    private static RigidBody2D AddActor(PhysicsWorld2D world, Vector2 position)
+    private static RigidBody2D AddActor(PhysicsWorld2D world, Vector2f position)
     {
         var spatial = new SpatialObject2D(Circle2D.Builder.Create(1f));
         spatial.Transform.Position = position;

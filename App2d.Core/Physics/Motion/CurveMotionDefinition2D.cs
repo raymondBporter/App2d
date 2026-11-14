@@ -13,7 +13,7 @@ public sealed record CurveMotionDefinition2D
     public bool Repeat { get; init; } = true;
     public IReadOnlyList<ProgressMapKind> Progress { get; init; } = [ProgressMapKind.PingPong, ProgressMapKind.Smooth];
 
-    public CurveMotion2D CreateMotion(Vector2 origin = default)
+    public CurveMotion2D CreateMotion(Vector2f  origin = default)
     {
         Ensure.ThrowIfNull(Curve);
         Curve.Validate();

@@ -13,7 +13,7 @@ public sealed class TileMap2D : ISolidTileMap2D
     private readonly TileRectangleMesher2D.KindAt _kindAt;
     private bool _collisionRectanglesDirty = true;
 
-    public TileMap2D(int width, int height, float tileSize, Vector2 origin = default)
+    public TileMap2D(int width, int height, float tileSize, Vector2f origin = default)
     {
         Ensure.Positive(width);
         Ensure.Positive(height);
@@ -27,7 +27,7 @@ public sealed class TileMap2D : ISolidTileMap2D
     public int Width => _solidTiles.Width;
     public int Height => _solidTiles.Height;
     public float TileSize => _solidTiles.CellSize.Width;
-    public Vector2 Origin => _solidTiles.Origin;
+    public Vector2f Origin => _solidTiles.Origin;
     public Rect2D WorldBounds => _solidTiles.WorldBounds;
     public GridSize2D GridSize => _solidTiles.Size;
     public GridGeometry2D GridGeometry => _solidTiles.Geometry;

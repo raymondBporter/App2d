@@ -15,7 +15,7 @@ Ensure.InRange(fraction, 0f, 1f, bounds: RangeBounds.Open);
 Ensure.Invertible(localToWorld, out var inverse);
 
 // Checks return the original value and capture its expression on failure.
-public Vector2 TileSize { get; } = Ensure.Positive(tileSize);
+public Vector2f TileSize { get; } = Ensure.Positive(tileSize);
 
 // Nonthrowing consumers use the same predicates.
 if (NumericValidation.IsPositive(radius)) { /* use the radius */ }

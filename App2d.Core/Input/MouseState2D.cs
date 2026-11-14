@@ -9,20 +9,20 @@ public sealed class MouseState2D
     private readonly HashSet<MouseButtons> _pressed = [];
     private readonly HashSet<MouseButtons> _released = [];
     private readonly HashSet<MouseButtons> _blocked = [];
-    private Vector2 _clientPosition;
-    private Vector2 _clientToDeviceScale = Vector2.One;
+    private Vector2f _clientPosition;
+    private Vector2f _clientToDeviceScale = Vector2f.One;
 
-    public Vector2 PositionDevice => _clientPosition * _clientToDeviceScale;
+    public Vector2f PositionDevice => _clientPosition * _clientToDeviceScale;
     public float WheelDelta { get; private set; }
     public bool IsDown(MouseButtons button) => _down.Contains(button);
     public bool WasPressed(MouseButtons button) => _pressed.Contains(button);
     public bool WasReleased(MouseButtons button) => _released.Contains(button);
 
-    internal void SetClientPosition(Vector2 position) => _clientPosition = position;
+    internal void SetClientPosition(Vector2f position) => _clientPosition = position;
 
     internal void SetDeviceMapping(Size clientSize, int deviceWidth, int deviceHeight)
     {
-        _clientToDeviceScale = new Vector2(
+        _clientToDeviceScale = new Vector2f(
             clientSize.Width > 0 ? deviceWidth / (float)clientSize.Width : 1f,
             clientSize.Height > 0 ? deviceHeight / (float)clientSize.Height : 1f);
     }

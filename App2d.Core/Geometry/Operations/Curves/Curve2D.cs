@@ -23,7 +23,7 @@ public static class Curve2D
     }
 
     /// <summary>Returns a unit tangent, or zero when the curve is locally degenerate.</summary>
-    public static Vector2 Tangent(ICurve2D curve, float amount)
+    public static Vector2f  Tangent(ICurve2D curve, float amount)
     {
         Ensure.ThrowIfNull(curve);
         amount = Clamping.Clamp01(amount);
@@ -35,23 +35,23 @@ public static class Curve2D
             derivative = curve.Evaluate(upper) - curve.Evaluate(lower);
         }
         return derivative.LengthSquared() <= DerivativeEpsilon * DerivativeEpsilon
-            ? Vector2.Zero
-            : Vector2.Normalize(derivative);
+            ? Vector2f.Zero
+            : Vector2f.Normalize(derivative);
     }
 
     /// <summary>Returns the tangent rotated 90 degrees counter-clockwise.</summary>
-    public static Vector2 Normal(ICurve2D curve, float amount)
+    public static Vector2f  Normal(ICurve2D curve, float amount)
     {
         var tangent = Tangent(curve, amount);
-        return new Vector2(-tangent.Y, tangent.X);
+        return new Vector2f(-tangent.Y, tangent.X);
     }
 
     /// <summary>Samples both endpoints and the requested number of equal parameter-space segments.</summary>
-    public static Vector2[] Sample(ICurve2D curve, int segmentCount)
+    public static Vector2f[] Sample(ICurve2D curve, int segmentCount)
     {
         Ensure.ThrowIfNull(curve);
         Ensure.Positive(segmentCount);
-        var points = new Vector2[segmentCount + 1];
+        var points = new Vector2f[segmentCount + 1];
         Sample(curve, points);
         return points;
     }
@@ -73,7 +73,7 @@ public static class Curve2D
             _ => 16
         };
         Ensure.Positive(segments);
-        var points = new List<Vector2> { curve.Evaluate(0f) };
+        var points = new List<Vector2f> { curve.Evaluate(0f) };
         for (var segment = 0; segment < segments; segment++)
         {
             var from = segment / (float)segments;
@@ -82,13 +82,13 @@ public static class Curve2D
         }
         return PolylineCurve2D.Builder.Create(points);
 
-        void Append(float from, float to, Vector2 start, Vector2 end, int depth)
+        void Append(float from, float to, Vector2f start, Vector2f end, int depth)
         {
             Ensure.Finite(start);
             Ensure.Finite(end);
             var middle = (from + to) * 0.5f;
             var midpoint = curve.Evaluate(middle);
-            var needsSplit = Vector2.Distance(start, end) > maximumSegmentLength;
+            var needsSplit = Vector2f.Distance(start, end) > maximumSegmentLength;
             for (var sample = 1; sample <= 3; sample++)
             {
                 var point = sample == 2 ? midpoint : curve.Evaluate(float.Lerp(from, to, sample / 4f));
@@ -111,7 +111,7 @@ public static class Curve2D
     }
 
     /// <summary>Samples both endpoints into caller-owned storage without allocating.</summary>
-    public static void Sample<TCurve>(TCurve curve, Span<Vector2> points) where TCurve : ICurve2D
+    public static void Sample<TCurve>(TCurve curve, Span<Vector2f> points) where TCurve : ICurve2D
     {
         if (curve is null)
         {

@@ -15,18 +15,18 @@ public readonly partial record struct SimplePolygon2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static SimplePolygon2D Create(IEnumerable<Vector2> vertices) => new SimplePolygon2D([.. Ensure.RequireNotNull(vertices)]).Validated();
+        public static SimplePolygon2D Create(IEnumerable<Vector2f> vertices) => new SimplePolygon2D([.. Ensure.RequireNotNull(vertices)]).Validated();
 
         /// <summary>
         /// Fills beneath a strictly left-to-right polyline down to a horizontal bottom. Builds a strip mesh
         /// directly, avoiding long triangulation diagonals and ear clipping for large terrain outlines.
         /// </summary>
-        public static SimplePolygon2D BelowPolyline(ReadOnlySpan<Vector2> surface, float bottom)
+        public static SimplePolygon2D BelowPolyline(ReadOnlySpan<Vector2f> surface, float bottom)
         {
             Ensure.ThrowIfTooShort(surface, 2);
             Ensure.Finite(bottom);
             var count = surface.Length;
-            var perimeter = new Vector2[count * 2];
+            var perimeter = new Vector2f[count * 2];
             var indices = new int[(count - 1) * 6];
             for (var index = 0; index < count; index++)
             {

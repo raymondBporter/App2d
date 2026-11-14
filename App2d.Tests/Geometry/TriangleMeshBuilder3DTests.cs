@@ -20,7 +20,7 @@ public sealed class TriangleMeshBuilder3DTests
         foreach (var point in builder.Vertices)
         {
             var offset = point - center;
-            Assert.InRange(new Vector2(offset.X, offset.Y).Length(), 0, radius + 1e-5f);
+            Assert.InRange(new Vector2f(offset.X, offset.Y).Length(), 0, radius + 1e-5f);
             if (dome) Assert.InRange(offset.Length(), radius - 1e-5f, radius + 1e-5f);
             else Assert.Equal(center.Z, point.Z);
             Assert.InRange(point.Z, center.Z - radius - 1e-5f, center.Z + 1e-5f);
@@ -69,7 +69,7 @@ public sealed class TriangleMeshBuilder3DTests
         var builder = new TriangleMeshBuilder3D<(Vector3 Position, int Material), int>(
             (point, material, _) => (point, material), initialCapacity: 3);
 
-        builder.Add(source, point => new Vector3(point, 4f), 7);
+        builder.Add(source, point => new Vector3(point.ToVector2(), 4f), 7);
 
         Assert.Equal(source.TriangleCount, builder.TriangleCount);
         Assert.Equal(source.TriangleCount * 3, builder.Count);
@@ -86,8 +86,8 @@ public sealed class TriangleMeshBuilder3DTests
     public void EllipseCanFollowANonflatSurface()
     {
         var builder = new TriangleMeshBuilder3D<Vector3, byte>((point, _, _) => point, 3);
-        builder.Ellipse(new Vector2(1f, 2f), new Vector2(2f, 1f),
-            point => new Vector3(point, point.X - point.Y), 0);
+        builder.Ellipse(new Vector2f(1f, 2f), new Vector2f(2f, 1f),
+            point => new Vector3(point.ToVector2(), point.X - point.Y), 0);
 
         Assert.Equal(24, builder.TriangleCount);
         Assert.All(builder.Vertices.ToArray(), point => Assert.Equal(point.X - point.Y, point.Z, 5));

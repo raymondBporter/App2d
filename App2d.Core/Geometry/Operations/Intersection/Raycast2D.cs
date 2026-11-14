@@ -21,10 +21,10 @@ public static partial class Raycast2D
     /// <param name="segment">The finite segment endpoints.</param>
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The crossing, normal and ray parameter.</param>
-    public static bool TrySegment(Vector2 origin, Vector2 direction, Segment<Vector2f, float> segment, float maxDistance, out RayHit2D hit) =>
+    public static bool TrySegment(Vector2f origin, Vector2f direction, Segment<Vector2f, float> segment, float maxDistance, out RayHit2D hit) =>
         TrySegment(origin, direction, segment.Start.ToVector2d(), segment.End.ToVector2d(), maxDistance, out hit);
 
-    private static bool TrySegment(Vector2 origin, Vector2 direction, Vector2d start, Vector2d end, float maxDistance, out RayHit2D hit)
+    private static bool TrySegment(Vector2f origin, Vector2f direction, Vector2d start, Vector2d end, float maxDistance, out RayHit2D hit)
     {
         // Double intermediates avoid cancellation when a ray has just left a nearby optical surface.
         var edge = end - start;
@@ -41,7 +41,7 @@ public static partial class Raycast2D
         {
             return Miss(out hit);
         }
-        var normal = Vector2.Normalize(new Vector2((float)-edge.Y, (float)edge.X));
+        var normal = Vector2f.Normalize(new Vector2f((float)-edge.Y, (float)edge.X));
         hit = new(origin + direction * (float)distance, normal, (float)distance);
         return true;
     }
@@ -54,12 +54,12 @@ public static partial class Raycast2D
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The nearest hit at or before <paramref name="maxDistance"/>.</param>
     /// <returns>True when the ray reaches the circle.</returns>
-    public static bool TryCircle(Vector2 origin, Vector2 direction, Vector2 center, float radius, float maxDistance, out RayHit2D hit)
+    public static bool TryCircle(Vector2f origin, Vector2f direction, Vector2f center, float radius, float maxDistance, out RayHit2D hit)
     {
         var offset = origin - center;
-        var a = Vector2.Dot(direction, direction);
-        var b = 2f * Vector2.Dot(offset, direction);
-        var c = Vector2.Dot(offset, offset) - radius * radius;
+        var a = Vector2f.Dot(direction, direction);
+        var b = 2f * Vector2f.Dot(offset, direction);
+        var c = Vector2f.Dot(offset, offset) - radius * radius;
         var discriminant = b * b - 4f * a * c;
         if (a <= Epsilon || discriminant < 0f)
         {
@@ -83,7 +83,7 @@ public static partial class Raycast2D
             return Miss(out hit);
         }
 
-        hit = new(point, Vector2.Normalize(normal), distance);
+        hit = new(point, Vector2f.Normalize(normal), distance);
         return true;
     }
 
@@ -95,7 +95,7 @@ public static partial class Raycast2D
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The nearest hit, with the exact gradient normal.</param>
     /// <returns>True when the ray reaches the ellipse.</returns>
-    public static bool TryEllipse(Vector2 origin, Vector2 direction, Vector2 center, Vector2 radii, float maxDistance, out RayHit2D hit)
+    public static bool TryEllipse(Vector2f origin, Vector2f direction, Vector2f center, Vector2f radii, float maxDistance, out RayHit2D hit)
     {
         var relative = origin.ToVector2d() - center.ToVector2d();
         var offset = new Vector2d(relative.X / radii.X, relative.Y / radii.Y);
@@ -126,8 +126,8 @@ public static partial class Raycast2D
             return Miss(out hit);
         }
 
-        var point = (origin.ToVector2d() + direction.ToVector2d() * distance).ToVector2();
-        hit = new(point, (normal / normalLength).ToVector2(), (float)distance);
+        var point = (origin.ToVector2d() + direction.ToVector2d() * distance).ToVector2f();
+        hit = new(point, (normal / normalLength).ToVector2f(), (float)distance);
         return true;
     }
 
@@ -138,20 +138,20 @@ public static partial class Raycast2D
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The nearest hit, with the outward edge normal.</param>
     /// <returns>True when the ray reaches the polygon.</returns>
-    public static bool TryConvexPolygon(Vector2 origin, Vector2 direction, ReadOnlySpan<Vector2> vertices, float maxDistance, out RayHit2D hit)
+    public static bool TryConvexPolygon(Vector2f origin, Vector2f direction, ReadOnlySpan<Vector2f> vertices, float maxDistance, out RayHit2D hit)
     {
         var signedAreaTwice = PolygonGeometry2D.SignedAreaTwice(vertices);
         var enteringDistance = float.NegativeInfinity;
         var exitingDistance = float.PositiveInfinity;
-        var enteringNormal = Vector2.Zero;
-        var exitingNormal = Vector2.Zero;
+        var enteringNormal = Vector2f.Zero;
+        var exitingNormal = Vector2f.Zero;
         for (var i = 0; i < vertices.Length; i++)
         {
             var start = vertices[i];
             var edge = vertices[(i + 1) % vertices.Length] - start;
             var outward = signedAreaTwice >= 0f ? edge.PerpCw : edge.PerpCcw;
-            var originSide = Vector2.Dot(origin - start, outward);
-            var directionProjection = Vector2.Dot(direction, outward);
+            var originSide = Vector2f.Dot(origin - start, outward);
+            var directionProjection = Vector2f.Dot(direction, outward);
             if (MathF.Abs(directionProjection) <= Epsilon)
             {
                 if (originSide > 0f)
@@ -186,7 +186,7 @@ public static partial class Raycast2D
             return Miss(out hit);
         }
 
-        hit = new(origin + direction * hitDistance, Vector2.Normalize(hitNormal), hitDistance);
+        hit = new(origin + direction * hitDistance, Vector2f.Normalize(hitNormal), hitDistance);
         return true;
     }
 
@@ -198,9 +198,9 @@ public static partial class Raycast2D
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The nearest hit.</param>
     /// <returns>True when the ray reaches the rectangle.</returns>
-    public static bool TryRectangle(Vector2 origin, Vector2 direction, Vector2 min, Vector2 max, float maxDistance, out RayHit2D hit)
+    public static bool TryRectangle(Vector2f origin, Vector2f direction, Vector2f min, Vector2f max, float maxDistance, out RayHit2D hit)
     {
-        Span<Vector2> corners = stackalloc Vector2[4];
+        Span<Vector2f> corners = stackalloc Vector2f[4];
         VertexGenerator2D.WriteRectangle(corners, min, max);
         return TryConvexPolygon(origin, direction, corners, maxDistance, out hit);
     }
@@ -212,7 +212,7 @@ public static partial class Raycast2D
     /// <param name="max">The upper-right corner.</param>
     /// <param name="maxDistance">The largest ray parameter considered.</param>
     /// <returns>True when some parameter in [0, maxDistance] lies inside the rectangle.</returns>
-    public static bool IntersectsRectangle(Vector2 origin, Vector2 direction, Vector2 min, Vector2 max, float maxDistance)
+    public static bool IntersectsRectangle(Vector2f origin, Vector2f direction, Vector2f min, Vector2f max, float maxDistance)
     {
         if (!min.IsFinite() || !max.IsFinite())
         {
@@ -233,7 +233,7 @@ public static partial class Raycast2D
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The nearest hit.</param>
     /// <returns>True when the ray reaches the capsule.</returns>
-    public static bool TryCapsule(Vector2 origin, Vector2 direction, Vector2 start, Vector2 end, float radius, float maxDistance, out RayHit2D hit)
+    public static bool TryCapsule(Vector2f origin, Vector2f direction, Vector2f start, Vector2f end, float radius, float maxDistance, out RayHit2D hit)
     {
         var segment = end - start;
         var segmentLength = segment.Length();
@@ -245,14 +245,14 @@ public static partial class Raycast2D
         var tangent = segment / segmentLength;
         var perpendicular = tangent.PerpCcw;
         var relativeOrigin = origin - start;
-        var originAlong = Vector2.Dot(relativeOrigin, tangent);
-        var originAcross = Vector2.Dot(relativeOrigin, perpendicular);
-        var directionAlong = Vector2.Dot(direction, tangent);
-        var directionAcross = Vector2.Dot(direction, perpendicular);
+        var originAlong = Vector2f.Dot(relativeOrigin, tangent);
+        var originAcross = Vector2f.Dot(relativeOrigin, perpendicular);
+        var directionAlong = Vector2f.Dot(direction, tangent);
+        var directionAcross = Vector2f.Dot(direction, perpendicular);
         var bestDistance = float.PositiveInfinity;
-        var bestNormal = Vector2.Zero;
+        var bestNormal = Vector2f.Zero;
 
-        void Consider(float distance, Vector2 normal)
+        void Consider(float distance, Vector2f normal)
         {
             if (distance < 0f || distance > maxDistance || distance >= bestDistance)
             {
@@ -287,7 +287,7 @@ public static partial class Raycast2D
             return Miss(out hit);
         }
 
-        hit = new(origin + direction * bestDistance, Vector2.Normalize(bestNormal), bestDistance);
+        hit = new(origin + direction * bestDistance, Vector2f.Normalize(bestNormal), bestDistance);
         return true;
 
         void ConsiderCap(float centerAlong, bool acceptStartCap)
@@ -324,7 +324,7 @@ public static partial class Raycast2D
                 var capNormal = tangent * (along - centerAlong) + perpendicular * across;
                 if (capNormal.LengthSquared() > Epsilon)
                 {
-                    Consider(distance, Vector2.Normalize(capNormal));
+                    Consider(distance, Vector2f.Normalize(capNormal));
                 }
             }
         }
@@ -338,15 +338,15 @@ public static partial class Raycast2D
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The boundary hit with the half-space normal.</param>
     /// <returns>True when the ray reaches the boundary; parallel rays miss.</returns>
-    public static bool TryHalfSpace(Vector2 origin, Vector2 direction, Vector2 unitNormal, float offset, float maxDistance, out RayHit2D hit)
+    public static bool TryHalfSpace(Vector2f origin, Vector2f direction, Vector2f unitNormal, float offset, float maxDistance, out RayHit2D hit)
     {
-        var denominator = Vector2.Dot(direction, unitNormal);
+        var denominator = Vector2f.Dot(direction, unitNormal);
         if (MathF.Abs(denominator) <= Epsilon)
         {
             return Miss(out hit);
         }
 
-        var distance = (offset - Vector2.Dot(origin, unitNormal)) / denominator;
+        var distance = (offset - Vector2f.Dot(origin, unitNormal)) / denominator;
         if (distance < 0f || distance > maxDistance)
         {
             return Miss(out hit);
@@ -387,7 +387,7 @@ public static partial class Raycast2D
     /// <param name="vertices">The simple perimeter without a repeated closing vertex.</param>
     /// <param name="maxDistance">The largest ray parameter accepted.</param>
     /// <param name="hit">The crossing, outward normal and ray parameter.</param>
-    public static bool TrySimplePolygon(Vector2 origin, Vector2 direction, ReadOnlySpan<Vector2> vertices, float maxDistance, out RayHit2D hit)
+    public static bool TrySimplePolygon(Vector2f origin, Vector2f direction, ReadOnlySpan<Vector2f> vertices, float maxDistance, out RayHit2D hit)
     {
         var winding = Math.Sign(PolygonGeometry2D.SignedAreaTwiceDouble(vertices));
         hit = default;
@@ -410,7 +410,7 @@ public static partial class Raycast2D
                 continue;
             }
 
-            var normal = Vector2.Normalize(new Vector2(edge.Y, -edge.X) * winding);
+            var normal = Vector2f.Normalize(new Vector2f(edge.Y, -edge.X) * winding);
             hit = new RayHit2D(origin + direction * distance, normal, distance);
             found = true;
         }

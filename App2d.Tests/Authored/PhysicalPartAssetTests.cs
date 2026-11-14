@@ -22,8 +22,8 @@ public sealed class PhysicalPartAssetTests
             part => Assert.Equal(Circle2D.Builder.Create(16, new(-42, 0)), Assert.IsType<Circle2D>(part)),
             part => Assert.Equal(Circle2D.Builder.Create(16, new(42, 0)), Assert.IsType<Circle2D>(part)));
         var bounds = ShapeBounds2D.Calculate(shape);
-        Assert.Equal(new Vector2(-58, -16), bounds.Min);
-        Assert.Equal(new Vector2(58, 16), bounds.Max);
+        Assert.Equal(new Vector2f(-58, -16), bounds.Min);
+        Assert.Equal(new Vector2f(58, 16), bounds.Max);
         Assert.Equal(BodyMotionType2D.Dynamic, asset.Physics!.MotionType);
         Assert.Equal(2f, asset.Physics!.Mass);
         Assert.Equal(1800f, asset.Physics!.MomentOfInertia);

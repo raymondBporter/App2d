@@ -40,16 +40,16 @@ public sealed class HeightFieldCollisionTests
             Assert.True(contact.Normal.Y > 0.99f, $"{shape.GetKind()}: {contact.Normal}");
             Assert.InRange(contact.PenetrationDepth, 0.249f, 0.251f);
             Assert.True(ShapeCollision2D.TryGetContact(flat, Similarity2D.Identity, shape, penetrating, out var reverse));
-            Assert.InRange(Vector2.Distance(contact.Normal, -reverse.Normal), 0f, 0.0001f);
+            Assert.InRange(Vector2f.Distance(contact.Normal, -reverse.Normal), 0f, 0.0001f);
             Assert.Equal(contact.PenetrationDepth, reverse.PenetrationDepth, 4);
             Assert.Equal(0f, ShapeDistance2D.Distance(shape, penetrating, flat, Similarity2D.Identity));
             Assert.False(ShapeCollision2D.TryGetContact(shape, Similarity2D.FromTranslation(new(0, 4)), valley, Similarity2D.Identity, out _), shape.GetKind());
             Assert.True(ShapeDistance2D.Distance(shape, Similarity2D.FromTranslation(new(0, 4)), valley, Similarity2D.Identity) > 1f, shape.GetKind());
         }
-        var halfSpace = HalfSpace2D.Builder.Create(Vector2.UnitY, -5f);
+        var halfSpace = HalfSpace2D.Builder.Create(Vector2f.UnitY, -5f);
         Assert.True(ShapeCollision2D.TryGetContact(flat, Similarity2D.Identity, halfSpace, Similarity2D.Identity, out _));
         Assert.False(ShapeCollision2D.TryGetContact(flat, Similarity2D.Identity,
-            HalfSpace2D.Builder.Create(Vector2.UnitY, -20f), Similarity2D.Identity, out _));
+            HalfSpace2D.Builder.Create(Vector2f.UnitY, -20f), Similarity2D.Identity, out _));
     }
 
     [Theory]
@@ -60,19 +60,19 @@ public sealed class HeightFieldCollisionTests
         var field = HeightFieldShape2D.Builder.Create([new(-10, 0), new(0, 0), new(10, 0)], -10f);
         var pose = Similarity2D.FromAxis(new(20, -13), new(0.8f, 0.6f), mirror: mirror, scale: 2f);
         var wheel = Circle2D.Builder.Create(1f);
-        foreach (var (center, normal) in new (Vector2, Vector2)[]
+        foreach (var (center, normal) in new (Vector2f, Vector2f)[]
         {
-            (new(0, 0.375f), Vector2.UnitY),
-            (new(-10.375f, -5f), -Vector2.UnitX),
-            (new(10.375f, -5f), Vector2.UnitX),
-            (new(0, -10.375f), -Vector2.UnitY)
+            (new(0, 0.375f), Vector2f.UnitY),
+            (new(-10.375f, -5f), -Vector2f.UnitX),
+            (new(10.375f, -5f), Vector2f.UnitX),
+            (new(0, -10.375f), -Vector2f.UnitY)
         })
         {
             var wheelPose = Similarity2D.FromTranslation(pose.TransformPoint(center));
             Assert.True(ShapeCollision2D.TryGetContact(wheel, wheelPose, field, pose, out var contact));
             Assert.Equal(0.25f, contact.PenetrationDepth, 4);
-            var expected = Vector2.Normalize(pose.XAxis * normal.X + pose.YAxis * normal.Y);
-            Assert.InRange(Vector2.Distance(expected, contact.Normal), 0f, 0.00001f);
+            var expected = Vector2f.Normalize(pose.XAxis * normal.X + pose.YAxis * normal.Y);
+            Assert.InRange(Vector2f.Distance(expected, contact.Normal), 0f, 0.00001f);
         }
     }
 
@@ -91,7 +91,7 @@ public sealed class HeightFieldCollisionTests
     public void ABoxSlidesAcrossCollinearSamplesWithoutInternalTriangleSeams()
     {
         var world = new PhysicsWorld2D { Gravity = new(0, -10f) };
-        var field = HeightFieldShape2D.Builder.Create(Enumerable.Range(-40, 81).Select(x => new Vector2(x, 0f)), -10f);
+        var field = HeightFieldShape2D.Builder.Create(Enumerable.Range(-40, 81).Select(x => new Vector2f(x, 0f)), -10f);
         var ground = world.AddBody(new SpatialObject2D(field), BodyMotionType2D.Static);
         ground.Friction = 0f;
         ground.Restitution = 0f;

@@ -53,29 +53,29 @@ public sealed class Vector2JsonConverterTests
     public void VectorsAndVectorListsKeepTheExistingCoordinateFormat(string optionsName)
     {
         var options = GetOptions(optionsName);
-        var vectors = new List<Vector2> { new(1.25f, -2.5f), Vector2.Zero };
+        var vectors = new List<Vector2f> { new(1.25f, -2.5f), Vector2f.Zero };
         var json = JsonSerializer.Serialize(vectors, options);
         using var document = JsonDocument.Parse(json);
         var first = document.RootElement[0];
         Assert.Equal(["x", "y"], first.EnumerateObject().Select(property => property.Name));
         Assert.Equal(1.25f, first.GetProperty("x").GetSingle());
         Assert.Equal(-2.5f, first.GetProperty("y").GetSingle());
-        Assert.Equal(vectors, JsonSerializer.Deserialize<List<Vector2>>(json, options));
-        Assert.Equal(new Vector2(3, 4), JsonSerializer.Deserialize<Vector2>("{\"Y\":4,\"X\":3}", options));
+        Assert.Equal(vectors, JsonSerializer.Deserialize<List<Vector2f>>(json, options));
+        Assert.Equal(new Vector2f(3, 4), JsonSerializer.Deserialize<Vector2f>("{\"Y\":4,\"X\":3}", options));
     }
 
     [Fact]
     public void TheConverterCanBeRegisteredElsewhereAndRespectsNamingAndNumberPolicies()
     {
         var defaults = PascalVectors;
-        Assert.Equal("{\"X\":1,\"Y\":2}", JsonSerializer.Serialize(new Vector2(1, 2), defaults));
-        Assert.Equal(new Vector2(1, 0), JsonSerializer.Deserialize<Vector2>("{\"X\":1}", defaults));
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2>("{\"x\":1}", defaults));
+        Assert.Equal("{\"X\":1,\"Y\":2}", JsonSerializer.Serialize(new Vector2f(1, 2), defaults));
+        Assert.Equal(new Vector2f(1, 0), JsonSerializer.Deserialize<Vector2f>("{\"X\":1}", defaults));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2f>("{\"x\":1}", defaults));
 
         var quoted = QuotedVectors;
-        var json = JsonSerializer.Serialize(new Vector2(1.25f, -2.5f), quoted);
+        var json = JsonSerializer.Serialize(new Vector2f(1.25f, -2.5f), quoted);
         Assert.Equal("{\"x\":\"1.25\",\"y\":\"-2.5\"}", json);
-        Assert.Equal(new Vector2(1.25f, -2.5f), JsonSerializer.Deserialize<Vector2>(json, quoted));
+        Assert.Equal(new Vector2f(1.25f, -2.5f), JsonSerializer.Deserialize<Vector2f>(json, quoted));
     }
 
     [Theory]
@@ -87,13 +87,13 @@ public sealed class Vector2JsonConverterTests
     [InlineData("{\"x\":1")]
     public void StrictOptionsRejectMalformedCoordinatesAndUnknownMembers(string json)
     {
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2>(json, GeometryJson2D.JsonOptions));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2f>(json, GeometryJson2D.JsonOptions));
     }
 
     [Fact]
     public void TolerantOptionsSkipNestedUnknownValuesAndDefaultMissingCoordinatesToZero()
     {
-        Assert.Equal(new Vector2(0, 2), JsonSerializer.Deserialize<Vector2>(
+        Assert.Equal(new Vector2f(0, 2), JsonSerializer.Deserialize<Vector2f>(
             "{\"extra\":{\"nested\":[1,2,3]},\"y\":2}", TolerantVectors));
     }
 }

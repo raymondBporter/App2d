@@ -30,9 +30,9 @@ public sealed class Direction2DTests
         Assert.Equal(direction, line.UnitDirection);
         Assert.Equal(direction.Vector, ray.Direction);
         Assert.Equal(direction.Vector, line.Direction);
-        Assert.Equal(new Ray2D(new(2, 3), new Vector2(3, 4)), ray);
-        Assert.Equal(new Line2D(new(2, 3), new Vector2(3, 4)), line);
-        Assert.Equal(new Vector2(5, 7), ray.PointAt(5));
+        Assert.Equal(new Ray2D(new(2, 3), new Vector2f(3, 4)), ray);
+        Assert.Equal(new Line2D(new(2, 3), new Vector2f(3, 4)), line);
+        Assert.Equal(new Vector2f(5, 7), ray.PointAt(5));
         Assert.Equal(direction, Direction2D.FromPoints(new(2, 3), new(5, 7)));
     }
 
@@ -41,11 +41,11 @@ public sealed class Direction2DTests
     {
         var up = Direction2D.FromAngle(MathF.PI / 2);
         Assert.Equal(MathF.PI / 2, up.AngleRadians, 5);
-        AssertClose(-Vector2.UnitX, up.PerpCcw.Vector);
-        AssertClose(Vector2.UnitX, up.PerpCw.Vector);
-        AssertClose(-Vector2.UnitY, up.Reversed.Vector);
-        AssertClose(new Vector2(0, 3), up.ScaledBy(3));
-        AssertClose(new Vector2(0, -3), up.ScaledBy(-3));
+        AssertClose(-Vector2f.UnitX, up.PerpCcw.Vector);
+        AssertClose(Vector2f.UnitX, up.PerpCw.Vector);
+        AssertClose(-Vector2f.UnitY, up.Reversed.Vector);
+        AssertClose(new Vector2f(0, 3), up.ScaledBy(3));
+        AssertClose(new Vector2f(0, -3), up.ScaledBy(-3));
     }
 
     [Fact]
@@ -56,14 +56,14 @@ public sealed class Direction2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new Direction2D(new(float.NaN, 1)));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Direction2D(new(float.PositiveInfinity, 1)));
         Assert.Throws<ArgumentOutOfRangeException>(() => Direction2D.FromAngle(float.NaN));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Direction2D.FromPoints(Vector2.One, Vector2.One));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Direction2D.FromPoints(Vector2f.One, Vector2f.One));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Direction2D).ScaledBy(1));
         Assert.Throws<ArgumentOutOfRangeException>(() => _ = default(Direction2D).AngleRadians);
         Assert.Throws<ArgumentOutOfRangeException>(() => Ray2D.FromDirection(default, default));
         Assert.Throws<ArgumentOutOfRangeException>(() => Line2D.FromDirection(default, default));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Direction2D(Vector2.UnitX).ScaledBy(float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Direction2D(Vector2f.UnitX).ScaledBy(float.NaN));
     }
 
-    private static void AssertClose(Vector2 expected, Vector2 actual) =>
-        Assert.True(Vector2.Distance(expected, actual) <= .000001f, $"Expected {expected}, actual {actual}.");
+    private static void AssertClose(Vector2f  expected, Vector2f  actual) =>
+        Assert.True(Vector2f.Distance(expected, actual) <= .000001f, $"Expected {expected}, actual {actual}.");
 }

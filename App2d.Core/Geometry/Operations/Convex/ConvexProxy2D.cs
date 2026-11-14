@@ -10,16 +10,16 @@ namespace App2d.Core.Geometry.Operations.Convex;
 /// </summary>
 public readonly ref struct ConvexProxy2D
 {
-    private readonly ReadOnlySpan<Vector2> vertices;
+    private readonly ReadOnlySpan<Vector2f> vertices;
     private readonly IConvexSupport2D? support;
     private readonly Similarity2D pose;
 
     /// <summary>Creates a world-space vertex core, optionally expanded by a nonnegative radius.</summary>
-    public ConvexProxy2D(ReadOnlySpan<Vector2> vertices, float radius = 0f)
+    public ConvexProxy2D(ReadOnlySpan<Vector2f> vertices, float radius = 0f)
         : this(vertices, Similarity2D.Identity, radius) { }
 
     /// <summary>Creates a local vertex core and pose. Vertices need not have a particular winding.</summary>
-    public ConvexProxy2D(ReadOnlySpan<Vector2> vertices, Similarity2D pose, float radius = 0f)
+    public ConvexProxy2D(ReadOnlySpan<Vector2f> vertices, Similarity2D pose, float radius = 0f)
     {
         Ensure.ThrowIfTooShort(vertices, 1);
         Ensure.Positive(pose.Scale);
@@ -43,14 +43,14 @@ public readonly ref struct ConvexProxy2D
     }
 
     internal float Radius { get; }
-    internal Vector2 Origin => pose.Translation;
-    internal Vector2 ReferencePoint => vertices.IsEmpty ? pose.Translation : pose.TransformPoint(vertices[0]);
+    internal Vector2f Origin => pose.Translation;
+    internal Vector2f ReferencePoint => vertices.IsEmpty ? pose.Translation : pose.TransformPoint(vertices[0]);
     internal int VertexCount => vertices.Length;
-    internal Vector2 Vertex(int index, Vector2 origin) => pose.TransformDirection(vertices[index]) + (pose.Translation - origin);
+    internal Vector2f Vertex(int index, Vector2f origin) => pose.TransformDirection(vertices[index]) + (pose.Translation - origin);
 
     internal void Validate() => Ensure.ThrowIf(support is null && vertices.IsEmpty, "A convex proxy must have a vertex core or support mapping.");
 
-    internal Vector2 Support(Vector2 worldDirection, Vector2 origin)
+    internal Vector2f Support(Vector2f worldDirection, Vector2f origin)
     {
         var localDirection = pose.TransposeTransformDirection(worldDirection);
         var point = support is null ? SupportPoint2D.Polygon(localDirection, vertices) : support.GetSupportPoint(localDirection);

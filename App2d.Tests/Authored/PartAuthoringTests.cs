@@ -35,7 +35,7 @@ public sealed class PartAuthoringTests
 
         // Parts attached to a deleted control leave with it.
         model.Controls.Add(new() { Id = "tail", Parent = Humanoid.Hips });
-        var tuft = ModelAuthoring.AddPart(model, new Ellipse2D { Center = Vector2.Zero, Radii = new(.1f, .1f) }.Validated(), "tail");
+        var tuft = ModelAuthoring.AddPart(model, new Ellipse2D { Center = Vector2f.Zero, Radii = new(.1f, .1f) }.Validated(), "tail");
         model.Validate();
         var removed = ModelAuthoring.RemoveControl(model, "tail");
         Assert.Equal([tuft.Id], removed.Select(p => p.Id));

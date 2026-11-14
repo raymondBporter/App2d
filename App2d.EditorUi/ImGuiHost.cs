@@ -110,7 +110,7 @@ public sealed class ImGuiHost : IDisposable
         MakeCurrent();
         ApplyScale();
         var io = ImGui.GetIO();
-        io.DisplaySize = new Vector2(_device.PresentationParameters.BackBufferWidth, _device.PresentationParameters.BackBufferHeight);
+        io.DisplaySize = new(_device.PresentationParameters.BackBufferWidth, _device.PresentationParameters.BackBufferHeight);
         io.DisplayFramebufferScale = Vector2.One;
         io.DeltaTime = MathF.Max(seconds, 1e-5f);
         _platform.UpdateInput(io);

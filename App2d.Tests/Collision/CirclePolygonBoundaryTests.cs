@@ -14,7 +14,7 @@ public sealed class CirclePolygonBoundaryTests
     [InlineData(true)]
     public void CollinearSurfaceVerticesProduceUpwardNormalsInEitherWinding(bool reverse)
     {
-        Vector2[] vertices = [new(-10, 0), new(-2, 0), new(0, 0), new(2, 0), new(10, 0), new(10, -10), new(-10, -10)];
+        Vector2f[] vertices = [new(-10, 0), new(-2, 0), new(0, 0), new(2, 0), new(10, 0), new(10, -10), new(-10, -10)];
         if (reverse) Array.Reverse(vertices);
         var polygon = SimplePolygon2D.Builder.Create(vertices);
         var wheel = Circle2D.Builder.Create(1f);
@@ -22,7 +22,7 @@ public sealed class CirclePolygonBoundaryTests
         {
             var pose = Similarity2D.FromTranslation(new(x, 0.75f));
             Assert.True(ShapeCollision2D.TryGetContact(wheel, pose, polygon, Similarity2D.Identity, out var contact));
-            Assert.InRange(Vector2.Distance(Vector2.UnitY, contact.Normal), 0f, 0.00001f);
+            Assert.InRange(Vector2f.Distance(Vector2f.UnitY, contact.Normal), 0f, 0.00001f);
             Assert.Equal(0.25f, contact.PenetrationDepth, 4);
             Assert.Equal(0f, contact.Point.Y, 4);
         }
@@ -45,10 +45,10 @@ public sealed class CirclePolygonBoundaryTests
         var wheel = Circle2D.Builder.Create(1f);
         Assert.False(ShapeCollision2D.TryGetContact(wheel, Similarity2D.FromTranslation(new(0, 1)), polygon, Similarity2D.Identity, out _));
         Assert.True(ShapeCollision2D.TryGetContact(wheel, Similarity2D.FromTranslation(new(0, -0.5f)), polygon, Similarity2D.Identity, out var contact));
-        Assert.Equal(Vector2.UnitY, contact.Normal);
+        Assert.Equal(Vector2f.UnitY, contact.Normal);
         Assert.Equal(1.5f, contact.PenetrationDepth, 4);
         Assert.True(ShapeCollision2D.TryGetContact(wheel, Similarity2D.Identity, polygon, Similarity2D.Identity, out var onEdge));
-        Assert.Equal(Vector2.UnitY, onEdge.Normal);
+        Assert.Equal(Vector2f.UnitY, onEdge.Normal);
         Assert.Equal(1f, onEdge.PenetrationDepth, 4);
     }
 
@@ -66,7 +66,7 @@ public sealed class CirclePolygonBoundaryTests
         wheelPose = wheelPose.Translated(-polygonPose.YAxis * 0.25f);
         Assert.True(ShapeCollision2D.TryGetContact(wheel, wheelPose, polygon, polygonPose, out var forward));
         Assert.True(ShapeCollision2D.TryGetContact(polygon, polygonPose, wheel, wheelPose, out var reverse));
-        Assert.InRange(Vector2.Distance(Vector2.Normalize(polygonPose.YAxis), forward.Normal), 0f, 0.00001f);
+        Assert.InRange(Vector2f.Distance(Vector2f.Normalize(polygonPose.YAxis), forward.Normal), 0f, 0.00001f);
         Assert.Equal(0.25f, forward.PenetrationDepth, 4);
         Assert.Equal(forward.PenetrationDepth, reverse.PenetrationDepth);
         Assert.Equal(-forward.Normal, reverse.Normal);

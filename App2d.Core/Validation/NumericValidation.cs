@@ -37,18 +37,19 @@ public static class NumericValidation
             _ => false
         });
 
-    public static bool IsNumber(Vector2 value) => IsNumber(value.X) && IsNumber(value.Y);
-    public static bool IsFinite(Vector2 value) => IsFinite(value.X) && IsFinite(value.Y);
-    public static bool IsPositive(Vector2 value) => IsPositive(value.X) && IsPositive(value.Y);
-    public static bool IsNegative(Vector2 value, bool allowNegativeInfinity = false) => IsNegative(value.X, allowNegativeInfinity) && IsNegative(value.Y, allowNegativeInfinity);
-    public static bool IsNonNegative(Vector2 value, bool allowInfinity = false) => IsNonNegative(value.X, allowInfinity) && IsNonNegative(value.Y, allowInfinity);
-    public static bool IsNonPositive(Vector2 value) => IsNonPositive(value.X) && IsNonPositive(value.Y);
-    public static bool IsNonZero(Vector2 value) => IsFinite(value) && value != Vector2.Zero;
-    public static bool IsLessThan(Vector2 value, Vector2 limit) => value.X < limit.X && value.Y < limit.Y;
-    public static bool IsLessThanOrEqual(Vector2 value, Vector2 limit) => value.X <= limit.X && value.Y <= limit.Y;
-    public static bool IsGreaterThan(Vector2 value, Vector2 limit) => value.X > limit.X && value.Y > limit.Y;
-    public static bool IsGreaterThanOrEqual(Vector2 value, Vector2 limit) => value.X >= limit.X && value.Y >= limit.Y;
-    public static bool IsInRange(Vector2 value, Vector2 minimum, Vector2 maximum, RangeBounds bounds = RangeBounds.Closed) =>
+    public static bool IsNumber(Vector2f value) => IsNumber(value.X) && IsNumber(value.Y);
+    public static bool IsFinite(Vector2f value) => IsFinite(value.X) && IsFinite(value.Y);
+    public static bool IsPositive(Vector2f value) => IsPositive(value.X) && IsPositive(value.Y);
+    public static bool IsNegative(Vector2f value, bool allowNegativeInfinity = false) => IsNegative(value.X, allowNegativeInfinity) && IsNegative(value.Y, allowNegativeInfinity);
+    public static bool IsNonNegative(Vector2f value, bool allowInfinity = false) => IsNonNegative(value.X, allowInfinity) && IsNonNegative(value.Y, allowInfinity);
+    public static bool IsNonPositive(Vector2f value) => IsNonPositive(value.X) && IsNonPositive(value.Y);
+    public static bool IsNonZero(Vector2f value) => IsFinite(value) && value != Vector2f.Zero;
+
+    public static bool IsLessThan(Vector2f value, Vector2f limit) => value.X < limit.X && value.Y < limit.Y;
+    public static bool IsLessThanOrEqual(Vector2f value, Vector2f limit) => value.X <= limit.X && value.Y <= limit.Y;
+    public static bool IsGreaterThan(Vector2f value, Vector2f limit) => value.X > limit.X && value.Y > limit.Y;
+    public static bool IsGreaterThanOrEqual(Vector2f value, Vector2f limit) => value.X >= limit.X && value.Y >= limit.Y;
+    public static bool IsInRange(Vector2f value, Vector2f minimum, Vector2f maximum, RangeBounds bounds = RangeBounds.Closed) =>
         IsInRange(value.X, minimum.X, maximum.X, bounds) &&
         IsInRange(value.Y, minimum.Y, maximum.Y, bounds);
 
@@ -84,10 +85,6 @@ public static class NumericValidation
         IsInRange(value.Y, minimum.Y, maximum.Y, bounds) &&
         IsInRange(value.Z, minimum.Z, maximum.Z, bounds) &&
         IsInRange(value.W, minimum.W, maximum.W, bounds);
-
-    public static bool IsNumber(Vector2f value) => IsNumber(value.X) && IsNumber(value.Y);
-    public static bool IsFinite(Vector2f value) => Vector2f.IsFinite(value);
-    public static bool IsNonZero(Vector2f value) => IsFinite(value) && value != Vector2f.Zero;
 
     public static bool IsNumber(Vector3f value) => IsNumber(value.X) && IsNumber(value.Y) && IsNumber(value.Z);
     public static bool IsFinite(Vector3f value) => Vector3f.IsFinite(value);

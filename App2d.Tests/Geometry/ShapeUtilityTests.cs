@@ -47,7 +47,7 @@ public sealed class ShapeUtilityTests
         var doubled = Outline(scaled);
         for (var i = 0; i < original.Length; i++)
         {
-            Assert.True(Vector2.Distance(original[i] * 2.5f, doubled[i]) < 1e-4f);
+            Assert.True(Vector2f.Distance(original[i] * 2.5f, doubled[i]) < 1e-4f);
         }
 
         Assert.Throws<ArgumentOutOfRangeException>(() => ShapeTransforms2D.Scaled(shape, 0));
@@ -65,7 +65,7 @@ public sealed class ShapeUtilityTests
         foreach (var point in outline)
         {
             Assert.InRange(ShapeDistance2D.SignedDistance(point, shape), -1e-4f, 1e-4f);
-            Assert.True(Vector2.Distance(point, center) <= radius + 1e-4f);
+            Assert.True(Vector2f.Distance(point, center) <= radius + 1e-4f);
             Assert.True(bounds.Contains(point) || bounds.DistanceTo(point) < 1e-4f);
         }
         Assert.True(radius <= bounds.HalfSize.Length() + 1e-4f);
@@ -74,14 +74,14 @@ public sealed class ShapeUtilityTests
     [Fact]
     public void BoundingCirclesAreExactForRoundShapesAndBoxDiagonals()
     {
-        Assert.Equal((new Vector2(1, 2), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Circle2D.Builder.Create(1.5f, new(1, 2))));
-        Assert.Equal((new Vector2(0, 0), MathF.Sqrt(2)), ShapeBounds2D.CalculateBoundingCircle(Rectangle2D.Builder.CreateFromSize(2, 2)));
-        Assert.Equal((new Vector2(0, 0), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Capsule2D.Builder.Create(new(-1, 0), new(1, 0), .5f)));
-        Assert.Equal((new Vector2(0, 0), 2f), ShapeBounds2D.CalculateBoundingCircle(Ellipse2D.Builder.Create(new(2, 1))));
+        Assert.Equal((new Vector2f(1, 2), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Circle2D.Builder.Create(1.5f, new(1, 2))));
+        Assert.Equal((new Vector2f(0, 0), MathF.Sqrt(2)), ShapeBounds2D.CalculateBoundingCircle(Rectangle2D.Builder.CreateFromSize(2, 2)));
+        Assert.Equal((new Vector2f(0, 0), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Capsule2D.Builder.Create(new(-1, 0), new(1, 0), .5f)));
+        Assert.Equal((new Vector2f(0, 0), 2f), ShapeBounds2D.CalculateBoundingCircle(Ellipse2D.Builder.Create(new(2, 1))));
         var (Center, Radius) = ShapeBounds2D.CalculateBoundingCircle(CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-3, 0)), Circle2D.Builder.Create(1, new(3, 0))]));
-        Assert.Equal(Vector2.Zero, Center);
+        Assert.Equal(Vector2f.Zero, Center);
         Assert.Equal(4f, Radius, 5);
-        Assert.Equal(float.PositiveInfinity, ShapeBounds2D.CalculateBoundingCircle(HalfSpace2D.Builder.Create(Vector2.UnitY, 0)).Radius);
+        Assert.Equal(float.PositiveInfinity, ShapeBounds2D.CalculateBoundingCircle(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0)).Radius);
     }
 
     [Fact]
@@ -89,22 +89,22 @@ public sealed class ShapeUtilityTests
     {
         var box = new SpatialObject2D(Rectangle2D.Builder.Create(new(-3, -1), new(3, 1)));
         var (center, radius) = ShapeBounds2D.CalculateBoundingCircle(box.Shape);
-        Span<Vector2> corners = stackalloc Vector2[4];
+        Span<Vector2f> corners = stackalloc Vector2f[4];
         for (var i = 0; i < 12; i++)
         {
             box.Transform.Rotation = i * MathF.Tau / 12;
-            var worldCenter = Vector2.Transform(center, box.Transform.Matrix);
+            var worldCenter = Vector2f.Transform(center, box.Transform.Matrix);
             ShapeTransforms2D.WriteWorldOutline(box.Shape, box.CollisionPose, corners);
             foreach (var corner in corners)
             {
-                Assert.True(Vector2.Distance(corner, worldCenter) <= radius + 1e-4f);
+                Assert.True(Vector2f.Distance(corner, worldCenter) <= radius + 1e-4f);
             }
         }
     }
 
-    private static Vector2[] Outline(IShape2D shape)
+    private static Vector2f[] Outline(IShape2D shape)
     {
-        var vertices = new Vector2[shape.GetOutlineVertCount(24)];
+        var vertices = new Vector2f[shape.GetOutlineVertCount(24)];
         shape.GetOutlineVerts(vertices, 24);
         return vertices;
     }

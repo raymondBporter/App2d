@@ -20,9 +20,9 @@ public sealed class SideScrollerSessionWorld2D(
     public ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => level.EnemySystem.DrainEvents();
     public Rect2D Bounds => level.TileMap.WorldBounds;
     public float GoalX => level.GoalX;
-    public void UpdateStreaming(Vector2 focus) => level.UpdateStreaming(focus);
+    public void UpdateStreaming(Vector2f focus) => level.UpdateStreaming(focus);
     public void UpdateWorldMotion(float dt) => level.UpdateWorldMotion(dt);
-    public void UpdateEnemies(float dt, Vector2 target) => level.EnemySystem.Update(dt, target);
+    public void UpdateEnemies(float dt, Vector2f target) => level.EnemySystem.Update(dt, target);
     public void SyncEnemiesAfterPhysics() => level.EnemySystem.SyncAfterPhysics();
     public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => level.UpdateSavePoints(dt, bounds);
     public void SetActiveSavePoint(long? id) => level.SetActiveSavePoint(id);

@@ -28,9 +28,9 @@ internal sealed class ModelCutoutEditor(EditorSession session)
             Ui.Help("Draw the rest silhouette here. Each point can follow the part frame or a named control; Point toward follows that control frame's rotation. Animate the controls, not the outline.");
             var vertices = PartContours2D.CutoutPoints(part);
             var controls = session.SubjectModel!.Asset.Controls.Select(c => c.Id).ToArray();
-            void Cutout(Action<List<Vector2>> edit)
+            void Cutout(Action<List<Vector2f>> edit)
             {
-                var points = new List<Vector2>(vertices);
+                var points = new List<Vector2f>(vertices);
                 edit(points);
                 try
                 {
@@ -99,7 +99,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
             return;
         }
 
-        var edited = new List<Vector2>(points);
+        var edited = new List<Vector2f>(points);
         try
         {
             edited[_cutoutDrag] = PartAttachment2D.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse).XY, model, pose);

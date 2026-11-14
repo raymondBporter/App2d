@@ -36,7 +36,7 @@ public static class PlayerHud2D
             : GameUiTheme.LowHealth;
 
         renderer.DrawScreenRoundedRectangle(lifePanel, 9f, panelColor);
-        renderer.DrawScreenText("LIFE", new Vector2(left + 14f, top + 35f), GameUiTheme.Text);
+        renderer.DrawScreenText("LIFE", new Vector2f(left + 14f, top + 35f), GameUiTheme.Text);
         renderer.DrawScreenRoundedRectangle(barBounds, 6f, emptyHealthColor);
 
         var filledSegments = Math.Clamp(currentHealth, 0, maximumHealth);
@@ -60,7 +60,7 @@ public static class PlayerHud2D
         renderer.DrawScreenRoundedRectangle(barBounds, 6f, accentColor, 3f);
         if (maximumHealth > 20)
         {
-            renderer.DrawScreenText($"{currentHealth}/{maximumHealth}", new Vector2(barLeft + 88, top + 33), GameUiTheme.Text);
+            renderer.DrawScreenText($"{currentHealth}/{maximumHealth}", new Vector2f(barLeft + 88, top + 33), GameUiTheme.Text);
         }
 
         const float weaponTop = top + panelHeight + 10f;

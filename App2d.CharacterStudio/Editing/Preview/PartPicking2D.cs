@@ -43,7 +43,7 @@ public static class PartPicking2D
     /// <summary>The picking score of an instance in an evaluated pose: its placement on the socket's evaluated placement, or its evaluated nested pose when animated.</summary>
     public static float Distance(ResolvedAttachment attachment, EvaluatedPose pose, Vector3 point) =>
         pose.Attachments.TryGetValue(attachment.Id, out var evaluated) ? Distance(evaluated, point)
-        : Distance(attachment, new ActorPose(pose, Vector2.Zero, 1).Socket(attachment.Socket), point);
+        : Distance(attachment, new ActorPose(pose, Vector2f.Zero, 1).Socket(attachment.Socket), point);
 
     public static float Distance(ResolvedAttachment attachment, Frame3D socket, Vector3 point) =>
         DistanceAt(attachment, PartPlacement3D.Placement(attachment, socket), point);
@@ -62,7 +62,7 @@ public static class PartPicking2D
     /// </summary>
     public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Frame3D? spatial = null, float physicalZ = 0)
     {
-        var p = new Vector2(point.X, point.Y);
+        var p = new Vector2f(point.X, point.Y);
         if (part.Hidden) return float.PositiveInfinity;
         if (part.SpatialCurve is not null)
         {
@@ -82,7 +82,7 @@ public static class PartPicking2D
             foreach (var (ia, ib, ic) in MeshTopology.Triangles(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(solid.Triangles)))
             {
                 var a = vertices[ia]; var b = vertices[ib]; var c = vertices[ic];
-                if (MathF.Abs(a.Orientation(b, c)) > 1e-8f && new Triangle<Vector2>(a, b, c).Contains(p, 1e-7)) return 0;
+                if (MathF.Abs(a.Orientation(b, c)) > 1e-8f && new Triangle<Vector2f>(a, b, c).Contains(p, 1e-7)) return 0;
                 nearest = MathF.Min(nearest, MathF.Min(Distance2D.DistanceToSegment(p, a, b),
                     MathF.Min(Distance2D.DistanceToSegment(p, b, c), Distance2D.DistanceToSegment(p, c, a))));
             }
@@ -99,7 +99,7 @@ public static class PartPicking2D
                 foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
                 {
                     if (MathF.Abs(contour[a].XY.Orientation(contour[b].XY, contour[c].XY)) > 1e-8f &&
-                        new Triangle<Vector2>(contour[a].XY, contour[b].XY, contour[c].XY).Contains(p, 1e-7))
+                        new Triangle<Vector2f>(contour[a].XY, contour[b].XY, contour[c].XY).Contains(p, 1e-7))
                     {
                         return 0;
                     }
@@ -131,7 +131,7 @@ public static class PartPicking2D
             var lengthSquared = along.LengthSquared();
             if (lengthSquared < 1e-10f)
             {
-                return Vector2.Distance(p, a.XY) / pickWidth;
+                return Vector2f.Distance(p, a.XY) / pickWidth;
             }
 
             var coordinates = PartAttachment2D.FrameOf(part, world).Frame;
@@ -160,7 +160,7 @@ public static class PartPicking2D
                         continue;
                     }
 
-                    if (new Triangle<Vector2>(a, b, c).Contains(p, 1e-7))
+                    if (new Triangle<Vector2f>(a, b, c).Contains(p, 1e-7))
                     {
                         return .5f;
                     }

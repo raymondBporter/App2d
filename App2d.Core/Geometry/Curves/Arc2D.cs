@@ -6,7 +6,7 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A circular arc with a signed sweep; positive angles turn counter-clockwise in Y-up coordinates.</summary>
 public readonly partial record struct Arc2D : ICurve2D
 {
-    public Arc2D(Vector2 center, float radius, float startAngleRadians, float sweepAngleRadians)
+    public Arc2D(Vector2f center, float radius, float startAngleRadians, float sweepAngleRadians)
     {
         Center = center;
         Radius = radius;
@@ -14,34 +14,34 @@ public readonly partial record struct Arc2D : ICurve2D
         SweepAngleRadians = sweepAngleRadians;
     }
 
-    public Vector2 Center { get; init; }
+    public Vector2f Center { get; init; }
     public float Radius { get; init; }
     public float StartAngleRadians { get; init; }
     public float SweepAngleRadians { get; init; }
     public double Length => (double)Radius * Math.Abs(SweepAngleRadians);
-    public Vector2 Start => Evaluate(0f);
-    public Vector2 End => Evaluate(1f);
+    public Vector2f Start => Evaluate(0f);
+    public Vector2f End => Evaluate(1f);
 
-    public Vector2 Evaluate(float amount)
+    public Vector2f Evaluate(float amount)
     {
         amount = Clamping.Clamp01(amount);
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
-        return (Center.ToVector2d() + Vector2d.FromAngle(angle) * Radius).ToVector2();
+        return (Center.ToVector2d() + Vector2d.FromAngle(angle) * Radius).ToVector2f();
     }
 
-    public Vector2 EvaluateDerivative(float amount)
+    public Vector2f EvaluateDerivative(float amount)
     {
         amount = Clamping.Clamp01(amount);
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
         var speed = (double)Radius * SweepAngleRadians;
-        return (Vector2d.FromAngle(angle).PerpCcw * speed).ToVector2();
+        return (Vector2d.FromAngle(angle).PerpCcw * speed).ToVector2f();
     }
 
-    public float Distance(Vector2 point)
+    public float Distance(Vector2f point)
     {
         if (Radius == 0 || SweepAngleRadians == 0)
         {
-            return Vector2.Distance(point, Start);
+            return Vector2f.Distance(point, Start);
         }
 
         var delta = point - Center;
@@ -61,7 +61,7 @@ public readonly partial record struct Arc2D : ICurve2D
             return MathF.Abs(radial - Radius);
         }
 
-        return MathF.Min(Vector2.Distance(point, Start), Vector2.Distance(point, End));
+        return MathF.Min(Vector2f.Distance(point, Start), Vector2f.Distance(point, End));
     }
 
     private static double PositiveAngle(double angle)

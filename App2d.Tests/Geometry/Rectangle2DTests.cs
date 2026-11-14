@@ -20,19 +20,19 @@ public sealed class Rectangle2DTests
     public void BuildersWithoutAnAngleStayAxisAligned()
     {
         var box = Rectangle2D.Builder.Create(new(-1, -2), new(3, 1));
-        Assert.Equal(new Vector2(1, -.5f), box.Center);
-        Assert.Equal(new Vector2(4, 3), box.Size);
-        Assert.Equal(Vector2.UnitX, box.Axis);
+        Assert.Equal(new Vector2f(1, -.5f), box.Center);
+        Assert.Equal(new Vector2f(4, 3), box.Size);
+        Assert.Equal(Vector2f.UnitX, box.Axis);
         Assert.True(box.IsAxisAligned);
         Assert.Equal(box, Rectangle2D.Builder.FromSize(4, 3, new(1, -.5f)));
-        Assert.Equal(Vector2.UnitX, default(Rectangle2D).Axis);
+        Assert.Equal(Vector2f.UnitX, default(Rectangle2D).Axis);
     }
 
     [Fact]
     public void ContainsOnlyWhenRotated()
     {
         // Three units out along the rotated long axis; the unrotated box is only one unit tall there.
-        var onAxis = new Vector2(2 + 3 * MathF.Cos(MathF.PI / 6) * .99f, 1 + 3 * MathF.Sin(MathF.PI / 6) * .99f);
+        var onAxis = new Vector2f(2 + 3 * MathF.Cos(MathF.PI / 6) * .99f, 1 + 3 * MathF.Sin(MathF.PI / 6) * .99f);
         Assert.True(Tilted.ContainsPoint(onAxis));
         Assert.False(Rectangle2D.Builder.FromSize(6, 2, new(2, 1)).ContainsPoint(onAxis));
         Assert.False(Tilted.ContainsPoint(new(5, 1)));
@@ -41,7 +41,7 @@ public sealed class Rectangle2DTests
     [Fact]
     public void CornersSupportAndBoundsAgree()
     {
-        Span<Vector2> corners = stackalloc Vector2[4];
+        Span<Vector2f> corners = stackalloc Vector2f[4];
         Tilted.WriteCorners(corners);
         var bounds = ShapeBounds2D.Calculate(Tilted);
         Assert.Equal(Rect2D.FromPoints(corners).Min, bounds.Min, Near);
@@ -55,17 +55,17 @@ public sealed class Rectangle2DTests
     [Fact]
     public void NinetyDegreesMatchesTheSwappedBox()
     {
-        var turned = Rectangle2D.Builder.FromSize(6, 2, Vector2.Zero, MathF.PI / 2);
+        var turned = Rectangle2D.Builder.FromSize(6, 2, Vector2f.Zero, MathF.PI / 2);
         var bounds = ShapeBounds2D.Calculate(turned);
-        Assert.Equal(new Vector2(-1, -3), bounds.Min, Near);
-        Assert.Equal(new Vector2(1, 3), bounds.Max, Near);
+        Assert.Equal(new Vector2f(-1, -3), bounds.Min, Near);
+        Assert.Equal(new Vector2f(1, 3), bounds.Max, Near);
     }
 
     [Fact]
     public void SignedDistanceAndMassIgnoreRotation()
     {
         var flat = Rectangle2D.Builder.FromSize(6, 2, new(2, 1));
-        Assert.Equal(ShapeDistance2D.SignedDistance(new Vector2(2, 1), flat), ShapeDistance2D.SignedDistance(new Vector2(2, 1), Tilted), 5);
+        Assert.Equal(ShapeDistance2D.SignedDistance(new Vector2f(2, 1), flat), ShapeDistance2D.SignedDistance(new Vector2f(2, 1), Tilted), 5);
         var a = ShapeMassProperties2D.Calculate(flat);
         var b = ShapeMassProperties2D.Calculate(Tilted);
         Assert.Equal(a.Mass, b.Mass, 5);
@@ -87,13 +87,13 @@ public sealed class Rectangle2DTests
     {
         Assert.ThrowsAny<ArgumentException>(() => (Tilted with { Axis = new(2, 0) }).Validate());
         Assert.ThrowsAny<ArgumentException>(() => Rectangle2D.Builder.FromSize(0, 2));
-        Assert.Equal(Vector2.UnitY, Rectangle2D.Builder.Create(Vector2.Zero, Vector2.One, new(0, 5)).Axis);
+        Assert.Equal(Vector2f.UnitY, Rectangle2D.Builder.Create(Vector2f.Zero, Vector2f.One, new(0, 5)).Axis);
     }
 
     [Fact]
     public void RotatedBoxCollidesLikeTheSamePolygon()
     {
-        Span<Vector2> corners = stackalloc Vector2[4];
+        Span<Vector2f> corners = stackalloc Vector2f[4];
         Tilted.WriteCorners(corners);
         var polygon = ConvexPolygon2D.Builder.Create(corners.ToArray());
         // Centered 0.2 outside the long edge in the box's own frame, so a 0.5 radius overlaps by 0.3.

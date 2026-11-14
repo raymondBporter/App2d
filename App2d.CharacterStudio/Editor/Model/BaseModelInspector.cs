@@ -257,7 +257,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
             return;
         }
 
-        var range = new Vector2(float.RadiansToDegrees(limit.Min), float.RadiansToDegrees(limit.Max));
+        var range = new Vector2f(float.RadiansToDegrees(limit.Min), float.RadiansToDegrees(limit.Max));
         if (Ui.Drag2("Min / max (degrees)", ref range, .5f, -720, 720))
         {
             session.Change(document, () => ModelAuthoring.SetLimit(document.Asset, id, new() { Min = float.DegreesToRadians(range.X), Max = float.DegreesToRadians(range.Y) }));
@@ -349,7 +349,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                     });
                     if (control.Link is null)
                     {
-                        var xy = new Vector2(local.X, local.Y);
+                        var xy = new Vector2f(local.X, local.Y);
                         if (Ui.Drag2("Local X / Y", ref xy, .005f, -10000, 10000))
                         {
                             Local(l => { l.X = xy.X; l.Y = xy.Y; });
@@ -398,7 +398,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
                             ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LinkT));
 
-                            var offset = new Vector2(bound.OffsetX, bound.OffsetY);
+                            var offset = new Vector2f(bound.OffsetX, bound.OffsetY);
                             if (Ui.Drag2("Offset in parent axes", ref offset, .005f, -100, 100))
                             {
                                 session.Change(document, () => { Live().Link!.OffsetX = offset.X; Live().Link!.OffsetY = offset.Y; document.Asset.Validate(); });

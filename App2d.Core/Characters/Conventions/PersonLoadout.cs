@@ -85,7 +85,7 @@ public static class PersonLoadout
     /// <summary>The held sword's blade, guard to tip, in the pose's actor space (along the blade's own axis; mesh swords are centred on it in depth).</summary>
     public static (Vector3 Guard, Vector3 Tip) Blade(EvaluatedPose pose, Part sword, ModelSocket socket)
     {
-        var frame = new ActorPose(pose, Vector2.Zero, 1).Socket(socket);
+        var frame = new ActorPose(pose, Vector2f.Zero, 1).Socket(socket);
         return (PartPlacement3D.Point(frame, sword, new(.07f, 0, 0)), PartPlacement3D.Point(frame, sword, new(sword.Point(EquipmentPoints.Tip)!.Value.X, 0, 0)));
     }
 

@@ -40,7 +40,7 @@ public sealed class EditorUiTests
         Assert.Equal(left.X + 180 + Ui.SplitterThickness, right.X);
 
         var io = ImGui.GetIO();
-        var handle = new Vector2(left.X + 180 + Ui.SplitterThickness / 2, left.Y + 50);
+        var handle = new Vector2f(left.X + 180 + Ui.SplitterThickness / 2, left.Y + 50);
         io.AddMousePosEvent(handle.X, handle.Y);
         Frame();
         Frame();
@@ -84,7 +84,7 @@ public sealed class EditorUiTests
         Assert.Equal(top.Y + 100 + Ui.SplitterThickness, bottom.Y);
 
         var io = ImGui.GetIO();
-        var handle = new Vector2(top.X + 150, top.Y + 100 + Ui.SplitterThickness / 2);
+        var handle = new Vector2f(top.X + 150, top.Y + 100 + Ui.SplitterThickness / 2);
         io.AddMousePosEvent(handle.X, handle.Y);
         Frame();
         Frame();

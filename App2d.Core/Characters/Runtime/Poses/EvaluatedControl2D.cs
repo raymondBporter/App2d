@@ -11,6 +11,6 @@ namespace App2d.Core.Characters.Authored;
 public readonly record struct EvaluatedControl2D(LayeredFrame2D Placement, float Angle)
 {
     public Frame2D Frame => Placement.Frame;
-    public Vector2 Position => Frame.Origin;
+    public Vector2f Position => Frame.Origin;
     public float Layer => Placement.Layer;
 }

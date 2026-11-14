@@ -89,7 +89,7 @@ public sealed class PersonMoveSetTests
             }
 
             var time = clip.Markers.Single(m => m.Id == PersonLoadout.SheatheMarker).Time;
-            var pose = new ActorPose(PoseEvaluator.Sample(Person, clip, time), Vector2.Zero, 1);
+            var pose = new ActorPose(PoseEvaluator.Sample(Person, clip, time), Vector2f.Zero, 1);
             var hand = pose.Socket(Person.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
             var back = pose.Socket(Person.Base.Sockets.Single(s => s.Id == Humanoid.BackSocket));
             var sword = Catalog.Parts[PersonLoadout.Sword];
@@ -97,7 +97,7 @@ public sealed class PersonMoveSetTests
             {
                 var a = PartPlacement3D.Point(hand, sword, point);
                 var b = PartPlacement3D.Point(back, sword, point);
-                Assert.InRange(Vector2.Distance(new(a.X, a.Y), new(b.X, b.Y)), 0, .01f);
+                Assert.InRange(Vector2f.Distance(new(a.X, a.Y), new(b.X, b.Y)), 0, .01f);
             }
         }
     }
@@ -121,7 +121,7 @@ public sealed class PersonMoveSetTests
     {
         var idle = Catalog.Animations["player-idle"];
         var hold = new ContactHold();
-        var first = hold.Evaluate(Person, idle, 0, true, Vector2.Zero, 1, default);
+        var first = hold.Evaluate(Person, idle, 0, true, Vector2f.Zero, 1, default);
         var foot = first.World("left-foot");
         var later = hold.Evaluate(Person, idle, .5, true, new(.03f, 0), 1, default);
         TestModels.Near(foot, later.World("left-foot"), 1e-4f, "planted foot");
@@ -135,7 +135,7 @@ public sealed class PersonMoveSetTests
         // A descending platform: the body drops with it, and held feet must drop too rather than stay at the old height.
         var idle = Catalog.Animations["player-idle"];
         var hold = new ContactHold();
-        var foot = hold.Evaluate(Person, idle, 0, true, Vector2.Zero, 1, default).World("left-foot");
+        var foot = hold.Evaluate(Person, idle, 0, true, Vector2f.Zero, 1, default).World("left-foot");
         var drop = new Vector3(.2f, -.4f, 0);
         hold.Shift(drop);
         var later = hold.Evaluate(Person, idle, .05, true, new(drop.X, drop.Y), 1, default);

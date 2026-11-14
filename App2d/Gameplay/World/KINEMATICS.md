@@ -7,10 +7,10 @@ Create the entity with a physics world and collision layers, call `Update(dt)`
 before `PhysicsWorld2D.Step(dt)`, and dispose it when removed.
 
 ```csharp
-public sealed class RisingMotion(Vector2 origin) : IKinematicMotion2D
+public sealed class RisingMotion(Vector2f origin) : IKinematicMotion2D
 {
-    public Vector2 Position(double seconds) => origin + new Vector2(0f, (float)seconds * 20f);
-    public Vector2 Velocity(double seconds) => new(0f, 20f);
+    public Vector2f Position(double seconds) => origin + new Vector2f(0f, (float)seconds * 20f);
+    public Vector2f Velocity(double seconds) => new(0f, 20f);
 }
 
 using var mover = new KinematicEntity2D(id, physics, shape,
@@ -101,7 +101,7 @@ legacy platforms. Presentation owns separate visuals and consumes those observat
 renderer frames of the JSON lift and a circle orbit using the same definition and runtime.
 
 `PlatformCollisionRules2D.Attach(physics).Surface(body).OneWaySurfaceNormal` specifies
-the outward normal of the only blocking face. Use `Vector2.UnitY` for a one-way floor.
+the outward normal of the only blocking face. Use `Vector2f.UnitY` for a one-way floor.
 The game's pair filter owns temporary drop-through exclusions, and its
 `OnBeforeCollision` callback checks contact direction and approach. Core bodies
 carry no one-way or wall-grip metadata. Kinematic entities

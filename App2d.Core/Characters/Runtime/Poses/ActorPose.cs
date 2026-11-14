@@ -10,16 +10,16 @@ namespace App2d.Core.Characters.Authored;
 /// position and facing. Rendering draws <see cref="Local"/> through a mirrored matrix; collision and props use
 /// <see cref="Place"/>, so both read one pose.
 /// </summary>
-public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing)
+public sealed record ActorPose(EvaluatedPose Local, Vector2f  Position, int Facing)
 {
     /// <summary>
     /// The entity-to-world placement: actor-local XY mirrored to the facing at the actor's position, with no layer
     /// offset, so a character's draw order is the same whichever way it faces.
     /// </summary>
-    public LayeredFrame2D Placement => new(new Frame2D(Position, new(Facing, 0), Vector2.UnitY), 0);
+    public LayeredFrame2D Placement => new(new Frame2D(Position, new(Facing, 0), Vector2f.UnitY), 0);
 
     /// <summary>The same placement for real 3D prop geometry: the planar frame extended with an unchanged Z axis.</summary>
-    public Frame3D Placement3D => new(new(Position, 0), new(Facing, 0, 0), Vector3.UnitY, Vector3.UnitZ);
+    public Frame3D Placement3D => new(new(Position.ToVector2(), 0), new(Facing, 0, 0), Vector3.UnitY, Vector3.UnitZ);
 
     public Vector3 Place(Vector3 local) => Placement.At(local);
     public Vector3 ToLocal(Vector3 world) => Placement.ToLocal(world);

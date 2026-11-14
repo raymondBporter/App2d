@@ -11,10 +11,10 @@ public static class ImageGradients2D
     /// A unit linear ramp has unit derivative in the interior. Border samples are clamped
     /// to the nearest pixel; a constant image has zero gradient, including its border.
     /// </summary>
-    public static Image2D<Vector2> Sobel(this Image2D<float> source)
+    public static Image2D<Vector2f> Sobel(this Image2D<float> source)
     {
         Ensure.ThrowIfNull(source);
-        var result = new Image2D<Vector2>(source.Width, source.Height);
+        var result = new Image2D<Vector2f>(source.Width, source.Height);
         for (var y = 0; y < source.Height; y++)
         {
             var top = source.GetRowSpan(Math.Max(y - 1, 0));
@@ -31,7 +31,7 @@ public static class ImageGradients2D
                 var dy = bottom[left] - top[left]
                     + 2 * (bottom[x] - top[x])
                     + bottom[right] - top[right];
-                output[x] = new Vector2(dx, dy) / 8;
+                output[x] = new Vector2f(dx, dy) / 8;
             }
         }
         return result;

@@ -8,7 +8,7 @@ namespace App2d.Levels;
 /// <summary>Small authored starter maps; never regenerates or replaces existing content.</summary>
 public static class PlaygroundMaps2D
 {
-    public static Vector2 Arrival(WorldMapAsset2D map, float playerHeight, float groundProbe)
+    public static Vector2f  Arrival(WorldMapAsset2D map, float playerHeight, float groundProbe)
     {
         var spawn = map.PositionThings.FirstOrDefault(t => t.Enabled && t.TypeKey == "player-spawn");
         if (spawn is not null)
@@ -18,7 +18,7 @@ public static class PlaygroundMaps2D
 
         var tiles = map.TileMap;
         var x = Math.Min(4, tiles.Width - 1);
-        return tiles.Origin + new Vector2((x + .5f) * tiles.TileSize,
+        return tiles.Origin + new Vector2f((x + .5f) * tiles.TileSize,
             TileGroundHeights2D.AtColumn(tiles, x) * tiles.TileSize + playerHeight / 2 + groundProbe);
     }
 

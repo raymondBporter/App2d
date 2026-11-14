@@ -15,24 +15,24 @@ public static class ShapeTransforms2D
     /// <param name="circle">The local circle.</param>
     /// <param name="pose">The local-to-world similarity.</param>
     /// <returns>The transformed center and the uniformly scaled radius.</returns>
-    public static (Vector2 Center, float Radius) Circle(Circle2D circle, Similarity2D pose) => (pose.TransformPoint(circle.Center), circle.Radius * pose.Scale);
+    public static (Vector2f Center, float Radius) Circle(Circle2D circle, Similarity2D pose) => (pose.TransformPoint(circle.Center), circle.Radius * pose.Scale);
 
     /// <summary>The world spine and radius of a posed capsule.</summary>
     /// <param name="capsule">The local capsule.</param>
     /// <param name="pose">The local-to-world similarity.</param>
     /// <returns>The transformed endpoints and the uniformly scaled radius.</returns>
-    public static (Vector2 Start, Vector2 End, float Radius) Capsule(Capsule2D capsule, Similarity2D pose) => (pose.TransformPoint(capsule.Start), pose.TransformPoint(capsule.End), capsule.Radius * pose.Scale);
+    public static (Vector2f Start, Vector2f End, float Radius) Capsule(Capsule2D capsule, Similarity2D pose) => (pose.TransformPoint(capsule.Start), pose.TransformPoint(capsule.End), capsule.Radius * pose.Scale);
 
     /// <summary>The world unit normal and offset of a posed half-space.</summary>
     /// <param name="halfSpace">The local half-space.</param>
     /// <param name="pose">The local-to-world similarity.</param>
     /// <returns>The normalized transformed normal and the offset of the transformed boundary point along it.</returns>
-    public static (Vector2 UnitNormal, float Offset) HalfSpace(HalfSpace2D halfSpace, Similarity2D pose)
+    public static (Vector2f UnitNormal, float Offset) HalfSpace(HalfSpace2D halfSpace, Similarity2D pose)
     {
         // Normals transform by (A⁻¹)ᵀ = A / Scale² for this family, so the direct direction transform is exact once normalized.
-        var normal = Vector2.Normalize(pose.TransformDirection(halfSpace.Normal));
+        var normal = Vector2f.Normalize(pose.TransformDirection(halfSpace.Normal));
         var boundary = pose.TransformPoint(halfSpace.Normal * halfSpace.Offset);
-        return (normal, Vector2.Dot(boundary, normal));
+        return (normal, Vector2f.Dot(boundary, normal));
     }
 
     /// <summary>Writes a drawing outline transformed into world space; returns zero for shapes without a single outline.</summary>
@@ -40,7 +40,7 @@ public static class ShapeTransforms2D
     /// <param name="pose">The local-to-world similarity.</param>
     /// <param name="vertices">A caller-owned buffer large enough for the local outline.</param>
     /// <param name="roundSegments">Samples around circles and ellipses; capsules use half per cap.</param>
-    public static int WriteWorldOutline(IShape2D shape, Similarity2D pose, Span<Vector2> vertices, int roundSegments = Ellipse2D.DefaultOutlineSegments)
+    public static int WriteWorldOutline(IShape2D shape, Similarity2D pose, Span<Vector2f> vertices, int roundSegments = Ellipse2D.DefaultOutlineSegments)
     {
         var count = shape.GetOutlineVertCount(roundSegments);
         if (count == 0)
@@ -67,7 +67,7 @@ public static class ShapeTransforms2D
     /// <param name="vertices">A buffer of at least <see cref="ShapeVertices2D.GetVertCount"/> entries.</param>
     /// <param name="radius">The world-space round radius of the core.</param>
     /// <returns>The number of vertices written, or 0 for shapes without a convex core.</returns>
-    public static int WriteWorldConvexCore(IShape2D shape, Similarity2D pose, Span<Vector2> vertices, out float radius)
+    public static int WriteWorldConvexCore(IShape2D shape, Similarity2D pose, Span<Vector2f> vertices, out float radius)
     {
         var count = shape.GetVertCount();
         radius = 0f;
@@ -184,9 +184,9 @@ public static class ShapeTransforms2D
         }
     }
 
-    private static Vector2[] PosedVertices(ReadOnlySpan<Vector2> vertices, Similarity2D pose)
+    private static Vector2f[] PosedVertices(ReadOnlySpan<Vector2f> vertices, Similarity2D pose)
     {
-        var posed = new Vector2[vertices.Length];
+        var posed = new Vector2f[vertices.Length];
         for (var i = 0; i < posed.Length; i++)
         {
             posed[i] = pose.TransformPoint(vertices[i]);
@@ -209,6 +209,6 @@ public static class ShapeTransforms2D
 
         var first = pose.TransformPoint(rectangle.Min);
         var second = pose.TransformPoint(rectangle.Max);
-        return AxisAlignedRectangle2D.Builder.Create(Vector2.Min(first, second), Vector2.Max(first, second));
+        return AxisAlignedRectangle2D.Builder.Create(Vector2f.Min(first, second), Vector2f.Max(first, second));
     }
 }

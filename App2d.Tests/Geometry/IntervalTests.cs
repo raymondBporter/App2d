@@ -120,19 +120,19 @@ public sealed class IntervalTests
     [Fact]
     public void ProjectionsProduceIntervals()
     {
-        ReadOnlySpan<Vector2> square = [new(0f, 0f), new(2f, 0f), new(2f, 2f), new(0f, 2f)];
-        var polygon = Projection2D.Polygon(square, Vector2.UnitX);
+        ReadOnlySpan<Vector2f> square = [new(0f, 0f), new(2f, 0f), new(2f, 2f), new(0f, 2f)];
+        var polygon = Projection2D.Polygon(square, Vector2f.UnitX);
         Assert.Equal(0f, polygon.Min, 3);
         Assert.Equal(2f, polygon.Max, 3);
 
-        var capsule = Projection2D.Capsule(new Vector2(-1f, 0f), new Vector2(3f, 0f), 0.5f, Vector2.UnitX);
+        var capsule = Projection2D.Capsule(new Vector2f(-1f, 0f), new Vector2f(3f, 0f), 0.5f, Vector2f.UnitX);
         Assert.Equal(-1.5f, capsule.Min, 3);
         Assert.Equal(3.5f, capsule.Max, 3);
 
-        var ellipse = Projection2D.Ellipse(new(1, 1), new(2, 1), Vector2.UnitX);
+        var ellipse = Projection2D.Ellipse(new(1, 1), new(2, 1), Vector2f.UnitX);
         Assert.Equal(-1f, ellipse.Min, 5);
         Assert.Equal(3f, ellipse.Max, 5);
-        var diagonal = Projection2D.Ellipse(default, new(2, 1), Vector2.Normalize(new(1, 1)));
+        var diagonal = Projection2D.Ellipse(default, new(2, 1), Vector2f.Normalize(new(1, 1)));
         Assert.Equal(MathF.Sqrt(2.5f), diagonal.Max, 5);
         Assert.Equal(-diagonal.Max, diagonal.Min, 5);
     }

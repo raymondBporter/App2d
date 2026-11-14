@@ -17,7 +17,7 @@ public enum EnemyKind2D
 }
 
 /// <summary>An enemy observation for presentation, including the final pose when it uses authored geometry.</summary>
-public readonly record struct EnemyState2D(EntityId2D Id, EnemyKind2D Kind, Vector2 Position, Vector2 Velocity, float Rotation, float Facing, bool IsEnabled, bool IsAlive)
+public readonly record struct EnemyState2D(EntityId2D Id, EnemyKind2D Kind, Vector2f Position, Vector2f Velocity, float Rotation, float Facing, bool IsEnabled, bool IsAlive)
 {
     public string? TypeId { get; init; }
     public string? ActionId { get; init; }
@@ -35,21 +35,21 @@ public readonly record struct EnemyState2D(EntityId2D Id, EnemyKind2D Kind, Vect
     public ActorPose? AuthoredPose { get; init; }
 }
 
-public readonly record struct EntityBoltState2D(Vector2 Position, Vector2 Velocity, Vector2 Size, float Lifetime)
+public readonly record struct EntityBoltState2D(Vector2f Position, Vector2f Velocity, Vector2f Size, float Lifetime)
 {
     public float Gravity { get; init; }
 }
 
-public abstract record EnemyEvent2D(EntityId2D EntityId, Vector2 Position);
+public abstract record EnemyEvent2D(EntityId2D EntityId, Vector2f Position);
 
-public sealed record EntityCue2D(EntityId2D EntityId, Vector2 Position, string Cue)
+public sealed record EntityCue2D(EntityId2D EntityId, Vector2f Position, string Cue)
     : EnemyEvent2D(EntityId, Position);
 
-public sealed record RivalAttackStarted2D(EntityId2D EntityId, Vector2 Position, UnarmedAttackKind2D Kind, float DurationSeconds)
+public sealed record RivalAttackStarted2D(EntityId2D EntityId, Vector2f Position, UnarmedAttackKind2D Kind, float DurationSeconds)
     : EnemyEvent2D(EntityId, Position);
 
-public sealed record RivalDamaged2D(EntityId2D EntityId, Vector2 Position)
+public sealed record RivalDamaged2D(EntityId2D EntityId, Vector2f Position)
     : EnemyEvent2D(EntityId, Position);
 
-public sealed record RivalDied2D(EntityId2D EntityId, Vector2 Position)
+public sealed record RivalDied2D(EntityId2D EntityId, Vector2f Position)
     : EnemyEvent2D(EntityId, Position);

@@ -2,6 +2,7 @@ using App2d.CharacterStudio.Importing.Puppet;
 using App2d.CharacterStudio.Seeds.Prototype;
 using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -19,7 +20,7 @@ public sealed class PersonVariantMotionTests
     private static PersonBuild BuildValues(string build) => build switch { "tall" => PersonBuild.TallThin, "short" => PersonBuild.ShortBroad, _ => new() };
     private static ResolvedModel Build(string build) =>
         build == "standard" ? ResolvedModel.From(Person) : ResolvedModel.From(Person, BuildValues(build).Apply(Person, build + "-build", build));
-    private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
     private static IEnumerable<double> TwoCycles(MotionClip clip) => Enumerable.Range(0, 481).Select(i => i * clip.Duration / 240.0);
 
     public static TheoryData<string, string> Cases => new()
@@ -40,8 +41,8 @@ public sealed class PersonVariantMotionTests
             var pose = PoseEvaluator.Sample(model, clip, seconds, repeat: true);
             foreach (var chain in model.Chains.Values)
             {
-                Assert.InRange(MathF.Abs(model.Length(chain.Root, chain.Joint) - Vector2.Distance(XY(pose.World(chain.Root)), XY(pose.World(chain.Joint)))), 0, 1e-4f);
-                Assert.InRange(MathF.Abs(model.Length(chain.Joint, chain.End) - Vector2.Distance(XY(pose.World(chain.Joint)), XY(pose.World(chain.End)))), 0, 1e-4f);
+                Assert.InRange(MathF.Abs(model.Length(chain.Root, chain.Joint) - Vector2f.Distance(XY(pose.World(chain.Root)), XY(pose.World(chain.Joint)))), 0, 1e-4f);
+                Assert.InRange(MathF.Abs(model.Length(chain.Joint, chain.End) - Vector2f.Distance(XY(pose.World(chain.Joint)), XY(pose.World(chain.End)))), 0, 1e-4f);
             }
             Assert.All(pose.Chains, c => Assert.True(c.Reached, $"{c.Chain} misses by {c.Residual} at {seconds:F3}s"));
             Assert.All(pose.Contacts, c => Assert.InRange(c.Residual, 0, 1e-4f));
@@ -99,9 +100,9 @@ public sealed class PersonVariantMotionTests
         var standard = Build("standard");
         static float Bend(EvaluatedPose pose, ModelChain chain)
         {
-            var a = Vector2.Normalize(XY(pose.World(chain.Root) - pose.World(chain.Joint)));
-            var b = Vector2.Normalize(XY(pose.World(chain.End) - pose.World(chain.Joint)));
-            return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector2.Dot(a, b), -1, 1)));
+            var a = Vector2f.Normalize(XY(pose.World(chain.Root) - pose.World(chain.Joint)));
+            var b = Vector2f.Normalize(XY(pose.World(chain.End) - pose.World(chain.Joint)));
+            return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector2f.Dot(a, b), -1, 1)));
         }
         foreach (var build in new[] { "tall", "short" })
         {
@@ -143,7 +144,7 @@ public sealed class PersonVariantMotionTests
         var foot = ResolvedModel.Rig(Person).Rest["left-foot"];
         var variant = new ModelVariant { Id = "stiff-left", Name = "Stiff left", Base = "person" };
         // P11a: the leg is a bone constraint; a straight leg is the thigh turned onto the foot with the knee at the midpoint.
-        var half = Vector2.Distance(new(hip.X, hip.Y), new(foot.X, foot.Y)) / 2;
+        var half = Vector2f.Distance(new(hip.X, hip.Y), new(foot.X, foot.Y)) / 2;
         variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-hip", RigProperties.LocalRotation), MathF.Atan2(foot.Y - hip.Y, foot.X - hip.X)));
         variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-hip", RigProperties.Length), half));
         variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-knee", RigProperties.LocalRotation), 0));
@@ -159,7 +160,7 @@ public sealed class PersonVariantMotionTests
                 {
                     Contact = (chain, target) => chain == "left-leg" ? target - new Vector3(0, .1f, 0) : target
                 });
-            Assert.InRange(MathF.Abs(model.Length("left-hip", "left-knee") - Vector2.Distance(XY(pose.World("left-hip")), XY(pose.World("left-knee")))), 0, 1e-4f);
+            Assert.InRange(MathF.Abs(model.Length("left-hip", "left-knee") - Vector2f.Distance(XY(pose.World("left-hip")), XY(pose.World("left-knee")))), 0, 1e-4f);
             if (pose.Chains.Single(c => c.Chain == "left-leg") is { Reached: false, Residual: > 1e-3f })
             {
                 misses++;

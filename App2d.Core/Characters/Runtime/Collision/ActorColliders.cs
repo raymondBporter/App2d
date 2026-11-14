@@ -37,7 +37,7 @@ public sealed class AttachedCollider
         var mirrored = pose.IsMirrored;
         var forward = mirrored ? -pose.XAxis : pose.XAxis;
         var rotation = MathF.Atan2(forward.Y, forward.X);
-        var scale = new Vector2(mirrored ? -pose.Scale : pose.Scale, pose.Scale);
+        var scale = new Vector2f(mirrored ? -pose.Scale : pose.Scale, pose.Scale);
         if (transform.Position != pose.Translation)
         {
             transform.Position = pose.Translation;

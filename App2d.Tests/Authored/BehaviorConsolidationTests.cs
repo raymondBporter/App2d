@@ -52,8 +52,8 @@ public sealed class BehaviorConsolidationTests
         var pose = new ActorPose(local, new(3, 4), 1);
         var collider = entity.Collider(shape.Id)!;
         var frame = collider.Frame(pose);
-        Assert.True(Vector2.Distance(pose.World(Humanoid.Head).XY, frame.Origin.XY) < 1e-5f);
-        Assert.True(Vector2.Distance(frame.At(new Vector2(.1f, .2f)).XY, collider.Place(pose).TransformPoint(new(.1f, .2f))) < 1e-5f);
+        Assert.True(Vector2f.Distance(pose.World(Humanoid.Head).XY, frame.Origin.XY) < 1e-5f);
+        Assert.True(Vector2f.Distance(frame.At(new Vector2f(.1f, .2f)).XY, collider.Place(pose).TransformPoint(new(.1f, .2f))) < 1e-5f);
         part.Geometry.Single(g => g.Id == part.Behavior!.Movement).Along = .1f;
         Assert.Throws<InvalidDataException>(part.Validate);
     }
@@ -77,8 +77,8 @@ public sealed class BehaviorConsolidationTests
         var placed = new ActorPose(local, new(3, 4), facing);
         var collider = entity.Collider(shape.Id)!;
         var frame = collider.Frame(placed);
-        var point = new Vector2(.13f, .09f);
-        Assert.True(Vector2.Distance(frame.At(point).XY, collider.Place(placed).TransformPoint(point)) < 1e-5f);
+        var point = new Vector2f(.13f, .09f);
+        Assert.True(Vector2f.Distance(frame.At(point).XY, collider.Place(placed).TransformPoint(point)) < 1e-5f);
         var before = collider.Region(placed);
         shape.Layer = -3;
         Assert.Equal(before.Pose, collider.Region(placed).Pose);

@@ -69,7 +69,7 @@ public static class QuadrupedTemplate
             m.Parts.Add(p);
             return p;
         }
-        PartGeometry Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
+        PartGeometry Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params Vector2f[] points)
             => Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, new SimplePolygon2D { Vertices = [.. points] }.Validated());
         void SetOutlineWidth(PartGeometry part, float width) => part.Material = part.RenderMaterial with
         {
@@ -88,8 +88,8 @@ public static class QuadrupedTemplate
             var root = m.Controls.First(c => c.Id == chain.Root).Rest;
             var joint = m.Controls.First(c => c.Id == chain.Joint).Rest;
             var foot = m.Controls.First(c => c.Id == chain.End).Rest;
-            var upper = Vector2.Distance(root.XY, joint.XY);
-            var lower = Vector2.Distance(joint.XY, foot.XY);
+            var upper = Vector2f.Distance(root.XY, joint.XY);
+            var lower = Vector2f.Distance(joint.XY, foot.XY);
             Shape(chain.Id + "-upper", chain.Root, chain.Joint, .25f, upper + .19f, 0, upper / 2, 0, color);
             Shape(chain.Id + "-lower", chain.Joint, chain.End, .23f, lower + .15f, 0, lower / 2, -.005f, color);
             Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, new SimplePolygon2D { Vertices = [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)] }.Validated());
@@ -204,7 +204,7 @@ public static class QuadrupedTemplate
         {
             Fill = "#397783"
         },
-        Points = [.. Enumerable.Range(0, 12).Select(i => new Vector2(x + rx * MathF.Cos(i * MathF.Tau / 12), y + ry * MathF.Sin(i * MathF.Tau / 12)))]
+        Points = [.. Enumerable.Range(0, 12).Select(i => new Vector2f(x + rx * MathF.Cos(i * MathF.Tau / 12), y + ry * MathF.Sin(i * MathF.Tau / 12)))]
     };
 
     public static IReadOnlyList<MotionClip> Clips(CharacterModel model)

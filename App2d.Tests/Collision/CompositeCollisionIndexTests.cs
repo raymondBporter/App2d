@@ -19,12 +19,12 @@ public sealed class CompositeCollisionIndexTests
         var large = CompositeShape2D.Builder.Create(parts);
         var pose = Similarity2D.FromAxis(new(20f, 30f), new(0.8f, 0.6f), mirror: mirrored, scale: 2f);
         var wheel = Circle2D.Builder.Create(0.75f);
-        var wheelPose = Similarity2D.FromTranslation(pose.TransformPoint(Vector2.Zero));
+        var wheelPose = Similarity2D.FromTranslation(pose.TransformPoint(Vector2f.Zero));
         Assert.True(ShapeCollision2D.TryGetContact(wheel, wheelPose, small, pose, out var expected));
         Assert.True(ShapeCollision2D.TryGetContact(wheel, wheelPose, large, pose, out var actual));
         Assert.Equal(expected.PenetrationDepth, actual.PenetrationDepth, 5);
-        Assert.InRange(Vector2.Distance(expected.Normal, actual.Normal), 0f, 0.00001f);
-        Assert.InRange(Vector2.Distance(expected.Point, actual.Point), 0f, 0.00001f);
+        Assert.InRange(Vector2f.Distance(expected.Normal, actual.Normal), 0f, 0.00001f);
+        Assert.InRange(Vector2f.Distance(expected.Point, actual.Point), 0f, 0.00001f);
         Assert.False(ShapeCollision2D.TryGetContact(wheel, Similarity2D.FromTranslation(new(-1000f, -1000f)), large, pose, out _));
     }
 }

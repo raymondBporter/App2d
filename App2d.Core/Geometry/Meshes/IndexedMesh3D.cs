@@ -35,7 +35,7 @@ public static class MeshGenerators3D
         Ensure.ThrowIf(outline.Count < 3, "An extrusion needs an outline.");
         Ensure.Positive(thickness);
         var points = CounterClockwise(outline);
-        var triangles = PolygonTriangulation2D.Triangulate(points.Select(p => new Vector2(p.X, p.Y)), 1e-8);
+        var triangles = PolygonTriangulation2D.Triangulate(points.Select(p => new Vector2f(p.X, p.Y)), 1e-8);
         var n = points.Count;
         var vertices = new List<Vector3>(n * 2);
         vertices.AddRange(points.Select(p => p with { Z = p.Z - thickness / 2 }));
@@ -56,7 +56,7 @@ public static class MeshGenerators3D
     public static List<Vector3> CounterClockwise(IEnumerable<Vector3> outline)
     {
         var points = outline.ToList();
-        if (PolygonGeometry2D.SignedAreaTwiceDouble([.. points.Select(p => new Vector2(p.X, p.Y))]) < 0)
+        if (PolygonGeometry2D.SignedAreaTwiceDouble([.. points.Select(p => new Vector2f(p.X, p.Y))]) < 0)
         {
             points.Reverse();
         }

@@ -12,6 +12,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
@@ -28,7 +29,7 @@ internal sealed class LibraryView(EditorSession session, App2d.CharacterStudio.E
     private bool _focusEquipment;
     private bool _showGameSize;
     private float _rotation, _scale = 1;
-    private Vector2 _translation;
+    private Vector2f _translation;
     private string _socketId = "", _socketControl = "", _socketToward = "";
     public Workspace Mode => Workspace.Library;
     public AssetDocument<GeometryAsset2D>? FocusedWindow => _windowOpen && _windowFocused ? session.Assets.Geometry(_windowGeometry) : null;
@@ -212,7 +213,8 @@ internal sealed class LibraryView(EditorSession session, App2d.CharacterStudio.E
             Ui.Drag2("Translate", ref _translation, .005f, -10000, 10000);
             if (ImGui.Button("Apply point transform"))
             {
-                set(GeometryAssetEditing.TransformPoints(asset, Matrix3x2.CreateScale(_scale) * Matrix3x2.CreateRotation(float.DegreesToRadians(_rotation)) * Matrix3x2.CreateTranslation(_translation)), true);
+                var transform = Affine2D.CreateMatrix(_translation, float.DegreesToRadians(_rotation), new Vector2f(_scale));
+                set(GeometryAssetEditing.TransformPoints(asset, transform), true);
                 _rotation = 0; _scale = 1; _translation = default;
             }
         }
@@ -287,7 +289,7 @@ internal sealed class LibraryView(EditorSession session, App2d.CharacterStudio.E
                 session.Change(doc, () => doc.Asset.Attachment = string.IsNullOrWhiteSpace(attachment) ? null : attachment.Trim());
         }
         Ui.Header("Piece transform in local space");
-        var xy = new Vector2(piece.X, piece.Y); var scale = new Vector2(piece.ScaleX, piece.ScaleY);
+        var xy = new Vector2f(piece.X, piece.Y); var scale = new Vector2f(piece.ScaleX, piece.ScaleY);
         var degrees = float.RadiansToDegrees(piece.Angle); var layer = piece.Layer;
         if (Ui.Drag2("Offset", ref xy)) session.Change(doc, () => { doc.Asset.X = xy.X; doc.Asset.Y = xy.Y; });
         if (Ui.Drag2("Scale", ref scale, .01f, -100, 100)) session.Change(doc, () => { doc.Asset.ScaleX = scale.X; doc.Asset.ScaleY = scale.Y; });
@@ -406,7 +408,7 @@ internal sealed class LibraryView(EditorSession session, App2d.CharacterStudio.E
         _windowFocused = false;
         if (!_windowOpen || session.Assets.Geometry(_windowGeometry) is not { } doc) return;
         var display = ImGui.GetIO().DisplaySize;
-        var maximum = Vector2.Max(new(1, 1), display - new Vector2(24, 24) * Ui.Scale);
+        var maximum = Vector2.Max(Vector2.One, display - new Vector2(24, 24) * Ui.Scale);
         ImGui.SetNextWindowSize(Vector2.Min(new Vector2(1000, 700) * Ui.Scale, maximum), ImGuiCond.Appearing);
         ImGui.SetNextWindowPos(display / 2, ImGuiCond.Appearing, new(.5f, .5f));
         ImGui.SetNextWindowSizeConstraints(Vector2.Min(new(360, 240), maximum), maximum);

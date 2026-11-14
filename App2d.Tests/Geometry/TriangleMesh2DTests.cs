@@ -11,7 +11,7 @@ namespace App2d.Tests.Geometry;
 
 public sealed class TriangleMesh2DTests
 {
-    private static readonly Vector2[] Notched =
+    private static readonly Vector2f[] Notched =
         [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)];
 
     [Theory]
@@ -23,8 +23,8 @@ public sealed class TriangleMesh2DTests
         var mesh = PolygonTriangulation2D.Triangulate(points);
         Assert.Equal(4, mesh.TriangleCount);
         Assert.Equal(3f, mesh.Area, 5);
-        Assert.Equal(new Vector2(0, 0), mesh.Bounds.Min);
-        Assert.Equal(new Vector2(2, 2), mesh.Bounds.Max);
+        Assert.Equal(new Vector2f(0, 0), mesh.Bounds.Min);
+        Assert.Equal(new Vector2f(2, 2), mesh.Bounds.Max);
         Assert.True(mesh.ContainsPoint(new(.5f, 1.5f)));
         Assert.True(mesh.ContainsPoint(new(1, 1)));
         Assert.False(mesh.ContainsPoint(new(1.5f, 1.5f)));
@@ -42,14 +42,14 @@ public sealed class TriangleMesh2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new TriangleMesh2D(Notched, [0, 1, 9]));
         Assert.Throws<ArgumentOutOfRangeException>(() => new TriangleMesh2D(Notched, [0, 0, 1]));
         Assert.ThrowsAny<ArgumentException>(() => PolygonTriangulation2D.Triangulate(
-            [new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 1), new Vector2(1, 0)]));
+            [new Vector2f(0, 0), new Vector2f(1, 1), new Vector2f(0, 1), new Vector2f(1, 0)]));
     }
 
     [Fact]
     public void TinyValidPolygonsDoNotDependOnAWorldScaleEpsilon()
     {
         var mesh = PolygonTriangulation2D.Triangulate(
-            [new Vector2(0, 0), new Vector2(1e-5f, 0), new Vector2(1e-5f, 1e-5f), new Vector2(0, 1e-5f)]);
+            [new Vector2f(0, 0), new Vector2f(1e-5f, 0), new Vector2f(1e-5f, 1e-5f), new Vector2f(0, 1e-5f)]);
         Assert.InRange(mesh.Area, .9e-10f, 1.1e-10f);
         Assert.True(mesh.ContainsPoint(new(5e-6f, 5e-6f)));
         Assert.False(mesh.ContainsPoint(new(1.1e-5f, 5e-6f)));
@@ -59,7 +59,7 @@ public sealed class TriangleMesh2DTests
     public void EdgeToleranceCanIncludeAPointJustOutsideTheMeshBounds()
     {
         var mesh = PolygonTriangulation2D.Triangulate(
-            [new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1)]);
+            [new Vector2f(0, 0), new Vector2f(1, 0), new Vector2f(0, 1)]);
         Assert.False(mesh.ContainsPoint(new(1.0001f, 0)));
         Assert.True(mesh.ContainsPoint(new(1.0001f, 0), .001));
     }
@@ -67,14 +67,14 @@ public sealed class TriangleMesh2DTests
     [Fact]
     public void FloatAndDoubleCrossProductsShareTheSameSignConvention()
     {
-        var a = new Vector2(1, 2);
-        var b = new Vector2(4, 2);
-        var c = new Vector2(1, 5);
+        var a = new Vector2f(1, 2);
+        var b = new Vector2f(4, 2);
+        var c = new Vector2f(1, 5);
         Assert.Equal(9f, a.Orientation(b, c));
-        Assert.Equal(9d, new Vector2d(b - a).Cross(new(c - a)));
+        Assert.Equal(9d, new Vector2d(b - a).Cross(new Vector2d(c - a)));
         Assert.Equal(9f, (b - a).Cross(c - a));
         Assert.Equal(-9f, a.Orientation(c, b));
-        Assert.Equal(9d, new Vector2d(a).Orientation(new(b), new(c)));
+        Assert.Equal(9d, new Vector2d(a).Orientation(new Vector2d(b), new Vector2d(c)));
     }
 
     [Theory]
@@ -82,7 +82,7 @@ public sealed class TriangleMesh2DTests
     [InlineData(true)]
     public void NearlyCollinearTrianglesRetainTheirAreaAndHull(bool reverse)
     {
-        Vector2[] points = [Vector2.Zero, new(16_777_216, 16_777_215), new(16_777_215, 16_777_214)];
+        Vector2f[] points = [Vector2f.Zero, new(16_777_216, 16_777_215), new(16_777_215, 16_777_214)];
         if (reverse)
         {
             Array.Reverse(points);
@@ -115,14 +115,14 @@ public sealed class TriangleMesh2DTests
     [InlineData(true)]
     public void ConvexClippingHandlesEitherWindingAndInterpolatesDepth(bool reverse)
     {
-        Vector2[] clip = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
+        Vector2f[] clip = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
         if (reverse)
         {
             Array.Reverse(clip);
         }
 
         Vector3[] subject = [new(-1, .5f, 0), new(2, .5f, 3), new(2, 1.5f, 3), new(-1, 1.5f, 0)];
-        var clipped = PolygonClipping2D.ClipConvexXY(subject, [.. clip.Select(p => new Vector3(p, 0))]);
+        var clipped = PolygonClipping2D.ClipConvexXY(subject, [.. clip.Select(p => new Vector3(p.ToVector2(), 0))]);
         Assert.NotEmpty(clipped);
         Assert.All(clipped, point =>
         {

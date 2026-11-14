@@ -15,7 +15,7 @@ namespace App2d.Core.Geometry.Operations.Vertices;
 public static class ShapeTessellation2D
 {
     /// <summary>Reuses concave polygon triangulation; finite convex outlines use a fan. Half-spaces require finite clip bounds.</summary>
-    public static IndexedTriangleEnumerable<Vector2> Triangles(this IShape2D shape, Span<Vector2> scratch,
+    public static IndexedTriangleEnumerable<Vector2f> Triangles(this IShape2D shape, Span<Vector2f> scratch,
         int roundSegments = 32, int cornerSegments = 8, Rect2D? clipBounds = null)
     {
         Ensure.ThrowIfNull(shape);
@@ -30,7 +30,7 @@ public static class ShapeTessellation2D
     }
 
     /// <summary>Returns true perimeter segments. A half-space contributes only its boundary line, never the clip rectangle's edges.</summary>
-    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> OutlineSegments(this IShape2D shape, Span<Vector2> scratch,
+    public static SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> OutlineSegments(this IShape2D shape, Span<Vector2f> scratch,
         int roundSegments = 32, int cornerSegments = 8, Rect2D? clipBounds = null)
     {
         Ensure.ThrowIfNull(shape);
@@ -50,7 +50,7 @@ public static class ShapeTessellation2D
         return MeshTopology.Segments(OutlineVertices(shape, scratch, roundSegments, cornerSegments));
     }
 
-    private static ReadOnlySpan<Vector2> OutlineVertices(IShape2D shape, Span<Vector2> scratch, int roundSegments, int cornerSegments) => shape switch
+    private static ReadOnlySpan<Vector2f> OutlineVertices(IShape2D shape, Span<Vector2f> scratch, int roundSegments, int cornerSegments) => shape switch
     {
         ConvexPolygon2D polygon => polygon.Vertices,
         SimplePolygon2D polygon => polygon.Vertices,

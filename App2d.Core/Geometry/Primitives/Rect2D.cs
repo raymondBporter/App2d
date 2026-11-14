@@ -13,14 +13,14 @@ namespace App2d.Core.Geometry.Primitives;
 public readonly record struct Rect2D : IRect2D
 {
     /// <summary>The rectangle covering the whole plane, used for half-spaces and other unbounded geometry.</summary>
-    public static Rect2D Unbounded { get; } = new(new Vector2(float.NegativeInfinity), new Vector2(float.PositiveInfinity));
+    public static Rect2D Unbounded { get; } = new(new Vector2f(float.NegativeInfinity), new Vector2f(float.PositiveInfinity));
 
     /// <summary>Creates a rectangle from ordered corners.</summary>
     /// <param name="min">The lower-left corner (smallest X and Y).</param>
     /// <param name="max">The upper-right corner; each component must be at least the matching component of <paramref name="min"/>.</param>
     /// <exception cref="ArgumentException">The corners are not ordered or contain NaN.</exception>
     [JsonConstructor]
-    public Rect2D(Vector2 min, Vector2 max)
+    public Rect2D(Vector2f min, Vector2f max)
     {
         Ensure.LessThanOrEqual(min, max, allowInfinity: true);
         Min = min;
@@ -28,16 +28,16 @@ public readonly record struct Rect2D : IRect2D
     }
 
     /// <summary>The lower-left corner.</summary>
-    public Vector2 Min { get; }
+    public Vector2f Min { get; }
 
     /// <summary>The upper-right corner.</summary>
-    public Vector2 Max { get; }
+    public Vector2f Max { get; }
 
     /// <summary>Creates a rectangle of a given size around a center.</summary>
     /// <param name="size">Finite, nonnegative width and height.</param>
     /// <param name="center">The finite center point.</param>
     /// <returns>The rectangle spanning half the size on each side of the center.</returns>
-    public static Rect2D FromSize(Vector2 size, Vector2 center = default)
+    public static Rect2D FromSize(Vector2f size, Vector2f center = default)
     {
         Ensure.NonNegative(size);
         Ensure.Finite(center);
@@ -46,14 +46,14 @@ public readonly record struct Rect2D : IRect2D
     }
 
     /// <summary>Creates a rectangle of positive size around a center.</summary>
-    public static Rect2D FromSize(Size2D size, Vector2 center = default)
+    public static Rect2D FromSize(Size2D size, Vector2f center = default)
     {
         Ensure.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
         return FromSize(size.ToVector2(), center);
     }
 
     /// <summary>Creates a rectangle from its minimum corner and positive size.</summary>
-    public static Rect2D FromMinAndSize(Vector2 min, Size2D size)
+    public static Rect2D FromMinAndSize(Vector2f min, Size2D size)
     {
         Ensure.Finite(min);
         Ensure.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
@@ -66,32 +66,32 @@ public readonly record struct Rect2D : IRect2D
     /// <param name="first">One corner.</param>
     /// <param name="second">The opposite corner, in any order relative to <paramref name="first"/>.</param>
     /// <returns>The smallest rectangle containing both points.</returns>
-    public static Rect2D FromPoints(Vector2 first, Vector2 second)
+    public static Rect2D FromPoints(Vector2f first, Vector2f second)
     {
         Ensure.Finite(first);
         Ensure.Finite(second);
-        return new(Vector2.Min(first, second), Vector2.Max(first, second));
+        return new(Vector2f.Min(first, second), Vector2f.Max(first, second));
     }
 
     /// <summary>The smallest rectangle containing every point.</summary>
     /// <param name="points">At least one point; NaN components are rejected by the constructor.</param>
     /// <returns>The bounding box of the points.</returns>
     /// <exception cref="ArgumentOutOfRangeException">The span is empty.</exception>
-    public static Rect2D FromPoints(ReadOnlySpan<Vector2> points)
+    public static Rect2D FromPoints(ReadOnlySpan<Vector2f> points)
     {
         Ensure.ThrowIfTooShort(points, 1);
         var min = points[0];
         var max = points[0];
         foreach (var point in points[1..])
         {
-            min = Vector2.Min(min, point);
-            max = Vector2.Max(max, point);
+            min = Vector2f.Min(min, point);
+            max = Vector2f.Max(max, point);
         }
         return new(min, max);
     }
 
     /// <summary>The bounding box of a nonempty point sequence, read once without copying it.</summary>
-    public static Rect2D FromPoints(IEnumerable<Vector2> points)
+    public static Rect2D FromPoints(IEnumerable<Vector2f> points)
     {
         Ensure.ThrowIfNull(points);
         using var enumerator = points.GetEnumerator();
@@ -100,14 +100,14 @@ public readonly record struct Rect2D : IRect2D
         var max = min;
         while (enumerator.MoveNext())
         {
-            min = Vector2.Min(min, enumerator.Current);
-            max = Vector2.Max(max, enumerator.Current);
+            min = Vector2f.Min(min, enumerator.Current);
+            max = Vector2f.Max(max, enumerator.Current);
         }
         return new(min, max);
     }
 
     /// <summary>Bounds of projected items. A static selector and explicit state avoid iterator and closure allocations.</summary>
-    public static Rect2D FromPoints<T, TState>(IReadOnlyList<T> items, TState state, Func<T, TState, Vector2> pointOf)
+    public static Rect2D FromPoints<T, TState>(IReadOnlyList<T> items, TState state, Func<T, TState, Vector2f> pointOf)
     {
         Ensure.ThrowIfNull(items);
         Ensure.ThrowIfNull(pointOf);
@@ -117,8 +117,8 @@ public readonly record struct Rect2D : IRect2D
         for (var i = 1; i < items.Count; i++)
         {
             var point = pointOf(items[i], state);
-            min = Vector2.Min(min, point);
-            max = Vector2.Max(max, point);
+            min = Vector2f.Min(min, point);
+            max = Vector2f.Max(max, point);
         }
         return new(min, max);
     }
@@ -127,11 +127,11 @@ public readonly record struct Rect2D : IRect2D
     /// <param name="center">The finite circle center.</param>
     /// <param name="radius">The finite, nonnegative radius.</param>
     /// <returns>The square of side 2 * radius around the center.</returns>
-    public static Rect2D FromCircle(Vector2 center, float radius)
+    public static Rect2D FromCircle(Vector2f center, float radius)
     {
         Ensure.Finite(center);
         Ensure.NonNegative(radius);
-        var extent = new Vector2(radius);
+        var extent = new Vector2f(radius);
         return new(center - extent, center + extent);
     }
 
@@ -140,12 +140,12 @@ public readonly record struct Rect2D : IRect2D
     /// <param name="end">The other finite spine endpoint.</param>
     /// <param name="radius">The finite, nonnegative radius.</param>
     /// <returns>The box around the spine expanded by the radius on every side.</returns>
-    public static Rect2D FromCapsule(Vector2 start, Vector2 end, float radius)
+    public static Rect2D FromCapsule(Vector2f start, Vector2f end, float radius)
     {
         Ensure.Finite(start);
         Ensure.Finite(end);
         Ensure.NonNegative(radius);
-        var extent = new Vector2(radius);
-        return new(Vector2.Min(start, end) - extent, Vector2.Max(start, end) + extent);
+        var extent = new Vector2f(radius);
+        return new(Vector2f.Min(start, end) - extent, Vector2f.Max(start, end) + extent);
     }
 }

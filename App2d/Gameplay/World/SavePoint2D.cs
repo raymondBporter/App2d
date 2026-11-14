@@ -8,7 +8,7 @@ namespace App2d.Gameplay.World;
 /// <summary>Checkpoint entry and activation state for the current campaign player.</summary>
 internal sealed class SavePoint2D
 {
-    private readonly Vector2 _basePosition;
+    private readonly Vector2f _basePosition;
     private bool _playerWasInside;
     public SavePoint2D(WorldThingSpec2D spec, float respawnGroundOffset)
     {
@@ -16,7 +16,7 @@ internal sealed class SavePoint2D
         Ensure.Positive(respawnGroundOffset);
         Ensure.ThrowIf(spec.Kind != WorldThingKind2D.SavePoint, "A checkpoint requires a save-point thing.");
         Spec = spec;
-        _basePosition = spec.Position - new Vector2(0f, respawnGroundOffset);
+        _basePosition = spec.Position - new Vector2f(0f, respawnGroundOffset);
     }
     public WorldThingSpec2D Spec { get; }
     public bool IsActive { get; private set; }
@@ -32,5 +32,5 @@ internal sealed class SavePoint2D
     }
     public void SetActive(bool active) => IsActive = active;
     private Rect2D TriggerBounds =>
-        new(_basePosition + new Vector2(-64f, -8f), _basePosition + new Vector2(64f, 132f));
+        new(_basePosition + new Vector2f(-64f, -8f), _basePosition + new Vector2f(64f, 132f));
 }

@@ -75,7 +75,7 @@ public sealed class PoseEvaluatorTests
         });
         var pose = Sample(clip, 0, model: longArm);
         TestModels.Near(new(1.2f, 1.65f, .3f), pose.World("hand"));
-        Assert.Equal(longArm.Length("shoulder", "elbow"), Vector2.Distance(XY(pose.World("shoulder")), XY(pose.World("elbow"))), 4);
+        Assert.Equal(longArm.Length("shoulder", "elbow"), Vector2f.Distance(XY(pose.World("shoulder")), XY(pose.World("elbow"))), 4);
     }
 
     [Fact]
@@ -150,13 +150,13 @@ public sealed class PoseEvaluatorTests
         var leg = pose.Chains.Single(c => c.Chain == "leg");
         Assert.False(leg.Reached);
         Assert.InRange(leg.Residual, 4.9f, 5.1f); // target is 6 below the hip; the leg reaches ~1.02
-        Assert.Equal(Model.Length("hip", "knee"), Vector2.Distance(XY(pose.World("hip")), XY(pose.World("knee"))), 4);
-        Assert.Equal(Model.Length("knee", "foot"), Vector2.Distance(XY(pose.World("knee")), XY(pose.World("foot"))), 4);
+        Assert.Equal(Model.Length("hip", "knee"), Vector2f.Distance(XY(pose.World("hip")), XY(pose.World("knee"))), 4);
+        Assert.Equal(Model.Length("knee", "foot"), Vector2f.Distance(XY(pose.World("knee")), XY(pose.World("foot"))), 4);
     }
 
     [Theory, InlineData(double.NaN), InlineData(-1d), InlineData(double.PositiveInfinity)]
     public void InvalidTimesAreRejected(double seconds) =>
         Assert.Throws<ArgumentOutOfRangeException>(() => PoseEvaluator.Sample(Model, TestModels.Clip(Model), seconds));
 
-    private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
 }

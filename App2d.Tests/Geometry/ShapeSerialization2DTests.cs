@@ -81,7 +81,7 @@ public sealed class ShapeSerialization2DTests
         Assert.Equal(original.GetType(), restored.GetType());
         Assert.Equal(original.Area, restored.Area);
         Assert.Equal(ShapeBounds2D.Calculate(original), ShapeBounds2D.Calculate(restored));
-        foreach (var point in new Vector2[] { new(0, 0), new(1.3f, -.7f), new(-2, 2), new(5, 5), new(.5f, .5f) })
+        foreach (var point in new Vector2f[] { new(0, 0), new(1.3f, -.7f), new(-2, 2), new(5, 5), new(.5f, .5f) })
         {
             Assert.Equal(original.ContainsPoint(point), restored.ContainsPoint(point));
             Assert.Equal(ShapeDistance2D.Distance(point, original), ShapeDistance2D.Distance(point, restored), 5);
@@ -96,7 +96,7 @@ public sealed class ShapeSerialization2DTests
         Assert.IsType<AxisAlignedRectangle2D>(rectangle.Validated());
         Assert.IsType<Rectangle2D>(GeometryJson2D.ShapeFromJson(Rectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson<IShape2D>()).Validated());
 
-        var composite = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1), Triangle2D.Builder.Create(new(0, 0), new(1, 0), new(0, 1)), AxisAlignedRectangle2D.Builder.Create(Vector2.Zero, Vector2.One)]).ToJson<IShape2D>()));
+        var composite = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1), Triangle2D.Builder.Create(new(0, 0), new(1, 0), new(0, 1)), AxisAlignedRectangle2D.Builder.Create(Vector2f.Zero, Vector2f.One)]).ToJson<IShape2D>()));
         Assert.Collection(composite.Parts.ToArray(), part => Assert.IsType<Circle2D>(part), part => Assert.IsType<Triangle2D>(part), part => Assert.IsType<AxisAlignedRectangle2D>(part));
         Assert.IsType<AxisAlignedRectangle2D>(composite.Validated().Parts[2]);
     }
@@ -121,7 +121,7 @@ public sealed class ShapeSerialization2DTests
     public void HandWrittenJsonUsesCamelCaseAndTheKindTagInAnyPosition()
     {
         var circle = Assert.IsType<Circle2D>(GeometryJson2D.ShapeFromJson("{\"center\":{\"x\":1,\"y\":2},\"radius\":3,\"kind\":\"circle\"}").Validated());
-        Assert.Equal(new Vector2(1, 2), circle.Center);
+        Assert.Equal(new Vector2f(1, 2), circle.Center);
         Assert.Equal(3f, circle.Radius);
         Assert.Equal(12, ShapeKinds2D.All.Count);
     }
@@ -158,6 +158,6 @@ public sealed class ShapeSerialization2DTests
     {
         public string GetKind() => "custom";
         public float Area => 1;
-        public bool ContainsPoint(Vector2 point) => false;
+        public bool ContainsPoint(Vector2f point) => false;
     }
 }

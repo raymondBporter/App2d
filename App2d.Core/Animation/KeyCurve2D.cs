@@ -12,8 +12,8 @@ namespace App2d.Core.Animation;
 /// </summary>
 public sealed record KeyCurve2D
 {
-    public Vector2 Control1 { get; set; }
-    public Vector2 Control2 { get; set; } = Vector2.One;
+    public Vector2f Control1 { get; set; }
+    public Vector2f Control2 { get; set; } = Vector2f.One;
     /// <summary>When true, handle Y coordinates are channel values; otherwise they are fractions of the endpoint difference.</summary>
     public bool Absolute { get; set; }
 
@@ -57,8 +57,8 @@ public sealed record KeyCurve2D
         var (first, second) = Controls(start, end);
         converted = this;
         if (!absolute && start == end && (first != start || second != start)) return false;
-        var values = absolute ? new Vector2(first, second) : start == end ? new Vector2(0, 1)
-            : (new Vector2(first, second) - new Vector2(start)) / (end - start);
+        var values = absolute ? new Vector2f(first, second) : start == end ? new Vector2f(0, 1)
+            : (new Vector2f(first, second) - new Vector2f(start)) / (end - start);
         converted = this with { Absolute = absolute, Control1 = Control1 with { Y = values.X }, Control2 = Control2 with { Y = values.Y } };
         return true;
     }

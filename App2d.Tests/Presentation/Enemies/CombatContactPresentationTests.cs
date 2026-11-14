@@ -7,7 +7,7 @@ namespace App2d.Tests.Presentation.Enemies;
 
 public sealed class CombatContactPresentationTests
 {
-    private static CombatDamage2D Hit(Vector2 direction, bool kill = false) => new(new(2), CombatFaction2D.Enemy, new(100, 50), kill)
+    private static CombatDamage2D Hit(Vector2f  direction, bool kill = false) => new(new(2), CombatFaction2D.Enemy, new(100, 50), kill)
     {
         Contact = new(new(1), 4, new(90, 60), direction, CombatImpactKind2D.Sword)
     };
@@ -17,22 +17,22 @@ public sealed class CombatContactPresentationTests
     {
         var scene = new Scene2D();
         using var effects = new CombatContactPresentation2D(scene);
-        effects.Present(Hit(Vector2.UnitX) with
+        effects.Present(Hit(Vector2f.UnitX) with
         {
             Contact = null
         });
         Assert.Empty(scene);
-        effects.Present(Hit(Vector2.UnitX));
+        effects.Present(Hit(Vector2f.UnitX));
         var right = scene.Select(v => v.Transform.Position).ToArray();
         Assert.All(scene, v => Assert.True(v.IsVisible));
         effects.Advance(.2f);
         Assert.All(scene, v => Assert.False(v.IsVisible));
-        effects.Present(Hit(-Vector2.UnitX));
+        effects.Present(Hit(-Vector2f.UnitX));
         var left = scene.Select(v => v.Transform.Position).ToArray();
         Assert.Equal(right.Length, left.Length);
         for (var i = 0; i < right.Length; i++)
         {
-            Assert.True(Vector2.Distance(new(180, 120), right[i] + left[i]) < .001f);
+            Assert.True(Vector2f.Distance(new(180, 120), right[i] + left[i]) < .001f);
         }
 
         effects.Reset();
@@ -46,11 +46,11 @@ public sealed class CombatContactPresentationTests
     {
         var scene = new Scene2D();
         using var effects = new CombatContactPresentation2D(scene);
-        effects.Present(Hit(Vector2.UnitX));
+        effects.Present(Hit(Vector2f.UnitX));
         var expected = scene.Select(v => (v.Transform.Position, v.Transform.Rotation)).ToArray();
         effects.Reset();
 
-        effects.Present(Hit(Vector2.Zero));
+        effects.Present(Hit(Vector2f.Zero));
 
         Assert.All(scene, v => Assert.True(v.IsVisible));
         Assert.Equal(expected, scene.Select(v => (v.Transform.Position, v.Transform.Rotation)).ToArray());
@@ -61,9 +61,9 @@ public sealed class CombatContactPresentationTests
     {
         var scene = new Scene2D();
         using var effects = new CombatContactPresentation2D(scene);
-        effects.Present(Hit(Vector2.UnitX));
+        effects.Present(Hit(Vector2f.UnitX));
         var count = scene.Count();
-        effects.Present(Hit(-Vector2.UnitX, true));
+        effects.Present(Hit(-Vector2f.UnitX, true));
         Assert.Equal(count * 2, scene.Count());
         effects.Advance(.13f);
         Assert.Equal(count, scene.Count(v => v.IsVisible));

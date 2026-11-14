@@ -12,7 +12,7 @@ internal sealed partial class ImageLabWindow
     private bool _regionEightConnected;
     private int _hoverRegion;
 
-    internal Vector2 RegionInspectionStudy()
+    internal Vector2f RegionInspectionStudy()
     {
         _inspectRegions = true;
         var frame = _history.Current!;
@@ -30,7 +30,7 @@ internal sealed partial class ImageLabWindow
         return new(index % frame.Width + .5f, index / frame.Width + .5f);
     }
 
-    internal void PointAtPixelForStudy(Vector2 pixel)
+    internal void PointAtPixelForStudy(Vector2f pixel)
     {
         var io = ImGui.GetIO();
         io.AddFocusEvent(true);
@@ -97,12 +97,12 @@ internal sealed partial class ImageLabWindow
         }
     }
 
-    private void UpdateRegionHover(Vector2 imagePosition, float zoom, RasterFrame displayed)
+    private void UpdateRegionHover(Vector2f imagePosition, float zoom, RasterFrame displayed)
     {
         var next = 0;
         if (_inspectRegions && displayed.Mask is not null && !_showOriginal && ImGui.IsItemHovered())
         {
-            var point = (ImGui.GetIO().MousePos - imagePosition) / zoom;
+        var point = (new Vector2f(ImGui.GetIO().MousePos) - imagePosition) / zoom;
             if (point.X >= 0 && point.Y >= 0 && point.X < displayed.Width && point.Y < displayed.Height)
             {
                 var regions = RegionMapForDisplay();

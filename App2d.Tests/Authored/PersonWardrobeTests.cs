@@ -60,7 +60,7 @@ public sealed class PersonWardrobeTests
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var entity = catalog.Entities["maul-brute"];
-        var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, catalog.Animations["person-death"], .6f), Vector2.Zero, 1);
+        var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, catalog.Animations["person-death"], .6f), Vector2f.Zero, 1);
         var socket = pose.Socket(entity.Sockets[Humanoid.HeadSocket]);
         TestModels.Near(Vector3.UnitX, socket.XAxis);
         TestModels.Near(Vector3.UnitY, socket.YAxis);
@@ -79,7 +79,7 @@ public sealed class PersonWardrobeTests
         {
             foreach (var at in new[] { 0, .55, .78, 1.1 })
             {
-                var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, at), Vector2.Zero, facing);
+                var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, at), Vector2f.Zero, facing);
                 var expected = pose.World("chest") - pose.World("hips");
                 expected.Z = 0;
                 TestModels.Near(Vector3.Normalize(expected), pose.Socket(socket).YAxis);
@@ -178,7 +178,7 @@ public sealed class PersonWardrobeTests
             {
                 for (var i = 0; i <= 12; i++)
                 {
-                    var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, clip.Duration * i / 12), Vector2.Zero, 1);
+                    var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, clip.Duration * i / 12), Vector2f.Zero, 1);
                     var vertices = shell.Vertices.Select(p => PartPlacement3D.Point(pose.Socket(wrap.Socket), wrap.Prop, p)).ToArray();
                     foreach (var side in new[] { "left", "right" })
                     {

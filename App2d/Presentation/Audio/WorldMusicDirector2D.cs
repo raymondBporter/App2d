@@ -46,7 +46,7 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
         }
     }
 
-    public void Update(LevelContent2D content, Vector2 playerPosition, float deltaSeconds)
+    public void Update(LevelContent2D content, Vector2f playerPosition, float deltaSeconds)
     {
         Ensure.NonNegative(deltaSeconds);
         CurrentZone = WorldZone2D.FindAt(content.Zones.AsSpan(), playerPosition);

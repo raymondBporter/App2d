@@ -27,9 +27,9 @@ public sealed class PersonBalancePresentationTests
     public PersonBalancePresentationTests()
     {
         var collision = new CollisionSystem2D();
-        _physics = new PhysicsWorld2D(collision) { Gravity = new Vector2(0f, -_metrics.Gravity) };
+        _physics = new PhysicsWorld2D(collision) { Gravity = new Vector2f(0f, -_metrics.Gravity) };
         _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
-            new Vector2(0f, _metrics.PlayerColliderSize.Y / 2f), 2u, 1u, CombatFaction2D.Player);
+            new Vector2f(0f, _metrics.PlayerColliderSize.Y / 2f), 2u, 1u, CombatFaction2D.Player);
     }
 
     [Theory]
@@ -136,7 +136,7 @@ public sealed class PersonBalancePresentationTests
     private RigidBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
         var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(right - left, 32f));
-        spatial.Transform.Position = new Vector2((left + right) / 2f, -16f);
+        spatial.Transform.Position = new Vector2f((left + right) / 2f, -16f);
         var body = _physics.AddBody(spatial, motion);
         body.CollisionLayer = 1u;
         body.CollisionMask = 2u;

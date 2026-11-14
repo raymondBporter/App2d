@@ -33,7 +33,7 @@ public static class ShapeBounds2D
             RoundedRectangle2D rounded => rounded.Frame.BoxBounds(rounded.InnerHalfSize, rounded.Radius),
             Rectangle2D rectangle => rectangle.Frame.BoxBounds(rectangle.HalfSize),
             IRect2D rectangle => rectangle.ToRect(),
-            Triangle2D triangle => new(Vector2.Min(Vector2.Min(triangle.A, triangle.B), triangle.C), Vector2.Max(Vector2.Max(triangle.A, triangle.B), triangle.C)),
+            Triangle2D triangle => new(Vector2f.Min(Vector2f.Min(triangle.A, triangle.B), triangle.C), Vector2f.Max(Vector2f.Max(triangle.A, triangle.B), triangle.C)),
             ConvexPolygon2D polygon => Rect2D.FromPoints(polygon.Vertices),
             SimplePolygon2D polygon => Rect2D.FromPoints(polygon.Vertices),
             HeightFieldShape2D field => field.Profile.Bounds(),
@@ -63,7 +63,7 @@ public static class ShapeBounds2D
                 return true;
             case Ellipse2D ellipse:
                 // The ellipse's own frame composes with the transform, so the analytic extents stay exact when it is rotated.
-                bounds = TransformedEllipse(Vector2.Zero, ellipse.Radii, ellipse.Frame.Matrix * transform);
+                bounds = TransformedEllipse(Vector2f.Zero, ellipse.Radii, ellipse.Frame.Matrix.Then(transform));
                 return true;
             case HalfSpace2D halfSpace:
                 bounds = TransformedHalfSpace(halfSpace, transform);
@@ -81,7 +81,7 @@ public static class ShapeBounds2D
     /// </summary>
     /// <param name="shape">Any built-in shape or custom convex shape.</param>
     /// <returns>The local center and radius; a half-space reports an infinite radius.</returns>
-    public static (Vector2 Center, float Radius) CalculateBoundingCircle(IShape2D shape)
+    public static (Vector2f Center, float Radius) CalculateBoundingCircle(IShape2D shape)
     {
         Ensure.ThrowIfNull(shape);
         switch (shape)
@@ -98,7 +98,7 @@ public static class ShapeBounds2D
             case Rectangle2D rectangle:
                 return (rectangle.Center, (float)new Vector2d(rectangle.HalfSize).Length());
             case HalfSpace2D:
-                return (Vector2.Zero, float.PositiveInfinity);
+                return (Vector2f.Zero, float.PositiveInfinity);
             case CompositeShape2D composite:
                 {
                     var center = Calculate(composite).Center;
@@ -106,7 +106,7 @@ public static class ShapeBounds2D
                     foreach (var part in composite.Parts)
                     {
                         var (partCenter, partRadius) = CalculateBoundingCircle(part);
-                        radius = Math.Max(radius, Vector2.Distance(center, partCenter) + partRadius);
+                        radius = Math.Max(radius, Vector2f.Distance(center, partCenter) + partRadius);
                     }
                     return (center, radius);
                 }
@@ -119,7 +119,7 @@ public static class ShapeBounds2D
                         return (bounds.Center, bounds.HalfSize.Length());
                     }
 
-                    Span<Vector2> vertices = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
+                    Span<Vector2f> vertices = count <= 64 ? stackalloc Vector2f[count] : new Vector2f[count];
                     shape.GetOutlineVerts(vertices);
                     var radiusSquared = 0d;
                     foreach (var vertex in vertices)
@@ -132,7 +132,7 @@ public static class ShapeBounds2D
         }
     }
 
-    private static Rect2D TransformedEllipse(Vector2 center, Vector2 radii, Matrix3x2 transform)
+    private static Rect2D TransformedEllipse(Vector2f center, Vector2f radii, Matrix3x2 transform)
     {
         var (xColumn, yColumn) = transform.GetColumns();
         var position = Vector2d.Transform(center.ToVector2d(), transform);
@@ -193,6 +193,6 @@ public static class ShapeBounds2D
     }
 
     private static Rect2D Convex(IConvexShape2D shape) => new(
-        new(shape.GetSupportPoint(-Vector2.UnitX).X, shape.GetSupportPoint(-Vector2.UnitY).Y),
-        new(shape.GetSupportPoint(Vector2.UnitX).X, shape.GetSupportPoint(Vector2.UnitY).Y));
+        new(shape.GetSupportPoint(-Vector2f.UnitX).X, shape.GetSupportPoint(-Vector2f.UnitY).Y),
+        new(shape.GetSupportPoint(Vector2f.UnitX).X, shape.GetSupportPoint(Vector2f.UnitY).Y));
 }

@@ -11,7 +11,7 @@ namespace App2d.Core.Characters.Authored;
 /// (the attacker's action sequence), the target's owner id, where the contact is (the centre of the overlap of the attack
 /// collider's bounds with the target collider's), and whether the target's guard took it instead of its hurt geometry.
 /// </summary>
-public readonly record struct AcceptedContact(ResolvedHit Hit, int Sequence, EntityId2D Target, Vector2 Position, string? TargetCollider, bool Blocked)
+public readonly record struct AcceptedContact(ResolvedHit Hit, int Sequence, EntityId2D Target, Vector2f  Position, string? TargetCollider, bool Blocked)
 {
     public string Group => Hit.Group;
     public StrikeDef Strike => Hit.Strike;
@@ -49,15 +49,15 @@ public static class CombatContacts
     /// </summary>
     public static int Resolve(ActorColliders attacker, int sequence, IEnumerable<ResolvedHit> active, uint targetMask, HitLedger ledger,
         Func<AttachedCollider, Collider2D, (EntityId2D Target, bool Guard)?> targetOf, List<AcceptedContact> results,
-        List<CollisionOverlap2D> scratch, Action<ResolvedHit, AttachedCollider, List<(EntityId2D Target, Vector2 Position)>>? extraTargets = null)
+        List<CollisionOverlap2D> scratch, Action<ResolvedHit, AttachedCollider, List<(EntityId2D Target, Vector2f  Position)>>? extraTargets = null)
     {
         Ensure.ThrowIfNull(attacker);
         Ensure.ThrowIfNull(ledger);
         Ensure.ThrowIfNull(results);
         Ensure.ThrowIfNull(scratch);
         results.Clear();
-        var seen = new List<(EntityId2D Target, Vector2 Position, string? Collider, bool Blocked)>();
-        var extra = new List<(EntityId2D Target, Vector2 Position)>();
+        var seen = new List<(EntityId2D Target, Vector2f  Position, string? Collider, bool Blocked)>();
+        var extra = new List<(EntityId2D Target, Vector2f  Position)>();
         foreach (var hit in active)
         {
             var attack = attacker.Find(hit.Collider.Id);
@@ -80,7 +80,7 @@ public static class CombatContacts
                 }
 
                 var other = overlap.Collider.WorldObject.WorldBounds;
-                var position = (Vector2.Max(bounds.Min, other.Min) + Vector2.Min(bounds.Max, other.Max)) / 2;
+                var position = (Vector2f.Max(bounds.Min, other.Min) + Vector2f.Min(bounds.Max, other.Max)) / 2;
                 var id = overlap.Collider.UserData is AttachedCollider attached ? attached.Id : null;
                 var index = seen.FindIndex(s => s.Target == found.Target);
                 if (index < 0)
@@ -121,14 +121,14 @@ public static class CombatContacts
     /// A projectile or other placed probe against the registered targets: the first live target by <paramref name="targetOf"/>,
     /// with the contact position, or null. Projectiles deduplicate by being consumed, not by a ledger.
     /// </summary>
-    public static (EntityId2D Target, Vector2 Position, bool Blocked)? Probe(CollisionSystem2D system, SpatialObject2D probe, uint targetMask, uint queryLayer,
+    public static (EntityId2D Target, Vector2f  Position, bool Blocked)? Probe(CollisionSystem2D system, SpatialObject2D probe, uint targetMask, uint queryLayer,
         Func<Collider2D, (EntityId2D Target, bool Guard)?> targetOf, List<CollisionOverlap2D> scratch, Func<EntityId2D, int>? order = null)
     {
         Ensure.ThrowIfNull(system);
         Ensure.ThrowIfNull(probe);
         Ensure.ThrowIfNull(scratch);
         system.Overlap(probe, scratch, targetMask, includeSensors: true);
-        (EntityId2D Target, Vector2 Position, bool Blocked)? best = null;
+        (EntityId2D Target, Vector2f  Position, bool Blocked)? best = null;
         var bestOrder = int.MaxValue;
         foreach (var overlap in scratch)
         {

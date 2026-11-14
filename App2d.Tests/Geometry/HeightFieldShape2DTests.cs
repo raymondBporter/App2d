@@ -39,7 +39,7 @@ public sealed class HeightFieldShape2DTests
     [Fact]
     public void CollinearSamplesReduceToOneFourVertexCollisionPieceWithoutChangingTheAuthoredSurface()
     {
-        Vector2[] surface = [.. Enumerable.Range(0, 1001).Select(index => new Vector2(index, index * 0.5f))];
+        Vector2f[] surface = [.. Enumerable.Range(0, 1001).Select(index => new Vector2f(index, index * 0.5f))];
         var field = new PolylineHeightField2D(surface, -10f);
         var shape = field.ToShape();
         Assert.Equal(surface, shape.Surface.ToArray());
@@ -51,7 +51,7 @@ public sealed class HeightFieldShape2DTests
     public void ConvexRunsHaveDisjointInteriorsAndExactlyCoverAnIrregularHeightfield()
     {
         var random = new Random(719);
-        var points = Enumerable.Range(0, 80).Select(index => new Vector2(index * 2f, random.Next(-8, 12))).ToArray();
+        var points = Enumerable.Range(0, 80).Select(index => new Vector2f(index * 2f, random.Next(-8, 12))).ToArray();
         var shape = HeightFieldShape2D.Builder.Create(points, -20f);
         var pieces = shape.ConvexPieces;
         Assert.InRange(MathF.Abs(shape.Area - pieces.Area), 0f, 0.002f);
@@ -59,7 +59,7 @@ public sealed class HeightFieldShape2DTests
             Assert.Equal(ShapeBounds2D.Calculate(pieces.Parts[index - 1]).Max.X, ShapeBounds2D.Calculate(pieces.Parts[index]).Min.X);
         for (var sample = 0; sample < 2000; sample++)
         {
-            var point = new Vector2((float)random.NextDouble() * 180f - 10f, (float)random.NextDouble() * 50f - 30f);
+            var point = new Vector2f((float)random.NextDouble() * 180f - 10f, (float)random.NextDouble() * 50f - 30f);
             Assert.Equal(shape.ContainsPoint(point), pieces.ContainsPoint(point));
         }
     }
@@ -75,15 +75,15 @@ public sealed class HeightFieldShape2DTests
         Assert.Equal(120f, shape.Area);
         Assert.Equal(polygon.Diameter, ShapeDiameter2D.Calculate(shape));
         Assert.Equal(ShapeMassProperties2D.Calculate(polygon, 2d), ShapeMassProperties2D.Calculate(shape, 2d));
-        foreach (var point in new Vector2[] { new(5, -2), new(5, 3), new(-2, -2), new(12, -12) })
+        foreach (var point in new Vector2f[] { new(5, -2), new(5, 3), new(-2, -2), new(12, -12) })
             Assert.Equal(ShapeDistance2D.SignedDistance(point, polygon), ShapeDistance2D.SignedDistance(point, shape));
-        Assert.True(ShapeRaycast2D.TryIntersect(new(5, 10), -Vector2.UnitY, shape, 20f, out var hit));
+        Assert.True(ShapeRaycast2D.TryIntersect(new(5, 10), -Vector2f.UnitY, shape, 20f, out var hit));
         Assert.Equal(10f, hit.Distance);
-        Assert.True(ShapeRaycast2D.TryIntersect(new(5, -5), -Vector2.UnitY, shape, 20f, out var bottom));
+        Assert.True(ShapeRaycast2D.TryIntersect(new(5, -5), -Vector2f.UnitY, shape, 20f, out var bottom));
         Assert.Equal(5f, bottom.Distance);
-        Assert.True(ShapeRaycast2D.TryIntersect(new(5, -5), Vector2.UnitX, shape, 20f, out var end));
+        Assert.True(ShapeRaycast2D.TryIntersect(new(5, -5), Vector2f.UnitX, shape, 20f, out var end));
         Assert.Equal(5f, end.Distance);
-        Span<Vector2> buffer = stackalloc Vector2[shape.GetOutlineVertCount()];
+        Span<Vector2f> buffer = stackalloc Vector2f[shape.GetOutlineVertCount()];
         Assert.Equal(polygon.Vertices.ToArray(), shape.GetOutlineVerts(buffer).ToArray());
         Assert.Equal(0, shape.GetVertCount()); // A concave field has no single convex support map.
         var area = 0f;
@@ -109,7 +109,7 @@ public sealed class HeightFieldShape2DTests
         var callsAfterBaking = calls;
         _ = functionShape.HeightAt(50f);
         _ = functionShape.ContainsPoint(new(50f, -5f));
-        _ = ShapeDistance2D.Distance(new Vector2(50f, 10f), functionShape);
+        _ = ShapeDistance2D.Distance(new Vector2f(50f, 10f), functionShape);
         Assert.Equal(callsAfterBaking, calls);
         var restored = Assert.IsType<HeightFieldShape2D>(GeometryJson2D.ShapeFromJson(functionShape.ToJson<IShape2D>()).Validated());
         Assert.Equal(functionShape.Surface.ToArray(), restored.Surface.ToArray());

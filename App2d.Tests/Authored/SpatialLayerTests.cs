@@ -70,7 +70,7 @@ public sealed class SpatialLayerTests
         Assert.Equal(frame.TransformPoint(contour[1]), transformed[1]);
         Assert.Equal(.25f, transformed.LayerAt(0));
         Assert.Equal(-.5f, transformed.LayerAt(1));
-        var placement = LayeredFrame2D.Local(Vector2.One, 0, new(1, 2), 8);
+        var placement = LayeredFrame2D.Local(Vector2f.One, 0, new(1, 2), 8);
         Assert.Equal(0, PartPlacement3D.Extend(placement).Origin.Z);
         Assert.Equal(PartPlacement3D.Lift(placement, new(.3f, .4f, .5f)), PartPlacement3D.Lift(placement with { Layer = -8 }, new(.3f, .4f, .5f)));
     }

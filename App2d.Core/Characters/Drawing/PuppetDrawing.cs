@@ -80,7 +80,7 @@ public sealed class PuppetDrawing
             return;
         }
 
-        var actor = new ActorPose(pose, Vector2.Zero, 1);
+        var actor = new ActorPose(pose, Vector2f.Zero, 1);
         foreach (var attachment in model.Attachments)
         {
             if (attachment.Instance.Hidden || hiddenSockets?.Contains(attachment.Socket.Id) == true)
@@ -118,7 +118,7 @@ public sealed class PuppetDrawing
     public void Build(ResolvedEntity entity, EvaluatedPose local)
     {
         Build(entity.Model, local);
-        var placed = new ActorPose(local, Vector2.Zero, 1);
+        var placed = new ActorPose(local, Vector2f.Zero, 1);
         foreach (var equipment in entity.Equipment)
         {
             AddAttachment(equipment.Prop, placed.Socket(equipment.Socket), seconds: local.SampleSeconds, layer: placed.SocketPlacement(equipment.Socket).Layer);
@@ -321,7 +321,7 @@ public sealed class PuppetDrawing
         color = color.Multiply(fill);
         Vector3 At(float x, float y)
         {
-            var p = new Vector3(frame.Frame.TransformPoint(bounds.Center + new Vector2(x * bounds.Width, y * bounds.Height)), physicalZ);
+            var p = new Vector3((frame.Frame.TransformPoint(bounds.Center + new Vector2f(x * bounds.Width, y * bounds.Height))).ToVector2(), physicalZ);
             return spatial is { } placed ? placed.TransformPoint(p) : p;
         }
         var a = At(-.5f, -.5f);
@@ -330,7 +330,7 @@ public sealed class PuppetDrawing
         var d = At(-.5f, .5f);
         var start = Mesh.Count;
         var uv = material.Source ?? AxisAlignedRectangle2D.UnitRect;
-        Vector2 Uv(float x, float y) => uv.Min + new Vector2(x, y) * uv.Size;
+        Vector2f Uv(float x, float y) => uv.Min + new Vector2f(uv.Size.X * x, uv.Size.Y * y);
         var layer = depth ?? frame.Layer;
         Mesh.Vertex(a, color, Uv(0, 1), layer);
         Mesh.Vertex(b, color, Uv(1, 1), layer);

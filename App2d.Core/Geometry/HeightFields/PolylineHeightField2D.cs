@@ -7,7 +7,7 @@ namespace App2d.Core.Geometry.HeightFields;
 /// <summary>A piecewise-linear top surface with strictly increasing X coordinates.</summary>
 public sealed class PolylineHeightField2D : IHeightField2D
 {
-    public PolylineHeightField2D(IEnumerable<Vector2> points, float yMin)
+    public PolylineHeightField2D(IEnumerable<Vector2f> points, float yMin)
         : this(PolylineCurve2D.Builder.Create(points), yMin) { }
 
     public PolylineHeightField2D(PolylineCurve2D curve, float yMin)

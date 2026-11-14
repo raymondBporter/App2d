@@ -90,13 +90,13 @@ public sealed class ModelEditingTests
         model.Validate();
         var child = ModelAuthoring.AddBone(model, parent.Id, "child");
         var origin = ResolvedModel.From(model).Rest[child.Id];
-        var target = new Vector2(origin.X + 1.2f, origin.Y + .8f);
+        var target = new Vector2f(origin.X + 1.2f, origin.Y + .8f);
 
         ModelAuthoring.MoveBoneTip(model, child.Id, target);
 
         var resolved = ResolvedModel.From(model);
         TestModels.Near(origin, resolved.Rest[child.Id]);
-        var tip = Vector2.Transform(new(child.Length, 0), resolved.RestTransforms[child.Id]);
-        Assert.InRange(Vector2.Distance(target, tip), 0, 1e-4f);
+        var tip = Vector2f.Transform(new(child.Length, 0), resolved.RestTransforms[child.Id]);
+        Assert.InRange(Vector2f.Distance(target, tip), 0, 1e-4f);
     }
 }

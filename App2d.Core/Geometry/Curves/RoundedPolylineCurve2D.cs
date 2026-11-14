@@ -12,18 +12,18 @@ namespace App2d.Core.Geometry.Curves;
 /// </summary>
 public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
 {
-    private readonly Vector2[]? _points;
+    private readonly Vector2f[]? _points;
     private readonly float[]? _distance, _trim;
     private readonly float _softness = 1;
 
-    public RoundedPolylineCurve2D(IEnumerable<Vector2> points, float softness = 1)
+    public RoundedPolylineCurve2D(IEnumerable<Vector2f> points, float softness = 1)
     {
         _points = points?.ToArray();
         _softness = softness;
         (_distance, _trim) = Measure(_points, softness);
     }
 
-    public ReadOnlySpan<Vector2> Points
+    public ReadOnlySpan<Vector2f> Points
     {
         get => _points;
         init
@@ -45,7 +45,7 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
 
     private float Length => _distance is { Length: > 0 } ? _distance[^1] : 0;
 
-    private static (float[] Distance, float[] Trim) Measure(Vector2[]? points, float softness)
+    private static (float[] Distance, float[] Trim) Measure(Vector2f[]? points, float softness)
     {
         if (points is null || points.Length < 2)
         {
@@ -56,7 +56,7 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
         var trim = new float[points.Length];
         for (var i = 1; i < points.Length; i++)
         {
-            distance[i] = distance[i - 1] + Vector2.Distance(points[i - 1], points[i]);
+            distance[i] = distance[i - 1] + Vector2f.Distance(points[i - 1], points[i]);
         }
 
         var scale = .48f * Clamping.Clamp01(float.IsFinite(softness) ? softness : 0);
@@ -105,12 +105,12 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
         var distance = _distance!;
         var trim = _trim!;
         return QuadraticBezier2D.Builder.Create(
-            Vector2.Lerp(points[i], points[i - 1], trim[i] / (distance[i] - distance[i - 1])),
+            Vector2f.Lerp(points[i], points[i - 1], trim[i] / (distance[i] - distance[i - 1])),
             points[i],
-            Vector2.Lerp(points[i], points[i + 1], trim[i] / (distance[i + 1] - distance[i])));
+            Vector2f.Lerp(points[i], points[i + 1], trim[i] / (distance[i + 1] - distance[i])));
     }
 
-    public Vector2 Evaluate(float amount)
+    public Vector2f Evaluate(float amount)
     {
         var points = Points;
         if (amount <= 0)
@@ -124,10 +124,10 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
         }
 
         var (i, t, corner) = Locate(amount);
-        return corner ? Corner(i).Evaluate(t) : Vector2.Lerp(points[i], points[i + 1], t);
+        return corner ? Corner(i).Evaluate(t) : Vector2f.Lerp(points[i], points[i + 1], t);
     }
 
-    public Vector2 EvaluateDerivative(float amount)
+    public Vector2f EvaluateDerivative(float amount)
     {
         var points = Points;
         var (i, t, corner) = Locate(amount);
@@ -137,7 +137,7 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
         }
 
         var span = _distance![i + 1] - _distance[i];
-        return span > 1e-8f ? (points[i + 1] - points[i]) * (Length / span) : Vector2.Zero;
+        return span > 1e-8f ? (points[i + 1] - points[i]) * (Length / span) : Vector2f.Zero;
     }
 
     /// <summary>Interpolates caller-supplied scalar values (e.g. depth) with the same fillet weights as XY.</summary>
@@ -190,5 +190,5 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
         return [.. samples];
     }
 
-    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 128);
+    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
 }

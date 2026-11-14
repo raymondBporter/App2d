@@ -167,9 +167,9 @@ public sealed class EquippablePieceTests : IDisposable
                     var placement = PartPlacement3D.Placement(attachment, actor.Socket(attachment.Socket));
                     var origin = placement.TransformPoint(Vector3.Zero);
                     TestModels.Near(foot with { Z = 0 }, origin with { Z = 0 });
-                    var axis = Vector2.Normalize(new(placement.YAxis.X, placement.YAxis.Y));
-                    var direction = Vector2.Normalize(new(knee.X - foot.X, knee.Y - foot.Y));
-                    Assert.True(Vector2.Dot(axis, direction) > .999f);
+                    var axis = Vector2f.Normalize(new(placement.YAxis.X, placement.YAxis.Y));
+                    var direction = Vector2f.Normalize(new(knee.X - foot.X, knee.Y - foot.Y));
+                    Assert.True(Vector2f.Dot(axis, direction) > .999f);
                 }
             }
     }

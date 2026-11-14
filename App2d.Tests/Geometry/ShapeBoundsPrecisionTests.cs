@@ -17,9 +17,9 @@ public sealed class ShapeBoundsPrecisionTests
     [InlineData(float.Epsilon, float.Epsilon)]
     public void SharedRectangleAndCapsuleCentersKeepFiniteExtremesAndSubnormalPoints(float first, float second)
     {
-        var a = new Vector2(first, -second);
-        var b = new Vector2(second, -first);
-        var expected = new Vector2((float)(((double)first + second) / 2), (float)(-((double)first + second) / 2));
+        var a = new Vector2f(first, -second);
+        var b = new Vector2f(second, -first);
+        var expected = new Vector2f((float)(((double)first + second) / 2), (float)(-((double)first + second) / 2));
         var rectangle = Rect2D.FromPoints(a, b);
         Assert.Equal(expected, rectangle.Center);
         Assert.Equal(expected.X, rectangle.MidX);
@@ -59,7 +59,7 @@ public sealed class ShapeBoundsPrecisionTests
     public void HalfSpaceBoundsDoNotDependOnTheInputNormalsLength(float scale)
     {
         var halfSpace = HalfSpace2D.Builder.Create(new(scale, 0), 3 * scale);
-        Assert.Equal(Vector2.UnitX, halfSpace.Normal);
+        Assert.Equal(Vector2f.UnitX, halfSpace.Normal);
         Assert.Equal(3f, halfSpace.Offset, 5);
         Assert.Equal(new Rect2D(new(float.NegativeInfinity), new(halfSpace.Offset, float.PositiveInfinity)), ShapeBounds2D.Calculate(halfSpace));
     }
@@ -67,7 +67,7 @@ public sealed class ShapeBoundsPrecisionTests
     [Fact]
     public void HalfSpaceBoundsFollowReflectionShearAndCollapsedTransforms()
     {
-        var halfSpace = HalfSpace2D.Builder.Create(Vector2.UnitX, 3);
+        var halfSpace = HalfSpace2D.Builder.Create(Vector2f.UnitX, 3);
         var mirror = new Matrix3x2(-2, 0, 0, 4, 10, 20);
         Assert.Equal(new Rect2D(new(4, float.NegativeInfinity), new(float.PositiveInfinity)), ShapeBounds2D.CalculateTransformed(halfSpace, mirror));
         var collapse = new Matrix3x2(0, 0, 0, 2, 10, 20);
@@ -87,11 +87,11 @@ public sealed class ShapeBoundsPrecisionTests
             foreach (var matrix in matrices)
             {
                 var bounds = ShapeBounds2D.CalculateTransformed(shape, matrix);
-                var points = new Vector2[1024];
+                var points = new Vector2f[1024];
                 shape.GetOutlineVerts(points, points.Length);
                 foreach (var point in points)
                 {
-                    Assert.InRange(bounds.DistanceTo(Vector2.Transform(point, matrix)), 0, .00002f);
+                    Assert.InRange(bounds.DistanceTo(Vector2f.Transform(point, matrix)), 0, .00002f);
                 }
             }
         }
@@ -100,7 +100,7 @@ public sealed class ShapeBoundsPrecisionTests
     [Fact]
     public void ScalarBuildersKeepCentersValidationAndAxisAlignedIntent()
     {
-        var center = new Vector2(10, -5);
+        var center = new Vector2f(10, -5);
         var rectangle = Assert.IsType<Rectangle2D>(Rectangle2D.Builder.FromSize(4, 2, center).Validated());
         Assert.Equal(new Rect2D(new(8, -6), new(12, -4)), ShapeBounds2D.Calculate(rectangle));
         Assert.IsType<AxisAlignedRectangle2D>(AxisAlignedRectangle2D.Builder.Create(4, 2, center).Validated());

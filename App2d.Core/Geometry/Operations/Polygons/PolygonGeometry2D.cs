@@ -14,7 +14,7 @@ public static class PolygonGeometry2D
     /// <summary>Whether finite perimeter vertices turn consistently and have nonzero area.</summary>
     /// <param name="vertices">At least three vertices in perimeter order, in either winding.</param>
     /// <param name="collinearEpsilon">Turns this close to zero are treated as collinear.</param>
-    public static bool IsConvexPerimeter(ReadOnlySpan<Vector2> vertices, double collinearEpsilon = 0d)
+    public static bool IsConvexPerimeter(ReadOnlySpan<Vector2f> vertices, double collinearEpsilon = 0d)
     {
         if (vertices.Length < 3)
         {
@@ -47,7 +47,7 @@ public static class PolygonGeometry2D
     /// </summary>
     /// <param name="source">At least three distinct, non-collinear finite points in any order.</param>
     /// <returns>The hull vertices in counter-clockwise order.</returns>
-    public static Vector2[] ConvexHull(IEnumerable<Vector2> source)
+    public static Vector2f[] ConvexHull(IEnumerable<Vector2f> source)
     {
         Ensure.ThrowIfNull(source);
         var input = source.ToArray();
@@ -56,7 +56,7 @@ public static class PolygonGeometry2D
         var points = input.Distinct().OrderBy(point => point.X).ThenBy(point => point.Y).ToArray();
         Ensure.ThrowIf(points.Length < 3, "A convex hull requires at least three distinct points.", nameof(source));
 
-        var hull = new List<Vector2>(points.Length * 2);
+        var hull = new List<Vector2f>(points.Length * 2);
         foreach (var point in points)
         {
             while (hull.Count >= 2 && new Vector2d(hull[^2]).Orientation(new(hull[^1]), new(point)) <= 0d)
@@ -87,7 +87,7 @@ public static class PolygonGeometry2D
     /// <summary>Twice the signed area of a polygon in perimeter order, in double precision: positive for counter-clockwise.</summary>
     /// <param name="vertices">The perimeter vertices without a repeated closing vertex.</param>
     /// <returns>Twice the signed area.</returns>
-    public static double SignedAreaTwiceDouble(ReadOnlySpan<Vector2> vertices)
+    public static double SignedAreaTwiceDouble(ReadOnlySpan<Vector2f> vertices)
     {
         var signedAreaTwice = 0d;
         foreach (var (a, b) in MeshTopology.Edges(vertices.Length))
@@ -101,16 +101,16 @@ public static class PolygonGeometry2D
     /// <summary>Twice the signed area of a polygon in perimeter order: positive for counter-clockwise.</summary>
     /// <param name="vertices">The perimeter vertices without a repeated closing vertex.</param>
     /// <returns>Twice the signed area accumulated in double precision and rounded to a float.</returns>
-    public static float SignedAreaTwice(ReadOnlySpan<Vector2> vertices) => (float)SignedAreaTwiceDouble(vertices);
+    public static float SignedAreaTwice(ReadOnlySpan<Vector2f> vertices) => (float)SignedAreaTwiceDouble(vertices);
 
     /// <summary>The unit outward normal of one edge of a polygon in either winding.</summary>
     /// <param name="vertices">The perimeter vertices.</param>
     /// <param name="edgeIndex">The edge from vertex i to vertex i + 1 (wrapping).</param>
     /// <returns>The outward unit normal, or +Y for a zero-length edge.</returns>
-    public static Vector2 GetOutwardEdgeNormal(ReadOnlySpan<Vector2> vertices, int edgeIndex)
+    public static Vector2f  GetOutwardEdgeNormal(ReadOnlySpan<Vector2f> vertices, int edgeIndex)
     {
         var edge = vertices[(edgeIndex + 1) % vertices.Length] - vertices[edgeIndex];
         var outward = SignedAreaTwiceDouble(vertices) >= 0 ? edge.PerpCw : edge.PerpCcw;
-        return outward.LengthSquared() > float.Epsilon ? Vector2.Normalize(outward) : Vector2.UnitY;
+        return outward.LengthSquared() > float.Epsilon ? Vector2f.Normalize(outward) : Vector2f.UnitY;
     }
 }

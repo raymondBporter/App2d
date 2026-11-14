@@ -89,7 +89,7 @@ internal sealed partial class EditorSmoke
             Check(s.Edit(basis, () =>
             {
                 basis.Asset.Sockets.Add(new() { Id = "left-shin", Control = "left-knee", Frame = "left-knee", Transform = new(new(shin / 2, 0)) });
-                ModelAuthoring.AddPart(basis.Asset, new Core.Geometry.Curves.LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "left-knee", "left-foot");
+                ModelAuthoring.AddPart(basis.Asset, new Core.Geometry.Curves.LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), "left-knee", "left-foot");
                 basis.Asset.Validate();
             }), s);
             Check(s.NewPart("shin-pad", "Shin pad"), s);
@@ -99,13 +99,13 @@ internal sealed partial class EditorSmoke
             Vector3 Mid(ResolvedModel m) => (m.Rest["left-knee"] + m.Rest["left-foot"]) / 2;
             var standard = s.Assets.Resolve(Walker)!;
             var padAt = Placement(standard, PoseEvaluator.Rest(standard), pad).Origin;
-            Record(Vector2.Distance(new(padAt.X, padAt.Y), new(Mid(standard).X, Mid(standard).Y)) < 1e-4f, "the pad sits on the shin's midpoint socket at rest");
+            Record(Vector2f.Distance(new(padAt.X, padAt.Y), new(Mid(standard).X, Mid(standard).Y)) < 1e-4f, "the pad sits on the shin's midpoint socket at rest");
             // The variant's longer shin: the socket rides the knee bone's frame, the midpoint part spans the new length.
             var tall = s.Assets.Resolve(TallWalker)!;
             var tallPad = Placement(tall, PoseEvaluator.Rest(tall), pad).Origin;
-            var alongKnee = Vector2.Normalize(new Vector2(tall.Rest["left-foot"].X, tall.Rest["left-foot"].Y) - new Vector2(tall.Rest["left-knee"].X, tall.Rest["left-knee"].Y));
-            var padOffset = new Vector2(tallPad.X, tallPad.Y) - new Vector2(tall.Rest["left-knee"].X, tall.Rest["left-knee"].Y);
-            Record(MathF.Abs(Vector2.Dot(padOffset, alongKnee) - shin / 2) < 1e-4f && MathF.Abs(padOffset.Length() - shin / 2) < 1e-4f && MathF.Abs(tall.Nodes["left-knee"].Length - shin - .15f) < 1e-5f,
+            var alongKnee = Vector2f.Normalize(new Vector2f(tall.Rest["left-foot"].X, tall.Rest["left-foot"].Y) - new Vector2f(tall.Rest["left-knee"].X, tall.Rest["left-knee"].Y));
+            var padOffset = new Vector2f(tallPad.X, tallPad.Y) - new Vector2f(tall.Rest["left-knee"].X, tall.Rest["left-knee"].Y);
+            Record(MathF.Abs(Vector2f.Dot(padOffset, alongKnee) - shin / 2) < 1e-4f && MathF.Abs(padOffset.Length() - shin / 2) < 1e-4f && MathF.Abs(tall.Nodes["left-knee"].Length - shin - .15f) < 1e-5f,
                 "on the longer shin the pad follows the knee bone's frame along the segment (the socket's offset in the bone's axes), with the shin part spanning the new length");
             s.Open(basis.Asset.MotionSets[0].Roles["walk"]);
             s.SetSubject(TallWalker);
@@ -132,7 +132,7 @@ internal sealed partial class EditorSmoke
                 {
                     var pose = PoseEvaluator.Sample(walker, clip, i * clip.Duration / 24.0, repeat: true);
                     var frame = Placement(walker, pose, guard);
-                    worst = MathF.Max(worst, MathF.Abs(Vector2.Dot(Vector2.Normalize(frame.XAxis), Vector2.Normalize(frame.YAxis))));
+                    worst = MathF.Max(worst, MathF.Abs(Vector2f.Dot(Vector2f.Normalize(frame.XAxis), Vector2f.Normalize(frame.YAxis))));
                     worst = MathF.Max(worst, MathF.Abs(frame.XAxis.Length() / frame.YAxis.Length() - 1));
                     turned = MathF.Max(turned, MathF.Abs(pose.Angles["left-knee"] - walker.Nodes["left-knee"].RestAngle));
                 }
@@ -310,7 +310,7 @@ internal sealed partial class EditorSmoke
         {
             var s = shell.Session;
             shell.LiveTest = false;
-            AuthoredArena Fight(string[] roster, Vector2[] positions, int ticks, bool press = false)
+            AuthoredArena Fight(string[] roster, Vector2f[] positions, int ticks, bool press = false)
             {
                 shell.Test.Stop();
                 shell.Test.Roster.Clear();
@@ -444,7 +444,7 @@ internal sealed partial class EditorSmoke
             {
                 var tallHound = s.Assets.Resolve("hound-tall")!;
                 var frame = Placement(tallHound, PoseEvaluator.Sample(tallHound, s.Assets.Clip(runId)!.Asset, i / 16.0, repeat: true), saddle);
-                worst = MathF.Max(worst, MathF.Abs(Vector2.Dot(Vector2.Normalize(frame.XAxis), Vector2.Normalize(frame.YAxis))));
+                worst = MathF.Max(worst, MathF.Abs(Vector2f.Dot(Vector2f.Normalize(frame.XAxis), Vector2f.Normalize(frame.YAxis))));
             }
             Record(worst < 1e-4f, "the saddle rides the body socket through the run as a similarity");
             var rush = s.Assets.Clips.Single(c => c.Asset.Model == "hound" && c.Id.EndsWith("-rush", StringComparison.Ordinal)).Id;
@@ -453,7 +453,7 @@ internal sealed partial class EditorSmoke
             Check(s.AddCollider(new() { Id = "bite", A = "head", Frame = "head", OffsetX = .25f, Geometry = Circle2D.Builder.Create(.22f) }, ColliderUses.Attack), s);
             var entity = s.EntityDocument!;
             // The guard template's range (1.6) suits a spear; the hound attacks from where its bite actually sits ahead of its feet.
-            var biteAhead = s.Entity!.Collider("bite")!.Region(new ActorPose(PoseEvaluator.Rest(s.Entity.Model), Vector2.Zero, 1)).Bounds.Max.X;
+            var biteAhead = s.Entity!.Collider("bite")!.Region(new ActorPose(PoseEvaluator.Rest(s.Entity.Model), Vector2f.Zero, 1)).Bounds.Max.X;
             Check(s.Edit(entity, () =>
             {
                 entity.Asset.Behavior!.Controller.Range = MathF.Round(biteAhead, 2);
@@ -559,7 +559,7 @@ internal sealed partial class EditorSmoke
             var torso = pose.Attachments[upper];
             var saddle = gait.Frame("body").At(new Vector3(.42f, .98f, 0));
             // The upper body's connection (its chest) is placed on the saddle; the slam then moves the module's own chest within that placement.
-            var seat = Vector2.Distance(new(saddle.X, saddle.Y), new(torso.Placement.Origin.X, torso.Placement.Origin.Y));
+            var seat = Vector2f.Distance(new(saddle.X, saddle.Y), new(torso.Placement.Origin.X, torso.Placement.Origin.Y));
             Record(centaur.Base.Controls.Count == 1 && centaur.MotionOwner?.Id == lower && (gait.Expression, torso.Expression) == ("walk", "hammer-slam"),
                 $"the centaur is one root control wearing the quadruped lower body and the Person upper body, the lower body owning the motion and walking while the upper body slams ({gait.Expression}, {torso.Expression})");
             Record(gait.Pose.Chains.All(c => c.Reached) && gait.Pose.Contacts.Count >= 2,
@@ -582,6 +582,6 @@ internal sealed partial class EditorSmoke
     private static Core.Characters.Geometry.LayeredFrame2D Placement(ResolvedModel model, EvaluatedPose pose, string instance)
     {
         var attachment = model.Attachment(instance) ?? throw new InvalidOperationException($"'{model.Id}' has no attachment '{instance}'.");
-        return attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket));
+        return attachment.Placement(new ActorPose(pose, Vector2f.Zero, 1).SocketPlacement(attachment.Socket));
     }
 }

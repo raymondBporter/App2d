@@ -6,7 +6,7 @@ namespace App2d.Core.Characters;
 /// <summary>Planar rig authoring coordinates: Y up, serialized Z is drawing layer. Spatial mesh and part points use Vector3f.</summary>
 public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
 {
-    [JsonIgnore] public Vector2 XY => new(X, Y);
+    [JsonIgnore] public Vector2f XY => new(X, Y);
     [JsonIgnore] public Vector3 XYZ => new(X, Y, Z);
     public static PuppetPoint From(Vector3 p) => new(p.X, p.Y, p.Z);
     public static PuppetPoint Lerp(PuppetPoint a, PuppetPoint b, float t) => From(Vector3.Lerp(a.XYZ, b.XYZ, t));

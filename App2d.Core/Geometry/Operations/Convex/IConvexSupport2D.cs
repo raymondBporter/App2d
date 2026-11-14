@@ -6,5 +6,5 @@ namespace App2d.Core.Geometry.Operations.Convex;
 public interface IConvexSupport2D
 {
     /// <summary>The point maximizing the projection onto a local direction; the direction need not be normalized.</summary>
-    Vector2 GetSupportPoint(Vector2 localDirection);
+    Vector2f GetSupportPoint(Vector2f localDirection);
 }

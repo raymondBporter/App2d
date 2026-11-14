@@ -51,9 +51,9 @@ public sealed class ShapePosed2DTests
     [Fact]
     public void MirrorKeepsOrientedShapesValid()
     {
-        var mirrored = Similarity2D.FromAxis(Vector2.Zero, Vector2.UnitX, mirror: true);
+        var mirrored = Similarity2D.FromAxis(Vector2f.Zero, Vector2f.UnitX, mirror: true);
         var rounded = Assert.IsType<RoundedRectangle2D>(ShapeTransforms2D.Posed(RoundedRectangle2D.Builder.FromSize(3, 2, .5f, new(1, 1), .4f), mirrored));
-        Assert.Equal(new Vector2(1, -1), rounded.Center, Near);
+        Assert.Equal(new Vector2f(1, -1), rounded.Center, Near);
         Assert.Equal(.5f, rounded.Radius);
     }
 
@@ -61,10 +61,10 @@ public sealed class ShapePosed2DTests
     public void AxisAlignedRectangleAcceptsQuarterTurnsAndRefusesOthers()
     {
         var box = AxisAlignedRectangle2D.Builder.Create(new(0, 0), new(2, 1));
-        var turned = Assert.IsType<AxisAlignedRectangle2D>(ShapeTransforms2D.Posed(box, Similarity2D.FromAxis(Vector2.Zero, Vector2.UnitY)));
-        Assert.Equal(new Vector2(-1, 0), turned.Min, Near);
-        Assert.Equal(new Vector2(0, 2), turned.Max, Near);
-        Assert.Throws<NotSupportedException>(() => ShapeTransforms2D.Posed(box, Similarity2D.FromAxis(Vector2.Zero, OrientedFrame2D.AxisFromAngle(.5f))));
+        var turned = Assert.IsType<AxisAlignedRectangle2D>(ShapeTransforms2D.Posed(box, Similarity2D.FromAxis(Vector2f.Zero, Vector2f.UnitY)));
+        Assert.Equal(new Vector2f(-1, 0), turned.Min, Near);
+        Assert.Equal(new Vector2f(0, 2), turned.Max, Near);
+        Assert.Throws<NotSupportedException>(() => ShapeTransforms2D.Posed(box, Similarity2D.FromAxis(Vector2f.Zero, OrientedFrame2D.AxisFromAngle(.5f))));
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class ShapePosed2DTests
         var posed = Assert.IsType<CompositeShape2D>(ShapeTransforms2D.Posed(composite, Pose));
         Assert.Equal(2, posed.Parts.Length);
         Assert.Equal(composite.Area * 4f, posed.Area, 3);
-        var floor = Assert.IsType<HalfSpace2D>(ShapeTransforms2D.Posed(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f), Similarity2D.FromTranslation(new(0, 3))));
+        var floor = Assert.IsType<HalfSpace2D>(ShapeTransforms2D.Posed(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f), Similarity2D.FromTranslation(new(0, 3))));
         Assert.Equal(3f, floor.Offset, 5);
     }
 

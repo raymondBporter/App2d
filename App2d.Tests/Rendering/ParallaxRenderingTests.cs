@@ -30,11 +30,11 @@ public sealed class ParallaxRenderingTests
         var first = Render();
         Assert.Equal(Color4b.Red, At(first, 64, 64));
         Assert.Equal(Color4b.Lime, At(first, 94, 64));
-        camera.Position += new Vector2(40f, 20f);
+        camera.Position += new Vector2f(40f, 20f);
         var moved = Render();
         Assert.Equal(Color4b.Red, At(moved, 56, 68)); // One fifth of both camera displacements.
         Assert.Equal(Color4b.Lime, At(moved, 54, 84));
-        Assert.Equal(new Vector2(240f, 120f), camera.Position);
+        Assert.Equal(new Vector2f(240f, 120f), camera.Position);
         Assert.Equal(originalTransform, scenery.Transform.Matrix);
 
         Color4b[] Render()
@@ -99,7 +99,7 @@ public sealed class ParallaxRenderingTests
         var camera = new Camera2D { Position = new(200f, 100f) };
         using var renderer = new Renderer2D(camera, graphics.Device);
         var layer = new ParallaxLayer2D(4f) { RepeatWidth = 64f };
-        layer.Scene.Add(new WorldObject2D(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f),
+        layer.Scene.Add(new WorldObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f),
             new SolidColorShader(Color4b.Red)));
         var world = Rectangle(12f, 12f, Color4b.Lime);
         world.Transform.Position = camera.Position;
@@ -146,7 +146,7 @@ public sealed class ParallaxRenderingTests
 
     private sealed class TreeGame : Game2D
     {
-        private readonly GiantTreeVisual2D _tree = new(new GiantTree2D(Vector2.Zero,
+        private readonly GiantTreeVisual2D _tree = new(new GiantTree2D(Vector2f.Zero,
             new GiantTreeSettings2D { Height = 1000f, TrunkWidth = 60f, BranchGap = new(200f, 200f) }, 42));
 
         public TreeGame() => Camera.Position = new(0f, 100f);

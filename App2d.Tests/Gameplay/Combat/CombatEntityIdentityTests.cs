@@ -94,7 +94,7 @@ public sealed class CombatEntityIdentityTests
 
         bool Attack(EntityId2D source, int sequence) => combat.ResolveAttack(
             enemy.WorldObject, source, sequence, CombatFaction2D.Player,
-            EnemyLayer, 1, _ => Vector2.Zero);
+            EnemyLayer, 1, _ => Vector2f.Zero);
     }
 
     [Fact]
@@ -108,11 +108,11 @@ public sealed class CombatEntityIdentityTests
         var combat = CreateCombat();
 
         Assert.True(combat.ResolveAttack(first.WorldObject, source, 1,
-            CombatFaction2D.Player, EnemyLayer, 1, _ => Vector2.Zero));
+            CombatFaction2D.Player, EnemyLayer, 1, _ => Vector2f.Zero));
         Assert.Equal(9, first.Health.Current);
         Assert.Equal(9, second.Health.Current);
         Assert.False(combat.ResolveAttack(first.WorldObject, source, 1,
-            CombatFaction2D.Player, EnemyLayer, 1, _ => Vector2.Zero));
+            CombatFaction2D.Player, EnemyLayer, 1, _ => Vector2f.Zero));
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public sealed class CombatEntityIdentityTests
         var enemy = CreateEnemy();
         var player = new Person2D(EntityId2D.Create(), _physics.CollisionSystem, _physics,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root),
-            Vector2.Zero, 4, 1, CombatFaction2D.Player);
+            Vector2f.Zero, 4, 1, CombatFaction2D.Player);
         _registry.Register(player);
         var id = player.Id;
         var contacts = new ContactDamageSystem2D(_physics.CollisionSystem, EnemyLayer, _registry);
@@ -132,7 +132,7 @@ public sealed class CombatEntityIdentityTests
         contacts.Resolve(player);
         Assert.Equal(player.Health.Maximum - 1, player.Health.Current);
 
-        player.Reset(new Vector2(300f, 120f));
+        player.Reset(new Vector2f(300f, 120f));
         Assert.Equal(id, player.Id);
         Assert.Equal(id, player.Body.Collider.EntityId);
         Assert.Same(player, _registry.Find(id));
@@ -151,6 +151,6 @@ public sealed class CombatEntityIdentityTests
         new(_physics.CollisionSystem, _registry);
 
     private static bool DamageFirst(CombatSystem2D combat, SpatialObject2D hitbox) =>
-        combat.TryDamageFirst(hitbox, CombatFaction2D.Player, EnemyLayer, 1, _ => Vector2.Zero);
+        combat.TryDamageFirst(hitbox, CombatFaction2D.Player, EnemyLayer, 1, _ => Vector2f.Zero);
 
 }

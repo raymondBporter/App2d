@@ -49,9 +49,9 @@ public static class Ui
     }
 
     /// <summary>A child panel, optionally with a header. Zero size fills the available space; size is in device pixels.</summary>
-    public static void Panel(string id, Action content, Action? header = null, Vector2 size = default, bool border = true, ImGuiWindowFlags flags = ImGuiWindowFlags.None)
+    public static void Panel(string id, Action content, Action? header = null, Vector2f size = default, bool border = true, ImGuiWindowFlags flags = ImGuiWindowFlags.None)
     {
-        var visible = ImGui.BeginChild(id, size, border ? ImGuiChildFlags.Borders : ImGuiChildFlags.None, flags);
+        var visible = ImGui.BeginChild(id, size.ToVector2(), border ? ImGuiChildFlags.Borders : ImGuiChildFlags.None, flags);
         try
         {
             if (!visible)
@@ -128,9 +128,9 @@ public static class Ui
     // The size a drag started from. One handle is held at a time, so one value serves every splitter.
     private static float _splitterStart;
 
-    private static bool Splitter(string id, ref float size, Vector2 extent, float min, float max, float direction, bool vertical)
+    private static bool Splitter(string id, ref float size, Vector2f extent, float min, float max, float direction, bool vertical)
     {
-        ImGui.InvisibleButton(id, Vector2.Max(extent, Vector2.One));
+        ImGui.InvisibleButton(id, Vector2.Max(extent.ToVector2(), Vector2.One));
         var active = ImGui.IsItemActive();
         if (active || ImGui.IsItemHovered())
         {
@@ -226,10 +226,17 @@ public static class Ui
         return ImGui.DragFloat("##" + label, ref value, speed, min, max, format);
     }
 
-    public static bool Drag2(string label, ref Vector2 value, float speed = .005f, float min = -100, float max = 100)
+    public static bool Drag2(string label, ref Vector2f value, float speed = .005f, float min = -100, float max = 100)
     {
         Label(label);
-        return ImGui.DragFloat2("##" + label, ref value, speed, min, max, "%.3f");
+        var coordinates = value.ToVector2();
+        if (!ImGui.DragFloat2("##" + label, ref coordinates, speed, min, max, "%.3f"))
+        {
+            return false;
+        }
+
+        value = new(coordinates);
+        return true;
     }
 
     public static bool Drag3(string label, ref Vector3 value, float speed = .005f, float min = -100, float max = 100)

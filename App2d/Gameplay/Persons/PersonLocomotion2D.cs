@@ -17,7 +17,7 @@ public sealed partial class PersonLocomotion2D
     private readonly PlatformCollisionRules2D _platformRules;
     private readonly List<Collider2D> _queryResults = [];
     private PersonMovementIntent2D _intent;
-    private Vector2 _positionBeforePhysics;
+    private Vector2f _positionBeforePhysics;
     private float _verticalSpeedBeforePhysics;
     private float _gravityScaleBeforePhysics;
     private bool _wasGroundedBeforePhysics;
@@ -59,7 +59,7 @@ public sealed partial class PersonLocomotion2D
     public event Action<float>? Landed;
     public bool IsGrounded { get; private set; }
     /// <summary>The velocity of the ground under the person (a moving platform's), or zero when airborne.</summary>
-    public Vector2 GroundVelocity => IsGrounded ? GetGroundSupportVelocity() : Vector2.Zero;
+    public Vector2f GroundVelocity => IsGrounded ? GetGroundSupportVelocity() : Vector2f.Zero;
     public bool IsWallGripping { get; private set; }
     public bool IsDashing { get; private set; }
     /// <summary>The unsupported edge in world space: -1 left, +1 right, or 0.</summary>
@@ -115,7 +115,7 @@ public sealed partial class PersonLocomotion2D
         {
             DetachFromLadder();
             _dashTimeRemaining = Math.Max(0f, _dashTimeRemaining - deltaSeconds);
-            _body.LinearVelocity = new Vector2(_dashDirection * Metrics.DashSpeed, 0f);
+            _body.LinearVelocity = new Vector2f(_dashDirection * Metrics.DashSpeed, 0f);
             IsWallGripping = false;
             _wallDirection = 0f;
             _body.GravityScale = 0f;
@@ -158,7 +158,7 @@ public sealed partial class PersonLocomotion2D
 
         if (intent.JumpReleased && _body.LinearVelocity.Y > 0f)
         {
-            _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, _body.LinearVelocity.Y * Metrics.JumpReleaseSpeedMultiplier);
+            _body.LinearVelocity = new Vector2f(_body.LinearVelocity.X, _body.LinearVelocity.Y * Metrics.JumpReleaseSpeedMultiplier);
         }
 
         UpdateGravityScale();
@@ -224,7 +224,7 @@ public sealed partial class PersonLocomotion2D
         _jumpBufferTime = 0f;
         _wallJumpBufferTime = 0f;
         _jumpInitialSpeed = 0f;
-        _body.LinearVelocity = new Vector2(
+        _body.LinearVelocity = new Vector2f(
             _body.LinearVelocity.X,
             Math.Max(_body.LinearVelocity.Y, Metrics.DownAttackBounceSpeed));
         UpdateGravityScale();
@@ -280,7 +280,7 @@ public sealed partial class PersonLocomotion2D
         _wasGroundedBeforePhysics = false;
         IsWallGripping = false;
         IsDashing = false;
-        _body.WorldObject.Transform.Scale = Vector2.One;
+        _body.WorldObject.Transform.Scale = Vector2f.One;
         _body.GravityScale = 1f;
         _platformRules.ClearIgnoredPlatforms(_body);
     }
@@ -298,7 +298,7 @@ public sealed partial class PersonLocomotion2D
             velocityX = MoveTowards(velocityX, _intent.MoveX * Metrics.RunSpeed, acceleration * deltaSeconds);
         }
 
-        _body.LinearVelocity = new Vector2(velocityX, _body.LinearVelocity.Y);
+        _body.LinearVelocity = new Vector2f(velocityX, _body.LinearVelocity.Y);
     }
 
     private void BeginDash(float facing)
@@ -326,7 +326,7 @@ public sealed partial class PersonLocomotion2D
     private void EndDash()
     {
         IsDashing = false;
-        _body.LinearVelocity = new Vector2(
+        _body.LinearVelocity = new Vector2f(
             _dashDirection * Metrics.RunSpeed,
             _body.LinearVelocity.Y);
     }
@@ -363,7 +363,7 @@ public sealed partial class PersonLocomotion2D
         var jumpSpeed = _intent.JumpHeld
             ? fullJumpSpeed
             : fullJumpSpeed * Metrics.JumpReleaseSpeedMultiplier;
-        _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, jumpSpeed);
+        _body.LinearVelocity = new Vector2f(_body.LinearVelocity.X, jumpSpeed);
         _jumpInitialSpeed = jumpSpeed;
         if (!isGroundJump)
         {
@@ -400,7 +400,7 @@ public sealed partial class PersonLocomotion2D
 
     private void BeginWallJump(float wallDirection)
     {
-        _body.LinearVelocity = new Vector2(
+        _body.LinearVelocity = new Vector2f(
             -wallDirection * Metrics.WallJumpHorizontalSpeed,
             Metrics.JumpSpeed);
         _jumpInitialSpeed = Metrics.JumpSpeed;
@@ -467,7 +467,7 @@ public sealed partial class PersonLocomotion2D
 
         _wallDirection = direction;
         IsWallGripping = true;
-        _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, 0f);
+        _body.LinearVelocity = new Vector2f(_body.LinearVelocity.X, 0f);
     }
 
     private bool HasWallSupport(float direction, float maximumGap)
@@ -479,7 +479,7 @@ public sealed partial class PersonLocomotion2D
             if (collider.UserData is not RigidBody2D other ||
                 ReferenceEquals(other, _body) ||
                 other.MotionType == BodyMotionType2D.Dynamic ||
-                _platformRules.Surface(other).OneWaySurfaceNormal == Vector2.UnitY ||
+                _platformRules.Surface(other).OneWaySurfaceNormal == Vector2f.UnitY ||
                 !_platformRules.Surface(other).IsWallGrippable ||
                 other.IsSensor ||
                 !_physics.CanCollide(_body, other))
@@ -627,7 +627,7 @@ public sealed partial class PersonLocomotion2D
                 continue;
             }
 
-            if (_platformRules.Surface(other).OneWaySurfaceNormal != Vector2.UnitY)
+            if (_platformRules.Surface(other).OneWaySurfaceNormal != Vector2f.UnitY)
             {
                 return false;
             }
@@ -646,7 +646,7 @@ public sealed partial class PersonLocomotion2D
             _platformRules.IgnorePlatform(_body, support);
         }
 
-        _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, Math.Min(_body.LinearVelocity.Y, -Metrics.OneWayDropSpeed));
+        _body.LinearVelocity = new Vector2f(_body.LinearVelocity.X, Math.Min(_body.LinearVelocity.Y, -Metrics.OneWayDropSpeed));
         return true;
     }
 
@@ -682,15 +682,15 @@ public sealed partial class PersonLocomotion2D
     }
 
     /// <summary>The fastest-rising support's velocity: the one a landing is measured against and a rider moves with.</summary>
-    private Vector2 GetGroundSupportVelocity()
+    private Vector2f GetGroundSupportVelocity()
     {
         if (GroundSupport2D.Velocity(_physics.LastContacts, _body, CanSupport) is { } touching)
         {
             return touching;
         }
 
-        var support = new Vector2(0f, float.NegativeInfinity);
-        void Consider(Vector2 velocity)
+        var support = new Vector2f(0f, float.NegativeInfinity);
+        void Consider(Vector2f velocity)
         {
             if (velocity.Y > support.Y)
             {
@@ -720,7 +720,7 @@ public sealed partial class PersonLocomotion2D
             }
         }
 
-        return float.IsFinite(support.Y) ? support : Vector2.Zero;
+        return float.IsFinite(support.Y) ? support : Vector2f.Zero;
     }
 
     private bool TrySnapToGround()
@@ -763,8 +763,8 @@ public sealed partial class PersonLocomotion2D
             return false;
         }
 
-        _body.WorldObject.Transform.Position -= new Vector2(0f, nearestGap);
-        _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, 0f);
+        _body.WorldObject.Transform.Position -= new Vector2f(0f, nearestGap);
+        _body.LinearVelocity = new Vector2f(_body.LinearVelocity.X, 0f);
         return true;
     }
 
@@ -792,14 +792,14 @@ public sealed partial class PersonLocomotion2D
 
         for (var distance = 1; distance <= Metrics.UpwardCornerCorrection; distance++)
         {
-            var first = new Vector2(_positionBeforePhysics.X + preferredDirection * distance, desiredY);
+            var first = new Vector2f(_positionBeforePhysics.X + preferredDirection * distance, desiredY);
             if (CanOccupy(first))
             {
                 CompleteCornerCorrection(first, integratedVerticalSpeed);
                 return;
             }
 
-            var second = new Vector2(_positionBeforePhysics.X - preferredDirection * distance, desiredY);
+            var second = new Vector2f(_positionBeforePhysics.X - preferredDirection * distance, desiredY);
             if (CanOccupy(second))
             {
                 CompleteCornerCorrection(second, integratedVerticalSpeed);
@@ -826,7 +826,7 @@ public sealed partial class PersonLocomotion2D
         return false;
     }
 
-    private bool CanOccupy(Vector2 position)
+    private bool CanOccupy(Vector2f position)
     {
         var originalPosition = _body.WorldObject.Transform.Position;
         _body.WorldObject.Transform.Position = position;
@@ -841,7 +841,7 @@ public sealed partial class PersonLocomotion2D
                 }
 
                 if (ReferenceEquals(other, _body) ||
-                    _platformRules.Surface(other).OneWaySurfaceNormal == Vector2.UnitY ||
+                    _platformRules.Surface(other).OneWaySurfaceNormal == Vector2f.UnitY ||
                     other.IsSensor ||
                     !_physics.CanCollide(_body, other))
                 {
@@ -862,10 +862,10 @@ public sealed partial class PersonLocomotion2D
         }
     }
 
-    private void CompleteCornerCorrection(Vector2 position, float verticalSpeed)
+    private void CompleteCornerCorrection(Vector2f position, float verticalSpeed)
     {
         _body.WorldObject.Transform.Position = position;
-        _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, verticalSpeed);
+        _body.LinearVelocity = new Vector2f(_body.LinearVelocity.X, verticalSpeed);
     }
 
     private bool CanSupport(RigidBody2D other) =>
@@ -883,12 +883,12 @@ public sealed partial class PersonLocomotion2D
             excluded: _body.Collider);
 
     private static Rect2D ExpandedDown(Rect2D bounds, float distance) =>
-        new(bounds.Min - new Vector2(0f, distance), bounds.Max);
+        new(bounds.Min - new Vector2f(0f, distance), bounds.Max);
 
     private static Rect2D ExpandedSide(Rect2D bounds, float direction, float distance) =>
         direction > 0f
-            ? new Rect2D(bounds.Min, bounds.Max + new Vector2(distance, 0f))
-            : new Rect2D(bounds.Min - new Vector2(distance, 0f), bounds.Max);
+            ? new Rect2D(bounds.Min, bounds.Max + new Vector2f(distance, 0f))
+            : new Rect2D(bounds.Min - new Vector2f(distance, 0f), bounds.Max);
 
     private bool HasHorizontalSupport(Rect2D bodyBounds, Rect2D supportBounds) =>
         bodyBounds.Right + Metrics.HorizontalSupportGrace >= supportBounds.Left &&

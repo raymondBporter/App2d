@@ -19,7 +19,7 @@ public sealed class ShapeDiameterTests
         Assert.Equal(5f, Rectangle2D.Builder.Create(3, 4).Diameter);
         Assert.Equal(5f, AxisAlignedRectangle2D.Builder.Create(3, 4).Diameter);
         Assert.Equal(5f, Triangle2D.Builder.Create(new(0, 0), new(3, 0), new(0, 4)).Diameter);
-        Assert.Equal(float.PositiveInfinity, HalfSpace2D.Builder.Create(Vector2.UnitY, 2).Diameter);
+        Assert.Equal(float.PositiveInfinity, HalfSpace2D.Builder.Create(Vector2f.UnitY, 2).Diameter);
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public sealed class ShapeDiameterTests
     {
         var shape = RoundedRectangle2D.Builder.Create(6, 4, 1, new(3, 2));
         Assert.Equal(new Rect2D(new(0, 0), new(6, 4)), ShapeBounds2D.Calculate(shape));
-        Assert.Equal(new Vector2(2, 1), shape.InnerHalfSize);
+        Assert.Equal(new Vector2f(2, 1), shape.InnerHalfSize);
         Assert.Equal(MathF.Sqrt(20) + 2, shape.Diameter, 5);
         Assert.Equal(shape.Diameter / 2, ShapeBounds2D.CalculateBoundingCircle(shape).Radius);
         Assert.Equal(5f, RoundedRectangle2D.Builder.Create(3, 4, 0).Diameter);
@@ -38,7 +38,7 @@ public sealed class ShapeDiameterTests
     [Fact]
     public void PolygonDiameterIgnoresWindingAndConcaveIndentations()
     {
-        Vector2[] points = [new(0, 0), new(5, 0), new(5, 1), new(1, 1), new(1, 4), new(0, 4)];
+        Vector2f[] points = [new(0, 0), new(5, 0), new(5, 1), new(1, 1), new(1, 4), new(0, 4)];
         var polygon = SimplePolygon2D.Builder.Create(points);
         Assert.Equal(MathF.Sqrt(41), polygon.Diameter, 5);
         Assert.Equal(polygon.Diameter, SimplePolygon2D.Builder.Create(points.Reverse()).Diameter);
@@ -64,8 +64,8 @@ public sealed class ShapeDiameterTests
         for (var i = 0; i < 16384; i++)
         {
             var angle = i * MathF.Tau / 16384;
-            var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-            sampled = MathF.Max(sampled, Vector2.Distance(a.GetSupportPoint(direction), b.GetSupportPoint(-direction)));
+            var direction = new Vector2f(MathF.Cos(angle), MathF.Sin(angle));
+            sampled = MathF.Max(sampled, Vector2f.Distance(a.GetSupportPoint(direction), b.GetSupportPoint(-direction)));
         }
         Assert.InRange(MathF.Abs(sampled - union.Diameter), 0, .00002f);
         Assert.True(union.Diameter > MathF.Max(a.Diameter, b.Diameter));
@@ -89,7 +89,7 @@ public sealed class ShapeDiameterTests
         Assert.True(radius > triangle.Diameter / 2);
         foreach (var point in new[] { triangle.A, triangle.B, triangle.C })
         {
-            Assert.InRange(Vector2.Distance(point, center), 0, radius + .00001f);
+            Assert.InRange(Vector2f.Distance(point, center), 0, radius + .00001f);
         }
     }
 
@@ -108,7 +108,7 @@ public sealed class ShapeDiameterTests
     {
         public string GetKind() => "custom-disk";
         public float Area => MathF.PI * 1.25f * 1.25f;
-        public bool ContainsPoint(Vector2 point) => point.Length() <= 1.25f;
-        public Vector2 GetSupportPoint(Vector2 direction) => Vector2.Normalize(direction) * 1.25f;
+        public bool ContainsPoint(Vector2f point) => point.Length() <= 1.25f;
+        public Vector2f GetSupportPoint(Vector2f direction) => Vector2f.Normalize(direction) * 1.25f;
     }
 }

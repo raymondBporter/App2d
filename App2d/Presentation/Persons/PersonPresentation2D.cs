@@ -27,7 +27,7 @@ public sealed class PersonPresentation2D : IDisposable
     private readonly AnimationPlayer2D<Texture2D> _animation = new();
     private readonly SpriteShader2D _spriteShader;
     private readonly WorldObject2D _visual;
-    private readonly Vector2 _visualOffset;
+    private readonly Vector2f _visualOffset;
     private readonly float _hardLandingSpeed;
 
     private AnimationClip2D<Texture2D> _idleAnimation = null!;
@@ -439,7 +439,7 @@ public sealed class PersonPresentation2D : IDisposable
     private void UpdateVisual(
         float deltaSeconds,
         long frameNumber,
-        Vector2 playerPosition,
+        Vector2f playerPosition,
         float facing,
         float invulnerabilitySeconds)
     {

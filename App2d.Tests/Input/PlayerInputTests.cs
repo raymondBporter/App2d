@@ -240,8 +240,8 @@ public sealed class PlayerInputTests
     public void StickDeadZoneRemovesDriftAndKeepsFullDiagonalWithinUnitLength()
     {
         var device = new XboxControllerInput2D();
-        Assert.Equal(Vector2.Zero, device.Update(0, new Vector2(100, -100), 0).LeftStick);
-        var diagonal = device.Update(0, new Vector2(short.MaxValue, short.MinValue), 0).LeftStick;
+        Assert.Equal(Vector2f.Zero, device.Update(0, new Vector2f(100, -100), 0).LeftStick);
+        var diagonal = device.Update(0, new Vector2f(short.MaxValue, short.MinValue), 0).LeftStick;
         Assert.InRange(diagonal.Length(), 0.999f, 1.001f);
         Assert.True(diagonal.X > 0 && diagonal.Y < 0);
     }
@@ -250,12 +250,12 @@ public sealed class PlayerInputTests
     public void GamepadStateCarriesBothSticksAndTriggerValues()
     {
         var device = new XboxControllerInput2D();
-        var state = device.Update(0, new Vector2(short.MaxValue, 0), 128,
-            new Vector2(0, short.MaxValue), 255);
+        var state = device.Update(0, new Vector2f(short.MaxValue, 0), 128,
+            new Vector2f(0, short.MaxValue), 255);
 
         Assert.True(state.IsConnected);
-        Assert.Equal(Vector2.UnitX, state.LeftStick);
-        Assert.Equal(Vector2.UnitY, state.RightStick);
+        Assert.Equal(Vector2f.UnitX, state.LeftStick);
+        Assert.Equal(Vector2f.UnitY, state.RightStick);
         Assert.Equal(1f, state.LeftTrigger);
         Assert.InRange(state.RightTrigger, 0.50f, 0.51f);
     }

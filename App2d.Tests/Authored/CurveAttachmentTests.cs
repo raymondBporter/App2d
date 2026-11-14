@@ -28,8 +28,8 @@ public sealed class CurveAttachmentTests
             {
                 Id = "stroke", A = "start", B = "end", Layer = -.01f,
                 Geometry = cubic
-                    ? new CubicBezier2D { Start = Vector2.Zero, Control1 = new(-.5f, 1f / 3), Control2 = new(-.5f, 2f / 3), End = Vector2.UnitY }.Validated()
-                    : new QuadraticBezier2D { Start = Vector2.Zero, Control = new(-.5f, .5f), End = Vector2.UnitY }.Validated(),
+                    ? new CubicBezier2D { Start = Vector2f.Zero, Control1 = new(-.5f, 1f / 3), Control2 = new(-.5f, 2f / 3), End = Vector2f.UnitY }.Validated()
+                    : new QuadraticBezier2D { Start = Vector2f.Zero, Control = new(-.5f, .5f), End = Vector2f.UnitY }.Validated(),
                 Material = new() { Fill = "#ff0000", StrokeWidth = .02f },
                 Bindings = cubic
                     ? [new() { Point = 0, Control = "start" }, new() { Point = 1, Control = "bend" }, new() { Point = 2, Control = "bend2" }, new() { Point = 3, Control = "end" }]
@@ -140,7 +140,7 @@ public sealed class CurveAttachmentTests
                 part.Bindings![1].Toward = "bend";
                 break;
             case "unsupported-curve":
-                part.Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated();
+                part.Geometry = new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated();
                 break;
         }
         Assert.Throws<InvalidDataException>(model.Validate);

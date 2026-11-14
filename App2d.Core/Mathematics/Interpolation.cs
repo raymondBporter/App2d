@@ -25,15 +25,15 @@ public static class Interpolation
     }
 
     /// <summary>Unclamped linear interpolation between vectors.</summary>
-    public static Vector2 Lerp(Vector2 start, Vector2 end, float amount) => start + amount * (end - start);
+    public static Vector2f  Lerp(Vector2f start, Vector2f end, float amount) => start + amount * (end - start);
 
-    public static Vector2 Lerp(Vector2 start, Vector2 end, float progress, Func<float, float> progressMapping)
+    public static Vector2f  Lerp(Vector2f start, Vector2f end, float progress, Func<float, float> progressMapping)
     {
         Ensure.ThrowIfNull(progressMapping);
         return Lerp(start, end, progressMapping(progress));
     }
 
-    public static Vector2 Lerp(Vector2 start, Vector2 end, double progress, IProgressMap progressMapping)
+    public static Vector2f  Lerp(Vector2f start, Vector2f end, double progress, IProgressMap progressMapping)
     {
         Ensure.ThrowIfNull(progressMapping);
         return Lerp(start, end, (float)progressMapping.Sample(progress));

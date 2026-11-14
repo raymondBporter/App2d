@@ -76,11 +76,11 @@ internal static class AuthoredRenderingSmoke2D
                     player.PlayDeath();
                 }
 
-                var position = new Vector2(0, 38);
+                var position = new Vector2f(0, 38);
                 var steps = (int)(seconds * 120);
                 for (var i = 0; i < steps; i++)
                 {
-                    position.X += state.LinearVelocity.X / 120; // vertical motion stays out of the fixed camera; the state still reports it
+                    position = position with { X = position.X + state.LinearVelocity.X / 120 }; // vertical motion stays out of the fixed camera; the state still reports it
                     var current = state with
                     {
                         Position = position,
@@ -117,7 +117,7 @@ internal static class AuthoredRenderingSmoke2D
                     {
                         var hit = swing.Hits[0].Collider.Definition;
                         var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color4b(235, 60, 50, 110)));
-                        box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2);
+                        box.Transform.Position = position + new Vector2f(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2f(0, traversal.PlayerColliderSize.Y / 2);
                         close.Draw(box);
                     }
                     if (name == "gun-run-shot")
@@ -178,7 +178,7 @@ internal static class AuthoredRenderingSmoke2D
                 {
                     var entity = authored.Entities[id];
                     var animator = new EntityAnimator(entity);
-                    var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-400 + i * 90), 0);
+                    var feet = new Vector2f(GameWorldUnits2D.WorldToAuthored(-400 + i * 90), 0);
                     // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
                     if (action is EntityControllers.Hit or EntityControllers.Death)
                     {
@@ -204,7 +204,7 @@ internal static class AuthoredRenderingSmoke2D
                         }
                     }
 
-                    return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, GameWorldUnits2D.AuthoredToWorld(feet), Vector2.Zero, 0, facing, true, true)
+                    return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, GameWorldUnits2D.AuthoredToWorld(feet), Vector2f.Zero, 0, facing, true, true)
                     {
                         TypeId = id,
                         AuthoredEntity = entity,
@@ -212,7 +212,7 @@ internal static class AuthoredRenderingSmoke2D
                         ActionId = animator.Action ?? animator.Role,
                         ActionSeconds = (float)(animator.Action is null ? animator.RoleTime : animator.ActionTime),
                         Bolts = id == "rock-thrower" && phase == "recovery"
-                        ? [new(GameWorldUnits2D.AuthoredToWorld(feet) + new Vector2(facing * 50, 80), new(facing * 160, 80), new(14.4f), 3) { Gravity = 600 }]
+                        ? [new(GameWorldUnits2D.AuthoredToWorld(feet) + new Vector2f(facing * 50, 80), new(facing * 160, 80), new(14.4f), 3) { Gravity = 600 }]
                         : []
                     };
                 }).ToImmutableArray();

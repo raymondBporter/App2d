@@ -32,10 +32,10 @@ public sealed class PlacementRoutingTests
             Assert.Equal(pose.World(part.A).Z + part.Layer, frame.Layer, 6);
             if (part.Geometry is IShape2D shape)
             {
-                var vertices = new Vector2[shape.GetOutlineVertCount(48)];
+                var vertices = new Vector2f[shape.GetOutlineVertCount(48)];
                 shape.GetOutlineVerts(vertices, 48);
                 Assert.Equal(frame.At(vertices[0]), TestModels.DrawPoint(PartContours2D.Contour(part, model, pose), 0));
-                var inside = frame.At(Vector2.Zero);
+                var inside = frame.At(Vector2f.Zero);
                 Assert.True(PartPicking2D.Distance(part, model, pose, inside) <= 1, part.Id);
                 Assert.True(PartAttachment2D.ArtworkPoint(part, 0, inside.XY, model, pose).Length() < 1e-5f, part.Id);
             }
@@ -62,8 +62,8 @@ public sealed class PlacementRoutingTests
         var pose = PoseEvaluator.Rest(resolved);
         var frame = PartAttachment2D.FrameOf(shape, pose.World, pose.Placement, id => resolved.Rest[id]);
         Assert.Equal(PartAttachment2D.Attachment(shape).Then(pose.Placement(root.Id)), frame);
-        Assert.Equal(pose.Placement(root.Id).At(new Vector2(root.Length, 0)), new Vector3(Vector2.Transform(new(root.Length, 0), pose.Bones[root.Id]), pose.World(root.Id).Z));
-        Assert.InRange(Vector2.Dot(frame.XAxis, frame.YAxis), -1e-6f, 1e-6f);
+        Assert.Equal(pose.Placement(root.Id).At(new Vector2f(root.Length, 0)), new Vector3(Vector2f.Transform(new(root.Length, 0), pose.Bones[root.Id]).ToVector2(), pose.World(root.Id).Z));
+        Assert.InRange(Vector2f.Dot(frame.XAxis, frame.YAxis), -1e-6f, 1e-6f);
     }
 
     [Fact]
@@ -79,14 +79,14 @@ public sealed class PlacementRoutingTests
             {
                 var planar = pose.SocketPlacement(socket);
                 var lifted = pose.Socket(socket);
-                TestModels.Near(new(planar.Frame.Origin, 0), lifted.Origin, 1e-6f, socket.Id);
+                TestModels.Near(new(planar.Frame.Origin.ToVector2(), 0), lifted.Origin, 1e-6f, socket.Id);
                 Assert.Equal(pose.Local.Points[socket.Control].Z + socket.Layer, planar.Layer, 6);
                 Assert.Equal(PartPlacement3D.Lift(planar, pose.Local.SocketAngles.GetValueOrDefault(socket.Id)), lifted);
                 Assert.Equal(facing < 0, planar.Frame.Matrix.GetDeterminant() < 0);
                 if (pose.Local.SocketAngles.GetValueOrDefault(socket.Id) == Vector3.Zero)
                 {
-                    TestModels.Near(new(planar.XAxis, 0), lifted.XAxis, 1e-6f, socket.Id);
-                    TestModels.Near(new(planar.YAxis, 0), lifted.YAxis, 1e-6f, socket.Id);
+                    TestModels.Near(new(planar.XAxis.ToVector2(), 0), lifted.XAxis, 1e-6f, socket.Id);
+                    TestModels.Near(new(planar.YAxis.ToVector2(), 0), lifted.YAxis, 1e-6f, socket.Id);
                     Assert.Equal(Vector3.UnitZ, lifted.ZAxis);
                 }
             }
@@ -95,7 +95,7 @@ public sealed class PlacementRoutingTests
             var hand = hero.Sockets["sword-hand"];
             var orientation = pose.Local.SocketAngles[hand.Id];
             Assert.NotEqual(0f, orientation.X + orientation.Y);
-            var local = new ActorPose(pose.Local, Vector2.Zero, 1);
+            var local = new ActorPose(pose.Local, Vector2f.Zero, 1);
             var turn = local.SocketTurn(hand);
             var planarTurn = MathF.Atan2(local.SocketPlacement(hand).XAxis.Y, local.SocketPlacement(hand).XAxis.X);
             Assert.Equal(planarTurn + orientation.Z, turn, 5);

@@ -69,14 +69,14 @@ internal sealed partial class ImageLabWindow
         }
     }
 
-    private void HandleBrush(Vector2 imagePosition, float zoom, RasterFrame displayed)
+    private void HandleBrush(Vector2f imagePosition, float zoom, RasterFrame displayed)
     {
         if (_tool == CanvasTool.Inspect || _history.Current is null || _showOriginal || _showPreview
             || (_tool == CanvasTool.Erase && _history.Current.Mask is null))
         {
             return;
         }
-        var point = (ImGui.GetIO().MousePos - imagePosition) / zoom;
+        var point = (new Vector2f(ImGui.GetIO().MousePos) - imagePosition) / zoom;
         if (!float.IsFinite(point.X) || !float.IsFinite(point.Y)
             || MathF.Abs(point.X) > 1e20f || MathF.Abs(point.Y) > 1e20f)
         {
@@ -111,7 +111,7 @@ internal sealed partial class ImageLabWindow
         }
     }
 
-    internal void BeginBrushStroke(Vector2 point)
+    internal void BeginBrushStroke(Vector2f point)
     {
         if (_tool is CanvasTool.Inspect or CanvasTool.Eyedropper || _history.Current is not { } source)
         {
@@ -132,7 +132,7 @@ internal sealed partial class ImageLabWindow
         MoveBrushStroke(point);
     }
 
-    internal void MoveBrushStroke(Vector2 point)
+    internal void MoveBrushStroke(Vector2f point)
     {
         if (_stroke is not null)
         {
@@ -149,9 +149,9 @@ internal sealed partial class ImageLabWindow
             throw new InvalidOperationException("Brush smoke needs a detected edge.");
         }
         var before = _history.Position;
-        var point = new Vector2(index % mask.Width + .5f, index / mask.Width + .5f);
+        var point = new Vector2f(index % mask.Width + .5f, index / mask.Width + .5f);
         BeginBrushStroke(point);
-        MoveBrushStroke(point + new Vector2(10, 3));
+        MoveBrushStroke(point + new Vector2f(10, 3));
         FinishBrushStroke();
         if (_history.Position != before + 1 || _history.Current!.Mask!.AsSpan()[index] || !mask.AsSpan()[index])
         {

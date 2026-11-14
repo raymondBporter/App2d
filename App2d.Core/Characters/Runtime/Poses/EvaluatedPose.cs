@@ -16,7 +16,7 @@ public sealed class EvaluatedPose
 
     public EvaluatedPose()
     {
-        Points = new ControlView<Vector3>(_controls, static control => new(control.Position, control.Layer));
+        Points = new ControlView<Vector3>(_controls, static control => new(control.Position.ToVector2(), control.Layer));
         Angles = new ControlView<float>(_controls, static control => control.Angle);
         Bones = new ControlView<Matrix3x2>(_controls, static control => control.Frame.Matrix);
     }
@@ -41,7 +41,7 @@ public sealed class EvaluatedPose
     /// <summary>Each limited bone node's joint-limit state at this sample: the requested local rotation, the held one and whether a bound was active.</summary>
     public Dictionary<string, ConstraintLimitEvaluation1D> Limits { get; } = new(StringComparer.Ordinal);
     /// <summary>Each drawing part's animated artwork fit at this sample (fit tracks), as multipliers of its leaf scale; absent is 1.</summary>
-    public Dictionary<string, Vector2> Fits { get; } = new(StringComparer.Ordinal);
+    public Dictionary<string, Vector2f> Fits { get; } = new(StringComparer.Ordinal);
     public Dictionary<string, Vector4> Tints { get; } = new(StringComparer.Ordinal);
     /// <summary>Time sampled by this pose, shared by texture frames. No rendering clock advances it.</summary>
     public double SampleSeconds { get; init; }
@@ -53,7 +53,7 @@ public sealed class EvaluatedPose
     public Vector3 World(string id)
     {
         var control = _controls[id];
-        return new(control.Position, control.Layer);
+        return new(control.Position.ToVector2(), control.Layer);
     }
 
     /// <summary>A control's evaluated placement: its bone frame at its drawing layer. Artwork, sockets and handles attach to this.</summary>

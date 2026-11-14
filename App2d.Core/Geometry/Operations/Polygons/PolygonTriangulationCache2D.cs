@@ -13,14 +13,14 @@ public static class PolygonTriangulationCache2D
 {
     private static readonly ConditionalWeakTable<object, Entry> Entries = [];
 
-    public static TriangleMesh2D Get(IReadOnlyList<Vector2> perimeter, double tolerance = 0) =>
+    public static TriangleMesh2D Get(IReadOnlyList<Vector2f> perimeter, double tolerance = 0) =>
         Get(perimeter, static point => point, tolerance);
 
     public static TriangleMesh2D GetXY(IReadOnlyList<Vector3> perimeter, double tolerance = 0) =>
-        Get(perimeter, static point => new Vector2(point.X, point.Y), tolerance);
+        Get(perimeter, static point => new Vector2f(point.X, point.Y), tolerance);
 
     /// <summary>Projects arbitrary authored vertices or vertex-buffer entries into XY before comparing or triangulating.</summary>
-    public static TriangleMesh2D Get<TPoint>(IReadOnlyList<TPoint> perimeter, Func<TPoint, Vector2> xy, double tolerance = 0)
+    public static TriangleMesh2D Get<TPoint>(IReadOnlyList<TPoint> perimeter, Func<TPoint, Vector2f> xy, double tolerance = 0)
     {
         Ensure.ThrowIfNull(perimeter);
         Ensure.ThrowIfNull(xy);
@@ -38,7 +38,7 @@ public static class PolygonTriangulationCache2D
         }
     }
 
-    public static CompositeShape2D GetConvexPieces(IReadOnlyList<Vector2> perimeter, double tolerance = 0)
+    public static CompositeShape2D GetConvexPieces(IReadOnlyList<Vector2f> perimeter, double tolerance = 0)
     {
         var mesh = Get(perimeter, tolerance);
         var entry = Entries.GetValue(perimeter, static _ => new());
@@ -54,7 +54,7 @@ public static class PolygonTriangulationCache2D
     }
 
     /// <summary>Installs a triangulation constructed with a known topology, such as monotone terrain strips.</summary>
-    internal static void StorePrepared(IReadOnlyList<Vector2> perimeter, TriangleMesh2D mesh, double tolerance)
+    internal static void StorePrepared(IReadOnlyList<Vector2f> perimeter, TriangleMesh2D mesh, double tolerance)
     {
         Ensure.ThrowIfNot(Matches(perimeter, mesh.Vertices, static point => point));
         var entry = Entries.GetValue(perimeter, static _ => new());
@@ -66,7 +66,7 @@ public static class PolygonTriangulationCache2D
         }
     }
 
-    private static bool Matches<TPoint>(IReadOnlyList<TPoint> perimeter, ReadOnlySpan<Vector2> snapshot, Func<TPoint, Vector2> xy)
+    private static bool Matches<TPoint>(IReadOnlyList<TPoint> perimeter, ReadOnlySpan<Vector2f> snapshot, Func<TPoint, Vector2f> xy)
     {
         if (perimeter.Count != snapshot.Length) return false;
         for (var i = 0; i < snapshot.Length; i++)

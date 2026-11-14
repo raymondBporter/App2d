@@ -23,9 +23,9 @@ public sealed class GiantTreeLevel2DTests
     [Fact]
     public void PlayerCanStandAndJumpOnAGeneratedBranch()
     {
-        var tree = new GiantTree2D(Vector2.Zero, new(), 3107);
+        var tree = new GiantTree2D(Vector2f.Zero, new(), 3107);
         var branch = tree.Branches[0];
-        var spawn = new Vector2(branch.Bounds.Center.X, branch.Bounds.Top + 48);
+        var spawn = new Vector2f(branch.Bounds.Center.X, branch.Bounds.Top + 48);
         using var game = SideScrollerSimulation2D.Create(new(Traversal(), Map(),
             [new(1, WorldThingKind2D.PlayerSpawn, "Branch", true, spawn)])
         {
@@ -58,7 +58,7 @@ public sealed class GiantTreeLevel2DTests
     [Fact]
     public void BranchesAllowUpwardPassageAndAreIndependentOfRootChunkStreaming()
     {
-        var tree = new GiantTree2D(Vector2.Zero, new(), 3107);
+        var tree = new GiantTree2D(Vector2f.Zero, new(), 3107);
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision);
         using var level = new SideScrollerLevel2D(Traversal(), Map(), giantTrees: [tree]);
@@ -88,7 +88,7 @@ public sealed class GiantTreeLevel2DTests
     [Fact]
     public void ReloadAndDisposeRemoveOldPlatformsAndPublishChangedContent()
     {
-        var tree = new GiantTree2D(Vector2.Zero, new(), 3107);
+        var tree = new GiantTree2D(Vector2f.Zero, new(), 3107);
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision);
         using var level = new SideScrollerLevel2D(Traversal(), Map(), giantTrees: [tree]);
@@ -105,10 +105,10 @@ public sealed class GiantTreeLevel2DTests
         {
             var expected = replacement.Branches[i].Bounds;
             var actual = level.GiantTreeBranches[i].WorldObject.WorldBounds;
-            Assert.InRange(Vector2.Distance(expected.Min, actual.Min), 0, 0.001f);
-            Assert.InRange(Vector2.Distance(expected.Max, actual.Max), 0, 0.001f);
+            Assert.InRange(Vector2f.Distance(expected.Min, actual.Min), 0, 0.001f);
+            Assert.InRange(Vector2f.Distance(expected.Max, actual.Max), 0, 0.001f);
         }
-        Assert.All(level.GiantTreeBranches, body => Assert.Equal(Vector2.UnitY, PlatformCollisionRules2D.Attach(physics).Surface(body).OneWaySurfaceNormal));
+        Assert.All(level.GiantTreeBranches, body => Assert.Equal(Vector2f.UnitY, PlatformCollisionRules2D.Attach(physics).Surface(body).OneWaySurfaceNormal));
         level.ReloadGiantTrees([]);
         Assert.Empty(physics.Bodies);
         Assert.Empty(level.CaptureContent().GiantTrees);

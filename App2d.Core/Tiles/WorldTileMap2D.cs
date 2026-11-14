@@ -21,8 +21,8 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
 
         TileSize = sources[0].TileSize;
         ChunkSize = sources[0].ChunkSize;
-        Origin = sources.Select(m => m.Origin).Aggregate(Vector2.Min);
-        var max = sources.Select(m => m.WorldBounds.Max).Aggregate(Vector2.Max);
+        Origin = sources.Select(m => m.Origin).Aggregate(Vector2f.Min);
+        var max = sources.Select(m => m.WorldBounds.Max).Aggregate(Vector2f.Max);
         _tilesets = [.. sources.SelectMany(m => m.TilesetIds).Distinct(StringComparer.Ordinal)];
         if (_tilesets.Length > TileCell2D.MaximumTilesetCount)
         {
@@ -70,8 +70,8 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
     public int ChunkColumns => (Width - 1) / ChunkSize + 1;
     public int ChunkRows => (Height - 1) / ChunkSize + 1;
     public float TileSize { get; }
-    public Vector2 Origin { get; }
-    public Rect2D WorldBounds => new(Origin, Origin + new Vector2(Width, Height) * TileSize);
+    public Vector2f Origin { get; }
+    public Rect2D WorldBounds => new(Origin, Origin + new Vector2f(Width, Height) * TileSize);
     public IReadOnlyList<string> TilesetIds => _tilesets;
     public event Action<TileChunk2D>? ChunkChanged;
 
@@ -90,7 +90,7 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
     public TileKind2D GetTileKind(int x, int y) => Find(x, y) is { } e ? e.Map.GetTileKind(x - e.X, y - e.Y) : TileKind2D.Empty;
     public byte GetTilesetIndex(int x, int y) => Find(x, y) is { } e ? e.Catalog[e.Map.GetTilesetIndex(x - e.X, y - e.Y)] : (byte)0;
     public bool IsSolid(int x, int y) => GetTileKind(x, y).IsSolid();
-    public TileChunk2D WorldToChunk(Vector2 position) => new(
+    public TileChunk2D WorldToChunk(Vector2f position) => new(
         Math.Clamp((int)MathF.Floor((position.X - Origin.X) / (TileSize * ChunkSize)), 0, ChunkColumns - 1),
         Math.Clamp((int)MathF.Floor((position.Y - Origin.Y) / (TileSize * ChunkSize)), 0, ChunkRows - 1));
 
@@ -105,8 +105,8 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         TileRectangleMesher2D.Mesh(Math.Min(ChunkSize, Width - x), Math.Min(ChunkSize, Height - y),
             (cx, cy) => GetTileKind(x + cx, y + cy), cells);
         return [.. cells.Select(c => new TileCollisionRectangle2D(new(
-            Origin + new Vector2(x + c.X, y + c.Y) * TileSize,
-            Origin + new Vector2(x + c.X + c.Width, y + c.Y + c.Height) * TileSize), c.Kind))];
+            Origin + new Vector2f(x + c.X, y + c.Y) * TileSize,
+            Origin + new Vector2f(x + c.X + c.Width, y + c.Y + c.Height) * TileSize), c.Kind))];
     }
 
     private void Invalidate(EditableTileMap2D map, int x, int y, TileChunk2D chunk)

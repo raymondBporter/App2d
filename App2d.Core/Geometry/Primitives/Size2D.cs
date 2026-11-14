@@ -20,6 +20,6 @@ public readonly record struct Size2D
     public float Height { get; }
     public bool IsValid => float.IsFinite(Width) && Width > 0f && float.IsFinite(Height) && Height > 0f;
 
-    public Vector2 ToVector2() => new(Width, Height);
-    public static Size2D FromVector2(Vector2 value) => new(value.X, value.Y);
+    public Vector2f ToVector2() => new(Width, Height);
+    public static Size2D FromVector2(Vector2f value) => new(value.X, value.Y);
 }

@@ -8,6 +8,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -41,7 +42,7 @@ public sealed class PartAssetTests : IDisposable
         Geometry =
         [
             new() { Id = "palm", A = PartLocation.Origin, Geometry = Ellipse2D.Builder.Create(new(.06f, .05f)), Material = new() { Asset = "leather" } },
-            new() { Id = "cuff-line", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .02f } },
+            new() { Id = "cuff-line", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .02f } },
             new() { Id = "cuff-mesh", A = PartLocation.Origin, Frame = PartLocation.Origin, Material = new() { Fill = fill }, Mesh = new() { Outline = [new(-.03f, .1f), new(.03f, .1f), new(.03f, .14f), new(-.03f, .14f)], Thickness = .02f } },
         ],
 
@@ -102,7 +103,7 @@ public sealed class PartAssetTests : IDisposable
         Assert.Null(glove.Geometry[0].Material!.Fill);
         // The two instances place the same origin on different sockets; the mirrored one reflects X in its socket's axes.
         var pose = PoseEvaluator.Rest(resolved);
-        var actor = new ActorPose(pose, Vector2.Zero, 1);
+        var actor = new ActorPose(pose, Vector2f.Zero, 1);
         var left = resolved.Attachments[0].Placement(actor.SocketPlacement(resolved.Attachments[0].Socket));
         var right = resolved.Attachments[1].Placement(actor.SocketPlacement(resolved.Attachments[1].Socket));
         TestModels.Near(actor.SocketPlacement(resolved.Attachments[0].Socket).Origin, left.Origin);

@@ -32,13 +32,13 @@ internal static class GunRenderingSmoke2D
         const float dt = 1f / 120f;
         var scene = new Scene2D();
         var collision = new CollisionSystem2D();
-        var physics = new PhysicsWorld2D(collision) { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D(collision) { Gravity = Vector2f.Zero };
         var metrics = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var ids = new EntityIdAllocator2D();
-        var person = new Person2D(ids.Allocate(), collision, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
+        var person = new Person2D(ids.Allocate(), collision, physics, metrics, Vector2f.Zero, 2, 1, CombatFaction2D.Player);
         var floor = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(800f, 20f),
             new SolidColorShader(new Color4b(54, 74, 85)));
-        floor.Transform.Position = new Vector2(0, person.WorldObject.WorldBounds.Bottom - 10f);
+        floor.Transform.Position = new Vector2f(0, person.WorldObject.WorldBounds.Bottom - 10f);
         scene.Add(floor);
         var floorBody = physics.AddBody(floor, BodyMotionType2D.Static);
         floorBody.CollisionLayer = 1;
@@ -65,8 +65,8 @@ internal static class GunRenderingSmoke2D
 
         foreach (var facing in new[] { 1f, -1f })
         {
-            camera.Position = Vector2.Zero;
-            person.Reset(Vector2.Zero);
+            camera.Position = Vector2f.Zero;
+            person.Reset(Vector2f.Zero);
             person.Face(facing);
             presentation.Reset();
             weaponPresentation.Reset();
@@ -103,12 +103,12 @@ internal static class GunRenderingSmoke2D
                 Step(hold);
             }
 
-            camera.Position = new Vector2(facing * 60f, 0f);
+            camera.Position = new Vector2f(facing * 60f, 0f);
             Save($"gun-recoil-{facing}.png", "RECOIL");
 
             var wall = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(8f, 70f),
                 new SolidColorShader(new Color4b(54, 74, 85)));
-            wall.Transform.Position = new Vector2(facing * 170f, 7f);
+            wall.Transform.Position = new Vector2f(facing * 170f, 7f);
             scene.Add(wall);
             var wallBody = physics.AddBody(wall, BodyMotionType2D.Static);
             wallBody.CollisionLayer = 1;
@@ -156,7 +156,7 @@ internal static class GunRenderingSmoke2D
                 renderer.BeginFrame(width, height, default);
                 renderer.Draw(scene);
                 PlayerHud2D.Draw(renderer, 5, 5, weaponPresentation.HudTexture);
-                renderer.DrawScreenLabel(caption, new Vector2(24f, 540f));
+                renderer.DrawScreenLabel(caption, new Vector2f(24f, 540f));
                 renderer.EndFrame();
             });
         }

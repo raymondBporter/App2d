@@ -17,19 +17,19 @@ public sealed class MeleeAttack2DTests
         Assert.True(attack.IsInProgress);
         Assert.False(attack.IsDamageActive);
 
-        Assert.False(attack.Update(0.09f, Vector2.Zero, 1f));
+        Assert.False(attack.Update(0.09f, Vector2f.Zero, 1f));
         Assert.False(attack.IsDamageActive);
 
-        Assert.False(attack.Update(0.02f, Vector2.Zero, 1f));
+        Assert.False(attack.Update(0.02f, Vector2f.Zero, 1f));
         Assert.True(attack.IsDamageActive);
 
-        Assert.False(attack.Update(0.15f, Vector2.Zero, 1f));
+        Assert.False(attack.Update(0.15f, Vector2f.Zero, 1f));
         Assert.True(attack.IsDamageActive);
 
-        Assert.False(attack.Update(0.02f, Vector2.Zero, 1f));
+        Assert.False(attack.Update(0.02f, Vector2f.Zero, 1f));
         Assert.True(attack.IsDamageActive);
 
-        Assert.False(attack.Update(0.01f, Vector2.Zero, 1f));
+        Assert.False(attack.Update(0.01f, Vector2f.Zero, 1f));
         Assert.False(attack.IsDamageActive);
         Assert.True(attack.IsInProgress);
     }
@@ -39,12 +39,12 @@ public sealed class MeleeAttack2DTests
     {
         var attack = CreateAttack();
         attack.TryStart();
-        attack.Update(0.27f, Vector2.Zero, 1f);
+        attack.Update(0.27f, Vector2f.Zero, 1f);
 
         Assert.False(attack.TryStart());
         Assert.Equal(1, attack.AttackId);
 
-        Assert.True(attack.Update(0.081f, Vector2.Zero, 1f));
+        Assert.True(attack.Update(0.081f, Vector2f.Zero, 1f));
         Assert.Equal(2, attack.AttackId);
         Assert.True(attack.IsInProgress);
         Assert.False(attack.IsDamageActive);
@@ -57,14 +57,14 @@ public sealed class MeleeAttack2DTests
         attack.TryStart();
 
         Assert.False(attack.TryStart());
-        Assert.False(attack.Update(0.11f, Vector2.Zero, 1f));
+        Assert.False(attack.Update(0.11f, Vector2f.Zero, 1f));
         Assert.Equal(1, attack.AttackId);
 
-        Assert.False(attack.Update(0.25f, Vector2.Zero, 1f));
+        Assert.False(attack.Update(0.25f, Vector2f.Zero, 1f));
         Assert.Equal(1, attack.AttackId);
         Assert.False(attack.IsInProgress);
 
-        Assert.False(attack.Update(0.001f, Vector2.Zero, 1f));
+        Assert.False(attack.Update(0.001f, Vector2f.Zero, 1f));
         Assert.False(attack.IsDamageActive);
     }
 
@@ -73,12 +73,12 @@ public sealed class MeleeAttack2DTests
     {
         var attack = CreateAttack();
         attack.TryStart();
-        attack.Update(0.11f, Vector2.Zero, 1f);
+        attack.Update(0.11f, Vector2f.Zero, 1f);
 
         var attackId = attack.AttackId;
         Assert.True(attack.IsDamageActive);
 
-        attack.Update(0.05f, Vector2.Zero, 1f);
+        attack.Update(0.05f, Vector2f.Zero, 1f);
 
         Assert.True(attack.IsDamageActive);
         Assert.Equal(attackId, attack.AttackId);

@@ -75,7 +75,7 @@ public sealed class ObjectEditorTests : IDisposable
         using (var database = LevelDatabase2D.OpenRead(map.DatabasePath))
         {
             var stored = Assert.Single(database.LoadPositionThings());
-            Assert.Equal(movedTo, new Vector2(stored.X, stored.Y));
+            Assert.Equal(movedTo, new Vector2f(stored.X, stored.Y));
         }
 
         editor.UndoThingEdit();

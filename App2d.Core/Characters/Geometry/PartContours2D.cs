@@ -15,7 +15,7 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>Character part outlines, including curves and cutouts deformed by control bindings.</summary>
 public static class PartContours2D
 {
-    public static IReadOnlyList<Vector2> CutoutPoints(PartGeometry part) =>
+    public static IReadOnlyList<Vector2f> CutoutPoints(PartGeometry part) =>
         ((SimplePolygon2D)part.Geometry!).VertexList;
 
     /// <summary>A part's outline in an evaluated pose of a resolved model, with the pose's animated artwork fit applied (P7a).</summary>
@@ -61,7 +61,7 @@ public static class PartContours2D
         }
         if (part.Geometry is ICurve2D || part.VertexZ is not null)
         {
-            return new([.. LocalContour(part).Select((v, i) => new Vector3(frame.Frame.TransformPoint(v), part.VertexZ?[i] ?? 0))], frame.Layer);
+            return new([.. LocalContour(part).Select((v, i) => new Vector3(frame.Frame.TransformPoint(v).ToVector2(), part.VertexZ?[i] ?? 0))], frame.Layer);
         }
         if (part.Geometry is SimplePolygon2D && part.Bindings is { Count: > 0 })
         {
@@ -79,7 +79,7 @@ public static class PartContours2D
                 // Preserve the part's layer relative to the bound control, including animated layer changes.
                 cutout[binding.Point] = PartAttachment2D.BoundPoint(binding, drawnRest, world, rest);
             }
-            return new([.. cutout.Select(p => new Vector3(p.XY, 0))], layers: [.. cutout.Select(p => p.Z)]);
+            return new([.. cutout.Select(p => new Vector3(p.XY.ToVector2(), 0))], layers: [.. cutout.Select(p => p.Z)]);
         }
         if (part.Geometry is IShape2D typed)
         {
@@ -87,7 +87,7 @@ public static class PartContours2D
             var count = shape.GetOutlineVertCount(48);
             if (count == 0) throw new NotSupportedException($"A {typed.GetKind()} has no drawable outline.");
 
-            Span<Vector2> buffer = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
+            Span<Vector2f> buffer = count <= 64 ? stackalloc Vector2f[count] : new Vector2f[count];
             var outline = shape.GetOutlineVerts(buffer, 48);
             var result = new List<Vector3>(count);
             foreach (var vertex in outline)
@@ -95,17 +95,17 @@ public static class PartContours2D
                 result.Add(frame.At(vertex));
             }
 
-            return new([.. result.Select(p => new Vector3(p.XY, 0))], frame.Layer);
+            return new([.. result.Select(p => new Vector3(p.XY.ToVector2(), 0))], frame.Layer);
         }
         throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");
     }
 
     /// <summary>Local vertices used for rigid geometry, physical depths and explicit format conversion.</summary>
-    public static List<Vector2> LocalContour(PartGeometry part)
+    public static List<Vector2f> LocalContour(PartGeometry part)
     {
         if (part.Geometry is IShape2D shape)
         {
-            var vertices = new Vector2[shape.GetOutlineVertCount(48)];
+            var vertices = new Vector2f[shape.GetOutlineVertCount(48)];
             shape.GetOutlineVerts(vertices, 48);
             return [.. vertices];
         }

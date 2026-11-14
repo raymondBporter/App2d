@@ -12,7 +12,7 @@ public static class EntityCollision
 {
 
     /// <summary>The movement shape placed at the feet, mirrored to the facing.</summary>
-    public static EntityRegion Movement(ResolvedEntity entity, Vector2 position, int facing) =>
+    public static EntityRegion Movement(ResolvedEntity entity, Vector2f position, int facing) =>
         new(ColliderUses.Movement, entity.MovementShape, Similarity2D.FromAxis(position, new(facing, 0), mirror: facing < 0));
 
     /// <summary>The hurt regions at a pose: the entity's enabled-by-default hurt colliders placed.</summary>
@@ -20,7 +20,7 @@ public static class EntityCollision
         [.. entity.Colliders.Where(c => c.Use == ColliderUses.Hurt && c.DefaultEnabled).Select(c => c.Region(pose))];
 
     /// <summary>Where a shot leaves: the first equipped prop with a muzzle, and its unit axis in world XY (facing included).</summary>
-    public static (Vector3 Point, Vector2 Axis) Muzzle(ResolvedEntity entity, ActorPose pose)
+    public static (Vector3 Point, Vector2f Axis) Muzzle(ResolvedEntity entity, ActorPose pose)
     {
         var gun = entity.Equipment.FirstOrDefault(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null) ?? throw new InvalidOperationException($"Entity '{entity.Id}' equips no prop with a muzzle.");
         var frame = pose.Socket(gun.Socket);

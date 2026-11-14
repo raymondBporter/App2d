@@ -225,7 +225,7 @@ public static class ImageEdges2D
         return ridges;
     }
 
-    private static float Sample(ReadOnlySpan<float> pixels, int width, int height, Vector2 point)
+    private static float Sample(ReadOnlySpan<float> pixels, int width, int height, Vector2f point)
     {
         var x = Math.Clamp(point.X, 0, width - 1);
         var y = Math.Clamp(point.Y, 0, height - 1);

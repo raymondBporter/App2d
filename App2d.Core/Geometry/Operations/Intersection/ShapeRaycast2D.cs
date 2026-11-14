@@ -16,7 +16,7 @@ public static class ShapeRaycast2D
     /// <param name="shape">The shape in the same coordinate space.</param>
     /// <param name="maxDistance">The largest ray parameter accepted; parameters are distances only for unit directions.</param>
     /// <param name="hit">The local hit, normal and ray parameter.</param>
-    public static bool TryIntersect(Vector2 origin, Vector2 direction, IShape2D shape, float maxDistance, out RayHit2D hit)
+    public static bool TryIntersect(Vector2f origin, Vector2f direction, IShape2D shape, float maxDistance, out RayHit2D hit)
     {
         Ensure.ThrowIfNull(shape);
         Ensure.NonNegative(maxDistance, allowInfinity: true);
@@ -27,7 +27,7 @@ public static class ShapeRaycast2D
             case Ellipse2D ellipse:
                 // Cast in the ellipse's own frame; it is rigid, so the ray parameter maps back unchanged.
                 var frame = ellipse.Frame;
-                if (!Raycast2D.TryEllipse(frame.ToFrame(origin), frame.ToFrameDirection(direction), Vector2.Zero, ellipse.Radii, maxDistance, out var frameHit))
+                if (!Raycast2D.TryEllipse(frame.ToFrame(origin), frame.ToFrameDirection(direction), Vector2f.Zero, ellipse.Radii, maxDistance, out var frameHit))
                 {
                     hit = default;
                     return false;
@@ -63,7 +63,7 @@ public static class ShapeRaycast2D
                     hit = default;
                     return false;
                 }
-                Span<Vector2> vertices = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
+                Span<Vector2f> vertices = count <= 64 ? stackalloc Vector2f[count] : new Vector2f[count];
                 shape.GetOutlineVerts(vertices);
                 return Raycast2D.TryConvexPolygon(origin, direction, vertices, maxDistance, out hit);
         }

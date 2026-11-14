@@ -12,7 +12,8 @@ namespace App2d.Analyzers.Tests;
 
 public sealed class VectorRuleTests
 {
-    private const string Prefix = "using System; using System.Numerics; using App2d.Core.Mathematics; class Example { ";
+    private const string Prefix = "using System; using System.Numerics; using App2d.Core.Mathematics; " +
+        "using Vector2f = App2d.Core.Mathematics.Vec2<float>; using Vector2d = App2d.Core.Mathematics.Vec2<double>; class Example { ";
     private const string Suffix = " }";
 
     private static readonly ImmutableArray<MetadataReference> References =
@@ -80,6 +81,8 @@ public sealed class VectorRuleTests
     [InlineData("Vector2 Half(Vector2 a) => new Vector2(a.X / 2f, a.Y / 2f);", "Vector2 Half(Vector2 a) => a / 2f;")]
     [InlineData("Vector2 Third(Vector2 a) => new Vector2(a.X * (1f / 3f), a.Y * (1f / 3f));", "Vector2 Third(Vector2 a) => a * (1f / 3f);")]
     [InlineData("Vector2d Add(Vector2d a, Vector2d b) => new Vector2d(a.X + b.X, a.Y + b.Y);", "Vector2d Add(Vector2d a, Vector2d b) => a + b;")]
+    [InlineData("Vector2f Mul(Vector2f a, Vector2f b) => new Vector2f(a.X * b.X, a.Y * b.Y);", "Vector2f Mul(Vector2f a, Vector2f b) => a * b;")]
+    [InlineData("Vector2f Div(Vector2f a, Vector2f b) => new Vector2f(a.X / b.X, a.Y / b.Y);", "Vector2f Div(Vector2f a, Vector2f b) => a / b;")]
     [InlineData("Vector2f Scale(Vector2f a, float s) => new Vector2f(a.X * s, a.Y * s);", "Vector2f Scale(Vector2f a, float s) => a * s;")]
     [InlineData("float Gap(Vector2 a, Vector2 b) => new Vector2(a.X - b.X, a.Y - b.Y).Length();", "float Gap(Vector2 a, Vector2 b) => (a - b).Length();")]
     [InlineData("struct Body { public Vector2 Position; } Vector2 Move(Body body, Vector2 d) => new Vector2(body.Position.X + d.X, body.Position.Y + d.Y);",
@@ -88,7 +91,6 @@ public sealed class VectorRuleTests
         AssertFixAsync(member, expected, new ComponentwiseVectorMathAnalyzer(), ComponentwiseVectorMathAnalyzer.DiagnosticId);
 
     [Theory]
-    [InlineData("Vector2f Mul(Vector2f a, Vector2f b) => new Vector2f(a.X * b.X, a.Y * b.Y);")] // No Vector2f * Vector2f operator.
     [InlineData("Vector2 Mixed(Vector2 a, Vector2 b) => new Vector2(a.X + b.X, a.Y - b.Y);")]
     [InlineData("Vector2 Cross(Vector2 a, Vector2 b) => new Vector2(a.X * b.Y, a.Y * b.X);")]
     [InlineData("Vector2 Swap(Vector2 a, Vector2 b) => new Vector2(a.Y + b.Y, a.X + b.X);")]

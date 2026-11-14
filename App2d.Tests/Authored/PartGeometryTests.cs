@@ -39,7 +39,7 @@ public sealed class PartGeometryTests
         var fitted = evaluated.Pose.Fitted(evaluated.Attachment.Parts[1]);
         Assert.Equal(2, fitted.ScaleX);
         var frame = PartAttachment2D.FrameOf(fitted, evaluated.World, evaluated.Frame);
-        var center = frame.At(Vector2.Zero);
+        var center = frame.At(Vector2f.Zero);
         Assert.Equal(0, PartPicking2D.Distance(fitted, evaluated.World, center, evaluated.Frame), 4);
         var contour = PartContours2D.Contour(fitted, evaluated.World, evaluated.Frame);
         Assert.All(contour, p => Assert.Equal(.3f, p.Z, 4));

@@ -15,15 +15,15 @@ public sealed class GeometryValidation2DTests
     public static TheoryData<IShape2D> InvalidGeometry =>
     [
         new Circle2D(0),
-        new Ellipse2D(new(0, 1), Vector2.Zero, Vector2.UnitX),
-        new Capsule2D(Vector2.Zero, Vector2.One, -1),
-        new Rectangle2D(Vector2.Zero, new(-1, 1), Vector2.UnitX),
-        new AxisAlignedRectangle2D(Vector2.One, Vector2.Zero),
-        new RoundedRectangle2D(Vector2.Zero, new(.5f, .5f), 1, Vector2.UnitX),
-        new Triangle2D(Vector2.Zero, Vector2.One, new(2, 2)),
-        new ConvexPolygon2D([Vector2.Zero, Vector2.One]),
-        new SimplePolygon2D([Vector2.Zero, Vector2.One, new(2, 2)]),
-        new HalfSpace2D(Vector2.Zero, 0),
+        new Ellipse2D(new(0, 1), Vector2f.Zero, Vector2f.UnitX),
+        new Capsule2D(Vector2f.Zero, Vector2f.One, -1),
+        new Rectangle2D(Vector2f.Zero, new(-1, 1), Vector2f.UnitX),
+        new AxisAlignedRectangle2D(Vector2f.One, Vector2f.Zero),
+        new RoundedRectangle2D(Vector2f.Zero, new(.5f, .5f), 1, Vector2f.UnitX),
+        new Triangle2D(Vector2f.Zero, Vector2f.One, new(2, 2)),
+        new ConvexPolygon2D([Vector2f.Zero, Vector2f.One]),
+        new SimplePolygon2D([Vector2f.Zero, Vector2f.One, new(2, 2)]),
+        new HalfSpace2D(Vector2f.Zero, 0),
         new CompositeShape2D([]),
     ];
 
@@ -58,11 +58,11 @@ public sealed class GeometryValidation2DTests
     public void FactoriesRejectInvalidDataAndNormalizeHalfSpaces()
     {
         Assert.ThrowsAny<ArgumentException>(() => Circle2D.Builder.Create(0));
-        Assert.ThrowsAny<ArgumentException>(() => AxisAlignedRectangle2D.Builder.Create(Vector2.One, Vector2.Zero));
-        Assert.ThrowsAny<ArgumentException>(() => SimplePolygon2D.Builder.Create([Vector2.Zero, Vector2.One, new(2, 2)]));
-        Assert.ThrowsAny<ArgumentException>(() => BSpline2D.Builder.Create([Vector2.Zero, Vector2.One], 3));
+        Assert.ThrowsAny<ArgumentException>(() => AxisAlignedRectangle2D.Builder.Create(Vector2f.One, Vector2f.Zero));
+        Assert.ThrowsAny<ArgumentException>(() => SimplePolygon2D.Builder.Create([Vector2f.Zero, Vector2f.One, new(2, 2)]));
+        Assert.ThrowsAny<ArgumentException>(() => BSpline2D.Builder.Create([Vector2f.Zero, Vector2f.One], 3));
         var halfSpace = HalfSpace2D.Builder.Create(new(2, 0), 4);
-        Assert.Equal(Vector2.UnitX, halfSpace.Normal);
+        Assert.Equal(Vector2f.UnitX, halfSpace.Normal);
         Assert.Equal(2, halfSpace.Offset);
         halfSpace.Validate();
     }
@@ -77,7 +77,7 @@ public sealed class GeometryValidation2DTests
 
         static void Create()
         {
-            CubicBezier2D.Builder.Create(Vector2.Zero, new(.1f, 2), new(.8f, -1), Vector2.One);
+            CubicBezier2D.Builder.Create(Vector2f.Zero, new(.1f, 2), new(.8f, -1), Vector2f.One);
             Circle2D.Builder.Create(1);
         }
     }
@@ -93,10 +93,10 @@ public sealed class GeometryValidation2DTests
     [Fact]
     public void CollectionValuesSnapshotInputAndWithEditsReplaceTheSnapshot()
     {
-        Vector2[] vertices = [new(0, 0), new(3, 0), new(0, 3)];
+        Vector2f[] vertices = [new(0, 0), new(3, 0), new(0, 3)];
         var polygon = ConvexPolygon2D.Builder.Create(vertices);
         vertices[1] = new(300, 0);
-        Assert.Equal(new Vector2(3, 0), polygon.Vertices[1]);
+        Assert.Equal(new Vector2f(3, 0), polygon.Vertices[1]);
         var edited = polygon with { Vertices = [new(0, 0), new(6, 0), new(0, 3)] };
         Assert.Equal(4.5f, polygon.Area);
         Assert.Equal(9f, edited.Area);
@@ -111,12 +111,12 @@ public sealed class GeometryValidation2DTests
     [Fact]
     public void DerivedGeometryFollowsWithEditsWithoutStaleConstructorCaches()
     {
-        var triangle = Triangle2D.Builder.Create(Vector2.Zero, new(2, 0), new(0, 2));
+        var triangle = Triangle2D.Builder.Create(Vector2f.Zero, new(2, 0), new(0, 2));
         Assert.Equal(2, triangle.Area);
         Assert.Equal(4, (triangle with { C = new(0, 4) }).Area);
-        var polygon = SimplePolygon2D.Builder.Create([Vector2.Zero, new(2, 0), new(0, 2)]);
+        var polygon = SimplePolygon2D.Builder.Create([Vector2f.Zero, new(2, 0), new(0, 2)]);
         Assert.Equal(2, polygon.Area);
-        Assert.Equal(4, (polygon with { Vertices = [Vector2.Zero, new(4, 0), new(0, 2)] }).Area);
+        Assert.Equal(4, (polygon with { Vertices = [Vector2f.Zero, new(4, 0), new(0, 2)] }).Area);
         var composite = CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1), Circle2D.Builder.Create(1)]);
         Assert.Equal(2 * MathF.PI, composite.Area);
         Assert.Equal(MathF.PI, (composite with { IncludeOverlap = false }).Area);
@@ -127,7 +127,7 @@ public sealed class GeometryValidation2DTests
     public void ConcreteJsonReadsTheSameValueAndDefersValidation()
     {
         var circle = JsonSerializer.Deserialize<Circle2D>("{\"kind\":\"circle\",\"center\":{\"x\":2,\"y\":3},\"radius\":-1}", GeometryJson2D.JsonOptions);
-        Assert.Equal(new Vector2(2, 3), circle.Center);
+        Assert.Equal(new Vector2f(2, 3), circle.Center);
         Assert.Equal(-1, circle.Radius);
         Assert.ThrowsAny<ArgumentException>(circle.Validate);
         Assert.DoesNotContain("area", circle.ToJson());
@@ -137,15 +137,15 @@ public sealed class GeometryValidation2DTests
     [Fact]
     public void CircumcircleFactoryPassesThroughAllThreePointsInEitherOrder()
     {
-        var a = new Vector2(0, 0);
-        var b = new Vector2(2, 0);
-        var c = new Vector2(0, 2);
+        var a = new Vector2f(0, 0);
+        var b = new Vector2f(2, 0);
+        var c = new Vector2f(0, 2);
         var circle = Circle2D.Builder.FromPoints(a, b, c);
         var reversed = Circle2D.Builder.FromPoints(a, c, b);
-        Assert.Equal(Vector2.One, circle.Center);
+        Assert.Equal(Vector2f.One, circle.Center);
         Assert.Equal(circle.Center, reversed.Center);
         foreach (var point in new[] { a, b, c })
-            Assert.InRange(MathF.Abs(Vector2.Distance(point, circle.Center) - circle.Radius), 0, .000001f);
-        Assert.Throws<ArgumentOutOfRangeException>(() => Circle2D.Builder.FromPoints(Vector2.Zero, Vector2.One, new(2, 2)));
+            Assert.InRange(MathF.Abs(Vector2f.Distance(point, circle.Center) - circle.Radius), 0, .000001f);
+        Assert.Throws<ArgumentOutOfRangeException>(() => Circle2D.Builder.FromPoints(Vector2f.Zero, Vector2f.One, new(2, 2)));
     }
 }

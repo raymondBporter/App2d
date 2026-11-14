@@ -31,7 +31,7 @@ public sealed class PterosaurTests
         var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(0, 26), 2, 1, CombatFaction2D.Player, 30);
         return (enemy, physics, player);
     }
-    private static void Tick(AuthoredEntityEnemy2D enemy, PhysicsWorld2D physics, Vector2 target, int count = 1)
+    private static void Tick(AuthoredEntityEnemy2D enemy, PhysicsWorld2D physics, Vector2f target, int count = 1)
     {
         for (var i = 0; i < count; i++)
         {
@@ -48,7 +48,7 @@ public sealed class PterosaurTests
         var before = enemy.Pose.Local.Points["near-tip"];
         Tick(enemy, physics, new(1000, 26), 35);
         Assert.Equal(0, enemy.Body.GravityScale);
-        Assert.Equal(new Vector2(-96, 154), enemy.WorldObject.Transform.Position);
+        Assert.Equal(new Vector2f(-96, 154), enemy.WorldObject.Transform.Position);
         Assert.False(enemy.CaptureState().IsAttacking);
         Assert.NotEqual(before, enemy.Pose.Local.Points["near-tip"]);
     }
@@ -81,7 +81,7 @@ public sealed class PterosaurTests
     {
         var (enemy, physics, player) = Create(facing);
         Tick(enemy, physics, player.Position, 35);
-        Assert.Equal(new Vector2(-facing * 96, 154), enemy.WorldObject.Transform.Position);
+        Assert.Equal(new Vector2f(-facing * 96, 154), enemy.WorldObject.Transform.Position);
         Assert.Empty(enemy.GetActiveAttackHitboxes());
         Tick(enemy, physics, player.Position, 35);
         var direction = enemy.Body.LinearVelocity;
@@ -100,7 +100,7 @@ public sealed class PterosaurTests
         var combat = new CombatSystem2D(physics.CollisionSystem, registry);
         var sword = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(70, 50));
         sword.Transform.Position = new(enemy.WorldObject.Transform.Position.X, 30);
-        Assert.True(combat.ResolveAttack(sword, player.Id, 1, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero));
+        Assert.True(combat.ResolveAttack(sword, player.Id, 1, CombatFaction2D.Player, 4, 1, _ => Vector2f.Zero));
         Assert.Equal(3, enemy.Health.Current);
         Assert.False(enemy.CaptureState().IsAttacking);
     }
@@ -141,7 +141,7 @@ public sealed class PterosaurTests
         if (kill)
         {
             Assert.False(enemy.Body.IsCollider);
-            Assert.Equal(Vector2.Zero, enemy.Body.LinearVelocity);
+            Assert.Equal(Vector2f.Zero, enemy.Body.LinearVelocity);
         }
     }
 

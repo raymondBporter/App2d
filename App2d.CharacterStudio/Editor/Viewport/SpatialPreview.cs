@@ -85,10 +85,11 @@ internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part?
         var hovered = ImGui.IsItemHovered();
         var io = ImGui.GetIO();
         var camera = Camera(size);
-        var mouse = ImGui.GetMousePos() - origin;
+        var viewportSize = new Vector2f(size);
+        var mouse = new Vector2f(ImGui.GetMousePos() - origin);
         if (hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            var picked = _scene.Pick(camera.ScreenRay(mouse, size), out var hit);
+            var picked = _scene.Pick(camera.ScreenRay(mouse, viewportSize), out var hit);
             _orbiting = picked is null;
             _dragging = picked is not null;
             if (picked is { } index)
@@ -100,8 +101,8 @@ internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part?
             }
         }
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _dragging = false; _orbiting = false; }
-        if (_dragging && camera.ScreenRay(mouse, size).TryIntersect(_dragPlane, out var distance))
-            _scene.Objects[_selected].Position = camera.ScreenRay(mouse, size).At(distance) + _dragOffset;
+        if (_dragging && camera.ScreenRay(mouse, viewportSize).TryIntersect(_dragPlane, out var distance))
+            _scene.Objects[_selected].Position = camera.ScreenRay(mouse, viewportSize).At(distance) + _dragOffset;
         if (_orbiting || hovered && ImGui.IsMouseDragging(ImGuiMouseButton.Right))
         {
             _yaw -= io.MouseDelta.X * .008f;
@@ -124,7 +125,7 @@ internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part?
         draw.PushClipRect(origin, origin + size, true);
         foreach (var item in _scene.Objects)
         {
-            if (!camera.TryProject(item.Position, size, out var screen)) continue;
+            if (!camera.TryProject(item.Position, viewportSize, out var screen)) continue;
             var at = origin + new Vector2(screen.X, screen.Y);
             var selected = ReferenceEquals(item, _scene.Objects[_selected]);
             var color = selected ? new Color4b(255, 200, 105).PackedValue : new Color4b(167, 187, 210).PackedValue;

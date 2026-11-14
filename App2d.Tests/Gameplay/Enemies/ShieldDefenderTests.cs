@@ -25,7 +25,7 @@ public sealed class ShieldDefenderTests
     private static (AuthoredEntityEnemy2D Enemy, Person2D Player, CombatSystem2D Combat) Create(int facing = 1)
     {
         Assert.True(Catalog.Errors.Count == 0, string.Join("\n", Catalog.Errors));
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var enemy = new AuthoredEntityEnemy2D(EntityId2D.Create(), Catalog.Entities["shield-defender"], physics, new(0, 40), 1, 4);
         enemy.SetSimulationEnabled(true);
         enemy.Update(0, new(facing * 400, 26));
@@ -38,13 +38,13 @@ public sealed class ShieldDefenderTests
     }
     private static Rect2D Shell(AuthoredEntityEnemy2D enemy) =>
         enemy.Entity.GuardCollider!.Region(enemy.Pose, GameWorldUnits2D.WorldUnitsPerAuthoredUnit).Bounds;
-    private static SpatialObject2D Box(Vector2 position, float size = 4)
+    private static SpatialObject2D Box(Vector2f position, float size = 4)
     {
-        var box = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(size)));
+        var box = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2f(size)));
         box.Transform.Position = position;
         return box;
     }
-    private static void Tick(AuthoredEntityEnemy2D enemy, Vector2 target, int ticks)
+    private static void Tick(AuthoredEntityEnemy2D enemy, Vector2f target, int ticks)
     {
         for (var i = 0; i < ticks; i++)
         {

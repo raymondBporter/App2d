@@ -23,18 +23,18 @@ public sealed class EnemySessionTests
     [Fact]
     public void SessionDeliversImmutableEnemyStatesAndStampedAttackEvents()
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
+        var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2f.Zero, 2, 1, CombatFaction2D.Player);
         var combat = new CombatSystem2D(physics.CollisionSystem, new CombatantRegistry2D());
         var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), player.Body, metrics.GunMuzzleOffset, physics.CollisionSystem,
             1, 4, CombatFaction2D.Player, combat);
         player.AttachActions(arsenal);
         var authored = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
-        var brute = new AuthoredEntityEnemy2D(EntityId2D.Create(), authored.Entities["maul-brute"], physics, new Vector2(40f, 0f), 1, 4);
+        var brute = new AuthoredEntityEnemy2D(EntityId2D.Create(), authored.Entities["maul-brute"], physics, new Vector2f(40f, 0f), 1, 4);
         var world = new EnemyWorld();
         world.Enemies.Register(brute, new TileChunk2D(0, 0));
-        using var session = new SideScrollerSession2D(physics, player, arsenal, world, new RespawnState2D(Vector2.Zero, 5), combat);
+        using var session = new SideScrollerSession2D(physics, player, arsenal, world, new RespawnState2D(Vector2f.Zero, 5), combat);
         var events = new List<EnemyOccurred2D>();
         SessionFrame2D? first = null;
         for (var i = 0; i < 120; i++)
@@ -51,7 +51,7 @@ public sealed class EnemySessionTests
         Assert.Contains(events, e => e.Occurrence is EntityCue2D { Cue: "heavy" });
         Assert.Empty(world.DrainEnemyEvents());
         var original = Assert.Single(first!.Enemies);
-        brute.WorldObject.Transform.Position = new Vector2(999f, 100f);
+        brute.WorldObject.Transform.Position = new Vector2f(999f, 100f);
         Assert.Equal(original, Assert.Single(first.Enemies));
         Assert.NotEqual(original.Position, Assert.Single(session.CaptureEnemies()).Position);
     }
@@ -59,15 +59,15 @@ public sealed class EnemySessionTests
     private sealed class EnemyWorld : ISideScrollerSessionWorld2D
     {
         public EnemySystem2D Enemies { get; } = new();
-        public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
+        public Rect2D Bounds => new(new Vector2f(-10000f), new Vector2f(10000f));
         public float GoalX => 9000f;
         public ImmutableArray<EnemyState2D> CaptureEnemies() => Enemies.CaptureStates();
         public ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => Enemies.DrainEvents();
-        public void UpdateStreaming(Vector2 position) => Enemies.UpdateStreaming(_ => true);
+        public void UpdateStreaming(Vector2f position) => Enemies.UpdateStreaming(_ => true);
         public void UpdateWorldMotion(float dt)
         {
         }
-        public void UpdateEnemies(float dt, Vector2 target) => Enemies.Update(dt, target);
+        public void UpdateEnemies(float dt, Vector2f target) => Enemies.Update(dt, target);
         public void SyncEnemiesAfterPhysics() => Enemies.SyncAfterPhysics();
         public void ResolveDamage(Person2D player) => Enemies.TryResolvePlayerHits(player);
         public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => null;

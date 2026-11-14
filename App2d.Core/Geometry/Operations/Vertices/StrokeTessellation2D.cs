@@ -13,12 +13,12 @@ public static class StrokeTessellation2D
     public const int MaximumSegmentVertices = 6 + DefaultCapSegments * 6;
 
     /// <summary>Writes triangle-list vertices. A collapsed butt stroke is empty; square/round strokes become a square/disk.</summary>
-    public static int WriteSegment(Span<Vector2> vertices, Vector2 start, Vector2 end, float width,
+    public static int WriteSegment(Span<Vector2f> vertices, Vector2f start, Vector2f end, float width,
         LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt, int capSegments = DefaultCapSegments) =>
         WriteSegment(vertices, start, end, width, width, startCap, endCap, capSegments);
 
     /// <summary>Writes triangle-list vertices for a uniform or tapered segment. A collapsed butt stroke is empty; square/round strokes become a square/disk.</summary>
-    public static int WriteSegment(Span<Vector2> vertices, Vector2 start, Vector2 end, float startWidth, float endWidth,
+    public static int WriteSegment(Span<Vector2f> vertices, Vector2f start, Vector2f end, float startWidth, float endWidth,
         LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt, int capSegments = DefaultCapSegments)
     {
         Ensure.Finite(start);
@@ -46,15 +46,15 @@ public static class StrokeTessellation2D
             }
             else if (count != 0)
             {
-                WriteQuad(vertices, start + new Vector2(-maxRadius, -maxRadius), start + new Vector2(maxRadius, -maxRadius),
-                    start + new Vector2(maxRadius, maxRadius), start + new Vector2(-maxRadius, maxRadius));
+                WriteQuad(vertices, start + new Vector2f(-maxRadius, -maxRadius), start + new Vector2f(maxRadius, -maxRadius),
+                    start + new Vector2f(maxRadius, maxRadius), start + new Vector2f(-maxRadius, maxRadius));
             }
 
             return count;
         }
 
-        var unit = Vector2.Normalize(axis);
-        var perp = new Vector2(-unit.Y, unit.X);
+        var unit = Vector2f.Normalize(axis);
+        var perp = new Vector2f(-unit.Y, unit.X);
         var startNormal = perp * startRadius;
         var endNormal = perp * endRadius;
         if (startCap == LineCap2D.Square) start -= unit * startRadius;
@@ -71,28 +71,28 @@ public static class StrokeTessellation2D
         return count;
     }
 
-    private static void WriteQuad(Span<Vector2> vertices, Vector2 a, Vector2 b, Vector2 c, Vector2 d)
+    private static void WriteQuad(Span<Vector2f> vertices, Vector2f a, Vector2f b, Vector2f c, Vector2f d)
     {
         vertices[0] = a; vertices[1] = b; vertices[2] = c;
         vertices[3] = a; vertices[4] = c; vertices[5] = d;
     }
 
-    private static void WriteDisk(Span<Vector2> vertices, Vector2 center, float radius, int segments)
+    private static void WriteDisk(Span<Vector2f> vertices, Vector2f center, float radius, int segments)
     {
-        var previous = center + new Vector2(radius, 0);
+        var previous = center + new Vector2f(radius, 0);
         for (var i = 1; i <= segments; i++)
         {
             var angle = i * MathF.Tau / segments;
-            var next = center + Vector2.FromPolar(radius, angle);
+            var next = center + Vector2f.FromPolar(radius, angle);
             var offset = (i - 1) * 3;
             vertices[offset] = center; vertices[offset + 1] = previous; vertices[offset + 2] = next;
             previous = next;
         }
     }
 
-    private static void WriteRoundCap(Span<Vector2> vertices, Vector2 center, Vector2 outward, float radius, int segments)
+    private static void WriteRoundCap(Span<Vector2f> vertices, Vector2f center, Vector2f outward, float radius, int segments)
     {
-        var tangent = new Vector2(-outward.Y, outward.X);
+        var tangent = new Vector2f(-outward.Y, outward.X);
         var previous = center + tangent * radius;
         for (var i = 1; i <= segments; i++)
         {

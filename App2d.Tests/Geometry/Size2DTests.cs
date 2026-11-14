@@ -14,8 +14,8 @@ public sealed class Size2DTests
         Assert.True(size.IsValid);
         Assert.Equal(12f, size.Width);
         Assert.Equal(7f, size.Height);
-        Assert.Equal(new Vector2(12f, 7f), size.ToVector2());
-        Assert.Equal(size, Size2D.FromVector2(new Vector2(12f, 7f)));
+        Assert.Equal(new Vector2f(12f, 7f), size.ToVector2());
+        Assert.Equal(size, Size2D.FromVector2(new Vector2f(12f, 7f)));
         Assert.Equal(size, JsonSerializer.Deserialize<Size2D>(JsonSerializer.Serialize(size)));
         Assert.False(default(Size2D).IsValid);
     }

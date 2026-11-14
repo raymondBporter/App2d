@@ -9,18 +9,19 @@ public sealed class Image2DTests
     [Fact]
     public void PixelsRowsAndSpansShareStorageAndSupportValueTypeMath()
     {
-        var image = new Image2D<Vector2>(3, 2);
+        var image = new Image2D<Vector2f>(3, 2);
         image[2, 1] = new(4, 5);
-        image[2, 1].X *= 2;
-        Assert.Equal(new Vector2(8, 5), image.AsSpan()[5]);
-        image.GetRowSpan(0).Fill(Vector2.One);
-        Assert.Equal(Vector2.One, image[2, 0]);
-        Assert.Equal(Vector2.Zero, image[0, 1]);
+        ref var pixel = ref image[2, 1];
+        pixel = pixel with { X = pixel.X * 2 };
+        Assert.Equal(new Vector2f(8, 5), image.AsSpan()[5]);
+        image.GetRowSpan(0).Fill(Vector2f.One);
+        Assert.Equal(Vector2f.One, image[2, 0]);
+        Assert.Equal(Vector2f.Zero, image[0, 1]);
         Assert.Equal(6, image.Count);
         image.Fill(new(7));
-        Assert.All(image.AsSpan().ToArray(), value => Assert.Equal(new Vector2(7), value));
+        Assert.All(image.AsSpan().ToArray(), value => Assert.Equal(new Vector2f(7), value));
         image.Clear();
-        Assert.All(image.AsSpan().ToArray(), value => Assert.Equal(Vector2.Zero, value));
+        Assert.All(image.AsSpan().ToArray(), value => Assert.Equal(Vector2f.Zero, value));
     }
 
     [Fact]

@@ -8,7 +8,7 @@ public readonly record struct Vector2i(int X, int Y)
     public static Vector2i Zero => default;
 
     /// <summary>Converts to float coordinates explicitly; large integers may round.</summary>
-    public Vector2 ToVector2() => new(X, Y);
+    public Vector2f ToVector2() => new(X, Y);
 
     public static Vector2i operator +(Vector2i a, Vector2i b) => new(checked(a.X + b.X), checked(a.Y + b.Y));
     public static Vector2i operator -(Vector2i a, Vector2i b) => new(checked(a.X - b.X), checked(a.Y - b.Y));

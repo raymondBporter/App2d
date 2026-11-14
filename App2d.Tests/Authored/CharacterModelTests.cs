@@ -14,7 +14,7 @@ public sealed class CharacterModelTests
         control.Rest = new(.25f, 1.5f, -.14338458f);
 
         var layered = control.Rest;
-        Assert.Equal(new Vector2(.25f, 1.5f), layered.XY);
+        Assert.Equal(new Vector2f(.25f, 1.5f), layered.XY);
         Assert.Equal(-.14338458f, layered.Z);
         control.Rest = layered with { X = .5f };
 

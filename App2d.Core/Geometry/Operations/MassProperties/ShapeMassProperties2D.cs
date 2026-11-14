@@ -19,7 +19,7 @@ public static class ShapeMassProperties2D
         shape.Validate();
         return shape switch
         {
-            Circle2D circle => Ellipse(circle.Center, new Vector2(circle.Radius), density),
+            Circle2D circle => Ellipse(circle.Center, new Vector2f(circle.Radius), density),
             Ellipse2D ellipse => Ellipse(ellipse.Center, ellipse.Radii, density),
             Rectangle2D rectangle => Rectangle(rectangle.Center - rectangle.HalfSize, rectangle.Center + rectangle.HalfSize, density),
             AxisAlignedRectangle2D rectangle => Rectangle(rectangle.Min, rectangle.Max, density),
@@ -35,7 +35,7 @@ public static class ShapeMassProperties2D
         };
     }
 
-    private static MassProperties2D Ellipse(Vector2 center, Vector2 radii, double density)
+    private static MassProperties2D Ellipse(Vector2f center, Vector2f radii, double density)
     {
         var a = (double)radii.X;
         var b = (double)radii.Y;
@@ -43,7 +43,7 @@ public static class ShapeMassProperties2D
         return Create(area, new(center), area * (a * a + b * b) / 4d, density);
     }
 
-    private static MassProperties2D Rectangle(Vector2 min, Vector2 max, double density)
+    private static MassProperties2D Rectangle(Vector2f min, Vector2f max, double density)
     {
         var size = new Vector2d(max) - new Vector2d(min);
         var area = size.X * size.Y;
@@ -81,7 +81,7 @@ public static class ShapeMassProperties2D
             innerInertia + horizontalInertia + verticalInertia + cornerInertia, density);
     }
 
-    private static MassProperties2D Polygon(ReadOnlySpan<Vector2> vertices, double density)
+    private static MassProperties2D Polygon(ReadOnlySpan<Vector2f> vertices, double density)
     {
         // Shift before summation so a small polygon far from the origin keeps its precision.
         var origin = new Vector2d(vertices[0]);

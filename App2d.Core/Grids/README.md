@@ -28,8 +28,8 @@ using App2d.Core.Mathematics;
 using System.Numerics;
 
 var wind = new Grid2D<Vector2>(64, 32, cellSize: 128f, origin: new(-4096, -2048));
-wind.Fill(new Vector2(12f, 0f));
-wind[4, 2] = new Vector2(25f, 3f);
+wind.Fill(new Vector2f(12f, 0f));
+wind[4, 2] = new Vector2f(25f, 3f);
 
 int index = wind.Size.GetIndex(4, 2); // 4 + 2 * 64
 Vector2i coordinates = wind.Size.GetCell(index);

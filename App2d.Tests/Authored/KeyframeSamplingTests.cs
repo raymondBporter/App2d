@@ -150,7 +150,7 @@ public sealed class KeyframeSamplingTests
         const string motionJson = """{"time":0.5,"x":2,"z":-3,"curve":{"x1":0.2,"y1":2,"x2":0.8,"y2":-1}}""";
         var motion = JsonSerializer.Deserialize<ClipKey>(motionJson, AuthoredJson.Options)!;
         Assert.Equal(new Vector3(2, 0, -3), motion.Value);
-        Assert.Equal(new Vector2(.2f, 2), motion.Curve!.Control1);
+        Assert.Equal(new Vector2f(.2f, 2), motion.Curve!.Control1);
         var json = JsonSerializer.Serialize(motion, AuthoredJson.Options);
         using var document = JsonDocument.Parse(json);
         Assert.False(document.RootElement.TryGetProperty("value", out _));

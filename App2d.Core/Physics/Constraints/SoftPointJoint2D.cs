@@ -11,11 +11,11 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
 {
     private float _frequencyHertz = 6f;
     private float _dampingRatio = 0.65f;
-    private Vector2 _firstArm, _secondArm, _bias, _impulse;
+    private Vector2f _firstArm, _secondArm, _bias, _impulse;
     private float _massXX, _massXY, _massYY, _massCoefficient, _impulseCoefficient;
 
     public SoftPointJoint2D(RigidBody2D first, RigidBody2D second,
-        Vector2 firstLocalAnchor, Vector2 secondLocalAnchor)
+        Vector2f firstLocalAnchor, Vector2f secondLocalAnchor)
     {
         First = Ensure.RequireNotNull(first);
         Second = Ensure.RequireNotNull(second);
@@ -28,10 +28,10 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
 
     public RigidBody2D First { get; }
     public RigidBody2D Second { get; }
-    public Vector2 FirstLocalAnchor { get; }
-    public Vector2 SecondLocalAnchor { get; }
-    public Vector2 FirstWorldAnchor => Vector2.Transform(FirstLocalAnchor, First.WorldObject.Transform.Matrix);
-    public Vector2 SecondWorldAnchor => Vector2.Transform(SecondLocalAnchor, Second.WorldObject.Transform.Matrix);
+    public Vector2f FirstLocalAnchor { get; }
+    public Vector2f SecondLocalAnchor { get; }
+    public Vector2f FirstWorldAnchor => Vector2f.Transform(FirstLocalAnchor, First.WorldObject.Transform.Matrix);
+    public Vector2f SecondWorldAnchor => Vector2f.Transform(SecondLocalAnchor, Second.WorldObject.Transform.Matrix);
     public bool IsEnabled { get; set; } = true;
 
     /// <summary>Natural frequency in cycles per second. Higher is stiffer; keep below half the substep rate.</summary>
@@ -51,7 +51,7 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
     public void PrepareVelocity(float deltaSeconds)
     {
         Ensure.Positive(deltaSeconds);
-        _impulse = Vector2.Zero;
+        _impulse = Vector2f.Zero;
         _massXX = _massXY = _massYY = 0f;
         if (!IsEnabled || First.InverseMass + Second.InverseMass <= 0f) return;
 
@@ -87,7 +87,7 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
         var relativeVelocity = Second.LinearVelocity + Second.AngularVelocity * Perpendicular(_secondArm)
             - First.LinearVelocity - First.AngularVelocity * Perpendicular(_firstArm);
         var speed = relativeVelocity + _bias;
-        var impulse = -_massCoefficient * new Vector2(
+        var impulse = -_massCoefficient * new Vector2f(
             _massXX * speed.X + _massXY * speed.Y,
             _massXY * speed.X + _massYY * speed.Y) - _impulseCoefficient * _impulse;
         _impulse += impulse;
@@ -99,6 +99,6 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
 
     public bool SolvePosition(float deltaSeconds) => false;
 
-    private static Vector2 Perpendicular(Vector2 vector) => new(-vector.Y, vector.X);
-    private static float Cross(Vector2 a, Vector2 b) => a.X * b.Y - a.Y * b.X;
+    private static Vector2f Perpendicular(Vector2f vector) => new(-vector.Y, vector.X);
+    private static float Cross(Vector2f a, Vector2f b) => a.X * b.Y - a.Y * b.X;
 }

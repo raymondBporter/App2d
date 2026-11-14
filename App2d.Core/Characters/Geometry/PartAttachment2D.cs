@@ -23,7 +23,7 @@ public static class PartAttachment2D
     public static LayeredFrame2D Carrier(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null)
     {
         var origin = world(part.A);
-        var direction = part.B is { } end ? (world(end) - origin).XY : Vector2.Zero;
+        var direction = part.B is { } end ? (world(end) - origin).XY : Vector2f.Zero;
         if (part.Frame is { } frame && (part.B is null || direction.LengthSquared() <= 1e-10f))
         {
             return bone is null
@@ -31,9 +31,9 @@ public static class PartAttachment2D
                 : bone(frame).WithOrigin(origin);
         }
 
-        if (part.B is null) direction = Vector2.UnitY;
+        if (part.B is null) direction = Vector2f.UnitY;
         var up = part.Geometry is ICurve2D ? direction
-            : direction.LengthSquared() > 1e-10f ? Vector2.Normalize(direction) : Vector2.UnitY;
+            : direction.LengthSquared() > 1e-10f ? Vector2f.Normalize(direction) : Vector2f.UnitY;
         return LayeredFrame2D.FromYAxis(origin, up);
     }
 
@@ -43,8 +43,8 @@ public static class PartAttachment2D
         var stretch = 1f;
         if (part.Stretch && part.B is { } toward && rest is not null)
         {
-            var span = Vector2.Distance(rest(part.A).XY, rest(toward).XY);
-            if (span > 1e-6f) stretch = Vector2.Distance(world(part.A).XY, world(toward).XY) / span;
+            var span = Vector2f.Distance(rest(part.A).XY, rest(toward).XY);
+            if (span > 1e-6f) stretch = Vector2f.Distance(world(part.A).XY, world(toward).XY) / span;
         }
         return LayeredFrame2D.Local(new(part.ScaleX * stretch, part.ScaleY * stretch), part.Angle,
             new(part.OffsetX + part.Along, part.OffsetY), part.Layer).Then(Carrier(part, world, bone));
@@ -54,8 +54,8 @@ public static class PartAttachment2D
     {
         var origin = world(binding.Control);
         var direction = binding.Toward is { } toward ? world(toward) - origin : Vector3.UnitY;
-        var up = new Vector2(direction.X, direction.Y);
-        up = up.LengthSquared() > 1e-10f ? Vector2.Normalize(up) : Vector2.UnitY;
+        var up = new Vector2f(direction.X, direction.Y);
+        up = up.LengthSquared() > 1e-10f ? Vector2f.Normalize(up) : Vector2f.UnitY;
         return LayeredFrame2D.FromYAxis(origin, up);
     }
 
@@ -68,7 +68,7 @@ public static class PartAttachment2D
     }
 
     /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
-    public static Vector2 ArtworkPoint(PartGeometry part, int index, Vector2 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
+    public static Vector2f  ArtworkPoint(PartGeometry part, int index, Vector2f target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
         var art = binding is null ? FrameOf(part, world, bone) : FrameOf(part, rest, restBone);
@@ -86,6 +86,6 @@ public static class PartAttachment2D
         return local;
     }
 
-    public static Vector2 ArtworkPoint(PartGeometry part, int index, Vector2 target, ResolvedModel model, EvaluatedPose pose) =>
+    public static Vector2f  ArtworkPoint(PartGeometry part, int index, Vector2f target, ResolvedModel model, EvaluatedPose pose) =>
         ArtworkPoint(part, index, target, pose.World, id => model.Rest[id], pose.Placement, model.RestPlacement);
 }

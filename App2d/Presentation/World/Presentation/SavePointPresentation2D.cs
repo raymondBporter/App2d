@@ -12,7 +12,7 @@ internal sealed class SavePointPresentation2D : IDisposable
     private const float OrbHeight = 82f;
     private readonly WorldObject2D _glow;
     private readonly WorldObject2D _orb;
-    private readonly Vector2 _basePosition;
+    private readonly Vector2f _basePosition;
     private readonly Scene2D _scene;
     private readonly List<WorldObject2D> _visuals = [];
     private float _animationSeconds;
@@ -29,22 +29,22 @@ internal sealed class SavePointPresentation2D : IDisposable
         {
             ZIndex = 1
         };
-        baseStone.Transform.Position = _basePosition + new Vector2(0f, 7f);
+        baseStone.Transform.Position = _basePosition + new Vector2f(0f, 7f);
         Add(baseStone);
 
         var pedestal = new WorldObject2D(
             ConvexPolygon2D.Builder.Create(
             [
-                new Vector2(-20f, 0f),
-                new Vector2(20f, 0f),
-                new Vector2(11f, 52f),
-                new Vector2(-11f, 52f)
+                new Vector2f(-20f, 0f),
+                new Vector2f(20f, 0f),
+                new Vector2f(11f, 52f),
+                new Vector2f(-11f, 52f)
             ]),
             new LinearGradientShader(new Color4b(91, 103, 125), new Color4b(37, 45, 62)))
         {
             ZIndex = 1
         };
-        pedestal.Transform.Position = _basePosition + new Vector2(0f, 12f);
+        pedestal.Transform.Position = _basePosition + new Vector2f(0f, 12f);
         Add(pedestal);
 
         _glow = new WorldObject2D(Circle2D.Builder.Create(31f),
@@ -53,22 +53,22 @@ internal sealed class SavePointPresentation2D : IDisposable
             IsVisible = false,
             ZIndex = 1
         };
-        _glow.Transform.Position = _basePosition + new Vector2(0f, OrbHeight);
+        _glow.Transform.Position = _basePosition + new Vector2f(0f, OrbHeight);
         Add(_glow);
 
         _orb = new WorldObject2D(
             ConvexPolygon2D.Builder.Create(
             [
-                new Vector2(0f, 24f),
-                new Vector2(18f, 0f),
-                new Vector2(0f, -24f),
-                new Vector2(-18f, 0f)
+                new Vector2f(0f, 24f),
+                new Vector2f(18f, 0f),
+                new Vector2f(0f, -24f),
+                new Vector2f(-18f, 0f)
             ]),
             InactiveOrbShader())
         {
             ZIndex = 2
         };
-        _orb.Transform.Position = _basePosition + new Vector2(0f, OrbHeight);
+        _orb.Transform.Position = _basePosition + new Vector2f(0f, OrbHeight);
         Add(_orb);
         SetActive(false);
     }
@@ -82,14 +82,14 @@ internal sealed class SavePointPresentation2D : IDisposable
         _animationSeconds += deltaSeconds;
 
         var bob = MathF.Sin(_animationSeconds * (IsActive ? 4.5f : 2.2f)) * (IsActive ? 5f : 2f);
-        var orbPosition = _basePosition + new Vector2(0f, OrbHeight + bob);
+        var orbPosition = _basePosition + new Vector2f(0f, OrbHeight + bob);
         _orb.Transform.Position = orbPosition;
         _glow.Transform.Position = orbPosition;
 
         if (IsActive)
         {
             var pulse = 1f + MathF.Sin(_animationSeconds * 5.5f) * 0.09f;
-            _glow.Transform.Scale = new Vector2(pulse);
+            _glow.Transform.Scale = new Vector2f(pulse);
         }
 
     }

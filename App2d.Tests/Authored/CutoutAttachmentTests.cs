@@ -53,7 +53,7 @@ public sealed class CutoutAttachmentTests
         Assert.All(bound, p => Assert.Equal(0, p.Z));
         Assert.Equal(rigid[0], bound[0]);
         var original = PartAttachment2D.ArtworkPoint(part, 2, bound[2].XY, pose.World, id => resolved.Rest[id]);
-        Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[2], original) < 1e-5f);
+        Assert.True(Vector2f.Distance(PartContours2D.CutoutPoints(part)[2], original) < 1e-5f);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public sealed class CutoutAttachmentTests
         for (var i = 0; i < contour.Count; i++)
         {
             var point = PartAttachment2D.ArtworkPoint(part, i, contour[i].XY, World, Rest, bone: _ => LayeredFrame2D.FromMatrix(current), restBone: _ => LayeredFrame2D.FromMatrix(rest));
-            Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[i], point) < 1e-5f);
+            Assert.True(Vector2f.Distance(PartContours2D.CutoutPoints(part)[i], point) < 1e-5f);
         }
     }
 

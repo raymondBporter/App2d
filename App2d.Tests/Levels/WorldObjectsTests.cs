@@ -17,7 +17,7 @@ public sealed class WorldObjectsTests : IDisposable
     {
         Directory.CreateDirectory(_root);
         using (var database = LevelDatabase2D.Open(Path.Combine(_root, "map.db")))
-            database.Save(new EditableTileMap2D(32, 32, 32, 32, Vector2.Zero, ["dark-cave"]), 0);
+            database.Save(new EditableTileMap2D(32, 32, 32, 32, Vector2f.Zero, ["dark-cave"]), 0);
         Part.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "objects", "lift.json"))
             .Save(Path.Combine(_root, "lift.json"));
         _document = new(1, [new("test", "Test", 0, [new("test", "Test", 0, "map.db")])]);
@@ -36,7 +36,7 @@ public sealed class WorldObjectsTests : IDisposable
         Assert.Equal(2, world.Objects.Count);
         Assert.Same(world.Objects[0].Asset, world.Objects[1].Asset);
         Assert.Equal(world.Maps[0].WorldThingId(1).ToString(), world.Objects[0].Id);
-        Assert.Equal(new Vector2(500f, 600f), world.Objects[1].Position);
+        Assert.Equal(new Vector2f(500f, 600f), world.Objects[1].Position);
         Assert.Equal(_root, world.Root);
     }
 
@@ -61,7 +61,7 @@ public sealed class WorldObjectsTests : IDisposable
         }
         using var world = Load(_document);
         Assert.Equal(2, world.PositionThings.Count);
-        Assert.Equal(new Vector2(200f, 300f), Assert.Single(world.Objects).Position);
+        Assert.Equal(new Vector2f(200f, 300f), Assert.Single(world.Objects).Position);
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public sealed class WorldObjectsTests : IDisposable
             var path = Path.Combine(_root, $"bad-{i}.db");
             using (var database = LevelDatabase2D.Open(path))
             {
-                database.Save(new EditableTileMap2D(32, 32, 32, 32, Vector2.Zero, ["dark-cave"]), 0);
+                database.Save(new EditableTileMap2D(32, 32, 32, 32, Vector2f.Zero, ["dark-cave"]), 0);
                 var definition = database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, "Bad", assets[i]);
                 database.CreatePositionThing(new(definition.DefinitionId, null, true, 0f, 0f));
             }

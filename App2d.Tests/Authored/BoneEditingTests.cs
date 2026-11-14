@@ -4,6 +4,7 @@ using App2d.CharacterStudio.Editing.Documents;
 using App2d.CharacterStudio.Editing.Session;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -13,7 +14,7 @@ namespace App2d.Tests.Authored;
 /// <summary>P3c of the character-system migration: the edit commands on canonical bone nodes and the inverse drags.</summary>
 public sealed class BoneEditingTests
 {
-    private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f  XY(Vector3 v) => new(v.X, v.Y);
 
     /// <summary>A root bone carrying a child bone, a bound grandchild, a loose point control and a bound lamp; the root may be scaled and reflected.</summary>
     private static CharacterModel Rig(float scale = 1, bool reflect = false)
@@ -37,14 +38,14 @@ public sealed class BoneEditingTests
         var model = Rig(scale, reflect);
         var before = ResolvedModel.From(model);
         Assert.True(before.Nodes["child"].Link is { IsTip: true });
-        TestModels.Near(XYZ(Vector2.Transform(new(1, 0), before.RestTransforms["root"]), before.Rest["child"].Z), before.Rest["child"]);
+        TestModels.Near(XYZ(Vector2f.Transform(new(1, 0), before.RestTransforms["root"]), before.Rest["child"].Z), before.Rest["child"]);
 
         // Resize: the bound child and everything below it move to the new tip; frames keep their scale.
         ModelAuthoring.ResizeBone(model, "root", 1.5f);
         var longer = ResolvedModel.From(model);
-        TestModels.Near(XYZ(Vector2.Transform(new(1.5f, 0), before.RestTransforms["root"]), before.Rest["child"].Z), longer.Rest["child"]);
+        TestModels.Near(XYZ(Vector2f.Transform(new(1.5f, 0), before.RestTransforms["root"]), before.Rest["child"].Z), longer.Rest["child"]);
         Assert.Equal(scale, new Frame2D(longer.RestTransforms["child"]).XAxis.Length(), 4);
-        TestModels.Near(XYZ(Vector2.Transform(new(.75f, .2f), before.RestTransforms["root"]), before.Rest["lamp"].Z), longer.Rest["lamp"]);
+        TestModels.Near(XYZ(Vector2f.Transform(new(.75f, .2f), before.RestTransforms["root"]), before.Rest["lamp"].Z), longer.Rest["lamp"]);
         // The loose point control keeps its authored rest.
         TestModels.Near(before.Rest["marker"], longer.Rest["marker"]);
 
@@ -57,11 +58,11 @@ public sealed class BoneEditingTests
         Assert.Equal(turned.Nodes["child"].RestAngle, turned.Nodes["root"].RestAngle + (reflect ? -1 : 1) * .4f, 4);
 
         // Tip drag: rotate then resize so the tip lands exactly, whatever the inherited scale and handedness.
-        var target = XY(turned.Rest["child"]) + new Vector2(-.7f, .9f);
+        var target = XY(turned.Rest["child"]) + new Vector2f(-.7f, .9f);
         ModelAuthoring.MoveBoneTip(model, "child", target);
         var dragged = ResolvedModel.From(model);
-        Assert.InRange(Vector2.Distance(target, Vector2.Transform(new(model.Controls.Single(c => c.Id == "child").Length, 0), dragged.RestTransforms["child"])), 0, 1e-4f);
-        Assert.InRange(Vector2.Distance(target, XY(dragged.Rest["tip"])), 0, 1e-4f);
+        Assert.InRange(Vector2f.Distance(target, Vector2f.Transform(new(model.Controls.Single(c => c.Id == "child").Length, 0), dragged.RestTransforms["child"])), 0, 1e-4f);
+        Assert.InRange(Vector2f.Distance(target, XY(dragged.Rest["tip"])), 0, 1e-4f);
         Assert.Equal(scale, new Frame2D(dragged.RestTransforms["tip"]).XAxis.Length(), 4);
 
         // Move the root's origin: its local translation re-expresses the character position; descendants follow with the flag.
@@ -238,5 +239,5 @@ public sealed class BoneEditingTests
         }
     }
 
-    private static Vector3 XYZ(Vector2 xy, float z) => new(xy, z);
+    private static Vector3 XYZ(Vector2f xy, float z) => new(xy.ToVector2(), z);
 }

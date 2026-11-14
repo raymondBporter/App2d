@@ -13,7 +13,7 @@ public sealed class Camera3DTests
         var position = new Vector3(3, 2, 4);
         var camera = perspective ? Camera3D.Perspective(position, Vector3.Zero, Vector3.UnitY, 1.5f)
             : Camera3D.Orthographic(position, Vector3.Zero, Vector3.UnitY, 6, 4);
-        var size = new Vector2(900, 600);
+        var size = new Vector2f(900, 600);
         foreach (var point in new[] { Vector3.Zero, new Vector3(.7f, -.4f, .2f), new Vector3(-.2f, .6f, -.3f) })
         {
             Assert.True(camera.TryProject(point, size, out var screen));
@@ -33,7 +33,7 @@ public sealed class Camera3DTests
     {
         var perspective = Camera3D.Perspective(new(0, 0, 5), Vector3.Zero, Vector3.UnitY, 1f);
         var orthographic = Camera3D.Orthographic(new(0, 0, 5), Vector3.Zero, Vector3.UnitY, 4f, 4f);
-        var size = new Vector2(400);
+        var size = new Vector2f(400);
         Assert.True(perspective.TryProject(new(1, 0, 1), size, out var near));
         Assert.True(perspective.TryProject(new(1, 0, -1), size, out var far));
         Assert.True(near.X > far.X);
@@ -47,7 +47,7 @@ public sealed class Camera3DTests
     public void PlaneDraggingPreservesTheInitialGrabOffset()
     {
         var camera = Camera3D.Perspective(new(2, 1, 4), Vector3.Zero, Vector3.UnitY, 1f);
-        var size = new Vector2(600);
+        var size = new Vector2f(600);
         var hit = new Vector3(.1f, .2f, .1f);
         var origin = new Vector3(.3f, .4f, -.1f);
         Assert.True(camera.TryProject(hit, size, out var screen));

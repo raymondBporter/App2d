@@ -10,7 +10,7 @@ public sealed class PartPaintTests
     [Fact]
     public void AcceptsConvexPaintInEitherWindingAndCollinearEdges()
     {
-        Vector2[] points = [new(0, 0), new(1, 0), new(2, 0), new(2, 1), new(0, 1)];
+        Vector2f[] points = [new(0, 0), new(1, 0), new(2, 0), new(2, 1), new(0, 1)];
         PartPaint.Check([new() { Material = new() { Fill = "#ffffff" }, Points = [.. points] }]);
         PartPaint.Check([new() { Material = new() { Fill = "#ffffff" }, Points = [.. points.Reverse()] }]);
         PartPaint.Check([new() { Material = new() { Fill = "#ffffff" }, Points = [new(0, 0), new(1, 0), new(1, 0), new(0, 1)] }]);
@@ -48,7 +48,7 @@ public sealed class PartPaintTests
         var options = puppet ? PuppetDefinition.JsonOptions : AuthoredJson.Options;
         var patch = JsonSerializer.Deserialize<PartPaint>(json, options)!;
         PartPaint.Check([patch]);
-        Assert.Equal(new[] { Vector2.Zero, Vector2.UnitX, Vector2.UnitY }, patch.Points);
+        Assert.Equal(new[] { Vector2f.Zero, Vector2f.UnitX, Vector2f.UnitY }, patch.Points);
 
         var saved = JsonSerializer.Serialize(patch, options);
         using var document = JsonDocument.Parse(saved);

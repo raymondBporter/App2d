@@ -23,7 +23,7 @@ public sealed class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
         Enemy.SetSimulationEnabled(isEnabled);
     }
 
-    public void Update(float deltaSeconds, Vector2 targetPosition)
+    public void Update(float deltaSeconds, Vector2f  targetPosition)
     {
         Ensure.NonNegative(deltaSeconds);
         Ensure.Finite(targetPosition);

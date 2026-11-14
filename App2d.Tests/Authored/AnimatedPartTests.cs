@@ -106,7 +106,7 @@ public sealed class AnimatedPartTests
         var rig = resolved.Attachment(Instance)!.Rig!;
         // The nested pose is the part's own clip sampled on the shared clock, placed by the instance placement on the socket.
         var expected = PoseEvaluator.Sample(rig, tail.Clips[0], .3, repeat: true, new() { InPlace = true });
-        var actor = new ActorPose(pose, Vector2.Zero, 1);
+        var actor = new ActorPose(pose, Vector2f.Zero, 1);
         var placement = resolved.Attachment(Instance)!.Placement(actor.SocketPlacement(resolved.Attachment(Instance)!.Socket));
         foreach (var control in rig.Order)
         {
@@ -161,7 +161,7 @@ public sealed class AnimatedPartTests
         ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "tail/tuft"), 0, new(0, 0, 0));
         clip.Validate(resolved);
         var fitted = PoseEvaluator.Sample(resolved, clip, .3).Attachments[Instance];
-        Assert.Equal(new Vector2(2, 0), fitted.Pose.Fits["tuft"]);
+        Assert.Equal(new Vector2f(2, 0), fitted.Pose.Fits["tuft"]);
         Assert.Contains("tuft", fitted.Pose.HiddenParts);
         Assert.DoesNotContain(fitted.DrawnParts(), p => p.Id == "tuft");
     }
@@ -313,7 +313,7 @@ public sealed class AnimatedPartTests
             var resolved = ResolvedModel.From(person, null, Library(tail));
             var pose = PoseEvaluator.Rest(resolved);
             var evaluated = pose.Attachments[Instance];
-            var actor = new ActorPose(pose, Vector2.Zero, 1);
+            var actor = new ActorPose(pose, Vector2f.Zero, 1);
             var socket = actor.SocketPlacement(resolved.Attachment(Instance)!.Socket);
             var rest = PoseEvaluator.Rest(resolved.Attachment(Instance)!.Rig!);
             // Both policies put the fitted origin at the socket; layout repositions controls and keeps the tuft round, stretch scales the frame.
@@ -349,7 +349,7 @@ public sealed class AnimatedPartTests
         clip.Validate(resolved);
         var pose = PoseEvaluator.Sample(model: resolved, clip: clip, seconds: .2);
         var head = resolved.Parts.First(p => p.Id == Humanoid.Head);
-        Assert.Equal(new Vector2(1, 0), pose.Fits[Humanoid.Head]);
+        Assert.Equal(new Vector2f(1, 0), pose.Fits[Humanoid.Head]);
         var squashed = PartContours2D.Contour(head, resolved, pose);
         Assert.Equal(squashed.Min(p => p.Y), squashed.Max(p => p.Y), 4);
         Assert.False(pose.Visible(resolved.Parts.First(p => p.Id == Humanoid.Body)));

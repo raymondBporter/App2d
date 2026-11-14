@@ -25,7 +25,7 @@ public static class PartCurves2D
             var points = CurveControlPoints2D.Get(curve);
             var placed = new Vector3[points.Count];
             for (var i = 0; i < points.Count; i++)
-                placed[i] = new(coordinates.TransformPoint(points[i]), float.Lerp(a.Z, b.Z, points[i].Y) + part.Layer);
+                placed[i] = new(coordinates.TransformPoint(points[i]).ToVector2(), float.Lerp(a.Z, b.Z, points[i].Y) + part.Layer);
             if (curve is RoundedPolylineCurve2D rounded)
             {
                 foreach (var binding in part.Bindings)
@@ -42,7 +42,7 @@ public static class PartCurves2D
                 foreach (var binding in part.Bindings)
                 {
                     var p = points[binding.Point];
-                    var drawnRest = new Vector3(restCoordinates.TransformPoint(p), float.Lerp(restA.Z, restB.Z, p.Y) + part.Layer);
+                    var drawnRest = new Vector3(restCoordinates.TransformPoint(p).ToVector2(), float.Lerp(restA.Z, restB.Z, p.Y) + part.Layer);
                     placed[binding.Point] = PartAttachment2D.BoundPoint(binding, drawnRest, world, rest);
                 }
                 // Rig points are planar positions plus rendering layers. Never feed their packed Z into spatial geometry.
@@ -60,7 +60,7 @@ public static class PartCurves2D
             var t = parameters[i];
             if (pinned is { } path)
             {
-                positions[i] = new(path.Evaluate(t), 0);
+                positions[i] = new(path.Evaluate(t).ToVector2(), 0);
                 order[i] = path.Interpolate(layers!, t);
             }
             else if (controls is not null)
@@ -75,7 +75,7 @@ public static class PartCurves2D
             else
             {
                 var p = source.Evaluate(t);
-                positions[i] = new(coordinates.TransformPoint(p), 0);
+                positions[i] = new(coordinates.TransformPoint(p).ToVector2(), 0);
                 order[i] = float.Lerp(a.Z, b.Z, p.Y) + part.Layer;
             }
         }

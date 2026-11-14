@@ -64,7 +64,7 @@ internal sealed partial class ProofRenders
                     }
                     if (tile == 3)
                     {
-                        var placed = new ActorPose(pose, Vector2.Zero, 1);
+                        var placed = new ActorPose(pose, Vector2f.Zero, 1);
                         var hero = catalog.Entities["hero"];
                         foreach (var (prop, socket) in PersonLoadout.Dressed(clip, seconds, PersonGear.Sword, hero))
                         {

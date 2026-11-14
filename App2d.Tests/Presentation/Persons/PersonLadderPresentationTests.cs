@@ -30,7 +30,7 @@ public sealed class PersonLadderPresentationTests
         var collision = new CollisionSystem2D();
         _physics = new PhysicsWorld2D(collision)
         {
-            Gravity = new Vector2(0f, -_metrics.Gravity),
+            Gravity = new Vector2f(0f, -_metrics.Gravity),
             MaxSubstepSeconds = Dt,
             PositionIterations = 3,
             VelocityIterations = 2
@@ -41,9 +41,9 @@ public sealed class PersonLadderPresentationTests
         }
 
         _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
-            new Vector2(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
+            new Vector2f(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
             2u, 1u, CombatFaction2D.Player, tileMap: _map);
-        AddSolid(new Vector2(256f, 16f), new Vector2(512f, 32f));
+        AddSolid(new Vector2f(256f, 16f), new Vector2f(512f, 32f));
     }
 
     [Theory]
@@ -103,7 +103,7 @@ public sealed class PersonLadderPresentationTests
         }
     }
 
-    private RigidBody2D AddSolid(Vector2 center, Vector2 size)
+    private RigidBody2D AddSolid(Vector2f center, Vector2f size)
     {
         var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size));
         spatial.Transform.Position = center;

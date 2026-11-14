@@ -27,7 +27,7 @@ internal struct KeyframeSegmentSampler(float phase, IProgressMap progressMap)
         if (phase <= 0) return start;
         if (phase >= 1) return end;
 
-        var handles = new Vector2(geometry.Control1.X, geometry.Control2.X);
+        var handles = new Vector2f(geometry.Control1.X, geometry.Control2.X);
         for (var i = 0; i < _count; i++)
         {
             if (_timings[i].Handles == handles)
@@ -44,6 +44,6 @@ internal struct KeyframeSegmentSampler(float phase, IProgressMap progressMap)
     private struct CurveTimingCache
     {
         // Required inline-array backing field; compiler-generated indexing accesses its storage.
-        private (Vector2 Handles, float Parameter) _element0;
+        private (Vector2f Handles, float Parameter) _element0;
     }
 }

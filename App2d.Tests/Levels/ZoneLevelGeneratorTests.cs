@@ -46,7 +46,7 @@ public sealed class ZoneLevelGeneratorTests
                 Assert.Equal("combat", world.Maps[0].Id);
                 Assert.True(world.StartAtArrival);
                 Assert.Equal(2, world.Maps[0].Identity);
-                Assert.Equal(new System.Numerics.Vector2(1024, -384), world.Maps[0].TileMap.Origin);
+                Assert.Equal(new Vector2f(1024, -384), world.Maps[0].TileMap.Origin);
                 Assert.Equal(1200, world.PositionThings.First(t => t.TypeKey == "player-spawn").X);
             }
             using (var db = LevelDatabase2D.Open(first))

@@ -32,7 +32,7 @@ public static class PuppetTemplates
                 puppet.Parts.Add(new()
                 {
                     Id = from + "-" + to,
-                    Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(),
+                    Geometry = new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(),
                     A = from,
                     B = to,
                     Material = RenderMaterialDefinition2D.Ink
@@ -213,7 +213,7 @@ public static class PuppetTemplates
         const float travel = 1.6f, stance = .3f, strike = .18f, ground = .025f;
 
         // Cubic Hermite through keyed values; interior tangents are Catmull-Rom.
-        static Vector2 Curve(float t, float[] times, Vector2[] values, Vector2 startTangent, Vector2 endTangent)
+        static Vector2f Curve(float t, float[] times, Vector2f[] values, Vector2f startTangent, Vector2f endTangent)
         {
             var i = 0;
             while (i < times.Length - 2 && t > times[i + 1])
@@ -221,7 +221,7 @@ public static class PuppetTemplates
                 i++;
             }
 
-            Vector2 Tangent(int k) => k == 0 ? startTangent : k == times.Length - 1 ? endTangent
+            Vector2f Tangent(int k) => k == 0 ? startTangent : k == times.Length - 1 ? endTangent
                 : (values[k + 1] - values[k - 1]) / (times[k + 1] - times[k - 1]);
             var span = times[i + 1] - times[i];
             var u = Math.Clamp((t - times[i]) / span, 0, 1);
@@ -232,14 +232,14 @@ public static class PuppetTemplates
         // Swing path of one foot relative to the hips: x forward, y height above the ground.
         // Peel back, heel kicks toward the seat, knee drives through, reach, then paw back into contact.
         float[] swingTimes = [stance, .40f, .52f, .64f, .76f, .88f, 1];
-        Vector2[] swingPath = [new(strike - travel * stance, 0), new(-.42f, .20f), new(-.30f, .45f), new(-.08f, .50f), new(.16f, .40f), new(.36f, .18f), new(strike, 0)];
-        Vector2 Foot(float p) => p < stance ? new(strike - travel * p, 0)
+        Vector2f[] swingPath = [new(strike - travel * stance, 0), new(-.42f, .20f), new(-.30f, .45f), new(-.08f, .50f), new(.16f, .40f), new(.36f, .18f), new(strike, 0)];
+        Vector2f Foot(float p) => p < stance ? new(strike - travel * p, 0)
             : Curve(p, swingTimes, swingPath, new(-1.4f, 1f), new(-1.5f, -1.5f));
 
         // Hip height over one step: settle after contact, lowest while loading, rise through push-off, peak in flight.
         // Padded by one key on each side so the loop seam uses Catmull-Rom tangents too.
         float[] bobTimes = [-.2f, 0, .24f, .6f, .8f, 1, 1.24f];
-        Vector2[] bobHeights = [new(.985f), new(.945f), new(.875f), new(.935f), new(.985f), new(.945f), new(.875f)];
+        Vector2f[] bobHeights = [new(.985f), new(.945f), new(.875f), new(.935f), new(.985f), new(.945f), new(.875f)];
         float Hips(float q) => Curve(Wrap(q), bobTimes, bobHeights, default, default).X;
 
         Vector3 Lean(Vector3 point, float angle) => Rotation2D.ApplyXYAround(point, new(0, 1), -angle);
@@ -277,8 +277,8 @@ public static class PuppetTemplates
                 var shoulder = Lean(rest.Points[shoulderId], lean) + new Vector3(.03f * swing, chestLag, 0);
                 pose.Points[shoulderId] = shoulder;
                 // Elbows stay bent near 90 degrees: high and forward, then low and back.
-                var hand = new Vector2(.03f + .26f * swing, -.33f + .09f * swing - .05f * MathF.Sin(armAngle));
-                pose.Points[handId] = shoulder + new Vector3(Rotation2D.Apply(hand, -lean * .6f), 0);
+                var hand = new Vector2f(.03f + .26f * swing, -.33f + .09f * swing - .05f * MathF.Sin(armAngle));
+                pose.Points[handId] = shoulder + new Vector3(Rotation2D.Apply(hand, -lean * .6f).ToVector2(), 0);
             }
             motion.Keys.Add(pose.Key(phase * motion.Duration));
         }

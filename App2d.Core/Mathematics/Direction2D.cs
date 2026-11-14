@@ -9,12 +9,12 @@ namespace App2d.Core.Mathematics;
 /// </summary>
 public readonly record struct Direction2D
 {
-    public Direction2D(Vector2 vector)
+    public Direction2D(Vector2f  vector)
     {
         Ensure.NonZero(vector);
         // Float squares can overflow or underflow for valid input vectors.
         var wide = vector.ToVector2d();
-        Vector = (wide / wide.Length()).ToVector2();
+        Vector = (wide / wide.Length()).ToVector2f();
     }
 
     public Direction2D(float x, float y)
@@ -22,11 +22,11 @@ public readonly record struct Direction2D
         // Float squares can overflow or underflow for valid input vectors.
         var wide = new Vector2d(x, y);
         Ensure.NonZero(wide);
-        Vector = (wide / wide.Length()).ToVector2();
+        Vector = (wide / wide.Length()).ToVector2f();
     }
 
-    public Vector2 Vector { get; }
-    public bool IsValid => Vector != Vector2.Zero;
+    public Vector2f Vector { get; }
+    public bool IsValid => Vector != Vector2f.Zero;
 
     public float AngleRadians
     {
@@ -43,7 +43,7 @@ public readonly record struct Direction2D
 
     public Direction2D Reversed => new(-Vector);
 
-    public Vector2 ScaledBy(float distance)
+    public Vector2f ScaledBy(float distance)
     {
         Validate();
         return Vector * Ensure.Finite(distance);
@@ -52,14 +52,14 @@ public readonly record struct Direction2D
     public static Direction2D FromAngle(float angleRadians) => new(Polar2D.Direction(angleRadians));
 
     /// <summary>Unit direction from one finite point toward another, without float subtraction overflow.</summary>
-    public static Direction2D FromPoints(Vector2 from, Vector2 to)
+    public static Direction2D FromPoints(Vector2f  from, Vector2f  to)
     {
         Ensure.Finite(from);
         Ensure.Finite(to);
         var delta = to.ToVector2d() - from.ToVector2d();
         var length = Ensure.NonZero(delta.Length(), nameof(to));
 
-        return new((delta / length).ToVector2());
+        return new((delta / length).ToVector2f());
     }
 
     internal void Validate() => Ensure.NonZero(Vector);

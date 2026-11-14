@@ -13,7 +13,7 @@ public interface ISolidTileMap2D
     int Width { get; }
     int Height { get; }
     float TileSize { get; }
-    Vector2 Origin { get; }
+    Vector2f Origin { get; }
 
     bool IsSolid(int x, int y);
 }
@@ -32,6 +32,6 @@ public interface IChunkedTileMap2D : ISolidTileMap2D
 
     TileKind2D GetTileKind(int x, int y);
     byte GetTilesetIndex(int x, int y);
-    TileChunk2D WorldToChunk(Vector2 worldPosition);
+    TileChunk2D WorldToChunk(Vector2f worldPosition);
     IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(TileChunk2D chunk);
 }

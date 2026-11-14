@@ -12,11 +12,11 @@ public sealed class ShapeAreaTests
     public void RectangleAreaIsWidthTimesHeight() => Assert.Equal(12f, Rectangle2D.Builder.CreateFromSize(4f, 3f).Area, 3);
 
     [Fact]
-    public void CapsuleAreaIsRectanglePlusEndCircle() => Assert.Equal(2f * 1f * 4f + MathF.PI * 1f, Capsule2D.Builder.Create(new Vector2(0f, 0f), new Vector2(4f, 0f), 1f).Area, 3);
+    public void CapsuleAreaIsRectanglePlusEndCircle() => Assert.Equal(2f * 1f * 4f + MathF.PI * 1f, Capsule2D.Builder.Create(new Vector2f(0f, 0f), new Vector2f(4f, 0f), 1f).Area, 3);
 
     [Fact]
-    public void PolygonAreaMatchesShoelace() => Assert.Equal(4f, ConvexPolygon2D.Builder.Create([new Vector2(0f, 0f), new Vector2(2f, 0f), new Vector2(2f, 2f), new Vector2(0f, 2f)]).Area, 3);
+    public void PolygonAreaMatchesShoelace() => Assert.Equal(4f, ConvexPolygon2D.Builder.Create([new Vector2f(0f, 0f), new Vector2f(2f, 0f), new Vector2f(2f, 2f), new Vector2f(0f, 2f)]).Area, 3);
 
     [Fact]
-    public void HalfSpaceAreaIsInfinite() => Assert.Equal(float.PositiveInfinity, HalfSpace2D.Builder.Create(Vector2.UnitY, 0f).Area);
+    public void HalfSpaceAreaIsInfinite() => Assert.Equal(float.PositiveInfinity, HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f).Area);
 }

@@ -39,7 +39,7 @@ internal sealed class RasterRegions
         return new(Labels.Map(id => keep[id]), $"Kept {kept} of {Count} regions · {(eightConnected ? 8 : 4)}-neighbor");
     }
 
-    public int PickRegion(Vector2 point, int radius, Image2D<bool> visibleMask)
+    public int PickRegion(Vector2f point, int radius, Image2D<bool> visibleMask)
     {
         if (!(point.X >= 0 && point.Y >= 0 && point.X < Labels.Width && point.Y < Labels.Height))
         {
@@ -66,7 +66,7 @@ internal sealed class RasterRegions
                 {
                     continue;
                 }
-                var candidate = Vector2.DistanceSquared(point, new(x + .5f, y + .5f));
+                var candidate = Vector2f.DistanceSquared(point, new(x + .5f, y + .5f));
                 if (candidate < distance || (candidate == distance && (nearest == 0 || id < nearest)))
                 {
                     distance = candidate;

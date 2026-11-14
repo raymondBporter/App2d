@@ -21,7 +21,7 @@ public sealed class PointCharacterProjectionTests
     [Fact]
     public void ViewMapsModelUnitsToDevicePixelsWithYDownAndDepthUntouched()
     {
-        var view = Core.Rendering.LayeredMeshRenderer.View(new Vector2(64, 48), 240);
+        var view = Core.Rendering.LayeredMeshRenderer.View(new Vector2f(64, 48), 240);
         AssertClose(new(64, 48, 3), XnaVector3.Transform(new(0, 0, 3), view));
         AssertClose(new(304, -192, -2), XnaVector3.Transform(new(1, 1, -2), view));
     }
@@ -32,11 +32,11 @@ public sealed class PointCharacterProjectionTests
     [InlineData(320, 225, 160, 112, 260)]
     public void ProjectionPutsTheModelOriginOnTheAnchorAtPixelsPerUnit(int width, int height, float anchorX, float anchorY, float pixelsPerUnit)
     {
-        var projection = Core.Rendering.LayeredMeshRenderer.Projection(width, height, new Vector2(anchorX, anchorY), pixelsPerUnit);
+        var projection = Core.Rendering.LayeredMeshRenderer.Projection(width, height, new Vector2f(anchorX, anchorY), pixelsPerUnit);
         AssertClose(Clip(anchorX, anchorY, width, height, .5f), XnaVector3.Transform(new(0, 0, 0), projection));
         AssertClose(Clip(anchorX + pixelsPerUnit, anchorY - pixelsPerUnit, width, height, .5f), XnaVector3.Transform(new(1, 1, 0), projection));
         AssertClose(Clip(anchorX, anchorY, width, height, 0), XnaVector3.Transform(new(0, 0, -64), projection));
-        var composed = Core.Rendering.LayeredMeshRenderer.View(new Vector2(anchorX, anchorY), pixelsPerUnit) * Core.Rendering.LayeredMeshRenderer.DeviceProjection(width, height);
+        var composed = Core.Rendering.LayeredMeshRenderer.View(new Vector2f(anchorX, anchorY), pixelsPerUnit) * Core.Rendering.LayeredMeshRenderer.DeviceProjection(width, height);
         for (var i = 0; i < 16; i++)
         {
             Assert.Equal(composed[i], projection[i], 1e-4);

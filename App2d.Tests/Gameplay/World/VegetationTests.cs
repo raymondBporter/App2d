@@ -45,13 +45,13 @@ public sealed class VegetationTests
         var cell = new GrassCell2D(6, 19);
         var bounds = VegetationPlacement2D.GrassBounds(game.Level.TileMap, cell);
         // A small strike inside the tuft should affect only that tile.
-        game.Level.CutGrass(new(bounds.Center - new Vector2(1f), bounds.Center + new Vector2(1f)));
+        game.Level.CutGrass(new(bounds.Center - new Vector2f(1f), bounds.Center + new Vector2f(1f)));
         var cut = session.CaptureSnapshot();
         Assert.Equal(cell, Assert.Single(cut.World.CutGrass));
         game.Level.CutGrass(bounds);
         Assert.Same(cut.World.CutGrass, session.CaptureSnapshot().World.CutGrass);
         Assert.Empty(original.World.CutGrass);
-        game.Level.UpdateStreaming(game.Level.SpawnPoint + new Vector2(32f, 0f));
+        game.Level.UpdateStreaming(game.Level.SpawnPoint + new Vector2f(32f, 0f));
         Assert.Same(cut.World.CutGrass, session.CaptureWorld().CutGrass);
         game.Level.UpdateStreaming(game.Level.TileMap.WorldBounds.Max);
         Assert.Empty(session.CaptureWorld().CutGrass);
@@ -68,7 +68,7 @@ public sealed class VegetationTests
         var map = game.Level.TileMap;
         for (var x = 0; x < map.Width; x += map.ChunkSize)
         {
-            game.Level.UpdateStreaming(map.Origin + new Vector2(x + 0.5f, 20f) * map.TileSize);
+            game.Level.UpdateStreaming(map.Origin + new Vector2f(x + 0.5f, 20f) * map.TileSize);
             // Even an oversized strike must never add unloaded terrain to the set.
             game.Level.CutGrass(map.WorldBounds);
             var cuts = game.Session.CaptureWorld().CutGrass;
@@ -155,8 +155,8 @@ public sealed class VegetationTests
     {
         using var game = Create();
         var bounds = VegetationPlacement2D.GrassBounds(game.Level.TileMap, new(6, 19));
-        game.Level.CutGrass(new(bounds.Min - new Vector2(0f, 100f), bounds.Max - new Vector2(0f, 100f)));
-        game.Level.CutGrass(new(bounds.Min + new Vector2(0f, 100f), bounds.Max + new Vector2(0f, 100f)));
+        game.Level.CutGrass(new(bounds.Min - new Vector2f(0f, 100f), bounds.Max - new Vector2f(0f, 100f)));
+        game.Level.CutGrass(new(bounds.Min + new Vector2f(0f, 100f), bounds.Max + new Vector2f(0f, 100f)));
         Assert.Empty(game.Session.CaptureWorld().CutGrass);
     }
 

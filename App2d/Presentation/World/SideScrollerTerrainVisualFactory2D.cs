@@ -73,7 +73,7 @@ internal sealed class SideScrollerTerrainVisualFactory2D(IChunkedTileMap2D tileM
 
     private void AddFillVisual(List<WorldObject2D> visuals, FillRun run, int startY, int endY)
     {
-        var runBounds = new Rect2D(new Vector2(TileToWorldX(run.StartX), TileToWorldY(startY)), new Vector2(TileToWorldX(run.EndX), TileToWorldY(endY)));
+        var runBounds = new Rect2D(new Vector2f(TileToWorldX(run.StartX), TileToWorldY(startY)), new Vector2f(TileToWorldX(run.EndX), TileToWorldY(endY)));
         visuals.Add(run.Tileset.CreateSolidFill(runBounds));
     }
 

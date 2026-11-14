@@ -14,8 +14,9 @@ public sealed class ObjectPathPreview2DTests
         var asset = Part.Load(LiftPath);
         var points = ObjectPathPreview2D.Sample(asset, new(100f, 50f), 4);
         Assert.Equal(5, points.Length);
-        Assert.Equal(new Vector2(100f, 50f), points[0]);
-        Assert.Equal(asset.Motion!.CreateMotion(new(100f, 50f)).Position(asset.Motion.PeriodSeconds / 2), points[2]);
-        Assert.Empty(ObjectPathPreview2D.Sample(asset with { Motion = null }, Vector2.Zero));
+        Assert.Equal(new Vector2f(100f, 50f), points[0]);
+        Vector2f expectedMidpoint = asset.Motion!.CreateMotion(new(100f, 50f)).Position(asset.Motion.PeriodSeconds / 2);
+        Assert.Equal(expectedMidpoint, points[2]);
+        Assert.Empty(ObjectPathPreview2D.Sample(asset with { Motion = null }, Vector2f.Zero));
     }
 }

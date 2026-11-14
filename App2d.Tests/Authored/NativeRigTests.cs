@@ -117,8 +117,8 @@ public sealed class NativeRigTests
         var model = ResolvedModel.From(Model);
         var rest = PoseEvaluator.Rest(model);
         // The child's rest is its local origin through the root's reflected, scaled frame.
-        var expected = Vector2.Transform(new(.4f, .05f), model.RestTransforms["wheel-root"]);
-        TestModels.Near(new(expected, 0), rest.World("spoke-tip"));
+        var expected = Vector2f.Transform(new(.4f, .05f), model.RestTransforms["wheel-root"]);
+        TestModels.Near(new(expected.ToVector2(), 0), rest.World("spoke-tip"));
         Assert.True(model.RestTransforms["wheel-root"].GetDeterminant() < 0, "the root reflects");
         Assert.Equal(1.5f, new Core.Mathematics.Transforms.Frame2D(model.RestTransforms["wheel-root"]).XAxis.Length(), 4);
         var clip = Animations.Single();
@@ -126,8 +126,8 @@ public sealed class NativeRigTests
         // At the end: the root turned by a further half turn and halved its pose scale; the child's setup-before-first translate holds its last key.
         Assert.Equal(.75f, new Core.Mathematics.Transforms.Frame2D(pose.Bones["wheel-root"]).XAxis.Length(), 4);
         Assert.True(pose.Bones["wheel-root"].GetDeterminant() < 0, "the reflection survives animation");
-        expected = Vector2.Transform(new(.4f + .3f, .05f + .2f), pose.Bones["wheel-root"]);
-        TestModels.Near(new(expected, 0), pose.World("spoke-tip"));
+        expected = Vector2f.Transform(new(.4f + .3f, .05f + .2f), pose.Bones["wheel-root"]);
+        TestModels.Near(new(expected.ToVector2(), 0), pose.World("spoke-tip"));
         clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].Value = new(-1, -1, 0);
         var collapsed = PoseEvaluator.Sample(model, clip, 1);
         Assert.Equal(0, collapsed.Bones["wheel-root"].GetDeterminant(), 5);

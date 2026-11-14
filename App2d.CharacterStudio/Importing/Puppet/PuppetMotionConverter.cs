@@ -21,7 +21,7 @@ public static class PuppetMotionConverter
         {
             // The solved bone beneath a pivot (P11a) sits at its parent's origin and takes its position from it: no channel.
             var bone = resolved.Controls[chain.Root];
-            if (bone.Parent is { } parent && Vector2.Distance(new(resolved.Rest[chain.Root].X, resolved.Rest[chain.Root].Y), new(resolved.Rest[parent].X, resolved.Rest[parent].Y)) < 1e-6f)
+            if (bone.Parent is { } parent && Vector2f.Distance(new(resolved.Rest[chain.Root].X, resolved.Rest[chain.Root].Y), new(resolved.Rest[parent].X, resolved.Rest[parent].Y)) < 1e-6f)
             {
                 solved.Add(chain.Root);
             }

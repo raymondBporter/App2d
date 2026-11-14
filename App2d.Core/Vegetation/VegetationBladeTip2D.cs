@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.Rendering;
 using System.Numerics;
@@ -11,7 +12,7 @@ public sealed class VegetationBladeTip2D
 {
     private readonly VegetationTipPolygon2D[] _polygons;
     private readonly Rect2D _localBounds;
-    public Vector2 ReleasePosition { get; }
+    public Vector2f ReleasePosition { get; }
 
     internal VegetationBladeTip2D(IReadOnlyList<VegetationTipPolygon2D> polygons)
     {
@@ -21,14 +22,14 @@ public sealed class VegetationBladeTip2D
         _polygons = [.. polygons.Select(p => p with { Points = [.. p.Points.Select(point => point - ReleasePosition)] })];
     }
 
-    public Rect2D WorldBounds(Vector2 position, float rotation) =>
-        _localBounds.TransformedBy(Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position));
+    public Rect2D WorldBounds(Vector2f position, float rotation) =>
+        _localBounds.TransformedBy(new RigidTransform2D(position, rotation).Matrix);
 
-    public void Render(Renderer2D renderer, Vector2 position, float rotation, float opacity)
+    public void Render(Renderer2D renderer, Vector2f position, float rotation, float opacity)
     {
-        var transform = Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position);
-        Span<Vector2> points = stackalloc Vector2[16];
-        Span<Vector2> ring = stackalloc Vector2[17];
+        var transform = new RigidTransform2D(position, rotation).Matrix;
+        Span<Vector2f> points = stackalloc Vector2f[16];
+        Span<Vector2f> ring = stackalloc Vector2f[17];
         foreach (var polygon in _polygons)
         {
             var world = points[..polygon.Points.Length];
@@ -49,4 +50,4 @@ public sealed class VegetationBladeTip2D
 }
 
 /// <summary>One convex piece of a clipping; an outline draws it in ink like the living plant (width in world units).</summary>
-internal readonly record struct VegetationTipPolygon2D(Vector2[] Points, Color4b Fill, Color4b? Outline, float OutlineWidth);
+internal readonly record struct VegetationTipPolygon2D(Vector2f[] Points, Color4b Fill, Color4b? Outline, float OutlineWidth);

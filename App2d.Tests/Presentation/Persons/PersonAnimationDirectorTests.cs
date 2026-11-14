@@ -55,14 +55,14 @@ public sealed class PersonAnimationDirectorTests
         director.ApplyState(Standing with
         {
             LandingSpeedThisFrame = 760
-        }, Vector2.Zero, 1);
+        }, Vector2f.Zero, 1);
         Assert.Equal(PersonMoves.Idle, director.Frame().Key);
         director.ApplyState(Standing with
         {
             LandingSpeedThisFrame = 1060
-        }, Vector2.Zero, 2);
+        }, Vector2f.Zero, 2);
         Assert.Equal(PersonMoves.Land, director.Frame().Key);
-        director.ApplyState(Standing, Vector2.Zero, 2.5);
+        director.ApplyState(Standing, Vector2f.Zero, 2.5);
         Assert.Equal(PersonMoves.Idle, director.Frame().Key);
     }
 
@@ -71,7 +71,7 @@ public sealed class PersonAnimationDirectorTests
     {
         public PersonAnimationDirector Director { get; } = new(Moves) { Equipment = equipment };
         private long _tick;
-        public Vector2 Feet;
+        public Vector2f Feet;
         public PersonFrame Step(PersonState2D state, int ticks = 1)
         {
             PersonFrame frame = default;
@@ -159,7 +159,7 @@ public sealed class PersonAnimationDirectorTests
         Assert.InRange(climb.Seconds, .1, .4); // phase from height climbed, not the clock
         Assert.Equal(PersonMoves.Climb, d.Step(climbing with
         {
-            LinearVelocity = Vector2.Zero
+            LinearVelocity = Vector2f.Zero
         }, 30).Key);
         Assert.Equal(PersonMoves.ClimbOff, d.Step(Standing).Key);
         Assert.Equal(PersonMoves.Idle, d.Step(Standing, 40).Key);

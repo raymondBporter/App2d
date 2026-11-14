@@ -75,19 +75,19 @@ public sealed class SpikeTerrain2DTests : IDisposable
         Assert.All(spikes, spike =>
         {
             var spikeTileMin = level.TileMap.Origin +
-                new System.Numerics.Vector2(spike.X, spike.Y) * level.TileMap.TileSize;
+                new Vector2f(spike.X, spike.Y) * level.TileMap.TileSize;
             var insideSpike = new Rect2D(
-                spikeTileMin + new System.Numerics.Vector2(8f, 0f),
-                spikeTileMin + new System.Numerics.Vector2(24f, 20f));
+                spikeTileMin + new Vector2f(8f, 0f),
+                spikeTileMin + new Vector2f(24f, 20f));
             Assert.True(level.TryGetSpikeSource(insideSpike, out var spikeSourceX));
             Assert.Equal(spikeTileMin.X + level.TileMap.TileSize / 2f, spikeSourceX);
         });
 
         var (X, Y) = FindClearTile(level);
-        var clearTileMin = level.TileMap.Origin + new System.Numerics.Vector2(X, Y) * level.TileMap.TileSize;
+        var clearTileMin = level.TileMap.Origin + new Vector2f(X, Y) * level.TileMap.TileSize;
         var insideClearTile = new Rect2D(
-            clearTileMin + new System.Numerics.Vector2(8f),
-            clearTileMin + new System.Numerics.Vector2(24f));
+            clearTileMin + new Vector2f(8f),
+            clearTileMin + new Vector2f(24f));
         Assert.False(level.TryGetSpikeSource(insideClearTile, out _));
     }
 

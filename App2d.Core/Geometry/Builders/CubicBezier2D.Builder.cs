@@ -18,6 +18,6 @@ public readonly partial record struct CubicBezier2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static CubicBezier2D Create(Vector2 start, Vector2 control1, Vector2 control2, Vector2 end) => new CubicBezier2D(start, control1, control2, end).Validated();
+        public static CubicBezier2D Create(Vector2f start, Vector2f control1, Vector2f control2, Vector2f end) => new CubicBezier2D(start, control1, control2, end).Validated();
     }
 }

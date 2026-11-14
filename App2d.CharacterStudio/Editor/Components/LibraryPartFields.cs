@@ -136,7 +136,7 @@ internal sealed class LibraryPartFields(EditorSession session)
         if (doc.Asset.Motion is not { } motion)
         {
             if (Ui.Button("Add path motion", doc.Asset.Physics is null || doc.Asset.Physics.MotionType == BodyMotionType2D.Kinematic))
-                session.Edit(doc, () => doc.Asset.Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(0, .5f), new(1, .5f), new(1, 0)) });
+                session.Edit(doc, () => doc.Asset.Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2f.Zero, new(0, .5f), new(1, .5f), new(1, 0)) });
             Ui.Help("A path moves the whole part. A physical part must use a kinematic body.");
             return;
         }

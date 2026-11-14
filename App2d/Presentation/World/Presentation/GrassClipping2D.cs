@@ -5,13 +5,13 @@ using System.Numerics;
 namespace App2d.Presentation.World.Presentation;
 
 /// <summary>Short-lived visual motion only; no rigid bodies or gameplay collisions.</summary>
-internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 velocity, float spin, float phase, float scale)
+internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2f velocity, float spin, float phase, float scale)
 {
     public const float LifetimeSeconds = 1f;
     private const float FadeSeconds = 0.22f;
     public VegetationBladeTip2D Shape { get; } = shape;
-    public Vector2 Position { get; private set; } = shape.ReleasePosition;
-    public Vector2 Velocity { get; private set; } = velocity;
+    public Vector2f Position { get; private set; } = shape.ReleasePosition;
+    public Vector2f Velocity { get; private set; } = velocity;
     public float Rotation { get; private set; }
     public float Age { get; private set; }
     public bool IsExpired => Age >= LifetimeSeconds;
@@ -34,7 +34,7 @@ internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 veloci
             };
             var drift = field.Offset(Position.X, 1f, phase, 1f) * 5f;
             var flutter = MathF.Sin(Age * 13f + phase) * 34f * scale;
-            var acceleration = new Vector2(drift + flutter - Velocity.X * 1.8f, -280f * scale);
+            var acceleration = new Vector2f(drift + flutter - Velocity.X * 1.8f, -280f * scale);
             Position += Velocity * step + acceleration * (0.5f * step * step);
             Velocity += acceleration * step;
             Rotation += (spin + MathF.Sin(Age * 9f + phase) * 1.4f) * step;

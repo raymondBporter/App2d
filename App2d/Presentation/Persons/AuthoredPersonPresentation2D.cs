@@ -119,9 +119,9 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     {
         // Planted feet stand on the ground, so they ride a moving platform instead of staying where it was.
         var elapsed = double.IsNaN(_stateClock) ? 0 : (float)Math.Clamp(tick / 120.0 - _stateClock, 0, .1);
-        if (state.IsGrounded && state.GroundVelocity != Vector2.Zero)
+        if (state.IsGrounded && state.GroundVelocity != Vector2f.Zero)
         {
-            _hold.Shift(new Vector3(state.GroundVelocity * (float)elapsed / _worldUnitsPerModelUnit, 0));
+            _hold.Shift(new Vector3((state.GroundVelocity * (float)elapsed / _worldUnitsPerModelUnit).ToVector2(), 0));
         }
 
         _state = state;
@@ -138,7 +138,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         Update();
     }
 
-    private Vector2 Feet(PersonState2D state) => state.Position - new Vector2(0, _halfHeight);
+    private Vector2f  Feet(PersonState2D state) => state.Position - new Vector2f(0, _halfHeight);
 
     private bool Visible() => _state.InvulnerabilitySeconds <= 0 || ((int)(_clock * 20) & 1) == 0 || !_state.IsAlive;
 
@@ -201,7 +201,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         _swoosh.Sweep = backhand ? 1 : -1;
         _swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary;
         var (guard, tip) = PersonLoadout.Blade(pose, sword, socket);
-        var layer = new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(socket).Layer + SwooshLayerOffset;
+        var layer = new ActorPose(pose, Vector2f.Zero, 1).SocketPlacement(socket).Layer + SwooshLayerOffset;
         _swoosh.Record((float)_clock, guard, tip, PersonLoadout.Swooshing(clip, seconds), layer);
     }
 

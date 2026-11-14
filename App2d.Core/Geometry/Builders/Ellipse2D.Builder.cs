@@ -20,9 +20,9 @@ public readonly partial record struct Ellipse2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static Ellipse2D Create(Vector2 radii, Vector2 center = default, float angleRadians = 0f) => new Ellipse2D(radii, center, OrientedFrame2D.AxisFromAngle(angleRadians)).Validated();
+        public static Ellipse2D Create(Vector2f radii, Vector2f center = default, float angleRadians = 0f) => new Ellipse2D(radii, center, OrientedFrame2D.AxisFromAngle(angleRadians)).Validated();
 
         /// <summary>An ellipse whose local +X follows any finite nonzero direction; its length is ignored.</summary>
-        public static Ellipse2D Create(Vector2 radii, Vector2 center, Vector2 axis) => new Ellipse2D(radii, center, new Direction2D(axis).Vector).Validated();
+        public static Ellipse2D Create(Vector2f radii, Vector2f center, Vector2f axis) => new Ellipse2D(radii, center, new Direction2D(axis).Vector).Validated();
     }
 }

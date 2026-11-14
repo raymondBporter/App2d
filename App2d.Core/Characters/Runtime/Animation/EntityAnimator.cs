@@ -25,7 +25,7 @@ public sealed class EntityAnimator
         Pose = new(PoseEvaluator.Sample(entity.Model, entity.Clip(Role), 0, true, new()
         {
             InPlace = true
-        }), Vector2.Zero, 1);
+        }), Vector2f.Zero, 1);
     }
 
     public ResolvedEntity Entity { get; }
@@ -122,7 +122,7 @@ public sealed class EntityAnimator
     /// controller picks the locomotion role; <paramref name="groundDistance"/> is how far the actor actually moved along
     /// the ground this step. <paramref name="hold"/> freezes locomotion, the explicit fallback for states without a role.
     /// </summary>
-    public void Step(float dt, Vector2 position, int facing, string role, float groundDistance, bool hold, List<AnimationEvent> events, string? expression = null)
+    public void Step(float dt, Vector2f position, int facing, string role, float groundDistance, bool hold, List<AnimationEvent> events, string? expression = null)
     {
         if (facing is not (1 or -1))
         {
@@ -176,7 +176,7 @@ public sealed class EntityAnimator
         Evaluate(position, expression);
     }
 
-    private void Evaluate(Vector2 position, string? expression)
+    private void Evaluate(Vector2f position, string? expression)
     {
         var action = Current;
         if (action is null || action.Mask is not null)

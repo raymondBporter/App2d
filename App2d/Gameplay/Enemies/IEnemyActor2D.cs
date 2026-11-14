@@ -13,7 +13,7 @@ public interface IEnemyActor2D
 
     void SetSimulationEnabled(bool isEnabled);
 
-    void Update(float deltaSeconds, Vector2 targetPosition);
+    void Update(float deltaSeconds, Vector2f targetPosition);
 
     void SyncAfterPhysics();
 }

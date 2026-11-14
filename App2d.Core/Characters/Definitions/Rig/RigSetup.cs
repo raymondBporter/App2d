@@ -43,8 +43,8 @@ public sealed record RigSetup
     /// <summary>Drawing-layer offset from the parent (character-migration-baseline.md, section 7.4).</summary>
     public float Layer { get; set; }
 
-    [JsonIgnore] public Vector2 Translation => new(X, Y);
-    [JsonIgnore] public Vector2 ScaleVector => new(Scale, Reflect ? -Scale : Scale);
+    [JsonIgnore] public Vector2f Translation => new(X, Y);
+    [JsonIgnore] public Vector2f ScaleVector => new(Scale, Reflect ? -Scale : Scale);
 
     public void Validate(string field)
     {
@@ -80,7 +80,7 @@ public sealed record RigLink
     [JsonIgnore] public bool IsTip => T == 1 && OffsetX == 0 && OffsetY == 0 && Orientation == RigLinkOrientations.Parent;
 
     /// <summary>The bound origin in the parent's local axes, from the parent's final length.</summary>
-    public Vector2 Origin(float parentLength) => new(parentLength * T + OffsetX, OffsetY);
+    public Vector2f Origin(float parentLength) => new(parentLength * T + OffsetX, OffsetY);
 
     public void Validate(string field)
     {

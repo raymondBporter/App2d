@@ -10,7 +10,7 @@ public sealed class Grid2DTests
     [Fact]
     public void CoordinatesFlatIndicesAndRowsAddressTheSameStorage()
     {
-        var grid = new Grid2D<Vector2>(5, 3, new Vector2(10, 20), new(-30, -40));
+        var grid = new Grid2D<Vector2f>(5, 3, new Vector2f(10, 20), new(-30, -40));
         foreach (var cell in grid.Size.Cells)
         {
             var index = grid.Size.GetIndex(cell);
@@ -19,18 +19,19 @@ public sealed class Grid2DTests
         }
         Assert.Equal(15, grid.Count);
         Assert.Equal(new Size2D(10, 20), grid.CellSize);
-        Assert.Equal(new Vector2(13, -13), grid[3, 2]);
-        grid[3, 2].X = 100; // Ref access can update a struct cell without a copy/write-back.
+        Assert.Equal(new Vector2f(13, -13), grid[3, 2]);
+        ref var cellValue = ref grid[3, 2];
+        cellValue = cellValue with { X = 100 };
         Assert.Equal(100, grid[13].X);
-        grid.GetRowSpan(1).Fill(Vector2.One);
-        Assert.All(grid.AsSpan().Slice(5, 5).ToArray(), v => Assert.Equal(Vector2.One, v));
+        grid.GetRowSpan(1).Fill(Vector2f.One);
+        Assert.All(grid.AsSpan().Slice(5, 5).ToArray(), v => Assert.Equal(Vector2f.One, v));
         Assert.Equal(new Rect2D(new(-30, -40), new(20, 20)), grid.WorldBounds);
         Assert.Equal(new Rect2D(new(0, 0), new(10, 20)), grid.GetCellBounds(new(3, 2)));
-        Assert.Equal(new Vector2(5, 10), grid.Geometry.GetCellCenter(new(3, 2)));
+        Assert.Equal(new Vector2f(5, 10), grid.Geometry.GetCellCenter(new(3, 2)));
         grid.Fill(new(7, 8));
-        Assert.All(grid.AsSpan().ToArray(), v => Assert.Equal(new Vector2(7, 8), v));
+        Assert.All(grid.AsSpan().ToArray(), v => Assert.Equal(new Vector2f(7, 8), v));
         grid.Clear();
-        Assert.All(grid.AsSpan().ToArray(), v => Assert.Equal(Vector2.Zero, v));
+        Assert.All(grid.AsSpan().ToArray(), v => Assert.Equal(Vector2f.Zero, v));
     }
 
     [Fact]
@@ -54,8 +55,8 @@ public sealed class Grid2DTests
         Assert.Equal(0, grid.Count);
         Assert.True(grid.Size.Cells.IsEmpty);
         Assert.True(grid.GetRowSpan(2).IsEmpty);
-        Assert.False(grid.TryGetCell(Vector2.Zero, out _));
-        Assert.True(grid.GetCellRange(new Rect2D(Vector2.Zero, Vector2.One)).IsEmpty);
+        Assert.False(grid.TryGetCell(Vector2f.Zero, out _));
+        Assert.True(grid.GetCellRange(new Rect2D(Vector2f.Zero, Vector2f.One)).IsEmpty);
         Assert.Throws<ArgumentOutOfRangeException>(() => new GridSize2D(65536, 65536));
         Assert.Throws<ArgumentOutOfRangeException>(() => new GridSize2D(-1, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => grid[0, 0] = 1);
@@ -73,7 +74,7 @@ public sealed class Grid2DTests
     public void WorldCoordinatesUseFloorAndRespectRectangularCells(float x, float y, int cx, int cy)
     {
         var geometry = new GridGeometry2D(new Size2D(10, 20), new(-70, 30));
-        Assert.Equal(new Vector2i(cx, cy), geometry.WorldToCell(new Vector2(x, y) + geometry.Origin));
+        Assert.Equal(new Vector2i(cx, cy), geometry.WorldToCell(new Vector2f(x, y) + geometry.Origin));
         Assert.Equal(new Vector2i(cx, cy), geometry.WorldToCell(geometry.GetCellCenter(new(cx, cy))));
     }
 
@@ -92,9 +93,9 @@ public sealed class Grid2DTests
     public void NearestCornerUsesGridOriginAndPreservesMidpointRounding()
     {
         var geometry = new GridGeometry2D(new Size2D(10, 20), new(-70, 30));
-        Assert.Equal(new Vector2(-70, 30), geometry.SnapToNearestCorner(new(-65, 40)));
-        Assert.Equal(new Vector2(-50, 70), geometry.SnapToNearestCorner(new(-55, 60)));
-        Assert.Equal(new Vector2(-90, -10), geometry.SnapToNearestCorner(new(-85, 0)));
+        Assert.Equal(new Vector2f(-70, 30), geometry.SnapToNearestCorner(new(-65, 40)));
+        Assert.Equal(new Vector2f(-50, 70), geometry.SnapToNearestCorner(new(-55, 60)));
+        Assert.Equal(new Vector2f(-90, -10), geometry.SnapToNearestCorner(new(-85, 0)));
     }
 
     [Fact]
@@ -137,7 +138,7 @@ public sealed class Grid2DTests
     [InlineData(-1f)]
     public void CellDimensionsMustBePositiveAndFinite(float size)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new GridGeometry2D(new Vector2(1, size)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GridGeometry2D(new Vector2f(1, size)));
     }
 
     [Fact]
@@ -147,9 +148,9 @@ public sealed class Grid2DTests
         Assert.False(geometry.TryWorldToCell(new(float.MaxValue, 0), out _));
         Assert.False(geometry.TryWorldToCell(new(float.NaN, 0), out _));
         Assert.False(geometry.TryGetCellRange(Rect2D.Unbounded, out _));
-        Assert.False(geometry.TryGetCellRange(new BackwardsRect(Vector2.One, Vector2.Zero), out _));
-        Assert.False(default(GridGeometry2D).TryWorldToCell(Vector2.Zero, out _));
-        Assert.Throws<ArgumentException>(() => default(GridGeometry2D).WorldToCell(Vector2.Zero));
+        Assert.False(geometry.TryGetCellRange(new BackwardsRect(Vector2f.One, Vector2f.Zero), out _));
+        Assert.False(default(GridGeometry2D).TryWorldToCell(Vector2f.Zero, out _));
+        Assert.Throws<ArgumentException>(() => default(GridGeometry2D).WorldToCell(Vector2f.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => geometry.WorldToCell(new(float.MaxValue)));
         Assert.Throws<ArgumentOutOfRangeException>(() => new GridGeometry2D(float.MaxValue).GetCellBounds(new(2, 0)));
     }
@@ -181,5 +182,5 @@ public sealed class Grid2DTests
         }
     }
 
-    private readonly record struct BackwardsRect(Vector2 Min, Vector2 Max) : IRect2D;
+    private readonly record struct BackwardsRect(Vector2f Min, Vector2f Max) : IRect2D;
 }

@@ -36,7 +36,7 @@ public sealed class AuthoredEntityEnemyTests
     [InlineData(1, 1, true)]
     public void ContactRecoilFollowsTheHitWithoutTurning(int facing, int direction, bool kill)
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
         enemy.SetSimulationEnabled(true);
         enemy.Update(0, new(facing * 400, 42));
@@ -59,13 +59,13 @@ public sealed class AuthoredEntityEnemyTests
         var facts = new List<CombatDamage2D>();
         game.Combat.DamageResolved += facts.Add;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy,
-            1, _ => new(200, 100), impactKind: CombatImpactKind2D.Sword, impactDirection: Vector2.UnitX));
+            1, _ => new(200, 100), impactKind: CombatImpactKind2D.Sword, impactDirection: Vector2f.UnitX));
         var contact = Assert.Single(facts).Contact!.Value;
         Assert.Equal(bounds.Center, contact.Position);
-        Assert.Equal(Vector2.UnitX, contact.Direction);
+        Assert.Equal(Vector2f.UnitX, contact.Direction);
         Assert.Equal(game.Player.Id, contact.SourceId);
         Assert.Equal(42, contact.AttackId);
-        Assert.False(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
+        Assert.False(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2f.Zero));
         Assert.Single(facts);
     }
 
@@ -90,10 +90,10 @@ public sealed class AuthoredEntityEnemyTests
     }
 
     /// <summary>Each foot's height above a moving platform, and its horizontal offset from the hips, after dropping onto it and riding.</summary>
-    private static (Dictionary<string, float> Heights, Dictionary<string, float> Trail) Ride(Vector2 velocity)
+    private static (Dictionary<string, float> Heights, Dictionary<string, float> Trail) Ride(Vector2f velocity)
     {
         var physics = new PhysicsWorld2D { Gravity = new(0, -1_900f), MaxSubstepSeconds = 1f / 120 };
-        using var platform = new AuthoredObject2D(Core.EntityId2D.Create(), ObjectPlatforms.Place("ride", Vector2.Zero, Vector2.Normalize(velocity) * 200, velocity.Length(), 200f, 10f), physics, 1, uint.MaxValue);
+        using var platform = new AuthoredObject2D(Core.EntityId2D.Create(), ObjectPlatforms.Place("ride", Vector2f.Zero, Vector2f.Normalize(velocity) * 200, velocity.Length(), 200f, 10f), physics, 1, uint.MaxValue);
         var box = ShapeBounds2D.Calculate(Authored.Entities["spear-guard"].MovementShape);
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics,
             new(0, platform.WorldObject.WorldBounds.Top + (box.Height / 2 + .5f) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit), 1, 4);
@@ -201,9 +201,9 @@ public sealed class AuthoredEntityEnemyTests
         Assert.True(center.Y > guard.WorldObject.WorldBounds.Max.Y - 30, "the head region comes from the pose, not the movement box");
         var hit = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(2, 2));
         hit.Transform.Position = center;
-        Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
+        Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2f.Zero));
         Assert.Equal(guard.Entity.Damage.Health - 1, guard.Health.Current);
-        Assert.False(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
+        Assert.False(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2f.Zero));
     }
 
     [Theory]
@@ -211,7 +211,7 @@ public sealed class AuthoredEntityEnemyTests
     [InlineData(true)]
     public void TheGunnersBoltsLeaveThePistolDamageThePlayerAndStopAtTerrain(bool wall)
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var gunner = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["cinder-gunner"], physics, new(0, 31), 1, 4);
         gunner.SetSimulationEnabled(true);
         var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(150, 40), 2, 1, CombatFaction2D.Player, 30);
@@ -235,7 +235,7 @@ public sealed class AuthoredEntityEnemyTests
                 sawBolt = true;
                 var gun = gunner.Entity.Equipment.Single(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null); // Hair and clothing are equipment too.
                 var muzzle = PartPlacement3D.Point(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Point(EquipmentPoints.Muzzle)!.Value) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
-                Assert.True(Vector2.Distance(new(muzzle.X, muzzle.Y), bolts[0].Position) < 12, "the bolt leaves the drawn muzzle");
+                Assert.True(Vector2f.Distance(new(muzzle.X, muzzle.Y), bolts[0].Position) < 12, "the bolt leaves the drawn muzzle");
                 Assert.True(bolts[0].Velocity.X > 0, "toward the player");
             }
         }
@@ -296,7 +296,7 @@ public sealed class AuthoredEntityEnemyTests
     [Fact]
     public void TheMaulSlamsForFiveInsideItsWindowAndShrugsOffKnockback()
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var maul = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["maul-brute"], physics, new(0, 36), 1, 4);
         maul.SetSimulationEnabled(true);
         var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(40, 40), 2, 1, CombatFaction2D.Player, 30);
@@ -331,10 +331,10 @@ public sealed class AuthoredEntityEnemyTests
     {
         foreach (var side in new[] { -1, 1 })
         {
-            var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+            var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
             var guard = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
             guard.SetSimulationEnabled(true);
-            var target = new Vector2(side * 80, 42);
+            var target = new Vector2f(side * 80, 42);
             var sawHitbox = false;
             for (var i = 0; i < 240; i++)
             {
@@ -358,10 +358,10 @@ public sealed class AuthoredEntityEnemyTests
     [Fact]
     public void AHitStaggersAndKeepsTheKnockbackThenTheControllerRecovers()
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var guard = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
         guard.SetSimulationEnabled(true);
-        var target = new Vector2(400, 42);
+        var target = new Vector2f(400, 42);
         guard.Update(1f / 120, target);
         guard.SyncAfterPhysics();
         Assert.True(guard.TakeDamage(1, new(-200, 0)));
@@ -385,7 +385,7 @@ public sealed class AuthoredEntityEnemyTests
     [Fact]
     public void CavemanCommitsHisFacingAndAHittingSwordCancelsTheSlam()
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 42), 1, 4);
         enemy.SetSimulationEnabled(true);
         for (var i = 0; i < 60; i++)
@@ -447,7 +447,7 @@ public sealed class AuthoredEntityEnemyTests
     [InlineData(true)]
     public void CavemanStopsAtLedgesAndWalls(bool wall)
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var ground = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(wall ? 500 : 14, 20));
         ground.Transform.Position = new(0, -10);
         physics.AddBody(ground, BodyMotionType2D.Static).CollisionLayer = 1;
@@ -471,7 +471,7 @@ public sealed class AuthoredEntityEnemyTests
     {
         foreach (var dodge in new[] { false, true })
         {
-            var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+            var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
             var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 40), 1, 4);
             enemy.SetSimulationEnabled(true);
             var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(facing * 40, 26), 2, 1, CombatFaction2D.Player, 30);
@@ -480,7 +480,7 @@ public sealed class AuthoredEntityEnemyTests
             {
                 if (dodge && i == 60)
                 {
-                    player.WorldObject.Transform.Position += new Vector2(facing * 100, 0);
+                    player.WorldObject.Transform.Position += new Vector2f(facing * 100, 0);
                 }
 
                 enemy.Update(1f / 120, player.Position);
@@ -500,12 +500,12 @@ public sealed class AuthoredEntityEnemyTests
     [Theory, InlineData("spear-guard"), InlineData("stalker-pest"), InlineData("club-caveman")]
     public void DeathPlaysItsClipOnceAndHoldsTheLastFrame(string id)
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities[id], physics, new(0, 42), 1, 4);
         enemy.SetSimulationEnabled(true);
         enemy.Update(1f / 120, new(400, 42));
         enemy.SyncAfterPhysics();
-        Assert.True(enemy.TakeDamage(enemy.Health.Current, Vector2.Zero));
+        Assert.True(enemy.TakeDamage(enemy.Health.Current, Vector2f.Zero));
         var death = enemy.Entity.Clip(EntityControllers.Death)!;
         for (var i = 0; i < (int)(death.Duration * 120) + 60; i++)
         {

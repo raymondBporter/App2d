@@ -75,7 +75,7 @@ public sealed class CubicBezierOperationsTests
         Assert.Equal(2, tangent.FindParametersAtX(0, parameters));
         Assert.Equal(.5, parameters[0], 12);
         Assert.Equal(1d, parameters[1]);
-        var flat = CubicBezier2D.Builder.Create(Vector2.Zero, new(1, 1), new(0, 2), new(1, 3));
+        var flat = CubicBezier2D.Builder.Create(Vector2f.Zero, new(1, 1), new(0, 2), new(1, 3));
         Assert.Equal(.5f, flat.ParameterAtX(.5f));
         Assert.Equal(0f, flat.ParameterAtX(0));
         Assert.Equal(1f, flat.ParameterAtX(1));
@@ -101,7 +101,7 @@ public sealed class CubicBezierOperationsTests
         Span<double> parameters = stackalloc double[3];
         for (var i = 0; i < 100; i++)
         {
-            var curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(random.NextSingle(), 1), new(random.NextSingle(), -1), Vector2.One);
+            var curve = CubicBezier2D.Builder.Create(Vector2f.Zero, new(random.NextSingle(), 1), new(random.NextSingle(), -1), Vector2f.One);
             for (var j = 0; j <= 20; j++)
             {
                 var x = j / 20f;
@@ -109,7 +109,7 @@ public sealed class CubicBezierOperationsTests
                 Assert.InRange(Math.Abs(curve.ParameterAtX(x) - parameters[0]), 0, 1e-7);
             }
         }
-        var veryFlat = CubicBezier2D.Builder.Create(Vector2.Zero, Vector2.Zero, Vector2.Zero, new(float.MaxValue, 1));
+        var veryFlat = CubicBezier2D.Builder.Create(Vector2f.Zero, Vector2f.Zero, Vector2f.Zero, new(float.MaxValue, 1));
         Assert.Equal(1, veryFlat.FindParametersAtX(float.Epsilon, parameters));
         Assert.InRange(Math.Abs(veryFlat.ParameterAtX(float.Epsilon) / parameters[0] - 1), 0, 1e-6);
     }
@@ -133,7 +133,7 @@ public sealed class CubicBezierOperationsTests
     [Fact]
     public void SplittingSlicingAndXLookupDoNotAllocate()
     {
-        var curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(.15f, 2), new(.8f, -1), Vector2.One);
+        var curve = CubicBezier2D.Builder.Create(Vector2f.Zero, new(.15f, 2), new(.8f, -1), Vector2f.One);
         for (var i = 0; i < 100; i++)
         {
             curve.Split(.3f);
@@ -150,6 +150,6 @@ public sealed class CubicBezierOperationsTests
         Assert.InRange(MathF.Abs(curve.Evaluate(parameter).X - .4f), 0, 1e-6f);
     }
 
-    private static void Near(Vector2 expected, Vector2 actual) =>
-        Assert.True(Vector2.Distance(expected, actual) < 2e-5f, $"Expected {expected}, got {actual}.");
+    private static void Near(Vector2f  expected, Vector2f  actual) =>
+        Assert.True(Vector2f.Distance(expected, actual) < 2e-5f, $"Expected {expected}, got {actual}.");
 }

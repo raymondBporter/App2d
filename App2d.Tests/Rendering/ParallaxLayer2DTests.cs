@@ -35,7 +35,7 @@ public sealed class ParallaxLayer2DTests
         Assert.Equal(originalPosition, camera.Position);
 
         camera.SetViewport(2560, 1440);
-        camera.Position += new Vector2(50f, 20f); // Also handles editor panning without a simulation tick.
+        camera.Position += new Vector2f(50f, 20f); // Also handles editor panning without a simulation tick.
         view = layer.GetView(camera);
         Assert.Equal(camera.Position * factor, view.Position);
         Assert.Equal(camera.ViewportSize, view.ViewportSize);

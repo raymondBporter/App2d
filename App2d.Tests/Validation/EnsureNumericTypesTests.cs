@@ -32,7 +32,7 @@ public sealed class EnsureNumericTypesTests
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.GreaterThan(value, new Vector3(-3)));
         Assert.Equal(Vector4.Zero, Ensure.NonPositive(Vector4.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonPositive(new Vector4(0, 0, 0, float.Epsilon)));
-        Assert.False(NumericValidation.IsNegative(new Vector2(-1, 0)));
+        Assert.False(NumericValidation.IsNegative(new Vector2f(-1, 0)));
         Assert.False(NumericValidation.IsNonPositive(new Vector4(-1, -1, -1, float.NaN)));
     }
 
@@ -71,7 +71,7 @@ public sealed class EnsureNumericTypesTests
     public void InfiniteOrderingRequiresOptInAndAlwaysRejectsNaN()
     {
         Ensure.LessThanOrEqual(double.NegativeInfinity, double.PositiveInfinity, allowInfinity: true);
-        Ensure.GreaterThan(Vector2.One, new Vector2(float.NegativeInfinity), allowInfinity: true);
+        Ensure.GreaterThan(Vector2f.One, new Vector2f(float.NegativeInfinity), allowInfinity: true);
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThan(1d, double.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.GreaterThanOrEqual(double.NaN, double.NegativeInfinity, allowInfinity: true));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThanOrEqual(Vector3.One, new Vector3(1, float.NaN, 1), allowInfinity: true));

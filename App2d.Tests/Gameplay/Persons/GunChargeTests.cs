@@ -91,10 +91,10 @@ public sealed class GunChargeTests
                 };
                 break;
             case "hit":
-                Assert.True(game.Person.TakeDamage(1, new Vector2(-100f, 100f)));
+                Assert.True(game.Person.TakeDamage(1, new Vector2f(-100f, 100f)));
                 break;
             case "reset":
-                game.Person.Reset(Vector2.Zero);
+                game.Person.Reset(Vector2f.Zero);
                 break;
             case "disable":
                 game.Person.SetSimulationEnabled(false);
@@ -123,7 +123,7 @@ public sealed class GunChargeTests
         game.Step(Press);
         Assert.True(game.Arsenal.IsChargingPrimary);
         game.Ground.IsCollider = false;
-        game.Physics.Gravity = new Vector2(0f, -100f);
+        game.Physics.Gravity = new Vector2f(0f, -100f);
         for (var i = 0; i < 90; i++)
         {
             game.Step(Hold);
@@ -149,7 +149,7 @@ public sealed class GunChargeTests
 
         if (takeDamage)
         {
-            Assert.True(game.Person.TakeDamage(1, Vector2.Zero));
+            Assert.True(game.Person.TakeDamage(1, Vector2f.Zero));
         }
         else
         {
@@ -174,7 +174,7 @@ public sealed class GunChargeTests
         using var game = new Fixture(ladder: kind == "climb");
         using var baseline = new Fixture(ladder: kind == "climb");
         PlatformCollisionRules2D.Attach(game.Physics).Surface(game.Ground).OneWaySurfaceNormal =
-            PlatformCollisionRules2D.Attach(baseline.Physics).Surface(baseline.Ground).OneWaySurfaceNormal = kind == "drop" ? Vector2.UnitY : null;
+            PlatformCollisionRules2D.Attach(baseline.Physics).Surface(baseline.Ground).OneWaySurfaceNormal = kind == "drop" ? Vector2f.UnitY : null;
         if (chargeFirst)
         {
             game.Step(Press);
@@ -248,7 +248,7 @@ public sealed class GunChargeTests
         using var game = new Fixture();
         var wall = game.Physics.AddBody(new SpatialObject2D(
             AxisAlignedRectangle2D.Builder.CreateFromSize(4f, 100f)), BodyMotionType2D.Static);
-        wall.WorldObject.Transform.Position = new Vector2(30f, 0f);
+        wall.WorldObject.Transform.Position = new Vector2f(30f, 0f);
         wall.CollisionLayer = 1;
         game.Step(Press);
         for (var i = 1; i < 72; i++)
@@ -268,7 +268,7 @@ public sealed class GunChargeTests
         using var game = new Fixture();
         var wall = game.Physics.AddBody(new SpatialObject2D(
             AxisAlignedRectangle2D.Builder.CreateFromSize(4f, 100f)), BodyMotionType2D.Static);
-        wall.WorldObject.Transform.Position = new Vector2(300f, 0f);
+        wall.WorldObject.Transform.Position = new Vector2f(300f, 0f);
         wall.CollisionLayer = 1;
         game.Step(Press);
         for (var i = 1; i < 110; i++)
@@ -297,7 +297,7 @@ public sealed class GunChargeTests
             var collision = new CollisionSystem2D();
             Physics = new(collision)
             {
-                Gravity = Vector2.Zero
+                Gravity = Vector2f.Zero
             };
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
             var map = new EditableTileMap2D(16, 64, 32f, 8);
@@ -309,12 +309,12 @@ public sealed class GunChargeTests
                 }
             }
 
-            var spawn = ladder ? new Vector2(16f - metrics.PlayerColliderCenterOffsetX, 28f) : Vector2.Zero;
+            var spawn = ladder ? new Vector2f(16f - metrics.PlayerColliderCenterOffsetX, 28f) : Vector2f.Zero;
             Person = new(EntityId2D.Create(), collision, Physics, metrics,
                 spawn, 2, 1, CombatFaction2D.Player, tileMap: map);
             Ground = Physics.AddBody(new SpatialObject2D(
                 AxisAlignedRectangle2D.Builder.CreateFromSize(1000f, 20f)), BodyMotionType2D.Static);
-            Ground.WorldObject.Transform.Position = new Vector2(0, Person.WorldObject.WorldBounds.Bottom - 10f);
+            Ground.WorldObject.Transform.Position = new Vector2f(0, Person.WorldObject.WorldBounds.Bottom - 10f);
             Ground.CollisionLayer = 1;
             Ground.CollisionMask = 2;
             Arsenal = new(new EntityIdAllocator2D(), Person.Body, metrics.GunMuzzleOffset, collision, 1, 4,

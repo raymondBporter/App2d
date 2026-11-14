@@ -33,7 +33,7 @@ public sealed class PhysicalPartTests
     [InlineData("tumbling-crate", TileKind2D.OneWay)]
     public void PlacedPartsLandOnStreamedTerrain(string partId, TileKind2D floor)
     {
-        var map = new EditableTileMap2D(64, 16, 32, 32, Vector2.Zero, ["dark-cave"]);
+        var map = new EditableTileMap2D(64, 16, 32, 32, Vector2f.Zero, ["dark-cave"]);
         for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 0, floor);
         var things = new List<WorldThingSpec2D>
         {
@@ -66,7 +66,7 @@ public sealed class PhysicalPartTests
             BranchGap = new(80, 80)
         }, 3107);
         var branch = tree.Branches.MaxBy(b => b.Bounds.Max.Y);
-        var map = new EditableTileMap2D(64, 32, 32, 32, Vector2.Zero, ["dark-cave"]);
+        var map = new EditableTileMap2D(64, 32, 32, 32, Vector2f.Zero, ["dark-cave"]);
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(100, 100))])
         {
@@ -161,7 +161,7 @@ public sealed class PhysicalPartTests
             Objects = world.Objects
         });
         var parts = game.Level.Objects.Where(o => o.CaptureDefinition().Part.Id == "dumbbell").ToArray();
-        Assert.Equal([new Vector2(368, -226), new(3216, -194), new(7696, -226), new(15056, -162), new(19248, -130)],
+        Assert.Equal([new Vector2f(368, -226), new(3216, -194), new(7696, -226), new(15056, -162), new(19248, -130)],
             parts.Select(o => o.WorldObject.Transform.Position).OrderBy(p => p.X));
         var expected = Catalog.Parts["dumbbell"].ToJson();
         Assert.All(parts, part =>
@@ -177,7 +177,7 @@ public sealed class PhysicalPartTests
     [Fact]
     public void PlacedPartsUseWorldOwnershipStreamingAndReloadWithoutCombatants()
     {
-        var map = new EditableTileMap2D(320, 32, 32, 32, Vector2.Zero, ["dark-cave"]);
+        var map = new EditableTileMap2D(320, 32, 32, 32, Vector2f.Zero, ["dark-cave"]);
         var cratePlacement = new ObjectPlacement2D("crate", Catalog.Parts["tumbling-crate"], new(400, 100));
         var dumbbellPlacement = new ObjectPlacement2D("dumbbell", Catalog.Parts["dumbbell"], new(200, 100));
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
@@ -220,11 +220,11 @@ public sealed class PhysicalPartTests
         var visual = Assert.Single(scene);
         var shader = Assert.IsType<PartShader2D>(visual.Shader);
         Assert.Same(asset, shader.Part);
-        Assert.InRange(Vector2.Distance(visual.LocalBounds.Min, item.WorldObject.LocalBounds.Min), 0, .01f);
-        Assert.InRange(Vector2.Distance(visual.LocalBounds.Max, item.WorldObject.LocalBounds.Max), 0, .01f);
+        Assert.InRange(Vector2f.Distance(visual.LocalBounds.Min, item.WorldObject.LocalBounds.Min), 0, .01f);
+        Assert.InRange(Vector2f.Distance(visual.LocalBounds.Max, item.WorldObject.LocalBounds.Max), 0, .01f);
         item.WorldObject.Transform.Rotation = .7f;
         item.WorldObject.Transform.Position = new(200, 30);
-        Assert.Equal(new Vector2(100, 80), visual.Transform.Position);
+        Assert.Equal(new Vector2f(100, 80), visual.Transform.Position);
         view.ApplyState(content, state with { Objects = [item.CaptureState()] });
         Assert.Equal(item.WorldObject.Transform.Matrix, visual.Transform.Matrix);
         item.SetSimulationEnabled(false);
@@ -239,7 +239,7 @@ public sealed class PhysicalPartTests
     {
         var part = Part.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "objects", "lift.json"));
         var physics = new PhysicsWorld2D();
-        using var item = new AuthoredObject2D(new(1), new("lift", part, Vector2.Zero), physics, 1, uint.MaxValue);
+        using var item = new AuthoredObject2D(new(1), new("lift", part, Vector2f.Zero), physics, 1, uint.MaxValue);
         item.Update(.75f); physics.Step(.75f);
         var state = item.CaptureState();
         item.Update(.25f); physics.Step(.25f);
@@ -259,11 +259,11 @@ public sealed class PhysicalPartTests
         using var view = new WorldPresentation2D(new Scene2D(), textures);
         var part = Catalog.Parts["dumbbell"];
         var content = LevelContent2D.Empty with { Objects = [new(new(1), "dumbbell", part)] };
-        var state = WorldState2D.Empty with { Objects = [new(new(1), Vector2.Zero, .3f)] };
+        var state = WorldState2D.Empty with { Objects = [new(new(1), Vector2f.Zero, .3f)] };
         for (var i = 0; i < 1000; i++) view.ApplyState(content, state);
         var before = GC.GetAllocatedBytesForCurrentThread();
         for (var i = 0; i < 1000; i++) view.ApplyState(content, state);
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
-        Assert.Equal(Vector2.Zero, state.Objects[0].Position);
+        Assert.Equal(Vector2f.Zero, state.Objects[0].Position);
     }
 }

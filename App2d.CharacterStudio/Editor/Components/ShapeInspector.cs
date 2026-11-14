@@ -21,7 +21,7 @@ internal static class ShapeInspector
                 Drag(withAngle(float.DegreesToRadians(degrees)));
             }
         }
-        void RectangleFields(Vector2 centre, Vector2 size, float? angleRadians, Func<Vector2, Vector2, float, IShape2D> fromSize)
+        void RectangleFields(Vector2f centre, Vector2f size, float? angleRadians, Func<Vector2f, Vector2f, float, IShape2D> fromSize)
         {
             var angle = angleRadians ?? 0f;
             if (Ui.Drag2("Centre", ref centre))
@@ -31,7 +31,7 @@ internal static class ShapeInspector
 
             if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
             {
-                Drag(fromSize(Vector2.Max(size, new(.01f)), centre, angle));
+                Drag(fromSize(Vector2f.Max(size, new(.01f)), centre, angle));
             }
 
             if (angleRadians is { } radians)
@@ -58,7 +58,7 @@ internal static class ShapeInspector
 
                     if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
                     {
-                        size = Vector2.Max(size, new(.01f));
+                        size = Vector2f.Max(size, new(.01f));
                         Drag(RoundedRectangle2D.Builder.FromSize(size, MathF.Min(rounded.Radius, MathF.Min(size.X, size.Y) / 2f), centre, rounded.AngleRadians));
                     }
                     var radius = rounded.Radius;
@@ -142,7 +142,7 @@ internal static class ShapeInspector
                     {
                         Drag(ellipse with
                         {
-                            Radii = Vector2.Max(radii, new(.005f))
+                            Radii = Vector2f.Max(radii, new(.005f))
                         });
                     }
                     AngleField(ellipse.AngleRadians, angle => Ellipse2D.Builder.Create(radii, centre, angle));

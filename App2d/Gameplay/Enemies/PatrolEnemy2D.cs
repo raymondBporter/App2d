@@ -57,7 +57,7 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
             : BodyMotionType2D.Static;
         if (!isEnabled)
         {
-            Body.LinearVelocity = Vector2.Zero;
+            Body.LinearVelocity = Vector2f.Zero;
         }
     }
 
@@ -96,14 +96,14 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 
         if (_stunSeconds <= 0f)
         {
-            Body.LinearVelocity = new Vector2(_direction * Speed, Body.LinearVelocity.Y);
+            Body.LinearVelocity = new Vector2f(_direction * Speed, Body.LinearVelocity.Y);
         }
 
         Body.AngularVelocity = 0f;
         WorldObject.Transform.Rotation = 0f;
     }
 
-    public bool TakeDamage(int damage, Vector2 knockback)
+    public bool TakeDamage(int damage, Vector2f knockback)
     {
         if (!Health.Damage(damage))
         {
@@ -114,7 +114,7 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
         {
             Body.IsCollider = false;
             Body.MotionType = BodyMotionType2D.Static;
-            Body.LinearVelocity = Vector2.Zero;
+            Body.LinearVelocity = Vector2f.Zero;
             return true;
         }
 

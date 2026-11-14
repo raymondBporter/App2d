@@ -62,11 +62,11 @@ public static class RigConversion
             var node = nodes[control.Id];
             var parent = control.Parent is null ? null : nodes[control.Parent];
             var next = i + 1 < run.Count ? nodes[run[i + 1].Id] : null;
-            var toNext = next is null ? Vector2.Zero : new Vector2(next.Rest.X - node.Rest.X, next.Rest.Y - node.Rest.Y);
+            var toNext = next is null ? Vector2f.Zero : new Vector2f(next.Rest.X - node.Rest.X, next.Rest.Y - node.Rest.Y);
             var direction = next is null ? node.RestAngle : MathF.Atan2(toNext.Y, toNext.X);
             var parentAngle = parent?.RestAngle ?? 0;
             var parentHand = parent?.Handedness ?? 1;
-            var scale = parent is null ? 1 : Vector2.TransformNormal(Vector2.UnitX, parent.RestFrame).Length();
+            var scale = parent is null ? 1 : Vector2f.TransformNormal(Vector2f.UnitX, parent.RestFrame).Length();
             var setup = new RigSetup
             {
                 Rotation = i == 0 ? parentHand * (direction - parentAngle) : parentHand * (direction - nodes[run[i - 1].Id].RestAngle - (nodes[run[i - 1].Id].Handedness * 0)),
@@ -96,7 +96,7 @@ public static class RigConversion
                 : $"{control.Id}: bone bound to the tip of {control.Parent}, rotation {setup.Rotation:0.####} layer {setup.Layer:0.####}, length {length:0.####}");
             // Later controls in the run measure from this one's new frame.
             nodes = RigGraph.Compile(model);
-            Ensure.LessThanOrEqual(Vector2.Distance(new(nodes[control.Id].Rest.X, nodes[control.Id].Rest.Y), new(node.Rest.X, node.Rest.Y)), 1e-4f);
+            Ensure.LessThanOrEqual(Vector2f.Distance(new(nodes[control.Id].Rest.X, nodes[control.Id].Rest.Y), new(node.Rest.X, node.Rest.Y)), 1e-4f);
             Ensure.LessThanOrEqual(MathF.Abs(nodes[control.Id].Rest.Z - node.Rest.Z), 1e-4f);
         }
         // A parameter that scaled a child's offset from its parent now scales the parent's length (P4a).

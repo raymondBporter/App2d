@@ -10,9 +10,9 @@ public sealed class AuthoredWorldThing2DTests
     [Fact]
     public void AuthoredSpawnAndGoalUseTheirExactPositions()
     {
-        var spawn = new Vector2(123f, -45f);
-        var savePoint = new Vector2(456f, 15f);
-        var goal = new Vector2(987f, 65f);
+        var spawn = new Vector2f(123f, -45f);
+        var savePoint = new Vector2f(456f, 15f);
+        var goal = new Vector2f(987f, 65f);
         WorldThingSpec2D[] things =
         [
             new(1, WorldThingKind2D.PlayerSpawn, "Start", true, spawn),

@@ -1,5 +1,6 @@
 using App2d.Core.Constraints;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -17,7 +18,7 @@ public sealed class SpringDamperJoint2D : IPhysicsConstraint2D
     private SpringCoefficients2D _spring;
     private float _length, _springImpulse, _lowerImpulse, _upperImpulse;
 
-    public SpringDamperJoint2D(RigidBody2D first, RigidBody2D second, Vector2 firstLocalAnchor, Vector2 secondLocalAnchor, float restLength)
+    public SpringDamperJoint2D(RigidBody2D first, RigidBody2D second, Vector2f firstLocalAnchor, Vector2f secondLocalAnchor, float restLength)
     {
         JointMath2D.Validate(first, second, firstLocalAnchor, secondLocalAnchor);
         First = first;
@@ -29,11 +30,11 @@ public sealed class SpringDamperJoint2D : IPhysicsConstraint2D
 
     public RigidBody2D First { get; }
     public RigidBody2D Second { get; }
-    public Vector2 FirstLocalAnchor { get; }
-    public Vector2 SecondLocalAnchor { get; }
-    public Vector2 FirstWorldAnchor => JointMath2D.Anchor(First, FirstLocalAnchor);
-    public Vector2 SecondWorldAnchor => JointMath2D.Anchor(Second, SecondLocalAnchor);
-    public float Length => Vector2.Distance(FirstWorldAnchor, SecondWorldAnchor);
+    public Vector2f FirstLocalAnchor { get; }
+    public Vector2f SecondLocalAnchor { get; }
+    public Vector2f FirstWorldAnchor => JointMath2D.Anchor(First, FirstLocalAnchor);
+    public Vector2f SecondWorldAnchor => JointMath2D.Anchor(Second, SecondLocalAnchor);
+    public float Length => Vector2f.Distance(FirstWorldAnchor, SecondWorldAnchor);
     public bool IsEnabled { get; set; } = true;
     public float RestLength
     {
@@ -87,7 +88,7 @@ public sealed class SpringDamperJoint2D : IPhysicsConstraint2D
         var firstAnchor = FirstWorldAnchor;
         var secondAnchor = SecondWorldAnchor;
         var delta = secondAnchor - firstAnchor;
-        var direction = delta.LengthSquared() > 1e-8f ? Vector2.Normalize(delta) : Vector2.UnitX;
+        var direction = delta.LengthSquared() > 1e-8f ? Vector2f.Normalize(delta) : Vector2f.UnitX;
         // length' = n dot (attachmentVelocityB - attachmentVelocityA).
         // Attachment velocity includes w x r; a force at the attachment also produces r x force torque.
         return new(First, Second, direction,

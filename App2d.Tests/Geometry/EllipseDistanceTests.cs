@@ -19,24 +19,24 @@ public sealed class EllipseDistanceTests
     [MemberData(nameof(Radii))]
     public void ClosestPerimeterPointBeatsEveryDenseSampleAndLiesOnTheEllipse(float a, float b)
     {
-        var center = new Vector2(3, -2);
-        var radii = new Vector2(a, b);
+        var center = new Vector2f(3, -2);
+        var radii = new Vector2f(a, b);
         var random = new Random(7);
-        Vector2[] queries =
+        Vector2f[] queries =
         [
-            center, center + new Vector2(a, 0), center + new Vector2(0, b), center + new Vector2(-a * 3, 0), center + new Vector2(0, b * 3),
-            center + new Vector2(a * .5f, 0), center + new Vector2(0, b * .5f), center + new Vector2(a * 2, b * 2), center + new Vector2(-a * .1f, b * .9f),
-            .. Enumerable.Range(0, 60).Select(_ => center + new Vector2(random.NextFloat(-3f, 3f) * a, random.NextFloat(-3f, 3f) * b))
+            center, center + new Vector2f(a, 0), center + new Vector2f(0, b), center + new Vector2f(-a * 3, 0), center + new Vector2f(0, b * 3),
+            center + new Vector2f(a * .5f, 0), center + new Vector2f(0, b * .5f), center + new Vector2f(a * 2, b * 2), center + new Vector2f(-a * .1f, b * .9f),
+            .. Enumerable.Range(0, 60).Select(_ => center + new Vector2f(random.NextFloat(-3f, 3f) * a, random.NextFloat(-3f, 3f) * b))
         ];
         foreach (var point in queries)
         {
             var closest = ClosestPoint2D.OnEllipsePerimeter(point, center, radii);
             Assert.InRange(Containment2D.NormalizedEllipseRadius(closest, center, radii), .99999f, 1.00001f);
-            var distance = Vector2.Distance(point, closest);
+            var distance = Vector2f.Distance(point, closest);
             var sampled = float.PositiveInfinity;
             for (var i = 0; i < 8192; i++)
             {
-                sampled = MathF.Min(sampled, Vector2.Distance(point, VertexGenerator2D.PointOnEllipse(center, radii, i * MathF.Tau / 8192)));
+                sampled = MathF.Min(sampled, Vector2f.Distance(point, VertexGenerator2D.PointOnEllipse(center, radii, i * MathF.Tau / 8192)));
             }
 
             var scale = MathF.Max(a, b);
@@ -48,21 +48,21 @@ public sealed class EllipseDistanceTests
     [Fact]
     public void SignedDistanceIsExactForAxisPointsAndNegativeInside()
     {
-        var radii = new Vector2(2, 1);
+        var radii = new Vector2f(2, 1);
         Assert.Equal(1f, Distance2D.SignedDistanceToEllipse(new(3, 0), default, radii), 5);
         Assert.Equal(2f, Distance2D.SignedDistanceToEllipse(new(0, 3), default, radii), 5);
         Assert.Equal(-1f, Distance2D.SignedDistanceToEllipse(default, default, radii), 5);
         Assert.Equal(-.5f, Distance2D.SignedDistanceToEllipse(new(0, .5f), default, radii), 5);
         Assert.Equal(0f, Distance2D.SignedDistanceToEllipse(new(2, 0), default, radii), 5);
         Assert.Equal(0f, Distance2D.DistanceToEllipse(new(1, .3f), default, radii));
-        Assert.Equal(1f, ShapeDistance2D.SignedDistance(new Vector2(3, 0), Ellipse2D.Builder.Create(radii)), 5);
-        Assert.Equal(-1f, ShapeDistance2D.SignedDistance(Vector2.Zero, Ellipse2D.Builder.Create(radii)), 5);
+        Assert.Equal(1f, ShapeDistance2D.SignedDistance(new Vector2f(3, 0), Ellipse2D.Builder.Create(radii)), 5);
+        Assert.Equal(-1f, ShapeDistance2D.SignedDistance(Vector2f.Zero, Ellipse2D.Builder.Create(radii)), 5);
         var placed = new SpatialObject2D(Ellipse2D.Builder.Create(radii));
         placed.Transform.Rotation = MathF.PI / 2;
         placed.Transform.Scale = new(2);
         placed.Transform.Position = new(10, 10);
-        Assert.Equal(2f, SpatialDistance2D.SignedDistance(new Vector2(10, 16), placed), 4); // vertical semi-axis is now 4
-        Assert.Equal(4f, SpatialDistance2D.SignedDistance(new Vector2(16, 10), placed), 4); // horizontal semi-axis is now 2
+        Assert.Equal(2f, SpatialDistance2D.SignedDistance(new Vector2f(10, 16), placed), 4); // vertical semi-axis is now 4
+        Assert.Equal(4f, SpatialDistance2D.SignedDistance(new Vector2f(16, 10), placed), 4); // horizontal semi-axis is now 2
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class EllipseDistanceTests
         var contacts = 0;
         for (var i = 0; i < 200; i++)
         {
-            circle.Transform.Position = ellipse.Transform.Position + new Vector2(random.NextFloat(-4f, 4f), random.NextFloat(-4f, 4f));
+            circle.Transform.Position = ellipse.Transform.Position + new Vector2f(random.NextFloat(-4f, 4f), random.NextFloat(-4f, 4f));
             var signed = SpatialDistance2D.SignedDistance(circle, ellipse);
             Assert.Equal(signed, SpatialDistance2D.SignedDistance(ellipse, circle), 5);
             var hit = ShapeCollision2D.TryGetContact(circle, ellipse, out var contact);
@@ -91,7 +91,7 @@ public sealed class EllipseDistanceTests
             Assert.Equal(-signed, contact.PenetrationDepth, 4);
             Assert.True(ShapeCollision2D.TryGetContact(ellipse, circle, out var reverse));
             Assert.Equal(contact.PenetrationDepth, reverse.PenetrationDepth, 4);
-            Assert.True(Vector2.Distance(contact.Normal, -reverse.Normal) < 1e-4f);
+            Assert.True(Vector2f.Distance(contact.Normal, -reverse.Normal) < 1e-4f);
             Assert.InRange(contact.Normal.Length(), .9999f, 1.0001f);
             // Moving the circle out along the normal by the depth separates it (within float noise).
             circle.Transform.Position += contact.Normal * (contact.PenetrationDepth + 1e-3f);

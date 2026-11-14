@@ -50,5 +50,5 @@ public sealed class JsonProfilesTests
     }
 
     private sealed record Counter { public int Count { get; init; } }
-    private sealed record WorldValue(Vector2 Position, string? Optional);
+    private sealed record WorldValue(Vector2f  Position, string? Optional);
 }

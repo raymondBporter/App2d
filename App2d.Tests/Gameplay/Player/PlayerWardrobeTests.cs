@@ -86,8 +86,8 @@ public sealed class PlayerWardrobeTests
             }
             drawing.Build(moves.Model, local);
             var bare = drawing.Mesh.Count;
-            foreach (var (prop, socket) in props) drawing.AddAttachment(prop, new ActorPose(local, Vector2.Zero, 1), socket);
-            foreach (var attachment in wardrobe.Attachments) drawing.AddAttachment(attachment, new ActorPose(local, Vector2.Zero, 1));
+            foreach (var (prop, socket) in props) drawing.AddAttachment(prop, new ActorPose(local, Vector2f.Zero, 1), socket);
+            foreach (var attachment in wardrobe.Attachments) drawing.AddAttachment(attachment, new ActorPose(local, Vector2f.Zero, 1));
             Assert.True(drawing.Mesh.Count > bare);
             Assert.Contains(props, p => p.Prop.Id == moves.Gear.Sword);
         }

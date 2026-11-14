@@ -58,7 +58,7 @@ internal static class ModelOverlay
     /// <summary>Outlines every piece of a library part instance at its evaluated placement: the payload parts' contours and the solids' outlines.</summary>
     public static void DrawAttachment(ViewportFrame frame, ResolvedAttachment attachment, EvaluatedPose pose)
     {
-        var placement = attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket));
+        var placement = attachment.Placement(new ActorPose(pose, Vector2f.Zero, 1).SocketPlacement(attachment.Socket));
         var color = StudioTheme.Selection.PackedValue;
         // An animated instance (P7a) outlines its pieces over its evaluated nested pose; a static one over its locations.
         pose.Attachments.TryGetValue(attachment.Id, out var evaluated);
@@ -67,7 +67,7 @@ internal static class ModelOverlay
             return;
         }
 
-        var socket = new ActorPose(pose, Vector2.Zero, 1).Socket(attachment.Socket);
+        var socket = new ActorPose(pose, Vector2f.Zero, 1).Socket(attachment.Socket);
         var pieces = evaluated is null ? attachment.Parts.Where(p => !p.Hidden).ToList() : [.. evaluated.DrawnParts()];
         foreach (var part in pieces)
         {
@@ -87,6 +87,6 @@ internal static class ModelOverlay
 
     public static Vector3 BoneTip(ModelControl control, EvaluatedPose pose)
     {
-        return pose.Placement(control.Id).At(new Vector2(control.Length, 0));
+        return pose.Placement(control.Id).At(new Vector2f(control.Length, 0));
     }
 }

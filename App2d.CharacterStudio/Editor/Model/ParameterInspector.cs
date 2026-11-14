@@ -57,13 +57,13 @@ internal sealed class ParameterInspector(EditorSession session)
 
                 ImGui.TextDisabled($"  slider spans the suggested range {parameter.Range.SoftMin:0.##}..{parameter.Range.SoftMax:0.##}; a file may hold {parameter.Min:0.##}..{parameter.Max:0.##}; neither is a joint limit.");
 
-                var range = new System.Numerics.Vector2(parameter.Min, parameter.Max);
+                var range = new Vector2f(parameter.Min, parameter.Max);
                 if (Ui.Drag2("Hard range (min / max)", ref range, .01f, -10000, 10000))
                 {
                     session.Change(document, () => { var live = Live(); live.Min = range.X; live.Max = range.Y; document.Asset.Validate(); });
                 }
 
-                var soft = new System.Numerics.Vector2(parameter.Range.SoftMin, parameter.Range.SoftMax);
+                var soft = new Vector2f(parameter.Range.SoftMin, parameter.Range.SoftMax);
                 if (Ui.Drag2("Suggested range (min / max)", ref soft, .01f, -10000, 10000))
                 {
                     session.Change(document, () => { var live = Live(); live.SoftMin = soft.X; live.SoftMax = soft.Y; document.Asset.Validate(); });

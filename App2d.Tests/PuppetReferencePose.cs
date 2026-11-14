@@ -55,7 +55,7 @@ internal sealed class PuppetReferencePose(PuppetPose pose)
         {
             var target = contact.Target.XYZ + travel;
             pose.Solve(definition, definition.Chains.Single(c => c.End == contact.End), target - pose.Position);
-            result.Contacts.Add(new(contact.End, target, Vector2.Distance(new(result.World(contact.End).X, result.World(contact.End).Y), new(target.X, target.Y))));
+            result.Contacts.Add(new(contact.End, target, Vector2f.Distance(new(result.World(contact.End).X, result.World(contact.End).Y), new(target.X, target.Y))));
         }
         return result;
     }

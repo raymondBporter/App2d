@@ -53,11 +53,11 @@ public class LayeredMeshRenderer : IDisposable
     }
 
     /// <summary>Model units (y up) to device pixels: the model origin lands on the anchor; depth is left in model units.</summary>
-    public static Matrix View(System.Numerics.Vector2 anchor, float pixelsPerUnit)
+    public static Matrix View(Vector2f anchor, float pixelsPerUnit)
         => Matrix.CreateScale(pixelsPerUnit, -pixelsPerUnit, 1) * Matrix.CreateTranslation(anchor.X, anchor.Y, 0);
 
     /// <summary>A fixed camera on a target of the given size: <see cref="View"/> over <see cref="DeviceProjection"/>.</summary>
-    public static Matrix Projection(int width, int height, System.Numerics.Vector2 anchor, float pixelsPerUnit)
+    public static Matrix Projection(int width, int height, Vector2f anchor, float pixelsPerUnit)
         => View(anchor, pixelsPerUnit) * DeviceProjection(width, height);
 
     public static Matrix Projection(FrameView2D view) => ToXnaMatrix(view.WorldToDeviceMatrix) *

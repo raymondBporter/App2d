@@ -50,7 +50,7 @@ public sealed class Camera3D
     }
 
     /// <summary>Projects a world point to pixels and depth [0,1]. False when behind the camera or outside its depth range.</summary>
-    public bool TryProject(Vector3 world, Vector2 viewportSize, out Vector3 screen)
+    public bool TryProject(Vector3 world, Vector2f  viewportSize, out Vector3 screen)
     {
         Ensure.Finite(world);
         Ensure.Positive(viewportSize);
@@ -64,7 +64,7 @@ public sealed class Camera3D
     }
 
     /// <summary>Unprojects a pixel to a ray starting on the near clipping plane. Works with either projection mode.</summary>
-    public Ray3D ScreenRay(Vector2 screen, Vector2 viewportSize)
+    public Ray3D ScreenRay(Vector2f  screen, Vector2f  viewportSize)
     {
         Ensure.Finite(screen);
         Ensure.Positive(viewportSize);

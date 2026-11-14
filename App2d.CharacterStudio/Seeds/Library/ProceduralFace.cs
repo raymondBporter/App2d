@@ -87,12 +87,12 @@ public static class ProceduralFace
     /// <summary>One feature's layout for a pose: where each control sits (unit head, Y up), each piece's fit and whether it shows.</summary>
     private sealed class Layout
     {
-        public Dictionary<string, Vector2> Controls { get; } = new(StringComparer.Ordinal);
-        public Dictionary<string, Vector2> Fits { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, Vector2f> Controls { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, Vector2f> Fits { get; } = new(StringComparer.Ordinal);
         public HashSet<string> Shown { get; } = new(StringComparer.Ordinal);
     }
 
-    private static Vector2 Up(float x, float yDown) => new(x, -yDown);
+    private static Vector2f Up(float x, float yDown) => new(x, -yDown);
 
     /// <summary>The old drawing's feature layout for a pose, as control positions, piece fits and visibility.</summary>
     private static Layout LayoutOf(ProceduralFacePose pose)
@@ -189,7 +189,7 @@ public static class ProceduralFace
             Id = id,
             A = a,
             B = b,
-            Geometry = QuadraticBezier2D.Builder.Create(Vector2.Zero, new(0, .5f), Vector2.UnitY),
+            Geometry = QuadraticBezier2D.Builder.Create(Vector2f.Zero, new(0, .5f), Vector2f.UnitY),
             Bindings = [new() { Point = 0, Control = a }, new() { Point = 1, Control = bend }, new() { Point = 2, Control = b }],
             Material = new() { Fill = Ink, StrokeWidth = Stroke * weight },
         };
@@ -198,18 +198,18 @@ public static class ProceduralFace
             Id = id,
             A = a,
             B = b,
-            Geometry = LineSegmentCurve2D.Create(Vector2.Zero, Vector2.UnitY),
+            Geometry = LineSegmentCurve2D.Create(Vector2f.Zero, Vector2f.UnitY),
             Material = new() { Fill = Ink, StrokeWidth = Stroke * weight },
         };
         static PartGeometry Cross(string id, string control)
         {
             // Two bars of the old X, as one cutout: a plus sign of half-length .085 and half-thickness .011, turned 45 degrees.
             const float L = .085f, T = .011f;
-            var plus = new Vector2[]
+            var plus = new Vector2f[]
             {
                 new(-T, L), new(T, L), new(T, T), new(L, T), new(L, -T), new(T, -T), new(T, -L), new(-T, -L), new(-T, -T), new(-L, -T), new(-L, T), new(-T, T),
             };
-            var turned = plus.Select(p => Vector2.Transform(p, Matrix3x2.CreateRotation(MathF.PI / 4))).ToArray();
+            var turned = plus.Select(p => Vector2f.Transform(p, Matrix3x2.CreateRotation(MathF.PI / 4))).ToArray();
             return new() { Id = id, A = control, Frame = control, Geometry = SimplePolygon2D.Builder.Create(turned), Material = new() { Fill = Ink } };
         }
         foreach (var side in new[] { "left", "right" })
@@ -250,7 +250,7 @@ public static class ProceduralFace
 
             foreach (var piece in Pieces)
             {
-                var fit = layout.Fits.GetValueOrDefault(piece, Vector2.One);
+                var fit = layout.Fits.GetValueOrDefault(piece, Vector2f.One);
                 Track(MotionClip.FitKind, piece).Keys.Add(new() { Time = i, Value = new(fit.X - 1, fit.Y - 1, 0), Ease = ProgressMapKind.Step });
                 Track(MotionClip.ShowKind, piece).Keys.Add(new() { Time = i, Value = new(layout.Shown.Contains(piece) ? 1 : 0, 0, 0), Ease = ProgressMapKind.Step });
             }

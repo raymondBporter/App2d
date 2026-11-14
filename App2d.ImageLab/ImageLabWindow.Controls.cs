@@ -7,7 +7,7 @@ namespace App2d.ImageLab;
 
 internal sealed partial class ImageLabWindow
 {
-    private Vector2 _lastImagePosition;
+    private Vector2f  _lastImagePosition;
     private float _lastImageZoom;
     private bool _texturePointSample;
     private void DrawToolbar()
@@ -31,8 +31,8 @@ internal sealed partial class ImageLabWindow
     private void DrawCanvasToolbar()
     {
         Ui.Row(
-            () => Ui.Button("Fit", () => { _fit = true; _pan = Vector2.Zero; }),
-            () => Ui.Button("100%", () => { _fit = false; _zoom = 1; _pan = Vector2.Zero; }),
+            () => Ui.Button("Fit", () => { _fit = true; _pan = Vector2f.Zero; }),
+            () => Ui.Button("100%", () => { _fit = false; _zoom = 1; _pan = Vector2f.Zero; }),
             () =>
             {
                 if (ImGui.Checkbox("Original", ref _showOriginal))
@@ -95,23 +95,24 @@ internal sealed partial class ImageLabWindow
             {
                 var previous = _zoom;
                 _zoom = Math.Clamp(_zoom * MathF.Pow(1.15f, io.MouseWheel), .01f, 64);
-                var relative = io.MousePos - origin - room / 2;
+                var relative = new Vector2f(io.MousePos - origin - room / 2);
                 _pan = relative - (relative - _pan) * (_zoom / previous);
                 _fit = false;
             }
             if (ImGui.IsMouseDown(ImGuiMouseButton.Middle))
             {
-                _pan += io.MouseDelta;
+                _pan += new Vector2f(io.MouseDelta);
                 _fit = false;
             }
         }
         var size = new Vector2(frame.Width, frame.Height) * _zoom;
-        var position = origin + (room - size) / 2 + _pan;
-        _lastImagePosition = position;
+        var position = origin + (room - size) / 2 + _pan.ToVector2();
+        var imagePosition = new Vector2f(position);
+        _lastImagePosition = imagePosition;
         _lastImageZoom = _zoom;
-        HandleBrush(position, _zoom, frame);
+        HandleBrush(imagePosition, _zoom, frame);
         frame = DisplayFrame()!;
-        UpdateRegionHover(position, _zoom, frame);
+        UpdateRegionHover(imagePosition, _zoom, frame);
         if (!ReferenceEquals(frame, _uploaded))
         {
             ReleaseTexture();
@@ -148,7 +149,7 @@ internal sealed partial class ImageLabWindow
         }
         draw.AddImage(_textureId, position, position + size);
         draw.AddRect(position, position + size, Ui.Color(100, 110, 130));
-        DrawEditCursor(draw, position, _zoom, frame, hovered);
+        DrawEditCursor(draw, imagePosition, _zoom, frame, hovered);
         draw.PopClipRect();
     }
 

@@ -16,6 +16,6 @@ public readonly partial record struct LineSegmentCurve2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static LineSegmentCurve2D Create(Vector2 start, Vector2 end) => new LineSegmentCurve2D(start, end).Validated();
+        public static LineSegmentCurve2D Create(Vector2f start, Vector2f end) => new LineSegmentCurve2D(start, end).Validated();
     }
 }

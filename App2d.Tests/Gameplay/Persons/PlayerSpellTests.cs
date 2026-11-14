@@ -83,7 +83,7 @@ public sealed class PlayerSpellTests
         var energy = Enumerable.Range(0, 200).Select(_ => f.Step(default).Players[0].Person.Spells.Energy).ToArray();
         var reference = Enumerable.Range(0, 200).Select(_ => unpaused.Step(default).Players[0].Person.Spells.Energy).ToArray();
         Assert.Equal(reference, energy);
-        f.Player.Reset(Vector2.Zero);
+        f.Player.Reset(Vector2f.Zero);
         f.Steps(17);
         Assert.Equal(0, f.Spells.Energy);
         f.Step(default);
@@ -174,7 +174,7 @@ public sealed class PlayerSpellTests
         };
         if (reason == "damage")
         {
-            Assert.True(f.Player.TakeDamage(1, Vector2.Zero));
+            Assert.True(f.Player.TakeDamage(1, Vector2f.Zero));
         }
 
         if (reason == "pause")
@@ -256,7 +256,7 @@ public sealed class PlayerSpellTests
         private readonly CombatantRegistry2D _registry = new();
         private readonly List<Person2D> _targets = [];
         private readonly TraversalMetrics2D _metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        public PhysicsWorld2D Physics { get; } = new() { Gravity = Vector2.Zero };
+        public PhysicsWorld2D Physics { get; } = new() { Gravity = Vector2f.Zero };
         public Person2D Player { get; }
         public PersonArsenal2D Arsenal { get; }
         public SideScrollerSession2D Session { get; }
@@ -266,7 +266,7 @@ public sealed class PlayerSpellTests
 
         public Fixture(SpellTuning2D? tuning = null)
         {
-            Player = new(_ids.Allocate(), Physics.CollisionSystem, Physics, _metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player, 30);
+            Player = new(_ids.Allocate(), Physics.CollisionSystem, Physics, _metrics, Vector2f.Zero, 2, 1, CombatFaction2D.Player, 30);
             _registry.Register(Player);
             Floor = Physics.AddBody(new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1000, 20)), BodyMotionType2D.Static);
             Floor.WorldObject.Transform.Position = new(0, Player.WorldObject.WorldBounds.Bottom - 10);
@@ -280,11 +280,11 @@ public sealed class PlayerSpellTests
                 });
             Player.AttachActions(Arsenal);
             Arsenal.WeaponOccurred += Events.Add;
-            Session = new(Physics, Player, Arsenal, new EmptyWorld(), new(Vector2.Zero, 30), combat);
+            Session = new(Physics, Player, Arsenal, new EmptyWorld(), new(Vector2f.Zero, 30), combat);
             Step(default);
         }
 
-        public Person2D Target(Vector2 position)
+        public Person2D Target(Vector2f position)
         {
             var target = new Person2D(_ids.Allocate(), Physics.CollisionSystem, Physics, _metrics, position, 4, 0, CombatFaction2D.Enemy, 30);
             target.Body.MotionType = BodyMotionType2D.Static;
@@ -316,13 +316,13 @@ public sealed class PlayerSpellTests
     {
         public Rect2D Bounds => new(new(-10000), new(10000));
         public float GoalX => 9000;
-        public void UpdateStreaming(Vector2 position)
+        public void UpdateStreaming(Vector2f position)
         {
         }
         public void UpdateWorldMotion(float dt)
         {
         }
-        public void UpdateEnemies(float dt, Vector2 position)
+        public void UpdateEnemies(float dt, Vector2f position)
         {
         }
         public void SyncEnemiesAfterPhysics()

@@ -148,7 +148,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         var height = (int)RequireMetaLong("height");
         var chunkSize = (int)RequireMetaLong("chunk_size");
         var tileSize = RequireMetaFloat("tile_size");
-        var origin = new Vector2(RequireMetaFloat("origin_x"), RequireMetaFloat("origin_y"));
+        var origin = new Vector2f(RequireMetaFloat("origin_x"), RequireMetaFloat("origin_y"));
 
         var tilesetIds = ReadTilesetCatalog();
         var map = new EditableTileMap2D(width, height, tileSize, chunkSize, origin, tilesetIds);

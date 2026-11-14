@@ -27,7 +27,7 @@ internal static class ObjectRenderingSmoke2D
             Surface = null,
             Motion = asset.Motion! with
             {
-                Curve = Arc2D.Builder.Create(Vector2.Zero, 48, 0, MathF.Tau),
+                Curve = Arc2D.Builder.Create(Vector2f.Zero, 48, 0, MathF.Tau),
                 Progress = [ProgressMapKind.Linear]
             }
         };

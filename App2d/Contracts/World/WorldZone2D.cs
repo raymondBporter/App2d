@@ -26,11 +26,11 @@ public sealed record WorldZone2D
     public int Priority { get; }
 
     // Half-open bounds assign a shared edge to exactly one adjacent rectangle.
-    public bool Contains(Vector2 point) => point.X >= Bounds.Min.X && point.X < Bounds.Max.X &&
+    public bool Contains(Vector2f point) => point.X >= Bounds.Min.X && point.X < Bounds.Max.X &&
         point.Y >= Bounds.Min.Y && point.Y < Bounds.Max.Y;
 
     /// <summary>Highest priority wins; equal priorities use ordinal ID, independent of file order.</summary>
-    public static WorldZone2D? FindAt(ReadOnlySpan<WorldZone2D> zones, Vector2 point)
+    public static WorldZone2D? FindAt(ReadOnlySpan<WorldZone2D> zones, Vector2f point)
     {
         Ensure.Finite(point);
         WorldZone2D? result = null;

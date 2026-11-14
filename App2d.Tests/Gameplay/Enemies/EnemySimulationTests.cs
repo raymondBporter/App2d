@@ -18,9 +18,9 @@ public sealed class EnemySimulationTests
     [Fact]
     public void StreamingFreezesAttackTimeAndDamageInterruptsBeforeTheStrike()
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var brute = CreateBrute(physics);
-        var target = new Vector2(40f, 0f);
+        var target = new Vector2f(40f, 0f);
         brute.Update(0.2f, target);
         brute.SyncAfterPhysics();
         brute.DrainEvents();
@@ -31,7 +31,7 @@ public sealed class EnemySimulationTests
         Assert.Equal(before.AttackElapsedSeconds, brute.CaptureState().AttackElapsedSeconds);
         Assert.Empty(brute.GetActiveAttackHitboxes());
         brute.SetSimulationEnabled(true);
-        Assert.True(brute.TakeDamage(1, Vector2.Zero));
+        Assert.True(brute.TakeDamage(1, Vector2f.Zero));
         brute.Update(0f, target);
         brute.SyncAfterPhysics();
         Assert.False(brute.CaptureState().IsAttacking);
@@ -44,14 +44,14 @@ public sealed class EnemySimulationTests
     [Fact]
     public void EnemySnapshotsPreserveIdentityAndValuesAcrossStreamingAndPhysics()
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var brute = CreateBrute(physics);
         var enemies = new EnemySystem2D();
         enemies.Register(brute, new TileChunk2D(0, 0));
         var inactive = Assert.Single(enemies.CaptureStates());
         Assert.False(inactive.IsEnabled);
         enemies.UpdateStreaming(_ => true);
-        enemies.Update(0.1f, new Vector2(400f, 0f));
+        enemies.Update(0.1f, new Vector2f(400f, 0f));
         physics.Step(0.1f);
         enemies.SyncAfterPhysics();
         var moving = Assert.Single(enemies.CaptureStates());
@@ -61,22 +61,22 @@ public sealed class EnemySimulationTests
         enemies.UpdateStreaming(_ => false);
         Assert.False(Assert.Single(enemies.CaptureStates()).IsEnabled);
         Assert.True(moving.IsEnabled);
-        Assert.Equal(Vector2.Zero, inactive.Position);
+        Assert.Equal(Vector2f.Zero, inactive.Position);
     }
 
     [Fact]
     public void RivalReportsAttackAndDamageFactsWithoutConstructingAView()
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var combat = new CombatSystem2D(physics.CollisionSystem, new CombatantRegistry2D());
         var rival = new RivalEnemy2D(new EntityIdAllocator2D(), physics.CollisionSystem, physics,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), combat,
-            Vector2.Zero, -100f, 100f, 1, 2, 4);
+            Vector2f.Zero, -100f, 100f, 1, 2, 4);
         rival.Person.ApplyCommand(new PersonCommand2D { PrimaryHeld = true }, 0f);
         var attack = Assert.IsType<RivalAttackStarted2D>(Assert.Single(rival.DrainEvents()));
         Assert.Equal(rival.Person.Id, attack.EntityId);
         Assert.True(rival.CaptureState().IsAttacking);
-        Assert.True(rival.Person.TakeDamage(12, Vector2.Zero));
+        Assert.True(rival.Person.TakeDamage(12, Vector2f.Zero));
         var events = rival.DrainEvents();
         Assert.Single(events.OfType<RivalDamaged2D>());
         Assert.Single(events.OfType<RivalDied2D>());
@@ -86,7 +86,7 @@ public sealed class EnemySimulationTests
 
     private static AuthoredEntityEnemy2D CreateBrute(PhysicsWorld2D physics)
     {
-        var brute = new AuthoredEntityEnemy2D(EntityId2D.Create(), Authored.Entities["maul-brute"], physics, Vector2.Zero, 1, 4);
+        var brute = new AuthoredEntityEnemy2D(EntityId2D.Create(), Authored.Entities["maul-brute"], physics, Vector2f.Zero, 1, 4);
         brute.SetSimulationEnabled(true);
         return brute;
     }

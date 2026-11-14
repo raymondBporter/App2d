@@ -41,7 +41,7 @@ internal sealed partial class ProofRenders
                     var at = column / 5f * clip.Duration;
                     var pose = PoseEvaluator.Sample(model, clip, at);
                     drawing.Build(model, pose);
-                    var placed = new ActorPose(pose, Vector2.Zero, 1);
+                    var placed = new ActorPose(pose, Vector2f.Zero, 1);
                     foreach (var (prop, socket) in PersonLoadout.Dressed(clip, at, PersonGear.Sword, catalog.Entities["hero"]))
                     {
                         drawing.AddAttachment(catalog.Parts[prop], placed, model.Base.Sockets.First(s => s.Id == socket));

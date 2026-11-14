@@ -76,7 +76,7 @@ public sealed class MeshTopologyTests
     [Fact]
     public void VertexTriplesFollowIndicesWithoutCopyingTheBuffers()
     {
-        Span<Vector2> vertices = [Vector2.Zero, Vector2.UnitX, Vector2.UnitY, Vector2.One];
+        Span<Vector2f> vertices = [Vector2f.Zero, Vector2f.UnitX, Vector2f.UnitY, Vector2f.One];
         Span<int> indices = [3, 0, 2];
         var triangles = MeshTopology.IndexedTriangles(vertices, indices);
         vertices[3] = new(7, 8);
@@ -85,7 +85,7 @@ public sealed class MeshTopologyTests
         var enumerator = triangles.GetEnumerator();
         Assert.Equal(1, triangles.Count);
         Assert.True(enumerator.MoveNext());
-        Assert.Equal(new Triangle<Vector2>(new(7, 8), Vector2.UnitX, Vector2.UnitY), enumerator.Current);
+        Assert.Equal(new Triangle<Vector2f>(new(7, 8), Vector2f.UnitX, Vector2f.UnitY), enumerator.Current);
         Assert.False(enumerator.MoveNext());
     }
 
@@ -94,9 +94,9 @@ public sealed class MeshTopologyTests
     {
         Assert.False(default(MeshTopology.TriangleEnumerable).GetEnumerator().MoveNext());
         Assert.False(default(MeshTopology.EdgeEnumerable).GetEnumerator().MoveNext());
-        Assert.False(default(IndexedTriangleEnumerable<Vector2>).GetEnumerator().MoveNext());
+        Assert.False(default(IndexedTriangleEnumerable<Vector2f>).GetEnumerator().MoveNext());
         Assert.Equal(0, MeshTopology.Triangles([]).Count);
-        Assert.False(MeshTopology.IndexedTriangles<Vector2>([], []).GetEnumerator().MoveNext());
+        Assert.False(MeshTopology.IndexedTriangles<Vector2f>([], []).GetEnumerator().MoveNext());
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public sealed class MeshTopologyTests
     {
         Assert.Throws<IndexOutOfRangeException>(() =>
         {
-            var triangles = MeshTopology.IndexedTriangles([Vector2.Zero, Vector2.UnitX, Vector2.UnitY], [0, 1, index]);
+            var triangles = MeshTopology.IndexedTriangles([Vector2f.Zero, Vector2f.UnitX, Vector2f.UnitY], [0, 1, index]);
             var enumerator = triangles.GetEnumerator();
             enumerator.MoveNext();
             _ = enumerator.Current;
@@ -125,7 +125,7 @@ public sealed class MeshTopologyTests
     [Fact]
     public void MeshViewMatchesRandomAccessTriangles()
     {
-        var mesh = new TriangleMesh2D([Vector2.Zero, Vector2.UnitX, Vector2.UnitY, Vector2.One], [3, 1, 0, 0, 2, 3]);
+        var mesh = new TriangleMesh2D([Vector2f.Zero, Vector2f.UnitX, Vector2f.UnitY, Vector2f.One], [3, 1, 0, 0, 2, 3]);
         var index = 0;
         foreach (var triangle in mesh.Triangles)
         {
@@ -138,7 +138,7 @@ public sealed class MeshTopologyTests
     [Fact]
     public void RepeatedTopologyAndVertexIterationDoesNotAllocate()
     {
-        var mesh = new TriangleMesh2D([Vector2.Zero, Vector2.UnitX, Vector2.UnitY, Vector2.One], [0, 1, 2, 1, 3, 2]);
+        var mesh = new TriangleMesh2D([Vector2f.Zero, Vector2f.UnitX, Vector2f.UnitY, Vector2f.One], [0, 1, 2, 1, 3, 2]);
         _ = Sum(mesh);
         var before = GC.GetAllocatedBytesForCurrentThread();
         var sum = 0f;

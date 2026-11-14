@@ -116,7 +116,7 @@ public sealed class SourceImportTests
         for (var i = 0; i <= 20; i++)
         {
             var pose = PoseEvaluator.Sample(resolved, clip, i * clip.Duration / 20);
-            float Flat(string a, string b) => Vector2.Distance(new(pose.World(a).X, pose.World(a).Y), new(pose.World(b).X, pose.World(b).Y));
+            float Flat(string a, string b) => Vector2f.Distance(new(pose.World(a).X, pose.World(a).Y), new(pose.World(b).X, pose.World(b).Y));
             Assert.Equal(thigh, Flat("right-hip", "right-knee"), 3);
             Assert.Equal(shin, Flat("right-knee", "right-foot"), 3);
         }

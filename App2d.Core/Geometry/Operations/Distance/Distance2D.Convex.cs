@@ -17,7 +17,7 @@ public static partial class Distance2D
     /// <param name="firstRadius">The round radius added to the first core.</param>
     /// <param name="secondRadius">The round radius added to the second core.</param>
     /// <returns>The gap when separated, or the negated minimum escape translation when overlapping.</returns>
-    public static float SignedDistanceBetweenConvexPolygons(ReadOnlySpan<Vector2> first, ReadOnlySpan<Vector2> second, float firstRadius = 0f, float secondRadius = 0f)
+    public static float SignedDistanceBetweenConvexPolygons(ReadOnlySpan<Vector2f> first, ReadOnlySpan<Vector2f> second, float firstRadius = 0f, float secondRadius = 0f)
     {
         Ensure.ThrowIfTooShort(first, 1);
         Ensure.ThrowIfTooShort(second, 1);
@@ -30,7 +30,7 @@ public static partial class Distance2D
     /// <param name="firstRadius">The round radius added to the first core.</param>
     /// <param name="secondRadius">The round radius added to the second core.</param>
     /// <returns>The nonnegative gap.</returns>
-    public static float DistanceBetweenConvexPolygons(ReadOnlySpan<Vector2> first, ReadOnlySpan<Vector2> second, float firstRadius = 0f, float secondRadius = 0f) => Gjk2D.Distance(new ConvexProxy2D(first, firstRadius), new ConvexProxy2D(second, secondRadius));
+    public static float DistanceBetweenConvexPolygons(ReadOnlySpan<Vector2f> first, ReadOnlySpan<Vector2f> second, float firstRadius = 0f, float secondRadius = 0f) => Gjk2D.Distance(new ConvexProxy2D(first, firstRadius), new ConvexProxy2D(second, secondRadius));
 
     /// <summary>The signed distance between two capsules, including crossed spines.</summary>
     /// <param name="firstStart">The first spine start.</param>
@@ -40,7 +40,7 @@ public static partial class Distance2D
     /// <param name="secondEnd">The second spine end.</param>
     /// <param name="secondRadius">The second radius.</param>
     /// <returns>The gap when separated, or the negated minimum escape translation when overlapping.</returns>
-    public static float SignedDistanceBetweenCapsules(Vector2 firstStart, Vector2 firstEnd, float firstRadius, Vector2 secondStart, Vector2 secondEnd, float secondRadius) => SignedDistanceBetweenConvexPolygons([firstStart, firstEnd], [secondStart, secondEnd], firstRadius, secondRadius);
+    public static float SignedDistanceBetweenCapsules(Vector2f firstStart, Vector2f firstEnd, float firstRadius, Vector2f secondStart, Vector2f secondEnd, float secondRadius) => SignedDistanceBetweenConvexPolygons([firstStart, firstEnd], [secondStart, secondEnd], firstRadius, secondRadius);
 
     /// <summary>The distance between two filled capsules; zero when touching or overlapping.</summary>
     /// <param name="firstStart">The first spine start.</param>
@@ -50,6 +50,6 @@ public static partial class Distance2D
     /// <param name="secondEnd">The second spine end.</param>
     /// <param name="secondRadius">The second radius.</param>
     /// <returns>The nonnegative gap.</returns>
-    public static float DistanceBetweenCapsules(Vector2 firstStart, Vector2 firstEnd, float firstRadius, Vector2 secondStart, Vector2 secondEnd, float secondRadius) => DistanceBetweenConvexPolygons([firstStart, firstEnd], [secondStart, secondEnd], firstRadius, secondRadius);
+    public static float DistanceBetweenCapsules(Vector2f firstStart, Vector2f firstEnd, float firstRadius, Vector2f secondStart, Vector2f secondEnd, float secondRadius) => DistanceBetweenConvexPolygons([firstStart, firstEnd], [secondStart, secondEnd], firstRadius, secondRadius);
 
 }

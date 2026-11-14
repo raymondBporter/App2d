@@ -21,7 +21,7 @@ public static class CurveRaycast2D
     }
 
     /// <summary>Queries a curve with any finite nonzero direction; Distance is the original ray parameter.</summary>
-    public static bool TryIntersect(Vector2 origin, Vector2 direction, ICurve2D curve, float maxDistance, out RayHit2D hit)
+    public static bool TryIntersect(Vector2f origin, Vector2f direction, ICurve2D curve, float maxDistance, out RayHit2D hit)
     {
         Ensure.ThrowIfNull(curve);
         Ensure.Finite(origin);
@@ -31,7 +31,7 @@ public static class CurveRaycast2D
         return Query(origin, direction, curve, 0, 1, maxDistance, out hit);
     }
 
-    private static bool Query(Vector2 origin, Vector2 direction, ICurve2D curve, double from, double to,
+    private static bool Query(Vector2f origin, Vector2f direction, ICurve2D curve, double from, double to,
         float maxDistance, out RayHit2D hit)
     {
         hit = default;
@@ -74,7 +74,7 @@ public static class CurveRaycast2D
         }
     }
 
-    private static bool Spans(Vector2 origin, Vector2 direction, PolynomialCurveSpan2D[] spans,
+    private static bool Spans(Vector2f origin, Vector2f direction, PolynomialCurveSpan2D[] spans,
         double from, double to, float maxDistance, out RayHit2D hit)
     {
         hit = default;
@@ -92,7 +92,7 @@ public static class CurveRaycast2D
         return found;
     }
 
-    private static bool Polynomial(Vector2 origin, Vector2 direction, ReadOnlySpan<Vector2d> controls,
+    private static bool Polynomial(Vector2f origin, Vector2f direction, ReadOnlySpan<Vector2d> controls,
         double from, double to, float maxDistance, out RayHit2D hit)
     {
         hit = default;
@@ -127,7 +127,7 @@ public static class CurveRaycast2D
             var tangent = Tangent(controls, roots[i]);
             var length = tangent.Length();
             if (length == 0) continue;
-            hit = new((rayOrigin + axis * distance).ToVector2(), (tangent.PerpCcw / length).ToVector2(), (float)distance);
+            hit = new((rayOrigin + axis * distance).ToVector2f(), (tangent.PerpCcw / length).ToVector2f(), (float)distance);
             maxDistance = hit.Distance;
             found = true;
         }

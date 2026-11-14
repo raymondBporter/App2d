@@ -50,7 +50,7 @@ internal sealed class MeleeAttack2D(EntityId2D sourceId, SpatialObject2D worldOb
     /// <summary>
     /// Advances the attack and reports whether a buffered swing began.
     /// </summary>
-    public bool Update(float deltaSeconds, Vector2 ownerPosition, float facing)
+    public bool Update(float deltaSeconds, Vector2f ownerPosition, float facing)
     {
         Ensure.NonNegative(deltaSeconds);
         Ensure.Finite(ownerPosition);
@@ -113,9 +113,9 @@ internal sealed class MeleeAttack2D(EntityId2D sourceId, SpatialObject2D worldOb
         }
     }
 
-    private void PositionHitbox(Vector2 ownerPosition, float facing)
+    private void PositionHitbox(Vector2f ownerPosition, float facing)
     {
-        WorldObject.Transform.Position = ownerPosition + new Vector2(facing * Profile.ForwardOffset, Profile.VerticalOffset);
+        WorldObject.Transform.Position = ownerPosition + new Vector2f(facing * Profile.ForwardOffset, Profile.VerticalOffset);
         WorldObject.Transform.Rotation = 0f;
     }
 }

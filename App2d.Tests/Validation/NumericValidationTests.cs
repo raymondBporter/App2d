@@ -36,14 +36,14 @@ public sealed class NumericValidationTests
     [Fact]
     public void NonzeroVectorsAllowAxisAlignedDirections()
     {
-        Ensure.NonZero(Vector2.UnitX);
+        Ensure.NonZero(Vector2f.UnitX);
         Ensure.NonZero(Vector3.UnitY);
         Ensure.NonZero(Vector4.UnitW);
-        Ensure.NonZero(new Vector2(float.Epsilon, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonZero(Vector2.Zero));
+        Ensure.NonZero(new Vector2f(float.Epsilon, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonZero(Vector2f.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonZero(Vector3.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonZero(Vector4.Zero));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.Positive(Vector2.UnitX));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.Positive(Vector2f.UnitX));
     }
 
     [Theory]
@@ -52,7 +52,7 @@ public sealed class NumericValidationTests
     [InlineData(float.NegativeInfinity)]
     public void EveryVectorComponentIsCheckedAndTheWholeValueIsReported(float bad)
     {
-        foreach (var vector in new Vector2[] { new(bad, 1), new(1, bad) })
+        foreach (var vector in new Vector2f[] { new(bad, 1), new(1, bad) })
         {
             Assert.False(vector.IsFinite());
             Assert.False(NumericValidation.IsFinite(vector));
@@ -60,7 +60,7 @@ public sealed class NumericValidationTests
             Assert.False(NumericValidation.IsPositive(vector));
             var error = Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonNegative(vector));
             Assert.Equal(nameof(vector), error.ParamName);
-            Assert.Equal(vector, Assert.IsType<Vector2>(error.ActualValue));
+            Assert.Equal(vector, Assert.IsType<Vector2f>(error.ActualValue));
             Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.Positive(vector));
         }
         foreach (var vector in stackalloc Vector3[] { new(bad, 1, 1), new(1, bad, 1), new(1, 1, bad) })
@@ -82,13 +82,13 @@ public sealed class NumericValidationTests
     [Fact]
     public void FinitenessAllowsZeroAndLargeComponentsEvenWhenMagnitudeOrDeterminantOverflows()
     {
-        Assert.True(Vector2.Zero.IsFinite());
+        Assert.True(Vector2f.Zero.IsFinite());
         Assert.True(Vector3.Zero.IsFinite());
         Assert.True(Vector4.Zero.IsFinite());
-        Assert.True(new Vector2(float.MaxValue).IsFinite());
+        Assert.True(new Vector2f(float.MaxValue).IsFinite());
         Assert.True(new Vector3(float.MaxValue).IsFinite());
         Assert.True(new Vector4(float.MaxValue).IsFinite());
-        Assert.False(float.IsFinite(new Vector2(float.MaxValue).Length()));
+        Assert.False(float.IsFinite(new Vector2f(float.MaxValue).Length()));
 
         var singular = new Matrix3x2();
         var large = Matrix3x2.CreateScale(float.MaxValue);
@@ -123,13 +123,13 @@ public sealed class NumericValidationTests
     [Fact]
     public void ComponentOrderingRequiresEveryAxisAndPreservesInclusiveEdges()
     {
-        var mixed = new Vector2(1, 5);
-        var limit = new Vector2(3);
+        var mixed = new Vector2f(1, 5);
+        var limit = new Vector2f(3);
         Assert.False(NumericValidation.IsLessThan(mixed, limit));
         Assert.False(NumericValidation.IsGreaterThan(mixed, limit));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThan(mixed, limit));
-        Ensure.LessThanOrEqual(new Vector2(1, 3), limit);
-        Ensure.GreaterThanOrEqual(limit, new Vector2(1, 3));
+        Ensure.LessThanOrEqual(new Vector2f(1, 3), limit);
+        Ensure.GreaterThanOrEqual(limit, new Vector2f(1, 3));
         Ensure.LessThan(Vector3.One, new Vector3(2));
         Ensure.GreaterThan(new Vector4(2), Vector4.One);
         Ensure.NonNegative(Vector3.UnitZ);
@@ -142,14 +142,14 @@ public sealed class NumericValidationTests
     [Fact]
     public void VectorRangeGuardsValidateBothBounds()
     {
-        Ensure.InRange(Vector2.One, Vector2.Zero, Vector2.One);
+        Ensure.InRange(Vector2f.One, Vector2f.Zero, Vector2f.One);
         Ensure.InRange(Vector3.One, Vector3.Zero, new Vector3(2), bounds: RangeBounds.Open);
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(Vector4.One, Vector4.Zero, Vector4.One, bounds: RangeBounds.Open));
-        var maximum = new Vector2(1, float.NaN);
-        var error = Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(Vector2.Zero, Vector2.Zero, maximum));
+        var maximum = new Vector2f(1, float.NaN);
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(Vector2f.Zero, Vector2f.Zero, maximum));
         Assert.Equal(nameof(maximum), error.ParamName);
         maximum = new(-1, 1);
-        error = Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(Vector2.Zero, Vector2.Zero, maximum));
+        error = Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(Vector2f.Zero, Vector2f.Zero, maximum));
         Assert.Equal(nameof(maximum), error.ParamName);
     }
 
@@ -158,9 +158,9 @@ public sealed class NumericValidationTests
     {
         var unbounded = new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity));
         Assert.False(unbounded.IsFinite);
-        Assert.True(unbounded.Contains(Vector2.Zero));
-        Assert.Equal(default, Rect2D.FromSize(Vector2.Zero));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2D(new(float.NaN, 0), Vector2.One));
+        Assert.True(unbounded.Contains(Vector2f.Zero));
+        Assert.Equal(default, Rect2D.FromSize(Vector2f.Zero));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2D(new(float.NaN, 0), Vector2f.One));
         Assert.Throws<ArgumentOutOfRangeException>(() => Circle2D.Builder.Create(float.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => Rectangle2D.Builder.CreateFromSize(float.PositiveInfinity, 1));
     }
@@ -172,14 +172,14 @@ public sealed class NumericValidationTests
     [InlineData(RangeBounds.OpenClosed, false, true)]
     public void VectorRangeEndpointsApplyOnEveryAxis(RangeBounds bounds, bool includesMinimum, bool includesMaximum)
     {
-        Ensure.InRange(Vector2.One, Vector2.Zero, new Vector2(2), bounds: bounds);
+        Ensure.InRange(Vector2f.One, Vector2f.Zero, new Vector2f(2), bounds: bounds);
         Ensure.InRange(Vector3.One, Vector3.Zero, new Vector3(2), bounds: bounds);
         Ensure.InRange(Vector4.One, Vector4.Zero, new Vector4(2), bounds: bounds);
-        Assert.Equal(includesMinimum, NumericValidation.IsInRange(new Vector2(0, 1), Vector2.Zero, new Vector2(2), bounds));
+        Assert.Equal(includesMinimum, NumericValidation.IsInRange(new Vector2f(0, 1), Vector2f.Zero, new Vector2f(2), bounds));
         Assert.Equal(includesMaximum, NumericValidation.IsInRange(new Vector3(1, 2, 1), Vector3.Zero, new Vector3(2), bounds));
         Assert.False(NumericValidation.IsInRange(new Vector4(1, 1, 3, 1), Vector4.Zero, new Vector4(2), bounds));
         if (!includesMinimum)
-            Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(new Vector2(0, 1), Vector2.Zero, new Vector2(2), bounds: bounds));
+            Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(new Vector2f(0, 1), Vector2f.Zero, new Vector2f(2), bounds: bounds));
         if (!includesMaximum)
             Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(new Vector3(1, 2, 1), Vector3.Zero, new Vector3(2), bounds: bounds));
     }
@@ -187,14 +187,14 @@ public sealed class NumericValidationTests
     [Fact]
     public void VectorInfinityPoliciesMatchScalarPolicies()
     {
-        var unbounded = new Vector2(float.PositiveInfinity);
+        var unbounded = new Vector2f(float.PositiveInfinity);
         Ensure.Number(unbounded);
         Ensure.NonNegative(unbounded, allowInfinity: true);
-        Ensure.InRange(Vector2.One, Vector2.Zero, unbounded);
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThanOrEqual(Vector2.One, unbounded));
+        Ensure.InRange(Vector2f.One, Vector2f.Zero, unbounded);
+        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThanOrEqual(Vector2f.One, unbounded));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonNegative(unbounded));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.Number(new Vector3(1, float.NaN, 1)));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonNegative(new Vector4(1, 1, 1, float.NaN), allowInfinity: true));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(unbounded, Vector2.Zero, unbounded));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.InRange(unbounded, Vector2f.Zero, unbounded));
     }
 }

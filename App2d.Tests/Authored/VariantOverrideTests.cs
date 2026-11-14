@@ -162,10 +162,10 @@ public sealed class VariantOverrideTests : IDisposable
         TestModels.Near(resolved.Rest[Humanoid.LeftHand], kept.Rest[Humanoid.LeftHand], 1e-5f);
         // A bone tip drag on a variant overrides rotation and length; a point control's tip is refused with the reason.
         variant.Overrides.Clear();
-        var target = new Vector2(resolved.Rest[Humanoid.LeftElbow].X - .3f, resolved.Rest[Humanoid.LeftElbow].Y + .1f);
+        var target = new Vector2f(resolved.Rest[Humanoid.LeftElbow].X - .3f, resolved.Rest[Humanoid.LeftElbow].Y + .1f);
         ModelAuthoring.MoveBoneTip(resolved, variant, Humanoid.LeftElbow, target);
         var dragged = ResolvedModel.From(person, variant);
-        TestModels.Near(new(target, resolved.Rest[Humanoid.LeftHand].Z), dragged.Rest[Humanoid.LeftHand], 1e-4f);
+        TestModels.Near(new(target.ToVector2(), resolved.Rest[Humanoid.LeftHand].Z), dragged.Rest[Humanoid.LeftHand], 1e-4f);
         Assert.True(variant.HasOverride(PropertyRef.OfControl(Humanoid.LeftElbow, RigProperties.LocalRotation)));
         Assert.Contains("only drag a bone node", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveBoneTip(resolved, variant, Humanoid.RightShoulder, target)).Message);
     }

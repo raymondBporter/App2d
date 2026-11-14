@@ -18,8 +18,8 @@ public static partial class Gjk2D
         }
 
         var origin = first.ReferencePoint;
-        Span<Vector2> a = stackalloc Vector2[first.VertexCount];
-        Span<Vector2> b = stackalloc Vector2[second.VertexCount];
+        Span<Vector2f> a = stackalloc Vector2f[first.VertexCount];
+        Span<Vector2f> b = stackalloc Vector2f[second.VertexCount];
         for (var i = 0; i < a.Length; i++)
         {
             a[i] = first.Vertex(i, origin);
@@ -36,7 +36,7 @@ public static partial class Gjk2D
         }
 
         var signedDistance = float.NegativeInfinity;
-        var normal = Vector2.UnitX;
+        var normal = Vector2f.UnitX;
         if (!TestSmallAxes(a, a, b, ref signedDistance, ref normal) || !TestSmallAxes(b, a, b, ref signedDistance, ref normal))
         {
             return false;
@@ -62,7 +62,7 @@ public static partial class Gjk2D
         return true;
     }
 
-    private static bool HasConvexOrder(ReadOnlySpan<Vector2> vertices)
+    private static bool HasConvexOrder(ReadOnlySpan<Vector2f> vertices)
     {
         if (vertices.Length < 3)
         {
@@ -89,7 +89,7 @@ public static partial class Gjk2D
         return winding != 0;
     }
 
-    private static bool TestSmallAxes(ReadOnlySpan<Vector2> edges, ReadOnlySpan<Vector2> first, ReadOnlySpan<Vector2> second, ref float signedDistance, ref Vector2 normal)
+    private static bool TestSmallAxes(ReadOnlySpan<Vector2f> edges, ReadOnlySpan<Vector2f> first, ReadOnlySpan<Vector2f> second, ref float signedDistance, ref Vector2f normal)
     {
         for (var i = 0; i < edges.Length; i++)
         {
@@ -99,7 +99,7 @@ public static partial class Gjk2D
                 continue;
             }
 
-            var direction = Vector2.Normalize(edge);
+            var direction = Vector2f.Normalize(edge);
             if (!TestSmallAxis(direction.PerpCcw, first, second, ref signedDistance, ref normal))
             {
                 return false;
@@ -113,7 +113,7 @@ public static partial class Gjk2D
         return true;
     }
 
-    private static bool TestSmallAxis(Vector2 axis, ReadOnlySpan<Vector2> first, ReadOnlySpan<Vector2> second, ref float signedDistance, ref Vector2 normal)
+    private static bool TestSmallAxis(Vector2f axis, ReadOnlySpan<Vector2f> first, ReadOnlySpan<Vector2f> second, ref float signedDistance, ref Vector2f normal)
     {
         var gap = Distance2D.SignedDistance(Projection2D.Polygon(first, axis), Projection2D.Polygon(second, axis), out var direction);
         if (gap > 0f)
@@ -129,7 +129,7 @@ public static partial class Gjk2D
         return true;
     }
 
-    private static (Vector2 Start, Vector2 End) SupportFace(ReadOnlySpan<Vector2> vertices, Vector2 direction)
+    private static (Vector2f Start, Vector2f End) SupportFace(ReadOnlySpan<Vector2f> vertices, Vector2f direction)
     {
         var start = SupportPoint2D.Polygon(direction, vertices);
         var end = start;

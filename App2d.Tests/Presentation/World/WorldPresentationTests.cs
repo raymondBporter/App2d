@@ -20,7 +20,7 @@ public sealed class WorldPresentationTests
     {
         var map = CreateMap();
         map.SetTileKind(4, 4, TileKind2D.Solid);
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         using var level = CreateLevel(map, [Platform()]);
         level.CreateSimulation(physics.CollisionSystem, physics, new EntityIdAllocator2D(), 1, 2, 4);
         var content = level.CaptureContent();

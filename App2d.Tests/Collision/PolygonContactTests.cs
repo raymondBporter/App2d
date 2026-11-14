@@ -8,7 +8,7 @@ namespace App2d.Tests.Collision;
 
 public sealed class PolygonContactTests
 {
-    private static SpatialObject2D At(IShape2D shape, Vector2 position, float rotation = 0f)
+    private static SpatialObject2D At(IShape2D shape, Vector2f position, float rotation = 0f)
     {
         var placed = new SpatialObject2D(shape);
         placed.Transform.Position = position;
@@ -39,7 +39,7 @@ public sealed class PolygonContactTests
         nameof(Capsule2D) => Capsule2D.Builder.Create(new(-.5f, 0), new(.5f, 0), .5f),
         nameof(Circle2D) => Circle2D.Builder.Create(1),
         nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(1.2f, .8f)),
-        nameof(HalfSpace2D) => HalfSpace2D.Builder.Create(-Vector2.UnitX, 1),
+        nameof(HalfSpace2D) => HalfSpace2D.Builder.Create(-Vector2f.UnitX, 1),
         _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
     };
 
@@ -48,29 +48,29 @@ public sealed class PolygonContactTests
     public void ConvexPolygonCollidesWithEveryShapeInEitherOrder(string shapeName)
     {
         var partnerShape = CreatePartner(shapeName);
-        var polygon = At(Diamond(1.5f), Vector2.Zero, .3f);
+        var polygon = At(Diamond(1.5f), Vector2f.Zero, .3f);
         var partner = At(partnerShape, new(1.2f, .1f));
         Assert.True(ShapeCollision2D.TryGetContact(polygon, partner, out var forward), partnerShape.GetType().Name);
         Assert.True(ShapeCollision2D.TryGetContact(partner, polygon, out var reverse), partnerShape.GetType().Name);
         Assert.True(forward.PenetrationDepth > 0f);
         Assert.Equal(forward.PenetrationDepth, reverse.PenetrationDepth, 4);
-        Assert.True(Vector2.Distance(forward.Normal, -reverse.Normal) < 1e-4f);
+        Assert.True(Vector2f.Distance(forward.Normal, -reverse.Normal) < 1e-4f);
         Assert.InRange(forward.Normal.Length(), .9999f, 1.0001f);
     }
 
     [Fact]
     public void SeparatedPolygonsProduceNoContactAndTouchingBoxesResolveAlongTheBoxEdge()
     {
-        var diamond = At(Diamond(1), Vector2.Zero);
+        var diamond = At(Diamond(1), Vector2f.Zero);
         Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Diamond(1), new(2.01f, 0)), out _));
         Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Rectangle2D.Builder.CreateFromSize(2, 2), new(2.01f, 0)), out _));
         Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Capsule2D.Builder.Create(new(0, -1), new(0, 1), .5f), new(1.51f, 0)), out _));
 
         // A box edge normal is the shortest escape when a diamond tip pokes into a box.
-        var box = At(Rectangle2D.Builder.CreateFromSize(2, 2), Vector2.Zero);
+        var box = At(Rectangle2D.Builder.CreateFromSize(2, 2), Vector2f.Zero);
         Assert.True(ShapeCollision2D.TryGetContact(box, At(Diamond(1), new(1.9f, 0)), out var contact));
         Assert.Equal(.1f, contact.PenetrationDepth, 4);
-        Assert.Equal(-Vector2.UnitX, contact.Normal);
+        Assert.Equal(-Vector2f.UnitX, contact.Normal);
 
         // Tip to tip, the diamonds escape along a diagonal edge normal, which is shorter than the axis overlap.
         Assert.True(ShapeCollision2D.TryGetContact(diamond, At(Diamond(1), new(1.9f, 0)), out var tips));

@@ -22,14 +22,14 @@ public sealed partial class Renderer2D
         _characterRenderer ??= new(_device);
         _authoredDrawing ??= new();
         _authoredDrawing.Build(shader.Model, pose, shader.Artwork);
-        var local = new ActorPose(pose, System.Numerics.Vector2.Zero, 1);
+        var local = new ActorPose(pose, Vector2f.Zero, 1);
         foreach (var (prop, socket) in shader.Props)
         {
             _authoredDrawing.AddAttachment(prop, local, socket);
         }
         foreach (var attachment in shader.Equipment) _authoredDrawing.AddAttachment(attachment, local);
 
-        var m = visual.Transform.Matrix * View.WorldToDeviceMatrix;
+        var m = View.LocalToDevice(visual.Transform.Matrix);
         var world = Matrix.CreateScale(shader.Facing, 1, 1) * LayeredMeshRenderer.ToXnaMatrix(m);
         var projection = LayeredMeshRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height);
         LayeredMesh? swoosh = null;

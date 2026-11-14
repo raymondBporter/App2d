@@ -15,8 +15,8 @@ public sealed class TileMeshingCharacterizationTests
         var rectangles = map.CollisionRectangles;
 
         Assert.Equal(2, rectangles.Count);
-        Assert.Contains(rectangles, r => r.Min == Vector2.Zero && r.Max == new Vector2(8f, 4f));
-        Assert.Contains(rectangles, r => r.Min == new Vector2(0f, 4f) && r.Max == new Vector2(2f, 6f));
+        Assert.Contains(rectangles, r => r.Min == Vector2f.Zero && r.Max == new Vector2f(8f, 4f));
+        Assert.Contains(rectangles, r => r.Min == new Vector2f(0f, 4f) && r.Max == new Vector2f(2f, 6f));
     }
 
     [Fact]

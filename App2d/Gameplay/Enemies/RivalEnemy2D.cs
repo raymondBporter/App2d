@@ -29,7 +29,7 @@ public sealed class RivalEnemy2D : IEnemyActor2D
         PhysicsWorld2D physics,
         TraversalMetrics2D traversal,
         CombatSystem2D combat,
-        Vector2 position,
+        Vector2f position,
         float minimumX,
         float maximumX,
         uint worldLayer,
@@ -78,7 +78,7 @@ public sealed class RivalEnemy2D : IEnemyActor2D
         Person.SetSimulationEnabled(isEnabled);
     }
 
-    public void Update(float deltaSeconds, Vector2 targetPosition)
+    public void Update(float deltaSeconds, Vector2f targetPosition)
     {
         Ensure.NonNegative(deltaSeconds);
         Ensure.Finite(targetPosition);

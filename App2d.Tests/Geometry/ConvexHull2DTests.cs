@@ -8,7 +8,7 @@ public sealed class ConvexHull2DTests
     [Fact]
     public void UnorderedPointsProduceMinimalCounterClockwisePerimeter()
     {
-        Vector2[] points =
+        Vector2f[] points =
         [
             new(2, 2), new(1, 1), new(0, 2), new(2, 0), new(0, 0),
             new(1, 0), new(2, 1), new(0, 1), new(0, 0)

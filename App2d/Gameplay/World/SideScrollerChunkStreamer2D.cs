@@ -65,7 +65,7 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
         Load(chunk);
     }
 
-    public void Update(Vector2 focus)
+    public void Update(Vector2f focus)
     {
         Ensure.Finite(focus);
         var center = _tileMap.WorldToChunk(focus);
@@ -114,7 +114,7 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
         {
             var isOneWay = collision.Kind.IsOneWay();
             var bounds = isOneWay
-                ? new Rect2D(new Vector2(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
+                ? new Rect2D(new Vector2f(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
                 : collision.Bounds;
             var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(bounds.Size));
             platform.Transform.Position = bounds.Center;
@@ -126,7 +126,7 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
             body.CollisionLayer = worldLayer;
             body.CollisionMask = collisionMask;
             var surface = PlatformCollisionRules2D.Attach(_physics).Surface(body);
-            surface.OneWaySurfaceNormal = isOneWay ? Vector2.UnitY : null;
+            surface.OneWaySurfaceNormal = isOneWay ? Vector2f.UnitY : null;
             surface.IsWallGrippable = collision.Kind.IsGrippable();
             colliders.Add(new ChunkCollider(platform, body));
         }

@@ -112,7 +112,7 @@ public sealed class ShapeArea2DTests
             IConvexShape2D[] parts = new IConvexShape2D[6];
             for (var i = 0; i < parts.Length; i++)
             {
-                var center = new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
+                var center = new Vector2f((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
                 parts[i] = i % 2 == 0 ? Circle2D.Builder.Create(.3f + (float)random.NextDouble(), center)
                     : Rectangle2D.Builder.CreateFromSize(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble(), center);
             }
@@ -124,9 +124,9 @@ public sealed class ShapeArea2DTests
     [Fact]
     public void ACommonLargeTranslationDoesNotChangeArea()
     {
-        var offset = new Vector2(1 << 20, -(1 << 20));
+        var offset = new Vector2f(1 << 20, -(1 << 20));
         var original = ShapeArea2D.Union([Circle2D.Builder.Create(1), Rectangle2D.Builder.Create(new(0, -1), new(2, 1)), Circle2D.Builder.Create(1, new(1, 0))]);
-        var moved = ShapeArea2D.Union([Circle2D.Builder.Create(1, offset), Rectangle2D.Builder.Create(offset + new Vector2(0, -1), offset + new Vector2(2, 1)), Circle2D.Builder.Create(1, offset + Vector2.UnitX)]);
+        var moved = ShapeArea2D.Union([Circle2D.Builder.Create(1, offset), Rectangle2D.Builder.Create(offset + new Vector2f(0, -1), offset + new Vector2f(2, 1)), Circle2D.Builder.Create(1, offset + Vector2f.UnitX)]);
         Assert.Equal(original, moved);
         Assert.Equal(2 * MathF.PI, ShapeArea2D.Union([Circle2D.Builder.Create(1), Circle2D.Builder.Create(1, new(1e30f, 0))]), 5);
     }
@@ -141,7 +141,7 @@ public sealed class ShapeArea2DTests
     [InlineData(2f, 1f, 2f)]
     public void EllipsePairsAgreeWithAnAffineTransformationOfTheCircleLens(float firstRadius, float secondRadius, float distance)
     {
-        var scale = new Vector2(3, .5f);
+        var scale = new Vector2f(3, .5f);
         IConvexShape2D[] parts = [Ellipse2D.Builder.Create(firstRadius * scale), Ellipse2D.Builder.Create(secondRadius * scale, new(distance * scale.X, 0))];
         var expected = scale.X * scale.Y * (Math.PI * (firstRadius * firstRadius + secondRadius * secondRadius) - CircleLens(firstRadius, secondRadius, distance));
         Assert.Equal((float)expected, ShapeArea2D.Union(parts, 3), 5);
@@ -181,7 +181,7 @@ public sealed class ShapeArea2DTests
     [InlineData(1.9f)]
     public void EllipseTriplesPreserveTripleCoverageAndHoles(float side)
     {
-        var radii = new Vector2(2, .5f);
+        var radii = new Vector2f(2, .5f);
         IConvexShape2D[] parts =
         [
             Ellipse2D.Builder.Create(radii), Ellipse2D.Builder.Create(radii, new(2 * side, 0)),
@@ -199,7 +199,7 @@ public sealed class ShapeArea2DTests
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(2, 1)), Ellipse2D.Builder.Create(new(1, .5f)), Circle2D.Builder.Create(.25f)]), 5);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(1, .5f), new(1, 0))]), 5);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Circle2D.Builder.Create(1)]), 5);
-        Assert.Equal(MathF.PI, ShapeArea2D.Union([Circle2D.Builder.Create(1), Ellipse2D.Builder.Create(Vector2.One)]), 5);
+        Assert.Equal(MathF.PI, ShapeArea2D.Union([Circle2D.Builder.Create(1), Ellipse2D.Builder.Create(Vector2f.One)]), 5);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(2, 1), new(1e-25f, 0))]), 5);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(2, 1), new(0, 1e-25f))]), 5);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(2, 1), new(1e-25f, 1e-25f))]), 5);
@@ -211,12 +211,12 @@ public sealed class ShapeArea2DTests
     [Fact]
     public void EllipseUnionIsInvariantUnderTranslationAndUniformScaling()
     {
-        var offset = new Vector2(1 << 20, -(1 << 20));
+        var offset = new Vector2f(1 << 20, -(1 << 20));
         var expected = ShapeArea2D.Union([Ellipse2D.Builder.Create(new(2, 1)), Circle2D.Builder.Create(1, new(1, 0)), Rectangle2D.Builder.Create(new(0, -1), new(2, 1))]);
-        Assert.Equal(expected, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(2, 1), offset), Circle2D.Builder.Create(1, offset + Vector2.UnitX), Rectangle2D.Builder.Create(offset + new Vector2(0, -1), offset + new Vector2(2, 1))]));
+        Assert.Equal(expected, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(2, 1), offset), Circle2D.Builder.Create(1, offset + Vector2f.UnitX), Rectangle2D.Builder.Create(offset + new Vector2f(0, -1), offset + new Vector2f(2, 1))]));
         foreach (var scale in new[] { 1e-8f, 1e8f })
         {
-            var actual = ShapeArea2D.Union([Ellipse2D.Builder.Create(scale * new Vector2(2, 1)), Circle2D.Builder.Create(scale, new(scale, 0)), Rectangle2D.Builder.Create(scale * new Vector2(0, -1), scale * new Vector2(2, 1))]);
+            var actual = ShapeArea2D.Union([Ellipse2D.Builder.Create(scale * new Vector2f(2, 1)), Circle2D.Builder.Create(scale, new(scale, 0)), Rectangle2D.Builder.Create(scale * new Vector2f(0, -1), scale * new Vector2f(2, 1))]);
             Assert.InRange(MathF.Abs(actual / scale / scale - expected), 0, 2e-6f);
         }
     }
@@ -233,7 +233,7 @@ public sealed class ShapeArea2DTests
             IConvexShape2D[] parts = new IConvexShape2D[6];
             for (var i = 0; i < parts.Length; i++)
             {
-                var center = new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
+                var center = new Vector2f((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
                 parts[i] = (i % 3) switch
                 {
                     0 => Ellipse2D.Builder.Create(new(.1f + (float)random.NextDouble() * 2, .1f + (float)random.NextDouble() * 2), center),
@@ -265,7 +265,7 @@ public sealed class ShapeArea2DTests
     [InlineData(1e-18f, 0f, 1f)]
     public void CapsuleBoundariesStayAnalyticInEverySpineDirection(float x, float y, float radius)
     {
-        var capsule = Capsule2D.Builder.Create(Vector2.Zero, new(x, y), radius);
+        var capsule = Capsule2D.Builder.Create(Vector2f.Zero, new(x, y), radius);
         var reversed = Capsule2D.Builder.Create(capsule.End, capsule.Start, radius);
         var expected = 2d * radius * Math.Sqrt((double)x * x + (double)y * y) + Math.PI * radius * radius;
         var actual = ShapeArea2D.Union([capsule, reversed], 3);
@@ -277,9 +277,9 @@ public sealed class ShapeArea2DTests
     [Fact]
     public void CollinearCapsulesMergeTheirStraightEdgesAndEndCaps()
     {
-        var first = Capsule2D.Builder.Create(new(-2, 0), Vector2.Zero, 1);
+        var first = Capsule2D.Builder.Create(new(-2, 0), Vector2f.Zero, 1);
         var second = Capsule2D.Builder.Create(new(-1, 0), new(2, 0), 1);
-        var adjacent = Capsule2D.Builder.Create(Vector2.Zero, new(2, 0), 1);
+        var adjacent = Capsule2D.Builder.Create(Vector2f.Zero, new(2, 0), 1);
         var contained = Capsule2D.Builder.Create(new(-1, 0), new(1, 0), .5f);
         Assert.Equal(8 + MathF.PI, ShapeArea2D.Union([first, second, contained]), 5);
         Assert.Equal(8 + MathF.PI, ShapeArea2D.Union([first, adjacent]), 5);
@@ -310,22 +310,22 @@ public sealed class ShapeArea2DTests
         Assert.Equal(capsule.Area, ShapeArea2D.Union([capsule, Rectangle2D.Builder.Create(new(-1, -1), new(1, 1))]), 5);
         Assert.Equal(8 + MathF.PI / 2, ShapeArea2D.Union([capsule, Rectangle2D.Builder.Create(new(0, -1), new(3, 1))]), 5);
         Assert.Equal(10 + MathF.PI / 2, ShapeArea2D.Union([capsule, Triangle2D.Builder.Create(new(0, -2), new(4, 0), new(0, 2))]), 5);
-        var pointCapsule = Capsule2D.Builder.Create(Vector2.Zero, Vector2.Zero, 1);
-        Assert.Equal((float)(2 * Math.PI - CircleLens(1, 1, 1)), ShapeArea2D.Union([pointCapsule, Circle2D.Builder.Create(1, Vector2.UnitX)]), 5);
+        var pointCapsule = Capsule2D.Builder.Create(Vector2f.Zero, Vector2f.Zero, 1);
+        Assert.Equal((float)(2 * Math.PI - CircleLens(1, 1, 1)), ShapeArea2D.Union([pointCapsule, Circle2D.Builder.Create(1, Vector2f.UnitX)]), 5);
     }
 
     [Fact]
     public void SmallCapsuleRadiiSurviveLargeTranslationsAndUniformScaling()
     {
-        var offset = new Vector2(1 << 20, -(1 << 20));
-        var capsule = Capsule2D.Builder.Create(Vector2.Zero, new(3, 4), .001f);
-        var moved = Capsule2D.Builder.Create(offset, offset + new Vector2(3, 4), capsule.Radius);
+        var offset = new Vector2f(1 << 20, -(1 << 20));
+        var capsule = Capsule2D.Builder.Create(Vector2f.Zero, new(3, 4), .001f);
+        var moved = Capsule2D.Builder.Create(offset, offset + new Vector2f(3, 4), capsule.Radius);
         var expected = ShapeArea2D.Union([capsule, capsule]);
         Assert.Equal(expected, ShapeArea2D.Union([moved, moved]));
         Assert.InRange(Math.Abs(expected - (10d * capsule.Radius + Math.PI * capsule.Radius * capsule.Radius)), 0, 2e-8);
         foreach (var scale in new[] { 1e-8f, 1e8f })
         {
-            var scaled = Capsule2D.Builder.Create(Vector2.Zero, scale * new Vector2(3, 4), scale * capsule.Radius);
+            var scaled = Capsule2D.Builder.Create(Vector2f.Zero, scale * new Vector2f(3, 4), scale * capsule.Radius);
             var actual = ShapeArea2D.Union([scaled, scaled]) / scale / scale;
             Assert.InRange(MathF.Abs(actual - expected), 0, expected * 2e-6f);
         }
@@ -338,7 +338,7 @@ public sealed class ShapeArea2DTests
     {
         var first = Capsule2D.Builder.Create(new(-1.7308766f, -1.4338739f), new(-2.312859f, -1.8960081f), .5353085f);
         var second = Capsule2D.Builder.Create(new(1.833708f, .050317526f), new(2.3724792f, .65145564f), .44707787f);
-        var offset = new Vector2(1 << 20, -(1 << 20));
+        var offset = new Vector2f(1 << 20, -(1 << 20));
         var moved = Capsule2D.Builder.Create(second.Start + offset, second.End + offset, second.Radius);
         foreach (var other in new[] { second, moved })
         {
@@ -357,10 +357,10 @@ public sealed class ShapeArea2DTests
             IConvexShape2D[] parts = new IConvexShape2D[6];
             for (var i = 0; i < parts.Length; i++)
             {
-                var center = new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
+                var center = new Vector2f((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
                 parts[i] = i switch
                 {
-                    0 or 1 => Capsule2D.Builder.Create(center, center + new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2), .15f + (float)random.NextDouble() * .75f),
+                    0 or 1 => Capsule2D.Builder.Create(center, center + new Vector2f((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2), .15f + (float)random.NextDouble() * .75f),
                     2 => Circle2D.Builder.Create(.3f + (float)random.NextDouble(), center),
                     3 => Ellipse2D.Builder.Create(new(.2f + (float)random.NextDouble() * 2, .2f + (float)random.NextDouble() * 2), center),
                     _ => Rectangle2D.Builder.CreateFromSize(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble(), center)
@@ -468,21 +468,21 @@ public sealed class ShapeArea2DTests
         Assert.InRange(Math.Abs(ShapeArea2D.Union(parts, 3) - CrossSectionArea(parts)), 0d, .0002d);
         // A rectangle corner exactly on the ellipse vertex, where the covered quarter arc ends; then the same turned by a quarter.
         Assert.Equal(1.5f * MathF.PI + 4, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(2, 1)), Rectangle2D.Builder.Create(new(0, 0), new(2, 2))]), 5);
-        var upright = Ellipse2D.Builder.Create(new(2, 1), default, Vector2.UnitY);
-        var straddling = Rectangle2D.Builder.Create(new(-1, 1), new(1, 1), Vector2.UnitY);
+        var upright = Ellipse2D.Builder.Create(new(2, 1), default, Vector2f.UnitY);
+        var straddling = Rectangle2D.Builder.Create(new(-1, 1), new(1, 1), Vector2f.UnitY);
         Assert.Equal(1.5f * MathF.PI + 4, ShapeArea2D.Union([upright, straddling]), 5);
     }
 
     [Fact]
     public void RotatedEllipsePairsAgreeWithTheRotatedCircleLens()
     {
-        var scale = new Vector2(3, .5f);
+        var scale = new Vector2f(3, .5f);
         const float angle = .7f;
         foreach (var (first, second, distance) in new[] { (1f, 1f, 1f), (2f, 1f, .5f), (2f, 1f, 2f) })
         {
             var expected = scale.X * scale.Y * (Math.PI * (first * first + second * second) - CircleLens(first, second, distance));
             var a = Ellipse2D.Builder.Create(first * scale, default, angle);
-            var b = Ellipse2D.Builder.Create(second * scale, Vector2.Transform(new(distance * scale.X, 0), Matrix3x2.CreateRotation(angle)), angle);
+            var b = Ellipse2D.Builder.Create(second * scale, Vector2f.Transform(new(distance * scale.X, 0), Matrix3x2.CreateRotation(angle)), angle);
             Assert.Equal((float)expected, ShapeArea2D.Union([a, b], 3), 5);
             Assert.Equal(ShapeArea2D.Union([a, b]), ShapeArea2D.Union([b, a]), 5);
         }
@@ -494,7 +494,7 @@ public sealed class ShapeArea2DTests
     public void RotatedEllipsesWithFourCrossingsKeepEveryExposedArc(float a, float b)
     {
         var expected = (float)(4d * a * b * Math.Atan2(a, b));
-        Assert.Equal(expected, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(a, b)), Ellipse2D.Builder.Create(new(a, b), default, Vector2.UnitY)]), 5);
+        Assert.Equal(expected, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(a, b)), Ellipse2D.Builder.Create(new(a, b), default, Vector2f.UnitY)]), 5);
         Assert.Equal(expected, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(a, b), default, MathF.PI / 4), Ellipse2D.Builder.Create(new(a, b), default, 3 * MathF.PI / 4)]), 5);
     }
 
@@ -505,8 +505,8 @@ public sealed class ShapeArea2DTests
         var ellipse = Ellipse2D.Builder.Create(new(2, 1), new(1, 1), axis);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(2, 1), new(1, 1), -axis)]), 5);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(1, 2), new(1, 1), axis.PerpCcw)]), 5);
-        Assert.Equal(ellipse.Area, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(2, 1), new(1, 1), Vector2.UnitY), Ellipse2D.Builder.Create(new(2, 1), new(1, 1), -Vector2.UnitY)]), 5);
-        Assert.Equal(MathF.PI, ShapeArea2D.Union([Circle2D.Builder.Create(1), Ellipse2D.Builder.Create(Vector2.One, default, axis)]), 5);
+        Assert.Equal(ellipse.Area, ShapeArea2D.Union([Ellipse2D.Builder.Create(new(2, 1), new(1, 1), Vector2f.UnitY), Ellipse2D.Builder.Create(new(2, 1), new(1, 1), -Vector2f.UnitY)]), 5);
+        Assert.Equal(MathF.PI, ShapeArea2D.Union([Circle2D.Builder.Create(1), Ellipse2D.Builder.Create(Vector2f.One, default, axis)]), 5);
         var roundTrip = (Ellipse2D)GeometryJson2D.ShapeFromJson(ellipse.ToJson<IShape2D>());
         Assert.InRange(MathF.Abs(ShapeArea2D.Union([ellipse, roundTrip]) - ellipse.Area), 0f, 1e-5f);
     }
@@ -522,7 +522,7 @@ public sealed class ShapeArea2DTests
             var parts = new IConvexShape2D[6];
             for (var i = 0; i < parts.Length; i++)
             {
-                var center = new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
+                var center = new Vector2f((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
                 var turn = (float)random.NextDouble() * MathF.Tau;
                 parts[i] = (i % 3) switch
                 {
@@ -535,9 +535,9 @@ public sealed class ShapeArea2DTests
             var rotation = Matrix3x2.CreateRotation(angle);
             var rotated = parts.Select(part => part switch
             {
-                Ellipse2D e => (IConvexShape2D)Ellipse2D.Builder.Create(e.Radii, Vector2.Transform(e.Center, rotation), e.AngleRadians + angle),
-                Circle2D c => Circle2D.Builder.Create(c.Radius, Vector2.Transform(c.Center, rotation)),
-                Rectangle2D r => Rectangle2D.Builder.FromSize(r.Size, Vector2.Transform(r.Center, rotation), r.AngleRadians + angle),
+                Ellipse2D e => (IConvexShape2D)Ellipse2D.Builder.Create(e.Radii, Vector2f.Transform(e.Center, rotation), e.AngleRadians + angle),
+                Circle2D c => Circle2D.Builder.Create(c.Radius, Vector2f.Transform(c.Center, rotation)),
+                Rectangle2D r => Rectangle2D.Builder.FromSize(r.Size, Vector2f.Transform(r.Center, rotation), r.AngleRadians + angle),
                 _ => throw new InvalidOperationException()
             }).ToArray();
             Assert.Equal(ShapeArea2D.Union(parts), ShapeArea2D.Union(rotated), 4);
@@ -566,10 +566,10 @@ public sealed class ShapeArea2DTests
     {
         var angle = (float)random.NextDouble() * MathF.Tau;
         var transform = Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
-        Vector2[] points = [new(-1, -.7f), new(1, -.7f), new(1, .7f), new(-1, .7f)];
+        Vector2f[] points = [new(-1, -.7f), new(1, -.7f), new(1, .7f), new(-1, .7f)];
         for (var i = 0; i < points.Length; i++)
         {
-            points[i] = Vector2.Transform(points[i], transform);
+            points[i] = Vector2f.Transform(points[i], transform);
         }
 
         if (random.Next(2) == 0)
@@ -629,10 +629,10 @@ public sealed class ShapeArea2DTests
                 }
                 else if (part is Rectangle2D or ConvexPolygon2D)
                 {
-                    Vector2[] corners;
+                    Vector2f[] corners;
                     if (part is Rectangle2D rectangle)
                     {
-                        corners = new Vector2[4];
+                        corners = new Vector2f[4];
                         rectangle.WriteCorners(corners);
                     }
                     else
@@ -731,11 +731,11 @@ public sealed class ShapeArea2DTests
         public string GetKind() => "CountingCircle";
         public float Area => MathF.PI;
         public int SupportReads { get; private set; }
-        public bool ContainsPoint(Vector2 point) => point.LengthSquared() <= 1;
-        public Vector2 GetSupportPoint(Vector2 direction)
+        public bool ContainsPoint(Vector2f point) => point.LengthSquared() <= 1;
+        public Vector2f GetSupportPoint(Vector2f direction)
         {
             SupportReads++;
-            return Vector2.Normalize(direction);
+            return Vector2f.Normalize(direction);
         }
     }
 
@@ -743,7 +743,7 @@ public sealed class ShapeArea2DTests
     {
         public string GetKind() => "Point";
         public float Area => 0;
-        public bool ContainsPoint(Vector2 point) => point == Vector2.Zero;
-        public Vector2 GetSupportPoint(Vector2 direction) => Vector2.Zero;
+        public bool ContainsPoint(Vector2f point) => point == Vector2f.Zero;
+        public Vector2f GetSupportPoint(Vector2f direction) => Vector2f.Zero;
     }
 }

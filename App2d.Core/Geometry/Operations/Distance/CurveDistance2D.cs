@@ -7,16 +7,16 @@ namespace App2d.Core.Geometry.Operations.Distance;
 /// <summary>Point distance queries for finite curves. Smooth curves without an analytic query use a sampled polyline.</summary>
 public static class CurveDistance2D
 {
-    public static float Distance(Vector2 point, ICurve2D curve)
+    public static float Distance(Vector2f point, ICurve2D curve)
     {
         Ensure.ThrowIfNull(curve);
         return curve.Distance(point);
     }
 
-    public static float Distance(ICurve2D curve, Vector2 point) => Distance(point, curve);
+    public static float Distance(ICurve2D curve, Vector2f  point) => Distance(point, curve);
 
     /// <summary>Polyline approximation in parameter space; callers can increase segments for tighter results.</summary>
-    public static float SampledDistance<TCurve>(Vector2 point, TCurve curve, int segmentCount) where TCurve : ICurve2D
+    public static float SampledDistance<TCurve>(Vector2f point, TCurve curve, int segmentCount) where TCurve : ICurve2D
     {
         Ensure.ThrowIfNull(curve);
         Ensure.Positive(segmentCount);

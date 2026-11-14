@@ -57,10 +57,10 @@ public sealed class BladeSwooshTests
     {
         // One 90 degree step: a chord would sag to 0.64 at 45 degrees; the rebuilt rotation keeps the tip at 0.9.
         var mesh = Swing((0, 90, true), (1 / 60f, 0, true));
-        var near45 = mesh.Vertices.ToArray().Select(v => new Vector2(v.Position.X, v.Position.Y))
+        var near45 = mesh.Vertices.ToArray().Select(v => new Vector2f(v.Position.X, v.Position.Y))
             .Where(p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) - 45) < 4).Max(p => p.Length());
         Assert.InRange(near45, .88f, .905f);
-        Assert.All(mesh.Vertices.ToArray(), v => Assert.True(new Vector2(v.Position.X, v.Position.Y).Length() <= .901f));
+        Assert.All(mesh.Vertices.ToArray(), v => Assert.True(new Vector2f(v.Position.X, v.Position.Y).Length() <= .901f));
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public sealed class BladeSwooshTests
         // Clockwise 60 degrees, then 170 more in one frame: the shorter way round (190 counter-clockwise) would sweep
         // the trail back over the start. The trail must stay on the clockwise side (x >= 0 half, bar the thin guard end).
         var mesh = Swing((0, 90, true), (1 / 60f, 30, true), (2 / 60f, -140, true));
-        var points = mesh.Vertices.ToArray().Select(v => new Vector2(v.Position.X, v.Position.Y)).Where(p => p.Length() > .3f).ToArray();
+        var points = mesh.Vertices.ToArray().Select(v => new Vector2f(v.Position.X, v.Position.Y)).Where(p => p.Length() > .3f).ToArray();
         Assert.Contains(points, p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) + 45) < 6);
         Assert.DoesNotContain(points, p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) - 160) < 10);
     }

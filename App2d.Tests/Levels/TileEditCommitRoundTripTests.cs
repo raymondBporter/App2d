@@ -77,7 +77,7 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
     public void StrokeCommittedThroughSaveChunksRoundTripsEveryPaintedTile()
     {
         var path = NewPath();
-        var map = new EditableTileMap2D(16, 16, 32f, 4, new Vector2(-512f, -640f));
+        var map = new EditableTileMap2D(16, 16, 32f, 4, new Vector2f(-512f, -640f));
 
         // A real editing session always starts from an already-baked file: SaveChunks
         // writes only the chunks table, so a prior full Save is what supplies the meta
@@ -122,7 +122,7 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
         // tiles on reload -- exactly the kind of loss the design doc warns WriteChunk's
         // whole-chunk persistence can hide.
         var path = NewPath();
-        var map = new EditableTileMap2D(8, 8, 32f, 4, new Vector2(-512f, -640f));
+        var map = new EditableTileMap2D(8, 8, 32f, 4, new Vector2f(-512f, -640f));
         map.SetTileKind(1, 1, TileKind2D.Solid);
         map.SetTileKind(2, 2, TileKind2D.OneWay);
 

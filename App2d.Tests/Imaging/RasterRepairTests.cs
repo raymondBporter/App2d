@@ -117,6 +117,6 @@ public sealed class RasterRepairTests
         paint.MoveTo(new(.5f, .5f));
         paint.MoveTo(new(100, .5f));
         Assert.Equal(4, paint.Frame.Mask!.AsSpan().ToArray().Count(static pixel => pixel));
-        Assert.Throws<ArgumentOutOfRangeException>(() => paint.MoveTo(new Vector2(float.NaN)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => paint.MoveTo(new Vector2f(float.NaN)));
     }
 }

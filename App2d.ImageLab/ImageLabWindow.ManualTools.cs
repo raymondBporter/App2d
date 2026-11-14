@@ -174,7 +174,7 @@ internal sealed partial class ImageLabWindow
         }
     }
 
-    private void DrawEditCursor(ImDrawListPtr draw, Vector2 imagePosition, float zoom, RasterFrame frame, bool hovered)
+    private void DrawEditCursor(ImDrawListPtr draw, Vector2f imagePosition, float zoom, RasterFrame frame, bool hovered)
     {
         if (_tool == CanvasTool.Inspect || !hovered)
         {
@@ -190,11 +190,11 @@ internal sealed partial class ImageLabWindow
         }
         else
         {
-            var relative = (mouse - imagePosition) / zoom;
+            var relative = (mouse - imagePosition.ToVector2()) / zoom;
             var pixel = new Vector2(MathF.Floor(relative.X), MathF.Floor(relative.Y));
             if (pixel.X >= 0 && pixel.Y >= 0 && pixel.X < frame.Width && pixel.Y < frame.Height)
             {
-                var min = imagePosition + pixel * zoom;
+                var min = imagePosition.ToVector2() + pixel * zoom;
                 draw.AddRect(min, min + new Vector2(zoom), Ui.Color(255, 208, 65));
             }
         }

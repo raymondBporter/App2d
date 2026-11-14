@@ -51,7 +51,7 @@ public sealed class ColliderActivationTests
         var enabledSteps = new List<double>();
         while (!animator.ActionComplete)
         {
-            animator.Step(Dt, Vector2.Zero, 1, "idle", 0, false, []);
+            animator.Step(Dt, Vector2f.Zero, 1, "idle", 0, false, []);
             colliders.Sync(animator.Pose, animator.ActiveHits(), alive: true);
             if (attack.Enabled)
             {
@@ -63,12 +63,12 @@ public sealed class ColliderActivationTests
         // Half-open: a step ending exactly on the finish is active; the next one, starting there, is not.
         var exact = new EntityAnimator(guard);
         exact.TryStart("attack");
-        exact.Step(hit.Start, Vector2.Zero, 1, "idle", 0, false, []);
+        exact.Step(hit.Start, Vector2f.Zero, 1, "idle", 0, false, []);
         Assert.Single(exact.ActiveHits());
-        exact.Step(hit.Finish - hit.Start, Vector2.Zero, 1, "idle", 0, false, []);
+        exact.Step(hit.Finish - hit.Start, Vector2f.Zero, 1, "idle", 0, false, []);
         Assert.Single(exact.ActiveHits());
         Assert.Equal(hit.Finish, exact.ActionTime, 6);
-        exact.Step(Dt, Vector2.Zero, 1, "idle", 0, false, []);
+        exact.Step(Dt, Vector2f.Zero, 1, "idle", 0, false, []);
         Assert.Empty(exact.ActiveHits());
         colliders.Sync(exact.Pose, exact.ActiveHits(), alive: true);
         Assert.False(attack.Enabled);
@@ -159,7 +159,7 @@ public sealed class ColliderActivationTests
         var player = new ActorColliders(entity, system, EntityId2D.Create(), ArenaLayers.Player, movement: true);
         var other = new ActorColliders(entity, system, EntityId2D.Create(), ArenaLayers.Others, movement: true);
         var rest = PoseEvaluator.Sample(entity.Model, null, 0);
-        var pose = new ActorPose(rest, Vector2.Zero, 1);
+        var pose = new ActorPose(rest, Vector2f.Zero, 1);
         player.Sync(pose, null, alive: true);
         other.Sync(pose, null, alive: true);
         var found = new List<AttachedCollider>();

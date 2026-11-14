@@ -18,23 +18,23 @@ public readonly partial record struct HalfSpace2D
 
     public static class Builder
     {
-        public static HalfSpace2D Create(Vector2 outwardNormal, float offset)
+        public static HalfSpace2D Create(Vector2f outwardNormal, float offset)
         {
             Ensure.NonZero(outwardNormal);
             Ensure.Finite(offset);
             var wide = outwardNormal.ToVector2d();
             var length = wide.Length();
-            return new HalfSpace2D((wide / length).ToVector2(), (float)(offset / length)).Validated();
+            return new HalfSpace2D((wide / length).ToVector2f(), (float)(offset / length)).Validated();
         }
 
-        public static HalfSpace2D FromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal)
+        public static HalfSpace2D FromPoint(Vector2f pointOnBoundary, Vector2f outwardNormal)
         {
             Ensure.Finite(pointOnBoundary);
             Ensure.NonZero(outwardNormal);
             var wide = outwardNormal.ToVector2d();
-            var normal = (wide / wide.Length()).ToVector2();
+            var normal = (wide / wide.Length()).ToVector2f();
             return Create(normal, (float)pointOnBoundary.ToVector2d().Dot(normal.ToVector2d()));
         }
-        public static HalfSpace2D CreateFromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal) => FromPoint(pointOnBoundary, outwardNormal);
+        public static HalfSpace2D CreateFromPoint(Vector2f pointOnBoundary, Vector2f outwardNormal) => FromPoint(pointOnBoundary, outwardNormal);
     }
 }

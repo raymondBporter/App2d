@@ -81,14 +81,14 @@ internal static class RigGraph
                         int hand;
                         if (link?.Orientation == RigLinkOrientations.Character)
                         {
-                            var at = Vector2.Transform(origin, parentFrame);
+                            var at = Vector2f.Transform(origin, parentFrame);
                             frame = LayeredFrame2D.Local(setup.ScaleVector, setup.Rotation, at, 0).Frame.Matrix;
                             angle = setup.Rotation;
                             hand = setup.Reflect ? -1 : 1;
                         }
                         else
                         {
-                            frame = LayeredFrame2D.Local(setup.ScaleVector, setup.Rotation, origin, setup.Layer).Frame.Matrix * parentFrame;
+                            frame = LayeredFrame2D.Local(setup.ScaleVector, setup.Rotation, origin, setup.Layer).Frame.Matrix.Then(parentFrame);
                             angle = parentAngle + parentHand * setup.Rotation;
                             hand = parentHand * (setup.Reflect ? -1 : 1);
                         }
@@ -102,8 +102,8 @@ internal static class RigGraph
                         if (!moved || layout is null)
                         {
                             var r = control.Rest.XYZ;
-                            var frame = Matrix3x2.CreateRotation(control.RestAngle) * Matrix3x2.CreateTranslation(r.X, r.Y);
-                            Vector2 translation;
+                            var frame = Matrix3x2.CreateRotation(control.RestAngle).Then(Matrix3x2.CreateTranslation(r.X, r.Y));
+                            Vector2f translation;
                             if (parent is null)
                             {
                                 translation = new(r.X, r.Y);
@@ -118,9 +118,9 @@ internal static class RigGraph
                         else
                         {
                             var setup = layout.Setups[control.Id];
-                            var position = parent is null ? setup.Translation : Vector2.Transform(setup.Translation, parentFrame);
+                            var position = parent is null ? setup.Translation : Vector2f.Transform(setup.Translation, parentFrame);
                             var angle = parentAngle + parentHand * setup.Rotation;
-                            var frame = Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation(position.X, position.Y);
+                            var frame = Matrix3x2.CreateRotation(angle).Then(Matrix3x2.CreateTranslation(position.X, position.Y));
                             node = new(control.Id, control.Parent, RigNodeKinds.Point, setup, control.Length, null, frame, angle, parentLayer + setup.Layer, parentHand);
                         }
                         break;

@@ -6,10 +6,10 @@ namespace App2d.Gameplay.World;
 /// <summary>Side-scroller traversal metadata, separate from the engine's rigid body.</summary>
 public sealed class PlatformSurface2D
 {
-    private Vector2? _oneWaySurfaceNormal;
+    private Vector2f? _oneWaySurfaceNormal;
 
     /// <summary>World-space outward normal of the blocking face; null makes every face solid.</summary>
-    public Vector2? OneWaySurfaceNormal
+    public Vector2f? OneWaySurfaceNormal
     {
         get => _oneWaySurfaceNormal;
         set

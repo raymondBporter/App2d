@@ -36,9 +36,9 @@ internal static class SpellRenderingSmoke2D
         var moves = PersonMoves.From(catalog);
         var metrics = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var collision = new CollisionSystem2D();
-        var physics = new PhysicsWorld2D(collision) { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D(collision) { Gravity = Vector2f.Zero };
         var ids = new EntityIdAllocator2D();
-        var person = new Person2D(ids.Allocate(), collision, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player, 30);
+        var person = new Person2D(ids.Allocate(), collision, physics, metrics, Vector2f.Zero, 2, 1, CombatFaction2D.Player, 30);
         var registry = new CombatantRegistry2D();
         registry.Register(person);
         var hero = new AuthoredHero2D(moves.Hero, metrics.PlayerColliderSize);
@@ -66,7 +66,7 @@ internal static class SpellRenderingSmoke2D
         const float dt = 1f / 120;
         foreach (var facing in new[] { 1f, -1f })
         {
-            person.Reset(Vector2.Zero);
+            person.Reset(Vector2f.Zero);
             person.Face(facing);
             person.Health.Damage(12);
             player.Reset();

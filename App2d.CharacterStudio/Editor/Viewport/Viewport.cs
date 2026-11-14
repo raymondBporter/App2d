@@ -22,7 +22,7 @@ internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, FrameVie
 {
     public ImDrawListPtr Draw { get; } = draw;
     public Vector2 Origin { get; } = origin;
-    public Vector2 Size => view.TargetBounds.Size;
+    public Vector2 Size => view.TargetBounds.Size.ToVector2();
     public IReadOnlyList<SubjectView> Subjects { get; } = subjects;
     public SubjectView? Primary => Subjects.Count > 0 ? Subjects[0] : null;
     public bool Hovered { get; } = hovered;
@@ -31,14 +31,14 @@ internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, FrameVie
     public Vector2 Screen(Vector3 world, int subject = 0)
     {
         var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        return Origin + view.WorldToDevice(world.XY + offset.XY);
+        return Origin + view.WorldToDevice(world.XY + offset.XY).ToVector2();
     }
 
     /// <summary>The world position under a screen point, in a subject's own space, keeping <paramref name="z"/>.</summary>
     public Vector3 World(Vector2 screen, float z = 0, int subject = 0)
     {
         var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        return new(view.DeviceToWorld(screen - Origin) - offset.XY, z);
+        return new((view.DeviceToWorld(new(screen - Origin)) - offset.XY).ToVector2(), z);
     }
 }
 
@@ -60,7 +60,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private string? _fittedFor;
 
     public float Zoom { get; set; } = 1;
-    public Vector2 Pan { get; set; }
+    public Vector2f Pan { get; set; }
     /// <summary>Keep the primary subject's travel centred while it moves.</summary>
     public bool Follow { get; set; } = true;
     /// <summary>Also show the scene at game size: enlarged authoring views alone are a poor readability test.</summary>
@@ -95,11 +95,11 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 ? nested.DrawnParts().SelectMany(p => PartContours2D.Contour(p, nested))
                 : a.Parts.Where(p => !p.Hidden).SelectMany(p =>
                 {
-                    var (world, frame) = a.Lookups(a.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(a.Socket)));
+                    var (world, frame) = a.Lookups(a.Placement(new ActorPose(pose, Vector2f.Zero, 1).SocketPlacement(a.Socket)));
                     return PartContours2D.Contour(p, world, frame, world, frame);
                 })))
             .Concat(model.Rest.Values)
-            .Concat(model.Order.Where(c => c.Length > 0).Select(c => pose.Placement(c.Id).At(new Vector2(c.Length, 0))))
+            .Concat(model.Order.Where(c => c.Length > 0).Select(c => pose.Placement(c.Id).At(new Vector2f(c.Length, 0))))
             .Append(Vector3.Zero);
     }
 
@@ -119,7 +119,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         var ppu = MathF.Min(height / _span, width / (_widthSpan + (views.Length - 1) * spacing)) * Zoom;
         var followX = Follow && views.Length > 0 ? views[0].Subject.Pose.Locomotion.X : 0;
         var centerX = _centerX + followX + (views.Length - 1) * spacing / 2;
-        var anchor = new Vector2(width / 2f - centerX * ppu, height / 2f + _centerY * ppu) + Pan;
+        var anchor = new Vector2f(width / 2f - centerX * ppu, height / 2f + _centerY * ppu) + Pan;
 
         while (_drawings.Count < views.Length)
         {
@@ -137,24 +137,24 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
             {
                 _drawings[i].Build(subject.Model, subject.Pose, session.PreviewEquipmentArtworkOn(subject.Model));
                 foreach (var equipment in session.PreviewEquipmentOn(subject.Model))
-                    _drawings[i].AddAttachment(equipment, new ActorPose(subject.Pose, Vector2.Zero, 1));
+                    _drawings[i].AddAttachment(equipment, new ActorPose(subject.Pose, Vector2f.Zero, 1));
                 if (session.Mode == Workspace.Appearance && session.Entity is { } wearer && wearer.Model.Id == subject.Model.Id)
                 {
                     foreach (var item in wearer.Equipment.Where(e => e.Prop.Id != session.PreviewPart))
                     {
-                        _drawings[i].AddAttachment(item.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1), item.Socket);
+                        _drawings[i].AddAttachment(item.Prop, new ActorPose(subject.Pose, Vector2f.Zero, 1), item.Socket);
                     }
                 }
 
                 if (session.Mode is Workspace.Animate or Workspace.Appearance && session.WeaponFor(subject.Model) is { } weapon)
                 {
-                    _drawings[i].AddAttachment(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1), weapon.Socket);
+                    _drawings[i].AddAttachment(weapon.Prop, new ActorPose(subject.Pose, Vector2f.Zero, 1), weapon.Socket);
                 }
 
                 // A library part being edited previews on the wearer at the chosen socket until it is attached for real.
                 if (session.PreviewAttachmentOn(subject.Model) is { } preview)
                 {
-                    var placement = preview.Placement(new ActorPose(subject.Pose, Vector2.Zero, 1).SocketPlacement(preview.Socket));
+                    var placement = preview.Placement(new ActorPose(subject.Pose, Vector2f.Zero, 1).SocketPlacement(preview.Socket));
                     if (preview.IsAnimated)
                     {
                         // An animated part previews its own clips on the transport clock (P7a) before it is attached.
@@ -162,7 +162,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                     }
                     else
                     {
-                        _drawings[i].AddAttachment(preview, new ActorPose(subject.Pose, Vector2.Zero, 1));
+                        _drawings[i].AddAttachment(preview, new ActorPose(subject.Pose, Vector2f.Zero, 1));
                     }
                 }
             }
@@ -191,7 +191,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
 
             if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
             {
-                Pan += io.MouseDelta;
+                Pan += new Vector2f(io.MouseDelta);
             }
         }
         return new(draw, start, view, views, hovered);

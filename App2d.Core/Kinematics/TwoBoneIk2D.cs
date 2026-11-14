@@ -5,9 +5,9 @@ using System.Numerics;
 namespace App2d.Core.Kinematics;
 
 public readonly record struct TwoBoneIkPose2D(
-    Vector2 Root,
-    Vector2 Joint,
-    Vector2 End,
+    Vector2f Root,
+    Vector2f Joint,
+    Vector2f End,
     float FirstAngle,
     float SecondAngle,
     bool ReachesTarget);
@@ -20,14 +20,14 @@ public static class TwoBoneIk2D
     /// Rigid segments with exact inner/outer reach boundaries, including straight and fully folded poses.
     /// Uses double intermediates for unequal lengths. Solve retains the historical inset used by point rigs and demos.
     /// </summary>
-    public static TwoBoneIkPose2D SolveExact(Vector2 root, Vector2 target, float firstLength, float secondLength, int bendDirection, Vector2? zeroTargetDirection = null)
+    public static TwoBoneIkPose2D SolveExact(Vector2f root, Vector2f target, float firstLength, float secondLength, int bendDirection, Vector2f? zeroTargetDirection = null)
     {
         Ensure.Finite(root);
         Ensure.Finite(target);
         Ensure.Positive(firstLength);
         Ensure.Positive(secondLength);
         Ensure.NonZero(bendDirection);
-        var fallback = Ensure.NonZero(zeroTargetDirection ?? Vector2.UnitX, nameof(zeroTargetDirection));
+        var fallback = Ensure.NonZero(zeroTargetDirection ?? Vector2f.UnitX, nameof(zeroTargetDirection));
         var fallbackLength = fallback.ToVector2d().Length();
 
         var delta = target.ToVector2d() - root.ToVector2d();
@@ -52,16 +52,16 @@ public static class TwoBoneIk2D
         // Equal segments can fold onto their origin. The perpendicular fallback fixes the otherwise free bend direction.
         var along = reach == 0 ? 0 : ((first - second) * (first + second) + reach * reach) / (2 * reach);
         var height = Math.Sqrt(Math.Max(0, first * first - along * along)) * Math.Sign(bendDirection);
-        var joint = (root.ToVector2d() + direction * along + direction.PerpCcw * height).ToVector2();
-        var end = (root.ToVector2d() + direction * reach).ToVector2();
+        var joint = (root.ToVector2d() + direction * along + direction.PerpCcw * height).ToVector2f();
+        var end = (root.ToVector2d() + direction * reach).ToVector2f();
         Ensure.Finite(joint);
         Ensure.Finite(end);
         return new(root, joint, end, (joint - root).AngleRadians, (end - joint).AngleRadians, Math.Abs(distance - reach) <= .01);
     }
 
     public static TwoBoneIkPose2D Solve(
-        Vector2 root,
-        Vector2 target,
+        Vector2f root,
+        Vector2f target,
         float firstLength,
         float secondLength,
         int bendDirection)
@@ -74,7 +74,7 @@ public static class TwoBoneIk2D
 
         var toTarget = target - root;
         var targetDistance = toTarget.Length();
-        var direction = targetDistance > Epsilon ? toTarget / targetDistance : Vector2.UnitX;
+        var direction = targetDistance > Epsilon ? toTarget / targetDistance : Vector2f.UnitX;
         var minimumReach = MathF.Abs(firstLength - secondLength) + Epsilon;
         // A relative margin: a fixed one visibly bends a short limb at full reach (0.001 on a 0.66 arm is 6 degrees).
         var maximumReach = (firstLength + secondLength) * (1 - 1e-5f);

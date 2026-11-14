@@ -16,7 +16,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
     private SpringCoefficients2D _spring;
     private float _translation, _springImpulse, _lowerImpulse, _upperImpulse;
 
-    public WheelJoint2D(RigidBody2D first, RigidBody2D second, Vector2 firstLocalAnchor, Vector2 secondLocalAnchor, Vector2 firstLocalAxis)
+    public WheelJoint2D(RigidBody2D first, RigidBody2D second, Vector2f firstLocalAnchor, Vector2f secondLocalAnchor, Vector2f firstLocalAxis)
     {
         JointMath2D.Validate(first, second, firstLocalAnchor, secondLocalAnchor);
         Ensure.NonZero(firstLocalAxis);
@@ -24,19 +24,19 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
         Second = second;
         FirstLocalAnchor = firstLocalAnchor;
         SecondLocalAnchor = secondLocalAnchor;
-        FirstLocalAxis = Vector2.Normalize(firstLocalAxis);
+        FirstLocalAxis = Vector2f.Normalize(firstLocalAxis);
     }
 
     public RigidBody2D First { get; }
     public RigidBody2D Second { get; }
-    public Vector2 FirstLocalAnchor { get; }
-    public Vector2 SecondLocalAnchor { get; }
-    public Vector2 FirstLocalAxis { get; }
-    public Vector2 FirstWorldAnchor => JointMath2D.Anchor(First, FirstLocalAnchor);
-    public Vector2 SecondWorldAnchor => JointMath2D.Anchor(Second, SecondLocalAnchor);
-    public Vector2 WorldAxis => Vector2.Normalize(Vector2.TransformNormal(FirstLocalAxis, First.WorldObject.Transform.Matrix));
-    public float Translation => Vector2.Dot(SecondWorldAnchor - FirstWorldAnchor, WorldAxis);
-    public float LateralError => Vector2.Dot(SecondWorldAnchor - FirstWorldAnchor, JointMath2D.Perpendicular(WorldAxis));
+    public Vector2f FirstLocalAnchor { get; }
+    public Vector2f SecondLocalAnchor { get; }
+    public Vector2f FirstLocalAxis { get; }
+    public Vector2f FirstWorldAnchor => JointMath2D.Anchor(First, FirstLocalAnchor);
+    public Vector2f SecondWorldAnchor => JointMath2D.Anchor(Second, SecondLocalAnchor);
+    public Vector2f WorldAxis => Vector2f.Normalize(Vector2f.TransformNormal(FirstLocalAxis, First.WorldObject.Transform.Matrix));
+    public float Translation => Vector2f.Dot(SecondWorldAnchor - FirstWorldAnchor, WorldAxis);
+    public float LateralError => Vector2f.Dot(SecondWorldAnchor - FirstWorldAnchor, JointMath2D.Perpendicular(WorldAxis));
     public bool IsEnabled { get; set; } = true;
     public bool IsSpringEnabled { get; set; } = true;
     /// <summary>Allowed travel in world units along the guide axis, measured from coincident anchors.</summary>
@@ -90,7 +90,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
         return CreateAxis(WorldAxis).CorrectPosition(error) || moved;
     }
 
-    private JointAxis2D CreateAxis(Vector2 direction)
+    private JointAxis2D CreateAxis(Vector2f direction)
     {
         var firstAnchor = FirstWorldAnchor;
         var secondAnchor = SecondWorldAnchor;

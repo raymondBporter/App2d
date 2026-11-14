@@ -29,7 +29,7 @@ public sealed class EntityRuntimeTests
             foreach (var t in new[] { hit.Start, hit.Finish - .01f })
             {
                 var box = EntityCollision.Attack(new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
-                TestModels.Near(new Vector3(3 + hit.Collider.Definition.OffsetX * facing, hit.Collider.Definition.OffsetY, 0), new Vector3(box.Bounds.Center, 0), 1e-4f, $"box centre at {t}, facing {facing}");
+                TestModels.Near(new Vector3(3 + hit.Collider.Definition.OffsetX * facing, hit.Collider.Definition.OffsetY, 0), new Vector3(box.Bounds.Center.ToVector2(), 0), 1e-4f, $"box centre at {t}, facing {facing}");
             }
         }
         // attack -> follow-up -> forehand -> follow-up: the traversal controller supports the first two, the chain the third.
@@ -154,12 +154,12 @@ public sealed class EntityRuntimeTests
         var entity = StarterContent.SpearGuardEntity();
         entity.Geometry.Single(c => c.Id == "head").Collision!.Enabled = false;
         var compiled = Compile(entity);
-        var pose = new ActorPose(PoseEvaluator.Rest(compiled.Model), Vector2.Zero, 1);
+        var pose = new ActorPose(PoseEvaluator.Rest(compiled.Model), Vector2f.Zero, 1);
         Assert.Equal(["body", "legs"], EntityCollision.Hurt(compiled, pose).Select(r => r.Id));
         Assert.Equal(["spear-tip", "body", "head", "legs"], compiled.Colliders.Select(c => c.Id));
     }
 
-    private static List<AnimationEvent> Attack(EntityAnimator animator, int facing, Vector2 position, Func<EntityAnimator, bool>? until = null)
+    private static List<AnimationEvent> Attack(EntityAnimator animator, int facing, Vector2f position, Func<EntityAnimator, bool>? until = null)
     {
         var events = new List<AnimationEvent>();
         Assert.True(animator.TryStart("attack"));
@@ -176,7 +176,7 @@ public sealed class EntityRuntimeTests
     {
         var guard = Catalog.Entities["spear-guard"];
         var animator = new EntityAnimator(guard);
-        var position = new Vector2(3, 0);
+        var position = new Vector2f(3, 0);
         var sawAnticipation = false;
         var sawActive = false;
         var sawRecovery = false;
@@ -223,7 +223,7 @@ public sealed class EntityRuntimeTests
         var guard = Catalog.Entities["spear-guard"];
         var right = new EntityAnimator(guard);
         var left = new EntityAnimator(guard);
-        var position = new Vector2(-2, .5f);
+        var position = new Vector2f(-2, .5f);
         right.TryStart("attack");
         left.TryStart("attack");
         for (var i = 0; i < 50; i++)
@@ -249,7 +249,7 @@ public sealed class EntityRuntimeTests
     public void MarkersAndEventsDispatchOnceIncludingSkippedOnes()
     {
         var guard = Catalog.Entities["spear-guard"];
-        var small = Attack(new EntityAnimator(guard), 1, Vector2.Zero);
+        var small = Attack(new EntityAnimator(guard), 1, Vector2f.Zero);
         Assert.Equal(["windup", "strike", "swing", "recover"], small.Select(e => e.Id));
         Assert.All(small, e => Assert.Equal(1, e.ActionSequence));
 
@@ -257,11 +257,11 @@ public sealed class EntityRuntimeTests
         var animator = new EntityAnimator(guard);
         var events = new List<AnimationEvent>();
         animator.TryStart("attack");
-        animator.Step(5, Vector2.Zero, 1, "idle", 0, false, events);
+        animator.Step(5, Vector2f.Zero, 1, "idle", 0, false, events);
         Assert.Equal(["windup", "strike", "recover", "swing"], events.Select(e => e.Id));
         Assert.Single(animator.ActiveHits()); // a window opened and closed within the step is still tested once
         events.Clear();
-        animator.Step(Dt, Vector2.Zero, 1, "idle", 0, false, events);
+        animator.Step(Dt, Vector2f.Zero, 1, "idle", 0, false, events);
         Assert.Empty(events);
         Assert.Empty(animator.ActiveHits());
     }
@@ -273,13 +273,13 @@ public sealed class EntityRuntimeTests
         var animator = new EntityAnimator(stalker);
         var events = new List<AnimationEvent>();
         var stride = PoseEvaluator.CycleTravel(stalker.Model, stalker.Clip("walk")!).X;
-        animator.Step(Dt, Vector2.Zero, 1, "walk", stride * 2.25f, false, events); // crosses two full cycles and a quarter in one step
+        animator.Step(Dt, Vector2f.Zero, 1, "walk", stride * 2.25f, false, events); // crosses two full cycles and a quarter in one step
         Assert.Equal(["step", "step-middle", "step", "step-middle", "step"], events.Select(e => e.Id));
         Assert.Equal(2.25, animator.RoleTime, 5);
         events.Clear();
         for (var i = 0; i < 10; i++)
         {
-            animator.Step(Dt, Vector2.Zero, 1, "walk", 0, false, events);
+            animator.Step(Dt, Vector2f.Zero, 1, "walk", 0, false, events);
         }
 
         Assert.Empty(events);
@@ -295,12 +295,12 @@ public sealed class EntityRuntimeTests
             var animator = new EntityAnimator(entity);
             var clip = entity.Clip("walk")!;
             var speed = PoseEvaluator.CycleTravel(entity.Model, clip).X / clip.Duration * 1.3f;
-            var position = Vector2.Zero;
+            var position = Vector2f.Zero;
             var held = new Dictionary<string, Vector3>();
             var holds = 0;
             for (var step = 0; step < 600; step++)
             {
-                position.X += speed * Dt;
+                position = position with { X = position.X + speed * Dt };
                 animator.Step(Dt, position, 1, "walk", speed * Dt, false, []);
                 foreach (var chain in entity.Model.Chains.Values)
                 {
@@ -329,7 +329,7 @@ public sealed class EntityRuntimeTests
     {
         var player = Catalog.Entities["player"];
         var animator = new EntityAnimator(player);
-        animator.Step(Dt, Vector2.Zero, 1, "idle", 0, false, []);
+        animator.Step(Dt, Vector2f.Zero, 1, "idle", 0, false, []);
         Assert.Equal(2, animator.Anchors.Count);
         var idleAnchor = animator.Anchors["left-leg"];
         animator.Step(Dt, new(.5f, 0), -1, "idle", 0, false, []); // turning around re-captures instead of dragging a foot across
@@ -355,10 +355,10 @@ public sealed class EntityRuntimeTests
         var player = Catalog.Entities["player"];
         var plain = new EntityAnimator(player);
         var hurt = new EntityAnimator(player);
-        var position = Vector2.Zero;
+        var position = Vector2f.Zero;
         for (var step = 0; step < 240; step++)
         {
-            position.X += 1.8f * Dt;
+                position = position with { X = position.X + 1.8f * Dt };
             plain.Step(Dt, position, 1, "walk", 1.8f * Dt, false, []);
             hurt.Step(Dt, position, 1, "walk", 1.8f * Dt, false, [], expression: "hurt");
             foreach (var control in player.Model.Controls.Keys)

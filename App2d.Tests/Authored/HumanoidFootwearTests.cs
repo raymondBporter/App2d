@@ -99,7 +99,7 @@ public sealed class HumanoidFootwearTests
                         up.Z = 0;
                         TestModels.Near(Vector3.Normalize(up), frame.YAxis);
                         var bare = PartAttachment2D.FrameOf(entity.Model.Parts.Single(p => p.Id == foot), local.World);
-                        var point = new Vector2(.04f, 0);
+                        var point = new Vector2f(.04f, 0);
                         // Both the bare foot and its shoe use the same local XY axes and mirroring.
                         var onFoot = pose.Place(bare.At(point));
                         var onShoe = PartPlacement3D.Point(frame, item.Prop, new(point.X, point.Y));
@@ -143,9 +143,9 @@ public sealed class HumanoidFootwearTests
         Assert.Same(original.Model, dressed.Model);
         Assert.Equal(original.Asset.Behavior!.Damage.Health, dressed.Asset.Behavior!.Damage.Health);
         Assert.Same(original.Actions["attack"].Clip, dressed.Actions["attack"].Clip);
-        var pose = new ActorPose(PoseEvaluator.Sample(original.Model, original.Actions["attack"].Clip, .6f), Vector2.Zero, 1);
+        var pose = new ActorPose(PoseEvaluator.Sample(original.Model, original.Actions["attack"].Clip, .6f), Vector2f.Zero, 1);
         Assert.Equal(EntityCollision.Hurt(original, pose), EntityCollision.Hurt(dressed, pose));
         Assert.Equal(EntityCollision.Muzzle(original, pose), EntityCollision.Muzzle(dressed, pose));
-        Assert.Equal(EntityCollision.Movement(original, Vector2.Zero, 1), EntityCollision.Movement(dressed, Vector2.Zero, 1));
+        Assert.Equal(EntityCollision.Movement(original, Vector2f.Zero, 1), EntityCollision.Movement(dressed, Vector2f.Zero, 1));
     }
 }

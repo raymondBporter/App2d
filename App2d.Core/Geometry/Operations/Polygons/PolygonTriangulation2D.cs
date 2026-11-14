@@ -9,11 +9,11 @@ namespace App2d.Core.Geometry.Operations.Polygons;
 public static class PolygonTriangulation2D
 {
     /// <summary>Ear-clips a simple, unclosed polygon. Indices refer to the input vertices and retain its winding.</summary>
-    public static TriangleMesh2D Triangulate(IEnumerable<Vector2> perimeter, double tolerance = 0)
+    public static TriangleMesh2D Triangulate(IEnumerable<Vector2f> perimeter, double tolerance = 0)
     {
         Ensure.ThrowIfNull(perimeter);
         Ensure.NonNegative(tolerance);
-        Vector2[] points = [.. perimeter];
+        Vector2f[] points = [.. perimeter];
         Ensure.ThrowIf(points.Length < 3, "A polygon needs at least three vertices.", nameof(perimeter));
         foreach (var point in points)
         {

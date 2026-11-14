@@ -28,7 +28,7 @@ public sealed class PartAttachmentDrawingTests
         Geometry =
         [
             new() { Id = "palm", A = PartLocation.Origin, Geometry = Ellipse2D.Builder.Create(new(.08f, .06f)), Material = new() { Asset = "leather" } },
-            new() { Id = "seam", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .02f } },
+            new() { Id = "seam", A = PartLocation.Origin, B = "cuff", Geometry = new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .02f } },
             new() { Id = "badge", A = "cuff", Geometry = Rectangle2D.Builder.FromSize(.1f, .1f), Material = new() { Texture = "images/badge.png" } },
             new() { Id = "cuff-mesh", A = PartLocation.Origin, Frame = PartLocation.Origin, Material = new() { Fill = "#333333" }, Mesh = new() { Outline = [new(-.03f, .1f), new(.03f, .1f), new(.03f, .14f), new(-.03f, .14f)], Thickness = .02f } },
         ],
@@ -46,7 +46,7 @@ public sealed class PartAttachmentDrawingTests
         var resolved = ResolvedModel.From(person, null, asset is null ? Library() : Library(asset));
         var pose = PoseEvaluator.Rest(resolved);
         var attachment = resolved.Attachments[^1];
-        return (attachment, attachment.Placement(new ActorPose(pose, Vector2.Zero, 1).SocketPlacement(attachment.Socket)), pose);
+        return (attachment, attachment.Placement(new ActorPose(pose, Vector2f.Zero, 1).SocketPlacement(attachment.Socket)), pose);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public sealed class PartAttachmentDrawingTests
         var viaProp = new PuppetDrawing();
         viaProp.Build(plain, pose);
         var bare = viaProp.Mesh.Count;
-        viaProp.AddAttachment(Catalog.Parts["boot-left"], new ActorPose(pose, Vector2.Zero, 1).Socket(booted.Base.Sockets.First(s => s.Id == Humanoid.LeftFootSocket)));
+        viaProp.AddAttachment(Catalog.Parts["boot-left"], new ActorPose(pose, Vector2f.Zero, 1).Socket(booted.Base.Sockets.First(s => s.Id == Humanoid.LeftFootSocket)));
         Assert.Equal(viaProp.Mesh.Count, viaPart.Mesh.Count);
         Assert.True(viaProp.Mesh.Count > bare);
         for (var i = bare; i < viaProp.Mesh.Count; i++)
@@ -81,7 +81,7 @@ public sealed class PartAttachmentDrawingTests
         person.Attachments.Add(new() { Id = "right-shoe", Asset = "sandal", Socket = Humanoid.RightFootSocket, Mirror = true });
         var resolved = ResolvedModel.From(person, null, Library());
         var pose = PoseEvaluator.Sample(resolved, Catalog.Animations["person-walk"], .3);
-        var actor = new ActorPose(pose, Vector2.Zero, 1);
+        var actor = new ActorPose(pose, Vector2f.Zero, 1);
         var left = resolved.Attachments[^2];
         var right = resolved.Attachments[^1];
         Assert.Same(left.Asset, right.Asset);
@@ -110,7 +110,7 @@ public sealed class PartAttachmentDrawingTests
         TestModels.Near(placement.Origin, world(PartLocation.Origin));
         TestModels.Near(placement.At(new Vector3(0, .2f, -.02f)), world("cuff"));
         var cuff = frame("cuff");
-        Assert.InRange(Vector2.Distance(cuff.XAxis, Vector2.Normalize(Vector2.Transform(new(MathF.Cos(.3f), MathF.Sin(.3f)), placement.Frame.Matrix) - placement.Origin.XY) * cuff.XAxis.Length()), 0, 1e-4f);
+        Assert.InRange(Vector2f.Distance(cuff.XAxis, Vector2f.Normalize(Vector2f.Transform(new(MathF.Cos(.3f), MathF.Sin(.3f)), placement.Frame.Matrix) - placement.Origin.XY) * cuff.XAxis.Length()), 0, 1e-4f);
         var palm = PartContours2D.Contour(attachment.Parts[0], world, frame, world, frame);
         TestModels.Near(placement.Origin with { Z = 0 }, new(palm.Average(p => p.X), palm.Average(p => p.Y), palm.Average(p => p.Z)), 1e-3f);
         Assert.Equal(placement.Layer, palm.LayerAt(0));
@@ -130,7 +130,7 @@ public sealed class PartAttachmentDrawingTests
         var drawing = new PuppetDrawing();
         drawing.Build(ResolvedModel.From(Person(), null, Library(Mixed())), pose);
         var bare = drawing.Mesh.Count;
-        var socket = new ActorPose(pose, Vector2.Zero, 1).Socket(attachment.Socket);
+        var socket = new ActorPose(pose, Vector2f.Zero, 1).Socket(attachment.Socket);
         drawing.AddAttachment(attachment, socket, layer: placement.Layer);
         Assert.True(drawing.Mesh.Count > bare);
         Assert.Contains(drawing.Batches, b => b.Texture == "images/badge.png");

@@ -39,24 +39,24 @@ internal static class BoneFrameIk
         Ensure.GreaterThanOrEqual(length, .01f, chain.Id);
         Ensure.Finite(y.LengthSquared(), chain.Id);
         Ensure.LessThanOrEqual(MathF.Abs(size - y.LengthSquared()), size * 1e-4f, chain.Id);
-        Ensure.LessThanOrEqual(MathF.Abs(Vector2.Dot(x, y)), size * 1e-4f, chain.Id);
+        Ensure.LessThanOrEqual(MathF.Abs(Vector2f.Dot(x, y)), size * 1e-4f, chain.Id);
 
-        var tip = Vector2.Transform(new(bone.Length, 0), frame);
-        var actual = child.Translation;
+        var tip = Vector2f.Transform(new(bone.Length, 0), frame);
+        var actual = new Vector2f(child.Translation);
         Ensure.Finite(actual, chain.Id);
-        Ensure.LessThanOrEqual(Vector2.Distance(tip, actual), MathF.Max(1e-5f, length * 1e-4f), chain.Id);
+        Ensure.LessThanOrEqual(Vector2f.Distance(tip, actual), MathF.Max(1e-5f, length * 1e-4f), chain.Id);
 
         return length;
     }
 
-    internal static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 target, int bend, Vector2 zeroTargetDirection)
+    internal static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 target, int bend, Vector2f zeroTargetDirection)
     {
         var root = pose.Controls[chain.Root].Frame.Matrix;
         var joint = pose.Controls[chain.Joint].Frame.Matrix;
         var first = Segment(chain, model.Nodes[chain.Root], root, joint);
         var second = Segment(chain, model.Nodes[chain.Joint], joint, pose.Bones[chain.End]);
-        var rootOrigin = new Vector2(root.M31, root.M32);
-        var goal = new Vector2(target.X, target.Y);
+        var rootOrigin = new Vector2f(root.M31, root.M32);
+        var goal = new Vector2f(target.X, target.Y);
 
         // Bend is in the bone frame's handedness, so mirroring a rig mirrors its elbow too.
         var handedness = root.GetDeterminant() < 0 ? -1 : 1;
@@ -65,21 +65,25 @@ internal static class BoneFrameIk
         var secondAngle = (solved.End - solved.Joint).AngleRadians;
         var limited = Limit(model, pose, chain, rootOrigin, goal, first, second, handedness, ref firstAngle, ref secondAngle);
 
-        var jointPosition = rootOrigin + first * Vector2.FromAngle(firstAngle);
-        var endPosition = jointPosition + second * Vector2.FromAngle(secondAngle);
+        var jointPosition = rootOrigin + first * Vector2f.FromAngle(firstAngle);
+        var endPosition = jointPosition + second * Vector2f.FromAngle(secondAngle);
         var rootState = pose.Controls[chain.Root];
-        TransformSubtree(chain.Root, rootState.Position, rootState.Layer, firstAngle - root.X.AngleRadians);
+        TransformSubtree(chain.Root, rootState.Position, rootState.Layer, firstAngle - new Vector2f(root.X).AngleRadians);
         joint = pose.Controls[chain.Joint].Frame.Matrix;
-        TransformSubtree(chain.Joint, jointPosition, pose.Controls[chain.Joint].Layer, secondAngle - joint.X.AngleRadians);
+        TransformSubtree(chain.Joint, jointPosition, pose.Controls[chain.Joint].Layer, secondAngle - new Vector2f(joint.X).AngleRadians);
         TransformSubtree(chain.End, endPosition, target.Z, 0);
-        return ChainResult.Of(chain.Id, Vector2.Distance(endPosition, goal), limited);
+        return ChainResult.Of(chain.Id, Vector2f.Distance(endPosition, goal), limited);
 
-        void TransformSubtree(string id, Vector2 at, float layer, float rotation)
+        void TransformSubtree(string id, Vector2f at, float layer, float rotation)
         {
             var origin = pose.Controls[id];
             var layerOffset = layer - origin.Layer;
-            Apply(id, Matrix3x2.CreateTranslation(-origin.Position) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(at));
-            void Apply(string bone, Matrix3x2 delta)
+            var rootDelta = Matrix2x3f.CreateTranslation(-origin.Position)
+                .Then(Matrix2x3f.CreateRotation(rotation))
+                .Then(Matrix2x3f.CreateTranslation(at));
+            Apply(id, rootDelta);
+
+            void Apply(string bone, Matrix2x3f delta)
             {
                 // A character-oriented node rides its parent's origin and keeps the character axes: the solve carries it
                 // and its subtree by translation only, so its artwork, sockets and children keep their authored turn.
@@ -87,12 +91,12 @@ internal static class BoneFrameIk
                 if (oriented)
                 {
                     var was = pose.Controls[bone].Position;
-                    delta = Matrix3x2.CreateTranslation(Vector2.Transform(was, delta) - was);
+                    delta = Matrix2x3f.CreateTranslation(delta.TransformPoint(was) - was);
                 }
 
                 var control = pose.Controls[bone];
-                var frame = control.Frame.Matrix * delta;
-                pose.Place(bone, frame, control.Layer + layerOffset, oriented ? control.Angle : frame.X.AngleRadians);
+                var frame = control.Frame.ColumnMatrix.Then(delta);
+                pose.Place(bone, frame.ToNumerics(), control.Layer + layerOffset, oriented ? control.Angle : frame.XAxis.AngleRadians);
                 foreach (var child in model.Children[bone])
                 {
                     Apply(child, delta);
@@ -108,7 +112,7 @@ internal static class BoneFrameIk
     /// crossed fixes the upper segment, and the lower one aims at the target from there. The held rotations are recorded in
     /// the pose's limit states. Returns whether any bound shaped the pose.
     /// </summary>
-    private static bool Limit(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector2 rootOrigin, Vector2 goal, float first, float second, int rootHand, ref float firstAngle, ref float secondAngle)
+    private static bool Limit(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector2f rootOrigin, Vector2f goal, float first, float second, int rootHand, ref float firstAngle, ref float secondAngle)
     {
         var rootNode = model.Nodes[chain.Root];
         var jointNode = model.Nodes[chain.Joint];
@@ -117,7 +121,7 @@ internal static class BoneFrameIk
             return false;
         }
 
-        var parentAngle = rootNode.Parent is null ? 0 : pose.Bones[rootNode.Parent].X.AngleRadians;
+        var parentAngle = rootNode.Parent is null ? 0 : new Vector2f(pose.Bones[rootNode.Parent].X).AngleRadians;
         var parentHand = rootNode.Parent is null ? 1 : pose.Bones[rootNode.Parent].GetDeterminant() < 0 ? -1 : 1;
         float RootLocal(float a) => parentHand * Angles.WrapSigned(a - parentAngle);
         float JointLocal(float a1, float a2) => rootHand * Angles.WrapSigned(a2 - a1);
@@ -129,7 +133,7 @@ internal static class BoneFrameIk
             limited = true;
             // The elbow is held at its bound: the two segments form a fixed shape that turns as one about the root to face the target.
             var phi = rootHand * heldJoint.Target;
-            var shape = new Vector2(first + second * MathF.Cos(phi), second * MathF.Sin(phi));
+            var shape = new Vector2f(first + second * MathF.Cos(phi), second * MathF.Sin(phi));
             var aim = goal - rootOrigin;
             if (aim.LengthSquared() > 1e-12f)
             {
@@ -148,7 +152,7 @@ internal static class BoneFrameIk
             limited = true;
             // The upper segment is held at its bound; the lower one aims at the target from the fixed elbow.
             firstAngle = parentAngle + parentHand * heldRoot.Target;
-            var aim = goal - (rootOrigin + first * Vector2.FromAngle(firstAngle));
+            var aim = goal - (rootOrigin + first * Vector2f.FromAngle(firstAngle));
             if (aim.LengthSquared() > 1e-12f)
             {
                 secondAngle = aim.AngleRadians;

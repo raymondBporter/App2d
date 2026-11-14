@@ -68,7 +68,7 @@ internal static class AnimationCurveEditor
             {
                 set(converted);
             }
-            var x = new Vector2(curve.Control1.X, curve.Control2.X);
+            var x = new Vector2f(curve.Control1.X, curve.Control2.X);
             if (Ui.Drag2("Time controls (0–1)", ref x, .005f, 0, 1))
             {
                 set(curve with
@@ -78,7 +78,7 @@ internal static class AnimationCurveEditor
                 });
             }
 
-            var y = new Vector2(curve.Control1.Y, curve.Control2.Y);
+            var y = new Vector2f(curve.Control1.Y, curve.Control2.Y);
             if (Ui.Drag2(absolute ? "Value controls" : "Value controls (fractions)", ref y, .005f, 0, 0))
             {
                 set(curve with

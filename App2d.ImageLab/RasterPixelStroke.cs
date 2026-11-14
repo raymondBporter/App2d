@@ -8,7 +8,7 @@ internal interface IRasterStroke
     RasterFrame Frame { get; }
     bool Changed { get; }
     string Description { get; }
-    bool MoveTo(Vector2 point);
+    bool MoveTo(Vector2f point);
 }
 
 // Pixel brush and drag-to-preview line. A line restores only its old pixels as its endpoint moves.
@@ -37,7 +37,7 @@ internal sealed class RasterPixelStroke : IRasterStroke
         Frame = source.Clone("Manual pixel repair");
     }
 
-    public bool MoveTo(Vector2 point)
+    public bool MoveTo(Vector2f point)
     {
         Ensure.Finite(point);
         if (!_line && (point.X < 0 || point.Y < 0 || point.X >= Frame.Width || point.Y >= Frame.Height))

@@ -9,12 +9,12 @@ public sealed class Projectile2D(SpatialObject2D worldObject)
 {
     public SpatialObject2D WorldObject { get; } = worldObject;
     public EntityId2D Id { get; private set; }
-    public Vector2 Origin { get; private set; }
-    public Vector2 Velocity { get; private set; }
+    public Vector2f  Origin { get; private set; }
+    public Vector2f  Velocity { get; private set; }
     public float RemainingLifetime { get; private set; }
     public bool IsActive => RemainingLifetime > 0f;
 
-    public void Launch(Vector2 position, Vector2 velocity, float lifetime, Vector2 origin, EntityId2D id)
+    public void Launch(Vector2f  position, Vector2f  velocity, float lifetime, Vector2f  origin, EntityId2D id)
     {
         Ensure.Positive(lifetime);
         Ensure.ThrowIf(!id.IsValid, "A projectile requires a valid entity ID.", nameof(id));
@@ -40,6 +40,6 @@ public sealed class Projectile2D(SpatialObject2D worldObject)
     public void Deactivate()
     {
         RemainingLifetime = 0f;
-        Velocity = Vector2.Zero;
+        Velocity = Vector2f.Zero;
     }
 }

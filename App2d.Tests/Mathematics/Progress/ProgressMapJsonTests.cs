@@ -29,7 +29,7 @@ public sealed class ProgressMapJsonTests
     {
         var definition = new CurveMotionDefinition2D
         {
-            Curve = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(10, 0)),
+            Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0)),
             PeriodSeconds = 4,
             Progress = [ProgressMapKind.PingPong, ProgressMapKind.Smoother]
         };
@@ -42,10 +42,10 @@ public sealed class ProgressMapJsonTests
             Assert.Equal(expected.Position(time), motion.Position(time));
             Assert.Equal(expected.Velocity(time), motion.Velocity(time));
         }
-        Assert.Equal(new Vector2(110, 20), motion.Position(2));
-        Assert.Equal(Vector2.Zero, motion.Velocity(2));
+        Assert.Equal(new Vector2f(110, 20), motion.Position(2));
+        Assert.Equal(Vector2f.Zero, motion.Velocity(2));
         var reversedOrder = ProgressMaps.Compose([ProgressMapKind.Smoother, ProgressMapKind.PingPong]);
-        Assert.NotEqual(motion.Position(.5), new Vector2(100, 20) + definition.Curve.Evaluate((float)reversedOrder.Sample(.125)));
+        Assert.NotEqual(motion.Position(.5), new Vector2f(100, 20) + definition.Curve.Evaluate((float)reversedOrder.Sample(.125)));
     }
 
     [Theory]
@@ -55,17 +55,17 @@ public sealed class ProgressMapJsonTests
     {
         var definition = new CurveMotionDefinition2D
         {
-            Curve = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(10, 0)),
+            Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0)),
             PeriodSeconds = 2,
             Repeat = false,
             Progress = reverse ? [ProgressMapKind.Reverse, ProgressMapKind.Smooth] : [ProgressMapKind.Smooth]
         };
         var motion = definition.CreateMotion();
-        Assert.Equal(new Vector2(start, 0), motion.Position(0));
-        Assert.Equal(new Vector2(5, 0), motion.Position(1));
-        Assert.Equal(new Vector2(end, 0), motion.Position(2));
+        Assert.Equal(new Vector2f(start, 0), motion.Position(0));
+        Assert.Equal(new Vector2f(5, 0), motion.Position(1));
+        Assert.Equal(new Vector2f(end, 0), motion.Position(2));
         Assert.Equal(motion.Position(2), motion.Position(10));
-        Assert.Equal(Vector2.Zero, motion.Velocity(10));
+        Assert.Equal(Vector2f.Zero, motion.Velocity(10));
         Assert.Throws<ArgumentException>(() => (definition with { Repeat = true }).Validate());
     }
 }

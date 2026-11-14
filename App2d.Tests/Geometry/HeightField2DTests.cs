@@ -16,7 +16,7 @@ public sealed class HeightField2DTests
         Assert.Equal(2, calls); // Constructor validates endpoints only, without a scan for minima/maxima.
         Assert.Equal(5f, field.HeightAt(MathF.PI / 2f), 5);
         Assert.Equal(3, calls);
-        Assert.InRange(Vector2.Distance(Vector2.Normalize(new(-3, 1)), field.NormalAt(0f)), 0f, 1e-6f);
+        Assert.InRange(Vector2f.Distance(Vector2f.Normalize(new(-3, 1)), field.NormalAt(0f)), 0f, 1e-6f);
         Assert.Equal(3, calls); // An analytic derivative does not need any height samples either.
         Assert.Equal(-2f, field.Bounds().Min.Y);
         Assert.Equal(5f, field.Bounds().Max.Y);
@@ -25,7 +25,7 @@ public sealed class HeightField2DTests
     [Fact]
     public void SourcesShareTheSameBoundedSolidAndTopNormalQueries()
     {
-        Vector2[] points = [new(-10, -1), new(-9, -0.5f), new(-3, 2.5f), new(10, 9)];
+        Vector2f[] points = [new(-10, -1), new(-9, -0.5f), new(-3, 2.5f), new(10, 9)];
         IHeightField2D[] fields =
         [
             new FunctionHeightField2D(-10f, 10f, -20f, x => 0.5f * x + 4f, _ => 0.5f, yMax: 9f),
@@ -37,7 +37,7 @@ public sealed class HeightField2DTests
             Assert.Equal(new(-10f, -20f), field.Bounds().Min);
             Assert.Equal(new(10f, 9f), field.Bounds().Max);
             Assert.InRange(MathF.Abs(field.HeightAt(1f) - 4.5f), 0f, 0.00001f);
-            Assert.InRange(Vector2.Distance(Vector2.Normalize(new(-0.5f, 1f)), field.NormalAt(1f)), 0f, 0.00001f);
+            Assert.InRange(Vector2f.Distance(Vector2f.Normalize(new(-0.5f, 1f)), field.NormalAt(1f)), 0f, 0.00001f);
             Assert.True(field.ContainsPoint(new(1f, field.HeightAt(1f))));
             Assert.True(field.ContainsPoint(new(-10f, -1f)));
             Assert.True(field.ContainsPoint(new(10f, 9f)));
@@ -70,7 +70,7 @@ public sealed class HeightField2DTests
     [Fact]
     public void PolylineUsesWorldXAndPreservesAuthoredCornersWhenBaked()
     {
-        Vector2[] points = [new(0, 2), new(3, 8), new(40, -2), new(100, 4)];
+        Vector2f[] points = [new(0, 2), new(3, 8), new(40, -2), new(100, 4)];
         var field = new PolylineHeightField2D(points, -10f);
         points[1] = new(3, 99); // The curve owns its input storage.
         Assert.Equal(5f, field.HeightAt(1.5f));

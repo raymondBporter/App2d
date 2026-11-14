@@ -9,7 +9,7 @@ namespace App2d.Core.Shapes;
 [System.Text.Json.Serialization.JsonConverter(typeof(GeometryJsonConverterFactory))]
 public readonly partial record struct ConvexPolygon2D
 {
-    private static void ValidateVertices(ReadOnlySpan<Vector2> vertices)
+    private static void ValidateVertices(ReadOnlySpan<Vector2f> vertices)
     {
         Ensure.ThrowIfTooShort(vertices, 3);
         for (var i = 0; i < vertices.Length; i++)
@@ -18,7 +18,7 @@ public readonly partial record struct ConvexPolygon2D
             var next = vertices[(i + 1) % vertices.Length];
 
             Ensure.Finite(current, nameof(vertices));
-            if (Vector2.DistanceSquared(current, next) <= Epsilon * Epsilon)
+            if (Vector2f.DistanceSquared(current, next) <= Epsilon * Epsilon)
             {
                 Ensure.ThrowInvalid("Adjacent polygon vertices must be distinct.", nameof(vertices));
             }
@@ -33,6 +33,6 @@ public readonly partial record struct ConvexPolygon2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static ConvexPolygon2D Create(IEnumerable<Vector2> vertices) => new ConvexPolygon2D([.. Ensure.RequireNotNull(vertices)]).Validated();
+        public static ConvexPolygon2D Create(IEnumerable<Vector2f> vertices) => new ConvexPolygon2D([.. Ensure.RequireNotNull(vertices)]).Validated();
     }
 }

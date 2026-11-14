@@ -3,6 +3,7 @@ using App2d.CharacterStudio.Seeds.Templates;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -15,7 +16,7 @@ public sealed class RigConversionTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
 
-    private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
 
     [Fact]
     public void TheShippedPersonLimbsAreBoneConstraintsWithTheShouldersAsPivots()
@@ -120,7 +121,7 @@ public sealed class RigConversionTests
             Assert.Equal(0, pose.Angles["hand"], 5);
             Assert.Equal(0, pose.Angles["foot"], 5);
             Assert.NotEqual(pose.Angles["upper-arm-bone"], pose.Angles["shoulder"]);
-            var grip = new ActorPose(pose, Vector2.Zero, 1).Socket(source.Sockets[0]);
+            var grip = new ActorPose(pose, Vector2f.Zero, 1).Socket(source.Sockets[0]);
             TestModels.Near(new(MathF.Cos(.6f * (float)seconds), MathF.Sin(.6f * (float)seconds), 0), grip.XAxis, 1e-5f, "grip axis follows the pivot's turn");
             Assert.All(pose.Chains, c => Assert.True(c.Reached));
         }
@@ -171,10 +172,10 @@ public sealed class RigConversionTests
         Assert.NotEqual(rest.Angles["piston"], turned.Angles["piston"], 3);
         var part = model.Parts.Single(p => p.Id == "rod-upper");
         var art = PartAttachment2D.FrameOf(part, turned.World, turned.Placement, id => model.Rest[id]);
-        Assert.InRange(Vector2.Distance(Vector2.Normalize(art.YAxis), Vector2.Normalize(piston)), 0, 1e-4f);
+        Assert.InRange(Vector2f.Distance(Vector2f.Normalize(art.YAxis), Vector2f.Normalize(piston)), 0, 1e-4f);
         // The segment lengths are the declared dimensions, scaled by nothing.
-        Assert.Equal(model.Nodes["piston"].Length, Vector2.Distance(XY(turned.World("piston")), XY(turned.World("rod-elbow"))), 4);
-        Assert.Equal(model.Nodes["rod-elbow"].Length, Vector2.Distance(XY(turned.World("rod-elbow")), XY(turned.World("rod-end"))), 4);
+        Assert.Equal(model.Nodes["piston"].Length, Vector2f.Distance(XY(turned.World("piston")), XY(turned.World("rod-elbow"))), 4);
+        Assert.Equal(model.Nodes["rod-elbow"].Length, Vector2f.Distance(XY(turned.World("rod-elbow")), XY(turned.World("rod-end"))), 4);
         // Changing the hub's length moves its bound pin; the rod re-solves to the new pin without stretching.
         var longer = TestModels.Linkage();
         longer.Controls.Single(c => c.Id == "hub").Length = .6f;

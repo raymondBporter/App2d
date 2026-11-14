@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
@@ -16,11 +17,11 @@ public sealed class AirJumpCloud2D : IDisposable
     private readonly Scene2D _scene;
     private readonly (WorldObject2D Shade, WorldObject2D Fill)[] _puffs;
     private readonly WorldObject2D[] _wisps = new WorldObject2D[9];
-    private readonly Vector2[] _wispOrigins = new Vector2[3];
-    private static readonly Vector2[] Offsets = [new(-19, -5), new(18, -5), new(-9, -2), new(9, -1), new(0, 0)];
+    private readonly Vector2f[] _wispOrigins = new Vector2f[3];
+    private static readonly Vector2f[] Offsets = [new(-19, -5), new(18, -5), new(-9, -2), new(9, -1), new(0, 0)];
     private static readonly float[] Radii = [10, 11, 13, 12, 14];
-    private Vector2 _position;
-    private Vector2 _previousFeet;
+    private Vector2f _position;
+    private Vector2f _previousFeet;
     private float _age = Duration;
 
     public AirJumpCloud2D(Scene2D scene)
@@ -44,15 +45,15 @@ public sealed class AirJumpCloud2D : IDisposable
         }
     }
 
-    public void Present(Vector2 feet)
+    public void Present(Vector2f feet)
     {
-        _position = feet - new Vector2(0, 9 * CloudScale);
+        _position = feet - new Vector2f(0, 9 * CloudScale);
         _previousFeet = feet;
         _age = 0;
         Draw();
     }
 
-    public void Advance(float dt, Vector2 feet)
+    public void Advance(float dt, Vector2f feet)
     {
         Ensure.NonNegative(dt);
         var previousAge = _age;
@@ -62,7 +63,7 @@ public sealed class AirJumpCloud2D : IDisposable
             var birth = WispBirths[i];
             if (previousAge < birth && _age >= birth)
             {
-                _wispOrigins[i] = Vector2.Lerp(_previousFeet, feet, (birth - previousAge) / dt) - new Vector2(0, 5);
+                _wispOrigins[i] = Vector2f.Lerp(_previousFeet, feet, (birth - previousAge) / dt) - new Vector2f(0, 5);
             }
         }
         _previousFeet = feet;
@@ -79,11 +80,11 @@ public sealed class AirJumpCloud2D : IDisposable
         {
             var (shade, fill) = _puffs[i];
             shade.IsVisible = fill.IsVisible = _age < Duration;
-            var center = _position + new Vector2(Offsets[i].X * spread, Offsets[i].Y - 24 * t) * CloudScale;
-            shade.Transform.Position = center - new Vector2(0, 2);
+            var center = _position + new Vector2f(Offsets[i].X * spread, Offsets[i].Y - 24 * t) * CloudScale;
+            shade.Transform.Position = center - new Vector2f(0, 2);
             fill.Transform.Position = center;
-            shade.Transform.Scale = new Vector2(Radii[i] + 1.5f, Radii[i] * .65f + 1) * size;
-            fill.Transform.Scale = new Vector2(Radii[i], Radii[i] * .65f) * size;
+            shade.Transform.Scale = new Vector2f(Radii[i] + 1.5f, Radii[i] * .65f + 1) * size;
+            fill.Transform.Scale = new Vector2f(Radii[i], Radii[i] * .65f) * size;
             ((CloudInk)shade.Shader).BaseColor = new Color(157, 185, 207, alpha);
             ((CloudInk)fill.Shader).BaseColor = new Color(242, 249, 255, alpha);
         }
@@ -98,8 +99,8 @@ public sealed class AirJumpCloud2D : IDisposable
             var progress = age / WispLifetime;
             var radius = (7 - group * 1.2f) * (1 - .5f * progress);
             // Wisps inherit a little lift, then linger behind the departing feet.
-            wisp.Transform.Position = _wispOrigins[group] + new Vector2(lobe * radius * (.7f + progress), 30 * age - 45 * age * age + (lobe == 0 ? 2 : 0));
-            wisp.Transform.Scale = new Vector2(radius, radius * .7f);
+            wisp.Transform.Position = _wispOrigins[group] + new Vector2f(lobe * radius * (.7f + progress), 30 * age - 45 * age * age + (lobe == 0 ? 2 : 0));
+            wisp.Transform.Scale = new Vector2f(radius, radius * .7f);
             ((CloudInk)wisp.Shader).BaseColor = new Color(242, 249, 255, (int)((150 - group * 25) * (1 - progress) * (1 - progress)));
         }
     }

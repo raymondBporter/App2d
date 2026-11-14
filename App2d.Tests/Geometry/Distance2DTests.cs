@@ -3,6 +3,7 @@ using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using System.Numerics;
@@ -22,9 +23,9 @@ public sealed class Distance2DTests
             Circle2D.Builder.Create(2), Capsule2D.Builder.Create(new(0, -1), new(0, 1), 2),
             Rectangle2D.Builder.CreateFromSize(4, 6),
             ConvexPolygon2D.Builder.Create([new(-2, -3), new(2, -3), new(2, 3), new(-2, 3)]),
-            HalfSpace2D.Builder.Create(Vector2.UnitX, 2)
+            HalfSpace2D.Builder.Create(Vector2f.UnitX, 2)
         ];
-        var point = new Vector2(x, 0);
+        var point = new Vector2f(x, 0);
         foreach (var shape in shapes)
         {
             Assert.Equal(expected, ShapeDistance2D.SignedDistance(point, shape), 5);
@@ -37,12 +38,12 @@ public sealed class Distance2DTests
     public void RectangleCornerDistanceIsEuclideanAndZeroAreaRectsWork()
     {
         var rectangle = new Rect2D(new(-1), new(1));
-        Assert.Equal(5f, Distance2D.SignedDistance(new Vector2(4, 5), rectangle));
+        Assert.Equal(5f, Distance2D.SignedDistance(new Vector2f(4, 5), rectangle));
         Assert.Equal(5f, Distance2D.SignedDistance(rectangle, new Rect2D(new(4, 5), new(6, 7))));
-        Assert.Equal(-1f, Distance2D.SignedDistance(Vector2.Zero, rectangle));
-        Assert.Equal(0f, Distance2D.Distance(Vector2.Zero, rectangle));
-        Assert.Equal(5f, Distance2D.Distance(new Vector2(3, 4), default(Rect2D)));
-        Assert.Equal(0f, Distance2D.SignedDistance(Vector2.Zero, default));
+        Assert.Equal(-1f, Distance2D.SignedDistance(Vector2f.Zero, rectangle));
+        Assert.Equal(0f, Distance2D.Distance(Vector2f.Zero, rectangle));
+        Assert.Equal(5f, Distance2D.Distance(new Vector2f(3, 4), default(Rect2D)));
+        Assert.Equal(0f, Distance2D.SignedDistance(Vector2f.Zero, default));
         Assert.Equal(-1f, Distance2D.SignedDistance(default(Rect2D), rectangle));
         Assert.Equal(5f, Distance2D.Distance(default(Rect2D), new Rect2D(new(3, 4), new(3, 4))));
     }
@@ -52,8 +53,8 @@ public sealed class Distance2DTests
     {
         var region = new Region(new(-1), new(1));
         var other = new Rect2D(new(4, 5), new(5, 6));
-        Assert.Equal(-1f, region.SignedDistanceTo(Vector2.Zero));
-        Assert.Equal(0f, region.DistanceTo(Vector2.Zero));
+        Assert.Equal(-1f, region.SignedDistanceTo(Vector2f.Zero));
+        Assert.Equal(0f, region.DistanceTo(Vector2f.Zero));
         Assert.Equal(5f, region.DistanceTo(other));
         Assert.Equal(5f, region.SignedDistanceTo(other));
     }
@@ -73,13 +74,13 @@ public sealed class Distance2DTests
     [Fact]
     public void PolygonPointQueryReturnsBoundaryFeatureAndSupportsEitherWinding()
     {
-        Vector2[] vertices = [new(-1), new(1, -1), new(1), new(-1, 1)];
+        Vector2f[] vertices = [new(-1), new(1, -1), new(1), new(-1, 1)];
         var signed = Distance2D.SignedDistanceToConvexPolygon(new(4, 5), vertices, out var closest, out var edge);
         Assert.Equal(5f, signed);
-        Assert.Equal(new Vector2(1, 1), closest);
+        Assert.Equal(new Vector2f(1, 1), closest);
         Assert.Equal(1, edge);
         Array.Reverse(vertices);
-        Assert.Equal(-1f, Distance2D.SignedDistanceToConvexPolygon(Vector2.Zero, vertices));
+        Assert.Equal(-1f, Distance2D.SignedDistanceToConvexPolygon(Vector2f.Zero, vertices));
         Assert.Equal(5f, Distance2D.SignedDistanceToConvexPolygon(new(4, 5), vertices));
         Assert.True(Distance2D.SignedDistanceToConvexPolygon(new(1.000001f, 0), vertices) > 0f);
         Assert.Throws<ArgumentOutOfRangeException>(() => Distance2D.SignedDistanceToConvexPolygon(default, []));
@@ -142,8 +143,8 @@ public sealed class Distance2DTests
     [Fact]
     public void RawConvexQueriesSupportRepeatedVerticesPointsAndSegments()
     {
-        Vector2[] box = [new(-1), new(1, -1), new(1, -1), new(1), new(-1, 1)];
-        Assert.Equal(-1f, Distance2D.SignedDistanceBetweenConvexPolygons(box, [Vector2.Zero]));
+        Vector2f[] box = [new(-1), new(1, -1), new(1, -1), new(1), new(-1, 1)];
+        Assert.Equal(-1f, Distance2D.SignedDistanceBetweenConvexPolygons(box, [Vector2f.Zero]));
         Assert.Equal(5f, Distance2D.SignedDistanceBetweenConvexPolygons(box, [new(4, 5)]));
         Assert.Equal(3f, Distance2D.SignedDistanceBetweenConvexPolygons([new(0, 0), new(2, 0)], [new(5, 0)]));
         Assert.Equal(3f, Distance2D.SignedDistanceBetweenConvexPolygons([new(0, 0), new(2, 0)], [new(5, 0), new(6, 0)]));
@@ -174,8 +175,8 @@ public sealed class Distance2DTests
         Assert.Equal(3f, SpatialDistance2D.SignedDistance(box, circle), 4);
         Assert.Equal(3f, SpatialDistance2D.SignedDistance(circle, box), 4);
         Assert.Equal(3f, SpatialDistance2D.Distance(box, circle), 4);
-        Assert.Equal(-2f, SpatialDistance2D.SignedDistance(new Vector2(10, 20), box), 4);
-        Assert.Equal(5f, SpatialDistance2D.SignedDistance(new Vector2(17, 26), box), 4);
+        Assert.Equal(-2f, SpatialDistance2D.SignedDistance(new Vector2f(10, 20), box), 4);
+        Assert.Equal(5f, SpatialDistance2D.SignedDistance(new Vector2f(17, 26), box), 4);
         Assert.Equal(3f, ShapeDistance2D.SignedDistance(box.Shape, box.CollisionPose, circle.Shape, circle.CollisionPose), 4);
         circle.Transform.Position = new(15, 22);
         Assert.Equal(-1f, SpatialDistance2D.SignedDistance(box, circle), 4); // pose cache refreshes
@@ -186,7 +187,7 @@ public sealed class Distance2DTests
     [Fact]
     public void TransformedHalfSpaceUsesItsWorldBoundary()
     {
-        var wall = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2.UnitX, 1));
+        var wall = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitX, 1));
         wall.Transform.Scale = new(2);
         wall.Transform.Rotation = MathF.PI / 2;
         wall.Transform.Position = new(3, 5); // boundary y = 7
@@ -200,14 +201,14 @@ public sealed class Distance2DTests
     public void CompositeUnsignedDistancePreservesGapsButSignedQueriesFailExplicitly()
     {
         var union = CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-3, 0)), Circle2D.Builder.Create(1, new(3, 0))]);
-        Assert.Equal(2f, ShapeDistance2D.Distance(Vector2.Zero, union));
-        Assert.Equal(0f, ShapeDistance2D.Distance(new Vector2(3, 0), union));
+        Assert.Equal(2f, ShapeDistance2D.Distance(Vector2f.Zero, union));
+        Assert.Equal(0f, ShapeDistance2D.Distance(new Vector2f(3, 0), union));
         Assert.Equal(1f, ShapeDistance2D.Distance(union, Circle2D.Builder.Create(1)));
         Assert.Equal(1f, ShapeDistance2D.Distance(Circle2D.Builder.Create(1), union));
         Assert.Equal(0f, ShapeDistance2D.Distance(union, union));
-        Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(Vector2.Zero, union));
+        Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(Vector2f.Zero, union));
         Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(union, Circle2D.Builder.Create(1)));
-        Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(HalfSpace2D.Builder.Create(Vector2.UnitY, 0), HalfSpace2D.Builder.Create(-Vector2.UnitY, 0)));
+        Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0), HalfSpace2D.Builder.Create(-Vector2f.UnitY, 0)));
     }
 
     [Fact]
@@ -224,17 +225,17 @@ public sealed class Distance2DTests
     [InlineData(-.1f, 0f)]
     public void AlmostParallelSegmentsStillFindTheClosestEndOrIntersection(float endY, float expected)
     {
-        var firstStart = Vector2.Zero;
-        var firstEnd = new Vector2(1000, 0);
-        var secondStart = new Vector2(0, .2f);
-        var secondEnd = new Vector2(1000, endY);
+        var firstStart = Vector2f.Zero;
+        var firstEnd = new Vector2f(1000, 0);
+        var secondStart = new Vector2f(0, .2f);
+        var secondEnd = new Vector2f(1000, endY);
         Assert.Equal(expected, Distance2D.DistanceBetweenSegments(firstStart, firstEnd, secondStart, secondEnd), 5);
         Assert.Equal(expected, Distance2D.DistanceBetweenSegments(secondStart, secondEnd, firstStart, firstEnd), 5);
         var closest = ClosestPoint2D.BetweenSegments(firstStart, firstEnd, secondStart, secondEnd);
         Assert.InRange(closest.FirstParameter, 0f, 1f);
         Assert.InRange(closest.SecondParameter, 0f, 1f);
-        Assert.True(Vector2.Distance(Vector2.Lerp(firstStart, firstEnd, closest.FirstParameter), closest.First) < .0001f);
-        Assert.True(Vector2.Distance(Vector2.Lerp(secondStart, secondEnd, closest.SecondParameter), closest.Second) < .0001f);
+        Assert.True(Vector2f.Distance(Vector2f.Lerp(firstStart, firstEnd, closest.FirstParameter), closest.First) < .0001f);
+        Assert.True(Vector2f.Distance(Vector2f.Lerp(secondStart, secondEnd, closest.SecondParameter), closest.Second) < .0001f);
     }
 
     private static void AssertPair(IShape2D first, IShape2D second, float expected)
@@ -244,5 +245,5 @@ public sealed class Distance2DTests
         Assert.Equal(Math.Max(0f, expected), ShapeDistance2D.Distance(first, second), 4);
     }
 
-    private readonly record struct Region(Vector2 Min, Vector2 Max) : IRect2D;
+    private readonly record struct Region(Vector2f Min, Vector2f Max) : IRect2D;
 }

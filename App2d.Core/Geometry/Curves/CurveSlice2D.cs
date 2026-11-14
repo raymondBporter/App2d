@@ -31,13 +31,13 @@ public readonly record struct CurveSlice2D<TCurve> : ICurveSlice2D where TCurve 
     public float From { get; }
     public float To { get; }
 
-    public Vector2 Evaluate(float amount) => Source.Evaluate(Parameter(amount));
+    public Vector2f Evaluate(float amount) => Source.Evaluate(Parameter(amount));
 
-    public Vector2 EvaluateDerivative(float amount) => From == To ? Vector2.Zero
+    public Vector2f EvaluateDerivative(float amount) => From == To ? Vector2f.Zero
         : Source.EvaluateDerivative(Parameter(amount)) * (To - From);
 
     /// <summary>Distance to the restricted curve, approximated by a sampled polyline.</summary>
-    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 128);
+    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
 
     private float Parameter(float amount)
     {

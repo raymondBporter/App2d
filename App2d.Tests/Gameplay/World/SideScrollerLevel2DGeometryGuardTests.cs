@@ -75,7 +75,7 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.WorldHeightTiles,
             32f,
             SideScrollerLevel2D.ChunkSizeTiles,
-            SideScrollerLevel2D.WorldOrigin + new Vector2(1f, 0f));
+            SideScrollerLevel2D.WorldOrigin + new Vector2f(1f, 0f));
 
         using var level = new SideScrollerLevel2D(DefaultTraversal(), map);
         Assert.Same(map, level.TileMap);

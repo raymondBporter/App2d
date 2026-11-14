@@ -37,7 +37,7 @@ public sealed class Person2D : ICombatant2D
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
         TraversalMetrics2D traversal,
-        Vector2 spawnPoint,
+        Vector2f spawnPoint,
         uint bodyLayer,
         uint worldLayer,
         CombatFaction2D faction,
@@ -56,7 +56,7 @@ public sealed class Person2D : ICombatant2D
 
         WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(
             traversal.PlayerColliderSize,
-            new Vector2(traversal.PlayerColliderCenterOffsetX, 0f)));
+            new Vector2f(traversal.PlayerColliderCenterOffsetX, 0f)));
         WorldObject.Transform.Position = spawnPoint;
 
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
@@ -84,7 +84,7 @@ public sealed class Person2D : ICombatant2D
     public RigidBody2D Body { get; }
     public Health2D Health { get; }
     public CombatFaction2D Faction { get; }
-    public Vector2 Position => WorldObject.Transform.Position;
+    public Vector2f Position => WorldObject.Transform.Position;
     public float Facing { get; private set; } = 1f;
     public float InvulnerabilitySeconds { get; private set; }
     public float LandingSpeedThisFrame { get; private set; }
@@ -241,7 +241,7 @@ public sealed class Person2D : ICombatant2D
 
         Facing = MathF.Sign(direction);
         var scale = WorldObject.Transform.Scale;
-        WorldObject.Transform.Scale = new Vector2(Facing, scale.Y);
+        WorldObject.Transform.Scale = new Vector2f(Facing, scale.Y);
     }
 
     public bool TryRegisterHit(EntityId2D attackSourceId, int attackId, string? hitGroup = null)
@@ -258,7 +258,7 @@ public sealed class Person2D : ICombatant2D
         return true;
     }
 
-    public bool TakeDamage(int damage, Vector2 knockback)
+    public bool TakeDamage(int damage, Vector2f knockback)
     {
         Ensure.Positive(damage);
         Ensure.Finite(knockback);
@@ -275,7 +275,7 @@ public sealed class Person2D : ICombatant2D
         Damaged?.Invoke();
         if (!IsAlive)
         {
-            Body.LinearVelocity = Vector2.Zero;
+            Body.LinearVelocity = Vector2f.Zero;
             _motor.EnterPassiveState();
             _actions?.Reset();
             Died?.Invoke();
@@ -302,7 +302,7 @@ public sealed class Person2D : ICombatant2D
 
         return TakeDamage(
             damage,
-            new Vector2(direction * horizontalKnockback, verticalKnockback));
+            new Vector2f(direction * horizontalKnockback, verticalKnockback));
     }
 
     public void SetSimulationEnabled(bool enabled)
@@ -316,12 +316,12 @@ public sealed class Person2D : ICombatant2D
         if (!enabled)
         {
             _motor.DetachFromLadder();
-            Body.LinearVelocity = Vector2.Zero;
+            Body.LinearVelocity = Vector2f.Zero;
             _actions?.Reset();
         }
     }
 
-    public void Reset(Vector2 spawnPoint, int? hitPoints = null)
+    public void Reset(Vector2f spawnPoint, int? hitPoints = null)
     {
         DownAttackBouncedThisFrame = false;
         Ensure.Finite(spawnPoint);
@@ -339,7 +339,7 @@ public sealed class Person2D : ICombatant2D
         Body.MotionType = _simulationEnabled
             ? BodyMotionType2D.Dynamic
             : BodyMotionType2D.Static;
-        Body.LinearVelocity = Vector2.Zero;
+        Body.LinearVelocity = Vector2f.Zero;
         Body.AngularVelocity = 0f;
         _motor.Reset();
         _actions?.Reset();

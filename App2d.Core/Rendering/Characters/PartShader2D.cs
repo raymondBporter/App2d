@@ -1,6 +1,7 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Drawing;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -26,13 +27,13 @@ public sealed class PartShader2D(Part part) : IShader2D
     public IShape2D BoundsShape()
     {
         SetTime(0);
-        var min = new Vector2(float.PositiveInfinity);
-        var max = new Vector2(float.NegativeInfinity);
+        var min = Vector2Extensions.PositiveInfinity;
+        var max = Vector2Extensions.NegativeInfinity;
         foreach (var vertex in Drawing.Mesh.Vertices)
         {
-            var point = new Vector2(vertex.Position.X, vertex.Position.Y);
-            min = Vector2.Min(min, point);
-            max = Vector2.Max(max, point);
+            var point = new Vector2f(vertex.Position.X, vertex.Position.Y);
+            min = Vector2f.Min(min, point);
+            max = Vector2f.Max(max, point);
         }
         return float.IsFinite(min.X) && min.X < max.X && min.Y < max.Y
             ? Rectangle2D.Builder.Create(min, max) : Rectangle2D.Builder.CreateFromSize(1, 1);

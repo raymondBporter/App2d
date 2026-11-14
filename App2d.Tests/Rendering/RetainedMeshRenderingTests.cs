@@ -207,8 +207,8 @@ public sealed class RetainedMeshRenderingTests
     [Fact]
     public void LargePolygonShapesAutomaticallyUseRetainedBuffers()
     {
-        var points = new Vector2[96];
-        VertexGenerator2D.WriteCircle(points, Vector2.Zero, 24);
+        var points = new Vector2f[96];
+        VertexGenerator2D.WriteCircle(points, Vector2f.Zero, 24);
         var shape = SimplePolygon2D.Builder.Create(points);
         var item = new WorldObject2D(shape, new SolidColorShader(Color4b.Lime));
         using var graphics = new GraphicsTestContext();
@@ -229,7 +229,7 @@ public sealed class RetainedMeshRenderingTests
     [InlineData(65537, 4)]
     public void IndexBufferWidthPreservesIndicesAtTheSixteenBitBoundary(int vertexCount, int indexBytes)
     {
-        var vertices = new Vector2[vertexCount];
+        var vertices = new Vector2f[vertexCount];
         vertices[0] = new(-16, -16);
         vertices[1] = new(16, -16);
         vertices[^1] = new(0, 16);

@@ -8,11 +8,11 @@ namespace App2d.Core.Geometry.Meshes;
 /// <summary>An indexed set of filled triangles in XY, independent of rendering and authoring.</summary>
 public sealed class TriangleMesh2D
 {
-    private readonly Vector2[] _vertices;
+    private readonly Vector2f[] _vertices;
     private readonly int[] _indices;
     private (int Start, int End)[]? _boundaryEdges;
 
-    public TriangleMesh2D(IEnumerable<Vector2> vertices, IEnumerable<int> indices)
+    public TriangleMesh2D(IEnumerable<Vector2f> vertices, IEnumerable<int> indices)
     {
         Ensure.ThrowIfNull(vertices);
         Ensure.ThrowIfNull(indices);
@@ -43,10 +43,10 @@ public sealed class TriangleMesh2D
         Bounds = Rect2D.FromPoints(_vertices);
     }
 
-    public ReadOnlySpan<Vector2> Vertices => _vertices;
+    public ReadOnlySpan<Vector2f> Vertices => _vertices;
     public ReadOnlySpan<int> Indices => _indices;
     /// <summary>A borrowed, allocation-free view of the mesh's vertex triples in index-buffer order.</summary>
-    public IndexedTriangleEnumerable<Vector2> Triangles => MeshTopology.IndexedTriangles(_vertices, _indices);
+    public IndexedTriangleEnumerable<Vector2f> Triangles => MeshTopology.IndexedTriangles(_vertices, _indices);
     /// <summary>Cached index topology, independent of vertex positions and rendering.</summary>
     public ReadOnlySpan<(int Start, int End)> BoundaryEdges => _boundaryEdges ??= MeshTopology.BoundaryEdges(_indices);
     public SegmentVertexEnumerable<Segment<Vector2f, float>, Vector2f> BoundarySegments => MeshTopology.IndexedSegments(_vertices, BoundaryEdges);
@@ -55,7 +55,7 @@ public sealed class TriangleMesh2D
     public float Area { get; }
     public Rect2D Bounds { get; }
 
-    public Triangle<Vector2> TriangleAt(int index)
+    public Triangle<Vector2f> TriangleAt(int index)
     {
         Ensure.Index(index, TriangleCount);
 
@@ -64,7 +64,7 @@ public sealed class TriangleMesh2D
     }
 
     /// <summary>Contains a point when it lies in any triangle, including an edge.</summary>
-    public bool ContainsPoint(Vector2 point, double edgeTolerance = 0)
+    public bool ContainsPoint(Vector2f point, double edgeTolerance = 0)
     {
         Ensure.Finite(point);
         Ensure.NonNegative(edgeTolerance);

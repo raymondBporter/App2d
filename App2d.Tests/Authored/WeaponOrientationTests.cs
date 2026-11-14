@@ -50,10 +50,10 @@ public sealed class WeaponOrientationTests
     public void TwistTurnsWidthIntoDepthWithoutMovingTheGripOrChangingLength()
     {
         var (model, socket, clip) = Setup();
-        var rest = new ActorPose(PoseEvaluator.Rest(model), Vector2.Zero, 1).Socket(socket);
+        var rest = new ActorPose(PoseEvaluator.Rest(model), Vector2f.Zero, 1).Socket(socket);
         ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, socket.Id), 0, new(MathF.PI / 2, 0, 0));
         clip.Validate(model);
-        var turned = new ActorPose(PoseEvaluator.Sample(model, clip, 0), Vector2.Zero, 1).Socket(socket);
+        var turned = new ActorPose(PoseEvaluator.Sample(model, clip, 0), Vector2f.Zero, 1).Socket(socket);
         TestModels.Near(rest.Origin, turned.Origin, 1e-6f);
         TestModels.Near(rest.XAxis, turned.XAxis, 1e-6f);
         Assert.InRange(MathF.Abs(turned.YAxis.Z), .999f, 1.001f);
@@ -67,7 +67,7 @@ public sealed class WeaponOrientationTests
         var (model, socket, clip) = Setup();
         ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, socket.Id), 0, new(.7f, .6f, .4f));
         var local = PoseEvaluator.Sample(model, clip, 0);
-        var origin = new Vector2(4, 2);
+        var origin = new Vector2f(4, 2);
         var right = new ActorPose(local, origin, 1).Socket(socket);
         var left = new ActorPose(local, origin, -1).Socket(socket);
         var prop = new Part { Pivot = EquipmentPoints.Grip, Locations = [new() { Id = EquipmentPoints.Grip, X = .2f, Y = -.1f, Z = .03f }], Scale = 2 };

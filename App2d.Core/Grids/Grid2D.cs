@@ -10,13 +10,13 @@ public sealed class Grid2D<T>
 {
     private readonly T[] _values;
 
-    public Grid2D(int width, int height, float cellSize = 1f, Vector2 origin = default)
+    public Grid2D(int width, int height, float cellSize = 1f, Vector2f origin = default)
         : this(new(width, height), new GridGeometry2D(cellSize, origin)) { }
 
-    public Grid2D(int width, int height, Vector2 cellSize, Vector2 origin = default)
+    public Grid2D(int width, int height, Vector2f cellSize, Vector2f origin = default)
         : this(new(width, height), new GridGeometry2D(cellSize, origin)) { }
 
-    public Grid2D(int width, int height, Size2D cellSize, Vector2 origin = default)
+    public Grid2D(int width, int height, Size2D cellSize, Vector2f origin = default)
         : this(new(width, height), new GridGeometry2D(cellSize, origin)) { }
 
     public Grid2D(GridSize2D size, GridGeometry2D geometry)
@@ -34,7 +34,7 @@ public sealed class Grid2D<T>
     public int Height => Size.Height;
     public int Count => Size.CellCount;
     public Size2D CellSize => Geometry.CellSize;
-    public Vector2 Origin => Geometry.Origin;
+    public Vector2f Origin => Geometry.Origin;
     public Rect2D WorldBounds { get; }
 
     public ref T this[int x, int y] => ref _values[Size.GetIndex(x, y)];
@@ -61,5 +61,5 @@ public sealed class Grid2D<T>
     }
     public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2D => Geometry.GetCellRange(bounds, Size);
 
-    public bool TryGetCell(Vector2 position, out Vector2i cell) => Geometry.TryWorldToCell(position, out cell) && Size.Contains(cell);
+    public bool TryGetCell(Vector2f position, out Vector2i cell) => Geometry.TryWorldToCell(position, out cell) && Size.Contains(cell);
 }

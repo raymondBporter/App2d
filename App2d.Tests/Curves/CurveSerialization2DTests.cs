@@ -2,6 +2,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Json;
+using App2d.Core.Mathematics;
 using System.Numerics;
 using System.Text.Json;
 
@@ -44,8 +45,8 @@ public sealed class CurveSerialization2DTests
         Assert.Equal(original.GetType(), restored.GetType());
         foreach (var amount in new[] { 0f, .13f, .5f, .87f, 1f })
         {
-            Assert.InRange(Vector2.Distance(original.Evaluate(amount), restored.Evaluate(amount)), 0, 1e-5f);
-            Assert.InRange(Vector2.Distance(original.EvaluateDerivative(amount), restored.EvaluateDerivative(amount)), 0, 1e-5f);
+            Assert.InRange(Vector2f.Distance(original.Evaluate(amount), restored.Evaluate(amount)), 0, 1e-5f);
+            Assert.InRange(Vector2f.Distance(original.EvaluateDerivative(amount), restored.EvaluateDerivative(amount)), 0, 1e-5f);
         }
     }
 
@@ -74,7 +75,7 @@ public sealed class CurveSerialization2DTests
         Assert.Contains("\"kind\": \"line\"", json);
         Assert.Contains("\"x\": 1", json);
         var restored = JsonSerializer.Deserialize<CurveEnvelope>(json, AuthoredJson.Options)!;
-        Assert.Equal(new Vector2(3, 4), restored.Path.Validated().Evaluate(1));
+        Assert.Equal(new Vector2f(3, 4), restored.Path.Validated().Evaluate(1));
     }
 
     [Fact]
@@ -96,21 +97,21 @@ public sealed class CurveSerialization2DTests
 #pragma warning disable APP2D001 // Deliberately invalid curves; the theory checks that validation rejects them.
     public static TheoryData<ICurve2D> InvalidValues =>
     [
-        new LineSegmentCurve2D { Start = new(float.NaN, 0), End = Vector2.One },
-        new LineSegmentCurve2D { Start = Vector2.Zero, End = new(0, float.PositiveInfinity) },
+        new LineSegmentCurve2D { Start = new(float.NaN, 0), End = Vector2f.One },
+        new LineSegmentCurve2D { Start = Vector2f.Zero, End = new(0, float.PositiveInfinity) },
         new PolylineCurve2D { Points = null! },
-        new PolylineCurve2D { Points = [Vector2.Zero] },
-        new PolylineCurve2D { Points = [Vector2.Zero, new(float.NaN, 1)] },
-        new Arc2D { Center = Vector2.Zero, Radius = -1, StartAngleRadians = 0, SweepAngleRadians = 1 },
+        new PolylineCurve2D { Points = [Vector2f.Zero] },
+        new PolylineCurve2D { Points = [Vector2f.Zero, new(float.NaN, 1)] },
+        new Arc2D { Center = Vector2f.Zero, Radius = -1, StartAngleRadians = 0, SweepAngleRadians = 1 },
         new Arc2D { Center = new(float.NaN, 0), Radius = 1, StartAngleRadians = 0, SweepAngleRadians = 1 },
-        new Arc2D { Center = Vector2.Zero, Radius = 1, StartAngleRadians = float.NaN, SweepAngleRadians = 1 },
-        new Arc2D { Center = Vector2.Zero, Radius = 1, StartAngleRadians = 0, SweepAngleRadians = float.PositiveInfinity },
-        new QuadraticBezier2D { Start = Vector2.Zero, Control = new(float.NaN, 0), End = Vector2.One },
-        new CubicBezier2D { Start = Vector2.Zero, Control1 = Vector2.UnitY, Control2 = new(float.NaN, 0), End = Vector2.One },
+        new Arc2D { Center = Vector2f.Zero, Radius = 1, StartAngleRadians = float.NaN, SweepAngleRadians = 1 },
+        new Arc2D { Center = Vector2f.Zero, Radius = 1, StartAngleRadians = 0, SweepAngleRadians = float.PositiveInfinity },
+        new QuadraticBezier2D { Start = Vector2f.Zero, Control = new(float.NaN, 0), End = Vector2f.One },
+        new CubicBezier2D { Start = Vector2f.Zero, Control1 = Vector2f.UnitY, Control2 = new(float.NaN, 0), End = Vector2f.One },
         new BSpline2D { ControlPoints = null! },
-        new BSpline2D { ControlPoints = [Vector2.Zero, Vector2.One], Degree = 0 },
-        new BSpline2D { ControlPoints = [Vector2.Zero, Vector2.One], Degree = 2 },
-        new BSpline2D { ControlPoints = [Vector2.Zero, new(float.NaN, 0)], Degree = 1 }
+        new BSpline2D { ControlPoints = [Vector2f.Zero, Vector2f.One], Degree = 0 },
+        new BSpline2D { ControlPoints = [Vector2f.Zero, Vector2f.One], Degree = 2 },
+        new BSpline2D { ControlPoints = [Vector2f.Zero, new(float.NaN, 0)], Degree = 1 }
     ];
 #pragma warning restore APP2D001
 
@@ -145,25 +146,25 @@ public sealed class CurveSerialization2DTests
             Assert.True(type.IsDefined(typeof(System.Runtime.CompilerServices.IsReadOnlyAttribute), inherit: false));
         }
 
-        Vector2[] points = [Vector2.Zero, Vector2.One];
+        Vector2f[] points = [Vector2f.Zero, Vector2f.One];
         PolylineCurve2D polyline = PolylineCurve2D.Builder.Create(points);
         BSpline2D spline = BSpline2D.Builder.Create(points, 1);
         points[1] = new(100, 100);
-        Assert.Equal(Vector2.One, polyline.Evaluate(1));
-        Assert.Equal(Vector2.One, spline.Evaluate(1));
-        var quadratic = BSpline2D.Builder.Create([Vector2.Zero, new(1, 2), new(2, 0)], 2);
-        Assert.Equal(new Vector2(1, 1), quadratic.Evaluate(.5f));
-        Assert.Equal(new Vector2(1, 2), (quadratic with { Degree = 1 }).Evaluate(.5f));
-        Assert.Equal(new Vector2(1, 1), quadratic.Evaluate(.5f));
-        var edited = spline with { ControlPoints = [Vector2.Zero, new(3, 3)] };
-        Assert.Equal(new Vector2(3, 3), edited.Evaluate(1));
-        Assert.Equal(Vector2.One, spline.Evaluate(1));
+        Assert.Equal(Vector2f.One, polyline.Evaluate(1));
+        Assert.Equal(Vector2f.One, spline.Evaluate(1));
+        var quadratic = BSpline2D.Builder.Create([Vector2f.Zero, new(1, 2), new(2, 0)], 2);
+        Assert.Equal(new Vector2f(1, 1), quadratic.Evaluate(.5f));
+        Assert.Equal(new Vector2f(1, 2), (quadratic with { Degree = 1 }).Evaluate(.5f));
+        Assert.Equal(new Vector2f(1, 1), quadratic.Evaluate(.5f));
+        var edited = spline with { ControlPoints = [Vector2f.Zero, new(3, 3)] };
+        Assert.Equal(new Vector2f(3, 3), edited.Evaluate(1));
+        Assert.Equal(Vector2f.One, spline.Evaluate(1));
     }
 
     [Fact]
     public void CurvesWithExecutableProfilesHaveNoJsonSchema()
     {
-        var curve = new NormalOffsetCurve2D(LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.One), _ => 1);
+        var curve = new NormalOffsetCurve2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.One), _ => 1);
         Assert.Throws<NotSupportedException>(() => curve.ToJson());
     }
 }

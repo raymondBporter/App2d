@@ -12,11 +12,11 @@ namespace App2d.Core.Grids;
 /// </summary>
 public readonly record struct GridGeometry2D
 {
-    public GridGeometry2D(float cellSize, Vector2 origin = default) : this(new Size2D(cellSize, cellSize), origin) { }
+    public GridGeometry2D(float cellSize, Vector2f origin = default) : this(new Size2D(cellSize, cellSize), origin) { }
 
-    public GridGeometry2D(Vector2 cellSize, Vector2 origin = default) : this(Size2D.FromVector2(cellSize), origin) { }
+    public GridGeometry2D(Vector2f cellSize, Vector2f origin = default) : this(Size2D.FromVector2(cellSize), origin) { }
 
-    public GridGeometry2D(Size2D cellSize, Vector2 origin = default)
+    public GridGeometry2D(Size2D cellSize, Vector2f origin = default)
     {
         Ensure.ThrowIf(!cellSize.IsValid, "Cell size must have positive finite dimensions.", nameof(cellSize));
         Ensure.Finite(origin);
@@ -25,10 +25,10 @@ public readonly record struct GridGeometry2D
     }
 
     public Size2D CellSize { get; }
-    public Vector2 Origin { get; }
+    public Vector2f Origin { get; }
     public bool IsValid => CellSize.IsValid && NumericValidation.IsFinite(Origin);
 
-    public Vector2i WorldToCell(Vector2 position)
+    public Vector2i WorldToCell(Vector2f position)
     {
         Ensure.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
         if (!TryWorldToCell(position, out var cell))
@@ -39,7 +39,7 @@ public readonly record struct GridGeometry2D
         return cell;
     }
 
-    public bool TryWorldToCell(Vector2 position, out Vector2i cell)
+    public bool TryWorldToCell(Vector2f position, out Vector2i cell)
     {
         cell = default;
         if (!IsValid || !NumericValidation.IsFinite(position))
@@ -59,7 +59,7 @@ public readonly record struct GridGeometry2D
     }
 
     /// <summary>Clamps to a nonempty finite grid. Even distant finite world positions safely reach an edge cell.</summary>
-    public Vector2i WorldToCellClamped(Vector2 position, GridSize2D size)
+    public Vector2i WorldToCellClamped(Vector2f position, GridSize2D size)
     {
         Ensure.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
         Ensure.Finite(position);
@@ -72,10 +72,10 @@ public readonly record struct GridGeometry2D
     public Rect2D GetCellBounds(Vector2i cell) => new(
         Corner(cell.X, cell.Y), Corner((double)cell.X + 1, (double)cell.Y + 1));
 
-    public Vector2 GetCellCenter(Vector2i cell) => Corner(cell.X + .5, cell.Y + .5);
+    public Vector2f GetCellCenter(Vector2i cell) => Corner(cell.X + .5, cell.Y + .5);
 
     /// <summary>Snaps a finite world point to its nearest cell corner. Halfway ties round to an even grid index.</summary>
-    public Vector2 SnapToNearestCorner(Vector2 position)
+    public Vector2f SnapToNearestCorner(Vector2f position)
     {
         Ensure.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
         Ensure.Finite(position);
@@ -154,10 +154,10 @@ public readonly record struct GridGeometry2D
         return new(WorldToCellClamped(clipped.Min, size), WorldToCellClamped(clipped.Max, size));
     }
 
-    private Vector2 Corner(double x, double y)
+    private Vector2f Corner(double x, double y)
     {
         Ensure.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
-        var point = new Vector2((float)(Origin.X + x * CellSize.Width), (float)(Origin.Y + y * CellSize.Height));
+        var point = new Vector2f((float)(Origin.X + x * CellSize.Width), (float)(Origin.Y + y * CellSize.Height));
         if (!NumericValidation.IsFinite(point))
         {
             Ensure.ThrowOutOfRange(point, "Grid bounds must fit finite world coordinates.");

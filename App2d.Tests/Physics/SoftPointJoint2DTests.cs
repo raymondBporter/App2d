@@ -36,7 +36,7 @@ public sealed class SoftPointJoint2DTests
         {
             firstWorld.Step(1f / 120f);
             secondWorld.Step(1f / 120f);
-            Assert.InRange(Vector2.Distance(firstBody.WorldCenterOfMass, secondBody.WorldCenterOfMass), 0f, 0.00001f);
+            Assert.InRange(Vector2f.Distance(firstBody.WorldCenterOfMass, secondBody.WorldCenterOfMass), 0f, 0.00001f);
         }
     }
 
@@ -48,15 +48,15 @@ public sealed class SoftPointJoint2DTests
         frame.Mass = 3f;
         frame.MomentOfInertia = 2f;
         var wheel = AddBody(world, BodyMotionType2D.Dynamic);
-        wheel.WorldObject.Transform.Position = Vector2.UnitY;
-        wheel.LinearVelocity = Vector2.UnitX * 5f;
+        wheel.WorldObject.Transform.Position = Vector2f.UnitY;
+        wheel.LinearVelocity = Vector2f.UnitX * 5f;
         wheel.AngularVelocity = 8f;
-        var joint = new SoftPointJoint2D(frame, wheel, Vector2.UnitY, Vector2.Zero);
+        var joint = new SoftPointJoint2D(frame, wheel, Vector2f.UnitY, Vector2f.Zero);
         var momentum = frame.Mass * frame.LinearVelocity + wheel.Mass * wheel.LinearVelocity;
         var angularMomentum = wheel.MomentOfInertia * wheel.AngularVelocity - wheel.Mass * wheel.LinearVelocity.X;
         joint.PrepareVelocity(1f / 120f);
         joint.SolveVelocity(1f / 120f);
-        Assert.InRange(Vector2.Distance(momentum, frame.Mass * frame.LinearVelocity + wheel.Mass * wheel.LinearVelocity), 0f, 0.00001f);
+        Assert.InRange(Vector2f.Distance(momentum, frame.Mass * frame.LinearVelocity + wheel.Mass * wheel.LinearVelocity), 0f, 0.00001f);
         Assert.NotEqual(0f, frame.AngularVelocity);
         Assert.Equal(8f, wheel.AngularVelocity);
         var afterAngularMomentum = frame.MomentOfInertia * frame.AngularVelocity
@@ -68,17 +68,17 @@ public sealed class SoftPointJoint2DTests
     public void LocalAnchorsUseRotationScaleAndCenterOfMass()
     {
         var world = new PhysicsWorld2D();
-        var frame = world.AddBody(new SpatialObject2D(Circle2D.Builder.Create(1f, new Vector2(2f, 0f))), BodyMotionType2D.Dynamic);
+        var frame = world.AddBody(new SpatialObject2D(Circle2D.Builder.Create(1f, new Vector2f(2f, 0f))), BodyMotionType2D.Dynamic);
         frame.FreezeRotation = false;
         frame.IsCollider = false;
         frame.WorldObject.Transform.Position = new(3f, 4f);
         frame.WorldObject.Transform.Rotation = MathF.PI / 2f;
-        frame.WorldObject.Transform.Scale = new Vector2(2f);
+        frame.WorldObject.Transform.Scale = new Vector2f(2f);
         frame.SetMassFromShape(2f);
         var wheel = AddBody(world, BodyMotionType2D.Dynamic);
         wheel.WorldObject.Transform.Position = new(4f, 12f);
-        var joint = new SoftPointJoint2D(frame, wheel, new(4f, 0f), Vector2.Zero);
-        Assert.InRange(Vector2.Distance(new(3f, 12f), joint.FirstWorldAnchor), 0f, 0.00001f);
+        var joint = new SoftPointJoint2D(frame, wheel, new(4f, 0f), Vector2f.Zero);
+        Assert.InRange(Vector2f.Distance(new(3f, 12f), joint.FirstWorldAnchor), 0f, 0.00001f);
         joint.PrepareVelocity(1f / 120f);
         joint.SolveVelocity(1f / 120f);
         Assert.True(frame.LinearVelocity.X > 0f);
@@ -104,11 +104,11 @@ public sealed class SoftPointJoint2DTests
         var (world, body, joint) = CreateSpring();
         joint.IsEnabled = false;
         world.Step(1f / 60f);
-        Assert.Equal(Vector2.Zero, body.LinearVelocity);
+        Assert.Equal(Vector2f.Zero, body.LinearVelocity);
         joint.IsEnabled = true;
         body.MotionType = BodyMotionType2D.Static;
         world.Step(1f / 60f);
-        Assert.Equal(Vector2.Zero, body.LinearVelocity);
+        Assert.Equal(Vector2f.Zero, body.LinearVelocity);
     }
 
     private static (PhysicsWorld2D World, RigidBody2D Body, SoftPointJoint2D Joint) CreateSpring()
@@ -116,8 +116,8 @@ public sealed class SoftPointJoint2DTests
         var world = new PhysicsWorld2D();
         var anchor = AddBody(world, BodyMotionType2D.Static);
         var body = AddBody(world, BodyMotionType2D.Dynamic);
-        body.WorldObject.Transform.Position = Vector2.UnitX;
-        var joint = new SoftPointJoint2D(anchor, body, Vector2.Zero, Vector2.Zero);
+        body.WorldObject.Transform.Position = Vector2f.UnitX;
+        var joint = new SoftPointJoint2D(anchor, body, Vector2f.Zero, Vector2f.Zero);
         world.Constraints.Add(joint);
         return (world, body, joint);
     }

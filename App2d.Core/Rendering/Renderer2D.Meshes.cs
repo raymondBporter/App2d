@@ -43,7 +43,7 @@ public sealed partial class Renderer2D
         Ensure.ThrowIfNull(material);
         Ensure.Finite(localToWorld);
         SelectMaterial(material);
-        DrawMeshCore(mesh, localToWorld * View.WorldToDeviceMatrix, mesh.Bounds, material);
+        DrawMeshCore(mesh, View.LocalToDevice(localToWorld), mesh.Bounds, material);
     }
 
     public void DrawMesh(TriangleMesh2D mesh, IShader2D material) => DrawMesh(mesh, material, Matrix3x2.Identity);

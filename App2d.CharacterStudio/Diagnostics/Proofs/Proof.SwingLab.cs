@@ -39,8 +39,8 @@ internal sealed partial class ProofRenders
         props[PersonLoadout.Sword] = PlayerMoves.PlayerMoves.CartoonSwordArt();
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
         var game = PlayerMoves.PlayerMoves.Clips(model).ToDictionary(c => c.Id);
-        var shapes = new Dictionary<MotionClip, List<(float Start, float Finish, Vector2[] Hull)>>();
-        List<(float Start, float Finish, Vector2[] Hull)> ShapesOf(MotionClip clip) =>
+        var shapes = new Dictionary<MotionClip, List<(float Start, float Finish, Vector2f[] Hull)>>();
+        List<(float Start, float Finish, Vector2f[] Hull)> ShapesOf(MotionClip clip) =>
             shapes.TryGetValue(clip, out var found) ? found : shapes[clip] = HitShapes(model, clip, props, sockets);
         using var target = RenderCapture2D.CreateTarget(GraphicsDevice, ReviewWidth, ReviewHeight);
         var drawing = new PuppetDrawing();
@@ -51,7 +51,7 @@ internal sealed partial class ProofRenders
         {
             var pose = PoseEvaluator.Sample(model, clip, seconds);
             drawing.Build(model, pose);
-            var placed = new ActorPose(pose, Vector2.Zero, 1);
+            var placed = new ActorPose(pose, Vector2f.Zero, 1);
             foreach (var (prop, socket) in PersonLoadout.Dressed(clip, seconds, PersonGear.Sword, catalog.Entities["hero"]))
             {
                 drawing.AddAttachment(worn[prop], placed, sockets[socket]);
@@ -76,7 +76,7 @@ internal sealed partial class ProofRenders
                 const float w = 2 / LabPpu;
                 for (var k = 0; k < hull.Length; k++)
                 {
-                    trail.Line(new(hull[k], -2), new(hull[(k + 1) % hull.Length], -2), w, red);
+                    trail.Line(new(hull[k].ToVector2(), -2), new(hull[(k + 1) % hull.Length].ToVector2(), -2), w, red);
                 }
             }
             BuildScenery(scenery, "ground", 0, seconds);
@@ -141,9 +141,9 @@ internal sealed partial class ProofRenders
     }
 
     /// <summary>The player's hit rectangles for a clip, one per live window ("strike" to "recover", "strike-2" to "recover-2"); see <see cref="SwingLab.HitRectangle"/>.</summary>
-    private static List<(float Start, float Finish, Vector2[] Hull)> HitShapes(ResolvedModel model, MotionClip clip, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets)
+    private static List<(float Start, float Finish, Vector2f[] Hull)> HitShapes(ResolvedModel model, MotionClip clip, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets)
     {
-        var result = new List<(float, float, Vector2[])>();
+        var result = new List<(float, float, Vector2f[])>();
         foreach (var suffix in Enumerable.Range(1, 8).Select(n => n == 1 ? "" : "-" + n))
         {
             if (clip.Markers.FirstOrDefault(m => m.Id == "strike" + suffix) is not { } strike || clip.Markers.FirstOrDefault(m => m.Id == "recover" + suffix) is not { } recover)
@@ -168,7 +168,7 @@ internal sealed partial class ProofRenders
     /// path during the swoosh is one clean curve, whether the arms reach their targets, and whether the held follow-through
     /// crosses the blade over the torso. Whether it looks good is the reviewer's call.
     /// </summary>
-    private static string SwingCheck(ResolvedModel model, SwingLab.Variant variant, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets, List<(float Start, float Finish, Vector2[] Hull)> shapes)
+    private static string SwingCheck(ResolvedModel model, SwingLab.Variant variant, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets, List<(float Start, float Finish, Vector2f[] Hull)> shapes)
     {
         var clip = variant.Clip;
         const int rate = 240;
@@ -257,7 +257,7 @@ internal sealed partial class ProofRenders
     /// <summary>Half the Person's standing height: with no duck, an enemy this tall must be hittable.</summary>
     private static float HalfHeight(ResolvedModel model) => model.DrawnHeight() / 2;
 
-    private static bool Crosses(Vector2 a, Vector2 b, Vector2 c, Vector2 d)
+    private static bool Crosses(Vector2f a, Vector2f b, Vector2f c, Vector2f d)
     {
         return a.Orientation(b, c) * a.Orientation(b, d) < 0 && c.Orientation(d, a) * c.Orientation(d, b) < 0;
     }

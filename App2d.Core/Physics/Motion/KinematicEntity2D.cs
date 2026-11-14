@@ -39,17 +39,17 @@ public sealed class KinematicEntity2D : IDisposable
     public RigidBody2D Body { get; }
     public double TimeSeconds { get; private set; }
     /// <summary>Instantaneous path velocity; the physics body's velocity is the step-average displacement.</summary>
-    public Vector2 MotionVelocity => Motion.Velocity(TimeSeconds);
+    public Vector2f MotionVelocity => Motion.Velocity(TimeSeconds);
 
     /// <returns>The world-space displacement scheduled for the next physics step.</returns>
-    public Vector2 Update(float deltaSeconds)
+    public Vector2f Update(float deltaSeconds)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         Ensure.NonNegative(deltaSeconds);
         if (deltaSeconds == 0f)
         {
-            Body.LinearVelocity = Vector2.Zero;
-            return Vector2.Zero;
+            Body.LinearVelocity = Vector2f.Zero;
+            return Vector2f.Zero;
         }
 
         var nextTime = TimeSeconds + deltaSeconds;

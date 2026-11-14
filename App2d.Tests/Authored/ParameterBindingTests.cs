@@ -53,7 +53,7 @@ public sealed class ParameterBindingTests
         return variant;
     }
 
-    private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
 
     [Fact]
     public void TheShippedPersonDeclaresItsProportionsAsParametersWithBindings()
@@ -193,8 +193,8 @@ public sealed class ParameterBindingTests
         Assert.Equal(1, longer.Nodes["hub"].Length);
         Assert.Equal(1, longer.ParameterValues["reach"]);
         var hub = XY(longer.Rest["hub"]);
-        TestModels.Near(new(hub + Rotation2D.Apply(new(.5f, 0), .3f), 0), longer.Rest["lamp"]);
-        TestModels.Near(new(hub + Rotation2D.Apply(new(1, 0), .3f), 0), longer.Rest["pin"]);
+        TestModels.Near(new((hub + Rotation2D.Apply(new(.5f, 0), .3f)).ToVector2(), 0), longer.Rest["lamp"]);
+        TestModels.Near(new((hub + Rotation2D.Apply(new(1, 0), .3f)).ToVector2(), 0), longer.Rest["pin"]);
         Assert.Equal(1, new Frame2D(longer.RestTransforms["lamp"]).XAxis.Length(), 5);
         // The preset writes the same value through the authoring route.
         var fromPreset = new ModelVariant { Id = "long", Name = "Long", Base = "crank" };
@@ -207,7 +207,7 @@ public sealed class ParameterBindingTests
         clip.Validate(standard);
         clip.Validate(longer);
         var pose = PoseEvaluator.Sample(longer, clip, 0);
-        TestModels.Near(new(XY(pose.World("hub")) + Rotation2D.Apply(new(.5f, 0), 1.5f), 0), pose.World("lamp"));
+        TestModels.Near(new((XY(pose.World("hub")) + Rotation2D.Apply(new(.5f, 0), 1.5f)).ToVector2(), 0), pose.World("lamp"));
     }
 
     [Fact]
@@ -346,8 +346,8 @@ public sealed class ParameterBindingTests
         Assert.DoesNotContain(ClipAuthoring.ChannelsForControl(model, "hub"), c => c.Kind == "shear");
         var pose = PoseEvaluator.Sample(model, clip, 0);
         var hub = XY(pose.World("hub"));
-        Assert.Equal(.4f * 1.5f, Vector2.Distance(hub, XY(pose.World("pin"))), 4);
-        Assert.Equal(.2f * 1.5f, Vector2.Distance(hub, XY(pose.World("lamp"))), 4);
+        Assert.Equal(.4f * 1.5f, Vector2f.Distance(hub, XY(pose.World("pin"))), 4);
+        Assert.Equal(.2f * 1.5f, Vector2f.Distance(hub, XY(pose.World("lamp"))), 4);
         Assert.Equal(1.5f, new Frame2D(pose.Bones["hub"]).XAxis.Length(), 4);
         Assert.Equal(1.5f, new Frame2D(pose.Bones["hub"]).YAxis.Length(), 4);
         // The length is a dimension, not the scale: it is unchanged by the channel.

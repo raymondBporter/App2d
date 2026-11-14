@@ -121,13 +121,13 @@ public sealed class GrassCuttingTests
             });
         }
 
-        Assert.InRange(Vector2.Distance(fast.Position, slow.Position), 0f, 0.002f);
+        Assert.InRange(Vector2f.Distance(fast.Position, slow.Position), 0f, 0.002f);
     }
 
     [Fact]
     public void LiveCutsBurstOnlyOnceAndLandingRemovesPiecesBeforeTheirTimeout()
     {
-        var map = new EditableTileMap2D(16, 16, 32f, 16, Vector2.Zero, ["ink-medieval-ground"]);
+        var map = new EditableTileMap2D(16, 16, 32f, 16, Vector2f.Zero, ["ink-medieval-ground"]);
         for (var x = 0; x < map.Width; x++)
         {
             map.SetTileKind(x, 1, TileKind2D.Solid);

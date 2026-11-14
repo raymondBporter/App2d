@@ -18,7 +18,7 @@ internal abstract class MeleePersonWeapon2D(
     IShape2D hitboxShape,
     MeleeAttackProfile2D attackProfile,
     int damage,
-    Vector2 knockback,
+    Vector2f knockback,
     CombatFaction2D ownerFaction,
     uint targetLayer,
     CombatSystem2D combat,
@@ -99,9 +99,9 @@ internal abstract class MeleePersonWeapon2D(
                 ownerFaction,
                 targetLayer,
                 authored?.Damage(_swing) ?? damage,
-                _ => new Vector2(_attackDirection * knockback.X, knockback.Y),
+                _ => new Vector2f(_attackDirection * knockback.X, knockback.Y),
                 impactKind: authored?.Impact(_swing) ?? CombatImpactKind2D.Sword,
-                impactDirection: knockback.X == 0 ? new Vector2(0, MathF.Sign(knockback.Y)) : new Vector2(_attackDirection, 0),
+                impactDirection: knockback.X == 0 ? new Vector2f(0, MathF.Sign(knockback.Y)) : new Vector2f(_attackDirection, 0),
                 attackerId: _ownerBody.EntityId,
                 hitGroup: authored?.HitGroup(_swing)))
         {
@@ -109,8 +109,8 @@ internal abstract class MeleePersonWeapon2D(
         }
     }
 
-    protected Vector2 OwnerPosition => _ownerBody.WorldObject.Transform.Position;
-    protected void ReportImpact(Vector2 position) => _publish(new SwordImpact2D(position));
+    protected Vector2f OwnerPosition => _ownerBody.WorldObject.Transform.Position;
+    protected void ReportImpact(Vector2f position) => _publish(new SwordImpact2D(position));
     protected virtual void OnHit()
     {
     }

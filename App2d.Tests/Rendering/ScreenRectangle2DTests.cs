@@ -10,13 +10,13 @@ public sealed class ScreenRectangle2DTests
     public void PositiveSizeCanCreateAndBeReadFromScreenBounds()
     {
         var size = new Size2D(40f, 60f);
-        var bounds = ScreenRectangle2D.FromTopLeftAndSize(new Vector2(10f, 20f), size);
+        var bounds = ScreenRectangle2D.FromTopLeftAndSize(new Vector2f(10f, 20f), size);
 
         Assert.Equal(new ScreenRectangle2D(10f, 20f, 50f, 80f), bounds);
         Assert.True(bounds.TryGetPositiveSize(out var measured));
         Assert.Equal(size, measured);
         Assert.False(bounds.InsetBy(100f, 0f).TryGetPositiveSize(out _));
-        Assert.Throws<ArgumentException>(() => ScreenRectangle2D.FromTopLeftAndSize(Vector2.Zero, default));
+        Assert.Throws<ArgumentException>(() => ScreenRectangle2D.FromTopLeftAndSize(Vector2f.Zero, default));
     }
 
     [Fact]

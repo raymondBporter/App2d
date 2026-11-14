@@ -222,7 +222,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var s = shell.Session;
                 s.PoseWeapon(new(MathF.PI / 2, 0, 0));
                 s.CommitAll();
-                Record(MathF.Abs(new ActorPose(s.Scene()[0].Pose, Vector2.Zero, 1).Socket(s.Scene()[0].Model.Base.Sockets.First(x => x.Id == Humanoid.SwordSocket)).YAxis.Z) > .99f, "edge-on blade has real depth");
+                Record(MathF.Abs(new ActorPose(s.Scene()[0].Pose, Vector2f.Zero, 1).Socket(s.Scene()[0].Model.Base.Sockets.First(x => x.Id == Humanoid.SwordSocket)).YAxis.Z) > .99f, "edge-on blade has real depth");
             }),
             ("24-appearance-editor", shell =>
             {
@@ -256,7 +256,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 {
                     var part = doc.Asset.Parts.Single(p => p.Id == "frill");
                     var polygon = (SimplePolygon2D)part.Geometry!;
-                    var vertices = new List<Vector2>(polygon.Vertices.ToArray()) { [0] = new(-.32f, -.46f) };
+                    var vertices = new List<Vector2f>(polygon.Vertices.ToArray()) { [0] = new(-.32f, -.46f) };
                     ModelAuthoring.SetCutout(part, vertices);
                 }), s);
                 s.Undo();
@@ -617,14 +617,14 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var hand = Tall().Rest["left-hand"];
                 s.Selection.Select(control: "left-elbow");
                 s.BeginDrag();
-                s.DragBoneTip("left-elbow", new Vector2(hand.X, hand.Y) + Vector2.Normalize(new Vector2(hand.X, hand.Y) - new Vector2(Tall().Rest["left-elbow"].X, Tall().Rest["left-elbow"].Y)) * .2f);
+                s.DragBoneTip("left-elbow", new Vector2f(hand.X, hand.Y) + Vector2f.Normalize(new Vector2f(hand.X, hand.Y) - new Vector2f(Tall().Rest["left-elbow"].X, Tall().Rest["left-elbow"].Y)) * .2f);
                 s.EndDrag();
                 Record(!s.MessageIsError && MathF.Abs(Tall().Nodes["left-elbow"].Length - forearm - .2f) < 1e-3f && Tall().Provenance(PropertyRef.OfControl("left-elbow", RigProperties.Length)) == PropertySource.Override && Tall().Masks(PropertyRef.OfControl("left-elbow", RigProperties.Length)),
                     "dragging the variant's forearm tip lengthens it by 0.2 as an override that masks the arms binding");
                 Record(person.Serialize() == baseBefore && !person.Dirty && s.Assets.Resolve("short-broad")!.Nodes["left-elbow"].Length == broadBefore && s.Assets.Resolve("short-broad")!.Attachment(right)!.Asset.Id == "mitt",
                     "the longer forearm and the swapped glove leave the base and short-broad unchanged");
                 s.BeginDrag();
-                s.DragBoneTip("right-shoulder", new Vector2(0, 0));
+                s.DragBoneTip("right-shoulder", new Vector2f(0, 0));
                 s.EndDrag();
                 Record(s.MessageIsError && s.Message.Contains("only drag a bone node") && !tall.Asset.HasOverride(PropertyRef.OfControl("right-shoulder", RigProperties.Length)),
                     "dragging the shoulder pivot's tip on the variant (a point control) is refused with its reason, not ignored: " + s.Message);
@@ -886,7 +886,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Check(s.Edit(guard, () => guard.Asset.Geometry.First(c => c.Id == "head").Geometry = Capsule2D.Builder.Create(new(0, -.2f), new(0, .2f), .3f)), s);
                 Record(s.EvaluateEntity()!.Colliders.First(c => c.Id == "head").Region.Shape is Capsule2D, "a hurt collider takes any convex shape: the head as a capsule, shown as registered");
                 s.Undo();
-                Check(s.AddCollider(new() { Id = "shin", A = Humanoid.LeftKnee, B = Humanoid.LeftFoot, Stretch = true, Geometry = Capsule2D.Builder.Create(Vector2.Zero, new(0, .39f), .06f) }, ColliderUses.Hurt), s);
+                Check(s.AddCollider(new() { Id = "shin", A = Humanoid.LeftKnee, B = Humanoid.LeftFoot, Stretch = true, Geometry = Capsule2D.Builder.Create(Vector2f.Zero, new(0, .39f), .06f) }, ColliderUses.Hurt), s);
                 Record(s.Entity!.Collider("shin") is { Binding: ColliderBindings.Control, RestSpan: > .3f } && s.EvaluateEntity()!.Colliders.Any(c => c.Id == "shin" && c.Enabled),
                     "a stretched capsule along the shin is added, resolved against the rig and shown");
                 Record(!s.RemoveCollider("spear-tip") && s.Message.Contains("re-point the window first"), "removing the collider a window names is refused by name");
@@ -1054,7 +1054,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var lower = pose.Attachments[CentaurStudy.Lower];
                 var upper = pose.Attachments[CentaurStudy.Upper];
                 var saddle = lower.Frame("body").At(new Vector3(.42f, .98f, 0));
-                Record(lower.Pose.Chains.All(c => c.Reached) && lower.Pose.Contacts.Count >= 2 && lower.Pose.Contacts.All(c => c.Residual < 1e-4f) && Vector2.Distance(new(saddle.X, saddle.Y), new(upper.World(Humanoid.Chest).X, upper.World(Humanoid.Chest).Y)) < 1e-4f,
+                Record(lower.Pose.Chains.All(c => c.Reached) && lower.Pose.Contacts.Count >= 2 && lower.Pose.Contacts.All(c => c.Residual < 1e-4f) && Vector2f.Distance(new(saddle.X, saddle.Y), new(upper.World(Humanoid.Chest).X, upper.World(Humanoid.Chest).Y)) < 1e-4f,
                     "at 0.55 s of the walk the lower body's legs reach with the planted feet holding, and the chest sits on the saddle socket carried by lower/body");
                 var walkClip = s.Assets.Clip("centaur-walk")!.Asset;
                 var gait = s.Assets.Part(ModulePlans.QuadrupedLower)!.Asset.Clip("quadruped-walk")!;
@@ -1189,8 +1189,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 ModelAuthoring.AddControl(model.Asset, $"hip-{i}", new(x + .15f, .4f, (i - 1) * .1f), $"knee-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"knee-{i}", new(x, 0, (i - 1) * .1f), $"foot-{i}");
                 ModelAuthoring.AddIkOverPoints(model.Asset, $"foot-{i}");
-                ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"hip-{i}", $"knee-{i}");
-                ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), $"hip-{i}", $"knee-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
             }
             ModelAuthoring.AddMeasure(model.Asset, "leg", ["hip-1", "knee-1", "foot-1"]);
             foreach (var chain in model.Asset.IkChains)

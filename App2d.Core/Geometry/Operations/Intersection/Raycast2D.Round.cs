@@ -12,10 +12,10 @@ public static partial class Raycast2D
     /// First hit on an arc, considering both intersections with its supporting circle.
     /// The normal is counterclockwise from the curve tangent. Zero radius/sweep has no surface and misses.
     /// </summary>
-    public static bool TryArc(Vector2 origin, Vector2 direction, Arc2D arc, float maxDistance, out RayHit2D hit) =>
+    public static bool TryArc(Vector2f origin, Vector2f direction, Arc2D arc, float maxDistance, out RayHit2D hit) =>
         TryArc(origin, direction, arc.Center, arc.Radius, arc.StartAngleRadians, arc.SweepAngleRadians, maxDistance, out hit);
 
-    internal static bool TryArc(Vector2 origin, Vector2 direction, Vector2 center, float radius,
+    internal static bool TryArc(Vector2f origin, Vector2f direction, Vector2f  center, float radius,
         double startAngle, double sweep, float maxDistance, out RayHit2D hit)
     {
         hit = default;
@@ -51,13 +51,13 @@ public static partial class Raycast2D
             var length = radial.Length();
             if (length == 0) return false;
             var normal = radial * (-Math.Sign(sweep) / length);
-            candidate = new(point.ToVector2(), normal.ToVector2(), (float)distance);
+            candidate = new(point.ToVector2f(), normal.ToVector2f(), (float)distance);
             return true;
         }
     }
 
     /// <summary>Intersects the exact straight sides and circular corners, without tessellating a rounded rectangle.</summary>
-    public static bool TryRoundedRectangle(Vector2 origin, Vector2 direction, RoundedRectangle2D rectangle,
+    public static bool TryRoundedRectangle(Vector2f origin, Vector2f direction, RoundedRectangle2D rectangle,
         float maxDistance, out RayHit2D hit)
     {
         var frame = rectangle.Frame;
@@ -75,10 +75,10 @@ public static partial class Raycast2D
         var outer = rectangle.HalfSize;
         var found = false;
         var best = default(RayHit2D);
-        Side(new(-inner.X, -outer.Y), new(inner.X, -outer.Y), -Vector2.UnitY);
-        Side(new(outer.X, -inner.Y), new(outer.X, inner.Y), Vector2.UnitX);
-        Side(new(inner.X, outer.Y), new(-inner.X, outer.Y), Vector2.UnitY);
-        Side(new(-outer.X, inner.Y), new(-outer.X, -inner.Y), -Vector2.UnitX);
+        Side(new(-inner.X, -outer.Y), new(inner.X, -outer.Y), -Vector2f.UnitY);
+        Side(new(outer.X, -inner.Y), new(outer.X, inner.Y), Vector2f.UnitX);
+        Side(new(inner.X, outer.Y), new(-inner.X, outer.Y), Vector2f.UnitY);
+        Side(new(-outer.X, inner.Y), new(-outer.X, -inner.Y), -Vector2f.UnitX);
         Corner(new(inner.X, inner.Y), 0);
         Corner(new(-inner.X, inner.Y), Math.PI / 2);
         Corner(new(-inner.X, -inner.Y), Math.PI);
@@ -86,13 +86,13 @@ public static partial class Raycast2D
         hit = found ? new(frame.FromFrame(best.Point), frame.FromFrameDirection(best.Normal), best.Distance) : default;
         return found;
 
-        void Side(Vector2 start, Vector2 end, Vector2 normal)
+        void Side(Vector2f start, Vector2f end, Vector2f normal)
         {
             if (TrySegment(localOrigin, localDirection, start.ToVector2d(), end.ToVector2d(), maxDistance, out var candidate))
                 Keep(candidate with { Normal = normal });
         }
 
-        void Corner(Vector2 center, double start)
+        void Corner(Vector2f center, double start)
         {
             if (TryArc(localOrigin, localDirection, center, rectangle.Radius, start, Math.PI / 2, maxDistance, out var candidate))
                 Keep(candidate with { Normal = -candidate.Normal });

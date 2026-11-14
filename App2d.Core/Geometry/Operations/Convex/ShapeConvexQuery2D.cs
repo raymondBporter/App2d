@@ -50,8 +50,8 @@ public static class ShapeConvexQuery2D
         // Polygon vertices already live in an immutable buffer; borrow it instead of copying large polygons.
         var firstCount = first is ConvexPolygon2D ? 0 : first.GetVertCount();
         var secondCount = second is ConvexPolygon2D ? 0 : second.GetVertCount();
-        Span<Vector2> firstVertices = firstCount <= 64 ? stackalloc Vector2[firstCount] : new Vector2[firstCount];
-        Span<Vector2> secondVertices = secondCount <= 64 ? stackalloc Vector2[secondCount] : new Vector2[secondCount];
+        Span<Vector2f> firstVertices = firstCount <= 64 ? stackalloc Vector2f[firstCount] : new Vector2f[firstCount];
+        Span<Vector2f> secondVertices = secondCount <= 64 ? stackalloc Vector2f[secondCount] : new Vector2f[secondCount];
         var firstRadius = 0f;
         var secondRadius = 0f;
         if (firstCount > 0)
@@ -75,18 +75,18 @@ public static class ShapeConvexQuery2D
     {
         var (worldCenter, radius) = ShapeTransforms2D.Circle(circle, circlePose);
         // Work in the ellipse's own frame composed with its pose, so the ellipse sits at the origin, axis-aligned.
-        if (!Similarity2D.TryFromMatrix(ellipse.Frame.Matrix * ellipsePose.ToMatrix(), out var pose))
+        if (!Similarity2D.TryFromMatrix(ellipse.Frame.Matrix.Then(ellipsePose.ToMatrix()), out var pose))
         {
             throw new InvalidOperationException("The ellipse frame and pose do not compose to a similarity.");
         }
         var center = pose.InverseTransformPoint(worldCenter);
-        var closest = ClosestPoint2D.OnEllipsePerimeter(center, Vector2.Zero, ellipse.Radii);
-        var inside = Containment2D.Ellipse(center, Vector2.Zero, ellipse.Radii);
-        var distance = Vector2.Distance(center, closest);
+        var closest = ClosestPoint2D.OnEllipsePerimeter(center, Vector2f.Zero, ellipse.Radii);
+        var inside = Containment2D.Ellipse(center, Vector2f.Zero, ellipse.Radii);
+        var distance = Vector2f.Distance(center, closest);
         var localNormal = distance > float.Epsilon
             ? (inside ? closest - center : center - closest) / distance
-            : Vector2.Normalize(closest / (ellipse.Radii * ellipse.Radii));
-        var normal = Vector2.Normalize(pose.TransformDirection(localNormal));
+            : Vector2f.Normalize(closest / (ellipse.Radii * ellipse.Radii));
+        var normal = Vector2f.Normalize(pose.TransformDirection(localNormal));
         return new((inside ? -distance : distance) * pose.Scale - radius, normal,
             worldCenter - normal * radius, pose.TransformPoint(closest), 0f);
     }

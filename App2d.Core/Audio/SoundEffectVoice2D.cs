@@ -38,7 +38,7 @@ public readonly record struct SoundEffectVoice2D
     }
 
     /// <summary>Moves a spatial voice's source; non-spatial voices ignore this.</summary>
-    public void SetPosition(Vector2 position)
+    public void SetPosition(Vector2f position)
     {
         Ensure.Finite(position);
         _voice?.SetPosition(position);
@@ -63,7 +63,7 @@ internal interface ISoundEffectVoice2D
     bool IsPlaying { get; }
     void SetVolumeScale(float volumeScale, float rampSeconds);
     void Stop(float fadeOutSeconds);
-    void SetPosition(Vector2 position)
+    void SetPosition(Vector2f position)
     {
     }
 }

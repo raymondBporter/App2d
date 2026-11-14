@@ -17,5 +17,5 @@ public interface ICombatant2D
 
     /// <summary>Whether this attack instance's hit group has not struck this combatant yet: one accepted contact per source, instance and group.</summary>
     bool TryRegisterHit(EntityId2D attackSourceId, int attackId, string? hitGroup = null);
-    bool TakeDamage(int damage, Vector2 knockback);
+    bool TakeDamage(int damage, Vector2f knockback);
 }

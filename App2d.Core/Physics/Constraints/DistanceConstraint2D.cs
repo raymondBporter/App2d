@@ -99,7 +99,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
             Second.WorldCenterOfMass,
             Limits,
             PositionTolerance);
-        var relativeSpeed = Vector2.Dot(
+        var relativeSpeed = Vector2f.Dot(
             Second.LinearVelocity - First.LinearVelocity,
             evaluation.Direction);
         var shouldCorrect = evaluation.Limit.State switch

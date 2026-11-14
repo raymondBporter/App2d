@@ -9,7 +9,7 @@ namespace App2d.Core.Geometry.Operations.Distance;
 public static class FarthestDistance2D
 {
     /// <summary>The farthest distance between two filled, axis-aligned ellipses. Zero radii also allow points and circles.</summary>
-    public static float BetweenEllipses(Vector2 firstCenter, Vector2 firstRadii, Vector2 secondCenter, Vector2 secondRadii)
+    public static float BetweenEllipses(Vector2f firstCenter, Vector2f firstRadii, Vector2f secondCenter, Vector2f secondRadii)
     {
         var delta = firstCenter.ToVector2d() - secondCenter.ToVector2d();
         var ax = (double)firstRadii.X * firstRadii.X;
@@ -52,8 +52,8 @@ public static class FarthestDistance2D
         Support Sample(double angle)
         {
             var direction = Vector2d.FromAngle(angle);
-            var a = first.GetSupportPoint(direction.ToVector2());
-            var b = second.GetSupportPoint((-direction).ToVector2());
+            var a = first.GetSupportPoint(direction.ToVector2f());
+            var b = second.GetSupportPoint((-direction).ToVector2f());
             var delta = a.ToVector2d() - b.ToVector2d();
             best = Math.Max(best, delta.Length());
             return new(angle, delta.Dot(direction));

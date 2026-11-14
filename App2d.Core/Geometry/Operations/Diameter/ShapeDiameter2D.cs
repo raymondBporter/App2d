@@ -75,8 +75,8 @@ public static class ShapeDiameter2D
             return FarthestDistance2D.BetweenConvex(first, second);
         }
 
-        Span<Vector2> firstBuffer = firstCount <= 64 ? stackalloc Vector2[firstCount] : new Vector2[firstCount];
-        Span<Vector2> secondBuffer = secondCount <= 64 ? stackalloc Vector2[secondCount] : new Vector2[secondCount];
+        Span<Vector2f> firstBuffer = firstCount <= 64 ? stackalloc Vector2f[firstCount] : new Vector2f[firstCount];
+        Span<Vector2f> secondBuffer = secondCount <= 64 ? stackalloc Vector2f[secondCount] : new Vector2f[secondCount];
         var firstVertices = first.GetVerts(firstBuffer, out var firstRadius);
         var secondVertices = second.GetVerts(secondBuffer, out var secondRadius);
         var squared = 0d;
@@ -99,12 +99,12 @@ public static class ShapeDiameter2D
             return FarthestDistance2D.BetweenConvex(ellipse, other);
         }
 
-        Span<Vector2> buffer = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
+        Span<Vector2f> buffer = count <= 64 ? stackalloc Vector2f[count] : new Vector2f[count];
         var vertices = other.GetVerts(buffer, out var radius);
         var distance = 0f;
         foreach (var point in vertices)
         {
-            distance = MathF.Max(distance, FarthestDistance2D.BetweenEllipses(Vector2.Zero, ellipse.Radii, ellipse.Frame.ToFrame(point), Vector2.Zero));
+            distance = MathF.Max(distance, FarthestDistance2D.BetweenEllipses(Vector2f.Zero, ellipse.Radii, ellipse.Frame.ToFrame(point), Vector2f.Zero));
         }
 
         return distance + radius;

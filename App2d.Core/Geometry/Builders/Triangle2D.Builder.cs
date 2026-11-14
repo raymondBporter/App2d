@@ -25,6 +25,6 @@ public readonly partial record struct Triangle2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static Triangle2D Create(Vector2 a, Vector2 b, Vector2 c) => new Triangle2D(a, b, c).Validated();
+        public static Triangle2D Create(Vector2f a, Vector2f b, Vector2f c) => new Triangle2D(a, b, c).Validated();
     }
 }

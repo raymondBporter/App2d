@@ -9,7 +9,7 @@ internal enum CanvasTool { Inspect, Paint, Line, Eyedropper, Erase }
 // A whole drag owns one scratch mask and becomes at most one history entry.
 internal sealed class RasterBrushStroke : IRasterStroke
 {
-    private Vector2? _previous;
+    private Vector2f? _previous;
     private readonly bool _foreground;
     public float Radius { get; }
     public RasterFrame Frame { get; }
@@ -23,14 +23,14 @@ internal sealed class RasterBrushStroke : IRasterStroke
         Frame = new(source.Clone(), "Manually cleaned mask");
     }
 
-    public bool MoveTo(Vector2 point)
+    public bool MoveTo(Vector2f point)
     {
         Ensure.Finite(point);
         var from = _previous ?? point;
         _previous = point;
         var mask = Frame.Mask!;
-        var min = Vector2.Max(Vector2.Zero, Vector2.Min(from, point) - new Vector2(Radius));
-        var max = Vector2.Min(new(mask.Width - 1, mask.Height - 1), Vector2.Max(from, point) + new Vector2(Radius));
+        var min = Vector2f.Max(Vector2f.Zero, Vector2f.Min(from, point) - new Vector2f(Radius));
+        var max = Vector2f.Min(new(mask.Width - 1, mask.Height - 1), Vector2f.Max(from, point) + new Vector2f(Radius));
         var delta = point - from;
         var lengthSquared = delta.LengthSquared();
         var changed = false;
@@ -38,9 +38,9 @@ internal sealed class RasterBrushStroke : IRasterStroke
         {
             for (var x = (int)MathF.Ceiling(min.X - .5f); x <= MathF.Floor(max.X); x++)
             {
-                var center = new Vector2(x + .5f, y + .5f);
-                var t = lengthSquared == 0 ? 0 : Math.Clamp(Vector2.Dot(center - from, delta) / lengthSquared, 0, 1);
-                if (Vector2.DistanceSquared(center, from + t * delta) <= Radius * Radius && mask[x, y] != _foreground)
+                var center = new Vector2f(x + .5f, y + .5f);
+                var t = lengthSquared == 0 ? 0 : Math.Clamp(Vector2f.Dot(center - from, delta) / lengthSquared, 0, 1);
+                if (Vector2f.DistanceSquared(center, from + t * delta) <= Radius * Radius && mask[x, y] != _foreground)
                 {
                     mask[x, y] = _foreground;
                     changed = true;

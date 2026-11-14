@@ -13,14 +13,14 @@ using System.Numerics;
 namespace App2d.CharacterStudio.Preview.Arena;
 
 public readonly record struct ArenaInput(float Move = 0, bool Run = false, bool Jump = false, bool Attack = false);
-public readonly record struct ArenaEvent(long Tick, int Actor, AnimationEvent Event, Vector2 Position);
+public readonly record struct ArenaEvent(long Tick, int Actor, AnimationEvent Event, Vector2f  Position);
 public readonly record struct ArenaHit(long Tick, int Attacker, int Target, string Window, int Damage);
 /// <summary>An accepted contact the target's guard took instead of its hurt geometry: no damage, the guard's block sound.</summary>
 public readonly record struct ArenaBlock(long Tick, int Attacker, int Target, string Window, string? Sound);
 /// <summary>A trigger collider's contact with another actor's movement collider: once when they start to overlap and once when they stop.</summary>
 public readonly record struct ArenaTrigger(long Tick, int Actor, string Collider, int Other, bool Entered);
 /// <summary>A projectile in flight, in model units.</summary>
-public readonly record struct ArenaBolt(int Owner, Vector2 Position, Vector2 Velocity, IConvexShape2D Shape, float Lifetime, int Damage);
+public readonly record struct ArenaBolt(int Owner, Vector2f  Position, Vector2f  Velocity, IConvexShape2D Shape, float Lifetime, int Damage);
 
 /// <summary>The arena's gameplay layers: the controlled actor and everyone else, so an attack's layer mask does the ally filtering.</summary>
 public static class ArenaLayers
@@ -44,7 +44,7 @@ public sealed class AuthoredArena
 
     public sealed class Actor
     {
-        internal Actor(int index, ResolvedEntity entity, Vector2 position, int facing, CollisionSystem2D collision)
+        internal Actor(int index, ResolvedEntity entity, Vector2f  position, int facing, CollisionSystem2D collision)
         {
             Index = index;
             Entity = entity;
@@ -64,8 +64,8 @@ public sealed class AuthoredArena
         /// <summary>The actor's registered colliders: the one set collision overlays, combat queries and triggers read.</summary>
         public ActorColliders Colliders { get; }
         public HitLedger Ledger { get; } = new();
-        public Vector2 Position { get; internal set; }
-        public Vector2 Velocity { get; internal set; }
+        public Vector2f  Position { get; internal set; }
+        public Vector2f  Velocity { get; internal set; }
         public int Facing { get; internal set; }
         public int Health { get; internal set; }
         public bool Grounded { get; internal set; } = true;
@@ -124,11 +124,11 @@ public sealed class AuthoredArena
     public int LastQueryCandidates { get; private set; }
 
     /// <summary>Moves an actor instantly. Its action, phase and contacts reset rather than stretching a foot across the jump.</summary>
-    public void Teleport(int index, Vector2 position)
+    public void Teleport(int index, Vector2f  position)
     {
         var actor = Actors[index];
         actor.Position = position;
-        actor.Velocity = Vector2.Zero;
+        actor.Velocity = Vector2f.Zero;
         actor.Grounded = position.Y <= 0;
         actor.Launched = false;
         actor.Animator.Reset();
@@ -172,7 +172,7 @@ public sealed class AuthoredArena
                     foreach (var target in Actors)
                     {
                         if (target != attacker && target.Alive && !target.Colliders.HasHurt && target.Index == 0 != (attacker.Index == 0)
-                            && target.Hurt.FirstOrDefault(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero)) is { } legacy)
+                            && target.Hurt.FirstOrDefault(h => h.Overlaps(region, Vector2f.Zero, Vector2f.Zero)) is { } legacy)
                         {
                             extra.Add((target.Id, region.Bounds.OverlapCenter(legacy.Bounds)));
                         }
@@ -220,7 +220,7 @@ public sealed class AuthoredArena
         foreach (var actor in Actors)
         {
             if (actor.Alive && !actor.Colliders.HasHurt && actor.Index == 0 != (owner == 0) && (target is null || actor.Index < target.Value.Target.Index)
-                && actor.Hurt.Any(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero)))
+                && actor.Hurt.Any(h => h.Overlaps(region, Vector2f.Zero, Vector2f.Zero)))
             {
                 target = (actor, false);
             }
@@ -374,15 +374,15 @@ public sealed class AuthoredArena
         // A whole-body attack stands still; a masked one is layered over locomotion, so the controller keeps moving.
         var standing = action == EntityControllers.Attack && animator.Current!.Mask is null || action == EntityControllers.Jump && !actor.Launched;
         var vx = standing ? 0 : MathF.Abs(move) < .01f ? 0 : move * speed;
-        var velocity = new Vector2(vx, actor.Grounded ? 0 : actor.Velocity.Y - Gravity * StepSeconds);
+        var velocity = new Vector2f(vx, actor.Grounded ? 0 : actor.Velocity.Y - Gravity * StepSeconds);
         var before = actor.Position;
         var position = before + velocity * StepSeconds;
-        position.X = Math.Clamp(position.X, -HalfWidth, HalfWidth);
+        position = position with { X = Math.Clamp(position.X, -HalfWidth, HalfWidth) };
         var landed = false;
         if (position.Y <= 0 && !actor.Grounded)
         {
-            position.Y = 0;
-            velocity.Y = 0;
+            position = position with { Y = 0 };
+            velocity = velocity with { Y = 0 };
             actor.Grounded = true;
             landed = true;
         }

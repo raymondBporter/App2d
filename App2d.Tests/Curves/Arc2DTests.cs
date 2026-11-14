@@ -9,34 +9,34 @@ public sealed class Arc2DTests
     [Fact]
     public void ArcDistanceUsesTheCircleInteriorAndFiniteSweepEndpoints()
     {
-        Arc2D quarter = Arc2D.Builder.Create(Vector2.Zero, 2, 0, MathF.PI / 2);
+        Arc2D quarter = Arc2D.Builder.Create(Vector2f.Zero, 2, 0, MathF.PI / 2);
         Assert.Equal(1, quarter.Distance(new(3 / MathF.Sqrt(2), 3 / MathF.Sqrt(2))), 5);
         Assert.Equal(MathF.Sqrt(5), quarter.Distance(new(-1, 0)), 5);
 
-        Arc2D clockwise = Arc2D.Builder.Create(Vector2.Zero, 2, 0, -MathF.PI / 2);
+        Arc2D clockwise = Arc2D.Builder.Create(Vector2f.Zero, 2, 0, -MathF.PI / 2);
         Assert.Equal(1, clockwise.Distance(new(0, -3)), 5);
         Assert.Equal(MathF.Sqrt(13), clockwise.Distance(new(0, 3)), 5);
 
-        Arc2D full = Arc2D.Builder.Create(Vector2.Zero, 2, 0, MathF.Tau);
+        Arc2D full = Arc2D.Builder.Create(Vector2f.Zero, 2, 0, MathF.Tau);
         Assert.Equal(1, full.Distance(new(-3, 0)), 5);
-        Assert.Equal(2, full.Distance(Vector2.Zero), 5);
+        Assert.Equal(2, full.Distance(Vector2f.Zero), 5);
 
-        Arc2D wrapped = Arc2D.Builder.Create(Vector2.Zero, 2, 3 * MathF.PI / 4, MathF.PI);
+        Arc2D wrapped = Arc2D.Builder.Create(Vector2f.Zero, 2, 3 * MathF.PI / 4, MathF.PI);
         Assert.Equal(1, wrapped.Distance(new(-3, 0)), 5);
         Assert.Equal(1, wrapped.Distance(new(0, -3)), 5);
 
-        Assert.Equal(3, Arc2D.Builder.Create(Vector2.Zero, 0, 0, 1).Distance(new(0, 3)), 5);
-        Assert.Equal(3, Arc2D.Builder.Create(Vector2.Zero, 2, 0, 0).Distance(new(5, 0)), 5);
+        Assert.Equal(3, Arc2D.Builder.Create(Vector2f.Zero, 0, 0, 1).Distance(new(0, 3)), 5);
+        Assert.Equal(3, Arc2D.Builder.Create(Vector2f.Zero, 2, 0, 0).Distance(new(5, 0)), 5);
     }
 
     [Fact]
     public void CircularArcSamplesEndpointsMidpointAndDerivative()
     {
         var arc = Arc2D.Builder.Create(new(2, 3), 4, 0, MathF.PI / 2);
-        Assert.Equal(new Vector2(6, 3), arc.Start);
-        Assert.InRange(Vector2.Distance(new(2 + 2 * MathF.Sqrt(2), 3 + 2 * MathF.Sqrt(2)), arc.Evaluate(.5f)), 0, 1e-6f);
-        Assert.InRange(Vector2.Distance(new(2, 7), arc.End), 0, 1e-6f);
-        Assert.InRange(Vector2.Distance(new(0, 2 * MathF.PI), arc.EvaluateDerivative(0)), 0, 1e-6f);
+        Assert.Equal(new Vector2f(6, 3), arc.Start);
+        Assert.InRange(Vector2f.Distance(new(2 + 2 * MathF.Sqrt(2), 3 + 2 * MathF.Sqrt(2)), arc.Evaluate(.5f)), 0, 1e-6f);
+        Assert.InRange(Vector2f.Distance(new(2, 7), arc.End), 0, 1e-6f);
+        Assert.InRange(Vector2f.Distance(new(0, 2 * MathF.PI), arc.EvaluateDerivative(0)), 0, 1e-6f);
         Assert.Equal(2 * Math.PI, arc.Length, 1e-6);
 
         var samples = Curve2D.Sample(arc, 4);
@@ -48,21 +48,21 @@ public sealed class Arc2DTests
     [Fact]
     public void ClockwiseAndFullCircleSweepsKeepTheirDirection()
     {
-        var clockwise = Arc2D.Builder.Create(Vector2.Zero, 1, 0, -MathF.PI / 2);
+        var clockwise = Arc2D.Builder.Create(Vector2f.Zero, 1, 0, -MathF.PI / 2);
         Assert.True(clockwise.Evaluate(.5f).Y < 0);
         Assert.True(clockwise.EvaluateDerivative(0).Y < 0);
 
         var full = Arc2D.Builder.Create(new(1, -1), 2, 0, MathF.Tau);
-        Assert.InRange(Vector2.Distance(full.Start, full.End), 0, 1e-6f);
-        Assert.InRange(Vector2.Distance(new(-1, -1), full.Evaluate(.5f)), 0, 1e-6f);
+        Assert.InRange(Vector2f.Distance(full.Start, full.End), 0, 1e-6f);
+        Assert.InRange(Vector2f.Distance(new(-1, -1), full.Evaluate(.5f)), 0, 1e-6f);
     }
 
     [Fact]
     public void ZeroRadiusIsAConstantCurve()
     {
         var arc = Arc2D.Builder.Create(new(4, 5), 0, 1, 3);
-        Assert.Equal(new Vector2(4, 5), arc.Evaluate(.5f));
-        Assert.Equal(Vector2.Zero, arc.EvaluateDerivative(.5f));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Arc2D.Builder.Create(Vector2.Zero, -1, 0, 1));
+        Assert.Equal(new Vector2f(4, 5), arc.Evaluate(.5f));
+        Assert.Equal(Vector2f.Zero, arc.EvaluateDerivative(.5f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Arc2D.Builder.Create(Vector2f.Zero, -1, 0, 1));
     }
 }

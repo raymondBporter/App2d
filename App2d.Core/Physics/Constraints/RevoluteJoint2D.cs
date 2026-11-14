@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Physics.Constraints;
@@ -5,7 +6,7 @@ namespace App2d.Core.Physics.Constraints;
 /// <summary>A firm bearing: two local anchors coincide, while relative rotation is unrestricted.</summary>
 public sealed class RevoluteJoint2D : IPhysicsConstraint2D
 {
-    public RevoluteJoint2D(RigidBody2D first, RigidBody2D second, Vector2 firstLocalAnchor, Vector2 secondLocalAnchor)
+    public RevoluteJoint2D(RigidBody2D first, RigidBody2D second, Vector2f firstLocalAnchor, Vector2f secondLocalAnchor)
     {
         JointMath2D.Validate(first, second, firstLocalAnchor, secondLocalAnchor);
         First = first;
@@ -16,10 +17,10 @@ public sealed class RevoluteJoint2D : IPhysicsConstraint2D
 
     public RigidBody2D First { get; }
     public RigidBody2D Second { get; }
-    public Vector2 FirstLocalAnchor { get; }
-    public Vector2 SecondLocalAnchor { get; }
-    public Vector2 FirstWorldAnchor => JointMath2D.Anchor(First, FirstLocalAnchor);
-    public Vector2 SecondWorldAnchor => JointMath2D.Anchor(Second, SecondLocalAnchor);
+    public Vector2f FirstLocalAnchor { get; }
+    public Vector2f SecondLocalAnchor { get; }
+    public Vector2f FirstWorldAnchor => JointMath2D.Anchor(First, FirstLocalAnchor);
+    public Vector2f SecondWorldAnchor => JointMath2D.Anchor(Second, SecondLocalAnchor);
     public bool IsEnabled { get; set; } = true;
 
     public void SolveVelocity(float deltaSeconds)
@@ -39,7 +40,7 @@ public sealed class RevoluteJoint2D : IPhysicsConstraint2D
         var secondAnchor = SecondWorldAnchor;
         var error = secondAnchor - firstAnchor;
         if (error.LengthSquared() <= JointMath2D.PositionTolerance * JointMath2D.PositionTolerance) return false;
-        if (error.LengthSquared() > 100f) error = Vector2.Normalize(error) * 10f;
+        if (error.LengthSquared() > 100f) error = Vector2f.Normalize(error) * 10f;
         var firstArm = firstAnchor - First.WorldCenterOfMass;
         var secondArm = secondAnchor - Second.WorldCenterOfMass;
         var impulse = -JointMath2D.SolvePointMass(First, Second, firstArm, secondArm, error);

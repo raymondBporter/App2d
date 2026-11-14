@@ -16,8 +16,8 @@ public sealed class ImageGradients2DTests
         }
 
         var gradient = source.Sobel();
-        Assert.Equal(new Vector2(2, -3), gradient[2, 2]);
-        Assert.Equal(new Vector2(1, -1.5f), gradient[0, 0]);
+        Assert.Equal(new Vector2f(2, -3), gradient[2, 2]);
+        Assert.Equal(new Vector2f(1, -1.5f), gradient[0, 0]);
         Assert.Equal(10, source[0, 0]);
     }
 
@@ -26,7 +26,7 @@ public sealed class ImageGradients2DTests
     {
         var source = new Image2D<float>(1, 5);
         source.Fill(.75f);
-        Assert.All(source.Sobel().AsSpan().ToArray(), value => Assert.Equal(Vector2.Zero, value));
+        Assert.All(source.Sobel().AsSpan().ToArray(), value => Assert.Equal(Vector2f.Zero, value));
         var colors = new Image2D<Vector3>(5, 1);
         colors.Fill(new(.2f, .6f, .9f));
         Assert.All(colors.SobelMagnitude().AsSpan().ToArray(), value => Assert.Equal(0, value));

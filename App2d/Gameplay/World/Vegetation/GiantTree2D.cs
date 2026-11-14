@@ -46,7 +46,7 @@ public readonly record struct GiantTreeBranch2D(Rect2D Bounds, int Side);
 /// </summary>
 public sealed class GiantTree2D
 {
-    public GiantTree2D(Vector2 root, GiantTreeSettings2D settings, int seed)
+    public GiantTree2D(Vector2f root, GiantTreeSettings2D settings, int seed)
     {
         Ensure.Finite(root);
         Ensure.ThrowIfNull(settings);
@@ -54,13 +54,13 @@ public sealed class GiantTree2D
         Root = root;
         Settings = settings;
         Seed = seed;
-        TrunkBounds = new(root - new Vector2(settings.TrunkWidth * 0.75f, 0),
-            root + new Vector2(settings.TrunkWidth * 0.75f, settings.Height));
+        TrunkBounds = new(root - new Vector2f(settings.TrunkWidth * 0.75f, 0),
+            root + new Vector2f(settings.TrunkWidth * 0.75f, settings.Height));
         var crownRadius = Math.Max(settings.TrunkWidth, settings.FoliageRadius.Max * 1.7f);
         var reach = Math.Max(settings.TrunkWidth * 0.5f + settings.BranchLength.Max + settings.FoliageRadius.Max * 1.2f,
             crownRadius * 1.8f) + 12f;
-        Bounds = new(root - new Vector2(reach, settings.FoliageRadius.Max * 0.6f + 12f),
-            root + new Vector2(reach, settings.Height + crownRadius * 1.1f + 12f));
+        Bounds = new(root - new Vector2f(reach, settings.FoliageRadius.Max * 0.6f + 12f),
+            root + new Vector2f(reach, settings.Height + crownRadius * 1.1f + 12f));
         Ensure.Finite(Bounds.Min);
         Ensure.Finite(Bounds.Max);
         Ensure.Finite(TrunkBounds.Min);
@@ -96,7 +96,7 @@ public sealed class GiantTree2D
         }
     }
 
-    public Vector2 Root { get; }
+    public Vector2f Root { get; }
     public int Seed { get; }
     public GiantTreeSettings2D Settings { get; }
     public Rect2D TrunkBounds { get; }

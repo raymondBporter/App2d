@@ -49,7 +49,7 @@ public sealed class ConcreteGeometryJsonTests
     public void ConcreteFieldsOmitTheTagAndInterfaceFieldsKeepIt(bool authored)
     {
         var circle = Circle2D.Builder.Create(3, new(1, 2));
-        var line = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.One);
+        var line = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.One);
         var fields = new Fields(circle, circle, line, circle);
         var options = authored ? AuthoredJson.Options : GeometryJson2D.JsonOptions;
         var json = JsonSerializer.Serialize(fields, options);

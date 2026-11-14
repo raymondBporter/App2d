@@ -46,7 +46,7 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
                 forwardOffset: 39f,
                 verticalOffset: 7f),
             damage: 1,
-            knockback: new Vector2(310f, 145f));
+            knockback: new Vector2f(310f, 145f));
         _kick = new Attack(
             ids.Allocate(),
             UnarmedAttackKind2D.Kick,
@@ -59,7 +59,7 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
                 forwardOffset: 48f,
                 verticalOffset: -9f),
             damage: 2,
-            knockback: new Vector2(470f, 205f));
+            knockback: new Vector2f(470f, 205f));
     }
 
     public event Action<UnarmedAttackKind2D, float>? AttackStarted;
@@ -146,7 +146,7 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
                 _ownerFaction,
                 _targetLayer,
                 attack.Damage,
-                _ => new Vector2(
+                _ => new Vector2f(
                     attack.Direction * attack.Knockback.X,
                     attack.Knockback.Y));
         }
@@ -158,12 +158,12 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
         IShape2D hitboxShape,
         MeleeAttackProfile2D profile,
         int damage,
-        Vector2 knockback)
+        Vector2f knockback)
     {
         public UnarmedAttackKind2D Kind { get; } = kind;
         public MeleeAttack2D Action { get; } = new(sourceId, new SpatialObject2D(hitboxShape), profile);
         public int Damage { get; } = damage;
-        public Vector2 Knockback { get; } = knockback;
+        public Vector2f Knockback { get; } = knockback;
         public float Direction { get; set; } = 1f;
     }
 }

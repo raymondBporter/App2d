@@ -47,7 +47,7 @@ public sealed class GameRenderPassTests
         Assert.Equal(drawGraphics ? new[] { "game", "debug", "ui" } : ["debug", "ui"], game.Passes);
 
         // World diagnostics use the game camera; screen UI does not move with it.
-        game.Camera.Position = new Vector2(13, 9);
+        game.Camera.Position = new Vector2f(13, 9);
         var moved = Render();
         Assert.True(At(moved, 51, 80).G > background.G);
         Assert.Equal(background, At(moved, 64, 80));

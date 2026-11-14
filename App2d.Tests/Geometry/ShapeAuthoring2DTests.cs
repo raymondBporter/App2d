@@ -28,7 +28,7 @@ public sealed class ShapeAuthoring2DTests
         Assert.Equal(kind, converted.GetKind());
         var bounds = ShapeBounds2D.Calculate(converted.Validated());
         Assert.True(new Rect2D(new(-1, 0), new(3, 2)).InflatedBy(1e-5f, 1e-5f).Contains(bounds), $"{kind} spilled to {bounds}.");
-        Assert.True(Vector2.Distance(new(1, 1), bounds.Center) < 1e-5f);
+        Assert.True(Vector2f.Distance(new(1, 1), bounds.Center) < 1e-5f);
         Assert.Equal(source, source.WithKind(ShapeKinds2D.Rectangle));
     }
 
@@ -37,8 +37,8 @@ public sealed class ShapeAuthoring2DTests
     {
         var tall = Rectangle2D.Builder.FromSize(1, 3);
         var capsule = Assert.IsType<Capsule2D>(tall.WithKind(ShapeKinds2D.Capsule));
-        Assert.Equal(new Vector2(0, -1), capsule.Start);
-        Assert.Equal(new Vector2(0, 1), capsule.End);
+        Assert.Equal(new Vector2f(0, -1), capsule.Start);
+        Assert.Equal(new Vector2f(0, 1), capsule.End);
         Assert.Equal(.5f, capsule.Radius);
         Assert.Equal(1f, Assert.IsType<Circle2D>(tall.WithKind(ShapeKinds2D.Circle)).Radius * 2);
         Assert.Throws<ArgumentException>(() => tall.WithKind("blob"));
@@ -87,7 +87,7 @@ public sealed class ShapeAuthoring2DTests
             Center = new(5, 5)
         };
         Assert.Equal(3f, moved.Radius);
-        Assert.Equal(new Vector2(5, 5), Assert.IsType<Circle2D>(moved.Validated()).Center);
+        Assert.Equal(new Vector2f(5, 5), Assert.IsType<Circle2D>(moved.Validated()).Center);
         Assert.Equal(circle, new Circle2D { Center = new(1, 2), Radius = 3 }.Validated());
         Assert.NotEqual(circle, moved);
     }

@@ -34,7 +34,7 @@ internal static class GiantTreeStudy2D
         var branch = tree.Branches[tree.Branches.Length / 2];
         var edge = tree.Root.X + branch.Side * tree.Settings.TrunkWidth * 0.5f;
         var tip = branch.Side < 0 ? branch.Bounds.Left : branch.Bounds.Right;
-        var spawn = new Vector2((edge + tip) * 0.5f, branch.Bounds.Top + traversal.PlayerColliderSize.Y * 0.5f + 12f);
+        var spawn = new Vector2f((edge + tip) * 0.5f, branch.Bounds.Top + traversal.PlayerColliderSize.Y * 0.5f + 12f);
         using var game = SideScrollerSimulation2D.Create(new(traversal, loaded.TileMap,
             [new(1, WorldThingKind2D.PlayerSpawn, "Tree study", true, spawn)])
         {
@@ -68,11 +68,11 @@ internal static class GiantTreeStudy2D
             new(loaded.GiantTrees.Max(t => t.Bounds.Right), loaded.GiantTrees.Max(t => t.Bounds.Top)));
         Save("giant-trees-overview.png", bounds.Center,
             Math.Min(1180f / bounds.Width, 620f / bounds.Height), "GIANT TREES  /  43-58 TILES TALL  /  EVERY BRANCH IS A PLATFORM");
-        Save("giant-tree-branch.png", game.Player.WorldObject.Transform.Position + new Vector2(0, 100), 1.35f,
+        Save("giant-tree-branch.png", game.Player.WorldObject.Transform.Position + new Vector2f(0, 100), 1.35f,
             "REAL PLAYER, REAL BRANCH COLLISION  /  JUMP THROUGH FROM BELOW, LAND ON TOP");
         Console.WriteLine($"Giant tree study: {loaded.GiantTrees.Length} trees, {game.Level.GiantTreeBranches.Count} branch platforms; player grounded at Y={branch.Bounds.Top:0.0}.");
 
-        void Save(string name, Vector2 focus, float zoom, string caption)
+        void Save(string name, Vector2f focus, float zoom, string caption)
         {
             camera.Zoom = zoom;
             camera.Position = focus;

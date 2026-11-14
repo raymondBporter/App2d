@@ -21,7 +21,7 @@ public sealed class Ellipse2DTests
     [Fact]
     public void ContainsSupportDistanceAndBoundsAgreeWithTheOutline()
     {
-        var outline = new Vector2[512];
+        var outline = new Vector2f[512];
         Tilted.WriteVertices(outline);
         var bounds = ShapeBounds2D.Calculate(Tilted);
         Assert.Equal(Rect2D.FromPoints(outline).Min, bounds.Min, Loose);
@@ -36,10 +36,10 @@ public sealed class Ellipse2DTests
     [Fact]
     public void TransformedBoundsComposeTheFrame()
     {
-        var turnBack = Matrix3x2.CreateRotation(-MathF.PI / 6, new Vector2(2, 1));
+        var turnBack = Matrix3x2.CreateRotation(-MathF.PI / 6, new Vector2f(2, 1).ToVector2());
         var bounds = ShapeBounds2D.CalculateTransformed(Tilted, turnBack);
-        Assert.Equal(new Vector2(-1, 0), bounds.Min, Loose);
-        Assert.Equal(new Vector2(5, 2), bounds.Max, Loose);
+        Assert.Equal(new Vector2f(-1, 0), bounds.Min, Loose);
+        Assert.Equal(new Vector2f(5, 2), bounds.Max, Loose);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class Ellipse2DTests
     public void CircleQueryAgainstARotatedEllipseMatchesTheUnrotatedOne()
     {
         var flat = Ellipse2D.Builder.Create(new(3, 1), new(2, 1));
-        var pose = Similarity2D.FromAxis(Vector2.Zero, OrientedFrame2D.AxisFromAngle(MathF.PI / 6));
+        var pose = Similarity2D.FromAxis(Vector2f.Zero, OrientedFrame2D.AxisFromAngle(MathF.PI / 6));
         var probe = Circle2D.Builder.Create(.5f, new(4.5f, 1.2f));
         var viaFlatPosed = ShapeConvexQuery2D.Query(probe, Similarity2D.Identity, flat, pose);
         var viaTilted = ShapeConvexQuery2D.Query(probe, Similarity2D.Identity, Ellipse2D.Builder.Create(new(3, 1), pose.TransformPoint(new(2, 1)), MathF.PI / 6), Similarity2D.Identity);
@@ -69,7 +69,7 @@ public sealed class Ellipse2DTests
         var a = Ellipse2D.Builder.Create(new(2, 1), new(-1, 0));
         var b = Ellipse2D.Builder.Create(new(2, 1), new(2, 0));
         var composite = CompositeShape2D.Builder.Create([a, b], includeOverlap: false, areaOutlineSegments: 256);
-        var turned = Similarity2D.FromAxis(Vector2.Zero, OrientedFrame2D.AxisFromAngle(.7f));
+        var turned = Similarity2D.FromAxis(Vector2f.Zero, OrientedFrame2D.AxisFromAngle(.7f));
         var ar = Ellipse2D.Builder.Create(new(2, 1), turned.TransformPoint(new(-1, 0)), .7f);
         var br = Ellipse2D.Builder.Create(new(2, 1), turned.TransformPoint(new(2, 0)), .7f);
         var rotated = CompositeShape2D.Builder.Create([ar, br], includeOverlap: false, areaOutlineSegments: 256);

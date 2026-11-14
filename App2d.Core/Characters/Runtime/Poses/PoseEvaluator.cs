@@ -61,19 +61,19 @@ public static class PoseEvaluator
         float Ratio(string scale) => scale == CharacterModel.Unit ? 1 : model.Measure(scale) / clip.Reference[scale];
 
         var travelRatio = Ratio(clip.Travel.Scale);
-        Vector2 Travel(float t)
+        Vector2f Travel(float t)
         {
             var (value, _) = Interpolate(clip.Travel.Keys, t);
-            return new Vector2(value.X, value.Y) * travelRatio;
+            return new Vector2f(value.X, value.Y) * travelRatio;
         }
         var cycleTravel = (Travel(clip.Duration) - Travel(0)) * (float)cycles;
-        var cycleOrigin = new Vector3(Travel(0) + cycleTravel, 0);
-        var pose = new EvaluatedPose { Locomotion = new(Travel(time) + cycleTravel, 0), SampleSeconds = restOnly ? seconds : time };
+        var cycleOrigin = new Vector3((Travel(0) + cycleTravel).ToVector2(), 0);
+        var pose = new EvaluatedPose { Locomotion = new((Travel(time) + cycleTravel).ToVector2(), 0), SampleSeconds = restOnly ? seconds : time };
         var layers = input.Layers().Select(l => new Layer(l)).ToArray();
         if (model.MotionOwner is { } mover)
         {
             // The owning module's travel, through its socket's rest frame (P10c); the wearer's own clip carries none.
-            pose.Locomotion = new(OwnerTravel(model, mover, clip, time, seconds, repeat, input, layers), 0);
+            pose.Locomotion = new(OwnerTravel(model, mover, clip, time, seconds, repeat, input, layers).ToVector2(), 0);
             cycleOrigin = pose.Locomotion;
         }
         if (input.InPlace)
@@ -215,7 +215,7 @@ public static class PoseEvaluator
             if (node.CharacterOriented)
             {
                 // The origin follows the parent; the axes stay the character's, so the parent's turn and scale are not inherited.
-                var at = carrier.At(new Vector3(origin, localLayer));
+                var at = carrier.At(new Vector3(origin.ToVector2(), localLayer));
                 pose.Place(control.Id, LayeredFrame2D.Local(scale, rotation, at.XY, at.Z), rotation);
                 continue;
             }
@@ -335,7 +335,7 @@ public static class PoseEvaluator
     /// </summary>
     private static void EvaluateAttachments(ResolvedModel model, EvaluatedPose pose, MotionClip clip, float time, double seconds, PoseInput input, Layer[] layers)
     {
-        var actor = new ActorPose(pose, Vector2.Zero, 1);
+        var actor = new ActorPose(pose, Vector2f.Zero, 1);
         // Dependency order (P10c): an instance mounted on another instance's control reads that instance's evaluated frames.
         foreach (var attachment in model.EvaluationOrder)
         {
@@ -416,13 +416,13 @@ public static class PoseEvaluator
     /// (with its cycles) turned by the instance's placement on its socket at rest. The wearer's rig is still at rest when
     /// this is read, which is why the owner must mount on one of the wearer's own controls.
     /// </summary>
-    private static Vector2 OwnerTravel(ResolvedModel model, ResolvedAttachment mover, MotionClip clip, float time, double seconds, bool repeat, PoseInput input, Layer[] layers)
+    private static Vector2f OwnerTravel(ResolvedModel model, ResolvedAttachment mover, MotionClip clip, float time, double seconds, bool repeat, PoseInput input, Layer[] layers)
     {
         var (expression, since, owned) = Select(mover, clip, time, input, layers);
         var (gait, at) = BasePlay(mover, expression, since, owned, time, seconds, input);
         if (gait is null)
         {
-            return Vector2.Zero;
+            return Vector2f.Zero;
         }
 
         var travel = TravelOf(mover.Rig!, gait, at, repeat: true);
@@ -450,15 +450,15 @@ public static class PoseEvaluator
     }
 
     /// <summary>A clip's root travel at a time on a model, cycles included, as the pose's locomotion reads it.</summary>
-    public static Vector2 TravelOf(ResolvedModel model, MotionClip clip, double seconds, bool repeat)
+    public static Vector2f  TravelOf(ResolvedModel model, MotionClip clip, double seconds, bool repeat)
     {
         var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
         var time = (float)(cycles > 0 ? seconds % clip.Duration : Math.Min(seconds, clip.Duration));
         var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
-        Vector2 Travel(float t)
+        Vector2f Travel(float t)
         {
             var (value, _) = Interpolate(clip.Travel.Keys, t);
-            return new Vector2(value.X, value.Y) * ratio;
+            return new Vector2f(value.X, value.Y) * ratio;
         }
         return Travel(time) + (Travel(clip.Duration) - Travel(0)) * (float)cycles;
     }
@@ -548,26 +548,26 @@ public static class PoseEvaluator
     }
 
     /// <summary>The locomotion frame's travel over one cycle on this model: the stride gameplay matches against ground distance.</summary>
-    public static Vector2 CycleTravel(ResolvedModel model, MotionClip clip)
+    public static Vector2f  CycleTravel(ResolvedModel model, MotionClip clip)
     {
         if (model.MotionOwner is { } mover)
         {
             // The owning module's gait selected at the clip's start carries the travel; one module clip cycle is the stride.
             var (expression, _, _) = Select(mover, clip, 0, default, []);
             var gait = mover.Asset.Binding(expression) is { Clip: { } id } binding && (binding.Layer ?? mover.Asset.BaseLayer!.Id) == mover.Asset.BaseLayer!.Id ? mover.Asset.Clip(id) : mover.Asset.Clip(mover.Asset.BaseLayer!.Clip);
-            return gait is null ? Vector2.Zero : OwnerFrame(model, mover).Direction(CycleTravel(mover.Rig!, gait));
+            return gait is null ? Vector2f.Zero : OwnerFrame(model, mover).Direction(CycleTravel(mover.Rig!, gait));
         }
 
         var keys = clip.Travel.Keys;
         if (keys.Count == 0)
         {
-            return Vector2.Zero;
+            return Vector2f.Zero;
         }
 
         var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
         var (end, _) = Interpolate(keys, clip.Duration);
         var (start, _) = Interpolate(keys, 0);
-        return new Vector2(end.X - start.X, end.Y - start.Y) * ratio;
+        return new Vector2f(end.X - start.X, end.Y - start.Y) * ratio;
     }
 
     /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>

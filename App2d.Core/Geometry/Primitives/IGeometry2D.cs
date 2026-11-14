@@ -11,5 +11,5 @@ public interface IGeometry2D
     /// <summary>Tests whether a point lies in or on this geometry.</summary>
     /// <param name="point">A point in the geometry's own coordinate space.</param>
     /// <returns>True when the point is inside or on the boundary.</returns>
-    bool ContainsPoint(Vector2 point);
+    bool ContainsPoint(Vector2f point);
 }

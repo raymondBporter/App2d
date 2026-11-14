@@ -218,9 +218,9 @@ public sealed class EditableTileMap2DTests
     [Fact]
     public void WorldToChunkClampsOutsideTheMap()
     {
-        var map = new EditableTileMap2D(8, 8, 10f, 4, new Vector2(-40f, -40f));
+        var map = new EditableTileMap2D(8, 8, 10f, 4, new Vector2f(-40f, -40f));
 
-        Assert.Equal(new TileChunk2D(0, 0), map.WorldToChunk(new Vector2(-1000f, -1000f)));
-        Assert.Equal(new TileChunk2D(1, 1), map.WorldToChunk(new Vector2(1000f, 1000f)));
+        Assert.Equal(new TileChunk2D(0, 0), map.WorldToChunk(new Vector2f(-1000f, -1000f)));
+        Assert.Equal(new TileChunk2D(1, 1), map.WorldToChunk(new Vector2f(1000f, 1000f)));
     }
 }

@@ -27,13 +27,13 @@ public readonly record struct Polar2D
         angleRadians = AngleRadians;
     }
 
-    public Vector2 ToCartesian() => Direction(AngleRadians) * Radius;
+    public Vector2f ToCartesian() => Direction(AngleRadians) * Radius;
 
     /// <summary>Converts radius/angle directly without allocating a coordinate object.</summary>
-    public static Vector2 ToCartesian(float radius, float angleRadians) => new Polar2D(radius, angleRadians).ToCartesian();
+    public static Vector2f ToCartesian(float radius, float angleRadians) => new Polar2D(radius, angleRadians).ToCartesian();
 
     /// <summary>Returns the unit direction at a finite angle. Zero radians points along +X.</summary>
-    public static Vector2 Direction(float angleRadians)
+    public static Vector2f  Direction(float angleRadians)
     {
         Ensure.Finite(angleRadians);
         var (sin, cos) = MathF.SinCos(angleRadians);
@@ -44,17 +44,17 @@ public readonly record struct Polar2D
     /// Returns a finite vector's heading in [-PI, PI]. The zero vector (including signed zero)
     /// has no geometric heading; this API uses zero. No near-zero tolerance is imposed.
     /// </summary>
-    public static float AngleOf(Vector2 direction)
+    public static float AngleOf(Vector2f direction)
     {
         Ensure.Finite(direction);
-        return direction == Vector2.Zero ? 0f : MathF.Atan2(direction.Y, direction.X);
+        return direction == Vector2f.Zero ? 0f : MathF.Atan2(direction.Y, direction.X);
     }
 
     /// <summary>
     /// Converts a finite vector relative to the origin. The resulting radius must fit a float;
     /// intermediate squares use double precision to avoid overflow/underflow for representable radii.
     /// </summary>
-    public static Polar2D FromCartesian(Vector2 value)
+    public static Polar2D FromCartesian(Vector2f value)
     {
         Ensure.Finite(value);
         var radius = (float)value.ToVector2d().Length();

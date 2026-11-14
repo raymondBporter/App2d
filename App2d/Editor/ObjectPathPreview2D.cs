@@ -7,7 +7,7 @@ namespace App2d.Editor;
 /// <summary>Samples an object's path from a placement origin for drawing; empty when the object does not move.</summary>
 internal static class ObjectPathPreview2D
 {
-    public static Vector2[] Sample(Part asset, Vector2 origin, int count = 32)
+    public static Vector2f[] Sample(Part asset, Vector2f origin, int count = 32)
     {
         Ensure.ThrowIfNull(asset);
         Ensure.Positive(count);
@@ -17,7 +17,7 @@ internal static class ObjectPathPreview2D
         }
 
         var motion = definition.CreateMotion(origin);
-        var points = new Vector2[count + 1];
+        var points = new Vector2f[count + 1];
         for (var i = 0; i <= count; i++)
         {
             points[i] = motion.Position(definition.PeriodSeconds * i / count);

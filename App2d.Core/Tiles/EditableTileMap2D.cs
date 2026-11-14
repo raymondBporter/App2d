@@ -20,7 +20,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         int height,
         float tileSize,
         int chunkSize,
-        Vector2 origin = default,
+        Vector2f  origin = default,
         IReadOnlyList<string>? tilesetIds = null)
     {
         Ensure.Positive(width);
@@ -43,7 +43,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     public int Height => _tiles.Height;
     public float TileSize => _tiles.CellSize.Width;
     public int ChunkSize { get; }
-    public Vector2 Origin => _tiles.Origin;
+    public Vector2f  Origin => _tiles.Origin;
     public int ChunkColumns => ChunkGridSize.Width;
     public int ChunkRows => ChunkGridSize.Height;
     public Rect2D WorldBounds => _tiles.WorldBounds;
@@ -226,7 +226,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         ChunkChanged?.Invoke(chunk);
     }
 
-    public TileChunk2D WorldToChunk(Vector2 worldPosition)
+    public TileChunk2D WorldToChunk(Vector2f  worldPosition)
     {
         var cell = ChunkGridGeometry.WorldToCellClamped(worldPosition, ChunkGridSize);
         return new(cell.X, cell.Y);

@@ -25,9 +25,9 @@ public sealed class PersonBalanceTests
     public PersonBalanceTests()
     {
         var collision = new CollisionSystem2D();
-        _physics = new PhysicsWorld2D(collision) { Gravity = new Vector2(0f, -_metrics.Gravity) };
+        _physics = new PhysicsWorld2D(collision) { Gravity = new Vector2f(0f, -_metrics.Gravity) };
         _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
-            new Vector2(0f, _metrics.PlayerColliderSize.Y / 2f), 2u, 1u, CombatFaction2D.Player);
+            new Vector2f(0f, _metrics.PlayerColliderSize.Y / 2f), 2u, 1u, CombatFaction2D.Player);
     }
 
     [Theory]
@@ -61,7 +61,7 @@ public sealed class PersonBalanceTests
     {
         var ledge = AddLedge(1);
         var lowerFloor = AddSupport(ledge.WorldObject.WorldBounds.Right, 200f);
-        lowerFloor.WorldObject.Transform.Position -= new Vector2(0f, 32f);
+        lowerFloor.WorldObject.Transform.Position -= new Vector2f(0f, 32f);
         Step();
         Assert.Equal(1, _person.BalanceDirection);
     }
@@ -71,7 +71,7 @@ public sealed class PersonBalanceTests
     [InlineData(BodyMotionType2D.Kinematic, true)]
     public void SupportsSolidAndOneWayPlatformEdges(BodyMotionType2D motion, bool oneWay)
     {
-        PlatformCollisionRules2D.Attach(_physics).Surface(AddLedge(-1, motion: motion)).OneWaySurfaceNormal = oneWay ? Vector2.UnitY : null;
+        PlatformCollisionRules2D.Attach(_physics).Surface(AddLedge(-1, motion: motion)).OneWaySurfaceNormal = oneWay ? Vector2f.UnitY : null;
         Step();
         Assert.Equal(-1, _person.BalanceDirection);
     }
@@ -80,7 +80,7 @@ public sealed class PersonBalanceTests
     public void IgnoredOneWayPlatformDoesNotSupportBalance()
     {
         var platform = AddLedge(1);
-        PlatformCollisionRules2D.Attach(_physics).Surface(platform).OneWaySurfaceNormal = Vector2.UnitY;
+        PlatformCollisionRules2D.Attach(_physics).Surface(platform).OneWaySurfaceNormal = Vector2f.UnitY;
         Step();
         Assert.Equal(1, _person.BalanceDirection);
         Step(drop: true);
@@ -109,7 +109,7 @@ public sealed class PersonBalanceTests
         _physics.RemoveBody(ledge);
         Step();
         Assert.Equal(0, _person.BalanceDirection);
-        _person.Reset(new Vector2(0f, 300f));
+        _person.Reset(new Vector2f(0f, 300f));
         Assert.Equal(0, _person.BalanceDirection);
     }
 
@@ -160,7 +160,7 @@ public sealed class PersonBalanceTests
     private RigidBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
         var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(right - left, 32f));
-        spatial.Transform.Position = new Vector2((left + right) / 2f, -16f);
+        spatial.Transform.Position = new Vector2f((left + right) / 2f, -16f);
         var body = _physics.AddBody(spatial, motion);
         body.CollisionLayer = 1u;
         body.CollisionMask = 2u;

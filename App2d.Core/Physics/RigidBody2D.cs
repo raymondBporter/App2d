@@ -36,25 +36,25 @@ public sealed class RigidBody2D
         }
     }
     /// <summary>Velocity of the center of mass in world units per second.</summary>
-    public Vector2 LinearVelocity { get; set; }
+    public Vector2f LinearVelocity { get; set; }
     public float AngularVelocity { get; set; }
 
     /// <summary>Defaults to the transform origin; shape-derived mass methods set the actual local centroid.</summary>
-    public Vector2 LocalCenterOfMass { get; private set; }
-    public Vector2 WorldCenterOfMass => LocalCenterOfMass == Vector2.Zero
+    public Vector2f LocalCenterOfMass { get; private set; }
+    public Vector2f WorldCenterOfMass => LocalCenterOfMass == Vector2f.Zero
         ? WorldObject.Transform.Position
-        : Vector2.Transform(LocalCenterOfMass, WorldObject.Transform.Matrix);
+        : Vector2f.Transform(LocalCenterOfMass, WorldObject.Transform.Matrix);
 
     /// <summary>
     /// When true (the default) contacts and constraints never impart spin; the body only
     /// rotates when gameplay sets AngularVelocity or applies torque directly.
     /// </summary>
     public bool FreezeRotation { get; set; } = true;
-    public Vector2 AccumulatedForce { get; private set; }
+    public Vector2f AccumulatedForce { get; private set; }
     public float AccumulatedTorque { get; private set; }
-    public Vector2 PreviousPosition { get; internal set; }
+    public Vector2f PreviousPosition { get; internal set; }
     public float PreviousRotation { get; internal set; }
-    internal Vector2 LastStepLinearVelocity { get; set; }
+    internal Vector2f LastStepLinearVelocity { get; set; }
     public float GravityScale { get; set; } = 1f;
     public float Restitution { get; set; } = 0.5f;
 
@@ -155,13 +155,13 @@ public sealed class RigidBody2D
         // Validate every conversion before changing the body, so unsupported or oversized shapes leave it intact.
         var nextMass = Ensure.Positive((float)mass);
         var nextInertia = Ensure.Positive((float)inertia);
-        var nextCenter = properties.CenterOfMass.ToVector2();
+        var nextCenter = properties.CenterOfMass.ToVector2f();
         Ensure.Finite(nextCenter);
-        var nextWorldCenter = Vector2.Transform(nextCenter, WorldObject.Transform.Matrix);
+        var nextWorldCenter = Vector2f.Transform(nextCenter, WorldObject.Transform.Matrix);
         Ensure.Finite(nextWorldCenter);
         // Preserve the velocity field when the reference point changes on an already spinning body.
         var offset = nextWorldCenter - WorldCenterOfMass;
-        var nextVelocity = LinearVelocity + AngularVelocity * new Vector2(-offset.Y, offset.X);
+        var nextVelocity = LinearVelocity + AngularVelocity * new Vector2f(-offset.Y, offset.X);
         Ensure.Finite(nextVelocity);
         Mass = nextMass;
         MomentOfInertia = nextInertia;
@@ -169,10 +169,10 @@ public sealed class RigidBody2D
         LinearVelocity = nextVelocity;
     }
 
-    public void AddForce(Vector2 force) => AccumulatedForce += force;
+    public void AddForce(Vector2f force) => AccumulatedForce += force;
     public void AddTorque(float torque) => AccumulatedTorque += torque;
 
-    public void AddImpulse(Vector2 impulse)
+    public void AddImpulse(Vector2f impulse)
     {
         if (MotionType == BodyMotionType2D.Dynamic)
         {
@@ -190,7 +190,7 @@ public sealed class RigidBody2D
 
     public void ClearAccumulators()
     {
-        AccumulatedForce = Vector2.Zero;
+        AccumulatedForce = Vector2f.Zero;
         AccumulatedTorque = 0f;
     }
 

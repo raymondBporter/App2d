@@ -90,7 +90,14 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
                     doc.Asset.Locations.Add(new() { Id = "end", Y = .2f });
                 }
 
-                doc.Asset.Geometry.Add(new() { Id = ModelAuthoring.UniqueId("curve", doc.Asset.Geometry.Select(p => p.Id)), A = origin, B = doc.Asset.IsAnimated ? doc.Asset.Controls[1].Id : doc.Asset.Locations[0].Id, Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .03f } });
+                doc.Asset.Geometry.Add(new() {
+                    Id = ModelAuthoring.UniqueId("curve", doc.Asset.Geometry.Select(p => p.Id)),
+                    A = origin,
+                    B = doc.Asset.IsAnimated ? doc.Asset.Controls[1].Id : doc.Asset.Locations[0].Id,
+                    Geometry = new LineSegmentCurve2D
+                    {
+                        Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(),
+                    Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .03f } });
                 doc.Asset.Validate();
                 _partPiece = doc.Asset.Geometry.Count - 1;
             });
@@ -299,7 +306,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         if (attachment?.IsAnimated != false) return;
         var piece = doc.Asset.Geometry[_partPiece];
         var (world, localFrame) = attachment.Lookups(LayeredFrame2D.Identity);
-        var placement = PartPlacement3D.Placement(attachment, new ActorPose(primary.Subject.Pose, Vector2.Zero, 1).Socket(attachment.Socket));
+        var placement = PartPlacement3D.Placement(attachment, new ActorPose(primary.Subject.Pose, Vector2f.Zero, 1).Socket(attachment.Socket));
         foreach (var collider in doc.Asset.Geometry.Where(g => g.Collision is { Enabled: true }))
         {
             var contour = PartContours2D.Contour(collider, world, localFrame);

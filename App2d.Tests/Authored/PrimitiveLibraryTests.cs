@@ -113,7 +113,7 @@ public sealed class PrimitiveLibraryTests : IDisposable
         Assert.Equal(6, GeometryAssetEditing.Points(edited).Count);
         Assert.Equal(4, GeometryAssetEditing.Points(geometry).Count);
         var points = GeometryAssetEditing.Points(edited).ToArray();
-        points[1] += new Vector2(0, -.1f);
+        points[1] += new Vector2f(0, -.1f);
         edited = GeometryAssetEditing.WithPoints(edited, points);
         edited.Validate();
         var rotated = GeometryAssetEditing.TransformPoints(edited, Matrix3x2.CreateRotation(MathF.PI / 2));

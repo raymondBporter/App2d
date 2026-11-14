@@ -20,12 +20,12 @@ internal sealed class XboxControllerInput2D
             Reset();
             return default;
         }
-        return Update(gamepad.Buttons, new Vector2(gamepad.LeftThumbX, gamepad.LeftThumbY), gamepad.RightTrigger,
-            new Vector2(gamepad.RightThumbX, gamepad.RightThumbY), gamepad.LeftTrigger);
+        return Update(gamepad.Buttons, new Vector2f(gamepad.LeftThumbX, gamepad.LeftThumbY), gamepad.RightTrigger,
+            new Vector2f(gamepad.RightThumbX, gamepad.RightThumbY), gamepad.LeftTrigger);
     }
 
-    internal GamepadState2D Update(ushort physicalButtons, Vector2 rawLeftStick, byte rightTrigger,
-        Vector2 rawRightStick = default, byte leftTrigger = 0)
+    internal GamepadState2D Update(ushort physicalButtons, Vector2f rawLeftStick, byte rightTrigger,
+        Vector2f rawRightStick = default, byte leftTrigger = 0)
     {
         // Separate thresholds prevent repeated presses around the trigger's activation point.
         _rightTriggerDown = rightTrigger >= (_rightTriggerDown ? 25 : 40);
@@ -86,10 +86,10 @@ internal sealed class XboxControllerInput2D
         return false;
     }
 
-    private static Vector2 ApplyDeadZone(Vector2 stick)
+    private static Vector2f ApplyDeadZone(Vector2f stick)
     {
         var magnitude = stick.Length();
-        return magnitude <= StickDeadZone ? Vector2.Zero : stick / magnitude *
+        return magnitude <= StickDeadZone ? Vector2f.Zero : stick / magnitude *
             Math.Clamp((magnitude - StickDeadZone) / (short.MaxValue - StickDeadZone), 0f, 1f);
     }
 

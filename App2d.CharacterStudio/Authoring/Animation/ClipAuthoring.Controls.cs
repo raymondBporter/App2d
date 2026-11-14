@@ -68,7 +68,7 @@ public static partial class ClipAuthoring
     }
 
     /// <summary>Sets a contact's interval within the clip, keeping at least a hundredth of a second.</summary>
-    public static void SetContactRange(MotionClip clip, int index, Vector2 range)
+    public static void SetContactRange(MotionClip clip, int index, Vector2f  range)
     {
         var contact = clip.Contacts[index];
         contact.Finish = Math.Clamp(range.Y, .01f, clip.Duration);

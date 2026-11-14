@@ -13,7 +13,7 @@ public sealed class ProportionExtremesTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
     private static CharacterModel Person => Catalog.Models["person"];
     private static ResolvedModel Build(PersonBuild build, string id) => ResolvedModel.From(Person, build.Apply(Person, id, id), Catalog.Parts.GetValueOrDefault);
-    private static Vector2 XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
 
     public static TheoryData<string, string> Cases => new()
     {
@@ -38,8 +38,8 @@ public sealed class ProportionExtremesTests
             var pose = PoseEvaluator.Sample(model, clip, seconds, repeat: true);
             foreach (var chain in model.Chains.Values)
             {
-                Assert.InRange(MathF.Abs(model.Length(chain.Root, chain.Joint) - Vector2.Distance(XY(pose.World(chain.Root)), XY(pose.World(chain.Joint)))), 0, 1e-4f);
-                Assert.InRange(MathF.Abs(model.Length(chain.Joint, chain.End) - Vector2.Distance(XY(pose.World(chain.Joint)), XY(pose.World(chain.End)))), 0, 1e-4f);
+                Assert.InRange(MathF.Abs(model.Length(chain.Root, chain.Joint) - Vector2f.Distance(XY(pose.World(chain.Root)), XY(pose.World(chain.Joint)))), 0, 1e-4f);
+                Assert.InRange(MathF.Abs(model.Length(chain.Joint, chain.End) - Vector2f.Distance(XY(pose.World(chain.Joint)), XY(pose.World(chain.End)))), 0, 1e-4f);
             }
 
             // Reached is honest: a chain either lands within tolerance or reports its gap; nothing is claimed by clamping.

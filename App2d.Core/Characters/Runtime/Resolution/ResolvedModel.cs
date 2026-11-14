@@ -99,7 +99,7 @@ public sealed class ResolvedModel
     }
 
     public float Measure(string scale) => scale == CharacterModel.Unit ? 1 : Measures[scale];
-    public float Length(string from, string to) => Vector2.Distance(new(Rest[from].X, Rest[from].Y), new(Rest[to].X, Rest[to].Y));
+    public float Length(string from, string to) => Vector2f.Distance(new(Rest[from].X, Rest[from].Y), new(Rest[to].X, Rest[to].Y));
 
     /// <summary>
     /// Resolution order (plan section 3.7): the authored rig and resource defaults; the variant's parameter values over the

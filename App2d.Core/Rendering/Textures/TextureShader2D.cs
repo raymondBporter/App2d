@@ -9,15 +9,15 @@ namespace App2d.Core.Rendering.Textures;
 /// (image rows run down as local Y falls). Without it, tiles repeat from the local origin
 /// using the original positive-Y convention.
 /// </param>
-public sealed class TextureShader2D(Texture2D texture, Vector2 tileSize,
+public sealed class TextureShader2D(Texture2D texture, Vector2f tileSize,
     TextureAddressMode tileModeX = TextureAddressMode.Wrap,
     TextureAddressMode tileModeY = TextureAddressMode.Wrap,
     TextureFilter filterMode = TextureFilter.Linear,
-    Vector2? imageOrigin = null) : IShader2D
+    Vector2f? imageOrigin = null) : IShader2D
 {
-    public Vector2? ImageOrigin { get; } = imageOrigin;
+    public Vector2f? ImageOrigin { get; } = imageOrigin;
     public Texture2D Texture { get; } = Ensure.RequireNotNull(texture);
-    public Vector2 TileSize { get; } = Ensure.Positive(tileSize);
+    public Vector2f TileSize { get; } = Ensure.Positive(tileSize);
     public TextureAddressMode TileModeX { get; } = tileModeX;
     public TextureAddressMode TileModeY { get; } = tileModeY;
     public TextureFilter FilterMode { get; } = filterMode;

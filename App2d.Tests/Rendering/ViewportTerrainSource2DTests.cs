@@ -42,8 +42,8 @@ public sealed class ViewportTerrainSource2DTests
         {
             for (var x = 0; x < map.ChunkColumns; x++)
             {
-                var min = map.Origin + new Vector2(x, y) * map.ChunkSize * map.TileSize;
-                var bounds = new Rect2D(min, min + new Vector2(map.ChunkSize * map.TileSize));
+                var min = map.Origin + new Vector2f(x, y) * map.ChunkSize * map.TileSize;
+                var bounds = new Rect2D(min, min + new Vector2f(map.ChunkSize * map.TileSize));
                 if (bounds.Intersects(camera.VisibleWorldBounds))
                 {
                     Assert.Contains(terrain, c => c.Chunk == new TileChunk2D(x, y));
@@ -102,14 +102,14 @@ public sealed class ViewportTerrainSource2DTests
         var map = CreateMap();
         using var source = new ViewportTerrainSource2D(map);
         var original = ReadTerrain(source, map.WorldBounds);
-        Assert.True(source.QueryTerrain(new Rect2D(new Vector2(-10000f), new Vector2(-9000f))).IsEmpty);
+        Assert.True(source.QueryTerrain(new Rect2D(new Vector2f(-10000f), new Vector2f(-9000f))).IsEmpty);
         Assert.Equal(original, ReadTerrain(source, map.WorldBounds));
     }
 
     [Fact]
     public void LocalTerrainVisualsSurvivePanningAndSimulationStreamingUntilEdited()
     {
-        var map = new EditableTileMap2D(24, 32, 32f, 8, Vector2.Zero, ["dark-cave"]);
+        var map = new EditableTileMap2D(24, 32, 32f, 8, Vector2f.Zero, ["dark-cave"]);
         map.SetTileKind(4, 4, TileKind2D.Solid);
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
@@ -123,7 +123,7 @@ public sealed class ViewportTerrainSource2DTests
 
         view.ApplyState(LevelContent2D.Empty, WorldState2D.Empty);
         view.ApplyState(LevelContent2D.Empty with { Revision = 2 }, WorldState2D.Empty);
-        var outside = new Rect2D(map.WorldBounds.Max + new Vector2(128), map.WorldBounds.Max + new Vector2(256));
+        var outside = new Rect2D(map.WorldBounds.Max + new Vector2f(128), map.WorldBounds.Max + new Vector2f(256));
         Assert.True(terrain.QueryTerrain(outside).IsEmpty);
         Assert.Same(snapshot, terrain.GetChunk(chunk));
         Assert.Same(visuals, view.GetTerrainVisuals(snapshot));
@@ -138,7 +138,7 @@ public sealed class ViewportTerrainSource2DTests
     [Fact]
     public void TreeCanopyQueriesItsOffscreenRootAndAnEditInAnotherChunkRechecksClearance()
     {
-        var map = new EditableTileMap2D(24, 32, 32f, 8, Vector2.Zero, ["dark-cave"]);
+        var map = new EditableTileMap2D(24, 32, 32f, 8, Vector2f.Zero, ["dark-cave"]);
         for (var x = 3; x <= 5; x++)
             map.SetTileKind(x, 5, TileKind2D.Solid);
 
@@ -166,7 +166,7 @@ public sealed class ViewportTerrainSource2DTests
     [Fact]
     public void WorldDrawRendersOffscreenCanopyAndQueriesTerrainOutsideTheScene()
     {
-        var map = new EditableTileMap2D(24, 32, 32f, 8, Vector2.Zero, ["dark-cave"]);
+        var map = new EditableTileMap2D(24, 32, 32f, 8, Vector2f.Zero, ["dark-cave"]);
         for (var x = 3; x <= 5; x++)
             map.SetTileKind(x, 5, TileKind2D.Solid);
 
@@ -207,5 +207,5 @@ public sealed class ViewportTerrainSource2DTests
         return terrain;
     }
 
-    private static EditableTileMap2D CreateMap() => new(640, 96, 32f, 32, new Vector2(-512f, -640f));
+    private static EditableTileMap2D CreateMap() => new(640, 96, 32f, 32, new Vector2f(-512f, -640f));
 }

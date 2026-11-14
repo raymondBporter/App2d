@@ -33,7 +33,7 @@ public sealed class PhysicsWorld2D
         _physicsColliderPairFilter = new PhysicsColliderPairFilter(this);
     }
 
-    public Vector2 Gravity { get; set; }
+    public Vector2f Gravity { get; set; }
     public int PositionIterations { get; set; } = 4;
     public int VelocityIterations { get; set; } = 1;
     public float MaxSubstepSeconds { get; set; } = 1f / 60f;
@@ -152,7 +152,7 @@ public sealed class PhysicsWorld2D
         {
             RigidBody2D surface;
             RigidBody2D rider;
-            Vector2 normal;
+            Vector2f normal;
             if (contact.First.MotionType == BodyMotionType2D.Kinematic && contact.First.TransfersContactMotion)
             {
                 surface = contact.First;
@@ -176,9 +176,9 @@ public sealed class PhysicsWorld2D
             }
 
             const float separationSpeedTolerance = 0.0001f;
-            var previousRelativeSpeed = Vector2.Dot(
+            var previousRelativeSpeed = Vector2f.Dot(
                 rider.LastStepLinearVelocity - surface.LastStepLinearVelocity, normal);
-            var riderVelocityChange = Vector2.Dot(
+            var riderVelocityChange = Vector2f.Dot(
                 rider.LinearVelocity - rider.LastStepLinearVelocity, normal);
             if (previousRelativeSpeed > separationSpeedTolerance ||
                 riderVelocityChange > separationSpeedTolerance)
@@ -187,8 +187,8 @@ public sealed class PhysicsWorld2D
             }
 
             var displacement = surface.LinearVelocity * deltaSeconds;
-            rider.WorldObject.Transform.Position += displacement - normal * Vector2.Dot(displacement, normal);
-            var relativeNormalSpeed = Vector2.Dot(rider.LinearVelocity - surface.LinearVelocity, normal);
+            rider.WorldObject.Transform.Position += displacement - normal * Vector2f.Dot(displacement, normal);
+            var relativeNormalSpeed = Vector2f.Dot(rider.LinearVelocity - surface.LinearVelocity, normal);
             rider.LinearVelocity -= normal * relativeNormalSpeed;
         }
     }
@@ -206,22 +206,22 @@ public sealed class PhysicsWorld2D
         return false;
     }
 
-    public bool IsTouching(RigidBody2D body, Vector2 direction, float minimumDot = 0.5f)
+    public bool IsTouching(RigidBody2D body, Vector2f direction, float minimumDot = 0.5f)
     {
         if (direction.LengthSquared() <= float.Epsilon)
         {
             return false;
         }
 
-        direction = Vector2.Normalize(direction);
+        direction = Vector2f.Normalize(direction);
         foreach (var contact in _lastContacts)
         {
-            if (contact.First == body && Vector2.Dot(contact.Geometry.Normal, direction) >= minimumDot)
+            if (contact.First == body && Vector2f.Dot(contact.Geometry.Normal, direction) >= minimumDot)
             {
                 return true;
             }
 
-            if (contact.Second == body && Vector2.Dot(-contact.Geometry.Normal, direction) >= minimumDot)
+            if (contact.Second == body && Vector2f.Dot(-contact.Geometry.Normal, direction) >= minimumDot)
             {
                 return true;
             }

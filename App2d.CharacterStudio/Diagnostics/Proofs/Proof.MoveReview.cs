@@ -69,7 +69,7 @@ internal sealed partial class ProofRenders
                 var input = upper is { } u ? new PoseInput { Overlay = new(u.Clip, u.Seconds, PersonLoadout.SwordUpperBody) } : default;
                 var pose = PoseEvaluator.Sample(model, clip, seconds, item.Upper is not null, input);
                 drawing.Build(model, pose);
-                var placed = new ActorPose(pose, Vector2.Zero, 1);
+                var placed = new ActorPose(pose, Vector2f.Zero, 1);
                 foreach (var (prop, socket) in PersonLoadout.Dressed(upper?.Clip ?? clip, upper?.Seconds ?? seconds, item.Gun ? PersonGear.Gun : PersonGear.Sword, catalog.Entities["hero"]))
                 {
                     drawing.AddAttachment(props[prop], placed, sockets[socket]);

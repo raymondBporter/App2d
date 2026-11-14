@@ -31,16 +31,16 @@ public sealed class InputState
                 e.IsInputKey = true;
             }
         };
-        surface.MouseMove += (_, e) => Mouse.SetClientPosition(new Vector2(e.X, e.Y));
+        surface.MouseMove += (_, e) => Mouse.SetClientPosition(new Vector2f(e.X, e.Y));
         surface.MouseDown += (_, e) =>
         {
             surface.Focus();
-            Mouse.SetClientPosition(new Vector2(e.X, e.Y));
+            Mouse.SetClientPosition(new Vector2f(e.X, e.Y));
             SetMouseButton(e.Button, true);
         };
         surface.MouseUp += (_, e) =>
         {
-            Mouse.SetClientPosition(new Vector2(e.X, e.Y));
+            Mouse.SetClientPosition(new Vector2f(e.X, e.Y));
             SetMouseButton(e.Button, false);
         };
         surface.MouseWheel += (_, e) =>

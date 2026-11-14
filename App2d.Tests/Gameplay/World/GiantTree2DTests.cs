@@ -53,8 +53,8 @@ public sealed class GiantTree2DTests
     public void InvalidAndUnboundedGenerationInputsAreRejectedBeforeGrowing()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new GiantTree2D(new(float.NaN, 0), new(), 1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new GiantTree2D(Vector2.Zero, new() { BranchGap = new(0, 10) }, 1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new GiantTree2D(Vector2.Zero, new() { BranchLength = new(100, 50) }, 1));
-        Assert.ThrowsAny<ArgumentException>(() => new GiantTree2D(Vector2.Zero, new() { Height = 1_000_000 }, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GiantTree2D(Vector2f.Zero, new() { BranchGap = new(0, 10) }, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GiantTree2D(Vector2f.Zero, new() { BranchLength = new(100, 50) }, 1));
+        Assert.ThrowsAny<ArgumentException>(() => new GiantTree2D(Vector2f.Zero, new() { Height = 1_000_000 }, 1));
     }
 }

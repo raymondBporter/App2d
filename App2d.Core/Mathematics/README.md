@@ -186,7 +186,7 @@ angle differences, not stored animation rotations whose full turns matter. A mat
 heading of its transformed local +X axis, not a unique decomposition of a reflected or sheared transform.
 In a screen coordinate system where Y points down, convert the Y component explicitly
 when you want the same visual convention. `Vector2.FromAngleDegrees(angle)` shares
-the direction convention of `Vector2.FromAngle(radians)`.
+the direction convention of `Vector2f.FromAngle(radians)`.
 
 `Vector2.Reject(vector, unitNormal)` removes the component parallel to a normalized normal.
 `Vector2.TryRefract(direction, incidentNormal, fromIndex, toIndex, out transmitted)`

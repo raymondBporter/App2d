@@ -16,7 +16,7 @@ public sealed class WorldFileTests : IDisposable
     {
         Directory.CreateDirectory(_root);
         using var db = LevelDatabase2D.Open(Path.Combine(_root, name));
-        db.Save(new EditableTileMap2D(8, 8, 32, 4, new Vector2(x, 0)), 0);
+        db.Save(new EditableTileMap2D(8, 8, 32, 4, new Vector2f(x, 0)), 0);
         var definition = db.CreateThingDefinition("save-point", "Checkpoint");
         db.CreatePositionThing(new(definition.DefinitionId, null, true, x + 32, 32));
     }
@@ -64,7 +64,7 @@ public sealed class WorldFileTests : IDisposable
         {
             Assert.True(map.TileMap.IsSolid(4, 19));
             Assert.False(map.TileMap.IsSolid(4, 20));
-            Assert.Equal(new Vector2(map.TileMap.Origin.X + 512, 160), PlaygroundMaps2D.Arrival(map, 128, 2));
+            Assert.Equal(new Vector2f(map.TileMap.Origin.X + 512, 160), PlaygroundMaps2D.Arrival(map, 128, 2));
         }
         Assert.True(world.Maps.Single(m => m.Id == "main").TileMap.IsSolid(2, 3));
         Assert.Throws<IOException>(() => PlaygroundMaps2D.Create(_root, ["a"]));
@@ -80,8 +80,8 @@ public sealed class WorldFileTests : IDisposable
         Write(left, right);
         using var world = WorldFile2D.Load(Manifest);
         Assert.Equal(2, world.Maps.Count);
-        Assert.Equal(new Vector2(-256, 0), Assert.Single(world.Zones).Bounds.Min);
-        Assert.Equal(new Vector2(256, 256), world.Zones[0].Bounds.Max);
+        Assert.Equal(new Vector2f(-256, 0), Assert.Single(world.Zones).Bounds.Min);
+        Assert.Equal(new Vector2f(256, 256), world.Zones[0].Bounds.Max);
         Assert.Equal(2, world.PositionThings.Select(t => t.ThingId).Distinct().Count());
         Assert.Equal(1, world.PositionThings[0].ThingId);
         var rightId = world.PositionThings[1].ThingId;

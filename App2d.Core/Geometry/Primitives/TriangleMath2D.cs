@@ -8,19 +8,19 @@ namespace App2d.Core.Geometry.Primitives;
 public static class TriangleMath2D
 {
     public static double SignedAreaTwice<TTriangle>(this TTriangle triangle)
-        where TTriangle : ITriangle<TTriangle, Vector2> =>
+        where TTriangle : ITriangle<TTriangle, Vector2f> =>
         new Vector2d(triangle.A).Orientation(new(triangle.B), new(triangle.C));
 
     public static double GetArea<TTriangle>(this TTriangle triangle)
-        where TTriangle : ITriangle<TTriangle, Vector2> => Math.Abs(triangle.SignedAreaTwice()) * .5d;
+        where TTriangle : ITriangle<TTriangle, Vector2f> => Math.Abs(triangle.SignedAreaTwice()) * .5d;
 
-    public static bool Contains<TTriangle>(this TTriangle triangle, Vector2 point, double edgeTolerance = 0)
-        where TTriangle : ITriangle<TTriangle, Vector2>
+    public static bool Contains<TTriangle>(this TTriangle triangle, Vector2f point, double edgeTolerance = 0)
+        where TTriangle : ITriangle<TTriangle, Vector2f>
         => Contains(triangle, point, edgeTolerance, Math.Sign(triangle.SignedAreaTwice()));
 
     // Validated shapes already cache winding; share the predicate without recalculating it for each query.
-    internal static bool Contains<TTriangle>(TTriangle triangle, Vector2 point, double edgeTolerance, int winding)
-        where TTriangle : ITriangle<TTriangle, Vector2>
+    internal static bool Contains<TTriangle>(TTriangle triangle, Vector2f point, double edgeTolerance, int winding)
+        where TTriangle : ITriangle<TTriangle, Vector2f>
     {
         Ensure.Finite(point);
         Ensure.NonNegative(edgeTolerance);
@@ -36,7 +36,7 @@ public static class TriangleMath2D
     /// Weights of <paramref name="a"/>, <paramref name="b"/> and <paramref name="c"/> that rebuild <paramref name="point"/>; they sum to 1 and
     /// interpolate any per-corner value. Points outside the triangle get a negative weight. A degenerate triangle gives non-finite weights.
     /// </summary>
-    public static Vector3 Barycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 point)
+    public static Vector3 Barycentric(Vector2f a, Vector2f b, Vector2f c, Vector2f point)
     {
         var ab = b - a;
         var ac = c - a;
@@ -48,14 +48,14 @@ public static class TriangleMath2D
     }
 
     public static TTriangle Reversed<TTriangle>(this TTriangle triangle)
-        where TTriangle : ITriangle<TTriangle, Vector2> => TTriangle.Create(triangle.A, triangle.C, triangle.B);
+        where TTriangle : ITriangle<TTriangle, Vector2f> => TTriangle.Create(triangle.A, triangle.C, triangle.B);
 
     public static TTriangle TransformedBy<TTriangle>(this TTriangle triangle, Matrix3x2 transform)
-        where TTriangle : ITriangle<TTriangle, Vector2> => TTriangle.Create(
-        Vector2.Transform(triangle.A, transform), Vector2.Transform(triangle.B, transform), Vector2.Transform(triangle.C, transform));
+        where TTriangle : ITriangle<TTriangle, Vector2f> => TTriangle.Create(
+        Vector2f.Transform(triangle.A, transform), Vector2f.Transform(triangle.B, transform), Vector2f.Transform(triangle.C, transform));
 
-    public static void WriteVertices<TTriangle>(this TTriangle triangle, Span<Vector2> vertices)
-        where TTriangle : ITriangle<TTriangle, Vector2>
+    public static void WriteVertices<TTriangle>(this TTriangle triangle, Span<Vector2f> vertices)
+        where TTriangle : ITriangle<TTriangle, Vector2f>
     {
         Ensure.ThrowIfTooShort(vertices, 3);
         vertices[0] = triangle.A;

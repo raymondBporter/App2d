@@ -16,7 +16,7 @@ public static partial class ShapeCollision2D
     {
         var index = CompositeIndexes.GetValue(composite.PartsIdentity, _ => new CompositeIndex(composite));
         Matrix3x2.Invert(compositePose.ToMatrix(), out var worldToLocal);
-        var localBounds = ShapeBounds2D.CalculateTransformed(other, otherPose.ToMatrix() * worldToLocal);
+        var localBounds = ShapeBounds2D.CalculateTransformed(other, otherPose.ToMatrix().Then(worldToLocal));
         var best = CollisionResult.None;
         var bestPart = int.MaxValue;
         Visit(0);

@@ -35,11 +35,11 @@ internal static partial class PlayerMoves
     // Sheathed sword: grip in the chest frame and the blade's direction. Worn diagonally across the back, so in this
     // profile it foreshortens to a near-vertical line hidden behind the torso: the hilt sits below the shoulder line
     // (a guard at neck height read as part of the neck) and only the scabbard's tip shows below the back.
-    private static readonly Vector2 SheathGrip = new(-.1f, -.08f);
+    private static readonly Vector2f SheathGrip = new(-.1f, -.08f);
     private const float SheathAngle = -MathF.PI / 2 - .12f;
     // The same sheath seen from behind: hilt over the right shoulder (screen left once turned), tip toward the left hip,
     // drawn across the back.
-    private static readonly Vector2 BackViewGrip = new(-.13f, .12f);
+    private static readonly Vector2f BackViewGrip = new(-.13f, .12f);
     private const float BackViewAngle = -MathF.PI / 2 + .55f;
 
     public static IEnumerable<ModelSocket> Sockets() =>
@@ -555,11 +555,11 @@ internal static partial class PlayerMoves
     private static MoveBuilder New(ResolvedModel m, string id, string name, float duration, bool loop) => new(m, id, name, duration, loop);
 
     /// <summary>The sheathed grip's actor-space position and blade angle for a body with hips offset (dx, dy) and this chest turn.</summary>
-    internal static (Vector2 Grip, float Angle) Hilt(float hipsDx, float hipsDy, float chestTurn)
+    internal static (Vector2f Grip, float Angle) Hilt(float hipsDx, float hipsDy, float chestTurn)
     {
         var (sin, cos) = MathF.SinCos(chestTurn);
-        var chest = new Vector2(hipsDx - .65f * sin, 1 + hipsDy + .65f * cos);
-        return (chest + new Vector2(SheathGrip.X * cos - SheathGrip.Y * sin, SheathGrip.X * sin + SheathGrip.Y * cos), chestTurn + SheathAngle);
+        var chest = new Vector2f(hipsDx - .65f * sin, 1 + hipsDy + .65f * cos);
+        return (chest + new Vector2f(SheathGrip.X * cos - SheathGrip.Y * sin, SheathGrip.X * sin + SheathGrip.Y * cos), chestTurn + SheathAngle);
     }
 
     // ---- Locomotion ---------------------------------------------------------------------------------------------
@@ -627,14 +627,14 @@ internal static partial class PlayerMoves
     // the viewer, with the right side on screen left.
 
     /// <summary>Deltas from rest (x, z) for the four girdle controls at axis angle <paramref name="degrees"/>.</summary>
-    private static (Vector2 LeftShoulder, Vector2 RightShoulder, Vector2 LeftHip, Vector2 RightHip) Girdles(ResolvedModel m, float degrees)
+    private static (Vector2f LeftShoulder, Vector2f RightShoulder, Vector2f LeftHip, Vector2f RightHip) Girdles(ResolvedModel m, float degrees)
     {
         const float shoulderHalf = .18f, hipHalf = .12f, setback = -.025f;
         var a = float.DegreesToRadians(degrees);
         var axis = Polar2D.Direction(a);
         // The shoulders sit slightly behind the torso's centerline, along the facing direction (the axis turned back 90).
         var mid = axis.PerpCw * setback;
-        Vector2 Delta(string id, Vector2 at)
+        Vector2f Delta(string id, Vector2f at)
         {
             var rest = m.Rest[id];
             return new(at.X - rest.X, at.Y - rest.Z);
@@ -689,7 +689,7 @@ internal static partial class PlayerMoves
         }
         for (var step = 1; step <= 5; step++)
         {
-            var hand = Vector2.FromPolar(.64f, float.DegreesToRadians(-90 + 22.5f * step));
+            var hand = Vector2f.FromPolar(.64f, float.DegreesToRadians(-90 + 22.5f * step));
             b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(hand.X, hand.Y).RightHand(-hand.X, hand.Y), ProgressMapKind.Linear);
         }
         return b

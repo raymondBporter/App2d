@@ -15,7 +15,7 @@ namespace App2d.CharacterStudio.Editor.Viewport;
 internal sealed class GeometryCanvas(EditorSession session)
 {
     private string? _id;
-    private Vector2 _center;
+    private Vector2f _center;
     private float _span = 1.5f;
     private int _drag = -1;
     private bool _grid = true, _snap, _triangles;
@@ -25,12 +25,12 @@ internal sealed class GeometryCanvas(EditorSession session)
     public void Draw(GeometryAsset2D asset, Action<GeometryAsset2D>? change, PartGeometry? preview = null)
     {
         var entry = preview ?? asset.Entry(new() { Fill = "#8faecb", Outline = RenderOutlineDefinition2D.Ink, StrokeWidth = .025f });
-        var contour = PartContours2D.Contour(entry, _ => Vector3.Zero, _ => LayeredFrame2D.Identity).Select(p => new Vector2(p.X, p.Y)).ToArray();
+        var contour = PartContours2D.Contour(entry, _ => Vector3.Zero, _ => LayeredFrame2D.Identity).Select(p => new Vector2f(p.X, p.Y)).ToArray();
         void Fit()
         {
             if (contour.Length == 0) return;
-            var min = contour.Aggregate(Vector2.Zero, Vector2.Min);
-            var max = contour.Aggregate(Vector2.Zero, Vector2.Max);
+            var min = contour.Aggregate(Vector2f.Zero, Vector2f.Min);
+            var max = contour.Aggregate(Vector2f.Zero, Vector2f.Max);
             _center = (min + max) / 2;
             _span = MathF.Max(.2f, MathF.Max(max.X - min.X, max.Y - min.Y) * 1.5f);
         }
@@ -55,14 +55,14 @@ internal sealed class GeometryCanvas(EditorSession session)
         ImGui.SetNextItemWidth(90 * Ui.Scale);
         ImGui.DragFloat("Grid units", ref _gridStep, .005f, .001f, 100, "%.3f", ImGuiSliderFlags.AlwaysClamp);
         _gridStep = Math.Clamp(_gridStep, .001f, 100);
-        var size = Vector2.Max(ImGui.GetContentRegionAvail(), new(1, 1));
+        var size = Vector2.Max(ImGui.GetContentRegionAvail(), Vector2.One);
         var origin = ImGui.GetCursorScreenPos();
         ImGui.InvisibleButton("local-geometry-canvas", size, ImGuiButtonFlags.MouseButtonLeft | ImGuiButtonFlags.MouseButtonMiddle);
         var hovered = ImGui.IsItemHovered();
         var ppu = MathF.Min(size.X, size.Y) / _span;
         var anchor = origin + size / 2;
-        Vector2 Screen(Vector2 p) => anchor + new Vector2(p.X - _center.X, _center.Y - p.Y) * ppu;
-        Vector2 World(Vector2 p) => _center + new Vector2(p.X - anchor.X, anchor.Y - p.Y) / ppu;
+        Vector2 Screen(Vector2f p) => anchor + new Vector2(p.X - _center.X, _center.Y - p.Y) * ppu;
+        Vector2f World(Vector2 p) => _center + new Vector2f(p.X - anchor.X, anchor.Y - p.Y) / ppu;
         var draw = ImGui.GetWindowDrawList();
         draw.AddRectFilled(origin, origin + size, 0xff211e1b);
         draw.PushClipRect(origin, origin + size, true);
@@ -123,11 +123,11 @@ internal sealed class GeometryCanvas(EditorSession session)
         }
         draw.AddLine(Screen(new(low.X, 0)), Screen(new(high.X, 0)), 0x99666699, 1.5f);
         draw.AddLine(Screen(new(0, low.Y)), Screen(new(0, high.Y)), 0x99669966, 1.5f);
-        draw.AddCircle(Screen(Vector2.Zero), 5 * Ui.Scale, 0xffdddddd);
-        draw.AddText(Screen(Vector2.Zero) + new Vector2(7, 5), 0xffdddddd, "0,0");
+        draw.AddCircle(Screen(Vector2f.Zero), 5 * Ui.Scale, 0xffdddddd);
+        draw.AddText(Screen(Vector2f.Zero) + new Vector2(7, 5), 0xffdddddd, "0,0");
         var points = change is null ? [] : GeometryAssetEditing.Points(asset);
         var localFrame = PartAttachment2D.FrameOf(entry, _ => Vector3.Zero, _ => LayeredFrame2D.Identity).Frame;
-        Vector2 PointScreen(Vector2 point) => Screen(localFrame.TransformPoint(point));
+        Vector2 PointScreen(Vector2f point) => Screen(localFrame.TransformPoint(point));
         if (asset.Geometry is QuadraticBezier2D or CubicBezier2D or BSpline2D)
         {
             for (var i = 1; i < points.Count; i++)
@@ -161,7 +161,7 @@ internal sealed class GeometryCanvas(EditorSession session)
             }
         }
         if (hovered && ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
-            _center += new Vector2(-ImGui.GetIO().MouseDelta.X, ImGui.GetIO().MouseDelta.Y) / ppu;
+            _center += new Vector2f(-ImGui.GetIO().MouseDelta.X, ImGui.GetIO().MouseDelta.Y) / ppu;
         if (hovered && ImGui.GetIO().MouseWheel != 0)
         {
             var mouse = World(ImGui.GetMousePos());

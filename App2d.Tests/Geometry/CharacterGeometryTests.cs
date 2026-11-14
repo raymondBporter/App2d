@@ -48,9 +48,9 @@ public sealed class CharacterGeometryTests
     public void UnscaledPartsUseTheirGeometryDimensions(IShape2D shape)
     {
         var part = new PartGeometry { A = "origin", Geometry = shape };
-        var vertices = new Vector2[shape.GetOutlineVertCount(48)];
+        var vertices = new Vector2f[shape.GetOutlineVertCount(48)];
         shape.GetOutlineVerts(vertices, 48);
-        Assert.Equal(vertices, PartContours2D.Contour(part, _ => Vector3.Zero).Select(p => new Vector2(p.X, p.Y)));
+        Assert.Equal(vertices, PartContours2D.Contour(part, _ => Vector3.Zero).Select(p => new Vector2f(p.X, p.Y)));
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public sealed class CharacterGeometryTests
         {
             A = "a",
             B = "b",
-            Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
+            Geometry = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.UnitY),
             ScaleX = 2,
             ScaleY = .5f,
             Angle = MathF.PI / 2,
@@ -145,7 +145,7 @@ public sealed class CharacterGeometryTests
     [Fact]
     public void StrokePickingKeepsItsMinimumWidthAndPointLikeSegmentTolerance()
     {
-        var part = new PartGeometry { Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), A = "a", B = "b", Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .01f }, Layer = 2 };
+        var part = new PartGeometry { Geometry = new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), A = "a", B = "b", Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .01f }, Layer = 2 };
         static Vector3 World(string id) => id == "a" ? default : new(.000001f, 0, 3);
         Assert.Equal(1, PartPicking2D.Distance(part, World, new(0, .06f, 100)), 5);
         var contour = PartContours2D.Contour(part, World);
@@ -159,7 +159,7 @@ public sealed class CharacterGeometryTests
     public void EntityRegionsKeepTranslatedAndTouchingOverlapBehavior()
     {
         var region = EntityRegion.Box("hurt", new(2, 3), new(4, 2));
-        Assert.Equal(new Vector2(0, 2), region.Outline()[0]);
+        Assert.Equal(new Vector2f(0, 2), region.Outline()[0]);
         Assert.True(region.Overlaps(region, new(10, 20), new(14, 20)));
         Assert.False(region.Overlaps(region, new(10, 20), new(14.01f, 20)));
     }

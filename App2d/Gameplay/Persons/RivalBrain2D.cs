@@ -17,7 +17,7 @@ internal sealed class RivalBrain2D(float minimumX, float maximumX)
     private float _jumpHoldSeconds;
     private bool _nextAttackIsKick = true;
 
-    public PersonCommand2D Decide(Person2D person, Vector2 targetPosition, float deltaSeconds)
+    public PersonCommand2D Decide(Person2D person, Vector2f targetPosition, float deltaSeconds)
     {
         _attackDelaySeconds = Math.Max(0f, _attackDelaySeconds - deltaSeconds);
         _dashDelaySeconds = Math.Max(0f, _dashDelaySeconds - deltaSeconds);

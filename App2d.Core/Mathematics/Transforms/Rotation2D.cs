@@ -8,7 +8,7 @@ public static class Rotation2D
 {
     private const double MinimumHalfAngleSine = 1e-6;
 
-    public static Vector2 Apply(Vector2 value, float radians)
+    public static Vector2f  Apply(Vector2f value, float radians)
     {
         if (radians == 0f)
         {
@@ -20,22 +20,22 @@ public static class Rotation2D
     }
 
     /// <summary>Rotates a point about a pivot in the XY plane.</summary>
-    public static Vector2 ApplyAround(Vector2 point, Vector2 pivot, float radians) =>
+    public static Vector2f  ApplyAround(Vector2f point, Vector2f pivot, float radians) =>
         pivot + Apply(point - pivot, radians);
 
     /// <summary>Rotates XY while preserving depth exactly.</summary>
     public static Vector3 ApplyXY(Vector3 value, float radians) =>
-        new(Apply(value.XY, radians), value.Z);
+        new(Apply(value.XY, radians).ToVector2(), value.Z);
 
     /// <summary>Rotates XY about a pivot while preserving depth exactly.</summary>
-    public static Vector3 ApplyXYAround(Vector3 value, Vector2 pivot, float radians) =>
-        new(ApplyAround(value.XY, pivot, radians), value.Z);
+    public static Vector3 ApplyXYAround(Vector3 value, Vector2f pivot, float radians) =>
+        new(ApplyAround(value.XY, pivot, radians).ToVector2(), value.Z);
 
     /// <summary>
     /// Finds the pivot carrying from to to through radians. Returns false when the turn is too close
     /// to a whole revolution to determine a stable pivot from float coordinates.
     /// </summary>
-    public static bool TryFindPivot(Vector2 from, Vector2 to, float radians, out Vector2 pivot)
+    public static bool TryFindPivot(Vector2f from, Vector2f to, float radians, out Vector2f pivot)
     {
         ValidateArc(from, to, radians);
         var half = (double)radians * 0.5d;
@@ -54,7 +54,7 @@ public static class Rotation2D
             pivot = default;
             return false;
         }
-        pivot = center.ToVector2();
+        pivot = center.ToVector2f();
         return true;
     }
 
@@ -63,7 +63,7 @@ public static class Rotation2D
     /// Fractions outside [0, 1] return the nearest endpoint. Near a whole revolution the pivot
     /// is ill-conditioned, so this uses linear interpolation.
     /// </summary>
-    public static Vector2 InterpolateArc(Vector2 from, Vector2 to, float radians, float fraction)
+    public static Vector2f  InterpolateArc(Vector2f from, Vector2f to, float radians, float fraction)
     {
         ValidateArc(from, to, radians);
         Ensure.Finite(fraction);
@@ -81,7 +81,7 @@ public static class Rotation2D
         var sinHalf = Math.Sin(half);
         if (Math.Abs(sinHalf) < MinimumHalfAngleSine)
         {
-            return Vector2.Lerp(from, to, fraction);
+            return Vector2f.Lerp(from, to, fraction);
         }
 
         // (1 - exp(i*fraction*angle)) / (1 - exp(i*angle)) applied to the endpoint displacement.
@@ -92,10 +92,10 @@ public static class Rotation2D
         var imaginary = scale * sinPhase;
         var delta = to.ToVector2d() - from.ToVector2d();
         return new Vector2d(from.X + real * delta.X - imaginary * delta.Y,
-            from.Y + imaginary * delta.X + real * delta.Y).ToVector2();
+            from.Y + imaginary * delta.X + real * delta.Y).ToVector2f();
     }
 
-    private static void ValidateArc(Vector2 from, Vector2 to, float radians)
+    private static void ValidateArc(Vector2f from, Vector2f to, float radians)
     {
         Ensure.Finite(from);
         Ensure.Finite(to);

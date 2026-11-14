@@ -22,7 +22,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     public const string ProfileViewMarker = PersonLoadout.ProfileViewMarker;
 
     private readonly Dictionary<(string Kind, string Target), SortedDictionary<float, ClipKey>> _tracks = [];
-    private readonly List<(string Chain, float Time, Vector2 Offset, bool Absolute, ProgressMapKind Ease)> _hands = [];
+    private readonly List<(string Chain, float Time, Vector2f Offset, bool Absolute, ProgressMapKind Ease)> _hands = [];
     private readonly List<(float Time, float Angle, ProgressMapKind Ease)> _blade = [];
     private readonly List<(float Time, float Wrist, ProgressMapKind Ease)> _grips = [];
     private readonly List<ClipContact> _contacts = [];
@@ -99,7 +99,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             Time = time
         };
     }
-    internal void Hand(string chain, float time, Vector2 offset, bool absolute, ProgressMapKind ease) => _hands.Add((chain, time, offset, absolute, ease));
+    internal void Hand(string chain, float time, Vector2f offset, bool absolute, ProgressMapKind ease) => _hands.Add((chain, time, offset, absolute, ease));
     internal void Blade(float time, float angle, ProgressMapKind ease) => _blade.Add((time, angle, ease));
     internal void Grip(float time, float wrist, ProgressMapKind ease) => _grips.Add((time, wrist, ease));
 
@@ -151,7 +151,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
                 var shoulder = pose.Points[chain.Frame];
                 // A target is keyed in the frame's rotation since rest, as the evaluator reads it (a bone frame has a rest direction).
                 var frameAngle = pose.Angles[chain.Frame] - model.Nodes[chain.Frame].RestAngle;
-                var goal = absolute ? new Vector3(offset, shoulder.Z) : shoulder + new Vector3(offset, 0);
+                var goal = absolute ? new Vector3(offset.ToVector2(), shoulder.Z) : shoulder + new Vector3(offset.ToVector2(), 0);
                 var local = Rotation2D.ApplyXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
                 Set(MotionClip.TargetKind, chainId, time, new()
                 {
@@ -174,7 +174,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             {
                 var pose = PoseEvaluator.Sample(model, clip, g.Time);
                 var forearm = pose.Points[arm.End] - pose.Points[arm.Joint];
-                return (g.Time, new Vector2(forearm.X, forearm.Y).AngleRadians + g.Wrist, g.Ease);
+                return (g.Time, new Vector2f(forearm.X, forearm.Y).AngleRadians + g.Wrist, g.Ease);
             })]);
             Emit();
             Hands();
@@ -240,7 +240,7 @@ internal sealed class PoseKey(MoveBuilder owner, float time, ProgressMapKind eas
         owner.Set(MotionClip.TranslateKind, Humanoid.Head, time, K(swing.X + dx, swing.Y + dy));
         return this;
     }
-    private Vector2 Swing(string parent, string child, float turn)
+    private Vector2f Swing(string parent, string child, float turn)
     {
         var offset = owner.Model.Rest[child] - owner.Model.Rest[parent];
         var turned = Rotation2D.ApplyXY(offset, turn);

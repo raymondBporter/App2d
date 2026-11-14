@@ -52,7 +52,7 @@ public sealed class ScaledScreenTextTests
         {
             renderer.BeginFrame(128, 128, default);
             renderer.Clear(Color4b.Black);
-            renderer.DrawScreenText("TEST", new Vector2(10, 55), Color4b.White, scale);
+            renderer.DrawScreenText("TEST", new Vector2f(10, 55), Color4b.White, scale);
             renderer.DrawScreenRoundedRectangle(new(105, 105, 120, 120), 0, Color4b.Red);
             renderer.EndFrame();
             return graphics.ReadPixels();

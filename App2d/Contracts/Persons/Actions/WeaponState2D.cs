@@ -5,20 +5,20 @@ using System.Numerics;
 namespace App2d.Contracts.Persons.Actions;
 
 /// <summary>Client observations, not a complete simulation restore point.</summary>
-public readonly record struct ProjectileState2D(EntityId2D Id, Vector2 Position, Vector2 Velocity, Vector2 Origin);
+public readonly record struct ProjectileState2D(EntityId2D Id, Vector2f Position, Vector2f Velocity, Vector2f Origin);
 
-public readonly record struct WeaponState2D(bool IsCharging, float ChargeProgress, Vector2 MuzzlePosition, ImmutableArray<ProjectileState2D> Projectiles)
+public readonly record struct WeaponState2D(bool IsCharging, float ChargeProgress, Vector2f MuzzlePosition, ImmutableArray<ProjectileState2D> Projectiles)
 {
-    public static WeaponState2D Empty => new(false, 0f, Vector2.Zero, []);
+    public static WeaponState2D Empty => new(false, 0f, Vector2f.Zero, []);
 }
 
 // Facts carry their occurrence position, even when the source moves later in the tick.
-public abstract record WeaponEvent2D(Vector2 Position);
-public sealed record ChargeStarted2D(Vector2 Position) : WeaponEvent2D(Position);
-public sealed record ChargeCancelled2D(Vector2 Position, float Progress) : WeaponEvent2D(Position);
-public sealed record GunFired2D(Vector2 Position) : WeaponEvent2D(Position);
-public sealed record ProjectileImpact2D(Vector2 Position, EntityId2D ProjectileId) : WeaponEvent2D(Position);
-public sealed record SwordImpact2D(Vector2 Position) : WeaponEvent2D(Position);
-public sealed record HealStarted2D(Vector2 Position) : WeaponEvent2D(Position);
-public sealed record HealCancelled2D(Vector2 Position) : WeaponEvent2D(Position);
-public sealed record HealCompleted2D(Vector2 Position, int Amount) : WeaponEvent2D(Position);
+public abstract record WeaponEvent2D(Vector2f Position);
+public sealed record ChargeStarted2D(Vector2f Position) : WeaponEvent2D(Position);
+public sealed record ChargeCancelled2D(Vector2f Position, float Progress) : WeaponEvent2D(Position);
+public sealed record GunFired2D(Vector2f Position) : WeaponEvent2D(Position);
+public sealed record ProjectileImpact2D(Vector2f Position, EntityId2D ProjectileId) : WeaponEvent2D(Position);
+public sealed record SwordImpact2D(Vector2f Position) : WeaponEvent2D(Position);
+public sealed record HealStarted2D(Vector2f Position) : WeaponEvent2D(Position);
+public sealed record HealCancelled2D(Vector2f Position) : WeaponEvent2D(Position);
+public sealed record HealCompleted2D(Vector2f Position, int Amount) : WeaponEvent2D(Position);

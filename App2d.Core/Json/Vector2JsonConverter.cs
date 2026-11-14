@@ -1,31 +1,31 @@
-using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Json;
 
 /// <summary>
-/// Serializes a <see cref="Vector2"/> as X/Y coordinates, using the serializer's property naming and number policies.
+/// Serializes a <see cref="Vector2f"/> as X/Y coordinates, using the serializer's property naming and number policies.
 /// Register this converter in <see cref="JsonSerializerOptions.Converters"/> to use vectors in authored JSON directly.
 /// </summary>
-public sealed class Vector2JsonConverter : JsonConverter<Vector2>
+public sealed class Vector2JsonConverter : JsonConverter<Vector2f>
 {
-    public override Vector2 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override Vector2f Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
         {
             throw new JsonException("Expected an X/Y coordinate object.");
         }
 
-        var xName = options.PropertyNamingPolicy?.ConvertName(nameof(Vector2.X)) ?? nameof(Vector2.X);
-        var yName = options.PropertyNamingPolicy?.ConvertName(nameof(Vector2.Y)) ?? nameof(Vector2.Y);
+        var xName = options.PropertyNamingPolicy?.ConvertName(nameof(Vector2f.X)) ?? nameof(Vector2f.X);
+        var yName = options.PropertyNamingPolicy?.ConvertName(nameof(Vector2f.Y)) ?? nameof(Vector2f.Y);
         var comparison = options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-        var vector = Vector2.Zero;
+        var x = 0f;
+        var y = 0f;
         while (reader.Read())
         {
             if (reader.TokenType == JsonTokenType.EndObject)
             {
-                return vector;
+                return new(x, y);
             }
 
             if (reader.TokenType != JsonTokenType.PropertyName)
@@ -41,11 +41,11 @@ public sealed class Vector2JsonConverter : JsonConverter<Vector2>
 
             if (string.Equals(name, xName, comparison))
             {
-                vector.X = JsonSerializer.Deserialize<float>(ref reader, options);
+                x = JsonSerializer.Deserialize<float>(ref reader, options);
             }
             else if (string.Equals(name, yName, comparison))
             {
-                vector.Y = JsonSerializer.Deserialize<float>(ref reader, options);
+                y = JsonSerializer.Deserialize<float>(ref reader, options);
             }
             else if (options.UnmappedMemberHandling == JsonUnmappedMemberHandling.Disallow)
             {
@@ -59,12 +59,12 @@ public sealed class Vector2JsonConverter : JsonConverter<Vector2>
         throw new JsonException("Incomplete coordinate object.");
     }
 
-    public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, Vector2f value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
-        writer.WritePropertyName(options.PropertyNamingPolicy?.ConvertName(nameof(Vector2.X)) ?? nameof(Vector2.X));
+        writer.WritePropertyName(options.PropertyNamingPolicy?.ConvertName(nameof(Vector2f.X)) ?? nameof(Vector2f.X));
         JsonSerializer.Serialize(writer, value.X, options);
-        writer.WritePropertyName(options.PropertyNamingPolicy?.ConvertName(nameof(Vector2.Y)) ?? nameof(Vector2.Y));
+        writer.WritePropertyName(options.PropertyNamingPolicy?.ConvertName(nameof(Vector2f.Y)) ?? nameof(Vector2f.Y));
         JsonSerializer.Serialize(writer, value.Y, options);
         writer.WriteEndObject();
     }

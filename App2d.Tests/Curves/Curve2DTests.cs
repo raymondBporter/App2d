@@ -42,24 +42,24 @@ public sealed class Curve2DTests
     public void QuadraticBezierSamplesTheFaceArcIntoCallerStorage()
     {
         var curve = QuadraticBezier2D.Builder.Create(new(0f, 0f), new(1f, 2f), new(2f, 0f));
-        Span<Vector2> points = stackalloc Vector2[5];
+        Span<Vector2f> points = stackalloc Vector2f[5];
         Curve2D.Sample(curve, points);
 
         Assert.Equal(curve.Start, points[0]);
-        Assert.Equal(new Vector2(1f, 1f), points[2]);
+        Assert.Equal(new Vector2f(1f, 1f), points[2]);
         Assert.Equal(curve.End, points[^1]);
-        Assert.Equal(new Vector2(2f, 4f), curve.EvaluateDerivative(0f));
-        Assert.Equal(new Vector2(2f, -4f), curve.EvaluateDerivative(1f));
+        Assert.Equal(new Vector2f(2f, 4f), curve.EvaluateDerivative(0f));
+        Assert.Equal(new Vector2f(2f, -4f), curve.EvaluateDerivative(1f));
     }
 
     [Fact]
     public void CubicBezierPreservesEndpointsAndHasAnalyticDerivative()
     {
         var curve = CubicBezier2D.Builder.Create(
-            new Vector2(1f, 2f),
-            new Vector2(3f, 8f),
-            new Vector2(7f, 5f),
-            new Vector2(9f, -3f));
+            new Vector2f(1f, 2f),
+            new Vector2f(3f, 8f),
+            new Vector2f(7f, 5f),
+            new Vector2f(9f, -3f));
 
         Assert.Equal(curve.Start, curve.Evaluate(-1f));
         Assert.Equal(curve.End, curve.Evaluate(2f));
@@ -70,7 +70,7 @@ public sealed class Curve2DTests
     [Fact]
     public void ClampedBSplinePreservesEndpoints()
     {
-        Vector2[] controlPoints =
+        Vector2f[] controlPoints =
         [
             new(0f, 0f),
             new(20f, -10f),
@@ -89,23 +89,23 @@ public sealed class Curve2DTests
     public void LinearBSplineInterpolatesItsControlPolygon()
     {
         var curve = BSpline2D.Builder.Create(
-            [new Vector2(0f, 0f), new Vector2(10f, 10f), new Vector2(20f, 0f)],
+            [new Vector2f(0f, 0f), new Vector2f(10f, 10f), new Vector2f(20f, 0f)],
             degree: 1);
 
-        Assert.Equal(new Vector2(5f, 5f), curve.Evaluate(0.25f));
-        Assert.Equal(new Vector2(15f, 5f), curve.Evaluate(0.75f));
-        Assert.Equal(new Vector2(20f, 20f), curve.EvaluateDerivative(0.25f));
-        Assert.Equal(new Vector2(20f, -20f), curve.EvaluateDerivative(0.75f));
+        Assert.Equal(new Vector2f(5f, 5f), curve.Evaluate(0.25f));
+        Assert.Equal(new Vector2f(15f, 5f), curve.Evaluate(0.75f));
+        Assert.Equal(new Vector2f(20f, 20f), curve.EvaluateDerivative(0.25f));
+        Assert.Equal(new Vector2f(20f, -20f), curve.EvaluateDerivative(0.75f));
     }
 
     [Fact]
     public void GaussianNormalOffsetCreatesALocalBump()
     {
         var baseline = CubicBezier2D.Builder.Create(
-            new Vector2(0f, 0f),
-            new Vector2(3f, 0f),
-            new Vector2(7f, 0f),
-            new Vector2(10f, 0f));
+            new Vector2f(0f, 0f),
+            new Vector2f(3f, 0f),
+            new Vector2f(7f, 0f),
+            new Vector2f(10f, 0f));
         var bumped = new NormalOffsetCurve2D(
             baseline,
             amount => 4f * Curve2D.Gaussian(amount, center: 0.5f, sigma: 0.1f));
@@ -118,13 +118,13 @@ public sealed class Curve2DTests
     [Fact]
     public void CurveSamplingIncludesBothEndpoints()
     {
-        var curve = CubicBezier2D.Builder.Create(Vector2.Zero, Vector2.UnitX, new(2f, 0f), new(3f, 0f));
+        var curve = CubicBezier2D.Builder.Create(Vector2f.Zero, Vector2f.UnitX, new(2f, 0f), new(3f, 0f));
         var samples = Curve2D.Sample(curve, segmentCount: 3);
 
         Assert.Equal(4, samples.Length);
         Assert.Equal(curve.Start, samples[0]);
         Assert.Equal(curve.End, samples[^1]);
-        Assert.Equal(Vector2.UnitX, Curve2D.Tangent(curve, 0.5f));
-        Assert.Equal(Vector2.UnitY, Curve2D.Normal(curve, 0.5f));
+        Assert.Equal(Vector2f.UnitX, Curve2D.Tangent(curve, 0.5f));
+        Assert.Equal(Vector2f.UnitY, Curve2D.Normal(curve, 0.5f));
     }
 }

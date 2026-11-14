@@ -417,8 +417,8 @@ public static class ModelAuthoring
                 throw new InvalidOperationException("Cannot reparent a bone beneath a collapsed parent.");
             }
 
-            var parentScale = target is null ? 1 : Vector2.TransformNormal(Vector2.UnitX, frame).Length();
-            var ownScale = Vector2.TransformNormal(Vector2.UnitX, node.RestFrame).Length();
+            var parentScale = target is null ? 1 : Vector2f.TransformNormal(Vector2f.UnitX, frame).Length();
+            var ownScale = Vector2f.TransformNormal(Vector2f.UnitX, node.RestFrame).Length();
             var parentHand = target?.Handedness ?? 1;
             control.Link = null;
             control.Local = new RigSetup
@@ -592,7 +592,7 @@ public static class ModelAuthoring
             throw new InvalidDataException("A drawing path needs 2 to 64 distinct controls.");
         }
 
-        var points = Enumerable.Range(0, controls.Count).Select(i => new Vector2(0, i / (float)(controls.Count - 1)));
+        var points = Enumerable.Range(0, controls.Count).Select(i => new Vector2f(0, i / (float)(controls.Count - 1)));
         part.A = controls[0];
         part.B = controls[^1];
         part.Frame = null;
@@ -600,13 +600,13 @@ public static class ModelAuthoring
         part.Bindings = [.. controls.Select((id, i) => new PartPointBinding { Point = i, Control = id })];
     }
 
-    public static void SetCutout(PartGeometry part, IReadOnlyList<Vector2> points)
+    public static void SetCutout(PartGeometry part, IReadOnlyList<Vector2f> points)
     {
         CheckCutout(points);
         part.Geometry = new SimplePolygon2D { Vertices = [.. points] }.Validated();
     }
 
-    public static void CheckCutout(IReadOnlyList<Vector2>? points)
+    public static void CheckCutout(IReadOnlyList<Vector2f>? points)
     {
         if (points is not { Count: >= 3 and <= 64 })
         {
@@ -631,8 +631,8 @@ public static class ModelAuthoring
     /// <summary>Edits the perimeter and remaps attachments in the same transaction. New points inherit their preceding attachment.</summary>
     public static void InsertCutoutPoint(PartGeometry part, int after)
     {
-        var points = new List<Vector2>(PartContours2D.CutoutPoints(part));
-        points.Insert(after + 1, Vector2.Lerp(points[after], points[(after + 1) % points.Count], .5f));
+        var points = new List<Vector2f>(PartContours2D.CutoutPoints(part));
+        points.Insert(after + 1, Vector2f.Lerp(points[after], points[(after + 1) % points.Count], .5f));
         CheckCutout(points);
         var bindings = (part.Bindings ?? []).ConvertAll(b => b with { Point = b.Point > after ? b.Point + 1 : b.Point });
         if (part.Bindings?.FirstOrDefault(b => b.Point == after) is { } source)
@@ -649,7 +649,7 @@ public static class ModelAuthoring
 
     public static void RemoveCutoutPoint(PartGeometry part, int index)
     {
-        var points = new List<Vector2>(PartContours2D.CutoutPoints(part));
+        var points = new List<Vector2f>(PartContours2D.CutoutPoints(part));
         points.RemoveAt(index);
         CheckCutout(points);
         SetCutout(part, points);
@@ -762,7 +762,7 @@ public static class ModelAuthoring
             bone.Local = setup;
             // Point descendants are authored in the character frame, so they turn about the pivot explicitly; bone
             // descendants are parent-local and follow.
-            var about = new Vector2(node.Rest.X, node.Rest.Y);
+            var about = new Vector2f(node.Rest.X, node.Rest.Y);
             var turn = angle - node.RestAngle;
             foreach (var control in Subtree(model.Controls, id).Where(c => c.Id != id && c.Node == RigNodeKinds.Point))
             {
@@ -810,7 +810,7 @@ public static class ModelAuthoring
             return;
         }
         var resolved = ResolvedModel.Rig(model);
-        var delta = new Vector3(Vector2.TransformNormal(new(length - bone.Length, 0), resolved.RestTransforms[id]), 0);
+        var delta = new Vector3(Vector2f.TransformNormal(new(length - bone.Length, 0), resolved.RestTransforms[id]).ToVector2(), 0);
         bone.Length = length;
         foreach (var child in next)
         {
@@ -840,7 +840,7 @@ public static class ModelAuthoring
         var parent = node.Parent is null ? null : resolved.Nodes[node.Parent];
         var local = LocalTranslation(parent, new(position.X, position.Y));
         var changes = new List<PropertyOverride>();
-        void Move(string control, RigSetup setup, Vector2 translation, float layer)
+        void Move(string control, RigSetup setup, Vector2f translation, float layer)
         {
             if (translation.X != setup.X) changes.Add(PropertyOverride.Of(PropertyRef.OfControl(control, RigProperties.LocalX), translation.X));
             if (translation.Y != setup.Y) changes.Add(PropertyOverride.Of(PropertyRef.OfControl(control, RigProperties.LocalY), translation.Y));
@@ -854,8 +854,8 @@ public static class ModelAuthoring
             var moved = node with { Setup = node.Setup with { X = local.X, Y = local.Y, Layer = position.Z - (parent?.RestLayer ?? 0) } };
             var frame = parent is null ? LayeredFrame2D.Local(moved.Setup.ScaleVector, moved.Setup.Rotation, moved.Setup.Translation, 0).Frame.Matrix
                 : node.Kind == RigNodeKinds.Point
-                    ? Matrix3x2.CreateRotation(moved.RestAngle) * Matrix3x2.CreateTranslation(position.X, position.Y)
-                    : LayeredFrame2D.Local(moved.Setup.ScaleVector, moved.Setup.Rotation, moved.Setup.Translation, 0).Frame.Matrix * parent.RestFrame;
+                    ? Matrix3x2.CreateRotation(moved.RestAngle).Then(Matrix3x2.CreateTranslation(position.X, position.Y))
+                    : LayeredFrame2D.Local(moved.Setup.ScaleVector, moved.Setup.Rotation, moved.Setup.Translation, 0).Frame.Matrix.Then(parent.RestFrame);
             var movedNode = moved with { RestFrame = frame, RestLayer = position.Z };
             foreach (var child in resolved.Base.Controls.Where(c => c.Parent == id))
             {
@@ -873,7 +873,7 @@ public static class ModelAuthoring
     }
 
     /// <summary>A character-frame position in a parent node's local axes, by the compiler's rule for that parent kind.</summary>
-    private static Vector2 LocalTranslation(RigNode? parent, Vector2 position)
+    private static Vector2f LocalTranslation(RigNode? parent, Vector2f position)
     {
         if (parent is null)
         {
@@ -905,7 +905,7 @@ public static class ModelAuthoring
     /// Turns and resizes a variant's bone so its tip lands on a character-frame position: overrides <c>local.rotation</c>
     /// (when the direction changes) and <c>length</c>. Bound and unbound bone nodes alike; a point node is refused.
     /// </summary>
-    public static void MoveBoneTip(ResolvedModel resolved, ModelVariant variant, string id, Vector2 position)
+    public static void MoveBoneTip(ResolvedModel resolved, ModelVariant variant, string id, Vector2f position)
     {
         var node = resolved.Nodes.GetValueOrDefault(id) ?? throw new InvalidOperationException($"'{resolved.Id}' has no control '{id}'.");
         if (node.Kind != RigNodeKinds.Bone)
@@ -913,7 +913,7 @@ public static class ModelAuthoring
             throw new InvalidOperationException($"'{id}' is a {node.Kind} control; a variant can only drag a bone node's tip. Convert the run to a bone chain on the base model.");
         }
 
-        var origin = new Vector2(node.Rest.X, node.Rest.Y);
+        var origin = new Vector2f(node.Rest.X, node.Rest.Y);
         var delta = position - origin;
         if (delta.LengthSquared() < .0001f)
         {
@@ -924,7 +924,7 @@ public static class ModelAuthoring
         var angle = MathF.Atan2(delta.Y, delta.X);
         var rotation = node.CharacterOriented ? angle : (parent?.Handedness ?? 1) * (angle - (parent?.RestAngle ?? 0));
         // The frame's X axis carries the inherited uniform scale, so the tip lands exactly.
-        var unit = Vector2.TransformNormal(Vector2.UnitX, node.RestFrame).Length();
+        var unit = Vector2f.TransformNormal(Vector2f.UnitX, node.RestFrame).Length();
         Ensure.GreaterThan(unit, 1e-6f);
 
         var changes = new List<PropertyOverride>();
@@ -987,10 +987,10 @@ public static class ModelAuthoring
     }
 
     /// <summary>Turns and resizes a rest bone to put its tip at a model-space position.</summary>
-    public static void MoveBoneTip(CharacterModel model, string id, Vector2 position)
+    public static void MoveBoneTip(CharacterModel model, string id, Vector2f position)
     {
         var origin = ResolvedModel.Rig(model).Rest[id];
-        var delta = position - new Vector2(origin.X, origin.Y);
+        var delta = position - new Vector2f(origin.X, origin.Y);
         if (delta.LengthSquared() < .0001f)
         {
             return;
@@ -998,7 +998,7 @@ public static class ModelAuthoring
 
         RotateRestBone(model, id, MathF.Atan2(delta.Y, delta.X));
         // The frame's X axis carries the inherited uniform scale (and the point control's unit axes), so the tip lands exactly.
-        var unit = Vector2.TransformNormal(Vector2.UnitX, RigGraph.Compile(model)[id].RestFrame).Length();
+        var unit = Vector2f.TransformNormal(Vector2f.UnitX, RigGraph.Compile(model)[id].RestFrame).Length();
         if (unit > 1e-6f)
         {
             ResizeBone(model, id, delta.Length() / unit);

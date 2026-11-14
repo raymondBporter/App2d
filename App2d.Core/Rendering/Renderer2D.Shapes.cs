@@ -3,6 +3,7 @@ using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
@@ -25,7 +26,7 @@ public sealed partial class Renderer2D
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
         Ensure.Finite(localToWorld);
         var bounds = ShapeBounds2D.Calculate(shape);
-        var matrix = localToWorld * View.WorldToDeviceMatrix;
+        var matrix = View.LocalToDevice(localToWorld);
         DrawShapeCore(shape, matrix, bounds, fillColor, outlineColor, screenStrokeWidth);
     }
 
@@ -41,7 +42,7 @@ public sealed partial class Renderer2D
             return;
         }
 
-        var matrix = item.Transform.Matrix * View.WorldToDeviceMatrix;
+        var matrix = View.LocalToDevice(item.Transform.Matrix);
         DrawShapeCore(item.Shape, matrix, item.LocalBounds, fillColor, outlineColor, screenStrokeWidth);
     }
 
@@ -74,7 +75,7 @@ public sealed partial class Renderer2D
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
         Ensure.Finite(localToWorld);
         SelectBatch(null, null);
-        var matrix = localToWorld * View.WorldToDeviceMatrix;
+        var matrix = View.LocalToDevice(localToWorld);
         if (fillColor is { } fill)
         {
             DrawMeshCore(mesh, matrix, mesh.Bounds, new SolidColorShader(fill));
@@ -91,7 +92,7 @@ public sealed partial class Renderer2D
     }
 
     /// <summary>Draws a finite world-space segment with pixel-sized width and optional caps.</summary>
-    public void DrawWorldSegment(Vector2 start, Vector2 end, Color4b color,
+    public void DrawWorldSegment(Vector2f start, Vector2f end, Color4b color,
         float screenStrokeWidth = 2f, LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
@@ -104,12 +105,12 @@ public sealed partial class Renderer2D
     }
 
     /// <summary>Draws a segment with width specified in world units, scaling with camera zoom.</summary>
-    public void DrawWorldThickSegment(Vector2 start, Vector2 end, float worldWidth, Color4b color,
+    public void DrawWorldThickSegment(Vector2f start, Vector2f end, float worldWidth, Color4b color,
         LineCap2D cap = LineCap2D.Butt) =>
         DrawWorldThickSegment(start, end, worldWidth, worldWidth, color, cap, cap);
 
     /// <summary>Draws a tapered segment with start and end widths specified in world units, scaling with camera zoom.</summary>
-    public void DrawWorldThickSegment(Vector2 start, Vector2 end, float startWorldWidth, float endWorldWidth,
+    public void DrawWorldThickSegment(Vector2f start, Vector2f end, float startWorldWidth, float endWorldWidth,
         Color4b color, LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
     {
         RequireFrame();
@@ -136,7 +137,7 @@ public sealed partial class Renderer2D
 
         Ensure.Positive(screenStrokeWidth);
         var deviceLine = new Line2D(View.WorldToDevice(line.Origin),
-            Vector2.TransformNormal(line.Direction, View.WorldToDeviceMatrix));
+            View.WorldToDeviceTransform.TransformDirection(line.Direction));
         if (!deviceLine.TryClipToRectangle(PaddedDeviceBounds(screenStrokeWidth), out var start, out var end))
         {
             return;
@@ -161,7 +162,7 @@ public sealed partial class Renderer2D
         var deviceOrigin = View.WorldToDevice(ray.Origin);
         var bounds = PaddedDeviceBounds(screenStrokeWidth);
         var deviceRay = new Ray2D(deviceOrigin,
-            Vector2.TransformNormal(ray.Direction, View.WorldToDeviceMatrix));
+            View.WorldToDeviceTransform.TransformDirection(ray.Direction));
         if (!deviceRay.TryClipToRectangle(bounds, out var start, out var end))
         {
             return;
@@ -174,7 +175,7 @@ public sealed partial class Renderer2D
     private Rect2D PaddedDeviceBounds(float width)
     {
         var padding = width * 0.5f + 1f;
-        return new Rect2D(View.TargetBounds.Min - new Vector2(padding), View.TargetBounds.Max + new Vector2(padding));
+        return new Rect2D(View.TargetBounds.Min - new Vector2f(padding).ToVector2f(), View.TargetBounds.Max + new Vector2f(padding).ToVector2f());
     }
 
     private static void ValidateShapeStyle(Color4b? fillColor, Color4b? outlineColor, float width)

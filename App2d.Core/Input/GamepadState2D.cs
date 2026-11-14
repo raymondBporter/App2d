@@ -4,10 +4,10 @@ namespace App2d.Core.Input;
 
 /// <summary>One physical gamepad sample, with button edges since the previous simulation tick.</summary>
 public readonly record struct GamepadState2D(
-    Vector2 LeftStick, GamepadButton2D Down, GamepadButton2D Pressed, GamepadButton2D Released)
+    Vector2f LeftStick, GamepadButton2D Down, GamepadButton2D Pressed, GamepadButton2D Released)
 {
     public bool IsConnected { get; init; }
-    public Vector2 RightStick { get; init; }
+    public Vector2f RightStick { get; init; }
     public float LeftTrigger { get; init; }
     public float RightTrigger { get; init; }
 

@@ -13,11 +13,11 @@ public sealed class ProceduralTree2D
     private const float LeafWindResponse = 0.14f;
     private readonly List<Branch> _branches = [];
     private readonly List<Crown> _crowns = [];
-    private readonly Vector2 _root;
+    private readonly Vector2f _root;
     private readonly float _height;
     public Rect2D Bounds { get; }
 
-    public ProceduralTree2D(Vector2 root, float height, int seed)
+    public ProceduralTree2D(Vector2f root, float height, int seed)
     {
         Ensure.Finite(root);
         Ensure.Positive(height);
@@ -28,12 +28,12 @@ public sealed class ProceduralTree2D
     }
 
     /// <summary>A conservative draw bound for a tree of the given height.</summary>
-    public static Rect2D EstimateBounds(Vector2 root, float height) =>
-        new(root - new Vector2(height, 0f), root + new Vector2(height, height * 1.5f));
+    public static Rect2D EstimateBounds(Vector2f root, float height) =>
+        new(root - new Vector2f(height, 0f), root + new Vector2f(height, height * 1.5f));
 
     public static float MaximumSway(VegetationWind2D wind) => wind.MaximumOffset(LeafWindResponse);
 
-    private void Grow(Vector2 start, float angle, float length, float width, int depth, Random random)
+    private void Grow(Vector2f start, float angle, float length, float width, int depth, Random random)
     {
         var end = start + Polar2D.ToCartesian(length, angle);
         _branches.Add(new(start, end, width));
@@ -57,10 +57,10 @@ public sealed class ProceduralTree2D
 
     public void Render(Renderer2D renderer, VegetationWind2D wind)
     {
-        Span<Vector2> quad = stackalloc Vector2[4];
+        Span<Vector2f> quad = stackalloc Vector2f[4];
         foreach (var branch in _branches)
         {
-            var normal = Vector2.Normalize(new Vector2(-(branch.End - branch.Start).Y, (branch.End - branch.Start).X));
+            var normal = Vector2f.Normalize(new Vector2f(-(branch.End - branch.Start).Y, (branch.End - branch.Start).X));
             quad[0] = branch.Start - normal * branch.Width * 0.5f;
             quad[1] = branch.End - normal * branch.Width * 0.32f;
             quad[2] = branch.End + normal * branch.Width * 0.32f;
@@ -71,10 +71,10 @@ public sealed class ProceduralTree2D
             quad[1] = branch.End;
             renderer.DrawWorldConvexPolygon(quad, new Color4b(105, 87, 57));
         }
-        Span<Vector2> leaves = stackalloc Vector2[10];
+        Span<Vector2f> leaves = stackalloc Vector2f[10];
         foreach (var crown in _crowns)
         {
-            var center = crown.Center + new Vector2(wind.Offset(_root.X, 1f, crown.Phase, LeafWindResponse), 0f);
+            var center = crown.Center + new Vector2f(wind.Offset(_root.X, 1f, crown.Phase, LeafWindResponse), 0f);
             for (var i = 0; i < leaves.Length; i++)
             {
                 var angle = i * MathF.Tau / leaves.Length + crown.Phase;
@@ -84,6 +84,6 @@ public sealed class ProceduralTree2D
         }
     }
 
-    private readonly record struct Branch(Vector2 Start, Vector2 End, float Width);
-    private readonly record struct Crown(Vector2 Center, float Radius, float Phase, Color4b Color);
+    private readonly record struct Branch(Vector2f Start, Vector2f End, float Width);
+    private readonly record struct Crown(Vector2f Center, float Radius, float Phase, Color4b Color);
 }

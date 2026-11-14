@@ -2,6 +2,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Geometry.Serialization;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Tests.Curves;
@@ -15,10 +16,10 @@ public sealed class RoundedPolylineCurve2DTests
     public void FilletHasNoReverseTurnAndKeepsEndpointTangents(float softness)
     {
         var curve = RoundedPolylineCurve2D.Builder.Create([new(0, 0), new(1, 0), new(1, 1)], softness);
-        Assert.Equal(Vector2.Zero, curve.Evaluate(0));
-        Assert.Equal(Vector2.One, curve.Evaluate(1));
-        Assert.Equal(Vector2.UnitX, Curve2D.Tangent(curve, 0));
-        Assert.Equal(Vector2.UnitY, Curve2D.Tangent(curve, 1));
+        Assert.Equal(Vector2f.Zero, curve.Evaluate(0));
+        Assert.Equal(Vector2f.One, curve.Evaluate(1));
+        Assert.Equal(Vector2f.UnitX, Curve2D.Tangent(curve, 0));
+        Assert.Equal(Vector2f.UnitY, Curve2D.Tangent(curve, 1));
         var previous = 0f;
         foreach (var t in curve.SampleParameters(1000))
         {
@@ -32,8 +33,8 @@ public sealed class RoundedPolylineCurve2DTests
         }
         var enter = (1 - .48f * softness) / 2;
         var leave = (1 + .48f * softness) / 2;
-        Assert.InRange(Vector2.Distance(curve.EvaluateDerivative(enter - 1e-6f), curve.EvaluateDerivative(enter + 1e-6f)), 0, .002f);
-        Assert.InRange(Vector2.Distance(curve.EvaluateDerivative(leave - 1e-6f), curve.EvaluateDerivative(leave + 1e-6f)), 0, .002f);
+        Assert.InRange(Vector2f.Distance(curve.EvaluateDerivative(enter - 1e-6f), curve.EvaluateDerivative(enter + 1e-6f)), 0, .002f);
+        Assert.InRange(Vector2f.Distance(curve.EvaluateDerivative(leave - 1e-6f), curve.EvaluateDerivative(leave + 1e-6f)), 0, .002f);
     }
 
     [Fact]
@@ -54,7 +55,7 @@ public sealed class RoundedPolylineCurve2DTests
     [Fact]
     public void LongerTailCanIntentionallyTurnBothWaysAndRoundTripThroughGeometryJson()
     {
-        Vector2[] points = [new(0, 0), new(1, 0), new(1, 1), new(2, 1), new(2, 2)];
+        Vector2f[] points = [new(0, 0), new(1, 0), new(1, 1), new(2, 1), new(2, 2)];
         var original = RoundedPolylineCurve2D.Builder.Create(points, .8f);
         var restored = Assert.IsType<RoundedPolylineCurve2D>(GeometryJson2D.CurveFromJson(original.ToJson<ICurve2D>()));
         var curve = restored.Validated();
@@ -74,7 +75,7 @@ public sealed class RoundedPolylineCurve2DTests
     [Fact]
     public void CollapsedSpansStraightLinesAndFoldbacksStayFinite()
     {
-        foreach (var points in new Vector2[][]
+        foreach (var points in new Vector2f[][]
         {
             [new(0, 0), new(0, 0), new(0, 0)], [new(0, 0), new(0, 0), new(1, 0)],
             [new(0, 0), new(1, 0), new(0, 0)], [new(0, 0), new(1, 0), new(2, 0)]

@@ -105,7 +105,7 @@ public sealed class ShapeRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
-        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2.UnitY, 0), Color4b.Blue, Color4b.White);
+        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0), Color4b.Blue, Color4b.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
@@ -123,7 +123,7 @@ public sealed class ShapeRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
-        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2.UnitX, offset), Color4b.Blue, Color4b.White);
+        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2f.UnitX, offset), Color4b.Blue, Color4b.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
@@ -157,8 +157,8 @@ public sealed class ShapeRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
-        renderer.DrawWorldLine(new Line2D(Vector2.Zero, Vector2.UnitX), Color4b.Red, 2);
-        renderer.DrawWorldRay(new Ray2D(new(0, -20), Vector2.UnitX), Color4b.Blue, 2);
+        renderer.DrawWorldLine(new Line2D(Vector2f.Zero, Vector2f.UnitX), Color4b.Red, 2);
+        renderer.DrawWorldRay(new Ray2D(new(0, -20), Vector2f.UnitX), Color4b.Blue, 2);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
@@ -246,7 +246,7 @@ public sealed class ShapeRenderingTests
         using var renderer = new Renderer2D(new Camera2D { Zoom = zoom }, graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
-        renderer.DrawWorldThickCircle(Vector2.Zero, 20, Color4b.Red, 4);
+        renderer.DrawWorldThickCircle(Vector2f.Zero, 20, Color4b.Red, 4);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
@@ -283,10 +283,10 @@ public sealed class ShapeRenderingTests
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
-        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickSegment(Vector2.Zero, Vector2.UnitX, 0, Color4b.Red));
-        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickPolyline([Vector2.Zero, Vector2.UnitX], -1, Color4b.Red));
-        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickCircle(Vector2.Zero, 5, Color4b.Red, 0));
-        Assert.Throws<ArgumentException>(() => renderer.DrawWorldConvexPolygon([Vector2.Zero, Vector2.UnitX, Vector2.UnitY], null));
+        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickSegment(Vector2f.Zero, Vector2f.UnitX, 0, Color4b.Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickPolyline([Vector2f.Zero, Vector2f.UnitX], -1, Color4b.Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => renderer.DrawWorldThickCircle(Vector2f.Zero, 5, Color4b.Red, 0));
+        Assert.Throws<ArgumentException>(() => renderer.DrawWorldConvexPolygon([Vector2f.Zero, Vector2f.UnitX, Vector2f.UnitY], null));
         renderer.EndFrame();
     }
 }

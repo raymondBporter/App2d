@@ -21,8 +21,8 @@ public static class Vector3Extensions
         /// <summary>Converts each component from radians to degrees.</summary>
         public Vector3 RadiansToDegrees() => new(float.RadiansToDegrees(value.X), float.RadiansToDegrees(value.Y), float.RadiansToDegrees(value.Z));
 
-        public Vector2 XY => new(value.X, value.Y);
-        public Vector2 XZ => new(value.X, value.Z);
-        public Vector2 YZ => new(value.Y, value.Z);
+        public Vector2f XY => new(value.X, value.Y);
+        public Vector2f XZ => new(value.X, value.Z);
+        public Vector2f YZ => new(value.Y, value.Z);
     }
 }

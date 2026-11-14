@@ -14,8 +14,8 @@ public sealed class Vector2iTests
         Assert.Equal(new Vector2i(4, -6), cell - offset);
         Assert.Equal(new Vector2i(9, -6), 3 * cell);
         Assert.Equal(cell * 3, 3 * cell);
-        Assert.Equal(new Vector2(3, -2), cell.ToVector2());
-        Assert.Equal(new Vector2(100, -24), new Vector2(4, 40) + cell.ToVector2() * 32);
+        Assert.Equal(new Vector2f(3, -2), cell.ToVector2());
+        Assert.Equal(new Vector2f(100, -24), new Vector2f(4, 40) + cell.ToVector2() * 32);
     }
 
     [Fact]

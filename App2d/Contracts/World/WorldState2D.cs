@@ -13,14 +13,14 @@ public sealed record ObjectDefinition2D(EntityId2D Id, string PlacementId, Core.
 {
     public string TextureRoot { get; init; } = Part.TextureRoot;
 }
-public readonly record struct ObjectState2D(EntityId2D Id, Vector2 Position, float Rotation)
+public readonly record struct ObjectState2D(EntityId2D Id, Vector2f Position, float Rotation)
 {
-    public Vector2 LinearVelocity { get; init; }
+    public Vector2f LinearVelocity { get; init; }
     public float AngularVelocity { get; init; }
     public double Time { get; init; }
     public bool IsEnabled { get; init; } = true;
 }
-public readonly record struct CheckpointPlacement2D(long ThingId, Vector2 BasePosition);
+public readonly record struct CheckpointPlacement2D(long ThingId, Vector2f BasePosition);
 public readonly record struct CheckpointState2D(long ThingId, bool IsActive);
 
 /// <summary>
@@ -28,7 +28,7 @@ public readonly record struct CheckpointState2D(long ThingId, bool IsActive);
 /// object definitions, checkpoint placements, and the goal. Successive ticks share one
 /// instance; <see cref="Revision"/> lets a receiver skip content it already holds.
 /// </summary>
-public sealed record LevelContent2D(long Revision, ImmutableArray<TerrainChunkState2D> Terrain, ImmutableArray<CheckpointPlacement2D> Checkpoints, Vector2? GoalPosition)
+public sealed record LevelContent2D(long Revision, ImmutableArray<TerrainChunkState2D> Terrain, ImmutableArray<CheckpointPlacement2D> Checkpoints, Vector2f? GoalPosition)
 {
     public static LevelContent2D Empty { get; } = new(0, [], [], null);
     public ImmutableArray<ObjectDefinition2D> Objects { get; init; } = [];
@@ -61,16 +61,16 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
     public int Height { get; }
     public int ChunkSize { get; }
     public float TileSize { get; }
-    public Vector2 Origin { get; }
+    public Vector2f Origin { get; }
     public int ChunkColumns => (Width + ChunkSize - 1) / ChunkSize;
     public int ChunkRows => (Height + ChunkSize - 1) / ChunkSize;
-    public Rect2D WorldBounds => new(Origin, Origin + new Vector2(Width, Height) * TileSize);
+    public Rect2D WorldBounds => new(Origin, Origin + new Vector2f(Width, Height) * TileSize);
     public ImmutableArray<string> TilesetIds { get; }
     IReadOnlyList<string> IChunkedTileMap2D.TilesetIds => TilesetIds;
     public ImmutableArray<TileCollisionRectangle2D> Collisions { get; }
 
     public TerrainChunkState2D(TileChunk2D chunk, long revision, int width, int height,
-        int chunkSize, float tileSize, Vector2 origin, ImmutableArray<string> tilesetIds,
+        int chunkSize, float tileSize, Vector2f origin, ImmutableArray<string> tilesetIds,
         ImmutableArray<TileCollisionRectangle2D> collisions, ImmutableArray<byte> cells)
     {
         Ensure.Positive(width);
@@ -135,7 +135,7 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
     public TileKind2D GetTileKind(int x, int y) => GetCell(x, y).Kind;
     public byte GetTilesetIndex(int x, int y) => GetCell(x, y).TilesetIndex;
     public bool IsSolid(int x, int y) => GetTileKind(x, y).IsSolid();
-    public TileChunk2D WorldToChunk(Vector2 position) => new(
+    public TileChunk2D WorldToChunk(Vector2f position) => new(
         (int)MathF.Floor((position.X - Origin.X) / (TileSize * ChunkSize)),
         (int)MathF.Floor((position.Y - Origin.Y) / (TileSize * ChunkSize)));
     public IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(TileChunk2D chunk) =>

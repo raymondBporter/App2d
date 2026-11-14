@@ -34,7 +34,7 @@ public static class PartSeeds
             Groups = [new() { Id = "tip-group", Targets = ["tip"] }],
             Geometry =
             [
-                new() { Id = "stroke", A = "root", B = "tip", Geometry = LineSegmentCurve2D.Create(Vector2.Zero, Vector2.UnitY), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .03f, Fill = "#8c4d2c" } },
+                new() { Id = "stroke", A = "root", B = "tip", Geometry = LineSegmentCurve2D.Create(Vector2f.Zero, Vector2f.UnitY), Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .03f, Fill = "#8c4d2c" } },
                 new() { Id = "tuft", A = "tip", Frame = "tip", Geometry = Ellipse2D.Builder.Create(new(.05f, .05f)), Material = new() { Fill = "#8c4d2c", Outline = RenderOutlineDefinition2D.Ink } },
             ],
             Exposed = ["tip", "tuft"],

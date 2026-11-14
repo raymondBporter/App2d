@@ -5,6 +5,7 @@ using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
@@ -31,8 +32,8 @@ public sealed class AttachedColliderSyncTests
         {
             var expected = attached.Definition.Place(enemy.Pose, Scale);
             var actual = attached.Region.Pose;
-            Assert.True(Vector2.Distance(expected.Translation, actual.Translation) < 1e-3f, $"{attached.Id} sits at {actual.Translation}, the pose places it at {expected.Translation}");
-            Assert.True(Vector2.Distance(expected.XAxis, actual.XAxis) < 1e-4f, $"{attached.Id} axis");
+            Assert.True(Vector2f.Distance(expected.Translation, actual.Translation) < 1e-3f, $"{attached.Id} sits at {actual.Translation}, the pose places it at {expected.Translation}");
+            Assert.True(Vector2f.Distance(expected.XAxis, actual.XAxis) < 1e-4f, $"{attached.Id} axis");
         }
     }
 
@@ -78,7 +79,7 @@ public sealed class AttachedColliderSyncTests
     [Fact]
     public void CombatFindsRegisteredHurtThroughTheBroadPhaseAndDamagesATargetOnce()
     {
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var entity = Compile(ColliderAttachmentTests.GuardWithHurtColliders());
         var enemy = new AuthoredEntityEnemy2D(EntityId2D.Create(), entity, physics, new(0, 40), 1, 4);
         enemy.SetSimulationEnabled(true);
@@ -108,8 +109,8 @@ public sealed class AttachedColliderSyncTests
         Assert.True(combat.ResolveAttack(hit, player.Id, 7, CombatFaction2D.Player, 4, 1, _ => new(100, 0)));
         Assert.Equal(health - 1, enemy.Health.Current);
         var contact = Assert.Single(facts).Contact!.Value.Position;
-        Assert.Contains(hurtBounds, bounds => contact == (Vector2.Max(bounds.Min, hit.WorldBounds.Min)
-            + Vector2.Min(bounds.Max, hit.WorldBounds.Max)) / 2);
+        Assert.Contains(hurtBounds, bounds => contact == (Vector2f.Max(bounds.Min, hit.WorldBounds.Min)
+            + Vector2f.Min(bounds.Max, hit.WorldBounds.Max)) / 2);
         Assert.False(combat.ResolveAttack(hit, player.Id, 7, CombatFaction2D.Player, 4, 1, _ => new(100, 0)));
         Assert.Single(facts);
         // The damage tick re-synchronized the colliders onto the reaction pose; a lethal hit disables the hurt geometry.
@@ -132,6 +133,6 @@ public sealed class AttachedColliderSyncTests
         probe.Transform.Position = new(top.Center.X, top.Max.Y - 2);
         Assert.False(probe.WorldBounds.Intersects(alive.WorldObject.WorldBounds), "the probe is above the movement body");
         Assert.True(physics.CollisionSystem.Overlap(probe, overlaps, 4) > 0);
-        Assert.True(combat.ResolveAttack(probe, player.Id, 10, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero));
+        Assert.True(combat.ResolveAttack(probe, player.Id, 10, CombatFaction2D.Player, 4, 1, _ => Vector2f.Zero));
     }
 }

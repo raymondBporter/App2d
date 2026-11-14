@@ -9,7 +9,7 @@ namespace App2d.Core.Characters.Authored;
 /// repositioned by. Drawing, picking, contours and editor handles read the nested pose through <see cref="World"/>,
 /// <see cref="Frame"/>, <see cref="Rest"/> and <see cref="RestFrame"/>, which carry it into the wearer's frame.
 /// </summary>
-public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, EvaluatedPose Pose, LayeredFrame2D Placement, string? Expression, bool Hidden, Vector2 LayoutFit)
+public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, EvaluatedPose Pose, LayeredFrame2D Placement, string? Expression, bool Hidden, Vector2f LayoutFit)
 {
     public string Id => Attachment.Id;
     public ResolvedModel Rig => Attachment.Rig!;
@@ -22,14 +22,14 @@ public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, Evaluate
     public LayeredFrame2D Frame(string control)
     {
         var local = Pose.Placement(control);
-        return (LayoutFit == Vector2.One ? local : local.WithOrigin(Fitted(local.Origin))).Then(Placement);
+        return (LayoutFit == Vector2f.One ? local : local.WithOrigin(Fitted(local.Origin))).Then(Placement);
     }
 
     public Vector3 Rest(string control) => Placement.At(Fitted(Rig.Rest[control]));
     public LayeredFrame2D RestFrame(string control)
     {
         var local = Rig.RestPlacement(control);
-        return (LayoutFit == Vector2.One ? local : local.WithOrigin(Fitted(local.Origin))).Then(Placement);
+        return (LayoutFit == Vector2f.One ? local : local.WithOrigin(Fitted(local.Origin))).Then(Placement);
     }
 
     /// <summary>The pieces drawn for this instance: fitted and visible per the nested pose.</summary>

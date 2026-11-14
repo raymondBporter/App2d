@@ -4,7 +4,7 @@ namespace App2d.Core.Characters.Authored;
 
 /// <summary>
 /// One compiled rig node: the parent-local similarity setup every control resolves to, its dimension, link and joint limits,
-/// and its derived rest frame in the character frame. The evaluator composes <c>nodeInCharacter = nodeLocal * parentInCharacter</c>
+/// and its derived rest frame in the character frame. The evaluator composes <c>nodeLocal.Then(parentInCharacter)</c>
 /// from these; positions, directions and angles are read from the result.
 /// </summary>
 public sealed record RigNode(
@@ -20,7 +20,7 @@ public sealed record RigNode(
     int Handedness,
     RigLimit? Limit = null)
 {
-    public Vector2 ScaleVector => Setup.ScaleVector;
+    public Vector2f ScaleVector => Setup.ScaleVector;
     public float Rotation => Setup.Rotation;
     /// <summary>The parent-local setup layer; RestLayer is the accumulated layer in the character frame.</summary>
     public float Layer => Setup.Layer;
@@ -28,5 +28,5 @@ public sealed record RigNode(
     /// <summary>Compatibility view packing the rest XY origin and drawing layer. No physical Z is stored here.</summary>
     public Vector3 Rest => new(RestFrame.M31, RestFrame.M32, RestLayer);
     /// <summary>The setup origin in the parent's local axes, before animation: the link's bound position or the setup translation.</summary>
-    public Vector2 Origin(float parentLength) => Link is { } link ? link.Origin(parentLength) : Setup.Translation;
+    public Vector2f Origin(float parentLength) => Link is { } link ? link.Origin(parentLength) : Setup.Translation;
 }

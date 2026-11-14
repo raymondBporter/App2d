@@ -17,7 +17,7 @@ internal sealed class GunBoltTrail2D : IDisposable
     private readonly WorldObject2D _visual;
     private readonly SpriteShader2D _shader;
     private readonly Texture2D[] _fadeTextures;
-    private Vector2 _origin;
+    private Vector2f _origin;
     private float _direction;
     private float _maximumLength;
     private float _fadeRemaining;
@@ -37,7 +37,7 @@ internal sealed class GunBoltTrail2D : IDisposable
 
     public bool IsVisible => _visual.IsVisible;
 
-    public void Begin(Vector2 muzzle, float direction, float speed)
+    public void Begin(Vector2f muzzle, float direction, float speed)
     {
         Reset();
         _origin = muzzle;
@@ -47,13 +47,13 @@ internal sealed class GunBoltTrail2D : IDisposable
         _shader.Texture = _fadeTextures[0];
     }
 
-    public void Follow(Vector2 head)
+    public void Follow(Vector2f head)
     {
         // Grow only over distance actually traveled: never draw back through the gun.
         var length = Math.Clamp((head.X - _origin.X) * _direction, 0f, _maximumLength);
         _visual.IsVisible = length > 0.01f;
-        _visual.Transform.Position = head - new Vector2(_direction * length * 0.5f, 0f);
-        _visual.Transform.Scale = new Vector2(Math.Max(0.001f, length), 1f);
+        _visual.Transform.Position = head - new Vector2f(_direction * length * 0.5f, 0f);
+        _visual.Transform.Scale = new Vector2f(Math.Max(0.001f, length), 1f);
         _fadeRemaining = FadeSeconds;
     }
 

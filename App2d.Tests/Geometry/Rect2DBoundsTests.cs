@@ -4,6 +4,7 @@ using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
@@ -16,18 +17,18 @@ public sealed class Rect2DBoundsTests
     [Fact]
     public void EnumerableBoundsReadProjectedPointsOnceAndUniformInflationExpandsEverySide()
     {
-        Vector2[] points = [new(3, 4), new(-2, 7), new(5, -1)];
+        Vector2f[] points = [new(3, 4), new(-2, 7), new(5, -1)];
         var visits = 0;
         var bounds = Rect2D.FromPoints(points.Select(point => { visits++; return point; })).InflatedBy(.5f);
         Assert.Equal(points.Length, visits);
         Assert.Equal(new Rect2D(new(-2.5f, -1.5f), new(5.5f, 7.5f)), bounds);
-        Assert.Throws<ArgumentException>(() => Rect2D.FromPoints(Enumerable.Empty<Vector2>()));
+        Assert.Throws<ArgumentException>(() => Rect2D.FromPoints(Enumerable.Empty<Vector2f>()));
     }
 
     [Fact]
     public void ProjectedBoundsAcceptExplicitStateWithoutAllocatingTemporaryPoints()
     {
-        IReadOnlyList<Vector2> points = [new(3, 4), new(-2, 7), new(5, -1)];
+        IReadOnlyList<Vector2f> points = [new(3, 4), new(-2, 7), new(5, -1)];
         var pose = Frame2D.FromRotation(.7f, new(5, 2));
         var expected = Rect2D.FromPoints(points.Select(pose.TransformPoint));
         Rect2D Measure() => Rect2D.FromPoints(points, pose, static (point, frame) => frame.TransformPoint(point));
@@ -58,7 +59,7 @@ public sealed class Rect2DBoundsTests
     [Fact]
     public void PointBoundsAndUnionHandleDifferentExtremaAndSinglePoints()
     {
-        Vector2[] points = [new(3, 4), new(-2, 7), new(5, -1)];
+        Vector2f[] points = [new(3, 4), new(-2, 7), new(5, -1)];
         var bounds = Rect2D.FromPoints(points);
         Assert.Equal(new Rect2D(new(-2, -1), new(5, 7)), bounds);
         Assert.Equal(new Rect2D(new(3, 4), new(3, 4)), Rect2D.FromPoints(points.AsSpan(0, 1)));
@@ -122,12 +123,12 @@ public sealed class Rect2DBoundsTests
     public void NonrotatingTransformsAgreeWithAllFourTransformedCorners(float xScale, float yScale)
     {
         var local = new Rect2D(new(-2, -1), new(4, 3));
-        var scale = new Vector2(xScale, yScale);
-        var translation = new Vector2(10, -5);
-        var matrix = Matrix3x2.CreateScale(scale) * Matrix3x2.CreateTranslation(translation);
+        var scale = new Vector2f(xScale, yScale);
+        var translation = new Vector2f(10, -5);
+        var matrix = Matrix3x2.CreateScale(scale.ToVector2()) * Matrix3x2.CreateTranslation(translation.ToVector2());
         var expected = CornerBounds(local, matrix);
         Near(expected, local.TransformedBy(matrix));
-        if (scale == Vector2.One)
+        if (scale == Vector2f.One)
         {
             Near(expected, local.TranslatedBy(translation));
         }
@@ -163,14 +164,14 @@ public sealed class Rect2DBoundsTests
         for (var i = 0; i < 64; i++)
         {
             var point = VertexGenerator2D.PointOnEllipse(circle.Center, new(circle.Radius), i * MathF.Tau / 64);
-            Assert.InRange(world.DistanceTo(Vector2.Transform(point, item.Transform.Matrix)), 0, .00001f);
+            Assert.InRange(world.DistanceTo(Vector2f.Transform(point, item.Transform.Matrix)), 0, .00001f);
         }
     }
 
     [Fact]
     public void AxisAlignedHalfSpacesRetainTheirBoundaryThroughTranslationAndScale()
     {
-        var item = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2.UnitY, 0));
+        var item = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0));
         var local = new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity, 0));
         Assert.Equal(local, item.LocalBounds);
         Assert.Equal(local, item.WorldBounds);
@@ -195,16 +196,16 @@ public sealed class Rect2DBoundsTests
 
     private static Rect2D CornerBounds(Rect2D bounds, Matrix3x2 matrix)
     {
-        Vector2[] corners = [bounds.Min, new(bounds.Max.X, bounds.Min.Y), bounds.Max, new(bounds.Min.X, bounds.Max.Y)];
-        var transformed = corners.Select(point => Vector2.Transform(point, matrix)).ToArray();
+        Vector2f[] corners = [bounds.Min, new(bounds.Max.X, bounds.Min.Y), bounds.Max, new(bounds.Min.X, bounds.Max.Y)];
+        var transformed = corners.Select(point => Vector2f.Transform(point, matrix)).ToArray();
         return new(new(transformed.Min(p => p.X), transformed.Min(p => p.Y)),
             new(transformed.Max(p => p.X), transformed.Max(p => p.Y)));
     }
 
     private static void Near(Rect2D expected, Rect2D actual)
     {
-        Assert.True(Vector2.Distance(expected.Min, actual.Min) < .00001f, $"Min: expected {expected.Min}, got {actual.Min}.");
-        Assert.True(Vector2.Distance(expected.Max, actual.Max) < .00001f, $"Max: expected {expected.Max}, got {actual.Max}.");
+        Assert.True(Vector2f.Distance(expected.Min, actual.Min) < .00001f, $"Min: expected {expected.Min}, got {actual.Min}.");
+        Assert.True(Vector2f.Distance(expected.Max, actual.Max) < .00001f, $"Max: expected {expected.Max}, got {actual.Max}.");
     }
 
     private sealed class CountedConvex : IConvexShape2D
@@ -212,8 +213,8 @@ public sealed class Rect2DBoundsTests
         public string GetKind() => "counted-convex";
         public int SupportCalls { get; private set; }
         public float Area => 24;
-        public bool ContainsPoint(Vector2 point) => Containment2D.Rectangle(point, new(-2, -1), new(4, 3));
-        public Vector2 GetSupportPoint(Vector2 direction)
+        public bool ContainsPoint(Vector2f point) => Containment2D.Rectangle(point, new(-2, -1), new(4, 3));
+        public Vector2f GetSupportPoint(Vector2f direction)
         {
             SupportCalls++;
             return SupportPoint2D.Rectangle(direction, new(-2, -1), new(4, 3));
@@ -224,6 +225,6 @@ public sealed class Rect2DBoundsTests
     {
         public string GetKind() => "unknown";
         public float Area => 0;
-        public bool ContainsPoint(Vector2 point) => false;
+        public bool ContainsPoint(Vector2f point) => false;
     }
 }

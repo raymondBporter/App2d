@@ -83,7 +83,7 @@ public sealed class ShapeIntersectionArea2DTests
         var a = Ellipse2D.Builder.Create(new(2, 1), default, .3f);
         var b = Ellipse2D.Builder.Create(new(1.5f, .75f), new(1.5f, .5f), -.8f);
         var expected = ShapeArea2D.Intersection(a, b);
-        var offset = new Vector2(1 << 20, -(1 << 20));
+        var offset = new Vector2f(1 << 20, -(1 << 20));
         Assert.Equal(expected, ShapeArea2D.Intersection(Ellipse2D.Builder.Create(a.Radii, offset, .3f), Ellipse2D.Builder.Create(b.Radii, b.Center + offset, -.8f)), 5);
         Assert.Equal(expected, ShapeArea2D.Intersection(Rotated(a, 1.1f), Rotated(b, 1.1f)), 5);
         foreach (var scale in new[] { 1e-8f, 1e8f })
@@ -143,7 +143,7 @@ public sealed class ShapeIntersectionArea2DTests
 
     private static IConvexShape2D RandomShape(Random random, int kind)
     {
-        var center = new Vector2((float)random.NextDouble() * 2 - 1, (float)random.NextDouble() * 2 - 1);
+        var center = new Vector2f((float)random.NextDouble() * 2 - 1, (float)random.NextDouble() * 2 - 1);
         var turn = (float)random.NextDouble() * MathF.Tau;
         return kind switch
         {

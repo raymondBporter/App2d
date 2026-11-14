@@ -10,20 +10,20 @@ public sealed class WorldTileMapTests
     public void AdjacentMapsShareTerrainHalosCollisionAndCatalogs()
     {
         var left = new EditableTileMap2D(3, 4, 32, 2, new(-96, 0), ["grass"]);
-        var right = new EditableTileMap2D(3, 4, 32, 2, Vector2.Zero, ["stone"]);
+        var right = new EditableTileMap2D(3, 4, 32, 2, Vector2f.Zero, ["stone"]);
         left.SetTileKind(2, 0, TileKind2D.Solid);
         right.SetTileKind(0, 0, TileKind2D.Solid);
         using var world = new WorldTileMap2D([left, right]);
         Assert.Equal(6, world.Width);
-        Assert.Equal(new Vector2(-96, 0), world.Origin);
+        Assert.Equal(new Vector2f(-96, 0), world.Origin);
         Assert.Equal((byte)0, world.GetTilesetIndex(2, 0));
         Assert.Equal((byte)1, world.GetTilesetIndex(3, 0));
         var snapshot = TerrainChunkState2D.Capture(world, new(1, 0), 1);
         Assert.True(snapshot.IsSolid(2, 0));
         Assert.True(snapshot.IsSolid(3, 0));
         var collision = Assert.Single(snapshot.Collisions);
-        Assert.Equal(new Vector2(-32, 0), collision.Bounds.Min);
-        Assert.Equal(new Vector2(32, 32), collision.Bounds.Max);
+        Assert.Equal(new Vector2f(-32, 0), collision.Bounds.Min);
+        Assert.Equal(new Vector2f(32, 32), collision.Bounds.Max);
         var dirty = new HashSet<TileChunk2D>();
         world.ChunkChanged += c => dirty.Add(c);
         right.SetTileKind(0, 0, TileKind2D.Empty);

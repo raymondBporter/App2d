@@ -28,7 +28,7 @@ public sealed class PersonLadderTests
         var collision = new CollisionSystem2D();
         _physics = new PhysicsWorld2D(collision)
         {
-            Gravity = new Vector2(0f, -_metrics.Gravity),
+            Gravity = new Vector2f(0f, -_metrics.Gravity),
             MaxSubstepSeconds = Dt,
             PositionIterations = 3,
             VelocityIterations = 2
@@ -39,9 +39,9 @@ public sealed class PersonLadderTests
         }
 
         _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
-            new Vector2(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
+            new Vector2f(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
             2u, 1u, CombatFaction2D.Player, tileMap: _map);
-        AddSolid(new Vector2(256f, 16f), new Vector2(512f, 32f));
+        AddSolid(new Vector2f(256f, 16f), new Vector2f(512f, 32f));
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class PersonLadderTests
     public void UpJustOutsideLadderGentlyCentersFromEitherSide(float offset, float facing)
     {
         _person.Face(facing);
-        _person.WorldObject.Transform.Position += new Vector2(
+        _person.WorldObject.Transform.Position += new Vector2f(
             144f + offset - _person.WorldObject.WorldBounds.Center.X, 0f);
         var initialY = _person.Position.Y;
 
@@ -97,7 +97,7 @@ public sealed class PersonLadderTests
     [InlineData(25f)]
     public void UpBeyondSmallGrabGraceDoesNotPullPlayer(float offset)
     {
-        _person.WorldObject.Transform.Position += new Vector2(offset, 0f);
+        _person.WorldObject.Transform.Position += new Vector2f(offset, 0f);
         var initialX = _person.Position.X;
 
         Step(climb: 1f, frames: 30);
@@ -109,7 +109,7 @@ public sealed class PersonLadderTests
     [Fact]
     public void StandingWithinGrabGraceWithoutClimbInputDoesNotPullPlayer()
     {
-        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+        _person.WorldObject.Transform.Position += new Vector2f(22f, 0f);
         var initialX = _person.Position.X;
 
         Step(frames: 30);
@@ -121,9 +121,9 @@ public sealed class PersonLadderTests
     [Fact]
     public void AlignmentCannotPullPlayerThroughSolidWall()
     {
-        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+        _person.WorldObject.Transform.Position += new Vector2f(22f, 0f);
         var wallRight = _person.WorldObject.WorldBounds.Left - 0.5f;
-        AddSolid(new Vector2(wallRight - 1f, 160f), new Vector2(2f, 256f));
+        AddSolid(new Vector2f(wallRight - 1f, 160f), new Vector2f(2f, 256f));
 
         Step(climb: 1f, frames: 30);
 
@@ -140,7 +140,7 @@ public sealed class PersonLadderTests
             _map.SetTileKind(5, y, TileKind2D.Ladder);
         }
 
-        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+        _person.WorldObject.Transform.Position += new Vector2f(22f, 0f);
 
         Step(climb: 1f, frames: 30);
 
@@ -232,7 +232,7 @@ public sealed class PersonLadderTests
     [Fact]
     public void CeilingBlocksClimbing()
     {
-        AddSolid(new Vector2(144f, 300f), new Vector2(96f, 32f));
+        AddSolid(new Vector2f(144f, 300f), new Vector2f(96f, 32f));
         Step(climb: 1f, frames: 240);
         Assert.True(_person.WorldObject.WorldBounds.Top <= 284.1f);
     }
@@ -251,8 +251,8 @@ public sealed class PersonLadderTests
     [InlineData(1)] // The ladder continues below the floor.
     public void DescendingOntoOneWayFloorStopsAndStands(int firstLadderRow)
     {
-        var platform = AddSolid(new Vector2(144f, 208f), new Vector2(96f, 32f));
-        PlatformCollisionRules2D.Attach(_physics).Surface(platform).OneWaySurfaceNormal = Vector2.UnitY;
+        var platform = AddSolid(new Vector2f(144f, 208f), new Vector2f(96f, 32f));
+        PlatformCollisionRules2D.Attach(_physics).Surface(platform).OneWaySurfaceNormal = Vector2f.UnitY;
         Step(climb: 1f, frames: 200);
         Assert.True(_person.IsClimbingLadder);
         Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);
@@ -337,7 +337,7 @@ public sealed class PersonLadderTests
     public void DamageReleasesLadderAndPreservesKnockback()
     {
         Step(climb: 1f, frames: 60);
-        Assert.True(_person.TakeDamage(1, new Vector2(220f, 170f)));
+        Assert.True(_person.TakeDamage(1, new Vector2f(220f, 170f)));
         Step(climb: 1f);
         Assert.False(_person.IsClimbingLadder);
         Assert.True(_person.Body.LinearVelocity.X > 0f);
@@ -352,7 +352,7 @@ public sealed class PersonLadderTests
         Assert.False(_person.IsClimbingLadder);
         Assert.Equal(1f, _person.Body.GravityScale);
         Step(climb: 1f, frames: 60);
-        Assert.True(_person.TakeDamage(5, Vector2.Zero));
+        Assert.True(_person.TakeDamage(5, Vector2f.Zero));
         Assert.False(_person.IsClimbingLadder);
         Assert.Equal(1f, _person.Body.GravityScale);
     }
@@ -376,7 +376,7 @@ public sealed class PersonLadderTests
         }
     }
 
-    private RigidBody2D AddSolid(Vector2 center, Vector2 size)
+    private RigidBody2D AddSolid(Vector2f center, Vector2f size)
     {
         var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size));
         spatial.Transform.Position = center;

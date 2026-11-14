@@ -13,14 +13,14 @@ public sealed class RigidTransform2DTests
         var parent = new RigidTransform2D(new(-5, 7), -.9f);
         var composed = local.Then(parent);
         Assert.Equal(local.Rotation + parent.Rotation, composed.Rotation);
-        foreach (var point in new[] { Vector2.Zero, Vector2.UnitX, Vector2.UnitY, new Vector2(3, -4) })
+        foreach (var point in new[] { Vector2f.Zero, Vector2f.UnitX, Vector2f.UnitY, new Vector2f(3, -4) })
         {
-            var expected = Vector2.Transform(point, local.Matrix * parent.Matrix);
-            Assert.InRange(Vector2.Distance(expected, composed.TransformPoint(point)), 0, 2e-5f);
-            Assert.InRange(Vector2.Distance(point, composed.Inverse().TransformPoint(composed.TransformPoint(point))), 0, 2e-5f);
+            var expected = Vector2f.Transform(point, local.Matrix * parent.Matrix);
+            Assert.InRange(Vector2f.Distance(expected, composed.TransformPoint(point)), 0, 2e-5f);
+            Assert.InRange(Vector2f.Distance(point, composed.Inverse().TransformPoint(composed.TransformPoint(point))), 0, 2e-5f);
             Assert.Equal(point, default(RigidTransform2D).TransformPoint(point));
         }
-        Assert.Equal(local.TransformDirection(Vector2.UnitX), (local with { Translation = new(20, 30) }).TransformDirection(Vector2.UnitX));
+        Assert.Equal(local.TransformDirection(Vector2f.UnitX), (local with { Translation = new(20, 30) }).TransformDirection(Vector2f.UnitX));
     }
 
     [Fact]

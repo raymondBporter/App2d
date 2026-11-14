@@ -15,7 +15,7 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D<SoundEffect2D> sounds
     private SoundEffectVoice2D _healVoice;
     private bool _healing;
     private float _pulse, _cancel, _clock;
-    private Vector2 _pulsePosition;
+    private Vector2f _pulsePosition;
 
     public void Apply(PersonState2D state, IEnumerable<WeaponEvent2D> events)
     {
@@ -32,7 +32,7 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D<SoundEffect2D> sounds
                 case HealCompleted2D completed:
                     StopHeal();
                     _pulse = .4f;
-                    _pulsePosition = completed.Position + new Vector2(0, 8);
+                    _pulsePosition = completed.Position + new Vector2f(0, 8);
                     sounds.PlayAt(SoundEffect2D.HealComplete, completed.Position);
                     break;
                 case HealCancelled2D cancelled:
@@ -54,7 +54,7 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D<SoundEffect2D> sounds
         _healVoice.SetPosition(Center);
     }
 
-    private Vector2 Center => _state.Position + new Vector2(_state.Facing * 7, 8);
+    private Vector2f Center => _state.Position + new Vector2f(_state.Facing * 7, 8);
 
     public void Advance(float dt)
     {
@@ -83,7 +83,7 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D<SoundEffect2D> sounds
             for (var i = 0; i < 6; i++)
             {
                 var angle = _clock * 4 + i * MathF.Tau / 6;
-                var offset = Vector2.FromPolar(radius, angle);
+                var offset = Vector2f.FromPolar(radius, angle);
                 renderer.DrawWorldCircle(Center + offset, 1.5f, new Color4b(179, 245, 255), 2f);
             }
         }

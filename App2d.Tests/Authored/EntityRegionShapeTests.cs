@@ -15,9 +15,9 @@ public sealed class EntityRegionShapeTests
     [Fact]
     public void CircleOverlapUsesTheExactRadiusInsteadOfItsDrawnOutlineOrBounds()
     {
-        var circle = EntityRegion.Circle("round", Vector2.Zero, 1);
-        Assert.False(circle.Overlaps(EntityRegion.Box("corner", new(.9f, .9f), new(.2f)), Vector2.Zero, Vector2.Zero));
-        Assert.True(circle.Overlaps(EntityRegion.Box("touch", new(1.1f, 0), new(.2f)), Vector2.Zero, Vector2.Zero));
+        var circle = EntityRegion.Circle("round", Vector2f.Zero, 1);
+        Assert.False(circle.Overlaps(EntityRegion.Box("corner", new(.9f, .9f), new(.2f)), Vector2f.Zero, Vector2f.Zero));
+        Assert.True(circle.Overlaps(EntityRegion.Box("touch", new(1.1f, 0), new(.2f)), Vector2f.Zero, Vector2f.Zero));
         Assert.IsType<Circle2D>(circle.Shape);
     }
 
@@ -26,17 +26,17 @@ public sealed class EntityRegionShapeTests
     {
         var horizontal = EntityRegion.Capsule("horizontal", new(-1, 0), new(1, 0), .25f);
         var vertical = EntityRegion.Capsule("vertical", new(0, -1), new(0, 1), .25f);
-        Assert.True(horizontal.Overlaps(vertical, Vector2.Zero, Vector2.Zero));
-        Assert.True(horizontal.Overlaps(horizontal, Vector2.Zero, new(0, .5f)));
-        Assert.False(horizontal.Overlaps(horizontal, Vector2.Zero, new(0, .51f)));
+        Assert.True(horizontal.Overlaps(vertical, Vector2f.Zero, Vector2f.Zero));
+        Assert.True(horizontal.Overlaps(horizontal, Vector2f.Zero, new(0, .5f)));
+        Assert.False(horizontal.Overlaps(horizontal, Vector2f.Zero, new(0, .51f)));
         Assert.IsType<Capsule2D>(horizontal.Scaled(40).Shape);
-        Assert.True(horizontal.Scaled(40).Overlaps(vertical.Scaled(40), Vector2.Zero, Vector2.Zero));
+        Assert.True(horizontal.Scaled(40).Overlaps(vertical.Scaled(40), Vector2f.Zero, Vector2f.Zero));
     }
 
     [Fact]
     public void RegionTestsTheActualPhysicsShapeInsteadOfItsBoundingBox()
     {
-        var region = EntityRegion.Box("attack", Vector2.Zero, new(2));
+        var region = EntityRegion.Box("attack", Vector2f.Zero, new(2));
         var target = new SpatialObject2D(Circle2D.Builder.Create(.1f));
         target.Transform.Position = new(1.1f, 1.1f);
         Assert.True(region.Shape is Rectangle2D);
@@ -87,10 +87,10 @@ public sealed class EntityRegionShapeTests
         var capsule = Assert.IsType<Capsule2D>(region.Shape);
         var frame = hit.Collider.Anchor(pose);
         var worldAxis = region.Pose.TransformPoint(capsule.End) - region.Pose.TransformPoint(capsule.Start);
-        Assert.True(Vector2.Dot(worldAxis, frame.XAxis.XY) > 0);
+        Assert.True(Vector2f.Dot(worldAxis, frame.XAxis.XY) > 0);
         Assert.Equal(.6f, worldAxis.Length(), 3);
         Assert.Equal(.1f, capsule.Radius, 3);
-        Assert.True(Vector2.Dot(region.Pose.YAxis, frame.YAxis.XY) >= 0, "the frame keeps its across direction when the actor is mirrored");
+        Assert.True(Vector2f.Dot(region.Pose.YAxis, frame.YAxis.XY) >= 0, "the frame keeps its across direction when the actor is mirrored");
     }
 
     [Fact]
@@ -105,14 +105,14 @@ public sealed class EntityRegionShapeTests
         Assert.Equal(.5f, Assert.IsType<Circle2D>(circle.Shape).Radius);
         Assert.Equal(new Rect2D(new(1, 1), new(3, 3)), circle.Bounds);
         Assert.Equal(24, circle.Outline().Length);
-        Assert.Equal(26, EntityRegion.Capsule("reach", default, Vector2.UnitX, .1f).Outline().Length);
+        Assert.Equal(26, EntityRegion.Capsule("reach", default, Vector2f.UnitX, .1f).Outline().Length);
         Assert.Throws<ArgumentOutOfRangeException>(() => EntityRegion.Box("flat", default, new(1, 0)));
     }
 
     [Fact]
     public void PlacedRegionsRotateMirrorAndScaleThroughTheirPose()
     {
-        var region = new EntityRegion("r", Rectangle2D.Builder.CreateFromSize(2, 1), Similarity2D.FromAxis(new(5, 5), Vector2.UnitY));
+        var region = new EntityRegion("r", Rectangle2D.Builder.CreateFromSize(2, 1), Similarity2D.FromAxis(new(5, 5), Vector2f.UnitY));
         Assert.Equal(new Rect2D(new(4.5f, 4), new(5.5f, 6)), region.Bounds);
         var probe = new SpatialObject2D(Circle2D.Builder.Create(.05f));
         probe.Transform.Position = new(5, 5.9f);
@@ -121,10 +121,10 @@ public sealed class EntityRegionShapeTests
         Assert.False(region.Overlaps(probe));
         Assert.True(region.Overlaps(EntityRegion.Box("other", new(5, 6.2f), new(1, .5f))));
         var placed = region.ToSpatialObject().WorldBounds;
-        Assert.True(Vector2.Distance(placed.Min, region.Bounds.Min) < 1e-4f && Vector2.Distance(placed.Max, region.Bounds.Max) < 1e-4f);
+        Assert.True(Vector2f.Distance(placed.Min, region.Bounds.Min) < 1e-4f && Vector2f.Distance(placed.Max, region.Bounds.Max) < 1e-4f);
         Assert.Equal(new Rect2D(new(9, 8), new(11, 12)), region.Scaled(2).Bounds);
         Assert.All(region.Outline(), point => Assert.True(region.Bounds.InflatedBy(1e-4f, 1e-4f).Contains(point)));
-        var mirrored = new EntityRegion("m", Capsule2D.Builder.Create(new(0, 0), new(1, 0), .1f), Similarity2D.FromAxis(Vector2.Zero, new(-1, 0), mirror: true));
-        Assert.Equal(new Vector2(-1, .5f), mirrored.Pose.TransformPoint(new(1, .5f)));
+        var mirrored = new EntityRegion("m", Capsule2D.Builder.Create(new(0, 0), new(1, 0), .1f), Similarity2D.FromAxis(Vector2f.Zero, new(-1, 0), mirror: true));
+        Assert.Equal(new Vector2f(-1, .5f), mirrored.Pose.TransformPoint(new(1, .5f)));
     }
 }

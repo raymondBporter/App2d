@@ -30,10 +30,10 @@ internal static class PartPainting
             if (triangles is null)
             {
                 var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
-                var points = patch.Points.ConvertAll(p => frame.Frame.TransformPoint(bounds.Center + p * new Vector2(bounds.Width, bounds.Height)));
+                var points = patch.Points.ConvertAll(p => frame.Frame.TransformPoint(bounds.Center + new Vector2f(p.X * bounds.Width, p.Y * bounds.Height)));
                 var outline = contour.Select(p => p.XY).ToArray();
                 var clipped = PolygonClipping2D.ClipConvex(points, outline);
-                var points3D = new LayeredContour([.. clipped.Select(p => PlaceSpatial(new Vector3(p, 0)))], frame.Layer - bias);
+                var points3D = new LayeredContour([.. clipped.Select(p => PlaceSpatial(new Vector3(p.ToVector2(), 0)))], frame.Layer - bias);
                 mesh.Polygon(points3D, color, null, 0);
                 continue;
             }
@@ -43,7 +43,7 @@ internal static class PartPainting
                 var b = triangles.Vertices[ib];
                 var c = triangles.Vertices[ic];
                 var clipped = PolygonClipping2D.ClipConvex(patch.Points, [a, b, c]);
-                (Vector3 Position, float Layer) Place(Vector2 localPoint)
+                (Vector3 Position, float Layer) Place(Vector2f localPoint)
                 {
                     var w = TriangleMath2D.Barycentric(a, b, c, localPoint);
                     var point = contour[ia] * w.X + contour[ib] * w.Y + contour[ic] * w.Z;

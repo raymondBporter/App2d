@@ -89,7 +89,7 @@ public sealed class VegetationPatch2D
                 var offset = (index - (count - 1) * 0.5f) * style.BladeWidth * 0.9f;
                 var light = index % 2 == 0;
                 blades.Add(new(
-                    new Vector2(position + offset, groundY),
+                    new Vector2f(position + offset, groundY),
                     height * (light ? 1f : 0.7f),
                     style.BladeWidth,
                     offset * 0.6f,
@@ -103,7 +103,7 @@ public sealed class VegetationPatch2D
             if (density > 0.6f && random.NextSingle() < style.FlowerChance)
             {
                 var flowerX = position + style.BladeWidth * random.NextFloat(-0.5f, 0.5f) * 2f;
-                flowers.Add(new(new Vector2(flowerX, groundY),
+                flowers.Add(new(new Vector2f(flowerX, groundY),
                     float.Lerp(style.MaximumHeight * 1.05f, style.TallHeight * 1.1f, random.NextSingle()),
                     random.NextFloat(MathF.Tau),
                     FlowerColors[random.Next(FlowerColors.Length)]));
@@ -125,7 +125,7 @@ public sealed class VegetationPatch2D
         for (var index = 0; index < count; index++)
         {
             var offset = (index - (count - 1) * 0.5f) * style.BladeWidth * 0.8f;
-            blades.Add(new(new Vector2(x + offset, groundY), height * (index % 2 == 0 ? 1f : 0.75f),
+            blades.Add(new(new Vector2f(x + offset, groundY), height * (index % 2 == 0 ? 1f : 0.75f),
                 style.BladeWidth * 0.8f, offset * 0.8f, phase + index * 0.4f, 0.2f,
                 Shade(index % 2 == 0 ? style.LightColor : style.DarkColor, VegetationLayer2D.Back),
                 VegetationLayer2D.Back, Uncuttable: true));
@@ -204,8 +204,8 @@ public sealed class VegetationPatch2D
             }
         }
 
-        Span<Vector2> quad = stackalloc Vector2[4];
-        Span<Vector2> outline = stackalloc Vector2[SegmentCount * 2 + 3];
+        Span<Vector2f> quad = stackalloc Vector2f[4];
+        Span<Vector2f> outline = stackalloc Vector2f[SegmentCount * 2 + 3];
         foreach (var blade in _blades)
         {
             if (blade.Layer != layer || !IsVisible(blade.Root.X, blade.Height, visibleLeft, visibleRight))
@@ -309,7 +309,7 @@ public sealed class VegetationPatch2D
     private void RenderFlower(Renderer2D renderer, Flower flower, VegetationWind2D wind)
     {
         var scale = _style.BladeWidth / 4.5f;
-        Span<Vector2> stem = stackalloc Vector2[SegmentCount + 1];
+        Span<Vector2f> stem = stackalloc Vector2f[SegmentCount + 1];
         for (var index = 0; index <= SegmentCount; index++)
         {
             stem[index] = FlowerPoint(flower, index / (float)SegmentCount, wind);
@@ -321,8 +321,8 @@ public sealed class VegetationPatch2D
         var leafRoot = FlowerPoint(flower, 0.35f, wind);
         var leaf = new Blade(leafRoot, 8f * scale, 4f * scale, 6f * scale, flower.Phase, 0.3f, _style.LightColor,
             VegetationLayer2D.Back);
-        Span<Vector2> quad = stackalloc Vector2[4];
-        Span<Vector2> outline = stackalloc Vector2[5];
+        Span<Vector2f> quad = stackalloc Vector2f[4];
+        Span<Vector2f> outline = stackalloc Vector2f[5];
         for (var index = 0; index < 2; index++)
         {
             var section = Section(leaf, index * 0.5f, (index + 1) * 0.5f, wind, 1f, leaf.Color);
@@ -348,7 +348,7 @@ public sealed class VegetationPatch2D
         FillDisc(renderer, head, 3f * scale, FlowerCenterColor);
     }
 
-    private void FillDisc(Renderer2D renderer, Vector2 center, float radius, Color4b color)
+    private void FillDisc(Renderer2D renderer, Vector2f center, float radius, Color4b color)
     {
         var disc = Disc(center, radius, color);
         renderer.DrawWorldConvexPolygon(disc.Points, disc.Fill);
@@ -358,9 +358,9 @@ public sealed class VegetationPatch2D
     /// <summary>An ink width scaled to this patch's blade size, in world units.</summary>
     private float Ink(float width) => width * _style.BladeWidth / 4.5f;
 
-    private static VegetationTipPolygon2D Disc(Vector2 center, float radius, Color4b color)
+    private static VegetationTipPolygon2D Disc(Vector2f center, float radius, Color4b color)
     {
-        var points = new Vector2[10];
+        var points = new Vector2f[10];
         for (var index = 0; index < points.Length; index++)
         {
             points[index] = center + Polar2D.ToCartesian(radius, index / (float)points.Length * MathF.Tau);
@@ -376,10 +376,10 @@ public sealed class VegetationPatch2D
     private static bool IsSevered(Flower flower, float? cutHeight) =>
         cutHeight is { } cut && cut < flower.Height * 0.85f;
 
-    private static Vector2 FlowerHead(Flower flower, VegetationWind2D wind) => FlowerPoint(flower, 1f, wind);
+    private static Vector2f FlowerHead(Flower flower, VegetationWind2D wind) => FlowerPoint(flower, 1f, wind);
 
-    private static Vector2 FlowerPoint(Flower flower, float weight, VegetationWind2D wind) =>
-        flower.Root + new Vector2(wind.Offset(flower.Root.X, weight, flower.Phase, 0.6f), flower.Height * weight);
+    private static Vector2f FlowerPoint(Flower flower, float weight, VegetationWind2D wind) =>
+        flower.Root + new Vector2f(wind.Offset(flower.Root.X, weight, flower.Phase, 0.6f), flower.Height * weight);
 
     /// <summary>
     /// Share of the blade left standing after a cut. Roughness zero cuts every blade exactly at the line;
@@ -394,27 +394,27 @@ public sealed class VegetationPatch2D
     {
         var bottom = Center(blade, from, wind);
         var top = Center(blade, to, wind);
-        var bottomRadius = new Vector2(HalfWidth(blade, from) * widthScale, 0f);
-        var topRadius = new Vector2(HalfWidth(blade, to) * widthScale, 0f);
+        var bottomRadius = new Vector2f(HalfWidth(blade, from) * widthScale, 0f);
+        var topRadius = new Vector2f(HalfWidth(blade, to) * widthScale, 0f);
         return new(bottom - bottomRadius, top - topRadius, top + topRadius, bottom + bottomRadius, color);
     }
 
-    private static Vector2 Edge(Blade blade, float weight, VegetationWind2D wind, float side) =>
-        Center(blade, weight, wind) + new Vector2(side * HalfWidth(blade, weight), 0f);
+    private static Vector2f Edge(Blade blade, float weight, VegetationWind2D wind, float side) =>
+        Center(blade, weight, wind) + new Vector2f(side * HalfWidth(blade, weight), 0f);
 
     private static float HalfWidth(Blade blade, float weight) => blade.Width * 0.5f * (1f - 0.92f * weight);
 
-    private static Vector2 Center(Blade blade, float weight, VegetationWind2D wind) =>
-        blade.Root + new Vector2(blade.Lean * weight * weight +
+    private static Vector2f Center(Blade blade, float weight, VegetationWind2D wind) =>
+        blade.Root + new Vector2f(blade.Lean * weight * weight +
             wind.Offset(blade.Root.X, weight, blade.Phase, blade.WindResponse), blade.Height * weight);
 
     private static Color4b Shade(Color4b color, VegetationLayer2D layer) =>
         layer == VegetationLayer2D.Back ? Color4b.Lerp(color, Color4b.Black, 0.08f) : color;
 
-    private readonly record struct Section2D(Vector2 A, Vector2 B, Vector2 C, Vector2 D, Color4b Color);
+    private readonly record struct Section2D(Vector2f A, Vector2f B, Vector2f C, Vector2f D, Color4b Color);
 
     private readonly record struct Blade(
-        Vector2 Root,
+        Vector2f Root,
         float Height,
         float Width,
         float Lean,
@@ -426,7 +426,7 @@ public sealed class VegetationPatch2D
         float GrazedKeep = 0f,
         bool Uncuttable = false);
 
-    private readonly record struct Flower(Vector2 Root, float Height, float Phase, Color4b Color);
+    private readonly record struct Flower(Vector2f Root, float Height, float Phase, Color4b Color);
 }
 
 /// <summary>

@@ -33,7 +33,7 @@ public static class SpatialDistance2D
     /// <param name="worldPoint">The query point in world space.</param>
     /// <param name="shape">The placed object.</param>
     /// <returns>Negative inside, zero on the boundary, positive outside.</returns>
-    public static float SignedDistance(Vector2 worldPoint, SpatialObject2D shape)
+    public static float SignedDistance(Vector2f worldPoint, SpatialObject2D shape)
     {
         Ensure.ThrowIfNull(shape);
         var pose = shape.CollisionPose;
@@ -44,7 +44,7 @@ public static class SpatialDistance2D
     /// <param name="worldPoint">The query point in world space.</param>
     /// <param name="shape">The placed object.</param>
     /// <returns>The nonnegative distance.</returns>
-    public static float Distance(Vector2 worldPoint, SpatialObject2D shape)
+    public static float Distance(Vector2f worldPoint, SpatialObject2D shape)
     {
         Ensure.ThrowIfNull(shape);
         var pose = shape.CollisionPose;
@@ -55,12 +55,12 @@ public static class SpatialDistance2D
     /// <param name="shape">The placed object.</param>
     /// <param name="worldPoint">The query point in world space.</param>
     /// <returns>Negative inside, zero on the boundary, positive outside.</returns>
-    public static float SignedDistance(SpatialObject2D shape, Vector2 worldPoint) => SignedDistance(worldPoint, shape);
+    public static float SignedDistance(SpatialObject2D shape, Vector2f worldPoint) => SignedDistance(worldPoint, shape);
 
     /// <summary>World-unit distance from a placed filled object to a world point; argument order does not matter.</summary>
     /// <param name="shape">The placed object.</param>
     /// <param name="worldPoint">The query point in world space.</param>
     /// <returns>The nonnegative distance.</returns>
-    public static float Distance(SpatialObject2D shape, Vector2 worldPoint) => Distance(worldPoint, shape);
+    public static float Distance(SpatialObject2D shape, Vector2f worldPoint) => Distance(worldPoint, shape);
 
 }

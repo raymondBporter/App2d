@@ -119,7 +119,7 @@ public sealed class ProgressMapTests
         Assert.Equal(11.5625f, Interpolation.Lerp(10, 20, .25, Easing.Smooth));
         var overshoot = new ProgressMap(_ => 1.2d, _ => 0d);
         Assert.True(Interpolation.Lerp(0, 10, .7, overshoot) > 10);
-        var vector = Interpolation.Lerp(Vector2.Zero, new(10, -4), .7, overshoot);
+        var vector = Interpolation.Lerp(Vector2f.Zero, new(10, -4), .7, overshoot);
         Assert.True(vector.X > 10);
         Assert.True(vector.Y < -4);
     }

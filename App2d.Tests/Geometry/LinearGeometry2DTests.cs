@@ -18,10 +18,10 @@ public sealed class LinearGeometry2DTests
         var ray = Ray2D.FromPoints(new(2, 3), new(5, 7));
         Assert.True(line.IsValid);
         Assert.True(ray.IsValid);
-        Assert.Equal(new Vector2(.6f, .8f), line.Direction);
+        Assert.Equal(new Vector2f(.6f, .8f), line.Direction);
         Assert.Equal(line.Direction, ray.Direction);
-        Assert.Equal(new Vector2(-1, -1), line.PointAt(-5));
-        Assert.Equal(new Vector2(5, 7), ray.PointAt(5));
+        Assert.Equal(new Vector2f(-1, -1), line.PointAt(-5));
+        Assert.Equal(new Vector2f(5, 7), ray.PointAt(5));
         Assert.True(line.ContainsPoint(line.PointAt(-5)));
         Assert.False(ray.ContainsPoint(line.PointAt(-5)));
         Assert.Throws<ArgumentOutOfRangeException>(() => ray.PointAt(-1));
@@ -31,14 +31,14 @@ public sealed class LinearGeometry2DTests
     [Fact]
     public void FromPointsHandlesVeryDistantOriginsWithoutOverflowingTheDirection()
     {
-        var from = new Vector2(float.MaxValue, 0);
-        var to = new Vector2(-float.MaxValue, 0);
+        var from = new Vector2f(float.MaxValue, 0);
+        var to = new Vector2f(-float.MaxValue, 0);
         var line = Line2D.FromPoints(from, to);
         var ray = Ray2D.FromPoints(from, to);
-        Assert.Equal(-Vector2.UnitX, line.Direction);
+        Assert.Equal(-Vector2f.UnitX, line.Direction);
         Assert.Equal(line.Direction, ray.Direction);
-        Assert.Equal(Vector2.Zero, line.PointAt(float.MaxValue));
-        Assert.Equal(Vector2.Zero, ray.PointAt(float.MaxValue));
+        Assert.Equal(Vector2f.Zero, line.PointAt(float.MaxValue));
+        Assert.Equal(Vector2f.Zero, ray.PointAt(float.MaxValue));
     }
 
     [Fact]
@@ -70,19 +70,19 @@ public sealed class LinearGeometry2DTests
         Assert.Equal(1 / MathF.Sqrt(2), ray.Direction.X, 6);
         Assert.Equal(ray.Direction.X, ray.Direction.Y);
         Assert.Equal(ray.Direction, line.Direction);
-        Assert.Equal(new Vector2(2, 2), ClosestPoint2D.OnLine(new(1, 3), default, new(scale, scale)));
+        Assert.Equal(new Vector2f(2, 2), ClosestPoint2D.OnLine(new(1, 3), default, new(scale, scale)));
         Assert.Equal(MathF.Sqrt(2), Distance2D.DistanceToLine(new(1, 3), default, new(scale, scale)), 5);
     }
 
     [Fact]
     public void PointQueriesClampAtRayOriginAndAcceptRawNonUnitDirections()
     {
-        var origin = new Vector2(1, 2);
-        var direction = new Vector2(4, 0);
-        var point = new Vector2(-2, 6);
+        var origin = new Vector2f(1, 2);
+        var direction = new Vector2f(4, 0);
+        var point = new Vector2f(-2, 6);
         var line = new Line2D(origin, direction);
         var ray = new Ray2D(origin, direction);
-        Assert.Equal(new Vector2(-2, 2), line.ClosestPoint(point));
+        Assert.Equal(new Vector2f(-2, 2), line.ClosestPoint(point));
         Assert.Equal(origin, ray.ClosestPoint(point));
         Assert.Equal(line.ClosestPoint(point), ClosestPoint2D.OnLine(point, origin, direction));
         Assert.Equal(ray.ClosestPoint(point), ClosestPoint2D.OnRay(point, origin, direction));
@@ -96,11 +96,11 @@ public sealed class LinearGeometry2DTests
     [Fact]
     public void GeometryContractIncludesShapesLinesAndRaysWithExplicitPointTolerance()
     {
-        IGeometry2D[] geometries = [Circle2D.Builder.Create(2), new Line2D(default, Vector2.UnitX), new Ray2D(default, Vector2.UnitX)];
-        Assert.All(geometries, geometry => Assert.True(geometry.ContainsPoint(Vector2.UnitX)));
-        Assert.All(geometries, geometry => Assert.False(geometry.ContainsPoint(new(3, 1))));
-        var line = new Line2D(default, Vector2.UnitX);
-        var ray = new Ray2D(default, Vector2.UnitX);
+        IGeometry2D[] geometries = [Circle2D.Builder.Create(2), new Line2D(default, Vector2f.UnitX), new Ray2D(default, Vector2f.UnitX)];
+        Assert.All(geometries, geometry => Assert.True(geometry.ContainsPoint(Vector2f.UnitX)));
+        Assert.All(geometries, geometry => Assert.False(geometry.ContainsPoint(new Vector2f(3, 1))));
+        var line = new Line2D(default, Vector2f.UnitX);
+        var ray = new Ray2D(default, Vector2f.UnitX);
         Assert.True(line.ContainsPoint(new(100, .000001f)));
         Assert.False(line.ContainsPoint(new(100, .000001f), tolerance: 0));
         Assert.True(ray.ContainsPoint(new(-.000001f, 0)));
@@ -114,15 +114,15 @@ public sealed class LinearGeometry2DTests
     [Fact]
     public void LineIntersectionsHandleCrossingParallelAndCoincidentLines()
     {
-        var horizontal = new Line2D(default, Vector2.UnitX);
-        Assert.True(horizontal.Intersects(new Line2D(new(-5, 10), Vector2.UnitY)));
-        Assert.False(horizontal.Intersects(new Line2D(Vector2.UnitY, Vector2.UnitX)));
-        Assert.True(horizontal.Intersects(new Line2D(new(5, 0), -Vector2.UnitX)));
-        var away = new Ray2D(new(-5, 1), Vector2.UnitY);
+        var horizontal = new Line2D(default, Vector2f.UnitX);
+        Assert.True(horizontal.Intersects(new Line2D(new(-5, 10), Vector2f.UnitY)));
+        Assert.False(horizontal.Intersects(new Line2D(Vector2f.UnitY, Vector2f.UnitX)));
+        Assert.True(horizontal.Intersects(new Line2D(new(5, 0), -Vector2f.UnitX)));
+        var away = new Ray2D(new(-5, 1), Vector2f.UnitY);
         Assert.False(horizontal.Intersects(away));
         Assert.False(away.Intersects(horizontal));
-        Assert.True(horizontal.Intersects(new Ray2D(new(-5, 1), -Vector2.UnitY)));
-        Assert.True(horizontal.Intersects(new Ray2D(new(-5, 0), -Vector2.UnitX)));
+        Assert.True(horizontal.Intersects(new Ray2D(new(-5, 1), -Vector2f.UnitY)));
+        Assert.True(horizontal.Intersects(new Ray2D(new(-5, 0), -Vector2f.UnitX)));
     }
 
     [Theory]
@@ -139,7 +139,7 @@ public sealed class LinearGeometry2DTests
     [InlineData(0, 1, 1, 0, false)]
     public void RayIntersectionsRespectBothForwardDirections(float x, float y, float dx, float dy, bool expected)
     {
-        var first = new Ray2D(default, Vector2.UnitX);
+        var first = new Ray2D(default, Vector2f.UnitX);
         var second = new Ray2D(new(x, y), new(dx, dy));
         Assert.Equal(expected, first.Intersects(second));
         Assert.Equal(expected, second.Intersects(first));
@@ -148,12 +148,12 @@ public sealed class LinearGeometry2DTests
     [Fact]
     public void NearlyParallelRaysStillFindDistantCrossings()
     {
-        var horizontal = new Ray2D(default, Vector2.UnitX);
-        Assert.True(horizontal.Intersects(new Ray2D(Vector2.UnitY, new(1, -1e-8f))));
-        Assert.False(horizontal.Intersects(new Ray2D(Vector2.UnitY, new(1, 1e-8f))));
+        var horizontal = new Ray2D(default, Vector2f.UnitX);
+        Assert.True(horizontal.Intersects(new Ray2D(Vector2f.UnitY, new(1, -1e-8f))));
+        Assert.False(horizontal.Intersects(new Ray2D(Vector2f.UnitY, new(1, 1e-8f))));
         // Opposite extreme origins must not overflow their difference before intersection math.
-        Assert.True(new Ray2D(new(-float.MaxValue, 0), Vector2.UnitX)
-            .Intersects(new Ray2D(new(float.MaxValue, -1), Vector2.UnitY)));
+        Assert.True(new Ray2D(new(-float.MaxValue, 0), Vector2f.UnitX)
+            .Intersects(new Ray2D(new(float.MaxValue, -1), Vector2f.UnitY)));
     }
 
     [Fact]
@@ -162,18 +162,18 @@ public sealed class LinearGeometry2DTests
         Assert.False(default(Line2D).IsValid);
         Assert.False(default(Ray2D).IsValid);
         Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, default));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ray2D.FromPoints(Vector2.One, Vector2.One));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Line2D.FromPoints(Vector2.One, Vector2.One));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Ray2D(new(float.NaN, 0), Vector2.UnitX));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Ray2D.FromPoints(Vector2f.One, Vector2f.One));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Line2D.FromPoints(Vector2f.One, Vector2f.One));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Ray2D(new(float.NaN, 0), Vector2f.UnitX));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, new(float.PositiveInfinity, 1)));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Ray2D).PointAt(0));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).ClosestPoint(default));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Ray2D).ContainsPoint(default));
-        Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).Intersects(new Line2D(default, Vector2.UnitX)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).Intersects(new Line2D(default, Vector2f.UnitX)));
         Assert.Throws<ArgumentOutOfRangeException>(() => SpatialRaycast2D.IntersectsBounds(default, Rect2D.Unbounded, 10));
         Assert.Throws<ArgumentOutOfRangeException>(() => Array.Empty<SpatialObject2D>().Raycast(default, 10, out _));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, Vector2.UnitX).PointAt(float.NaN));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Ray2D(default, Vector2.UnitX).DistanceTo(new(float.NaN, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, Vector2f.UnitX).PointAt(float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Ray2D(default, Vector2f.UnitX).DistanceTo(new(float.NaN, 0)));
     }
 
     [Fact]
@@ -181,15 +181,15 @@ public sealed class LinearGeometry2DTests
     {
         var horizontal = Line2D.Horizontal(3);
         var vertical = Line2D.Vertical(-2);
-        Assert.Equal(Vector2.UnitX, horizontal.Direction);
-        Assert.Equal(Vector2.UnitY, vertical.Direction);
+        Assert.Equal(Vector2f.UnitX, horizontal.Direction);
+        Assert.Equal(Vector2f.UnitY, vertical.Direction);
         Assert.True(horizontal.ContainsPoint(new(1000, 3), tolerance: 0));
         Assert.False(horizontal.ContainsPoint(new(1000, 3.5f)));
         Assert.True(vertical.ContainsPoint(new(-2, -1000), tolerance: 0));
         Assert.Equal(4, horizontal.DistanceTo(new(7, 7)));
         Assert.Equal(9, vertical.DistanceTo(new(7, 7)));
-        Assert.Equal(new Vector2(7, 3), horizontal.ClosestPoint(new(7, 7)));
-        Assert.Equal(new Vector2(-2, 7), vertical.ClosestPoint(new(7, 7)));
+        Assert.Equal(new Vector2f(7, 3), horizontal.ClosestPoint(new(7, 7)));
+        Assert.Equal(new Vector2f(-2, 7), vertical.ClosestPoint(new(7, 7)));
         Assert.True(horizontal.Intersects(vertical));
         Assert.False(horizontal.Intersects(Line2D.Horizontal(4)));
         Assert.Equal(1, horizontal.WhichSide(new(0, 2)));

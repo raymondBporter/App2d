@@ -11,7 +11,7 @@ namespace App2d.Core.Geometry.Operations.Vertices;
 public static class ShapeVertices2D
 {
     /// <summary>Samples a placed outline into the caller's buffer without allocating or registering a spatial object.</summary>
-    public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Similarity2D pose, Span<Vector2> vertices, int roundSegments = 32, int cornerSegments = 8)
+    public static ReadOnlySpan<Vector2f> GetOutlineVerts(this IShape2D shape, Similarity2D pose, Span<Vector2f> vertices, int roundSegments = 32, int cornerSegments = 8)
     {
         var outline = shape.GetOutlineVerts(vertices, roundSegments, cornerSegments);
         for (var i = 0; i < outline.Length; i++)
@@ -22,9 +22,9 @@ public static class ShapeVertices2D
     }
 
     /// <summary>Allocates a drawable outline of a placed shape. Use the span overload when supplying reusable storage.</summary>
-    public static Vector2[] Outline(this IShape2D shape, Similarity2D pose, int roundSegments = 32, int cornerSegments = 8)
+    public static Vector2f[] Outline(this IShape2D shape, Similarity2D pose, int roundSegments = 32, int cornerSegments = 8)
     {
-        var vertices = new Vector2[shape.GetOutlineVertCount(roundSegments, cornerSegments)];
+        var vertices = new Vector2f[shape.GetOutlineVertCount(roundSegments, cornerSegments)];
         shape.GetOutlineVerts(pose, vertices, roundSegments, cornerSegments);
         return vertices;
     }
@@ -41,7 +41,7 @@ public static class ShapeVertices2D
         {
             Circle2D => 1,
             Capsule2D => 2,
-            RoundedRectangle2D rounded when rounded.InnerHalfSize == Vector2.Zero => 1,
+            RoundedRectangle2D rounded when rounded.InnerHalfSize == Vector2f.Zero => 1,
             RoundedRectangle2D rounded when rounded.InnerHalfSize.X == 0f || rounded.InnerHalfSize.Y == 0f => 2,
             RoundedRectangle2D => 4,
             Rectangle2D => 4,
@@ -61,7 +61,7 @@ public static class ShapeVertices2D
     /// <param name="radius">The local round radius, or zero for an unrounded polygon.</param>
     /// <returns>A read-only view into the caller's buffer, valid for the lifetime of that buffer.</returns>
     /// <exception cref="NotSupportedException">The shape has no exact finite polygonal convex core.</exception>
-    public static ReadOnlySpan<Vector2> GetVerts(this IShape2D shape, Span<Vector2> vertices, out float radius)
+    public static ReadOnlySpan<Vector2f> GetVerts(this IShape2D shape, Span<Vector2f> vertices, out float radius)
     {
         var count = shape.GetVertCount();
         if (count == 0) throw new NotSupportedException($"A {shape.GetKind()} has no exact finite polygonal convex core.");
@@ -131,7 +131,7 @@ public static class ShapeVertices2D
     /// <param name="roundSegments">At least three samples around a circle or ellipse; capsules use half per cap.</param>
     /// <returns>A read-only view into the caller's buffer, valid for the lifetime of that buffer.</returns>
     /// <exception cref="NotSupportedException">The shape has no single finite outline.</exception>
-    public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Span<Vector2> vertices, int roundSegments = 32, int cornerSegments = 8)
+    public static ReadOnlySpan<Vector2f> GetOutlineVerts(this IShape2D shape, Span<Vector2f> vertices, int roundSegments = 32, int cornerSegments = 8)
     {
         var count = shape.GetOutlineVertCount(roundSegments, cornerSegments);
         if (count == 0) throw new NotSupportedException($"A {shape.GetKind()} has no single finite outline.");
@@ -143,7 +143,7 @@ public static class ShapeVertices2D
                 VertexGenerator2D.WriteCircle(vertices[..count], circle.Center, circle.Radius);
                 break;
             case Ellipse2D ellipse:
-                VertexGenerator2D.WriteEllipse(vertices[..count], Vector2.Zero, ellipse.Radii);
+                VertexGenerator2D.WriteEllipse(vertices[..count], Vector2f.Zero, ellipse.Radii);
                 ellipse.Frame.MapFromFrame(vertices[..count]);
                 break;
             case Capsule2D capsule:

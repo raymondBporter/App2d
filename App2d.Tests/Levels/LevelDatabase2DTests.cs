@@ -75,7 +75,7 @@ public sealed class LevelDatabase2DTests : IDisposable
 
     private static EditableTileMap2D BuildMap()
     {
-        var map = new EditableTileMap2D(10, 6, 32f, 4, new Vector2(-512f, -640f));
+        var map = new EditableTileMap2D(10, 6, 32f, 4, new Vector2f(-512f, -640f));
         map.Fill((x, y) => (x + y) switch
         {
             0 => TileKind2D.Solid | TileKind2D.Grippable,

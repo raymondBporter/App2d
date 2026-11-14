@@ -7,7 +7,7 @@ namespace App2d.Core.Characters;
 public sealed record PartPaint
 {
     public RenderMaterialDefinition2D? Material { get; set; }
-    public List<Vector2> Points { get; set; } = [];
+    public List<Vector2f> Points { get; set; } = [];
 
     public static void Check(IReadOnlyList<PartPaint>? paint)
     {
@@ -21,7 +21,7 @@ public sealed record PartPaint
             throw new InvalidDataException("A part supports at most 64 paint patches.");
         }
 
-        Span<Vector2> xy = stackalloc Vector2[64];
+        Span<Vector2f> xy = stackalloc Vector2f[64];
         foreach (var patch in paint)
         {
             if (patch?.Points is not { Count: >= 3 and <= 64 })

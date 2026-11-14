@@ -10,7 +10,7 @@ namespace App2d.Core.Mathematics.Transforms;
 /// </summary>
 public readonly record struct Similarity2D
 {
-    private Similarity2D(Vector2 xAxis, Vector2 yAxis, Vector2 translation, float scale)
+    private Similarity2D(Vector2f xAxis, Vector2f yAxis, Vector2f translation, float scale)
     {
         XAxis = xAxis;
         YAxis = yAxis;
@@ -19,16 +19,16 @@ public readonly record struct Similarity2D
     }
 
     /// <summary>The pose that leaves everything where it is.</summary>
-    public static Similarity2D Identity { get; } = new(Vector2.UnitX, Vector2.UnitY, Vector2.Zero, 1f);
+    public static Similarity2D Identity { get; } = new(Vector2f.UnitX, Vector2f.UnitY, Vector2f.Zero, 1f);
 
     /// <summary>The image of local +X, of length <see cref="Scale"/>.</summary>
-    public Vector2 XAxis { get; }
+    public Vector2f XAxis { get; }
 
     /// <summary>The image of local +Y, of length <see cref="Scale"/>.</summary>
-    public Vector2 YAxis { get; }
+    public Vector2f YAxis { get; }
 
     /// <summary>Where the local origin lands.</summary>
-    public Vector2 Translation { get; }
+    public Vector2f Translation { get; }
 
     /// <summary>The uniform scale factor.</summary>
     public float Scale { get; }
@@ -42,10 +42,10 @@ public readonly record struct Similarity2D
     /// <summary>A pose with unit scale and no rotation, placed at a finite position.</summary>
     /// <param name="translation">Where the local origin lands.</param>
     /// <returns>A translation-only pose.</returns>
-    public static Similarity2D FromTranslation(Vector2 translation)
+    public static Similarity2D FromTranslation(Vector2f  translation)
     {
         Ensure.Finite(translation);
-        return new Similarity2D(Vector2.UnitX, Vector2.UnitY, translation, 1f);
+        return new Similarity2D(Vector2f.UnitX, Vector2f.UnitY, translation, 1f);
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ public readonly record struct Similarity2D
     /// <param name="mirror">Flip the handedness so local +Y is the clockwise perpendicular of the axis.</param>
     /// <param name="scale">The finite, positive uniform scale.</param>
     /// <returns>The pose.</returns>
-    public static Similarity2D FromAxis(Vector2 translation, Vector2 xAxis, bool mirror = false, float scale = 1f)
+    public static Similarity2D FromAxis(Vector2f  translation, Vector2f xAxis, bool mirror = false, float scale = 1f)
     {
         Ensure.Finite(translation);
         Ensure.NonZero(xAxis);
@@ -72,8 +72,7 @@ public readonly record struct Similarity2D
     /// <returns>True when the matrix is a similarity.</returns>
     public static bool TryFromMatrix(Matrix3x2 matrix, out Similarity2D similarity)
     {
-        var xAxis = matrix.X;
-        var yAxis = matrix.Y;
+        var (xAxis, yAxis, translation) = matrix.GetRows();
         var xLength = xAxis.Length();
         var yLength = yAxis.Length();
         var largest = Math.Max(xLength, yLength);
@@ -85,14 +84,14 @@ public readonly record struct Similarity2D
             return false;
         }
 
-        similarity = new Similarity2D(xAxis, yAxis, matrix.Translation, (xLength + yLength) / 2f);
+        similarity = new Similarity2D(xAxis, yAxis, translation, (xLength + yLength) / 2f);
         return true;
     }
 
     /// <summary>The same pose moved by an offset.</summary>
     /// <param name="offset">A finite translation added in world space.</param>
     /// <returns>The moved pose.</returns>
-    public Similarity2D Translated(Vector2 offset)
+    public Similarity2D Translated(Vector2f  offset)
     {
         Ensure.Finite(offset);
         return new Similarity2D(XAxis, YAxis, Translation + offset, Scale);
@@ -127,12 +126,12 @@ public readonly record struct Similarity2D
     /// <summary>Maps a local point into world space.</summary>
     /// <param name="point">The local point.</param>
     /// <returns>The world point.</returns>
-    public Vector2 TransformPoint(Vector2 point) => Translation + XAxis * point.X + YAxis * point.Y;
+    public Vector2f TransformPoint(Vector2f point) => Translation + XAxis * point.X + YAxis * point.Y;
 
     /// <summary>Maps a local direction into world space, scaling its length by <see cref="Scale"/>.</summary>
     /// <param name="direction">The local direction.</param>
     /// <returns>The world direction.</returns>
-    public Vector2 TransformDirection(Vector2 direction) => XAxis * direction.X + YAxis * direction.Y;
+    public Vector2f TransformDirection(Vector2f  direction) => XAxis * direction.X + YAxis * direction.Y;
 
     /// <summary>
     /// Multiplies by the transpose of the linear part: maps a world support or normal direction into local space
@@ -140,19 +139,19 @@ public readonly record struct Similarity2D
     /// </summary>
     /// <param name="direction">The world direction.</param>
     /// <returns>The local direction, scaled by <see cref="Scale"/>.</returns>
-    public Vector2 TransposeTransformDirection(Vector2 direction) => new(Vector2.Dot(XAxis, direction), Vector2.Dot(YAxis, direction));
+    public Vector2f TransposeTransformDirection(Vector2f  direction) => new(Vector2f.Dot(XAxis, direction), Vector2f.Dot(YAxis, direction));
 
     /// <summary>Maps a world point into local space.</summary>
     /// <param name="point">The world point.</param>
     /// <returns>The local point.</returns>
-    public Vector2 InverseTransformPoint(Vector2 point)
+    public Vector2f InverseTransformPoint(Vector2f point)
     {
         var relative = point - Translation;
-        return new Vector2(Vector2.Dot(XAxis, relative), Vector2.Dot(YAxis, relative)) / (Scale * Scale);
+        return new Vector2f(Vector2f.Dot(XAxis, relative), Vector2f.Dot(YAxis, relative)) / (Scale * Scale);
     }
 
     /// <summary>Maps a world direction into local space, dividing its length by <see cref="Scale"/>.</summary>
     /// <param name="direction">The world direction.</param>
     /// <returns>The local direction.</returns>
-    public Vector2 InverseTransformDirection(Vector2 direction) => TransposeTransformDirection(direction) / (Scale * Scale);
+    public Vector2f InverseTransformDirection(Vector2f  direction) => TransposeTransformDirection(direction) / (Scale * Scale);
 }

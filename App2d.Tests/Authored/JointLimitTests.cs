@@ -220,7 +220,7 @@ public sealed class JointLimitTests
             Assert.Equal(a.Chains[0].Reached, b.Chains[0].Reached);
             Assert.Equal(a.Chains[0].Residual, b.Chains[0].Residual, 4);
             // A mirrored actor (facing -1) is a placement of the same pose: nothing about the limits changes.
-            var faced = new ActorPose(a, Vector2.Zero, -1);
+            var faced = new ActorPose(a, Vector2f.Zero, -1);
             Assert.Equal(-a.World("hand").X, faced.World("hand").X, 5);
         }
     }

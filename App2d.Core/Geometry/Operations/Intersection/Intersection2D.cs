@@ -12,7 +12,7 @@ namespace App2d.Core.Geometry.Operations.Intersection;
 /// <param name="Center">The circle center at first contact.</param>
 /// <param name="SurfacePoint">The point on the rectangle surface that is touched.</param>
 /// <param name="Normal">The unit outward normal of the touched rectangle face.</param>
-public readonly record struct SweptCircleHit2D(float Time, Vector2 Center, Vector2 SurfacePoint, Vector2 Normal);
+public readonly record struct SweptCircleHit2D(float Time, Vector2f Center, Vector2f SurfacePoint, Vector2f Normal);
 
 /// <summary>
 /// Intersection and overlap tests between raw primitives in one coordinate space. Touching counts as intersecting.
@@ -28,7 +28,7 @@ public static class Intersection2D
     /// <param name="start">The first clipped endpoint along the line direction.</param>
     /// <param name="end">The second clipped endpoint.</param>
     /// <returns>True when the line touches the rectangle.</returns>
-    public static bool TryClipToRectangle<TRect>(this Line2D line, TRect rectangle, out Vector2 start, out Vector2 end) where TRect : IRect2D =>
+    public static bool TryClipToRectangle<TRect>(this Line2D line, TRect rectangle, out Vector2f start, out Vector2f end) where TRect : IRect2D =>
         TryClipLinearToRectangle(line.Origin, line.Direction, line.IsValid, false, rectangle, out start, out end);
 
     /// <summary>Clips a forward ray to a finite axis-aligned rectangle, keeping the origin when it starts inside.</summary>
@@ -37,7 +37,7 @@ public static class Intersection2D
     /// <param name="start">The first clipped point along the ray.</param>
     /// <param name="end">The point where the ray leaves the rectangle.</param>
     /// <returns>True when the ray touches the rectangle.</returns>
-    public static bool TryClipToRectangle<TRect>(this Ray2D ray, TRect rectangle, out Vector2 start, out Vector2 end) where TRect : IRect2D =>
+    public static bool TryClipToRectangle<TRect>(this Ray2D ray, TRect rectangle, out Vector2f start, out Vector2f end) where TRect : IRect2D =>
         TryClipLinearToRectangle(ray.Origin, ray.Direction, ray.IsValid, true, rectangle, out start, out end);
 
     /// <summary>Tests whether two infinite lines share a point; coincident lines intersect.</summary>
@@ -70,7 +70,7 @@ public static class Intersection2D
     /// <param name="secondMin">The second lower-left corner.</param>
     /// <param name="secondMax">The second upper-right corner.</param>
     /// <returns>True when the rectangles share at least a point.</returns>
-    public static bool RectanglesOverlap(Vector2 firstMin, Vector2 firstMax, Vector2 secondMin, Vector2 secondMax) => firstMin.X <= secondMax.X && firstMax.X >= secondMin.X && firstMin.Y <= secondMax.Y && firstMax.Y >= secondMin.Y;
+    public static bool RectanglesOverlap(Vector2f firstMin, Vector2f firstMax, Vector2f secondMin, Vector2f secondMax) => firstMin.X <= secondMax.X && firstMax.X >= secondMin.X && firstMin.Y <= secondMax.Y && firstMax.Y >= secondMin.Y;
 
     /// <summary>
     /// Separating-axis overlap of two convex perimeters with at least three vertices, in either winding.
@@ -82,7 +82,7 @@ public static class Intersection2D
     /// <param name="firstOffset">A translation applied to the first perimeter.</param>
     /// <param name="secondOffset">A translation applied to the second perimeter.</param>
     /// <returns>True when no edge normal separates the perimeters.</returns>
-    public static bool ConvexPolygonsOverlap(IReadOnlyList<Vector2> first, IReadOnlyList<Vector2> second, Vector2 firstOffset = default, Vector2 secondOffset = default)
+    public static bool ConvexPolygonsOverlap(IReadOnlyList<Vector2f> first, IReadOnlyList<Vector2f> second, Vector2f firstOffset = default, Vector2f secondOffset = default)
     {
         Ensure.ThrowIfNull(first);
         Ensure.ThrowIfNull(second);
@@ -90,7 +90,7 @@ public static class Intersection2D
         Ensure.ThrowIf(second.Count < 3, "A convex perimeter requires at least three vertices.", nameof(second));
         return !Separated(first) && !Separated(second);
 
-        bool Separated(IReadOnlyList<Vector2> perimeter)
+        bool Separated(IReadOnlyList<Vector2f> perimeter)
         {
             for (var i = 0; i < perimeter.Count; i++)
             {
@@ -121,7 +121,7 @@ public static class Intersection2D
     /// <param name="rectangle">The rectangle to sweep against; non-finite rectangles never hit.</param>
     /// <param name="hit">The first contact.</param>
     /// <returns>True when the swept circle touches the rectangle.</returns>
-    public static bool TrySweptCircleRectangle<TRect>(Vector2 start, Vector2 end, float radius, TRect rectangle, out SweptCircleHit2D hit) where TRect : IRect2D
+    public static bool TrySweptCircleRectangle<TRect>(Vector2f start, Vector2f end, float radius, TRect rectangle, out SweptCircleHit2D hit) where TRect : IRect2D
     {
         Ensure.NonNegative(radius);
         if (!rectangle.IsFinite)
@@ -130,12 +130,12 @@ public static class Intersection2D
             return false;
         }
 
-        var expandedMin = rectangle.Min - new Vector2(radius);
-        var expandedMax = rectangle.Max + new Vector2(radius);
+        var expandedMin = rectangle.Min - new Vector2f(radius).ToVector2f();
+        var expandedMax = rectangle.Max + new Vector2f(radius).ToVector2f();
         if (Containment2D.Rectangle(start, expandedMin, expandedMax))
         {
             var normal = NearestBoundaryNormal(start, expandedMin, expandedMax);
-            var initialSurfacePoint = Vector2.Clamp(start - normal * radius, rectangle.Min, rectangle.Max);
+            var initialSurfacePoint = Vector2f.Clamp(start - normal * radius, rectangle.Min, rectangle.Max);
             hit = new SweptCircleHit2D(0f, start, initialSurfacePoint, normal);
             return true;
         }
@@ -143,22 +143,22 @@ public static class Intersection2D
         var delta = end - start;
         var entryTime = 0f;
         var exitTime = 1f;
-        var entryNormal = Vector2.Zero;
-        if (!UpdateSlab(start.X, delta.X, expandedMin.X, expandedMax.X, -Vector2.UnitX, Vector2.UnitX, ref entryTime, ref exitTime, ref entryNormal) ||
-            !UpdateSlab(start.Y, delta.Y, expandedMin.Y, expandedMax.Y, -Vector2.UnitY, Vector2.UnitY, ref entryTime, ref exitTime, ref entryNormal) ||
-            entryTime < 0f || entryTime > 1f || entryNormal == Vector2.Zero)
+        var entryNormal = Vector2f.Zero;
+        if (!UpdateSlab(start.X, delta.X, expandedMin.X, expandedMax.X, -Vector2f.UnitX, Vector2f.UnitX, ref entryTime, ref exitTime, ref entryNormal) ||
+            !UpdateSlab(start.Y, delta.Y, expandedMin.Y, expandedMax.Y, -Vector2f.UnitY, Vector2f.UnitY, ref entryTime, ref exitTime, ref entryNormal) ||
+            entryTime < 0f || entryTime > 1f || entryNormal == Vector2f.Zero)
         {
             hit = default;
             return false;
         }
 
-        var center = Vector2.Lerp(start, end, entryTime);
-        var surfacePoint = Vector2.Clamp(center - entryNormal * radius, rectangle.Min, rectangle.Max);
+        var center = Vector2f.Lerp(start, end, entryTime);
+        var surfacePoint = Vector2f.Clamp(center - entryNormal * radius, rectangle.Min, rectangle.Max);
         hit = new SweptCircleHit2D(entryTime, center, surfacePoint, entryNormal);
         return true;
     }
 
-    private static bool TryClipLinearToRectangle<TRect>(Vector2 origin, Vector2 direction, bool valid, bool forwardOnly, TRect rectangle, out Vector2 start, out Vector2 end) where TRect : IRect2D
+    private static bool TryClipLinearToRectangle<TRect>(Vector2f origin, Vector2f direction, bool valid, bool forwardOnly, TRect rectangle, out Vector2f start, out Vector2f end) where TRect : IRect2D
     {
         if (!valid)
         {
@@ -197,7 +197,7 @@ public static class Intersection2D
         return min <= max;
     }
 
-    private static bool Intersects(Vector2 firstOrigin, Vector2 firstDirection, bool firstIsRay, Vector2 secondOrigin, Vector2 secondDirection, bool secondIsRay)
+    private static bool Intersects(Vector2f firstOrigin, Vector2f firstDirection, bool firstIsRay, Vector2f secondOrigin, Vector2f secondDirection, bool secondIsRay)
     {
         Ensure.NonZero(firstDirection);
         Ensure.NonZero(secondDirection);
@@ -226,7 +226,7 @@ public static class Intersection2D
         return sameDirection || delta.Dot(firstAxis) >= 0;
     }
 
-    private static bool UpdateSlab(float start, float delta, float minimum, float maximum, Vector2 minimumNormal, Vector2 maximumNormal, ref float entryTime, ref float exitTime, ref Vector2 entryNormal)
+    private static bool UpdateSlab(float start, float delta, float minimum, float maximum, Vector2f minimumNormal, Vector2f maximumNormal, ref float entryTime, ref float exitTime, ref Vector2f entryNormal)
     {
         if (MathF.Abs(delta) <= SweepParallelEpsilon)
         {
@@ -250,23 +250,23 @@ public static class Intersection2D
         return entryTime <= exitTime;
     }
 
-    private static Vector2 NearestBoundaryNormal(Vector2 point, Vector2 minimum, Vector2 maximum)
+    private static Vector2f NearestBoundaryNormal(Vector2f point, Vector2f minimum, Vector2f maximum)
     {
         var nearestDistance = point.X - minimum.X;
-        var nearestNormal = -Vector2.UnitX;
+        var nearestNormal = -Vector2f.UnitX;
         if (maximum.X - point.X < nearestDistance)
         {
             nearestDistance = maximum.X - point.X;
-            nearestNormal = Vector2.UnitX;
+            nearestNormal = Vector2f.UnitX;
         }
         if (point.Y - minimum.Y < nearestDistance)
         {
             nearestDistance = point.Y - minimum.Y;
-            nearestNormal = -Vector2.UnitY;
+            nearestNormal = -Vector2f.UnitY;
         }
         if (maximum.Y - point.Y < nearestDistance)
         {
-            nearestNormal = Vector2.UnitY;
+            nearestNormal = Vector2f.UnitY;
         }
 
         return nearestNormal;

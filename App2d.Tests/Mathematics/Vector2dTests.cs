@@ -23,8 +23,8 @@ public sealed class Vector2dTests
     [Fact]
     public void WideningBeforeArithmeticPreservesDifferencesThatFloatsLose()
     {
-        var first = new Vector2(16777216, 3);
-        var second = new Vector2(-1, 4);
+        var first = new Vector2f(16777216, 3);
+        var second = new Vector2f(-1, 4);
         var difference = first.ToVector2d() - second.ToVector2d();
         Assert.Equal(new Vector2d(16777217, -1), difference);
         Assert.NotEqual((first - second).X, difference.X);
@@ -35,9 +35,9 @@ public sealed class Vector2dTests
     [Fact]
     public void OrientationPreservesDifferencesWhenPointsAreWidenedBeforeSubtracting()
     {
-        var a = new Vector2(16_777_216, 0);
-        var b = new Vector2(-1, 1);
-        var c = new Vector2(0, 1);
+        var a = new Vector2f(16_777_216, 0);
+        var b = new Vector2f(-1, 1);
+        var c = new Vector2f(0, 1);
 
         Assert.Equal(0f, a.Orientation(b, c));
         Assert.Equal(-1d, new Vector2d(a).Orientation(new(b), new(c)));
@@ -105,7 +105,7 @@ public sealed class Vector2dTests
     [Fact]
     public void FloatExtremesHaveFiniteDoubleDistancesAndProducts()
     {
-        var a = new Vector2(float.MaxValue, float.MaxValue).ToVector2d();
+        var a = new Vector2f(float.MaxValue, float.MaxValue).ToVector2d();
         var b = -a;
         var distance = Vector2d.Distance(a, b);
         Assert.True(double.IsFinite(distance));
@@ -114,7 +114,7 @@ public sealed class Vector2dTests
         Assert.Equal(0, a.Dot(new(a.X, -a.Y)));
         Assert.Equal(0, a.Cross(a));
 
-        var tiny = new Vector2(float.Epsilon, 0).ToVector2d();
+        var tiny = new Vector2f(float.Epsilon, 0).ToVector2d();
         Assert.Equal(float.Epsilon, Vector2d.Distance(Vector2d.Zero, tiny));
         Assert.True(tiny.LengthSquared() > 0);
     }

@@ -11,10 +11,10 @@ namespace App2d.Core.Geometry.Meshes;
 public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 {
     private const int MaximumVertexCount = 1_048_576;
-    private readonly Func<Vector3, TMaterial, Vector2, TVertex> _vertexFactory;
+    private readonly Func<Vector3, TMaterial, Vector2f, TVertex> _vertexFactory;
     private TVertex[] _vertices;
 
-    public TriangleMeshBuilder3D(Func<Vector3, TMaterial, Vector2, TVertex> vertexFactory, int initialCapacity = 64)
+    public TriangleMeshBuilder3D(Func<Vector3, TMaterial, Vector2f, TVertex> vertexFactory, int initialCapacity = 64)
     {
         _vertexFactory = Ensure.RequireNotNull(vertexFactory);
         Ensure.NonNegative(initialCapacity);
@@ -41,7 +41,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         Max = new(float.NegativeInfinity);
     }
 
-    public void Vertex(Vector3 point, TMaterial material, Vector2 uv = default)
+    public void Vertex(Vector3 point, TMaterial material, Vector2f uv = default)
     {
         Ensure.Finite(point);
         Ensure.Finite(uv);
@@ -81,7 +81,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         Vector3 At(int ring, int index)
         {
             var ringRadius = radius * ring / rings;
-            return center + new Vector3(VertexGenerator2D.UnitCircle[index * stride] * ringRadius,
+            return center + new Vector3((VertexGenerator2D.UnitCircle[index * stride] * ringRadius).ToVector2(),
                 dome ? -MathF.Sqrt(MathF.Max(0f, radius * radius - ringRadius * ringRadius)) : 0f);
         }
         for (var ring = 1; ring <= rings; ring++)
@@ -98,7 +98,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     }
 
     /// <summary>Fills an ellipse after placing its 2D samples on a 3D surface.</summary>
-    public void Ellipse(Vector2 center, Vector2 radii, Func<Vector2, Vector3> place,
+    public void Ellipse(Vector2f center, Vector2f radii, Func<Vector2f, Vector3> place,
         TMaterial material, int segments = 24)
     {
         Ensure.Finite(center);
@@ -128,7 +128,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
             return;
         }
 
-        var direction = new Vector2(end.X - start.X, end.Y - start.Y);
+        var direction = new Vector2f(end.X - start.X, end.Y - start.Y);
         var length = direction.Length();
         var radius = width / 2f;
         if (length > 1e-8f)
@@ -192,10 +192,10 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         Vector3 Offset(int i)
         {
             var delta = points[Math.Min(i + 1, points.Count - 1)] - points[Math.Max(0, i - 1)];
-            var tangent = new Vector2(delta.X, delta.Y);
+            var tangent = new Vector2f(delta.X, delta.Y);
             if (tangent.LengthSquared() < 1e-12f && i + 1 < points.Count)
             { delta = points[i + 1] - points[i]; tangent = new(delta.X, delta.Y); }
-            tangent = tangent.LengthSquared() > 1e-12f ? Vector2.Normalize(tangent) : Vector2.UnitY;
+            tangent = tangent.LengthSquared() > 1e-12f ? Vector2f.Normalize(tangent) : Vector2f.UnitY;
             return new(-tangent.Y * radius, tangent.X * radius, 0);
         }
         var previous = Offset(0);
@@ -234,7 +234,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     }
 
     /// <summary>Places an indexed 2D mesh on a 3D surface without exposing its index format.</summary>
-    public void Add(TriangleMesh2D mesh, Func<Vector2, Vector3> place, TMaterial material)
+    public void Add(TriangleMesh2D mesh, Func<Vector2f, Vector3> place, TMaterial material)
     {
         Ensure.ThrowIfNull(mesh);
         Ensure.ThrowIfNull(place);

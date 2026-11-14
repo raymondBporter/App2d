@@ -374,7 +374,7 @@ public sealed class EditorSession
             }
             var model = _partPreview.Value.Model;
             var time = ShowRest ? 0 : Transport.Time;
-            var position = _partPreview.Value.Motion?.Position(time) ?? Vector2.Zero;
+            var position = _partPreview.Value.Motion?.Position(time) ?? Vector2f.Zero;
             var socket = model.Attachments[0].Socket;
             socket.Transform = socket.Transform with { Translation = position };
             var pose = PoseEvaluator.Sample(model, null, time, input: new(Expression) { Clock = time });
@@ -448,7 +448,7 @@ public sealed class EditorSession
             local = PoseEvaluator.Sample(entity.Model, action.Clip, time, input: new(Expression) { Clock = time });
         }
 
-        var pose = new ActorPose(local, Vector2.Zero, 1);
+        var pose = new ActorPose(local, Vector2f.Zero, 1);
         var active = action is null ? [] : action.Hits.Where(h => time >= h.Start && time < h.Finish).ToList();
         var attacks = active.ConvertAll(h => (h, EntityCollision.Attack(pose, h)));
         var movement = EntityCollision.Movement(entity, new(local.Locomotion.X, 0), 1);
@@ -497,7 +497,7 @@ public sealed class EditorSession
     /// overrides the node's length and local rotation (P6c). A node that is not a bone node is refused with the reason in the
     /// message, never silently ignored.
     /// </summary>
-    public void DragBoneTip(string control, Vector2 world)
+    public void DragBoneTip(string control, Vector2f world)
     {
         if (!_dragging)
         {

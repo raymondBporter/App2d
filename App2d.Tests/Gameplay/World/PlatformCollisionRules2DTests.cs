@@ -64,12 +64,12 @@ public sealed class PlatformCollisionRules2DTests
         var rules = PlatformCollisionRules2D.Attach(world);
         var platform = AddPlatform(world);
         var actor = AddActor(world, 0f);
-        actor.LinearVelocity = -Vector2.UnitY;
-        var geometry = new CollisionContact2D(Vector2.Zero, Vector2.UnitY, 0f);
+        actor.LinearVelocity = -Vector2f.UnitY;
+        var geometry = new CollisionContact2D(Vector2f.Zero, Vector2f.UnitY, 0f);
         Assert.True(rules.OnBeforeCollision(new(actor, platform, geometry)));
         Assert.True(rules.OnBeforeCollision(new(platform, actor,
             new CollisionContact2D(geometry.Point, -geometry.Normal, geometry.PenetrationDepth))));
-        actor.LinearVelocity = Vector2.UnitY;
+        actor.LinearVelocity = Vector2f.UnitY;
         Assert.False(rules.OnBeforeCollision(new(actor, platform, geometry)));
         Assert.False(rules.OnBeforeCollision(new(platform, actor,
             new CollisionContact2D(geometry.Point, -geometry.Normal, geometry.PenetrationDepth))));
@@ -108,7 +108,7 @@ public sealed class PlatformCollisionRules2DTests
         spatial.Transform.Position = new(0f, -1f);
         var platform = world.AddBody(spatial, motion);
         platform.Restitution = 0f;
-        PlatformCollisionRules2D.Attach(world).Surface(platform).OneWaySurfaceNormal = Vector2.UnitY;
+        PlatformCollisionRules2D.Attach(world).Surface(platform).OneWaySurfaceNormal = Vector2f.UnitY;
         return platform;
     }
 

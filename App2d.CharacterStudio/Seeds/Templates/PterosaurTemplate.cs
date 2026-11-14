@@ -56,10 +56,10 @@ public static class PterosaurTemplate
             A = a,
             B = b,
             Layer = depth,
-            Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
+            Geometry = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.UnitY),
             Material = new() { Fill = "#302632", StrokeWidth = width, Outline = RenderOutlineDefinition2D.Ink with { Color = "#302632", Width = .028f } },
         });
-        PartGeometry Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
+        PartGeometry Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params Vector2f[] points)
             => Shape(key, a, a + "-up", w, h, x, y, depth, fill, new SimplePolygon2D { Vertices = [.. points] }.Validated());
         foreach (var (side, sign, depth, fill) in new[] { ("far", 1f, .12f, "#9e5f7e"), ("near", -1f, -.02f, "#b56e8b") })
         {

@@ -33,9 +33,9 @@ public static class TraversalMetricsLoader2D
         var standingHeight = MathF.Round(manifest.StandingCollider.Size.Height * heightRatio / halfUnit) * halfUnit;
 
         return TraversalMetrics2D.FromGeometry(
-            new Vector2(manifest.VisualSize.Width, manifest.VisualSize.Height),
+            new Vector2f(manifest.VisualSize.Width, manifest.VisualSize.Height),
             manifest.FootAnchorYFraction,
-            new Vector2(manifest.StandingCollider.Size.Width, standingHeight),
+            new Vector2f(manifest.StandingCollider.Size.Width, standingHeight),
             manifest.StandingCollider.CenterOffsetX);
     }
 
@@ -46,13 +46,13 @@ public static class TraversalMetricsLoader2D
             throw new InvalidDataException($"Unsupported player geometry schema version {manifest.SchemaVersion}: {path}");
         }
 
-        var canvasSize = new Vector2(
+        var canvasSize = new Vector2f(
             manifest.CanvasSizePixels.Width,
             manifest.CanvasSizePixels.Height);
-        var visualSize = new Vector2(
+        var visualSize = new Vector2f(
             manifest.VisualSize.Width,
             manifest.VisualSize.Height);
-        var standingSize = new Vector2(
+        var standingSize = new Vector2f(
             manifest.StandingCollider.Size.Width,
             manifest.StandingCollider.Size.Height);
 

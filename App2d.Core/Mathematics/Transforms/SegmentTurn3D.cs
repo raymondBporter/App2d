@@ -37,7 +37,7 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
         {
             var d0 = a.XY;
             var d1 = b.XY;
-            var turn = MathF.Atan2(d0.Cross(d1), Vector2.Dot(d0, d1));
+            var turn = MathF.Atan2(d0.Cross(d1), Vector2f.Dot(d0, d1));
             var (expected, limit) = previous.Angle != 0 && previous.Planar ? (MathF.Sign(previous.Angle), 2.6f) : (Math.Sign(sweep), MathF.PI / 2);
             if (expected != 0 && MathF.Sign(turn) != expected && MathF.Abs(turn) > limit)
             {
@@ -86,7 +86,7 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
         var d1 = (toTip - toBase).XY;
         var flatLength = float.Lerp(d0.Length(), d1.Length(), u);
         var position = Rotation2D.InterpolateArc(fromBase.XY, toBase.XY, Angle, u);
-        var flat = Rotation2D.Apply(d0.Length() > 1e-6f ? Vector2.Normalize(d0) : Vector2.UnitX, Angle * u);
-        return (new(position, baseZ), new(position + flat * flatLength, tipZ));
+        var flat = Rotation2D.Apply(d0.Length() > 1e-6f ? Vector2f.Normalize(d0) : Vector2f.UnitX, Angle * u);
+        return (new(position.ToVector2(), baseZ), new((position + flat * flatLength).ToVector2(), tipZ));
     }
 }

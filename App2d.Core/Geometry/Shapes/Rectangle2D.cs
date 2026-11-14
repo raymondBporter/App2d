@@ -16,13 +16,13 @@ namespace App2d.Core.Shapes;
 /// </summary>
 public readonly partial record struct Rectangle2D : IConvexShape2D
 {
-    private readonly Vector2 _axis;
+    private readonly Vector2f _axis;
 
     /// <summary>Creates a rectangle from its center, half extents and axis.</summary>
     /// <param name="center">The finite local center.</param>
     /// <param name="halfSize">Finite, positive half extents along the rectangle's own axes.</param>
     /// <param name="axis">The unit direction of the rectangle's local +X.</param>
-    public Rectangle2D(Vector2 center, Vector2 halfSize, Vector2 axis)
+    public Rectangle2D(Vector2f center, Vector2f halfSize, Vector2f axis)
     {
         Center = center;
         HalfSize = halfSize;
@@ -30,13 +30,13 @@ public readonly partial record struct Rectangle2D : IConvexShape2D
     }
 
     /// <summary>The local center.</summary>
-    public Vector2 Center { get; init; }
+    public Vector2f Center { get; init; }
 
     /// <summary>Half the width and height, measured along the rectangle's own axes.</summary>
-    public Vector2 HalfSize { get; init; }
+    public Vector2f HalfSize { get; init; }
 
     /// <summary>The unit direction of the rectangle's local +X. An unset axis reads as local +X.</summary>
-    public Vector2 Axis
+    public Vector2f Axis
     {
         get => OrientedFrame2D.AxisOrUnitX(_axis);
         init => _axis = value;
@@ -49,7 +49,7 @@ public readonly partial record struct Rectangle2D : IConvexShape2D
     public override int GetHashCode() => HashCode.Combine(Center, HalfSize, Axis);
 
     /// <summary>The full width and height along the rectangle's own axes.</summary>
-    public Vector2 Size => HalfSize * 2f;
+    public Vector2f Size => HalfSize * 2f;
 
     /// <summary>The extent along the rectangle's own +X.</summary>
     public float Width => Size.X;
@@ -73,10 +73,10 @@ public readonly partial record struct Rectangle2D : IConvexShape2D
     public float Diameter => Diameter2D.Rectangle(-HalfSize, HalfSize);
 
     /// <inheritdoc/>
-    public bool ContainsPoint(Vector2 localPoint) => Containment2D.Rectangle(Frame.ToFrame(localPoint), -HalfSize, HalfSize);
+    public bool ContainsPoint(Vector2f localPoint) => Containment2D.Rectangle(Frame.ToFrame(localPoint), -HalfSize, HalfSize);
 
     /// <inheritdoc/>
-    public Vector2 GetSupportPoint(Vector2 localDirection)
+    public Vector2f GetSupportPoint(Vector2f localDirection)
     {
         var frame = Frame;
         return frame.FromFrame(SupportPoint2D.Rectangle(frame.ToFrameDirection(localDirection), -HalfSize, HalfSize));
@@ -84,7 +84,7 @@ public readonly partial record struct Rectangle2D : IConvexShape2D
 
     /// <summary>Writes the four local-space corners counter-clockwise from the corner at negative half extents.</summary>
     /// <param name="corners">A buffer of at least four entries.</param>
-    public void WriteCorners(Span<Vector2> corners)
+    public void WriteCorners(Span<Vector2f> corners)
     {
         VertexGenerator2D.WriteRectangle(corners, -HalfSize, HalfSize);
         Frame.MapFromFrame(corners[..4]);

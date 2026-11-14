@@ -28,7 +28,7 @@ public sealed class ContactResolutionTests
         var hit = entity.Actions["attack"].Hits[0];
         while (animator.ActionTime < hit.Start + .02f)
         {
-            animator.Step(1 / 120f, Vector2.Zero, 1, "idle", 0, false, []);
+            animator.Step(1 / 120f, Vector2f.Zero, 1, "idle", 0, false, []);
         }
 
         attacker.Sync(animator.Pose, animator.ActiveHits(), alive: true);

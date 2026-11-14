@@ -173,7 +173,7 @@ public sealed class EnemyPresentation2D(
                 var rock = state.Bolts[_bolts.Count].Gravity > 0;
                 IShape2D shape = rock
                     ? ConvexPolygon2D.Builder.Create([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
-                    : AxisAlignedRectangle2D.Builder.CreateFromSize(Vector2.One);
+                    : AxisAlignedRectangle2D.Builder.CreateFromSize(Vector2f.One);
                 var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new Color4b(133, 139, 134) : Color4b.OrangeRed)) { ZIndex = 2 };
                 _bolts.Add(bolt);
                 scene.Add(bolt);
@@ -267,7 +267,7 @@ public sealed class EnemyPresentation2D(
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
         {
             _visual.IsVisible = state.IsEnabled && state.IsAlive;
-            _visual.Transform.Position = state.Position + new Vector2(0f, 10f);
+            _visual.Transform.Position = state.Position + new Vector2f(0f, 10f);
             _shader.FlipX = state.Facing < 0f;
             if (!_visual.IsVisible)
             {
@@ -321,7 +321,7 @@ public sealed class EnemyPresentation2D(
             }
             _person.SetVisible(state.IsEnabled);
             _person.Update(dt, tick, state.Person, state.MoveX, false, state.IsAttacking);
-            _marker.Transform.Position = state.Position + new Vector2(0f, 34f);
+            _marker.Transform.Position = state.Position + new Vector2f(0f, 34f);
             _marker.IsVisible = state.IsEnabled && state.IsAlive;
         }
 

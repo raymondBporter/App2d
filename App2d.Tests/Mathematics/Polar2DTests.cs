@@ -15,8 +15,8 @@ public sealed class Polar2DTests
     public void DirectionsFollowYUpCounterClockwiseConvention(float degrees, float x, float y)
     {
         var radians = float.DegreesToRadians(degrees);
-        AssertClose(new(x, y), Vector2.FromAngle(radians));
-        AssertClose(new Vector2(x, y) * 7f, Vector2.FromPolar(7, radians));
+        AssertClose(new(x, y), Vector2f.FromAngle(radians));
+        AssertClose(new Vector2f(x, y) * 7f, Vector2f.FromPolar(7, radians));
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public sealed class Polar2DTests
     [InlineData(float.MaxValue, 0)]
     public void CartesianCoordinatesRoundTripAcrossQuadrantsAndScales(float x, float y)
     {
-        var value = new Vector2(x, y);
+        var value = new Vector2f(x, y);
         var polar = value.ToPolar();
         Assert.InRange(polar.AngleRadians, -MathF.PI, MathF.PI);
         Assert.Equal(value.AngleRadians, polar.AngleRadians);
@@ -40,25 +40,25 @@ public sealed class Polar2DTests
     [Fact]
     public void RadiusUsesVectorMagnitudeAndStoredAnglesKeepFullTurns()
     {
-        var (radius, angle) = new Vector2(3, 4).ToPolar();
+        var (radius, angle) = new Vector2f(3, 4).ToPolar();
         Assert.Equal(5f, radius);
         Assert.InRange(angle, 0f, MathF.PI / 2);
 
         const float unwrapped = -3 * MathF.Tau + .37f;
         var polar = new Polar2D(2, unwrapped);
         Assert.Equal(unwrapped, polar.AngleRadians);
-        AssertClose(Rotation2D.Apply(Vector2.UnitX * 2, unwrapped), polar.ToCartesian());
+        AssertClose(Rotation2D.Apply(Vector2f.UnitX * 2, unwrapped), polar.ToCartesian());
     }
 
     [Fact]
     public void ZeroHasAnExplicitHeadingWithoutDiscardingTinyDirections()
     {
-        Assert.Equal(default, Vector2.Zero.ToPolar());
-        Assert.Equal(Vector2.Zero, default(Polar2D).ToCartesian());
-        Assert.Equal(Vector2.Zero, new Polar2D(0, 2).ToCartesian());
+        Assert.Equal(default, Vector2f.Zero.ToPolar());
+        Assert.Equal(Vector2f.Zero, default(Polar2D).ToCartesian());
+        Assert.Equal(Vector2f.Zero, new Polar2D(0, 2).ToCartesian());
         Assert.Equal(0, BitConverter.SingleToInt32Bits(Polar2D.AngleOf(new(-0f, -0f))));
-        Assert.Equal(MathF.PI / 2, new Vector2(0, float.Epsilon).AngleRadians);
-        Assert.Equal(-MathF.PI / 2, new Vector2(0, -float.Epsilon).AngleRadians);
+        Assert.Equal(MathF.PI / 2, new Vector2f(0, float.Epsilon).AngleRadians);
+        Assert.Equal(-MathF.PI / 2, new Vector2f(0, -float.Epsilon).AngleRadians);
     }
 
     [Theory]
@@ -69,9 +69,9 @@ public sealed class Polar2DTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar2D(value, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar2D(1, value));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2.FromAngle(value));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2.FromPolar(1, value));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2.FromPolar(value, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2f.FromAngle(value));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2f.FromPolar(1, value));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2f.FromPolar(value, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => Polar2D.AngleOf(new(value, 1)));
         Assert.Throws<ArgumentOutOfRangeException>(() => Polar2D.FromCartesian(new(1, value)));
     }
@@ -80,7 +80,7 @@ public sealed class Polar2DTests
     public void RadiusCannotBeNegativeOrOverflowWhenConverting()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar2D(-1, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2.FromPolar(-1, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2f.FromPolar(-1, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => Polar2D.FromCartesian(new(float.MaxValue)));
     }
 
@@ -105,13 +105,13 @@ public sealed class Polar2DTests
 
         static float Convert(int i)
         {
-            var point = Vector2.FromPolar(5, i * .01f);
+            var point = Vector2f.FromPolar(5, i * .01f);
             var polar = point.ToPolar();
             return polar.Radius + point.AngleRadians + polar.ToCartesian().X;
         }
     }
 
-    private static void AssertClose(Vector2 expected, Vector2 actual)
+    private static void AssertClose(Vector2f expected, Vector2f actual)
     {
         var scale = Math.Max(Math.Abs(expected.X), Math.Abs(expected.Y));
         Assert.InRange(Math.Abs(actual.X / scale - expected.X / scale), 0, 2e-6f);

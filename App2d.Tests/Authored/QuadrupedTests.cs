@@ -49,7 +49,7 @@ public sealed class QuadrupedTests
     [Fact]
     public void ConcaveCutoutPickingAndPaintRespectTheNotch()
     {
-        List<Vector2> points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)];
+        List<Vector2f> points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)];
         var part = new PartGeometry
         {
             A = "body",

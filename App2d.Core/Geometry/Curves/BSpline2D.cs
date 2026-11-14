@@ -11,10 +11,10 @@ namespace App2d.Core.Geometry.Curves;
 /// </summary>
 public readonly partial record struct BSpline2D : ICurve2D
 {
-    private readonly Vector2[]? _controlPoints;
-    private static readonly ConditionalWeakTable<Vector2[], Dictionary<int, Prepared>> PreparedCurves = [];
+    private readonly Vector2f[]? _controlPoints;
+    private static readonly ConditionalWeakTable<Vector2f[], Dictionary<int, Prepared>> PreparedCurves = [];
 
-    public BSpline2D(IEnumerable<Vector2> controlPoints, int degree = 3)
+    public BSpline2D(IEnumerable<Vector2f> controlPoints, int degree = 3)
     {
         _controlPoints = controlPoints?.ToArray();
         Degree = degree;
@@ -22,7 +22,7 @@ public readonly partial record struct BSpline2D : ICurve2D
 
     public int Degree { get; init; } = 3;
     public BSpline2D() { }
-    public ReadOnlySpan<Vector2> ControlPoints { get => _controlPoints; init => _controlPoints = value.ToArray(); }
+    public ReadOnlySpan<Vector2f> ControlPoints { get => _controlPoints; init => _controlPoints = value.ToArray(); }
 
     private Prepared Data
     {
@@ -42,18 +42,18 @@ public readonly partial record struct BSpline2D : ICurve2D
             }
         }
     }
-    private sealed record Prepared(float[] Knots, Vector2[] DerivativePoints, float[] DerivativeKnots)
+    private sealed record Prepared(float[] Knots, Vector2f[] DerivativePoints, float[] DerivativeKnots)
     {
         internal PolynomialCurveSpan2D[]? RaycastSpans;
     }
 
-    public Vector2 Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, Clamping.Clamp01(amount));
-    public Vector2 EvaluateDerivative(float amount)
+    public Vector2f Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, Clamping.Clamp01(amount));
+    public Vector2f EvaluateDerivative(float amount)
     {
         var data = Data;
         return EvaluateDeBoor(data.DerivativePoints, data.DerivativeKnots, Degree - 1, Clamping.Clamp01(amount));
     }
-    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this,
+    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this,
         Clamping.Clamp((ControlPoints.Length - Degree) * 32, 64, 1024));
 
     private static float[] CreateClampedUniformKnots(int controlPointCount, int degree)
@@ -73,12 +73,12 @@ public readonly partial record struct BSpline2D : ICurve2D
         return knots;
     }
 
-    private static Vector2[] CreateDerivativeControlPoints(
-        ReadOnlySpan<Vector2> controlPoints,
+    private static Vector2f[] CreateDerivativeControlPoints(
+        ReadOnlySpan<Vector2f> controlPoints,
         ReadOnlySpan<float> knots,
         int degree)
     {
-        var derivativePoints = new Vector2[controlPoints.Length - 1];
+        var derivativePoints = new Vector2f[controlPoints.Length - 1];
         for (var index = 0; index < derivativePoints.Length; index++)
         {
             var denominator = knots[index + degree + 1] - knots[index + 1];
@@ -87,8 +87,8 @@ public readonly partial record struct BSpline2D : ICurve2D
         return derivativePoints;
     }
 
-    private static Vector2 EvaluateDeBoor(
-        ReadOnlySpan<Vector2> controlPoints,
+    private static Vector2f EvaluateDeBoor(
+        ReadOnlySpan<Vector2f> controlPoints,
         ReadOnlySpan<float> knots,
         int degree,
         float amount)
@@ -100,8 +100,8 @@ public readonly partial record struct BSpline2D : ICurve2D
         }
 
         var values = degree <= 15
-            ? stackalloc Vector2[degree + 1]
-            : new Vector2[degree + 1];
+            ? stackalloc Vector2f[degree + 1]
+            : new Vector2f[degree + 1];
         for (var index = 0; index <= degree; index++)
         {
             values[index] = controlPoints[span - degree + index];
@@ -115,7 +115,7 @@ public readonly partial record struct BSpline2D : ICurve2D
                 var lower = knots[knotIndex];
                 var upper = knots[index + span - level + 1];
                 var blend = upper == lower ? 0f : (amount - lower) / (upper - lower);
-                values[index] = Vector2.Lerp(values[index - 1], values[index], blend);
+                values[index] = Vector2f.Lerp(values[index - 1], values[index], blend);
             }
         }
         return values[degree];

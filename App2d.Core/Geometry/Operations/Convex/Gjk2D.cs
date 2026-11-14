@@ -16,7 +16,7 @@ namespace App2d.Core.Geometry;
 /// <param name="PointOnFirst">The first boundary witness.</param>
 /// <param name="PointOnSecond">The second boundary witness.</param>
 /// <param name="ErrorBound">The remaining support gap at termination, in world units.</param>
-public readonly record struct ConvexQueryResult2D(float SignedDistance, Vector2 Normal, Vector2 PointOnFirst, Vector2 PointOnSecond, float ErrorBound);
+public readonly record struct ConvexQueryResult2D(float SignedDistance, Vector2f Normal, Vector2f PointOnFirst, Vector2f PointOnSecond, float ErrorBound);
 
 /// <summary>
 /// Convex distance and overlap using GJK; penetrating cores use a 2D expanding polytope (EPA), with SAT for small cores.
@@ -71,7 +71,7 @@ public static partial class Gjk2D
             return order;
         }
 
-        ReadOnlySpan<Vector2> directions = [Vector2.UnitX, Vector2.UnitY, -Vector2.UnitX, -Vector2.UnitY];
+        ReadOnlySpan<Vector2f> directions = [Vector2f.UnitX, Vector2f.UnitY, -Vector2f.UnitX, -Vector2f.UnitY];
         foreach (var direction in directions)
         {
             order = Compare(first.Support(direction, first.Origin), second.Support(direction, first.Origin));
@@ -83,7 +83,7 @@ public static partial class Gjk2D
         return first.Radius.CompareTo(second.Radius);
     }
 
-    private static int Compare(Vector2 first, Vector2 second)
+    private static int Compare(Vector2f first, Vector2f second)
     {
         var order = first.X.CompareTo(second.X);
         return order != 0 ? order : first.Y.CompareTo(second.Y);
@@ -109,7 +109,7 @@ public static partial class Gjk2D
             var origin = first.ReferencePoint;
             var a = first.Vertex(0, origin);
             var b = second.Vertex(0, origin);
-            var fallback = Vector2.UnitX;
+            var fallback = Vector2f.UnitX;
             if (second.VertexCount == 2)
             {
                 var end = second.Vertex(1, origin);
@@ -117,7 +117,7 @@ public static partial class Gjk2D
                 b = ClosestPoint2D.OnSegment(a, b, end);
                 if (Dot(edge, edge) > 0d)
                 {
-                    fallback = Vector2.Normalize(new(-edge.Y, edge.X));
+                    fallback = Vector2f.Normalize(new(-edge.Y, edge.X));
                 }
             }
             var delta = a - b;
@@ -151,7 +151,7 @@ public static partial class Gjk2D
 
         var origin = first.ReferencePoint;
         Span<Vertex> simplex = stackalloc Vertex[3];
-        simplex[0] = Support(first, second, Vector2.UnitX, origin);
+        simplex[0] = Support(first, second, Vector2f.UnitX, origin);
         simplex[0].Weight = 1d;
         var count = 1;
         var scale = Math.Sqrt(Dot(simplex[0].Difference, simplex[0].Difference));
@@ -165,7 +165,7 @@ public static partial class Gjk2D
             if (count == 3 || distance <= tolerance * .01d)
             {
                 return penetration ? Penetration(first, second, simplex[..count], origin, scale)
-                    : Result(simplex[..count], 0f, Vector2.UnitX, first, second, origin, 0d);
+                    : Result(simplex[..count], 0f, Vector2f.UnitX, first, second, origin, 0d);
             }
 
             var direction = -closest / (float)distance;
@@ -191,7 +191,7 @@ public static partial class Gjk2D
         var length = last.Length();
         return count == 3 || length == 0f
             ? (penetration ? Penetration(first, second, simplex[..count], origin, scale)
-                : Result(simplex[..count], 0f, Vector2.UnitX, first, second, origin, 0d))
+                : Result(simplex[..count], 0f, Vector2f.UnitX, first, second, origin, 0d))
             : Result(simplex[..count], length, last / length, first, second, origin, error);
     }
 
@@ -203,22 +203,22 @@ public static partial class Gjk2D
 
     private struct Vertex
     {
-        public Vector2 First;
-        public Vector2 Second;
-        public Vector2 Difference;
+        public Vector2f First;
+        public Vector2f Second;
+        public Vector2f Difference;
         public double Weight;
     }
 
-    private static Vertex Support(ConvexProxy2D first, ConvexProxy2D second, Vector2 direction, Vector2 origin)
+    private static Vertex Support(ConvexProxy2D first, ConvexProxy2D second, Vector2f direction, Vector2f origin)
     {
         var a = first.Support(direction, origin);
         var b = second.Support(-direction, origin);
         return new Vertex { First = a, Second = b, Difference = a - b };
     }
 
-    private static double Dot(Vector2 a, Vector2 b) => a.ToVector2d().Dot(b.ToVector2d());
+    private static double Dot(Vector2f a, Vector2f b) => a.ToVector2d().Dot(b.ToVector2d());
 
-    private static Vector2 Closest(ReadOnlySpan<Vertex> vertices, int count)
+    private static Vector2f Closest(ReadOnlySpan<Vertex> vertices, int count)
     {
         var closest = Vector2d.Zero;
         for (var i = 0; i < count; i++)
@@ -226,7 +226,7 @@ public static partial class Gjk2D
             closest += vertices[i].Difference.ToVector2d() * vertices[i].Weight;
         }
 
-        return closest.ToVector2();
+        return closest.ToVector2f();
     }
 
     private static void Reduce(Span<Vertex> s, ref int count)
@@ -320,37 +320,37 @@ public static partial class Gjk2D
         }
     }
 
-    private static ConvexQueryResult2D Penetration(ConvexProxy2D first, ConvexProxy2D second, ReadOnlySpan<Vertex> simplex, Vector2 origin, double scale)
+    private static ConvexQueryResult2D Penetration(ConvexProxy2D first, ConvexProxy2D second, ReadOnlySpan<Vertex> simplex, Vector2f origin, double scale)
     {
         Span<Vertex> polygon = stackalloc Vertex[MaxEpaVertices];
         Span<Vertex> seeds = stackalloc Vertex[8];
         simplex.CopyTo(seeds);
         var seedCount = simplex.Length;
-        seeds[seedCount++] = Support(first, second, Vector2.UnitX, origin);
-        seeds[seedCount++] = Support(first, second, Vector2.UnitY, origin);
-        seeds[seedCount++] = Support(first, second, -Vector2.UnitX, origin);
-        seeds[seedCount++] = Support(first, second, -Vector2.UnitY, origin);
+        seeds[seedCount++] = Support(first, second, Vector2f.UnitX, origin);
+        seeds[seedCount++] = Support(first, second, Vector2f.UnitY, origin);
+        seeds[seedCount++] = Support(first, second, -Vector2f.UnitX, origin);
+        seeds[seedCount++] = Support(first, second, -Vector2f.UnitY, origin);
         if (simplex.Length == 2)
         {
             // Cardinal directions can all select the same diagonal endpoints when support projections tie.
             // Query both sides of the actual simplex segment to distinguish a thin core from a full solid.
             var edge = simplex[1].Difference - simplex[0].Difference;
-            var perpendicular = Vector2.Normalize(new Vector2(-edge.Y, edge.X));
+            var perpendicular = Vector2f.Normalize(new Vector2f(-edge.Y, edge.X));
             seeds[seedCount++] = Support(first, second, perpendicular, origin);
             seeds[seedCount++] = Support(first, second, -perpendicular, origin);
         }
         var count = Hull(seeds[..seedCount], polygon);
         if (count < 3)
         {
-            var normal = count == 2 ? new Vector2(-(polygon[1].Difference - polygon[0].Difference).Y, (polygon[1].Difference - polygon[0].Difference).X) : Vector2.UnitX;
-            normal = Vector2.Normalize(normal);
+            var normal = count == 2 ? new Vector2f(-(polygon[1].Difference - polygon[0].Difference).Y, (polygon[1].Difference - polygon[0].Difference).X) : Vector2f.UnitX;
+            normal = Vector2f.Normalize(normal);
             SetEdgeWeights(polygon, 0, count - 1);
             return Result(polygon[..count], 0f, normal, first, second, origin, 0d);
         }
 
         var edgeIndex = 0;
         var edgeDistance = 0d;
-        var edgeNormal = Vector2.UnitX;
+        var edgeNormal = Vector2f.UnitX;
         var gap = 0d;
         for (; ; )
         {
@@ -365,7 +365,7 @@ public static partial class Gjk2D
                     continue;
                 }
 
-                var normal = new Vector2((float)(edge.Y / length), (float)(-edge.X / length));
+                var normal = new Vector2f((float)(edge.Y / length), (float)(-edge.X / length));
                 var distance = Dot(normal, a);
                 if (distance < edgeDistance)
                 {
@@ -462,8 +462,8 @@ public static partial class Gjk2D
         return count - 1;
     }
 
-    private static ConvexQueryResult2D Result(ReadOnlySpan<Vertex> vertices, float coreDistance, Vector2 normal,
-        ConvexProxy2D first, ConvexProxy2D second, Vector2 origin, double error)
+    private static ConvexQueryResult2D Result(ReadOnlySpan<Vertex> vertices, float coreDistance, Vector2f normal,
+        ConvexProxy2D first, ConvexProxy2D second, Vector2f origin, double error)
     {
         var a = Vector2d.Zero;
         var b = Vector2d.Zero;
@@ -472,8 +472,8 @@ public static partial class Gjk2D
             a += vertex.First.ToVector2d() * vertex.Weight;
             b += vertex.Second.ToVector2d() * vertex.Weight;
         }
-        var pointA = a.ToVector2() - normal * first.Radius + origin;
-        var pointB = b.ToVector2() + normal * second.Radius + origin;
+        var pointA = a.ToVector2f() - normal * first.Radius + origin;
+        var pointB = b.ToVector2f() + normal * second.Radius + origin;
         return new(coreDistance - first.Radius - second.Radius, normal, pointA, pointB, (float)error);
     }
 }

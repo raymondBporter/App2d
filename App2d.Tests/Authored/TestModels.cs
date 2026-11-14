@@ -69,7 +69,7 @@ internal static class TestModels
     /// parent's tip, any other through its local setup; every unnamed control keeps its rest (P11c, in place of the retired
     /// rest-pin conversion of the variant reader).
     /// </summary>
-    public static ModelVariant Stretched(CharacterModel model, string id, string name, params (string Control, Vector2 Position)[] pins)
+    public static ModelVariant Stretched(CharacterModel model, string id, string name, params (string Control, Vector2f Position)[] pins)
     {
         var variant = new ModelVariant { Id = id, Name = name, Base = model.Id };
         foreach (var (control, position) in pins)
@@ -82,7 +82,7 @@ internal static class TestModels
             }
             else
             {
-                ModelAuthoring.MoveRest(resolved, variant, control, new(position, node.Rest.Z), children: false);
+                ModelAuthoring.MoveRest(resolved, variant, control, new(position.ToVector2(), node.Rest.Z), children: false);
             }
         }
 

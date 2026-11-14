@@ -32,7 +32,7 @@ internal sealed class SwordPersonWeapon2D(
             inputBufferSeconds: 0.10f,
             forwardOffset: 52f),
         damage: authored?.Damage() ?? 2,
-        knockback: new Vector2(520f, 285f),
+        knockback: new Vector2f(520f, 285f),
         ownerFaction,
         targetLayer,
         combat,
@@ -94,7 +94,7 @@ internal sealed class SwordPersonWeapon2D(
                 forwardOffset: 0f,
                 verticalOffset: -32f),
             damage: 2,
-            knockback: new Vector2(0f, -285f),
+            knockback: new Vector2f(0f, -285f),
             faction, layer, combatSystem, started, emit)
     {
         internal (bool HasBounced, bool BouncePending) CaptureBounce() => (_hasBounced, _bouncePending);

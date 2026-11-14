@@ -73,7 +73,7 @@ internal static class ThingTypeRegistry2D
         Ensure.ThrowIfNull(record);
         Ensure.ThrowIfNull(asset);
         Ensure.ThrowIf(!Require(record.TypeKey).IsObject, $"Thing type '{record.TypeKey}' is not an object.");
-        return new ObjectPlacement2D(worldThingId.ToString(CultureInfo.InvariantCulture), asset, new Vector2(record.X, record.Y));
+        return new ObjectPlacement2D(worldThingId.ToString(CultureInfo.InvariantCulture), asset, new Vector2f(record.X, record.Y));
     }
 
     public static WorldThingSpec2D ToRuntime(PositionThingRecord2D record)
@@ -89,6 +89,6 @@ internal static class ThingTypeRegistry2D
             kind,
             record.Name,
             record.Enabled,
-            new Vector2(record.X, record.Y));
+            new Vector2f(record.X, record.Y));
     }
 }

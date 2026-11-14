@@ -52,7 +52,7 @@ public sealed class KeyCurve2DTests
         Assert.False(key.TryConvertValueControls(false, 5, 5, out _));
         var relative = new KeyCurve2D { Control1 = new(0, 2), Control2 = new(1, -1) };
         Assert.True(relative.TryConvertValueControls(true, 2, 6, out var absolute));
-        Assert.Equal(new Vector2(0, 2), absolute.ToCurve(2, 6).Start);
+        Assert.Equal(new Vector2f(0, 2), absolute.ToCurve(2, 6).Start);
         Assert.Equal(relative.ToCurve(2, 6), absolute.ToCurve(2, 6));
     }
 

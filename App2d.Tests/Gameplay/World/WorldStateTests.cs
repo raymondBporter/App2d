@@ -54,20 +54,20 @@ public sealed class WorldStateTests
     {
         var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var map = CreateMap();
-        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var physics = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var registry = new CombatantRegistry2D();
         var combat = new CombatSystem2D(physics.CollisionSystem, registry);
-        var spawn = new Vector2(-368f, 40f);
-        var checkpoint = new Vector2(-150f, 40f);
+        var spawn = new Vector2f(-368f, 40f);
+        var checkpoint = new Vector2f(-150f, 40f);
         WorldThingSpec2D[] things =
         [
             new(1, WorldThingKind2D.PlayerSpawn, null, true, spawn),
             new(2, WorldThingKind2D.SavePoint, null, true, checkpoint),
-            new(3, WorldThingKind2D.Goal, null, true, new Vector2(6000f, 0f)),
-            new(4, WorldThingKind2D.Shieldback, null, true, new Vector2(600f, 50f)),
-            new(5, WorldThingKind2D.GreenDinosaur, null, true, new Vector2(800f, 50f)),
-            new(6, WorldThingKind2D.BoilerBrute, null, true, new Vector2(1000f, 50f)),
-            new(7, WorldThingKind2D.Rival, null, true, new Vector2(1200f, 50f))
+            new(3, WorldThingKind2D.Goal, null, true, new Vector2f(6000f, 0f)),
+            new(4, WorldThingKind2D.Shieldback, null, true, new Vector2f(600f, 50f)),
+            new(5, WorldThingKind2D.GreenDinosaur, null, true, new Vector2f(800f, 50f)),
+            new(6, WorldThingKind2D.BoilerBrute, null, true, new Vector2f(1000f, 50f)),
+            new(7, WorldThingKind2D.Rival, null, true, new Vector2f(1200f, 50f))
         ];
         var authored = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
         using var level = new SideScrollerLevel2D(metrics, map, things,

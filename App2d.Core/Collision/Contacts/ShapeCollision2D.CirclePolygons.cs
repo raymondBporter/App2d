@@ -13,7 +13,7 @@ public static partial class ShapeCollision2D
         var center = polygonPose.InverseTransformPoint(circlePose.TransformPoint(circle.Center));
         var radius = circle.Radius * circlePose.Scale / polygonPose.Scale;
         var closest = ClosestPoint2D.OnPolygonPerimeter(center, polygon.Vertices, out var edge);
-        var distance = Vector2.Distance(center, closest);
+        var distance = Vector2f.Distance(center, closest);
         var inside = polygon.ContainsPoint(center);
         var signedDistance = inside ? -distance : distance;
         if (signedDistance >= radius) return CollisionResult.None;
@@ -23,7 +23,7 @@ public static partial class ShapeCollision2D
         var localNormal = distance > 1e-7f
             ? (inside ? closest - center : center - closest) / distance
             : PolygonGeometry2D.GetOutwardEdgeNormal(polygon.Vertices, edge);
-        var normal = Vector2.Normalize(polygonPose.TransformDirection(localNormal));
+        var normal = Vector2f.Normalize(polygonPose.TransformDirection(localNormal));
         return CollisionResult.From(new CollisionContact2D(polygonPose.TransformPoint(closest), normal,
             (radius - signedDistance) * polygonPose.Scale));
     }

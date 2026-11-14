@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using System.Numerics;
 
@@ -17,18 +18,18 @@ public sealed class Camera2DTests
         {
             ReferenceViewportHeight = 1080f,
             Zoom = 1.35f,
-            Position = new Vector2(150f, 70f)
+            Position = new Vector2f(150f, 70f)
         };
         camera.SetViewport(1920, 1080);
         var originalBounds = camera.VisibleWorldBounds;
-        var point = new Vector2(270f, 120f);
+        var point = new Vector2f(270f, 120f);
         var originalNormalizedPosition = camera.WorldToDevice(point) / camera.ViewportSize;
 
         camera.SetViewport(width, height);
 
-        Assert.InRange(Vector2.Distance(originalBounds.Min, camera.VisibleWorldBounds.Min), 0f, 0.001f);
-        Assert.InRange(Vector2.Distance(originalBounds.Max, camera.VisibleWorldBounds.Max), 0f, 0.001f);
-        Assert.InRange(Vector2.Distance(originalNormalizedPosition,
+        Assert.InRange(Vector2f.Distance(originalBounds.Min, camera.VisibleWorldBounds.Min), 0f, 0.001f);
+        Assert.InRange(Vector2f.Distance(originalBounds.Max, camera.VisibleWorldBounds.Max), 0f, 0.001f);
+        Assert.InRange(Vector2f.Distance(originalNormalizedPosition,
             camera.WorldToDevice(point) / camera.ViewportSize), 0f, 0.0001f);
         Assert.Equal(1.35f, camera.Zoom);
         Assert.Equal(1.35f * height / 1080f, camera.PixelsPerWorldUnit, 5);
@@ -44,9 +45,9 @@ public sealed class Camera2DTests
 
         Assert.Equal(size.Y, camera.VisibleWorldBounds.Size.Y);
         Assert.Equal(size.X * 1.5f, camera.VisibleWorldBounds.Size.X);
-        var origin = camera.WorldToDevice(Vector2.Zero);
-        Assert.Equal(Vector2.Distance(origin, camera.WorldToDevice(Vector2.UnitX)),
-            Vector2.Distance(origin, camera.WorldToDevice(Vector2.UnitY)));
+        var origin = camera.WorldToDevice(Vector2f.Zero);
+        Assert.Equal(Vector2f.Distance(origin, camera.WorldToDevice(Vector2f.UnitX)),
+            Vector2f.Distance(origin, camera.WorldToDevice(Vector2f.UnitY)));
         camera.Zoom = 4f;
         Assert.Equal(size.Y / 2f, camera.VisibleWorldBounds.Size.Y);
     }
@@ -58,48 +59,69 @@ public sealed class Camera2DTests
         {
             ReferenceViewportHeight = 1080f,
             Zoom = 1.35f,
-            Position = new Vector2(100f, 50f),
+            Position = new Vector2f(100f, 50f),
             Rotation = 0.3f
         };
         camera.SetViewport(960, 540);
-        var point = new Vector2(170f, -25f);
+        var point = new Vector2f(170f, -25f);
         var devicePoint = camera.WorldToDevice(point);
-        Assert.InRange(Vector2.Distance(point, camera.DeviceToWorld(devicePoint)), 0f, 0.001f);
+        Assert.InRange(Vector2f.Distance(point, camera.DeviceToWorld(devicePoint)), 0f, 0.001f);
 
         var view = camera.GetFrameView();
-        Assert.Equal(new Rect2D(Vector2.Zero, new(960, 540)), view.TargetBounds);
+        Assert.Equal(new Rect2D(Vector2f.Zero, new(960, 540)), view.TargetBounds);
         Assert.Equal(camera.VisibleWorldBounds, view.VisibleWorldBounds);
         Assert.Equal(devicePoint, view.WorldToDevice(point));
-        Assert.InRange(Vector2.Distance(point, view.DeviceToWorld(devicePoint)), 0f, 0.001f);
+        Assert.InRange(Vector2f.Distance(point, view.DeviceToWorld(devicePoint)), 0f, 0.001f);
 
-        var drag = new Vector2(75f, -20f);
-        camera.Position -= Vector2.TransformNormal(drag, camera.DeviceToWorldMatrix);
-        Assert.InRange(Vector2.Distance(devicePoint + drag, camera.WorldToDevice(point)), 0f, 0.001f);
+        var drag = new Vector2f(75f, -20f);
+        camera.Position -= Vector2f.TransformNormal(drag, camera.DeviceToWorldMatrix);
+        Assert.InRange(Vector2f.Distance(devicePoint + drag, camera.WorldToDevice(point)), 0f, 0.001f);
         Assert.Equal(devicePoint, view.WorldToDevice(point));
+    }
+
+    [Fact]
+    public void LocalToDeviceAppliesPlacementBeforeTheRotatedCamera()
+    {
+        var camera = new Camera2D
+        {
+            Position = new(25, -60),
+            Rotation = .36f,
+            Zoom = 2.25f
+        };
+        camera.SetViewport(960, 540);
+        var view = camera.GetFrameView();
+        var legacyWorldToDevice = Matrix3x2.CreateTranslation((-camera.Position).ToVector2())
+            * Matrix3x2.CreateRotation(-camera.Rotation)
+            * Matrix3x2.CreateScale(camera.PixelsPerWorldUnit, -camera.PixelsPerWorldUnit)
+            * Matrix3x2.CreateTranslation((camera.ViewportSize / 2f).ToVector2());
+        var localToWorld = new Matrix3x2(1, .5f, -.25f, 2, 80, -30);
+
+        Assert.Equal(legacyWorldToDevice, view.WorldToDeviceMatrix);
+        Assert.Equal(localToWorld * legacyWorldToDevice, view.LocalToDevice(localToWorld));
     }
 
     [Fact]
     public void AnchoredViewUsesTheSameProjectionAsTheLayeredPreview()
     {
-        var anchor = new Vector2(157f, 101f);
+        var anchor = new Vector2f(157f, 101f);
         var view = FrameView2D.FromAnchor(new(640, 480), anchor, 32f);
 
-        Assert.Equal(anchor, view.WorldToDevice(Vector2.Zero));
-        Assert.Equal(anchor + new Vector2(32f, -32f), view.WorldToDevice(Vector2.One));
-        Assert.Equal(Vector2.One, view.DeviceToWorld(view.WorldToDevice(Vector2.One)));
+        Assert.Equal(anchor, view.WorldToDevice(Vector2f.Zero));
+        Assert.Equal(anchor + new Vector2f(32f, -32f), view.WorldToDevice(Vector2f.One));
+        Assert.Equal(Vector2f.One, view.DeviceToWorld(view.WorldToDevice(Vector2f.One)));
         Assert.Equal(LayeredMeshRenderer.Projection(640, 480, anchor, 32f), LayeredMeshRenderer.Projection(view));
     }
 
     [Fact]
     public void VisibleWorldBoundsCentersOnTheCameraPosition()
     {
-        var camera = new Camera2D { Position = new Vector2(100f, 50f) };
+        var camera = new Camera2D { Position = new Vector2f(100f, 50f) };
         camera.SetViewport(800, 600);
 
         var bounds = camera.VisibleWorldBounds;
 
-        Assert.Equal(new Vector2(-300f, -250f), bounds.Min);
-        Assert.Equal(new Vector2(500f, 350f), bounds.Max);
+        Assert.Equal(new Vector2f(-300f, -250f), bounds.Min);
+        Assert.Equal(new Vector2f(500f, 350f), bounds.Max);
     }
 
     [Fact]
@@ -110,8 +132,8 @@ public sealed class Camera2DTests
 
         var bounds = camera.VisibleWorldBounds;
 
-        Assert.Equal(new Vector2(-200f, -150f), bounds.Min);
-        Assert.Equal(new Vector2(200f, 150f), bounds.Max);
+        Assert.Equal(new Vector2f(-200f, -150f), bounds.Min);
+        Assert.Equal(new Vector2f(200f, 150f), bounds.Max);
     }
 
     [Fact]
@@ -122,14 +144,14 @@ public sealed class Camera2DTests
             WorldBounds = new(new(-500f), new(500f)),
             Position = new(1000f),
         };
-        Assert.Equal(new Vector2(100f, 200f), camera.Position);
+        Assert.Equal(new Vector2f(100f, 200f), camera.Position);
 
         camera.Zoom = 2f;
         camera.Position = new(1000f);
-        Assert.Equal(new Vector2(300f, 350f), camera.Position);
+        Assert.Equal(new Vector2f(300f, 350f), camera.Position);
 
         camera.SetViewport(1200, 1000);
-        Assert.Equal(new Vector2(200f, 250f), camera.Position);
+        Assert.Equal(new Vector2f(200f, 250f), camera.Position);
         Assert.True(camera.VisibleWorldBounds.Max.X <= 500f);
         Assert.True(camera.VisibleWorldBounds.Max.Y <= 500f);
     }

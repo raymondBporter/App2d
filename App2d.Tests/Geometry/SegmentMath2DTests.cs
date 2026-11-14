@@ -13,8 +13,8 @@ public sealed class SegmentMath2DTests
         var segment = LineSegmentCurve2D.Create(new(1, 2), new(4, 6));
 
         Assert.Equal(5f, segment.Length());
-        Assert.Equal(new Vector2(2.5f, 4), segment.PointAt(.5f));
-        Assert.Equal(new Vector2(2.5f, 4), segment.Midpoint);
+        Assert.Equal(new Vector2f(2.5f, 4), segment.PointAt(.5f));
+        Assert.Equal(new Vector2f(2.5f, 4), segment.Midpoint);
         Assert.Equal(segment.Start, segment.Evaluate(-1));
         Assert.Equal(segment.End, segment.Evaluate(2));
     }
@@ -29,7 +29,7 @@ public sealed class SegmentMath2DTests
         Assert.Equal(segment.End, reversed.Start);
         Assert.Equal(segment.Start, reversed.End);
         Assert.Equal(5f, reversed.Length());
-        Assert.Equal(new Vector2(2.5f, 4), reversed.PointAt(.5f));
+        Assert.Equal(new Vector2f(2.5f, 4), reversed.PointAt(.5f));
         Assert.Equal(segment.Midpoint, reversed.Midpoint);
 
         var line = LineSegmentCurve2D.Builder.Create(segment.Start, segment.End);
@@ -40,7 +40,7 @@ public sealed class SegmentMath2DTests
     [Fact]
     public void CollapsedSegmentsHaveZeroLengthAndSampleTheirEndpoint()
     {
-        var point = new Vector2(2, 3);
+        var point = new Vector2f(2, 3);
         var segment = LineSegmentCurve2D.Builder.Create(point, point);
 
         Assert.Equal(0f, segment.Length());
@@ -63,9 +63,9 @@ public sealed class SegmentMath2DTests
         Assert.Equal(new Vector2f(float.Epsilon, 3 * float.Epsilon), tiny.Midpoint);
     }
 
-    private readonly record struct FactorySegment(Vector2 Start, Vector2 End, bool CreatedByFactory = false)
-        : ISegment<FactorySegment, Vector2>
+    private readonly record struct FactorySegment(Vector2f Start, Vector2f End, bool CreatedByFactory = false)
+        : ISegment<FactorySegment, Vector2f>
     {
-        public static FactorySegment Create(Vector2 start, Vector2 end) => new(start, end, true);
+        public static FactorySegment Create(Vector2f start, Vector2f end) => new(start, end, true);
     }
 }

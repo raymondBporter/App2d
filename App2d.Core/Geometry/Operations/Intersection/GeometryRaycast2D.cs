@@ -25,9 +25,9 @@ public static class GeometryRaycast2D
     {
         ray.Validate();
         Ensure.Invertible(localToWorld, out var inverse);
-        var origin = Vector2.Transform(ray.Origin, inverse);
+        var origin = Vector2f.Transform(ray.Origin, inverse);
         // Keep the unnormalized transformed direction: its parameter is still the world ray distance.
-        var direction = Vector2.TransformNormal(ray.Direction, inverse);
+        var direction = Vector2f.TransformNormal(ray.Direction, inverse);
         if (!TryIntersect(origin, direction, geometry, maxDistance, out var localHit))
         {
             hit = default;
@@ -36,12 +36,12 @@ public static class GeometryRaycast2D
         var normal = new Vector2d(
             (double)inverse.M11 * localHit.Normal.X + (double)inverse.M12 * localHit.Normal.Y,
             (double)inverse.M21 * localHit.Normal.X + (double)inverse.M22 * localHit.Normal.Y);
-        hit = new(ray.PointAt(localHit.Distance), (normal / normal.Length()).ToVector2(), localHit.Distance);
+        hit = new(ray.PointAt(localHit.Distance), (normal / normal.Length()).ToVector2f(), localHit.Distance);
         return true;
     }
 
     /// <summary>Distance is the parameter of the supplied, possibly unnormalized direction.</summary>
-    public static bool TryIntersect(Vector2 origin, Vector2 direction, IGeometryValue2D geometry, float maxDistance, out RayHit2D hit)
+    public static bool TryIntersect(Vector2f origin, Vector2f direction, IGeometryValue2D geometry, float maxDistance, out RayHit2D hit)
     {
         Ensure.ThrowIfNull(geometry);
         Ensure.Finite(origin);

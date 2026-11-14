@@ -68,7 +68,7 @@ internal sealed class AttachmentInspector(EditorSession session)
             ImGui.SetTooltip(owns ? "This instance's clips carry the wearer's travel; the wearer's own clips may neither travel nor plant." : document.Asset.MotionOwner is { } other ? $"'{other}' owns the root motion; one instance at most." : "The wearer's own clips carry the travel.");
         }
 
-        var offset = new Vector2(instance.X, instance.Y);
+        var offset = new Vector2f(instance.X, instance.Y);
         if (Ui.Drag2("Offset in socket axes", ref offset, .005f, -100, 100))
         {
             session.Change(document, () => { var live = Live(); live.X = offset.X; live.Y = offset.Y; document.Asset.Validate(); });
@@ -102,7 +102,7 @@ internal sealed class AttachmentInspector(EditorSession session)
         }
 
         ParameterInspector.BoundNote(Resolved, PropertyRef.OfAttachment(id, RigProperties.Layer));
-        var fit = new Vector2(instance.FitX, instance.FitY);
+        var fit = new Vector2f(instance.FitX, instance.FitY);
         if (Ui.Drag2("Fit X / Y (artwork only)", ref fit, .01f, -100, 100))
         {
             session.Change(document, () => { var live = Live(); live.FitX = fit.X; live.FitY = fit.Y; document.Asset.Validate(); });

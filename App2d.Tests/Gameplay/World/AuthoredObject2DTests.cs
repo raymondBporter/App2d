@@ -33,16 +33,16 @@ public sealed class AuthoredObject2DTests
         Assert.IsType<CubicBezier2D>(restored.Motion!.Curve);
         Assert.Equal("#25d2be", restored.Geometry[0].Material!.Fill);
         Assert.True(restored.Physics!.TransfersContactMotion);
-        Assert.Equal(Vector2.UnitY, restored.Surface!.OneWayNormal);
-        var origin = new Vector2(30, 40);
+        Assert.Equal(Vector2f.UnitY, restored.Surface!.OneWayNormal);
+        var origin = new Vector2f(30, 40);
         var physics = new PhysicsWorld2D();
         using var instance = new AuthoredObject2D(EntityId2D.Create(), new("test", restored, origin), physics, 1, uint.MaxValue);
         Assert.Equal(BodyMotionType2D.Kinematic, instance.Body!.MotionType);
         Assert.Equal(origin, instance.WorldObject.Transform.Position);
         instance.Update(1.5f);
         physics.Step(1.5f);
-        Assert.InRange(Vector2.Distance(new(110, 88), instance.WorldObject.Transform.Position), 0, .001f);
-        Assert.Equal(Vector2.UnitY, PlatformCollisionRules2D.Attach(physics).Surface(instance.Body).OneWaySurfaceNormal);
+        Assert.InRange(Vector2f.Distance(new(110, 88), instance.WorldObject.Transform.Position), 0, .001f);
+        Assert.Equal(Vector2f.UnitY, PlatformCollisionRules2D.Attach(physics).Surface(instance.Body).OneWaySurfaceNormal);
     }
 
     [Theory]
@@ -85,10 +85,10 @@ public sealed class AuthoredObject2DTests
         var asset = Part.Load(SamplePath);
         asset = asset with
         {
-            Motion = asset.Motion! with { Curve = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(20, 0)), PeriodSeconds = 4 }
+            Motion = asset.Motion! with { Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(20, 0)), PeriodSeconds = 4 }
         };
         var physics = new PhysicsWorld2D { Gravity = new(0, -100) };
-        var instance = new AuthoredObject2D(EntityId2D.Create(), new("lift", asset, Vector2.Zero), physics, 1, uint.MaxValue);
+        var instance = new AuthoredObject2D(EntityId2D.Create(), new("lift", asset, Vector2f.Zero), physics, 1, uint.MaxValue);
         var riderObject = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(10, 10));
         riderObject.Transform.Position = new(0, 11);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
@@ -137,7 +137,7 @@ public sealed class AuthoredObject2DTests
     {
         var asset = SeparateCollision();
         var physics = new PhysicsWorld2D();
-        using var instance = new AuthoredObject2D(EntityId2D.Create(), new("lift", asset, Vector2.Zero), physics, 1, uint.MaxValue);
+        using var instance = new AuthoredObject2D(EntityId2D.Create(), new("lift", asset, Vector2f.Zero), physics, 1, uint.MaxValue);
         Assert.IsType<Circle2D>(instance.WorldObject.Shape);
         Assert.IsType<Rectangle2D>(instance.CaptureDefinition().Part.Geometry[0].Geometry);
     }
@@ -148,7 +148,7 @@ public sealed class AuthoredObject2DTests
         var asset = SeparateCollision();
         asset.Geometry.RemoveAt(0);
         var physics = new PhysicsWorld2D();
-        using var instance = new AuthoredObject2D(EntityId2D.Create(), new("sensor", asset, Vector2.Zero), physics, 1, uint.MaxValue);
+        using var instance = new AuthoredObject2D(EntityId2D.Create(), new("sensor", asset, Vector2f.Zero), physics, 1, uint.MaxValue);
         Assert.NotNull(instance.Body);
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
@@ -172,11 +172,11 @@ public sealed class AuthoredObject2DTests
     {
         var source = Part.Load(SamplePath);
         var physics = new PhysicsWorld2D();
-        using var visualOnly = new AuthoredObject2D(EntityId2D.Create(), new("art", source with { Physics = null, Surface = null }, Vector2.Zero), physics, 1, uint.MaxValue);
+        using var visualOnly = new AuthoredObject2D(EntityId2D.Create(), new("art", source with { Physics = null, Surface = null }, Vector2f.Zero), physics, 1, uint.MaxValue);
         Assert.Null(visualOnly.Body);
         visualOnly.Update(1);
-        Assert.NotEqual(Vector2.Zero, visualOnly.WorldObject.Transform.Position);
-        using var collisionOnly = new AuthoredObject2D(EntityId2D.Create(), new("invisible", source with { Geometry = [source.Geometry[0] with { Material = null }] }, Vector2.Zero), physics, 1, uint.MaxValue);
+        Assert.NotEqual(Vector2f.Zero, visualOnly.WorldObject.Transform.Position);
+        using var collisionOnly = new AuthoredObject2D(EntityId2D.Create(), new("invisible", source with { Geometry = [source.Geometry[0] with { Material = null }] }, Vector2f.Zero), physics, 1, uint.MaxValue);
         Assert.NotNull(collisionOnly.Body);
         Assert.Null(Assert.Single(collisionOnly.CaptureDefinition().Part.Geometry).Material);
     }

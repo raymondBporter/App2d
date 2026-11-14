@@ -25,7 +25,7 @@ public sealed class AuthoredHero2D
     private readonly float _halfHeight;
     private readonly Dictionary<string, IShape2D> _shapes = new(StringComparer.Ordinal);
 
-    public AuthoredHero2D(ResolvedEntity entity, Vector2 colliderSize)
+    public AuthoredHero2D(ResolvedEntity entity, Vector2f  colliderSize)
     {
         Entity = entity;
         if (entity.Controller.Id != EntityControllers.Traversal)
@@ -95,7 +95,7 @@ public sealed class AuthoredHero2D
         ? new(ShapeBounds2D.Calculate(p.Shape.Validated()).Size * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, strike.Damage) : null;
 
     /// <summary>Where a shot leaves the pistol: the muzzle at the shoot (or wall-shot) action's fire event.</summary>
-    public Vector2 Muzzle(float facing, bool wallGrip)
+    public Vector2f Muzzle(float facing, bool wallGrip)
     {
         var action = (wallGrip ? Entity.Actions.GetValueOrDefault(EntityControllers.WallShot) : null) ?? Entity.Actions.GetValueOrDefault(EntityControllers.Shoot)
             ?? throw new InvalidOperationException($"Entity '{Entity.Id}' has no shoot action.");
@@ -110,7 +110,7 @@ public sealed class AuthoredHero2D
         new(PoseEvaluator.Sample(Entity.Model, clip, Math.Clamp(seconds, 0, clip.Duration), input: new()
         {
             InPlace = true
-        }), Vector2.Zero, facing < 0 ? -1 : 1);
+        }), Vector2f.Zero, facing < 0 ? -1 : 1);
 
-    private Vector2 ToWorld(Vector2 units) => units * WorldUnitsPerModelUnit - new Vector2(0, _halfHeight);
+    private Vector2f ToWorld(Vector2f units) => units * WorldUnitsPerModelUnit - new Vector2f(0, _halfHeight);
 }

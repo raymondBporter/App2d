@@ -14,8 +14,8 @@ public sealed class SpatialSoundEffectTests
     [InlineData(2000f, 0f)]
     public void FalloffHasFullVolumeCoreAndSmoothFadeToSilence(float distance, float expected)
     {
-        Assert.Equal(expected, SoundEffectCues2D.DefaultFalloff.Evaluate(new(distance, 0f), Vector2.Zero), 5);
-        Assert.Equal(expected, SoundEffectCues2D.DefaultFalloff.Evaluate(new(0f, -distance), Vector2.Zero), 5);
+        Assert.Equal(expected, SoundEffectCues2D.DefaultFalloff.Evaluate(new(distance, 0f), Vector2f.Zero), 5);
+        Assert.Equal(expected, SoundEffectCues2D.DefaultFalloff.Evaluate(new(0f, -distance), Vector2f.Zero), 5);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public sealed class SpatialSoundEffectTests
     public void InaudibleOneShotsDoNotConsumeVoicesAndHammerCarriesFarther()
     {
         var output = new RecordingSink();
-        var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => Vector2.Zero, SoundEffectCues2D.Falloff);
+        var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => Vector2f.Zero, SoundEffectCues2D.Falloff);
         sounds.PlayAt(SoundEffect2D.GunImpact, new(900f, 0f));
         Assert.Empty(output.Voices);
         sounds.PlayAt(SoundEffect2D.HammerImpact, new(900f, 0f));
@@ -50,10 +50,10 @@ public sealed class SpatialSoundEffectTests
     [Fact]
     public void ActiveOneShotFollowsListenerWithoutRestarting()
     {
-        var listener = Vector2.Zero;
+        var listener = Vector2f.Zero;
         var output = new RecordingSink();
         var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => listener, SoundEffectCues2D.Falloff);
-        sounds.PlayAt(SoundEffect2D.EnemyHurt, Vector2.Zero);
+        sounds.PlayAt(SoundEffect2D.EnemyHurt, Vector2f.Zero);
         var playback = Assert.Single(output.Voices);
         Assert.Equal(1f, playback.Volume);
         listener = new(448f, 0f);
@@ -63,7 +63,7 @@ public sealed class SpatialSoundEffectTests
         listener = new(1000f, 0f);
         sounds.Update();
         Assert.Equal(0f, playback.Volume);
-        listener = Vector2.Zero;
+        listener = Vector2f.Zero;
         sounds.Update();
         Assert.Equal(1f, playback.Volume);
         Assert.Single(output.Voices);
@@ -73,14 +73,14 @@ public sealed class SpatialSoundEffectTests
     public void SourceMotionAndVolumeChangesMultiplyRatherThanOverwriteFalloff()
     {
         var output = new RecordingSink();
-        var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => Vector2.Zero, SoundEffectCues2D.Falloff);
+        var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => Vector2f.Zero, SoundEffectCues2D.Falloff);
         var voice = sounds.BeginAt(SoundEffect2D.GunCharge, new(448f, 0f), 0.6f);
         var playback = Assert.Single(output.Voices);
         Assert.Equal(0.3f, playback.Volume, 5);
         var copiedHandle = voice;
         copiedHandle.SetVolumeScale(0.4f, 0.1f);
         Assert.Equal(0.2f, playback.Volume, 5);
-        voice.SetPosition(Vector2.Zero);
+        voice.SetPosition(Vector2f.Zero);
         sounds.Update();
         Assert.Equal(0.4f, playback.Volume, 5);
         voice.SetPosition(new(448f, 0f));
@@ -92,11 +92,11 @@ public sealed class SpatialSoundEffectTests
     public void InitiallySilentControllableVoiceCanMoveIntoRange()
     {
         var output = new RecordingSink();
-        var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => Vector2.Zero, SoundEffectCues2D.Falloff);
+        var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => Vector2f.Zero, SoundEffectCues2D.Falloff);
         var voice = sounds.BeginAt(SoundEffect2D.GunCharge, new(2000f, 0f));
         var playback = Assert.Single(output.Voices);
         Assert.Equal(0f, playback.Volume);
-        voice.SetPosition(Vector2.Zero);
+        voice.SetPosition(Vector2f.Zero);
         sounds.Update();
         Assert.Equal(1f, playback.Volume);
         Assert.Single(output.Voices);
@@ -118,9 +118,9 @@ public sealed class SpatialSoundEffectTests
     public void StoppingDoesNotLetSpatialUpdatesOverwriteFadeOut()
     {
         var output = new RecordingSink();
-        var listener = Vector2.Zero;
+        var listener = Vector2f.Zero;
         var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => listener, SoundEffectCues2D.Falloff);
-        var handle = sounds.BeginAt(SoundEffect2D.GunCharge, Vector2.Zero);
+        var handle = sounds.BeginAt(SoundEffect2D.GunCharge, Vector2f.Zero);
         var playback = Assert.Single(output.Voices);
         handle.Stop(0.1f);
         Assert.Equal(0.1f, playback.StopFade);
@@ -134,9 +134,9 @@ public sealed class SpatialSoundEffectTests
     public void CompletedVoicesAreRemoved()
     {
         var output = new RecordingSink();
-        var listener = Vector2.Zero;
+        var listener = Vector2f.Zero;
         var sounds = new SpatialSoundEffectSink2D<SoundEffect2D>(output, () => listener, SoundEffectCues2D.Falloff);
-        var handle = sounds.BeginAt(SoundEffect2D.GunCharge, Vector2.Zero);
+        var handle = sounds.BeginAt(SoundEffect2D.GunCharge, Vector2f.Zero);
         var playback = Assert.Single(output.Voices);
         playback.IsPlaying = false;
         Assert.False(handle.IsPlaying);
@@ -152,13 +152,13 @@ public sealed class SpatialSoundEffectTests
     public void DefaultVoiceAndLegacySinkRemainSafe()
     {
         var voice = default(SoundEffectVoice2D);
-        voice.SetPosition(Vector2.Zero);
+        voice.SetPosition(Vector2f.Zero);
         voice.SetVolumeScale(0.5f);
         voice.Stop();
         Assert.False(voice.IsPlaying);
         ISoundEffectSink2D<SoundEffect2D> sink = new LegacySink();
-        sink.PlayAt(SoundEffect2D.EnemyHurt, Vector2.One);
-        sink.BeginAt(SoundEffect2D.GunCharge, Vector2.One);
+        sink.PlayAt(SoundEffect2D.EnemyHurt, Vector2f.One);
+        sink.BeginAt(SoundEffect2D.GunCharge, Vector2f.One);
         Assert.Equal(2, ((LegacySink)sink).Count);
     }
 

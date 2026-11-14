@@ -30,10 +30,10 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         CombatFaction2D attackerFaction,
         uint targetLayer,
         int damage,
-        Func<ICombatant2D, Vector2> knockback,
+        Func<ICombatant2D, Vector2f> knockback,
         bool stopAfterFirstHit = false,
         CombatImpactKind2D impactKind = CombatImpactKind2D.Generic,
-        Vector2 impactDirection = default,
+        Vector2f impactDirection = default,
         EntityId2D attackerId = default,
         string? hitGroup = null)
     {
@@ -52,10 +52,10 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
             }
 
             var force = knockback(combatant);
-            var direction = impactDirection == Vector2.Zero ? force : impactDirection;
+            var direction = impactDirection == Vector2f.Zero ? force : impactDirection;
             if (direction.LengthSquared() > 0)
             {
-                direction = Vector2.Normalize(direction);
+                direction = Vector2f.Normalize(direction);
             }
 
             var attackerPosition = Combatants.Find(attackerId.IsValid ? attackerId : attackSourceId)?.WorldObject.Transform.Position;
@@ -71,7 +71,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
             }
 
             var position = hurtCollider is { } reached ? hitbox.WorldBounds.OverlapCenter(reached.WorldObject.WorldBounds)
-                : Vector2.Clamp(hitbox.WorldBounds.Center, combatant.WorldObject.WorldBounds.Min, combatant.WorldObject.WorldBounds.Max);
+                : Vector2f.Clamp(hitbox.WorldBounds.Center, combatant.WorldObject.WorldBounds.Min, combatant.WorldObject.WorldBounds.Max);
             var contact = new CombatContact2D(attackSourceId, attackId, position, direction, impactKind)
             {
                 AttackerId = attackerId.IsValid ? attackerId : attackSourceId
@@ -98,7 +98,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         CombatFaction2D attackerFaction,
         uint targetLayer,
         int damage,
-        Func<ICombatant2D, Vector2> knockback)
+        Func<ICombatant2D, Vector2f> knockback)
     {
         Ensure.ThrowIfNull(hitbox);
         Ensure.ThrowIfNull(knockback);
@@ -166,7 +166,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         return reached;
     }
 
-    private void Damage(ICombatant2D combatant, int damage, Vector2 knockback, CombatContact2D? contact = null)
+    private void Damage(ICombatant2D combatant, int damage, Vector2f knockback, CombatContact2D? contact = null)
     {
         var wasAlive = combatant.IsAlive;
         if (!combatant.TakeDamage(damage, knockback))

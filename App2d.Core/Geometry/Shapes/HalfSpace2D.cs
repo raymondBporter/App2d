@@ -13,14 +13,14 @@ public readonly partial record struct HalfSpace2D : IShape2D
     /// <summary>Creates a half-space from normalized data. Builder.Create normalizes and validates input.</summary>
     /// <param name="outwardNormal">The unit normal pointing toward free space.</param>
     /// <param name="offset">The finite signed boundary offset along <paramref name="outwardNormal"/>.</param>
-    public HalfSpace2D(Vector2 outwardNormal, float offset)
+    public HalfSpace2D(Vector2f outwardNormal, float offset)
     {
         Normal = outwardNormal;
         Offset = offset;
     }
 
     /// <summary>The unit normal pointing toward free space.</summary>
-    public Vector2 Normal { get; init; }
+    public Vector2f Normal { get; init; }
 
     /// <summary>The signed boundary offset along <see cref="Normal"/>.</summary>
     public float Offset { get; init; }
@@ -32,6 +32,6 @@ public readonly partial record struct HalfSpace2D : IShape2D
     public float Diameter => float.PositiveInfinity;
 
     /// <inheritdoc/>
-    public bool ContainsPoint(Vector2 localPoint) => Containment2D.HalfSpace(localPoint, Normal, Offset);
+    public bool ContainsPoint(Vector2f localPoint) => Containment2D.HalfSpace(localPoint, Normal, Offset);
 
 }

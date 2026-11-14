@@ -29,7 +29,7 @@ public sealed class WorldPresentation2D : IDisposable
     private readonly Dictionary<TileChunk2D, ChunkView> _chunks = [];
     private readonly Dictionary<(string Id, float Size), SideScrollerTerrainTileset2D> _tilesets = [];
     private readonly List<WorldObject2D> _goal = [];
-    private Vector2? _goalPosition;
+    private Vector2f? _goalPosition;
     private LevelContent2D _content = LevelContent2D.Empty;
     private WorldState2D _state = WorldState2D.Empty;
     private long? _appliedContentRevision;
@@ -239,15 +239,15 @@ public sealed class WorldPresentation2D : IDisposable
         }
     }
 
-    private void CreateGoal(Vector2 position)
+    private void CreateGoal(Vector2f position)
     {
-        var pole = new WorldObject2D(Capsule2D.Builder.Create(Vector2.Zero, new Vector2(0f, 190f), 5f),
+        var pole = new WorldObject2D(Capsule2D.Builder.Create(Vector2f.Zero, new Vector2f(0f, 190f), 5f),
             new SolidColorShader(new Color4b(238, 242, 232)));
         pole.Transform.Position = position;
         var flag = new WorldObject2D(ConvexPolygon2D.Builder.Create([
-            Vector2.Zero, new Vector2(92f, -30f), new Vector2(0f, -60f)]),
+            Vector2f.Zero, new Vector2f(92f, -30f), new Vector2f(0f, -60f)]),
             new SolidColorShader(new Color4b(255, 79, 120)));
-        flag.Transform.Position = position + new Vector2(0f, 185f);
+        flag.Transform.Position = position + new Vector2f(0f, 185f);
         _goal.Add(pole);
         _goal.Add(flag);
         _scene.Add(pole);
@@ -286,6 +286,6 @@ public sealed class WorldPresentation2D : IDisposable
         _appliedContentRevision = null;
     }
 
-    private sealed record CheckpointView(SavePointPresentation2D Visual, Vector2 BasePosition);
+    private sealed record CheckpointView(SavePointPresentation2D Visual, Vector2f BasePosition);
     private sealed record ChunkView(long Revision, List<WorldObject2D> Visuals);
 }

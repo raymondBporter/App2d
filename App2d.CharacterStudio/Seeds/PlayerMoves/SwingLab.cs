@@ -39,7 +39,7 @@ internal static class SwingLab
     /// </summary>
     private readonly record struct Arc(float Angle, float Wrist, float Radius, float Chest, float HipsX, float HipsY, float Head, float OffX, float OffY, float Tilt = 0, float Yaw = 60)
     {
-        public Vector2 Hand => Polar2D.ToCartesian(Radius, Angle);
+        public Vector2f Hand => Polar2D.ToCartesian(Radius, Angle);
         public Arc With(float angle, float wrist, float tilt) => this with { Angle = angle, Wrist = wrist, Tilt = tilt };
     }
 
@@ -112,7 +112,7 @@ internal static class SwingLab
         {
             var arm = Side.Direction(p.Arm, p.ArmDip) * _arm;
             var blade = Side.Direction(p.Blade, p.BladeDip);
-            var angle = ContinueBlade(new Vector2(blade.X, blade.Y).AngleRadians);
+            var angle = ContinueBlade(new Vector2f(blade.X, blade.Y).AngleRadians);
             var tilt = float.RadiansToDegrees(MathF.Asin(Math.Clamp(-blade.Z, -1, 1)));
             Builder.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(Builder.Model, p.Yaw).RightHand(arm.X, arm.Y).LeftHand(p.OffX, p.OffY).Blade(angle), ease);
             _orient.Add((time, p.Twist, tilt));
@@ -398,9 +398,9 @@ internal static class SwingLab
     /// higher than the shoulders at <paramref name="strike"/>. Made once from the swing, it is fixed to the player while the
     /// hit is live; the blade never drags it about. Null when the blade never gets in front.
     /// </summary>
-    public static (Vector2 Min, Vector2 Max)? HitRectangle(ResolvedModel model, MotionClip clip, float from, float strike, float recover, Func<float, (Vector3 Guard, Vector3 Tip)?> blade)
+    public static (Vector2f Min, Vector2f Max)? HitRectangle(ResolvedModel model, MotionClip clip, float from, float strike, float recover, Func<float, (Vector3 Guard, Vector3 Tip)?> blade)
     {
-        var points = new List<Vector2>();
+        var points = new List<Vector2f>();
         for (var t = from; t <= recover + 1e-4f; t += 1 / 240f)
         {
             if (blade(t) is var (guard, tip))

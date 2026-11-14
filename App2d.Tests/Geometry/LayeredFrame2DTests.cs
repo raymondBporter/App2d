@@ -30,12 +30,12 @@ public sealed class LayeredFrame2DTests
         var local = LayeredFrame2D.Local(new(2, .5f), .4f, new(1, 2), -.1f);
         var parent = new LayeredFrame2D(new Frame2D(new(12, -3), new(-2, 0), new(.5f, 3)), .25f);
         var combined = local.Then(parent);
-        var point = new Vector2(4, 2);
+        var point = new Vector2f(4, 2);
         TestModels.Near(parent.At(local.At(point)), combined.At(point), 1e-5f, "a composed placement lands where the parent places the local result");
         Assert.Equal(local.Frame.Then(parent.Frame), combined.Frame);
         Assert.Equal(.15f, combined.Layer, 6);
         // A further local layer offset adds on top, and XY rotation, scale or reflection never leak into the layer.
-        Assert.Equal(.15f + .02f, combined.At(new Vector3(point, .02f)).Z, 6);
+        Assert.Equal(.15f + .02f, combined.At(new Vector3(point.ToVector2(), .02f)).Z, 6);
         Assert.Equal(.15f, local.Then(parent with { Frame = new Frame2D(Matrix3x2.CreateScale(-7, 7) * Matrix3x2.CreateRotation(2)) }).Layer, 6);
     }
 
@@ -60,7 +60,7 @@ public sealed class LayeredFrame2DTests
         var world = placement.At(local);
         Assert.True(placement.TryToLocal(world, out var restored));
         TestModels.Near(local, restored, 1e-5f, "local coordinates");
-        Assert.False(new LayeredFrame2D(new Frame2D(Vector2.Zero, Vector2.UnitX, Vector2.UnitX), 0).TryToLocal(world, out _));
+        Assert.False(new LayeredFrame2D(new Frame2D(Vector2f.Zero, Vector2f.UnitX, Vector2f.UnitX), 0).TryToLocal(world, out _));
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public sealed class LayeredFrame2DTests
         var leaf = LayeredFrame2D.Local(new(3, .25f), .7f, new(.2f, .1f), 0);
         var carrier = new LayeredFrame2D(new Frame2D(Matrix3x2.CreateScale(-1.5f, 1.5f) * Matrix3x2.CreateRotation(2.1f) * Matrix3x2.CreateTranslation(4, 5)), .3f);
         var placed = leaf.Then(carrier);
-        Assert.InRange(Vector2.Dot(placed.XAxis, placed.YAxis), -1e-5f, 1e-5f);
+        Assert.InRange(Vector2f.Dot(placed.XAxis, placed.YAxis), -1e-5f, 1e-5f);
         Assert.Equal(3 * 1.5f, placed.XAxis.Length(), 4);
         Assert.Equal(.25f * 1.5f, placed.YAxis.Length(), 4);
     }

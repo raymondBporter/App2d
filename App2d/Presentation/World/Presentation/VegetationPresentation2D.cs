@@ -97,7 +97,7 @@ public sealed class VegetationPresentation2D : IDisposable
 
                 var cell = new GrassCell2D(x, y);
                 var seed = VegetationPlacement2D.Seed(x, y);
-                var root = map.Origin + new Vector2(x, y + 1) * map.TileSize;
+                var root = map.Origin + new Vector2f(x, y + 1) * map.TileSize;
                 var style = Style(map.TilesetIds[map.GetTilesetIndex(x, y)], map.TileSize);
                 patches.Add(new(cell, root, map.TileSize,
                     new VegetationPatch2D(root.X, root.X + map.TileSize, root.Y, style, seed)));
@@ -124,7 +124,7 @@ public sealed class VegetationPresentation2D : IDisposable
                     VegetationPlacement2D.HasGrass(map, x - 1, y) &&
                     VegetationPlacement2D.HasGrass(map, x + 1, y) && HasTreeClearance(map, x, y, sources))
                 {
-                    var root = map.Origin + new Vector2(x + 0.5f, y + 1) * map.TileSize;
+                    var root = map.Origin + new Vector2f(x + 0.5f, y + 1) * map.TileSize;
                     trees.Add(new(root, map.TileSize * (MinimumTreeHeightInTiles + seed % 100 / 50f), seed));
                 }
             }
@@ -248,7 +248,7 @@ public sealed class VegetationPresentation2D : IDisposable
             tree.Render(renderer, visible, wind);
         }
 
-        var sway = new Vector2(ProceduralTree2D.MaximumSway(wind), 0);
+        var sway = new Vector2f(ProceduralTree2D.MaximumSway(wind), 0);
         var cullBounds = new Rect2D(visible.Min - sway, visible.Max + sway);
         if (_terrainSource is not null)
         {
@@ -273,7 +273,7 @@ public sealed class VegetationPresentation2D : IDisposable
     internal GridCellRange2D QueryTreeChunks(Rect2D visible)
     {
         var size = _terrainSource!.Map.TileSize;
-        var reach = ProceduralTree2D.EstimateBounds(Vector2.Zero, size * (MinimumTreeHeightInTiles + TreeHeightVariationInTiles));
+        var reach = ProceduralTree2D.EstimateBounds(Vector2f.Zero, size * (MinimumTreeHeightInTiles + TreeHeightVariationInTiles));
         return QueryRoots(visible, reach, new(size * 0.5f, size));
     }
 
@@ -290,7 +290,7 @@ public sealed class VegetationPresentation2D : IDisposable
         if (_terrainSource is { } terrain)
         {
             var size = terrain.Map.TileSize;
-            foreach (var cell in QueryRoots(visible, PatchBounds(Vector2.Zero, size), new(0, size)))
+            foreach (var cell in QueryRoots(visible, PatchBounds(Vector2f.Zero, size), new(0, size)))
             {
                 var id = new TileChunk2D(cell.X, cell.Y);
                 var chunk = GetLocalChunk(id);
@@ -328,11 +328,11 @@ public sealed class VegetationPresentation2D : IDisposable
         }
     }
 
-    private static Rect2D PatchBounds(Vector2 root, float size) =>
-        new(root - new Vector2(size * 0.5f, 0f), root + new Vector2(size * 1.5f, size * 1.2f));
+    private static Rect2D PatchBounds(Vector2f root, float size) =>
+        new(root - new Vector2f(size * 0.5f, 0f), root + new Vector2f(size * 1.5f, size * 1.2f));
 
     // Invert the overlap to find the cells that could own those roots.
-    private GridCellRange2D QueryRoots(Rect2D visible, Rect2D reach, Vector2 rootOffset) =>
+    private GridCellRange2D QueryRoots(Rect2D visible, Rect2D reach, Vector2f rootOffset) =>
         _terrainSource!.QueryChunks(new(visible.Min - reach.Max - rootOffset, visible.Max - reach.Min - rootOffset));
 
     private Chunk GetLocalChunk(TileChunk2D id)
@@ -384,7 +384,7 @@ public sealed class VegetationPresentation2D : IDisposable
             }
 
             _clippings.Add(new(tip,
-                new Vector2(random.NextFloat(-0.5f, 0.5f) * 65f, random.NextFloat(90f, 130f)) * scale,
+                new Vector2f(random.NextFloat(-0.5f, 0.5f) * 65f, random.NextFloat(90f, 130f)) * scale,
                 random.NextFloat(-0.5f, 0.5f) * 12f, random.NextFloat(MathF.Tau), scale));
         }
     }
@@ -413,7 +413,7 @@ public sealed class VegetationPresentation2D : IDisposable
             Coverage: coverage, PatchWidth: size * 6f, SprigChance: 0.35f);
     }
 
-    private sealed record Patch(GrassCell2D Cell, Vector2 Root, float Size, VegetationPatch2D Visual);
+    private sealed record Patch(GrassCell2D Cell, Vector2f Root, float Size, VegetationPatch2D Visual);
     private sealed class Chunk(IChunkedTileMap2D source)
     {
         public IChunkedTileMap2D Source { get; } = source;

@@ -118,7 +118,7 @@ public sealed record PartLocation
     /// <summary>Animated assets: the rig control whose evaluated placement carries this location (the offset is in its axes).</summary>
     public string? Control { get; set; }
 
-    [JsonIgnore] public Vector2 Position => new(X, Y);
+    [JsonIgnore] public Vector2f Position => new(X, Y);
     [JsonIgnore] public Vector3f Point => new(X, Y, Z);
 
     public void Validate(string field)
@@ -247,7 +247,7 @@ public sealed record Part
         }
 
         var location = Locations.FirstOrDefault(l => l.Id == id) ?? throw new KeyNotFoundException($"Part '{Id}' has no location '{id}'.");
-        return LayeredFrame2D.Local(Vector2.One, location.Angle, location.Position, location.Layer);
+        return LayeredFrame2D.Local(Vector2f.One, location.Angle, location.Position, location.Layer);
     }
 
     /// <summary>Whether a wearer may key this target (a rig control or a piece) through a namespaced track.</summary>

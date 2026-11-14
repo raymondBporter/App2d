@@ -116,7 +116,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
     private sealed class Burst
     {
         public readonly (WorldObject2D Edge, WorldObject2D Fill)[] Pieces;
-        public Vector2 Position;
+        public Vector2f Position;
         public float Age, Duration, Angle, Size;
         public Burst(Scene2D scene)
         {

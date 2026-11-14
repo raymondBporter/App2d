@@ -164,7 +164,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
         if (ClipAuthoring.ActiveContact(clip, chainId, time) is { } contact)
         {
             var index = clip.Contacts.IndexOf(contact);
-            var range = new Vector2(contact.Start, contact.Finish);
+            var range = new Vector2f(contact.Start, contact.Finish);
             if (Ui.Drag2("Planted from / until (seconds)", ref range, .002f, 0, clip.Duration))
             {
                 session.Change(document, () => ClipAuthoring.SetContactRange(document.Asset, index, range));
@@ -220,7 +220,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
         var showTrack = ClipAuthoring.Track(clip, show);
         ImGui.TextDisabled($"piece '{local}'{(asset is null ? "" : $" of part '{asset}'")}: artwork-fit channel ({ChannelSemantics.Of(ChannelSemantics.ArtworkFit).Units}){(fitTrack is null ? ", not keyed yet" : $", {fitTrack.Keys.Count} keys")}; enabled-state channel (held){(showTrack is null ? ", not keyed yet" : $", {showTrack.Keys.Count} keys")}");
         var value = ClipAuthoring.Value(clip, fit, time).Value;
-        var multipliers = new Vector2(value.X + 1, value.Y + 1);
+        var multipliers = new Vector2f(value.X + 1, value.Y + 1);
         if (Ui.Drag2("Fit X / Y multipliers (artwork only)", ref multipliers, .01f, -100, 100))
         {
             session.Change(document, () => ClipAuthoring.SetKey(document.Asset, fit, time, new(multipliers.X - 1, multipliers.Y - 1, 0)));

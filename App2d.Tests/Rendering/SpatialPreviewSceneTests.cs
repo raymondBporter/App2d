@@ -15,7 +15,7 @@ public sealed class SpatialPreviewSceneTests
         var initial = cube.Position;
         var version = cube.Mesh.Version;
         var camera = Camera3D.Perspective(new(3, 2, 4), Vector3.Zero, Vector3.UnitY, 1.5f);
-        var size = new Vector2(900, 600);
+        var size = new Vector2f(900, 600);
         Assert.True(camera.TryProject(initial, size, out var screen));
         var originalRay = camera.ScreenRay(new(screen.X, screen.Y), size);
         Assert.Equal(0, scene.Pick(originalRay, out _));

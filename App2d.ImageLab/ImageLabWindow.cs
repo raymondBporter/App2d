@@ -29,7 +29,7 @@ internal sealed partial class ImageLabWindow : Form
     private string _status = "Load an image to begin.";
     private bool _fit = true;
     private float _zoom = 1;
-    private Vector2 _pan;
+    private Vector2f _pan;
 
     public ImageLabWindow()
     {
@@ -95,7 +95,7 @@ internal sealed partial class ImageLabWindow : Form
         _problem = null;
         _transform = new();
         _fit = true;
-        _pan = Vector2.Zero;
+        _pan = Vector2f.Zero;
         _showOriginal = false;
         _showPreview = false;
         _status = $"Loaded {name}. Choose a transform, preview, then Apply.";

@@ -151,7 +151,7 @@ public sealed class PartAnimationTests
                 Exposed = [],
                 Layers = [],
                 Clips = [],
-                Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(0, 1), new(2, 1), new(2, 0)), PeriodSeconds = 2 }
+                Motion = new() { Curve = CubicBezier2D.Builder.Create(Vector2f.Zero, new(0, 1), new(2, 1), new(2, 0)), PeriodSeconds = 2 }
             };
             part.Geometry[0].A = part.Geometry[0].Frame = PartLocation.Origin;
             part.Save(Path.Combine(root, "parts", part.Id + ".json"));
@@ -244,9 +244,9 @@ public sealed class PartAnimationTests
             var before = instance.WorldObject.Transform.Position;
             seconds += dt;
             instance.Update(dt);
-            Assert.True(Vector2.Distance((motion.Position(seconds) - before) / dt, instance.Body!.LinearVelocity) < .001f);
+            Assert.True(Vector2f.Distance((motion.Position(seconds) - before) / dt, instance.Body!.LinearVelocity) < .001f);
             world.Step(dt);
-            Assert.True(Vector2.Distance(motion.Position(seconds), instance.WorldObject.Transform.Position) < .001f);
+            Assert.True(Vector2f.Distance(motion.Position(seconds), instance.WorldObject.Transform.Position) < .001f);
         }
     }
 }

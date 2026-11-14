@@ -17,6 +17,6 @@ public readonly partial record struct QuadraticBezier2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static QuadraticBezier2D Create(Vector2 start, Vector2 control, Vector2 end) => new QuadraticBezier2D(start, control, end).Validated();
+        public static QuadraticBezier2D Create(Vector2f start, Vector2f control, Vector2f end) => new QuadraticBezier2D(start, control, end).Validated();
     }
 }

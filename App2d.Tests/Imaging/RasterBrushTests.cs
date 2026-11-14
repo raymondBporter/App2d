@@ -41,7 +41,7 @@ public sealed class RasterBrushTests
         Assert.False(blank.MoveTo(new(3, 3)));
         Assert.False(blank.Changed);
         Assert.Throws<ArgumentOutOfRangeException>(() => new RasterBrushStroke(mask, 0, true));
-        Assert.Throws<ArgumentOutOfRangeException>(() => stroke.MoveTo(new Vector2(float.NaN)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => stroke.MoveTo(new Vector2f(float.NaN)));
     }
 
     [Fact]

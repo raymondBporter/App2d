@@ -34,8 +34,8 @@ public sealed class SwordDownAttackTests
     {
         using var game = new Fixture();
         game.Person.Face(facing);
-        var below = game.AddEnemy(new Vector2(0f, -55f));
-        var beside = game.AddEnemy(new Vector2(70f, 0f));
+        var below = game.AddEnemy(new Vector2f(0f, -55f));
+        var beside = game.AddEnemy(new Vector2f(70f, 0f));
         game.Step(Attack, 0f);
         Assert.Equal(1, game.DownAttacks);
         Assert.Equal(0, game.NormalAttacks);
@@ -44,7 +44,7 @@ public sealed class SwordDownAttackTests
         Assert.Equal(facing < 0f, game.Shader.FlipX);
 
         var hitbox = Assert.Single(game.Arsenal.GetActiveAttackHitboxes());
-        Assert.Equal(game.Person.Position + new Vector2(0f, -32f), hitbox.Transform.Position);
+        Assert.Equal(game.Person.Position + new Vector2f(0f, -32f), hitbox.Transform.Position);
         Assert.Equal(3, below.Health.Current);
         Assert.True(below.Body.LinearVelocity.Y < 0f);
         Assert.Equal(5, beside.Health.Current);
@@ -53,12 +53,12 @@ public sealed class SwordDownAttackTests
 
         // Clear invulnerability to prove attack identity prevents a second hit.
         // Keep the player in range instead of letting the bounce move them away.
-        game.Person.Body.LinearVelocity = Vector2.Zero;
+        game.Person.Body.LinearVelocity = Vector2f.Zero;
         below.BeginFrame(1f);
         game.Step(default, 0.05f);
         Assert.Equal(3, below.Health.Current);
         Assert.False(game.Person.DownAttackBouncedThisFrame);
-        Assert.Equal(Vector2.Zero, game.Person.Body.LinearVelocity);
+        Assert.Equal(Vector2f.Zero, game.Person.Body.LinearVelocity);
         game.AssertFrame("sword-down-attack", 2);
         game.Step(default, 0.04f);
         game.Step(default, 0f);
@@ -124,10 +124,10 @@ public sealed class SwordDownAttackTests
         switch (cause)
         {
             case "damage":
-                Assert.True(game.Person.TakeDamage(1, Vector2.Zero));
+                Assert.True(game.Person.TakeDamage(1, Vector2f.Zero));
                 break;
             case "reset":
-                game.Person.Reset(Vector2.Zero);
+                game.Person.Reset(Vector2f.Zero);
                 break;
             case "disable":
                 game.Person.SetSimulationEnabled(false);
@@ -142,7 +142,7 @@ public sealed class SwordDownAttackTests
     {
         using var attacking = new Fixture();
         using var baseline = new Fixture();
-        attacking.Physics.Gravity = baseline.Physics.Gravity = new Vector2(0f, -900f);
+        attacking.Physics.Gravity = baseline.Physics.Gravity = new Vector2f(0f, -900f);
         var movement = new PersonCommand2D { MoveX = 1f };
         for (var i = 0; i < 60; i++)
         {
@@ -164,10 +164,10 @@ public sealed class SwordDownAttackTests
     public void HitReversesFallOncePreservesSidewaysVelocityAndCanBounceAgain(string target)
     {
         using var game = new Fixture();
-        game.Physics.Gravity = new Vector2(0f, -1900f);
+        game.Physics.Gravity = new Vector2f(0f, -1900f);
         if (target != "spikes")
         {
-            game.AddEnemy(new Vector2(0f, -55f));
+            game.AddEnemy(new Vector2f(0f, -55f));
         }
 
         if (target != "enemy")
@@ -175,10 +175,10 @@ public sealed class SwordDownAttackTests
             game.AddSpikes();
         }
 
-        game.Person.Body.LinearVelocity = new Vector2(120f, -900f);
+        game.Person.Body.LinearVelocity = new Vector2f(120f, -900f);
         game.Step(Attack, 0f);
         Assert.True(game.Person.DownAttackBouncedThisFrame);
-        Assert.Equal(new Vector2(120f, 520f), game.Person.Body.LinearVelocity);
+        Assert.Equal(new Vector2f(120f, 520f), game.Person.Body.LinearVelocity);
         Assert.Equal(5, game.Person.Health.Current);
         Assert.False(game.Person.IsGrounded);
         Assert.False(game.Level.TryGetSpikeSource(game.Person.WorldObject.WorldBounds, out _));
@@ -189,11 +189,11 @@ public sealed class SwordDownAttackTests
         Assert.True(game.Person.Position.Y > 0f);
 
         game.Step(default, 0.25f);
-        game.Person.WorldObject.Transform.Position = Vector2.Zero;
-        game.Person.Body.LinearVelocity = new Vector2(-90f, -600f);
+        game.Person.WorldObject.Transform.Position = Vector2f.Zero;
+        game.Person.Body.LinearVelocity = new Vector2f(-90f, -600f);
         game.Step(Attack, 0f);
         Assert.True(game.Person.DownAttackBouncedThisFrame);
-        Assert.Equal(new Vector2(-90f, 520f), game.Person.Body.LinearVelocity);
+        Assert.Equal(new Vector2f(-90f, 520f), game.Person.Body.LinearVelocity);
     }
 
     [Theory]
@@ -205,10 +205,10 @@ public sealed class SwordDownAttackTests
     public void OnlyAnActiveDownwardHitCanBounce(string scenario)
     {
         using var game = new Fixture();
-        game.Person.Body.LinearVelocity = new Vector2(0f, -200f);
+        game.Person.Body.LinearVelocity = new Vector2f(0f, -200f);
         if (scenario == "dead-enemy")
         {
-            game.AddEnemy(new Vector2(0f, -55f)).TakeDamage(5, Vector2.Zero);
+            game.AddEnemy(new Vector2f(0f, -55f)).TakeDamage(5, Vector2f.Zero);
         }
 
         if (scenario == "normal")
@@ -240,7 +240,7 @@ public sealed class SwordDownAttackTests
     public void BounceWinsOverEnemyBodyContactOnImpactFrameOnly()
     {
         using var game = new Fixture();
-        game.AddContactEnemy(new Vector2(0f, -40f));
+        game.AddContactEnemy(new Vector2f(0f, -40f));
         game.Step(Attack, 0f);
         Assert.True(game.Person.DownAttackBouncedThisFrame);
         game.ContactDamage.Resolve(game.Person);
@@ -275,13 +275,13 @@ public sealed class SwordDownAttackTests
         {
             Physics = new(_collision)
             {
-                Gravity = Vector2.Zero
+                Gravity = Vector2f.Zero
             };
             TileMap = new(SideScrollerLevel2D.WorldWidthTiles, SideScrollerLevel2D.WorldHeightTiles,
                 32f, SideScrollerLevel2D.ChunkSizeTiles, SideScrollerLevel2D.WorldOrigin);
             Level = new(_metrics, TileMap);
             ContactDamage = new(_collision, 4, _combatants);
-            Person = new(EntityId2D.Create(), _collision, Physics, _metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
+            Person = new(EntityId2D.Create(), _collision, Physics, _metrics, Vector2f.Zero, 2, 1, CombatFaction2D.Player);
             if (grounded)
             {
                 var floor = Physics.AddBody(new SpatialObject2D(
@@ -311,7 +311,7 @@ public sealed class SwordDownAttackTests
             };
         }
 
-        public Person2D AddEnemy(Vector2 position)
+        public Person2D AddEnemy(Vector2f position)
         {
             var enemy = new Person2D(EntityId2D.Create(), _collision, Physics, _metrics, position, 4, 0, CombatFaction2D.Enemy);
             // Keep overlap targets fixed while still recording damage knockback.
@@ -322,7 +322,7 @@ public sealed class SwordDownAttackTests
 
         public void AddSpikes() => TileMap.SetTileKind(16, 18, TileKind2D.Spikes);
 
-        public void AddContactEnemy(Vector2 position)
+        public void AddContactEnemy(Vector2f position)
         {
             var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(24f, 40f));
             spatial.Transform.Position = position;

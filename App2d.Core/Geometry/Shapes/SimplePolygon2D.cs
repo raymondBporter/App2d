@@ -12,19 +12,19 @@ namespace App2d.Core.Shapes;
 /// <summary>A filled simple polygon, including concave outlines, in either winding.</summary>
 public readonly partial record struct SimplePolygon2D : IShape2D
 {
-    private readonly Vector2[]? _vertices;
-    private static readonly ConditionalWeakTable<Vector2[], ReadOnlyCollection<Vector2>> Views = [];
-    internal IReadOnlyList<Vector2> VertexList => Views.GetValue(_vertices!, static vertices => Array.AsReadOnly(vertices));
+    private readonly Vector2f[]? _vertices;
+    private static readonly ConditionalWeakTable<Vector2f[], ReadOnlyCollection<Vector2f>> Views = [];
+    internal IReadOnlyList<Vector2f> VertexList => Views.GetValue(_vertices!, static vertices => Array.AsReadOnly(vertices));
 
     /// <summary>Creates a polygon snapshot. Prefer Builder.Create for construction.</summary>
-    public SimplePolygon2D(Vector2[] vertices) => _vertices = vertices?.ToArray();
+    public SimplePolygon2D(Vector2f[] vertices) => _vertices = vertices?.ToArray();
 
-    public ReadOnlySpan<Vector2> Vertices { get => _vertices; init => _vertices = value.ToArray(); }
+    public ReadOnlySpan<Vector2f> Vertices { get => _vertices; init => _vertices = value.ToArray(); }
     public float Area => Mesh.Area;
 
     /// <inheritdoc/>
     public float Diameter => Diameter2D.Polygon(_vertices);
-    public bool ContainsPoint(Vector2 point) => Containment2D.SimplePolygon(point, Vertices);
+    public bool ContainsPoint(Vector2f point) => Containment2D.SimplePolygon(point, Vertices);
 
     internal TriangleMesh2D Mesh => PolygonTriangulationCache2D.Get(VertexList, 1e-8);
     internal CompositeShape2D ConvexPieces => PolygonTriangulationCache2D.GetConvexPieces(VertexList, 1e-8);

@@ -61,7 +61,7 @@ public sealed class MigrationReferenceTests
 
     private sealed record ReferenceCase(string Id, string Model, string? Entity, string? Clip, float Seconds, int Facing, bool InPlace = true, string? Expression = null, string? Gear = null);
 
-    private sealed record Scenario(string Id, string[] Entities, Vector2[] Positions, int Steps, int[] AttackSteps, float Move = 0);
+    private sealed record Scenario(string Id, string[] Entities, Vector2f[] Positions, int Steps, int[] AttackSteps, float Move = 0);
 
     private static float Marker(MotionClip clip, string id) => clip.Markers.First(m => m.Id == id).Time;
 
@@ -314,7 +314,7 @@ public sealed class MigrationReferenceTests
 
         var clip = c.Clip is null ? null : ClipOf(c.Clip);
         var pose = PoseEvaluator.Sample(model, clip, c.Seconds, repeat: true, new(c.Expression) { InPlace = c.InPlace });
-        var actor = new ActorPose(pose, Vector2.Zero, c.Facing);
+        var actor = new ActorPose(pose, Vector2f.Zero, c.Facing);
         var record = new CaseRecord
         {
             Model = model.Id,
@@ -347,7 +347,7 @@ public sealed class MigrationReferenceTests
         }
 
         record.Props = placements.ToDictionary(p => $"{p.Prop.Id}@{p.Socket.Id}", p => PropPoints(p.Prop, DrawingFrame(actor, p.Socket)), StringComparer.Ordinal);
-        record.Movement = Bounds(EntityCollision.Movement(entity, Vector2.Zero, c.Facing).Bounds);
+        record.Movement = Bounds(EntityCollision.Movement(entity, Vector2f.Zero, c.Facing).Bounds);
         record.Hurt = [.. EntityCollision.Hurt(entity, actor).Select(h => new RegionRecord(h.Id, Bounds(h.Bounds), V2(h.Pose.Translation), V2(h.Pose.XAxis), h.Pose.IsMirrored))];
         record.Attacks = [.. entity.Actions.Values.Where(a => a.Clip.Id == c.Clip).SelectMany(a => a.Hits.Select(h =>
         {
@@ -505,7 +505,7 @@ public sealed class MigrationReferenceTests
 
     private static float[] V(Vector3 v) => [v.X, v.Y, v.Z];
 
-    private static float[] V2(Vector2 v) => [v.X, v.Y];
+    private static float[] V2(Vector2f v) => [v.X, v.Y];
 
     private static float[] M(Matrix3x2 m) => [m.M11, m.M12, m.M21, m.M22, m.M31, m.M32];
 

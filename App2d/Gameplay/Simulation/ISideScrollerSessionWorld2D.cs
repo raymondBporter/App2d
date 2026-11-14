@@ -20,9 +20,9 @@ public interface ISideScrollerSessionWorld2D
     ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => [];
     Rect2D Bounds { get; }
     float GoalX { get; }
-    void UpdateStreaming(Vector2 focus);
+    void UpdateStreaming(Vector2f focus);
     void UpdateWorldMotion(float deltaSeconds);
-    void UpdateEnemies(float deltaSeconds, Vector2 targetPosition);
+    void UpdateEnemies(float deltaSeconds, Vector2f targetPosition);
     void SyncEnemiesAfterPhysics();
     void ResolveDamage(Person2D player);
     WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Rect2D playerBounds);

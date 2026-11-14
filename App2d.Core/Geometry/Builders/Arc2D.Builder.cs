@@ -18,7 +18,7 @@ public readonly partial record struct Arc2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static Arc2D Create(Vector2 center, float radius, float startAngleRadians, float sweepAngleRadians)
+        public static Arc2D Create(Vector2f center, float radius, float startAngleRadians, float sweepAngleRadians)
         {
             return new Arc2D(center, radius, startAngleRadians, sweepAngleRadians).Validated();
         }
