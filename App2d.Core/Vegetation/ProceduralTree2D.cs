@@ -35,7 +35,7 @@ public sealed class ProceduralTree2D
 
     private void Grow(Vector2f start, float angle, float length, float width, int depth, Random random)
     {
-        var end = start + Polar2D.ToCartesian(length, angle);
+        var end = start + Vector2f.FromPolar(length, angle);
         _branches.Add(new(start, end, width));
         if (depth <= 1)
         {

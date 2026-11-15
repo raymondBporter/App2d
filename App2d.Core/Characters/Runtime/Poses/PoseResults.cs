@@ -14,4 +14,4 @@ public sealed record ChainResult(string Chain, float Residual, bool Reached, boo
 
     public static ChainResult Of(string chain, float residual, bool limited = false) => new(chain, residual, residual <= ReachTolerance, limited);
 }
-public sealed record ContactResult(string Chain, Vector3 Target, float Residual);
+public sealed record ContactResult(string Chain, Vector3f Target, float Residual);

@@ -41,12 +41,12 @@ public sealed class PrimitiveBufferViewTests
     [Fact]
     public void ThreeDimensionalAndPackedVerticesUseTheSameViews()
     {
-        Span<Vector3> points = [Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.One, Vector3.UnitY, Vector3.UnitZ];
+        Span<Vector3f> points = [Vector3f.Zero, Vector3f.UnitX, Vector3f.UnitY, Vector3f.One, Vector3f.UnitY, Vector3f.UnitZ];
         var actual = new List<Triangle3D>();
         foreach (var triangle in MeshTopology.TriangleList(points).As<Triangle3D>()) actual.Add(triangle);
         Assert.Equal(2, actual.Count);
         Assert.Equal(.5d, actual[0].Area);
-        Assert.Equal(Vector3.One, actual[1].A);
+        Assert.Equal(Vector3f.One, actual[1].A);
         Assert.Throws<ArgumentException>(() => MeshTopology.TriangleList([Vector2f.Zero]));
     }
 

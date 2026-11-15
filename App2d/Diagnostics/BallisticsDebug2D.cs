@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Contracts.Player;
 using App2d.Core.Rendering;
 using App2d.Core.Validation;
@@ -57,7 +58,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         Ensure.Finite(origin);
         Ensure.NonZero(facing);
 
-        var angle = float.DegreesToRadians(_angle);
+        var angle = Angles.DegreesToRadians(_angle);
         var velocity = _speed * _traversal.TileSize * new Vector2f(
             MathF.Cos(angle) * MathF.Sign(facing), MathF.Sin(angle));
         Reference = new Shot(origin, velocity, _referenceGravity * _traversal.TileSize);
@@ -101,7 +102,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         }
 
         var speed = reference.Velocity.Length() / _traversal.TileSize;
-        var angle = float.RadiansToDegrees(MathF.Atan2(reference.Velocity.Y, MathF.Abs(reference.Velocity.X)));
+        var angle = Angles.RadiansToDegrees(new Vector2f(MathF.Abs(reference.Velocity.X), reference.Velocity.Y).AngleRadians);
         renderer.DrawScreenLabel($"F4 FIRE / F6 CLEAR | BALLISTICS {speed:0.0} tiles/s @ {angle:0} deg | 1 tile = 1 m (reference only)",
             new Vector2f(24f, 220f));
         renderer.DrawScreenLabel(Describe("YELLOW reference", reference), new Vector2f(24f, 260f));

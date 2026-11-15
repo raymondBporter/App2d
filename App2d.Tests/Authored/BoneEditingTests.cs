@@ -14,7 +14,7 @@ namespace App2d.Tests.Authored;
 /// <summary>P3c of the character-system migration: the edit commands on canonical bone nodes and the inverse drags.</summary>
 public sealed class BoneEditingTests
 {
-    private static Vector2f  XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f  XY(Vector3f v) => new(v.X, v.Y);
 
     /// <summary>A root bone carrying a child bone, a bound grandchild, a loose point control and a bound lamp; the root may be scaled and reflected.</summary>
     private static CharacterModel Rig(float scale = 1, bool reflect = false)
@@ -26,7 +26,7 @@ public sealed class BoneEditingTests
         var child = ModelAuthoring.AddBone(model, "root", "child");
         child.Local = new() { Rotation = .4f, Layer = -.05f };
         ModelAuthoring.AddBone(model, "child", "tip");
-        ModelAuthoring.AddControl(model, "child", ResolvedModel.From(model).Rest["child"] + new Vector3(.2f, .3f, -.02f), "marker");
+        ModelAuthoring.AddControl(model, "child", ResolvedModel.From(model).Rest["child"] + new Vector3f(.2f, .3f, -.02f), "marker");
         model.Controls.Add(new() { Id = "lamp", Parent = "root", Node = RigNodeKinds.Bone, Link = new() { T = .5f, OffsetY = .2f } });
         model.Validate();
         return model;
@@ -53,8 +53,8 @@ public sealed class BoneEditingTests
         ModelAuthoring.RotateRestBone(model, "root", 1.1f);
         var turned = ResolvedModel.From(model);
         Assert.Equal(1.1f, turned.Nodes["root"].RestAngle, 4);
-        TestModels.Near(XYZ(XY(turned.Rest["root"]) + Rotation2D.Apply(new(1.5f * scale, 0), 1.1f), before.Rest["child"].Z), turned.Rest["child"]);
-        TestModels.Near(Rotation2D.ApplyXYAround(longer.Rest["marker"], XY(longer.Rest["root"]), 1.1f - longer.Nodes["root"].RestAngle), turned.Rest["marker"]);
+        TestModels.Near(XYZ(XY(turned.Rest["root"]) + new Vector2f(1.5f * scale, 0).Rotate(1.1f), before.Rest["child"].Z), turned.Rest["child"]);
+        TestModels.Near(longer.Rest["marker"].RotateXY(1.1f - longer.Nodes["root"].RestAngle, XY(longer.Rest["root"])), turned.Rest["marker"]);
         Assert.Equal(turned.Nodes["child"].RestAngle, turned.Nodes["root"].RestAngle + (reflect ? -1 : 1) * .4f, 4);
 
         // Tip drag: rotate then resize so the tip lands exactly, whatever the inherited scale and handedness.
@@ -66,14 +66,14 @@ public sealed class BoneEditingTests
         Assert.Equal(scale, new Frame2D(dragged.RestTransforms["tip"]).XAxis.Length(), 4);
 
         // Move the root's origin: its local translation re-expresses the character position; descendants follow with the flag.
-        var origin = dragged.Rest["root"] + new Vector3(.4f, -.6f, .03f);
+        var origin = dragged.Rest["root"] + new Vector3f(.4f, -.6f, .03f);
         ModelAuthoring.MoveRest(model, "root", origin, children: true);
         var moved = ResolvedModel.From(model);
         TestModels.Near(origin, moved.Rest["root"]);
-        TestModels.Near(dragged.Rest["tip"] + new Vector3(.4f, -.6f, .03f), moved.Rest["tip"]);
-        TestModels.Near(dragged.Rest["marker"] + new Vector3(.4f, -.6f, .03f), moved.Rest["marker"]);
+        TestModels.Near(dragged.Rest["tip"] + new Vector3f(.4f, -.6f, .03f), moved.Rest["tip"]);
+        TestModels.Near(dragged.Rest["marker"] + new Vector3f(.4f, -.6f, .03f), moved.Rest["marker"]);
         // A bound origin cannot be moved; the reason names the link.
-        Assert.Contains("bound to 'root'", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(model, "child", Vector3.Zero, true)).Message);
+        Assert.Contains("bound to 'root'", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(model, "child", Vector3f.Zero, true)).Message);
 
         // JSON round trip keeps every edited setup.
         var json = model.ToJson();
@@ -93,26 +93,26 @@ public sealed class BoneEditingTests
         free.Local = new() { X = .3f, Y = .1f };
         model.Validate();
         var before = ResolvedModel.From(model);
-        ModelAuthoring.MoveRest(model, "root", before.Rest["root"] + new Vector3(.5f, .5f, 0), children: false);
+        ModelAuthoring.MoveRest(model, "root", before.Rest["root"] + new Vector3f(.5f, .5f, 0), children: false);
         var after = ResolvedModel.From(model);
         TestModels.Near(before.Rest["free"], after.Rest["free"], 1e-5f, "unbound bone child stays");
         TestModels.Near(before.Rest["marker"], after.Rest["marker"], 1e-5f, "point descendant stays");
         // A bound child necessarily follows its parent.
-        TestModels.Near(before.Rest["child"] + new Vector3(.5f, .5f, 0), after.Rest["child"], 1e-5f, "bound child follows");
+        TestModels.Near(before.Rest["child"] + new Vector3f(.5f, .5f, 0), after.Rest["child"], 1e-5f, "bound child follows");
 
         // A point parent with a bone child: the bone child re-expresses its local setup to stay.
         var shipped = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var person = CharacterModel.FromJson(shipped.Models["person"].ToJson());
         Func<string, Part?> parts = shipped.Parts.GetValueOrDefault;
         var rest = ResolvedModel.From(person, null, parts);
-        ModelAuthoring.MoveRest(person, "chest", rest.Rest["chest"] + new Vector3(0, .2f, 0), children: false);
+        ModelAuthoring.MoveRest(person, "chest", rest.Rest["chest"] + new Vector3f(0, .2f, 0), children: false);
         var lifted = ResolvedModel.From(person, null, parts);
         TestModels.Near(rest.Rest["left-shoulder"], lifted.Rest["left-shoulder"], 1e-5f);
         TestModels.Near(rest.Rest["left-hand"], lifted.Rest["left-hand"], 1e-5f);
         TestModels.Near(rest.Rest["right-shoulder"], lifted.Rest["right-shoulder"], 1e-5f);
         ModelAuthoring.MoveRest(person, "chest", rest.Rest["chest"], children: true);
         var back = ResolvedModel.From(person, null, parts);
-        TestModels.Near(rest.Rest["left-hand"] - new Vector3(0, .2f, 0), back.Rest["left-hand"], 1e-5f, "with children the arm moves with the chest");
+        TestModels.Near(rest.Rest["left-hand"] - new Vector3f(0, .2f, 0), back.Rest["left-hand"], 1e-5f, "with children the arm moves with the chest");
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public sealed class BoneEditingTests
         foreach (var control in new[] { "lamp", "marker", "child", "root" })
         {
             var pose = PoseEvaluator.Sample(model, clip, 0);
-            var desired = pose.World(control) + new Vector3(.35f, -.25f, .02f);
+            var desired = pose.World(control) + new Vector3f(.35f, -.25f, .02f);
             ClipAuthoring.Pose(model, clip, pose, 0, control, desired);
             clip.Validate(model);
             TestModels.Near(desired, PoseEvaluator.Sample(model, clip, 0).World(control), 1e-4f, control);
@@ -164,26 +164,26 @@ public sealed class BoneEditingTests
         var person = catalog.Resolve("person");
         var variant = new ModelVariant { Id = "v", Name = "V", Base = "person" };
         // An unbound bone node moves through its local setup; a tip-bound one is refused with the link named.
-        ModelAuthoring.MoveRest(person, variant, Humanoid.LeftUpperArmBone, person.Rest[Humanoid.LeftUpperArmBone] + new Vector3(.05f, 0, 0), true);
+        ModelAuthoring.MoveRest(person, variant, Humanoid.LeftUpperArmBone, person.Rest[Humanoid.LeftUpperArmBone] + new Vector3f(.05f, 0, 0), true);
         Assert.True(variant.HasOverride(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.LocalX)));
         Assert.False(variant.HasOverride(PropertyRef.OfControl(Humanoid.LeftUpperArmBone, RigProperties.LocalY)));
-        TestModels.Near(person.Rest["left-hand"] + new Vector3(.05f, 0, 0), ResolvedModel.From(person.Base, variant, catalog.Parts.GetValueOrDefault).Rest["left-hand"], 1e-5f);
-        Assert.Contains("bound to", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(person, variant, "left-elbow", Vector3.Zero, true)).Message);
+        TestModels.Near(person.Rest["left-hand"] + new Vector3f(.05f, 0, 0), ResolvedModel.From(person.Base, variant, catalog.Parts.GetValueOrDefault).Rest["left-hand"], 1e-5f);
+        Assert.Contains("bound to", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveRest(person, variant, "left-elbow", Vector3f.Zero, true)).Message);
         variant.Overrides.Clear();
         // Moving the chest alone re-expresses its unbound children (the bone shoulder and the point controls) so they stay put.
-        ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + Vector3.UnitY * .1f, false);
+        ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + Vector3f.UnitY * .1f, false);
         var kept = ResolvedModel.From(person.Base, variant, catalog.Parts.GetValueOrDefault);
         foreach (var child in person.Base.Controls.Where(c => c.Parent == "chest"))
         {
             TestModels.Near(person.Rest[child.Id], kept.Rest[child.Id], 1e-5f, child.Id);
         }
-        TestModels.Near(person.Rest["chest"] + Vector3.UnitY * .1f, kept.Rest["chest"], 1e-5f);
+        TestModels.Near(person.Rest["chest"] + Vector3f.UnitY * .1f, kept.Rest["chest"], 1e-5f);
         variant.Overrides.Clear();
         // Moving the chest with its children needs no child override: the arm follows through the hierarchy.
-        ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + new Vector3(0, .1f, 0), true);
+        ModelAuthoring.MoveRest(person, variant, "chest", person.Rest["chest"] + new Vector3f(0, .1f, 0), true);
         Assert.Single(variant.Overrides);
         var lifted = ResolvedModel.From(person.Base, variant, catalog.Parts.GetValueOrDefault);
-        TestModels.Near(person.Rest["left-hand"] + new Vector3(0, .1f, 0), lifted.Rest["left-hand"], 1e-5f);
+        TestModels.Near(person.Rest["left-hand"] + new Vector3f(0, .1f, 0), lifted.Rest["left-hand"], 1e-5f);
         // Flattening a variant writes the fitted bone setup, not a frozen rest.
         var tall = ResolvedModel.From(person.Base, catalog.Variants["tall-thin"], catalog.Parts.GetValueOrDefault);
         var flat = ModelAuthoring.Flatten(tall, "flat-tall", "Flat tall");
@@ -239,5 +239,5 @@ public sealed class BoneEditingTests
         }
     }
 
-    private static Vector3 XYZ(Vector2f xy, float z) => new(xy.ToVector2(), z);
+    private static Vector3f XYZ(Vector2f xy, float z) => new(xy, z);
 }

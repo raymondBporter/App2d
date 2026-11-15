@@ -36,7 +36,7 @@ public static class TriangleMath2D
     /// Weights of <paramref name="a"/>, <paramref name="b"/> and <paramref name="c"/> that rebuild <paramref name="point"/>; they sum to 1 and
     /// interpolate any per-corner value. Points outside the triangle get a negative weight. A degenerate triangle gives non-finite weights.
     /// </summary>
-    public static Vector3 Barycentric(Vector2f a, Vector2f b, Vector2f c, Vector2f point)
+    public static Vector3f Barycentric(Vector2f a, Vector2f b, Vector2f c, Vector2f point)
     {
         var ab = b - a;
         var ac = c - a;

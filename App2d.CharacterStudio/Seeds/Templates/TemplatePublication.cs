@@ -62,7 +62,7 @@ public static class TemplatePublication
         var after = ResolvedModel.From(declared, null, partOf);
         foreach (var control in before.Order)
         {
-            if (Vector3.Distance(before.Rest[control.Id], after.Rest[control.Id]) > tolerance)
+            if (Vector3f.Distance(before.Rest[control.Id], after.Rest[control.Id]) > tolerance)
             {
                 differences.Add($"control '{control.Id}' rest moved from {before.Rest[control.Id]} to {after.Rest[control.Id]}");
             }
@@ -100,7 +100,7 @@ public static class TemplatePublication
                 var now = PoseEvaluator.Sample(after, clip, clip.Duration * phase);
                 foreach (var (id, point) in was.Points)
                 {
-                    if (Vector3.Distance(point, now.Points[id]) > tolerance)
+                    if (Vector3f.Distance(point, now.Points[id]) > tolerance)
                     {
                         differences.Add($"clip '{clip.Id}' at {clip.Duration * phase:0.##} s: '{id}' moved from {point} to {now.Points[id]}");
                         break;

@@ -1,4 +1,6 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace App2d.Core.Mathematics;
 
@@ -7,12 +9,21 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
 {
     private readonly Vector3 _value;
 
-    [System.Text.Json.Serialization.JsonConstructor]
+    [JsonConstructor]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vector3f(float x, float y, float z = 0) : this(new Vector3(x, y, z)) { }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Vector3f(float value) : this(new Vector3(value)) { }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Vector3f(Vector2f xy, float z) : this(new Vector3(xy.ToVector2(), z)) { }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vector3f(Vector3 value) => _value = value;
-    public float X { get => _value.X; init => _value = new(value, _value.Y, _value.Z); }
-    public float Y { get => _value.Y; init => _value = new(_value.X, value, _value.Z); }
-    public float Z { get => _value.Z; init => _value = new(_value.X, _value.Y, value); }
+    public float X { get => _value.X; init => _value.X = value; }
+    public float Y { get => _value.Y; init => _value.Y = value; }
+    public float Z { get => _value.Z; init => _value.Z = value; }
     public float this[int index] => _value[index];
 
     public static int Dimension => 3;
@@ -23,28 +34,100 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
     public static Vector3f UnitY => new(Vector3.UnitY);
     public static Vector3f UnitZ => new(Vector3.UnitZ);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f operator +(Vector3f left, Vector3f right) => new(left._value + right._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f operator -(Vector3f left, Vector3f right) => new(left._value - right._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f operator -(Vector3f value) => new(-value._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f operator *(Vector3f value, float scale) => new(value._value * scale);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f operator *(float scale, Vector3f value) => value * scale;
+
+    /// <summary>Multiplies the corresponding coordinates.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3f operator *(Vector3f left, Vector3f right) => new(left._value * right._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f operator /(Vector3f value, float scale) => new(value._value / scale);
 
+    /// <summary>Divides the corresponding coordinates.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3f operator /(Vector3f left, Vector3f right) => new(left._value / right._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Dot(Vector3f left, Vector3f right) => Vector3.Dot(left._value, right._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float Dot(Vector3f other) => Vector3.Dot(_value, other._value);
+
     public static Vector3f Min(Vector3f left, Vector3f right) => new(Vector3.Min(left._value, right._value));
     public static Vector3f Max(Vector3f left, Vector3f right) => new(Vector3.Max(left._value, right._value));
     public static Vector3f Abs(Vector3f value) => new(Vector3.Abs(value._value));
-    public static bool IsFinite(Vector3f value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z);
+    public static bool IsFinite(Vector3f value) => value.IsFinite();
 
-    public Vector3f Cross(Vector3f other) => new(Vector3.Cross(_value, other._value));
-    [System.Text.Json.Serialization.JsonIgnore]
+    /// <summary>True when every component is finite, regardless of the vector's length.</summary>
+    public bool IsFinite() => float.IsFinite(X) && float.IsFinite(Y) && float.IsFinite(Z);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float Length() => _value.Length();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float LengthSquared() => _value.LengthSquared();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Distance(Vector3f first, Vector3f second) => Vector3.Distance(first._value, second._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float DistanceSquared(Vector3f first, Vector3f second) => Vector3.DistanceSquared(first._value, second._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3f Normalize(Vector3f value) => new(Vector3.Normalize(value._value));
+
+    public Vector3f Normalized() => Normalize(this);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3f Lerp(Vector3f first, Vector3f second, float amount) =>
+        new(Vector3.Lerp(first._value, second._value, amount));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3f Cross(Vector3f left, Vector3f right) => new(Vector3.Cross(left._value, right._value));
+
+    public Vector3f Cross(Vector3f other) => Cross(this, other);
+
+    public static Vector3f Transform(Vector3f point, Matrix4x4 matrix) => new(Vector3.Transform(point._value, matrix));
+    public static Vector3f TransformNormal(Vector3f direction, Matrix4x4 matrix) => new(Vector3.TransformNormal(direction._value, matrix));
+    public static Vector3f Transform(Vector3f value, Quaternion rotation) => new(Vector3.Transform(value._value, rotation));
+
+    /// <summary>Converts each component from degrees to radians.</summary>
+    public Vector3f DegreesToRadians() => new(Angles.DegreesToRadians(X), Angles.DegreesToRadians(Y), Angles.DegreesToRadians(Z));
+
+    /// <summary>Converts each component from radians to degrees.</summary>
+    public Vector3f RadiansToDegrees() => new(Angles.RadiansToDegrees(X), Angles.RadiansToDegrees(Y), Angles.RadiansToDegrees(Z));
+
+    /// <summary>Rotates XY about the origin in radians, preserving Z.</summary>
+    public Vector3f RotateXY(float radians) => new(XY.Rotate(radians), Z);
+
+    /// <summary>Rotates XY about a pivot in radians, preserving Z.</summary>
+    public Vector3f RotateXY(float radians, Vector2f pivot) => new(XY.Rotate(radians, pivot), Z);
+
+    [JsonIgnore]
     public Vector2f XY => new(X, Y);
-    [System.Text.Json.Serialization.JsonIgnore]
+    [JsonIgnore]
     public Vector2f XZ => new(X, Z);
-    [System.Text.Json.Serialization.JsonIgnore]
+    [JsonIgnore]
     public Vector2f YZ => new(Y, Z);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vector3 ToVector3() => _value;
+
+    /// <summary>Widens all coordinates before double-precision arithmetic, including subtraction.</summary>
     public Vector3d ToVector3d() => new(X, Y, Z);
+
     public override string ToString() => _value.ToString();
 }

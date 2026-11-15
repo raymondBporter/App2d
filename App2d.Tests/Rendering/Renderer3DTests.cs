@@ -23,10 +23,10 @@ public sealed class Renderer3DTests
     {
         using var graphics = new GraphicsTestContext(DepthFormat.Depth24);
         using var renderer = new Renderer3D(graphics.Device);
-        var camera = Camera3D.Orthographic(new(0, 0, 4), Vector3.Zero, Vector3.UnitY, 2, 2);
+        var camera = Camera3D.Orthographic(new(0, 0, 4), Vector3f.Zero, Vector3f.UnitY, 2, 2);
         var back = Triangle(Color4b.Red);
         var front = Triangle(Color4b.Lime);
-        var closer = Frame3D.FromRotation(Vector3.Zero, Vector3.UnitZ);
+        var closer = Frame3D.FromRotation(Vector3f.Zero, Vector3f.UnitZ);
         renderer.Clear(Color4b.Black);
         renderer.Draw(front, closer, camera);
         renderer.Draw(back, Frame3D.Identity, camera);
@@ -36,7 +36,7 @@ public sealed class Renderer3DTests
         renderer.Draw(front, closer, camera);
         Assert.Equal(Color4b.Lime, graphics.ReadPixels()[64 * 128 + 64]);
         Assert.Equal(2, renderer.MeshUploadCount);
-        var orbit = Camera3D.Perspective(new(.3f, .2f, 4), Vector3.Zero, Vector3.UnitY, 1);
+        var orbit = Camera3D.Perspective(new(.3f, .2f, 4), Vector3f.Zero, Vector3f.UnitY, 1);
         renderer.Clear(Color4b.Black);
         renderer.Draw(front, Frame3D.FromRotation(new(0, .2f, 0)), orbit);
         Assert.Equal(2, renderer.MeshUploadCount);
@@ -51,7 +51,7 @@ public sealed class Renderer3DTests
     {
         using var graphics = new GraphicsTestContext(DepthFormat.Depth24);
         using var renderer = new Renderer3D(graphics.Device) { MeshCacheBudgetBytes = 0 };
-        var camera = Camera3D.Perspective(new(0, 0, 4), Vector3.Zero, Vector3.UnitY, 1);
+        var camera = Camera3D.Perspective(new(0, 0, 4), Vector3f.Zero, Vector3f.UnitY, 1);
         graphics.Device.DepthStencilState = DepthStencilState.None;
         graphics.Device.BlendState = BlendState.Additive;
         graphics.Device.RasterizerState = RasterizerState.CullClockwise;

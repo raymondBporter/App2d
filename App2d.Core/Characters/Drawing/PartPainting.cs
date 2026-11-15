@@ -21,7 +21,7 @@ internal static class PartPainting
             return;
         }
 
-        Vector3 PlaceSpatial(Vector3 point) => spatial is { } placed ? placed.TransformPoint(point + Vector3.UnitZ * physicalZ) : point;
+        Vector3f PlaceSpatial(Vector3f point) => spatial is { } placed ? placed.TransformPoint(point + Vector3f.UnitZ * physicalZ) : point;
         for (var layer = 0; layer < paint.Count; layer++)
         {
             var patch = paint[layer];
@@ -33,7 +33,7 @@ internal static class PartPainting
                 var points = patch.Points.ConvertAll(p => frame.Frame.TransformPoint(bounds.Center + new Vector2f(p.X * bounds.Width, p.Y * bounds.Height)));
                 var outline = contour.Select(p => p.XY).ToArray();
                 var clipped = PolygonClipping2D.ClipConvex(points, outline);
-                var points3D = new LayeredContour([.. clipped.Select(p => PlaceSpatial(new Vector3(p.ToVector2(), 0)))], frame.Layer - bias);
+                var points3D = new LayeredContour([.. clipped.Select(p => PlaceSpatial(new Vector3f(p, 0)))], frame.Layer - bias);
                 mesh.Polygon(points3D, color, null, 0);
                 continue;
             }
@@ -43,13 +43,13 @@ internal static class PartPainting
                 var b = triangles.Vertices[ib];
                 var c = triangles.Vertices[ic];
                 var clipped = PolygonClipping2D.ClipConvex(patch.Points, [a, b, c]);
-                (Vector3 Position, float Layer) Place(Vector2f localPoint)
+                (Vector3f Position, float Layer) Place(Vector2f localPoint)
                 {
                     var w = TriangleMath2D.Barycentric(a, b, c, localPoint);
                     var point = contour[ia] * w.X + contour[ib] * w.Y + contour[ic] * w.Z;
                     if (spatial is { } placed)
                     {
-                        point = placed.TransformPoint(point + Vector3.UnitZ * physicalZ);
+                        point = placed.TransformPoint(point + Vector3f.UnitZ * physicalZ);
                     }
                     var layer = contour.LayerAt(ia) * w.X + contour.LayerAt(ib) * w.Y + contour.LayerAt(ic) * w.Z - bias;
                     return (point, layer);

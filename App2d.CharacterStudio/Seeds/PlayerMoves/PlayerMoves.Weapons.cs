@@ -18,7 +18,7 @@ internal static partial class PlayerMoves
             clip.Tracks.RemoveAll(t => t.Kind == MotionClip.OrientKind && t.Target == socket);
             foreach (var (time, twist, tilt) in keys)
             {
-                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, socket), time, new Vector3(twist, tilt, 0).DegreesToRadians());
+                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, socket), time, new Vector3f(twist, tilt, 0).DegreesToRadians());
             }
         }
         switch (clip.Id)

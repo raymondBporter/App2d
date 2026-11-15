@@ -13,7 +13,7 @@ public sealed class ProportionExtremesTests
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
     private static CharacterModel Person => Catalog.Models["person"];
     private static ResolvedModel Build(PersonBuild build, string id) => ResolvedModel.From(Person, build.Apply(Person, id, id), Catalog.Parts.GetValueOrDefault);
-    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3f v) => new(v.X, v.Y);
 
     public static TheoryData<string, string> Cases => new()
     {
@@ -80,8 +80,8 @@ public sealed class ProportionExtremesTests
         var standardPlanted = standardPose.Contacts.Single(c => c.Chain == contact.Chain);
         var restEnd = model.Rest[model.Chains[contact.Chain].End];
         var standardRestEnd = standard.Rest[standard.Chains[contact.Chain].End];
-        TestModels.Near(standardRestEnd + new Vector3(contact.Target.X * standardRatio, contact.Target.Y * standardRatio, 0) + new Vector3(PoseEvaluator.Sample(standard, walk, 0).Locomotion.X, 0, 0), standardPlanted.Target with { Z = standardRestEnd.Z }, 1e-4f);
-        TestModels.Near(restEnd + new Vector3(contact.Target.X * ratio, contact.Target.Y * ratio, 0) + new Vector3(PoseEvaluator.Sample(model, walk, 0).Locomotion.X, 0, 0), planted.Target with { Z = restEnd.Z }, 1e-4f);
+        TestModels.Near(standardRestEnd + new Vector3f(contact.Target.X * standardRatio, contact.Target.Y * standardRatio, 0) + new Vector3f(PoseEvaluator.Sample(standard, walk, 0).Locomotion.X, 0, 0), standardPlanted.Target with { Z = standardRestEnd.Z }, 1e-4f);
+        TestModels.Near(restEnd + new Vector3f(contact.Target.X * ratio, contact.Target.Y * ratio, 0) + new Vector3f(PoseEvaluator.Sample(model, walk, 0).Locomotion.X, 0, 0), planted.Target with { Z = restEnd.Z }, 1e-4f);
         Assert.InRange(planted.Residual, 0, 1e-4f);
     }
 

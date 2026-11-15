@@ -17,7 +17,7 @@ internal sealed record ArenaColliderFrame(string Id, string Use, EntityRegion Re
 /// system (<see cref="Colliders"/>).
 /// </summary>
 internal sealed record ArenaActorFrame(ResolvedEntity Entity, ActorPose Pose, EntityRegion Movement,
-    IReadOnlyList<EntityRegion> Attacks, IReadOnlyDictionary<string, Vector3> Anchors, bool Alive, IReadOnlyList<ArenaColliderFrame> Colliders)
+    IReadOnlyList<EntityRegion> Attacks, IReadOnlyDictionary<string, Vector3f> Anchors, bool Alive, IReadOnlyList<ArenaColliderFrame> Colliders)
 {
     /// <summary>Every actor, with the bolts in flight shown as attack regions of the actor that fired them.</summary>
     public static IReadOnlyList<ArenaActorFrame> Capture(AuthoredArena arena) => [.. arena.Actors.Select(a => new ArenaActorFrame(
@@ -68,7 +68,7 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 
         void Outline(EntityRegion region, Color4b color, float width)
         {
-            var points = region.Outline().Select(p => new Vector3(p.ToVector2(), -6)).ToList();
+            var points = region.Outline().Select(p => new Vector3f(p, -6)).ToList();
             for (var i = 0; i < points.Count; i++)
             {
                 mesh.Line(points[i], points[(i + 1) % points.Count], width * pixel, color);
@@ -95,7 +95,7 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 
             foreach (var region in actor.Attacks)
             {
-                mesh.Polygon([.. region.Outline().Select(q => new Vector3(q.ToVector2(), -6.1f))], new Color4b(235, 60, 50, 90), new Color4b(220, 40, 30), 3 * pixel);
+                mesh.Polygon([.. region.Outline().Select(q => new Vector3f(q, -6.1f))], new Color4b(235, 60, 50, 90), new Color4b(220, 40, 30), 3 * pixel);
             }
 
             foreach (var equipment in actor.Entity.Equipment)
@@ -116,8 +116,8 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
                     Z = -6.2f
                 };
                 var green = new Color4b(36, 140, 104);
-                mesh.Line(p - new Vector3(9 * pixel, 0, 0), p + new Vector3(9 * pixel, 0, 0), 2 * pixel, green);
-                mesh.Line(p - new Vector3(0, 9 * pixel, 0), p + new Vector3(0, 9 * pixel, 0), 2 * pixel, green);
+                mesh.Line(p - new Vector3f(9 * pixel, 0, 0), p + new Vector3f(9 * pixel, 0, 0), 2 * pixel, green);
+                mesh.Line(p - new Vector3f(0, 9 * pixel, 0), p + new Vector3f(0, 9 * pixel, 0), 2 * pixel, green);
             }
         }
     }

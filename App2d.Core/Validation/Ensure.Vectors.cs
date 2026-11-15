@@ -7,6 +7,10 @@ namespace App2d.Core.Validation;
 public static partial class Ensure
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vec2<TReal> Finite<TReal>(Vec2<TReal> value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where TReal : unmanaged, IFloatingPointIeee754<TReal> =>
+        NumericValidation.IsFinite(value) ? value : throw CreateOutOfRange(value, "Value must be finite.", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2f Number(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNumber(value) ? value : throw CreateOutOfRange(value, "Value must not be NaN.", paramName);
 
@@ -95,35 +99,35 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 Number(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector3f Number(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNumber(value) ? value : throw CreateOutOfRange(value, "Value must not be NaN.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 Finite(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector3f Finite(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsFinite(value) ? value : throw CreateOutOfRange(value, "Value must be finite.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 Positive(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector3f Positive(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsPositive(value) ? value : throw CreateOutOfRange(value, "Value must be finite and positive (> 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 Negative(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowNegativeInfinity = false) =>
+    public static Vector3f Negative(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowNegativeInfinity = false) =>
         NumericValidation.IsNegative(value, allowNegativeInfinity) ? value : throw CreateOutOfRange(value, "Value must be negative (< 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 NonNegative(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowInfinity = false) =>
+    public static Vector3f NonNegative(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowInfinity = false) =>
         NumericValidation.IsNonNegative(value, allowInfinity) ? value : throw CreateOutOfRange(value, "Value must be nonnegative (>= 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 NonPositive(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector3f NonPositive(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNonPositive(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonpositive (<= 0).", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 NonZero(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static Vector3f NonZero(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNonZero(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonzero.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 LessThan(Vector3 value, Vector3 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector3f LessThan(Vector3f value, Vector3f maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null, bool allowInfinity = false)
     {
         if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
@@ -133,7 +137,7 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 LessThanOrEqual(Vector3 value, Vector3 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector3f LessThanOrEqual(Vector3f value, Vector3f maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null, bool allowInfinity = false)
     {
         if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
@@ -143,7 +147,7 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 GreaterThan(Vector3 value, Vector3 minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector3f GreaterThan(Vector3f value, Vector3f minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null, bool allowInfinity = false)
     {
         if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
@@ -153,7 +157,7 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 GreaterThanOrEqual(Vector3 value, Vector3 minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector3f GreaterThanOrEqual(Vector3f value, Vector3f minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null, bool allowInfinity = false)
     {
         if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
@@ -163,7 +167,7 @@ public static partial class Ensure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3 InRange(Vector3 value, Vector3 minimum, Vector3 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static Vector3f InRange(Vector3f value, Vector3f minimum, Vector3f maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         RangeBounds bounds = RangeBounds.Closed,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null)
@@ -269,18 +273,6 @@ public static partial class Ensure
         return NumericValidation.IsInRange(value, minimum, maximum, bounds)
             ? value : throw CreateRangeException(value, minimum, maximum, bounds, paramName);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3f Number(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
-        NumericValidation.IsNumber(value) ? value : throw CreateOutOfRange(value, "Value must not be NaN.", paramName);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3f Finite(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
-        NumericValidation.IsFinite(value) ? value : throw CreateOutOfRange(value, "Value must be finite.", paramName);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3f NonZero(Vector3f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
-        NumericValidation.IsNonZero(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonzero.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector4f Number(Vector4f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>

@@ -53,7 +53,7 @@ public sealed class ParameterBindingTests
         return variant;
     }
 
-    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3f v) => new(v.X, v.Y);
 
     [Fact]
     public void TheShippedPersonDeclaresItsProportionsAsParametersWithBindings()
@@ -144,14 +144,14 @@ public sealed class ParameterBindingTests
     }
 
     /// <summary>The retired <c>PersonBuildRule.Apply</c>, kept here as the oracle the data bindings must reproduce.</summary>
-    private static (Dictionary<string, Vector3> Positions, List<PartGeometry> Parts) LegacyPersonBuild(ResolvedModel standard, PersonBuild b)
+    private static (Dictionary<string, Vector3f> Positions, List<PartGeometry> Parts) LegacyPersonBuild(ResolvedModel standard, PersonBuild b)
     {
         var rest = standard.Order.ToDictionary(c => c.Id, c => standard.Rest[c.Id], StringComparer.Ordinal);
         var parts = standard.Base.Parts.ConvertAll(p => p with { });
-        var built = new Dictionary<string, Vector3>(StringComparer.Ordinal);
+        var built = new Dictionary<string, Vector3f>(StringComparer.Ordinal);
         var ground = rest[Humanoid.LeftFoot].Y;
         float Lift(float y) => ground + (y - ground) * b.Legs;
-        Vector3 Across(Vector3 v) => new(v.X * b.Width, v.Y, v.Z * b.Width);
+        Vector3f Across(Vector3f v) => new(v.X * b.Width, v.Y, v.Z * b.Width);
         built[Humanoid.Hips] = rest[Humanoid.Hips] with { Y = Lift(rest[Humanoid.Hips].Y) };
         built[Humanoid.Chest] = built[Humanoid.Hips] + (rest[Humanoid.Chest] - rest[Humanoid.Hips]) * b.Torso;
         built[Humanoid.Head] = built[Humanoid.Chest] + (rest[Humanoid.Head] - rest[Humanoid.Chest]) * b.Torso;
@@ -165,7 +165,7 @@ public sealed class ParameterBindingTests
             built[hip] = Across(rest[hip]) with { Y = Lift(rest[hip].Y) };
             built[knee] = built[foot] + (rest[knee] - rest[foot]) * b.Legs;
             var shoulder = rest[shoulderId] - rest[Humanoid.Chest];
-            built[shoulderId] = built[Humanoid.Chest] + new Vector3(shoulder.X * b.Width, shoulder.Y * b.Torso, shoulder.Z * b.Width);
+            built[shoulderId] = built[Humanoid.Chest] + new Vector3f(shoulder.X * b.Width, shoulder.Y * b.Torso, shoulder.Z * b.Width);
             built[elbow] = built[shoulderId] + (rest[elbow] - rest[shoulderId]) * b.Arms;
             built[hand] = built[elbow] + (rest[hand] - rest[elbow]) * b.Arms;
             // P11a: the solved upper-arm bone sits at its shoulder pivot.
@@ -193,8 +193,8 @@ public sealed class ParameterBindingTests
         Assert.Equal(1, longer.Nodes["hub"].Length);
         Assert.Equal(1, longer.ParameterValues["reach"]);
         var hub = XY(longer.Rest["hub"]);
-        TestModels.Near(new((hub + Rotation2D.Apply(new(.5f, 0), .3f)).ToVector2(), 0), longer.Rest["lamp"]);
-        TestModels.Near(new((hub + Rotation2D.Apply(new(1, 0), .3f)).ToVector2(), 0), longer.Rest["pin"]);
+        TestModels.Near(new(hub + new Vector2f(.5f, 0).Rotate(.3f), 0), longer.Rest["lamp"]);
+        TestModels.Near(new(hub + new Vector2f(1, 0).Rotate(.3f), 0), longer.Rest["pin"]);
         Assert.Equal(1, new Frame2D(longer.RestTransforms["lamp"]).XAxis.Length(), 5);
         // The preset writes the same value through the authoring route.
         var fromPreset = new ModelVariant { Id = "long", Name = "Long", Base = "crank" };
@@ -207,7 +207,7 @@ public sealed class ParameterBindingTests
         clip.Validate(standard);
         clip.Validate(longer);
         var pose = PoseEvaluator.Sample(longer, clip, 0);
-        TestModels.Near(new((XY(pose.World("hub")) + Rotation2D.Apply(new(.5f, 0), 1.5f)).ToVector2(), 0), pose.World("lamp"));
+        TestModels.Near(new(XY(pose.World("hub")) + new Vector2f(.5f, 0).Rotate(1.5f), 0), pose.World("lamp"));
     }
 
     [Fact]

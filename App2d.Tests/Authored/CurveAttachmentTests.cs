@@ -63,16 +63,16 @@ public sealed class CurveAttachmentTests
         ClipAuthoring.SetKey(clip, new("translate", "bend"), 0, new(.3f, -.4f, .4f));
         ClipAuthoring.SetKey(clip, new("translate", "start"), 0, new(-.2f, 0, 0));
         ClipAuthoring.SetKey(clip, new("translate", "root"), 0, new(3, 4, 0));
-        ClipAuthoring.SetKey(clip, new("rotate", "root"), 0, Vector3.Zero, .7f);
+        ClipAuthoring.SetKey(clip, new("rotate", "root"), 0, Vector3f.Zero, .7f);
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
         var path = PartContours2D.Contour(part, pose.World, rest: id => resolved.Rest[id]);
         var expectedMiddle = cubic
             ? (pose.World("start") + 3 * pose.World("bend") + 3 * pose.World("bend2") + pose.World("end")) / 8
             : (pose.World("start") + 2 * pose.World("bend") + pose.World("end")) / 4;
-        expectedMiddle.Z += part.Layer;
+        expectedMiddle = expectedMiddle with { Z = expectedMiddle.Z + part.Layer };
         TestModels.Near(expectedMiddle, TestModels.DrawPoint(path, 16), 1e-6f);
-        TestModels.Near(pose.World("start") + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(path, 0), 1e-6f);
-        TestModels.Near(pose.World("end") + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(path, path.Count - 1), 1e-6f);
+        TestModels.Near(pose.World("start") + new Vector3f(0, 0, part.Layer), TestModels.DrawPoint(path, 0), 1e-6f);
+        TestModels.Near(pose.World("end") + new Vector3f(0, 0, part.Layer), TestModels.DrawPoint(path, path.Count - 1), 1e-6f);
         Assert.All(path, p => Assert.Equal(0, p.Z));
 
         // Picking follows the rendered curve, including a moved handle outside the original endpoint frame.
@@ -81,7 +81,7 @@ public sealed class CurveAttachmentTests
             Assert.InRange(PartPicking2D.Distance(part, pose.World, point, rest: id => resolved.Rest[id]), 0, 1e-4f);
         }
 
-        Assert.True(PartPicking2D.Distance(part, pose.World, path[16] + new Vector3(0, 2, 0), rest: id => resolved.Rest[id]) > 1);
+        Assert.True(PartPicking2D.Distance(part, pose.World, path[16] + new Vector3f(0, 2, 0), rest: id => resolved.Rest[id]) > 1);
         var drawing = new PuppetDrawing();
         drawing.Build(resolved, pose);
         Assert.NotEmpty(drawing.Mesh.Vertices.ToArray());
@@ -104,7 +104,7 @@ public sealed class CurveAttachmentTests
         var resolved = ResolvedModel.From(model);
         var clip = ClipAuthoring.New(resolved, "turn", "Turn");
         ClipAuthoring.SetKey(clip, new("translate", "bend"), 0, new(.5f, 0, .4f));
-        ClipAuthoring.SetKey(clip, new("rotate", "bend"), 0, Vector3.Zero, MathF.PI / 2);
+        ClipAuthoring.SetKey(clip, new("rotate", "bend"), 0, Vector3f.Zero, MathF.PI / 2);
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
         var path = PartContours2D.Contour(part, pose.World, rest: id => resolved.Rest[id]);
         // Rest artwork handle (1, 1) sits .5 left of its control. That offset turns down.

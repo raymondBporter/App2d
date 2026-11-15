@@ -501,7 +501,7 @@ public sealed class ShapeArea2DTests
     [Fact]
     public void RotatedEllipsesCoincideThroughCanonicalForm()
     {
-        var axis = Polar2D.Direction(.3f);
+        var axis = Vector2f.Direction(.3f);
         var ellipse = Ellipse2D.Builder.Create(new(2, 1), new(1, 1), axis);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(2, 1), new(1, 1), -axis)]), 5);
         Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, Ellipse2D.Builder.Create(new(1, 2), new(1, 1), axis.PerpCcw)]), 5);
@@ -515,7 +515,7 @@ public sealed class ShapeArea2DTests
     public void RotatedMixedUnionsAgreeWithTheOracleAndAreRotationInvariant()
     {
         var random = new Random(31907);
-        Check([Ellipse2D.Builder.Create(new(10, .02f), default, .35f), Circle2D.Builder.Create(.25f, 3 * Polar2D.Direction(.35f))]);
+        Check([Ellipse2D.Builder.Create(new(10, .02f), default, .35f), Circle2D.Builder.Create(.25f, 3 * Vector2f.Direction(.35f))]);
         for (var sample = 0; sample < 32; sample++)
         {
             var angle = (float)random.NextDouble() * MathF.Tau;

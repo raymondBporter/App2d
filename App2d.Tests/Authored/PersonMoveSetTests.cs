@@ -136,7 +136,7 @@ public sealed class PersonMoveSetTests
         var idle = Catalog.Animations["player-idle"];
         var hold = new ContactHold();
         var foot = hold.Evaluate(Person, idle, 0, true, Vector2f.Zero, 1, default).World("left-foot");
-        var drop = new Vector3(.2f, -.4f, 0);
+        var drop = new Vector3f(.2f, -.4f, 0);
         hold.Shift(drop);
         var later = hold.Evaluate(Person, idle, .05, true, new(drop.X, drop.Y), 1, default);
         TestModels.Near(foot + drop, later.World("left-foot"), 1e-3f, "carried foot");

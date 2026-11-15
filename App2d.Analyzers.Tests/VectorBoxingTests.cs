@@ -55,7 +55,7 @@ public sealed class VectorBoxingTests
     private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string member)
     {
         var source = "using System; using System.Numerics; using App2d.Core.Mathematics; " +
-            "using Vector2f = App2d.Core.Mathematics.Vec2<float>; class Example { " + member + " }";
+            "using App2d.Core.Mathematics; class Example { " + member + " }";
         var compilation = CSharpCompilation.Create("Example", [CSharpSyntaxTree.ParseText(source)], References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
         Assert.Empty(compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));

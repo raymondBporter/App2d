@@ -38,11 +38,11 @@ public sealed class SpatialLayerTests
         Assert.DoesNotContain("\"depth\"", json);
         Assert.Equal(original.SpatialCurve!.Evaluate(.25f), part.SpatialCurve!.Evaluate(.25f));
 
-        var contour = PartContours2D.Contour(part, _ => Vector3.Zero);
+        var contour = PartContours2D.Contour(part, _ => Vector3f.Zero);
         Assert.Equal(-2, contour[0].Z);
         Assert.Equal(2, contour[^1].Z);
         Assert.Equal(part.Layer, contour.LayerAt(0));
-        Assert.Equal(0, PartPicking2D.Distance(part, _ => Vector3.Zero, contour[8]));
+        Assert.Equal(0, PartPicking2D.Distance(part, _ => Vector3f.Zero, contour[8]));
 
         var drawing = new PuppetDrawing();
         drawing.Build(restored);

@@ -10,7 +10,7 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>Resolves character bindings, then delegates curve and attribute evaluation to geometry.</summary>
 public static class PartCurves2D
 {
-    internal static LayeredContour Contour(PartGeometry part, Func<string, Vector3> world, Func<string, Vector3>? rest)
+    internal static LayeredContour Contour(PartGeometry part, Func<string, Vector3f> world, Func<string, Vector3f>? rest)
     {
         var curve = (ICurve2D)part.Geometry!;
         var a = world(part.A);
@@ -23,13 +23,13 @@ public static class PartCurves2D
         if (part.Bindings is { Count: > 0 })
         {
             var points = CurveControlPoints2D.Get(curve);
-            var placed = new Vector3[points.Count];
+            var placed = new Vector3f[points.Count];
             for (var i = 0; i < points.Count; i++)
-                placed[i] = new(coordinates.TransformPoint(points[i]).ToVector2(), float.Lerp(a.Z, b.Z, points[i].Y) + part.Layer);
+                placed[i] = new(coordinates.TransformPoint(points[i]), float.Lerp(a.Z, b.Z, points[i].Y) + part.Layer);
             if (curve is RoundedPolylineCurve2D rounded)
             {
                 foreach (var binding in part.Bindings)
-                    placed[binding.Point] = world(binding.Control) + Vector3.UnitZ * part.Layer;
+                    placed[binding.Point] = world(binding.Control) + Vector3f.UnitZ * part.Layer;
                 pinned = (rounded with { Points = [.. placed.Select(p => p.XY)] }).Validated();
                 source = pinned.Value;
             }
@@ -42,7 +42,7 @@ public static class PartCurves2D
                 foreach (var binding in part.Bindings)
                 {
                     var p = points[binding.Point];
-                    var drawnRest = new Vector3(restCoordinates.TransformPoint(p).ToVector2(), float.Lerp(restA.Z, restB.Z, p.Y) + part.Layer);
+                    var drawnRest = new Vector3f(restCoordinates.TransformPoint(p), float.Lerp(restA.Z, restB.Z, p.Y) + part.Layer);
                     placed[binding.Point] = PartAttachment2D.BoundPoint(binding, drawnRest, world, rest);
                 }
                 // Rig points are planar positions plus rendering layers. Never feed their packed Z into spatial geometry.
@@ -53,21 +53,21 @@ public static class PartCurves2D
         var count = source switch { LineSegmentCurve2D => 2, PolylineCurve2D p => p.Points.Length, _ => 33 };
         var parameters = source is RoundedPolylineCurve2D roundedPath ? roundedPath.SampleParameters(part.CurveSections)
             : [.. Enumerable.Range(0, count).Select(i => i / (float)(count - 1))];
-        var positions = new Vector3[parameters.Length];
+        var positions = new Vector3f[parameters.Length];
         var order = new float[parameters.Length];
         for (var i = 0; i < parameters.Length; i++)
         {
             var t = parameters[i];
             if (pinned is { } path)
             {
-                positions[i] = new(path.Evaluate(t).ToVector2(), 0);
+                positions[i] = new(path.Evaluate(t), 0);
                 order[i] = path.Interpolate(layers!, t);
             }
             else if (controls is not null)
             {
                 positions[i] = controls.Length == 3
-                    ? BezierMath.Quadratic(controls[0], controls[1], controls[2], t).ToVector3()
-                    : BezierMath.Cubic(controls[0], controls[1], controls[2], controls[3], t).ToVector3();
+                    ? BezierMath.Quadratic(controls[0], controls[1], controls[2], t)
+                    : BezierMath.Cubic(controls[0], controls[1], controls[2], controls[3], t);
                 order[i] = controls.Length == 3
                     ? BezierMath.Quadratic(layers![0], layers[1], layers[2], t)
                     : BezierMath.Cubic(layers![0], layers[1], layers[2], layers[3], t);
@@ -75,7 +75,7 @@ public static class PartCurves2D
             else
             {
                 var p = source.Evaluate(t);
-                positions[i] = new(coordinates.TransformPoint(p).ToVector2(), 0);
+                positions[i] = new(coordinates.TransformPoint(p), 0);
                 order[i] = float.Lerp(a.Z, b.Z, p.Y) + part.Layer;
             }
         }

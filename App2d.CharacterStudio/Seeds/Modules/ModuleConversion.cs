@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.Core.Validation;
@@ -522,9 +523,9 @@ public static class ModuleConversion
                         continue;
                     }
 
-                    var relative = Rotation2D.ApplyXY(expected.Points[c.Id] - anchorWorld, -turn);
+                    var relative = (expected.Points[c.Id] - anchorWorld).RotateXY(-turn);
                     var converted = instance.World(c.Id) - moduleAnchor;
-                    var distance = Vector3.Distance(relative, converted);
+                    var distance = Vector3f.Distance(relative, converted);
                     if (distance > positionTolerance)
                     {
                         differences.Add($"clip '{clip.Id}' at {time:0.###} s: control '{c.Id}' expected {relative} from the anchor, converted {converted} ({distance:0.######} apart)");
@@ -545,7 +546,7 @@ public static class ModuleConversion
 
                     var (Min, Max, Centroid, Area) = Silhouette(PartContours2D.Contour(source.Parts.First(p => p.Id == piece.Id), source, expected), anchorWorld);
                     var after = Silhouette(PartContours2D.Contour(instance.Pose.Fitted(piece), instance.World, instance.Frame, instance.Rest, instance.RestFrame), moduleAnchor);
-                    var gap = MathF.Max(Vector3.Distance(Min, after.Min), MathF.Max(Vector3.Distance(Max, after.Max), MathF.Max(Vector3.Distance(Centroid, after.Centroid), MathF.Abs(Area - after.Area))));
+                    var gap = MathF.Max(Vector3f.Distance(Min, after.Min), MathF.Max(Vector3f.Distance(Max, after.Max), MathF.Max(Vector3f.Distance(Centroid, after.Centroid), MathF.Abs(Area - after.Area))));
                     if (gap > silhouetteTolerance)
                     {
                         differences.Add($"clip '{clip.Id}' at {time:0.###} s: piece '{piece.Id}' silhouette moved by {gap:0.######}");
@@ -556,18 +557,18 @@ public static class ModuleConversion
         return differences;
     }
 
-    private static (Vector3 Min, Vector3 Max, Vector3 Centroid, float Area) Silhouette(LayeredContour contour, Vector3 anchor)
+    private static (Vector3f Min, Vector3f Max, Vector3f Centroid, float Area) Silhouette(LayeredContour contour, Vector3f anchor)
     {
-        var min = new Vector3(float.PositiveInfinity);
-        var max = new Vector3(float.NegativeInfinity);
-        var sum = Vector3.Zero;
+        var min = new Vector3f(float.PositiveInfinity);
+        var max = new Vector3f(float.NegativeInfinity);
+        var sum = Vector3f.Zero;
         double area = 0;
         for (var i = 0; i < contour.Count; i++)
         {
             // Migration validation compares the fixed-camera drawing, including its separate layer attribute.
-            var p = contour[i] + Vector3.UnitZ * contour.LayerAt(i) - anchor;
-            min = Vector3.Min(min, p);
-            max = Vector3.Max(max, p);
+            var p = contour[i] + Vector3f.UnitZ * contour.LayerAt(i) - anchor;
+            min = Vector3f.Min(min, p);
+            max = Vector3f.Max(max, p);
             sum += p;
             var q = contour[(i + 1) % contour.Count] - anchor;
             area += (double)p.X * q.Y - (double)q.X * p.Y;

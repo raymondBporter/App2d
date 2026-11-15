@@ -35,7 +35,7 @@ public sealed class PartAttachmentDrawingTests
 
     };
 
-    private static Vector3 Point(Microsoft.Xna.Framework.Vector3 v) => new(v.X, v.Y, v.Z);
+    private static Vector3f Point(Microsoft.Xna.Framework.Vector3 v) => new(v.X, v.Y, v.Z);
 
     private static Func<string, Part?> Library(params Part[] parts) => id => parts.FirstOrDefault(p => p.Id == id) ?? Catalog.Parts.GetValueOrDefault(id);
 
@@ -87,10 +87,10 @@ public sealed class PartAttachmentDrawingTests
         Assert.Same(left.Asset, right.Asset);
         var leftSocket = actor.SocketPlacement(left.Socket);
         var rightSocket = actor.SocketPlacement(right.Socket);
-        foreach (var local in new[] { new Vector3(.1f, .05f, .01f), new Vector3(-.05f, .15f, 0) })
+        foreach (var local in new[] { new Vector3f(.1f, .05f, .01f), new Vector3f(-.05f, .15f, 0) })
         {
             TestModels.Near(leftSocket.At(local), left.Placement(leftSocket).At(local), 1e-5f);
-            TestModels.Near(rightSocket.At(new Vector3(-local.X, local.Y, local.Z)), right.Placement(rightSocket).At(local), 1e-5f);
+            TestModels.Near(rightSocket.At(new Vector3f(-local.X, local.Y, local.Z)), right.Placement(rightSocket).At(local), 1e-5f);
         }
         var drawing = new PuppetDrawing();
         drawing.Build(resolved, pose);
@@ -108,7 +108,7 @@ public sealed class PartAttachmentDrawingTests
         var (world, frame) = attachment.Lookups(placement);
         // Every piece hangs from a location of the same placement.
         TestModels.Near(placement.Origin, world(PartLocation.Origin));
-        TestModels.Near(placement.At(new Vector3(0, .2f, -.02f)), world("cuff"));
+        TestModels.Near(placement.At(new Vector3f(0, .2f, -.02f)), world("cuff"));
         var cuff = frame("cuff");
         Assert.InRange(Vector2f.Distance(cuff.XAxis, Vector2f.Normalize(Vector2f.Transform(new(MathF.Cos(.3f), MathF.Sin(.3f)), placement.Frame.Matrix) - placement.Origin.XY) * cuff.XAxis.Length()), 0, 1e-4f);
         var palm = PartContours2D.Contour(attachment.Parts[0], world, frame, world, frame);
@@ -120,7 +120,7 @@ public sealed class PartAttachmentDrawingTests
         var badge = PartAttachment2D.FrameOf(attachment.Parts[2], world, frame);
         TestModels.Near(world("cuff"), badge.Origin, 1e-5f);
         var lifted = PartPlacement3D.Extend(placement);
-        TestModels.Near(placement.At(new Vector3(.03f, .14f, 0)) with { Z = 0 }, lifted.TransformPoint(new(.03f, .14f, 0)), 1e-5f);
+        TestModels.Near(placement.At(new Vector3f(.03f, .14f, 0)) with { Z = 0 }, lifted.TransformPoint(new(.03f, .14f, 0)), 1e-5f);
         // The instance's fit and mirror are in the placement: X stretched by 2 × 1.5 and reflected, Y by 1.5.
         Assert.Equal(3, placement.XAxis.Length(), 4);
         Assert.Equal(1.5f, placement.YAxis.Length(), 4);
@@ -136,10 +136,10 @@ public sealed class PartAttachmentDrawingTests
         Assert.Contains(drawing.Batches, b => b.Texture == "images/badge.png");
         // One picking score for all four kinds: inside the palm, on the seam, on the badge, inside the solid.
         Assert.Equal(0, PartPicking2D.Distance(attachment, socket, placement.Origin), 3);
-        Assert.InRange(PartPicking2D.Distance(attachment, socket, placement.At(new Vector3(0, .1f, 0))), 0, 1);
+        Assert.InRange(PartPicking2D.Distance(attachment, socket, placement.At(new Vector3f(0, .1f, 0))), 0, 1);
         Assert.Equal(0, PartPicking2D.Distance(attachment, socket, world("cuff")), 3);
-        Assert.Equal(0, PartPicking2D.Distance(attachment, socket, placement.At(new Vector3(0, .12f, 0))), 3);
-        Assert.True(PartPicking2D.Distance(attachment, socket, placement.At(new Vector3(2, 2, 0))) > 5);
+        Assert.Equal(0, PartPicking2D.Distance(attachment, socket, placement.At(new Vector3f(0, .12f, 0))), 3);
+        Assert.True(PartPicking2D.Distance(attachment, socket, placement.At(new Vector3f(2, 2, 0))) > 5);
         Assert.Equal(PartPicking2D.Distance(attachment, socket, placement.Origin), PartPicking2D.Distance(attachment, pose, placement.Origin), 5);
     }
 

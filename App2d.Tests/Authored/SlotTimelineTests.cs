@@ -194,8 +194,8 @@ public sealed class SlotTimelineTests
             Target = "torso",
             Kind = MotionClip.ShowKind,
             Keys = [
-            new() { Value = Vector3.Zero, Ease = ProgressMapKind.EaseInOutSine, Curve = new() },
-            new() { Time = .5f, Value = Vector3.UnitX }]
+            new() { Value = Vector3f.Zero, Ease = ProgressMapKind.EaseInOutSine, Curve = new() },
+            new() { Time = .5f, Value = Vector3f.UnitX }]
         });
 
         foreach (var (from, to) in new[] { (0f, .2f), (.1f, .8f), (.8f, 1f), (.4f, .6f), (.2f, .4f), (.6f, .9f) })
@@ -248,7 +248,7 @@ public sealed class SlotTimelineTests
     {
         var (_, clip) = Scene();
         var channel = new Channel(MotionClip.TranslateKind, "body");
-        ClipAuthoring.SetKey(clip, channel, 0, Vector3.Zero);
+        ClipAuthoring.SetKey(clip, channel, 0, Vector3f.Zero);
         ClipAuthoring.SetKey(clip, channel, 1, new(2, 4, 0));
         ClipAuthoring.SetCurve(clip, channel, 0, 0, new()
         {
@@ -263,10 +263,10 @@ public sealed class SlotTimelineTests
         });
         var value = ClipAuthoring.Value(clip, channel, .5f).Value;
         TestModels.Near(new(.25f, .5f, .75f), value);
-        ClipAuthoring.SetKey(clip, channel, 0, Vector3.Zero);
+        ClipAuthoring.SetKey(clip, channel, 0, Vector3f.Zero);
         Assert.NotNull(clip.Tracks[0].Keys[0].CurveZ);
         ClipAuthoring.SetEase(clip, 0, ProgressMapKind.Step);
         Assert.Null(clip.Tracks[0].Keys[0].CurveZ);
-        TestModels.Near(Vector3.Zero, ClipAuthoring.Value(clip, channel, .5f).Value);
+        TestModels.Near(Vector3f.Zero, ClipAuthoring.Value(clip, channel, .5f).Value);
     }
 }

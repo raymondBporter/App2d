@@ -24,7 +24,7 @@ public sealed class RoundedPolylineCurve2DTests
         foreach (var t in curve.SampleParameters(1000))
         {
             var tangent = Curve2D.Tangent(curve, t);
-            var angle = MathF.Atan2(tangent.Y, tangent.X);
+            var angle = tangent.AngleRadians;
             Assert.InRange(angle, previous - 1e-5f, MathF.PI / 2 + 1e-5f);
             previous = angle;
             var p = curve.Evaluate(t);

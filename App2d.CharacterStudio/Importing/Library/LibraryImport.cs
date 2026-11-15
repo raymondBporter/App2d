@@ -67,7 +67,7 @@ public static class LibraryImport
     public static string DefaultRest(PointLibrary library, string clipId) => library.Clips.ContainsKey("idle") ? "idle" : clipId;
 
     /// <summary>A library point in model-like units: pivot at the origin, Y up, pixels divided by the export's pixels per unit.</summary>
-    public static Func<Vector3, Vector3> Units(PointLibrary library)
+    public static Func<Vector3f, Vector3f> Units(PointLibrary library)
     {
         var drawing = library.Drawing;
         var pivot = drawing.TryGetProperty("pivot", out var p) ? new Vector2f(p[0].GetSingle(), p[1].GetSingle()) : Vector2f.Zero;
@@ -78,22 +78,22 @@ public static class LibraryImport
     /// <summary>Mapped source positions for every control the mapping names, at one time.</summary>
     public sealed class Sampler
     {
-        private readonly Vector3[] _raw;
-        private readonly Func<Vector3, Vector3> _units;
+        private readonly Vector3f[] _raw;
+        private readonly Func<Vector3f, Vector3f> _units;
         private readonly Dictionary<string, int[]> _indices;
         public Sampler(PointLibrary library, string clipId, IReadOnlyDictionary<string, List<string>> points)
         {
             Clip = library.Clips.TryGetValue(clipId, out var clip) ? clip : throw new KeyNotFoundException($"Library '{library.Id}' has no clip '{clipId}'.");
-            _raw = new Vector3[library.PointNames.Count];
+            _raw = new Vector3f[library.PointNames.Count];
             _units = Units(library);
             var index = library.PointNames.Select((n, i) => (n, i)).ToDictionary(p => p.n, p => p.i, StringComparer.Ordinal);
             _indices = points.ToDictionary(p => p.Key, p => p.Value.Select(n => index.TryGetValue(n, out var i) ? i : throw new InvalidDataException($"Library '{library.Id}' has no point '{n}' (mapped to '{p.Key}').")).ToArray(), StringComparer.Ordinal);
         }
         public PointClip Clip { get; }
-        public IReadOnlyDictionary<string, Vector3> At(double seconds)
+        public IReadOnlyDictionary<string, Vector3f> At(double seconds)
         {
             Clip.Sample(seconds, _raw, holdEnd: true);
-            return _indices.ToDictionary(p => p.Key, p => _units(p.Value.Aggregate(Vector3.Zero, (sum, i) => sum + _raw[i]) / p.Value.Length), StringComparer.Ordinal);
+            return _indices.ToDictionary(p => p.Key, p => _units(p.Value.Aggregate(Vector3f.Zero, (sum, i) => sum + _raw[i]) / p.Value.Length), StringComparer.Ordinal);
         }
     }
 
@@ -137,15 +137,15 @@ public static class LibraryImport
             Source = new() { Kind = AssetSource.Library, File = library.Id, Motion = clipId, Rest = restClip, Points = points.ToDictionary(p => p.Key, p => p.Value.ToList(), StringComparer.Ordinal) },
         };
         // The clip's reference measures are the model's own, so a model-scaled offset is already in reference units.
-        Vector3? Offset(IReadOnlyDictionary<string, Vector3> now, string target, string? frame, string scale)
+        Vector3f? Offset(IReadOnlyDictionary<string, Vector3f> now, string target, string? frame, string scale)
         {
             if (!now.ContainsKey(target) || frame is not null && !now.ContainsKey(frame))
             {
                 return null;
             }
 
-            var current = now[target] - (frame is null ? Vector3.Zero : now[frame]);
-            var rest = reference[target] - (frame is null ? Vector3.Zero : reference[frame]);
+            var current = now[target] - (frame is null ? Vector3f.Zero : now[frame]);
+            var rest = reference[target] - (frame is null ? Vector3f.Zero : reference[frame]);
             return (current - rest) * Ratio(scale);
         }
         var tracks = new List<ClipTrack>();
@@ -176,7 +176,7 @@ public static class LibraryImport
             var now = source.At(time);
             foreach (var track in tracks)
             {
-                Vector3? delta;
+                Vector3f? delta;
                 if (track.Kind == MotionClip.TargetKind)
                 {
                     var chain = resolved.Chains[track.Target];
@@ -206,7 +206,7 @@ public static class LibraryImport
     /// Model length over source length for each measure whose path is mapped, along the source's reference pose, and one
     /// overall ratio (their mean, or the ratio of heights) for everything else.
     /// </summary>
-    public static (IReadOnlyDictionary<string, float> Measures, float Overall) Ratios(ResolvedModel model, IReadOnlyDictionary<string, Vector3> reference)
+    public static (IReadOnlyDictionary<string, float> Measures, float Overall) Ratios(ResolvedModel model, IReadOnlyDictionary<string, Vector3f> reference)
     {
         var ratios = new Dictionary<string, float>(StringComparer.Ordinal);
         foreach (var measure in model.Base.Measures.Where(m => m.Path.All(reference.ContainsKey)))
@@ -221,7 +221,7 @@ public static class LibraryImport
         return (ratios, overall);
     }
 
-    private static float Height(IEnumerable<Vector3> points)
+    private static float Height(IEnumerable<Vector3f> points)
     {
         var ys = points.Select(p => p.Y).ToArray();
         return ys.Length == 0 ? 1 : ys.Max() - ys.Min();

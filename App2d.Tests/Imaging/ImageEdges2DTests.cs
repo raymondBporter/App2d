@@ -164,11 +164,11 @@ public sealed class ImageEdges2DTests
     [Fact]
     public void HsvUsesTurnsAndHandlesGrayBlackAndTheRedSeam()
     {
-        Assert.Equal(new Vector3(0, 1, 1), ColorSpaces2D.SrgbToHsv(Vector3.UnitX));
-        Assert.Equal(new Vector3(1f / 3, 1, 1), ColorSpaces2D.SrgbToHsv(Vector3.UnitY));
-        Assert.Equal(new Vector3(2f / 3, 1, 1), ColorSpaces2D.SrgbToHsv(Vector3.UnitZ));
-        Assert.Equal(Vector3.Zero, ColorSpaces2D.SrgbToHsv(Vector3.Zero));
-        Assert.Equal(new Vector3(0, 0, .5f), ColorSpaces2D.SrgbToHsv(new(.5f)));
+        Assert.Equal(new Vector3f(0, 1, 1), ColorSpaces2D.SrgbToHsv(Vector3f.UnitX));
+        Assert.Equal(new Vector3f(1f / 3, 1, 1), ColorSpaces2D.SrgbToHsv(Vector3f.UnitY));
+        Assert.Equal(new Vector3f(2f / 3, 1, 1), ColorSpaces2D.SrgbToHsv(Vector3f.UnitZ));
+        Assert.Equal(Vector3f.Zero, ColorSpaces2D.SrgbToHsv(Vector3f.Zero));
+        Assert.Equal(new Vector3f(0, 0, .5f), ColorSpaces2D.SrgbToHsv(new(.5f)));
         Assert.InRange(ColorSpaces2D.SrgbToHsv(new(1, 0, .01f)).X, .99f, 1);
         Assert.InRange(ColorSpaces2D.SrgbToHsv(new(1, .01f, 0)).X, 0, .01f);
         Assert.Throws<ArgumentOutOfRangeException>(() => ColorSpaces2D.SrgbToHsv(new(-1, 0, 0)));

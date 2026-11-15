@@ -12,7 +12,7 @@ public static class Matrix3x2Extensions
         (new(matrix.X), new(matrix.Y), new(matrix.Z));
 
     /// <summary>The two full columns, including translation in each vector's Z component.</summary>
-    public static (Vector3 X, Vector3 Y) GetColumns(this Matrix3x2 matrix) =>
+    public static (Vector3f X, Vector3f Y) GetColumns(this Matrix3x2 matrix) =>
         (new(matrix.M11, matrix.M21, matrix.M31), new(matrix.M12, matrix.M22, matrix.M32));
 
     /// <summary>True when every matrix entry is finite. Singular matrices are allowed.</summary>

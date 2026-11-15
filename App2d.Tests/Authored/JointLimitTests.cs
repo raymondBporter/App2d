@@ -81,7 +81,7 @@ public sealed class JointLimitTests
             Name = "Bend",
             Model = "arm",
             Duration = 1,
-            Tracks = [new() { Kind = MotionClip.BendKind, Target = "fore", Keys = [new() { Value = Vector3.Zero }, new() { Time = .5f, Value = new(.5f, 0, 0) }, new() { Time = 1, Value = new(1, 0, 0) }] }],
+            Tracks = [new() { Kind = MotionClip.BendKind, Target = "fore", Keys = [new() { Value = Vector3f.Zero }, new() { Time = .5f, Value = new(.5f, 0, 0) }, new() { Time = 1, Value = new(1, 0, 0) }] }],
         };
         clip.Validate(model);
         Assert.Equal(-.5f, Local(PoseEvaluator.Sample(model, clip, 0), model, "fore"), 5);
@@ -153,8 +153,8 @@ public sealed class JointLimitTests
         var rest = PoseEvaluator.Rest(model);
         var shoulder = rest.World("upper");
         // The hand hangs about 1.07 below the shoulder at rest (upper .6 straight down, fore .5 bent by .4).
-        MotionClip Reach(Vector3 target) => new() { Id = "reach", Name = "Reach", Model = "arm", Duration = 1, Tracks = [new() { Kind = MotionClip.TargetKind, Target = "reach", Keys = [new() { Value = target - model.Rest["hand"] }] }] };
-        EvaluatedPose Solve(Vector3 target)
+        MotionClip Reach(Vector3f target) => new() { Id = "reach", Name = "Reach", Model = "arm", Duration = 1, Tracks = [new() { Kind = MotionClip.TargetKind, Target = "reach", Keys = [new() { Value = target - model.Rest["hand"] }] }] };
+        EvaluatedPose Solve(Vector3f target)
         {
             var clip = Reach(target);
             clip.Validate(model);
@@ -162,7 +162,7 @@ public sealed class JointLimitTests
         }
 
         // Offsets in the arm's own sense: the reflected torso flips the arm vertically, so the mirrored case mirrors Y.
-        Vector3 Off(float x, float y) => new(x, reflected ? -y : y, 0);
+        Vector3f Off(float x, float y) => new(x, reflected ? -y : y, 0);
 
         // Reachable within the limits: the analytic pose is exact and the elbow bends inside its range.
         var inside = Solve(shoulder + Off(.3f, -.8f));
@@ -181,12 +181,12 @@ public sealed class JointLimitTests
         Assert.InRange(held.Residual, .15f, .3f);
         Assert.InRange(Local(close, model, "fore"), -1e-5f, 2.4f + 1e-5f);
         Assert.Equal(ConstraintLimitState1D.Upper, close.Limits["fore"].State);
-        Assert.Equal(.6f, Vector3.Distance(close.World("upper"), close.World("fore")), 4);
-        Assert.Equal(.5f, Vector3.Distance(close.World("fore"), close.World("hand")), 4);
+        Assert.Equal(.6f, Vector3f.Distance(close.World("upper"), close.World("fore")), 4);
+        Assert.Equal(.5f, Vector3f.Distance(close.World("fore"), close.World("hand")), 4);
         // The hand is the closest point of the held shape's sweep, so it lies on the shoulder-target ray.
-        var toTarget = Vector3.Normalize(Off(.1f, -.17f));
-        var toHand = Vector3.Normalize(close.World("hand") - shoulder);
-        Assert.Equal(1, Vector3.Dot(toTarget, toHand), 3);
+        var toTarget = Vector3f.Normalize(Off(.1f, -.17f));
+        var toHand = Vector3f.Normalize(close.World("hand") - shoulder);
+        Assert.Equal(1, Vector3f.Dot(toTarget, toHand), 3);
 
         // Beyond full reach: straight arm, honest residual, within limits.
         var far = Solve(shoulder + Off(0, -3));
@@ -203,7 +203,7 @@ public sealed class JointLimitTests
         var plainRest = PoseEvaluator.Rest(plain);
         var mirrorRest = PoseEvaluator.Rest(mirrored);
         // The same local target offset, hence the same parent-local pose, in both rigs: the local rotations agree and so do the limit states.
-        foreach (var offset in new[] { new Vector3(.3f, -.8f, 0), new Vector3(.1f, -.17f, 0), new Vector3(0, -3, 0) })
+        foreach (var offset in new[] { new Vector3f(.3f, -.8f, 0), new Vector3f(.1f, -.17f, 0), new Vector3f(0, -3, 0) })
         {
             // The reflected torso flips the arm vertically, so the same arm-relative target has its Y mirrored in character space.
             EvaluatedPose Solve(ResolvedModel model)

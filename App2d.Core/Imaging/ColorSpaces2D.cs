@@ -11,9 +11,9 @@ public static class ColorSpaces2D
     /// are in [0, 1]. Achromatic colors use hue zero. Hue is circular and unreliable
     /// at low saturation; scalar derivatives across its 0/1 seam are not color distances.
     /// </summary>
-    public static Vector3 SrgbToHsv(Vector3 srgb)
+    public static Vector3f SrgbToHsv(Vector3f srgb)
     {
-        Ensure.InRange(srgb, Vector3.Zero, Vector3.One);
+        Ensure.InRange(srgb, Vector3f.Zero, Vector3f.One);
         var value = MathF.Max(srgb.X, MathF.Max(srgb.Y, srgb.Z));
         var chroma = value - MathF.Min(srgb.X, MathF.Min(srgb.Y, srgb.Z));
         if (chroma == 0)
@@ -31,9 +31,9 @@ public static class ColorSpaces2D
     /// Converts sRGB components in [0, 1] to Oklab (L, a, b), including sRGB transfer decoding.
     /// Coefficients: https://bottosson.github.io/posts/oklab/
     /// </summary>
-    public static Vector3 SrgbToOklab(Vector3 srgb)
+    public static Vector3f SrgbToOklab(Vector3f srgb)
     {
-        Ensure.InRange(srgb, Vector3.Zero, Vector3.One);
+        Ensure.InRange(srgb, Vector3f.Zero, Vector3f.One);
         var r = Decode(srgb.X);
         var g = Decode(srgb.Y);
         var b = Decode(srgb.Z);
@@ -50,7 +50,7 @@ public static class ColorSpaces2D
     /// Converts Oklab to sRGB, including sRGB transfer encoding. Does not clamp:
     /// colors outside the sRGB gamut can produce components outside [0, 1].
     /// </summary>
-    public static Vector3 OklabToSrgb(Vector3 oklab)
+    public static Vector3f OklabToSrgb(Vector3f oklab)
     {
         Ensure.Finite(oklab);
         var l = oklab.X + .3963377774f * oklab.Y + .2158037573f * oklab.Z;

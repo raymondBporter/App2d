@@ -275,8 +275,8 @@ internal sealed partial class ProofRenders
         var overreach = 0;
         float Yaw(EvaluatedPose p, string left, string right, string frame)
         {
-            var d = Rotation2D.ApplyXY(p.Points[right] - p.Points[left], model.Nodes[frame].RestAngle - p.Angles[frame]);
-            return MathF.Atan2(d.Z, d.X);
+            var d = (p.Points[right] - p.Points[left]).RotateXY(model.Nodes[frame].RestAngle - p.Angles[frame]);
+            return d.XZ.AngleRadians;
         }
         var rest = PoseEvaluator.Rest(model);
         var restShoulders = Yaw(rest, Humanoid.LeftShoulder, Humanoid.RightShoulder, Humanoid.Chest);
@@ -301,9 +301,9 @@ internal sealed partial class ProofRenders
         {
             var a = PoseEvaluator.Sample(model, clip, 0);
             var b = PoseEvaluator.Sample(model, clip, clip.Duration);
-            seam = a.Points.Keys.Max(k => Vector3.Distance(a.Points[k] - a.Locomotion, b.Points[k] - b.Locomotion));
+            seam = a.Points.Keys.Max(k => Vector3f.Distance(a.Points[k] - a.Locomotion, b.Points[k] - b.Locomotion));
         }
-        return $"{item.Id}: contact residual {contact:F4}, frames overreaching {overreach}/{samples + 1}, shared turn offset (mean) {float.RadiansToDegrees(turnSum / (samples + 1)):F2} deg, peak counter-rotation {float.RadiansToDegrees(swing):F1} deg" +
+        return $"{item.Id}: contact residual {contact:F4}, frames overreaching {overreach}/{samples + 1}, shared turn offset (mean) {Angles.RadiansToDegrees(turnSum / (samples + 1)):F2} deg, peak counter-rotation {Angles.RadiansToDegrees(swing):F1} deg" +
             (clip.Loop ? $", loop seam {seam:F4}" : "");
     }
 }

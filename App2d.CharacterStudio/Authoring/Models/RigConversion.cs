@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -63,7 +64,7 @@ public static class RigConversion
             var parent = control.Parent is null ? null : nodes[control.Parent];
             var next = i + 1 < run.Count ? nodes[run[i + 1].Id] : null;
             var toNext = next is null ? Vector2f.Zero : new Vector2f(next.Rest.X - node.Rest.X, next.Rest.Y - node.Rest.Y);
-            var direction = next is null ? node.RestAngle : MathF.Atan2(toNext.Y, toNext.X);
+            var direction = next is null ? node.RestAngle : toNext.AngleRadians;
             var parentAngle = parent?.RestAngle ?? 0;
             var parentHand = parent?.Handedness ?? 1;
             var scale = parent is null ? 1 : Vector2f.TransformNormal(Vector2f.UnitX, parent.RestFrame).Length();
@@ -81,7 +82,7 @@ public static class RigConversion
             else
             {
                 // The previous control's frame now points along the run, so this one's direction is relative to that.
-                var previousDirection = MathF.Atan2(node.Rest.Y - nodes[run[i - 1].Id].Rest.Y, node.Rest.X - nodes[run[i - 1].Id].Rest.X);
+                var previousDirection = (node.Rest.XY - nodes[run[i - 1].Id].Rest.XY).AngleRadians;
                 setup.Rotation = parentHand * (direction - previousDirection);
                 control.Link = new RigLink();
             }
@@ -279,7 +280,7 @@ public static class RigConversion
 
                         foreach (var key in track.Keys)
                         {
-                            key.Value = Rotation2D.ApplyXY(key.Value, -restAngle);
+                            key.Value = key.Value.RotateXY(-restAngle);
                         }
 
                         report.Add($"clip '{clip.Id}': {track.Keys.Count} target key(s) of '{chain.Id}' turned by {-restAngle:0.####} into the rest axes of '{chain.Frame}'");

@@ -43,9 +43,9 @@ public sealed class BoneAuthoringTests
         Near(new(.5f * MathF.Cos(.5f), .5f * MathF.Sin(.5f)), pose.World(child.Id));
         Assert.Equal(.4f, pose.Angles[child.Id], 4);
         var frame = PartAttachment2D.FrameOf(shape, pose.World, pose.Placement, id => resolved.Rest[id]);
-        var expected = new Vector2f(pose.World(child.Id).X, pose.World(child.Id).Y) + Rotation2D.Apply(new(.25f, 0), .4f);
+        var expected = new Vector2f(pose.World(child.Id).X, pose.World(child.Id).Y) + new Vector2f(.25f, 0).Rotate(.4f);
         Near(expected, frame.Origin);
-        Near(Rotation2D.Apply(Vector2f.UnitX, .55f), new Vector3(frame.XAxis.ToVector2(), 0));
+        Near(Vector2f.UnitX.Rotate(.55f), new Vector3f(frame.XAxis, 0));
         var drawing = new PuppetDrawing();
         drawing.Build(resolved, pose);
         Assert.True(drawing.Mesh.Count > 0);
@@ -60,12 +60,12 @@ public sealed class BoneAuthoringTests
         var shape = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), bone.Id);
         shape.B = other.Id;
         model.Validate();
-        var frame = PartAttachment2D.Carrier(shape, id => id == shape.A ? Vector3.Zero : Vector3.UnitX,
-            _ => LayeredFrame2D.FromRotation(.3f, Vector3.Zero));
+        var frame = PartAttachment2D.Carrier(shape, id => id == shape.A ? Vector3f.Zero : Vector3f.UnitX,
+            _ => LayeredFrame2D.FromRotation(.3f, Vector3f.Zero));
         Assert.Equal(Vector2f.UnitX, frame.YAxis);
-        var collapsed = PartAttachment2D.Carrier(shape, _ => Vector3.Zero,
-            _ => LayeredFrame2D.FromRotation(.3f, Vector3.Zero));
-        Assert.Equal(LayeredFrame2D.FromRotation(.3f, Vector3.Zero), collapsed);
+        var collapsed = PartAttachment2D.Carrier(shape, _ => Vector3f.Zero,
+            _ => LayeredFrame2D.FromRotation(.3f, Vector3f.Zero));
+        Assert.Equal(LayeredFrame2D.FromRotation(.3f, Vector3f.Zero), collapsed);
     }
 
     [Fact]
@@ -79,6 +79,6 @@ public sealed class BoneAuthoringTests
         Assert.Equal("end-chain", ModelAuthoring.AddBoneIk(model, end.Id).Id);
     }
 
-    private static void Near(Vector2f  expected, Vector3 actual) =>
+    private static void Near(Vector2f  expected, Vector3f actual) =>
         Assert.InRange(Vector2f.Distance(expected, new(actual.X, actual.Y)), 0, 1e-4f);
 }

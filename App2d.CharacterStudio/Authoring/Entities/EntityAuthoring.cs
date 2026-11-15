@@ -113,7 +113,7 @@ public static class EntityAuthoring
     {
         var pose = PoseEvaluator.Rest(model);
         var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, model, pose))
-            .Concat(model.Rest.Values).DefaultIfEmpty(Vector3.Zero).ToList();
+            .Concat(model.Rest.Values).DefaultIfEmpty(Vector3f.Zero).ToList();
         var height = MathF.Max(.2f, points.Max(p => p.Y));
         var width = Math.Clamp((points.Max(p => p.X) - points.Min(p => p.X)) * .6f, .2f, height);
         return new()

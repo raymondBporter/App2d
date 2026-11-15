@@ -4,6 +4,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Progress;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -169,7 +170,7 @@ public static class PuppetTemplates
             foreach (var (shoulderId, handId, sign) in new[] { (Humanoid.LeftShoulder, Humanoid.LeftHand, 1f), (Humanoid.RightShoulder, Humanoid.RightHand, -1f) })
             {
                 var shoulder = pose.Points[shoulderId];
-                pose.Points[handId] = shoulder + new Vector3(sign * .18f * swing, -.61f, 0);
+                pose.Points[handId] = shoulder + new Vector3f(sign * .18f * swing, -.61f, 0);
             }
             motion.Keys.Add(pose.Key(time));
         }
@@ -242,7 +243,7 @@ public static class PuppetTemplates
         Vector2f[] bobHeights = [new(.985f), new(.945f), new(.875f), new(.935f), new(.985f), new(.945f), new(.875f)];
         float Hips(float q) => Curve(Wrap(q), bobTimes, bobHeights, default, default).X;
 
-        Vector3 Lean(Vector3 point, float angle) => Rotation2D.ApplyXYAround(point, new(0, 1), -angle);
+        Vector3f Lean(Vector3f point, float angle) => point.RotateXY(-angle, new(0, 1));
 
         const int keyCount = 36;
         for (var i = 0; i <= keyCount; i++)
@@ -256,8 +257,8 @@ public static class PuppetTemplates
             var lean = .21f + .03f * MathF.Cos(MathF.Tau * (step - .6f));
             var chestLag = .25f * (Hips(step - .06f) - hipHeight);
             var headLag = .5f * (Hips(step - .08f) - hipHeight);
-            pose.Points[Humanoid.Chest] = Lean(rest.Points[Humanoid.Chest], lean) + new Vector3(0, chestLag, 0);
-            pose.Points[Humanoid.Head] = Lean(rest.Points[Humanoid.Head], lean * 1.1f) + new Vector3(0, headLag, 0);
+            pose.Points[Humanoid.Chest] = Lean(rest.Points[Humanoid.Chest], lean) + new Vector3f(0, chestLag, 0);
+            pose.Points[Humanoid.Head] = Lean(rest.Points[Humanoid.Head], lean * 1.1f) + new Vector3f(0, headLag, 0);
             foreach (var (shoulderId, handId, hipId, footId, legPhase, armAngle) in new[]
             {
                 (Humanoid.RightShoulder, Humanoid.RightHand, Humanoid.RightHip, Humanoid.RightFoot, phase, MathF.Tau * (phase - .03f) + MathF.PI),
@@ -274,11 +275,11 @@ public static class PuppetTemplates
                 var track = rest.Points[footId];
                 pose.Points[footId] = new(foot.X + track.X, ground + foot.Y - pose.Position.Y, track.Z);
                 var swing = MathF.Cos(armAngle);
-                var shoulder = Lean(rest.Points[shoulderId], lean) + new Vector3(.03f * swing, chestLag, 0);
+                var shoulder = Lean(rest.Points[shoulderId], lean) + new Vector3f(.03f * swing, chestLag, 0);
                 pose.Points[shoulderId] = shoulder;
                 // Elbows stay bent near 90 degrees: high and forward, then low and back.
                 var hand = new Vector2f(.03f + .26f * swing, -.33f + .09f * swing - .05f * MathF.Sin(armAngle));
-                pose.Points[handId] = shoulder + new Vector3(Rotation2D.Apply(hand, -lean * .6f).ToVector2(), 0);
+                pose.Points[handId] = shoulder + new Vector3f(hand.Rotate(-lean * .6f), 0);
             }
             motion.Keys.Add(pose.Key(phase * motion.Duration));
         }

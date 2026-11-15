@@ -76,7 +76,7 @@ public static class ConstraintMath2D
         var delta = requestedPoint - anchor;
         var angle = delta.LengthSquared() > MinimumDirectionLengthSquared ? delta.AngleRadians : fallbackAngle;
         angle = angleLimits.Clamp(angle);
-        return anchor + Polar2D.ToCartesian(radius, angle);
+        return anchor + Vector2f.FromPolar(radius, angle);
     }
 
     private static void ValidateDistanceLimits(Interval<float> limits)

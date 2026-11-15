@@ -47,7 +47,8 @@ public static class AuthoredJson
     // Keep component-based file vocabulary at the boundary. Working values use vectors and transforms.
     private static void AuthoredComponents(JsonTypeInfo info)
     {
-        Components<ClipKey>(info, nameof(ClipKey.Value), ["x", "y", "z"], static (key, i) => key.Value[i], static (key, i, component) => { var value = key.Value; value[i] = component; key.Value = value; });
+        Components<ClipKey>(info, nameof(ClipKey.Value), ["x", "y", "z"], static (key, i) => key.Value[i],
+            static (key, i, component) => key.Value = WithComponent(key.Value, i, component));
         Components<SlotColorKey2D>(info, nameof(SlotColorKey2D.Value), ["r", "g", "b", "a"], static (key, i) => key.Value[i], static (key, i, component) => { var value = key.Value; value[i] = component; key.Value = value; });
         Components<KeyCurve2D>(info, nameof(KeyCurve2D.Control1), ["x1", "y1"], static (curve, i) => curve.Control1[i],
             static (curve, i, component) => curve.Control1 = WithComponent(curve.Control1, i, component));
@@ -80,6 +81,13 @@ public static class AuthoredJson
 
     private static Vector2f WithComponent(Vector2f value, int index, float component) =>
         index == 0 ? value with { X = component } : value with { Y = component };
+
+    private static Vector3f WithComponent(Vector3f value, int index, float component) => index switch
+    {
+        0 => value with { X = component },
+        1 => value with { Y = component },
+        _ => value with { Z = component },
+    };
 
     private static void Components<T>(JsonTypeInfo info, string vectorName, string[] names,
         Func<T, int, float> get, Action<T, int, float> set)

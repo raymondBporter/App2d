@@ -123,8 +123,8 @@ public sealed class PuppetDrawing
         {
             AddAttachment(equipment.Prop, placed.Socket(equipment.Socket), seconds: local.SampleSeconds, layer: placed.SocketPlacement(equipment.Socket).Layer);
         }
-        Vector3 World(string id) => id == PartLocation.Origin ? Vector3.Zero : local.World(id);
-        Vector3 Rest(string id) => id == PartLocation.Origin ? Vector3.Zero : entity.Model.Rest[id];
+        Vector3f World(string id) => id == PartLocation.Origin ? Vector3f.Zero : local.World(id);
+        Vector3f Rest(string id) => id == PartLocation.Origin ? Vector3f.Zero : entity.Model.Rest[id];
         LayeredFrame2D Bone(string id) => id is PartLocation.Origin or CharacterModel.Locomotion ? LayeredFrame2D.Identity : local.Placement(id);
         LayeredFrame2D RestBone(string id) => id is PartLocation.Origin or CharacterModel.Locomotion ? LayeredFrame2D.Identity : entity.Model.RestPlacement(id);
         foreach (var geometry in entity.Geometry.Where(g => g.Definition.Material is not null && !g.Definition.Hidden))
@@ -193,7 +193,7 @@ public sealed class PuppetDrawing
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup, replacing the drawing. The only drawing path for both prototype and authored models.</summary>
-    public void Build(IEnumerable<PartGeometry> parts, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
+    public void Build(IEnumerable<PartGeometry> parts, Func<string, Vector3f> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3f>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         Clear();
         Add(parts, world, bone, rest, restBone);
@@ -203,8 +203,8 @@ public sealed class PuppetDrawing
     /// Appends parts over a world-position lookup. <paramref name="tint"/> multiplies every fill and stroke (a slot's color);
     /// <paramref name="blend"/> and <paramref name="imageDepth"/> apply to image parts, which a slot orders by depth.
     /// </summary>
-    public void Add(IEnumerable<PartGeometry> parts, Func<string, Vector3> world,
-        Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Color4b? tint = null, string blend = "normal", float? imageDepth = null, Frame3D? spatial = null, Func<string, float>? physicalDepth = null, double seconds = 0, float layer = 0)
+    public void Add(IEnumerable<PartGeometry> parts, Func<string, Vector3f> world,
+        Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3f>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Color4b? tint = null, string blend = "normal", float? imageDepth = null, Frame3D? spatial = null, Func<string, float>? physicalDepth = null, double seconds = 0, float layer = 0)
     {
         foreach (var source in parts)
         {
@@ -319,9 +319,9 @@ public sealed class PuppetDrawing
         var fill = material.Fill is null ? Color4b.White : ColorExtensions.FromHexRgb(material.Fill);
         var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
         color = color.Multiply(fill);
-        Vector3 At(float x, float y)
+        Vector3f At(float x, float y)
         {
-            var p = new Vector3((frame.Frame.TransformPoint(bounds.Center + new Vector2f(x * bounds.Width, y * bounds.Height))).ToVector2(), physicalZ);
+            var p = new Vector3f((frame.Frame.TransformPoint(bounds.Center + new Vector2f(x * bounds.Width, y * bounds.Height))), physicalZ);
             return spatial is { } placed ? placed.TransformPoint(p) : p;
         }
         var a = At(-.5f, -.5f);

@@ -9,15 +9,15 @@ public sealed class Matrix2x2Tests
     public void FloatRowsColumnsAndTransformsUseColumnVectors()
     {
         var matrix = new Matrix2x2f(1, 2, 3, 4);
-        var point = new Vector2f(5, 7);
-        var expected = new Vector2f(19, 43);
+        var point = new Vec2<float>(5, 7);
+        var expected = new Vec2<float>(19, 43);
 
-        Assert.Equal((new Vector2f(1, 2), new Vector2f(3, 4)), matrix.GetRows());
-        Assert.Equal((new Vector2f(1, 3), new Vector2f(2, 4)), matrix.GetColumns());
+        Assert.Equal((new Vec2<float>(1, 2), new Vec2<float>(3, 4)), matrix.GetRows());
+        Assert.Equal((new Vec2<float>(1, 3), new Vec2<float>(2, 4)), matrix.GetColumns());
         Assert.Equal(expected, matrix.TransformPoint(point));
         Assert.Equal(expected, matrix.TransformNormal(point));
-        Assert.Equal(matrix.X, matrix * Vector2f.UnitX);
-        Assert.Equal(matrix.Y, matrix * Vector2f.UnitY);
+        Assert.Equal(matrix.X, matrix * Vec2<float>.UnitX);
+        Assert.Equal(matrix.Y, matrix * Vec2<float>.UnitY);
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public sealed class Matrix2x2Tests
     {
         var left = new Matrix2x2f(1, 2, 3, 4);
         var right = new Matrix2x2f(2, 0, 1, 3);
-        var point = new Vector2f(5, 7);
+        var point = new Vec2<float>(5, 7);
 
         Assert.Equal(new Matrix2x2f(4, 6, 10, 12), left * right);
         Assert.Equal(left * (right * point), TransformComposed(left, right, point));

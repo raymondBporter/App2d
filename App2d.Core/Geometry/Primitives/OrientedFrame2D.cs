@@ -21,7 +21,7 @@ public readonly record struct OrientedFrame2D(Vector2f Center, Vector2f Axis)
     public bool IsAxisAligned => Axis == Vector2f.UnitX;
 
     /// <summary>The heading of <see cref="Axis"/> in radians, counter-clockwise from local +X.</summary>
-    public float AngleRadians => Polar2D.AngleOf(Axis);
+    public float AngleRadians => Polar<float>.AngleOf(new Vec2<float>(Axis));
 
     /// <summary>The frame-to-local matrix in the row-vector convention of <see cref="Matrix3x2"/>.</summary>
     public Matrix3x2 Matrix => new(Axis.X, Axis.Y, Perp.X, Perp.Y, Center.X, Center.Y);
@@ -71,7 +71,7 @@ public readonly record struct OrientedFrame2D(Vector2f Center, Vector2f Axis)
     public static Vector2f  AxisOrUnitX(Vector2f axis) => axis == default ? Vector2f.UnitX : axis;
 
     /// <summary>The unit axis at a heading in radians; a zero heading is exactly local +X.</summary>
-    public static Vector2f  AxisFromAngle(float angleRadians) => angleRadians == 0f ? Vector2f.UnitX : Polar2D.Direction(angleRadians);
+    public static Vector2f  AxisFromAngle(float angleRadians) => angleRadians == 0f ? Vector2f.UnitX : Vector2f.Direction(angleRadians);
 
     /// <summary>Rejects an axis that is not finite or not within <see cref="AxisTolerance"/> of unit length.</summary>
     public static void ValidateAxis(Vector2f axis, string name)

@@ -81,7 +81,7 @@ public sealed class ModuleExtractionTests : IDisposable
         Assert.Contains("body", upper.Exposed);
         Assert.Equal("idle", upper.Expression);
         Assert.True(upper.Binds("walk") && upper.Binds("player-sword-side-cut") && upper.Binds("club-caveman-slam"));
-        Assert.Equal(Vector3.Zero, upper.Controls.First(c => c.Id == Humanoid.Chest).Rest.XYZ);
+        Assert.Equal(Vector3f.Zero, upper.Controls.First(c => c.Id == Humanoid.Chest).Rest.XYZ);
         Assert.Contains(upper.Contract(), line => line.StartsWith("connection: control 'chest' at the origin on a socket taking 'upper-body'", StringComparison.Ordinal));
         Assert.Contains(upper.Contract(), line => line.StartsWith("inputs: torso (factor 1 in 0.5..2)", StringComparison.Ordinal));
         var lower = Catalog.Parts[ModulePlans.QuadrupedLower];
@@ -114,8 +114,8 @@ public sealed class ModuleExtractionTests : IDisposable
         Assert.Same(resolved.Attachments[0].Asset, resolved.Attachments[1].Asset);
         // The wearer's own 'head' and each module's 'head' are three targets; a clip keys them apart.
         var clip = ClipAuthoring.New(resolved, "wave", "Wave", 1, true);
-        ClipAuthoring.SetKey(clip, new(MotionClip.RotateKind, "head"), 0, Vector3.Zero, .2f);
-        ClipAuthoring.SetKey(clip, new(MotionClip.RotateKind, "a/head"), 0, Vector3.Zero, -.5f);
+        ClipAuthoring.SetKey(clip, new(MotionClip.RotateKind, "head"), 0, Vector3f.Zero, .2f);
+        ClipAuthoring.SetKey(clip, new(MotionClip.RotateKind, "a/head"), 0, Vector3f.Zero, -.5f);
         ClipAuthoring.SetKey(clip, new(MotionClip.TranslateKind, "b/head"), 0, new(0, .1f, 0), 0);
         ClipAuthoring.SetPlay(clip, "a", 0, "walk");
         ClipAuthoring.SetPlay(clip, "b", 0, "hit");
@@ -130,8 +130,8 @@ public sealed class ModuleExtractionTests : IDisposable
         Assert.True(b.Pose.Points["head"].Y - b.Rig.Rest["head"].Y > .09f, "b's head is lifted by its own namespaced key");
         Assert.True(MathF.Abs(a.Pose.Points["head"].Y - a.Rig.Rest["head"].Y) < .02f, "a's head keeps its height: b's key never reaches a");
         // The inputs are each instance's: b's arms are 1.5 times a's, through the module's own parameter bindings.
-        var reachA = Vector3.Distance(a.Rig.Rest["left-hand"], a.Rig.Rest["left-shoulder"]);
-        var reachB = Vector3.Distance(b.Rig.Rest["left-hand"], b.Rig.Rest["left-shoulder"]);
+        var reachA = Vector3f.Distance(a.Rig.Rest["left-hand"], a.Rig.Rest["left-shoulder"]);
+        var reachB = Vector3f.Distance(b.Rig.Rest["left-hand"], b.Rig.Rest["left-shoulder"]);
         Assert.Equal(1.5f, reachB / reachA, 3);
         Assert.Equal(1.5f, b.Rig.ParameterValues["arms"], 5);
         Assert.Equal(1, a.Rig.ParameterValues["arms"], 5);

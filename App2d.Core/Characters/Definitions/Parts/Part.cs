@@ -426,7 +426,7 @@ public sealed record Part
         var controls = Controls.Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
         var pieces = Geometry.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
         Require(Connection is null || controls.Contains(Connection), $"{owner}: the connection control '{Connection}' is not a rig control.");
-        Require(Connection is null || Controls.First(c => c.Id == Connection).Parent is null && Controls.First(c => c.Id == Connection).Rest.XYZ == Vector3.Zero,
+        Require(Connection is null || Controls.First(c => c.Id == Connection).Parent is null && Controls.First(c => c.Id == Connection).Rest.XYZ == Vector3f.Zero,
             $"{owner}: the connection control '{Connection}' must be a rig root at the origin (the payload's origin is what lands on the wearer's socket).");
         foreach (var target in Exposed)
         {

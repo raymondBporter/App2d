@@ -64,20 +64,20 @@ public sealed class RoundedRectangle2DTests
     public void SavedCharacterBoxKeepsItsOutlineAsARoundedRectangleShape()
     {
         var model = ModelAuthoring.Empty("rounded-test", "Rounded test");
-        ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
+        ModelAuthoring.AddControl(model, null, Vector3f.Zero, "root");
         var part = ModelAuthoring.AddPart(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "root");
         part.Geometry = ((RoundedRectangle2D)part.Geometry!).WithSize(new(2, 1)) with
         {
             Radius = .25f
         };
-        var before = PartContours2D.Contour(part, _ => Vector3.Zero);
+        var before = PartContours2D.Contour(part, _ => Vector3f.Zero);
 
         var json = model.ToJson();
         Assert.Contains("\"kind\": \"rounded-rectangle\"", json);
         var restored = CharacterModel.FromJson(json).Parts.Single();
         Assert.IsType<RoundedRectangle2D>(restored.Geometry);
         Assert.Equal(ShapeKinds2D.RoundedRectangle, restored.Geometry!.GetKind());
-        Assert.Equal(before, PartContours2D.Contour(restored, _ => Vector3.Zero));
+        Assert.Equal(before, PartContours2D.Contour(restored, _ => Vector3f.Zero));
     }
 
     [Fact]

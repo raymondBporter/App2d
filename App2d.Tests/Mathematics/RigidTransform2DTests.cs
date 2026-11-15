@@ -38,4 +38,24 @@ public sealed class RigidTransform2DTests
         Assert.True(float.IsNaN(Angles.WrapSigned(float.PositiveInfinity)));
         Assert.True(double.IsNaN(Angles.WrapSigned(double.NaN)));
     }
+
+    [Fact]
+    public void FractionalDegreeConversionsUseTheRequestedPrecision()
+    {
+        Assert.Equal(0.5f * Angles.RadiansPerDegree, Angles.DegreesToRadians(0.5f), 7);
+        Assert.Equal(Math.PI / 360, Angles.DegreesToRadians(0.5d), 15);
+        Assert.Equal(0.5d, Angles.RadiansToDegrees(Math.PI / 360), 14);
+    }
+
+    [Fact]
+    public void PositiveWrappingAndExactTrigPreserveTheFullTurnSeam()
+    {
+        Assert.Equal(3f * MathF.PI / 2, Angles.WrapPositive(-MathF.PI / 2));
+        Assert.Equal(0d, Angles.WrapPositive(Math.Tau));
+        Assert.Equal(Math.Tau, Angles.WrapPositive(-double.Epsilon));
+        Assert.Equal((0d, 1d), Angles.SinCosAtTurnEndpoint(0d));
+        Assert.Equal((0d, 1d), Angles.SinCosAtTurnEndpoint(Math.Tau));
+        Assert.Equal((0f, 1f), Angles.SinCosAtTurnEndpoint(MathF.Tau));
+        Assert.Equal(Math.SinCos(0.5d), Angles.SinCosAtTurnEndpoint(0.5d));
+    }
 }

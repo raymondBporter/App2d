@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.CharacterStudio.Editing.Documents;
 using App2d.CharacterStudio.Editing.Session;
@@ -76,10 +77,10 @@ internal sealed class AttachmentInspector(EditorSession session)
 
         ParameterInspector.BoundNote(Resolved, PropertyRef.OfAttachment(id, RigProperties.X));
         ParameterInspector.BoundNote(Resolved, PropertyRef.OfAttachment(id, RigProperties.Y));
-        var angle = float.RadiansToDegrees(instance.Angle);
+        var angle = Angles.RadiansToDegrees(instance.Angle);
         if (Ui.Drag("Angle (degrees)", ref angle, 1f, -720, 720))
         {
-            session.Change(document, () => { Live().Angle = float.DegreesToRadians(angle); document.Asset.Validate(); });
+            session.Change(document, () => { Live().Angle = Angles.DegreesToRadians(angle); document.Asset.Validate(); });
         }
 
         var scale = instance.Scale;

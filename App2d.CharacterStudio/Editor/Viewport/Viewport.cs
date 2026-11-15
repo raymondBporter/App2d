@@ -15,7 +15,7 @@ using Matrix = Microsoft.Xna.Framework.Matrix;
 namespace App2d.CharacterStudio.Editor.Viewport;
 
 /// <summary>A subject placed in the viewport. Compare pins sit side by side at one world scale.</summary>
-internal sealed record SubjectView(Subject Subject, Vector3 Offset);
+internal sealed record SubjectView(Subject Subject, Vector3f Offset);
 
 /// <summary>One frame of the viewport as the workspace views see it: where things are on screen and what the mouse is doing.</summary>
 internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, FrameView2D view, IReadOnlyList<SubjectView> subjects, bool hovered)
@@ -28,17 +28,17 @@ internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, FrameVie
     public bool Hovered { get; } = hovered;
     public static Vector2 Mouse => ImGui.GetMousePos();
 
-    public Vector2 Screen(Vector3 world, int subject = 0)
+    public Vector2 Screen(Vector3f world, int subject = 0)
     {
-        var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
+        var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3f.Zero;
         return Origin + view.WorldToDevice(world.XY + offset.XY).ToVector2();
     }
 
     /// <summary>The world position under a screen point, in a subject's own space, keeping <paramref name="z"/>.</summary>
-    public Vector3 World(Vector2 screen, float z = 0, int subject = 0)
+    public Vector3f World(Vector2 screen, float z = 0, int subject = 0)
     {
-        var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        return new((view.DeviceToWorld(new(screen - Origin)) - offset.XY).ToVector2(), z);
+        var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3f.Zero;
+        return new(view.DeviceToWorld(new(screen - Origin)) - offset.XY, z);
     }
 }
 
@@ -87,7 +87,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         _centerX = (left + right) / 2;
     }
 
-    private static IEnumerable<Vector3> DrawingPoints(ResolvedModel model)
+    private static IEnumerable<Vector3f> DrawingPoints(ResolvedModel model)
     {
         var pose = PoseEvaluator.Rest(model);
         return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, model, pose))
@@ -100,7 +100,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 })))
             .Concat(model.Rest.Values)
             .Concat(model.Order.Where(c => c.Length > 0).Select(c => pose.Placement(c.Id).At(new Vector2f(c.Length, 0))))
-            .Append(Vector3.Zero);
+            .Append(Vector3f.Zero);
     }
 
     public ViewportFrame Draw(Vector2 available, IReadOnlyList<Subject> scene, EditorSession session)

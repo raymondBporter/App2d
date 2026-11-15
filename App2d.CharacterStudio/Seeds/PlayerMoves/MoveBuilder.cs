@@ -151,8 +151,8 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
                 var shoulder = pose.Points[chain.Frame];
                 // A target is keyed in the frame's rotation since rest, as the evaluator reads it (a bone frame has a rest direction).
                 var frameAngle = pose.Angles[chain.Frame] - model.Nodes[chain.Frame].RestAngle;
-                var goal = absolute ? new Vector3(offset.ToVector2(), shoulder.Z) : shoulder + new Vector3(offset.ToVector2(), 0);
-                var local = Rotation2D.ApplyXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
+                var goal = absolute ? new Vector3f(offset, shoulder.Z) : shoulder + new Vector3f(offset, 0);
+                var local = (goal - shoulder).RotateXY(-frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
                 Set(MotionClip.TargetKind, chainId, time, new()
                 {
                     Value = new(local.X, local.Y, 0),
@@ -243,7 +243,7 @@ internal sealed class PoseKey(MoveBuilder owner, float time, ProgressMapKind eas
     private Vector2f Swing(string parent, string child, float turn)
     {
         var offset = owner.Model.Rest[child] - owner.Model.Rest[parent];
-        var turned = Rotation2D.ApplyXY(offset, turn);
+        var turned = offset.RotateXY(turn);
         return new(turned.X - offset.X, turned.Y - offset.Y);
     }
     /// <summary>A foot at an actor-space position in the locomotion frame (ground is y = 0.025 for a flat sole).</summary>

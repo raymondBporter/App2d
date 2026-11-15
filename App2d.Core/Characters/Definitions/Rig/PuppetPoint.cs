@@ -7,9 +7,9 @@ namespace App2d.Core.Characters;
 public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
 {
     [JsonIgnore] public Vector2f XY => new(X, Y);
-    [JsonIgnore] public Vector3 XYZ => new(X, Y, Z);
-    public static PuppetPoint From(Vector3 p) => new(p.X, p.Y, p.Z);
-    public static PuppetPoint Lerp(PuppetPoint a, PuppetPoint b, float t) => From(Vector3.Lerp(a.XYZ, b.XYZ, t));
+    [JsonIgnore] public Vector3f XYZ => new(X, Y, Z);
+    public static PuppetPoint From(Vector3f p) => new(p.X, p.Y, p.Z);
+    public static PuppetPoint Lerp(PuppetPoint a, PuppetPoint b, float t) => From(Vector3f.Lerp(a.XYZ, b.XYZ, t));
     public void Check(string field)
     {
         new Limit(-10000, 10000).Check(X, field + ".x");

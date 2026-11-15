@@ -58,7 +58,7 @@ public sealed class PointLibrary
 
 public sealed class PointClip
 {
-    private readonly Vector3[] _points;
+    private readonly Vector3f[] _points;
     private readonly double[] _times;
     public string Id { get; }
     public string Label { get; }
@@ -106,7 +106,7 @@ public sealed class PointClip
             throw new InvalidDataException($"Invalid point names in {id}.");
         }
 
-        _points = new Vector3[checked(SampleCount * PointCount)];
+        _points = new Vector3f[checked(SampleCount * PointCount)];
         for (var point = 0; point < PointCount; point++)
         {
             var name = pointNames[point];
@@ -129,7 +129,7 @@ public sealed class PointClip
         }
     }
 
-    public void Sample(double seconds, Span<Vector3> output, bool holdEnd = false)
+    public void Sample(double seconds, Span<Vector3f> output, bool holdEnd = false)
     {
         Ensure.Finite(seconds);
         Ensure.ThrowIf(output.Length != PointCount, "Wrong pose size.", nameof(output));
@@ -161,11 +161,11 @@ public sealed class PointClip
         var mix = (float)((t - _times[lo]) / (_times[hi] - _times[lo]));
         for (var i = 0; i < PointCount; i++)
         {
-            output[i] = Vector3.Lerp(Read(lo, i), Read(hi, i), mix);
+            output[i] = Vector3f.Lerp(Read(lo, i), Read(hi, i), mix);
         }
     }
 
-    public Vector3 Read(int sample, int point)
+    public Vector3f Read(int sample, int point)
     {
         Ensure.Index(sample, SampleCount);
         Ensure.Index(point, PointCount);

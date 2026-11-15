@@ -2,7 +2,6 @@ using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
-using Vector3 = System.Numerics.Vector3;
 
 namespace App2d.Core.Characters.Drawing;
 
@@ -56,13 +55,13 @@ public sealed record SwooshStyle
 public sealed class BladeSwoosh
 {
     /// <summary>A recorded blade and the turn that carried the previous one onto it.</summary>
-    private readonly record struct Blade(float Time, Vector3 Guard, Vector3 Tip, SegmentTurn3D Turn, float Layer);
-    private readonly record struct Section(float Time, Vector3 Guard, Vector3 Tip, float Layer = 0);
+    private readonly record struct Blade(float Time, Vector3f Guard, Vector3f Tip, SegmentTurn3D Turn, float Layer);
+    private readonly record struct Section(float Time, Vector3f Guard, Vector3f Tip, float Layer = 0);
 
     private readonly List<Blade> _history = [];
     private readonly List<Section> _sections = [];
     private readonly List<float> _distance = [];
-    private readonly List<Vector3> _edge = [];
+    private readonly List<Vector3f> _edge = [];
     private bool _swinging;
     private float _start, _end, _now;
 
@@ -83,7 +82,7 @@ public sealed class BladeSwoosh
     }
 
     /// <summary>Records the blade at <paramref name="time"/>. A new swing (<paramref name="swinging"/> turning on) starts a fresh trail.</summary>
-    public void Record(float time, Vector3 guard, Vector3 tip, bool swinging, float layer = 0)
+    public void Record(float time, Vector3f guard, Vector3f tip, bool swinging, float layer = 0)
     {
         _now = time;
         if (swinging)
@@ -142,7 +141,7 @@ public sealed class BladeSwoosh
         _distance.Add(0);
         for (var i = 1; i < _sections.Count; i++)
         {
-            _distance.Add(_distance[^1] + Vector3.Distance(_sections[i - 1].Tip, _sections[i].Tip));
+            _distance.Add(_distance[^1] + Vector3f.Distance(_sections[i - 1].Tip, _sections[i].Tip));
         }
 
         var length = _distance[^1];
@@ -201,11 +200,11 @@ public sealed class BladeSwoosh
         var ub = _distance[i] / _distance[^1];
         // A band can end mid-step (the inner tongue closing): stand in a section interpolated to its end.
         var end = u1 < ub - 1e-6f ? Lerp(a, b, (u1 - ua) / MathF.Max(1e-6f, ub - ua)) : b;
-        (Vector3 Near, Vector3 Far) Edge(Section s, float u)
+        (Vector3f Near, Vector3f Far) Edge(Section s, float u)
         {
             var width = Style.Coverage * MathF.Pow(MathF.Sin(Math.Clamp(u, 0, 1) * MathF.PI / 2), Style.Taper);
             var inner = s.Tip + (s.Guard - s.Tip) * width;
-            return (Vector3.Lerp(s.Tip, inner, near(u)), Vector3.Lerp(s.Tip, inner, far(u)));
+            return (Vector3f.Lerp(s.Tip, inner, near(u)), Vector3f.Lerp(s.Tip, inner, far(u)));
         }
         var (n0, f0) = Edge(a, u0);
         var (n1, f1) = Edge(end, u1);
@@ -283,5 +282,5 @@ public sealed class BladeSwoosh
     }
 
     private static Section Lerp(Section a, Section b, float u) =>
-        new(float.Lerp(a.Time, b.Time, u), Vector3.Lerp(a.Guard, b.Guard, u), Vector3.Lerp(a.Tip, b.Tip, u), float.Lerp(a.Layer, b.Layer, u));
+        new(float.Lerp(a.Time, b.Time, u), Vector3f.Lerp(a.Guard, b.Guard, u), Vector3f.Lerp(a.Tip, b.Tip, u), float.Lerp(a.Layer, b.Layer, u));
 }

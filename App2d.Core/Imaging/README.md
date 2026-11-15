@@ -2,7 +2,7 @@
 
 `Image2D<T>` is width, height, and one row-major array of unmanaged pixel values.
 It has no cell size, origin, world bounds, loading, rendering, or pixel objects.
-Use `float` or `double` for scalar processing, `Vector3`/`Vector4` for float channels,
+Use `float` or `double` for scalar processing, `Vector3f`/`Vector4` for float channels,
 and `bool` for masks and skeletons. Values are neither quantized nor implicitly clamped.
 
 ```csharp
@@ -89,7 +89,7 @@ and hue zero for achromatic colors. Hue wraps and becomes unreliable near gray;
 its raw scalar gradient is not a perceptual color difference. See the
 [HSV conversion equations](https://docs.opencv.org/4.x/de/d25/imgproc_color_conversions.html).
 
-`QuantizePalette` runs deterministic k-means over `Vector3` pixels and returns
+`QuantizePalette` runs deterministic k-means over `Vector3f` pixels and returns
 `(Palette, Indices)`. It starts with farthest-point seeds and alternates nearest
 color assignment with averaging, using Euclidean distance in the supplied space.
 The palette has **at most** the requested count; an image with fewer distinct colors
@@ -110,7 +110,7 @@ using System.Numerics;
 using App2d.Core.Imaging;
 
 // colors is Image2D<Color4b>, for example from Texture2D.CopyImage().
-var rgb = colors.Map(static c => new Vector3(c.R, c.G, c.B) / 255f);
+var rgb = colors.Map(static c => new Vector3f(c.R, c.G, c.B) / 255f);
 var lab = rgb.Map(ColorSpaces2D.SrgbToOklab);
 var edgeStrength = lab.SobelMagnitude();
 var edges = edgeStrength.Map(static strength => strength >= .08f); // Tune to the image.

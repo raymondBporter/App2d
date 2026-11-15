@@ -42,12 +42,12 @@ public sealed class ProgressKindKeyframeTests
         foreach (var kind in ProgressMaps.ForTravel(EasingTravel.Forward))
         {
             MotionClip.ValidateEase(kind, "test ease");
-            List<ClipKey> motion = [new() { Ease = kind }, new() { Time = 1f, Value = Vector3.One }];
+            List<ClipKey> motion = [new() { Ease = kind }, new() { Time = 1f, Value = Vector3f.One }];
             List<SlotColorKey2D> color = [new() { Ease = kind, Value = Vector4.Zero }, new() { Time = 1f, Value = Vector4.One }];
             var expected = (float)ProgressMaps.FromKind(kind).Sample(.37f);
-            Assert.Equal(new Vector3(expected), PoseEvaluator.Interpolate(motion, .37f).Value);
+            Assert.Equal(new Vector3f(expected), PoseEvaluator.Interpolate(motion, .37f).Value);
             Assert.Equal(new Vector4(expected), SlotColorTrack2D.Sample(color, .37f));
-            Assert.Equal(Vector3.One, PoseEvaluator.Interpolate(motion, 1f).Value);
+            Assert.Equal(Vector3f.One, PoseEvaluator.Interpolate(motion, 1f).Value);
             Assert.Equal(Vector4.One, SlotColorTrack2D.Sample(color, 1f));
         }
     }

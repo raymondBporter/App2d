@@ -34,19 +34,19 @@ public static class PartContours2D
         if (part.Mesh is { } mesh)
         {
             var placed = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, frame), spatial, physicalZ);
-            return new([.. (mesh.Outline ?? mesh.Vertices).Select(p => placed.TransformPoint(p.ToVector3()))], PartAttachment2D.FrameOf(part, world, frame).Layer);
+            return new([.. (mesh.Outline ?? mesh.Vertices).Select(p => placed.TransformPoint(p))], PartAttachment2D.FrameOf(part, world, frame).Layer);
         }
         return Contour(part, world, frame, world, frame).TransformedBy(spatial, physicalZ);
     }
 
     /// <summary>A shape's closed outline or a curve's sampled open stroke.</summary>
-    public static LayeredContour Contour(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
+    public static LayeredContour Contour(PartGeometry part, Func<string, Vector3f> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3f>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         if (part.SpatialCurve is { } spatialCurve)
         {
             var placement = PartAttachment2D.FrameOf(part, world, bone, rest);
             var curve = spatialCurve.TransformedBy(PartPlacement3D.Extend(placement));
-            return new([.. Enumerable.Range(0, part.CurveSections + 1).Select(i => curve.Evaluate(i / (float)part.CurveSections).ToVector3())], placement.Layer);
+            return new([.. Enumerable.Range(0, part.CurveSections + 1).Select(i => curve.Evaluate(i / (float)part.CurveSections))], placement.Layer);
         }
         if (part.Geometry is ICurve2D && part.Frame is null)
         {
@@ -57,11 +57,11 @@ public static class PartContours2D
         if (part.Mesh is { } mesh)
         {
             var lifted = PartPlacement3D.Extend(frame);
-            return new([.. (mesh.Outline ?? mesh.Vertices).Select(v => lifted.TransformPoint(v.ToVector3()))], frame.Layer);
+            return new([.. (mesh.Outline ?? mesh.Vertices).Select(v => lifted.TransformPoint(v))], frame.Layer);
         }
         if (part.Geometry is ICurve2D || part.VertexZ is not null)
         {
-            return new([.. LocalContour(part).Select((v, i) => new Vector3(frame.Frame.TransformPoint(v).ToVector2(), part.VertexZ?[i] ?? 0))], frame.Layer);
+            return new([.. LocalContour(part).Select((v, i) => new Vector3f(frame.Frame.TransformPoint(v), part.VertexZ?[i] ?? 0))], frame.Layer);
         }
         if (part.Geometry is SimplePolygon2D && part.Bindings is { Count: > 0 })
         {
@@ -79,7 +79,7 @@ public static class PartContours2D
                 // Preserve the part's layer relative to the bound control, including animated layer changes.
                 cutout[binding.Point] = PartAttachment2D.BoundPoint(binding, drawnRest, world, rest);
             }
-            return new([.. cutout.Select(p => new Vector3(p.XY.ToVector2(), 0))], layers: [.. cutout.Select(p => p.Z)]);
+            return new([.. cutout.Select(p => new Vector3f(p.XY, 0))], layers: [.. cutout.Select(p => p.Z)]);
         }
         if (part.Geometry is IShape2D typed)
         {
@@ -89,13 +89,13 @@ public static class PartContours2D
 
             Span<Vector2f> buffer = count <= 64 ? stackalloc Vector2f[count] : new Vector2f[count];
             var outline = shape.GetOutlineVerts(buffer, 48);
-            var result = new List<Vector3>(count);
+            var result = new List<Vector3f>(count);
             foreach (var vertex in outline)
             {
                 result.Add(frame.At(vertex));
             }
 
-            return new([.. result.Select(p => new Vector3(p.XY.ToVector2(), 0))], frame.Layer);
+            return new([.. result.Select(p => new Vector3f(p.XY, 0))], frame.Layer);
         }
         throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");
     }

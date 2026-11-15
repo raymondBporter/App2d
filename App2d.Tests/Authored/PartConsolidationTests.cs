@@ -8,7 +8,7 @@ namespace App2d.Tests.Authored;
 
 public sealed class PartConsolidationTests
 {
-    private static Vector3 Point(Microsoft.Xna.Framework.Vector3 p) => new(p.X, p.Y, p.Z);
+    private static Vector3f Point(Microsoft.Xna.Framework.Vector3 p) => new(p.X, p.Y, p.Z);
     private static Part Tool() => new()
     {
         Id = "tool",
@@ -47,12 +47,12 @@ public sealed class PartConsolidationTests
         Assert.Equal(3, drawn.Length);
         for (var i = 0; i < 3; i++)
         {
-            var local = geometry.Mesh!.Vertices[i].ToVector3() + new Vector3(.4f, .1f, .2f);
-            var expected = socketFrame.TransformPoint((local - part.Point(EquipmentPoints.Grip)!.Value.ToVector3()) * part.Scale);
+            var local = geometry.Mesh!.Vertices[i] + new Vector3f(.4f, .1f, .2f);
+            var expected = socketFrame.TransformPoint((local - part.Point(EquipmentPoints.Grip)!.Value) * part.Scale);
             TestModels.Near(expected, Point(drawn[i].Position), 1e-5f);
             Assert.Equal(.4f + .6f + .7f, drawn[i].Layer, 5);
         }
-        var centre = drawn.Aggregate(Vector3.Zero, (sum, v) => sum + Point(v.Position)) / drawn.Length;
+        var centre = drawn.Aggregate(Vector3f.Zero, (sum, v) => sum + Point(v.Position)) / drawn.Length;
         Assert.Equal(0, PartPicking2D.Distance(first, socketFrame, centre));
         drawing.Clear();
         first.Instance.Layer += 2;

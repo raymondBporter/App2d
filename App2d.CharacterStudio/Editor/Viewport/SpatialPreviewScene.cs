@@ -30,7 +30,7 @@ internal sealed class SpatialPreviewScene
             var color = part.Material?.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : new Color4b(156, 187, 205);
             for (var i = 0; i < solid.Triangles.Count; i += 3)
             {
-                Vector3 At(int index) => Vector3.Transform(solid.Vertices[index].ToVector3(), placement);
+                Vector3f At(int index) => Vector3f.Transform(solid.Vertices[index], placement);
                 triangles.Add((new(At(solid.Triangles[i]), At(solid.Triangles[i + 1]), At(solid.Triangles[i + 2])), color));
             }
         }
@@ -38,8 +38,8 @@ internal sealed class SpatialPreviewScene
         if (triangles.Count > 0)
         {
             var points = triangles.SelectMany(face => new[] { face.Triangle.A, face.Triangle.B, face.Triangle.C }).ToArray();
-            var min = points.Aggregate(Vector3.Min);
-            var max = points.Aggregate(Vector3.Max);
+            var min = points.Aggregate(Vector3f.Min);
+            var max = points.Aggregate(Vector3f.Max);
             var span = max - min;
             var scale = 1.9f / MathF.Max(span.X, MathF.Max(span.Y, span.Z));
             var center = (min + max) / 2;
@@ -52,7 +52,7 @@ internal sealed class SpatialPreviewScene
         Color4b[] colors = [new(71, 129, 203), new(57, 185, 202), new(104, 103, 194), new(54, 146, 186), new(238, 178, 85), new(75, 91, 123)];
         for (var i = 0; i < box.Triangles.Count; i += 3)
             Face(cube, box.Vertices[box.Triangles[i]], box.Vertices[box.Triangles[i + 1]], box.Vertices[box.Triangles[i + 2]], colors[i / 6]);
-        var calibration = new SpatialPreviewObject("Calibration cube", cube, new(.8f, -.75f, .1f), Vector3.Zero);
+        var calibration = new SpatialPreviewObject("Calibration cube", cube, new(.8f, -.75f, .1f), Vector3f.Zero);
         var objects = new List<SpatialPreviewObject>();
         if (swordMesh.Count > 0) objects.Add(new("Sword", swordMesh, new(-.35f, .05f, 0), new(0, -.15f, 1.35f)));
         objects.Add(calibration);
@@ -62,7 +62,7 @@ internal sealed class SpatialPreviewScene
             drawing.Build(curve);
             var curveMesh = Mesh();
             drawing.Mesh.CopySpatialTo(curveMesh);
-            objects.Add(new("Spatial Bézier", curveMesh, Vector3.Zero, Vector3.Zero));
+            objects.Add(new("Spatial Bézier", curveMesh, Vector3f.Zero, Vector3f.Zero));
         }
         Objects = objects;
         const float floor = -1.05f;
@@ -80,14 +80,14 @@ internal sealed class SpatialPreviewScene
     public static TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> Mesh() => new(
         (point, color, uv) => new(new XVector3(point.X, point.Y, point.Z), color, new XVector2(uv.X, uv.Y)));
 
-    private static void Face(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh, Vector3 a, Vector3 b, Vector3 c, Color4b color)
+    private static void Face(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh, Vector3f a, Vector3f b, Vector3f c, Color4b color)
     {
         var triangle = new Triangle3D(a, b, c);
         var light = triangle.TryGetUnitNormal(out var normal) ? Light.Shade(normal) : 1f;
         mesh.Triangle(a, b, c, color.ScaleRgb(light));
     }
 
-    private static void Quad(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color4b color)
+    private static void Quad(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh, Vector3f a, Vector3f b, Vector3f c, Vector3f d, Color4b color)
     {
         mesh.Triangle(a, b, c, color);
         mesh.Triangle(a, c, d, color);
@@ -100,7 +100,7 @@ internal sealed class SpatialPreviewScene
         foreach (var item in Objects) renderer.Draw(item.Mesh, item.Frame, camera);
     }
 
-    public int? Pick(Ray3D ray, out Vector3 point)
+    public int? Pick(Ray3D ray, out Vector3f point)
     {
         int? picked = null;
         var nearest = float.PositiveInfinity;
@@ -111,7 +111,7 @@ internal sealed class SpatialPreviewScene
             var vertices = item.Mesh.Vertices;
             for (var j = 0; j < vertices.Length; j += 3)
             {
-                Vector3 At(int index)
+                Vector3f At(int index)
                 {
                     var p = item.Mesh.Vertices[index].Position;
                     return item.Frame.TransformPoint(new(p.X, p.Y, p.Z));
@@ -126,14 +126,14 @@ internal sealed class SpatialPreviewScene
     }
 }
 
-internal sealed class SpatialPreviewObject(string name, TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh, Vector3 position, Vector3 rotation)
+internal sealed class SpatialPreviewObject(string name, TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh, Vector3f position, Vector3f rotation)
 {
-    private readonly Vector3 _initialPosition = position;
-    private readonly Vector3 _initialRotation = rotation;
+    private readonly Vector3f _initialPosition = position;
+    private readonly Vector3f _initialRotation = rotation;
     public string Name { get; } = name;
     public TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> Mesh { get; } = mesh;
-    public Vector3 Position { get; set; } = position;
-    public Vector3 Rotation { get; set; } = rotation;
+    public Vector3f Position { get; set; } = position;
+    public Vector3f Rotation { get; set; } = rotation;
     public Frame3D Frame => Frame3D.FromRotation(Rotation, Position);
     public void Reset() => (Position, Rotation) = (_initialPosition, _initialRotation);
 }

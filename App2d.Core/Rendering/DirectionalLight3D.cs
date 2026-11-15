@@ -9,15 +9,15 @@ namespace App2d.Core.Rendering;
 /// </summary>
 public readonly record struct DirectionalLight3D
 {
-    public DirectionalLight3D(Vector3 towardLight, float ambient, float diffuse)
+    public DirectionalLight3D(Vector3f towardLight, float ambient, float diffuse)
     {
-        TowardLight = Vector3.Normalize(towardLight);
+        TowardLight = Vector3f.Normalize(towardLight);
         Ambient = ambient;
         Diffuse = diffuse;
     }
 
     /// <summary>Unit vector from a surface toward the light.</summary>
-    public Vector3 TowardLight { get; }
+    public Vector3f TowardLight { get; }
     public float Ambient { get; }
     public float Diffuse { get; }
 
@@ -25,5 +25,5 @@ public readonly record struct DirectionalLight3D
     public static DirectionalLight3D Props { get; } = new(new(-.3f, .5f, -1), .72f, .28f);
 
     /// <summary>Brightness for a unit normal; multiply a color's RGB by it.</summary>
-    public float Shade(Vector3 normal) => Ambient + Diffuse * MathF.Max(0, Vector3.Dot(normal, TowardLight));
+    public float Shade(Vector3f normal) => Ambient + Diffuse * MathF.Max(0, Vector3f.Dot(normal, TowardLight));
 }

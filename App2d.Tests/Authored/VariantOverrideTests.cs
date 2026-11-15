@@ -50,7 +50,7 @@ public sealed class VariantOverrideTests : IDisposable
         var tallAfter = ResolvedModel.From(person, tall, library);
         Assert.Equal(baseJson, person.ToJson());
         Assert.Equal(forearmBefore + .2f, tallAfter.Nodes[Humanoid.LeftElbow].Length, 5);
-        Assert.Equal(.2f, Vector3.Distance(handBefore, tallAfter.Rest[Humanoid.LeftHand]), 4);
+        Assert.Equal(.2f, Vector3f.Distance(handBefore, tallAfter.Rest[Humanoid.LeftHand]), 4);
         Assert.Same(mitten, tallAfter.Attachments.Single().Asset);
         Assert.Same(glove, ResolvedModel.From(person, broad, library).Attachments.Single().Asset);
         Assert.Equal(ResolvedModel.From(person, broad, library).Nodes[Humanoid.LeftElbow].Length, ResolvedModel.From(person, PersonBuild.ShortBroad.Apply(person, "b2", "B2"), library).Nodes[Humanoid.LeftElbow].Length);
@@ -139,11 +139,11 @@ public sealed class VariantOverrideTests : IDisposable
         var chest = resolved.Rest[Humanoid.Chest];
         var head = resolved.Rest[Humanoid.Head];
         // With children: one override on the chest; the head and arms ride along through the hierarchy.
-        ModelAuthoring.MoveRest(resolved, variant, Humanoid.Chest, chest + new Vector3(.1f, .2f, 0), children: true);
+        ModelAuthoring.MoveRest(resolved, variant, Humanoid.Chest, chest + new Vector3f(.1f, .2f, 0), children: true);
         Assert.Equal(2, variant.Overrides.Count);
         Assert.All(variant.Overrides, o => Assert.Equal(Humanoid.Chest, o.Target.Control));
         var moved = ResolvedModel.From(person, variant);
-        TestModels.Near(head + new Vector3(.1f, .2f, 0), moved.Rest[Humanoid.Head], 1e-5f);
+        TestModels.Near(head + new Vector3f(.1f, .2f, 0), moved.Rest[Humanoid.Head], 1e-5f);
         // The legs parameter still scales the hips beneath, since the chest's override is parent-local.
         variant.Parameters["legs"] = 1.4f;
         var longer = ResolvedModel.From(person, variant);
@@ -151,9 +151,9 @@ public sealed class VariantOverrideTests : IDisposable
         variant.Parameters["legs"] = PersonBuild.TallThin.Legs;
         variant.Overrides.Clear();
         // Without children: the chest moves, every unbound child gets its own setup override and stays exactly where it was.
-        ModelAuthoring.MoveRest(resolved, variant, Humanoid.Chest, chest + new Vector3(.1f, .2f, 0), children: false);
+        ModelAuthoring.MoveRest(resolved, variant, Humanoid.Chest, chest + new Vector3f(.1f, .2f, 0), children: false);
         var kept = ResolvedModel.From(person, variant);
-        TestModels.Near(chest + new Vector3(.1f, .2f, 0), kept.Rest[Humanoid.Chest], 1e-5f);
+        TestModels.Near(chest + new Vector3f(.1f, .2f, 0), kept.Rest[Humanoid.Chest], 1e-5f);
         foreach (var child in person.Controls.Where(c => c.Parent == Humanoid.Chest))
         {
             TestModels.Near(resolved.Rest[child.Id], kept.Rest[child.Id], 1e-5f, child.Id);
@@ -165,7 +165,7 @@ public sealed class VariantOverrideTests : IDisposable
         var target = new Vector2f(resolved.Rest[Humanoid.LeftElbow].X - .3f, resolved.Rest[Humanoid.LeftElbow].Y + .1f);
         ModelAuthoring.MoveBoneTip(resolved, variant, Humanoid.LeftElbow, target);
         var dragged = ResolvedModel.From(person, variant);
-        TestModels.Near(new(target.ToVector2(), resolved.Rest[Humanoid.LeftHand].Z), dragged.Rest[Humanoid.LeftHand], 1e-4f);
+        TestModels.Near(new(target, resolved.Rest[Humanoid.LeftHand].Z), dragged.Rest[Humanoid.LeftHand], 1e-4f);
         Assert.True(variant.HasOverride(PropertyRef.OfControl(Humanoid.LeftElbow, RigProperties.LocalRotation)));
         Assert.Contains("only drag a bone node", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.MoveBoneTip(resolved, variant, Humanoid.RightShoulder, target)).Message);
     }

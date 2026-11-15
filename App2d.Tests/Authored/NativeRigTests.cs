@@ -69,7 +69,7 @@ public sealed class NativeRigTests
         Assert.Equal(.75f * control, kind == MotionClip.RotateKind ? sample.Angle : sample.Value.X, 5);
         if (kind == MotionClip.RotateKind)
         {
-            Assert.Equal(Vector3.Zero, sample.Value);
+            Assert.Equal(Vector3f.Zero, sample.Value);
         }
 
         ClipAuthoring.Retime(motion, 2);
@@ -118,7 +118,7 @@ public sealed class NativeRigTests
         var rest = PoseEvaluator.Rest(model);
         // The child's rest is its local origin through the root's reflected, scaled frame.
         var expected = Vector2f.Transform(new(.4f, .05f), model.RestTransforms["wheel-root"]);
-        TestModels.Near(new(expected.ToVector2(), 0), rest.World("spoke-tip"));
+        TestModels.Near(new(expected, 0), rest.World("spoke-tip"));
         Assert.True(model.RestTransforms["wheel-root"].GetDeterminant() < 0, "the root reflects");
         Assert.Equal(1.5f, new Core.Mathematics.Transforms.Frame2D(model.RestTransforms["wheel-root"]).XAxis.Length(), 4);
         var clip = Animations.Single();
@@ -127,7 +127,7 @@ public sealed class NativeRigTests
         Assert.Equal(.75f, new Core.Mathematics.Transforms.Frame2D(pose.Bones["wheel-root"]).XAxis.Length(), 4);
         Assert.True(pose.Bones["wheel-root"].GetDeterminant() < 0, "the reflection survives animation");
         expected = Vector2f.Transform(new(.4f + .3f, .05f + .2f), pose.Bones["wheel-root"]);
-        TestModels.Near(new(expected.ToVector2(), 0), pose.World("spoke-tip"));
+        TestModels.Near(new(expected, 0), pose.World("spoke-tip"));
         clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].Value = new(-1, -1, 0);
         var collapsed = PoseEvaluator.Sample(model, clip, 1);
         Assert.Equal(0, collapsed.Bones["wheel-root"].GetDeterminant(), 5);
@@ -200,7 +200,7 @@ public sealed class NativeRigTests
         var model = ResolvedModel.From(Model);
         var clip = Animations[0];
         var pose = PoseEvaluator.Sample(model, clip, .3);
-        var desired = pose.World("spoke-tip") + new Vector3(.2f, -.15f, 0);
+        var desired = pose.World("spoke-tip") + new Vector3f(.2f, -.15f, 0);
         ClipAuthoring.Pose(model, clip, pose, .3f, "spoke-tip", desired);
         TestModels.Near(desired, PoseEvaluator.Sample(model, clip, .3).World("spoke-tip"));
         var child = model.Rest["spoke-tip"];
@@ -218,7 +218,7 @@ public sealed class NativeRigTests
         var moved = new ModelVariant { Id = "moved-wheel", Name = "Moved wheel", Base = "wheel", Overrides = [PropertyOverride.Of(PropertyRef.OfControl("wheel-root", RigProperties.LocalX), 2)] };
         var shifted = ResolvedModel.From(Model, moved);
         Assert.Equal(2, shifted.Rest["wheel-root"].X, 5);
-        TestModels.Near(ResolvedModel.From(Model).Rest["spoke-tip"] + new Vector3(1.5f, 0, 0), shifted.Rest["spoke-tip"]);
+        TestModels.Near(ResolvedModel.From(Model).Rest["spoke-tip"] + new Vector3f(1.5f, 0, 0), shifted.Rest["spoke-tip"]);
         var variant = new ModelVariant { Id = "moved-wheel", Name = "Moved wheel", Base = "wheel", Overrides = [PropertyOverride.Of(PropertyRef.OfPart(Model.Parts[0].Id, RigProperties.OffsetX), .1f)] };
         var model = ResolvedModel.From(Model, variant);
         var rest = PoseEvaluator.Rest(model);
@@ -232,7 +232,7 @@ public sealed class NativeRigTests
 
         var clip = Animations[0];
         var pose = PoseEvaluator.Sample(model, clip, .3);
-        var desired = pose.World("wheel-root") + new Vector3(.2f, .3f, 0);
+        var desired = pose.World("wheel-root") + new Vector3f(.2f, .3f, 0);
         ClipAuthoring.Pose(model, clip, pose, .3f, "wheel-root", desired);
         TestModels.Near(desired, PoseEvaluator.Sample(model, clip, .3).World("wheel-root"));
     }

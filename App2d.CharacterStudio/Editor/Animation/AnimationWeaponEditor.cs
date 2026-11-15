@@ -17,7 +17,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
 {
     private string? _weaponDrag;
     private float _weaponPointerAngle;
-    private Vector3 _weaponStart;
+    private Vector3f _weaponStart;
     private readonly LibraryPartFields _partFields = new(session);
     private readonly Model.ModelPartInspector _geometryInspector = new(session, new(session));
 
@@ -78,12 +78,15 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
         }
 
         var degrees = angles.RadiansToDegrees();
-        var changed = Ui.Drag("Turn (degrees)", ref degrees.Z, .5f, -2880, 2880, "%.1f");
-        changed |= Ui.Drag("Tilt (degrees)", ref degrees.Y, .5f, -180, 180, "%.1f");
-        changed |= Ui.Drag("Twist (degrees)", ref degrees.X, .5f, -2880, 2880, "%.1f");
+        var turn = degrees.Z;
+        var tilt = degrees.Y;
+        var twist = degrees.X;
+        var changed = Ui.Drag("Turn (degrees)", ref turn, .5f, -2880, 2880, "%.1f");
+        changed |= Ui.Drag("Tilt (degrees)", ref tilt, .5f, -180, 180, "%.1f");
+        changed |= Ui.Drag("Twist (degrees)", ref twist, .5f, -2880, 2880, "%.1f");
         if (changed)
         {
-            session.PoseWeapon(degrees.DegreesToRadians());
+            session.PoseWeapon(new Vector3f(twist, tilt, turn).DegreesToRadians());
         }
 
         if (ImGui.Button("Broadside"))
@@ -116,7 +119,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
         ImGui.SameLine();
         if (ImGui.Button("Reset rotation"))
         {
-            session.PoseWeapon(Vector3.Zero);
+            session.PoseWeapon(Vector3f.Zero);
             session.CommitAll();
         }
         if (session.HasPendingPose)
@@ -199,6 +202,12 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
 
         var socket = new ActorPose(subject.Pose, Vector2f.Zero, 1).Socket(weapon.Socket);
         var center = frame.Screen(socket.Origin);
+        float PointerAngle()
+        {
+            var mouse = ViewportFrame.Mouse;
+            return new Vector2f(mouse.X - center.X, center.Y - mouse.Y).AngleRadians;
+        }
+
         var draw = frame.Draw;
         var scale = Ui.Scale;
         var angles = subject.Pose.SocketAngles.GetValueOrDefault(weapon.Socket.Id);
@@ -219,7 +228,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
             if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(ViewportFrame.Mouse, point) < 12 * scale)
             {
                 _weaponDrag = name;
-                _weaponPointerAngle = MathF.Atan2(center.Y - ViewportFrame.Mouse.Y, ViewportFrame.Mouse.X - center.X);
+                _weaponPointerAngle = PointerAngle();
                 _weaponStart = angles;
                 session.BeginDrag();
             }
@@ -236,17 +245,17 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
                 var speed = ImGui.GetIO().KeyShift ? .2f : 1;
                 if (_weaponDrag == "Turn")
                 {
-                    var pointer = MathF.Atan2(center.Y - ViewportFrame.Mouse.Y, ViewportFrame.Mouse.X - center.X);
-                    _weaponStart.Z += Angles.WrapSigned(pointer - _weaponPointerAngle) * speed;
+                    var pointer = PointerAngle();
+                    _weaponStart = _weaponStart with { Z = _weaponStart.Z + Angles.WrapSigned(pointer - _weaponPointerAngle) * speed };
                     _weaponPointerAngle = pointer;
                 }
                 else if (_weaponDrag == "Tilt")
                 {
-                    _weaponStart.Y -= ImGui.GetIO().MouseDelta.Y * .01f / scale * speed;
+                    _weaponStart = _weaponStart with { Y = _weaponStart.Y - ImGui.GetIO().MouseDelta.Y * .01f / scale * speed };
                 }
                 else
                 {
-                    _weaponStart.X += ImGui.GetIO().MouseDelta.X * .01f / scale * speed;
+                    _weaponStart = _weaponStart with { X = _weaponStart.X + ImGui.GetIO().MouseDelta.X * .01f / scale * speed };
                 }
 
                 session.PoseWeapon(_weaponStart);

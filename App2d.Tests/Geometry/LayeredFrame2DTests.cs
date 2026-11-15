@@ -15,9 +15,9 @@ public sealed class LayeredFrame2DTests
     [Fact]
     public void IdentityAndDefaultAreExplicit()
     {
-        var point = new Vector3(2, -1, .3f);
+        var point = new Vector3f(2, -1, .3f);
         Assert.Equal(point, LayeredFrame2D.Identity.At(point));
-        Assert.Equal(new Vector3(0, 0, .3f), default(LayeredFrame2D).At(point));
+        Assert.Equal(new Vector3f(0, 0, .3f), default(LayeredFrame2D).At(point));
         var placed = LayeredFrame2D.Local(new(2, .5f), .4f, new(1, 2), -.1f);
         Assert.Equal(placed, placed.Then(LayeredFrame2D.Identity));
         Assert.Equal(placed, LayeredFrame2D.Identity.Then(placed));
@@ -35,7 +35,7 @@ public sealed class LayeredFrame2DTests
         Assert.Equal(local.Frame.Then(parent.Frame), combined.Frame);
         Assert.Equal(.15f, combined.Layer, 6);
         // A further local layer offset adds on top, and XY rotation, scale or reflection never leak into the layer.
-        Assert.Equal(.15f + .02f, combined.At(new Vector3(point.ToVector2(), .02f)).Z, 6);
+        Assert.Equal(.15f + .02f, combined.At(new Vector3f(point, .02f)).Z, 6);
         Assert.Equal(.15f, local.Then(parent with { Frame = new Frame2D(Matrix3x2.CreateScale(-7, 7) * Matrix3x2.CreateRotation(2)) }).Layer, 6);
     }
 
@@ -56,7 +56,7 @@ public sealed class LayeredFrame2DTests
     public void LocalCoordinatesUndoThePlacementIncludingTheLayer()
     {
         var placement = LayeredFrame2D.Local(new(2, .5f), .4f, new(1, 2), -.1f).Then(LayeredFrame2D.FromRotation(1.2f, new(3, 4, .5f)));
-        var local = new Vector3(.3f, -.7f, .05f);
+        var local = new Vector3f(.3f, -.7f, .05f);
         var world = placement.At(local);
         Assert.True(placement.TryToLocal(world, out var restored));
         TestModels.Near(local, restored, 1e-5f, "local coordinates");
@@ -80,9 +80,9 @@ public sealed class LayeredFrame2DTests
         foreach (var facing in new[] { 1, -1 })
         {
             var actor = new ActorPose(new EvaluatedPose(), new(10, 2), facing);
-            var local = new Vector3(.4f, 1.1f, -.12f);
+            var local = new Vector3f(.4f, 1.1f, -.12f);
             var world = actor.Place(local);
-            Assert.Equal(new Vector3(10 + .4f * facing, 3.1f, -.12f), world);
+            Assert.Equal(new Vector3f(10 + .4f * facing, 3.1f, -.12f), world);
             TestModels.Near(local, actor.ToLocal(world), 1e-6f, "round trip");
             Assert.Equal(facing < 0, actor.Placement.Then(LayeredFrame2D.Identity).Frame.Matrix.GetDeterminant() < 0);
             Assert.Equal(world, actor.Placement3D.TransformPoint(local));

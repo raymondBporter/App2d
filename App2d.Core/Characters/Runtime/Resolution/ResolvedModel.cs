@@ -45,7 +45,7 @@ public sealed class ResolvedModel
     /// <summary>The canonical rig graph: every control's parent-local similarity setup, dimension, link and derived rest frame.</summary>
     public IReadOnlyDictionary<string, RigNode> Nodes { get; }
     /// <summary>Each control's derived rest position in the character frame, at its absolute rest layer.</summary>
-    public IReadOnlyDictionary<string, Vector3> Rest { get; }
+    public IReadOnlyDictionary<string, Vector3f> Rest { get; }
     public IReadOnlyDictionary<string, Matrix3x2> RestTransforms { get; }
     /// <summary>Each control's drawing layer relative to its parent (a root's is its rest Z). Composed layers reproduce the authored absolute rest Z.</summary>
     public IReadOnlyDictionary<string, float> LayerOffsets { get; }

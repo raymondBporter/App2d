@@ -175,7 +175,7 @@ public sealed class CombatHitstopTests
         var (Guard, Tip) = PersonLoadout.Blade(initial.Local, Moves.Props[PersonLoadout.Sword], Moves.Model.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
         view.Advance(.025f);
         var held = PersonLoadout.Blade(view.Pose!.Local, Moves.Props[PersonLoadout.Sword], Moves.Model.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
-        Assert.InRange(Vector3.Distance(Tip, held.Tip), 0, .0001f);
+        Assert.InRange(Vector3f.Distance(Tip, held.Tip), 0, .0001f);
         view.ApplyState(state with
         {
             Position = new(20, 0),

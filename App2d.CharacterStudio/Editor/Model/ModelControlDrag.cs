@@ -11,7 +11,7 @@ internal sealed class ModelControlDrag(EditorSession session)
 {
     private string? _dragging;
     private bool _draggingTip;
-    private Vector3 _grab;
+    private Vector3f _grab;
 
     public void Drag(ViewportFrame frame, ResolvedModel model, EvaluatedPose pose)
     {

@@ -7,8 +7,9 @@
   <!-- Share aliases across projects that use the runtime math and rendering types. -->
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'App2d.Analyzers' and '$(MSBuildProjectName)' != 'App2d.Analyzers.CodeFixes'">
     <Using Include="Microsoft.Xna.Framework.Color" Alias="Color4b" />
-    <Using Include="App2d.Core.Mathematics.Vec2&lt;float&gt;" Alias="Vector2f" />
+    <Using Include="App2d.Core.Mathematics.Vector2f" Alias="Vector2f" />
     <Using Include="App2d.Core.Mathematics.Vec2&lt;double&gt;" Alias="Vector2d" />
+    <Using Include="App2d.Core.Mathematics.Vector3f" Alias="Vector3f" />
     <Using Include="App2d.Core.Mathematics.Matrix2x2&lt;float&gt;" Alias="Matrix2x2f" />
     <Using Include="App2d.Core.Mathematics.Matrix2x2&lt;double&gt;" Alias="Matrix2x2d" />
   </ItemGroup>

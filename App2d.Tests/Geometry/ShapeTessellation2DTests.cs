@@ -192,11 +192,11 @@ public sealed class ShapeTessellation2DTests
     [Fact]
     public void RestTopologyCacheIgnoresDepthChangesButObservesXYChanges()
     {
-        List<Vector3> points = [Vector3.Zero, Vector3.UnitX, Vector3.UnitY];
+        List<Vector3f> points = [Vector3f.Zero, Vector3f.UnitX, Vector3f.UnitY];
         var original = PolygonTriangulationCache2D.GetXY(points);
-        points[1] += new Vector3(0, 0, 3);
+        points[1] += new Vector3f(0, 0, 3);
         Assert.Same(original, PolygonTriangulationCache2D.GetXY(points));
-        points[1] += new Vector3(2, 0, 0);
+        points[1] += new Vector3f(2, 0, 0);
         Assert.NotSame(original, PolygonTriangulationCache2D.GetXY(points));
     }
 

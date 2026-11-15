@@ -246,7 +246,7 @@ public sealed record Affine2D
             return false;
         }
 
-        var rotation = MathF.Atan2(matrix.M12, matrix.M11);
+        var rotation = new Vector2f(matrix.X).AngleRadians;
         transform = new()
         {
             X = matrix.M31,
@@ -254,7 +254,7 @@ public sealed record Affine2D
             Rotation = rotation,
             ScaleX = (float)scaleX,
             ScaleY = (float)scaleY,
-            ShearY = MathF.Atan2(-matrix.M21, matrix.M22) - rotation,
+            ShearY = new Vector2f(matrix.Y).PerpCw.AngleRadians - rotation,
             // Keep the supplied map exactly until a channel is edited. Decomposition has float roundoff;
             // rebuilding a rank-one matrix could otherwise turn it into a nearly singular invertible one.
             _matrix = matrix

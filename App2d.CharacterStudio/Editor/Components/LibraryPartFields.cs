@@ -93,7 +93,7 @@ internal sealed class LibraryPartFields(EditorSession session)
         foreach (var location in doc.Asset.Locations.ToArray())
         {
             ImGui.PushID(location.Id);
-            var point = location.Point.ToVector3();
+            var point = location.Point;
             if (Ui.Drag3(location.Id + " (local XYZ)", ref point))
                 session.Change(doc, () => { location.X = point.X; location.Y = point.Y; location.Z = point.Z; doc.Asset.Validate(); });
             var layer = location.Layer;

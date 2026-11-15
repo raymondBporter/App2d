@@ -33,7 +33,7 @@ public readonly record struct Direction2D
         get
         {
             Validate();
-            return Polar2D.AngleOf(Vector);
+            return Polar<float>.AngleOf(new Vec2<float>(Vector));
         }
     }
 
@@ -49,7 +49,7 @@ public readonly record struct Direction2D
         return Vector * Ensure.Finite(distance);
     }
 
-    public static Direction2D FromAngle(float angleRadians) => new(Polar2D.Direction(angleRadians));
+    public static Direction2D FromAngle(float angleRadians) => new(Vector2f.Direction(angleRadians));
 
     /// <summary>Unit direction from one finite point toward another, without float subtraction overflow.</summary>
     public static Direction2D FromPoints(Vector2f  from, Vector2f  to)

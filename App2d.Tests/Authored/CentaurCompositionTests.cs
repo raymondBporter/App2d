@@ -53,8 +53,8 @@ public sealed class CentaurCompositionTests
             Assert.NotEmpty(lower.Pose.Contacts);
             // The torso follows the lower body's own control: the saddle socket sits on lower/body, so the chest lands at that control plus the socket offset in its frame.
             var body = lower.Frame("body");
-            var expected = body.At(new Vector3(.42f, .98f, 0));
-            TestModels.Near(new Vector3(expected.X, expected.Y, 0), new Vector3(upper.World(Humanoid.Chest).X, upper.World(Humanoid.Chest).Y, 0), 1e-4f);
+            var expected = body.At(new Vector3f(.42f, .98f, 0));
+            TestModels.Near(new Vector3f(expected.X, expected.Y, 0), new Vector3f(upper.World(Humanoid.Chest).X, upper.World(Humanoid.Chest).Y, 0), 1e-4f);
             // Root motion belongs to the lower body alone: the pose's locomotion is the quadruped walk's travel, cycles included.
             var travel = PoseEvaluator.TravelOf(lowerRig, quadrupedWalk, seconds, repeat: true);
             Assert.Equal(travel.X, pose.Locomotion.X, 4);

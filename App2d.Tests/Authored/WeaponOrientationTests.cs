@@ -18,15 +18,15 @@ public sealed class WeaponOrientationTests
     {
         var mesh = PartGeometryBuilder.Blade(.1f, .65f, .82f, .047f, .014f, "#dce5e7");
         new Part { Id = "blade", Name = "Blade", Geometry = [mesh] }.Validate();
-        var center = new Vector3(.4f, 0, 0);
+        var center = new Vector3f(.4f, 0, 0);
         var edges = new Dictionary<(int, int), int>();
         for (var i = 0; i < mesh.Mesh!.Triangles.Count; i += 3)
         {
             var indices = mesh.Mesh!.Triangles.Skip(i).Take(3).ToArray();
-            var a = mesh.Mesh!.Vertices[indices[0]].ToVector3();
-            var b = mesh.Mesh!.Vertices[indices[1]].ToVector3();
-            var c = mesh.Mesh!.Vertices[indices[2]].ToVector3();
-            Assert.True(Vector3.Dot(Vector3.Cross(b - a, c - a), (a + b + c) / 3 - center) > 0);
+            var a = mesh.Mesh!.Vertices[indices[0]];
+            var b = mesh.Mesh!.Vertices[indices[1]];
+            var c = mesh.Mesh!.Vertices[indices[2]];
+            Assert.True(Vector3f.Dot(Vector3f.Cross(b - a, c - a), (a + b + c) / 3 - center) > 0);
             for (var j = 0; j < 3; j++)
             {
                 var u = indices[j];
@@ -58,7 +58,7 @@ public sealed class WeaponOrientationTests
         TestModels.Near(rest.XAxis, turned.XAxis, 1e-6f);
         Assert.InRange(MathF.Abs(turned.YAxis.Z), .999f, 1.001f);
         Assert.InRange(turned.YAxis.XY.Length(), 0, 1e-6f);
-        Assert.InRange(Vector3.Distance(turned.TransformPoint(new(2, 0, 0)), turned.Origin), 1.999f, 2.001f);
+        Assert.InRange(Vector3f.Distance(turned.TransformPoint(new(2, 0, 0)), turned.Origin), 1.999f, 2.001f);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class WeaponOrientationTests
             var r = PartPlacement3D.Point(right, prop, p);
             var l = PartPlacement3D.Point(left, prop, p);
             TestModels.Near(new(8 - r.X, r.Y, r.Z), l, 1e-5f);
-            Assert.InRange(Vector3.Distance(r, right.Origin) - Vector3.Distance(p.ToVector3(), prop.Point(EquipmentPoints.Grip)!.Value.ToVector3()) * 2, -1e-5f, 1e-5f);
+            Assert.InRange(Vector3f.Distance(r, right.Origin) - Vector3f.Distance(p, prop.Point(EquipmentPoints.Grip)!.Value) * 2, -1e-5f, 1e-5f);
         }
         Assert.True(right.XAxis.XY.Length() < .9f);
     }
@@ -86,7 +86,7 @@ public sealed class WeaponOrientationTests
     {
         var (model, socket, clip) = Setup();
         var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.OrientKind, socket.Id);
-        ClipAuthoring.SetKey(clip, channel, 0, Vector3.Zero);
+        ClipAuthoring.SetKey(clip, channel, 0, Vector3f.Zero);
         ClipAuthoring.SetKey(clip, channel, 1, new(MathF.Tau, 0, 0));
         clip = MotionClip.FromJson(clip.ToJson());
         clip.Validate(model);
@@ -116,7 +116,7 @@ public sealed class WeaponOrientationTests
         {
             Overlay = new(overlay, 0, new HashSet<string> { socket.Frame ?? socket.Control })
         });
-        Assert.Equal(Vector3.Zero, result.SocketAngles[socket.Id]);
+        Assert.Equal(Vector3f.Zero, result.SocketAngles[socket.Id]);
         clip.Tracks[0].Target = "missing-socket";
         Assert.Contains("unknown socket", Assert.Throws<InvalidDataException>(() => clip.Validate(model)).Message);
     }
@@ -147,7 +147,7 @@ public sealed class WeaponOrientationTests
         {
             drawing.Mesh.Clear();
             var matrix = Matrix4x4.CreateRotationX(angle);
-            drawing.AddAttachment(prop, new(Vector3.Zero, Vector3.UnitX, Vector3.Transform(Vector3.UnitY, matrix), Vector3.Transform(Vector3.UnitZ, matrix)));
+            drawing.AddAttachment(prop, new(Vector3f.Zero, Vector3f.UnitX, Vector3f.Transform(Vector3f.UnitY, matrix), Vector3f.Transform(Vector3f.UnitZ, matrix)));
             Assert.True(drawing.Mesh.TriangleCount > 12);
             return drawing.Mesh.Max.Y - drawing.Mesh.Min.Y;
         }
@@ -174,10 +174,10 @@ public sealed class WeaponOrientationTests
         };
         prop.Validate();
         var drawing = new PuppetDrawing();
-        drawing.AddAttachment(prop, new(new Vector3(1e9f), Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
+        drawing.AddAttachment(prop, new(new Vector3f(1e9f), Vector3f.UnitX, Vector3f.UnitY, Vector3f.UnitZ));
         Assert.Equal(0, drawing.Mesh.Count);
 
-        drawing.AddAttachment(prop, new(Vector3.Zero, Vector3.UnitX, Vector3.UnitX, Vector3.UnitZ));
+        drawing.AddAttachment(prop, new(Vector3f.Zero, Vector3f.UnitX, Vector3f.UnitX, Vector3f.UnitZ));
         Assert.Equal(0, drawing.Mesh.Count);
     }
 

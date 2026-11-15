@@ -271,7 +271,7 @@ public sealed class EnsureTests
             Ensure.GreaterThanOrEqual(2L, 1L);
             Ensure.InRange(.5f, 0f, 1f);
             Ensure.Positive(new Vector2f(1));
-            Ensure.NonZero(Vector3.UnitX);
+            Ensure.NonZero(Vector3f.UnitX);
             Ensure.LessThan(new Vector4(1), new Vector4(2));
         }
     }

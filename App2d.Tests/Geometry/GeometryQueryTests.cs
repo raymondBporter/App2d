@@ -3,6 +3,7 @@ using App2d.Core.Geometry.Operations.Containment;
 using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
@@ -91,12 +92,12 @@ public sealed class GeometryQueryTests
     [Fact]
     public void XyRotationPreservesDepthAndCanBeInverted()
     {
-        var original = new Vector3(3, 4, 17);
-        var rotated = Rotation2D.ApplyXY(original, MathF.PI / 2);
+        var original = new Vector3f(3, 4, 17);
+        var rotated = original.RotateXY(MathF.PI / 2);
         Assert.Equal(-4, rotated.X, 5);
         Assert.Equal(3, rotated.Y, 5);
         Assert.Equal(17, rotated.Z);
-        Assert.True(Vector3.Distance(original, Rotation2D.ApplyXY(rotated, -MathF.PI / 2)) < .00001f);
-        Assert.Equal(original, Rotation2D.ApplyXY(original, 0));
+        Assert.True(Vector3f.Distance(original, rotated.RotateXY(-MathF.PI / 2)) < .00001f);
+        Assert.Equal(original, original.RotateXY(0));
     }
 }

@@ -12,7 +12,7 @@ namespace App2d.Core.Characters.Authored;
 public sealed record ClipKey : IEditableTimedKey
 {
     public float Time { get; set; }
-    public Vector3 Value { get; set; }
+    public Vector3f Value { get; set; }
     public float Angle { get; set; }
     /// <summary>How the value moves from this key to the next: see <see cref="ProgressMapKind"/>.</summary>
     public ProgressMapKind Ease { get; set; } = ProgressMapKind.Linear;
@@ -107,7 +107,7 @@ public sealed class MotionClip
     public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, BendKind, FitKind, ShowKind, TintKind, AlphaKind];
     /// <summary>The kinds that target a drawing part rather than a control, chain or socket.</summary>
     public static readonly IReadOnlyList<string> PartKinds = [FitKind, ShowKind, TintKind, AlphaKind];
-    public static Vector3 DefaultValue(string kind) => kind == TintKind ? Vector3.One : kind is AlphaKind or ShowKind ? Vector3.UnitX : Vector3.Zero;
+    public static Vector3f DefaultValue(string kind) => kind == TintKind ? Vector3f.One : kind is AlphaKind or ShowKind ? Vector3f.UnitX : Vector3f.Zero;
     public string Format { get; set; } = FormatId;
     /// <summary>The current clip schema selects animated Part expressions through <see cref="Plays"/>.</summary>
     public const int CurrentVersion = 4;

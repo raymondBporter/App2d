@@ -1,36 +1,10 @@
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Mathematics.Transforms;
 
-/// <summary>Rotation in the XY plane, in radians, without constructing a transform or shape.</summary>
+/// <summary>Pivot solving and endpoint arc interpolation in the XY plane.</summary>
 public static class Rotation2D
 {
-    private const double MinimumHalfAngleSine = 1e-6;
-
-    public static Vector2f  Apply(Vector2f value, float radians)
-    {
-        if (radians == 0f)
-        {
-            return value;
-        }
-
-        var (sin, cos) = MathF.SinCos(radians);
-        return new(value.X * cos - value.Y * sin, value.X * sin + value.Y * cos);
-    }
-
-    /// <summary>Rotates a point about a pivot in the XY plane.</summary>
-    public static Vector2f  ApplyAround(Vector2f point, Vector2f pivot, float radians) =>
-        pivot + Apply(point - pivot, radians);
-
-    /// <summary>Rotates XY while preserving depth exactly.</summary>
-    public static Vector3 ApplyXY(Vector3 value, float radians) =>
-        new(Apply(value.XY, radians).ToVector2(), value.Z);
-
-    /// <summary>Rotates XY about a pivot while preserving depth exactly.</summary>
-    public static Vector3 ApplyXYAround(Vector3 value, Vector2f pivot, float radians) =>
-        new(ApplyAround(value.XY, pivot, radians).ToVector2(), value.Z);
-
     /// <summary>
     /// Finds the pivot carrying from to to through radians. Returns false when the turn is too close
     /// to a whole revolution to determine a stable pivot from float coordinates.
@@ -40,7 +14,7 @@ public static class Rotation2D
         ValidateArc(from, to, radians);
         var half = (double)radians * 0.5d;
         var sinHalf = Math.Sin(half);
-        if (Math.Abs(sinHalf) < MinimumHalfAngleSine)
+        if (Math.Abs(sinHalf) < Angles.MinimumHalfAngleSine)
         {
             pivot = default;
             return false;
@@ -79,7 +53,7 @@ public static class Rotation2D
 
         var half = (double)radians * 0.5d;
         var sinHalf = Math.Sin(half);
-        if (Math.Abs(sinHalf) < MinimumHalfAngleSine)
+        if (Math.Abs(sinHalf) < Angles.MinimumHalfAngleSine)
         {
             return Vector2f.Lerp(from, to, fraction);
         }

@@ -239,10 +239,17 @@ public static class Ui
         return true;
     }
 
-    public static bool Drag3(string label, ref Vector3 value, float speed = .005f, float min = -100, float max = 100)
+    public static bool Drag3(string label, ref Vector3f value, float speed = .005f, float min = -100, float max = 100)
     {
         Label(label);
-        return ImGui.DragFloat3("##" + label, ref value, speed, min, max, "%.3f");
+        var coordinates = value.ToVector3();
+        if (!ImGui.DragFloat3("##" + label, ref coordinates, speed, min, max, "%.3f"))
+        {
+            return false;
+        }
+
+        value = new(coordinates);
+        return true;
     }
 
     public static bool Text(string label, ref string value, uint length = 80)

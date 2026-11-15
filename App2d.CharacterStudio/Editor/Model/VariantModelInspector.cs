@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.CharacterStudio.Editing.Documents;
 using App2d.CharacterStudio.Editing.Session;
@@ -205,12 +206,12 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
 
             var value = resolved.Number(target);
             var degrees = declaration.Units == ParameterUnits.Radians;
-            var shown = degrees ? float.RadiansToDegrees(value) : value;
+            var shown = degrees ? Angles.RadiansToDegrees(value) : value;
             var range = declaration.Range ?? new Limit(-100, 100);
             ImGui.SetNextItemWidth(-1);
             if (Ui.Drag("##" + target.Key, ref shown, degrees ? 1f : .005f, degrees ? -720 : range.Min, degrees ? 720 : range.Max, degrees ? "%.1f°" : "%.3f"))
             {
-                var next = degrees ? float.DegreesToRadians(shown) : shown;
+                var next = degrees ? Angles.DegreesToRadians(shown) : shown;
                 session.Change(document, () => ModelAuthoring.SetOverride(document.Asset, basis, PropertyOverride.Of(target, next)));
             }
 

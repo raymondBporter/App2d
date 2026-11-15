@@ -126,7 +126,7 @@ internal sealed class AnimationViewport(EditorSession session, App2d.CharacterSt
         _controls.Draw(frame, subject);
     }
 
-    private IEnumerable<(string Control, Vector3 Point)> SourcePoints(Subject subject, MotionClip clip)
+    private IEnumerable<(string Control, Vector3f Point)> SourcePoints(Subject subject, MotionClip clip)
     {
         try
         {

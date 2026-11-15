@@ -25,7 +25,7 @@ internal sealed class GeometryCanvas(EditorSession session)
     public void Draw(GeometryAsset2D asset, Action<GeometryAsset2D>? change, PartGeometry? preview = null)
     {
         var entry = preview ?? asset.Entry(new() { Fill = "#8faecb", Outline = RenderOutlineDefinition2D.Ink, StrokeWidth = .025f });
-        var contour = PartContours2D.Contour(entry, _ => Vector3.Zero, _ => LayeredFrame2D.Identity).Select(p => new Vector2f(p.X, p.Y)).ToArray();
+        var contour = PartContours2D.Contour(entry, _ => Vector3f.Zero, _ => LayeredFrame2D.Identity).Select(p => new Vector2f(p.X, p.Y)).ToArray();
         void Fit()
         {
             if (contour.Length == 0) return;
@@ -126,7 +126,7 @@ internal sealed class GeometryCanvas(EditorSession session)
         draw.AddCircle(Screen(Vector2f.Zero), 5 * Ui.Scale, 0xffdddddd);
         draw.AddText(Screen(Vector2f.Zero) + new Vector2(7, 5), 0xffdddddd, "0,0");
         var points = change is null ? [] : GeometryAssetEditing.Points(asset);
-        var localFrame = PartAttachment2D.FrameOf(entry, _ => Vector3.Zero, _ => LayeredFrame2D.Identity).Frame;
+        var localFrame = PartAttachment2D.FrameOf(entry, _ => Vector3f.Zero, _ => LayeredFrame2D.Identity).Frame;
         Vector2 PointScreen(Vector2f point) => Screen(localFrame.TransformPoint(point));
         if (asset.Geometry is QuadraticBezier2D or CubicBezier2D or BSpline2D)
         {

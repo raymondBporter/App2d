@@ -95,8 +95,8 @@ internal sealed partial class ProofRenders
             {
                 Z = 6.9f
             };
-            _proofGround.Line(p - new Vector3(8 * pixel, 0, 0), p + new Vector3(8 * pixel, 0, 0), 2 * pixel, color);
-            _proofGround.Line(p - new Vector3(0, 8 * pixel, 0), p + new Vector3(0, 8 * pixel, 0), 2 * pixel, color);
+            _proofGround.Line(p - new Vector3f(8 * pixel, 0, 0), p + new Vector3f(8 * pixel, 0, 0), 2 * pixel, color);
+            _proofGround.Line(p - new Vector3f(0, 8 * pixel, 0), p + new Vector3f(0, 8 * pixel, 0), 2 * pixel, color);
         }
     }
 

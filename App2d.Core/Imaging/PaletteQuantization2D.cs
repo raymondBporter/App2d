@@ -17,7 +17,7 @@ public static class PaletteQuantization2D
     /// perceptual distance. Alpha/masking, denoising, spatial region cleanup, and dithering are
     /// caller choices. The source is unchanged. Work is O(pixels * colors * iterations).
     /// </remarks>
-    public static (Vector3[] Palette, Image2D<int> Indices) QuantizePalette(this Image2D<Vector3> source, int colorCount, int maxIterations = 32)
+    public static (Vector3f[] Palette, Image2D<int> Indices) QuantizePalette(this Image2D<Vector3f> source, int colorCount, int maxIterations = 32)
     {
         Ensure.ThrowIfNull(source);
         Ensure.Positive(colorCount);
@@ -57,7 +57,7 @@ public static class PaletteQuantization2D
             {
                 if (counts[i] > 0)
                 {
-                    palette[i] = (sums[i] / counts[i]).ToVector3();
+                    palette[i] = (sums[i] / counts[i]).ToVector3f();
                 }
             }
             if (!changed)
@@ -79,9 +79,9 @@ public static class PaletteQuantization2D
         );
     }
 
-    private static Vector3[] Seed(ReadOnlySpan<Vector3> pixels, int count)
+    private static Vector3f[] Seed(ReadOnlySpan<Vector3f> pixels, int count)
     {
-        var palette = new List<Vector3>(count) { pixels[0] };
+        var palette = new List<Vector3f>(count) { pixels[0] };
         var distances = new double[pixels.Length];
         Array.Fill(distances, double.PositiveInfinity);
         while (palette.Count < count)
@@ -104,7 +104,7 @@ public static class PaletteQuantization2D
         return [.. palette];
     }
 
-    private static int Nearest(Vector3 pixel, ReadOnlySpan<Vector3> palette)
+    private static int Nearest(Vector3f pixel, ReadOnlySpan<Vector3f> palette)
     {
         var nearest = 0;
         var distance = Vector3d.DistanceSquared(pixel.ToVector3d(), palette[0].ToVector3d());
@@ -120,7 +120,7 @@ public static class PaletteQuantization2D
         return nearest;
     }
 
-    private static Vector3[] Compact(Vector3[] palette, ReadOnlySpan<int> counts, Span<int> labels)
+    private static Vector3f[] Compact(Vector3f[] palette, ReadOnlySpan<int> counts, Span<int> labels)
     {
         var remap = new int[palette.Length];
         var used = 0;

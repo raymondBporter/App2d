@@ -118,7 +118,7 @@ public readonly record struct Similarity2D
         return new()
         {
             Position = Translation,
-            Rotation = MathF.Atan2(forward.Y, forward.X),
+            Rotation = forward.AngleRadians,
             Scale = new(mirrored ? -Scale : Scale, Scale)
         };
     }

@@ -73,7 +73,11 @@ public sealed class IVectorTests
             Assert.Equal(a3 / scale, (new Vector3f(a3) / scale).ToVector3());
             Assert.Equal(a / scale, (new Vector4f(a) / scale).ToVector4());
             Assert.Equal(Vector2.Dot(a2, b2), Vector2f.Dot(new(a2), new(b2)));
+            Assert.Equal(Vector2.Distance(a2, b2), Vector2f.Distance(new(a2), new(b2)));
+            Assert.Equal(Vector2.Lerp(a2, b2, scale), Vector2f.Lerp(new(a2), new(b2), scale).ToVector2());
             Assert.Equal(Vector3.Dot(a3, b3), Vector3f.Dot(new(a3), new(b3)));
+            Assert.Equal(Vector3.Distance(a3, b3), Vector3f.Distance(new(a3), new(b3)));
+            Assert.Equal(Vector3.Lerp(a3, b3, scale), Vector3f.Lerp(new(a3), new(b3), scale).ToVector3());
             Assert.Equal(Vector4.Dot(a, b), Vector4f.Dot(new(a), new(b)));
             Assert.Equal(Vector3.Cross(a3, b3), new Vector3f(a3).Cross(new(b3)).ToVector3());
             Assert.Equal(Vector2.Normalize(a2), new Vector2f(a2).Normalized().ToVector2());
@@ -109,11 +113,11 @@ public sealed class IVectorTests
         Assert.Equal(value, wide.ToVector4());
         Assert.Equal(value, value.ToVector4f().ToVector4());
         Assert.Equal(new Vector2(1, 2), new Vector2f(1, 2).ToVector2());
-        Assert.Equal(new Vector3(1, 2, 3), new Vector3(1, 2, 3).ToVector3f().ToVector3());
+        Assert.Equal(new Vector3(1, 2, 3), new Vector3f(new Vector3(1, 2, 3)).ToVector3());
     }
 
     [Fact]
-    public void Float2DAliasSharesTheNumericsMeshSpanLayout()
+    public void Float2DWrapperSharesTheNumericsMeshSpanLayout()
     {
         Vector2f[] vertices = [new(2, -3), new(5, 7)];
         var wrapped = MemoryMarshal.Cast<Vector2f, Vector2>(vertices.AsSpan());

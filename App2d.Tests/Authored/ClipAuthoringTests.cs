@@ -13,7 +13,7 @@ public sealed class ClipAuthoringTests
     public void NamedForwardEasingCanBeAuthoredAndOtherTravelIsRefusedBeforeMutation()
     {
         var clip = TestModels.Clip(Model);
-        clip.Travel.Keys = [new() { Curve = new KeyCurve2D() }, new() { Time = 1f, Value = Vector3.UnitX }];
+        clip.Travel.Keys = [new() { Curve = new KeyCurve2D() }, new() { Time = 1f, Value = Vector3f.UnitX }];
         ClipAuthoring.SetEase(clip, 0f, ProgressMapKind.Smoother);
         Assert.Equal(ProgressMapKind.Smoother, clip.Travel.Keys[0].Ease);
         Assert.Null(clip.Travel.Keys[0].Curve);
@@ -37,7 +37,7 @@ public sealed class ClipAuthoringTests
         Assert.Equal(before, clip.ToJson());
     }
 
-    private static Vector3 Posed(MotionClip clip, string control, float time, ResolvedModel? model = null)
+    private static Vector3f Posed(MotionClip clip, string control, float time, ResolvedModel? model = null)
     {
         clip.Validate(model ?? Model);
         return PoseEvaluator.Sample(model ?? Model, clip, time).World(control);
@@ -53,7 +53,7 @@ public sealed class ClipAuthoringTests
             Target = "body",
             Keys = [new() { Angle = .3f }]
         });
-        var target = PoseEvaluator.Sample(Model, clip, .25).World(control) + new Vector3(.05f, .04f, .1f);
+        var target = PoseEvaluator.Sample(Model, clip, .25).World(control) + new Vector3f(.05f, .04f, .1f);
         var channel = ClipAuthoring.Pose(Model, clip, PoseEvaluator.Sample(Model, clip, .25), .25f, control, target);
         Assert.NotNull(channel);
         TestModels.Near(target, Posed(clip, control, .25f), 1e-4f, control);
@@ -83,7 +83,7 @@ public sealed class ClipAuthoringTests
 
     [Fact]
     public void AnIkJointCannotBePosedDirectly() =>
-        Assert.Throws<InvalidOperationException>(() => ClipAuthoring.Pose(Model, TestModels.Clip(Model), PoseEvaluator.Rest(Model), 0, "knee", Vector3.Zero));
+        Assert.Throws<InvalidOperationException>(() => ClipAuthoring.Pose(Model, TestModels.Clip(Model), PoseEvaluator.Rest(Model), 0, "knee", Vector3f.Zero));
 
     [Fact]
     public void AKeyAuthoredOnOneBuildIsStoredInReferenceUnits()
@@ -93,9 +93,9 @@ public sealed class ClipAuthoringTests
         var longLegs = ResolvedModel.From(TestModels.Creature(), stretched);
         var clip = TestModels.Clip(Model);
         var ratio = longLegs.Measure("leg") / Model.Measure("leg");
-        ClipAuthoring.Pose(longLegs, clip, PoseEvaluator.Sample(longLegs, clip, 0), 0, "body", longLegs.Rest["body"] + new Vector3(0, .15f, 0));
+        ClipAuthoring.Pose(longLegs, clip, PoseEvaluator.Sample(longLegs, clip, 0), 0, "body", longLegs.Rest["body"] + new Vector3f(0, .15f, 0));
         TestModels.Near(new(0, .15f / ratio, 0), ClipAuthoring.Value(clip, new(MotionClip.TranslateKind, "body"), 0).Value);
-        TestModels.Near(Model.Rest["body"] + new Vector3(0, .15f / ratio, 0), Posed(clip, "body", 0));
+        TestModels.Near(Model.Rest["body"] + new Vector3f(0, .15f / ratio, 0), Posed(clip, "body", 0));
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class ClipAuthoringTests
         };
         var contact = ClipAuthoring.Plant(Model, clip, PoseEvaluator.Sample(Model, clip, .2), "leg", .2f, .4f);
         Assert.Equal(.6f, contact.Finish, 4);
-        var target = PoseEvaluator.Sample(Model, clip, .3).World("foot") + new Vector3(.1f, 0, 0);
+        var target = PoseEvaluator.Sample(Model, clip, .3).World("foot") + new Vector3f(.1f, 0, 0);
         Assert.Null(ClipAuthoring.Pose(Model, clip, PoseEvaluator.Sample(Model, clip, .3), .3f, "foot", target));
         Assert.Empty(clip.Tracks);
         TestModels.Near(target, Posed(clip, "foot", .5f), 1e-4f, "planted over the whole interval");
@@ -158,7 +158,7 @@ public sealed class ClipAuthoringTests
         var curve = new KeyCurve2D { Absolute = true, Control1 = new(1f / 3, 2), Control2 = new(2f / 3, 2) };
         var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TargetKind, "arm");
         clip.Tracks = [new() { Kind = channel.Kind, Target = channel.Target, Keys = [
-            new() { Curve = curve, Bend = -1 }, new() { Time = .5f, Value = Vector3.One }, new() { Time = 1 } ] }];
+            new() { Curve = curve, Bend = -1 }, new() { Time = .5f, Value = Vector3f.One }, new() { Time = 1 } ] }];
 
         ClipAuthoring.MoveKeys(clip, 0, .5f, [channel]);
 
@@ -167,7 +167,7 @@ public sealed class ClipAuthoringTests
         Assert.Same(curve, keys[0].Curve);
         Assert.Equal(-1, keys[0].Bend);
         Assert.Equal(1.5f, ClipAuthoring.Value(clip, channel, .75f).Value.X, 5);
-        Assert.Equal(Vector3.Zero, ClipAuthoring.Value(clip, channel, 1).Value);
+        Assert.Equal(Vector3f.Zero, ClipAuthoring.Value(clip, channel, 1).Value);
         clip.Validate(Model);
     }
 
@@ -177,12 +177,12 @@ public sealed class ClipAuthoringTests
         var clip = TestModels.Clip(Model);
         var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TranslateKind, "body");
         var curve = new KeyCurve2D { Absolute = true, Control1 = new(.2f, 2), Control2 = new(.8f, -1) };
-        ClipAuthoring.SetKey(clip, channel, .5f, Vector3.Zero);
+        ClipAuthoring.SetKey(clip, channel, .5f, Vector3f.Zero);
         ClipAuthoring.SetCurve(clip, channel, .5f, 0, curve);
-        ClipAuthoring.SetKey(clip, channel, .5f + ClipAuthoring.SameTime / 2, Vector3.UnitX);
+        ClipAuthoring.SetKey(clip, channel, .5f + ClipAuthoring.SameTime / 2, Vector3f.UnitX);
 
         var key = Assert.Single(clip.Tracks[0].Keys);
-        Assert.Equal(Vector3.UnitX, key.Value);
+        Assert.Equal(Vector3f.UnitX, key.Value);
         Assert.Equal(curve, key.Curve);
         ClipAuthoring.DeleteKeys(clip, .5f);
         Assert.Empty(clip.Tracks);
@@ -193,8 +193,8 @@ public sealed class ClipAuthoringTests
     {
         var clip = TestModels.Clip(Model);
         var channel = new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TranslateKind, "body");
-        ClipAuthoring.SetKey(clip, channel, ClipAuthoring.SameTime, Vector3.UnitX);
-        ClipAuthoring.SetKey(clip, channel, 0, Vector3.Zero);
+        ClipAuthoring.SetKey(clip, channel, ClipAuthoring.SameTime, Vector3f.UnitX);
+        ClipAuthoring.SetKey(clip, channel, 0, Vector3f.Zero);
         Assert.Equal([0, ClipAuthoring.SameTime], ClipAuthoring.KeyTimes(clip));
     }
 

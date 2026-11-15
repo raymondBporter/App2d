@@ -46,5 +46,6 @@ public readonly record struct Vector3d(double X, double Y, double Z) : IVector<V
 
     /// <summary>Rounds each coordinate to a float. Values outside the float range become infinities.</summary>
     public Vector3 ToVector3() => new((float)X, (float)Y, (float)Z);
+    public Vector3f ToVector3f() => new(ToVector3());
     public override string ToString() => $"<{X}, {Y}, {Z}>";
 }

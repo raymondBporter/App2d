@@ -19,11 +19,11 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2f  Position, int Faci
     public LayeredFrame2D Placement => new(new Frame2D(Position, new(Facing, 0), Vector2f.UnitY), 0);
 
     /// <summary>The same placement for real 3D prop geometry: the planar frame extended with an unchanged Z axis.</summary>
-    public Frame3D Placement3D => new(new(Position.ToVector2(), 0), new(Facing, 0, 0), Vector3.UnitY, Vector3.UnitZ);
+    public Frame3D Placement3D => new(new(Position, 0), new(Facing, 0, 0), Vector3f.UnitY, Vector3f.UnitZ);
 
-    public Vector3 Place(Vector3 local) => Placement.At(local);
-    public Vector3 ToLocal(Vector3 world) => Placement.ToLocal(world);
-    public Vector3 World(string control) => Place(Local.Points[control]);
+    public Vector3f Place(Vector3f local) => Placement.At(local);
+    public Vector3f ToLocal(Vector3f world) => Placement.ToLocal(world);
+    public Vector3f World(string control) => Place(Local.Points[control]);
 
     /// <summary>
     /// The carrier a socket attaches to, in actor-local units: its control's point turned by the frame control's angle
@@ -39,15 +39,15 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2f  Position, int Faci
                 throw new InvalidOperationException($"Socket '{socket.Id}' sits on '{socket.Control}', but attachment '{nested.Instance}' was not evaluated in this pose.");
             }
 
-            Vector3 World(string control) => instance.World(control);
-            float AngleOf(string control) { var frame = instance.Frame(control); return MathF.Atan2(frame.XAxis.Y, frame.XAxis.X); }
+            Vector3f World(string control) => instance.World(control);
+            float AngleOf(string control) => instance.Frame(control).XAxis.AngleRadians;
             var nestedAngle = socket.Frame == CharacterModel.Locomotion ? 0 : AngleOf(socket.Frame is { } f ? MotionClip.Split(f).Target : nested.Control);
             if (socket.Toward is { } nestedToward)
             {
                 var direction = World(MotionClip.Split(nestedToward).Target) - World(nested.Control);
                 if (direction.X * direction.X + direction.Y * direction.Y > 1e-10f)
                 {
-                    nestedAngle = MathF.Atan2(-direction.X, direction.Y);
+                    nestedAngle = direction.XY.PerpCw.AngleRadians;
                 }
             }
             return LayeredFrame2D.FromRotation(nestedAngle, World(nested.Control));
@@ -59,7 +59,7 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2f  Position, int Faci
             var direction = Local.Points[toward] - Local.Points[socket.Control];
             if (direction.X * direction.X + direction.Y * direction.Y > 1e-10f)
             {
-                angle = MathF.Atan2(-direction.X, direction.Y);
+                angle = direction.XY.PerpCw.AngleRadians;
             }
         }
         return LayeredFrame2D.FromRotation(angle, Local.Points[socket.Control]);

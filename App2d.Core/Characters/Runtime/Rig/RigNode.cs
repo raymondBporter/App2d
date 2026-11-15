@@ -26,7 +26,7 @@ public sealed record RigNode(
     public float Layer => Setup.Layer;
     public bool CharacterOriented => Link?.Orientation == RigLinkOrientations.Character;
     /// <summary>Compatibility view packing the rest XY origin and drawing layer. No physical Z is stored here.</summary>
-    public Vector3 Rest => new(RestFrame.M31, RestFrame.M32, RestLayer);
+    public Vector3f Rest => new(RestFrame.M31, RestFrame.M32, RestLayer);
     /// <summary>The setup origin in the parent's local axes, before animation: the link's bound position or the setup translation.</summary>
     public Vector2f Origin(float parentLength) => Link is { } link ? link.Origin(parentLength) : Setup.Translation;
 }

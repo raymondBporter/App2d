@@ -35,8 +35,8 @@ public sealed class PartAnimationTests
         Clips = [new() { Id = "sway", Name = "Sway", Model = "animated-panel", Duration = 2,
             Tracks = [
                 new() { Kind = MotionClip.RotateKind, Target = "root", Keys = [new() { Time = 0 }, new() { Time = 2, Angle = .6f }] },
-                new() { Kind = MotionClip.AlphaKind, Target = "panel", Keys = [new() { Time = 0, Value = Vector3.UnitX }, new() { Time = 2, Value = new(.2f, 0, 0) }] },
-                new() { Kind = MotionClip.TintKind, Target = "panel", Keys = [new() { Time = 0, Value = Vector3.One }, new() { Time = 2, Value = new(.5f, .8f, 1) }] }
+                new() { Kind = MotionClip.AlphaKind, Target = "panel", Keys = [new() { Time = 0, Value = Vector3f.UnitX }, new() { Time = 2, Value = new(.2f, 0, 0) }] },
+                new() { Kind = MotionClip.TintKind, Target = "panel", Keys = [new() { Time = 0, Value = Vector3f.One }, new() { Time = 2, Value = new(.5f, .8f, 1) }] }
             ] }]
     };
 
@@ -63,13 +63,13 @@ public sealed class PartAnimationTests
         var actor = new ActorPose(pose.Pose, new(5, 3), facing);
         foreach (var vertex in vertices)
         {
-            var local = frame.ToLocal(new Vector3(vertex.Position.X, vertex.Position.Y, vertex.Position.Z)).XY;
+            var local = frame.ToLocal(new Vector3f(vertex.Position.X, vertex.Position.Y, vertex.Position.Z)).XY;
             Assert.InRange(MathF.Abs(local.X), .9999f, 1.0001f);
             Assert.InRange(MathF.Abs(local.Y), .4999f, .5001f);
         }
         var worldA = actor.Place(new(vertices[0].Position.X, vertices[0].Position.Y, vertices[0].Position.Z));
         var worldB = actor.Place(new(vertices[1].Position.X, vertices[1].Position.Y, vertices[1].Position.Z));
-        Assert.InRange(Vector3.Distance(worldA, worldB), 1.9999f, 2.0001f);
+        Assert.InRange(Vector3f.Distance(worldA, worldB), 1.9999f, 2.0001f);
         Assert.Equal(.5f, vertices.Min(v => v.TextureCoordinate.X));
         Assert.Equal(1f, vertices.Max(v => v.TextureCoordinate.X));
         Assert.Equal(0f, vertices.Min(v => v.TextureCoordinate.Y));
@@ -122,8 +122,8 @@ public sealed class PartAnimationTests
         var clip = ClipAuthoring.New(resolved, "fade", "Fade");
         ClipAuthoring.SetKey(clip, new(MotionClip.AlphaKind, "screen/panel"), 0, new(.3f, 0, 0));
         ClipAuthoring.SetKey(clip, new(MotionClip.TintKind, "screen/panel"), 0, new(.2f, .4f, .6f));
-        ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "screen/panel"), 0, Vector3.Zero);
-        ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "screen/panel"), .5f, Vector3.UnitX);
+        ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "screen/panel"), 0, Vector3f.Zero);
+        ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "screen/panel"), .5f, Vector3f.UnitX);
         clip.Validate(resolved);
         var hidden = PoseEvaluator.Sample(resolved, clip, .49, input: new() { ReverseHorizontalMotion = true });
         Assert.False(hidden.Attachments["screen"].Pose.Visible(part.Geometry[0]));
@@ -132,7 +132,7 @@ public sealed class PartAnimationTests
         Assert.Equal(new Vector4(.2f, .4f, .6f, .3f), shown.Attachments["screen"].Pose.Tints["panel"]);
         Assert.Equal(0, ClipAuthoring.Value(clip, new(MotionClip.ShowKind, "screen/panel"), .49f).Value.X);
         var inner = resolved.Attachments[0].Rig!;
-        var overlay = new MotionClip { Id = "tint", Name = "Tint", Model = part.Id, Tracks = [new() { Kind = MotionClip.AlphaKind, Target = "panel", Keys = [new() { Value = Vector3.UnitX }] }] };
+        var overlay = new MotionClip { Id = "tint", Name = "Tint", Model = part.Id, Tracks = [new() { Kind = MotionClip.AlphaKind, Target = "panel", Keys = [new() { Value = Vector3f.UnitX }] }] };
         var layered = PoseEvaluator.Sample(inner, part.Clips[0], 1, input: new() { Overlay = new(overlay, 0, new HashSet<string> { "panel" }, .5f) });
         Assert.InRange(layered.Tints["panel"].W, .7999f, .8001f);
     }
@@ -214,7 +214,7 @@ public sealed class PartAnimationTests
             Name = "Fade",
             Model = "panel",
             Tracks = [
-            new() { Kind = MotionClip.ShowKind, Target = "panel", Keys = [new() { Value = Vector3.Zero }, new() { Time = .5f, Value = Vector3.UnitX }] },
+            new() { Kind = MotionClip.ShowKind, Target = "panel", Keys = [new() { Value = Vector3f.Zero }, new() { Time = .5f, Value = Vector3f.UnitX }] },
             new() { Kind = MotionClip.AlphaKind, Target = "panel", SetupBeforeFirst = true, Keys = [new() { Time = .5f, Value = new(.3f, 0, 0) }] }
         ]
         };

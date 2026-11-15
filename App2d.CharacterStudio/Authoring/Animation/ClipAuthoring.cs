@@ -98,11 +98,11 @@ public static partial class ClipAuthoring
 
     public static ClipTrack? Track(MotionClip clip, Channel channel) => clip.Tracks.FirstOrDefault(t => t.Kind == channel.Kind && t.Target == channel.Target);
 
-    public static (Vector3 Value, float Angle) Value(MotionClip clip, Channel channel, float time) =>
+    public static (Vector3f Value, float Angle) Value(MotionClip clip, Channel channel, float time) =>
         Track(clip, channel) is { } track ? PoseEvaluator.Interpolate(track, time) : (MotionClip.DefaultValue(channel.Kind), 0);
 
     /// <summary>Writes a key at <paramref name="time"/>, replacing a key already there and keeping its easing.</summary>
-    public static void SetKey(MotionClip clip, Channel channel, float time, Vector3 value, float angle = 0)
+    public static void SetKey(MotionClip clip, Channel channel, float time, Vector3f value, float angle = 0)
     {
         var track = Track(clip, channel);
         if (track is null)
@@ -115,7 +115,7 @@ public static partial class ClipAuthoring
         }
 
         var rotate = channel.Kind == MotionClip.RotateKind;
-        var key = new ClipKey { Time = time, Value = rotate ? Vector3.Zero : value, Angle = rotate ? angle : 0 };
+        var key = new ClipKey { Time = time, Value = rotate ? Vector3f.Zero : value, Angle = rotate ? angle : 0 };
         if (track.Keys.AtTime(time) is { } existing)
         {
             key.Ease = existing.Ease;
@@ -132,7 +132,7 @@ public static partial class ClipAuthoring
     /// sampled at that time without repetition. An active contact moves its planted target instead of a key.
     /// Returns the channel keyed, or null when a contact target moved.
     /// </summary>
-    public static Channel? Pose(ResolvedModel model, MotionClip clip, EvaluatedPose pose, float time, string control, Vector3 world)
+    public static Channel? Pose(ResolvedModel model, MotionClip clip, EvaluatedPose pose, float time, string control, Vector3f world)
     {
         if (Nested(model, control) is { } nested)
         {
@@ -181,7 +181,7 @@ public static partial class ClipAuthoring
     /// node's setup origin, in reference units, its layer offset less the node's. Uniform scale and reflection of the carrier
     /// divide out. A nested rig (P7a) is keyed in its own units.
     /// </summary>
-    private static (Channel Channel, Vector3 Value) Delta(ResolvedModel model, MotionClip clip, EvaluatedPose pose, string control, Vector3 world, bool nested)
+    private static (Channel Channel, Vector3f Value) Delta(ResolvedModel model, MotionClip clip, EvaluatedPose pose, string control, Vector3f world, bool nested)
     {
         var channel = ChannelFor(model, control) ?? throw new InvalidOperationException(
             $"'{control}' is solved by IK; drag the chain's end or flip its bend.");
@@ -612,7 +612,7 @@ public static partial class ClipAuthoring
     }
 
     /// <summary>The locomotion frame's origin at a clip time, as the evaluator places it for the first cycle.</summary>
-    private static Vector3 TravelAt(ResolvedModel model, MotionClip clip, float time)
+    private static Vector3f TravelAt(ResolvedModel model, MotionClip clip, float time)
     {
         var value = PoseEvaluator.Interpolate(clip.Travel.Keys, time).Value * Ratio(model, clip, clip.Travel.Scale);
         return new(value.X, value.Y, 0);

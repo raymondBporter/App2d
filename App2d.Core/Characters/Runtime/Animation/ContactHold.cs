@@ -11,15 +11,15 @@ namespace App2d.Core.Characters.Authored;
 /// </summary>
 public sealed class ContactHold
 {
-    private readonly Dictionary<string, Vector3> _anchors = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Vector3f> _anchors = new(StringComparer.Ordinal);
     private readonly HashSet<string> _held = new(StringComparer.Ordinal);
     private int _facing = 1;
 
-    public IReadOnlyDictionary<string, Vector3> Anchors => _anchors;
+    public IReadOnlyDictionary<string, Vector3f> Anchors => _anchors;
     public void Clear() => _anchors.Clear();
 
     /// <summary>Moves every held anchor by <paramref name="delta"/>: the ground they stand on moved, as a platform does.</summary>
-    public void Shift(Vector3 delta)
+    public void Shift(Vector3f delta)
     {
         foreach (var chain in _anchors.Keys.ToList())
         {
@@ -43,7 +43,7 @@ public sealed class ContactHold
         }
         var placed = new ActorPose(new EvaluatedPose(), position, facing);
         _held.Clear();
-        Vector3 Hold(string chain, Vector3 authored)
+        Vector3f Hold(string chain, Vector3f authored)
         {
             _held.Add(chain);
             if (_anchors.TryGetValue(chain, out var anchor))

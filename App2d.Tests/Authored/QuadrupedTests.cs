@@ -41,9 +41,9 @@ public sealed class QuadrupedTests
         var clip = QuadrupedTemplate.Clips(model).Single(c => c.Id.EndsWith("-walk"));
         var a = PoseEvaluator.Sample(resolved, clip, .2f);
         var b = PoseEvaluator.Sample(resolved, clip, .4f);
-        Assert.True(Vector3.Distance(a.World("near-front-foot"), b.World("near-front-foot")) < .001f);
+        Assert.True(Vector3f.Distance(a.World("near-front-foot"), b.World("near-front-foot")) < .001f);
         var next = PoseEvaluator.Sample(resolved, clip, clip.Duration + .2f, repeat: true);
-        Assert.True(Vector3.Distance(next.World("near-front-foot") - a.World("near-front-foot"), new(clip.Travel.Keys[^1].Value.X, 0, 0)) < .001f);
+        Assert.True(Vector3f.Distance(next.World("near-front-foot") - a.World("near-front-foot"), new(clip.Travel.Keys[^1].Value.X, 0, 0)) < .001f);
     }
 
     [Fact]
@@ -63,12 +63,12 @@ public sealed class QuadrupedTests
         };
         ModelAuthoring.SetCutout(part, points);
         part.Validate(_ => true);
-        Assert.True(PartPicking2D.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
-        Assert.True(PartPicking2D.Distance(part, _ => Vector3.Zero, new(.8f, .8f, 0)) > 1);
+        Assert.True(PartPicking2D.Distance(part, _ => Vector3f.Zero, new(.15f, .8f, 0)) <= 1);
+        Assert.True(PartPicking2D.Distance(part, _ => Vector3f.Zero, new(.8f, .8f, 0)) > 1);
         var mesh = PolygonTriangulation2D.Triangulate(points);
         Assert.Equal(.51f, mesh.Area, 5);
         var drawing = new PuppetDrawing();
-        drawing.Build([part], _ => Vector3.Zero);
+        drawing.Build([part], _ => Vector3f.Zero);
         foreach (var vertex in drawing.Mesh.Vertices)
         {
             Assert.True(vertex.Position.X <= .30001f || vertex.Position.Y <= .30001f, "Fill or paint spills across the notch.");

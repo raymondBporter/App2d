@@ -16,8 +16,8 @@ public sealed class Matrix3x2ExtensionsTests
 
         var point = new Vector2f(17, 19);
         var (xColumn, yColumn) = matrix.GetColumns();
-        var homogeneous = new Vector3(point.ToVector2(), 1);
+        var homogeneous = new Vector3f(point, 1);
         Assert.Equal(Vector2f.Transform(point, matrix),
-            new Vector2f(Vector3.Dot(homogeneous, xColumn), Vector3.Dot(homogeneous, yColumn)));
+            new Vector2f(Vector3f.Dot(homogeneous, xColumn), Vector3f.Dot(homogeneous, yColumn)));
     }
 }

@@ -30,7 +30,7 @@ public sealed record ResolvedAttachment(PartInstance Instance, Part Asset, Model
     }
 
     /// <summary>The static payload's drawing inputs for an instance placement: each location's origin and frame, as the shared part drawing expects.</summary>
-    public (Func<string, Vector3> World, Func<string, LayeredFrame2D> Frame) Lookups(LayeredFrame2D placement) =>
+    public (Func<string, Vector3f> World, Func<string, LayeredFrame2D> Frame) Lookups(LayeredFrame2D placement) =>
         (location => LocationPlacement(location, placement).Origin, location => LocationPlacement(location, placement));
 
     /// <summary>The expression this instance shows before any clip or request: its own, else the asset's default.</summary>

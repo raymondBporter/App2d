@@ -323,7 +323,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
         else if (ground is { } carry && carry != Vector2f.Zero)
         {
-                _animator.Carry(new Vector3((carry * dt / Scale).ToVector2(), 0));
+                _animator.Carry(new Vector3f((carry * dt / Scale), 0));
         }
 
         var moved = MathF.Abs(root.X - _rootBefore.X) / Scale;

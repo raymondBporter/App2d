@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Entities;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.CharacterStudio.Editing.Documents;
@@ -205,10 +206,10 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
             if (part.Frame is not null)
             {
-                var degrees = float.RadiansToDegrees(part.Angle);
+                var degrees = Angles.RadiansToDegrees(part.Angle);
                 if (Ui.Drag("Shape angle (degrees)", ref degrees, 1f, -360, 360))
                 {
-                    session.Change(document, () => Part(document, partId).Angle = float.DegreesToRadians(degrees));
+                    session.Change(document, () => Part(document, partId).Angle = Angles.DegreesToRadians(degrees));
                 }
                 if (part.Material?.Texture is { } texture)
                 {
@@ -257,20 +258,20 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
             return;
         }
 
-        var range = new Vector2f(float.RadiansToDegrees(limit.Min), float.RadiansToDegrees(limit.Max));
+        var range = new Vector2f(Angles.RadiansToDegrees(limit.Min), Angles.RadiansToDegrees(limit.Max));
         if (Ui.Drag2("Min / max (degrees)", ref range, .5f, -720, 720))
         {
-            session.Change(document, () => ModelAuthoring.SetLimit(document.Asset, id, new() { Min = float.DegreesToRadians(range.X), Max = float.DegreesToRadians(range.Y) }));
+            session.Change(document, () => ModelAuthoring.SetLimit(document.Asset, id, new() { Min = Angles.DegreesToRadians(range.X), Max = Angles.DegreesToRadians(range.Y) }));
         }
 
         ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LimitMin));
         ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LimitMax));
-        ImGui.TextDisabled($"  rest rotation {float.RadiansToDegrees(control.Local?.Rotation ?? 0):0.#}° is at {limit.ToNormalized(control.Local?.Rotation ?? 0):0.##} of the range");
+        ImGui.TextDisabled($"  rest rotation {Angles.RadiansToDegrees(control.Local?.Rotation ?? 0):0.#}° is at {limit.ToNormalized(control.Local?.Rotation ?? 0):0.##} of the range");
         if (session.Evaluate(session.SubjectId)?.Pose.Limits.TryGetValue(id, out var state) == true)
         {
             ImGui.TextDisabled(state.State == ConstraintLimitState1D.Inactive
-                ? $"  preview: inside the limits ({float.RadiansToDegrees(state.Coordinate):0.#}°)"
-                : $"  preview: held at the {state.State.ToString().ToLowerInvariant()} bound, {float.RadiansToDegrees(MathF.Abs(state.Error)):0.#}° short of the requested rotation");
+                ? $"  preview: inside the limits ({Angles.RadiansToDegrees(state.Coordinate):0.#}°)"
+                : $"  preview: held at the {state.State.ToString().ToLowerInvariant()} bound, {Angles.RadiansToDegrees(MathF.Abs(state.Error)):0.#}° short of the requested rotation");
         }
 
         if (ImGui.SmallButton("Remove joint limits"))
@@ -311,10 +312,10 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                             ImGui.TextDisabled($"Origin (character): {node.Rest.X:0.###}, {node.Rest.Y:0.###}, layer {node.Rest.Z:0.###}; change the parent's length or the link.");
                         }
 
-                        var direction = float.RadiansToDegrees(node.RestAngle);
+                        var direction = Angles.RadiansToDegrees(node.RestAngle);
                         if (Ui.Drag("Direction (degrees, character)", ref direction, 1f, -720, 720))
                         {
-                            session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, float.DegreesToRadians(direction)));
+                            session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, Angles.DegreesToRadians(direction)));
                         }
                     }
                     var length = control.Length;
@@ -358,10 +359,10 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                         ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LocalX));
                         ParameterInspector.BoundNote(resolved, PropertyRef.OfControl(id, RigProperties.LocalY));
                     }
-                    var rotation = float.RadiansToDegrees(local.Rotation);
+                    var rotation = Angles.RadiansToDegrees(local.Rotation);
                     if (Ui.Drag("Local rotation (degrees)", ref rotation, 1f, -720, 720))
                     {
-                        Local(l => l.Rotation = float.DegreesToRadians(rotation));
+                        Local(l => l.Rotation = Angles.DegreesToRadians(rotation));
                     }
 
                     var scale = local.Scale;
@@ -460,10 +461,10 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                             session.Change(document, () => ModelAuthoring.ResizeBone(document.Asset, id, length));
                         }
 
-                        var degrees = float.RadiansToDegrees(control.RestAngle);
+                        var degrees = Angles.RadiansToDegrees(control.RestAngle);
                         if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
                         {
-                            session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, float.DegreesToRadians(degrees)));
+                            session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, Angles.DegreesToRadians(degrees)));
                         }
 
                         Ui.Help("The bone starts at this control and points along its local +X axis. Its children and attached shapes follow rotation.");

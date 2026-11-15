@@ -77,7 +77,7 @@ public sealed class CharacterBufferRenderingTests
         Assert.Throws<ArgumentOutOfRangeException>(() => renderer.Draw(mesh, Projection, Matrix.Identity, count: 6));
         renderer.Draw(mesh, Projection, Matrix.Identity, start: 3);
         Assert.Equal(0, renderer.MeshUploadCount);
-        mesh.Vertex(Vector3.Zero, Color4b.Red);
+        mesh.Vertex(Vector3f.Zero, Color4b.Red);
         Assert.Throws<ArgumentOutOfRangeException>(() => renderer.Draw(mesh, Projection, Matrix.Identity));
         Assert.Equal(0, renderer.MeshDrawCount);
     }

@@ -23,12 +23,12 @@ public readonly record struct IndexedEdge3D
 /// <summary>Face normals and edge adjacency for an indexed 3D triangle mesh.</summary>
 public sealed class TriangleMeshAnalysis3D
 {
-    private readonly Vector3[] _faceNormals;
+    private readonly Vector3f[] _faceNormals;
     private readonly bool[] _validFaces;
     private readonly Dictionary<IndexedEdge3D, List<int>> _edgeFaces = [];
 
     /// <param name="handedness">+1 for winding normals or -1 when a reflected placement reverses winding.</param>
-    public TriangleMeshAnalysis3D(IReadOnlyList<Vector3> vertices, IReadOnlyList<int> triangleIndices, int handedness = 1)
+    public TriangleMeshAnalysis3D(IReadOnlyList<Vector3f> vertices, IReadOnlyList<int> triangleIndices, int handedness = 1)
     {
         Ensure.ThrowIfNull(vertices);
         Ensure.ThrowIfNull(triangleIndices);
@@ -39,7 +39,7 @@ public sealed class TriangleMeshAnalysis3D
             Ensure.Finite(vertex, nameof(vertices));
         }
 
-        _faceNormals = new Vector3[triangleIndices.Count / 3];
+        _faceNormals = new Vector3f[triangleIndices.Count / 3];
         _validFaces = new bool[_faceNormals.Length];
         for (var face = 0; face < _faceNormals.Length; face++)
         {
@@ -65,7 +65,7 @@ public sealed class TriangleMeshAnalysis3D
     public int FaceCount => _faceNormals.Length;
 
     /// <summary>Returns false and zero for a degenerate face.</summary>
-    public bool TryGetFaceNormal(int faceIndex, out Vector3 normal)
+    public bool TryGetFaceNormal(int faceIndex, out Vector3f normal)
     {
         Ensure.Index(faceIndex, _faceNormals.Length);
 
@@ -77,14 +77,14 @@ public sealed class TriangleMeshAnalysis3D
     /// Yields visible boundary, silhouette, and crease edges. View direction points toward the viewer;
     /// creaseCosine is the maximum dot product between normals that still counts as a crease.
     /// </summary>
-    public IEnumerable<IndexedEdge3D> FeatureEdges(Vector3 viewDirection, float creaseCosine,
+    public IEnumerable<IndexedEdge3D> FeatureEdges(Vector3f viewDirection, float creaseCosine,
         float frontFacingThreshold = 0f)
     {
         Ensure.NonZero(viewDirection);
         Ensure.InRange(creaseCosine, -1f, 1f);
         Ensure.NonNegative(frontFacingThreshold);
         var wideView = viewDirection.ToVector3d();
-        var view = (wideView / wideView.Length()).ToVector3();
+        var view = (wideView / wideView.Length()).ToVector3f();
 
         foreach (var (edge, faces) in _edgeFaces)
         {
@@ -92,7 +92,7 @@ public sealed class TriangleMeshAnalysis3D
             var back = false;
             foreach (var face in faces)
             {
-                if (Vector3.Dot(_faceNormals[face], view) > frontFacingThreshold)
+                if (Vector3f.Dot(_faceNormals[face], view) > frontFacingThreshold)
                 {
                     front = true;
                 }
@@ -106,7 +106,7 @@ public sealed class TriangleMeshAnalysis3D
                 continue;
             }
 
-            var crease = faces.Count == 2 && Vector3.Dot(_faceNormals[faces[0]], _faceNormals[faces[1]]) < creaseCosine;
+            var crease = faces.Count == 2 && Vector3f.Dot(_faceNormals[faces[0]], _faceNormals[faces[1]]) < creaseCosine;
             if (faces.Count == 1 || back || crease)
             {
                 yield return edge;

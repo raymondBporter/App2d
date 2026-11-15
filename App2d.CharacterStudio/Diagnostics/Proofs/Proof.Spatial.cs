@@ -14,9 +14,9 @@ internal sealed partial class ProofRenders
             Part.Load(Path.Combine(_assetRoot, "authored", "parts", "spatial-curve-study.json")));
         using var renderer = new Renderer3D(GraphicsDevice);
         using var target = RenderCapture2D.CreateTarget(GraphicsDevice, 1200, 800);
-        var position = _smokeIndex == 2 ? new Vector3(3.9f, .2f, .15f) : new Vector3(2f, 1.4f, 3.5f);
-        var camera = _smokeIndex == 1 ? Camera3D.Orthographic(position, Vector3.Zero, Vector3.UnitY, 4.5f, 3f)
-            : Camera3D.Perspective(position, Vector3.Zero, Vector3.UnitY, 1.5f);
+        var position = _smokeIndex == 2 ? new Vector3f(3.9f, .2f, .15f) : new Vector3f(2f, 1.4f, 3.5f);
+        var camera = _smokeIndex == 1 ? Camera3D.Orthographic(position, Vector3f.Zero, Vector3f.UnitY, 4.5f, 3f)
+            : Camera3D.Perspective(position, Vector3f.Zero, Vector3f.UnitY, 1.5f);
         using (GraphicsDevice.UseRenderTarget(target)) scene.Draw(renderer, camera);
         var name = _smokeIndex switch { 0 => "01-perspective", 1 => "02-orthographic", _ => "03-side" };
         target.SavePng(Path.Combine(_smokePath, name + ".png"));

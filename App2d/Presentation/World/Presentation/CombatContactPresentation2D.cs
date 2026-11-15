@@ -71,7 +71,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
             }
 
             var angle = burst.Angle + Angles[i];
-            var axis = Polar2D.Direction(angle);
+            var axis = Vector2f.Direction(angle);
             var distance = (3 + 17 * t) * burst.Size;
             var length = Lengths[i] * burst.Size * (1 - .65f * t);
             var width = (i == 2 ? 5 : 3.6f) * burst.Size * (1 - .75f * t);

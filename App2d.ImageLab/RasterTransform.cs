@@ -103,7 +103,7 @@ internal sealed record RasterTransform(
             return new(input.Clone(), "0 visible colors");
         }
         var lab = new Image2D<Color4b>(visible.Length, 1, visible)
-            .Map(static c => ColorSpaces2D.SrgbToOklab(new Vector3(c.R, c.G, c.B) / 255f));
+            .Map(static c => ColorSpaces2D.SrgbToOklab(new Vector3f(c.R, c.G, c.B) / 255f));
         var (palette, indices) = lab.QuantizePalette(Colors, Iterations);
         var displayPalette = palette.Select(static color => ColorSpaces2D.OklabToSrgb(color)).ToArray();
         var result = input.Clone();

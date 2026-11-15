@@ -4,7 +4,6 @@ using App2d.CharacterStudio.Editor.Viewport;
 using App2d.Core.Characters.Authored;
 using ImGuiNET;
 using System.Numerics;
-using Vector3 = System.Numerics.Vector3;
 
 namespace App2d.CharacterStudio.Editor.Animation;
 
@@ -12,14 +11,14 @@ namespace App2d.CharacterStudio.Editor.Animation;
 internal sealed class AnimationControlDrag(EditorSession session, App2d.CharacterStudio.Editor.Viewport.Viewport viewport)
 {
     private string? _dragging;
-    private Vector3 _grab;
+    private Vector3f _grab;
     private bool _grabbed;
 
     public void Draw(ViewportFrame frame, Subject subject)
     {
         var model = subject.Model;
         var pose = subject.Pose;
-        Vector3 World(string id) => ClipAuthoring.Nested(model, id) is { } nested ? pose.Attachments[nested.Attachment.Id].World(nested.Target) : pose.World(id);
+        Vector3f World(string id) => ClipAuthoring.Nested(model, id) is { } nested ? pose.Attachments[nested.Attachment.Id].World(nested.Target) : pose.World(id);
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
             // The wearer's own controls, then the exposed controls of its animated instances (P7a) by their namespaced names.

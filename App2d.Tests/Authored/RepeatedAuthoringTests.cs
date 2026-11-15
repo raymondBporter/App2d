@@ -71,7 +71,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
             TestModels.Near(point, none.Points[id], 1e-6f, $"weight 0 leaves {id} on the base");
         }
 
-        Assert.True(Vector3.Distance(plain.World("right-hand"), full.World("right-hand")) > .2f, "the thrust moves the spear hand");
+        Assert.True(Vector3f.Distance(plain.World("right-hand"), full.World("right-hand")) > .2f, "the thrust moves the spear hand");
         Assert.True(MathF.Abs(full.Angles["chest"] - plain.Angles["chest"]) > .05f, "the thrust turns the chest");
         // Channels blend before the hierarchy is built: the chest's rotation is halfway at half weight.
         Assert.Equal((plain.Angles["chest"] + full.Angles["chest"]) / 2, half.Angles["chest"], 4);

@@ -27,13 +27,13 @@ public sealed class RigConstraintTests
         TestModels.Near(new(-.25f, 0, 0), pose.World("flag"));
         Assert.Equal(MathF.PI / 2, pose.Angles["beam"], 4);
         Assert.Equal(0, pose.Angles["hinge"], 4);
-        var local = Rotation2D.Apply(new(.2f, .3f), .3f);
+        var local = new Vector2f(.2f, .3f).Rotate(.3f);
         TestModels.Near(new(1 + local.X, 1 + local.Y, .5f), pose.World("payload"));
         var part = model.Parts[0];
         var frame = PartAttachment2D.FrameOf(part, pose.World, pose.Placement, id => resolved.Rest[id]);
         TestModels.Near(new(0, .5f, 0), frame.Origin);
         var socket = new ActorPose(pose, Vector2f.Zero, 1).Socket(model.Sockets[0]);
-        var offset = Rotation2D.Apply(new(.2f, 0), .3f);
+        var offset = new Vector2f(.2f, 0).Rotate(.3f);
         TestModels.Near(new(1 + offset.X, 1 + offset.Y, 0), socket.Origin);
         Assert.Equal(.4f, new ActorPose(pose, Vector2f.Zero, 1).SocketPlacement(model.Sockets[0]).Layer, 5);
         Assert.All(pose.Chains, c => Assert.True(c.Reached));
@@ -71,7 +71,7 @@ public sealed class RigConstraintTests
         ClipAuthoring.SetKey(clip, new(MotionClip.ScaleKind, "carrier"), 0, new(.5f, .5f, 0));
         ClipAuthoring.SetKey(clip, new(MotionClip.TranslateKind, "carrier"), 0, new(.1f, .15f, .05f));
         var before = PoseEvaluator.Sample(resolved, clip, 0);
-        var desired = new Vector3(Vector2f.Transform(new(1, 1), before.Bones["carrier"]).ToVector2(), .3f);
+        var desired = new Vector3f(Vector2f.Transform(new(1, 1), before.Bones["carrier"]), .3f);
         ClipAuthoring.Pose(resolved, clip, before, 0, "tool", desired);
         clip.Validate(resolved);
         var reloaded = MotionClip.FromJson(clip.ToJson());
@@ -95,7 +95,7 @@ public sealed class RigConstraintTests
             Contact = (_, p) =>
             {
                 calls++;
-                return p + new Vector3(.03f, .01f, 0);
+                return p + new Vector3f(.03f, .01f, 0);
             }
         });
         TestModels.Near(new(1.03f, 1.01f, .2f), pose.World("tool"));
@@ -220,8 +220,8 @@ public sealed class RigConstraintTests
         ModelAuthoring.RotateRestBone(model, "beam", .4f);
         var resolved = ResolvedModel.From(model);
         var pose = PoseEvaluator.Rest(resolved);
-        TestModels.Near(new(Rotation2D.Apply(new(1.5f, 0), .4f).ToVector2(), .1f), pose.World("hinge"));
-        TestModels.Near(new(Rotation2D.Apply(new(2.5f, 0), .4f).ToVector2(), .2f), pose.World("tool"));
+        TestModels.Near(new(new Vector2f(1.5f, 0).Rotate(.4f), .1f), pose.World("hinge"));
+        TestModels.Near(new(new Vector2f(2.5f, 0).Rotate(.4f), .2f), pose.World("tool"));
     }
 
     [Fact]
@@ -355,7 +355,7 @@ public sealed class RigConstraintTests
         return model;
     }
 
-    private static MotionClip Aim(ResolvedModel model, Vector3 world)
+    private static MotionClip Aim(ResolvedModel model, Vector3f world)
     {
         var clip = ClipAuthoring.New(model, "machine-aim", "Aim");
         ClipAuthoring.SetKey(clip, new(MotionClip.TargetKind, "reach"), 0, world - model.Rest["tool"]);
@@ -371,5 +371,5 @@ public sealed class RigConstraintTests
             Assert.Equal(MathF.Atan2(frame.M12, frame.M11), pose.Angles[id], 4);
         }
     }
-    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3f v) => new(v.X, v.Y);
 }

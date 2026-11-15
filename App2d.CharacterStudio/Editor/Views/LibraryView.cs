@@ -159,11 +159,11 @@ internal sealed class LibraryView(EditorSession session, App2d.CharacterStudio.E
         if (asset.Geometry is Arc2D arc)
         {
             var center = arc.Center; var radius = arc.Radius;
-            var start = float.RadiansToDegrees(arc.StartAngleRadians); var sweep = float.RadiansToDegrees(arc.SweepAngleRadians);
+            var start = Angles.RadiansToDegrees(arc.StartAngleRadians); var sweep = Angles.RadiansToDegrees(arc.SweepAngleRadians);
             if (Ui.Drag2("Center", ref center)) set(asset with { Geometry = arc with { Center = center } }, false);
             if (Ui.Drag("Radius", ref radius, .005f, .001f, 10000)) set(asset with { Geometry = arc with { Radius = radius } }, false);
-            if (Ui.Drag("Start degrees", ref start, 1, -36000, 36000)) set(asset with { Geometry = arc with { StartAngleRadians = float.DegreesToRadians(start) } }, false);
-            if (Ui.Drag("Sweep degrees", ref sweep, 1, -360, 360)) set(asset with { Geometry = arc with { SweepAngleRadians = float.DegreesToRadians(sweep) } }, false);
+            if (Ui.Drag("Start degrees", ref start, 1, -36000, 36000)) set(asset with { Geometry = arc with { StartAngleRadians = Angles.DegreesToRadians(start) } }, false);
+            if (Ui.Drag("Sweep degrees", ref sweep, 1, -360, 360)) set(asset with { Geometry = arc with { SweepAngleRadians = Angles.DegreesToRadians(sweep) } }, false);
         }
         if (asset.Geometry is HeightFieldShape2D heightfield)
         {
@@ -213,7 +213,7 @@ internal sealed class LibraryView(EditorSession session, App2d.CharacterStudio.E
             Ui.Drag2("Translate", ref _translation, .005f, -10000, 10000);
             if (ImGui.Button("Apply point transform"))
             {
-                var transform = Affine2D.CreateMatrix(_translation, float.DegreesToRadians(_rotation), new Vector2f(_scale));
+                var transform = Affine2D.CreateMatrix(_translation, Angles.DegreesToRadians(_rotation), new Vector2f(_scale));
                 set(GeometryAssetEditing.TransformPoints(asset, transform), true);
                 _rotation = 0; _scale = 1; _translation = default;
             }
@@ -290,10 +290,10 @@ internal sealed class LibraryView(EditorSession session, App2d.CharacterStudio.E
         }
         Ui.Header("Piece transform in local space");
         var xy = new Vector2f(piece.X, piece.Y); var scale = new Vector2f(piece.ScaleX, piece.ScaleY);
-        var degrees = float.RadiansToDegrees(piece.Angle); var layer = piece.Layer;
+        var degrees = Angles.RadiansToDegrees(piece.Angle); var layer = piece.Layer;
         if (Ui.Drag2("Offset", ref xy)) session.Change(doc, () => { doc.Asset.X = xy.X; doc.Asset.Y = xy.Y; });
         if (Ui.Drag2("Scale", ref scale, .01f, -100, 100)) session.Change(doc, () => { doc.Asset.ScaleX = scale.X; doc.Asset.ScaleY = scale.Y; });
-        if (Ui.Drag("Angle degrees", ref degrees, 1, -36000, 36000)) session.Change(doc, () => doc.Asset.Angle = float.DegreesToRadians(degrees));
+        if (Ui.Drag("Angle degrees", ref degrees, 1, -36000, 36000)) session.Change(doc, () => doc.Asset.Angle = Angles.DegreesToRadians(degrees));
         if (Ui.Drag("Layer", ref layer, .005f, -16, 16)) session.Change(doc, () => doc.Asset.Layer = layer);
         Mounting(doc);
     }

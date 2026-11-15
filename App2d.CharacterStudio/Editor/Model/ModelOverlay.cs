@@ -85,7 +85,7 @@ internal static class ModelOverlay
         frame.Draw.AddCircleFilled(frame.Screen(placement.Origin), 4 * Ui.Scale, color);
     }
 
-    public static Vector3 BoneTip(ModelControl control, EvaluatedPose pose)
+    public static Vector3f BoneTip(ModelControl control, EvaluatedPose pose)
     {
         return pose.Placement(control.Id).At(new Vector2f(control.Length, 0));
     }

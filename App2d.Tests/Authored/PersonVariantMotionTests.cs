@@ -20,7 +20,7 @@ public sealed class PersonVariantMotionTests
     private static PersonBuild BuildValues(string build) => build switch { "tall" => PersonBuild.TallThin, "short" => PersonBuild.ShortBroad, _ => new() };
     private static ResolvedModel Build(string build) =>
         build == "standard" ? ResolvedModel.From(Person) : ResolvedModel.From(Person, BuildValues(build).Apply(Person, build + "-build", build));
-    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3f v) => new(v.X, v.Y);
     private static IEnumerable<double> TwoCycles(MotionClip clip) => Enumerable.Range(0, 481).Select(i => i * clip.Duration / 240.0);
 
     public static TheoryData<string, string> Cases => new()
@@ -102,7 +102,7 @@ public sealed class PersonVariantMotionTests
         {
             var a = Vector2f.Normalize(XY(pose.World(chain.Root) - pose.World(chain.Joint)));
             var b = Vector2f.Normalize(XY(pose.World(chain.End) - pose.World(chain.Joint)));
-            return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector2f.Dot(a, b), -1, 1)));
+            return Angles.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector2f.Dot(a, b), -1, 1)));
         }
         foreach (var build in new[] { "tall", "short" })
         {
@@ -145,7 +145,7 @@ public sealed class PersonVariantMotionTests
         var variant = new ModelVariant { Id = "stiff-left", Name = "Stiff left", Base = "person" };
         // P11a: the leg is a bone constraint; a straight leg is the thigh turned onto the foot with the knee at the midpoint.
         var half = Vector2f.Distance(new(hip.X, hip.Y), new(foot.X, foot.Y)) / 2;
-        variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-hip", RigProperties.LocalRotation), MathF.Atan2(foot.Y - hip.Y, foot.X - hip.X)));
+        variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-hip", RigProperties.LocalRotation), (foot.XY - hip.XY).AngleRadians));
         variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-hip", RigProperties.Length), half));
         variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-knee", RigProperties.LocalRotation), 0));
         variant.Set(PropertyOverride.Of(PropertyRef.OfControl("left-knee", RigProperties.Length), half));
@@ -158,7 +158,7 @@ public sealed class PersonVariantMotionTests
             var pose = PoseEvaluator.Sample(model, clip, seconds, repeat: true,
                 input: new()
                 {
-                    Contact = (chain, target) => chain == "left-leg" ? target - new Vector3(0, .1f, 0) : target
+                    Contact = (chain, target) => chain == "left-leg" ? target - new Vector3f(0, .1f, 0) : target
                 });
             Assert.InRange(MathF.Abs(model.Length("left-hip", "left-knee") - Vector2f.Distance(XY(pose.World("left-hip")), XY(pose.World("left-knee")))), 0, 1e-4f);
             if (pose.Chains.Single(c => c.Chain == "left-leg") is { Reached: false, Residual: > 1e-3f })

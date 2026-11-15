@@ -41,7 +41,7 @@ integers, unsigned integers, `Int128`, `Half`, `float`, `double`, `decimal`,
 `BigInteger`, and other types implementing the required numeric interface.
 Negative zero is zero. Comparisons are exact; tolerance formulas remain explicit.
 
-`Vector2`, `Vector3`, and `Vector4` have component-wise sign, ordering, and range
+`Vector2f`, `Vector3f`, and `Vector4` have component-wise sign, ordering, and range
 checks. `NonZero` checks the whole vector, so `(1, 0)` is a valid direction.
 The engine's float/double vector structs also support `Number`, `Finite`, and
 `NonZero` without narrowing their coordinates. `Matrix3x2` and `Matrix4x4`

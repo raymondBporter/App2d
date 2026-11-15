@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Entities;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.CharacterStudio.Editing.Documents;
@@ -95,7 +96,7 @@ internal sealed partial class EditorSmoke(string output, bool acceptance = false
                 s.BeginDrag();
                 for (var i = 1; i <= 8; i++)
                 {
-                    s.DragControl(Humanoid.Chest, chest + new Vector3(.02f * i, .015f * i, 0));
+                    s.DragControl(Humanoid.Chest, chest + new Vector3f(.02f * i, .015f * i, 0));
                 }
                 s.EndDrag();
                 Record(s.ClipDocument!.CanUndo, "the drag is one undo step");
@@ -429,7 +430,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var reopened = AuthoredCatalog.Load(s.Assets.Root);
                 Record(reopened.Errors.Count == 0, "bone constraints and contact clips save and reopen without resource errors");
                 var pose = PoseEvaluator.Sample(reopened.Resolve("linkage"), reopened.Animations["linkage-move"], .5f);
-                Record(pose.Contacts.Count == 1 && Vector3.Distance(pose.World("tool"), target) < 1e-4f, "the reopened bone rig holds its contact target");
+                Record(pose.Contacts.Count == 1 && Vector3f.Distance(pose.World("tool"), target) < 1e-4f, "the reopened bone rig holds its contact target");
             }),
             ("37-rounded-path-inspector", shell =>
             {
@@ -444,7 +445,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Selection.Select(control: "left-shoulder"); shell.Viewport.Fit(s.Evaluate("person"));
                 var doc = s.SubjectModel!;
                 ModelControl Control(string id) => doc.Asset.Controls.Single(c => c.Id == id);
-                Vector3 Rest(string id) => s.Assets.Resolve("person")!.Rest[id];
+                Vector3f Rest(string id) => s.Assets.Resolve("person")!.Rest[id];
                 // P11a: every limb is a bone-solver constraint; the shoulder is the authored pivot, the upper arm the solved bone beneath it.
                 Record(Control("left-shoulder").Node == RigNodeKinds.Point && Control(Humanoid.LeftUpperArmBone).Node == RigNodeKinds.Bone && Control("left-elbow").Link is { IsTip: true }
                     && Control("left-hand").Link?.Orientation == RigLinkOrientations.Character && doc.Asset.Version == CharacterModel.CurrentVersion,
@@ -454,19 +455,19 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var elbow = Rest("left-elbow");
                 Check(s.Edit(doc, () => ModelAuthoring.ResizeBone(doc.Asset, Humanoid.LeftUpperArmBone, Control(Humanoid.LeftUpperArmBone).Length + .2f)), s);
                 var stretched = Rest("left-elbow") - elbow;
-                Record(MathF.Abs(stretched.Length() - .2f) < 1e-4f && Vector3.Distance(Rest("left-hand") - hand, stretched) < 1e-4f, "lengthening the upper arm moves the bound elbow and hand by the same 0.2 without stretching");
+                Record(MathF.Abs(stretched.Length() - .2f) < 1e-4f && Vector3f.Distance(Rest("left-hand") - hand, stretched) < 1e-4f, "lengthening the upper arm moves the bound elbow and hand by the same 0.2 without stretching");
                 Check(s.Edit(doc, () => ModelAuthoring.RotateRestBone(doc.Asset, Humanoid.LeftUpperArmBone, -MathF.PI / 2)), s);
                 Record(MathF.Abs(Rest("left-elbow").X - Rest("left-shoulder").X) < 1e-4f && Rest("left-elbow").Y < Rest("left-shoulder").Y, "turning the upper arm straight down carries the elbow with it");
                 s.BeginDrag();
-                s.DragControl("left-elbow", Rest("left-elbow") + new Vector3(.3f, 0, 0));
+                s.DragControl("left-elbow", Rest("left-elbow") + new Vector3f(.3f, 0, 0));
                 s.EndDrag();
                 Record(s.MessageIsError && s.Message.Contains("bound to '" + Humanoid.LeftUpperArmBone + "'"), "dragging the bound elbow is refused with its reason: " + s.Message);
                 var shoulder = Rest("left-shoulder");
                 var reach = Rest("left-hand") - shoulder;
                 s.BeginDrag();
-                s.DragControl("left-shoulder", shoulder + new Vector3(-.1f, 0, 0));
+                s.DragControl("left-shoulder", shoulder + new Vector3f(-.1f, 0, 0));
                 s.EndDrag();
-                Record(Vector3.Distance(Rest("left-shoulder"), shoulder + new Vector3(-.1f, 0, 0)) < 1e-4f && Vector3.Distance(Rest("left-hand") - Rest("left-shoulder"), reach) < 1e-4f,
+                Record(Vector3f.Distance(Rest("left-shoulder"), shoulder + new Vector3f(-.1f, 0, 0)) < 1e-4f && Vector3f.Distance(Rest("left-hand") - Rest("left-shoulder"), reach) < 1e-4f,
                     "dragging the shoulder's origin moves it through its local setup and the bound arm comes along");
                 while (doc.CanUndo)
                 {
@@ -540,11 +541,11 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 }), s);
                 s.Selection.Select(control: "weight");
                 shell.Viewport.Fit(s.Evaluate("lever"));
-                Vector3 Weight() => s.Assets.Resolve("lever")!.Rest["weight"];
+                Vector3f Weight() => s.Assets.Resolve("lever")!.Rest["weight"];
                 var half = Weight();
                 s.Change(lever, () => { lever.Asset.Parameters[0].Default = 1.2f; lever.Asset.Validate(); });
                 s.CommitAll();
-                Record(MathF.Abs(Vector3.Distance(Weight(), s.Assets.Resolve("lever")!.Rest["beam"]) - .6f) < 1e-5f && MathF.Abs(Vector3.Distance(half, s.Assets.Resolve("lever")!.Rest["beam"]) - .3f) < 1e-5f,
+                Record(MathF.Abs(Vector3f.Distance(Weight(), s.Assets.Resolve("lever")!.Rest["beam"]) - .6f) < 1e-5f && MathF.Abs(Vector3f.Distance(half, s.Assets.Resolve("lever")!.Rest["beam"]) - .3f) < 1e-5f,
                     "t = .5 follows the changing midpoint when the bound beam length doubles");
                 Check(s.Save(lever), s);
                 Record(AuthoringWorkspace.Open(s.Assets.Root).Resolve("lever")!.Nodes["beam"].Length == 1.2f, "the lever's parameter default saves and reopens");
@@ -644,7 +645,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Check(s.MakeIndependent("tall-thin", "tall-flat", "Tall flat"), s);
                 var flat = s.Assets.Resolve("tall-flat")!;
                 Record(s.SubjectModel?.Id == "tall-flat" && flat.Base.Parameters.Count == 0 && flat.Base.MotionSets[0].Roles["walk"] == "person-heavy-walk" && flat.Base.Attachments[^1].Asset == "boot"
-                    && Tall().Order.All(c => Vector3.Distance(Tall().Rest[c.Id], flat.Rest[c.Id]) < 1e-5f),
+                    && Tall().Order.All(c => Vector3f.Distance(Tall().Rest[c.Id], flat.Rest[c.Id]) < 1e-5f),
                     "making the variant independent flattens its resolved recipe: lengths, the swapped glove and the role binding become authored");
                 s.Open("tall-thin");
                 Check(s.Edit(tall, () => ModelAuthoring.SetOverride(tall.Asset, person.Asset, PropertyOverride.Of(PropertyRef.OfControl("left-elbow", RigProperties.Length), forearm + .15f))), s);
@@ -723,7 +724,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var clip = s.ClipDocument!;
                 var resolved = s.Assets.Resolve("limb")!;
                 var shoulder = resolved.Rest["upper"];
-                Vector3 Target(float x, float y) => shoulder + new Vector3(x, y, 0) - resolved.Rest["hand"];
+                Vector3f Target(float x, float y) => shoulder + new Vector3f(x, y, 0) - resolved.Rest["hand"];
                 Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, chain), 0, Target(.05f, -.1f))), s);
                 s.Seek(0);
                 var pose = s.Evaluate("limb")!.Pose;
@@ -820,15 +821,15 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var evaluated = subject.Pose.Attachments[PartSeeds.TailId];
                 var wag = PoseEvaluator.Sample(tail!.Rig!, tail.Asset.Clips[0], .3, repeat: true);
                 Record(evaluated.Expression == "wag" && MathF.Abs(evaluated.Pose.Angles["root"] - wag.Angles["root"]) < 1e-5f && !evaluated.Hidden,
-                    $"at 0.3 s of the walk the tail wags on the shared clock (root {float.RadiansToDegrees(evaluated.Pose.Angles["root"]):0.#} degrees)");
+                    $"at 0.3 s of the walk the tail wags on the shared clock (root {Angles.RadiansToDegrees(evaluated.Pose.Angles["root"]):0.#} degrees)");
                 var walk = s.ClipDocument!;
                 var tipBefore = evaluated.World("tip");
                 s.Selection.Select(control: "tail/tip");
                 s.BeginDrag();
-                s.DragControl("tail/tip", tipBefore + new Vector3(.08f, .03f, 0));
+                s.DragControl("tail/tip", tipBefore + new Vector3f(.08f, .03f, 0));
                 s.EndDrag();
                 var tipAfter = s.Evaluate("person")!.Pose.Attachments[PartSeeds.TailId].World("tip");
-                Record(walk.Asset.Tracks.Any(t => t.Target == "tail/tip" && t.Kind == MotionClip.TranslateKind) && Vector3.Distance(tipAfter, tipBefore + new Vector3(.08f, .03f, 0)) < 1e-3f,
+                Record(walk.Asset.Tracks.Any(t => t.Target == "tail/tip" && t.Kind == MotionClip.TranslateKind) && Vector3f.Distance(tipAfter, tipBefore + new Vector3f(.08f, .03f, 0)) < 1e-3f,
                     "dragging the exposed tip keys the walk's namespaced 'tail/tip' channel and the tip lands where it was dragged");
                 Check(s.Edit(walk, () => ClipAuthoring.SetPlay(walk.Asset, PartSeeds.TailId, .3f, "flick")), s);
                 var flicked = s.Evaluate("person")!.Pose.Attachments[PartSeeds.TailId];
@@ -836,7 +837,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.Expression = "tucked";
                 Record(s.Evaluate("person")!.Pose.Attachments[PartSeeds.TailId].Hidden, "the game-face request 'tucked' hides the tail through the asset's binding");
                 s.Expression = null;
-                Check(s.Edit(walk, () => ClipAuthoring.SetKey(walk.Asset, new(MotionClip.TranslateKind, "tail/root"), 0, Vector3.UnitX)), s);
+                Check(s.Edit(walk, () => ClipAuthoring.SetKey(walk.Asset, new(MotionClip.TranslateKind, "tail/root"), 0, Vector3f.UnitX)), s);
                 var problems = s.Assets.Problems(walk);
                 Record(problems.Any(p => p.Contains("does not expose 'root'") && p.Contains("path: person > attachments > tail > part tail > exposed")), "keying the unexposed root is reported by name with the reference path: " + string.Join("; ", problems));
                 s.Undo();
@@ -1010,8 +1011,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var wave = s.ClipDocument!;
                 Check(s.Edit(wave, () =>
                 {
-                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "head"), 0, Vector3.Zero, .2f);
-                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "a/head"), 0, Vector3.Zero, -.5f);
+                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "head"), 0, Vector3f.Zero, .2f);
+                    ClipAuthoring.SetKey(wave.Asset, new(MotionClip.RotateKind, "a/head"), 0, Vector3f.Zero, -.5f);
                     ClipAuthoring.SetKey(wave.Asset, new(MotionClip.TranslateKind, "b/head"), 0, new(0, .1f, 0), 0);
                     ClipAuthoring.SetPlay(wave.Asset, "a", 0, "walk");
                     ClipAuthoring.SetPlay(wave.Asset, "b", 0, "hit");
@@ -1022,8 +1023,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var b = pose.Attachments["b"];
                 Record(MathF.Abs(pose.Angles["head"] - .2f) < 1e-5f && MathF.Abs(a.Pose.Angles["head"] + .5f) < 1e-5f && MathF.Abs(b.Pose.Angles["head"]) < 1e-5f && b.Pose.Points["head"].Y - b.Rig.Rest["head"].Y > .09f && (a.Expression, b.Expression) == ("walk", "hit"),
                     "the wearer's head, a/head and b/head are three targets keyed apart; a walks while b takes the hit, and b's lifted head never reaches a");
-                var reachA = Vector3.Distance(a.Rig.Rest["left-hand"], a.Rig.Rest["left-shoulder"]);
-                var reachB = Vector3.Distance(b.Rig.Rest["left-hand"], b.Rig.Rest["left-shoulder"]);
+                var reachA = Vector3f.Distance(a.Rig.Rest["left-hand"], a.Rig.Rest["left-shoulder"]);
+                var reachB = Vector3f.Distance(b.Rig.Rest["left-hand"], b.Rig.Rest["left-shoulder"]);
                 Record(MathF.Abs(reachB / reachA - 1.5f) < 1e-3f && b.Rig.ParameterValues["arms"] == 1.5f, $"b's arms input (1.5) lengthens its own rig's arms through the module's bindings ({reachB / reachA:0.###} of a's); a keeps the part's default");
                 Check(s.Edit(standDocument, () => standDocument.Asset.Attachments.First(x => x.Id == "a").Inputs["head"] = 1.3f), s);
                 Record(s.Evaluate("rider-stand")!.Pose.Attachments["a"].Rig.ParameterValues["head"] == 1.3f, "setting a's head input re-resolves that instance's rig alone");
@@ -1053,7 +1054,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var pose = s.Evaluate(CentaurStudy.Id)!.Pose;
                 var lower = pose.Attachments[CentaurStudy.Lower];
                 var upper = pose.Attachments[CentaurStudy.Upper];
-                var saddle = lower.Frame("body").At(new Vector3(.42f, .98f, 0));
+                var saddle = lower.Frame("body").At(new Vector3f(.42f, .98f, 0));
                 Record(lower.Pose.Chains.All(c => c.Reached) && lower.Pose.Contacts.Count >= 2 && lower.Pose.Contacts.All(c => c.Residual < 1e-4f) && Vector2f.Distance(new(saddle.X, saddle.Y), new(upper.World(Humanoid.Chest).X, upper.World(Humanoid.Chest).Y)) < 1e-4f,
                     "at 0.55 s of the walk the lower body's legs reach with the planted feet holding, and the chest sits on the saddle socket carried by lower/body");
                 var walkClip = s.Assets.Clip("centaur-walk")!.Asset;
@@ -1222,8 +1223,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         {
             s.Seek(time);
             var pose = s.Evaluate("tripod")!.Pose;
-            s.DragControl("body", pose.World("body") + new Vector3(0, lift * .3f, 0));
-            s.DragControl("foot-1", pose.World("foot-1") + new Vector3(.1f * MathF.Sin(time * MathF.Tau), lift, 0));
+            s.DragControl("body", pose.World("body") + new Vector3f(0, lift * .3f, 0));
+            s.DragControl("foot-1", pose.World("foot-1") + new Vector3f(.1f * MathF.Sin(time * MathF.Tau), lift, 0));
             s.EndDrag();
         }
         s.Seek(0);

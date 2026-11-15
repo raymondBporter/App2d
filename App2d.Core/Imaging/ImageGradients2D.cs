@@ -43,7 +43,7 @@ public static class ImageGradients2D
     /// The caller chooses the channel space, for example RGB or Oklab; no grayscale
     /// conversion, smoothing, thresholding, or edge thinning is implicit.
     /// </summary>
-    public static Image2D<float> SobelMagnitude(this Image2D<Vector3> source)
+    public static Image2D<float> SobelMagnitude(this Image2D<Vector3f> source)
     {
         Ensure.ThrowIfNull(source);
         var result = new Image2D<float>(source.Width, source.Height);

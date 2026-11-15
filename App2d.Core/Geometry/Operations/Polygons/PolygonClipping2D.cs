@@ -87,7 +87,7 @@ public static class PolygonClipping2D
     /// <param name="subject">The polygon to clip, with Z carried through.</param>
     /// <param name="clip">A convex polygon with at least three vertices and nonzero XY area; its Z is ignored.</param>
     /// <returns>The clipped perimeter with interpolated Z, possibly empty.</returns>
-    public static List<Vector3> ClipConvexXY(IReadOnlyList<Vector3> subject, IReadOnlyList<Vector3> clip) => Clip(subject, clip, static point => new Vector2f(point.X, point.Y), static (a, b, t) => Vector3.Lerp(a, b, t));
+    public static List<Vector3f> ClipConvexXY(IReadOnlyList<Vector3f> subject, IReadOnlyList<Vector3f> clip) => Clip(subject, clip, static point => new Vector2f(point.X, point.Y), static (a, b, t) => Vector3f.Lerp(a, b, t));
 
     private static double SignedSide(Vector2f point, Vector2f normal, float offset) => point.ToVector2d().Dot(normal.ToVector2d()) - offset;
 

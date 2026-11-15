@@ -320,8 +320,8 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         var gold = StudioTheme.AppearanceSelection.PackedValue;
         for (var i = 0; i < points.Count; i++)
         {
-            var p = frame.Screen(socket.TransformPoint(points[i].ToVector3()));
-            var next = frame.Screen(socket.TransformPoint(points[(i + 1) % points.Count].ToVector3()));
+            var p = frame.Screen(socket.TransformPoint(points[i]));
+            var next = frame.Screen(socket.TransformPoint(points[(i + 1) % points.Count]));
             frame.Draw.AddLine(p, next, gold, 1);
             frame.Draw.AddCircleFilled(p, 4 * Ui.Scale, gold);
             if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(p, ViewportFrame.Mouse) < 8 * Ui.Scale)
@@ -347,7 +347,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             return;
         }
 
-        var coordinates = new Frame2D(socket.TransformPoint(points[_drag].ToVector3()).XY, socket.XAxis.XY, socket.YAxis.XY);
+        var coordinates = new Frame2D(socket.TransformPoint(points[_drag]).XY, socket.XAxis.XY, socket.YAxis.XY);
         if (MathF.Abs(coordinates.Matrix.GetDeterminant()) < 1e-6f ||
             !coordinates.TryToLocal(frame.World(ViewportFrame.Mouse).XY, out var delta))
         {

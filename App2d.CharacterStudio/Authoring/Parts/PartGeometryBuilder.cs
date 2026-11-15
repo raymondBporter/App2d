@@ -59,7 +59,7 @@ public static class PartGeometryBuilder
         Ensure.Positive(scale);
 
         var positions = new List<int>();
-        var welded = new Dictionary<Vector3, int>();
+        var welded = new Dictionary<Vector3f, int>();
         var mesh = new PartMesh();
         var lineNumber = 0;
         foreach (var line in text.Split('\n'))
@@ -80,13 +80,12 @@ public static class PartGeometryBuilder
                         throw new FormatException("Vertex needs X Y Z.");
                     }
 
-                    var p = new Vector3(float.Parse(words[1], CultureInfo.InvariantCulture), float.Parse(words[2], CultureInfo.InvariantCulture), float.Parse(words[3], CultureInfo.InvariantCulture)) * scale;
-                    var point = new Vector3f(p);
+                    var point = new Vector3f(float.Parse(words[1], CultureInfo.InvariantCulture), float.Parse(words[2], CultureInfo.InvariantCulture), float.Parse(words[3], CultureInfo.InvariantCulture)) * scale;
                     PartMesh.CheckPoint(point, "OBJ vertex");
-                    if (!welded.TryGetValue(p, out var index))
+                    if (!welded.TryGetValue(point, out var index))
                     {
                         index = mesh.Vertices.Count;
-                        welded.Add(p, index);
+                        welded.Add(point, index);
                         mesh.Vertices.Add(point);
                     }
                     positions.Add(index);

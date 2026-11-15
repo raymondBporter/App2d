@@ -43,8 +43,8 @@ public sealed class PlacementRoutingTests
             {
                 // A curve's carrier spans A to B, so its first and last samples sit on the controls.
                 var path = PartContours2D.Contour(part, model, pose);
-                TestModels.Near(pose.World(part.A) + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(path, 0), 1e-5f, part.Id);
-                TestModels.Near(pose.World(part.B!) + new Vector3(0, 0, part.Layer), TestModels.DrawPoint(path, path.Count - 1), 1e-4f, part.Id);
+                TestModels.Near(pose.World(part.A) + new Vector3f(0, 0, part.Layer), TestModels.DrawPoint(path, 0), 1e-5f, part.Id);
+                TestModels.Near(pose.World(part.B!) + new Vector3f(0, 0, part.Layer), TestModels.DrawPoint(path, path.Count - 1), 1e-4f, part.Id);
             }
         }
     }
@@ -62,7 +62,7 @@ public sealed class PlacementRoutingTests
         var pose = PoseEvaluator.Rest(resolved);
         var frame = PartAttachment2D.FrameOf(shape, pose.World, pose.Placement, id => resolved.Rest[id]);
         Assert.Equal(PartAttachment2D.Attachment(shape).Then(pose.Placement(root.Id)), frame);
-        Assert.Equal(pose.Placement(root.Id).At(new Vector2f(root.Length, 0)), new Vector3(Vector2f.Transform(new(root.Length, 0), pose.Bones[root.Id]).ToVector2(), pose.World(root.Id).Z));
+        Assert.Equal(pose.Placement(root.Id).At(new Vector2f(root.Length, 0)), new Vector3f(Vector2f.Transform(new(root.Length, 0), pose.Bones[root.Id]), pose.World(root.Id).Z));
         Assert.InRange(Vector2f.Dot(frame.XAxis, frame.YAxis), -1e-6f, 1e-6f);
     }
 
@@ -79,15 +79,15 @@ public sealed class PlacementRoutingTests
             {
                 var planar = pose.SocketPlacement(socket);
                 var lifted = pose.Socket(socket);
-                TestModels.Near(new(planar.Frame.Origin.ToVector2(), 0), lifted.Origin, 1e-6f, socket.Id);
+                TestModels.Near(new(planar.Frame.Origin, 0), lifted.Origin, 1e-6f, socket.Id);
                 Assert.Equal(pose.Local.Points[socket.Control].Z + socket.Layer, planar.Layer, 6);
                 Assert.Equal(PartPlacement3D.Lift(planar, pose.Local.SocketAngles.GetValueOrDefault(socket.Id)), lifted);
                 Assert.Equal(facing < 0, planar.Frame.Matrix.GetDeterminant() < 0);
-                if (pose.Local.SocketAngles.GetValueOrDefault(socket.Id) == Vector3.Zero)
+                if (pose.Local.SocketAngles.GetValueOrDefault(socket.Id) == Vector3f.Zero)
                 {
-                    TestModels.Near(new(planar.XAxis.ToVector2(), 0), lifted.XAxis, 1e-6f, socket.Id);
-                    TestModels.Near(new(planar.YAxis.ToVector2(), 0), lifted.YAxis, 1e-6f, socket.Id);
-                    Assert.Equal(Vector3.UnitZ, lifted.ZAxis);
+                    TestModels.Near(new(planar.XAxis, 0), lifted.XAxis, 1e-6f, socket.Id);
+                    TestModels.Near(new(planar.YAxis, 0), lifted.YAxis, 1e-6f, socket.Id);
+                    Assert.Equal(Vector3f.UnitZ, lifted.ZAxis);
                 }
             }
 
@@ -97,7 +97,7 @@ public sealed class PlacementRoutingTests
             Assert.NotEqual(0f, orientation.X + orientation.Y);
             var local = new ActorPose(pose.Local, Vector2f.Zero, 1);
             var turn = local.SocketTurn(hand);
-            var planarTurn = MathF.Atan2(local.SocketPlacement(hand).XAxis.Y, local.SocketPlacement(hand).XAxis.X);
+            var planarTurn = local.SocketPlacement(hand).XAxis.AngleRadians;
             Assert.Equal(planarTurn + orientation.Z, turn, 5);
             Assert.True(MathF.Abs(local.Socket(hand).ZAxis.Z) < .999f, "the lifted frame leaves the screen plane");
         }

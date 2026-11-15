@@ -67,19 +67,19 @@ public static class PoseEvaluator
             return new Vector2f(value.X, value.Y) * travelRatio;
         }
         var cycleTravel = (Travel(clip.Duration) - Travel(0)) * (float)cycles;
-        var cycleOrigin = new Vector3((Travel(0) + cycleTravel).ToVector2(), 0);
-        var pose = new EvaluatedPose { Locomotion = new((Travel(time) + cycleTravel).ToVector2(), 0), SampleSeconds = restOnly ? seconds : time };
+        var cycleOrigin = new Vector3f((Travel(0) + cycleTravel), 0);
+        var pose = new EvaluatedPose { Locomotion = new((Travel(time) + cycleTravel), 0), SampleSeconds = restOnly ? seconds : time };
         var layers = input.Layers().Select(l => new Layer(l)).ToArray();
         if (model.MotionOwner is { } mover)
         {
             // The owning module's travel, through its socket's rest frame (P10c); the wearer's own clip carries none.
-            pose.Locomotion = new(OwnerTravel(model, mover, clip, time, seconds, repeat, input, layers).ToVector2(), 0);
+            pose.Locomotion = new(OwnerTravel(model, mover, clip, time, seconds, repeat, input, layers), 0);
             cycleOrigin = pose.Locomotion;
         }
         if (input.InPlace)
         {
             cycleOrigin -= pose.Locomotion;
-            pose.Locomotion = Vector3.Zero;
+            pose.Locomotion = Vector3f.Zero;
         }
 
         // The base clip's own tracks (a namespaced target belongs to a nested instance, read there), then the layers over it.
@@ -95,7 +95,7 @@ public static class PoseEvaluator
         (ClipTrack? Track, float Time, MotionClip Clip) Read(Layer? layer, string kind, string target) => layer is null
             ? (tracks.GetValueOrDefault((kind, target)), time, clip)
             : (layer.Tracks.GetValueOrDefault((kind, target)), layer.Time, layer.Clip);
-        Vector3 LayerDelta(Layer? layer, string kind, string target, string defaultScale)
+        Vector3f LayerDelta(Layer? layer, string kind, string target, string defaultScale)
         {
             var (track, at, source) = Read(layer, kind, target);
             if (track is null)
@@ -107,7 +107,7 @@ public static class PoseEvaluator
             var scale = track.Scale ?? defaultScale;
             // A wearer's namespaced layer keys a nested part in the part's own units (P7a/P10b): no measure scales it.
             var ratio = scale == CharacterModel.Unit || layer?.Source.Namespace is not null ? 1 : model.Measure(scale) / source.Reference[scale];
-            var delta = new Vector3(value.X * ratio, value.Y * ratio, value.Z);
+            var delta = new Vector3f(value.X * ratio, value.Y * ratio, value.Z);
             if (!input.ReverseHorizontalMotion || kind == MotionClip.ScaleKind || MotionClip.PartKinds.Contains(kind))
             {
                 return delta;
@@ -116,14 +116,14 @@ public static class PoseEvaluator
             return new(-delta.X, delta.Y, delta.Z);
         }
         // Every masking layer in order blends the value below it toward its own; an unkeyed masked channel rests.
-        Vector3 Delta(string kind, string target, string defaultScale)
+        Vector3f Delta(string kind, string target, string defaultScale)
         {
             var value = LayerDelta(null, kind, target, defaultScale);
             foreach (var layer in layers)
             {
                 if (layer.Masks(target))
                 {
-                    value = layer.Weight >= 1 ? LayerDelta(layer, kind, target, defaultScale) : Vector3.Lerp(value, LayerDelta(layer, kind, target, defaultScale), layer.Weight);
+                    value = layer.Weight >= 1 ? LayerDelta(layer, kind, target, defaultScale) : Vector3f.Lerp(value, LayerDelta(layer, kind, target, defaultScale), layer.Weight);
                 }
             }
 
@@ -215,7 +215,7 @@ public static class PoseEvaluator
             if (node.CharacterOriented)
             {
                 // The origin follows the parent; the axes stay the character's, so the parent's turn and scale are not inherited.
-                var at = carrier.At(new Vector3(origin.ToVector2(), localLayer));
+                var at = carrier.At(new Vector3f(origin, localLayer));
                 pose.Place(control.Id, LayeredFrame2D.Local(scale, rotation, at.XY, at.Z), rotation);
                 continue;
             }
@@ -253,7 +253,7 @@ public static class PoseEvaluator
 
             var chain = model.Chains[contact.Chain];
             var ratio = Ratio(chain.Scale);
-            var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), contact.Target.Y * ratio, contact.Target.Z);
+            var target = cycleOrigin + model.Rest[chain.End] + new Vector3f(contact.Target.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), contact.Target.Y * ratio, contact.Target.Z);
             if (owning > 0)
             {
                 constraints.Apply(new RigContactPin(chain.Id, target, owning));
@@ -268,9 +268,9 @@ public static class PoseEvaluator
         }
         foreach (var socket in model.Base.Sockets)
         {
-            Vector3 ReadOrientation(Layer? layer) => Read(layer, MotionClip.OrientKind, socket.Id) is { Track: { } t, Time: var at }
-                ? ReverseOrientation(Interpolate(t.Keys, at).Value) : Vector3.Zero;
-            Vector3 ReverseOrientation(Vector3 value) => input.ReverseHorizontalMotion ? new(value.X, -value.Y, -value.Z) : value;
+            Vector3f ReadOrientation(Layer? layer) => Read(layer, MotionClip.OrientKind, socket.Id) is { Track: { } t, Time: var at }
+                ? ReverseOrientation(Interpolate(t.Keys, at).Value) : Vector3f.Zero;
+            Vector3f ReverseOrientation(Vector3f value) => input.ReverseHorizontalMotion ? new(value.X, -value.Y, -value.Z) : value;
             // Socket channels follow ownership of their frame, including an IK chain that owns their attachment end.
             var orientation = ReadOrientation(null);
             foreach (var layer in layers)
@@ -279,7 +279,7 @@ public static class PoseEvaluator
                     || model.Chains.Values.Any(c => c.End == socket.Control && layer.Masks(c.Id));
                 if (owned)
                 {
-                    orientation = Vector3.Lerp(orientation, ReadOrientation(layer), layer.Weight);
+                    orientation = Vector3f.Lerp(orientation, ReadOrientation(layer), layer.Weight);
                 }
             }
 
@@ -289,7 +289,7 @@ public static class PoseEvaluator
         // Part channels (P7a): an explicit artwork fit and a held visibility per drawing part, layered like any other channel.
         foreach (var part in model.Parts)
         {
-            var tint = new Vector4(Delta(MotionClip.TintKind, part.Id, CharacterModel.Unit), Delta(MotionClip.AlphaKind, part.Id, CharacterModel.Unit).X);
+            var tint = new Vector4(Delta(MotionClip.TintKind, part.Id, CharacterModel.Unit).ToVector3(), Delta(MotionClip.AlphaKind, part.Id, CharacterModel.Unit).X);
             if (tint != Vector4.One) pose.Tints[part.Id] = Vector4.Clamp(tint, Vector4.Zero, Vector4.One);
             var fit = Delta(MotionClip.FitKind, part.Id, CharacterModel.Unit);
             if (fit.X != 0 || fit.Y != 0)
@@ -571,15 +571,15 @@ public static class PoseEvaluator
     }
 
     /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>
-    public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false) =>
-        KeyframeSampling.Sample(keys, time, (Value: Vector3.Zero, Angle: 0f), new MotionInterpolation(rotate));
+    public static (Vector3f Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false) =>
+        KeyframeSampling.Sample(keys, time, (Value: Vector3f.Zero, Angle: 0f), new MotionInterpolation(rotate));
 
-    private readonly struct MotionInterpolation(bool rotate) : IKeyframeInterpolation<ClipKey, (Vector3 Value, float Angle)>
+    private readonly struct MotionInterpolation(bool rotate) : IKeyframeInterpolation<ClipKey, (Vector3f Value, float Angle)>
     {
-        public (Vector3 Value, float Angle) GetValue(ClipKey key) => (key.Value, key.Angle);
+        public (Vector3f Value, float Angle) GetValue(ClipKey key) => (key.Value, key.Angle);
         public bool IsHeld(ClipKey key) => key.Ease == ProgressMapKind.Step;
 
-        public (Vector3 Value, float Angle) Interpolate(ClipKey a, ClipKey b, float phase)
+        public (Vector3f Value, float Angle) Interpolate(ClipKey a, ClipKey b, float phase)
         {
             var progressMap = ProgressMaps.FromKind(a.Ease);
             var sample = new KeyframeSegmentSampler(phase, progressMap);
@@ -592,7 +592,7 @@ public static class PoseEvaluator
         }
     }
 
-    public static (Vector3 Value, float Angle) Interpolate(ClipTrack track, float time) =>
+    public static (Vector3f Value, float Angle) Interpolate(ClipTrack track, float time) =>
         track.Keys.Count == 0 || track.SetupBeforeFirst && time < track.Keys[0].Time ? (MotionClip.DefaultValue(track.Kind), 0)
         : track.Kind == MotionClip.ShowKind ? (KeyframeSampling.Held(track.Keys, time)!.Value, 0)
         : Interpolate(track.Keys, time, track.Kind == MotionClip.RotateKind);

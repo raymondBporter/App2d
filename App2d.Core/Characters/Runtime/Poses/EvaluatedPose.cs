@@ -16,7 +16,7 @@ public sealed class EvaluatedPose
 
     public EvaluatedPose()
     {
-        Points = new ControlView<Vector3>(_controls, static control => new(control.Position.ToVector2(), control.Layer));
+        Points = new ControlView<Vector3f>(_controls, static control => new(control.Position, control.Layer));
         Angles = new ControlView<float>(_controls, static control => control.Angle);
         Bones = new ControlView<Matrix3x2>(_controls, static control => control.Frame.Matrix);
     }
@@ -25,17 +25,17 @@ public sealed class EvaluatedPose
     public IReadOnlyDictionary<string, EvaluatedControl2D> Controls => _controls;
 
     /// <summary>Compatibility view of XY plus drawing layer in Z, derived from Controls.</summary>
-    public IReadOnlyDictionary<string, Vector3> Points { get; }
+    public IReadOnlyDictionary<string, Vector3f> Points { get; }
     /// <summary>Accumulated XY rotation of each control's frame, unwrapped so full turns stay meaningful; inherited by its children.</summary>
     public IReadOnlyDictionary<string, float> Angles { get; }
     /// <summary>Each control's frame in the character frame (row-vector convention: <c>nodeInCharacter = nodeLocal * parentInCharacter</c>).</summary>
     public IReadOnlyDictionary<string, Matrix3x2> Bones { get; }
     public List<EvaluatedSlot2D> Slots { get; } = [];
-    public Dictionary<string, Vector3> SocketAngles { get; } = new(StringComparer.Ordinal);
+    public Dictionary<string, Vector3f> SocketAngles { get; } = new(StringComparer.Ordinal);
     /// <summary>The expression each animated part instance shows (P7a/P7c): a gameplay request, then the clip's selection channel, then the instance's and the asset's default.</summary>
     public Dictionary<string, string> Expressions { get; } = new(StringComparer.Ordinal);
     /// <summary>The locomotion frame's origin at this sample.</summary>
-    public Vector3 Locomotion { get; set; }
+    public Vector3f Locomotion { get; set; }
     public List<ChainResult> Chains { get; } = [];
     public List<ContactResult> Contacts { get; } = [];
     /// <summary>Each limited bone node's joint-limit state at this sample: the requested local rotation, the held one and whether a bound was active.</summary>
@@ -50,10 +50,10 @@ public sealed class EvaluatedPose
     /// <summary>Every animated part instance evaluated inside this pose, by instance ID: the nested runtime graph (P7a).</summary>
     public Dictionary<string, EvaluatedAttachment> Attachments { get; } = new(StringComparer.Ordinal);
     /// <summary>Compatibility lookup packing XY and layer; this is not a physical 3D position.</summary>
-    public Vector3 World(string id)
+    public Vector3f World(string id)
     {
         var control = _controls[id];
-        return new(control.Position.ToVector2(), control.Layer);
+        return new(control.Position, control.Layer);
     }
 
     /// <summary>A control's evaluated placement: its bone frame at its drawing layer. Artwork, sockets and handles attach to this.</summary>

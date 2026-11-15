@@ -62,9 +62,9 @@ public class ResolvedGeometry
     {
         if (Binding is ColliderBindings.Actor or ColliderBindings.Control)
         {
-            Vector3 World(string id) => id == PartLocation.Origin ? Vector3.Zero : pose.Local.World(id);
+            Vector3f World(string id) => id == PartLocation.Origin ? Vector3f.Zero : pose.Local.World(id);
             LayeredFrame2D Bone(string id) => id is PartLocation.Origin or CharacterModel.Locomotion ? LayeredFrame2D.Identity : pose.Local.Placement(id);
-            Vector3 Rest(string id) => id == PartLocation.Origin ? Vector3.Zero : _model.Rest[id];
+            Vector3f Rest(string id) => id == PartLocation.Origin ? Vector3f.Zero : _model.Rest[id];
             return PartAttachment2D.FrameOf(Definition, World, Bone, Rest).Then(pose.Placement);
         }
         var anchor = Anchor(pose);

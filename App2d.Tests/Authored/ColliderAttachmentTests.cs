@@ -96,8 +96,8 @@ public sealed class ColliderAttachmentTests
                 // The registered collider (through the affine transform) is the placement value, and that is the legacy region.
                 var placed = hit.Collider.Place(pose);
                 var view = registered.Region;
-                TestModels.Near(new(placed.Translation.ToVector2(), 0), new(view.Pose.Translation.ToVector2(), 0), 1e-5f, $"{id} translation at {t}");
-                TestModels.Near(new(placed.XAxis.ToVector2(), 0), new(view.Pose.XAxis.ToVector2(), 0), 1e-5f, $"{id} axis at {t}");
+                TestModels.Near(new(placed.Translation, 0), new(view.Pose.Translation, 0), 1e-5f, $"{id} translation at {t}");
+                TestModels.Near(new(placed.XAxis, 0), new(view.Pose.XAxis, 0), 1e-5f, $"{id} axis at {t}");
                 Assert.Equal(placed.IsMirrored, view.Pose.IsMirrored);
                 Assert.Equal(facing < 0, placed.IsMirrored);
                 var legacy = EntityCollision.Attack(pose, hit);

@@ -13,7 +13,7 @@ namespace App2d.Analyzers.Tests;
 
 public sealed class ShapeConstructionTests
 {
-    private const string Imports = "using App2d.Core.Shapes; using App2d.Core.Geometry.Curves; using Vector2f = App2d.Core.Mathematics.Vec2<float>; ";
+    private const string Imports = "using App2d.Core.Shapes; using App2d.Core.Geometry.Curves; using App2d.Core.Mathematics; ";
 
     private static readonly ImmutableArray<MetadataReference> References =
         [.. ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)

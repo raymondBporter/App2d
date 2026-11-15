@@ -8,7 +8,7 @@ namespace App2d.Core.Geometry.Meshes;
 public static class Orientation3D
 {
     /// <summary>Returns +1 for a right-handed basis, -1 for a reflected basis, or false for a flat/invalid basis.</summary>
-    public static bool TryGetHandedness(Vector3 along, Vector3 across, Vector3 normal, out int handedness)
+    public static bool TryGetHandedness(Vector3f along, Vector3f across, Vector3f normal, out int handedness)
     {
         if (!NumericValidation.IsFinite(along) || !NumericValidation.IsFinite(across) ||
             !NumericValidation.IsFinite(normal))

@@ -31,8 +31,8 @@ public sealed class GeometryJson2DTests
             using var json = JsonDocument.Parse(geometry.ToJson());
             Assert.Single(json.RootElement.EnumerateObject(), p => p.Name == "kind");
             var model = ModelAuthoring.Empty("geometry-test", "Geometry test");
-            ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
-            ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
+            ModelAuthoring.AddControl(model, null, Vector3f.Zero, "root");
+            ModelAuthoring.AddControl(model, "root", Vector3f.UnitY, "tip");
             var part = ModelAuthoring.AddPart(model, geometry, "root", geometry is ICurve2D ? "tip" : null);
             var saved = CharacterModel.FromJson(model.ToJson());
             Assert.Equal(geometry.ToJson(), saved.Parts.Single().Geometry!.ToJson());

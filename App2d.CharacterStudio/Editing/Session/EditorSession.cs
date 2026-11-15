@@ -531,7 +531,7 @@ public sealed class EditorSession
     /// Moves a control to a world position. In Model it changes rest geometry: the base's, or the variant's overrides. In
     /// Animate it poses the clip at the current time, keyed when autokey is on and held as an unkeyed pose otherwise.
     /// </summary>
-    public void DragControl(string control, Vector3 world)
+    public void DragControl(string control, Vector3f world)
     {
         if (!_dragging)
         {
@@ -612,7 +612,7 @@ public sealed class EditorSession
     public void DiscardPendingPose() => _pending = null;
 
     /// <summary>Poses a socket independently of its arm. Respects autokey and the same pending-pose/undo workflow as control drags.</summary>
-    public void PoseWeapon(Vector3 radians)
+    public void PoseWeapon(Vector3f radians)
     {
         Transport.Pause();
         Attempt(() =>

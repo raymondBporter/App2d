@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Animation;
 using App2d.CharacterStudio.Editing.Documents;
 using App2d.CharacterStudio.Editing.Preview;
@@ -85,7 +86,7 @@ internal sealed class AnimationControlInspector(EditorSession session)
                 if (limit is not null && rotateTrack is null)
                 {
                     var t = ClipAuthoring.Value(clip, bend, time).Value.X;
-                    if (Ui.Slider($"Normalized bend (0 = {float.RadiansToDegrees(limit.Min):0.#}°, 1 = {float.RadiansToDegrees(limit.Max):0.#}°)", ref t, 0, 1))
+                    if (Ui.Slider($"Normalized bend (0 = {Angles.RadiansToDegrees(limit.Min):0.#}°, 1 = {Angles.RadiansToDegrees(limit.Max):0.#}°)", ref t, 0, 1))
                     {
                         session.Change(document, () => ClipAuthoring.SetKey(document.Asset, bend, time, new(Math.Clamp(t, 0, 1), 0, 0)));
                     }
@@ -95,15 +96,15 @@ internal sealed class AnimationControlInspector(EditorSession session)
 
                 if (bendTrack is null)
                 {
-                    var degrees = float.RadiansToDegrees(ClipAuthoring.Value(clip, rotate, time).Angle);
+                    var degrees = Angles.RadiansToDegrees(ClipAuthoring.Value(clip, rotate, time).Angle);
                     if (Ui.Drag("Rotation (degrees, turns children)", ref degrees, .5f, -720, 720))
                     {
-                        session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, float.DegreesToRadians(degrees)));
+                        session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, Angles.DegreesToRadians(degrees)));
                     }
 
                     if (limit is not null)
                     {
-                        ImGui.TextDisabled($"  angle channel: authored degrees, held between {float.RadiansToDegrees(limit.Min):0.#}° and {float.RadiansToDegrees(limit.Max):0.#}° of parent-local rotation.");
+                        ImGui.TextDisabled($"  angle channel: authored degrees, held between {Angles.RadiansToDegrees(limit.Min):0.#}° and {Angles.RadiansToDegrees(limit.Max):0.#}° of parent-local rotation.");
                     }
                 }
                 else
@@ -115,11 +116,11 @@ internal sealed class AnimationControlInspector(EditorSession session)
                 {
                     if (state.State == ConstraintLimitState1D.Inactive)
                     {
-                        ImGui.TextDisabled($"  within limits at {float.RadiansToDegrees(state.Coordinate):0.#}° parent-local.");
+                        ImGui.TextDisabled($"  within limits at {Angles.RadiansToDegrees(state.Coordinate):0.#}° parent-local.");
                     }
                     else
                     {
-                        Ui.Problem($"Held at the {state.State.ToString().ToLowerInvariant()} limit, {float.RadiansToDegrees(MathF.Abs(state.Error)):0.#}° short of the requested rotation.");
+                        Ui.Problem($"Held at the {state.State.ToString().ToLowerInvariant()} limit, {Angles.RadiansToDegrees(MathF.Abs(state.Error)):0.#}° short of the requested rotation.");
                     }
                 }
             }
@@ -239,9 +240,9 @@ internal sealed class AnimationControlInspector(EditorSession session)
         if (Ui.Slider("Alpha multiplier", ref opacity, 0, 1))
             session.Change(document, () => ClipAuthoring.SetKey(document.Asset, alpha, time, new(opacity, 0, 0)));
         var tint = new Channel(MotionClip.TintKind, control);
-        var color = ClipAuthoring.Value(clip, tint, time).Value;
+        var color = ClipAuthoring.Value(clip, tint, time).Value.ToVector3();
         if (ImGui.ColorEdit3("Tint multiplier", ref color))
-            session.Change(document, () => ClipAuthoring.SetKey(document.Asset, tint, time, color));
+            session.Change(document, () => ClipAuthoring.SetKey(document.Asset, tint, time, new(color)));
         Channel[] channels = [.. MotionClip.PartKinds.Select(kind => new Channel(kind, control))];
         var key = channels.SelectMany(c => ClipAuthoring.Track(clip, c)?.Keys ?? []).FirstOrDefault(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
         if (key is null)

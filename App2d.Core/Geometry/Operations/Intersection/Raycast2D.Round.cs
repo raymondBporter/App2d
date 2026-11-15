@@ -41,7 +41,7 @@ public static partial class Raycast2D
             if (!double.IsFinite(distance) || distance < 0 || distance > float.MaxValue || distance > maxDistance) return false;
             var point = origin.ToVector2d() + axis * distance;
             var radial = point - center.ToVector2d();
-            var angle = Math.Atan2(radial.Y, radial.X);
+            var angle = radial.AngleRadians;
             var progress = sweep > 0 ? angle - startAngle : startAngle - angle;
             progress = (progress % Math.Tau + Math.Tau) % Math.Tau;
             // Arc channels are floats. Permit angular roundoff at either endpoint, including wraparound.

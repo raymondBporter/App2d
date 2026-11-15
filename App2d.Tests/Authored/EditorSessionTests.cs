@@ -148,7 +148,7 @@ public sealed class EditorSessionTests : IDisposable
         session.BeginDrag();
         for (var frame = 1; frame <= 6; frame++)
         {
-            session.DragControl("chest", before[0] + new Vector3(0, .02f * frame, 0));
+            session.DragControl("chest", before[0] + new Vector3f(0, .02f * frame, 0));
         }
 
         session.EndDrag();
@@ -174,7 +174,7 @@ public sealed class EditorSessionTests : IDisposable
         session.AutoKey = false;
         session.Seek(.3f);
         var chest = session.Evaluate("person")!.Pose.World("chest");
-        session.DragControl("chest", chest + new Vector3(0, .1f, 0));
+        session.DragControl("chest", chest + new Vector3f(0, .1f, 0));
         session.EndDrag();
         Assert.True(session.HasPendingPose);
         Assert.False(session.ClipDocument!.Dirty);
@@ -198,7 +198,7 @@ public sealed class EditorSessionTests : IDisposable
         session.EditRig = true;
         var basis = session.Assets.Model("person")!;
         var head = session.Evaluate("tall-thin")!.Model.Rest["head"];
-        session.DragControl("head", head + new Vector3(0, .1f, 0));
+        session.DragControl("head", head + new Vector3f(0, .1f, 0));
         session.EndDrag();
         Assert.False(basis.Dirty);
         Assert.Equal(head.Y + .1f, session.Evaluate("tall-thin")!.Model.Rest["head"].Y, 4);
@@ -240,8 +240,8 @@ public sealed class EditorSessionTests : IDisposable
         {
             session.Seek(time);
             var pose = session.Evaluate("tripod")!.Pose;
-            session.DragControl("body", pose.World("body") + new Vector3(0, lift * .3f, 0));
-            session.DragControl("foot-1", pose.World("foot-1") + new Vector3(0, lift, 0));
+            session.DragControl("body", pose.World("body") + new Vector3f(0, lift * .3f, 0));
+            session.DragControl("foot-1", pose.World("foot-1") + new Vector3f(0, lift, 0));
             session.EndDrag();
         }
         session.Seek(0);
@@ -332,7 +332,7 @@ public sealed class EditorSessionTests : IDisposable
         session.Change(clip, () => ClipAuthoring.Retime(clip.Asset, duration / 2));
         session.CommitAll();
         Assert.True(session.Transport.Time <= clip.Asset.Duration);
-        session.DragControl("chest", session.Evaluate("person")!.Pose.World("chest") + new Vector3(0, .05f, 0));
+        session.DragControl("chest", session.Evaluate("person")!.Pose.World("chest") + new Vector3f(0, .05f, 0));
         session.EndDrag();
         Assert.Empty(session.Assets.Problems(clip));
     }

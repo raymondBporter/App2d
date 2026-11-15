@@ -96,8 +96,7 @@ public sealed class HumanoidFootwearTests
                         TestModels.Near(pose.World(foot) with { Z = 0 }, PartPlacement3D.Point(frame, item.Prop, item.Prop.Point(EquipmentPoints.Grip)!.Value));
                         Assert.Equal(pose.World(foot).Z, pose.SocketPlacement(item.Socket).Layer, 5);
                         var up = pose.World(knee) - pose.World(foot);
-                        up.Z = 0;
-                        TestModels.Near(Vector3.Normalize(up), frame.YAxis);
+                        TestModels.Near(Vector3f.Normalize(up with { Z = 0 }), frame.YAxis);
                         var bare = PartAttachment2D.FrameOf(entity.Model.Parts.Single(p => p.Id == foot), local.World);
                         var point = new Vector2f(.04f, 0);
                         // Both the bare foot and its shoe use the same local XY axes and mirroring.

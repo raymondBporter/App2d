@@ -121,7 +121,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         var elapsed = double.IsNaN(_stateClock) ? 0 : (float)Math.Clamp(tick / 120.0 - _stateClock, 0, .1);
         if (state.IsGrounded && state.GroundVelocity != Vector2f.Zero)
         {
-            _hold.Shift(new Vector3((state.GroundVelocity * (float)elapsed / _worldUnitsPerModelUnit).ToVector2(), 0));
+            _hold.Shift(new Vector3f((state.GroundVelocity * (float)elapsed / _worldUnitsPerModelUnit), 0));
         }
 
         _state = state;

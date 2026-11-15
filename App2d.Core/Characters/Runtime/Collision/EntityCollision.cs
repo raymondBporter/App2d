@@ -20,7 +20,7 @@ public static class EntityCollision
         [.. entity.Colliders.Where(c => c.Use == ColliderUses.Hurt && c.DefaultEnabled).Select(c => c.Region(pose))];
 
     /// <summary>Where a shot leaves: the first equipped prop with a muzzle, and its unit axis in world XY (facing included).</summary>
-    public static (Vector3 Point, Vector2f Axis) Muzzle(ResolvedEntity entity, ActorPose pose)
+    public static (Vector3f Point, Vector2f Axis) Muzzle(ResolvedEntity entity, ActorPose pose)
     {
         var gun = entity.Equipment.FirstOrDefault(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null) ?? throw new InvalidOperationException($"Entity '{entity.Id}' equips no prop with a muzzle.");
         var frame = pose.Socket(gun.Socket);

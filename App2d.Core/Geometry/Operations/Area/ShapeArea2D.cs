@@ -110,7 +110,7 @@ public static class ShapeArea2D
             {
                 for (var j = 0; j < vertices.Length; j++)
                 {
-                    vertices[j] = shape.GetSupportPoint(Polar2D.Direction(MathF.Tau * j / vertices.Length));
+                    vertices[j] = shape.GetSupportPoint(Vector2f.Direction(MathF.Tau * j / vertices.Length));
                     Ensure.Finite(vertices[j], nameof(shape));
                 }
             }

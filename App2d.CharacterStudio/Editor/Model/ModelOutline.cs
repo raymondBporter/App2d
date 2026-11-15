@@ -247,7 +247,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
                 structural.Request(model, "add a control", () =>
                 {
                     var parent = session.Selection.Control;
-                    var at = parent is null ? new Vector3(0, 1, 0) : (Resolved ?? throw new InvalidDataException("The model does not resolve; repair it before adding controls.")).Rest[parent] + new Vector3(.3f, 0, 0);
+                    var at = parent is null ? new Vector3f(0, 1, 0) : (Resolved ?? throw new InvalidDataException("The model does not resolve; repair it before adding controls.")).Rest[parent] + new Vector3f(.3f, 0, 0);
                     session.Selection.Select(control: ModelAuthoring.AddControl(model.Asset, parent, at).Id);
                 });
             }

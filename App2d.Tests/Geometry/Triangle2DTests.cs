@@ -109,8 +109,8 @@ public sealed class Triangle2DTests
     public void BarycentricWeightsRebuildThePointAndMarkTheCorners()
     {
         Vector2f a = new(1, 1), b = new(5, 2), c = new(2, 6);
-        Assert.Equal(Vector3.UnitX, TriangleMath2D.Barycentric(a, b, c, a));
-        Assert.Equal(Vector3.UnitZ, TriangleMath2D.Barycentric(a, b, c, c));
+        Assert.Equal(Vector3f.UnitX, TriangleMath2D.Barycentric(a, b, c, a));
+        Assert.Equal(Vector3f.UnitZ, TriangleMath2D.Barycentric(a, b, c, c));
         var point = new Vector2f(2.5f, 3);
         var w = TriangleMath2D.Barycentric(a, b, c, point);
         Assert.Equal(1, w.X + w.Y + w.Z, 5);

@@ -45,23 +45,23 @@ public sealed class LayeredMesh(int initialCapacity = 32768)
     public int Count => _geometry.Count;
     public long Version => _geometry.Version;
     public int TriangleCount => _geometry.TriangleCount;
-    public Vector3 Min => _geometry.Min;
-    public Vector3 Max => _geometry.Max;
+    public Vector3f Min => _geometry.Min;
+    public Vector3f Max => _geometry.Max;
 
     public void Clear() { _geometry.Clear(); Layer = 0; }
-    public void Vertex(Vector3 point, Color4b color, Vector2f uv = default, float layer = 0) => _geometry.Vertex(point, new(color, Layer + layer), uv);
-    public void Triangle(Vector3 a, Vector3 b, Vector3 c, Color4b color) => _geometry.Triangle(a, b, c, new(color, Layer));
-    public void Triangle(Vector3 a, Vector3 b, Vector3 c, Color4b color, float firstLayer, float secondLayer, float thirdLayer) =>
+    public void Vertex(Vector3f point, Color4b color, Vector2f uv = default, float layer = 0) => _geometry.Vertex(point, new(color, Layer + layer), uv);
+    public void Triangle(Vector3f a, Vector3f b, Vector3f c, Color4b color) => _geometry.Triangle(a, b, c, new(color, Layer));
+    public void Triangle(Vector3f a, Vector3f b, Vector3f c, Color4b color, float firstLayer, float secondLayer, float thirdLayer) =>
         _geometry.Triangle(a, b, c, new(color, Layer + firstLayer), new(color, Layer + secondLayer), new(color, Layer + thirdLayer));
-    public void Disk(Vector3 center, float radius, Color4b color, bool dome = false) => _geometry.Disk(center, radius, new(color, Layer), dome);
-    public void Ellipse(Vector2f center, Vector2f radii, Func<Vector2f, Vector3> place, Color4b color, int segments = 24) =>
+    public void Disk(Vector3f center, float radius, Color4b color, bool dome = false) => _geometry.Disk(center, radius, new(color, Layer), dome);
+    public void Ellipse(Vector2f center, Vector2f radii, Func<Vector2f, Vector3f> place, Color4b color, int segments = 24) =>
         _geometry.Ellipse(center, radii, place, new(color, Layer), segments);
-    public void Line(Vector3 start, Vector3 end, float width, Color4b color) => _geometry.Line(start, end, width, new(color, Layer));
-    public void Line(Vector3 start, Vector3 end, float width, Color4b color, float startLayer, float endLayer) =>
+    public void Line(Vector3f start, Vector3f end, float width, Color4b color) => _geometry.Line(start, end, width, new(color, Layer));
+    public void Line(Vector3f start, Vector3f end, float width, Color4b color, float startLayer, float endLayer) =>
         _geometry.Line(start, end, width, new(color, Layer + startLayer), new(color, Layer + endLayer));
 
     /// <summary>A fan-filled polygon and/or its outline, all on the current layer.</summary>
-    public void Polygon(IReadOnlyList<Vector3> points, Color4b? fill, Color4b? ink, float width) => Polygon(new LayeredContour(points), fill, ink, width);
+    public void Polygon(IReadOnlyList<Vector3f> points, Color4b? fill, Color4b? ink, float width) => Polygon(new LayeredContour(points), fill, ink, width);
 
     /// <summary>A fan-filled polygon and/or its outline, each point on its own layer. The outline sits just in front of the fill.</summary>
     public void Polygon(LayeredContour points, Color4b? fill, Color4b? ink, float width)
@@ -85,9 +85,9 @@ public sealed class LayeredMesh(int initialCapacity = 32768)
     public void Path(LayeredContour points, Color4b color, float startWidth, float? endWidth = null) =>
         _geometry.Path(points, new(color, Layer), startWidth, endWidth, Attributes(points, color));
     public void Ribbon(LayeredContour points, Color4b color, float width) => _geometry.Ribbon(points, new(color, Layer), width, Attributes(points, color));
-    public void Shell(Vector3 center, IReadOnlyList<Vector3> contour, float depth, Color4b color) =>
+    public void Shell(Vector3f center, IReadOnlyList<Vector3f> contour, float depth, Color4b color) =>
         _geometry.Shell(center, contour, depth, new(color, Layer));
-    public void Add(TriangleMesh2D mesh, Func<Vector2f, Vector3> place, Color4b color) => _geometry.Add(mesh, place, new(color, Layer));
+    public void Add(TriangleMesh2D mesh, Func<Vector2f, Vector3f> place, Color4b color) => _geometry.Add(mesh, place, new(color, Layer));
 
     /// <summary>
     /// A placed solid with one shade per face and ink on the silhouette and creases a camera looking down -Z sees. Coplanar
@@ -119,7 +119,7 @@ public sealed class LayeredMesh(int initialCapacity = 32768)
 
         var layer = Layer;
         Layer -= .0005f;
-        foreach (var edge in analysis.FeatureEdges(-Vector3.UnitZ, .7f, 1e-5f))
+        foreach (var edge in analysis.FeatureEdges(-Vector3f.UnitZ, .7f, 1e-5f))
         {
             Line(vertices[edge.A], vertices[edge.B], inkWidth, outline.Multiply(tint));
         }

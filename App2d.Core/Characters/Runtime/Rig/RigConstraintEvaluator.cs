@@ -6,9 +6,9 @@ using System.Numerics;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>A sampled IK goal in model/world XY and character depth. Bend is +1 or -1.</summary>
-public readonly record struct RigIkTarget(string Constraint, Vector3 Position, int Bend);
+public readonly record struct RigIkTarget(string Constraint, Vector3f Position, int Bend);
 /// <summary>A contact pin applied after its IK goal. Release blends toward that goal; a releasing pin is not reported as held.</summary>
-public readonly record struct RigContactPin(string Constraint, Vector3 Position, float Release = 0);
+public readonly record struct RigContactPin(string Constraint, Vector3f Position, float Release = 0);
 
 /// <summary>
 /// Shared, graphics-free IK/contact evaluation for one pose. Apply targets in model order, then contact pins in clip order.
@@ -47,7 +47,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
             throw new InvalidOperationException($"Contact '{pin.Constraint}' needs an IK target first.");
         }
 
-        var target = pin.Release > 0 ? Vector3.Lerp(pin.Position, goal.Target.Position, pin.Release) : pin.Position;
+        var target = pin.Release > 0 ? Vector3f.Lerp(pin.Position, goal.Target.Position, pin.Release) : pin.Position;
         var result = Solve(pin.Constraint, target, goal.Target.Bend);
         pose.Chains[goal.Index] = result;
         if (pin.Release == 0)
@@ -60,36 +60,36 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
     /// Converts a sampled offset into a goal: a locomotion-framed constraint keys its target as a character-frame offset from
     /// the end's rest; a control-framed constraint keys it in the frame's own local axes.
     /// </summary>
-    public static Vector3 TargetPosition(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 delta)
+    public static Vector3f TargetPosition(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3f delta)
     {
         var locomotion = chain.Frame == CharacterModel.Locomotion;
         var point = locomotion ? pose.Locomotion : pose.Points[chain.Frame];
-        var rest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
+        var rest = locomotion ? Vector3f.Zero : model.Rest[chain.Frame];
         if (locomotion)
         {
-            return point + Rotation2D.ApplyXY(model.Rest[chain.End] - rest + delta, locomotion ? 0 : pose.Angles[chain.Frame] - model.Nodes[chain.Frame].RestAngle);
+            return point + (model.Rest[chain.End] - rest + delta).RotateXY(locomotion ? 0 : pose.Angles[chain.Frame] - model.Nodes[chain.Frame].RestAngle);
         }
 
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
         var local = Vector2f.Transform(model.Rest[chain.End].XY, setupInverse) + delta.XY;
-        return new(Vector2f.Transform(local, frame).ToVector2(), point.Z + model.Rest[chain.End].Z - rest.Z + delta.Z);
+        return new(Vector2f.Transform(local, frame), point.Z + model.Rest[chain.End].Z - rest.Z + delta.Z);
     }
 
     /// <summary>Inverse of TargetPosition, before reference-measure scaling. Used by dragging as well as other authoring hosts.</summary>
-    public static Vector3 TargetDelta(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 world)
+    public static Vector3f TargetDelta(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3f world)
     {
         var locomotion = chain.Frame == CharacterModel.Locomotion;
         var point = locomotion ? pose.Locomotion : pose.Points[chain.Frame];
-        var rest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
+        var rest = locomotion ? Vector3f.Zero : model.Rest[chain.Frame];
         if (locomotion)
         {
-            return Rotation2D.ApplyXY(world - point, locomotion ? 0 : model.Nodes[chain.Frame].RestAngle - pose.Angles[chain.Frame]) - (model.Rest[chain.End] - rest);
+            return (world - point).RotateXY(locomotion ? 0 : model.Nodes[chain.Frame].RestAngle - pose.Angles[chain.Frame]) - (model.Rest[chain.End] - rest);
         }
 
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
         Matrix3x2.Invert(frame, out var inverse);
         var delta = Vector2f.Transform(world.XY, inverse) - Vector2f.Transform(model.Rest[chain.End].XY, setupInverse);
-        return new(delta.ToVector2(), world.Z - point.Z - model.Rest[chain.End].Z + rest.Z);
+        return new(delta, world.Z - point.Z - model.Rest[chain.End].Z + rest.Z);
     }
 
     private static (Matrix3x2 SetupInverse, Matrix3x2 Frame) TargetFrames(ResolvedModel model, EvaluatedPose pose, ModelChain chain)
@@ -103,7 +103,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         return (setupInverse, frame);
     }
 
-    private ChainResult Solve(string id, Vector3 target, int bend)
+    private ChainResult Solve(string id, Vector3f target, int bend)
     {
         Ensure.Finite(target);
 

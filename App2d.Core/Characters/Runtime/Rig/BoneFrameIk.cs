@@ -49,7 +49,7 @@ internal static class BoneFrameIk
         return length;
     }
 
-    internal static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 target, int bend, Vector2f zeroTargetDirection)
+    internal static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3f target, int bend, Vector2f zeroTargetDirection)
     {
         var root = pose.Controls[chain.Root].Frame.Matrix;
         var joint = pose.Controls[chain.Joint].Frame.Matrix;

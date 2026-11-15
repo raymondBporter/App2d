@@ -34,12 +34,12 @@ public sealed record PartMesh
     }
 
     /// <summary>The geometry as a plain indexed mesh, with no outline or thickness.</summary>
-    public IndexedMesh3D ToIndexedMesh() => new([.. Vertices.Select(v => v.ToVector3())], Triangles);
+    public IndexedMesh3D ToIndexedMesh() => new([.. Vertices], Triangles);
 
     /// <summary>Extrudes an XY outline around its physical Z; the resulting geometry owns no material.</summary>
     public static PartMesh Extrude(IEnumerable<Vector3f> outline, float thickness)
     {
-        var points = outline.Select(p => p.ToVector3()).ToList();
+        var points = outline.ToList();
         Ensure.ThrowIf(points.Count < 3, "An extrusion needs an outline.");
         Ensure.Positive(thickness);
         points = MeshGenerators3D.CounterClockwise(points);
@@ -54,9 +54,9 @@ public sealed record PartMesh
         }
         return new()
         {
-            Outline = [.. points.Select(p => new Vector3f(p))],
+            Outline = [.. points],
             Thickness = thickness,
-            Vertices = [.. solid.Vertices.Select(v => new Vector3f(v))],
+            Vertices = [.. solid.Vertices],
             Triangles = [.. solid.Triangles],
         };
     }

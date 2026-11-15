@@ -20,7 +20,7 @@ public static class PartAttachment2D
     /// The carrier a part attaches to: its bone's frame placed at control A, or the frame whose +Y runs from A toward B
     /// (unit length for shapes, the full A to B span for curves, screen up without B or when A and B coincide).
     /// </summary>
-    public static LayeredFrame2D Carrier(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null)
+    public static LayeredFrame2D Carrier(PartGeometry part, Func<string, Vector3f> world, Func<string, LayeredFrame2D>? bone = null)
     {
         var origin = world(part.A);
         var direction = part.B is { } end ? (world(end) - origin).XY : Vector2f.Zero;
@@ -38,7 +38,7 @@ public static class PartAttachment2D
     }
 
     /// <summary>Where a part's geometry lands: its attachment on its carrier.</summary>
-    public static LayeredFrame2D FrameOf(PartGeometry part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null)
+    public static LayeredFrame2D FrameOf(PartGeometry part, Func<string, Vector3f> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3f>? rest = null)
     {
         var stretch = 1f;
         if (part.Stretch && part.B is { } toward && rest is not null)
@@ -50,17 +50,17 @@ public static class PartAttachment2D
             new(part.OffsetX + part.Along, part.OffsetY), part.Layer).Then(Carrier(part, world, bone));
     }
 
-    internal static LayeredFrame2D BindingFrame(PartPointBinding binding, Func<string, Vector3> world)
+    internal static LayeredFrame2D BindingFrame(PartPointBinding binding, Func<string, Vector3f> world)
     {
         var origin = world(binding.Control);
-        var direction = binding.Toward is { } toward ? world(toward) - origin : Vector3.UnitY;
+        var direction = binding.Toward is { } toward ? world(toward) - origin : Vector3f.UnitY;
         var up = new Vector2f(direction.X, direction.Y);
         up = up.LengthSquared() > 1e-10f ? Vector2f.Normalize(up) : Vector2f.UnitY;
         return LayeredFrame2D.FromYAxis(origin, up);
     }
 
     /// <summary>A drawn rest point carried by its bound control, keeping its layer offset from that control.</summary>
-    internal static Vector3 BoundPoint(PartPointBinding binding, Vector3 drawnRest, Func<string, Vector3> world, Func<string, Vector3> rest)
+    internal static Vector3f BoundPoint(PartPointBinding binding, Vector3f drawnRest, Func<string, Vector3f> world, Func<string, Vector3f> rest)
     {
         var before = BindingFrame(binding, rest);
         var now = BindingFrame(binding, world);
@@ -68,7 +68,7 @@ public static class PartAttachment2D
     }
 
     /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
-    public static Vector2f  ArtworkPoint(PartGeometry part, int index, Vector2f target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
+    public static Vector2f  ArtworkPoint(PartGeometry part, int index, Vector2f target, Func<string, Vector3f> world, Func<string, Vector3f> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
         var art = binding is null ? FrameOf(part, world, bone) : FrameOf(part, rest, restBone);

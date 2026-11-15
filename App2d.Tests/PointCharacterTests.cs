@@ -38,23 +38,23 @@ public sealed class PointCharacterTests
     public void UsesActualAdaptiveTimesAndPlainXyzCoordinates()
     {
         var clip = Library().Clips["motion"];
-        Span<Vector3> pose = stackalloc Vector3[1];
+        Span<Vector3f> pose = stackalloc Vector3f[1];
         clip.Sample(.125, pose);
-        Assert.Equal(new Vector3(-2.5f, 17.5f, 112.5f), pose[0]);
+        Assert.Equal(new Vector3f(-2.5f, 17.5f, 112.5f), pose[0]);
         clip.Sample(.625, pose);
-        Assert.Equal(new Vector3(5, 25, 120), pose[0]);
+        Assert.Equal(new Vector3f(5, 25, 120), pose[0]);
     }
     [Fact]
     public void LoopWrapAndExplicitEndpointHoldAreDifferentOperations()
     {
         var clip = Library().Clips["motion"];
-        Span<Vector3> pose = stackalloc Vector3[1];
+        Span<Vector3f> pose = stackalloc Vector3f[1];
         clip.Sample(1, pose);
         Assert.Equal(clip.Read(0, 0), pose[0]);
         clip.Sample(1, pose, holdEnd: true);
         Assert.Equal(clip.Read(2, 0), pose[0]);
         clip.Sample(-.375, pose);
-        Assert.Equal(new Vector3(5, 25, 120), pose[0]);
+        Assert.Equal(new Vector3f(5, 25, 120), pose[0]);
         var once = Library(false).Clips["motion"];
         once.Sample(100, pose);
         Assert.Equal(once.Read(2, 0), pose[0]);
@@ -65,7 +65,7 @@ public sealed class PointCharacterTests
         foreach (var loop in new[] { false, true })
         {
             var clip = Library(loop, [0, 1 - 1e-10, 1 + 1e-10]).Clips["motion"];
-            var pose = new Vector3[1];
+            var pose = new Vector3f[1];
             clip.Sample(1, pose, holdEnd: true);
             Assert.Equal(clip.Read(2, 0), pose[0]);
             clip.Sample(100, pose, holdEnd: true);
@@ -79,7 +79,7 @@ public sealed class PointCharacterTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => Library(times: [0, 0, 1]));
         Assert.Throws<InvalidDataException>(() => Library(times: [0, .25, .9]));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Sample(double.NaN, new Vector3[1]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Sample(double.NaN, new Vector3f[1]));
         Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Read(3, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Read(0, 1));
     }
@@ -108,10 +108,10 @@ public sealed class PointCharacterTests
             }
             """;
         var original = Library(pointsJson: points, names: ["root", "hand"]).Clips["motion"];
-        Assert.Equal(new Vector3(1, 2, 3), original.Read(0, 1));
-        Assert.Equal(new Vector3(-5, 15, 110), original.Read(0, 0));
+        Assert.Equal(new Vector3f(1, 2, 3), original.Read(0, 1));
+        Assert.Equal(new Vector3f(-5, 15, 110), original.Read(0, 0));
         var edited = Library(pointsJson: points.Replace("[1,2,3]", "[11,22,33]"), names: ["root", "hand"]).Clips["motion"];
-        Assert.Equal(new Vector3(11, 22, 33), edited.Read(0, 1));
+        Assert.Equal(new Vector3f(11, 22, 33), edited.Read(0, 1));
         Assert.Equal(original.Read(0, 0), edited.Read(0, 0));
     }
 
@@ -126,7 +126,7 @@ public sealed class PointCharacterTests
             Assert.Equal(entry.GetProperty("clipCount").GetInt32(), library.Clips.Count);
             foreach (var clip in library.Clips.Values)
             {
-                var pose = new Vector3[library.PointNames.Count];
+                var pose = new Vector3f[library.PointNames.Count];
                 clip.Sample(clip.Duration / 2, pose);
                 Assert.All(pose, p => Assert.True(float.IsFinite(p.X) && float.IsFinite(p.Y) && float.IsFinite(p.Z)));
             }
@@ -136,7 +136,7 @@ public sealed class PointCharacterTests
     public void SamplingDoesNotAllocatePerFrameArrays()
     {
         var clip = Library().Clips["motion"];
-        var pose = new Vector3[1];
+        var pose = new Vector3f[1];
         for (var i = 0; i < 100; i++)
         {
             clip.Sample(.3, pose);

@@ -165,7 +165,7 @@ public sealed class EquippablePieceTests : IDisposable
                     var foot = actor.World(left ? Humanoid.LeftFoot : Humanoid.RightFoot);
                     var knee = actor.World(left ? Humanoid.LeftKnee : Humanoid.RightKnee);
                     var placement = PartPlacement3D.Placement(attachment, actor.Socket(attachment.Socket));
-                    var origin = placement.TransformPoint(Vector3.Zero);
+                    var origin = placement.TransformPoint(Vector3f.Zero);
                     TestModels.Near(foot with { Z = 0 }, origin with { Z = 0 });
                     var axis = Vector2f.Normalize(new(placement.YAxis.X, placement.YAxis.Y));
                     var direction = Vector2f.Normalize(new(knee.X - foot.X, knee.Y - foot.Y));

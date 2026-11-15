@@ -37,7 +37,7 @@ public static class PuppetMotionConverter
             }
         }
 
-        Vector3 Rest(string control) => resolved.Rest[control];
+        Vector3f Rest(string control) => resolved.Rest[control];
         var clip = new MotionClip
         {
             Id = id,
@@ -50,7 +50,7 @@ public static class PuppetMotionConverter
             Travel = new() { Scale = travelScale },
         };
         var tracks = new Dictionary<(string, string), ClipTrack>();
-        void Add(string kind, string target, float time, Vector3 delta)
+        void Add(string kind, string target, float time, Vector3f delta)
         {
             if (!tracks.TryGetValue((kind, target), out var track))
             {
@@ -70,8 +70,8 @@ public static class PuppetMotionConverter
         foreach (var key in motion.Keys)
         {
             var position = key.Position.XYZ;
-            var locomotion = new Vector3(position.X, 0, 0);
-            Vector3 World(string control) => (key.Points.TryGetValue(control, out var p) ? p.XYZ : Rest(control)) + position;
+            var locomotion = new Vector3f(position.X, 0, 0);
+            Vector3f World(string control) => (key.Points.TryGetValue(control, out var p) ? p.XYZ : Rest(control)) + position;
             clip.Travel.Keys.Add(new()
             {
                 Time = key.Time,
@@ -80,14 +80,14 @@ public static class PuppetMotionConverter
             foreach (var control in model.Controls.Where(c => !solved.Contains(c.Id)))
             {
                 var parentWorld = control.Parent is null ? locomotion : World(control.Parent);
-                var parentRest = control.Parent is null ? Vector3.Zero : Rest(control.Parent);
+                var parentRest = control.Parent is null ? Vector3f.Zero : Rest(control.Parent);
                 Add(MotionClip.TranslateKind, control.Id, key.Time, World(control.Id) - parentWorld - (Rest(control.Id) - parentRest));
             }
             foreach (var chain in model.IkChains)
             {
                 var inLocomotion = chain.Frame == CharacterModel.Locomotion;
                 var frameWorld = inLocomotion ? locomotion : World(chain.Frame);
-                var frameRest = inLocomotion ? Vector3.Zero : Rest(chain.Frame);
+                var frameRest = inLocomotion ? Vector3f.Zero : Rest(chain.Frame);
                 Add(MotionClip.TargetKind, chain.Id, key.Time, World(chain.End) - frameWorld - (Rest(chain.End) - frameRest));
             }
         }
@@ -102,7 +102,7 @@ public static class PuppetMotionConverter
                 Chain = chain.Id,
                 Start = contact.Start,
                 Finish = contact.Finish,
-                Target = PuppetPoint.From(contact.Target.XYZ - new Vector3(start, 0, 0) - Rest(chain.End))
+                Target = PuppetPoint.From(contact.Target.XYZ - new Vector3f(start, 0, 0) - Rest(chain.End))
             });
         }
         clip.Validate(resolved);

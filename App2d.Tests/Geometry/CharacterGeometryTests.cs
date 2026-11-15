@@ -26,8 +26,8 @@ public sealed class CharacterGeometryTests
             Assert.Equal(1f, part.ScaleX);
             Assert.Equal(1f, part.ScaleY);
             Assert.True(part.RenderMaterial.StrokeWidth > 0);
-            Assert.Equal(rest[part.A] + new Vector3(0, 0, part.Layer), Authored.TestModels.DrawPoint(points, 0));
-            Assert.True(Vector3.Distance(rest[part.B!] + new Vector3(0, 0, part.Layer), Authored.TestModels.DrawPoint(points, points.Count - 1)) < 1e-6f);
+            Assert.Equal(rest[part.A] + new Vector3f(0, 0, part.Layer), Authored.TestModels.DrawPoint(points, 0));
+            Assert.True(Vector3f.Distance(rest[part.B!] + new Vector3f(0, 0, part.Layer), Authored.TestModels.DrawPoint(points, points.Count - 1)) < 1e-6f);
         }
     }
 
@@ -50,7 +50,7 @@ public sealed class CharacterGeometryTests
         var part = new PartGeometry { A = "origin", Geometry = shape };
         var vertices = new Vector2f[shape.GetOutlineVertCount(48)];
         shape.GetOutlineVerts(vertices, 48);
-        Assert.Equal(vertices, PartContours2D.Contour(part, _ => Vector3.Zero).Select(p => new Vector2f(p.X, p.Y)));
+        Assert.Equal(vertices, PartContours2D.Contour(part, _ => Vector3f.Zero).Select(p => new Vector2f(p.X, p.Y)));
     }
 
     [Fact]
@@ -68,15 +68,15 @@ public sealed class CharacterGeometryTests
             OffsetY = .25f,
             Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .1f },
         };
-        static Vector3 World(string id) => id == "a" ? new(3, 4, 0) : new(3, 6, 0);
+        static Vector3f World(string id) => id == "a" ? new(3, 4, 0) : new(3, 6, 0);
         var points = PartContours2D.Contour(part, World);
-        Assert.True(Vector3.Distance(new(5, 4.5f, 0), points[0]) < 1e-6f);
-        Assert.True(Vector3.Distance(new(4, 4.5f, 0), points[1]) < 1e-6f);
+        Assert.True(Vector3f.Distance(new(5, 4.5f, 0), points[0]) < 1e-6f);
+        Assert.True(Vector3f.Distance(new(4, 4.5f, 0), points[1]) < 1e-6f);
         Assert.All(points, p => Assert.InRange(PartPicking2D.Distance(part, World, p), 0, 1e-5f));
 
         var thick = part with { Material = part.RenderMaterial with { StrokeWidth = .8f } };
         Assert.Equal(points, PartContours2D.Contour(thick, World));
-        var probe = new Vector3(4.5f, 4.7f, 0);
+        var probe = new Vector3f(4.5f, 4.7f, 0);
         Assert.True(PartPicking2D.Distance(part, World, probe) > 1);
         Assert.True(PartPicking2D.Distance(thick, World, probe) < 1);
         var drawing = new PuppetDrawing();
@@ -96,7 +96,7 @@ public sealed class CharacterGeometryTests
             Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .2f },
             Geometry = new LineSegmentCurve2D { Start = new(.5f, 0), End = new(.5f, 1) }.Validated()
         };
-        static Vector3 World(string id) => id == "a" ? new(2, 3, 0) : new(2, 5, 0);
+        static Vector3f World(string id) => id == "a" ? new(2, 3, 0) : new(2, 5, 0);
         Assert.Equal(0, PartPicking2D.Distance(part, World, new(3, 4, 0)), 5);
         Assert.Equal(5, PartPicking2D.Distance(part, World, new(4, 4, 0)), 5);
         Assert.Equal(0, PartPicking2D.Distance(part, _ => new(2, 3, 0), new(2, 3, 0)), 5);
@@ -132,25 +132,25 @@ public sealed class CharacterGeometryTests
 
         if (kind == "ellipse")
         {
-            Assert.True(Vector3.Distance(new(12, 17, 0), contour[0]) < .00001f);
-            Assert.True(Vector3.Distance(new(13, 19, 0), contour[12]) < .00001f);
+            Assert.True(Vector3f.Distance(new(12, 17, 0), contour[0]) < .00001f);
+            Assert.True(Vector3f.Distance(new(13, 19, 0), contour[12]) < .00001f);
         }
         else
         {
             Assert.True(PartPicking2D.Distance(part, World, new(13, 17, 0)) > 1);
         }
-        static Vector3 World(string id) => id == "a" ? new(10, 20, 3) : new(12, 20, 6);
+        static Vector3f World(string id) => id == "a" ? new(10, 20, 3) : new(12, 20, 6);
     }
 
     [Fact]
     public void StrokePickingKeepsItsMinimumWidthAndPointLikeSegmentTolerance()
     {
         var part = new PartGeometry { Geometry = new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(), A = "a", B = "b", Material = RenderMaterialDefinition2D.Ink with { StrokeWidth = .01f }, Layer = 2 };
-        static Vector3 World(string id) => id == "a" ? default : new(.000001f, 0, 3);
+        static Vector3f World(string id) => id == "a" ? default : new(.000001f, 0, 3);
         Assert.Equal(1, PartPicking2D.Distance(part, World, new(0, .06f, 100)), 5);
         var contour = PartContours2D.Contour(part, World);
-        Assert.Equal(Vector3.Zero, contour[0]);
-        Assert.Equal(new Vector3(.000001f, 0, 0), contour[1]);
+        Assert.Equal(Vector3f.Zero, contour[0]);
+        Assert.Equal(new Vector3f(.000001f, 0, 0), contour[1]);
         Assert.Equal(2, contour.LayerAt(0));
         Assert.Equal(5, contour.LayerAt(1));
     }

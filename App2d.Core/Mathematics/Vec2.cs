@@ -16,6 +16,8 @@ public readonly record struct Vec2<TReal>(TReal X, TReal Y) : IVector<Vec2<TReal
 
     public Vec2(Vec2<float> value) : this(TReal.CreateTruncating(value.X), TReal.CreateTruncating(value.Y)) { }
 
+    public Vec2(Vector2f value) : this(TReal.CreateTruncating(value.X), TReal.CreateTruncating(value.Y)) { }
+
     public Vec2(Vector2 value) : this(TReal.CreateTruncating(value.X), TReal.CreateTruncating(value.Y)) { }
 
     public static int Dimension => 2;
@@ -23,6 +25,8 @@ public readonly record struct Vec2<TReal>(TReal X, TReal Y) : IVector<Vec2<TReal
     public static Vec2<TReal> One => new(TReal.One, TReal.One);
     public static Vec2<TReal> UnitX => new(TReal.One, TReal.Zero);
     public static Vec2<TReal> UnitY => new(TReal.Zero, TReal.One);
+    public static Vec2<TReal> NegativeInfinity => new(TReal.NegativeInfinity);
+    public static Vec2<TReal> PositiveInfinity => new(TReal.PositiveInfinity);
     public static Vec2<TReal> FromCoordinates(ReadOnlySpan<TReal> coordinates) => new(coordinates[0], coordinates[1]);
 
     public TReal this[int index] => index switch
@@ -106,15 +110,97 @@ public readonly record struct Vec2<TReal>(TReal X, TReal Y) : IVector<Vec2<TReal
     public static Vec2<TReal> Clamp(Vec2<TReal> value, Vec2<TReal> minimum, Vec2<TReal> maximum) =>
         IVectorExtensions.Clamp<Vec2<TReal>, TReal>(value, minimum, maximum);
 
-    /// <summary>Unit vector at an angle in radians, counter-clockwise from +X in Y-up space.</summary>
-    public static Vec2<TReal> FromAngle(TReal angleRadians)
-    {
-        if (typeof(TReal) == typeof(float))
-            Validation.Ensure.Finite(angleRadians);
+    /// <summary>Removes the component parallel to a unit normal.</summary>
+    public static Vec2<TReal> Reject(Vec2<TReal> value, Vec2<TReal> unitNormal) =>
+        IVectorExtensions.Reject<Vec2<TReal>, TReal>(value, unitNormal);
 
+    /// <summary>
+    /// Refracts a unit direction through a unit normal pointing toward the incident medium.
+    /// Indices must be finite and positive. Total internal reflection returns false and a zero vector.
+    /// </summary>
+    public static bool TryRefract(Vec2<TReal> direction, Vec2<TReal> incidentNormal,
+        TReal fromIndex, TReal toIndex, out Vec2<TReal> transmitted)
+    {
+        Validation.Ensure.Positive(fromIndex);
+        Validation.Ensure.Positive(toIndex);
+        var tangent = Reject(direction, incidentNormal);
+        // Preserve the input precision of the rejection, then widen narrower types before scaling.
+        if (typeof(TReal) == typeof(float) || typeof(TReal) == typeof(Half))
+        {
+            var refracted = Vec2<double>.TryRefractTangent(tangent.ToVector2d(), incidentNormal.ToVector2d(),
+                double.CreateTruncating(fromIndex), double.CreateTruncating(toIndex), out var wide);
+            transmitted = new(TReal.CreateTruncating(wide.X), TReal.CreateTruncating(wide.Y));
+            return refracted;
+        }
+
+        return TryRefractTangent(tangent, incidentNormal, fromIndex, toIndex, out transmitted);
+    }
+
+    internal static bool TryRefractTangent(Vec2<TReal> tangent, Vec2<TReal> normal,
+        TReal fromIndex, TReal toIndex, out Vec2<TReal> transmitted)
+    {
+        var ratio = fromIndex / toIndex;
+        if (TReal.IsPositiveInfinity(ratio))
+        {
+            // Separate the ratio into a bounded mantissa and a power of two to keep zero and tiny tangents usable.
+            var fromExponent = TReal.ILogB(fromIndex);
+            var toExponent = TReal.ILogB(toIndex);
+            ratio = TReal.ScaleB(fromIndex, -fromExponent) / TReal.ScaleB(toIndex, -toExponent);
+            var exponent = fromExponent - toExponent;
+            tangent = new(TReal.ScaleB(tangent.X, exponent), TReal.ScaleB(tangent.Y, exponent));
+        }
+        tangent *= ratio;
+
+        var normalSquared = TReal.One - tangent.LengthSquared();
+        if (normalSquared < TReal.Zero)
+        {
+            transmitted = Zero;
+            return false;
+        }
+
+        transmitted = tangent - normal * TReal.Sqrt(normalSquared);
+        return true;
+    }
+
+    /// <summary>Unit vector at an angle in radians, counter-clockwise from +X in Y-up space.</summary>
+    public static Vec2<TReal> FromAngle(TReal angleRadians) =>
+        typeof(TReal) == typeof(float) ? Direction(angleRadians) : FromAngleUnchecked(angleRadians);
+
+    /// <summary>Returns the unit direction at a finite angle. Zero radians points along +X.</summary>
+    public static Vec2<TReal> Direction(TReal angleRadians) => FromAngleUnchecked(Validation.Ensure.Finite(angleRadians));
+
+    private static Vec2<TReal> FromAngleUnchecked(TReal angleRadians)
+    {
         var (sin, cos) = TReal.SinCos(angleRadians);
         return new(cos, sin);
     }
+
+    /// <summary>Unit vector at a finite angle in degrees, counter-clockwise from +X in Y-up space.</summary>
+    public static Vec2<TReal> FromAngleDegrees(TReal angleDegrees) =>
+        Direction(Angles.DegreesToRadians(angleDegrees));
+
+    /// <summary>Vector from a finite, nonnegative radius and a finite angle in radians.</summary>
+    public static Vec2<TReal> FromPolar(TReal radius, TReal angleRadians) =>
+        Polar<TReal>.ToCartesian(radius, angleRadians);
+
+    public Polar<TReal> ToPolar() => Polar<TReal>.FromCartesian(this);
+
+    /// <summary>Heading in radians from +X, counter-clockwise in Y-up space.</summary>
+    [JsonIgnore]
+    public TReal AngleRadians => TReal.Atan2(Y, X);
+
+    /// <summary>Rotates counter-clockwise about the origin.</summary>
+    public Vec2<TReal> Rotate(TReal radians)
+    {
+        if (radians == TReal.Zero)
+            return this;
+
+        var (sin, cos) = TReal.SinCos(radians);
+        return new(X * cos - Y * sin, X * sin + Y * cos);
+    }
+
+    /// <summary>Rotates counter-clockwise about a pivot.</summary>
+    public Vec2<TReal> Rotate(TReal radians, Vec2<TReal> pivot) => pivot + (this - pivot).Rotate(radians);
 
     /// <summary>The perpendicular dot product, positive for a counter-clockwise turn in Y-up space.</summary>
     public TReal Cross(Vec2<TReal> other) => X * other.Y - Y * other.X;
@@ -157,7 +243,7 @@ public readonly record struct Vec2<TReal>(TReal X, TReal Y) : IVector<Vec2<TReal
         : new(float.CreateTruncating(X), float.CreateTruncating(Y));
 
     public Vec2<double> ToVector2d() => new(double.CreateTruncating(X), double.CreateTruncating(Y));
-    public Vec2<float> ToVector2f() => new(float.CreateTruncating(X), float.CreateTruncating(Y));
+    public Vector2f ToVector2f() => new(ToVector2());
     public override string ToString() => typeof(TReal) == typeof(float) ? ToVector2().ToString() : $"<{X}, {Y}>";
 
     // Only called from the float paths above, where the sequential layouts agree.

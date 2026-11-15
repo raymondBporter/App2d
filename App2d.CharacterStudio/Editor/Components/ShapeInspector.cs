@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using ImGuiNET;
@@ -15,10 +16,10 @@ internal static class ShapeInspector
         // The widget shows degrees; shapes store radians.
         void AngleField(float angleRadians, Func<float, IShape2D> withAngle)
         {
-            var degrees = float.RadiansToDegrees(angleRadians);
+            var degrees = Angles.RadiansToDegrees(angleRadians);
             if (Ui.Drag("Angle (deg)", ref degrees, .5f, -180, 180))
             {
-                Drag(withAngle(float.DegreesToRadians(degrees)));
+                Drag(withAngle(Angles.DegreesToRadians(degrees)));
             }
         }
         void RectangleFields(Vector2f centre, Vector2f size, float? angleRadians, Func<Vector2f, Vector2f, float, IShape2D> fromSize)

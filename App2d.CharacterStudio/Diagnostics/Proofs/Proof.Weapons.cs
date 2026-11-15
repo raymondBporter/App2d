@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
@@ -23,8 +24,8 @@ internal sealed partial class ProofRenders
                 {
                     drawing.Clear();
                     var (twist, tilt) = angles[column];
-                    var rotation = Matrix4x4.CreateRotationX(float.DegreesToRadians(twist)) * Matrix4x4.CreateRotationY(float.DegreesToRadians(tilt));
-                    drawing.AddAttachment(catalog.Parts[props[row]], new(Vector3.Zero, Vector3.Transform(Vector3.UnitX, rotation), Vector3.Transform(Vector3.UnitY, rotation), Vector3.Transform(Vector3.UnitZ, rotation)));
+                    var rotation = Matrix4x4.CreateRotationX(Angles.DegreesToRadians(twist)) * Matrix4x4.CreateRotationY(Angles.DegreesToRadians(tilt));
+                    drawing.AddAttachment(catalog.Parts[props[row]], new(Vector3f.Zero, Vector3f.Transform(Vector3f.UnitX, rotation), Vector3f.Transform(Vector3f.UnitY, rotation), Vector3f.Transform(Vector3f.UnitZ, rotation)));
                     _renderer.DrawActor(drawing, LayeredMeshRenderer.Projection(1200, 750, new(column * 200 + 65, row * 150 + 75), 90), Matrix.Identity);
                 }
             }

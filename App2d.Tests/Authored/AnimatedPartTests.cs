@@ -79,15 +79,15 @@ public sealed class AnimatedPartTests
             breaks(broken);
             return Assert.Throws<InvalidDataException>(() => broken.Validate(model)).Message;
         }
-        Assert.Contains("path: person > attachments > tail > part tail > exposed", Error(resolved, c => ClipAuthoring.SetKey(c, new(MotionClip.TranslateKind, "tail/root"), 0, Vector3.UnitX), resolved));
-        Assert.Contains("path: person > attachments > mane", Error(resolved, c => ClipAuthoring.SetKey(c, new(MotionClip.TranslateKind, "mane/root"), 0, Vector3.UnitX), resolved));
+        Assert.Contains("path: person > attachments > tail > part tail > exposed", Error(resolved, c => ClipAuthoring.SetKey(c, new(MotionClip.TranslateKind, "tail/root"), 0, Vector3f.UnitX), resolved));
+        Assert.Contains("path: person > attachments > mane", Error(resolved, c => ClipAuthoring.SetKey(c, new(MotionClip.TranslateKind, "mane/root"), 0, Vector3f.UnitX), resolved));
         Assert.Contains("binds no expression 'curl'", Error(resolved, c => ClipAuthoring.SetPlay(c, Instance, 0, "curl"), resolved));
         Assert.Contains("sockets or chains", Error(resolved, c => c.Tracks.Add(new() { Kind = MotionClip.TargetKind, Target = "tail/tip" }), resolved));
         // A static instance exposes nothing and plays nothing.
         var glove = PartAssetTests.Glove();
         ModelAuthoring.AddAttachment(person, "glove", Humanoid.LeftHandSocket, Library(tail, glove), "glove");
         var withGlove = ResolvedModel.From(person, null, Library(tail, glove));
-        Assert.Contains("static part 'glove'", Error(withGlove, c => ClipAuthoring.SetKey(c, new(MotionClip.TranslateKind, "glove/palm"), 0, Vector3.UnitX), withGlove));
+        Assert.Contains("static part 'glove'", Error(withGlove, c => ClipAuthoring.SetKey(c, new(MotionClip.TranslateKind, "glove/palm"), 0, Vector3f.UnitX), withGlove));
         Assert.Contains("plays nothing", Error(withGlove, c => ClipAuthoring.SetPlay(c, "glove", 0, "wag"), withGlove));
         // A group may own an instance whole; an instance default must be a bound word.
         person.Groups.Add(new() { Id = "tail-owner", Targets = [Instance] });
@@ -119,7 +119,7 @@ public sealed class AnimatedPartTests
         Assert.False(evaluated.Hidden);
         // Drawing, contours and picking read the nested pose: the tuft is where the tip is, in the wearer's frame.
         var contour = PartContours2D.Contour(tail.Geometry[1], evaluated);
-        var center = contour.Aggregate(Vector3.Zero, (a, b) => a + b) / contour.Count;
+        var center = contour.Aggregate(Vector3f.Zero, (a, b) => a + b) / contour.Count;
         TestModels.Near(evaluated.World("tip"), center, 1e-3f);
         Assert.Equal(0, PartPicking2D.Distance(resolved.Attachment(Instance)!, pose, evaluated.World("tip")), 3);
         // Seeking is pure: the same instant again, and after a later one, gives the same pose; part markers reach nothing.
@@ -149,9 +149,9 @@ public sealed class AnimatedPartTests
         Assert.Equal(plain.Angles["root"], evaluated.Pose.Angles["root"], 5);
         TestModels.Near(plain.Points["mid"], evaluated.Pose.Points["mid"]);
         var midFrame = plain.Placement("mid");
-        TestModels.Near(midFrame.At(new Vector3(.07f, .2f + .02f, 0)), evaluated.Pose.Points["tip"], 1e-5f);
+        TestModels.Near(midFrame.At(new Vector3f(.07f, .2f + .02f, 0)), evaluated.Pose.Points["tip"], 1e-5f);
         // The pose inverse on a nested control writes the namespaced key that puts it at the asked world position.
-        var target = evaluated.World("tip") + new Vector3(.03f, -.05f, 0);
+        var target = evaluated.World("tip") + new Vector3f(.03f, -.05f, 0);
         var channel = ClipAuthoring.Pose(resolved, clip, pose, .3f, "tail/tip", target);
         Assert.Equal(new App2d.CharacterStudio.Authoring.Animation.Channel(MotionClip.TranslateKind, "tail/tip"), channel);
         TestModels.Near(target, PoseEvaluator.Sample(resolved, clip, .3).Attachments[Instance].World("tip"), 1e-4f);
@@ -327,7 +327,7 @@ public sealed class AnimatedPartTests
                 Assert.Equal(width, height, 3);
                 // The default wag has turned the root at its first key; the tip still lands at its nested position with X doubled.
                 Assert.NotEqual(rest.Points["tip"], evaluated.Pose.Points["tip"]);
-                TestModels.Near(socket.At(new Vector3(evaluated.Pose.Points["tip"].X * 2, evaluated.Pose.Points["tip"].Y, 0)), evaluated.World("tip"));
+                TestModels.Near(socket.At(new Vector3f(evaluated.Pose.Points["tip"].X * 2, evaluated.Pose.Points["tip"].Y, 0)), evaluated.World("tip"));
             }
             else
             {
@@ -354,7 +354,7 @@ public sealed class AnimatedPartTests
         Assert.Equal(squashed.Min(p => p.Y), squashed.Max(p => p.Y), 4);
         Assert.False(pose.Visible(resolved.Parts.First(p => p.Id == Humanoid.Body)));
         Assert.True(PoseEvaluator.Sample(resolved, clip, .6).Visible(resolved.Parts.First(p => p.Id == Humanoid.Body)));
-        Assert.Contains("unknown part", Assert.Throws<InvalidDataException>(() => { ClipAuthoring.SetKey(clip, new(MotionClip.FitKind, "halo"), 0, Vector3.Zero); clip.Validate(resolved); }).Message);
+        Assert.Contains("unknown part", Assert.Throws<InvalidDataException>(() => { ClipAuthoring.SetKey(clip, new(MotionClip.FitKind, "halo"), 0, Vector3f.Zero); clip.Validate(resolved); }).Message);
         clip.Tracks.RemoveAll(t => t.Target == "halo");
         Assert.Contains("0 (hidden) or 1 (shown)", Assert.Throws<InvalidDataException>(() => { ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, Humanoid.Head), 0, new(.5f, 0, 0)); clip.Validate(); }).Message);
     }

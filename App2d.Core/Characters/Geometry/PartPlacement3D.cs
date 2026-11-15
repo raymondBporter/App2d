@@ -22,8 +22,8 @@ public static class PartPlacement3D
     /// local Y and turns further about Z (radians, applied in that order) before the placement carries the result, so
     /// a mirrored or scaled planar frame mirrors or scales the prop with it. Drawing layers are carried separately.
     /// </summary>
-    public static Frame3D Lift(LayeredFrame2D placement, Vector3 orientation) =>
-        orientation == Vector3.Zero ? Extend(placement) : Frame3D.FromRotation(orientation).Then(Extend(placement));
+    public static Frame3D Lift(LayeredFrame2D placement, Vector3f orientation) =>
+        orientation == Vector3f.Zero ? Extend(placement) : Frame3D.FromRotation(orientation).Then(Extend(placement));
 
     /// <summary>
     /// A lifted frame's X axis back in gameplay XY: the unit projection, or the facing when the axis points straight
@@ -37,8 +37,8 @@ public static class PartPlacement3D
 
     /// <summary>Asset coordinates relative to its chosen pivot, in authored units.</summary>
     public static Frame3D Local(Part part) => new(
-        -(part.Point(part.Pivot) ?? throw new InvalidDataException("Unknown part pivot.")).ToVector3() * part.Scale,
-        Vector3.UnitX * part.Scale, Vector3.UnitY * part.Scale, Vector3.UnitZ * part.Scale);
+        -(part.Point(part.Pivot) ?? throw new InvalidDataException("Unknown part pivot.")) * part.Scale,
+        Vector3f.UnitX * part.Scale, Vector3f.UnitY * part.Scale, Vector3f.UnitZ * part.Scale);
 
     /// <summary>Physical instance and asset placement, independent of their drawing layers.</summary>
     public static Frame3D Placement(ResolvedAttachment attachment, Frame3D socket) =>
@@ -46,9 +46,9 @@ public static class PartPlacement3D
 
     /// <summary>A geometry frame carried in 3D. Physical Z rotates with the geometry; layer order does not enter the frame.</summary>
     public static Frame3D GeometryFrame(LayeredFrame2D local, Frame3D spatial, float physicalZ = 0) =>
-        Extend(local).WithOrigin(new(local.Frame.Origin.ToVector2(), physicalZ)).Then(spatial);
+        Extend(local).WithOrigin(new(local.Frame.Origin, physicalZ)).Then(spatial);
 
     /// <summary>A prop's local point in the world, with its grip on the frame's origin. The one transform art, hits and muzzles share.</summary>
-    public static Vector3 Point(Frame3D frame, Part prop, Vector3f local) =>
-        frame.TransformPoint((local.ToVector3() - (prop.Point(prop.Pivot) ?? throw new InvalidDataException("Unknown part pivot.")).ToVector3()) * prop.Scale);
+    public static Vector3f Point(Frame3D frame, Part prop, Vector3f local) =>
+        frame.TransformPoint((local - (prop.Point(prop.Pivot) ?? throw new InvalidDataException("Unknown part pivot."))) * prop.Scale);
 }

@@ -14,12 +14,12 @@ internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part?
     private RenderTarget2D? _target;
     private nint _image;
     private float _yaw = .55f, _pitch = .32f, _distance = 3.9f;
-    private Vector3 _lookAt;
+    private Vector3f _lookAt;
     private bool _perspective = true, _dragging, _orbiting;
     private int _selected;
     private string _dragMode = "View plane";
     private Plane _dragPlane;
-    private Vector3 _dragOffset;
+    private Vector3f _dragOffset;
 
     public void Draw(Vector2 available)
     {
@@ -50,10 +50,10 @@ internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part?
             _selected = _scene.Objects.ToList().FindIndex(o => o.Name == name);
         item = _scene.Objects[_selected];
         if (Ui.Combo("Drag on", _dragMode, ["View plane", "XY plane", "XZ plane", "YZ plane"]) is { } mode) _dragMode = mode;
-        var position = item.Position;
-        if (ImGui.DragFloat3("Position", ref position, .01f)) item.Position = position;
-        var angles = item.Rotation * (180f / MathF.PI);
-        if (ImGui.DragFloat3("Rotation", ref angles, .5f)) item.Rotation = angles * (MathF.PI / 180f);
+        var position = item.Position.ToVector3();
+        if (ImGui.DragFloat3("Position", ref position, .01f)) item.Position = new(position);
+        var angles = item.Rotation.RadiansToDegrees().ToVector3();
+        if (ImGui.DragFloat3("Rotation", ref angles, .5f)) item.Rotation = new Vector3f(angles).DegreesToRadians();
         if (ImGui.Button("Reset object")) item.Reset();
         ImGui.Spacing();
         ImGui.TextDisabled($"{item.Mesh.TriangleCount} triangles");
@@ -64,11 +64,11 @@ internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part?
 
     private Camera3D Camera(Vector2 size)
     {
-        var direction = new Vector3(MathF.Sin(_yaw) * MathF.Cos(_pitch), MathF.Sin(_pitch), MathF.Cos(_yaw) * MathF.Cos(_pitch));
+        var direction = new Vector3f(MathF.Sin(_yaw) * MathF.Cos(_pitch), MathF.Sin(_pitch), MathF.Cos(_yaw) * MathF.Cos(_pitch));
         var position = _lookAt + direction * _distance;
         var height = 2f * _distance * MathF.Tan(MathF.PI / 8);
-        return _perspective ? Camera3D.Perspective(position, _lookAt, Vector3.UnitY, size.X / size.Y)
-            : Camera3D.Orthographic(position, _lookAt, Vector3.UnitY, height * size.X / size.Y, height);
+        return _perspective ? Camera3D.Perspective(position, _lookAt, Vector3f.UnitY, size.X / size.Y)
+            : Camera3D.Orthographic(position, _lookAt, Vector3f.UnitY, height * size.X / size.Y, height);
     }
 
     private void Stage(Vector2 available)
@@ -95,8 +95,8 @@ internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part?
             if (picked is { } index)
             {
                 _selected = index;
-                var normal = _dragMode switch { "XY plane" => Vector3.UnitZ, "XZ plane" => Vector3.UnitY, "YZ plane" => Vector3.UnitX, _ => camera.Forward };
-                _dragPlane = new(normal, -Vector3.Dot(normal, hit));
+                var normal = _dragMode switch { "XY plane" => Vector3f.UnitZ, "XZ plane" => Vector3f.UnitY, "YZ plane" => Vector3f.UnitX, _ => camera.Forward };
+                _dragPlane = new(normal.ToVector3(), -Vector3f.Dot(normal, hit));
                 _dragOffset = _scene.Objects[index].Position - hit;
             }
         }
@@ -113,8 +113,8 @@ internal sealed class SpatialPreview(GraphicsDevice device, ImGuiHost gui, Part?
             _distance = Math.Clamp(_distance * MathF.Pow(1.12f, -io.MouseWheel), 1f, 16f);
             if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
             {
-                var right = Vector3.Normalize(Vector3.Cross(camera.Forward, Vector3.UnitY));
-                var up = Vector3.Normalize(Vector3.Cross(right, camera.Forward));
+                var right = Vector3f.Normalize(Vector3f.Cross(camera.Forward, Vector3f.UnitY));
+                var up = Vector3f.Normalize(Vector3f.Cross(right, camera.Forward));
                 _lookAt += (-right * io.MouseDelta.X + up * io.MouseDelta.Y) * (_distance * .0015f);
             }
         }

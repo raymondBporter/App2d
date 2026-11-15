@@ -36,7 +36,7 @@ internal static class CharacterUi
     }
 
     /// <summary>A rig point: X/Y position and its Z drawing layer.</summary>
-    public static bool LayeredPoint(string label, ref System.Numerics.Vector3 point, bool layerIsOffset = false)
+    public static bool LayeredPoint(string label, ref Vector3f point, bool layerIsOffset = false)
     {
         var xy = new Vector2f(point.X, point.Y);
         var moved = Ui.Drag2(label + " X / Y", ref xy);
@@ -44,7 +44,7 @@ internal static class CharacterUi
         var reordered = CharacterLayer(label + " layer", ref layer, offset: layerIsOffset);
         if (moved || reordered)
         {
-            point = new(xy.ToVector2(), layer.Order);
+            point = new(xy, layer.Order);
         }
 
         return moved || reordered;

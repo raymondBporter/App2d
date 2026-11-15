@@ -96,7 +96,7 @@ internal sealed partial class EditorSmoke
             s.Open(Walker);
             Check(s.AttachPart("shin-pad", "left-shin"), s);
             var pad = basis.Asset.Attachments[^1].Id;
-            Vector3 Mid(ResolvedModel m) => (m.Rest["left-knee"] + m.Rest["left-foot"]) / 2;
+            Vector3f Mid(ResolvedModel m) => (m.Rest["left-knee"] + m.Rest["left-foot"]) / 2;
             var standard = s.Assets.Resolve(Walker)!;
             var padAt = Placement(standard, PoseEvaluator.Rest(standard), pad).Origin;
             Record(Vector2f.Distance(new(padAt.X, padAt.Y), new(Mid(standard).X, Mid(standard).Y)) < 1e-4f, "the pad sits on the shin's midpoint socket at rest");
@@ -137,7 +137,7 @@ internal sealed partial class EditorSmoke
                     turned = MathF.Max(turned, MathF.Abs(pose.Angles["left-knee"] - walker.Nodes["left-knee"].RestAngle));
                 }
             }
-            Record(turned > .3f && worst < 1e-4f, $"through the walk and run the knee turns by up to {float.RadiansToDegrees(turned):0} degrees and the guard's frame stays a similarity (axes orthogonal and equal within {worst:E1}): no shear");
+            Record(turned > .3f && worst < 1e-4f, $"through the walk and run the knee turns by up to {Angles.RadiansToDegrees(turned):0} degrees and the guard's frame stays a similarity (axes orthogonal and equal within {worst:E1}): no shear");
             s.Open(basis.Asset.MotionSets[0].Roles["run"]);
             s.Seek(.35f);
             s.Selection.Select(attachment: guard);
@@ -247,7 +247,7 @@ internal sealed partial class EditorSmoke
             var keyed = s.Evaluate(Walker)!.Pose;
             var pivot = keyed.World(Humanoid.LeftUpperArmBone);
             var hand = keyed.World(Humanoid.LeftHand);
-            var folded = RigConstraintEvaluator.TargetDelta(model, keyed, chain, pivot + new Vector3(.04f, -.04f, 0));
+            var folded = RigConstraintEvaluator.TargetDelta(model, keyed, chain, pivot + new Vector3f(.04f, -.04f, 0));
             var inside = RigConstraintEvaluator.TargetDelta(model, keyed, chain, pivot + (hand - pivot) * .96f);
             Check(s.Edit(clip, () => ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, Humanoid.LeftArm), 0, folded)), s);
             var pose = s.Evaluate(Walker)!.Pose;
@@ -396,7 +396,7 @@ internal sealed partial class EditorSmoke
             var reopened = AuthoringWorkspace.Open(s.Assets.Root);
             var reopenedWalk = PoseEvaluator.Sample(reopened.Resolve(TallWalker)!, reopened.Clip(walkId)!.Asset, .3, repeat: true);
             var reopenedGuard = reopened.CompileEntity(WalkerGuard);
-            var same = liveWalk.Points.All(p => Vector3.Distance(p.Value, reopenedWalk.Points[p.Key]) < 1e-5f) && liveWalk.Attachments.Keys.SequenceEqual(reopenedWalk.Attachments.Keys);
+            var same = liveWalk.Points.All(p => Vector3f.Distance(p.Value, reopenedWalk.Points[p.Key]) < 1e-5f) && liveWalk.Attachments.Keys.SequenceEqual(reopenedWalk.Attachments.Keys);
             Record(reopened.LoadErrors.Count == 0 &&
                 reopened.Documents.All(d => reopened.Problems(d).Count == 0) &&
                 same && reopenedGuard?.Colliders.Select(c => c.Id).SequenceEqual(liveGuard.Colliders.Select(c => c.Id)) == true &&
@@ -557,7 +557,7 @@ internal sealed partial class EditorSmoke
             var pose = s.Evaluate("my-centaur")!.Pose;
             var gait = pose.Attachments[lower];
             var torso = pose.Attachments[upper];
-            var saddle = gait.Frame("body").At(new Vector3(.42f, .98f, 0));
+            var saddle = gait.Frame("body").At(new Vector3f(.42f, .98f, 0));
             // The upper body's connection (its chest) is placed on the saddle; the slam then moves the module's own chest within that placement.
             var seat = Vector2f.Distance(new(saddle.X, saddle.Y), new(torso.Placement.Origin.X, torso.Placement.Origin.Y));
             Record(centaur.Base.Controls.Count == 1 && centaur.MotionOwner?.Id == lower && (gait.Expression, torso.Expression) == ("walk", "hammer-slam"),

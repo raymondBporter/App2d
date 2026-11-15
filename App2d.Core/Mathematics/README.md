@@ -5,18 +5,18 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | API | Purpose |
 | --- | --- |
 | `Direction2D` | Finite unit vector with angle, perpendicular, reversal and signed scaling helpers |
-| `Polar2D` | Radius/angle value and direct polar/Cartesian conversions |
+| `Polar<TReal>` | Radius and angle in radians, with conversions to and from `Vec2<TReal>` |
 | `Vector2i` | Signed integer coordinates, checked addition/subtraction/scaling, and explicit float conversion |
 | `IVector<TSelf, TReal>` | Concrete floating-point vector contract: arithmetic, dot product, component queries, min/max and absolute value |
 | `Vector2f`, `Vector3f`, `Vector4f` | Readonly float vectors backed by the corresponding `System.Numerics` vectors |
 | `Vector2d`, `Vector3d`, `Vector4d` | Readonly double vectors for higher-precision geometry |
 | `IVectorExtensions` | Shared lengths, distances, normalization, interpolation, projection/rejection, reflection and clamping |
-| `Vector2Extensions` | Angle construction, rejection/refraction, finite checks, rotation, cross products, orientation, and perpendicular vectors |
-| `Vector3Extensions` | `IsFinite()`, componentwise `DegreesToRadians()` / `RadiansToDegrees()`, and `XY`, `XZ`, and `YZ` coordinate-plane projections |
+| `Vec2<TReal>` | Two-dimensional vectors with angle, polar, rotation, and refraction operations |
+| `Vector2f` | Two-dimensional float vector backed by `System.Numerics.Vector2` |
 | `Vector4Extensions` | `IsFinite()` component query |
 | `Matrix3x2Extensions` | `GetRows()`, `GetColumns()`, `IsFinite()` entry query and transpose direction transform |
-| `Rotation2D` | Rotate vectors or points about a pivot, solve a pivot from two endpoints and a turn, and interpolate an endpoint arc |
-| `Angles` | Generic IEEE floating-point angle wrapping in radians |
+| `Rotation2D` | Solve a pivot from endpoints and a turn, or interpolate the resulting arc |
+| `Angles` | Convert between degrees and radians and wrap signed angles |
 | `Interpolation` | Value blending, optional progress-map application, and inverse lerp |
 | `Clamping` | Generic `Clamp(value, minimum, maximum)` and `Clamp01(value)` scalar helpers |
 | `Progress` | Clamped smoothstep families, their inverses, and unclamped maps with analytic derivatives |
@@ -39,7 +39,7 @@ Cubics and quartics use derivative isolation and bisection with double arithmeti
 within evaluation precision may merge.
 
 For scalar angles, use .NET's `float.DegreesToRadians(value)` / `float.RadiansToDegrees(value)`
-(or the `double` equivalents). `Vector3` extensions convert every component with the same operations.
+(or the `double` equivalents). `Vector3f.DegreesToRadians()` and `Vector3f.RadiansToDegrees()` convert each component with the same operations.
 
 Progress mapping files live in `Progress/`; affine, similarity, frame, rotation, and matrix helpers live in
 `Transforms/`. Progress mapping uses `App2d.Core.Mathematics.Progress`; transforms use
@@ -97,8 +97,8 @@ composing smoothstep after it gives zero turnaround velocity.
 
 ## Transforms
 
-`Vector2`, `Vector3`, `Vector4`, and `Matrix3x2` share the `IsFinite()` extension name: every component or entry
-must be finite. Zero values and singular matrices are finite; a finite vector's magnitude can still overflow.
+`Vector2f`, `Vector3f`, `Vector4`, and `Matrix3x2` expose `IsFinite()` to check that every component or entry is finite.
+Zero values and singular matrices are finite; a finite vector's magnitude can still overflow.
 `Affine2D.IsFinite` checks its seven authored channels, while `affine.Matrix.IsFinite()` checks the evaluated map
 (channel arithmetic can overflow). `Similarity2D.IsFinite` checks both axes, translation, and scale; it does not
 require nonzero scale. Use `TryInverse` or `Similarity2D.TryFromMatrix` for those stricter requirements.
@@ -167,16 +167,16 @@ if (world.TryInverse(out var inverse))
 using App2d.Core.Mathematics;
 
 float heading = contact.Direction.AngleRadians;
-Vector2 axis = Polar2D.Direction(heading);
-Vector2 offset = Polar2D.ToCartesian(radius: 24, angleRadians: heading);
+var axis = Vector2f.Direction(heading);
+Vector2f offset = Vector2f.FromPolar(radius: 24, angleRadians: heading);
 
 Direction2D travel = new(target - origin);
 Vector2 destination = origin + travel.ScaledBy(24);
 Ray2D ray = Ray2D.FromDirection(origin, travel); // using App2d.Core.Geometry.Shapes
 
-Polar2D polar = (point - center).ToPolar();
-Vector2 restored = center + polar.ToCartesian();
-var authored = new Polar2D(radius: 24, angleRadians: 3 * MathF.Tau + heading);
+Polar<float> polar = (point - center).ToPolar();
+Vector2f restored = center + polar.ToCartesian().ToVector2f();
+var authored = new Polar<float>(radius: 24, angleRadians: 3 * MathF.Tau + heading);
 ```
 
 Angles are radians unless a method explicitly names degrees, increasing counter-clockwise from +X in Y-up coordinates.
@@ -185,11 +185,15 @@ range is **[-PI, PI]**, with both half-turn signs possible; it does not choose a
 angle differences, not stored animation rotations whose full turns matter. A matrix's `matrix.X.AngleRadians` is the
 heading of its transformed local +X axis, not a unique decomposition of a reflected or sheared transform.
 In a screen coordinate system where Y points down, convert the Y component explicitly
-when you want the same visual convention. `Vector2.FromAngleDegrees(angle)` shares
-the direction convention of `Vector2f.FromAngle(radians)`.
+when you want the same visual convention. `Vector2f.FromAngleDegrees(angle)` shares
+the direction convention of `Vector2f.FromAngle(radians)`. `Vec2<TReal>.AngleRadians` uses
+IEEE `Atan2(Y, X)`. Use `point.Rotate(radians)` or `point.Rotate(radians, pivot)`
+for 2D rotation, and `point3D.RotateXY(radians, pivot)` to preserve Z. Convert with
+`Angles.DegreesToRadians` and `Angles.RadiansToDegrees`, or use `0.5f * Angles.RadiansPerDegree`
+for a half-degree constant.
 
-`Vector2.Reject(vector, unitNormal)` removes the component parallel to a normalized normal.
-`Vector2.TryRefract(direction, incidentNormal, fromIndex, toIndex, out transmitted)`
+`Vec2<TReal>.Reject(vector, unitNormal)` removes the component parallel to a normalized normal.
+`Vec2<TReal>.TryRefract(direction, incidentNormal, fromIndex, toIndex, out transmitted)`
 applies Snell's law to unit vectors. The normal points toward the incident medium;
 indices must be finite and positive. Total internal reflection returns false and
 sets the output to zero. These CPU helpers support ray tracing and lighting calculations;
@@ -201,7 +205,7 @@ and integer scaling throw on overflow. Division is omitted so callers choose the
 own rounding policy. `ToVector2()` explicitly converts to the existing float vector;
 large integers may round. Existing graphics APIs continue to accept `System.Numerics.Vector2`.
 
-The six floating-point vector types implement `IVector<TSelf, TReal>`, with `TReal` constrained to
+The floating-point vector types implement `IVector<TSelf, TReal>`, with `TReal` constrained to
 `IFloatingPointIeee754<TReal>`. Keep the concrete vector type in storage and generic arguments,
 for example `Segment<Vector3d, double>`. Do not store an `IVector<...>` interface value: converting a struct
 to an interface boxes it. The integer vector, unit directions, and validated sizes have different
@@ -226,10 +230,12 @@ double length = segment.Length();
 Vector3d midpoint = segment.Midpoint;
 ```
 
-The primitives remain concrete: float arithmetic forwards to `System.Numerics`, and `Vector2d` /
-`Vector4d` division uses packed intrinsics. Perpendiculars, orientation, cross products, and transforms retain
-their dimension-specific definitions. Use constructors and `ToVector2()` / `ToVector3()` / `ToVector4()`
-at graphics boundaries, or the corresponding `ToVector*f()` / `ToVector*d()` conversions.
+`Vector2f`, `Vector3f`, and `Vector4f` store one corresponding `System.Numerics` vector and forward
+their basic arithmetic to it. `Vector2d` is an alias for `Vec2<double>`, and its division uses packed
+intrinsics, as does `Vector4d` division. Use constructors and `ToVector2()` / `ToVector3()` /
+`ToVector4()` at graphics boundaries. Generic APIs such as `Polar<TReal>` and `Matrix2x2<TReal>`
+use `Vec2<TReal>`. Use `new Vec2<float>(value)` and `ToVector2f()` to convert between the generic
+float vector and the wrapper.
 
 Lengths use `Sqrt(Dot(value, value))`, so finite coordinates can still produce an overflowing or
 underflowing squared length. `Normalize` divides by that length; zero vectors produce NaN components.
@@ -252,20 +258,17 @@ double preciseTurn = new Vector2d(a).Orientation(new(b), new(c));
 Hulls, triangulation, clipping, and polygon winding retain double precision for near-collinear or large inputs.
 Character drawing and editor calculations use float arithmetic where they already did so.
 
-`AngleOf` / `AngleRadians` return an angle in [-PI, PI]. A zero vector has no
-direction; the shared convention returns zero, including for signed-zero components.
-Tiny nonzero vectors retain their heading. A caller such as a constraint solver can
-still choose its own near-zero tolerance and fallback before calling this helper.
+`AngleRadians` follows `Atan2`, including its signed-zero behavior. `Polar<TReal>.AngleOf`
+validates the vector and returns positive zero for any combination of zero coordinates.
+Tiny nonzero vectors retain their heading.
 
-`Polar2D` is an immutable value type with no per-coordinate heap allocation. Its
-radius must be finite and nonnegative; its angle must be finite. The constructor
-preserves full rotations for authored motion. Equality compares the stored radius
-and angle, so coordinates separated by a full turn need not compare equal even when
-their Cartesian positions coincide. `FromCartesian` returns the principal angle
-and rejects vectors whose magnitude cannot fit in a float.
+`Polar<TReal>` is an immutable value type with a finite, nonnegative radius and a finite angle.
+The constructor preserves full rotations for authored motion. Equality compares the stored radius
+and angle. `FromCartesian` returns the principal angle and requires the vector's magnitude to fit in
+`TReal`. `Vec2<TReal>.ToPolar()` returns the matching `Polar<TReal>`.
 
 `Direction2D` is also an immutable value type. Its constructor normalizes any finite
-nonzero `Vector2`; `FromAngle` uses the same +X/radian convention as `Polar2D`.
+nonzero `Vector2`; `FromAngle` uses the same +X/radian convention as `Polar<float>`.
 `FromPoints(from, to)` normalizes the difference using double intermediates so even
 widely separated finite float points produce a direction.
 Use `.Vector` when a `Vector2` is needed. It does not implicitly accept a `Vector2`,

@@ -1,12 +1,12 @@
 # Spatial rendering
 
 `Camera3D` and `Renderer3D` provide a spatial path independent of characters, rigs, and authored layer order.
-World positions use `System.Numerics.Vector3`; `Frame3D` supplies affine placement. With row-vector conventions,
+World positions use `Vector3f`, and `Frame3D` supplies affine placement. With row-vector conventions,
 the pipeline is `local * world * view * projection`, followed by the perspective divide and viewport mapping.
 Orthographic and perspective cameras share the same projection and picking API.
 
 ```csharp
-var camera = Camera3D.Perspective(new(3, 2, 4), Vector3.Zero, Vector3.UnitY, width / (float)height);
+var camera = Camera3D.Perspective(new(3, 2, 4), Vector3f.Zero, Vector3f.UnitY, width / (float)height);
 renderer.Clear(background); // once for the scene, on a depth-enabled target
 renderer.Draw(mesh, Frame3D.Identity, camera);
 renderer.Draw(otherMesh, placement, camera); // same depth buffer

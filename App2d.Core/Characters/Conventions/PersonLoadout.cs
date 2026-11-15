@@ -83,7 +83,7 @@ public static class PersonLoadout
     private static bool OpensSwoosh(string id) => IsSwoosh(id) && !id.EndsWith("-end", StringComparison.Ordinal);
 
     /// <summary>The held sword's blade, guard to tip, in the pose's actor space (along the blade's own axis; mesh swords are centred on it in depth).</summary>
-    public static (Vector3 Guard, Vector3 Tip) Blade(EvaluatedPose pose, Part sword, ModelSocket socket)
+    public static (Vector3f Guard, Vector3f Tip) Blade(EvaluatedPose pose, Part sword, ModelSocket socket)
     {
         var frame = new ActorPose(pose, Vector2f.Zero, 1).Socket(socket);
         return (PartPlacement3D.Point(frame, sword, new(.07f, 0, 0)), PartPlacement3D.Point(frame, sword, new(sword.Point(EquipmentPoints.Tip)!.Value.X, 0, 0)));
@@ -103,14 +103,14 @@ public static class PersonLoadout
 
         var end = clip.Markers.FirstOrDefault(m => m.Id == SwooshEndMarker && m.Time > start.Time)?.Time ?? clip.Duration;
         var yaw = 0f;
-        Vector3? last = null;
+        Vector3f? last = null;
         for (var t = start.Time; t <= end + 1e-4f; t += 1 / 240f)
         {
             var (guard, tip) = Blade(PoseEvaluator.Sample(model, clip, t), sword, socket);
-            var d = Vector3.Normalize(tip - guard);
+            var d = Vector3f.Normalize(tip - guard);
             if (last is { } a)
             {
-                yaw += Vector3.Cross(a, d).Y;
+                yaw += Vector3f.Cross(a, d).Y;
             }
 
             last = d;

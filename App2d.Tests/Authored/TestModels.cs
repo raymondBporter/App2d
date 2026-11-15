@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -82,7 +83,7 @@ internal static class TestModels
             }
             else
             {
-                ModelAuthoring.MoveRest(resolved, variant, control, new(position.ToVector2(), node.Rest.Z), children: false);
+                ModelAuthoring.MoveRest(resolved, variant, control, new(position, node.Rest.Z), children: false);
             }
         }
 
@@ -201,7 +202,7 @@ internal static class TestModels
         clip.Tracks =
         [
             new() { Kind = MotionClip.RotateKind, Target = "wheel-root", Keys =
-                [new() { Curve = new() { Control1 = new(.2f, float.DegreesToRadians(40)), Control2 = new(.8f, float.DegreesToRadians(140)), Absolute = true } }, new() { Time = 1, Angle = MathF.PI }] },
+                [new() { Curve = new() { Control1 = new(.2f, Angles.DegreesToRadians(40f)), Control2 = new(.8f, Angles.DegreesToRadians(140f)), Absolute = true } }, new() { Time = 1, Angle = MathF.PI }] },
             new() { Kind = MotionClip.ScaleKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, Value = new(-.5f, -.5f, 0)}] },
             new() { Kind = MotionClip.TranslateKind, Target = "spoke-tip", SetupBeforeFirst = true, Keys = [new() { Time = .25f, Value = new(.2f, .1f, 0)}, new() { Time = 1, Value = new(.3f, .2f, 0)}] }
         ];
@@ -223,11 +224,11 @@ internal static class TestModels
     };
 
     // Fixed-camera reference comparisons combine the two independent channels at the rendering boundary.
-    public static Vector3 DrawPoint(Core.Rendering.LayeredContour contour, int index) =>
-        contour[index] + Vector3.UnitZ * contour.LayerAt(index);
+    public static Vector3f DrawPoint(Core.Rendering.LayeredContour contour, int index) =>
+        contour[index] + Vector3f.UnitZ * contour.LayerAt(index);
 
-    public static void Near(Vector3 expected, Vector3 actual, float tolerance = 1e-4f, string what = "") =>
-        Assert.True(Vector3.Distance(expected, actual) <= tolerance, $"{what}: expected {expected}, found {actual}");
+    public static void Near(Vector3f expected, Vector3f actual, float tolerance = 1e-4f, string what = "") =>
+        Assert.True(Vector3f.Distance(expected, actual) <= tolerance, $"{what}: expected {expected}, found {actual}");
 
     /// <summary>
     /// Two full cycles at 240 samples each: every control's world position must match the prototype evaluator.

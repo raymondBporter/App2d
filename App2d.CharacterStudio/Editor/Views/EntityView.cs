@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Entities;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.CharacterStudio.Editing;
@@ -626,10 +627,10 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                         });
                     }
 
-                    var degrees = float.RadiansToDegrees(collider.Angle);
+                    var degrees = Angles.RadiansToDegrees(collider.Angle);
                     if (Ui.Drag("Angle (deg)", ref degrees, .5f, -360, 360))
                     {
-                        session.Change(document, () => Collider().Angle = float.DegreesToRadians(degrees));
+                        session.Change(document, () => Collider().Angle = Angles.DegreesToRadians(degrees));
                     }
 
                     break;
@@ -1106,7 +1107,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
 
         var draw = frame.Draw;
-        Vector2 Screen(Vector2f p) => frame.Screen(new(p.ToVector2(), 0));
+        Vector2 Screen(Vector2f p) => frame.Screen(new(p, 0));
         void Outline(EntityRegion region, uint color, float width)
         {
             var points = region.Outline().Select(Screen).ToArray();

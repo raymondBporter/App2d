@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.CharacterStudio.Editing.Preview;
 using App2d.CharacterStudio.Seeds.Prototype;
@@ -21,7 +22,7 @@ public sealed class PuppetAuthoringTests
     {
         var part = new PartGeometry { Geometry = new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated(), A = "base", B = "top", ScaleX = 2, ScaleY = 2 };
         // Local up points right in this pose, so the narrow end is at world X = 1.
-        static Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
+        static Vector3f World(string id) => id == "base" ? Vector3f.Zero : Vector3f.UnitX;
         var contour = PartContours2D.Contour(part, World);
         Assert.Equal(.7f, contour.Where(p => p.X > .999f).Max(p => MathF.Abs(p.Y)), 5);
         Assert.Equal(1, contour.Where(p => p.X < -.999f).Max(p => MathF.Abs(p.Y)), 5);
@@ -49,8 +50,8 @@ public sealed class PuppetAuthoringTests
     public void ChangingGeometryKeepsItsIdentityAndSuppliesACurveEndpoint()
     {
         var model = ModelAuthoring.Empty("test", "Test");
-        ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
-        ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
+        ModelAuthoring.AddControl(model, null, Vector3f.Zero, "root");
+        ModelAuthoring.AddControl(model, "root", Vector3f.UnitY, "tip");
         var part = ModelAuthoring.AddPart(model, GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse), "root");
         var id = part.Id;
 
@@ -74,7 +75,7 @@ public sealed class PuppetAuthoringTests
     {
         var empty = PuppetDefinition.FromJson(new PuppetDefinition().ToJson());
         var drawing = new PuppetDrawing();
-        drawing.Build(empty.Parts, _ => Vector3.Zero, rest: id => empty.Controls.First(c => c.Id == id).Rest.XYZ);
+        drawing.Build(empty.Parts, _ => Vector3f.Zero, rest: id => empty.Controls.First(c => c.Id == id).Rest.XYZ);
         Assert.Equal(0, drawing.Mesh.Count);
     }
 
@@ -102,7 +103,7 @@ public sealed class PuppetAuthoringTests
             foreach (var contact in pose.Contacts)
             {
                 Assert.InRange(contact.Error, 0, .00001f);
-                Assert.InRange(Vector3.Distance(pose.World(contact.End), contact.Target), 0, .00001f);
+                Assert.InRange(Vector3f.Distance(pose.World(contact.End), contact.Target), 0, .00001f);
             }
             AssertBoneLengths(puppet, pose);
         }
@@ -119,9 +120,9 @@ public sealed class PuppetAuthoringTests
             var pose = PuppetReferencePose.Sample(puppet, motion, time);
             float KneeAngle(string side)
             {
-                var thigh = Vector3.Normalize(pose.Points[side + "-hip"] - pose.Points[side + "-knee"]);
-                var shin = Vector3.Normalize(pose.Points[side + "-foot"] - pose.Points[side + "-knee"]);
-                return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector3.Dot(thigh, shin), -1, 1)));
+                var thigh = Vector3f.Normalize(pose.Points[side + "-hip"] - pose.Points[side + "-knee"]);
+                var shin = Vector3f.Normalize(pose.Points[side + "-foot"] - pose.Points[side + "-knee"]);
+                return Angles.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector3f.Dot(thigh, shin), -1, 1)));
             }
             Assert.InRange(KneeAngle(support), 165, 178);
             Assert.InRange(KneeAngle(swing), 90, 145);
@@ -208,14 +209,14 @@ public sealed class PuppetAuthoringTests
         var end = PuppetReferencePose.Sample(puppet, motion, motion.Duration);
         foreach (var id in start.Points.Keys)
         {
-            Assert.InRange(Vector3.Distance(start.Points[id], end.Points[id]), 0, 1e-5f);
+            Assert.InRange(Vector3f.Distance(start.Points[id], end.Points[id]), 0, 1e-5f);
         }
 
         var before = PuppetReferencePose.Sample(puppet, motion, motion.Duration - .0001, true);
         var after = PuppetReferencePose.Sample(puppet, motion, motion.Duration + .0001, true);
         foreach (var id in start.Points.Keys)
         {
-            Assert.InRange(Vector3.Distance(before.World(id), after.World(id)), 0, .001f);
+            Assert.InRange(Vector3f.Distance(before.World(id), after.World(id)), 0, .001f);
         }
 
         Assert.True(after.Position.X > before.Position.X);
@@ -232,7 +233,7 @@ public sealed class PuppetAuthoringTests
         puppet.Controls.Add(new()
         {
             Id = "grip",
-            Rest = PuppetPoint.From(hand + new Vector3(.1f, .1f, 0))
+            Rest = PuppetPoint.From(hand + new Vector3f(.1f, .1f, 0))
         });
         puppet.Bones.Add(new()
         {
@@ -241,8 +242,8 @@ public sealed class PuppetAuthoringTests
         });
         puppet.Validate();
         var pose = PuppetPose.Rest(puppet);
-        pose.Solve(puppet, puppet.Chains.Single(c => c.End == "right-hand"), hand + new Vector3(.2f, .1f, 0));
-        Assert.InRange(Vector3.Distance(pose.Points["grip"] - pose.Points["right-hand"], new(.1f, .1f, 0)), 0, 1e-6f);
+        pose.Solve(puppet, puppet.Chains.Single(c => c.End == "right-hand"), hand + new Vector3f(.2f, .1f, 0));
+        Assert.InRange(Vector3f.Distance(pose.Points["grip"] - pose.Points["right-hand"], new(.1f, .1f, 0)), 0, 1e-6f);
     }
 
     [Fact]
@@ -269,7 +270,7 @@ public sealed class PuppetAuthoringTests
             var pose = PuppetReferencePose.Sample(puppet, motion, i * motion.Duration / 240, repeat: true);
             foreach (var contact in pose.Contacts)
             {
-                Assert.InRange(Vector3.Distance(pose.World(contact.End), contact.Target), 0, .00001f);
+                Assert.InRange(Vector3f.Distance(pose.World(contact.End), contact.Target), 0, .00001f);
             }
 
             foreach (var foot in new[] { "left-foot", "right-foot" })
@@ -289,7 +290,7 @@ public sealed class PuppetAuthoringTests
         var next = PuppetReferencePose.Sample(puppet, motion, motion.Duration + 1e-4, repeat: true);
         foreach (var id in next.Points.Keys)
         {
-            Assert.InRange(Vector3.Distance(end.World(id), next.World(id)), 0, .01f);
+            Assert.InRange(Vector3f.Distance(end.World(id), next.World(id)), 0, .01f);
         }
     }
 

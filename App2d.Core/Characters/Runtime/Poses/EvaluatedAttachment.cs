@@ -14,10 +14,10 @@ public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, Evaluate
     public string Id => Attachment.Id;
     public ResolvedModel Rig => Attachment.Rig!;
 
-    private Vector3 Fitted(Vector3 point) => new(point.X * LayoutFit.X, point.Y * LayoutFit.Y, point.Z);
+    private Vector3f Fitted(Vector3f point) => new(point.X * LayoutFit.X, point.Y * LayoutFit.Y, point.Z);
 
     /// <summary>A rig control's origin in the wearer's frame.</summary>
-    public Vector3 World(string control) => Placement.At(Fitted(Pose.Points[control]));
+    public Vector3f World(string control) => Placement.At(Fitted(Pose.Points[control]));
     /// <summary>A rig control's placement in the wearer's frame: the artwork carrier of a bone-attached piece.</summary>
     public LayeredFrame2D Frame(string control)
     {
@@ -25,7 +25,7 @@ public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, Evaluate
         return (LayoutFit == Vector2f.One ? local : local.WithOrigin(Fitted(local.Origin))).Then(Placement);
     }
 
-    public Vector3 Rest(string control) => Placement.At(Fitted(Rig.Rest[control]));
+    public Vector3f Rest(string control) => Placement.At(Fitted(Rig.Rest[control]));
     public LayeredFrame2D RestFrame(string control)
     {
         var local = Rig.RestPlacement(control);

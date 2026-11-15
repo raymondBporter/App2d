@@ -27,8 +27,8 @@ public sealed class PartShader2D(Part part) : IShader2D
     public IShape2D BoundsShape()
     {
         SetTime(0);
-        var min = Vector2Extensions.PositiveInfinity;
-        var max = Vector2Extensions.NegativeInfinity;
+        var min = Vector2f.PositiveInfinity;
+        var max = Vector2f.NegativeInfinity;
         foreach (var vertex in Drawing.Mesh.Vertices)
         {
             var point = new Vector2f(vertex.Position.X, vertex.Position.Y);

@@ -31,8 +31,8 @@ public sealed class PartGeometryTests
         var resolved = ResolvedModel.From(model, partOf: _ => tail);
         var clip = ClipAuthoring.New(resolved, "mesh-motion", "Mesh motion", loop: false);
         ClipAuthoring.SetKey(clip, new(MotionClip.FitKind, "tail/tuft"), 0, new(1, 0, 0));
-        ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "tail/tuft"), 0, Vector3.UnitX);
-        ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "tail/tuft"), .5f, Vector3.Zero);
+        ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "tail/tuft"), 0, Vector3f.UnitX);
+        ClipAuthoring.SetKey(clip, new(MotionClip.ShowKind, "tail/tuft"), .5f, Vector3f.Zero);
         clip.Validate(resolved);
 
         var evaluated = PoseEvaluator.Sample(resolved, clip, .2).Attachments["tail"];
@@ -73,10 +73,10 @@ public sealed class PartGeometryTests
             },
         };
         entry.Validate(id => id == "origin");
-        Assert.Equal(0, PartPicking2D.Distance(entry, _ => Vector3.Zero, new(.1f, .1f, 0)), 4);
-        Assert.Equal(0, PartPicking2D.Distance(entry, _ => Vector3.Zero, new(3.1f, .1f, 0)), 4);
-        Assert.True(PartPicking2D.Distance(entry, _ => Vector3.Zero, new(2, .1f, 0)) > 1);
+        Assert.Equal(0, PartPicking2D.Distance(entry, _ => Vector3f.Zero, new(.1f, .1f, 0)), 4);
+        Assert.Equal(0, PartPicking2D.Distance(entry, _ => Vector3f.Zero, new(3.1f, .1f, 0)), 4);
+        Assert.True(PartPicking2D.Distance(entry, _ => Vector3f.Zero, new(2, .1f, 0)) > 1);
         entry.Hidden = true;
-        Assert.Equal(float.PositiveInfinity, PartPicking2D.Distance(entry, _ => Vector3.Zero, new(.1f, .1f, 0)));
+        Assert.Equal(float.PositiveInfinity, PartPicking2D.Distance(entry, _ => Vector3f.Zero, new(.1f, .1f, 0)));
     }
 }

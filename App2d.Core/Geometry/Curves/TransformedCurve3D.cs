@@ -7,16 +7,16 @@ namespace App2d.Core.Geometry.Curves;
 public readonly record struct TransformedCurve3D<TCurve>(TCurve Curve, Frame3D Frame) : ICurve<Vector3f, float>
     where TCurve : ICurve<Vector3f, float>
 {
-    public Vector3f Evaluate(float amount) => new(Frame.TransformPoint(Curve.Evaluate(amount).ToVector3()));
-    public Vector3f EvaluateDerivative(float amount) => new(Frame.TransformDirection(Curve.EvaluateDerivative(amount).ToVector3()));
+    public Vector3f Evaluate(float amount) => Frame.TransformPoint(Curve.Evaluate(amount));
+    public Vector3f EvaluateDerivative(float amount) => Frame.TransformDirection(Curve.EvaluateDerivative(amount));
 }
 
 /// <summary>Transforms double coordinates with widened frame coefficients, without narrowing the curve.</summary>
 public readonly record struct TransformedCurve3d<TCurve>(TCurve Curve, Frame3D Frame) : ICurve<Vector3d, double>
     where TCurve : ICurve<Vector3d, double>
 {
-    private Vector3d Direction(Vector3d value) => new Vector3d(Frame.XAxis) * value.X + new Vector3d(Frame.YAxis) * value.Y + new Vector3d(Frame.ZAxis) * value.Z;
-    public Vector3d Evaluate(double amount) => new Vector3d(Frame.Origin) + Direction(Curve.Evaluate(amount));
+    private Vector3d Direction(Vector3d value) => Frame.XAxis.ToVector3d() * value.X + Frame.YAxis.ToVector3d() * value.Y + Frame.ZAxis.ToVector3d() * value.Z;
+    public Vector3d Evaluate(double amount) => Frame.Origin.ToVector3d() + Direction(Curve.Evaluate(amount));
     public Vector3d EvaluateDerivative(double amount) => Direction(Curve.EvaluateDerivative(amount));
 }
 

@@ -30,7 +30,7 @@ public sealed class RenderMaterialDefinition2DTests
             Geometry = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.UnitY),
             Material = RenderMaterialDefinition2D.Ink
         };
-        static Vector3 World(string id) => id == "tip" ? Vector3.UnitY : Vector3.Zero;
+        static Vector3f World(string id) => id == "tip" ? Vector3f.UnitY : Vector3f.Zero;
         var drawing = new PuppetDrawing();
         drawing.Build([stroke], World);
         var visible = drawing.Mesh.Vertices.ToArray();
@@ -206,7 +206,7 @@ public sealed class RenderMaterialDefinition2DTests
             }
         };
         var drawing = new PuppetDrawing();
-        drawing.Build([part], _ => Vector3.Zero);
+        drawing.Build([part], _ => Vector3f.Zero);
         var colors = drawing.Mesh.Vertices.ToArray().Select(vertex => vertex.Color).ToArray();
         Assert.Contains(ColorExtensions.FromHexRgb("#123456"), colors);
         Assert.Contains(ColorExtensions.FromHexRgb("#abcdef"), colors);
@@ -247,7 +247,7 @@ public sealed class RenderMaterialDefinition2DTests
         Assert.Equal(json, Part.FromJson(json).ToJson());
 
         var drawing = new PuppetDrawing();
-        drawing.AddAttachment(prop, new Frame3D(Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
+        drawing.AddAttachment(prop, new Frame3D(Vector3f.Zero, Vector3f.UnitX, Vector3f.UnitY, Vector3f.UnitZ));
         var colors = drawing.Mesh.Vertices.ToArray().Select(vertex => vertex.Color).ToArray();
         Assert.Contains(ColorExtensions.FromHexRgb("#224466"), colors);
         Assert.Contains(ColorExtensions.FromHexRgb("#ffeeaa"), colors);

@@ -25,7 +25,7 @@ public sealed class KeyframeSamplingTests
         {
             var value = PoseEvaluator.Interpolate(motion, time).Value;
             var tint = SlotColorTrack2D.Sample(color, time);
-            Assert.Equal(value, new Vector3(tint.X, tint.Y, tint.Z));
+            Assert.Equal(value, new Vector3f(tint.X, tint.Y, tint.Z));
         }
         Assert.Equal(color[1].Value, SlotColorTrack2D.Sample(color, 1));
         Assert.Equal(default, PoseEvaluator.Interpolate([], 0));
@@ -41,7 +41,7 @@ public sealed class KeyframeSamplingTests
             new() { Time = 1, Value = new(4, 6, 8), Angle = 2 * MathF.Tau }
         ];
         var (Value, Angle) = PoseEvaluator.Interpolate(keys, .5f, rotate: true);
-        Assert.Equal(new Vector3(3, 5, 7), Value);
+        Assert.Equal(new Vector3f(3, 5, 7), Value);
         Assert.Equal(MathF.Tau / 4, Angle, 5);
         Assert.Equal(2 * MathF.Tau, PoseEvaluator.Interpolate(keys, 1, rotate: true).Angle);
     }
@@ -55,7 +55,7 @@ public sealed class KeyframeSamplingTests
             new() { Time = 1, Value = new(0, 4, 6), Angle = MathF.Tau }
         ];
         var (Value, Angle) = PoseEvaluator.Interpolate(keys, .5f);
-        Assert.Equal(new Vector3(3, 3, 5), Value);
+        Assert.Equal(new Vector3f(3, 3, 5), Value);
         Assert.Equal(MathF.PI, Angle);
     }
 
@@ -99,7 +99,7 @@ public sealed class KeyframeSamplingTests
                 var expected = new Vector4(Expected(2, -2, r), Expected(3, 3, g), Expected(4, 6, b), Expected(1, 0, a));
                 Assert.Equal(expected, SlotColorTrack2D.Sample(color, time));
                 var (Value, Angle) = PoseEvaluator.Interpolate(motion, time);
-                Assert.Equal(new Vector3(expected.X, expected.Y, expected.Z), Value);
+                Assert.Equal(new Vector3f(expected.X, expected.Y, expected.Z), Value);
                 var progress = (float)ProgressMaps.FromKind(ease).Sample(time);
                 Assert.Equal(ease == ProgressMapKind.Step ? 0 : Interpolation.Lerp(0, 2 * MathF.Tau, progress), Angle);
             }
@@ -112,17 +112,17 @@ public sealed class KeyframeSamplingTests
         // Valid authored handles can overflow when converted to geometry; a held segment never needs that geometry.
         var curve = new KeyCurve2D { Control1 = new(1f / 3, float.MaxValue), Control2 = new(2f / 3, float.MaxValue) };
         curve.Validate();
-        List<ClipKey> motion = [new() { Value = -Vector3.One, Angle = -MathF.Tau, Ease = ProgressMapKind.Step, Curve = curve },
-            new() { Time = 1, Value = Vector3.One, Angle = MathF.Tau }];
+        List<ClipKey> motion = [new() { Value = -Vector3f.One, Angle = -MathF.Tau, Ease = ProgressMapKind.Step, Curve = curve },
+            new() { Time = 1, Value = Vector3f.One, Angle = MathF.Tau }];
         List<SlotColorKey2D> color = [new() { Value = -Vector4.One, Ease = ProgressMapKind.Step, CurveR = curve },
             new() { Time = 1, Value = Vector4.One }];
 
         foreach (var time in new[] { -.1f, 0, .25f, .999f })
         {
-            Assert.Equal((-Vector3.One, -MathF.Tau), PoseEvaluator.Interpolate(motion, time, rotate: true));
+            Assert.Equal((-Vector3f.One, -MathF.Tau), PoseEvaluator.Interpolate(motion, time, rotate: true));
             Assert.Equal(-Vector4.One, SlotColorTrack2D.Sample(color, time));
         }
-        Assert.Equal((Vector3.One, MathF.Tau), PoseEvaluator.Interpolate(motion, 1, rotate: true));
+        Assert.Equal((Vector3f.One, MathF.Tau), PoseEvaluator.Interpolate(motion, 1, rotate: true));
         Assert.Equal(Vector4.One, SlotColorTrack2D.Sample(color, 1));
     }
 
@@ -141,7 +141,7 @@ public sealed class KeyframeSamplingTests
             curve.Evaluate(.37f, 3, 6), curve.Evaluate(.37f, 4, 7));
         Assert.NotEqual(before, expected);
         Assert.Equal(expected, SlotColorTrack2D.Sample(color, .37f));
-        Assert.Equal(new Vector3(expected.X, expected.Y, expected.Z), PoseEvaluator.Interpolate(motion, .37f).Value);
+        Assert.Equal(new Vector3f(expected.X, expected.Y, expected.Z), PoseEvaluator.Interpolate(motion, .37f).Value);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public sealed class KeyframeSamplingTests
     {
         const string motionJson = """{"time":0.5,"x":2,"z":-3,"curve":{"x1":0.2,"y1":2,"x2":0.8,"y2":-1}}""";
         var motion = JsonSerializer.Deserialize<ClipKey>(motionJson, AuthoredJson.Options)!;
-        Assert.Equal(new Vector3(2, 0, -3), motion.Value);
+        Assert.Equal(new Vector3f(2, 0, -3), motion.Value);
         Assert.Equal(new Vector2f(.2f, 2), motion.Curve!.Control1);
         var json = JsonSerializer.Serialize(motion, AuthoredJson.Options);
         using var document = JsonDocument.Parse(json);

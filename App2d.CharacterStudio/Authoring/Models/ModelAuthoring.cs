@@ -5,6 +5,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
@@ -299,7 +300,7 @@ public static class ModelAuthoring
     private static IEnumerable<string> Names(CharacterModel model) =>
         model.Controls.Select(c => c.Id).Concat([CharacterModel.Locomotion, CharacterModel.Unit]);
 
-    public static ModelControl AddControl(CharacterModel model, string? parent, Vector3 rest, string? id = null)
+    public static ModelControl AddControl(CharacterModel model, string? parent, Vector3f rest, string? id = null)
     {
         var control = new ModelControl { Id = id ?? UniqueId(parent is null ? "control" : parent + "-child", Names(model)), Parent = parent, Rest = PuppetPoint.From(rest) };
         model.Controls.Add(control);
@@ -681,7 +682,7 @@ public static class ModelAuthoring
     /// descendants keep or shift their character-frame rest by the flag, bone descendants follow their parent unless the
     /// flag is off, when their local setup is re-expressed so they stay in place.
     /// </summary>
-    public static void MoveRest(CharacterModel model, string id, Vector3 position, bool children)
+    public static void MoveRest(CharacterModel model, string id, Vector3f position, bool children)
     {
         var moving = Control(model, id);
         if (moving.Node == RigNodeKinds.Bone)
@@ -720,7 +721,7 @@ public static class ModelAuthoring
     /// (bone descendants follow through the hierarchy); without, bone children re-express their local setup against the
     /// moved parent so every descendant keeps its character-frame rest. A bound child always follows its parent.
     /// </summary>
-    private static void CarryDescendants(CharacterModel model, string id, Vector3 delta, bool children, Dictionary<string, RigNode> before)
+    private static void CarryDescendants(CharacterModel model, string id, Vector3f delta, bool children, Dictionary<string, RigNode> before)
     {
         if (children)
         {
@@ -766,7 +767,7 @@ public static class ModelAuthoring
             var turn = angle - node.RestAngle;
             foreach (var control in Subtree(model.Controls, id).Where(c => c.Id != id && c.Node == RigNodeKinds.Point))
             {
-                control.Rest = PuppetPoint.From(Rotation2D.ApplyXYAround(control.Rest.XYZ, about, turn));
+                control.Rest = PuppetPoint.From(control.Rest.XYZ.RotateXY(turn, about));
                 control.RestAngle += turn;
             }
 
@@ -779,7 +780,7 @@ public static class ModelAuthoring
         {
             if (control != bone)
             {
-                control.Rest = PuppetPoint.From(Rotation2D.ApplyXYAround(control.Rest.XYZ, pivot, delta));
+                control.Rest = PuppetPoint.From(control.Rest.XYZ.RotateXY(delta, pivot));
             }
 
             control.RestAngle += delta;
@@ -810,7 +811,7 @@ public static class ModelAuthoring
             return;
         }
         var resolved = ResolvedModel.Rig(model);
-        var delta = new Vector3(Vector2f.TransformNormal(new(length - bone.Length, 0), resolved.RestTransforms[id]).ToVector2(), 0);
+        var delta = new Vector3f(Vector2f.TransformNormal(new(length - bone.Length, 0), resolved.RestTransforms[id]), 0);
         bone.Length = length;
         foreach (var child in next)
         {
@@ -829,7 +830,7 @@ public static class ModelAuthoring
     /// unbound child gets its own local setup override so it stays in place, and a bound child follows its parent as it
     /// must. A bound origin is refused with the reason.
     /// </summary>
-    public static void MoveRest(ResolvedModel resolved, ModelVariant variant, string id, Vector3 position, bool children)
+    public static void MoveRest(ResolvedModel resolved, ModelVariant variant, string id, Vector3f position, bool children)
     {
         var node = resolved.Nodes.GetValueOrDefault(id) ?? throw new InvalidOperationException($"'{resolved.Id}' has no control '{id}'.");
         if (node.Link is { } link)
@@ -921,7 +922,7 @@ public static class ModelAuthoring
         }
 
         var parent = node.Parent is null ? null : resolved.Nodes[node.Parent];
-        var angle = MathF.Atan2(delta.Y, delta.X);
+        var angle = delta.AngleRadians;
         var rotation = node.CharacterOriented ? angle : (parent?.Handedness ?? 1) * (angle - (parent?.RestAngle ?? 0));
         // The frame's X axis carries the inherited uniform scale, so the tip lands exactly.
         var unit = Vector2f.TransformNormal(Vector2f.UnitX, node.RestFrame).Length();
@@ -996,7 +997,7 @@ public static class ModelAuthoring
             return;
         }
 
-        RotateRestBone(model, id, MathF.Atan2(delta.Y, delta.X));
+        RotateRestBone(model, id, delta.AngleRadians);
         // The frame's X axis carries the inherited uniform scale (and the point control's unit axes), so the tip lands exactly.
         var unit = Vector2f.TransformNormal(Vector2f.UnitX, RigGraph.Compile(model)[id].RestFrame).Length();
         if (unit > 1e-6f)

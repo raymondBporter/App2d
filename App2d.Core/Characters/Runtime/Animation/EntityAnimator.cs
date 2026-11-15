@@ -41,7 +41,7 @@ public sealed class EntityAnimator
     /// <summary>The actor's own continuous clock: every step adds to it and nothing restarts it, so part layers on a local clock (a blink) never jump with a role change.</summary>
     public double Clock { get; private set; }
     public ActorPose Pose { get; private set; }
-    public IReadOnlyDictionary<string, Vector3> Anchors => _hold.Anchors;
+    public IReadOnlyDictionary<string, Vector3f> Anchors => _hold.Anchors;
     public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
     public bool ActionComplete => Current is { } action && ActionTime >= action.Clip.Duration;
     /// <summary>Whether locomotion is playing: no action, or a masked one layered over it.</summary>
@@ -102,7 +102,7 @@ public sealed class EntityAnimator
     }
 
     /// <summary>The ground under the actor moved by <paramref name="delta"/> (model units): planted contacts ride with it.</summary>
-    public void Carry(Vector3 delta) => _hold.Shift(delta);
+    public void Carry(Vector3f delta) => _hold.Shift(delta);
 
     /// <summary>The actor left the ground: planted contacts let go, and re-plant where the clip puts them on landing.</summary>
     public void Lift() => _hold.Clear();

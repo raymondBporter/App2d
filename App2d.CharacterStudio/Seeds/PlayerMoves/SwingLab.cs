@@ -39,7 +39,7 @@ internal static class SwingLab
     /// </summary>
     private readonly record struct Arc(float Angle, float Wrist, float Radius, float Chest, float HipsX, float HipsY, float Head, float OffX, float OffY, float Tilt = 0, float Yaw = 60)
     {
-        public Vector2f Hand => Polar2D.ToCartesian(Radius, Angle);
+        public Vector2f Hand => Vector2f.FromPolar(Radius, Angle);
         public Arc With(float angle, float wrist, float tilt) => this with { Angle = angle, Wrist = wrist, Tilt = tilt };
     }
 
@@ -63,10 +63,10 @@ internal static class SwingLab
     /// </summary>
     private readonly record struct Side(float Arm, float Blade, float Chest, float HipsX, float HipsY, float Head, float Yaw, float OffX, float OffY, float ArmDip = 10, float BladeDip = 5, float Twist = 0)
     {
-        public static Vector3 Direction(float yaw, float dip)
+        public static Vector3f Direction(float yaw, float dip)
         {
-            var (sy, cy) = MathF.SinCos(float.DegreesToRadians(yaw));
-            var (sd, cd) = MathF.SinCos(float.DegreesToRadians(dip));
+            var (sy, cy) = MathF.SinCos(Angles.DegreesToRadians(yaw));
+            var (sd, cd) = MathF.SinCos(Angles.DegreesToRadians(dip));
             return new(cy * cd, -sd, -sy * cd);
         }
     }
@@ -75,7 +75,7 @@ internal static class SwingLab
         b.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(b.Model, p.Yaw).RightHand(p.Hand.X, p.Hand.Y).LeftHand(p.OffX, p.OffY).Grip(p.Wrist), ease);
 
     /// <summary>The right arm's full length, shoulder to elbow to hand.</summary>
-    private static float ArmLength(ResolvedModel m) => Vector3.Distance(m.Rest[Humanoid.RightShoulder], m.Rest[Humanoid.RightElbow]) + Vector3.Distance(m.Rest[Humanoid.RightElbow], m.Rest[Humanoid.RightHand]);
+    private static float ArmLength(ResolvedModel m) => Vector3f.Distance(m.Rest[Humanoid.RightShoulder], m.Rest[Humanoid.RightElbow]) + Vector3f.Distance(m.Rest[Humanoid.RightElbow], m.Rest[Humanoid.RightHand]);
 
     /// <summary>A clip under construction with the blade's depth tilt kept beside it; the tilt becomes orientation keys after the build.</summary>
     private sealed class Swing(ResolvedModel m, string id, string name, float duration)
@@ -113,7 +113,7 @@ internal static class SwingLab
             var arm = Side.Direction(p.Arm, p.ArmDip) * _arm;
             var blade = Side.Direction(p.Blade, p.BladeDip);
             var angle = ContinueBlade(new Vector2f(blade.X, blade.Y).AngleRadians);
-            var tilt = float.RadiansToDegrees(MathF.Asin(Math.Clamp(-blade.Z, -1, 1)));
+            var tilt = Angles.RadiansToDegrees(MathF.Asin(Math.Clamp(-blade.Z, -1, 1)));
             Builder.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(Builder.Model, p.Yaw).RightHand(arm.X, arm.Y).LeftHand(p.OffX, p.OffY).Blade(angle), ease);
             _orient.Add((time, p.Twist, tilt));
             return this;
@@ -139,7 +139,7 @@ internal static class SwingLab
             var clip = Builder.Build();
             foreach (var (time, twist, tilt) in _orient)
             {
-                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, Humanoid.SwordSocket), time, new Vector3(twist, tilt, 0).DegreesToRadians());
+                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, Humanoid.SwordSocket), time, new Vector3f(twist, tilt, 0).DegreesToRadians());
             }
 
             clip.Validate(Builder.Model);
@@ -386,7 +386,7 @@ internal static class SwingLab
     }
 
     /// <summary>The held sword's blade, guard to tip, in actor space; null while it is on the back.</summary>
-    public static (Vector3 Guard, Vector3 Tip)? Blade(ResolvedModel model, MotionClip clip, float seconds, Part sword, ModelSocket socket) =>
+    public static (Vector3f Guard, Vector3f Tip)? Blade(ResolvedModel model, MotionClip clip, float seconds, Part sword, ModelSocket socket) =>
         PersonLoadout.SwordInHand(clip, seconds) ? PersonLoadout.Blade(PoseEvaluator.Sample(model, clip, seconds), sword, socket) : null;
 
     /// <summary>Where "in front of the player" starts, in actor units from the feet.</summary>
@@ -398,7 +398,7 @@ internal static class SwingLab
     /// higher than the shoulders at <paramref name="strike"/>. Made once from the swing, it is fixed to the player while the
     /// hit is live; the blade never drags it about. Null when the blade never gets in front.
     /// </summary>
-    public static (Vector2f Min, Vector2f Max)? HitRectangle(ResolvedModel model, MotionClip clip, float from, float strike, float recover, Func<float, (Vector3 Guard, Vector3 Tip)?> blade)
+    public static (Vector2f Min, Vector2f Max)? HitRectangle(ResolvedModel model, MotionClip clip, float from, float strike, float recover, Func<float, (Vector3f Guard, Vector3f Tip)?> blade)
     {
         var points = new List<Vector2f>();
         for (var t = from; t <= recover + 1e-4f; t += 1 / 240f)
@@ -407,7 +407,7 @@ internal static class SwingLab
             {
                 for (var k = 0; k <= 8; k++)
                 {
-                    var p = Vector3.Lerp(guard, tip, k / 8f);
+                    var p = Vector3f.Lerp(guard, tip, k / 8f);
                     if (p.X > Front)
                     {
                         points.Add(new(p.X, p.Y));

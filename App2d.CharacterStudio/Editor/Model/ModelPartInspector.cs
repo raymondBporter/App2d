@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.CharacterStudio.Authoring.Models;
 using App2d.CharacterStudio.Editing.Documents;
 using App2d.CharacterStudio.Editing.Session;
@@ -236,8 +237,8 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                     }
                 }
             }
-            var angle = float.RadiansToDegrees(part.Angle);
-            if (Ui.Drag("Angle (degrees)", ref angle, 1, -720, 720)) change(p => p.Angle = float.DegreesToRadians(angle));
+            var angle = Angles.RadiansToDegrees(part.Angle);
+            if (Ui.Drag("Angle (degrees)", ref angle, 1, -720, 720)) change(p => p.Angle = Angles.DegreesToRadians(angle));
             if (part.Mesh is { } mesh)
             {
                 var thickness = mesh.Thickness;

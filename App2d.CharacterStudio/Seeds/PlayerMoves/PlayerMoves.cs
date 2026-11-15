@@ -630,8 +630,8 @@ internal static partial class PlayerMoves
     private static (Vector2f LeftShoulder, Vector2f RightShoulder, Vector2f LeftHip, Vector2f RightHip) Girdles(ResolvedModel m, float degrees)
     {
         const float shoulderHalf = .18f, hipHalf = .12f, setback = -.025f;
-        var a = float.DegreesToRadians(degrees);
-        var axis = Polar2D.Direction(a);
+        var a = Angles.DegreesToRadians(degrees);
+        var axis = Vector2f.Direction(a);
         // The shoulders sit slightly behind the torso's centerline, along the facing direction (the axis turned back 90).
         var mid = axis.PerpCw * setback;
         Vector2f Delta(string id, Vector2f at)
@@ -689,7 +689,7 @@ internal static partial class PlayerMoves
         }
         for (var step = 1; step <= 5; step++)
         {
-            var hand = Vector2f.FromPolar(.64f, float.DegreesToRadians(-90 + 22.5f * step));
+            var hand = Vector2f.FromPolar(.64f, Angles.DegreesToRadians(-90 + 22.5f * step));
             b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(hand.X, hand.Y).RightHand(-hand.X, hand.Y), ProgressMapKind.Linear);
         }
         return b
@@ -763,8 +763,8 @@ internal static partial class PlayerMoves
         {
             var t = b.Duration * i / steps;
             var phase = MathF.Tau * i / steps * direction;
-            var left = Polar2D.ToCartesian(radius, phase + .4f);
-            var right = Polar2D.ToCartesian(radius, phase + .4f + MathF.PI);
+            var left = Vector2f.FromPolar(radius, phase + .4f);
+            var right = Vector2f.FromPolar(radius, phase + .4f + MathF.PI);
             var tip = lean + wobble * MathF.Sin(MathF.Tau * i / steps);
             b.Key(t, k => k.Chest(tip).Head(-.22f - tip * .5f).LeftHand(left.X, left.Y - .1f).RightHand(right.X, right.Y - .1f), ProgressMapKind.Linear);
         }

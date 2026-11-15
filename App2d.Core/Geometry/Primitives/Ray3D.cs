@@ -8,25 +8,25 @@ namespace App2d.Core.Geometry.Primitives;
 /// <summary>A spatial ray with a unit direction. Hit distances are measured from its origin in world units.</summary>
 public readonly record struct Ray3D
 {
-    public Ray3D(Vector3 origin, Vector3 direction)
+    public Ray3D(Vector3f origin, Vector3f direction)
     {
         Origin = Ensure.Finite(origin);
         Ensure.NonZero(direction);
         var wide = direction.ToVector3d();
-        Direction = (wide / wide.Length()).ToVector3();
+        Direction = (wide / wide.Length()).ToVector3f();
     }
 
-    public Vector3 Origin { get; }
-    public Vector3 Direction { get; }
-    public Vector3 At(float distance) => Origin + Direction * Ensure.NonNegative(distance);
+    public Vector3f Origin { get; }
+    public Vector3f Direction { get; }
+    public Vector3f At(float distance) => Origin + Direction * Ensure.NonNegative(distance);
 
     /// <summary>Intersects a plane Normal dot point + D = 0. Parallel rays and hits behind the origin return false.</summary>
     public bool TryIntersect(Plane plane, out float distance)
     {
-        Ensure.Finite(plane.Normal);
+        var planeNormal = Ensure.Finite(new Vector3f(plane.Normal), "plane.Normal");
         Ensure.Finite(plane.D);
         distance = 0;
-        var normal = plane.Normal.ToVector3d();
+        var normal = planeNormal.ToVector3d();
         var denominator = normal.Dot(Direction.ToVector3d());
         if (normal.LengthSquared() == 0 || Math.Abs(denominator) <= normal.Length() * 1e-12) return false;
         var hit = -(normal.Dot(Origin.ToVector3d()) + plane.D) / denominator;

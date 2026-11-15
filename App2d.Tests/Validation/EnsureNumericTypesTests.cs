@@ -24,12 +24,12 @@ public sealed class EnsureNumericTypesTests
     [Fact]
     public void VectorComparisonsAndSignsApplyToEveryComponent()
     {
-        var value = new Vector3(-3, -2, -1);
+        var value = new Vector3f(-3, -2, -1);
         Assert.Equal(value, Ensure.Negative(value));
-        Assert.Equal(value, Ensure.LessThanOrEqual(value, new Vector3(-1)));
-        Assert.Equal(value, Ensure.GreaterThanOrEqual(value, new Vector3(-3)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThan(value, new Vector3(-1)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.GreaterThan(value, new Vector3(-3)));
+        Assert.Equal(value, Ensure.LessThanOrEqual(value, new Vector3f(-1)));
+        Assert.Equal(value, Ensure.GreaterThanOrEqual(value, new Vector3f(-3)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThan(value, new Vector3f(-1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.GreaterThan(value, new Vector3f(-3)));
         Assert.Equal(Vector4.Zero, Ensure.NonPositive(Vector4.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.NonPositive(new Vector4(0, 0, 0, float.Epsilon)));
         Assert.False(NumericValidation.IsNegative(new Vector2f(-1, 0)));
@@ -74,6 +74,6 @@ public sealed class EnsureNumericTypesTests
         Ensure.GreaterThan(Vector2f.One, new Vector2f(float.NegativeInfinity), allowInfinity: true);
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThan(1d, double.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.GreaterThanOrEqual(double.NaN, double.NegativeInfinity, allowInfinity: true));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThanOrEqual(Vector3.One, new Vector3(1, float.NaN, 1), allowInfinity: true));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Ensure.LessThanOrEqual(Vector3f.One, new Vector3f(1, float.NaN, 1), allowInfinity: true));
     }
 }

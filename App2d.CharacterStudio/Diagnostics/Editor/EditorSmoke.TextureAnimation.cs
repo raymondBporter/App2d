@@ -55,11 +55,11 @@ internal sealed partial class EditorSmoke
             var clip = s.ClipDocument!.Asset;
             ClipAuthoring.SetKey(clip, new(MotionClip.RotateKind, "carrier"), 0, default, -.3f);
             ClipAuthoring.SetKey(clip, new(MotionClip.RotateKind, "carrier"), 1, default, .6f);
-            ClipAuthoring.SetKey(clip, new(MotionClip.TranslateKind, "carrier"), 0, Vector3.Zero);
+            ClipAuthoring.SetKey(clip, new(MotionClip.TranslateKind, "carrier"), 0, Vector3f.Zero);
             ClipAuthoring.SetKey(clip, new(MotionClip.TranslateKind, "carrier"), 1, new(.3f, .2f, 0));
-            ClipAuthoring.SetKey(clip, new(MotionClip.AlphaKind, "panel"), 0, Vector3.UnitX);
+            ClipAuthoring.SetKey(clip, new(MotionClip.AlphaKind, "panel"), 0, Vector3f.UnitX);
             ClipAuthoring.SetKey(clip, new(MotionClip.AlphaKind, "panel"), 1, new(.25f, 0, 0));
-            ClipAuthoring.SetKey(clip, new(MotionClip.TintKind, "panel"), 0, Vector3.One);
+            ClipAuthoring.SetKey(clip, new(MotionClip.TintKind, "panel"), 0, Vector3f.One);
             ClipAuthoring.SetKey(clip, new(MotionClip.TintKind, "panel"), 1, new(.5f, .9f, 1));
         }), s);
         s.ShowRest = s.EditRig = false;

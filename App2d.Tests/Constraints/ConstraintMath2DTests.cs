@@ -46,7 +46,7 @@ public sealed class ConstraintMath2DTests
             new Interval<float>(-0.5f, 0.5f));
 
         Assert.Equal(5f, projected.Length(), 5);
-        Assert.Equal(0.5f, MathF.Atan2(projected.Y, projected.X), 5);
+        Assert.Equal(0.5f, projected.AngleRadians, 5);
     }
 }
 

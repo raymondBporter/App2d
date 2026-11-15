@@ -7,15 +7,17 @@ namespace App2d.Tests.Mathematics;
 public sealed class Rotation2DTests
 {
     [Fact]
-    public void RotateAroundAndVectorExtensionsUseTheSharedRotation()
+    public void VectorsRotateAboutTheOriginOrAPivot()
     {
         var pivot = new Vector2f(1, 1);
         var point = new Vector2f(2, 1);
-        var turned = Rotation2D.ApplyAround(point, pivot, MathF.PI / 2);
+        var turned = point.Rotate(MathF.PI / 2, pivot);
         Assert.InRange(Vector2f.Distance(new(1, 2), turned), 0, 1e-6f);
-        Assert.Equal(turned, point.RotateAround(pivot, MathF.PI / 2));
-        Assert.Equal(Rotation2D.Apply(point, MathF.PI / 2), point.Rotate(MathF.PI / 2));
-        Assert.Equal(new Vector3(turned.ToVector2(), 7), Rotation2D.ApplyXYAround(new(point.ToVector2(), 7), pivot, MathF.PI / 2));
+        Assert.InRange(Vector2f.Distance(new(-1, 2), point.Rotate(MathF.PI / 2)), 0, 1e-6f);
+        Assert.Equal(new Vector3f(turned, 7), new Vector3f(point, 7).RotateXY(MathF.PI / 2, pivot));
+        var wide = new Vector2d(16_777_217, 2).Rotate(Math.PI, new(16_777_216, 2));
+        Assert.Equal(16_777_215d, wide.X);
+        Assert.Equal(2d, wide.Y, 14);
     }
 
     [Fact]
@@ -25,10 +27,10 @@ public sealed class Rotation2DTests
         var to = new Vector2f(1, 2);
         Assert.True(Rotation2D.TryFindPivot(from, to, MathF.PI / 2, out var pivot));
         Assert.InRange(Vector2f.Distance(new(1, 1), pivot), 0, 1e-6f);
-        Assert.InRange(Vector2f.Distance(to, Rotation2D.ApplyAround(from, pivot, MathF.PI / 2)), 0, 1e-6f);
+        Assert.InRange(Vector2f.Distance(to, from.Rotate(MathF.PI / 2, pivot)), 0, 1e-6f);
 
         var arbitraryPivot = new Vector2f(-3, 4);
-        to = Rotation2D.ApplyAround(from, arbitraryPivot, -1.2f);
+        to = from.Rotate(-1.2f, arbitraryPivot);
         Assert.True(Rotation2D.TryFindPivot(from, to, -1.2f, out pivot));
         Assert.InRange(Vector2f.Distance(arbitraryPivot, pivot), 0, 2e-6f);
     }
@@ -84,7 +86,7 @@ public sealed class Rotation2DTests
     [Fact]
     public void Vector3PlaneProjectionsKeepTheRequestedCoordinates()
     {
-        var vector = new Vector3(2, 3, 5);
+        var vector = new Vector3f(2, 3, 5);
         Assert.Equal(new Vector2f(2, 3), vector.XY);
         Assert.Equal(new Vector2f(2, 5), vector.XZ);
         Assert.Equal(new Vector2f(3, 5), vector.YZ);

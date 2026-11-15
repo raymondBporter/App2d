@@ -40,14 +40,14 @@ public sealed class WardrobeDepthTests
         target.GetData(pixels);
         var elbow = pose.World("left-elbow");
         var hand = pose.World("left-hand");
-        var y0 = Vector3.Dot(elbow - frame.Origin, frame.YAxis);
-        var y1 = Vector3.Dot(hand - frame.Origin, frame.YAxis);
+        var y0 = Vector3f.Dot(elbow - frame.Origin, frame.YAxis);
+        var y1 = Vector3f.Dot(hand - frame.Origin, frame.YAxis);
         var torso = entity.Model.ParameterValues[PersonBuild.TorsoId];
         foreach (var height in new[] { .032f, .052f, .075f })
         {
             var t = (height * torso - y0) / (y1 - y0);
             Assert.InRange(t, 0, 1);
-            var sample = Vector3.Lerp(elbow, hand, t) - hips;
+            var sample = Vector3f.Lerp(elbow, hand, t) - hips;
             var x = (int)MathF.Round(64 + facing * sample.X * 240);
             var y = (int)MathF.Round(48 - sample.Y * 240);
             Assert.True(pixels[y * 128 + x].R < 70, $"{id}: near forearm is hidden at belt height {height}.");
@@ -94,7 +94,7 @@ public sealed class WardrobeDepthTests
         var clothed = Render(true);
         foreach (var side in new[] { "left", "right" })
         {
-            var sample = Vector3.Lerp(pose.World(side + "-hip"), pose.World(side + "-knee"), .08f) - hips;
+            var sample = Vector3f.Lerp(pose.World(side + "-hip"), pose.World(side + "-knee"), .08f) - hips;
             var x = (int)MathF.Round(64 + facing * sample.X * 160);
             var y = (int)MathF.Round(48 - sample.Y * 160);
             Assert.True(bare[y * 128 + x].R < 70, "The sample must hit the dark leg stroke before clothing.");

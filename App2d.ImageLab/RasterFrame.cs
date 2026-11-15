@@ -79,7 +79,7 @@ internal sealed class RasterFrame
                 ChannelSource.OklabLightness => ColorSpaces2D.SrgbToOklab(rgb).X,
                 ChannelSource.OklabA => ColorSpaces2D.SrgbToOklab(rgb).Y + .5f,
                 ChannelSource.OklabB => ColorSpaces2D.SrgbToOklab(rgb).Z + .5f,
-                _ => Vector3.Dot(rgb, new(.2126f, .7152f, .0722f))
+                _ => Vector3f.Dot(rgb, new(.2126f, .7152f, .0722f))
             };
         });
     }
@@ -119,9 +119,9 @@ internal sealed class RasterFrame
 
     internal static byte Byte(float value) => (byte)MathF.Round(Math.Clamp(value, 0, 1) * 255);
 
-    internal static Vector3 CompositeOnWhite(Color4b color)
+    internal static Vector3f CompositeOnWhite(Color4b color)
     {
         var alpha = color.A / 255f;
-        return new Vector3(color.R, color.G, color.B) / 255f * alpha + new Vector3(1 - alpha);
+        return new Vector3f(color.R, color.G, color.B) / 255f * alpha + new Vector3f(1 - alpha);
     }
 }

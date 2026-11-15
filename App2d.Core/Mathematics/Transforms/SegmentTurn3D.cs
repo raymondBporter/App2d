@@ -8,12 +8,12 @@ namespace App2d.Core.Mathematics.Transforms;
 /// axis and a positive angle. Interpolating along the turn keeps the tip on its arc instead of cutting a chord, which matters
 /// when two samples are far apart (a fast swing between frames).
 /// </summary>
-public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
+public readonly record struct SegmentTurn3D(float Angle, Vector3f Axis)
 {
     /// <summary>No turn: the first sample of a sequence.</summary>
-    public static SegmentTurn3D None { get; } = new(0, Vector3.UnitZ);
+    public static SegmentTurn3D None { get; } = new(0, Vector3f.UnitZ);
 
-    public bool Planar => Axis == Vector3.UnitZ;
+    public bool Planar => Axis == Vector3f.UnitZ;
 
     /// <summary>
     /// The turn from one segment to the next. In the XY plane it is signed about Z, and the shorter way round is right unless the
@@ -22,7 +22,7 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
     /// 0 to infer). Through depth it turns about the axis the two segments share, with the same 150 degree rule against the
     /// previous turn's axis.
     /// </summary>
-    public static SegmentTurn3D Between(Vector3 fromBase, Vector3 fromTip, Vector3 toBase, Vector3 toTip, SegmentTurn3D previous, int sweep = 0)
+    public static SegmentTurn3D Between(Vector3f fromBase, Vector3f fromTip, Vector3f toBase, Vector3f toTip, SegmentTurn3D previous, int sweep = 0)
     {
         var a = fromTip - fromBase;
         var b = toTip - toBase;
@@ -31,7 +31,7 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
             return None;
         }
 
-        var cross = Vector3.Cross(Vector3.Normalize(a), Vector3.Normalize(b));
+        var cross = Vector3f.Cross(Vector3f.Normalize(a), Vector3f.Normalize(b));
         var planar = cross.LengthSquared() < 1e-10f || MathF.Abs(cross.Z) > .97f * cross.Length();
         if (planar)
         {
@@ -44,11 +44,11 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
                 turn -= MathF.Sign(turn) * MathF.Tau;
             }
 
-            return new(turn, Vector3.UnitZ);
+            return new(turn, Vector3f.UnitZ);
         }
-        var axis = Vector3.Normalize(cross);
-        var angle = MathF.Atan2(cross.Length(), Vector3.Dot(Vector3.Normalize(a), Vector3.Normalize(b)));
-        if (previous.Angle != 0 && !previous.Planar && Vector3.Dot(axis, previous.Axis) < 0 && angle > 2.6f)
+        var axis = Vector3f.Normalize(cross);
+        var angle = MathF.Atan2(cross.Length(), Vector3f.Dot(Vector3f.Normalize(a), Vector3f.Normalize(b)));
+        if (previous.Angle != 0 && !previous.Planar && Vector3f.Dot(axis, previous.Axis) < 0 && angle > 2.6f)
         {
             (axis, angle) = (-axis, MathF.Tau - angle);
         }
@@ -57,9 +57,9 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
     }
 
     /// <summary>The length of the tip's arc from <paramref name="fromTip"/> to <paramref name="toTip"/> under this turn.</summary>
-    public float ArcLength(Vector3 fromTip, Vector3 toTip)
+    public float ArcLength(Vector3f fromTip, Vector3f toTip)
     {
-        var chord = Vector3.Distance(fromTip, toTip);
+        var chord = Vector3f.Distance(fromTip, toTip);
         var half = MathF.Abs(Angle) / 2;
         return half < 5e-4f ? chord : chord * half / MathF.Sin(half);
     }
@@ -69,15 +69,15 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
     /// the arc about the shared pivot and depths blend; through depth the base moves straight and the segment turns about the axis.
     /// Lengths blend linearly.
     /// </summary>
-    public (Vector3 Base, Vector3 Tip) Interpolate(Vector3 fromBase, Vector3 fromTip, Vector3 toBase, Vector3 toTip, float u)
+    public (Vector3f Base, Vector3f Tip) Interpolate(Vector3f fromBase, Vector3f fromTip, Vector3f toBase, Vector3f toTip, float u)
     {
         u = Math.Clamp(u, 0, 1);
         if (!Planar)
         {
             var along = fromTip - fromBase;
             var length = float.Lerp(along.Length(), (toTip - toBase).Length(), u);
-            var direction = Vector3.Transform(Vector3.Normalize(along), Quaternion.CreateFromAxisAngle(Axis, Angle * u));
-            var at = Vector3.Lerp(fromBase, toBase, u);
+            var direction = Vector3f.Transform(Vector3f.Normalize(along), Quaternion.CreateFromAxisAngle(Axis.ToVector3(), Angle * u));
+            var at = Vector3f.Lerp(fromBase, toBase, u);
             return (at, at + direction * length);
         }
         var baseZ = float.Lerp(fromBase.Z, toBase.Z, u);
@@ -86,7 +86,7 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3 Axis)
         var d1 = (toTip - toBase).XY;
         var flatLength = float.Lerp(d0.Length(), d1.Length(), u);
         var position = Rotation2D.InterpolateArc(fromBase.XY, toBase.XY, Angle, u);
-        var flat = Rotation2D.Apply(d0.Length() > 1e-6f ? Vector2f.Normalize(d0) : Vector2f.UnitX, Angle * u);
-        return (new(position.ToVector2(), baseZ), new((position + flat * flatLength).ToVector2(), tipZ));
+        var flat = (d0.Length() > 1e-6f ? Vector2f.Normalize(d0) : Vector2f.UnitX).Rotate(Angle * u);
+        return (new(position, baseZ), new((position + flat * flatLength), tipZ));
     }
 }

@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
@@ -14,7 +15,7 @@ public sealed class Frame2DTests
     {
         var frame = Frame2D.FromRotationDegrees(degrees, new(7, -3));
         var local = new Vector2f(.32f, -.16f);
-        var expected = frame.Origin + Rotation2D.Apply(local, float.DegreesToRadians(degrees));
+        var expected = frame.Origin + local.Rotate(Angles.DegreesToRadians(degrees));
         Assert.True(Vector2f.Distance(expected, frame.TransformPoint(local)) < .000002f);
         Assert.Equal(frame.XAxis, frame.Matrix.GetRows().X);
         Assert.Equal(frame.YAxis, frame.Matrix.GetRows().Y);

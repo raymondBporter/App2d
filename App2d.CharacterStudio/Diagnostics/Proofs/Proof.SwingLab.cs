@@ -76,7 +76,7 @@ internal sealed partial class ProofRenders
                 const float w = 2 / LabPpu;
                 for (var k = 0; k < hull.Length; k++)
                 {
-                    trail.Line(new(hull[k].ToVector2(), -2), new(hull[(k + 1) % hull.Length].ToVector2(), -2), w, red);
+                    trail.Line(new(hull[k], -2), new(hull[(k + 1) % hull.Length], -2), w, red);
                 }
             }
             BuildScenery(scenery, "ground", 0, seconds);
@@ -160,7 +160,7 @@ internal sealed partial class ProofRenders
         return result;
     }
 
-    private static (Vector3 Guard, Vector3 Tip)? LabBlade(ResolvedModel model, MotionClip clip, float seconds, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets) =>
+    private static (Vector3f Guard, Vector3f Tip)? LabBlade(ResolvedModel model, MotionClip clip, float seconds, Dictionary<string, Part> props, Dictionary<string, ModelSocket> sockets) =>
         SwingLab.Blade(model, clip, seconds, props[PersonLoadout.Sword], sockets[Humanoid.SwordSocket]);
 
     /// <summary>
@@ -178,7 +178,7 @@ internal sealed partial class ProofRenders
         var speed = new float[times.Length];
         for (var i = 1; i < times.Length; i++)
         {
-            speed[i] = tips[i] is { } b && tips[i - 1] is { } a ? Vector3.Distance(a, b) * rate : 0;
+            speed[i] = tips[i] is { } b && tips[i - 1] is { } a ? Vector3f.Distance(a, b) * rate : 0;
         }
 
         var strike = clip.Markers.FirstOrDefault(m => m.Id == "strike")?.Time ?? 0;
@@ -224,7 +224,7 @@ internal sealed partial class ProofRenders
             var (Guard, Tip) = LabBlade(model, clip, t, props, sockets)!.Value;
             var forearm = p.Points[Humanoid.RightHand] - p.Points[Humanoid.RightElbow];
             var along = Tip - Guard;
-            return float.RadiansToDegrees(MathF.Abs(Angles.WrapSigned(along.XY.AngleRadians - forearm.XY.AngleRadians)));
+            return Angles.RadiansToDegrees(MathF.Abs(Angles.WrapSigned(along.XY.AngleRadians - forearm.XY.AngleRadians)));
         }).ToArray();
         // All out: the elbow's bend (0 = locked straight) at contact and in the held follow-through.
         float Bend(float t)
@@ -232,7 +232,7 @@ internal sealed partial class ProofRenders
             var p = PoseEvaluator.Sample(model, clip, MathF.Min(clip.Duration, t));
             var upper = p.Points[Humanoid.RightElbow] - p.Points[Humanoid.RightShoulder];
             var fore = p.Points[Humanoid.RightHand] - p.Points[Humanoid.RightElbow];
-            return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector3.Dot(Vector3.Normalize(upper), Vector3.Normalize(fore)), -1, 1)));
+            return Angles.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector3f.Dot(Vector3f.Normalize(upper), Vector3f.Normalize(fore)), -1, 1)));
         }
         // Reach: the first hit shape's extent from the feet (x forward, y up).
         var shape = shapes.FirstOrDefault().Hull;

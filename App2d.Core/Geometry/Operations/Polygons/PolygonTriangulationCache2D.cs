@@ -16,7 +16,7 @@ public static class PolygonTriangulationCache2D
     public static TriangleMesh2D Get(IReadOnlyList<Vector2f> perimeter, double tolerance = 0) =>
         Get(perimeter, static point => point, tolerance);
 
-    public static TriangleMesh2D GetXY(IReadOnlyList<Vector3> perimeter, double tolerance = 0) =>
+    public static TriangleMesh2D GetXY(IReadOnlyList<Vector3f> perimeter, double tolerance = 0) =>
         Get(perimeter, static point => new Vector2f(point.X, point.Y), tolerance);
 
     /// <summary>Projects arbitrary authored vertices or vertex-buffer entries into XY before comparing or triangulating.</summary>

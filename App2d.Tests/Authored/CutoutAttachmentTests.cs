@@ -45,11 +45,11 @@ public sealed class CutoutAttachmentTests
         Assert.Equal(rigid, bound);
         var clip = ClipAuthoring.New(resolved, "fold", "Fold");
         ClipAuthoring.SetKey(clip, new("translate", "tip"), 0, new(1, 0, .3f));
-        ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3.Zero, MathF.PI / 2);
+        ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3f.Zero, MathF.PI / 2);
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
         bound = PartContours2D.Contour(part, pose.World, rest: id => resolved.Rest[id]);
-        Assert.True(Vector3.Distance(new(2, 0, .3f), TestModels.DrawPoint(bound, 1)) < 1e-5f);
-        Assert.True(Vector3.Distance(new(1, 0, .3f), TestModels.DrawPoint(bound, 2)) < 1e-5f);
+        Assert.True(Vector3f.Distance(new(2, 0, .3f), TestModels.DrawPoint(bound, 1)) < 1e-5f);
+        Assert.True(Vector3f.Distance(new(1, 0, .3f), TestModels.DrawPoint(bound, 2)) < 1e-5f);
         Assert.All(bound, p => Assert.Equal(0, p.Z));
         Assert.Equal(rigid[0], bound[0]);
         var original = PartAttachment2D.ArtworkPoint(part, 2, bound[2].XY, pose.World, id => resolved.Rest[id]);
@@ -93,7 +93,7 @@ public sealed class CutoutAttachmentTests
         var part = model.Parts[0];
         var clip = ClipAuthoring.New(resolved, "fold", "Fold");
         ClipAuthoring.SetKey(clip, new("translate", "tip"), 0, new(-.75f, .75f, 0));
-        ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3.Zero, MathF.PI);
+        ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3f.Zero, MathF.PI);
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
         Assert.True(PartPicking2D.Distance(part, pose.World, new(.12f, .5f, 0), rest: id => resolved.Rest[id]) <= 1);
     }
@@ -126,17 +126,17 @@ public sealed class CutoutAttachmentTests
 
         var rest = Matrix3x2.CreateScale(1.5f, .7f) * Matrix3x2.CreateRotation(.4f);
         var current = Matrix3x2.CreateScale(-.8f, 1.3f) * Matrix3x2.CreateRotation(-.6f);
-        Vector3 World(string id) => id switch
+        Vector3f World(string id) => id switch
         {
             "tip" => new(2, 0, 0),
             "direction" => new(2, 1, 0),
-            _ => Vector3.Zero
+            _ => Vector3f.Zero
         };
-        Vector3 Rest(string id) => id switch
+        Vector3f Rest(string id) => id switch
         {
             "tip" => new(1, 0, 0),
             "direction" => new(1, 1, 0),
-            _ => Vector3.Zero
+            _ => Vector3f.Zero
         };
         var contour = PartContours2D.Contour(part, World, bone: _ => LayeredFrame2D.FromMatrix(current), rest: Rest, restBone: _ => LayeredFrame2D.FromMatrix(rest));
         for (var i = 0; i < contour.Count; i++)

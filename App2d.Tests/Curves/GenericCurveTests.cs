@@ -45,8 +45,8 @@ public sealed class GenericCurveTests
         var transformed = curve.TransformedBy(frame);
         foreach (var t in new[] { 0f, .25f, .5f, .75f, 1f })
         {
-            Assert.Equal(new Vector3f(frame.TransformPoint(curve.Evaluate(t).ToVector3())), transformed.Evaluate(t));
-            Assert.Equal(new Vector3f(frame.TransformDirection(curve.EvaluateDerivative(t).ToVector3())), transformed.EvaluateDerivative(t));
+            Assert.Equal(frame.TransformPoint(curve.Evaluate(t)), transformed.Evaluate(t));
+            Assert.Equal(frame.TransformDirection(curve.EvaluateDerivative(t)), transformed.EvaluateDerivative(t));
         }
         var derivative = (transformed.Evaluate(.501f) - transformed.Evaluate(.499f)) / .002f;
         Assert.InRange((derivative - transformed.EvaluateDerivative(.5f)).Length(), 0, .002f);
@@ -56,7 +56,7 @@ public sealed class GenericCurveTests
     public void DoubleTransformationDoesNotNarrowLargeCoordinates()
     {
         var curve = new QuadraticBezier<Vector3d, double>(new(16_777_217, 0, 1), new(16_777_218, 1, 2), new(16_777_219, 0, 3));
-        var transformed = curve.TransformedBy(Frame3D.Identity.WithOrigin(Vector3.UnitX));
+        var transformed = curve.TransformedBy(Frame3D.Identity.WithOrigin(Vector3f.UnitX));
         Assert.Equal(16_777_218, transformed.Evaluate(0).X);
         Assert.Equal(curve.EvaluateDerivative(.5), transformed.EvaluateDerivative(.5));
     }

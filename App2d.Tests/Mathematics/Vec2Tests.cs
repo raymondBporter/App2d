@@ -1,15 +1,16 @@
 using App2d.Core.Mathematics;
-using System.Numerics;
 
 namespace App2d.Tests.Mathematics;
 
-public sealed class Vector2ExtensionsTests
+public sealed class Vec2Tests
 {
     [Fact]
     public void InfinityConstantsHaveTheirOwnSigns()
     {
-        Assert.Equal(new Vector2f(float.PositiveInfinity), Vector2Extensions.PositiveInfinity);
-        Assert.Equal(new Vector2f(float.NegativeInfinity), Vector2Extensions.NegativeInfinity);
+        Assert.Equal(new Vector2f(float.PositiveInfinity), Vector2f.PositiveInfinity);
+        Assert.Equal(new Vector2f(float.NegativeInfinity), Vector2f.NegativeInfinity);
+        Assert.Equal(new Vector2d(double.PositiveInfinity), Vector2d.PositiveInfinity);
+        Assert.Equal(new Vec2<Half>(Half.NegativeInfinity), Vec2<Half>.NegativeInfinity);
     }
 
     [Fact]
@@ -55,7 +56,7 @@ public sealed class Vector2ExtensionsTests
     public void DegreeConstructionSharesTheExistingVectorDirectionConvention(float degrees, float x, float y)
     {
         Near(new(x, y), Vector2f.FromAngleDegrees(degrees));
-        Assert.Equal(Vector2f.FromAngle(float.DegreesToRadians(degrees)), Vector2f.FromAngleDegrees(degrees));
+        Assert.Equal(Vector2f.FromAngle(Angles.DegreesToRadians(degrees)), Vector2f.FromAngleDegrees(degrees));
     }
 
     [Fact]
@@ -90,6 +91,19 @@ public sealed class Vector2ExtensionsTests
         Assert.ThrowsAny<ArgumentException>(() => Vector2f.TryRefract(-Vector2f.UnitY, Vector2f.UnitY, 0, 1, out _));
         Assert.ThrowsAny<ArgumentException>(() => Vector2f.TryRefract(-Vector2f.UnitY, Vector2f.UnitY, 1, float.NaN, out _));
         Assert.ThrowsAny<ArgumentException>(() => Vector2f.FromAngleDegrees(float.PositiveInfinity));
+    }
+
+    [Fact]
+    public void DoubleRefractionKeepsNormalAndShallowIncidenceWhenTheRatioOverflows()
+    {
+        Assert.True(Vector2d.TryRefract(-Vector2d.UnitY, Vector2d.UnitY, double.MaxValue, double.Epsilon, out var normal));
+        Assert.Equal(-Vector2d.UnitY, normal);
+
+        Assert.True(Vector2d.TryRefract(new(double.Epsilon, -1), Vector2d.UnitY, 0.5d, double.Epsilon, out var shallow));
+        Assert.Equal(new Vector2d(0.5d, -Math.Sqrt(0.75d)), shallow);
+
+        Assert.False(Vector2d.TryRefract(Vector2d.UnitX, Vector2d.UnitY, double.MaxValue, double.Epsilon, out var reflected));
+        Assert.Equal(Vector2d.Zero, reflected);
     }
 
     private static void Near(Vector2f expected, Vector2f actual) => Assert.True(Vector2f.Distance(expected, actual) < .000002f, $"Expected {expected}, got {actual}");

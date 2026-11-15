@@ -300,7 +300,7 @@ public sealed class VegetationPatch2D
             for (var petal = 0; petal < 5; petal++)
             {
                 var angle = petal / 5f * MathF.Tau + flower.Phase;
-                yield return new([Disc(head + Polar2D.Direction(angle) * 5.2f * scale, 3.8f * scale, flower.Color)]);
+                yield return new([Disc(head + Vector2f.Direction(angle) * 5.2f * scale, 3.8f * scale, flower.Color)]);
             }
             yield return new([Disc(head, 3f * scale, FlowerCenterColor)]);
         }
@@ -343,7 +343,7 @@ public sealed class VegetationPatch2D
         for (var petal = 0; petal < 5; petal++)
         {
             var angle = petal / 5f * MathF.Tau + flower.Phase;
-            FillDisc(renderer, head + Polar2D.Direction(angle) * 5.2f * scale, 3.8f * scale, flower.Color);
+            FillDisc(renderer, head + Vector2f.Direction(angle) * 5.2f * scale, 3.8f * scale, flower.Color);
         }
         FillDisc(renderer, head, 3f * scale, FlowerCenterColor);
     }
@@ -363,7 +363,7 @@ public sealed class VegetationPatch2D
         var points = new Vector2f[10];
         for (var index = 0; index < points.Length; index++)
         {
-            points[index] = center + Polar2D.ToCartesian(radius, index / (float)points.Length * MathF.Tau);
+            points[index] = center + Vector2f.FromPolar(radius, index / (float)points.Length * MathF.Tau);
         }
 
         return new(points, color, InkColor, DetailOutlineWidth * radius / 3.8f);

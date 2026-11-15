@@ -29,7 +29,7 @@ public sealed class EntityRuntimeTests
             foreach (var t in new[] { hit.Start, hit.Finish - .01f })
             {
                 var box = EntityCollision.Attack(new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
-                TestModels.Near(new Vector3(3 + hit.Collider.Definition.OffsetX * facing, hit.Collider.Definition.OffsetY, 0), new Vector3(box.Bounds.Center.ToVector2(), 0), 1e-4f, $"box centre at {t}, facing {facing}");
+                TestModels.Near(new Vector3f(3 + hit.Collider.Definition.OffsetX * facing, hit.Collider.Definition.OffsetY, 0), new Vector3f(box.Bounds.Center, 0), 1e-4f, $"box centre at {t}, facing {facing}");
             }
         }
         // attack -> follow-up -> forehand -> follow-up: the traversal controller supports the first two, the chain the third.
@@ -296,7 +296,7 @@ public sealed class EntityRuntimeTests
             var clip = entity.Clip("walk")!;
             var speed = PoseEvaluator.CycleTravel(entity.Model, clip).X / clip.Duration * 1.3f;
             var position = Vector2f.Zero;
-            var held = new Dictionary<string, Vector3>();
+            var held = new Dictionary<string, Vector3f>();
             var holds = 0;
             for (var step = 0; step < 600; step++)
             {
@@ -393,7 +393,7 @@ public sealed class EntityRuntimeTests
         {
             InPlace = true
         });
-        Assert.Equal(Vector3.Zero, inPlace.Locomotion);
+        Assert.Equal(Vector3f.Zero, inPlace.Locomotion);
         foreach (var control in model.Controls.Keys)
         {
             TestModels.Near(authored.World(control) - authored.Locomotion, inPlace.World(control), 1e-4f, control);

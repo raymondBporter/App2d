@@ -358,7 +358,7 @@ public sealed class MigrationReferenceTests
         {
             var (point, axis) = EntityCollision.Muzzle(entity, actor);
             var equipped = entity.Equipment.First(e => e.Prop.Point(EquipmentPoints.Muzzle) is not null);
-            record.Muzzle = new(V(point + Vector3.UnitZ * actor.SocketPlacement(equipped.Socket).Layer), V2(axis));
+            record.Muzzle = new(V(point + Vector3f.UnitZ * actor.SocketPlacement(equipped.Socket).Layer), V2(axis));
         }
 
         return record;
@@ -368,23 +368,23 @@ public sealed class MigrationReferenceTests
     private static Frame3D DrawingFrame(ActorPose actor, ModelSocket socket)
     {
         var spatial = actor.Socket(socket);
-        return spatial.WithOrigin(spatial.Origin + Vector3.UnitZ * actor.SocketPlacement(socket).Layer);
+        return spatial.WithOrigin(spatial.Origin + Vector3f.UnitZ * actor.SocketPlacement(socket).Layer);
     }
 
     private static SilhouetteRecord Silhouette(PartGeometry part, EvaluatedPose pose, ResolvedModel model, ActorPose actor)
     {
         var sampled = PartContours2D.Contour(part, model, pose);
         var contour = Enumerable.Range(0, sampled.Count)
-            .Select(i => actor.Place(sampled[i] + Vector3.UnitZ * sampled.LayerAt(i))).ToList();
-        var min = new Vector3(float.PositiveInfinity);
-        var max = new Vector3(float.NegativeInfinity);
-        var sum = Vector3.Zero;
+            .Select(i => actor.Place(sampled[i] + Vector3f.UnitZ * sampled.LayerAt(i))).ToList();
+        var min = new Vector3f(float.PositiveInfinity);
+        var max = new Vector3f(float.NegativeInfinity);
+        var sum = Vector3f.Zero;
         double area = 0;
         for (var i = 0; i < contour.Count; i++)
         {
             var p = contour[i];
-            min = Vector3.Min(min, p);
-            max = Vector3.Max(max, p);
+            min = Vector3f.Min(min, p);
+            max = Vector3f.Max(max, p);
             sum += p;
             var q = contour[(i + 1) % contour.Count];
             area += (double)p.X * q.Y - (double)q.X * p.Y;
@@ -503,7 +503,7 @@ public sealed class MigrationReferenceTests
             : Tolerances["position"];
     }
 
-    private static float[] V(Vector3 v) => [v.X, v.Y, v.Z];
+    private static float[] V(Vector3f v) => [v.X, v.Y, v.Z];
 
     private static float[] V2(Vector2f v) => [v.X, v.Y];
 

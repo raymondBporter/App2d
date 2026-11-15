@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using System.Numerics;
@@ -27,9 +28,9 @@ public sealed class BladeSwooshTests
         Assert.All(first.Zip(second), pair => Assert.Equal(8, pair.Second.Layer - pair.First.Layer, 4));
     }
 
-    private static (Vector3 Guard, Vector3 Tip) At(float degrees)
+    private static (Vector3f Guard, Vector3f Tip) At(float degrees)
     {
-        var (s, c) = MathF.SinCos(float.DegreesToRadians(degrees));
+        var (s, c) = MathF.SinCos(Angles.DegreesToRadians(degrees));
         return (new(c * .1f, s * .1f, 0), new(c * .9f, s * .9f, 0));
     }
 
@@ -58,7 +59,7 @@ public sealed class BladeSwooshTests
         // One 90 degree step: a chord would sag to 0.64 at 45 degrees; the rebuilt rotation keeps the tip at 0.9.
         var mesh = Swing((0, 90, true), (1 / 60f, 0, true));
         var near45 = mesh.Vertices.ToArray().Select(v => new Vector2f(v.Position.X, v.Position.Y))
-            .Where(p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) - 45) < 4).Max(p => p.Length());
+            .Where(p => MathF.Abs(Angles.RadiansToDegrees(p.AngleRadians) - 45) < 4).Max(p => p.Length());
         Assert.InRange(near45, .88f, .905f);
         Assert.All(mesh.Vertices.ToArray(), v => Assert.True(new Vector2f(v.Position.X, v.Position.Y).Length() <= .901f));
     }
@@ -70,8 +71,8 @@ public sealed class BladeSwooshTests
         // the trail back over the start. The trail must stay on the clockwise side (x >= 0 half, bar the thin guard end).
         var mesh = Swing((0, 90, true), (1 / 60f, 30, true), (2 / 60f, -140, true));
         var points = mesh.Vertices.ToArray().Select(v => new Vector2f(v.Position.X, v.Position.Y)).Where(p => p.Length() > .3f).ToArray();
-        Assert.Contains(points, p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) + 45) < 6);
-        Assert.DoesNotContain(points, p => MathF.Abs(float.RadiansToDegrees(MathF.Atan2(p.Y, p.X)) - 160) < 10);
+        Assert.Contains(points, p => MathF.Abs(Angles.RadiansToDegrees(p.AngleRadians) + 45) < 6);
+        Assert.DoesNotContain(points, p => MathF.Abs(Angles.RadiansToDegrees(p.AngleRadians) - 160) < 10);
     }
 
     [Fact]
@@ -96,10 +97,10 @@ public sealed class BladeSwooshTests
         {
             Style = SwooshStyle.Primary with { Material = SwooshStyle.Primary.Material with { Outline = null } }
         };
-        static (Vector3, Vector3) Yaw(float degrees)
+        static (Vector3f, Vector3f) Yaw(float degrees)
         {
-            var (s, c) = MathF.SinCos(float.DegreesToRadians(degrees));
-            return (Vector3.Zero, new(c * .9f, 0, -s * .9f));
+            var (s, c) = MathF.SinCos(Angles.DegreesToRadians(degrees));
+            return (Vector3f.Zero, new(c * .9f, 0, -s * .9f));
         }
         foreach (var (time, degrees) in new[] { (0f, 180f), (1 / 60f, 90f), (2 / 60f, 0f) })
         {

@@ -18,17 +18,17 @@ public sealed class Camera3D
         ViewProjection = view * projection;
         Ensure.Invertible(ViewProjection, out _inverse);
         Ensure.Invertible(view, out var world);
-        Position = world.Translation;
-        Forward = Vector3.Normalize(new(-world.M31, -world.M32, -world.M33));
+        Position = new(world.Translation);
+        Forward = Vector3f.Normalize(new(-world.M31, -world.M32, -world.M33));
     }
 
     public Matrix4x4 View { get; }
     public Matrix4x4 Projection { get; }
     public Matrix4x4 ViewProjection { get; }
-    public Vector3 Position { get; }
-    public Vector3 Forward { get; }
+    public Vector3f Position { get; }
+    public Vector3f Forward { get; }
 
-    public static Camera3D Perspective(Vector3 position, Vector3 target, Vector3 up, float aspectRatio,
+    public static Camera3D Perspective(Vector3f position, Vector3f target, Vector3f up, float aspectRatio,
         float verticalFieldOfView = MathF.PI / 4, float near = .05f, float far = 1000f)
     {
         ValidateView(position, target, up);
@@ -36,25 +36,27 @@ public sealed class Camera3D
         Ensure.GreaterThan(verticalFieldOfView, 0f);
         Ensure.LessThan(verticalFieldOfView, MathF.PI);
         ValidateDepth(near, far);
-        return new(Matrix4x4.CreateLookAt(position, target, up), Matrix4x4.CreatePerspectiveFieldOfView(verticalFieldOfView, aspectRatio, near, far));
+        return new(Matrix4x4.CreateLookAt(position.ToVector3(), target.ToVector3(), up.ToVector3()),
+            Matrix4x4.CreatePerspectiveFieldOfView(verticalFieldOfView, aspectRatio, near, far));
     }
 
-    public static Camera3D Orthographic(Vector3 position, Vector3 target, Vector3 up, float width, float height,
+    public static Camera3D Orthographic(Vector3f position, Vector3f target, Vector3f up, float width, float height,
         float near = .05f, float far = 1000f)
     {
         ValidateView(position, target, up);
         Ensure.Positive(width);
         Ensure.Positive(height);
         ValidateDepth(near, far);
-        return new(Matrix4x4.CreateLookAt(position, target, up), Matrix4x4.CreateOrthographic(width, height, near, far));
+        return new(Matrix4x4.CreateLookAt(position.ToVector3(), target.ToVector3(), up.ToVector3()),
+            Matrix4x4.CreateOrthographic(width, height, near, far));
     }
 
     /// <summary>Projects a world point to pixels and depth [0,1]. False when behind the camera or outside its depth range.</summary>
-    public bool TryProject(Vector3 world, Vector2f  viewportSize, out Vector3 screen)
+    public bool TryProject(Vector3f world, Vector2f  viewportSize, out Vector3f screen)
     {
         Ensure.Finite(world);
         Ensure.Positive(viewportSize);
-        var clip = Vector4.Transform(new Vector4(world, 1), ViewProjection);
+        var clip = Vector4.Transform(new Vector4(world.ToVector3(), 1), ViewProjection);
         screen = default;
         if (!(clip.W > 0)) return false;
         var depth = clip.Z / clip.W;
@@ -75,19 +77,19 @@ public sealed class Camera3D
         return new(near, far - near);
     }
 
-    private Vector3 Unproject(Vector4 clip)
+    private Vector3f Unproject(Vector4 clip)
     {
         var point = Vector4.Transform(clip, _inverse);
         return new(point.X / point.W, point.Y / point.W, point.Z / point.W);
     }
 
-    private static void ValidateView(Vector3 position, Vector3 target, Vector3 up)
+    private static void ValidateView(Vector3f position, Vector3f target, Vector3f up)
     {
         Ensure.Finite(position);
         Ensure.Finite(target);
         Ensure.NonZero(up);
         Ensure.NonZero(target - position);
-        Ensure.NonZero(Vector3.Cross(target - position, up));
+        Ensure.NonZero(Vector3f.Cross(target - position, up));
     }
 
     private static void ValidateDepth(float near, float far)

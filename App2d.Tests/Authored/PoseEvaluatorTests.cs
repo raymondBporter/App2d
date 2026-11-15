@@ -42,7 +42,7 @@ public sealed class PoseEvaluatorTests
         TestModels.Near(new(0, .8f, 0), pose.World("body"));
         TestModels.Near(new(0, 1.3f, 0), pose.World("shoulder"));
         TestModels.Near(new(.8f, 1.3f, 0), pose.World("hand"), 1e-4f, "arm target follows the shoulder frame");
-        TestModels.Near(Vector3.Zero, pose.World("foot"), 1e-4f, "leg target stays in the locomotion frame");
+        TestModels.Near(Vector3f.Zero, pose.World("foot"), 1e-4f, "leg target stays in the locomotion frame");
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class PoseEvaluatorTests
             Finish = .5f
         });
         var planted = Sample(clip, .25);
-        TestModels.Near(Vector3.Zero, planted.World("foot"), 1e-4f, "planted while travelling");
+        TestModels.Near(Vector3f.Zero, planted.World("foot"), 1e-4f, "planted while travelling");
         Assert.Single(planted.Contacts);
         var released = Sample(clip, .5);
         Assert.Empty(released.Contacts);
@@ -158,5 +158,5 @@ public sealed class PoseEvaluatorTests
     public void InvalidTimesAreRejected(double seconds) =>
         Assert.Throws<ArgumentOutOfRangeException>(() => PoseEvaluator.Sample(Model, TestModels.Clip(Model), seconds));
 
-    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3f v) => new(v.X, v.Y);
 }

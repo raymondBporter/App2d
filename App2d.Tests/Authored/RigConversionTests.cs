@@ -16,7 +16,7 @@ public sealed class RigConversionTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
 
-    private static Vector2f XY(Vector3 v) => new(v.X, v.Y);
+    private static Vector2f XY(Vector3f v) => new(v.X, v.Y);
 
     [Fact]
     public void TheShippedPersonLimbsAreBoneConstraintsWithTheShouldersAsPivots()
@@ -168,7 +168,7 @@ public sealed class RigConversionTests
         TestModels.Near(turned.World("crank-pin"), turned.World("rod-end"), 2e-2f, "the rod follows the pin");
         // Rigid frames: the piston and elbow frames point along their segments after the solve.
         var piston = XY(turned.World("rod-elbow")) - XY(turned.World("piston"));
-        Assert.Equal(MathF.Atan2(piston.Y, piston.X), MathF.IEEERemainder(turned.Angles["piston"], MathF.Tau), 3);
+        Assert.Equal(piston.AngleRadians, MathF.IEEERemainder(turned.Angles["piston"], MathF.Tau), 3);
         Assert.NotEqual(rest.Angles["piston"], turned.Angles["piston"], 3);
         var part = model.Parts.Single(p => p.Id == "rod-upper");
         var art = PartAttachment2D.FrameOf(part, turned.World, turned.Placement, id => model.Rest[id]);

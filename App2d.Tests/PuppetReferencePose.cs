@@ -8,11 +8,11 @@ namespace App2d.Tests;
 /// <summary>The prototype evaluator retained only to verify imported motion against its source.</summary>
 internal sealed class PuppetReferencePose(PuppetPose pose)
 {
-    public Dictionary<string, Vector3> Points => pose.Points;
-    public Vector3 Position => pose.Position;
-    public Vector3 World(string id) => Points[id] + Position;
+    public Dictionary<string, Vector3f> Points => pose.Points;
+    public Vector3f Position => pose.Position;
+    public Vector3f World(string id) => Points[id] + Position;
     public List<Contact> Contacts { get; } = [];
-    public sealed record Contact(string End, Vector3 Target, float Error);
+    public sealed record Contact(string End, Vector3f Target, float Error);
 
     public static PuppetReferencePose Sample(PuppetDefinition definition, PuppetMotion motion, double seconds, bool repeat = false)
     {
@@ -21,7 +21,7 @@ internal sealed class PuppetReferencePose(PuppetPose pose)
         var result = new PuppetReferencePose(pose);
         var cycles = repeat && motion.Loop ? Math.Floor(seconds / motion.Duration) : 0;
         var time = (float)(cycles > 0 ? seconds % motion.Duration : Math.Min(seconds, motion.Duration));
-        Vector3 travel = default;
+        Vector3f travel = default;
         if (motion.Keys.Count > 0)
         {
             var first = motion.Keys[0];
@@ -40,10 +40,10 @@ internal sealed class PuppetReferencePose(PuppetPose pose)
                 a = key;
             }
             var amount = b.Time <= a.Time ? 0 : Math.Clamp((time - a.Time) / (b.Time - a.Time), 0, 1);
-            pose.Position = Vector3.Lerp(a.Position.XYZ, b.Position.XYZ, amount) + travel;
+            pose.Position = Vector3f.Lerp(a.Position.XYZ, b.Position.XYZ, amount) + travel;
             foreach (var control in definition.Controls)
             {
-                pose.Points[control.Id] = Vector3.Lerp(a.Points.GetValueOrDefault(control.Id, control.Rest).XYZ, b.Points.GetValueOrDefault(control.Id, control.Rest).XYZ, amount);
+                pose.Points[control.Id] = Vector3f.Lerp(a.Points.GetValueOrDefault(control.Id, control.Rest).XYZ, b.Points.GetValueOrDefault(control.Id, control.Rest).XYZ, amount);
             }
         }
         foreach (var chain in definition.Chains)

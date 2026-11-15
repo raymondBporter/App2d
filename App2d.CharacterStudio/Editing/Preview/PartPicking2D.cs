@@ -20,11 +20,11 @@ public static class PartPicking2D
 {
 
     /// <summary>The picking score of a part in an evaluated pose of a resolved model, with the pose's animated artwork fit applied.</summary>
-    public static float Distance(PartGeometry part, ResolvedModel model, EvaluatedPose pose, Vector3 point) =>
+    public static float Distance(PartGeometry part, ResolvedModel model, EvaluatedPose pose, Vector3f point) =>
         Distance(pose.Fitted(part), pose.World, point, pose.Placement, id => model.Rest[id], model.RestPlacement);
 
     /// <summary>The picking score of an evaluated animated instance (P7a): the best of its visible pieces in their nested pose.</summary>
-    public static float Distance(EvaluatedAttachment attachment, Vector3 point)
+    public static float Distance(EvaluatedAttachment attachment, Vector3f point)
     {
         if (attachment.Hidden)
         {
@@ -41,14 +41,14 @@ public static class PartPicking2D
     }
 
     /// <summary>The picking score of an instance in an evaluated pose: its placement on the socket's evaluated placement, or its evaluated nested pose when animated.</summary>
-    public static float Distance(ResolvedAttachment attachment, EvaluatedPose pose, Vector3 point) =>
+    public static float Distance(ResolvedAttachment attachment, EvaluatedPose pose, Vector3f point) =>
         pose.Attachments.TryGetValue(attachment.Id, out var evaluated) ? Distance(evaluated, point)
         : Distance(attachment, new ActorPose(pose, Vector2f.Zero, 1).Socket(attachment.Socket), point);
 
-    public static float Distance(ResolvedAttachment attachment, Frame3D socket, Vector3 point) =>
+    public static float Distance(ResolvedAttachment attachment, Frame3D socket, Vector3f point) =>
         DistanceAt(attachment, PartPlacement3D.Placement(attachment, socket), point);
 
-    private static float DistanceAt(ResolvedAttachment attachment, Frame3D spatial, Vector3 point)
+    private static float DistanceAt(ResolvedAttachment attachment, Frame3D spatial, Vector3f point)
     {
         if (attachment.Instance.Hidden) return float.PositiveInfinity;
         var (world, frame) = attachment.Lookups(LayeredFrame2D.Identity);
@@ -60,7 +60,7 @@ public static class PartPicking2D
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
-    public static float Distance(PartGeometry part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Frame3D? spatial = null, float physicalZ = 0)
+    public static float Distance(PartGeometry part, Func<string, Vector3f> world, Vector3f point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3f>? rest = null, Func<string, LayeredFrame2D>? restBone = null, Frame3D? spatial = null, float physicalZ = 0)
     {
         var p = new Vector2f(point.X, point.Y);
         if (part.Hidden) return float.PositiveInfinity;
@@ -77,7 +77,7 @@ public static class PartPicking2D
         {
             var frame = PartPlacement3D.Extend(PartAttachment2D.FrameOf(part, world, bone));
             if (spatial is { } placed) frame = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, bone), placed, physicalZ);
-            var vertices = solid.Vertices.Select(v => frame.TransformPoint(v.ToVector3()).XY).ToArray();
+            var vertices = solid.Vertices.Select(v => frame.TransformPoint(v).XY).ToArray();
             var nearest = float.PositiveInfinity;
             foreach (var (ia, ib, ic) in MeshTopology.Triangles(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(solid.Triangles)))
             {

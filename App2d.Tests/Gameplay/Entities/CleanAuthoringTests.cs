@@ -90,7 +90,7 @@ public sealed class CleanAuthoringTests : IDisposable
         {
             s.Seek(time);
             var pose = s.Evaluate("beetle")!.Pose;
-            s.DragControl(time is .2f ? "back-foot" : "front-foot", pose.World(time is .2f ? "back-foot" : "front-foot") + new Vector3(0, lift, 0));
+            s.DragControl(time is .2f ? "back-foot" : "front-foot", pose.World(time is .2f ? "back-foot" : "front-foot") + new Vector3f(0, lift, 0));
             s.EndDrag();
         }
         s.Seek(0);
@@ -205,7 +205,7 @@ public sealed class CleanAuthoringTests : IDisposable
         s.Seek(time);
         var pose = s.Evaluate(s.SubjectId!)!.Pose;
         s.BeginDrag();
-        s.DragControl(control, pose.World(control) + new Vector3(reach, lift, 0));
+        s.DragControl(control, pose.World(control) + new Vector3f(reach, lift, 0));
         s.EndDrag();
     }
 }

@@ -13,7 +13,7 @@ namespace App2d.Analyzers.Tests;
 public sealed class VectorRuleTests
 {
     private const string Prefix = "using System; using System.Numerics; using App2d.Core.Mathematics; " +
-        "using Vector2f = App2d.Core.Mathematics.Vec2<float>; using Vector2d = App2d.Core.Mathematics.Vec2<double>; class Example { ";
+        "using App2d.Core.Mathematics; using Vector2d = App2d.Core.Mathematics.Vec2<double>; class Example { ";
     private const string Suffix = " }";
 
     private static readonly ImmutableArray<MetadataReference> References =

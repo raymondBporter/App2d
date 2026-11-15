@@ -245,7 +245,7 @@ can move away from and return to equal endpoint values. The existing keyframe JS
 
 `KeyCurve2D.Split(time, start, end)` returns the two time segments; `Slice(from, to, start, end)` extracts one
 interval. Both use sampled values for the new key endpoints. Handles are stored as two `Vector2` values;
-motion keys store `Vector3`, and tint keys store `Vector4`. `AuthoredJson` maps these vectors to the existing
+motion keys store `Vector3f`, and tint keys store `Vector4`. `AuthoredJson` maps these vectors to the existing
 scalar file fields, including their sparse defaults. `KeyframeSampling` owns the shared ordered-key lookup,
 and `KeyframeSegmentSampler` owns shared scalar segment evaluation. Component timing curves stay independent.
 

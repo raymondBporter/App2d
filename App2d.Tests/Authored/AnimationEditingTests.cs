@@ -225,7 +225,7 @@ public sealed class AnimationEditingTests
         // Bone nodes (the left arm) derive their rest, so they follow their moved parents.
         foreach (var control in source.Controls.Where(c => c.Node == RigNodeKinds.Point))
         {
-            control.Rest = PuppetPoint.From(control.Rest.XYZ + new Vector3(3, 0, 0));
+            control.Rest = PuppetPoint.From(control.Rest.XYZ + new Vector3f(3, 0, 0));
         }
 
         var moved = ResolvedModel.From(source);
@@ -233,7 +233,7 @@ public sealed class AnimationEditingTests
         Assert.NotEmpty(first);
         foreach (var (control, point) in first)
         {
-            TestModels.Near(point + new Vector3(3, 0, 0), second[control]);
+            TestModels.Near(point + new Vector3f(3, 0, 0), second[control]);
         }
     }
 }

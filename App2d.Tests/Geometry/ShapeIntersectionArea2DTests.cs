@@ -64,7 +64,7 @@ public sealed class ShapeIntersectionArea2DTests
         // B centered on A's +X vertex: the crossings straddle A's parameter seam.
         var seam = (float)(2 * 1 * ShapeArea2DTests.CircleLens(1, 1, 1));
         Assert.Equal(seam, ShapeArea2D.Intersection(Ellipse2D.Builder.Create(new(2, 1)), Ellipse2D.Builder.Create(new(2, 1), new(2, 0))), 5);
-        Assert.Equal(seam, ShapeArea2D.Intersection(Ellipse2D.Builder.Create(new(2, 1), default, .3f), Ellipse2D.Builder.Create(new(2, 1), 2 * Polar2D.Direction(.3f), .3f)), 5);
+        Assert.Equal(seam, ShapeArea2D.Intersection(Ellipse2D.Builder.Create(new(2, 1), default, .3f), Ellipse2D.Builder.Create(new(2, 1), 2 * Vector2f.Direction(.3f), .3f)), 5);
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public sealed class ShapeIntersectionArea2DTests
             0 => Ellipse2D.Builder.Create(new(.2f + (float)random.NextDouble() * 2, .2f + (float)random.NextDouble() * 2), center, turn),
             1 => Circle2D.Builder.Create(.3f + (float)random.NextDouble(), center),
             2 => Rectangle2D.Builder.FromSize(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble(), center, turn),
-            _ => Capsule2D.Builder.Create(center, center + Polar2D.Direction(turn) * (.5f + (float)random.NextDouble()), .2f + (float)random.NextDouble() * .5f)
+            _ => Capsule2D.Builder.Create(center, center + Vector2f.Direction(turn) * (.5f + (float)random.NextDouble()), .2f + (float)random.NextDouble() * .5f)
         };
     }
 }

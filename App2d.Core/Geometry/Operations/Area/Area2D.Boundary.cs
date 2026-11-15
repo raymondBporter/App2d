@@ -137,7 +137,7 @@ public static partial class Area2D
 
         var cosine = (distance * distance + circle.Radius * circle.Radius - other.Radius * other.Radius) / (2d * distance * circle.Radius);
         var halfAngle = Math.Acos(Math.Clamp(cosine, -1d, 1d));
-        var start = PositiveAngle(Math.Atan2(delta.Y, delta.X) - halfAngle);
+        var start = Angles.WrapPositive(delta.AngleRadians - halfAngle);
         var end = start + 2d * halfAngle;
         covered.Add(new(start, Math.Min(end, Math.Tau)));
         if (end > Math.Tau)
@@ -186,7 +186,7 @@ public static partial class Area2D
             var count = PolynomialRoots.FindRealRoots(coefficients, -1d, 1d, roots);
             for (var i = 0; i < count; i++)
             {
-                angles.Add(PositiveAngle(chart * Math.PI + 2d * Math.Atan(roots[i])));
+                angles.Add(Angles.WrapPositive(chart * Math.PI + 2d * Math.Atan(roots[i])));
             }
         }
         CoverArcsInside(curve, other, covered, angles);
@@ -209,7 +209,7 @@ public static partial class Area2D
             // just outside the edge. This is especially important at a capsule's arc/edge seams.
             if (Math.Abs(normalized.Dot(normalized) - 1d) <= 8d * ConicCoincidenceTolerance * magnitude)
             {
-                angles.Add(PositiveAngle(Math.Atan2(normalized.Y, normalized.X)));
+                angles.Add(Angles.WrapPositive(normalized.AngleRadians));
             }
 
             if (!CurveRoots(start, direction, curve, out var low, out var high))
@@ -228,7 +228,7 @@ public static partial class Area2D
                 }
 
                 var point = curve.NormalizeRelative(start + direction * parameter);
-                angles.Add(PositiveAngle(Math.Atan2(point.Y, point.X)));
+                angles.Add(Angles.WrapPositive(point.AngleRadians));
             }
         }
         CoverArcsInside(curve, polygon, covered, angles);
@@ -410,15 +410,6 @@ public static partial class Area2D
     // cross product with the chord, so it holds in any orientation.
     private static double SignedArcArea(BoundaryPart curve, double from, double to) => .5d * (curve.Radii.X * curve.Radii.Y * (to - from) + curve.Center.Cross(curve.PointAt(to) - curve.PointAt(from)));
 
-    private static (double Sin, double Cos) EndpointSinCos(double angle) =>
-        angle == 0d || angle == Math.Tau ? (0d, 1d) : Math.SinCos(angle);
-
-    private static double PositiveAngle(double angle)
-    {
-        angle %= Math.Tau;
-        return angle < 0d ? angle + Math.Tau : angle;
-    }
-
     internal sealed class BoundaryPart
     {
         internal Vector2d Center { get; private set; }
@@ -557,7 +548,7 @@ public static partial class Area2D
 
         internal Vector2d PointAt(double angle)
         {
-            var (sin, cos) = EndpointSinCos(angle);
+            var (sin, cos) = Angles.SinCosAtTurnEndpoint(angle);
             return FromFrame(new(Radii.X * cos, Radii.Y * sin));
         }
 

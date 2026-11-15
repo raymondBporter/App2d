@@ -7,7 +7,7 @@ var output = Path.GetFullPath(args.Length > 0 ? args[0] : "artifacts/cloth-lab/p
 var source = Path.GetFullPath(args.Length > 1 ? args[1] : "tools/ClothLab");
 const int intervals = 120;
 float Round(float x) => MathF.Round(x, 6);
-float[] Point(Vector3 p) => [Round(p.X), Round(p.Y), Round(p.Z)];
+float[] Point(Vector3f p) => [Round(p.X), Round(p.Y), Round(p.Z)];
 object Export(PuppetDefinition definition)
 {
     var motion = definition.Motions[0];
@@ -15,7 +15,7 @@ object Export(PuppetDefinition definition)
     var frames = Enumerable.Range(0, intervals + 1).Select(i =>
     {
         var pose = PuppetPose.Sample(definition, motion, motion.Duration * (double)i / intervals);
-        return definition.Controls.SelectMany(c => Point(pose.World(c.Id) - new Vector3(pose.Position.X, 0, 0))).ToArray();
+        return definition.Controls.SelectMany(c => Point(pose.World(c.Id) - new Vector3f(pose.Position.X, 0, 0))).ToArray();
     }).ToArray();
     if (frames.Any(frame => frame.Any(value => !float.IsFinite(value))))
     {

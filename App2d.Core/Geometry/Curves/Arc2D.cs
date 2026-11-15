@@ -51,22 +51,16 @@ public readonly partial record struct Arc2D : ICurve2D
             return MathF.Abs(radial - Radius);
         }
 
-        var angle = Math.Atan2(delta.Y, delta.X);
+        var angle = delta.ToVector2d().AngleRadians;
         var sweep = (double)SweepAngleRadians;
         var progress = sweep > 0
-            ? PositiveAngle(angle - StartAngleRadians)
-            : PositiveAngle(StartAngleRadians - angle);
+            ? Angles.WrapPositive(angle - StartAngleRadians)
+            : Angles.WrapPositive(StartAngleRadians - angle);
         if (progress <= Math.Abs(sweep))
         {
             return MathF.Abs(radial - Radius);
         }
 
         return MathF.Min(Vector2f.Distance(point, Start), Vector2f.Distance(point, End));
-    }
-
-    private static double PositiveAngle(double angle)
-    {
-        var result = angle % Math.Tau;
-        return result < 0 ? result + Math.Tau : result;
     }
 }

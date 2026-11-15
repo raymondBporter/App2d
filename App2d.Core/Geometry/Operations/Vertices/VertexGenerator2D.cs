@@ -34,7 +34,7 @@ public static class VertexGenerator2D
     /// <param name="radii">The half-extents along X and Y.</param>
     /// <param name="angle">The parametric angle in radians; zero is the +X extreme.</param>
     /// <returns>Center + (cos, sin) scaled by the radii.</returns>
-    public static Vector2f  PointOnEllipse(Vector2f center, Vector2f radii, float angle) => center + Polar2D.Direction(angle) * radii;
+    public static Vector2f  PointOnEllipse(Vector2f center, Vector2f radii, float angle) => center + Vector2f.Direction(angle) * radii;
 
     /// <summary>Writes a full ellipse; the buffer length selects the number of segments, starting on local +X.</summary>
     /// <param name="vertices">A buffer of at least three entries; every entry is written.</param>

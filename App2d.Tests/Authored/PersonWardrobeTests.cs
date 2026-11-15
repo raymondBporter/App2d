@@ -26,12 +26,12 @@ public sealed class PersonWardrobeTests
             var a = solid.Mesh!.Triangles[i];
             var b = solid.Mesh!.Triangles[i + 1];
             var c = solid.Mesh!.Triangles[i + 2];
-            var pa = solid.Mesh!.Vertices[a].ToVector3();
-            var pb = solid.Mesh!.Vertices[b].ToVector3();
-            var pc = solid.Mesh!.Vertices[c].ToVector3();
+            var pa = solid.Mesh!.Vertices[a];
+            var pb = solid.Mesh!.Vertices[b];
+            var pc = solid.Mesh!.Vertices[c];
             if (pa.Z < 0 && pb.Z < 0 && pc.Z < 0)
             {
-                var cross = Vector3.Cross(pb - pa, pc - pa);
+                var cross = Vector3f.Cross(pb - pa, pc - pa);
                 Assert.True(cross.Z < 0);
                 area += -cross.Z / 2;
                 var center = (pa + pb + pc) / 3;
@@ -62,8 +62,8 @@ public sealed class PersonWardrobeTests
         var entity = catalog.Entities["maul-brute"];
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, catalog.Animations["person-death"], .6f), Vector2f.Zero, 1);
         var socket = pose.Socket(entity.Sockets[Humanoid.HeadSocket]);
-        TestModels.Near(Vector3.UnitX, socket.XAxis);
-        TestModels.Near(Vector3.UnitY, socket.YAxis);
+        TestModels.Near(Vector3f.UnitX, socket.XAxis);
+        TestModels.Near(Vector3f.UnitY, socket.YAxis);
         TestModels.Near(pose.World("head"), socket.Origin);
     }
 
@@ -81,8 +81,7 @@ public sealed class PersonWardrobeTests
             {
                 var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, at), Vector2f.Zero, facing);
                 var expected = pose.World("chest") - pose.World("hips");
-                expected.Z = 0;
-                TestModels.Near(Vector3.Normalize(expected), pose.Socket(socket).YAxis);
+                TestModels.Near(Vector3f.Normalize(expected with { Z = 0 }), pose.Socket(socket).YAxis);
                 TestModels.Near(pose.World("hips"), pose.Socket(socket).Origin);
             }
         }
@@ -131,7 +130,7 @@ public sealed class PersonWardrobeTests
             },
         };
         var drawing = new PuppetDrawing();
-        drawing.Build([part], _ => Vector3.Zero);
+        drawing.Build([part], _ => Vector3f.Zero);
         var red = drawing.Mesh.Vertices.ToArray().Where(v => v.Color.R == 255 && v.Color.G == 0).ToArray();
         Assert.NotEmpty(red);
         foreach (var vertex in red)
@@ -141,7 +140,7 @@ public sealed class PersonWardrobeTests
             Assert.InRange(p.Z, -.0001f, 0);
         }
         // Resizing the body also resizes the paint, without changing a clothing socket or prop scale.
-        drawing.Build([part with { ScaleX = 4 }], _ => Vector3.Zero);
+        drawing.Build([part with { ScaleX = 4 }], _ => Vector3f.Zero);
         Assert.InRange(drawing.Mesh.Max.X, 1.999f, 2.001f);
     }
 

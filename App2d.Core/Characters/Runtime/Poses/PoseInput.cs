@@ -15,7 +15,7 @@ public readonly record struct PartPlay(string Instance, string Expression, doubl
 public readonly record struct PoseInput(string? Expression = null)
 {
     public bool InPlace { get; init; }
-    public Func<string, Vector3, Vector3>? Contact { get; init; }
+    public Func<string, Vector3f, Vector3f>? Contact { get; init; }
     /// <summary>A masked override: its clip owns every channel whose target is in the mask. The base clip keeps the rest.</summary>
     public PoseLayer? Overlay { get; init; }
     /// <summary>Further masked layers over <see cref="Overlay"/>, each over the ones before it.</summary>

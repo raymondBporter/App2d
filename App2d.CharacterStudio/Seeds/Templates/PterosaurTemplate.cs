@@ -168,7 +168,7 @@ public static class PterosaurTemplate
         {
             for (var i = 0; i < angles.Length; i++)
             {
-                ClipAuthoring.SetKey(c, new("rotate", target), c.Duration * i / (angles.Length - 1), Vector3.Zero, angles[i]);
+                ClipAuthoring.SetKey(c, new("rotate", target), c.Duration * i / (angles.Length - 1), Vector3f.Zero, angles[i]);
             }
         }
         void Wings(MotionClip c, float[] near, float[] far, float[] fold, float[]? farFold = null)
@@ -180,9 +180,9 @@ public static class PterosaurTemplate
         }
         var hover = Clip("hover", 1, true);
         Wings(hover, [-.22f, .28f, -.22f], [.22f, -.28f, .22f], [0, -.1f, 0]);
-        ClipAuthoring.SetKey(hover, new("translate", "body"), 0, Vector3.Zero);
+        ClipAuthoring.SetKey(hover, new("translate", "body"), 0, Vector3f.Zero);
         ClipAuthoring.SetKey(hover, new("translate", "body"), .5f, new(0, .05f, 0));
-        ClipAuthoring.SetKey(hover, new("translate", "body"), 1, Vector3.Zero);
+        ClipAuthoring.SetKey(hover, new("translate", "body"), 1, Vector3f.Zero);
         Rotate(hover, "head", -.08f, -.12f, -.08f);
         var fold = Clip("fold", .48f, false);
         Wings(fold, [-.22f, -.15f, -.15f], [.22f, 1.3f, 1.3f], [0, -1.1f, -1.1f], [0, .1f, .1f]);
