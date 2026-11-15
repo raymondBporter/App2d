@@ -119,6 +119,7 @@ Operations, one static class per question, all taking raw parameters:
 | --- | --- |
 | `Area2D` | How big is it? |
 | `Containment2D` | Is this point inside? (plus normalized radial picking scores) |
+| `ShapeBounds2D` | What encloses this shape or point set? |
 | `SupportPoint2D` | Which point is farthest in a direction? |
 | `Projection2D` | What interval does it cover on an axis? |
 | `ClosestPoint2D` | Which point of it is nearest? (`OnEllipsePerimeter` brackets Eberly's monotone root; no polygonizing) |
@@ -133,6 +134,17 @@ Operations, one static class per question, all taking raw parameters:
 Conventions: Y up, angles in radians counter-clockwise, closed perimeters omit the repeated closing vertex, touching
 counts as intersecting, filled distances are zero inside, signed distances are negative inside. Inputs are finite,
 radii nonnegative, rectangle bounds ordered. Raw functions do not validate unless documented.
+
+`ShapeBounds2D.GetContainingCapsule(points)` fits a capsule around finite points in any order.
+It searches angles and radii on the convex hull within a fixed iteration budget and checks all
+input points against the stored spine. Pass `minimumRadius` to set a thickness floor, especially
+for collinear points or a single point.
+
+`ConicPencil2D` constructs the family of conics through four points with no three collinear.
+Sweep `pencil.At(knob)` from 0 to 1, or use `AtWeights` to set the ratio of the two line products
+directly. `ThroughPoint(q)` sets that ratio so the conic also passes through `q`.
+The coefficients use coordinates relative to the first point. `Evaluate(p)` accepts points in
+the original coordinate space.
 
 ```csharp
 using App2d.Core.Geometry;
@@ -296,6 +308,11 @@ The nested `Builder` types are static factories with no instance properties or f
 constructs a value, validates it, and returns it. Half-space factories also normalize the normal and offset.
 Analyzer `APP2D001` warns on unchecked construction and offers a factory fix, or explicit `Validated()` for an object
 initializer. An intentional unvalidated draft can suppress that warning while editing and validate later.
+
+`ConvexPolygon2D.Builder.CreateRegularHexagon(radius, center, angleRadians)` creates a six-vertex
+convex polygon that uses the existing polygon queries and JSON format. The radius is measured
+from the center to a corner. Zero rotation gives horizontal top and bottom edges.
+`VertexGenerator2D.WriteRegularHexagon` writes the same corners into an existing buffer.
 
 The geometry value is also the JSON data. `geometry.ToJson()` writes its kind and source fields;
 `GeometryJson2D.FromJson(json)`, `ShapeFromJson(json)`, and `CurveFromJson(json)` read the actual values without

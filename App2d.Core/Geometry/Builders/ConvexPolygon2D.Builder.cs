@@ -1,5 +1,6 @@
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -34,5 +35,13 @@ public readonly partial record struct ConvexPolygon2D
     public static class Builder
     {
         public static ConvexPolygon2D Create(IEnumerable<Vector2f> vertices) => new ConvexPolygon2D([.. Ensure.RequireNotNull(vertices)]).Validated();
+
+        /// <summary>Creates a regular hexagon with the given center-to-corner radius and rotation in radians.</summary>
+        public static ConvexPolygon2D CreateRegularHexagon(float radius, Vector2f center = default, float angleRadians = 0f)
+        {
+            Span<Vector2f> vertices = stackalloc Vector2f[6];
+            VertexGenerator2D.WriteRegularHexagon(vertices, center, radius, angleRadians);
+            return new ConvexPolygon2D { Vertices = vertices }.Validated();
+        }
     }
 }

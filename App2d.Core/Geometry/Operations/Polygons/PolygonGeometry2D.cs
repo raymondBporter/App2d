@@ -53,8 +53,19 @@ public static class PolygonGeometry2D
         var input = source.ToArray();
         Ensure.ThrowIf(input.Any(point => !NumericValidation.IsFinite(point)), "Hull points must be finite.", nameof(source));
 
+        var hull = ConvexHullOfFinitePoints(input);
+        Ensure.ThrowIf(hull.Length < 3, "A convex hull requires three distinct, non-collinear points.", nameof(source));
+        return hull;
+    }
+
+    // Bounds can use a degenerate hull: a point or the endpoints of a collinear set.
+    internal static Vector2f[] ConvexHullOfFinitePoints(Vector2f[] input)
+    {
         var points = input.Distinct().OrderBy(point => point.X).ThenBy(point => point.Y).ToArray();
-        Ensure.ThrowIf(points.Length < 3, "A convex hull requires at least three distinct points.", nameof(source));
+        if (points.Length <= 2)
+        {
+            return points;
+        }
 
         var hull = new List<Vector2f>(points.Length * 2);
         foreach (var point in points)
@@ -80,7 +91,6 @@ public static class PolygonGeometry2D
         }
 
         hull.RemoveAt(hull.Count - 1);
-        Ensure.ThrowIf(hull.Count < 3, "A convex hull requires three non-collinear points.", nameof(source));
         return [.. hull];
     }
 

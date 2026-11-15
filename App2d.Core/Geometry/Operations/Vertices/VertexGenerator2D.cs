@@ -61,6 +61,33 @@ public static class VertexGenerator2D
     /// <returns>The number of vertices written, equal to the buffer length.</returns>
     public static int WriteCircle(Span<Vector2f> vertices, Vector2f center, float radius) => WriteEllipse(vertices, center, new(radius));
 
+    /// <summary>
+    /// Writes six counter-clockwise corners of a regular hexagon. At zero angle the first corner points along +X.
+    /// Radius is the center-to-corner distance. Entries after the sixth are untouched.
+    /// </summary>
+    public static int WriteRegularHexagon(Span<Vector2f> vertices, Vector2f center, float radius, float angleRadians = 0f)
+    {
+        Ensure.ThrowIfTooShort(vertices, 6);
+        Ensure.Finite(center);
+        Ensure.Positive(radius);
+
+        const double sin60 = 0.8660254037844386d;
+        var origin = center.ToVector2d();
+        var axis = Vector2d.Direction(angleRadians) * radius;
+        var halfAxis = axis / 2d;
+        var side = axis.PerpCcw * sin60;
+        // The other two pairs use cos(60°) = 1/2 and sin(60°), expressed in the rotated basis.
+        var upperRight = halfAxis + side;
+        var upperLeft = side - halfAxis;
+        vertices[0] = (origin + axis).ToVector2f();
+        vertices[1] = (origin + upperRight).ToVector2f();
+        vertices[2] = (origin + upperLeft).ToVector2f();
+        vertices[3] = (origin - axis).ToVector2f();
+        vertices[4] = (origin - upperRight).ToVector2f();
+        vertices[5] = (origin - upperLeft).ToVector2f();
+        return 6;
+    }
+
     /// <summary>Writes an elliptical arc including both endpoints; the buffer length selects the sample count.</summary>
     /// <param name="vertices">A buffer of at least two entries; every entry is written.</param>
     /// <param name="center">The finite center.</param>

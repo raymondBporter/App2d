@@ -32,7 +32,8 @@ public static class Containment2D
     /// <param name="end">The other spine endpoint.</param>
     /// <param name="radius">The capsule radius.</param>
     /// <returns>True when the point is within the radius of the spine segment.</returns>
-    public static bool Capsule(Vector2f point, Vector2f start, Vector2f end, float radius) => Vector2f.DistanceSquared(point, ClosestPoint2D.OnSegment(point, start, end)) <= radius * radius;
+    public static bool Capsule(Vector2f point, Vector2f start, Vector2f end, float radius) =>
+        LinearGeometry2D.DistanceSquaredToSegment(point.ToVector2d(), start.ToVector2d(), end.ToVector2d()) <= (double)radius * radius;
 
     /// <summary>Tests whether a point lies in or on an ordered axis-aligned rectangle.</summary>
     /// <param name="point">The point to test.</param>

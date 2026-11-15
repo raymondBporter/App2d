@@ -16,7 +16,7 @@ namespace App2d.Core.Geometry.Operations.Bounds;
 /// composites take the union of their parts, and unknown convex shapes fall back to four support points.
 /// New non-convex shape types need a row here before a <see cref="SpatialObject2D"/> can hold them.
 /// </summary>
-public static class ShapeBounds2D
+public static partial class ShapeBounds2D
 {
     /// <summary>The axis-aligned bounds of a shape in its own coordinate space.</summary>
     /// <param name="shape">Any built-in shape or custom convex shape.</param>
