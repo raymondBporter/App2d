@@ -58,7 +58,7 @@ public sealed class Frame3DTests
         Assert.Equal(new Vector3f(5, 10, 6), collapsed.TransformPoint(new(20, 3, 4)));
         Assert.False(collapsed.TryToLocal(Vector3f.Zero, out _));
         Assert.False(collapsed.TryInverse(out _));
-        Assert.Throws<InvalidOperationException>(() => collapsed.ToLocal(Vector3f.Zero));
+        Assert.Throws<InvalidOperationException>(() => { collapsed.ToLocal(Vector3f.Zero); });
         Assert.Equal(Vector3f.One, Frame3D.Identity.TransformPoint(Vector3f.One));
         Frame3D zero = default;
         Assert.Equal(Vector3f.Zero, Vector3f.Transform(Vector3f.One, zero.Matrix));

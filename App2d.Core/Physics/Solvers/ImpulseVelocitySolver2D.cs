@@ -1,6 +1,3 @@
-using App2d.Core.Mathematics;
-using System.Numerics;
-
 namespace App2d.Core.Physics.Solvers;
 
 public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D

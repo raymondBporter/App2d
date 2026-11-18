@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Geometry.Meshes;
 

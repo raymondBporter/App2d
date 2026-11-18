@@ -3,10 +3,9 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Geometry.Operations.Transforms;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
-using System.Numerics;
+using App2d.Core.Geometry.Transforms;
 
 namespace App2d.Gameplay.Persons.Actions;
 
@@ -25,7 +24,7 @@ public sealed class AuthoredHero2D
     private readonly float _halfHeight;
     private readonly Dictionary<string, IShape2D> _shapes = new(StringComparer.Ordinal);
 
-    public AuthoredHero2D(ResolvedEntity entity, Vector2f  colliderSize)
+    public AuthoredHero2D(ResolvedEntity entity, Vector2f colliderSize)
     {
         Entity = entity;
         if (entity.Controller.Id != EntityControllers.Traversal)

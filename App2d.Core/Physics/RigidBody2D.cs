@@ -2,7 +2,6 @@ using App2d.Core.Collision;
 using App2d.Core.Geometry.Operations.MassProperties;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Physics;
 
@@ -20,8 +19,8 @@ public sealed class RigidBody2D
         Collider = Ensure.RequireNotNull(collider);
         _motionType = motionType;
         Collider.Mobility = ToColliderMobility(motionType);
-        PreviousPosition = worldObject.Transform.Position;
-        PreviousRotation = worldObject.Transform.Rotation;
+        PreviousPosition = worldObject.Position;
+        PreviousRotation = worldObject.Rotation;
     }
 
     public SpatialObject2D WorldObject { get; }
@@ -42,7 +41,7 @@ public sealed class RigidBody2D
     /// <summary>Defaults to the transform origin; shape-derived mass methods set the actual local centroid.</summary>
     public Vector2f LocalCenterOfMass { get; private set; }
     public Vector2f WorldCenterOfMass => LocalCenterOfMass == Vector2f.Zero
-        ? WorldObject.Transform.Position
+        ? WorldObject.Position
         : Vector2f.Transform(LocalCenterOfMass, WorldObject.Transform.Matrix);
 
     /// <summary>
@@ -136,7 +135,7 @@ public sealed class RigidBody2D
     {
         Ensure.Positive(density);
         var properties = ShapeMassProperties2D.Calculate(WorldObject.Shape, density);
-        var scale = (double)WorldObject.CollisionPose.Scale;
+        var scale = (double)WorldObject.Scale;
         ApplyMassProperties(properties, properties.Mass * scale * scale,
             properties.MomentOfInertia * scale * scale * scale * scale);
     }
@@ -146,7 +145,7 @@ public sealed class RigidBody2D
     {
         Ensure.Positive(mass);
         var properties = ShapeMassProperties2D.Calculate(WorldObject.Shape).WithMass(mass);
-        var scale = (double)WorldObject.CollisionPose.Scale;
+        var scale = (double)WorldObject.Scale;
         ApplyMassProperties(properties, mass, properties.MomentOfInertia * scale * scale);
     }
 

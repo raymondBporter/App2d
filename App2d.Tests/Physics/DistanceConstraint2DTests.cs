@@ -3,7 +3,6 @@ using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Physics;
 
@@ -17,7 +16,7 @@ public sealed class DistanceConstraint2DTests
 
         Assert.True(constraint.Limits.IsSingleton);
         Assert.True(constraint.SolvePosition(1f / 60f));
-        Assert.Equal(6f, second.WorldObject.Transform.Position.X, 4);
+        Assert.Equal(6f, second.WorldObject.Position.X, 4);
     }
 
     [Fact]
@@ -27,15 +26,15 @@ public sealed class DistanceConstraint2DTests
         var constraint = new DistanceConstraint2D(first, second, new Interval<float>(4f, 6f));
 
         Assert.True(constraint.SolvePosition(1f / 60f));
-        Assert.Equal(6f, second.WorldObject.Transform.Position.X, 4);
+        Assert.Equal(6f, second.WorldObject.Position.X, 4);
 
-        second.WorldObject.Transform.Position = new Vector2f(2f, 0f);
+        second.WorldObject.Position = new Vector2f(2f, 0f);
         Assert.True(constraint.SolvePosition(1f / 60f));
-        Assert.Equal(4f, second.WorldObject.Transform.Position.X, 4);
+        Assert.Equal(4f, second.WorldObject.Position.X, 4);
 
-        second.WorldObject.Transform.Position = new Vector2f(5f, 0f);
+        second.WorldObject.Position = new Vector2f(5f, 0f);
         Assert.False(constraint.SolvePosition(1f / 60f));
-        Assert.Equal(5f, second.WorldObject.Transform.Position.X, 4);
+        Assert.Equal(5f, second.WorldObject.Position.X, 4);
     }
 
     [Fact]
@@ -72,9 +71,9 @@ public sealed class DistanceConstraint2DTests
     {
         var world = new PhysicsWorld2D { Gravity = Vector2f.Zero };
         var firstObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
-        firstObject.Transform.Position = new Vector2f(firstX, 0f);
+        firstObject.Position = new Vector2f(firstX, 0f);
         var secondObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
-        secondObject.Transform.Position = new Vector2f(secondX, 0f);
+        secondObject.Position = new Vector2f(secondX, 0f);
         return (
             world.AddBody(firstObject, BodyMotionType2D.Static),
             world.AddBody(secondObject, BodyMotionType2D.Dynamic));

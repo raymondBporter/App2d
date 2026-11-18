@@ -20,7 +20,6 @@ using App2d.Presentation.Audio;
 using App2d.Presentation.World;
 using App2d.Rendering;
 using App2d.Things;
-using System.Numerics;
 
 namespace App2d;
 

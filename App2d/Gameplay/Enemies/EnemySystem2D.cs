@@ -6,7 +6,6 @@ using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 

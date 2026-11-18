@@ -24,14 +24,14 @@ public readonly record struct FrameView2D
         VisibleWorldBounds = TargetBounds.TransformedBy(DeviceToWorldMatrix);
     }
 
-    public Rect2D TargetBounds { get; }
+    public Rect2f TargetBounds { get; }
     [JsonIgnore]
     public Matrix2x3f WorldToDeviceTransform { get; }
     [JsonIgnore]
     public Matrix2x3f DeviceToWorldTransform { get; }
     public Matrix3x2 WorldToDeviceMatrix => WorldToDeviceTransform.ToNumerics();
     public Matrix3x2 DeviceToWorldMatrix => DeviceToWorldTransform.ToNumerics();
-    public Rect2D VisibleWorldBounds { get; }
+    public Rect2f VisibleWorldBounds { get; }
     public float PixelsPerWorldUnit { get; }
 
     public Vector2f WorldToDevice(Vector2f point) => WorldToDeviceTransform.TransformPoint(point);

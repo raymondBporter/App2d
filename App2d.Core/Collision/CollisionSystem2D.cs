@@ -2,7 +2,6 @@ using App2d.Core.Collision.BroadPhase;
 using App2d.Core.Collision.Filtering;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
-using App2d.Core.Mathematics;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 
@@ -158,7 +157,7 @@ public sealed class CollisionSystem2D
     /// exactly as <see cref="CollectContacts"/>'s default pair filter does (<see cref="Collider2D.CanCollideWith"/>). An
     /// undeclared query (the default) stays one-sided, as the terrain probes always were, and finds colliders whose own mask is empty.
     /// </summary>
-    public int QueryBounds(Rect2D bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null, uint? queryLayer = null)
+    public int QueryBounds(Rect2f bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null, uint? queryLayer = null)
     {
         Ensure.ThrowIfNull(results);
         if (excluded is not null)
@@ -293,7 +292,7 @@ public sealed class CollisionSystem2D
         }
     }
 
-    private void QueryBoundsCore(Rect2D bounds, List<Collider2D> results)
+    private void QueryBoundsCore(Rect2f bounds, List<Collider2D> results)
     {
         results.Clear();
         var stamp = NextQueryStamp();
@@ -321,7 +320,7 @@ public sealed class CollisionSystem2D
         }
     }
 
-    private static void QueryCells(Dictionary<Vector2i, List<Collider2D>> cells, GridCellRange2D range, Rect2D bounds, int stamp, List<Collider2D> results)
+    private static void QueryCells(Dictionary<Vector2i, List<Collider2D>> cells, GridCellRange2D range, Rect2f bounds, int stamp, List<Collider2D> results)
     {
         foreach (var cell in range)
         {
@@ -335,7 +334,7 @@ public sealed class CollisionSystem2D
         }
     }
 
-    private static void TryAddQueryCandidate(Collider2D collider, Rect2D bounds, int stamp, List<Collider2D> results)
+    private static void TryAddQueryCandidate(Collider2D collider, Rect2f bounds, int stamp, List<Collider2D> results)
     {
         if (collider.QueryStamp == stamp ||
             !bounds.Intersects(collider.WorldObject.WorldBounds))

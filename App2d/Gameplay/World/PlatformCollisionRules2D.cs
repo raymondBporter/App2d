@@ -135,7 +135,7 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
         }
         // A tumbling body's previous support point must use its previous rotation as well as position.
         var pose = other.WorldObject.CollisionPose;
-        var rotation = Matrix3x2.CreateRotation(other.PreviousRotation - other.WorldObject.Transform.Rotation);
+        var rotation = Matrix3x2.CreateRotation(other.PreviousRotation - other.WorldObject.Rotation);
         var previousPose = Similarity2D.FromAxis(other.PreviousPosition,
             Vector2f.TransformNormal(pose.XAxis, rotation), pose.IsMirrored, pose.Scale);
         var previousNearSide = -MaximumProjection(other.WorldObject.Shape, previousPose, -surfaceNormal);
@@ -144,8 +144,8 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
             return false;
         }
         var relativeMotion = Vector2f.Dot(
-            other.WorldObject.Transform.Position - other.PreviousPosition -
-            (surface.WorldObject.Transform.Position - surface.PreviousPosition), surfaceNormal);
+            other.WorldObject.Position - other.PreviousPosition -
+            (surface.WorldObject.Position - surface.PreviousPosition), surfaceNormal);
         return relativeMotion <= 0f && Vector2f.Dot(other.LinearVelocity - surface.LinearVelocity, surfaceNormal) <= 0f;
     }
 
@@ -166,7 +166,7 @@ public sealed class PlatformCollisionRules2D : IPairFilter2D<RigidBody2D>, IPhys
                 maximum = MathF.Max(maximum, MaximumProjection(part, pose, normal));
             return maximum;
         }
-        var bounds = ShapeBounds2D.CalculateTransformed(shape, pose.ToMatrix());
+        var bounds = ShapeBounds2D.CalculateTransformed(shape, pose);
         return Vector2f.Dot(bounds.Center, normal) + (MathF.Abs(normal.X) * bounds.Size.X + MathF.Abs(normal.Y) * bounds.Size.Y) * 0.5f;
     }
 }

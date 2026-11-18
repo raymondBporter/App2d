@@ -1,6 +1,5 @@
 using App2d.Core.Json;
 using App2d.Core.Tiles;
-using System.Numerics;
 using System.Text.Json;
 
 namespace App2d.Levels;
@@ -8,7 +7,7 @@ namespace App2d.Levels;
 /// <summary>Small authored starter maps; never regenerates or replaces existing content.</summary>
 public static class PlaygroundMaps2D
 {
-    public static Vector2f  Arrival(WorldMapAsset2D map, float playerHeight, float groundProbe)
+    public static Vector2f Arrival(WorldMapAsset2D map, float playerHeight, float groundProbe)
     {
         var spawn = map.PositionThings.FirstOrDefault(t => t.Enabled && t.TypeKey == "player-spawn");
         if (spawn is not null)

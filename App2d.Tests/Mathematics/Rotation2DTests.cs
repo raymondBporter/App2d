@@ -1,6 +1,4 @@
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
-using System.Numerics;
 
 namespace App2d.Tests.Mathematics;
 
@@ -71,7 +69,7 @@ public sealed class Rotation2DTests
         var to = new Vector2f(8, 9);
         Assert.Equal(from, Rotation2D.InterpolateArc(from, to, MathF.PI / 2, -.25f));
         Assert.Equal(to, Rotation2D.InterpolateArc(from, to, MathF.PI / 2, 1.25f));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Rotation2D.InterpolateArc(from, to, 0, float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Rotation2D.InterpolateArc(from, to, 0, float.NaN); });
     }
 
     [Fact]

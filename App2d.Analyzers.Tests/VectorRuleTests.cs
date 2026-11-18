@@ -1,5 +1,4 @@
 using App2d.Analyzers.CodeFixes;
-using App2d.Core.Mathematics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -13,7 +12,7 @@ namespace App2d.Analyzers.Tests;
 public sealed class VectorRuleTests
 {
     private const string Prefix = "using System; using System.Numerics; using App2d.Core.Mathematics; " +
-        "using App2d.Core.Mathematics; using Vector2d = App2d.Core.Mathematics.Vec2<double>; class Example { ";
+        "using App2d.Core.Mathematics; using Vector2d = App2d.Core.Mathematics.Vector2d; class Example { ";
     private const string Suffix = " }";
 
     private static readonly ImmutableArray<MetadataReference> References =

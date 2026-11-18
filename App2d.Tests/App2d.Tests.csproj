@@ -25,8 +25,6 @@
     <ProjectReference Include="..\App2d\App2d.csproj" />
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
     <ProjectReference Include="..\App2d.Demos\App2d.Demos.csproj" />
-    <ProjectReference Include="..\App2d.CharacterStudio\App2d.CharacterStudio.csproj" />
     <ProjectReference Include="..\App2d.EditorUi\App2d.EditorUi.csproj" />
-    <ProjectReference Include="..\App2d.ImageLab\App2d.ImageLab.csproj" />
   </ItemGroup>
 </Project>

@@ -1,8 +1,6 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Gameplay.World.Vegetation;
 
@@ -38,7 +36,7 @@ public sealed record GiantTreeSettings2D
 }
 
 /// <summary>A horizontal, flat-topped limb. Side is -1 for left or +1 for right.</summary>
-public readonly record struct GiantTreeBranch2D(Rect2D Bounds, int Side);
+public readonly record struct GiantTreeBranch2D(Rect2f Bounds, int Side);
 
 /// <summary>
 /// Immutable seeded level geometry. Simulation and rendering share these exact branch tops;
@@ -99,9 +97,9 @@ public sealed class GiantTree2D
     public Vector2f Root { get; }
     public int Seed { get; }
     public GiantTreeSettings2D Settings { get; }
-    public Rect2D TrunkBounds { get; }
+    public Rect2f TrunkBounds { get; }
     /// <summary>Includes the canopy and a margin for leaf motion, even when the root is off-screen.</summary>
-    public Rect2D Bounds { get; }
+    public Rect2f Bounds { get; }
     public ImmutableArray<GiantTreeBranch2D> Branches { get; }
 
     private static float Sample(Interval<float> range, Random random) => random.NextFloat(range.Min, range.Max);

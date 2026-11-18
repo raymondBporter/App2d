@@ -5,7 +5,6 @@ using App2d.Core.Physics.Integration;
 using App2d.Core.Physics.Solvers;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Physics;
 
@@ -115,8 +114,8 @@ public sealed class PhysicsWorld2D
         TransferContactMotion(deltaSeconds);
         foreach (var body in _bodies)
         {
-            body.PreviousPosition = body.WorldObject.Transform.Position;
-            body.PreviousRotation = body.WorldObject.Transform.Rotation;
+            body.PreviousPosition = body.WorldObject.Position;
+            body.PreviousRotation = body.WorldObject.Rotation;
         }
 
         _lastContacts.Clear();
@@ -187,7 +186,7 @@ public sealed class PhysicsWorld2D
             }
 
             var displacement = surface.LinearVelocity * deltaSeconds;
-            rider.WorldObject.Transform.Position += displacement - normal * Vector2f.Dot(displacement, normal);
+            rider.WorldObject.Position += displacement - normal * Vector2f.Dot(displacement, normal);
             var relativeNormalSpeed = Vector2f.Dot(rider.LinearVelocity - surface.LinearVelocity, normal);
             rider.LinearVelocity -= normal * relativeNormalSpeed;
         }

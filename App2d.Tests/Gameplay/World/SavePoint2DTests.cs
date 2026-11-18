@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Gameplay.World;
-using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 
@@ -36,6 +35,6 @@ public sealed class SavePoint2DTests
         Assert.False(savePoint.IsActive);
     }
 
-    private static Rect2D BoundsAt(Vector2f center) =>
+    private static Rect2f BoundsAt(Vector2f center) =>
         new(center - new Vector2f(10f), center + new Vector2f(10f));
 }

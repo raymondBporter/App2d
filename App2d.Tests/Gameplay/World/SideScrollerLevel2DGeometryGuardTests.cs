@@ -1,7 +1,6 @@
 using App2d.Contracts.Player;
 using App2d.Core.Tiles;
 using App2d.Gameplay.World;
-using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 

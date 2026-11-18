@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -6,10 +5,6 @@ namespace App2d.Core.Validation;
 
 public static partial class Ensure
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vec2<TReal> Finite<TReal>(Vec2<TReal> value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where TReal : unmanaged, IFloatingPointIeee754<TReal> =>
-        NumericValidation.IsFinite(value) ? value : throw CreateOutOfRange(value, "Value must be finite.", paramName);
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2f Number(Vector2f value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNumber(value) ? value : throw CreateOutOfRange(value, "Value must not be NaN.", paramName);

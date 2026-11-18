@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Operations.Area;
 using App2d.Core.Geometry.Operations.Diameter;
 using App2d.Core.Geometry.Shapes;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Shapes;

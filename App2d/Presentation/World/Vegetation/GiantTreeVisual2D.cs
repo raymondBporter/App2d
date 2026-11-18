@@ -1,10 +1,8 @@
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Vegetation;
 using App2d.Gameplay.World.Vegetation;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Presentation.World.Vegetation;
 
@@ -60,7 +58,7 @@ public sealed class GiantTreeVisual2D
 
     public GiantTree2D Tree { get; }
 
-    public void Render(Renderer2D renderer, Rect2D visible, VegetationWind2D wind)
+    public void Render(Renderer2D renderer, Rect2f visible, VegetationWind2D wind)
     {
         if (!visible.Intersects(Tree.Bounds))
         {
@@ -70,7 +68,7 @@ public sealed class GiantTreeVisual2D
         Span<Vector2f> leaves = stackalloc Vector2f[14];
         foreach (var crown in _crowns)
         {
-            if (!visible.Intersects(Rect2D.FromSize(crown.Radii * 2f + new Vector2f(12f), crown.Center)))
+            if (!visible.Intersects(Rect2f.FromSize(crown.Radii * 2f + new Vector2f(12f), crown.Center)))
             {
                 continue;
             }

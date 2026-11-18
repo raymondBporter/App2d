@@ -10,7 +10,6 @@ using App2d.Core.Validation;
 using App2d.Gameplay.World.Vegetation;
 using App2d.Things;
 using System.Collections.Immutable;
-using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -118,7 +117,7 @@ public static class WorldFile2D
                     min = Vector2f.Min(min, loaded.TileMap.WorldBounds.Min);
                     max = Vector2f.Max(max, loaded.TileMap.WorldBounds.Max);
                 }
-                zones.Add(new(zone.Id, zone.Name, new Rect2D(min, max), zone.Priority));
+                zones.Add(new(zone.Id, zone.Name, new Rect2f(min, max), zone.Priority));
             }
             if (file.StartMapId is not null)
             {

@@ -1,7 +1,5 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Grids;
 
@@ -35,7 +33,7 @@ public sealed class Grid2D<T>
     public int Count => Size.CellCount;
     public Size2D CellSize => Geometry.CellSize;
     public Vector2f Origin => Geometry.Origin;
-    public Rect2D WorldBounds { get; }
+    public Rect2f WorldBounds { get; }
 
     public ref T this[int x, int y] => ref _values[Size.GetIndex(x, y)];
     public ref T this[Vector2i cell] => ref _values[Size.GetIndex(cell)];
@@ -50,7 +48,7 @@ public sealed class Grid2D<T>
 
     public void Fill(T value) => _values.AsSpan().Fill(value);
     public void Clear() => _values.AsSpan().Clear();
-    public Rect2D GetCellBounds(Vector2i cell)
+    public Rect2f GetCellBounds(Vector2i cell)
     {
         if (!Size.Contains(cell))
         {
@@ -59,7 +57,7 @@ public sealed class Grid2D<T>
 
         return Geometry.GetCellBounds(cell);
     }
-    public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2D => Geometry.GetCellRange(bounds, Size);
+    public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2f => Geometry.GetCellRange(bounds, Size);
 
     public bool TryGetCell(Vector2f position, out Vector2i cell) => Geometry.TryWorldToCell(position, out cell) && Size.Contains(cell);
 }

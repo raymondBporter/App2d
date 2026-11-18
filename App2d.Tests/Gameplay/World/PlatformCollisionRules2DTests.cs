@@ -4,7 +4,6 @@ using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Gameplay.World;
-using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 
@@ -29,9 +28,9 @@ public sealed class PlatformCollisionRules2DTests
         dropping.LinearVelocity = new(0f, -20f);
         platform.LinearVelocity = new(30f, 0f);
         world.Step(1f / 60f);
-        Assert.Equal(-5f, dropping.WorldObject.Transform.Position.X, 4);
-        Assert.Equal(5.5f, staying.WorldObject.Transform.Position.X, 4);
-        Assert.True(dropping.WorldObject.Transform.Position.Y < 1f);
+        Assert.Equal(-5f, dropping.WorldObject.Position.X, 4);
+        Assert.Equal(5.5f, staying.WorldObject.Position.X, 4);
+        Assert.True(dropping.WorldObject.Position.Y < 1f);
         Assert.Equal(originalMask, dropping.CollisionMask);
         Assert.DoesNotContain(world.LastContacts, c => c.First == dropping || c.Second == dropping);
     }
@@ -86,7 +85,7 @@ public sealed class PlatformCollisionRules2DTests
         Assert.Same(rules, PlatformCollisionRules2D.Attach(world));
         var platform = AddPlatform(world);
         var actor = AddActor(world, 0f);
-        actor.WorldObject.Transform.Position = new(0f, 0.8f);
+        actor.WorldObject.Position = new(0f, 0.8f);
         policy.TestPairs = false;
         Assert.False(world.CanCollide(actor, platform));
         world.Step(1f / 60f);
@@ -105,7 +104,7 @@ public sealed class PlatformCollisionRules2DTests
     private static RigidBody2D AddPlatform(PhysicsWorld2D world, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
         var spatial = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(40f, 2f));
-        spatial.Transform.Position = new(0f, -1f);
+        spatial.Position = new(0f, -1f);
         var platform = world.AddBody(spatial, motion);
         platform.Restitution = 0f;
         PlatformCollisionRules2D.Attach(world).Surface(platform).OneWaySurfaceNormal = Vector2f.UnitY;
@@ -115,7 +114,7 @@ public sealed class PlatformCollisionRules2DTests
     private static RigidBody2D AddActor(PhysicsWorld2D world, float x)
     {
         var spatial = new SpatialObject2D(Circle2D.Builder.Create(1f));
-        spatial.Transform.Position = new(x, 1f);
+        spatial.Position = new(x, 1f);
         var actor = world.AddBody(spatial, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         return actor;

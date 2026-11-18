@@ -48,7 +48,7 @@ public sealed partial class Renderer2D
 
     public void DrawMesh(TriangleMesh2D mesh, IShader2D material) => DrawMesh(mesh, material, Matrix3x2.Identity);
 
-    private void DrawMeshCore(TriangleMesh2D mesh, Matrix3x2 localToDevice, Rect2D bounds, IShader2D material)
+    private void DrawMeshCore(TriangleMesh2D mesh, Matrix3x2 localToDevice, Rect2f bounds, IShader2D material)
     {
         if (!TryGetMeshStyle(material, out var style))
         {
@@ -108,7 +108,7 @@ public sealed partial class Renderer2D
         }
     }
 
-    private MeshBuffers UploadMesh(TriangleMesh2D mesh, Rect2D bounds, IShader2D material)
+    private MeshBuffers UploadMesh(TriangleMesh2D mesh, Rect2f bounds, IShader2D material)
     {
         var vertices = new VertexPositionColorTexture[mesh.Vertices.Length];
         for (var i = 0; i < vertices.Length; i++)
@@ -172,5 +172,5 @@ public sealed partial class Renderer2D
     }
 
     private readonly record struct MeshStyle(byte Kind, IShader2D? Material, bool FlipX, bool FlipY);
-    private readonly record struct MeshKey(TriangleMesh2D Mesh, Rect2D Bounds, MeshStyle Style);
+    private readonly record struct MeshKey(TriangleMesh2D Mesh, Rect2f Bounds, MeshStyle Style);
 }

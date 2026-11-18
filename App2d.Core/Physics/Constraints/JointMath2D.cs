@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Physics.Constraints;
 
@@ -63,8 +62,8 @@ internal static class JointMath2D
     {
         if (translation == Vector2f.Zero && rotation == 0f) return;
         var center = body.WorldCenterOfMass + translation;
-        body.WorldObject.Transform.Rotation += rotation;
-        body.WorldObject.Transform.Position += center - body.WorldCenterOfMass;
+        body.WorldObject.Rotation += rotation;
+        body.WorldObject.Position += center - body.WorldCenterOfMass;
     }
 }
 

@@ -8,7 +8,6 @@ using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Presentation.Assets;
-using System.Numerics;
 
 namespace App2d.Presentation.Persons;
 
@@ -446,7 +445,7 @@ public sealed class PersonPresentation2D : IDisposable
         _animation.Update(deltaSeconds);
         _spriteShader.Texture = _animation.CurrentFrame;
         _spriteShader.FlipX = facing < 0f;
-        _visual.Transform.Position = playerPosition + _visualOffset;
+        _visual.Position = playerPosition + _visualOffset;
         _visual.IsVisible = _simulationVisible &&
             (invulnerabilitySeconds <= 0f || frameNumber % 12 < 6);
     }

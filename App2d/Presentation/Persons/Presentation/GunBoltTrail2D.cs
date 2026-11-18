@@ -1,7 +1,6 @@
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
-using System.Numerics;
 
 namespace App2d.Presentation.Persons.Presentation;
 
@@ -52,7 +51,7 @@ internal sealed class GunBoltTrail2D : IDisposable
         // Grow only over distance actually traveled: never draw back through the gun.
         var length = Math.Clamp((head.X - _origin.X) * _direction, 0f, _maximumLength);
         _visual.IsVisible = length > 0.01f;
-        _visual.Transform.Position = head - new Vector2f(_direction * length * 0.5f, 0f);
+        _visual.Position = head - new Vector2f(_direction * length * 0.5f, 0f);
         _visual.Transform.Scale = new Vector2f(Math.Max(0.001f, length), 1f);
         _fadeRemaining = FadeSeconds;
     }

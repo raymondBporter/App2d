@@ -9,7 +9,7 @@ namespace App2d.Tests.Geometry;
 
 public sealed class Rect2DTests
 {
-    private static readonly Rect2D Sample = new(new(-4, -2), new(2, 8));
+    private static readonly Rect2f Sample = new(new(-4, -2), new(2, 8));
 
     [Theory]
     [InlineData(0, 0, true)]
@@ -29,28 +29,28 @@ public sealed class Rect2DTests
     [Fact]
     public void DegenerateRectanglesHaveNoInteriorAndNaNIsNeverContained()
     {
-        Assert.False(default(Rect2D).ContainsInterior(Vector2f.Zero));
-        Assert.False(new Rect2D(new(0, -1), new(0, 1)).ContainsInterior(Vector2f.Zero));
+        Assert.False(default(Rect2f).ContainsInterior(Vector2f.Zero));
+        Assert.False(new Rect2f(new(0, -1), new(0, 1)).ContainsInterior(Vector2f.Zero));
         Assert.False(Sample.ContainsInterior(new(float.NaN, 0)));
-        Assert.True(Rect2D.Unbounded.ContainsInterior(Vector2f.Zero));
-        Assert.False(Rect2D.Unbounded.ContainsInterior(new(float.PositiveInfinity, 0)));
+        Assert.True(Rect2f.Unbounded.ContainsInterior(Vector2f.Zero));
+        Assert.False(Rect2f.Unbounded.ContainsInterior(new(float.PositiveInfinity, 0)));
     }
 
     [Fact]
     public void PositiveSizesCreateCenteredAndMinAnchoredRectangles()
     {
         var size = new Size2D(6f, 10f);
-        Assert.Equal(Sample, Rect2D.FromSize(size, new(-1f, 3f)));
-        Assert.Equal(Sample, Rect2D.FromMinAndSize(Sample.Min, size));
+        Assert.Equal(Sample, Rect2f.FromSize(size, new(-1f, 3f)));
+        Assert.Equal(Sample, Rect2f.FromMinAndSize(Sample.Min, size));
         Assert.Equal(Sample, ShapeBounds2D.Calculate(Rectangle2D.Builder.CreateFromSize(size, new(-1f, 3f))));
         Assert.Equal(Sample, ShapeBounds2D.Calculate(Rectangle2D.Builder.CreateFromMinAndSize(Sample.Min, size)));
         Assert.Equal(Sample, AxisAlignedRectangle2D.Builder.CreateFromSize(size, new(-1f, 3f)).ToRect());
         Assert.Equal(Sample, AxisAlignedRectangle2D.Builder.FromMinAndSize(Sample.Min, size).ToRect());
         Assert.True(Sample.TryGetPositiveSize(out var measured));
         Assert.Equal(size, measured);
-        Assert.False(default(Rect2D).TryGetPositiveSize(out _));
-        Assert.False(Rect2D.Unbounded.TryGetPositiveSize(out _));
-        Assert.Throws<ArgumentException>(() => Rect2D.FromMinAndSize(Vector2f.Zero, default));
+        Assert.False(default(Rect2f).TryGetPositiveSize(out _));
+        Assert.False(Rect2f.Unbounded.TryGetPositiveSize(out _));
+        Assert.Throws<ArgumentException>(() => Rect2f.FromMinAndSize(Vector2f.Zero, default));
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class Rect2DTests
     {
         var value = new CustomValue(Sample.Min, Sample.Max);
         var reference = new CustomReference(Sample.Min, Sample.Max);
-        IRect2D contract = value;
+        IRect2f contract = value;
         Assert.Equal(6, value.Width);
         Assert.Equal(new Vector2f(-4, 8), reference.TopLeft);
         Assert.Equal(new Vector2f(-4, 3), contract.CenterLeft);
@@ -96,7 +96,7 @@ public sealed class Rect2DTests
     [Fact]
     public void BoundsAndTheAxisAlignedShapeAdoptTheContractWhileTheOrientedShapeDoesNot()
     {
-        var bounds = new Rect2D(Sample.Min, Sample.Max);
+        var bounds = new Rect2f(Sample.Min, Sample.Max);
         var shape = Rectangle2D.Builder.Create(Sample.Min, Sample.Max);
         var axisAligned = AxisAlignedRectangle2D.Builder.Create(Sample.Min, Sample.Max);
         Assert.Equal(6, bounds.Width);
@@ -106,11 +106,11 @@ public sealed class Rect2DTests
         Assert.True(axisAligned.Contains(bounds));
         Assert.True(axisAligned.Contains(Sample));
         Assert.Equal(bounds, new SpatialObject2D(shape).LocalBounds);
-        Assert.Equal(axisAligned.Area, ((IRect2D)axisAligned).Area);
+        Assert.Equal(axisAligned.Area, ((IRect2f)axisAligned).Area);
         Assert.Equal(shape.ContainsPoint(Sample.Max), axisAligned.Contains(Sample.Max));
-        Assert.False(typeof(IShape2D).IsAssignableFrom(typeof(Rect2D)));
-        Assert.False(typeof(IShape2D).IsAssignableFrom(typeof(IRect2D)));
-        Assert.False(typeof(IRect2D).IsAssignableFrom(typeof(Rectangle2D)));
+        Assert.False(typeof(IShape2D).IsAssignableFrom(typeof(Rect2f)));
+        Assert.False(typeof(IShape2D).IsAssignableFrom(typeof(IRect2f)));
+        Assert.False(typeof(IRect2f).IsAssignableFrom(typeof(Rectangle2D)));
     }
 
     [Theory]
@@ -127,7 +127,7 @@ public sealed class Rect2DTests
     [Fact]
     public void RectangleContainmentRequiresTheWholeOtherRectangle()
     {
-        Assert.True(Sample.Contains(new Rect2D(new(-3, -1), new(1, 7))));
+        Assert.True(Sample.Contains(new Rect2f(new(-3, -1), new(1, 7))));
         Assert.True(Sample.Contains(Sample));
         var partial = new CustomValue(new(1, 7), new(3, 9));
         Assert.True(Sample.Intersects(partial));
@@ -143,8 +143,8 @@ public sealed class Rect2DTests
     public void IntersectionDistinguishesDisjointRectsFromEdgeAndCornerContact(
         float x, float y, bool intersects, float width, float height)
     {
-        var first = new Rect2D(Vector2f.Zero, new(2));
-        var second = new Rect2D(new(x, y), new(x + 2, y + 2));
+        var first = new Rect2f(Vector2f.Zero, new(2));
+        var second = new Rect2f(new(x, y), new(x + 2, y + 2));
         Assert.Equal(intersects, first.Intersects(second));
         Assert.Equal(intersects, second.Intersects(first));
         Assert.Equal(intersects, first.TryIntersect(second, out var result));
@@ -167,7 +167,7 @@ public sealed class Rect2DTests
     {
         var other = new CustomReference(new(0, -5), new(10, 4));
         var union = Sample.Union(other);
-        Assert.Equal(new Rect2D(new(-4, -5), new(10, 8)), union);
+        Assert.Equal(new Rect2f(new(-4, -5), new(10, 8)), union);
         Assert.True(union.Contains(Sample));
         Assert.True(union.Contains(other));
         Assert.Equal(new Vector2f(-4, 8), Sample.ClosestPoint(new(-10, 20)));
@@ -177,10 +177,10 @@ public sealed class Rect2DTests
     [Fact]
     public void MovementExpansionAndInsetProduceNewValuesAndClampOversizedInsets()
     {
-        Assert.Equal(new Rect2D(new(-3, 0), new(3, 10)), Sample.TranslatedBy(new(1, 2)));
-        Assert.Equal(new Rect2D(new(-5, -4), new(3, 10)), Sample.InflatedBy(1, 2));
-        Assert.Equal(new Rect2D(new(-3, 0), new(1, 6)), Sample.InsetBy(1, 2));
-        Assert.Equal(new Rect2D(new(-1, 0), new(-1, 6)), Sample.InsetBy(100, 2));
+        Assert.Equal(new Rect2f(new(-3, 0), new(3, 10)), Sample.TranslatedBy(new(1, 2)));
+        Assert.Equal(new Rect2f(new(-5, -4), new(3, 10)), Sample.InflatedBy(1, 2));
+        Assert.Equal(new Rect2f(new(-3, 0), new(1, 6)), Sample.InsetBy(1, 2));
+        Assert.Equal(new Rect2f(new(-1, 0), new(-1, 6)), Sample.InsetBy(100, 2));
         var collapsed = Sample.InsetBy(100, 100);
         Assert.Equal(Sample.Center, collapsed.Min);
         Assert.Equal(Sample.Center, collapsed.Max);
@@ -191,18 +191,18 @@ public sealed class Rect2DTests
     [Fact]
     public void DefaultAndZeroSizeRectsAreValidPointRects()
     {
-        var point = default(Rect2D);
+        var point = default(Rect2f);
         Assert.Equal(0, point.Area);
         Assert.True(point.Contains(Vector2f.Zero));
         Assert.False(point.Contains(Vector2f.One));
         Assert.True(point.Intersects(point));
-        Assert.Equal(new Rect2D(new(3, 4), new(3, 4)), Rect2D.FromSize(Vector2f.Zero, new(3, 4)));
+        Assert.Equal(new Rect2f(new(3, 4), new(3, 4)), Rect2f.FromSize(Vector2f.Zero, new(3, 4)));
     }
 
     [Fact]
     public void InfiniteBoundsKeepTheirBroadPhaseBehavior()
     {
-        var unbounded = Rect2D.Unbounded;
+        var unbounded = Rect2f.Unbounded;
         Assert.False(unbounded.IsFinite);
         Assert.False(unbounded.ToRect().IsFinite);
         Assert.True(unbounded.Contains(Sample));
@@ -211,19 +211,19 @@ public sealed class Rect2DTests
         Assert.Equal(Sample, finite);
         Assert.Equal(unbounded.ToRect(), Sample.Union(unbounded));
         Assert.Equal(unbounded, unbounded.TransformedBy(Matrix3x2.Identity));
-        Assert.True(unbounded.Intersects(new Rect2D(Sample.Min, Sample.Max)));
+        Assert.True(unbounded.Intersects(new Rect2f(Sample.Min, Sample.Max)));
     }
 
     [Fact]
     public void ConstructionAndInsetsRejectInvalidInputs()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2D(Vector2f.One, Vector2f.Zero));
-        Assert.ThrowsAny<ArgumentException>(() => new Rect2D(new(float.NaN, 0), Vector2f.One));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2D.FromSize(new Vector2f(-1, 2)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2f(Vector2f.One, Vector2f.Zero));
+        Assert.ThrowsAny<ArgumentException>(() => new Rect2f(new(float.NaN, 0), Vector2f.One));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2f.FromSize(new Vector2f(-1, 2)));
         Assert.Throws<ArgumentOutOfRangeException>(() => Sample.InflatedBy(-1, 2));
         Assert.Throws<ArgumentOutOfRangeException>(() => Sample.InsetBy(1, float.NaN));
-        Assert.Equal(Sample, Rect2D.FromSize(new Vector2f(6, 10), new(-1, 3)));
-        Assert.Equal(Sample, Rect2D.FromPoints(Sample.Max, Sample.Min));
+        Assert.Equal(Sample, Rect2f.FromSize(new Vector2f(6, 10), new(-1, 3)));
+        Assert.Equal(Sample, Rect2f.FromPoints(Sample.Max, Sample.Min));
     }
 
     [Fact]
@@ -251,7 +251,7 @@ public sealed class Rect2DTests
         Assert.Equal(Sample.TopRight, corners[2]);
         Assert.Equal(Sample.TopLeft, corners[3]);
 
-        static float Query<T>(T rectangle, Span<Vector2f> corners) where T : IRect2D
+        static float Query<T>(T rectangle, Span<Vector2f> corners) where T : IRect2f
         {
             rectangle.WriteCorners(corners);
             return rectangle.Contains(rectangle.Center) && rectangle.TryIntersect(rectangle, out var overlap)
@@ -262,11 +262,11 @@ public sealed class Rect2DTests
     [Fact]
     public void OverlapCenterIsTheSharedRectanglesCenterOrTheGapsMiddle()
     {
-        var a = new Rect2D(new(0, 0), new(4, 4));
-        Assert.Equal(new Vector2f(3, 2), a.OverlapCenter(new Rect2D(new(2, -1), new(6, 5))));
-        Assert.Equal(new Vector2f(5, 2), a.OverlapCenter(new Rect2D(new(6, 0), new(8, 4))));
+        var a = new Rect2f(new(0, 0), new(4, 4));
+        Assert.Equal(new Vector2f(3, 2), a.OverlapCenter(new Rect2f(new(2, -1), new(6, 5))));
+        Assert.Equal(new Vector2f(5, 2), a.OverlapCenter(new Rect2f(new(6, 0), new(8, 4))));
     }
 
-    private readonly record struct CustomValue(Vector2f Min, Vector2f Max) : IRect2D;
-    private sealed record CustomReference(Vector2f Min, Vector2f Max) : IRect2D;
+    private readonly record struct CustomValue(Vector2f Min, Vector2f Max) : IRect2f;
+    private sealed record CustomReference(Vector2f Min, Vector2f Max) : IRect2f;
 }

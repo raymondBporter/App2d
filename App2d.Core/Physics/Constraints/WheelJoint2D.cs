@@ -1,7 +1,6 @@
 using App2d.Core.Constraints;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Physics.Constraints;
 

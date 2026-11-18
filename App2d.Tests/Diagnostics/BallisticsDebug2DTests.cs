@@ -1,7 +1,6 @@
 using App2d.Contracts.Player;
 using App2d.Core.Input;
 using App2d.Diagnostics;
-using System.Numerics;
 
 namespace App2d.Tests.Diagnostics;
 
@@ -86,6 +85,6 @@ public sealed class BallisticsDebug2DTests
     private static BallisticsDebug2D Create() => new(TraversalMetrics2D.FromGeometry(
         new Vector2f(138f), 0.635f, new Vector2f(22f, 56f), 0f));
 
-    private static void AssertClose(Vector2f  expected, Vector2f  actual) =>
+    private static void AssertClose(Vector2f expected, Vector2f actual) =>
         Assert.True(Vector2f.Distance(expected, actual) < 0.001f, $"Expected {expected}, got {actual}.");
 }

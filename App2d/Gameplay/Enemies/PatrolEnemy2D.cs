@@ -4,7 +4,6 @@ using App2d.Core.Physics;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
-using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
@@ -84,7 +83,7 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 
         _stunSeconds = Math.Max(0f, _stunSeconds - deltaSeconds);
 
-        var x = WorldObject.Transform.Position.X;
+        var x = WorldObject.Position.X;
         if (x <= PatrolMinX)
         {
             _direction = 1f;
@@ -100,7 +99,7 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
         }
 
         Body.AngularVelocity = 0f;
-        WorldObject.Transform.Rotation = 0f;
+        WorldObject.Rotation = 0f;
     }
 
     public bool TakeDamage(int damage, Vector2f knockback)

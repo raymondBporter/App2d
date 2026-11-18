@@ -8,7 +8,6 @@ using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
@@ -80,7 +79,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
 
     public WeaponState2D CaptureState() => new(IsCharging, ChargeProgress, MuzzlePosition,
         [.. _bullets.Where(b => b.IsActive).Select(b => new ProjectileState2D(
-            b.Id, b.WorldObject.Transform.Position, b.Velocity, b.Origin))]);
+            b.Id, b.WorldObject.Position, b.Velocity, b.Origin))]);
 
     public override PersonActionState2D CaptureActionState() => _secondsSinceShot is { } elapsed
         ? new(App2d.Contracts.Simulation.PlayerAttackKind2D.Shot, elapsed, RecoverySeconds) : default;
@@ -171,7 +170,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
         }
     }
 
-    private Vector2f MuzzlePosition => _ownerBody.WorldObject.Transform.Position +
+    private Vector2f MuzzlePosition => _ownerBody.WorldObject.Position +
         (_authoredMuzzle?.Invoke(_direction) ?? new Vector2f(_direction * _muzzleOffset.X, _muzzleOffset.Y));
 
     private void Fire()
@@ -189,10 +188,10 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
         _shotStarted();
         _publish(new GunFired2D(muzzle));
         // Never spawn a projectile beyond a thin wall intersecting the barrel.
-        var owner = _ownerBody.WorldObject.Transform.Position;
+        var owner = _ownerBody.WorldObject.Position;
         var offset = muzzle - owner;
         var barrel = _authoredMuzzle is null ? _barrelPath : new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(Math.Abs(offset.X) + BoltWidth, 4));
-        barrel.Transform.Position = owner + new Vector2f(_authoredMuzzle is null ? _direction * (_muzzleOffset.X + BoltWidth) * .5f : offset.X * .5f, offset.Y);
+        barrel.Position = owner + new Vector2f(_authoredMuzzle is null ? _direction * (_muzzleOffset.X + BoltWidth) * .5f : offset.X * .5f, offset.Y);
         if (_collision.Overlap(barrel, _overlaps, _worldLayer, includeSensors: false) > 0)
         {
             _publish(new ProjectileImpact2D(muzzle, EntityId2D.None));
@@ -227,7 +226,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
         if (hit)
         {
             projectile.Deactivate();
-            _publish(new ProjectileImpact2D(projectile.WorldObject.Transform.Position, projectile.Id));
+            _publish(new ProjectileImpact2D(projectile.WorldObject.Position, projectile.Id));
         }
     }
 

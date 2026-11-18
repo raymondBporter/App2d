@@ -66,9 +66,31 @@ existing collision restriction; recalculate mass properties after changing size.
 
 ## Geometry
 
-Value types: `Rect2D` (the only axis-aligned box; `Unbounded` covers the plane), `IRect2D` + `Rect2DExtensions`
+Value types: `Rect2f` (float bounds; `Unbounded` covers the plane), `IRect2f` + `Rect2DExtensions`
 (anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `OrientedFrame2D` (a center and a
 unit axis that oriented shapes project every query through), `Interval<T>`, `Line2D`, `Ray2D`, `RayHit2D`, `IGeometry2D`.
+
+`IRect2<TVector, TReal>` describes bounds using a concrete floating-point vector.
+`TVector` is unmanaged and implements `IVector2<TVector, TReal>`; `TReal` is unmanaged
+and implements `IFloatingPointIeee754<TReal>`. `IRect2f` is a global
+alias for `IRect2<Vector2f, float>`; `IRect2d` selects `Vector2d` and `double`.
+The aliases change spelling, not storage or conversions.
+
+`Rect2<TVector, TReal>` supplies generic floating-point bounds and `Rect2Math<TVector, TReal>`
+shares queries with other implementations through concrete `TSelf` parameters.
+`Rect2d` aliases `Rect2<Vector2d, double>`. For example:
+
+```csharp
+var precise = new Rect2d(new(16_777_217, -4), new(16_777_220, 8));
+double width = precise.Width; // 3, with no float rounding
+Vector2d center = precise.Center;
+bool contains = Rect2Math<Vector2d, double>.Contains(precise, center);
+```
+
+`Rect2f` retains the renderer's packed float vector storage and float-specific
+factories and transforms. It shares the same bounds contract as
+`Rect2<Vector2f, float>`. `Rect2.Unbounded<TVector, TReal>()` creates infinite bounds,
+and the generic `DistanceTo` extension computes distance with the coordinate type's `Hypot`.
 
 Rectangle `Contains(point)` includes edges. `ContainsInterior(point)` explicitly excludes
 all edges and corners; a rectangle with a collapsed dimension has no interior. The raw
@@ -149,7 +171,7 @@ the original coordinate space.
 ```csharp
 using App2d.Core.Geometry;
 
-var box = Rect2D.FromSize(new(20, 10), center: new(5, 3));
+var box = Rect2f.FromSize(new(20, 10), center: new(5, 3));
 var hit = box.Contains(point) ? box.SignedDistanceTo(point) : box.DistanceSquaredTo(point);
 var world = box.TransformedBy(matrix);
 var onEllipse = ClosestPoint2D.OnEllipsePerimeter(point, center, radii);
@@ -186,7 +208,7 @@ if (GeometryRaycast2D.TryIntersect(ray, curve, 10f, out var hit))
 | Boundary | Query representation |
 | --- | --- |
 | Circles, ellipses, capsules, half-spaces | Direct analytic primitive intersections |
-| Rectangles, triangles, convex/concave polygons, baked heightfields | Their actual straight boundaries |
+| Rectangles, triangles, convex/concave polygons | Their actual straight boundaries |
 | Rounded rectangles | Exact straight sides and circular corners, including collapsed circle/capsule cores |
 | Arcs | Both supporting-circle roots, restricted by the signed angular sweep |
 | Quadratic and cubic Beziers | Polynomial roots on the original curve; no flattening |

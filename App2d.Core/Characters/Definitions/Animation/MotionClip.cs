@@ -3,7 +3,6 @@ using App2d.Core.Json;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;

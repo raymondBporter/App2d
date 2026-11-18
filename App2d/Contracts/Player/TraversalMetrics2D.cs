@@ -1,5 +1,4 @@
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Contracts.Player;
 
@@ -11,7 +10,7 @@ public sealed class TraversalMetrics2D
     {
     }
 
-    public static TraversalMetrics2D FromGeometry(Vector2f  visualSize, float footAnchorYFraction, Vector2f  standingColliderSize, float colliderCenterOffsetX)
+    public static TraversalMetrics2D FromGeometry(Vector2f visualSize, float footAnchorYFraction, Vector2f standingColliderSize, float colliderCenterOffsetX)
     {
         Ensure.Positive(visualSize);
         Ensure.Positive(standingColliderSize);
@@ -27,15 +26,15 @@ public sealed class TraversalMetrics2D
     }
 
     public float TileSize { get; init; } = DesignUnit * 4f;
-    public Vector2f  PlayerColliderSize { get; private init; }
+    public Vector2f PlayerColliderSize { get; private init; }
     public float PlayerColliderCenterOffsetX { get; private init; }
-    public Vector2f  PlayerVisualSize { get; private init; }
+    public Vector2f PlayerVisualSize { get; private init; }
     public float PlayerSpriteFootYFraction { get; private init; }
-    public Vector2f  PlayerVisualOffset => new(0f, PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) - PlayerColliderSize.Y * 0.5f);
+    public Vector2f PlayerVisualOffset => new(0f, PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) - PlayerColliderSize.Y * 0.5f);
 
     // Authored pistol socket (418, 206) in the 512px standing frame.
     // Load this configuration once; weapon simulation receives only the world offset.
-    public Vector2f  GunMuzzleOffset => new((418f / 512f - 0.5f) * PlayerVisualSize.X, (PlayerSpriteFootYFraction - 206f / 512f) * PlayerVisualSize.Y - PlayerColliderSize.Y * 0.5f);
+    public Vector2f GunMuzzleOffset => new((418f / 512f - 0.5f) * PlayerVisualSize.X, (PlayerSpriteFootYFraction - 206f / 512f) * PlayerVisualSize.Y - PlayerColliderSize.Y * 0.5f);
     public float RunSpeed { get; init; } = 430f;
     public float LadderClimbSpeed { get; init; } = 180f;
     public float LadderGrabGrace { get; init; } = DesignUnit;

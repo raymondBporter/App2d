@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace App2d.Core.Physics.Motion;
 
 /// <summary>An immutable, deterministic translation path in world space.</summary>

@@ -1,6 +1,5 @@
 using App2d.Core.Constraints;
 using App2d.Core.Kinematics;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;

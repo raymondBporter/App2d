@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>The nearest boundary or curve intersection reported by a ray query.</summary>

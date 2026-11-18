@@ -38,6 +38,23 @@ public readonly record struct Vector3d(double X, double Y, double Z) : IVector<V
     public static Vector3d Abs(Vector3d value) => new(double.Abs(value.X), double.Abs(value.Y), double.Abs(value.Z));
     public static bool IsFinite(Vector3d value) => double.IsFinite(value.X) && double.IsFinite(value.Y) && double.IsFinite(value.Z);
 
+    public double Dot(Vector3d other) => Dot(this, other);
+    public Vector3d Min(Vector3d other) => Min(this, other);
+    public Vector3d Max(Vector3d other) => Max(this, other);
+    public Vector3d Abs() => Abs(this);
+    public bool IsFinite() => IsFinite(this);
+    public double LengthSquared() => IVectorExtensions.LengthSquared<Vector3d, double>(this);
+    public double Length() => IVectorExtensions.Length<Vector3d, double>(this);
+    public Vector3d Normalized() => IVectorExtensions.Normalize<Vector3d, double>(this);
+    public double DistanceSquared(Vector3d other) => IVectorExtensions.DistanceSquared<Vector3d, double>(this, other);
+    public double Distance(Vector3d other) => IVectorExtensions.Distance<Vector3d, double>(this, other);
+    public Vector3d Lerp(Vector3d other, double amount) => IVectorExtensions.Lerp<Vector3d, double>(this, other, amount);
+    public Vector3d Midpoint(Vector3d other) => IVectorExtensions.Midpoint<Vector3d, double>(this, other);
+    public Vector3d Project(Vector3d unitNormal) => IVectorExtensions.Project<Vector3d, double>(this, unitNormal);
+    public Vector3d Reject(Vector3d unitNormal) => IVectorExtensions.Reject<Vector3d, double>(this, unitNormal);
+    public Vector3d Reflect(Vector3d unitNormal) => IVectorExtensions.Reflect<Vector3d, double>(this, unitNormal);
+    public Vector3d Clamp(Vector3d minimum, Vector3d maximum) => IVectorExtensions.Clamp<Vector3d, double>(this, minimum, maximum);
+
     /// <summary>The right-handed cross product, perpendicular to both input vectors.</summary>
     public Vector3d Cross(Vector3d other) => new(
         Y * other.Z - Z * other.Y,

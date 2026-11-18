@@ -7,7 +7,6 @@ using App2d.Core.Physics;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
@@ -80,13 +79,13 @@ internal abstract class MeleePersonWeapon2D(
         _sinceSwing = _attack.IsInProgress ? 0 : _sinceSwing + deltaSeconds;
         if (_attack.Update(
             deltaSeconds,
-            _ownerBody.WorldObject.Transform.Position,
+            _ownerBody.WorldObject.Position,
             _attackDirection))
         {
             _attackDirection = _bufferedAttackDirection;
             _attack.Update(
                 0f,
-                _ownerBody.WorldObject.Transform.Position,
+                _ownerBody.WorldObject.Position,
                 _attackDirection);
             NotifyAttackStarted();
         }
@@ -109,7 +108,7 @@ internal abstract class MeleePersonWeapon2D(
         }
     }
 
-    protected Vector2f OwnerPosition => _ownerBody.WorldObject.Transform.Position;
+    protected Vector2f OwnerPosition => _ownerBody.WorldObject.Position;
     protected void ReportImpact(Vector2f position) => _publish(new SwordImpact2D(position));
     protected virtual void OnHit()
     {

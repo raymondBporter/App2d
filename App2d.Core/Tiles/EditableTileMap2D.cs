@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Tiles;
 
@@ -20,7 +19,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         int height,
         float tileSize,
         int chunkSize,
-        Vector2f  origin = default,
+        Vector2f origin = default,
         IReadOnlyList<string>? tilesetIds = null)
     {
         Ensure.Positive(width);
@@ -43,10 +42,10 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     public int Height => _tiles.Height;
     public float TileSize => _tiles.CellSize.Width;
     public int ChunkSize { get; }
-    public Vector2f  Origin => _tiles.Origin;
+    public Vector2f Origin => _tiles.Origin;
     public int ChunkColumns => ChunkGridSize.Width;
     public int ChunkRows => ChunkGridSize.Height;
-    public Rect2D WorldBounds => _tiles.WorldBounds;
+    public Rect2f WorldBounds => _tiles.WorldBounds;
     public GridSize2D GridSize => _tiles.Size;
     public GridGeometry2D GridGeometry => _tiles.Geometry;
     public GridSize2D ChunkGridSize { get; }
@@ -226,7 +225,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         ChunkChanged?.Invoke(chunk);
     }
 
-    public TileChunk2D WorldToChunk(Vector2f  worldPosition)
+    public TileChunk2D WorldToChunk(Vector2f worldPosition)
     {
         var cell = ChunkGridGeometry.WorldToCellClamped(worldPosition, ChunkGridSize);
         return new(cell.X, cell.Y);

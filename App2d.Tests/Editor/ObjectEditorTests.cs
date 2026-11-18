@@ -5,7 +5,6 @@ using App2d.Editor;
 using App2d.Levels;
 using App2d.Things;
 using Microsoft.Data.Sqlite;
-using System.Numerics;
 
 namespace App2d.Tests.Editor;
 

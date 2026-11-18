@@ -1,7 +1,5 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Constraints;
 
@@ -44,7 +42,7 @@ public static class ConstraintMath2D
         return new DistanceConstraintEvaluation2D(direction, distance, ConstraintMath1D.EvaluateLimit(limits, distance, activationTolerance));
     }
 
-    public static Vector2f  ProjectPointToDistance(Vector2f anchor, Vector2f requestedPoint, Interval<float> limits, Vector2f fallbackDirection = default)
+    public static Vector2f ProjectPointToDistance(Vector2f anchor, Vector2f requestedPoint, Interval<float> limits, Vector2f fallbackDirection = default)
     {
         var evaluation = EvaluateDistance(anchor, requestedPoint, limits, fallbackDirection: fallbackDirection);
         return anchor + evaluation.Direction * evaluation.Limit.Target;
@@ -61,13 +59,13 @@ public static class ConstraintMath2D
         return new AxisConstraintEvaluation2D(axis, translation, limit, anchor + axis * limit.Target);
     }
 
-    public static Vector2f  ProjectPointToAxis(Vector2f anchor, Vector2f requestedPoint, Vector2f axis, Interval<float> translationLimits) => EvaluateAxis(anchor, requestedPoint, axis, translationLimits).ProjectedPoint;
+    public static Vector2f ProjectPointToAxis(Vector2f anchor, Vector2f requestedPoint, Vector2f axis, Interval<float> translationLimits) => EvaluateAxis(anchor, requestedPoint, axis, translationLimits).ProjectedPoint;
 
     /// <summary>
     /// Projects a point onto a fixed-radius arc. Angles are unwrapped radians
     /// relative to +X; wrapping intervals across -PI/PI are intentionally not inferred.
     /// </summary>
-    public static Vector2f  ProjectPointToPolarArc(Vector2f anchor, Vector2f requestedPoint, float radius, Interval<float> angleLimits, float fallbackAngle = 0f)
+    public static Vector2f ProjectPointToPolarArc(Vector2f anchor, Vector2f requestedPoint, float radius, Interval<float> angleLimits, float fallbackAngle = 0f)
     {
         Ensure.Finite(anchor);
         Ensure.Finite(requestedPoint);

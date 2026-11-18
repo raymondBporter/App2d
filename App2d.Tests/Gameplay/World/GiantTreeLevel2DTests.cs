@@ -11,7 +11,6 @@ using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Gameplay.World.Vegetation;
-using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 
@@ -38,7 +37,7 @@ public sealed class GiantTreeLevel2DTests
 
         Assert.True(game.Player.IsGrounded);
         Assert.Equal(branch.Bounds.Top, game.Player.WorldObject.WorldBounds.Bottom, 2);
-        var standingY = game.Player.WorldObject.Transform.Position.Y;
+        var standingY = game.Player.WorldObject.Position.Y;
         for (var i = 0; i < 12; i++)
         {
             Step(new()
@@ -47,7 +46,7 @@ public sealed class GiantTreeLevel2DTests
             });
         }
 
-        Assert.True(game.Player.WorldObject.Transform.Position.Y > standingY + 30);
+        Assert.True(game.Player.WorldObject.Position.Y > standingY + 30);
 
         void Step(PersonCommand2D command)
         {
@@ -65,7 +64,7 @@ public sealed class GiantTreeLevel2DTests
         level.CreateSimulation(collision, physics, new EntityIdAllocator2D(), 1, 2, 4);
         var branch = tree.Branches[0].Bounds;
         var actor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(20, 40));
-        actor.Transform.Position = new(branch.Center.X, branch.Bottom - 30);
+        actor.Position = new(branch.Center.X, branch.Bottom - 30);
         var body = physics.AddBody(actor, BodyMotionType2D.Dynamic);
         body.CollisionLayer = 2;
         body.CollisionMask = 1;

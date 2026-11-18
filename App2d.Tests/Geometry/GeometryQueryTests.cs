@@ -3,9 +3,6 @@ using App2d.Core.Geometry.Operations.Containment;
 using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
-using App2d.Core.Mathematics.Transforms;
-using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 

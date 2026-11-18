@@ -1,12 +1,11 @@
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Distance;
-using App2d.Core.Geometry.Operations.Transforms;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 
@@ -92,7 +91,7 @@ public sealed class ShapeUtilityTests
         Span<Vector2f> corners = stackalloc Vector2f[4];
         for (var i = 0; i < 12; i++)
         {
-            box.Transform.Rotation = i * MathF.Tau / 12;
+            box.Rotation = i * MathF.Tau / 12;
             var worldCenter = Vector2f.Transform(center, box.Transform.Matrix);
             ShapeTransforms2D.WriteWorldOutline(box.Shape, box.CollisionPose, corners);
             foreach (var corner in corners)

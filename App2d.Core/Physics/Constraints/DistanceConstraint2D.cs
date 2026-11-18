@@ -1,7 +1,6 @@
 using App2d.Core.Constraints;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Physics.Constraints;
 
@@ -143,8 +142,8 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         }
 
         var correction = evaluation.Direction * (evaluation.Limit.Error * PositionStrength / inverseMassSum);
-        First.WorldObject.Transform.Position += correction * First.InverseMass;
-        Second.WorldObject.Transform.Position -= correction * Second.InverseMass;
+        First.WorldObject.Position += correction * First.InverseMass;
+        Second.WorldObject.Position -= correction * Second.InverseMass;
         return true;
     }
 }

@@ -3,7 +3,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Core.Vegetation;
 
@@ -11,18 +10,18 @@ namespace App2d.Core.Vegetation;
 public sealed class VegetationBladeTip2D
 {
     private readonly VegetationTipPolygon2D[] _polygons;
-    private readonly Rect2D _localBounds;
+    private readonly Rect2f _localBounds;
     public Vector2f ReleasePosition { get; }
 
     internal VegetationBladeTip2D(IReadOnlyList<VegetationTipPolygon2D> polygons)
     {
-        var bounds = Rect2D.FromPoints([.. polygons.SelectMany(p => p.Points)]);
+        var bounds = Rect2f.FromPoints([.. polygons.SelectMany(p => p.Points)]);
         ReleasePosition = bounds.Center;
         _localBounds = new(bounds.Min - ReleasePosition, bounds.Max - ReleasePosition);
         _polygons = [.. polygons.Select(p => p with { Points = [.. p.Points.Select(point => point - ReleasePosition)] })];
     }
 
-    public Rect2D WorldBounds(Vector2f position, float rotation) =>
+    public Rect2f WorldBounds(Vector2f position, float rotation) =>
         _localBounds.TransformedBy(new RigidTransform2D(position, rotation).Matrix);
 
     public void Render(Renderer2D renderer, Vector2f position, float rotation, float opacity)

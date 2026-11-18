@@ -4,7 +4,6 @@ using App2d.Contracts.Simulation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Presentation.Persons;
-using System.Numerics;
 
 namespace App2d.Tests.Presentation.Persons;
 

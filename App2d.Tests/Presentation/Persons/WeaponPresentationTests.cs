@@ -5,7 +5,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons.Presentation;
-using System.Numerics;
 
 namespace App2d.Tests.Presentation.Persons;
 

@@ -1,7 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Json;
-using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
 
@@ -50,5 +49,5 @@ public sealed class JsonProfilesTests
     }
 
     private sealed record Counter { public int Count { get; init; } }
-    private sealed record WorldValue(Vector2f  Position, string? Optional);
+    private sealed record WorldValue(Vector2f Position, string? Optional);
 }

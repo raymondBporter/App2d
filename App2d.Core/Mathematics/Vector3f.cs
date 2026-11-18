@@ -74,6 +74,18 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
     /// <summary>True when every component is finite, regardless of the vector's length.</summary>
     public bool IsFinite() => float.IsFinite(X) && float.IsFinite(Y) && float.IsFinite(Z);
 
+    public Vector3f Min(Vector3f other) => Min(this, other);
+    public Vector3f Max(Vector3f other) => Max(this, other);
+    public Vector3f Abs() => Abs(this);
+    public float DistanceSquared(Vector3f other) => DistanceSquared(this, other);
+    public float Distance(Vector3f other) => Distance(this, other);
+    public Vector3f Lerp(Vector3f other, float amount) => Lerp(this, other, amount);
+    public Vector3f Midpoint(Vector3f other) => IVectorExtensions.Midpoint<Vector3f, float>(this, other);
+    public Vector3f Project(Vector3f unitNormal) => IVectorExtensions.Project<Vector3f, float>(this, unitNormal);
+    public Vector3f Reject(Vector3f unitNormal) => IVectorExtensions.Reject<Vector3f, float>(this, unitNormal);
+    public Vector3f Reflect(Vector3f unitNormal) => new(Vector3.Reflect(_value, unitNormal._value));
+    public Vector3f Clamp(Vector3f minimum, Vector3f maximum) => IVectorExtensions.Clamp<Vector3f, float>(this, minimum, maximum);
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float Length() => _value.Length();
 

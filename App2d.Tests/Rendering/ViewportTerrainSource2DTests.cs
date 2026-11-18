@@ -6,7 +6,6 @@ using App2d.Core.Tiles;
 using App2d.Gameplay.World;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Tests.Rendering;
 
@@ -22,8 +21,8 @@ public sealed class ViewportTerrainSource2DTests
         Assert.Equal(6, all.Count);
         Assert.Contains(all, c => c.Chunk == new TileChunk2D(2, 1));
         // The final chunk extends to X=90, but terrain ends at X=70 plus one tile of artwork padding.
-        Assert.True(source.QueryTerrain(new Rect2D(new(81, 0), new(89, 10))).IsEmpty);
-        Assert.Contains(ReadTerrain(source, new Rect2D(new(69, 0), new(70, 10))), c => c.Chunk.X == 2);
+        Assert.True(source.QueryTerrain(new Rect2f(new(81, 0), new(89, 10))).IsEmpty);
+        Assert.Contains(ReadTerrain(source, new Rect2f(new(69, 0), new(70, 10))), c => c.Chunk.X == 2);
     }
 
     [Theory]
@@ -43,7 +42,7 @@ public sealed class ViewportTerrainSource2DTests
             for (var x = 0; x < map.ChunkColumns; x++)
             {
                 var min = map.Origin + new Vector2f(x, y) * map.ChunkSize * map.TileSize;
-                var bounds = new Rect2D(min, min + new Vector2f(map.ChunkSize * map.TileSize));
+                var bounds = new Rect2f(min, min + new Vector2f(map.ChunkSize * map.TileSize));
                 if (bounds.Intersects(camera.VisibleWorldBounds))
                 {
                     Assert.Contains(terrain, c => c.Chunk == new TileChunk2D(x, y));
@@ -102,7 +101,7 @@ public sealed class ViewportTerrainSource2DTests
         var map = CreateMap();
         using var source = new ViewportTerrainSource2D(map);
         var original = ReadTerrain(source, map.WorldBounds);
-        Assert.True(source.QueryTerrain(new Rect2D(new Vector2f(-10000f), new Vector2f(-9000f))).IsEmpty);
+        Assert.True(source.QueryTerrain(new Rect2f(new Vector2f(-10000f), new Vector2f(-9000f))).IsEmpty);
         Assert.Equal(original, ReadTerrain(source, map.WorldBounds));
     }
 
@@ -123,7 +122,7 @@ public sealed class ViewportTerrainSource2DTests
 
         view.ApplyState(LevelContent2D.Empty, WorldState2D.Empty);
         view.ApplyState(LevelContent2D.Empty with { Revision = 2 }, WorldState2D.Empty);
-        var outside = new Rect2D(map.WorldBounds.Max + new Vector2f(128), map.WorldBounds.Max + new Vector2f(256));
+        var outside = new Rect2f(map.WorldBounds.Max + new Vector2f(128), map.WorldBounds.Max + new Vector2f(256));
         Assert.True(terrain.QueryTerrain(outside).IsEmpty);
         Assert.Same(snapshot, terrain.GetChunk(chunk));
         Assert.Same(visuals, view.GetTerrainVisuals(snapshot));
@@ -145,7 +144,7 @@ public sealed class ViewportTerrainSource2DTests
         using var terrain = new ViewportTerrainSource2D(map);
         using var vegetation = new VegetationPresentation2D(terrain);
         var root = new TileChunk2D(0, 0);
-        var visible = new Rect2D(new(128, 320), new(160, 352));
+        var visible = new Rect2f(new(128, 320), new(160, 352));
         Assert.False(terrain.QueryTerrain(visible).Contains(new(root.X, root.Y)));
         Assert.True(vegetation.QueryTreeChunks(visible).Contains(new(root.X, root.Y)));
 
@@ -199,7 +198,7 @@ public sealed class ViewportTerrainSource2DTests
         }
     }
 
-    private static List<TerrainChunkState2D> ReadTerrain(ViewportTerrainSource2D source, Rect2D bounds)
+    private static List<TerrainChunkState2D> ReadTerrain(ViewportTerrainSource2D source, Rect2f bounds)
     {
         var terrain = new List<TerrainChunkState2D>();
         foreach (var cell in source.QueryTerrain(bounds))

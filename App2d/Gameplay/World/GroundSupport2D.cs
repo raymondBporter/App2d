@@ -1,5 +1,4 @@
 using App2d.Core.Physics;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 

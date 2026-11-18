@@ -1,7 +1,6 @@
 using App2d.Core.IO;
 using App2d.Core.Json;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 using System.Text.Json;
 
 namespace App2d.Core.Characters;

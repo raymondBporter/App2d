@@ -3,7 +3,6 @@ using App2d.Core.Physics;
 using App2d.Core.Physics.Solvers;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Physics;
 
@@ -12,7 +11,7 @@ public sealed class ImpulseVelocitySolver2DTests
     private static RigidBody2D DynamicBody(PhysicsWorld2D world, Vector2f position)
     {
         var worldObject = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2f, 2f));
-        worldObject.Transform.Position = position;
+        worldObject.Position = position;
         return world.AddBody(worldObject, BodyMotionType2D.Dynamic);
     }
 

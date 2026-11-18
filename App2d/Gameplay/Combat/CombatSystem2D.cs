@@ -5,7 +5,6 @@ using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Gameplay.Combat;
 
@@ -58,7 +57,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
                 direction = Vector2f.Normalize(direction);
             }
 
-            var attackerPosition = Combatants.Find(attackerId.IsValid ? attackerId : attackSourceId)?.WorldObject.Transform.Position;
+            var attackerPosition = Combatants.Find(attackerId.IsValid ? attackerId : attackSourceId)?.WorldObject.Position;
             var blocked = combatant is ICombatGuard2D protectedTarget && protectedTarget.CanBlock(hitbox.WorldBounds, direction, attackerPosition);
             if (hurtCollider is null && combatant is IRegisteredHurt2D && !blocked)
             {
@@ -181,7 +180,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         }
 
         DamageResolved?.Invoke(new CombatDamage2D(combatant.Id, combatant.Faction,
-            combatant.WorldObject.Transform.Position, killed)
+            combatant.WorldObject.Position, killed)
         {
             Contact = contact
         });

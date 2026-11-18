@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Presentation.World;
 
@@ -33,7 +32,7 @@ public sealed class SideScrollerCamera2D
     private float _verticalFollowSuppression;
     private float _lastGroundedPlayerY;
 
-    public SideScrollerCamera2D(Camera2D camera, Rect2D levelBounds, Vector2f initialPlayerPosition)
+    public SideScrollerCamera2D(Camera2D camera, Rect2f levelBounds, Vector2f initialPlayerPosition)
     {
         _camera = Ensure.RequireNotNull(camera);
         if (!levelBounds.IsFinite)

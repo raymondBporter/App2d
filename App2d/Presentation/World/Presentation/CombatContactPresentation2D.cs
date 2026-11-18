@@ -1,9 +1,7 @@
 using App2d.Contracts.Combat;
-using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -75,8 +73,8 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
             var distance = (3 + 17 * t) * burst.Size;
             var length = Lengths[i] * burst.Size * (1 - .65f * t);
             var width = (i == 2 ? 5 : 3.6f) * burst.Size * (1 - .75f * t);
-            edge.Transform.Position = fill.Transform.Position = burst.Position + axis * distance;
-            edge.Transform.Rotation = fill.Transform.Rotation = angle;
+            edge.Position = fill.Position = burst.Position + axis * distance;
+            edge.Rotation = fill.Rotation = angle;
             edge.Transform.Scale = new(length + 2, width + 2);
             fill.Transform.Scale = new(length, width);
             var alpha = (byte)(255 * (1 - MathF.Pow(t, 3)));

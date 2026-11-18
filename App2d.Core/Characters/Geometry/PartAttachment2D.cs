@@ -1,7 +1,5 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Mathematics;
-using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;
 
@@ -68,7 +66,7 @@ public static class PartAttachment2D
     }
 
     /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
-    public static Vector2f  ArtworkPoint(PartGeometry part, int index, Vector2f target, Func<string, Vector3f> world, Func<string, Vector3f> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
+    public static Vector2f ArtworkPoint(PartGeometry part, int index, Vector2f target, Func<string, Vector3f> world, Func<string, Vector3f> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
         var art = binding is null ? FrameOf(part, world, bone) : FrameOf(part, rest, restBone);
@@ -86,6 +84,6 @@ public static class PartAttachment2D
         return local;
     }
 
-    public static Vector2f  ArtworkPoint(PartGeometry part, int index, Vector2f target, ResolvedModel model, EvaluatedPose pose) =>
+    public static Vector2f ArtworkPoint(PartGeometry part, int index, Vector2f target, ResolvedModel model, EvaluatedPose pose) =>
         ArtworkPoint(part, index, target, pose.World, id => model.Rest[id], pose.Placement, model.RestPlacement);
 }

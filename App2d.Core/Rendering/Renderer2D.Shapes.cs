@@ -3,7 +3,6 @@ using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
@@ -46,7 +45,7 @@ public sealed partial class Renderer2D
         DrawShapeCore(item.Shape, matrix, item.LocalBounds, fillColor, outlineColor, screenStrokeWidth);
     }
 
-    private void DrawShapeCore(IShape2D shape, Matrix3x2 matrix, Rect2D bounds,
+    private void DrawShapeCore(IShape2D shape, Matrix3x2 matrix, Rect2f bounds,
         Color4b? fillColor, Color4b? outlineColor, float width)
     {
         SelectBatch(null, null);
@@ -172,10 +171,10 @@ public sealed partial class Renderer2D
         Line(start, end, color, screenStrokeWidth, bounds.Contains(deviceOrigin) ? originCap : LineCap2D.Butt);
     }
 
-    private Rect2D PaddedDeviceBounds(float width)
+    private Rect2f PaddedDeviceBounds(float width)
     {
         var padding = width * 0.5f + 1f;
-        return new Rect2D(View.TargetBounds.Min - new Vector2f(padding).ToVector2f(), View.TargetBounds.Max + new Vector2f(padding).ToVector2f());
+        return new Rect2f(View.TargetBounds.Min - new Vector2f(padding).ToVector2f(), View.TargetBounds.Max + new Vector2f(padding).ToVector2f());
     }
 
     private static void ValidateShapeStyle(Color4b? fillColor, Color4b? outlineColor, float width)

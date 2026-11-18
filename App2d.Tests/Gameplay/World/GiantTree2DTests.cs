@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Gameplay.World.Vegetation;
-using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 

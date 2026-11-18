@@ -2,3 +2,4 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("App2d.Tests")]
 [assembly: InternalsVisibleTo("App2d.CharacterStudio")]
+[assembly: InternalsVisibleTo("App2d.CharacterStudio.Tests")]

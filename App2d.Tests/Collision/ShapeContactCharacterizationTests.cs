@@ -2,7 +2,6 @@ using App2d.Core.Collision;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Collision;
 
@@ -13,8 +12,8 @@ public sealed class ShapeContactCharacterizationTests
     private static SpatialObject2D At(IShape2D shape, Vector2f position, float rotation = 0f)
     {
         var worldObject = new SpatialObject2D(shape);
-        worldObject.Transform.Position = position;
-        worldObject.Transform.Rotation = rotation;
+        worldObject.Position = position;
+        worldObject.Rotation = rotation;
         return worldObject;
     }
 
@@ -82,7 +81,7 @@ public sealed class ShapeContactCharacterizationTests
     public void UniformlyScaledCircleUsesScaledRadius()
     {
         var circle = At(Circle2D.Builder.Create(1f), Vector2f.Zero);
-        circle.Transform.Scale = new Vector2f(3f, 3f);
+        circle.Scale = 3f;
         var other = At(Circle2D.Builder.Create(1f), new Vector2f(3.5f, 0f));
 
         Assert.True(Provider.TryGetContact(circle, other, out var contact));

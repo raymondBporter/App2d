@@ -5,7 +5,6 @@ using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Json;
 using App2d.Core.Shapes;
-using System.Numerics;
 using System.Text.Json;
 
 namespace App2d.Tests.Geometry;
@@ -123,7 +122,7 @@ public sealed class ShapeSerialization2DTests
         var circle = Assert.IsType<Circle2D>(GeometryJson2D.ShapeFromJson("{\"center\":{\"x\":1,\"y\":2},\"radius\":3,\"kind\":\"circle\"}").Validated());
         Assert.Equal(new Vector2f(1, 2), circle.Center);
         Assert.Equal(3f, circle.Radius);
-        Assert.Equal(12, ShapeKinds2D.All.Count);
+        Assert.Equal(11, ShapeKinds2D.All.Count);
     }
 
     [Fact]

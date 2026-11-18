@@ -1,6 +1,5 @@
 using App2d.Core.Mathematics.Transforms;
 using System.Collections;
-using System.Numerics;
 
 namespace App2d.Core.Rendering;
 

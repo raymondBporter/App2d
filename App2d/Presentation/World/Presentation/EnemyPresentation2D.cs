@@ -7,6 +7,7 @@ using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
@@ -161,40 +162,66 @@ public sealed class EnemyPresentation2D(
         public abstract void Dispose();
     }
 
-    /// <summary>An enemy's live bolts as boxes, pooled.</summary>
+    /// <summary>Pooled visuals for an enemy's live bolts and thrown rocks.</summary>
     private sealed class BoltViews(Scene2D scene) : IDisposable
     {
-        private readonly List<WorldObject2D> _bolts = [];
+        private static readonly Vector2f[] RockVertices =
+            [new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)];
+        private readonly List<(WorldObject2D Visual, Vector2f Size, bool Rock)> _bolts = [];
+
         public void Update(EnemyState2D state)
         {
             var count = state.IsEnabled && !state.Bolts.IsDefault ? state.Bolts.Length : 0;
-            while (_bolts.Count < count)
+            for (var i = 0; i < count; i++)
             {
-                var rock = state.Bolts[_bolts.Count].Gravity > 0;
-                IShape2D shape = rock
-                    ? ConvexPolygon2D.Builder.Create([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
-                    : AxisAlignedRectangle2D.Builder.CreateFromSize(Vector2f.One);
-                var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new Color4b(133, 139, 134) : Color4b.OrangeRed)) { ZIndex = 2 };
-                _bolts.Add(bolt);
-                scene.Add(bolt);
-            }
-            for (var i = 0; i < _bolts.Count; i++)
-            {
-                _bolts[i].IsVisible = i < count;
-                if (i >= count)
+                var bolt = state.Bolts[i];
+                var rock = bolt.Gravity > 0;
+                if (i == _bolts.Count)
                 {
-                    continue;
+                    _bolts.Add(AddBolt(bolt.Size, rock));
+                }
+                else if (_bolts[i].Size != bolt.Size || _bolts[i].Rock != rock)
+                {
+                    var previous = _bolts[i].Visual;
+                    _bolts[i] = AddBolt(bolt.Size, rock);
+                    scene.Remove(previous);
                 }
 
-                _bolts[i].Transform.Position = state.Bolts[i].Position;
-                _bolts[i].Transform.Scale = state.Bolts[i].Size;
+                var visual = _bolts[i].Visual;
+                visual.Position = bolt.Position;
+                visual.IsVisible = true;
+            }
+
+            for (var i = count; i < _bolts.Count; i++)
+            {
+                _bolts[i].Visual.IsVisible = false;
             }
         }
+
+        private (WorldObject2D Visual, Vector2f Size, bool Rock) AddBolt(Vector2f size, bool rock)
+        {
+            IShape2D shape;
+            if (rock)
+            {
+                var vertices = new Vector2f[RockVertices.Length];
+                VertexTransforms2D.Transform(RockVertices, vertices, Matrix3x2.CreateScale(size.ToVector2()));
+                shape = ConvexPolygon2D.Builder.Create(vertices);
+            }
+            else
+            {
+                shape = AxisAlignedRectangle2D.Builder.CreateFromSize(size);
+            }
+
+            var visual = new WorldObject2D(shape, new SolidColorShader(rock ? new Color4b(133, 139, 134) : Color4b.OrangeRed)) { ZIndex = 2 };
+            scene.Add(visual);
+            return (visual, size, rock);
+        }
+
         public void Dispose()
         {
             foreach (var bolt in _bolts)
             {
-                scene.Remove(bolt);
+                scene.Remove(bolt.Visual);
             }
         }
     }
@@ -218,9 +245,9 @@ public sealed class EnemyPresentation2D(
             };
             _visual = new(AxisAlignedRectangle2D.Builder.CreateFromSize(12, 12, new(0, 2)), _shader)
             {
+                Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit,
                 ZIndex = 1
             };
-            _visual.Transform.Scale = new(GameWorldUnits2D.WorldUnitsPerAuthoredUnit);
             scene.Add(_visual);
         }
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
@@ -239,7 +266,7 @@ public sealed class EnemyPresentation2D(
             var holding = action?.Projectile?.Gravity > 0 && state.ActionSeconds < action.Events.First(e => e.Event.Id == EntityControllers.Fire).Seconds;
             _shader.Props = [.. _entity.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null ||
                 !_entity.Actions.Values.Any(a => a.Projectile?.Gravity > 0) || holding).Select(e => (e.Prop, e.Socket))];
-            _visual.Transform.Position = GameWorldUnits2D.AuthoredToWorld(pose.Position);
+            _visual.Position = GameWorldUnits2D.AuthoredToWorld(pose.Position);
         }
         public override void Dispose()
         {
@@ -267,7 +294,7 @@ public sealed class EnemyPresentation2D(
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
         {
             _visual.IsVisible = state.IsEnabled && state.IsAlive;
-            _visual.Transform.Position = state.Position + new Vector2f(0f, 10f);
+            _visual.Position = state.Position + new Vector2f(0f, 10f);
             _shader.FlipX = state.Facing < 0f;
             if (!_visual.IsVisible)
             {
@@ -321,7 +348,7 @@ public sealed class EnemyPresentation2D(
             }
             _person.SetVisible(state.IsEnabled);
             _person.Update(dt, tick, state.Person, state.MoveX, false, state.IsAttacking);
-            _marker.Transform.Position = state.Position + new Vector2f(0f, 34f);
+            _marker.Position = state.Position + new Vector2f(0f, 34f);
             _marker.IsVisible = state.IsEnabled && state.IsAlive;
         }
 

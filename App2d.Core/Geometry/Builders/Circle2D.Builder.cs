@@ -2,7 +2,6 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Construction;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Shapes;
 

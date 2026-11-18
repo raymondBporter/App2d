@@ -10,7 +10,6 @@ using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons.Actions;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons;
 
@@ -57,7 +56,7 @@ public sealed class Person2D : ICombatant2D
         WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(
             traversal.PlayerColliderSize,
             new Vector2f(traversal.PlayerColliderCenterOffsetX, 0f)));
-        WorldObject.Transform.Position = spawnPoint;
+        WorldObject.Position = spawnPoint;
 
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
         Body.Restitution = 0f;
@@ -84,7 +83,7 @@ public sealed class Person2D : ICombatant2D
     public RigidBody2D Body { get; }
     public Health2D Health { get; }
     public CombatFaction2D Faction { get; }
-    public Vector2f Position => WorldObject.Transform.Position;
+    public Vector2f Position => WorldObject.Position;
     public float Facing { get; private set; } = 1f;
     public float InvulnerabilitySeconds { get; private set; }
     public float LandingSpeedThisFrame { get; private set; }
@@ -334,7 +333,7 @@ public sealed class Person2D : ICombatant2D
             Health.Reset();
         }
 
-        WorldObject.Transform.Position = spawnPoint;
+        WorldObject.Position = spawnPoint;
         Body.IsCollider = _simulationEnabled;
         Body.MotionType = _simulationEnabled
             ? BodyMotionType2D.Dynamic

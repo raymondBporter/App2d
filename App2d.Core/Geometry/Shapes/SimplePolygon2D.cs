@@ -4,7 +4,6 @@ using App2d.Core.Geometry.Operations.Diameter;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Shapes;
 using System.Collections.ObjectModel;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Shapes;

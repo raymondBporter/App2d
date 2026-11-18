@@ -1,5 +1,4 @@
 using App2d.Core.Collision.Contacts;
-using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Serialization;

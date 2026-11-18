@@ -1,7 +1,6 @@
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Shapes;
-using System.Numerics;
 using System.Text.Json;
 using static App2d.Tests.Geometry.VectorComparers;
 

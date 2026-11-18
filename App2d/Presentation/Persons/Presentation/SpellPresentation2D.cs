@@ -1,10 +1,8 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core.Audio;
-using App2d.Core.Mathematics;
 using App2d.Presentation.Audio;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Presentation.Persons.Presentation;
 

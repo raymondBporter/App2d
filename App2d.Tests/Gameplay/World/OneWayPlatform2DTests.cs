@@ -2,7 +2,6 @@ using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Gameplay.World;
-using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 
@@ -21,7 +20,7 @@ public sealed class OneWayPlatform2DTests
 
         world.Step(1f / 60f);
 
-        Assert.Equal(-20f, actor.WorldObject.Transform.Position.X, 3);
+        Assert.Equal(-20f, actor.WorldObject.Position.X, 3);
         Assert.Equal(60f, actor.LinearVelocity.X, 3);
         Assert.Empty(world.LastContacts);
     }
@@ -32,14 +31,14 @@ public sealed class OneWayPlatform2DTests
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2f.Zero, new Vector2f(32f, 8f));
         var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
-        actorObject.Transform.Position = new Vector2f(-18f, 8.5f);
+        actorObject.Position = new Vector2f(-18f, 8.5f);
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         actor.LinearVelocity = new Vector2f(60f, 0f);
 
         world.Step(1f / 60f);
 
-        Assert.Equal(new Vector2f(-17f, 8.5f), actorObject.Transform.Position);
+        Assert.Equal(new Vector2f(-17f, 8.5f), actorObject.Position);
         Assert.Equal(new Vector2f(60f, 0f), actor.LinearVelocity);
         Assert.Empty(world.LastContacts);
     }
@@ -50,14 +49,14 @@ public sealed class OneWayPlatform2DTests
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2f.Zero, new Vector2f(32f, 8f));
         var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
-        actorObject.Transform.Position = new Vector2f(0f, 10f);
+        actorObject.Position = new Vector2f(0f, 10f);
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         actor.LinearVelocity = new Vector2f(0f, -120f);
 
         world.Step(1f / 60f);
 
-        Assert.Equal(9f, actorObject.Transform.Position.Y, 3);
+        Assert.Equal(9f, actorObject.Position.Y, 3);
         Assert.Equal(0f, actor.LinearVelocity.Y, 3);
         Assert.Single(world.LastContacts);
     }
@@ -68,14 +67,14 @@ public sealed class OneWayPlatform2DTests
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2f.Zero, new Vector2f(32f, 8f));
         var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
-        actorObject.Transform.Position = new Vector2f(0f, -10f);
+        actorObject.Position = new Vector2f(0f, -10f);
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         actor.LinearVelocity = new Vector2f(0f, 120f);
 
         world.Step(1f / 60f);
 
-        Assert.Equal(-8f, actorObject.Transform.Position.Y, 3);
+        Assert.Equal(-8f, actorObject.Position.Y, 3);
         Assert.Equal(120f, actor.LinearVelocity.Y, 3);
         Assert.Empty(world.LastContacts);
     }
@@ -91,7 +90,7 @@ public sealed class OneWayPlatform2DTests
 
         blockedWorld.Step(1f / 60f);
 
-        Assert.Equal(6f, blocked.WorldObject.Transform.Position.X, 3);
+        Assert.Equal(6f, blocked.WorldObject.Position.X, 3);
         Assert.Equal(0f, blocked.LinearVelocity.X, 3);
         Assert.Single(blockedWorld.LastContacts);
 
@@ -103,7 +102,7 @@ public sealed class OneWayPlatform2DTests
 
         passWorld.Step(1f / 60f);
 
-        Assert.Equal(-5f, passing.WorldObject.Transform.Position.X, 3);
+        Assert.Equal(-5f, passing.WorldObject.Position.X, 3);
         Assert.Equal(120f, passing.LinearVelocity.X, 3);
         Assert.Empty(passWorld.LastContacts);
     }
@@ -122,7 +121,7 @@ public sealed class OneWayPlatform2DTests
             Assert.InRange(actor.LinearVelocity.Y, -0.001f, 0.001f);
         }
 
-        Assert.InRange(actor.WorldObject.Transform.Position.Y, 8.999f, 9.001f);
+        Assert.InRange(actor.WorldObject.Position.Y, 8.999f, 9.001f);
         Assert.Single(world.LastContacts);
     }
 
@@ -142,12 +141,12 @@ public sealed class OneWayPlatform2DTests
         world.Step(dt);
         surface.LinearVelocity = new Vector2f(30f, 0f);
         world.Step(dt);
-        Assert.Equal(0.5f, actor.WorldObject.Transform.Position.X, 3);
-        Assert.Equal(6f, actor.WorldObject.Transform.Position.Y, 3);
+        Assert.Equal(0.5f, actor.WorldObject.Position.X, 3);
+        Assert.Equal(6f, actor.WorldObject.Position.Y, 3);
 
         actor.LinearVelocity = new Vector2f(0f, 30f);
         world.Step(dt);
-        Assert.True(actor.WorldObject.Transform.Position.Y > 6f);
+        Assert.True(actor.WorldObject.Position.Y > 6f);
         Assert.True(actor.LinearVelocity.Y > 0f);
     }
 
@@ -157,19 +156,19 @@ public sealed class OneWayPlatform2DTests
         var world = CreateWorld();
         var normal = Vector2f.Normalize(new Vector2f(-1f, 1f));
         var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(8f, 32f));
-        surfaceObject.Transform.Rotation = MathF.PI / 4f;
+        surfaceObject.Rotation = MathF.PI / 4f;
         var surface = world.AddBody(surfaceObject, BodyMotionType2D.Static);
         PlatformCollisionRules2D.Attach(world).Surface(surface).OneWaySurfaceNormal = normal;
         surface.Restitution = 0f;
         var actorObject = new SpatialObject2D(Circle2D.Builder.Create(2f));
-        actorObject.Transform.Position = normal * 20f;
+        actorObject.Position = normal * 20f;
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         actor.LinearVelocity = -normal * 180f;
 
         world.Step(1f / 60f);
 
-        Assert.InRange(Vector2f.Dot(actorObject.Transform.Position, normal), 17.999f, 18.001f);
+        Assert.InRange(Vector2f.Dot(actorObject.Position, normal), 17.999f, 18.001f);
         Assert.Single(world.LastContacts);
     }
 
@@ -189,7 +188,7 @@ public sealed class OneWayPlatform2DTests
     {
         var platformObject = new SpatialObject2D(
             AxisAlignedRectangle2D.Builder.CreateFromSize(size));
-        platformObject.Transform.Position = position;
+        platformObject.Position = position;
         var platform = world.AddBody(
             platformObject,
             BodyMotionType2D.Static);
@@ -205,7 +204,7 @@ public sealed class OneWayPlatform2DTests
     {
         var actorObject = new SpatialObject2D(
             AxisAlignedRectangle2D.Builder.CreateFromSize(size));
-        actorObject.Transform.Position = position;
+        actorObject.Position = position;
         var actor = world.AddBody(
             actorObject,
             BodyMotionType2D.Dynamic);

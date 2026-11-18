@@ -11,7 +11,6 @@ using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using App2d.Presentation.Player;
 using App2d.Presentation.World.Presentation;
-using System.Numerics;
 
 namespace App2d.Presentation.Persons;
 
@@ -63,9 +62,9 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         };
         _visual = new(AxisAlignedRectangle2D.Builder.CreateFromSize(10, 10, new(0, 2)), _shader)
         {
+            Scale = _worldUnitsPerModelUnit,
             ZIndex = 1
         };
-        _visual.Transform.Scale = new(_worldUnitsPerModelUnit);
         scene.Add(_visual);
         Wardrobe = new(moves);
         Wardrobe.Changed += RefreshWardrobe;
@@ -138,7 +137,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         Update();
     }
 
-    private Vector2f  Feet(PersonState2D state) => state.Position - new Vector2f(0, _halfHeight);
+    private Vector2f Feet(PersonState2D state) => state.Position - new Vector2f(0, _halfHeight);
 
     private bool Visible() => _state.InvulnerabilitySeconds <= 0 || ((int)(_clock * 20) & 1) == 0 || !_state.IsAlive;
 
@@ -174,7 +173,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         _shader.Equipment = Wardrobe.Attachments;
         _shader.Artwork = Wardrobe.Artwork;
         RecordSwoosh(frame, seconds, pose.Local);
-        _visual.Transform.Position = Feet(s);
+        _visual.Position = Feet(s);
         _visual.IsVisible = _enabled && Visible();
     }
 

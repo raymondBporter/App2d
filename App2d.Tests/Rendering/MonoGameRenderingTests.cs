@@ -4,7 +4,6 @@ using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
 
 namespace App2d.Tests.Rendering;
@@ -70,7 +69,7 @@ public sealed class MonoGameRenderingTests
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity, 0)), item.LocalBounds);
+        Assert.Equal(new Rect2f(new(float.NegativeInfinity), new(float.PositiveInfinity, 0)), item.LocalBounds);
         Assert.Equal(Color4b.Blue, pixels[80 * 128 + 64]);
         Assert.Equal(Color4b.Transparent, pixels[48 * 128 + 64]);
     }

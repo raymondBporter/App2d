@@ -3,7 +3,6 @@ using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Collision;
 
@@ -82,7 +81,7 @@ public sealed class CirclePolygonBoundaryTests
         ground.Restitution = 0f;
         var wheel = world.AddBody(new SpatialObject2D(Circle2D.Builder.Create(1f)), BodyMotionType2D.Dynamic);
         wheel.SetMassFromShape(1f);
-        wheel.WorldObject.Transform.Position = new(-5f, 1f);
+        wheel.WorldObject.Position = new(-5f, 1f);
         wheel.LinearVelocity = new(4f, 0f);
         wheel.AngularVelocity = -4f;
         wheel.FreezeRotation = false;

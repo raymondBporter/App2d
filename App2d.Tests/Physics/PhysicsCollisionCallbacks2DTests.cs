@@ -4,7 +4,6 @@ using App2d.Core.Physics;
 using App2d.Core.Physics.Filtering;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Physics;
 
@@ -17,11 +16,11 @@ public sealed class PhysicsCollisionCallbacks2DTests
         var callbacks = new Callbacks { Accept = false };
         world.CollisionCallbacks = callbacks;
         actor.LinearVelocity = new(0f, -6f);
-        var before = actor.WorldObject.Transform.Position;
+        var before = actor.WorldObject.Position;
         world.Step(1f / 60f);
         Assert.NotEmpty(callbacks.Before);
         Assert.True(callbacks.Before[0].Geometry.PenetrationDepth > 0f);
-        Assert.Equal(before.Y - 0.1f, actor.WorldObject.Transform.Position.Y, 4);
+        Assert.Equal(before.Y - 0.1f, actor.WorldObject.Position.Y, 4);
         Assert.Equal(-6f, actor.LinearVelocity.Y);
         Assert.Empty(world.LastContacts);
         Assert.Empty(callbacks.After);
@@ -60,14 +59,14 @@ public sealed class PhysicsCollisionCallbacks2DTests
         Assert.Single(callbacks.After);
         Assert.Single(world.LastContacts);
         Assert.Equal(-6f, actor.LinearVelocity.Y);
-        Assert.Equal(0.7f, actor.WorldObject.Transform.Position.Y, 4);
+        Assert.Equal(0.7f, actor.WorldObject.Position.Y, 4);
     }
 
     [Fact]
     public void AfterCallbacksCanRemoveBodiesWithoutInvalidatingNotificationsAndCannotRecursivelyStep()
     {
         var (world, actor, _) = CreateWorld();
-        actor.WorldObject.Transform.Position = new(-4f, 0.8f);
+        actor.WorldObject.Position = new(-4f, 0.8f);
         var second = AddActor(world, new(4f, 0.8f));
         var callbacks = new Callbacks
         {
@@ -129,7 +128,7 @@ public sealed class PhysicsCollisionCallbacks2DTests
         var world = new PhysicsWorld2D();
         var actor = AddActor(world, new(0f, 0.8f));
         var floor = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(100f, 2f));
-        floor.Transform.Position = new(0f, -1f);
+        floor.Position = new(0f, -1f);
         var ground = world.AddBody(floor, BodyMotionType2D.Static);
         ground.Restitution = 0f;
         return (world, actor, ground);
@@ -138,7 +137,7 @@ public sealed class PhysicsCollisionCallbacks2DTests
     private static RigidBody2D AddActor(PhysicsWorld2D world, Vector2f position)
     {
         var spatial = new SpatialObject2D(Circle2D.Builder.Create(1f));
-        spatial.Transform.Position = position;
+        spatial.Position = position;
         var actor = world.AddBody(spatial, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         return actor;

@@ -1,5 +1,4 @@
 using App2d.Core.Json;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
@@ -245,6 +244,6 @@ public sealed class Affine2DTests
         Near(point, inverse.TransformPoint(transform.TransformPoint(point)));
     }
 
-    private static void Near(Vector2f  expected, Vector2f  actual) =>
+    private static void Near(Vector2f expected, Vector2f actual) =>
         Assert.True(Vector2f.Distance(expected, actual) < 2e-5f, $"Expected {expected}, found {actual}.");
 }

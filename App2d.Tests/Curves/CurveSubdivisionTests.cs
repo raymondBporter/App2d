@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
-using System.Numerics;
 
 namespace App2d.Tests.Curves;
 
@@ -91,5 +90,5 @@ public sealed class CurveSubdivisionTests
         }
     }
 
-    private static void Near(Vector2f  expected, Vector2f  actual) => Assert.InRange(Vector2f.Distance(expected, actual), 0, 2e-5f);
+    private static void Near(Vector2f expected, Vector2f actual) => Assert.InRange(Vector2f.Distance(expected, actual), 0, 2e-5f);
 }

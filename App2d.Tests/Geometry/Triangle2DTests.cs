@@ -5,7 +5,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 
@@ -29,8 +28,8 @@ public sealed class Triangle2DTests
         Assert.False(triangle.ContainsPoint(new(-.1f, 1)));
         Assert.Equal(new Vector2f(4, 0), triangle.GetSupportPoint(Vector2f.UnitX));
         Assert.Equal(new Vector2f(0, 3), triangle.GetSupportPoint(Vector2f.UnitY));
-        Assert.Equal(new Rect2D(default, new(4, 3)), ShapeBounds2D.Calculate(triangle));
-        Assert.Equal(new Rect2D(default, new(4, 3)), new SpatialObject2D(triangle).LocalBounds);
+        Assert.Equal(new Rect2f(default, new(4, 3)), ShapeBounds2D.Calculate(triangle));
+        Assert.Equal(new Rect2f(default, new(4, 3)), new SpatialObject2D(triangle).LocalBounds);
         Assert.Equal(-1f, ShapeDistance2D.SignedDistance(new Vector2f(1, 1), triangle), 5);
         Assert.Equal(1f, ShapeDistance2D.Distance(new Vector2f(5, 0), triangle), 5);
     }
@@ -58,7 +57,7 @@ public sealed class Triangle2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.PositiveInfinity, 0), Vector2f.UnitY));
         Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.MaxValue, 0), new(0, float.MaxValue)));
         Assert.Throws<ArgumentOutOfRangeException>(() => RightTriangle().ContainsPoint(new(float.NaN, 0)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => RightTriangle().GetSupportPoint(new(float.NaN, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { RightTriangle().GetSupportPoint(new(float.NaN, 0)); });
     }
 
     [Theory]
@@ -70,13 +69,13 @@ public sealed class Triangle2DTests
             ? Triangle2D.Builder.Create(new(0, -1), new(0, 1), new(2, -1))
             : Triangle2D.Builder.Create(new(0, -1), new(2, -1), new(0, 1));
         var item = new SpatialObject2D(local);
-        item.Transform.Position = new(10, 0);
+        item.Position = new(10, 0);
         Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2f.UnitX), item, 20, out var hit));
         Assert.Equal(10f, hit.Distance, 5);
         Assert.Equal(new Vector2f(10, 0), hit.Point);
         Assert.Equal(-Vector2f.UnitX, hit.Normal);
         Assert.False(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2f.UnitX), item, 9, out _));
-        item.Transform.Rotation = MathF.PI / 2;
+        item.Rotation = MathF.PI / 2;
         Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(10, -5), Vector2f.UnitY), item, 20, out _));
     }
 

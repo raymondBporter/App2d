@@ -1,7 +1,6 @@
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Shapes;
 
@@ -18,6 +17,6 @@ public readonly partial record struct Capsule2D
     /// <summary>Stateless validated construction.</summary>
     public static class Builder
     {
-        public static Capsule2D Create(Vector2f  start, Vector2f  end, float radius) => new Capsule2D(start, end, radius).Validated();
+        public static Capsule2D Create(Vector2f start, Vector2f end, float radius) => new Capsule2D(start, end, radius).Validated();
     }
 }

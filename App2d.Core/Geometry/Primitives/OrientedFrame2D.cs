@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -21,7 +20,7 @@ public readonly record struct OrientedFrame2D(Vector2f Center, Vector2f Axis)
     public bool IsAxisAligned => Axis == Vector2f.UnitX;
 
     /// <summary>The heading of <see cref="Axis"/> in radians, counter-clockwise from local +X.</summary>
-    public float AngleRadians => Polar<float>.AngleOf(new Vec2<float>(Axis));
+    public float AngleRadians => Polar<float>.AngleOf(Axis);
 
     /// <summary>The frame-to-local matrix in the row-vector convention of <see cref="Matrix3x2"/>.</summary>
     public Matrix3x2 Matrix => new(Axis.X, Axis.Y, Perp.X, Perp.Y, Center.X, Center.Y);
@@ -52,7 +51,7 @@ public readonly record struct OrientedFrame2D(Vector2f Center, Vector2f Axis)
     }
 
     /// <summary>The local axis-aligned bounds of a box with these half extents in the frame, grown by an optional margin on every side.</summary>
-    public Rect2D BoxBounds(Vector2f halfSize, float inflate = 0f)
+    public Rect2f BoxBounds(Vector2f halfSize, float inflate = 0f)
     {
         var perp = Perp;
         var extent = new Vector2f(halfSize.X * MathF.Abs(Axis.X) + halfSize.Y * MathF.Abs(perp.X) + inflate, halfSize.X * MathF.Abs(Axis.Y) + halfSize.Y * MathF.Abs(perp.Y) + inflate);
@@ -60,7 +59,7 @@ public readonly record struct OrientedFrame2D(Vector2f Center, Vector2f Axis)
     }
 
     /// <summary>The local axis-aligned bounds of an ellipse with these radii in the frame.</summary>
-    public Rect2D EllipseBounds(Vector2f radii)
+    public Rect2f EllipseBounds(Vector2f radii)
     {
         var perp = Perp;
         var extent = new Vector2f(MathF.Sqrt(Square(radii.X * Axis.X) + Square(radii.Y * perp.X)), MathF.Sqrt(Square(radii.X * Axis.Y) + Square(radii.Y * perp.Y)));
@@ -68,10 +67,10 @@ public readonly record struct OrientedFrame2D(Vector2f Center, Vector2f Axis)
     }
 
     /// <summary>An unset axis reads as local +X, so default values and object initializers stay axis-aligned.</summary>
-    public static Vector2f  AxisOrUnitX(Vector2f axis) => axis == default ? Vector2f.UnitX : axis;
+    public static Vector2f AxisOrUnitX(Vector2f axis) => axis == default ? Vector2f.UnitX : axis;
 
     /// <summary>The unit axis at a heading in radians; a zero heading is exactly local +X.</summary>
-    public static Vector2f  AxisFromAngle(float angleRadians) => angleRadians == 0f ? Vector2f.UnitX : Vector2f.Direction(angleRadians);
+    public static Vector2f AxisFromAngle(float angleRadians) => angleRadians == 0f ? Vector2f.UnitX : Vector2f.Direction(angleRadians);
 
     /// <summary>Rejects an axis that is not finite or not within <see cref="AxisTolerance"/> of unit length.</summary>
     public static void ValidateAxis(Vector2f axis, string name)

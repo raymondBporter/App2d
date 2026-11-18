@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Primitives;
@@ -16,7 +15,7 @@ public static class SegmentMath2D
         where TSegment : ISegment<TSegment, Vector2f> => AsVectorSegment(segment).Length();
 
     /// <summary>Samples the segment, clamping the amount to [0, 1].</summary>
-    public static Vector2f  PointAt<TSegment>(this TSegment segment, float amount)
+    public static Vector2f PointAt<TSegment>(this TSegment segment, float amount)
         where TSegment : ISegment<TSegment, Vector2f> => AsVectorSegment(segment).PointAt(amount);
 
     /// <summary>Swaps endpoints through the concrete type's static factory.</summary>

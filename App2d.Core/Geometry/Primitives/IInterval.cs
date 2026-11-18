@@ -10,6 +10,9 @@ namespace App2d.Core.Geometry.Primitives;
 /// <typeparam name="T">The numeric type of the endpoints.</typeparam>
 public interface IInterval<T> where T : INumber<T>
 {
+    public static IInterval<T>  UnitInterval => new Interval<T>(T.Zero, T.One);
+    public static IInterval<T> Zero => new Interval<T>(T.Zero, T.Zero);
+
     /// <summary>The smallest value in the range.</summary>
     T Min { get; }
 

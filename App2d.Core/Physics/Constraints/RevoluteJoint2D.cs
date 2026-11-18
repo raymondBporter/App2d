@@ -1,6 +1,3 @@
-using App2d.Core.Mathematics;
-using System.Numerics;
-
 namespace App2d.Core.Physics.Constraints;
 
 /// <summary>A firm bearing: two local anchors coincide, while relative rotation is unrestricted.</summary>

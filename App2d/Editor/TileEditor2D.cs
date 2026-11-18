@@ -10,7 +10,6 @@ using App2d.Core.Validation;
 using App2d.Levels;
 using App2d.Things;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 
 namespace App2d.Editor;
 
@@ -133,8 +132,8 @@ internal sealed class TileEditor2D : IDisposable
     public IReadOnlyList<string> TilesetIds => _map.TilesetIds;
     public Vector2f MouseDevicePosition => _lastMouseDevice;
     public Vector2f CameraFocus => _cameraFocus;
-    public Rect2D VisibleWorldBounds => _camera.VisibleWorldBounds;
-    public Rect2D MapBounds => _map.WorldBounds;
+    public Rect2f VisibleWorldBounds => _camera.VisibleWorldBounds;
+    public Rect2f MapBounds => _map.WorldBounds;
     public GridGeometry2D GridGeometry => _map.GridGeometry;
     public float TileSize => _map.TileSize;
     public Vector2f VisibleDeviceSize => _camera.ViewportSize;

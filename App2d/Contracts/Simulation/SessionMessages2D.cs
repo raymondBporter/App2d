@@ -5,7 +5,6 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.World;
 using App2d.Core;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Contracts.Simulation;
 
@@ -50,15 +49,15 @@ public sealed record EnemyOccurred2D(SessionEventStamp2D Stamp, EnemyEvent2D Occ
 public sealed record CombatDamageOccurred2D(SessionEventStamp2D Stamp, CombatDamage2D Damage) : SessionEvent2D(Stamp);
 public sealed record WeaponOccurred2D(SessionEventStamp2D Stamp, WeaponEvent2D Occurrence) : SessionEvent2D(Stamp);
 public sealed record JumpStarted2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
-public sealed record AirJumpStarted2D(SessionEventStamp2D Stamp, Vector2f  Position) : SessionEvent2D(Stamp);
+public sealed record AirJumpStarted2D(SessionEventStamp2D Stamp, Vector2f Position) : SessionEvent2D(Stamp);
 public sealed record Landed2D(SessionEventStamp2D Stamp, float ImpactSpeed) : SessionEvent2D(Stamp);
 public sealed record Footstep2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
 public sealed record Damaged2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
 public sealed record Died2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
-public sealed record Respawned2D(SessionEventStamp2D Stamp, Vector2f  Position) : SessionEvent2D(Stamp);
+public sealed record Respawned2D(SessionEventStamp2D Stamp, Vector2f Position) : SessionEvent2D(Stamp);
 public sealed record GoalReached2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
 public sealed record CheckpointActivated2D(
-    SessionEventStamp2D Stamp, long CheckpointId, int HitPoints, Vector2f  Position) : SessionEvent2D(Stamp);
+    SessionEventStamp2D Stamp, long CheckpointId, int HitPoints, Vector2f Position) : SessionEvent2D(Stamp);
 public enum PlayerAttackKind2D
 {
     Melee, Downward, Shot, Punch, Kick
@@ -67,4 +66,4 @@ public sealed record AttackStarted2D(
     SessionEventStamp2D Stamp, PlayerAttackKind2D Kind,
     float DurationSeconds, bool IsWallGripping) : SessionEvent2D(Stamp);
 
-public readonly record struct RespawnState2D(Vector2f  Position, int HitPoints, long? CheckpointId = null);
+public readonly record struct RespawnState2D(Vector2f Position, int HitPoints, long? CheckpointId = null);

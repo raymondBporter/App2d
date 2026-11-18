@@ -1,5 +1,4 @@
 using App2d.Core.Imaging;
-using System.Numerics;
 
 namespace App2d.Tests.Imaging;
 

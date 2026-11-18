@@ -14,7 +14,6 @@ using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.World;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
@@ -55,7 +54,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private bool _chargeBlocked;
     private readonly AuthoredFlightController2D? _flight;
     /// <summary>The movement shape's local bounds: feet at the origin, +X toward facing, authored units.</summary>
-    private readonly Rect2D _movement;
+    private readonly Rect2f _movement;
 
     public AuthoredEntityEnemy2D(EntityId2D id, ResolvedEntity entity, PhysicsWorld2D physics, Vector2f position, uint worldLayer, uint enemyLayer)
     {
@@ -68,7 +67,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _flight = entity.Asset.Behavior!.Controller.Flight is { } flight ? new(flight) : null;
         _movement = ShapeBounds2D.Calculate(entity.MovementShape);
         WorldObject = new(AxisAlignedRectangle2D.Builder.CreateFromSize(_movement.Size * Scale));
-        WorldObject.Transform.Position = position;
+        WorldObject.Position = position;
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
         Body.EntityId = id;
         Body.CollisionLayer = enemyLayer;
@@ -94,7 +93,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     public ICombatant2D Combatant => this;
     public ActorPose Pose => _animator.Pose;
     /// <summary>The feet origin in world pixels; the animator works in model units from here.</summary>
-    private Vector2f Root => WorldObject.Transform.Position - new Vector2f(_movement.Center.X * _facing, _movement.Center.Y) * Scale;
+    private Vector2f Root => WorldObject.Position - new Vector2f(_movement.Center.X * _facing, _movement.Center.Y) * Scale;
     private string? Expression => !IsAlive ? "knocked-out" : _hurt > 0 ? "hurt" : null;
 
     public void SetSimulationEnabled(bool isEnabled)
@@ -126,7 +125,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _cooldown = MathF.Max(0, _cooldown - dt);
         _hurt = MathF.Max(0, _hurt - dt);
         Body.AngularVelocity = 0;
-        WorldObject.Transform.Rotation = 0;
+        WorldObject.Rotation = 0;
         if (!IsAlive)
         {
             return;
@@ -145,13 +144,13 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
         if (_flight is not null)
         {
-            var velocity = _flight.Update(dt, WorldObject.Transform.Position, targetPosition,
+            var velocity = _flight.Update(dt, WorldObject.Position, targetPosition,
                 _animator.Current, (float)_animator.ActionTime, Entity.Asset.Behavior!.Controller, ref _facing, _chargeBlocked, RecoveryAltitude);
-            if (_animator.Action is null && _flight.Ready && _cooldown <= 0 && CanFly(targetPosition - WorldObject.Transform.Position) &&
+            if (_animator.Action is null && _flight.Ready && _cooldown <= 0 && CanFly(targetPosition - WorldObject.Position) &&
                 _animator.TryStart(EntityControllers.Attack))
             {
                 _cooldown = _animator.Current!.Clip.Duration + config.Cooldown;
-                _flight.Begin(WorldObject.Transform.Position);
+                _flight.Begin(WorldObject.Position);
                 _chargeBlocked = false;
                 velocity = Vector2f.Zero;
             }
@@ -188,7 +187,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             Body.LinearVelocity = new(_facing * speed * Scale, Body.LinearVelocity.Y);
             return;
         }
-        var delta = targetPosition - WorldObject.Transform.Position;
+        var delta = targetPosition - WorldObject.Position;
         if (Math.Abs(delta.X) > 1)
         {
             _facing = Math.Sign(delta.X);
@@ -240,7 +239,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 4));
         for (var down = 0; down <= 800; down += 4)
         {
-            probe.Transform.Position = target - new Vector2f(0, down);
+            probe.Position = target - new Vector2f(0, down);
             if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) > 0)
             {
                 return _overlaps.Max(o => o.Collider.WorldObject.WorldBounds.Max.Y) + 26;
@@ -255,7 +254,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(_movement.Size * Scale));
         for (var i = 1; i <= steps; i++)
         {
-            probe.Transform.Position = WorldObject.Transform.Position + displacement * (i / (float)steps);
+            probe.Position = WorldObject.Position + displacement * (i / (float)steps);
             if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) > 0)
             {
                 return false;
@@ -268,16 +267,16 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private bool CanAdvance(float dt, int direction, float? speed = null)
     {
         var bounds = WorldObject.WorldBounds;
-        var x = WorldObject.Transform.Position.X + direction *
+        var x = WorldObject.Position.X + direction *
             (_movement.Width * Scale / 2 + (speed ?? Entity.Asset.Behavior!.Controller.WalkSpeed) * Scale * dt + 3);
         var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 8));
-        probe.Transform.Position = new(x, bounds.Min.Y - 3);
+        probe.Position = new(x, bounds.Min.Y - 3);
         if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0)
         {
             return false;
         }
 
-        probe.Transform.Position = new(x, bounds.Min.Y + 8);
+        probe.Position = new(x, bounds.Min.Y + 8);
         return _collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0;
     }
 
@@ -323,7 +322,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
         else if (ground is { } carry && carry != Vector2f.Zero)
         {
-                _animator.Carry(new Vector3f((carry * dt / Scale), 0));
+            _animator.Carry(new Vector3f((carry * dt / Scale), 0));
         }
 
         var moved = MathF.Abs(root.X - _rootBefore.X) / Scale;
@@ -382,12 +381,12 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     /// <summary>Terrain between the body's centre line and the muzzle: a gun poked through a wall never fires beyond it.</summary>
     private bool BarrelBlocked(Vector2f muzzle)
     {
-        var start = new Vector2f(WorldObject.Transform.Position.X, muzzle.Y);
+        var start = new Vector2f(WorldObject.Position.X, muzzle.Y);
         var steps = Math.Max(1, (int)MathF.Ceiling(Vector2f.Distance(start, muzzle) / 2));
         var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 4));
         for (var i = 0; i <= steps; i++)
         {
-            probe.Transform.Position = Vector2f.Lerp(start, muzzle, i / (float)steps);
+            probe.Position = Vector2f.Lerp(start, muzzle, i / (float)steps);
             if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) > 0)
             {
                 return true;
@@ -425,7 +424,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             {
                 var t = _dt * step / steps;
                 position = bolt.Position + bolt.Velocity * t + acceleration * (t * t / 2);
-                shape.Transform.Position = position;
+                shape.Position = position;
                 if (_collision.Overlap(shape, _overlaps, _worldLayer, includeSensors: false) > 0)
                 {
                     hit = true;
@@ -471,7 +470,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             (_, collider) => collider.EntityId == player.Id && player.IsAlive ? (player.Id, false) : null, _contacts, _overlaps);
         foreach (var contact in _contacts)
         {
-            if (player.TryTakeDamageFromX(contact.Strike.Damage, WorldObject.Transform.Position.X))
+            if (player.TryTakeDamageFromX(contact.Strike.Damage, WorldObject.Position.X))
             {
                 _events.Add(new EntityCue2D(Id, contact.Position, contact.Strike.Sound ?? "hit"));
             }
@@ -505,7 +504,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     }
 
     /// <summary>The registered guard collider's bounds while it is enabled (up), as the last synchronization left it.</summary>
-    private Rect2D? GuardBounds()
+    private Rect2f? GuardBounds()
     {
         if (!_enabled || Entity.GuardCollider is not { } guard)
         {
@@ -516,14 +515,14 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return shield.Enabled ? shield.Bounds : null;
     }
 
-    public bool OverlapsGuard(Rect2D attackBounds) => GuardBounds() is { } bounds && bounds.Intersects(attackBounds);
+    public bool OverlapsGuard(Rect2f attackBounds) => GuardBounds() is { } bounds && bounds.Intersects(attackBounds);
 
-    public bool CanBlock(Rect2D attackBounds, Vector2f incomingDirection, Vector2f? attackerPosition)
+    public bool CanBlock(Rect2f attackBounds, Vector2f incomingDirection, Vector2f? attackerPosition)
     {
         var fromFront = attackerPosition is { } source
-            ? (source.X - WorldObject.Transform.Position.X) * _facing > 0
+            ? (source.X - WorldObject.Position.X) * _facing > 0
             : incomingDirection.X != 0 ? incomingDirection.X * _facing < 0
-            : (attackBounds.Center.X - WorldObject.Transform.Position.X) * _facing > 0;
+            : (attackBounds.Center.X - WorldObject.Position.X) * _facing > 0;
         if (!fromFront)
         {
             return false;
@@ -532,7 +531,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return OverlapsGuard(attackBounds);
     }
 
-    public bool TryBlock(Rect2D attackBounds, Vector2f incomingDirection, Vector2f? attackerPosition)
+    public bool TryBlock(Rect2f attackBounds, Vector2f incomingDirection, Vector2f? attackerPosition)
     {
         if (!CanBlock(attackBounds, incomingDirection, attackerPosition))
         {
@@ -576,7 +575,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return true;
     }
 
-    public EnemyState2D CaptureState() => new(Id, EnemyKind2D.Authored, WorldObject.Transform.Position, Body.LinearVelocity, 0, _facing, _enabled, IsAlive)
+    public EnemyState2D CaptureState() => new(Id, EnemyKind2D.Authored, WorldObject.Position, Body.LinearVelocity, 0, _facing, _enabled, IsAlive)
     {
         TypeId = Entity.Id,
         ActionId = _animator.Action ?? _animator.Role,

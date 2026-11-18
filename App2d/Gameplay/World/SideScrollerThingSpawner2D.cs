@@ -9,7 +9,6 @@ using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
@@ -83,16 +82,16 @@ internal sealed class SideScrollerThingSpawner2D(
         void Register(IEnemyActor2D enemy)
         {
             var homeChunk = tileMap.WorldToChunk(
-                enemy.Combatant.WorldObject.Transform.Position);
+                enemy.Combatant.WorldObject.Position);
             combat.Combatants.Register(enemy.Combatant);
             enemies.Register(enemy, homeChunk);
         }
     }
 
-    private Shieldback2D CreateShieldback(Vector2f  position)
+    private Shieldback2D CreateShieldback(Vector2f position)
     {
-        var spatialObject = new SpatialObject2D(Capsule2D.Builder.Create(new Vector2f (-19f, 0f), new Vector2f (19f, 0f), 22f));
-        spatialObject.Transform.Position = position;
+        var spatialObject = new SpatialObject2D(Capsule2D.Builder.Create(new Vector2f(-19f, 0f), new Vector2f(19f, 0f), 22f));
+        spatialObject.Position = position;
         var body = physics.AddBody(spatialObject, BodyMotionType2D.Dynamic);
         body.Restitution = 0f;
         body.Mass = 1.25f;

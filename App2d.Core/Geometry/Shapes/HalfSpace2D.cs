@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Operations.Containment;
 using App2d.Core.Geometry.Shapes;
-using System.Numerics;
 
 namespace App2d.Core.Shapes;
 

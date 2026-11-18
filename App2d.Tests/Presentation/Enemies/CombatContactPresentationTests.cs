@@ -1,13 +1,12 @@
 using App2d.Contracts.Combat;
 using App2d.Core.Rendering;
 using App2d.Presentation.World.Presentation;
-using System.Numerics;
 
 namespace App2d.Tests.Presentation.Enemies;
 
 public sealed class CombatContactPresentationTests
 {
-    private static CombatDamage2D Hit(Vector2f  direction, bool kill = false) => new(new(2), CombatFaction2D.Enemy, new(100, 50), kill)
+    private static CombatDamage2D Hit(Vector2f direction, bool kill = false) => new(new(2), CombatFaction2D.Enemy, new(100, 50), kill)
     {
         Contact = new(new(1), 4, new(90, 60), direction, CombatImpactKind2D.Sword)
     };
@@ -23,12 +22,12 @@ public sealed class CombatContactPresentationTests
         });
         Assert.Empty(scene);
         effects.Present(Hit(Vector2f.UnitX));
-        var right = scene.Select(v => v.Transform.Position).ToArray();
+        var right = scene.Select(v => v.Position).ToArray();
         Assert.All(scene, v => Assert.True(v.IsVisible));
         effects.Advance(.2f);
         Assert.All(scene, v => Assert.False(v.IsVisible));
         effects.Present(Hit(-Vector2f.UnitX));
-        var left = scene.Select(v => v.Transform.Position).ToArray();
+        var left = scene.Select(v => v.Position).ToArray();
         Assert.Equal(right.Length, left.Length);
         for (var i = 0; i < right.Length; i++)
         {
@@ -47,13 +46,13 @@ public sealed class CombatContactPresentationTests
         var scene = new Scene2D();
         using var effects = new CombatContactPresentation2D(scene);
         effects.Present(Hit(Vector2f.UnitX));
-        var expected = scene.Select(v => (v.Transform.Position, v.Transform.Rotation)).ToArray();
+        var expected = scene.Select(v => (v.Position, v.Rotation)).ToArray();
         effects.Reset();
 
         effects.Present(Hit(Vector2f.Zero));
 
         Assert.All(scene, v => Assert.True(v.IsVisible));
-        Assert.Equal(expected, scene.Select(v => (v.Transform.Position, v.Transform.Rotation)).ToArray());
+        Assert.Equal(expected, scene.Select(v => (v.Position, v.Rotation)).ToArray());
     }
 
     [Fact]

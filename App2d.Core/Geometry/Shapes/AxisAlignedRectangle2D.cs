@@ -5,12 +5,11 @@ using App2d.Core.Geometry.Operations.Diameter;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
-using System.Numerics;
 
 namespace App2d.Core.Shapes;
 
 /// <summary>A rectangle whose owner keeps its world axes aligned: the one shape that never rotates, in local space or through a pose.</summary>
-public readonly partial record struct AxisAlignedRectangle2D : IConvexShape2D, IRect2D
+public readonly partial record struct AxisAlignedRectangle2D : IConvexShape2D, IRect2f
 {
     /// <summary>The rectangle from (0, 0) to (1, 1), covering a whole image in normalized coordinates.</summary>
     public static AxisAlignedRectangle2D UnitRect { get; } = Builder.Create(Vector2f.Zero, Vector2f.One);

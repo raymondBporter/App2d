@@ -1,5 +1,10 @@
 # Character Studio
 
+Studio's source and solution now live in [AppAnimation](https://github.com/raymondBporter/AppAnimation),
+cloned beside App2d. The commands below run from the App2d checkout. Studio still
+edits this checkout's `Assets/Characters`; its authoring and integration tests run
+with `dotnet test ../AppAnimation/App2d.CharacterStudio.Tests`.
+
 ## Geometry, render materials and Pieces
 
 Use **New > Geometry**, **New > Render material**, and **New > Piece** to build
@@ -98,7 +103,7 @@ its reference paths and the creation is refused. Use **Save all** to save the cr
 ## Run
 
 ```powershell
-dotnet run --project App2d.CharacterStudio
+dotnet run --project ../AppAnimation/App2d.CharacterStudio
 ```
 
 Requires Windows and .NET 10. ImGui.NET 1.91.6.1 is pinned; MonoGame WindowsDX is the same version as the game. Startup
@@ -131,7 +136,7 @@ unbound points retain the usual normalized A-to-B stroke frame, while bound poin
 control's XYZ position (curve bindings cannot use `toward`). Existing cutout bindings retain their
 rest-offset behavior. Drawing, selection and bounds share `PartGeometry.Contour`.
 
-Run `dotnet run --project App2d.CharacterStudio -- --smoke-rounded-paths artifacts/rounded-paths`
+Run `dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --smoke-rounded-paths artifacts/rounded-paths`
 for 24 before/after frames of walk, run, landing and sword motion through the game renderer, with close-up
 and game-scale figures. The report includes triangle counts.
 
@@ -199,7 +204,7 @@ color patches, clipped to the outline. Variants can resize/recolor/hide these pa
 No texture or deformable mesh is needed for this starter.
 
 ```powershell
-dotnet run --project App2d.CharacterStudio -- --smoke-quadrupeds artifacts/quadrupeds
+dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --smoke-quadrupeds artifacts/quadrupeds
 ```
 
 This renders pose samples and both facings through the game drawing path. `--write-quadrupeds <authored-dir>`
@@ -223,7 +228,7 @@ Surface paint follows membrane deformation through the same rest triangles as th
 retriangulates the folded screen silhouette. Ordinary rigid cutouts and clothing retain their existing authoring path.
 
 ```powershell
-dotnet run --project App2d.CharacterStudio -- --smoke-pterosaur artifacts/pterosaur-review
+dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --smoke-pterosaur artifacts/pterosaur-review
 ```
 
 This renders all six poses and both facings. `--write-pterosaur <authored-dir>` explicitly regenerates the starter model
@@ -363,7 +368,7 @@ studies; `--write-player-moves <authored-dir>` regenerates the player move set.
 `--write-weapons <authored-dir>` replaces the five starter weapon assets and their sample orientation tracks, keeping
 body keys and entity settings. It is a regeneration command and overwrites edits to those weapon assets/tracks.
 
-The game has two more: `dotnet run --project App2d.CharacterStudio -- --render-smoke <dir>` draws authored entities through the game
+The game has two more: `dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --render-smoke <dir>` draws authored entities through the game
 presentation, and `-- --face-smoke <dir>` draws every expression the baked Person face part binds.
 
 ## Code

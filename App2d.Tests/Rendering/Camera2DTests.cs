@@ -1,5 +1,4 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using System.Numerics;
 
@@ -68,7 +67,7 @@ public sealed class Camera2DTests
         Assert.InRange(Vector2f.Distance(point, camera.DeviceToWorld(devicePoint)), 0f, 0.001f);
 
         var view = camera.GetFrameView();
-        Assert.Equal(new Rect2D(Vector2f.Zero, new(960, 540)), view.TargetBounds);
+        Assert.Equal(new Rect2f(Vector2f.Zero, new(960, 540)), view.TargetBounds);
         Assert.Equal(camera.VisibleWorldBounds, view.VisibleWorldBounds);
         Assert.Equal(devicePoint, view.WorldToDevice(point));
         Assert.InRange(Vector2f.Distance(point, view.DeviceToWorld(devicePoint)), 0f, 0.001f);

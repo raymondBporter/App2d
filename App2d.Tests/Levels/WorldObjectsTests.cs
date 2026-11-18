@@ -2,7 +2,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Tiles;
 using App2d.Levels;
-using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 

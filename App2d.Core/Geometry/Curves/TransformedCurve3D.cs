@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 
 namespace App2d.Core.Geometry.Curves;

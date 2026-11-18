@@ -1,6 +1,5 @@
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Mathematics;
 
@@ -25,15 +24,15 @@ public static class Interpolation
     }
 
     /// <summary>Unclamped linear interpolation between vectors.</summary>
-    public static Vector2f  Lerp(Vector2f start, Vector2f end, float amount) => start + amount * (end - start);
+    public static Vector2f Lerp(Vector2f start, Vector2f end, float amount) => start + amount * (end - start);
 
-    public static Vector2f  Lerp(Vector2f start, Vector2f end, float progress, Func<float, float> progressMapping)
+    public static Vector2f Lerp(Vector2f start, Vector2f end, float progress, Func<float, float> progressMapping)
     {
         Ensure.ThrowIfNull(progressMapping);
         return Lerp(start, end, progressMapping(progress));
     }
 
-    public static Vector2f  Lerp(Vector2f start, Vector2f end, double progress, IProgressMap progressMapping)
+    public static Vector2f Lerp(Vector2f start, Vector2f end, double progress, IProgressMap progressMapping)
     {
         Ensure.ThrowIfNull(progressMapping);
         return Lerp(start, end, (float)progressMapping.Sample(progress));

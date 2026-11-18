@@ -3,7 +3,6 @@ using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Rendering.Textures;
@@ -272,7 +271,7 @@ public sealed partial class Renderer2D : IDisposable
         new(new XnaVector3(point.X, point.Y, 0),
             Color4b.FromNonPremultiplied(color.R, color.G, color.B, color.A), new XnaVector2(uv.X, uv.Y));
 
-    private static VertexPositionColorTexture MaterialVertex(Vector2f local, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
+    private static VertexPositionColorTexture MaterialVertex(Vector2f local, Matrix3x2 matrix, Rect2f bounds, IShader2D shader)
     {
         var uv = Vector2f.Zero;
         switch (shader)
@@ -304,13 +303,8 @@ public sealed partial class Renderer2D : IDisposable
         return Vertex(Vector2f.Transform(local, matrix), shader.GetVertexColor(local, bounds), uv);
     }
 
-    private void FillShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
+    private void FillShape(IShape2D shape, Matrix3x2 matrix, Rect2f bounds, IShader2D shader)
     {
-        if (shape is HeightFieldShape2D field)
-        {
-            FillShape(field.Polygon, matrix, bounds, shader);
-            return;
-        }
         if (shape is CompositeShape2D composite)
         {
             foreach (var part in composite.Parts)
@@ -574,7 +568,7 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawShapeOverlay(SpatialObject2D item, Color4b fillColor, Color4b outlineColor, float screenStrokeWidth = 2f) =>
         DrawShape(item, fillColor, outlineColor, screenStrokeWidth);
 
-    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, Color4b color, float width)
+    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, Rect2f bounds, Color4b color, float width)
     {
         if (shape is CompositeShape2D composite)
         {
@@ -623,7 +617,7 @@ public sealed partial class Renderer2D : IDisposable
     }
 
     private bool IsCulled(SpatialObject2D item) => item.WorldBounds.IsFinite && !item.WorldBounds.Intersects(View.VisibleWorldBounds);
-    private Rect2D GetVisibleLocalBounds(Matrix3x2 matrix)
+    private Rect2f GetVisibleLocalBounds(Matrix3x2 matrix)
     {
         if (!Matrix3x2.Invert(matrix, out var inverse))
         {

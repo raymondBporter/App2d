@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>A gameplay request that one animated part instance play an expression (P7a), optionally at a clip time gameplay owns.</summary>

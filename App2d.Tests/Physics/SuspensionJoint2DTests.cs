@@ -3,7 +3,6 @@ using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Physics;
 
@@ -19,14 +18,14 @@ public sealed class SuspensionJoint2DTests
     {
         var world = new PhysicsWorld2D();
         var frame = AddBody(world, BodyMotionType2D.Static);
-        frame.WorldObject.Transform.Position = new(3f, 4f);
-        frame.WorldObject.Transform.Rotation = rotation;
-        frame.WorldObject.Transform.Scale = new Vector2f(2f);
+        frame.WorldObject.Position = new(3f, 4f);
+        frame.WorldObject.Rotation = rotation;
+        frame.WorldObject.Scale = 2f;
         var wheel = AddBody(world, BodyMotionType2D.Dynamic);
         var joint = new WheelJoint2D(frame, wheel, new(1f, 2f), Vector2f.Zero, new(0f, 8f)) { IsSpringEnabled = false };
         var axis = joint.WorldAxis;
         var sideways = new Vector2f(-axis.Y, axis.X);
-        wheel.WorldObject.Transform.Position = joint.FirstWorldAnchor + axis * 12f + sideways * 5f;
+        wheel.WorldObject.Position = joint.FirstWorldAnchor + axis * 12f + sideways * 5f;
         wheel.LinearVelocity = axis * 3f + sideways * 7f;
         wheel.AngularVelocity = 8f;
         world.Constraints.Add(joint);
@@ -44,7 +43,7 @@ public sealed class SuspensionJoint2DTests
         var frame = AddBody(world, BodyMotionType2D.Kinematic);
         frame.AngularVelocity = 2f;
         var wheel = AddBody(world, BodyMotionType2D.Dynamic);
-        wheel.WorldObject.Transform.Position = Vector2f.UnitY * 5f;
+        wheel.WorldObject.Position = Vector2f.UnitY * 5f;
         wheel.LinearVelocity = new(-10f, 0f); // w x position: following the rotating guide exactly.
         var joint = new WheelJoint2D(frame, wheel, Vector2f.Zero, Vector2f.Zero, Vector2f.UnitY) { IsSpringEnabled = false };
         joint.PrepareVelocity(Dt);
@@ -66,7 +65,7 @@ public sealed class SuspensionJoint2DTests
             TranslationLimits = new Interval<float>(0f, 28f)
         };
         world.Constraints.Add(joint);
-        wheel.WorldObject.Transform.Position = Vector2f.UnitY * position;
+        wheel.WorldObject.Position = Vector2f.UnitY * position;
         wheel.LinearVelocity = Vector2f.UnitY * speed;
         world.Step(Dt);
         Assert.Equal(stop, joint.Translation, 3);
@@ -85,7 +84,7 @@ public sealed class SuspensionJoint2DTests
         var world = new PhysicsWorld2D { MaxSubstepSeconds = 1f / 240f, VelocityIterations = 8 };
         var frame = AddBody(world, BodyMotionType2D.Static);
         var wheel = AddBody(world, BodyMotionType2D.Dynamic);
-        wheel.WorldObject.Transform.Position = Vector2f.UnitY * 10f;
+        wheel.WorldObject.Position = Vector2f.UnitY * 10f;
         wheel.AngularVelocity = 6f;
         var joint = new WheelJoint2D(frame, wheel, Vector2f.Zero, Vector2f.Zero, Vector2f.UnitY)
         {
@@ -111,11 +110,11 @@ public sealed class SuspensionJoint2DTests
         var world = new PhysicsWorld2D { PositionIterations = 12, VelocityIterations = 12 };
         var frame = AddBody(world, BodyMotionType2D.Static);
         var arm = AddBody(world, BodyMotionType2D.Dynamic);
-        arm.WorldObject.Transform.Position = new(-4f, 0f);
+        arm.WorldObject.Position = new(-4f, 0f);
         arm.LinearVelocity = new(0f, -8f);
         arm.AngularVelocity = 2f;
         var wheel = AddBody(world, BodyMotionType2D.Dynamic);
-        wheel.WorldObject.Transform.Position = new(-8f, 0f);
+        wheel.WorldObject.Position = new(-8f, 0f);
         wheel.AngularVelocity = 7f;
         var pivot = new RevoluteJoint2D(frame, arm, Vector2f.Zero, new(4f, 0f));
         var bearing = new RevoluteJoint2D(arm, wheel, new(-4f, 0f), Vector2f.Zero);
@@ -124,7 +123,7 @@ public sealed class SuspensionJoint2DTests
         for (var step = 0; step < 120; step++) world.Step(Dt);
         Assert.InRange(Vector2f.Distance(pivot.FirstWorldAnchor, pivot.SecondWorldAnchor), 0f, 0.02f);
         Assert.InRange(Vector2f.Distance(bearing.FirstWorldAnchor, bearing.SecondWorldAnchor), 0f, 0.02f);
-        Assert.InRange(Math.Abs(arm.WorldObject.Transform.Rotation), 0.1f, 5f);
+        Assert.InRange(Math.Abs(arm.WorldObject.Rotation), 0.1f, 5f);
         Assert.Equal(7f, wheel.AngularVelocity);
     }
 
@@ -134,7 +133,7 @@ public sealed class SuspensionJoint2DTests
         var world = new PhysicsWorld2D();
         var frame = AddBody(world, BodyMotionType2D.Static);
         var wheel = AddBody(world, BodyMotionType2D.Dynamic);
-        wheel.WorldObject.Transform.Position = new(3f, 4f);
+        wheel.WorldObject.Position = new(3f, 4f);
         var shock = new SpringDamperJoint2D(frame, wheel, Vector2f.Zero, Vector2f.Zero, 5f);
         wheel.LinearVelocity = new(-4f, 3f);
         wheel.AngularVelocity = 9f;
@@ -156,7 +155,7 @@ public sealed class SuspensionJoint2DTests
         var frame = AddBody(world, BodyMotionType2D.Dynamic);
         frame.Mass = 3f;
         var arm = AddBody(world, BodyMotionType2D.Dynamic);
-        arm.WorldObject.Transform.Position = new(4f, 2f);
+        arm.WorldObject.Position = new(4f, 2f);
         arm.LinearVelocity = new(4f, 0f);
         var shock = new SpringDamperJoint2D(frame, arm, new(0f, 2f), Vector2f.Zero, 4f);
         shock.PrepareVelocity(Dt);
@@ -172,7 +171,7 @@ public sealed class SuspensionJoint2DTests
         var world = new PhysicsWorld2D();
         var frame = AddBody(world, BodyMotionType2D.Static);
         var arm = AddBody(world, BodyMotionType2D.Dynamic);
-        arm.WorldObject.Transform.Position = new(4f, 0f);
+        arm.WorldObject.Position = new(4f, 0f);
         arm.AngularVelocity = 2f;
         var shock = new SpringDamperJoint2D(frame, arm, Vector2f.Zero, new(0f, 2f), MathF.Sqrt(20f));
         shock.PrepareVelocity(Dt);
@@ -187,7 +186,7 @@ public sealed class SuspensionJoint2DTests
         var world = new PhysicsWorld2D();
         var frame = AddBody(world, BodyMotionType2D.Static);
         var arm = AddBody(world, BodyMotionType2D.Dynamic);
-        arm.WorldObject.Transform.Position = new(2f, 0f);
+        arm.WorldObject.Position = new(2f, 0f);
         var shock = new SpringDamperJoint2D(frame, arm, Vector2f.Zero, Vector2f.Zero, 5f)
         {
             IsEnabled = false,
@@ -200,7 +199,7 @@ public sealed class SuspensionJoint2DTests
         shock.IsEnabled = true;
         world.Step(Dt);
         Assert.Equal(4f, shock.Length, 3);
-        arm.WorldObject.Transform.Position = new(10f, 0f);
+        arm.WorldObject.Position = new(10f, 0f);
         world.Step(Dt);
         Assert.Equal(6f, shock.Length, 3);
         Assert.True(arm.LinearVelocity.X <= 0f);

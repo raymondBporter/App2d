@@ -4,7 +4,6 @@ using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Operations.Diameter;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
-using System.Numerics;
 
 namespace App2d.Core.Shapes;
 
@@ -29,7 +28,7 @@ public readonly partial record struct Capsule2D : IConvexShape2D
     public Vector2f End { get; init; }
 
     /// <summary>The center of the capsule's spine, in either endpoint order.</summary>
-    public Vector2f Center => Rect2D.FromPoints(Start, End).Center;
+    public Vector2f Center => Rect2f.FromPoints(Start, End).Center;
 
     /// <summary>The radius around the spine.</summary>
     public float Radius { get; init; }

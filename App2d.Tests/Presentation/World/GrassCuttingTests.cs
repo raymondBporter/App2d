@@ -3,7 +3,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using App2d.Presentation.World.Presentation;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Tests.Presentation.World;
 

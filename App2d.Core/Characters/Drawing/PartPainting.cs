@@ -4,10 +4,8 @@ using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
-using System.Numerics;
 
 namespace App2d.Core.Characters.Drawing;
 

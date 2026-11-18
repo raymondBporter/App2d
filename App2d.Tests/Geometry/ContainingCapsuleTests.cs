@@ -1,5 +1,4 @@
 using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Mathematics;
 
 namespace App2d.Tests.Geometry;
 

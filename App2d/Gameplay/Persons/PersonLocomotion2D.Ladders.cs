@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons;
 
@@ -62,7 +61,7 @@ public sealed partial class PersonLocomotion2D
         // Ease the collider (including its facing-dependent offset) toward the
         // ladder, only if this step is clear. Climbing retains solid collision.
         var bounds = _body.WorldObject.WorldBounds;
-        var position = _body.WorldObject.Transform.Position;
+        var position = _body.WorldObject.Position;
         var offset = MoveTowards(bounds.Center.X, ladder.Center.X, Metrics.LadderAlignSpeed * deltaSeconds) - bounds.Center.X;
         position = position with { X = position.X + offset };
         if (!CanOccupy(position))
@@ -70,7 +69,7 @@ public sealed partial class PersonLocomotion2D
             DetachFromLadder();
             return false;
         }
-        _body.WorldObject.Transform.Position = position;
+        _body.WorldObject.Position = position;
 
         IsClimbingLadder = true;
         IsGrounded = IsWallGripping = false;
@@ -91,7 +90,7 @@ public sealed partial class PersonLocomotion2D
         return true;
     }
 
-    private bool TryFindLadder(out Rect2D ladder)
+    private bool TryFindLadder(out Rect2f ladder)
     {
         ladder = default;
         if (_tileMap is null)
@@ -136,7 +135,7 @@ public sealed partial class PersonLocomotion2D
                     top++;
                 }
 
-                ladder = new Rect2D(origin + new Vector2f(x, bottom) * size, origin + new Vector2f(x + 1, top + 1) * size);
+                ladder = new Rect2f(origin + new Vector2f(x, bottom) * size, origin + new Vector2f(x + 1, top + 1) * size);
                 nearestDistance = distance;
                 break;
             }

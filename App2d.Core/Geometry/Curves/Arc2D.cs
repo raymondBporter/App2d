@@ -1,6 +1,3 @@
-using App2d.Core.Mathematics;
-using System.Numerics;
-
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A circular arc with a signed sweep; positive angles turn counter-clockwise in Y-up coordinates.</summary>

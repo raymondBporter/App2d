@@ -1,7 +1,5 @@
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Animation;

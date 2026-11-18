@@ -1,6 +1,5 @@
 using App2d.Core.Validation;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 
 namespace App2d.Core.Rendering.Textures;
 

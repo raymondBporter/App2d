@@ -6,7 +6,6 @@ using App2d.Core.Objects;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Motion;
 using App2d.Core.Shapes;
-using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 

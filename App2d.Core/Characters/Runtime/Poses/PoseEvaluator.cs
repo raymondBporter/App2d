@@ -1,6 +1,5 @@
 using App2d.Core.Animation;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Timing;
 using App2d.Core.Validation;
@@ -450,7 +449,7 @@ public static class PoseEvaluator
     }
 
     /// <summary>A clip's root travel at a time on a model, cycles included, as the pose's locomotion reads it.</summary>
-    public static Vector2f  TravelOf(ResolvedModel model, MotionClip clip, double seconds, bool repeat)
+    public static Vector2f TravelOf(ResolvedModel model, MotionClip clip, double seconds, bool repeat)
     {
         var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
         var time = (float)(cycles > 0 ? seconds % clip.Duration : Math.Min(seconds, clip.Duration));
@@ -548,7 +547,7 @@ public static class PoseEvaluator
     }
 
     /// <summary>The locomotion frame's travel over one cycle on this model: the stride gameplay matches against ground distance.</summary>
-    public static Vector2f  CycleTravel(ResolvedModel model, MotionClip clip)
+    public static Vector2f CycleTravel(ResolvedModel model, MotionClip clip)
     {
         if (model.MotionOwner is { } mover)
         {

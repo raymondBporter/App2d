@@ -1,5 +1,4 @@
 using App2d.Core.Geometry.Curves;
-using System.Numerics;
 
 namespace App2d.Tests.Curves;
 
@@ -150,6 +149,6 @@ public sealed class CubicBezierOperationsTests
         Assert.InRange(MathF.Abs(curve.Evaluate(parameter).X - .4f), 0, 1e-6f);
     }
 
-    private static void Near(Vector2f  expected, Vector2f  actual) =>
+    private static void Near(Vector2f expected, Vector2f actual) =>
         Assert.True(Vector2f.Distance(expected, actual) < 2e-5f, $"Expected {expected}, got {actual}.");
 }

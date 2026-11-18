@@ -38,6 +38,23 @@ public readonly record struct Vector4f : IVector<Vector4f, float>
     public static Vector4f Abs(Vector4f value) => new(Vector4.Abs(value._value));
     public static bool IsFinite(Vector4f value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z) && float.IsFinite(value.W);
 
+    public float Dot(Vector4f other) => Dot(this, other);
+    public Vector4f Min(Vector4f other) => Min(this, other);
+    public Vector4f Max(Vector4f other) => Max(this, other);
+    public Vector4f Abs() => Abs(this);
+    public bool IsFinite() => IsFinite(this);
+    public float LengthSquared() => _value.LengthSquared();
+    public float Length() => _value.Length();
+    public Vector4f Normalized() => new(Vector4.Normalize(_value));
+    public float DistanceSquared(Vector4f other) => Vector4.DistanceSquared(_value, other._value);
+    public float Distance(Vector4f other) => Vector4.Distance(_value, other._value);
+    public Vector4f Lerp(Vector4f other, float amount) => new(Vector4.Lerp(_value, other._value, amount));
+    public Vector4f Midpoint(Vector4f other) => IVectorExtensions.Midpoint<Vector4f, float>(this, other);
+    public Vector4f Project(Vector4f unitNormal) => IVectorExtensions.Project<Vector4f, float>(this, unitNormal);
+    public Vector4f Reject(Vector4f unitNormal) => IVectorExtensions.Reject<Vector4f, float>(this, unitNormal);
+    public Vector4f Reflect(Vector4f unitNormal) => IVectorExtensions.Reflect<Vector4f, float>(this, unitNormal);
+    public Vector4f Clamp(Vector4f minimum, Vector4f maximum) => IVectorExtensions.Clamp<Vector4f, float>(this, minimum, maximum);
+
     [System.Text.Json.Serialization.JsonIgnore]
     public Vector3f XYZ => new(X, Y, Z);
     public Vector4 ToVector4() => _value;

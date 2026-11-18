@@ -25,7 +25,7 @@ public static class Matrix3x2Extensions
     /// convention). Maps world support/normal directions into the space the
     /// matrix transforms from.
     /// </summary>
-    public static Vector2f  TransposeTransformDirection(this Matrix3x2 matrix, Vector2f direction) => new(
+    public static Vector2f TransposeTransformDirection(this Matrix3x2 matrix, Vector2f direction) => new(
         matrix.M11 * direction.X + matrix.M12 * direction.Y,
         matrix.M21 * direction.X + matrix.M22 * direction.Y);
 }

@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Physics.Motion;
-using System.Numerics;
 
 namespace App2d.Tests.Mathematics.Progress;
 

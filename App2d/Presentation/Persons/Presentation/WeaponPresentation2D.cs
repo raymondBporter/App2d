@@ -7,7 +7,6 @@ using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Presentation.Audio;
-using System.Numerics;
 
 namespace App2d.Presentation.Persons.Presentation;
 
@@ -41,8 +40,8 @@ public sealed class WeaponPresentation2D : IDisposable
         _swordHud = textures.Load("ui/hud/weapons/sword.png");
         _unarmedHud = textures.Load("ui/hud/weapons/unarmed.png");
         _chargeHud = [.. Enumerable.Range(0, 61).Select(i => textures.Load($"ui/hud/gun-charge/frame-{i:0000}.png"))];
-        _glow = CreateVisual(textures.Load("effects/gun/charge.png"), new Vector2f (30f));
-        _flash = CreateVisual(textures.Load("effects/gun/flash.png"), new Vector2f (42.5f, 27.5f));
+        _glow = CreateVisual(textures.Load("effects/gun/charge.png"), new Vector2f(30f));
+        _flash = CreateVisual(textures.Load("effects/gun/flash.png"), new Vector2f(42.5f, 27.5f));
         _chargeAnimation.Play(new AnimationClip2D<Texture2D>(Enumerable.Range(0, 24)
             .Select(i => textures.Load($"effects/gun/ready/frame-{i:0000}.png")), framesPerSecond: 30f));
         _chargeAnimation.Stop();
@@ -90,7 +89,7 @@ public sealed class WeaponPresentation2D : IDisposable
                     StopCharge();
                     _flashSeconds = 0.06f;
                     _cancelSeconds = 0f;
-                    _flash.Transform.Position = fired.Position;
+                    _flash.Position = fired.Position;
                     _sounds.PlayAt(SoundEffect2D.GunFire, fired.Position);
                     break;
                 case ProjectileImpact2D impact:
@@ -120,10 +119,10 @@ public sealed class WeaponPresentation2D : IDisposable
         }
 
         _glow.IsVisible = state.IsCharging || _cancelSeconds > 0f;
-        _glow.Transform.Position = state.MuzzlePosition;
+        _glow.Position = state.MuzzlePosition;
         var scale = state.IsCharging ? 0.2f + 0.8f * state.ChargeProgress
             : (0.2f + 0.8f * _cancelProgress) * _cancelSeconds / 0.14f;
-        _glow.Transform.Scale = new Vector2f (Math.Max(0.001f, scale));
+        _glow.Scale = Math.Max(0.001f, scale);
         _flash.IsVisible = _flashSeconds > 0f;
 
         _activeIds.Clear();
@@ -158,7 +157,7 @@ public sealed class WeaponPresentation2D : IDisposable
                 bolt = _bolts.Find(b => !_activeIds.Contains(b.Id) && !b.Trail.IsVisible);
                 if (bolt is null)
                 {
-                    bolt = new BoltVisual(CreateVisual(_boltTexture, new Vector2f (30f, 10f)),
+                    bolt = new BoltVisual(CreateVisual(_boltTexture, new Vector2f(30f, 10f)),
                         new GunBoltTrail2D(_scene, _trailTextures));
                     _bolts.Add(bolt);
                 }
@@ -166,14 +165,14 @@ public sealed class WeaponPresentation2D : IDisposable
                 bolt.Trail.Begin(projectile.Origin, MathF.Sign(projectile.Velocity.X), projectile.Velocity.Length());
             }
             bolt.Visual.IsVisible = true;
-            bolt.Visual.Transform.Position = projectile.Position;
+            bolt.Visual.Position = projectile.Position;
             ((SpriteShader2D)bolt.Visual.Shader).FlipX = projectile.Velocity.X < 0f;
             // Bright core sits at x=.675 in the authored bolt texture.
-            bolt.Trail.Follow(projectile.Position + new Vector2f (MathF.Sign(projectile.Velocity.X) * 30f * 0.175f, 0f));
+            bolt.Trail.Follow(projectile.Position + new Vector2f(MathF.Sign(projectile.Velocity.X) * 30f * 0.175f, 0f));
         }
     }
 
-    private WorldObject2D CreateVisual(Texture2D texture, Vector2f  size)
+    private WorldObject2D CreateVisual(Texture2D texture, Vector2f size)
     {
         var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size), new SpriteShader2D(texture))
         {
@@ -184,7 +183,7 @@ public sealed class WeaponPresentation2D : IDisposable
         return visual;
     }
 
-    private void StartCharge(Vector2f  position)
+    private void StartCharge(Vector2f position)
     {
         StopCharge();
         _charging = true;

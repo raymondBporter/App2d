@@ -56,7 +56,7 @@ internal sealed class DemoGame : Game
 
     protected override void Update(GameTime time)
     {
-        if (IsActive)
+        if (IsActive && _gui is not null)
         {
             _demos[_selected].Update((float)time.ElapsedGameTime.TotalSeconds);
         }

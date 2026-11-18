@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace App2d.Core.Mathematics;
 
 /// <summary>A pair of signed integer coordinates. Arithmetic is checked; division is not defined.</summary>

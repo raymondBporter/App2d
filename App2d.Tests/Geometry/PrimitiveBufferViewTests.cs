@@ -2,7 +2,6 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
 

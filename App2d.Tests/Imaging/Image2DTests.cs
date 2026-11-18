@@ -1,6 +1,5 @@
 using App2d.Core.Imaging;
 using App2d.Core.Rendering.Textures;
-using System.Numerics;
 
 namespace App2d.Tests.Imaging;
 

@@ -3,10 +3,8 @@ using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
-using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 

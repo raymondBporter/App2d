@@ -2,7 +2,6 @@ using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
-using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 
@@ -26,7 +25,7 @@ public sealed class ShapeDiameterTests
     public void RoundedRectangleUsesTheInnerDiagonalAndTwoRadii()
     {
         var shape = RoundedRectangle2D.Builder.Create(6, 4, 1, new(3, 2));
-        Assert.Equal(new Rect2D(new(0, 0), new(6, 4)), ShapeBounds2D.Calculate(shape));
+        Assert.Equal(new Rect2f(new(0, 0), new(6, 4)), ShapeBounds2D.Calculate(shape));
         Assert.Equal(new Vector2f(2, 1), shape.InnerHalfSize);
         Assert.Equal(MathF.Sqrt(20) + 2, shape.Diameter, 5);
         Assert.Equal(shape.Diameter / 2, ShapeBounds2D.CalculateBoundingCircle(shape).Radius);

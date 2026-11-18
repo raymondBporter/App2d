@@ -37,7 +37,7 @@ public static class Rotation2D
     /// Fractions outside [0, 1] return the nearest endpoint. Near a whole revolution the pivot
     /// is ill-conditioned, so this uses linear interpolation.
     /// </summary>
-    public static Vector2f  InterpolateArc(Vector2f from, Vector2f to, float radians, float fraction)
+    public static Vector2f InterpolateArc(Vector2f from, Vector2f to, float radians, float fraction)
     {
         ValidateArc(from, to, radians);
         Ensure.Finite(fraction);
@@ -65,8 +65,7 @@ public static class Rotation2D
         var real = scale * cosPhase;
         var imaginary = scale * sinPhase;
         var delta = to.ToVector2d() - from.ToVector2d();
-        return new Vector2d(from.X + real * delta.X - imaginary * delta.Y,
-            from.Y + imaginary * delta.X + real * delta.Y).ToVector2f();
+        return new Vector2d(from.X + real * delta.X - imaginary * delta.Y, from.Y + imaginary * delta.X + real * delta.Y).ToVector2f();
     }
 
     private static void ValidateArc(Vector2f from, Vector2f to, float radians)

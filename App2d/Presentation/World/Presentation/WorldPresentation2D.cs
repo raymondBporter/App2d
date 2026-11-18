@@ -11,7 +11,6 @@ using App2d.Core.Vegetation;
 using App2d.Gameplay.World;
 using App2d.Rendering;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -47,8 +46,8 @@ public sealed class WorldPresentation2D : IDisposable
             _terrainSource.ChunkChanged += InvalidateTerrain;
     }
 
-    public void DrawTrees(Renderer2D renderer, Rect2D visible) => _vegetation.DrawTrees(renderer, visible);
-    public void DrawGrass(Renderer2D renderer, Rect2D visible, VegetationLayer2D layer) =>
+    public void DrawTrees(Renderer2D renderer, Rect2f visible) => _vegetation.DrawTrees(renderer, visible);
+    public void DrawGrass(Renderer2D renderer, Rect2f visible, VegetationLayer2D layer) =>
         _vegetation.DrawGrass(renderer, visible, layer);
 
     public void Draw(Renderer2D renderer)
@@ -92,8 +91,8 @@ public sealed class WorldPresentation2D : IDisposable
         foreach (var item in state.Objects)
         {
             if (!_objects.TryGetValue(item.Id, out var view)) continue;
-            view.Visual.Transform.Position = item.Position;
-            view.Visual.Transform.Rotation = item.Rotation;
+            view.Visual.Position = item.Position;
+            view.Visual.Rotation = item.Rotation;
             view.Visual.IsVisible = item.IsEnabled;
             ((PartShader2D)view.Visual.Shader).SetTime(item.Time);
         }
@@ -243,11 +242,11 @@ public sealed class WorldPresentation2D : IDisposable
     {
         var pole = new WorldObject2D(Capsule2D.Builder.Create(Vector2f.Zero, new Vector2f(0f, 190f), 5f),
             new SolidColorShader(new Color4b(238, 242, 232)));
-        pole.Transform.Position = position;
+        pole.Position = position;
         var flag = new WorldObject2D(ConvexPolygon2D.Builder.Create([
             Vector2f.Zero, new Vector2f(92f, -30f), new Vector2f(0f, -60f)]),
             new SolidColorShader(new Color4b(255, 79, 120)));
-        flag.Transform.Position = position + new Vector2f(0f, 185f);
+        flag.Position = position + new Vector2f(0f, 185f);
         _goal.Add(pole);
         _goal.Add(flag);
         _scene.Add(pole);

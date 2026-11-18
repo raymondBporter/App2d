@@ -1,5 +1,4 @@
 using App2d.Core.Imaging;
-using System.Numerics;
 
 namespace App2d.Tests.Imaging;
 
@@ -23,9 +22,9 @@ public sealed class ColorSpaces2DTests
             AssertClose(color, ColorSpaces2D.OklabToSrgb(ColorSpaces2D.SrgbToOklab(color)));
 
         Assert.True(ColorSpaces2D.OklabToSrgb(new(.7f, .4f, .4f)).X > 1);
-        Assert.Throws<ArgumentOutOfRangeException>(() => ColorSpaces2D.SrgbToOklab(new(-.1f, 0, 0)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ColorSpaces2D.SrgbToOklab(new(float.NaN, 0, 0)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ColorSpaces2D.OklabToSrgb(new(0, float.PositiveInfinity, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { ColorSpaces2D.SrgbToOklab(new(-.1f, 0, 0)); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { ColorSpaces2D.SrgbToOklab(new(float.NaN, 0, 0)); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { ColorSpaces2D.OklabToSrgb(new(0, float.PositiveInfinity, 0)); });
     }
 
     private static void AssertClose(Vector3f expected, Vector3f actual) =>

@@ -1,5 +1,4 @@
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Mathematics;
 
@@ -9,7 +8,7 @@ namespace App2d.Core.Mathematics;
 /// </summary>
 public readonly record struct Direction2D
 {
-    public Direction2D(Vector2f  vector)
+    public Direction2D(Vector2f vector)
     {
         Ensure.NonZero(vector);
         // Float squares can overflow or underflow for valid input vectors.
@@ -33,7 +32,7 @@ public readonly record struct Direction2D
         get
         {
             Validate();
-            return Polar<float>.AngleOf(new Vec2<float>(Vector));
+            return Polar<float>.AngleOf(Vector);
         }
     }
 
@@ -52,7 +51,7 @@ public readonly record struct Direction2D
     public static Direction2D FromAngle(float angleRadians) => new(Vector2f.Direction(angleRadians));
 
     /// <summary>Unit direction from one finite point toward another, without float subtraction overflow.</summary>
-    public static Direction2D FromPoints(Vector2f  from, Vector2f  to)
+    public static Direction2D FromPoints(Vector2f from, Vector2f to)
     {
         Ensure.Finite(from);
         Ensure.Finite(to);

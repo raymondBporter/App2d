@@ -1,6 +1,5 @@
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
-using System.Numerics;
 
 namespace App2d.Presentation.World;
 
@@ -21,7 +20,7 @@ public static class SideScrollerBackground2D
             var width = 150f + i % 3 * 45f;
             var cloud = new WorldObject2D(Capsule2D.Builder.Create(
                 new Vector2f(-width / 2f, 0f), new Vector2f(width / 2f, 0f), 38f), cloudShader);
-            cloud.Transform.Position = new Vector2f(-850f + i * 470f, 210f + i % 3 * 95f);
+            cloud.Position = new Vector2f(-850f + i * 470f, 210f + i % 3 * 95f);
             clouds.Scene.Add(cloud);
         }
 
@@ -35,15 +34,15 @@ public static class SideScrollerBackground2D
                 new Vector2f(0f, height),
                 new Vector2f(width / 2f, 0f)
             ]), mountainShader);
-            mountain.Transform.Position = new Vector2f(-1_100f + i * 500f, -520f);
+            mountain.Position = new Vector2f(-1_100f + i * 500f, -520f);
             mountains.Scene.Add(mountain);
         }
 
         for (var i = 0; i < 13; i++)
         {
-            var hill = new WorldObject2D(Circle2D.Builder.Create(185f + i % 3 * 24f), hillShader);
-            hill.Transform.Position = new Vector2f(-1_000f + i * 510f, -525f);
-            hill.Transform.Scale = new Vector2f(1.9f, 1f);
+            var radius = 185f + i % 3 * 24f;
+            var hill = new WorldObject2D(Ellipse2D.Builder.Create(new Vector2f(radius * 1.9f, radius)), hillShader);
+            hill.Position = new Vector2f(-1_000f + i * 510f, -525f);
             hills.Scene.Add(hill);
         }
 

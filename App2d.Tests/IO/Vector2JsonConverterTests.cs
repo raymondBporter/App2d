@@ -4,7 +4,6 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Json;
-using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -70,7 +69,7 @@ public sealed class Vector2JsonConverterTests
         var defaults = PascalVectors;
         Assert.Equal("{\"X\":1,\"Y\":2}", JsonSerializer.Serialize(new Vector2f(1, 2), defaults));
         Assert.Equal(new Vector2f(1, 0), JsonSerializer.Deserialize<Vector2f>("{\"X\":1}", defaults));
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2f>("{\"x\":1}", defaults));
+        Assert.Throws<JsonException>(() => { JsonSerializer.Deserialize<Vector2f>("{\"x\":1}", defaults); });
 
         var quoted = QuotedVectors;
         var json = JsonSerializer.Serialize(new Vector2f(1.25f, -2.5f), quoted);
@@ -87,7 +86,7 @@ public sealed class Vector2JsonConverterTests
     [InlineData("{\"x\":1")]
     public void StrictOptionsRejectMalformedCoordinatesAndUnknownMembers(string json)
     {
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Vector2f>(json, GeometryJson2D.JsonOptions));
+        Assert.Throws<JsonException>(() => { JsonSerializer.Deserialize<Vector2f>(json, GeometryJson2D.JsonOptions); });
     }
 
     [Fact]

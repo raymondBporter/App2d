@@ -1,5 +1,4 @@
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Physics.Integration;
 
@@ -32,12 +31,12 @@ public sealed class SemiImplicitEulerIntegrator2D : IPhysicsIntegrator2D
         if (body.LocalCenterOfMass != Vector2f.Zero && body.AngularVelocity != 0f)
         {
             var center = body.WorldCenterOfMass + body.LinearVelocity * deltaSeconds;
-            body.WorldObject.Transform.Rotation += body.AngularVelocity * deltaSeconds;
-            body.WorldObject.Transform.Position += center - body.WorldCenterOfMass;
+            body.WorldObject.Rotation += body.AngularVelocity * deltaSeconds;
+            body.WorldObject.Position += center - body.WorldCenterOfMass;
             return;
         }
 
-        body.WorldObject.Transform.Position += body.LinearVelocity * deltaSeconds;
-        body.WorldObject.Transform.Rotation += body.AngularVelocity * deltaSeconds;
+        body.WorldObject.Position += body.LinearVelocity * deltaSeconds;
+        body.WorldObject.Rotation += body.AngularVelocity * deltaSeconds;
     }
 }

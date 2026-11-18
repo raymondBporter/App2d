@@ -7,7 +7,6 @@ using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Gameplay.Combat;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
@@ -20,7 +19,7 @@ internal sealed class SwordPersonWeapon2D(
     Action<float> attackStarted,
     Action<WeaponEvent2D> publish,
     Action<float> downAttackStarted,
-    Func<Rect2D, bool>? overlapsSpikes = null, AuthoredHero2D? authored = null) : MeleePersonWeapon2D(
+    Func<Rect2f, bool>? overlapsSpikes = null, AuthoredHero2D? authored = null) : MeleePersonWeapon2D(
         EquipmentKind2D.Sword,
         ids.Allocate(),
         ownerBody,
@@ -81,7 +80,7 @@ internal sealed class SwordPersonWeapon2D(
         CombatSystem2D combatSystem,
         Action<float> started,
         Action<WeaponEvent2D> emit,
-        Func<Rect2D, bool>? spikeOverlap) : MeleePersonWeapon2D(
+        Func<Rect2f, bool>? spikeOverlap) : MeleePersonWeapon2D(
             EquipmentKind2D.Sword, sourceId, body,
             AxisAlignedRectangle2D.Builder.CreateFromSize(64f, 48f),
             new MeleeAttackProfile2D(

@@ -1,7 +1,5 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Geometry.Meshes;
 
@@ -40,7 +38,7 @@ public sealed class TriangleMesh2D
         }
         Ensure.LessThanOrEqual(area, float.MaxValue);
         Area = (float)area;
-        Bounds = Rect2D.FromPoints(_vertices);
+        Bounds = Rect2f.FromPoints(_vertices);
     }
 
     public ReadOnlySpan<Vector2f> Vertices => _vertices;
@@ -53,7 +51,7 @@ public sealed class TriangleMesh2D
     public int TriangleCount => _indices.Length / 3;
     /// <summary>The sum of triangle areas; overlaps are counted once per triangle.</summary>
     public float Area { get; }
-    public Rect2D Bounds { get; }
+    public Rect2f Bounds { get; }
 
     public Triangle<Vector2f> TriangleAt(int index)
     {

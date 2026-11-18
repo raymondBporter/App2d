@@ -2,94 +2,33 @@
 
 A small MonoGame/XNA 2D engine and the side-scroller built on it.
 
-The solution contains the engine, games, editors, supporting tools, and tests.
+The solution contains the engine, game, demos, shared editor UI, and their tests.
 `App2d.Core` is the engine: mathematics, geometry,
 collision, physics, tiles, rendering, audio, authored characters, and the WinForms game
 host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
 level storage, the editor, and the in-game debug tools. `App2d.Tests` holds the game and engine tests.
-`App2d.CharacterStudio` is the character editor, with retained character generators in
-`Seeds` and rendering smokes/proofs/studies in `Diagnostics`. The
-[character system guide](docs/character-system.md) explains the shared vocabulary,
-definitions, runtime, Studio, and source layout. Run Studio commands with
-`dotnet run --project App2d.CharacterStudio -- <flag>`. Studio references the game;
-the game does not reference Studio. `App2d.EditorUi` supplies shared editor UI.
-`tools/ClothLab` is a small cape study.
+`App2d.EditorUi` supplies shared editor UI. `tools/ClothLab` is a small cape study.
 Everything targets `net10.0-windows10.0.19041.0`.
 
-`App2d.ImageLab` is a small raster workbench: load an image, preview parameterized
-transforms, apply them to an undo/redo stack, and save the current step as PNG.
-Run `dotnet run --project App2d.ImageLab`. See [Image Lab](App2d.ImageLab/README.md)
-for the transforms and a few starting pipelines.
+Character Studio and ImageLab have their own repositories and solutions:
+[AppAnimation](https://github.com/raymondBporter/AppAnimation) and
+[AppImage](https://github.com/raymondBporter/AppImage). Clone them beside App2d.
+They use ordinary C# project references to this checkout, with an optional
+`-p:App2dRoot=C:/path/to/App2d` override; no submodules or Git references are needed.
+Open `AppAnimation.slnx` or `AppImage.slnx` in the corresponding checkout.
+
+Studio's authoring code, generators, diagnostics, and dependent tests live in
+AppAnimation. Character assets remain here in `Assets/Characters`, and Studio
+edits that source library. The [character system guide](docs/character-system.md)
+explains the shared vocabulary and runtime. From this checkout, run Studio with
+`dotnet run --project ../AppAnimation/App2d.CharacterStudio -- <flag>`.
+ImageLab's raster workbench and tests live in AppImage; run
+`dotnet run --project ../AppImage/App2d.ImageLab`.
 
 Beamwright and Trials have their own solutions and repositories:
 [Beamwright](https://github.com/raymondBporter/beamwright) and
 [Trials](https://github.com/raymondBporter/trials). Both reference `App2d.Core` from an
 existing App2d checkout; their READMEs document the configurable `App2dRoot` path.
-
-`IHeightField2D` in Core describes the solid `XMin <= x <= XMax` and
-`YMin <= y <= HeightAt(x)`: a function on top, vertical end caps, and a supplied flat bottom.
-`PolylineHeightField2D`, `BSplineHeightField2D`, and `FunctionHeightField2D` share this API.
-The function source needs no vertices; height, slope, outward top normal and containment
-queries evaluate the source directly. B-splines invert their X coordinate before evaluating
-Y, and require strictly increasing control-point X coordinates. Polyline slopes use the
-segment to the right at corners. Supplied bottoms must lie below the top; evaluating an
-invalid height throws instead of moving the bottom or changing the function.
-
-```csharp
-using App2d.Core.Geometry.HeightFields;
-using App2d.Core.Geometry.Operations.HeightFields;
-
-IHeightField2D hills = new FunctionHeightField2D(
-    xMin: -1000f, xMax: 1000f, yMin: -200f,
-    height: x => 30f * MathF.Sin(x / 100f),
-    slope: x => 0.3f * MathF.Cos(x / 100f),
-    yMax: 30f);
-var normal = hills.NormalAt(50f); // normalize((-slope, 1))
-var collider = hills.ToShape(); // HeightFieldShape2D implements IShape2D.
-var terrain = new TrialsTerrain2D(world, hills);
-```
-
-No minimum/maximum search is performed. `YMax` is a conservative upper bound: polylines
-use their highest vertex, B-splines use their highest control point, and functions may supply
-a bound or leave it at positive infinity. `Bounds()` permits infinite rectangles.
-`YMin = float.NegativeInfinity` supports unbounded-downward source queries; polygon baking
-then requires `ToClippedShape(finiteBottom)` (or `ToClippedPolygon`) explicitly. Sampling is an approximation;
-choose a segment length that resolves a function's shortest features. Trials samples once
-and shares that boundary between drawing, camera heights and existing shape collision.
-The side-scroller's tile terrain remains unchanged.
-
-`HeightFieldShape2D` attaches directly to a `SpatialObject2D`/`WorldObject2D`, with bounds,
-area, mass/inertia, point distances, raycasts, drawing and JSON support. Its serialized data
-is the frozen polyline top and finite `YMin`; analytic delegates remain in the source API.
-Polyline sources retain their authored edges exactly; B-splines and functions are sampled
-once, and every shape operation uses the same approximation.
-
-Collision splits heightfields with a linear slope scan: nonincreasing top-edge slopes keep
-one convex run; an increasing slope starts the next run at the shared vertex. Each run
-closes vertically down to `YMin`. Cross products compare slopes without division, and
-exactly collinear samples collapse inside the collision pieces. Their interiors are disjoint
-and their union is the heightfield. This needs no general polygon decomposition or root
-search. All built-in finite shapes and half-spaces use the existing convex collision path
-against these pieces; circles use the complete outer perimeter to avoid internal seams.
-Concave pair contacts retain the solver's per-piece behavior rather than claiming a single
-global minimum escape translation. Other shapes can still encounter shared piece edges
-at concave joins; this is a smaller set of edges than a triangle decomposition.
-
-Circle-versus-simple-polygon contacts query the actual outer perimeter, including its
-vertices, rather than internal triangle seams. Containment determines the outward normal;
-other shapes use the existing convex-part contacts, with bounds rejection before narrow phase.
-Large composites cache a local-space bounds tree so only nearby parts reach the narrow phase;
-moving or rotating the body reuses the tree, and equal-depth contacts retain source-part ordering.
-The spline is the authoring curve; collision uses its polyline approximation, not an analytic
-spline contact. Adaptive deviation checks sample quarter/midpoints and are not certified
-error bounds for arbitrary user-defined curves.
-
-A support function on an entire nonconvex spline would make GJK see its convex hull,
-bridging valleys. Minkowski support addition is valid for convex shapes:
-`support(A + B, d) = support(A,d) + support(B,d)`. A disk adds `r * normalize(d)`.
-`NormalOffsetCurve2D` instead evaluates `C(t) + offset(t)*normal(t)`; it can describe a
-local wheel-center path for a constant radius, but endpoints and overlapping offsets
-still require geometric handling. It is not a general nonconvex GJK collision shape.
 
 Within the game project, `Contracts` owns commands, immutable observations/events, and
 shared configuration; `Gameplay` owns the simulation; `Presentation` owns views, camera,
@@ -114,7 +53,7 @@ The engine is grouped by responsibility:
 - `Frame2D` and `Frame3D` describe affine coordinate systems with explicit axes, an
   origin, composition, and point/direction transforms. Sockets return `Frame3D`;
   callers project an axis or point with `.XY` when entering 2D gameplay.
-- Geometry supplies `Rect2D.FromPoints(points).InflatedBy(padding)` and shape outlines
+- Geometry supplies `Rect2f.FromPoints(points).InflatedBy(padding)` and shape outlines
   placed by `Similarity2D`, with span overloads for reusable buffers. Collision can
   query `(shapeA, poseA, shapeB, poseB)` directly through `ShapeCollision2D.Overlaps`
   or `TryGetContact`; no registered spatial objects are required.
@@ -122,7 +61,7 @@ The engine is grouped by responsibility:
   byte channels. `ColorExtensions` parses and formats RGB/RGBA hex and converts to
   normalized `System.Numerics.Vector4` for float color math, using straight alpha.
 - Appearance palettes are simple source files: [UiTheme](App2d.EditorUi/UiTheme.cs)
-  for shared controls, [StudioTheme](App2d.CharacterStudio/Editor/Shell/StudioTheme.cs) for
+  for shared controls, [StudioTheme](https://github.com/raymondBporter/AppAnimation/blob/main/App2d.CharacterStudio/Editor/Shell/StudioTheme.cs) for
   editor viewports and timelines, [GameUiTheme](App2d/Presentation/GameUiTheme.cs) for
   the HUD, menus and level-editor overlays, and [DebugTheme](App2d.Core/Rendering/DebugTheme.cs)
   for grids, colliders and diagnostics. Edit their named colors, rebuild and restart.
@@ -206,7 +145,7 @@ Geometry lives under `App2d.Core/Geometry`:
   keeps transform rotation at zero.
 - `HalfSpace2D` represents an infinite solid side of a line. Its normal points out of
   the solid region and into permitted space.
-- `Rect2D` supplies local bounds to rendering and shaders.
+- `Rect2f` supplies local bounds to rendering and shaders; `Rect2d` provides double-precision bounds.
 
 `App2d.Core/Tiles/TileMap2D` stores compact authored maps as a bool-only grid; it carries
 no `TileKind2D`. `App2d.Core/Tiles/EditableTileMap2D` is the only `IChunkedTileMap2D`
@@ -542,7 +481,7 @@ See [world maps](docs/world-maps.md).
 Run the C# / Dear ImGui character editor with:
 
 ```powershell
-dotnet run --project App2d.CharacterStudio
+dotnet run --project ../AppAnimation/App2d.CharacterStudio
 ```
 
 It works on the authored assets in `Assets/Characters/authored`, which the game plays: base models, variants with
@@ -913,7 +852,7 @@ Build and test on Windows with a Direct3D-capable adapter:
 ```powershell
 dotnet build App2d.slnx
 dotnet test App2d.slnx
-dotnet run --project App2d.CharacterStudio -- --render-smoke artifacts/monogame-smoke
+dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --render-smoke artifacts/monogame-smoke
 ```
 
 Rendering tests draw into real GPU render targets and read pixels back to check sprite

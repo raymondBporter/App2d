@@ -25,8 +25,8 @@ public sealed class ContactDamageSystem2D(CollisionSystem2D collision, uint sour
             if (_combatants.Find(overlap.Collider.EntityId) is ICombatant2D { IsAlive: true } combatant &&
                 combatant is IContactDamageSource2D source)
             {
-                target.WorldObject.Transform.Position += overlap.Contact.MinimumTranslationVector;
-                if (target.TryTakeDamageFromX(source.ContactDamage, combatant.WorldObject.Transform.Position.X))
+                target.WorldObject.Position += overlap.Contact.MinimumTranslationVector;
+                if (target.TryTakeDamageFromX(source.ContactDamage, combatant.WorldObject.Position.X))
                 {
                     return !target.IsAlive;
                 }

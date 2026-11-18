@@ -10,7 +10,6 @@ using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Simulation;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
@@ -28,7 +27,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         uint targetLayer,
         CombatFaction2D ownerFaction,
         CombatSystem2D combat,
-        Func<Rect2D, bool>? overlapsSpikes = null,
+        Func<Rect2f, bool>? overlapsSpikes = null,
         AuthoredHero2D? hero = null, Func<float, Vector2f>? muzzle = null,
         Health2D? health = null, SpellTuning2D? spells = null)
     {
@@ -38,7 +37,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         Ensure.ThrowIfNull(combat);
         _spellHealth = health ?? (combat.Combatants.Find(ownerBody.EntityId) as Person2D)?.Health;
         _spellTuning = (spells ?? new SpellTuning2D()).Validate();
-        _spellPosition = () => ownerBody.WorldObject.Transform.Position;
+        _spellPosition = () => ownerBody.WorldObject.Position;
         _energy = _spellTuning.StartingEnergy;
 
         _sword = new SwordPersonWeapon2D(ids, ownerBody, ownerFaction, targetLayer, combat,

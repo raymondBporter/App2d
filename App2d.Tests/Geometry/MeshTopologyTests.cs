@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Primitives;
-using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 

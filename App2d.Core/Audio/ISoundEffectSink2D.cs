@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace App2d.Core.Audio;
 
 /// <summary>Plays the cues of a game's sound enum. Silent and test sinks need only implement <see cref="Play"/>.</summary>

@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Physics.Motion;
 
@@ -25,7 +24,7 @@ public sealed class KinematicEntity2D : IDisposable
         WorldObject = new SpatialObject2D(Ensure.RequireNotNull(shape));
         var start = motion.Position(0d);
         Ensure.Finite(start);
-        WorldObject.Transform.Position = start;
+        WorldObject.Position = start;
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Kinematic);
         Body.EntityId = id;
         Body.Restitution = 0f;
@@ -57,7 +56,7 @@ public sealed class KinematicEntity2D : IDisposable
         var pathVelocity = Motion.Velocity(nextTime);
         Ensure.Finite(target);
         Ensure.Finite(pathVelocity);
-        var displacement = target - WorldObject.Transform.Position;
+        var displacement = target - WorldObject.Position;
         Ensure.Finite(displacement);
         Body.LinearVelocity = displacement / deltaSeconds;
         Ensure.Finite(Body.LinearVelocity);

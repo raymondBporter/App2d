@@ -4,7 +4,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Validation;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Presentation.Player;
 

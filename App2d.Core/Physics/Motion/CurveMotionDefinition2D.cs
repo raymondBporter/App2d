@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Physics.Motion;
 
@@ -13,7 +12,7 @@ public sealed record CurveMotionDefinition2D
     public bool Repeat { get; init; } = true;
     public IReadOnlyList<ProgressMapKind> Progress { get; init; } = [ProgressMapKind.PingPong, ProgressMapKind.Smooth];
 
-    public CurveMotion2D CreateMotion(Vector2f  origin = default)
+    public CurveMotion2D CreateMotion(Vector2f origin = default)
     {
         Ensure.ThrowIfNull(Curve);
         Curve.Validate();

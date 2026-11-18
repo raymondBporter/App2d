@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
@@ -93,9 +92,6 @@ public static class NumericValidation
     public static bool IsNumber(Vector2d value) => IsNumber(value.X) && IsNumber(value.Y);
     public static bool IsFinite(Vector2d value) => Vector2d.IsFinite(value);
     public static bool IsNonZero(Vector2d value) => IsFinite(value) && value != Vector2d.Zero;
-
-
-    public static bool IsFinite<TReal>(Vec2<TReal> value) where TReal : unmanaged, IFloatingPointIeee754<TReal> => Vec2<TReal>.IsFinite(value);
 
 
     public static bool IsNumber(Vector3d value) => IsNumber(value.X) && IsNumber(value.Y) && IsNumber(value.Z);

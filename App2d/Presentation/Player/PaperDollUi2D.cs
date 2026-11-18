@@ -224,7 +224,7 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         var idle = moves[PersonMoves.Idle];
         var pose = PoseEvaluator.Sample(moves.Model, idle, _clock, repeat: true, new("relaxed") { InPlace = true, Clock = _clock });
         _drawing.Build(moves.Model, pose, wardrobe.Artwork);
-        var actor = new ActorPose(pose, Vector2f .Zero, 1);
+        var actor = new ActorPose(pose, Vector2f.Zero, 1);
         foreach (var (prop, socket) in wardrobe.Dress(idle, (float)(_clock % idle.Duration), PersonGear.None))
             _drawing.AddAttachment(prop, actor, socket);
         foreach (var attachment in wardrobe.Attachments) _drawing.AddAttachment(attachment, actor);
@@ -236,7 +236,7 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         var min = drawing.Mesh.Min;
         var max = drawing.Mesh.Max;
         var ppu = MathF.Min(target.Width / MathF.Max(.01f, max.X - min.X), target.Height / MathF.Max(.01f, max.Y - min.Y)) * fit;
-        var anchor = new Vector2f (target.Width / 2f - (min.X + max.X) / 2 * ppu, target.Height / 2f + (min.Y + max.Y) / 2 * ppu);
+        var anchor = new Vector2f(target.Width / 2f - (min.X + max.X) / 2 * ppu, target.Height / 2f + (min.Y + max.Y) / 2 * ppu);
         using var bound = device.UseRenderTarget(target, Color4b.Transparent);
         _renderer!.DrawActor(drawing, LayeredMeshRenderer.Projection(target.Width, target.Height, anchor, ppu), Matrix.Identity);
     }

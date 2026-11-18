@@ -1,6 +1,3 @@
-using App2d.Core.Mathematics;
-using System.Numerics;
-
 namespace App2d.Tests.Mathematics;
 
 public sealed class PolarTests
@@ -33,7 +30,7 @@ public sealed class PolarTests
         Assert.InRange(polar.AngleRadians, -MathF.PI, MathF.PI);
         Assert.Equal(value.AngleRadians, polar.AngleRadians);
         AssertClose(value, polar.ToCartesian().ToVector2f());
-        Assert.Equal(polar, Polar<float>.FromCartesian(new Vec2<float>(value)));
+        Assert.Equal(polar, Polar<float>.FromCartesian(value));
     }
 
     [Fact]
@@ -53,9 +50,9 @@ public sealed class PolarTests
     public void ZeroHasAnExplicitHeadingWithoutDiscardingTinyDirections()
     {
         Assert.Equal(default, Vector2f.Zero.ToPolar());
-        Assert.Equal(Vec2<float>.Zero, default(Polar<float>).ToCartesian());
-        Assert.Equal(Vec2<float>.Zero, new Polar<float>(0, 2).ToCartesian());
-        Assert.Equal(0, BitConverter.SingleToInt32Bits(Polar<float>.AngleOf(new(-0f, -0f))));
+        Assert.Equal(Vector2f.Zero, default(Polar<float>).ToCartesian());
+        Assert.Equal(Vector2f.Zero, new Polar<float>(0, 2).ToCartesian());
+        Assert.Equal(0, BitConverter.SingleToInt32Bits(Polar<float>.AngleOf(new Vector2f(-0f, -0f))));
         Assert.Equal(-MathF.PI, new Vector2f(-0f, -0f).AngleRadians);
         Assert.Equal(Math.PI, new Vector2d(-0d, 0d).AngleRadians);
         Assert.Equal(MathF.PI / 2, new Vector2f(0, float.Epsilon).AngleRadians);
@@ -70,20 +67,20 @@ public sealed class PolarTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar<float>(value, 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar<float>(1, value));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2f.FromAngle(value));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2d.Direction(value));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2f.FromPolar(1, value));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2f.FromPolar(value, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Polar<float>.AngleOf(new(value, 1)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Polar<float>.FromCartesian(new(1, value)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Vector2f.FromAngle(value); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Vector2d.Direction(value); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Vector2f.FromPolar(1, value); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Vector2f.FromPolar(value, 0); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => Polar<float>.AngleOf(new Vector2f(value, 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Polar<float>.FromCartesian(new Vector2f(1, value)));
     }
 
     [Fact]
     public void RadiusCannotBeNegativeOrOverflowWhenConverting()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Polar<float>(-1, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Vector2f.FromPolar(-1, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Polar<float>.FromCartesian(new(float.MaxValue)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Vector2f.FromPolar(-1, 0); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => Polar<float>.FromCartesian(new Vector2f(float.MaxValue)));
     }
 
     [Fact]
@@ -97,10 +94,10 @@ public sealed class PolarTests
         Assert.Equal(polar.ToCartesian(), Vector2d.FromPolar(polar.Radius, polar.AngleRadians));
         Assert.Equal(Vector2d.FromAngle(Math.PI / 2), Vector2d.FromAngleDegrees(90));
 
-        var half = new Vec2<Half>((Half)3, Half.Zero);
-        Polar<Half> halfPolar = half.ToPolar();
+        var half = new TestVector2<Half>((Half)3, Half.Zero);
+        Polar<Half> halfPolar = Vector2Math<TestVector2<Half>, Half>.ToPolar(half);
         Assert.Equal(((Half)3, Half.Zero), (halfPolar.Radius, halfPolar.AngleRadians));
-        Assert.Equal(half, halfPolar.ToCartesian());
+        Assert.Equal(half, halfPolar.ToCartesian<TestVector2<Half>>());
     }
 
     [Fact]

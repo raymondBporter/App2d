@@ -1,10 +1,8 @@
 using App2d.Contracts.World;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
-using App2d.Core.Mathematics;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
@@ -28,7 +26,7 @@ internal sealed class ViewportTerrainSource2D : IDisposable
         }
     }
 
-    public GridCellRange2D QueryChunks(Rect2D bounds)
+    public GridCellRange2D QueryChunks(Rect2f bounds)
     {
         Ensure.ThrowIf(!bounds.IsFinite, "Viewport bounds must be finite.", nameof(bounds));
         return bounds.TryIntersect(Map.WorldBounds, out var clipped)
@@ -36,11 +34,11 @@ internal sealed class ViewportTerrainSource2D : IDisposable
             : default;
     }
 
-    public GridCellRange2D QueryTerrain(Rect2D visible)
+    public GridCellRange2D QueryTerrain(Rect2f visible)
     {
         // The tileset can draw artwork one tile past the owning cell.
         var padding = new Vector2f(Map.TileSize).ToVector2f();
-        return QueryChunks(new (visible.Min - padding, visible.Max + padding));
+        return QueryChunks(new(visible.Min - padding, visible.Max + padding));
     }
 
     public TerrainChunkState2D GetChunk(TileChunk2D chunk)

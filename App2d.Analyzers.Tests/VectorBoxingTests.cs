@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;

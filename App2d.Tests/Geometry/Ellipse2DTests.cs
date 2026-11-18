@@ -8,7 +8,6 @@ using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
-using System.Numerics;
 using static App2d.Tests.Geometry.VectorComparers;
 
 namespace App2d.Tests.Geometry;
@@ -24,8 +23,8 @@ public sealed class Ellipse2DTests
         var outline = new Vector2f[512];
         Tilted.WriteVertices(outline);
         var bounds = ShapeBounds2D.Calculate(Tilted);
-        Assert.Equal(Rect2D.FromPoints(outline).Min, bounds.Min, Loose);
-        Assert.Equal(Rect2D.FromPoints(outline).Max, bounds.Max, Loose);
+        Assert.Equal(Rect2f.FromPoints(outline).Min, bounds.Min, Loose);
+        Assert.Equal(Rect2f.FromPoints(outline).Max, bounds.Max, Loose);
         foreach (var v in outline) Assert.InRange(ShapeDistance2D.SignedDistance(v, Tilted), -1e-3f, 1e-3f);
         var tip = Tilted.Frame.FromFrame(new(3, 0));
         Assert.Equal(tip, Tilted.GetSupportPoint(Tilted.Axis), Near);
@@ -36,7 +35,8 @@ public sealed class Ellipse2DTests
     [Fact]
     public void TransformedBoundsComposeTheFrame()
     {
-        var turnBack = Matrix3x2.CreateRotation(-MathF.PI / 6, new Vector2f(2, 1).ToVector2());
+        var rotation = Similarity2D.FromAxis(Vector2f.Zero, OrientedFrame2D.AxisFromAngle(-MathF.PI / 6));
+        var turnBack = rotation.Translated(Tilted.Center - rotation.TransformPoint(Tilted.Center));
         var bounds = ShapeBounds2D.CalculateTransformed(Tilted, turnBack);
         Assert.Equal(new Vector2f(-1, 0), bounds.Min, Loose);
         Assert.Equal(new Vector2f(5, 2), bounds.Max, Loose);

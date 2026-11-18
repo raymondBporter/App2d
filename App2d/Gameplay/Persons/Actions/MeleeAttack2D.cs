@@ -2,7 +2,6 @@ using App2d.Core;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
@@ -115,8 +114,8 @@ internal sealed class MeleeAttack2D(EntityId2D sourceId, SpatialObject2D worldOb
 
     private void PositionHitbox(Vector2f ownerPosition, float facing)
     {
-        WorldObject.Transform.Position = ownerPosition + new Vector2f(facing * Profile.ForwardOffset, Profile.VerticalOffset);
-        WorldObject.Transform.Rotation = 0f;
+        WorldObject.Position = ownerPosition + new Vector2f(facing * Profile.ForwardOffset, Profile.VerticalOffset);
+        WorldObject.Rotation = 0f;
     }
 }
 

@@ -5,7 +5,6 @@ using App2d.Core.Physics;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.World;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons;
 
@@ -333,7 +332,7 @@ public sealed partial class PersonLocomotion2D
 
     private void RecordPrePhysicsState()
     {
-        _positionBeforePhysics = _body.WorldObject.Transform.Position;
+        _positionBeforePhysics = _body.WorldObject.Position;
         _verticalSpeedBeforePhysics = _body.LinearVelocity.Y;
         _gravityScaleBeforePhysics = _body.GravityScale;
     }
@@ -763,7 +762,7 @@ public sealed partial class PersonLocomotion2D
             return false;
         }
 
-        _body.WorldObject.Transform.Position -= new Vector2f(0f, nearestGap);
+        _body.WorldObject.Position -= new Vector2f(0f, nearestGap);
         _body.LinearVelocity = new Vector2f(_body.LinearVelocity.X, 0f);
         return true;
     }
@@ -828,8 +827,8 @@ public sealed partial class PersonLocomotion2D
 
     private bool CanOccupy(Vector2f position)
     {
-        var originalPosition = _body.WorldObject.Transform.Position;
-        _body.WorldObject.Transform.Position = position;
+        var originalPosition = _body.WorldObject.Position;
+        _body.WorldObject.Position = position;
         try
         {
             QueryBodyBounds(_body.WorldObject.WorldBounds);
@@ -858,13 +857,13 @@ public sealed partial class PersonLocomotion2D
         }
         finally
         {
-            _body.WorldObject.Transform.Position = originalPosition;
+            _body.WorldObject.Position = originalPosition;
         }
     }
 
     private void CompleteCornerCorrection(Vector2f position, float verticalSpeed)
     {
-        _body.WorldObject.Transform.Position = position;
+        _body.WorldObject.Position = position;
         _body.LinearVelocity = new Vector2f(_body.LinearVelocity.X, verticalSpeed);
     }
 
@@ -874,7 +873,7 @@ public sealed partial class PersonLocomotion2D
         !other.IsSensor &&
         _physics.CanCollide(_body, other);
 
-    private void QueryBodyBounds(Rect2D bounds) =>
+    private void QueryBodyBounds(Rect2f bounds) =>
         _collision.QueryBounds(
             bounds,
             _queryResults,
@@ -882,15 +881,15 @@ public sealed partial class PersonLocomotion2D
             includeSensors: false,
             excluded: _body.Collider);
 
-    private static Rect2D ExpandedDown(Rect2D bounds, float distance) =>
+    private static Rect2f ExpandedDown(Rect2f bounds, float distance) =>
         new(bounds.Min - new Vector2f(0f, distance), bounds.Max);
 
-    private static Rect2D ExpandedSide(Rect2D bounds, float direction, float distance) =>
+    private static Rect2f ExpandedSide(Rect2f bounds, float direction, float distance) =>
         direction > 0f
-            ? new Rect2D(bounds.Min, bounds.Max + new Vector2f(distance, 0f))
-            : new Rect2D(bounds.Min - new Vector2f(distance, 0f), bounds.Max);
+            ? new Rect2f(bounds.Min, bounds.Max + new Vector2f(distance, 0f))
+            : new Rect2f(bounds.Min - new Vector2f(distance, 0f), bounds.Max);
 
-    private bool HasHorizontalSupport(Rect2D bodyBounds, Rect2D supportBounds) =>
+    private bool HasHorizontalSupport(Rect2f bodyBounds, Rect2f supportBounds) =>
         bodyBounds.Right + Metrics.HorizontalSupportGrace >= supportBounds.Left &&
         bodyBounds.Left - Metrics.HorizontalSupportGrace <= supportBounds.Right;
 

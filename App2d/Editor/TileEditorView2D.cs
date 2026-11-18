@@ -1,7 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
-using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using App2d.Presentation;
 using App2d.Rendering;
@@ -97,7 +96,7 @@ internal static class TileEditorView2D
     /// than the whole map (a zoomed-out view could otherwise ask for hundreds of lines)
     /// and clamped to the map bounds so nothing is drawn outside the paintable area.
     /// </summary>
-    private static void DrawGrid(Renderer2D renderer, Rect2D visible, Rect2D mapBounds, GridGeometry2D grid)
+    private static void DrawGrid(Renderer2D renderer, Rect2f visible, Rect2f mapBounds, GridGeometry2D grid)
     {
         if (!visible.TryIntersect(mapBounds, out var clipped) ||
             !clipped.TryGetPositiveSize(out _))

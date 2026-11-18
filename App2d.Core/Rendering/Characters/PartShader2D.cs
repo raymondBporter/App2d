@@ -1,9 +1,7 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Drawing;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
-using System.Numerics;
 
 namespace App2d.Core.Rendering.Characters;
 

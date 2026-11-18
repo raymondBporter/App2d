@@ -11,6 +11,8 @@ internal sealed class HexWheelSimulation
 {
     internal const float DefaultTileRadius = .26f;
     internal const float DefaultInnerRadius = 2.5f;
+    internal const float DefaultJointFrequency = 30f;
+    internal const float DefaultJointDamping = .9f;
     internal const float OuterRadius = 4.8f;
     internal const float GroundY = 0f;
     internal const float StepSeconds = 1f / 120f;
@@ -19,7 +21,6 @@ internal sealed class HexWheelSimulation
 
     private readonly List<RigidBody2D> _tiles = [];
     private readonly List<SoftPointJoint2D> _seams = [];
-    private readonly List<SoftPointJoint2D> _driveJoints = [];
     private readonly List<RigidBody2D> _drivenTiles = [];
     private readonly RigidBody2D _cursor;
     private readonly float _estimatedInertia;
@@ -33,15 +34,10 @@ internal sealed class HexWheelSimulation
         IShape2D sharedShape = Hexagon;
         var tileInertia = (float)ShapeMassProperties2D.Calculate(sharedShape, 1f).WithMass(1f).MomentOfInertia;
         var center = new Vector2f(0f, GroundY + OuterRadius + tileRadius + dropHeight);
-        HubRadius = innerRadius - tileRadius;
-
         World.CollisionSystem.CellSize = 2f * tileRadius;
         var floor = World.AddBody(new(HalfSpace2D.Builder.Create(Vector2f.UnitY, GroundY)), BodyMotionType2D.Static);
-        floor.Friction = .85f;
+        floor.Friction = .95f;
         floor.Restitution = 0f;
-        Hub = AddBody(Circle2D.Builder.Create(HubRadius), center, BodyMotionType2D.Dynamic);
-        Hub.SetMassFromShape(16f);
-        Hub.IsCollider = false;
         _cursor = AddBody(Circle2D.Builder.Create(tileRadius), center, BodyMotionType2D.Kinematic);
         _cursor.IsCollider = false;
 
@@ -64,6 +60,7 @@ internal sealed class HexWheelSimulation
                 body.MomentOfInertia = tileInertia;
                 tilesByCell.Add((column, row), body);
                 _tiles.Add(body);
+                _estimatedInertia += tileInertia + body.Mass * squared;
             }
         }
 
@@ -77,8 +74,8 @@ internal sealed class HexWheelSimulation
                 {
                     var offset = CellOffset(column, row);
                     var midpoint = offset / 2f;
-                    var alongEdge = Vector2f.Normalize(offset.PerpCcw) * (tileRadius / 3f);
-                    AddEdgeJoints(tile, neighbor, midpoint, -midpoint, alongEdge, _seams);
+                    var alongEdge = Vector2f.Normalize(offset.PerpCcw) * (.45f * tileRadius);
+                    AddEdgeJoints(tile, neighbor, midpoint, alongEdge);
                 }
 
                 facesHole |= CellOffset(cell.Column + column, cell.Row + row).LengthSquared() < innerRadius * innerRadius
@@ -87,15 +84,11 @@ internal sealed class HexWheelSimulation
 
             if (facesHole)
             {
-                var localCenter = CellOffset(cell.Column, cell.Row);
-                var alongEdge = Vector2f.Normalize(localCenter.PerpCcw) * (tileRadius / 3f);
-                AddEdgeJoints(Hub, tile, localCenter, Vector2f.Zero, alongEdge, _driveJoints);
                 _drivenTiles.Add(tile);
             }
         }
 
-        _estimatedInertia = Hub.MomentOfInertia + _tiles.Count * (innerRadius * innerRadius + OuterRadius * OuterRadius) / 2f;
-        SetSuspension(8f, .8f);
+        SetSuspension(DefaultJointFrequency, DefaultJointDamping);
     }
 
     internal PhysicsWorld2D World { get; } = new()
@@ -103,27 +96,35 @@ internal sealed class HexWheelSimulation
         Gravity = new(0f, -9.81f),
         MaxSubstepSeconds = StepSeconds,
         PositionIterations = 2,
-        VelocityIterations = 4,
+        VelocityIterations = 8,
     };
 
     internal ConvexPolygon2D Hexagon { get; }
     internal IReadOnlyList<RigidBody2D> Tiles => _tiles;
     internal IReadOnlyList<RigidBody2D> DrivenTiles => _drivenTiles;
     internal IReadOnlyList<SoftPointJoint2D> Seams => _seams;
-    internal RigidBody2D Hub { get; }
     internal RigidBody2D? GrabbedTile => _grab?.Second;
     internal float TileRadius { get; }
     internal float InnerRadius { get; }
-    internal float HubRadius { get; }
+
+    internal Vector2f DriveCenter
+    {
+        get
+        {
+            var weightedCenter = Vector2f.Zero;
+            var mass = 0f;
+            foreach (var tile in _drivenTiles)
+            {
+                weightedCenter += tile.WorldCenterOfMass * tile.Mass;
+                mass += tile.Mass;
+            }
+            return mass > 0f ? weightedCenter / mass : weightedCenter;
+        }
+    }
 
     internal void SetSuspension(float frequency, float damping)
     {
         foreach (var joint in _seams)
-        {
-            joint.FrequencyHertz = frequency;
-            joint.DampingRatio = damping;
-        }
-        foreach (var joint in _driveJoints)
         {
             joint.FrequencyHertz = frequency;
             joint.DampingRatio = damping;
@@ -134,11 +135,34 @@ internal sealed class HexWheelSimulation
     {
         if (motorSpeed is { } target)
         {
-            // A speed controller applies torque to the hub. The joints transmit it to the inner tiles.
-            var acceleration = Math.Clamp(4f * (target - Hub.AngularVelocity), -3f, 3f);
-            Hub.AddTorque(_estimatedInertia * acceleration);
+            ApplyDrive(target);
         }
         World.Step(StepSeconds);
+    }
+
+    private void ApplyDrive(float targetSpeed)
+    {
+        var center = DriveCenter;
+        var inertia = 0f;
+        var angularMomentum = 0f;
+        foreach (var tile in _drivenTiles)
+        {
+            var radius = tile.WorldCenterOfMass - center;
+            inertia += tile.Mass * radius.LengthSquared();
+            angularMomentum += tile.Mass * Vector2f.Dot(radius.PerpCcw, tile.LinearVelocity);
+        }
+        if (inertia <= 0f)
+            return;
+
+        var currentSpeed = angularMomentum / inertia;
+        var acceleration = Math.Clamp(8f * (targetSpeed - currentSpeed), -5f, 5f);
+        var torquePerInertia = _estimatedInertia * acceleration / inertia;
+        foreach (var tile in _drivenTiles)
+        {
+            // Each force is tangent to the current radius. The mass-weighted center makes their sum zero.
+            var tangent = (tile.WorldCenterOfMass - center).PerpCcw;
+            tile.AddForce(tangent * (torquePerInertia * tile.Mass));
+        }
     }
 
     internal bool BeginGrab(Vector2f point)
@@ -161,7 +185,7 @@ internal sealed class HexWheelSimulation
         return false;
     }
 
-    internal void MoveGrab(Vector2f point) => _cursor.WorldObject.Transform.Position = point;
+    internal void MoveGrab(Vector2f point) => _cursor.WorldObject.Position = point;
 
     internal void EndGrab()
     {
@@ -175,21 +199,20 @@ internal sealed class HexWheelSimulation
     private RigidBody2D AddBody(IShape2D shape, Vector2f center, BodyMotionType2D motion)
     {
         var spatial = new SpatialObject2D(shape);
-        spatial.Transform.Position = center;
+        spatial.Position = center;
         var body = World.AddBody(spatial, motion);
         body.FreezeRotation = false;
-        body.Friction = .6f;
+        body.Friction = .8f;
         body.Restitution = 0f;
         return body;
     }
 
-    private void AddEdgeJoints(RigidBody2D first, RigidBody2D second, Vector2f firstMidpoint, Vector2f secondMidpoint,
-        Vector2f alongEdge, List<SoftPointJoint2D> joints)
+    private void AddEdgeJoints(RigidBody2D first, RigidBody2D second, Vector2f midpoint, Vector2f alongEdge)
     {
-        var near = new SoftPointJoint2D(first, second, firstMidpoint + alongEdge, secondMidpoint + alongEdge);
-        var far = new SoftPointJoint2D(first, second, firstMidpoint - alongEdge, secondMidpoint - alongEdge);
-        joints.Add(near);
-        joints.Add(far);
+        var near = new SoftPointJoint2D(first, second, midpoint + alongEdge, -midpoint + alongEdge);
+        var far = new SoftPointJoint2D(first, second, midpoint - alongEdge, -midpoint - alongEdge);
+        _seams.Add(near);
+        _seams.Add(far);
         World.Constraints.Add(near);
         World.Constraints.Add(far);
     }

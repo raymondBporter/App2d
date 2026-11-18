@@ -1,6 +1,3 @@
-using App2d.Core.Mathematics;
-using System.Numerics;
-
 namespace App2d.Tests.Mathematics;
 
 public sealed class Vector2iTests
@@ -21,8 +18,8 @@ public sealed class Vector2iTests
     [Fact]
     public void IntegerCoordinateOverflowDoesNotWrapIntoAnUnrelatedCell()
     {
-        Assert.Throws<OverflowException>(() => new Vector2i(int.MaxValue, 0) + new Vector2i(1, 0));
-        Assert.Throws<OverflowException>(() => new Vector2i(int.MinValue, 0) - new Vector2i(1, 0));
-        Assert.Throws<OverflowException>(() => new Vector2i(int.MaxValue, 1) * 2);
+        Assert.Throws<OverflowException>(() => { var x = new Vector2i(int.MaxValue, 0) + new Vector2i(1, 0); });
+        Assert.Throws<OverflowException>(() => { var x = new Vector2i(int.MinValue, 0) - new Vector2i(1, 0); });
+        Assert.Throws<OverflowException>(() => { var x = new Vector2i(int.MaxValue, 1) * 2; });
     }
 }

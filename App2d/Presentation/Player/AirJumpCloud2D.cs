@@ -1,8 +1,6 @@
-using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
-using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.Player;
@@ -81,8 +79,8 @@ public sealed class AirJumpCloud2D : IDisposable
             var (shade, fill) = _puffs[i];
             shade.IsVisible = fill.IsVisible = _age < Duration;
             var center = _position + new Vector2f(Offsets[i].X * spread, Offsets[i].Y - 24 * t) * CloudScale;
-            shade.Transform.Position = center - new Vector2f(0, 2);
-            fill.Transform.Position = center;
+            shade.Position = center - new Vector2f(0, 2);
+            fill.Position = center;
             shade.Transform.Scale = new Vector2f(Radii[i] + 1.5f, Radii[i] * .65f + 1) * size;
             fill.Transform.Scale = new Vector2f(Radii[i], Radii[i] * .65f) * size;
             ((CloudInk)shade.Shader).BaseColor = new Color(157, 185, 207, alpha);
@@ -99,7 +97,7 @@ public sealed class AirJumpCloud2D : IDisposable
             var progress = age / WispLifetime;
             var radius = (7 - group * 1.2f) * (1 - .5f * progress);
             // Wisps inherit a little lift, then linger behind the departing feet.
-            wisp.Transform.Position = _wispOrigins[group] + new Vector2f(lobe * radius * (.7f + progress), 30 * age - 45 * age * age + (lobe == 0 ? 2 : 0));
+            wisp.Position = _wispOrigins[group] + new Vector2f(lobe * radius * (.7f + progress), 30 * age - 45 * age * age + (lobe == 0 ? 2 : 0));
             wisp.Transform.Scale = new Vector2f(radius, radius * .7f);
             ((CloudInk)wisp.Shader).BaseColor = new Color(242, 249, 255, (int)((150 - group * 25) * (1 - progress) * (1 - progress)));
         }

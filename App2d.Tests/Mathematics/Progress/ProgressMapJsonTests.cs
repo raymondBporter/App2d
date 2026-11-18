@@ -2,7 +2,6 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Physics.Motion;
-using System.Numerics;
 using System.Text.Json;
 
 namespace App2d.Tests.Mathematics.Progress;

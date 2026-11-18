@@ -1,14 +1,13 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Tiles;
 
 public sealed class TileMap2D : ISolidTileMap2D
 {
     private readonly Grid2D<bool> _solidTiles;
-    private readonly List<Rect2D> _collisionRectangles = [];
+    private readonly List<Rect2f> _collisionRectangles = [];
     private readonly List<TileCellRectangle2D> _meshBuffer = [];
     private readonly TileRectangleMesher2D.KindAt _kindAt;
     private bool _collisionRectanglesDirty = true;
@@ -28,11 +27,11 @@ public sealed class TileMap2D : ISolidTileMap2D
     public int Height => _solidTiles.Height;
     public float TileSize => _solidTiles.CellSize.Width;
     public Vector2f Origin => _solidTiles.Origin;
-    public Rect2D WorldBounds => _solidTiles.WorldBounds;
+    public Rect2f WorldBounds => _solidTiles.WorldBounds;
     public GridSize2D GridSize => _solidTiles.Size;
     public GridGeometry2D GridGeometry => _solidTiles.Geometry;
 
-    public IReadOnlyList<Rect2D> CollisionRectangles
+    public IReadOnlyList<Rect2f> CollisionRectangles
     {
         get
         {

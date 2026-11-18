@@ -1,9 +1,8 @@
-using App2d.Core.Geometry.Operations.Transforms;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Transforms;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
-using System.Numerics;
 using static App2d.Tests.Geometry.VectorComparers;
 
 namespace App2d.Tests.Geometry;
@@ -82,6 +81,5 @@ public sealed class ShapePosed2DTests
     public void PosedRejectsDegeneratePoses()
     {
         Assert.ThrowsAny<ArgumentException>(() => ShapeTransforms2D.Posed(Circle2D.Builder.Create(1), default));
-        Assert.Throws<NotSupportedException>(() => ShapeTransforms2D.Posed(HeightFieldShape2D.Builder.Create([new(0, 0), new(1, 0)], -1f), Pose));
     }
 }

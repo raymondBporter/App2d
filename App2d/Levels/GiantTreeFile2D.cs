@@ -4,7 +4,6 @@ using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.World.Vegetation;
 using System.Collections.Immutable;
-using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

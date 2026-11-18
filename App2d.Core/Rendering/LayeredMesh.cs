@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics.Transforms;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 using XVector2 = Microsoft.Xna.Framework.Vector2;
 using XVector3 = Microsoft.Xna.Framework.Vector3;
 

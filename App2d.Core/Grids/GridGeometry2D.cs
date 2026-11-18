@@ -1,7 +1,5 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Grids;
 
@@ -69,7 +67,7 @@ public readonly record struct GridGeometry2D
             (int)Math.Clamp(Math.Floor(((double)position.Y - Origin.Y) / CellSize.Height), 0, size.Height - 1));
     }
 
-    public Rect2D GetCellBounds(Vector2i cell) => new(
+    public Rect2f GetCellBounds(Vector2i cell) => new(
         Corner(cell.X, cell.Y), Corner((double)cell.X + 1, (double)cell.Y + 1));
 
     public Vector2f GetCellCenter(Vector2i cell) => Corner(cell.X + .5, cell.Y + .5);
@@ -84,9 +82,9 @@ public readonly record struct GridGeometry2D
             Math.Round(((double)position.Y - Origin.Y) / CellSize.Height));
     }
 
-    public Rect2D GetBounds(GridSize2D size) => new(Corner(0, 0), Corner(size.Width, size.Height));
+    public Rect2f GetBounds(GridSize2D size) => new(Corner(0, 0), Corner(size.Width, size.Height));
 
-    public Rect2D GetBounds(GridCellRange2D cells)
+    public Rect2f GetBounds(GridCellRange2D cells)
     {
         Ensure.ThrowIf(cells.IsEmpty, "An empty cell range has no world bounds.", nameof(cells));
         return new(Corner(cells.Minimum.X, cells.Minimum.Y),
@@ -97,7 +95,7 @@ public readonly record struct GridGeometry2D
     /// Maps both corners with floor, including the cell owning the maximum endpoint. This conservative
     /// coverage preserves edge contacts in a broad phase. A zero-area rectangle maps to its point's cell.
     /// </summary>
-    public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2D
+    public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2f
     {
         // Value-type rectangles cannot be null; avoid boxing them in unoptimized builds.
         if (!typeof(TRect).IsValueType)
@@ -115,7 +113,7 @@ public readonly record struct GridGeometry2D
     }
 
     /// <summary>False means a sparse spatial index must use its overflow/fallback path, not skip the object.</summary>
-    public bool TryGetCellRange<TRect>(TRect bounds, out GridCellRange2D cells) where TRect : IRect2D
+    public bool TryGetCellRange<TRect>(TRect bounds, out GridCellRange2D cells) where TRect : IRect2f
     {
         cells = default;
         if ((!typeof(TRect).IsValueType && bounds is null) ||
@@ -137,7 +135,7 @@ public readonly record struct GridGeometry2D
     }
 
     /// <summary>Clips a finite ordered rectangle to a finite grid. Disjoint or empty grids return an empty range.</summary>
-    public GridCellRange2D GetCellRange<TRect>(TRect bounds, GridSize2D size) where TRect : IRect2D
+    public GridCellRange2D GetCellRange<TRect>(TRect bounds, GridSize2D size) where TRect : IRect2f
     {
         if (!typeof(TRect).IsValueType)
         {

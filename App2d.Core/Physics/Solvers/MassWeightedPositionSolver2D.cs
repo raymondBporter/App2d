@@ -13,8 +13,8 @@ public sealed class MassWeightedPositionSolver2D : IPhysicsPositionSolver2D
         }
 
         var correction = contact.Geometry.MinimumTranslationVector;
-        contact.First.WorldObject.Transform.Position += correction * (firstWeight / totalWeight);
-        contact.Second.WorldObject.Transform.Position -= correction * (secondWeight / totalWeight);
+        contact.First.WorldObject.Position += correction * (firstWeight / totalWeight);
+        contact.Second.WorldObject.Position -= correction * (secondWeight / totalWeight);
     }
 
     private static float GetWeight(RigidBody2D body, RigidBody2D other)

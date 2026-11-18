@@ -1,7 +1,5 @@
 using App2d.Core.Geometry.Operations.Distance;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Geometry.Curves;
 
@@ -29,7 +27,7 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         BezierMath.Cubic<Vector2f, float>(Start, Control1, Control2, End, amount);
 
     public Vector2f EvaluateDerivative(float amount) =>
-        BezierMath.CubicDerivative<Vector2f, float>(Start, Control1, Control2,End, amount);
+        BezierMath.CubicDerivative<Vector2f, float>(Start, Control1, Control2, End, amount);
 
     /// <summary>Splits at a finite parameter in [0, 1], preserving the exact curve on each side.</summary>
     public (CubicBezier2D Left, CubicBezier2D Right) Split(float amount)

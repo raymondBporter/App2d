@@ -4,7 +4,6 @@ using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.World.Vegetation;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Contracts.World;
 
@@ -64,7 +63,7 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
     public Vector2f Origin { get; }
     public int ChunkColumns => (Width + ChunkSize - 1) / ChunkSize;
     public int ChunkRows => (Height + ChunkSize - 1) / ChunkSize;
-    public Rect2D WorldBounds => new(Origin, Origin + new Vector2f(Width, Height) * TileSize);
+    public Rect2f WorldBounds => new(Origin, Origin + new Vector2f(Width, Height) * TileSize);
     public ImmutableArray<string> TilesetIds { get; }
     IReadOnlyList<string> IChunkedTileMap2D.TilesetIds => TilesetIds;
     public ImmutableArray<TileCollisionRectangle2D> Collisions { get; }

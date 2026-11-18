@@ -1,7 +1,5 @@
 using App2d.Core.Characters.Authored;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
-using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;
 
@@ -29,7 +27,7 @@ public static class PartPlacement3D
     /// A lifted frame's X axis back in gameplay XY: the unit projection, or the facing when the axis points straight
     /// at or away from the viewer. Foreshortening never changes a projectile's speed or a region's axis length.
     /// </summary>
-    public static Vector2f  ProjectAxis(Frame3D frame, int facing)
+    public static Vector2f ProjectAxis(Frame3D frame, int facing)
     {
         var projected = frame.XAxis.XY;
         return projected.LengthSquared() > 1e-8f ? Vector2f.Normalize(projected) : new Vector2f(facing, 0);

@@ -1,6 +1,4 @@
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
-using System.Numerics;
 
 namespace App2d.Tests.Mathematics;
 
@@ -64,7 +62,7 @@ public sealed class Frame2DTests
         Assert.Equal(new Vector2f(5, 10), frame.TransformPoint(new(20, 3)));
         Assert.False(frame.TryToLocal(Vector2f.Zero, out _));
         Assert.False(frame.TryInverse(out _));
-        Assert.Throws<InvalidOperationException>(() => frame.ToLocal(Vector2f.Zero));
+        Assert.Throws<InvalidOperationException>(() => { frame.ToLocal(Vector2f.Zero); });
         Assert.Equal(Vector2f.One, Frame2D.Identity.TransformPoint(Vector2f.One));
     }
 }

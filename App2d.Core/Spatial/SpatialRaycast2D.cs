@@ -1,8 +1,6 @@
 using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Spatial;
 
@@ -60,7 +58,7 @@ public static class SpatialRaycast2D
     /// <param name="bounds">The box to test.</param>
     /// <param name="maxDistance">The largest world distance considered.</param>
     /// <returns>True when the ray touches the box.</returns>
-    public static bool IntersectsBounds(Ray2D ray, Rect2D bounds, float maxDistance)
+    public static bool IntersectsBounds(Ray2D ray, Rect2f bounds, float maxDistance)
     {
         ray.Validate();
         Ensure.NonNegative(maxDistance, allowInfinity: true);

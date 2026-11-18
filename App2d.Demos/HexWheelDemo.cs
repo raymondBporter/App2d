@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using App2d.EditorUi;
 using ImGuiNET;
 using System.Numerics;
@@ -10,10 +9,10 @@ internal sealed class HexWheelDemo : IDemo
     private float _tileRadius = HexWheelSimulation.DefaultTileRadius;
     private float _innerRadius = HexWheelSimulation.DefaultInnerRadius;
     private float _dropHeight = .4f;
-    private float _motorSpeed = -.85f;
+    private float _motorSpeed = 1.4f;
     private float _gravity = 9.81f;
-    private float _frequency = 8f;
-    private float _damping = .8f;
+    private float _frequency = HexWheelSimulation.DefaultJointFrequency;
+    private float _damping = HexWheelSimulation.DefaultJointDamping;
     private bool _motorOn = true;
     private bool _paused;
     private bool _showAnchors;
@@ -32,10 +31,11 @@ internal sealed class HexWheelDemo : IDemo
             return;
 
         const float step = HexWheelSimulation.StepSeconds;
+        var targetSpeed = GetMotorTarget();
         _elapsed = Math.Min(_elapsed + seconds, 2d * step);
         while (_elapsed >= step)
         {
-            _simulation.Step(_motorOn ? _motorSpeed : null);
+            _simulation.Step(targetSpeed);
             if (_releaseAfterStep)
             {
                 EndGrab();
@@ -46,7 +46,7 @@ internal sealed class HexWheelDemo : IDemo
 
     private void DrawControls()
     {
-        ImGui.TextWrapped("Drag a tile to stretch the wheel. The gold hub drives the inner ring.");
+        ImGui.TextWrapped("Hold Left or Right to drive. Release to coast. Drag a tile to stretch the wheel.");
         ImGui.TextUnformatted($"{_simulation.Tiles.Count} tiles · {_simulation.Seams.Count / 2} shared edges");
         if (ImGui.Button("Retile and reset"))
         {
@@ -64,16 +64,16 @@ internal sealed class HexWheelDemo : IDemo
         }
         if (_paused && ImGui.Button("Step"))
         {
-            _simulation.Step(_motorOn ? _motorSpeed : null);
+            _simulation.Step(GetMotorTarget());
         }
         ImGui.Separator();
         ImGui.Checkbox("Motor", ref _motorOn);
-        Ui.Slider("Motor speed (rad/s)", ref _motorSpeed, -2f, 2f);
+        Ui.Slider("Motor speed (rad/s)", ref _motorSpeed, .25f, 3f);
         if (Ui.Slider("Gravity", ref _gravity, 0f, 18f))
         {
             _simulation.World.Gravity = new(0f, -_gravity);
         }
-        if (Ui.Slider("Joint frequency (Hz)", ref _frequency, 2f, 18f) |
+        if (Ui.Slider("Joint frequency (Hz)", ref _frequency, 2f, 50f) ||
             Ui.Slider("Joint damping ratio", ref _damping, 0f, 1.5f))
         {
             _simulation.SetSuspension(_frequency, _damping);
@@ -87,10 +87,10 @@ internal sealed class HexWheelDemo : IDemo
 
     private void DrawCanvas()
     {
-        var hub = _simulation.Hub;
+        var center = _simulation.DriveCenter;
         if (_simulation.GrabbedTile is null)
         {
-            _cameraX = hub.WorldCenterOfMass.X;
+            _cameraX = center.X;
         }
         var canvas = DemoCanvas.Begin("wheel", new(_cameraX, 5.55f), new(15f, 13.5f));
         if (canvas.Activated)
@@ -124,7 +124,7 @@ internal sealed class HexWheelDemo : IDemo
             var ground = canvas.ScreenAt(new(_cameraX, HexWheelSimulation.GroundY)).Y;
             draw.AddRectFilled(new(canvas.Min.X, ground), canvas.Max, Ui.Color(25, 33, 45));
             draw.AddLine(new(canvas.Min.X, ground), new(canvas.Max.X, ground), Ui.Color(120, 144, 161), 2f * Ui.Scale);
-            DrawHub(canvas);
+            DrawDrive(canvas, center);
             DrawTiles(canvas);
             if (_showAnchors)
             {
@@ -150,22 +150,30 @@ internal sealed class HexWheelDemo : IDemo
         _releaseAfterStep = false;
     }
 
-    private void DrawHub(DemoCanvas canvas)
+    private float? GetMotorTarget()
     {
-        var hub = _simulation.Hub;
-        var center = hub.WorldCenterOfMass;
+        if (!_motorOn || ImGui.GetIO().WantTextInput)
+            return null;
+
+        var left = ImGui.IsKeyDown(ImGuiKey.LeftArrow);
+        var right = ImGui.IsKeyDown(ImGuiKey.RightArrow);
+        return left == right ? null : left ? _motorSpeed : -_motorSpeed;
+    }
+
+    private void DrawDrive(DemoCanvas canvas, Vector2f center)
+    {
+        if (!_motorOn)
+            return;
+
         var screenCenter = canvas.ScreenAt(center);
         var draw = canvas.Draw;
-        var radius = _simulation.HubRadius * canvas.Scale;
-        draw.AddCircleFilled(screenCenter, radius, Ui.Color(27, 37, 50), 64);
+        var driving = !_paused && GetMotorTarget() is not null;
+        var spokeColor = Ui.Color(216, 161, 96, (byte)(driving ? 180 : 60));
         foreach (var tile in _simulation.DrivenTiles)
         {
-            draw.AddLine(screenCenter, canvas.ScreenAt(tile.WorldCenterOfMass), Ui.Color(216, 161, 96, 80), Ui.Scale);
+            draw.AddLine(screenCenter, canvas.ScreenAt(tile.WorldCenterOfMass), spokeColor, Ui.Scale);
         }
-        draw.AddCircle(screenCenter, radius, Ui.Color(216, 161, 96), 64, 1.5f * Ui.Scale);
-        var arm = Vector2f.FromAngle(hub.WorldObject.Transform.Rotation) * _simulation.HubRadius;
-        draw.AddLine(screenCenter, canvas.ScreenAt(center + arm), Ui.Color(255, 192, 112), 3f * Ui.Scale);
-        draw.AddCircleFilled(screenCenter, 5f * Ui.Scale, Ui.Color(255, 192, 112));
+        draw.AddCircleFilled(screenCenter, 4f * Ui.Scale, Ui.Color(216, 161, 96, (byte)(driving ? 255 : 140)));
     }
 
     private void DrawTiles(DemoCanvas canvas)

@@ -43,7 +43,7 @@ HammerImpact. These mappings live in EnemyPresentation2D.
 assets and **overwrites edits to them**. It does not run in ordinary builds.
 Prefer editing the saved assets once tuning starts.
 
-`dotnet run --project App2d.CharacterStudio -- --smoke-wardrobe artifacts/club-caveman`
+`dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --smoke-wardrobe artifacts/club-caveman`
 also renders `club-caveman.png`: idle, run, lift, overhead hold, strike,
 recovery, hit, death; each at large size and mirrored game size.
 

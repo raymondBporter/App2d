@@ -64,7 +64,7 @@ Ensure.LessThanOrEqual(minimum, maximum, allowInfinity: true);
 
 The ordering predicates use ordinary comparisons, allowing infinity and rejecting
 NaN. Throwing ordering checks require finite operands unless opted in. This keeps
-unbounded rectangles and heightfields valid while rejecting accidental infinities
+unbounded rectangles valid while rejecting accidental infinities
 in ordinary values.
 
 ## Other existing checks

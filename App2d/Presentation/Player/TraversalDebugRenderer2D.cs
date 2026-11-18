@@ -2,7 +2,6 @@ using App2d.Contracts.Player;
 using App2d.Core.Rendering;
 using App2d.Core.Validation;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Presentation.Player;
 

@@ -2,7 +2,6 @@
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Physics;
 
@@ -38,7 +37,7 @@ public sealed class PhysicsCollisionSystem2DTests
             new SpatialObject2D(Circle2D.Builder.Create(10f)),
             BodyMotionType2D.Static);
         var dynamicObject = new SpatialObject2D(Circle2D.Builder.Create(10f));
-        dynamicObject.Transform.Position = new Vector2f(15f, 0f);
+        dynamicObject.Position = new Vector2f(15f, 0f);
         physics.AddBody(dynamicObject, BodyMotionType2D.Dynamic);
 
         physics.Step(1f / 60f);

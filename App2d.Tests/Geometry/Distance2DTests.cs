@@ -3,10 +3,8 @@ using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 
@@ -37,22 +35,22 @@ public sealed class Distance2DTests
     [Fact]
     public void RectangleCornerDistanceIsEuclideanAndZeroAreaRectsWork()
     {
-        var rectangle = new Rect2D(new(-1), new(1));
+        var rectangle = new Rect2f(new(-1), new(1));
         Assert.Equal(5f, Distance2D.SignedDistance(new Vector2f(4, 5), rectangle));
-        Assert.Equal(5f, Distance2D.SignedDistance(rectangle, new Rect2D(new(4, 5), new(6, 7))));
+        Assert.Equal(5f, Distance2D.SignedDistance(rectangle, new Rect2f(new(4, 5), new(6, 7))));
         Assert.Equal(-1f, Distance2D.SignedDistance(Vector2f.Zero, rectangle));
         Assert.Equal(0f, Distance2D.Distance(Vector2f.Zero, rectangle));
-        Assert.Equal(5f, Distance2D.Distance(new Vector2f(3, 4), default(Rect2D)));
+        Assert.Equal(5f, Distance2D.Distance(new Vector2f(3, 4), default(Rect2f)));
         Assert.Equal(0f, Distance2D.SignedDistance(Vector2f.Zero, default));
-        Assert.Equal(-1f, Distance2D.SignedDistance(default(Rect2D), rectangle));
-        Assert.Equal(5f, Distance2D.Distance(default(Rect2D), new Rect2D(new(3, 4), new(3, 4))));
+        Assert.Equal(-1f, Distance2D.SignedDistance(default(Rect2f), rectangle));
+        Assert.Equal(5f, Distance2D.Distance(default(Rect2f), new Rect2f(new(3, 4), new(3, 4))));
     }
 
     [Fact]
     public void AnyRectangleContractGetsDistanceQueries()
     {
         var region = new Region(new(-1), new(1));
-        var other = new Rect2D(new(4, 5), new(5, 6));
+        var other = new Rect2f(new(4, 5), new(5, 6));
         Assert.Equal(-1f, region.SignedDistanceTo(Vector2f.Zero));
         Assert.Equal(0f, region.DistanceTo(Vector2f.Zero));
         Assert.Equal(5f, region.DistanceTo(other));
@@ -167,18 +165,18 @@ public sealed class Distance2DTests
     {
         var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2, 4));
         box.Transform.Scale = new(-2, 2);
-        box.Transform.Rotation = MathF.PI / 2;
-        box.Transform.Position = new(10, 20); // world extents x=6..14, y=18..22
+        box.Rotation = MathF.PI / 2;
+        box.Position = new(10, 20); // world extents x=6..14, y=18..22
         var circle = new SpatialObject2D(Circle2D.Builder.Create(1));
-        circle.Transform.Scale = new(2);
-        circle.Transform.Position = new(19, 22);
+        circle.Scale = 2;
+        circle.Position = new(19, 22);
         Assert.Equal(3f, SpatialDistance2D.SignedDistance(box, circle), 4);
         Assert.Equal(3f, SpatialDistance2D.SignedDistance(circle, box), 4);
         Assert.Equal(3f, SpatialDistance2D.Distance(box, circle), 4);
         Assert.Equal(-2f, SpatialDistance2D.SignedDistance(new Vector2f(10, 20), box), 4);
         Assert.Equal(5f, SpatialDistance2D.SignedDistance(new Vector2f(17, 26), box), 4);
         Assert.Equal(3f, ShapeDistance2D.SignedDistance(box.Shape, box.CollisionPose, circle.Shape, circle.CollisionPose), 4);
-        circle.Transform.Position = new(15, 22);
+        circle.Position = new(15, 22);
         Assert.Equal(-1f, SpatialDistance2D.SignedDistance(box, circle), 4); // pose cache refreshes
         box.Transform.Scale = new(2, 1);
         Assert.Throws<ArgumentException>(() => SpatialDistance2D.Distance(box, circle));
@@ -188,11 +186,11 @@ public sealed class Distance2DTests
     public void TransformedHalfSpaceUsesItsWorldBoundary()
     {
         var wall = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitX, 1));
-        wall.Transform.Scale = new(2);
-        wall.Transform.Rotation = MathF.PI / 2;
-        wall.Transform.Position = new(3, 5); // boundary y = 7
+        wall.Scale = 2;
+        wall.Rotation = MathF.PI / 2;
+        wall.Position = new(3, 5); // boundary y = 7
         var circle = new SpatialObject2D(Circle2D.Builder.Create(1));
-        circle.Transform.Position = new(3, 10);
+        circle.Position = new(3, 10);
         Assert.Equal(2f, SpatialDistance2D.SignedDistance(circle, wall), 4);
         Assert.Equal(2f, SpatialDistance2D.SignedDistance(wall, circle), 4);
     }
@@ -245,5 +243,5 @@ public sealed class Distance2DTests
         Assert.Equal(Math.Max(0f, expected), ShapeDistance2D.Distance(first, second), 4);
     }
 
-    private readonly record struct Region(Vector2f Min, Vector2f Max) : IRect2D;
+    private readonly record struct Region(Vector2f Min, Vector2f Max) : IRect2f;
 }

@@ -1,7 +1,6 @@
 using App2d.Contracts.Enemies;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
-using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
@@ -11,7 +10,7 @@ public sealed class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
     public PatrolEnemy2D Enemy { get; } = Ensure.RequireNotNull(enemy);
     public ICombatant2D Combatant => Enemy;
     public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.Shieldback,
-        Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, Enemy.Facing,
+        Enemy.WorldObject.Position, Enemy.Body.LinearVelocity, 0f, Enemy.Facing,
         _simulationEnabled, Enemy.IsAlive)
     {
         MoveSpeed = Enemy.Speed
@@ -23,7 +22,7 @@ public sealed class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
         Enemy.SetSimulationEnabled(isEnabled);
     }
 
-    public void Update(float deltaSeconds, Vector2f  targetPosition)
+    public void Update(float deltaSeconds, Vector2f targetPosition)
     {
         Ensure.NonNegative(deltaSeconds);
         Ensure.Finite(targetPosition);

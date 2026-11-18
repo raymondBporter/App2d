@@ -1,9 +1,7 @@
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Collision;
 
@@ -54,8 +52,8 @@ public sealed class DistanceContactConsistencyTests
         SpatialObject2D Place(IShape2D shape)
         {
             var placed = new SpatialObject2D(shape);
-            placed.Transform.Position = new(random.NextFloat(-3f, 3f), random.NextFloat(-3f, 3f));
-            placed.Transform.Rotation = random.NextFloat(MathF.Tau);
+            placed.Position = new(random.NextFloat(-3f, 3f), random.NextFloat(-3f, 3f));
+            placed.Rotation = random.NextFloat(MathF.Tau);
             var scale = random.NextFloat(.5f, 2f);
             placed.Transform.Scale = new(random.Next(2) == 0 ? -scale : scale, scale);
             return placed;

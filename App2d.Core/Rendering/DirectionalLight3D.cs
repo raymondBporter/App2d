@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace App2d.Core.Rendering;
 
 /// <summary>

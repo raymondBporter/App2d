@@ -10,7 +10,6 @@ using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Gameplay.Simulation;
 
@@ -31,10 +30,10 @@ public sealed class SideScrollerSession2D : IDisposable
     private bool _disposed;
     private long _eventSequence;
     private bool _advancing;
-    private Vector2f ? _pendingPlaygroundTravel;
+    private Vector2f? _pendingPlaygroundTravel;
 
     /// <summary>Offline level-playground command, applied at the next simulation tick.</summary>
-    public void TravelForPlaytesting(Vector2f  destination)
+    public void TravelForPlaytesting(Vector2f destination)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         Ensure.ThrowIf(_advancing, "Travel requires a completed simulation tick.");
@@ -270,10 +269,10 @@ public sealed class SideScrollerSession2D : IDisposable
     }
 
     /// <summary>Policy: terrain streams around the first participant.</summary>
-    private Vector2f  StreamingFocus => _players[0].Person.Position;
+    private Vector2f StreamingFocus => _players[0].Person.Position;
 
     /// <summary>Policy: enemies pursue the first living participant, or the first one if none live.</summary>
-    private Vector2f  EnemyTarget
+    private Vector2f EnemyTarget
     {
         get
         {

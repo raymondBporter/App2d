@@ -6,7 +6,6 @@ using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
@@ -18,13 +17,13 @@ public sealed class SideScrollerSessionWorld2D(
     public WorldState2D CaptureWorld() => level.CaptureWorld();
     public ImmutableArray<EnemyState2D> CaptureEnemies() => level.EnemySystem.CaptureStates();
     public ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => level.EnemySystem.DrainEvents();
-    public Rect2D Bounds => level.TileMap.WorldBounds;
+    public Rect2f Bounds => level.TileMap.WorldBounds;
     public float GoalX => level.GoalX;
     public void UpdateStreaming(Vector2f focus) => level.UpdateStreaming(focus);
     public void UpdateWorldMotion(float dt) => level.UpdateWorldMotion(dt);
     public void UpdateEnemies(float dt, Vector2f target) => level.EnemySystem.Update(dt, target);
     public void SyncEnemiesAfterPhysics() => level.EnemySystem.SyncAfterPhysics();
-    public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => level.UpdateSavePoints(dt, bounds);
+    public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2f bounds) => level.UpdateSavePoints(dt, bounds);
     public void SetActiveSavePoint(long? id) => level.SetActiveSavePoint(id);
 
     public void ResolveDamage(Person2D player)

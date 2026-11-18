@@ -1,6 +1,3 @@
-using App2d.Core.Mathematics;
-using System.Numerics;
-
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>An open polyline parameterized uniformly across its segments.</summary>

@@ -1,4 +1,3 @@
-using App2d.Core.Validation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -8,7 +7,7 @@ namespace App2d.Core.Mathematics;
 
 /// <summary>A two-dimensional float vector backed by <see cref="Vector2"/>.</summary>
 [StructLayout(LayoutKind.Sequential)]
-public readonly record struct Vector2f : IVector<Vector2f, float>
+public readonly record struct Vector2f : IVector2<Vector2f, float>
 {
     private readonly Vector2 _value;
 
@@ -36,6 +35,7 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
     public static Vector2f NegativeInfinity => new(float.NegativeInfinity);
     public static Vector2f PositiveInfinity => new(float.PositiveInfinity);
     public static Vector2f FromCoordinates(ReadOnlySpan<float> coordinates) => new(coordinates[0], coordinates[1]);
+    public static Vector2f Create(float x, float y) => new(x, y);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2f operator +(Vector2f left, Vector2f right) => new(left._value + right._value);
@@ -74,6 +74,31 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
     public static Vector2f Abs(Vector2f value) => new(Vector2.Abs(value._value));
     public static bool IsFinite(Vector2f value) => float.IsFinite(value.X) && float.IsFinite(value.Y);
 
+    public Vector2f Min(Vector2f other) => Min(this, other);
+    public Vector2f Max(Vector2f other) => Max(this, other);
+    public Vector2f Abs() => Abs(this);
+    public bool IsFinite() => IsFinite(this);
+    public float DistanceSquared(Vector2f other) => DistanceSquared(this, other);
+    public float Distance(Vector2f other) => Distance(this, other);
+    public Vector2f Lerp(Vector2f other, float amount) => Lerp(this, other, amount);
+    public Vector2f Midpoint(Vector2f other) => IVectorExtensions.Midpoint<Vector2f, float>(this, other);
+    public Vector2f Project(Vector2f unitNormal) => IVectorExtensions.Project<Vector2f, float>(this, unitNormal);
+    public Vector2f Reject(Vector2f unitNormal) => Reject(this, unitNormal);
+    public Vector2f Reflect(Vector2f unitNormal) => Reflect(this, unitNormal);
+    public Vector2f Clamp(Vector2f minimum, Vector2f maximum) => Clamp(this, minimum, maximum);
+
+    public float Cross(Vector2f other) => Vector2Math<Vector2f, float>.Cross(this, other);
+    public float Orientation(Vector2f second, Vector2f third) => Vector2Math<Vector2f, float>.Orientation(this, second, third);
+    [JsonIgnore]
+    public float AngleRadians => Vector2Math<Vector2f, float>.AngleRadians(this);
+    [JsonIgnore]
+    public Vector2f PerpCcw => Vector2Math<Vector2f, float>.PerpCcw(this);
+    [JsonIgnore]
+    public Vector2f PerpCw => Vector2Math<Vector2f, float>.PerpCw(this);
+    public Vector2f Rotate(float radians) => Vector2Math<Vector2f, float>.Rotate(this, radians);
+    public Vector2f Rotate(float radians, Vector2f pivot) => Vector2Math<Vector2f, float>.Rotate(this, radians, pivot);
+    public Polar<float> ToPolar() => Vector2Math<Vector2f, float>.ToPolar(this);
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float LengthSquared() => _value.LengthSquared();
 
@@ -92,8 +117,7 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
     public Vector2f Normalized() => Normalize(this);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2f Lerp(Vector2f first, Vector2f second, float amount) =>
-        new(Vector2.Lerp(first._value, second._value, amount));
+    public static Vector2f Lerp(Vector2f first, Vector2f second, float amount) => new(Vector2.Lerp(first._value, second._value, amount));
 
     public static Vector2f Clamp(Vector2f value, Vector2f minimum, Vector2f maximum) => Min(Max(value, minimum), maximum);
 
@@ -104,73 +128,6 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
 
     /// <summary>Removes the component parallel to a unit normal.</summary>
     public static Vector2f Reject(Vector2f value, Vector2f unitNormal) => value - unitNormal * Dot(value, unitNormal);
-
-    /// <summary>
-    /// Refracts a unit direction through a unit normal pointing toward the incident medium.
-    /// Indices must be finite and positive. Total internal reflection returns false and a zero vector.
-    /// </summary>
-    public static bool TryRefract(Vector2f direction, Vector2f incidentNormal,
-        float fromIndex, float toIndex, out Vector2f transmitted)
-    {
-        Ensure.Positive(fromIndex);
-        Ensure.Positive(toIndex);
-        var tangent = Reject(direction, incidentNormal);
-        var refracted = Vector2d.TryRefractTangent(tangent.ToVector2d(), incidentNormal.ToVector2d(), fromIndex, toIndex, out var wide);
-        transmitted = wide.ToVector2f();
-        return refracted;
-    }
-
-    /// <summary>Returns the unit direction at a finite angle. Zero radians points along +X.</summary>
-    public static Vector2f Direction(float angleRadians)
-    {
-        Ensure.Finite(angleRadians);
-        var (sin, cos) = float.SinCos(angleRadians);
-        return new(cos, sin);
-    }
-
-    /// <summary>Unit vector at a finite angle in radians, counter-clockwise from +X in Y-up space.</summary>
-    public static Vector2f FromAngle(float angleRadians) => Direction(angleRadians);
-
-    /// <summary>Unit vector at a finite angle in degrees, counter-clockwise from +X in Y-up space.</summary>
-    public static Vector2f FromAngleDegrees(float angleDegrees) => Direction(Angles.DegreesToRadians(angleDegrees));
-
-    /// <summary>Vector from a finite, nonnegative radius and a finite angle in radians.</summary>
-    public static Vector2f FromPolar(float radius, float angleRadians)
-    {
-        var polar = new Polar<float>(radius, angleRadians);
-        return Direction(polar.AngleRadians) * polar.Radius;
-    }
-
-    public Polar<float> ToPolar() => Polar<float>.FromCartesian(new Vec2<float>(this));
-
-    /// <summary>Heading in radians from +X, counter-clockwise in Y-up space.</summary>
-    [JsonIgnore]
-    public float AngleRadians => float.Atan2(Y, X);
-
-    /// <summary>Rotates counter-clockwise about the origin.</summary>
-    public Vector2f Rotate(float radians)
-    {
-        if (radians == 0f)
-            return this;
-
-        var (sin, cos) = float.SinCos(radians);
-        return new(X * cos - Y * sin, X * sin + Y * cos);
-    }
-
-    /// <summary>Rotates counter-clockwise about a pivot.</summary>
-    public Vector2f Rotate(float radians, Vector2f pivot) => pivot + (this - pivot).Rotate(radians);
-
-    /// <summary>The perpendicular dot product, positive for a counter-clockwise turn in Y-up space.</summary>
-    public float Cross(Vector2f other) => X * other.Y - Y * other.X;
-
-    /// <summary>Twice the signed triangle area, positive for a counter-clockwise turn in Y-up space.</summary>
-    public float Orientation(Vector2f b, Vector2f c) => (b - this).Cross(c - this);
-
-    [JsonIgnore]
-    public Vector2f PerpCcw => new(-Y, X);
-
-    [JsonIgnore]
-    public Vector2f PerpCw => new(Y, -X);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2f Transform(Vector2f point, Matrix3x2 matrix) => new(Vector2.Transform(point._value, matrix));
@@ -189,6 +146,6 @@ public readonly record struct Vector2f : IVector<Vector2f, float>
     public Vector2 ToVector2() => _value;
 
     public Vector2f ToVector2f() => this;
-    public Vector2d ToVector2d() => new(X, Y);
+    public Vector2d ToVector2d() => new(this);
     public override string ToString() => _value.ToString();
 }

@@ -3,6 +3,10 @@
 This is the current system guide. Start here to understand how the saved assets,
 runtime, Studio, generators, and diagnostics fit together.
 
+Studio, its generators and diagnostics, and the tests that depend on them are in
+[AppAnimation](https://github.com/raymondBporter/AppAnimation). Runtime code and
+shared assets remain in App2d; the Studio solution references this checkout.
+
 The source organization separates **definitions**, **resolution**, **evaluation**,
 **live state**, and **authoring tools**. This organization pass preserves the C#
 implementations, type names, namespaces, project references, and asset formats.
@@ -327,7 +331,7 @@ unless a forced generation is requested. Merely opening Studio or loading the ga
 does not regenerate the library. `MigrationMeasurements` retains its historical
 name but measures the current catalog/evaluation/arena path.
 
-Run Studio with `dotnet run --project App2d.CharacterStudio`. The unchanged command
+Run Studio with `dotnet run --project ../AppAnimation/App2d.CharacterStudio`. The unchanged command
 entry points are in `Program.cs` and `Seeds/SeedCommands.cs`. For examples and visual
 workflows, see [Character Studio](character-studio.md).
 

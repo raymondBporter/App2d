@@ -12,7 +12,7 @@ namespace App2d.Core.Spatial;
 /// </summary>
 public class SpatialObject2D(IShape2D shape)
 {
-    private Rect2D _worldBounds;
+    private Rect2f _worldBounds;
     private int _worldBoundsVersion = -1;
     private Similarity2D _collisionPose;
     private int _collisionPoseVersion = -1;
@@ -20,10 +20,35 @@ public class SpatialObject2D(IShape2D shape)
     public Affine2D Transform { get; } = new();
     public IShape2D Shape { get; } = Ensure.RequireNotNull(shape);
 
-    /// <summary>Calculated once when the immutable shape is attached; independent of this object's transform.</summary>
-    public Rect2D LocalBounds { get; } = ShapeBounds2D.Calculate(shape);
+    public Vector2f Position
+    {
+        get => Transform.Position;
+        set => Transform.Position = value;
+    }
 
-    public Rect2D WorldBounds
+    /// <summary>Rotation in radians.</summary>
+    public float Rotation
+    {
+        get => Transform.Rotation;
+        set => Transform.Rotation = value;
+    }
+
+    /// <summary>The positive uniform scale of the pose. Changing it preserves the existing axis signs.</summary>
+    public float Scale
+    {
+        get => CollisionPose.Scale;
+        set
+        {
+            Ensure.Positive(value);
+            var scale = Transform.Scale;
+            Transform.Scale = new(MathF.CopySign(value, scale.X), MathF.CopySign(value, scale.Y));
+        }
+    }
+
+    /// <summary>Calculated once when the immutable shape is attached; independent of this object's transform.</summary>
+    public Rect2f LocalBounds { get; } = ShapeBounds2D.Calculate(shape);
+
+    public Rect2f WorldBounds
     {
         get
         {
@@ -32,8 +57,7 @@ public class SpatialObject2D(IShape2D shape)
                 return _worldBounds;
             }
 
-            _worldBounds = ShapeBounds2D.TryCalculateTransformed(Shape, Transform.Matrix, out var bounds)
-                ? bounds : LocalBounds.TransformedBy(Transform.Matrix);
+            _worldBounds = ShapeBounds2D.CalculateAffineTransformed(Shape, Transform.Matrix, LocalBounds);
             _worldBoundsVersion = Transform.Version;
             return _worldBounds;
         }

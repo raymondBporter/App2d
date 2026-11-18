@@ -6,7 +6,6 @@ using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
@@ -114,10 +113,10 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
         {
             var isOneWay = collision.Kind.IsOneWay();
             var bounds = isOneWay
-                ? new Rect2D(new Vector2f(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
+                ? new Rect2f(new Vector2f(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
                 : collision.Bounds;
             var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(bounds.Size));
-            platform.Transform.Position = bounds.Center;
+            platform.Position = bounds.Center;
             _platforms.Add(platform);
 
             var body = _physics.AddBody(platform, BodyMotionType2D.Static,

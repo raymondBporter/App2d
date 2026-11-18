@@ -17,7 +17,7 @@ public sealed class Camera2D
     const float MinZoom = 0.05f;
     const float MaxZoom = 20f;
 
-    public Vector2f  Position
+    public Vector2f Position
     {
         get;
         set => field = ClampToWorld(value);
@@ -34,10 +34,10 @@ public sealed class Camera2D
         }
     }
 
-    public Vector2f  ViewportSize { get; private set; } = new(InitialSizeX, InitialSizeY);
+    public Vector2f ViewportSize { get; private set; } = new(InitialSizeX, InitialSizeY);
 
     /// <summary>Optional world limit for the viewport center and its visible area.</summary>
-    public Rect2D? WorldBounds
+    public Rect2f? WorldBounds
     {
         get;
         set
@@ -107,16 +107,16 @@ public sealed class Camera2D
     }
 
     /// <summary>The world-space bounding box of everything the viewport can see.</summary>
-    public Rect2D VisibleWorldBounds => new Rect2D(Vector2f.Zero, ViewportSize).TransformedBy(DeviceToWorldMatrix);
+    public Rect2f VisibleWorldBounds => new Rect2f(Vector2f.Zero, ViewportSize).TransformedBy(DeviceToWorldMatrix);
 
-    public Vector2f  WorldToDevice(Vector2f  worldPoint) => WorldToDeviceTransform.TransformPoint(worldPoint);
+    public Vector2f WorldToDevice(Vector2f worldPoint) => WorldToDeviceTransform.TransformPoint(worldPoint);
 
-    public Vector2f  DeviceToWorld(Vector2f  devicePoint) => Vector2f.Transform(devicePoint, DeviceToWorldMatrix);
+    public Vector2f DeviceToWorld(Vector2f devicePoint) => Vector2f.Transform(devicePoint, DeviceToWorldMatrix);
 
     public FrameView2D GetFrameView() => new(ViewportSize, WorldToDeviceMatrix, PixelsPerWorldUnit);
 
     /// <summary>Constrain a desired center, with optional room for render effects such as shake.</summary>
-    public Vector2f  ClampToWorld(Vector2f  desiredPosition, float padding = 0f)
+    public Vector2f ClampToWorld(Vector2f desiredPosition, float padding = 0f)
     {
         Ensure.Finite(desiredPosition);
         Ensure.NonNegative(padding);

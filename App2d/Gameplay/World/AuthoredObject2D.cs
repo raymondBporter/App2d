@@ -7,7 +7,6 @@ using App2d.Core.Physics.Motion;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
@@ -33,7 +32,7 @@ public sealed class AuthoredObject2D : IDisposable
         var shape = asset.Physics is not null ? PartShapes2D.Collision(asset) : new PartShader2D(asset).BoundsShape();
         _motion = asset.Motion?.CreateMotion(placement.Position);
         WorldObject = new(shape);
-        WorldObject.Transform.Position = _motion?.Position(0) ?? placement.Position;
+        WorldObject.Position = _motion?.Position(0) ?? placement.Position;
         Body = asset.Physics?.CreateBody(physics, WorldObject);
         if (Body is not null)
         {
@@ -63,8 +62,8 @@ public sealed class AuthoredObject2D : IDisposable
         _time += dt;
         if (_motion is null) return;
         var target = _motion.Position(_time);
-        if (Body is not null) Body.LinearVelocity = dt == 0 ? Vector2f.Zero : (target - WorldObject.Transform.Position) / dt;
-        else WorldObject.Transform.Position = target;
+        if (Body is not null) Body.LinearVelocity = dt == 0 ? Vector2f.Zero : (target - WorldObject.Position) / dt;
+        else WorldObject.Position = target;
     }
 
     public void SetSimulationEnabled(bool enabled)
@@ -83,7 +82,7 @@ public sealed class AuthoredObject2D : IDisposable
     }
 
     public ObjectDefinition2D CaptureDefinition() => new(Id, Placement.Id, Placement.Asset);
-    public ObjectState2D CaptureState() => new(Id, WorldObject.Transform.Position, WorldObject.Transform.Rotation)
+    public ObjectState2D CaptureState() => new(Id, WorldObject.Position, WorldObject.Rotation)
     {
         LinearVelocity = IsEnabled ? Body?.LinearVelocity ?? Vector2f.Zero : _pausedVelocity,
         AngularVelocity = IsEnabled ? Body?.AngularVelocity ?? 0 : _pausedSpin,
@@ -98,8 +97,8 @@ public sealed class AuthoredObject2D : IDisposable
         Ensure.Finite(state.Position); Ensure.Finite(state.Rotation);
         Ensure.Finite(state.LinearVelocity); Ensure.Finite(state.AngularVelocity); Ensure.NonNegative(state.Time);
         SetSimulationEnabled(true);
-        WorldObject.Transform.Position = state.Position;
-        WorldObject.Transform.Rotation = state.Rotation;
+        WorldObject.Position = state.Position;
+        WorldObject.Rotation = state.Rotation;
         _time = state.Time;
         if (Body is not null) { Body.LinearVelocity = state.LinearVelocity; Body.AngularVelocity = state.AngularVelocity; }
         SetSimulationEnabled(state.IsEnabled);

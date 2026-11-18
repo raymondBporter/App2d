@@ -1,7 +1,6 @@
 using App2d.Contracts.Enemies;
 using App2d.Gameplay.Combat;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 

@@ -1,5 +1,4 @@
 using App2d.Core.Animation;
-using App2d.Core.Mathematics;
 
 namespace App2d.Tests.Animation;
 

@@ -1,7 +1,6 @@
 using App2d.Contracts.World;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
@@ -22,7 +21,7 @@ internal sealed class SavePoint2D
     public bool IsActive { get; private set; }
     public CheckpointPlacement2D CapturePlacement() => new(Spec.ThingId, _basePosition);
     public CheckpointState2D CaptureState() => new(Spec.ThingId, IsActive);
-    public bool Update(float deltaSeconds, Rect2D playerBounds)
+    public bool Update(float deltaSeconds, Rect2f playerBounds)
     {
         Ensure.NonNegative(deltaSeconds);
         var isInside = TriggerBounds.Intersects(playerBounds);
@@ -31,6 +30,6 @@ internal sealed class SavePoint2D
         return entered;
     }
     public void SetActive(bool active) => IsActive = active;
-    private Rect2D TriggerBounds =>
+    private Rect2f TriggerBounds =>
         new(_basePosition + new Vector2f(-64f, -8f), _basePosition + new Vector2f(64f, 132f));
 }

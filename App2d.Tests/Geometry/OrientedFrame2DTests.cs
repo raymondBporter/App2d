@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
-using System.Numerics;
 using static App2d.Tests.Geometry.VectorComparers;
 
 namespace App2d.Tests.Geometry;
@@ -27,7 +26,7 @@ public sealed class OrientedFrame2DTests
         Span<Vector2f> corners = stackalloc Vector2f[4];
         VertexGenerator2D.WriteRectangle(corners, new(-3, -1), new(3, 1));
         Tilted.MapFromFrame(corners);
-        var expected = Rect2D.FromPoints(corners);
+        var expected = Rect2f.FromPoints(corners);
         var actual = Tilted.BoxBounds(new(3, 1));
         Assert.Equal(expected.Min, actual.Min, Near);
         Assert.Equal(expected.Max, actual.Max, Near);
@@ -37,7 +36,7 @@ public sealed class OrientedFrame2DTests
     public void NinetyDegreesSwapsBoxExtentsExactly()
     {
         var frame = new OrientedFrame2D(Vector2f.Zero, Vector2f.UnitY);
-        Assert.Equal(new Rect2D(new(-1, -3), new(1, 3)), frame.BoxBounds(new(3, 1)));
+        Assert.Equal(new Rect2f(new(-1, -3), new(1, 3)), frame.BoxBounds(new(3, 1)));
     }
 
     [Fact]
@@ -46,7 +45,7 @@ public sealed class OrientedFrame2DTests
         var vertices = new Vector2f[256];
         VertexGenerator2D.WriteEllipse(vertices, Vector2f.Zero, new(3, 1));
         Tilted.MapFromFrame(vertices);
-        var sampled = Rect2D.FromPoints(vertices);
+        var sampled = Rect2f.FromPoints(vertices);
         var analytic = Tilted.EllipseBounds(new(3, 1));
         Assert.Equal(sampled.Min, analytic.Min, Loose);
         Assert.Equal(sampled.Max, analytic.Max, Loose);

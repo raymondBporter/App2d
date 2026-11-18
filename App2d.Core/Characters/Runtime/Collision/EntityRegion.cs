@@ -7,7 +7,6 @@ using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -27,7 +26,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     public EntityRegion(string id, IConvexShape2D shape) : this(id, shape, Similarity2D.Identity) { }
 
     /// <summary>The axis-aligned box around the placed region.</summary>
-    public Rect2D Bounds => ShapeBounds2D.CalculateTransformed(Shape, Pose.ToMatrix());
+    public Rect2f Bounds => ShapeBounds2D.CalculateTransformed(Shape, Pose);
 
     /// <summary>Tests two regions after translating each into a common space. Touching counts as overlap.</summary>
     /// <param name="other">The other region.</param>
@@ -48,7 +47,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     {
         Ensure.ThrowIfNull(other);
         var pose = Pose.Translated(position);
-        if (!ShapeBounds2D.CalculateTransformed(Shape, pose.ToMatrix()).Intersects(other.WorldBounds))
+        if (!ShapeBounds2D.CalculateTransformed(Shape, pose).Intersects(other.WorldBounds))
         {
             return false;
         }

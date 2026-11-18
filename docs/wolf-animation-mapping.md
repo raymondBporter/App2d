@@ -50,8 +50,8 @@ Run from the repository root:
 & 'C:/Program Files/Blender Foundation/Blender 5.2/blender.exe' --background --factory-startup --disable-autoexec --python-exit-code 1 --python tools/CharacterPipeline/export_wolf.py
 node tools/CharacterPipeline/import-wolf.cjs
 node --test tools/CharacterPipeline/tests/wolf-pack.test.cjs
-dotnet run --project App2d.CharacterStudio -- --check
-dotnet run --project App2d.CharacterStudio -- --smoke-wolf artifacts/wolf-smoke
+dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --check
+dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --smoke-wolf artifacts/wolf-smoke
 ```
 
 Export writes an ignored intermediate pack in `Assets/Work/tomek-wolf`; import

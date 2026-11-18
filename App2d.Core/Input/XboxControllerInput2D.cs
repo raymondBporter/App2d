@@ -1,4 +1,3 @@
-using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace App2d.Core.Input;

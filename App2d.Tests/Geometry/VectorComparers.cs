@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace App2d.Tests.Geometry;
 
 /// <summary>Absolute per-component tolerances for vector assertions.</summary>

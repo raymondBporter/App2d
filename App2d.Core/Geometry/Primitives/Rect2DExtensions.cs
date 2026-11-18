@@ -8,12 +8,12 @@ using System.Numerics;
 namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
-/// Shared rectangle properties and queries for any <see cref="IRect2D"/>. Generic receivers keep value-type
+/// Shared float rectangle properties and queries. Generic receivers keep value-type
 /// rectangles unboxed. All coordinates belong to the rectangle's own space; Top means Max.Y.
 /// </summary>
 public static class Rect2DExtensions
 {
-    extension<T>(T rectangle) where T : IRect2D
+    extension<T>(T rectangle) where T : IRect2f
     {
         /// <summary>Min.X.</summary>
         public float Left => rectangle.Min.X;
@@ -109,18 +109,18 @@ public static class Rect2DExtensions
         /// <summary>Tests whether another rectangle lies entirely inside this one, shared edges included.</summary>
         /// <param name="other">The rectangle to test.</param>
         /// <returns>True when the whole other rectangle is contained.</returns>
-        public bool Contains<TOther>(TOther other) where TOther : IRect2D => Containment2D.RectangleInRectangle(rectangle.Min, rectangle.Max, other.Min, other.Max);
+        public bool Contains<TOther>(TOther other) where TOther : IRect2f => Containment2D.RectangleInRectangle(rectangle.Min, rectangle.Max, other.Min, other.Max);
 
         /// <summary>Tests overlap with another rectangle; touching edges and corners count.</summary>
         /// <param name="other">The other rectangle.</param>
         /// <returns>True when the rectangles share at least a point.</returns>
-        public bool Intersects<TOther>(TOther other) where TOther : IRect2D => Intersection2D.RectanglesOverlap(rectangle.Min, rectangle.Max, other.Min, other.Max);
+        public bool Intersects<TOther>(TOther other) where TOther : IRect2f => Intersection2D.RectanglesOverlap(rectangle.Min, rectangle.Max, other.Min, other.Max);
 
         /// <summary>Computes the shared rectangle, including zero-area edge and corner contacts.</summary>
         /// <param name="other">The other rectangle.</param>
         /// <param name="result">The intersection, or default when the rectangles are disjoint.</param>
         /// <returns>True when the rectangles intersect.</returns>
-        public bool TryIntersect<TOther>(TOther other, out Rect2D result) where TOther : IRect2D
+        public bool TryIntersect<TOther>(TOther other, out Rect2f result) where TOther : IRect2f
         {
             if (!rectangle.Intersects(other))
             {
@@ -132,12 +132,12 @@ public static class Rect2DExtensions
         }
 
         /// <summary>The center of the shared rectangle, a natural contact point; for disjoint rectangles, the middle of the gap between them.</summary>
-        public Vector2f OverlapCenter<TOther>(TOther other) where TOther : IRect2D => (Vector2f.Max(rectangle.Min, other.Min) + Vector2f.Min(rectangle.Max, other.Max)) / 2;
+        public Vector2f OverlapCenter<TOther>(TOther other) where TOther : IRect2f => (Vector2f.Max(rectangle.Min, other.Min) + Vector2f.Min(rectangle.Max, other.Max)) / 2;
 
         /// <summary>The smallest rectangle containing both operands.</summary>
         /// <param name="other">The other rectangle.</param>
         /// <returns>The bounding box of both rectangles.</returns>
-        public Rect2D Union<TOther>(TOther other) where TOther : IRect2D => new(Vector2f.Min(rectangle.Min, other.Min), Vector2f.Max(rectangle.Max, other.Max));
+        public Rect2f Union<TOther>(TOther other) where TOther : IRect2f => new(Vector2f.Min(rectangle.Min, other.Min), Vector2f.Max(rectangle.Max, other.Max));
 
         /// <summary>The closest point in or on this rectangle; interior points are returned unchanged.</summary>
         /// <param name="point">The query point.</param>
@@ -162,17 +162,17 @@ public static class Rect2DExtensions
         /// <summary>The distance between two filled rectangles; zero when touching or overlapping.</summary>
         /// <param name="other">The other rectangle.</param>
         /// <returns>The nonnegative gap.</returns>
-        public float DistanceTo<TOther>(TOther other) where TOther : IRect2D => Distance2D.Distance(rectangle.ToRect(), other.ToRect());
+        public float DistanceTo<TOther>(TOther other) where TOther : IRect2f => Distance2D.Distance(rectangle.ToRect(), other.ToRect());
 
         /// <summary>The signed distance between two finite rectangles: the gap, or the negated minimum escape translation when overlapping.</summary>
         /// <param name="other">The other rectangle.</param>
         /// <returns>The signed distance.</returns>
-        public float SignedDistanceTo<TOther>(TOther other) where TOther : IRect2D => Distance2D.SignedDistance(rectangle.ToRect(), other.ToRect());
+        public float SignedDistanceTo<TOther>(TOther other) where TOther : IRect2f => Distance2D.SignedDistance(rectangle.ToRect(), other.ToRect());
 
         /// <summary>Moves the rectangle by a finite offset.</summary>
         /// <param name="offset">The translation to apply.</param>
         /// <returns>The translated rectangle.</returns>
-        public Rect2D TranslatedBy(Vector2f offset)
+        public Rect2f TranslatedBy(Vector2f offset)
         {
             Ensure.Finite(offset);
             return new(rectangle.Min + offset, rectangle.Max + offset);
@@ -181,13 +181,13 @@ public static class Rect2DExtensions
         /// <summary>Expands all four sides by the same nonnegative finite amount.</summary>
         /// <param name="amount">The amount added on each side.</param>
         /// <returns>The inflated rectangle.</returns>
-        public Rect2D InflatedBy(float amount) => rectangle.InflatedBy(amount, amount);
+        public Rect2f InflatedBy(float amount) => rectangle.InflatedBy(amount, amount);
 
         /// <summary>Expands both sides of each axis by nonnegative finite amounts.</summary>
         /// <param name="x">The amount added to the left and right.</param>
         /// <param name="y">The amount added to the bottom and top.</param>
         /// <returns>The inflated rectangle.</returns>
-        public Rect2D InflatedBy(float x, float y)
+        public Rect2f InflatedBy(float x, float y)
         {
             Ensure.NonNegative(x);
             Ensure.NonNegative(y);
@@ -199,7 +199,7 @@ public static class Rect2DExtensions
         /// <param name="x">The amount removed from the left and right.</param>
         /// <param name="y">The amount removed from the bottom and top.</param>
         /// <returns>The inset rectangle.</returns>
-        public Rect2D InsetBy(float x, float y)
+        public Rect2f InsetBy(float x, float y)
         {
             Ensure.NonNegative(x);
             Ensure.NonNegative(y);
@@ -207,22 +207,22 @@ public static class Rect2DExtensions
             return new(rectangle.Min + amount, rectangle.Max - amount);
         }
 
-        /// <summary>Copies Min and Max into a <see cref="Rect2D"/> value.</summary>
+        /// <summary>Copies Min and Max into a <see cref="Rect2f"/> value.</summary>
         /// <returns>An equivalent rectangle value.</returns>
-        public Rect2D ToRect() => new(rectangle.Min, rectangle.Max);
+        public Rect2f ToRect() => new(rectangle.Min, rectangle.Max);
 
         /// <summary>
         /// Encloses this rectangle after a matrix transform. Rotation or shear transforms all four corners;
         /// otherwise the two corners are scaled and translated directly. This bounds the box, not the shape
-        /// inside it. Non-finite rectangles stay <see cref="Rect2D.Unbounded"/> so broad-phase candidates survive.
+        /// inside it. Non-finite rectangles stay <see cref="Rect2f.Unbounded"/> so broad-phase candidates survive.
         /// </summary>
         /// <param name="transform">The local-to-world matrix to apply.</param>
         /// <returns>The axis-aligned box around the transformed corners.</returns>
-        public Rect2D TransformedBy(Matrix3x2 transform)
+        public Rect2f TransformedBy(Matrix3x2 transform)
         {
             if (!rectangle.IsFinite)
             {
-                return Rect2D.Unbounded;
+                return Rect2f.Unbounded;
             }
 
             if (transform.M12 == 0f && transform.M21 == 0f)
@@ -240,7 +240,7 @@ public static class Rect2DExtensions
                 corners[i] = Vector2f.Transform(corners[i], transform);
             }
 
-            return Rect2D.FromPoints(corners);
+            return Rect2f.FromPoints(corners);
         }
 
         /// <summary>Writes the four finite corners counter-clockwise from Min, leaving extra entries untouched.</summary>

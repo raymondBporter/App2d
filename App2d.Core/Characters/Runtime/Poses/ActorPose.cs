@@ -1,7 +1,5 @@
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
-using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -10,7 +8,7 @@ namespace App2d.Core.Characters.Authored;
 /// position and facing. Rendering draws <see cref="Local"/> through a mirrored matrix; collision and props use
 /// <see cref="Place"/>, so both read one pose.
 /// </summary>
-public sealed record ActorPose(EvaluatedPose Local, Vector2f  Position, int Facing)
+public sealed record ActorPose(EvaluatedPose Local, Vector2f Position, int Facing)
 {
     /// <summary>
     /// The entity-to-world placement: actor-local XY mirrored to the facing at the actor's position, with no layer

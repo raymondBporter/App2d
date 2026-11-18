@@ -2,7 +2,6 @@ using App2d.Contracts.World;
 using App2d.Core.Audio;
 using App2d.Presentation.Audio;
 using System.Diagnostics;
-using System.Numerics;
 using Xunit.Abstractions;
 
 namespace App2d.Tests.Presentation.Audio;

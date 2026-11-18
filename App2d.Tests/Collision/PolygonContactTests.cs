@@ -2,7 +2,6 @@ using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Collision;
 
@@ -11,8 +10,8 @@ public sealed class PolygonContactTests
     private static SpatialObject2D At(IShape2D shape, Vector2f position, float rotation = 0f)
     {
         var placed = new SpatialObject2D(shape);
-        placed.Transform.Position = position;
-        placed.Transform.Rotation = rotation;
+        placed.Position = position;
+        placed.Rotation = rotation;
         return placed;
     }
 

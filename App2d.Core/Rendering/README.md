@@ -25,7 +25,7 @@ hit and the object origin; intersect each new mouse ray with that same plane and
 
 ## Studio preview
 
-Run `dotnet run --project App2d.CharacterStudio -- --preview-3d`, or select **3D preview** in the editor toolbar.
+Run `dotnet run --project ../AppAnimation/App2d.CharacterStudio -- --preview-3d`, or select **3D preview** in the editor toolbar.
 The existing sword, calibration cube and `spatial-curve-study` asset share a camera and depth buffer. The curve's XYZ
 control points use the generic Core Bézier evaluator; its drawing layer does not become spatial Z. Drag empty space or use
 the right mouse button to orbit, use the wheel to zoom, and middle-drag to pan. Click an object to select it and drag

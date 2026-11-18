@@ -88,16 +88,11 @@ public static class IVectorExtensions
 }
 
 // C# does not infer a scalar type from a constraint on TVector. These two extension groups
-// fix the scalar type, preserving both value.Length() and Vector3d.Distance(a, b) without boxing.
+// fix the scalar type for static conveniences such as Vector3d.Distance(a, b).
 public static class FloatVectorExtensions
 {
     extension<TVector>(TVector value) where TVector : unmanaged, IVector<TVector, float>
     {
-        public float Dot(TVector other) => TVector.Dot(value, other);
-        public bool IsFinite() => TVector.IsFinite(value);
-        public float LengthSquared() => IVectorExtensions.LengthSquared<TVector, float>(value);
-        public float Length() => IVectorExtensions.Length<TVector, float>(value);
-        public TVector Normalized() => IVectorExtensions.Normalize<TVector, float>(value);
         public static TVector Normalize(TVector vector) => IVectorExtensions.Normalize<TVector, float>(vector);
         public static float DistanceSquared(TVector first, TVector second) => IVectorExtensions.DistanceSquared<TVector, float>(first, second);
         public static float Distance(TVector first, TVector second) => IVectorExtensions.Distance<TVector, float>(first, second);
@@ -113,11 +108,6 @@ public static class DoubleVectorExtensions
 {
     extension<TVector>(TVector value) where TVector : unmanaged, IVector<TVector, double>
     {
-        public double Dot(TVector other) => TVector.Dot(value, other);
-        public bool IsFinite() => TVector.IsFinite(value);
-        public double LengthSquared() => IVectorExtensions.LengthSquared<TVector, double>(value);
-        public double Length() => IVectorExtensions.Length<TVector, double>(value);
-        public TVector Normalized() => IVectorExtensions.Normalize<TVector, double>(value);
         public static TVector Normalize(TVector vector) => IVectorExtensions.Normalize<TVector, double>(vector);
         public static double DistanceSquared(TVector first, TVector second) => IVectorExtensions.DistanceSquared<TVector, double>(first, second);
         public static double Distance(TVector first, TVector second) => IVectorExtensions.Distance<TVector, double>(first, second);

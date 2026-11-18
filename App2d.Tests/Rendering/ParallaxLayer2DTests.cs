@@ -1,5 +1,4 @@
 using App2d.Core.Rendering;
-using System.Numerics;
 
 namespace App2d.Tests.Rendering;
 

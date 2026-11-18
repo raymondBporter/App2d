@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
-using System.Numerics;
 
 namespace App2d.Contracts.World;
 
@@ -19,7 +18,7 @@ public static class VegetationPlacement2D
         map.GetTileKind(x, y) is var kind && kind.IsSolid() && !kind.IsSpikes() &&
         map.GetTileKind(x, y + 1) == TileKind2D.Empty;
 
-    public static Rect2D GrassBounds(IChunkedTileMap2D map, GrassCell2D cell)
+    public static Rect2f GrassBounds(IChunkedTileMap2D map, GrassCell2D cell)
     {
         var root = map.Origin + new Vector2f(cell.X, cell.Y + 1) * map.TileSize;
         return new(root + new Vector2f(0f, map.TileSize * CutHeightInTiles),

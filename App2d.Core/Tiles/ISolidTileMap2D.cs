@@ -1,5 +1,4 @@
 using App2d.Core.Geometry.Primitives;
-using System.Numerics;
 
 namespace App2d.Core.Tiles;
 
@@ -27,7 +26,7 @@ public interface IChunkedTileMap2D : ISolidTileMap2D
     int ChunkSize { get; }
     int ChunkColumns { get; }
     int ChunkRows { get; }
-    Rect2D WorldBounds { get; }
+    Rect2f WorldBounds { get; }
     IReadOnlyList<string> TilesetIds { get; }
 
     TileKind2D GetTileKind(int x, int y);

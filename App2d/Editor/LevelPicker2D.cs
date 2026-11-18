@@ -3,7 +3,6 @@ using App2d.Core.Rendering;
 using App2d.Levels;
 using App2d.Presentation;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Editor;
 

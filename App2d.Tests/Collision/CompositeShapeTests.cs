@@ -5,7 +5,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Collision;
 
@@ -18,10 +17,10 @@ public sealed class CompositeShapeTests
         Rectangle2D.Builder.Create(new Vector2f(-2f, -2f), new Vector2f(0f, 2f)),
         Rectangle2D.Builder.Create(new Vector2f(0f, -2f), new Vector2f(2f, 0f))]);
 
-    private static SpatialObject2D At(IShape2D shape, Vector2f  position)
+    private static SpatialObject2D At(IShape2D shape, Vector2f position)
     {
         var worldObject = new SpatialObject2D(shape);
-        worldObject.Transform.Position = position;
+        worldObject.Position = position;
         return worldObject;
     }
 

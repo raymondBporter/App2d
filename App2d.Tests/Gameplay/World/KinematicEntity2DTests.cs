@@ -4,7 +4,6 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Motion;
 using App2d.Core.Shapes;
-using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 
@@ -19,17 +18,17 @@ public sealed class KinematicEntity2DTests
             Circle2D.Builder.Create(2f), motion, collisionLayer: 1, collisionMask: uint.MaxValue);
 
         Assert.Equal(BodyMotionType2D.Kinematic, entity.Body.MotionType);
-        Assert.Equal(new Vector2f(10f, 0f), entity.WorldObject.Transform.Position);
+        Assert.Equal(new Vector2f(10f, 0f), entity.WorldObject.Position);
         var displacement = entity.Update(0.25f);
         Assert.Equal(new Vector2f(-10f, 10f), displacement, new Vector2Tolerance(0.001f));
         physics.Step(0.25f);
-        Assert.Equal(new Vector2f(0f, 10f), entity.WorldObject.Transform.Position, new Vector2Tolerance(0.001f));
+        Assert.Equal(new Vector2f(0f, 10f), entity.WorldObject.Position, new Vector2Tolerance(0.001f));
         Assert.Equal(0.25d, entity.TimeSeconds);
         Assert.Equal(new Vector2f(-20f * MathF.PI, 0f), entity.MotionVelocity,
             new Vector2Tolerance(0.001f));
         entity.Update(0.25f);
         physics.Step(0.25f);
-        Assert.Equal(new Vector2f(-10f, 0f), entity.WorldObject.Transform.Position,
+        Assert.Equal(new Vector2f(-10f, 0f), entity.WorldObject.Position,
             new Vector2Tolerance(0.001f));
         entity.Dispose();
         Assert.DoesNotContain(entity.Body, physics.Bodies);
@@ -108,7 +107,7 @@ public sealed class KinematicEntity2DTests
         Assert.Equal(new Vector2f(10, 0), motion.Position(.9999999d));
         Assert.Equal(new Vector2f(10, 0), entity.Update(.9999999f));
         physics.Step(.9999999f);
-        Assert.Equal(new Vector2f(10, 0), entity.WorldObject.Transform.Position, new Vector2Tolerance(.0001f));
+        Assert.Equal(new Vector2f(10, 0), entity.WorldObject.Position, new Vector2Tolerance(.0001f));
     }
 
     [Theory]
@@ -123,8 +122,8 @@ public sealed class KinematicEntity2DTests
     {
         var progress = new ProgressMap(phase => phase is 0d or 1d ? phase : sampledProgress, _ => 1d);
         var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0)), 1, progress, repeat: false);
-        Assert.Throws<ArgumentOutOfRangeException>(() => motion.Position(.25));
-        Assert.Throws<ArgumentOutOfRangeException>(() => motion.Velocity(.25));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { motion.Position(.25); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { motion.Velocity(.25); });
     }
 
     private sealed class OrbitMotion : IKinematicMotion2D

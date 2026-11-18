@@ -1,7 +1,5 @@
 using App2d.Core.Geometry.Operations.Distance;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Geometry.Curves;
 

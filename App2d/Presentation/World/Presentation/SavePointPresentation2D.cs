@@ -2,7 +2,6 @@ using App2d.Contracts.World;
 using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -29,7 +28,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         {
             ZIndex = 1
         };
-        baseStone.Transform.Position = _basePosition + new Vector2f(0f, 7f);
+        baseStone.Position = _basePosition + new Vector2f(0f, 7f);
         Add(baseStone);
 
         var pedestal = new WorldObject2D(
@@ -44,7 +43,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         {
             ZIndex = 1
         };
-        pedestal.Transform.Position = _basePosition + new Vector2f(0f, 12f);
+        pedestal.Position = _basePosition + new Vector2f(0f, 12f);
         Add(pedestal);
 
         _glow = new WorldObject2D(Circle2D.Builder.Create(31f),
@@ -53,7 +52,7 @@ internal sealed class SavePointPresentation2D : IDisposable
             IsVisible = false,
             ZIndex = 1
         };
-        _glow.Transform.Position = _basePosition + new Vector2f(0f, OrbHeight);
+        _glow.Position = _basePosition + new Vector2f(0f, OrbHeight);
         Add(_glow);
 
         _orb = new WorldObject2D(
@@ -68,7 +67,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         {
             ZIndex = 2
         };
-        _orb.Transform.Position = _basePosition + new Vector2f(0f, OrbHeight);
+        _orb.Position = _basePosition + new Vector2f(0f, OrbHeight);
         Add(_orb);
         SetActive(false);
     }
@@ -83,13 +82,13 @@ internal sealed class SavePointPresentation2D : IDisposable
 
         var bob = MathF.Sin(_animationSeconds * (IsActive ? 4.5f : 2.2f)) * (IsActive ? 5f : 2f);
         var orbPosition = _basePosition + new Vector2f(0f, OrbHeight + bob);
-        _orb.Transform.Position = orbPosition;
-        _glow.Transform.Position = orbPosition;
+        _orb.Position = orbPosition;
+        _glow.Position = orbPosition;
 
         if (IsActive)
         {
             var pulse = 1f + MathF.Sin(_animationSeconds * 5.5f) * 0.09f;
-            _glow.Transform.Scale = new Vector2f(pulse);
+            _glow.Scale = pulse;
         }
 
     }

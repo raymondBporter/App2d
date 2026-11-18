@@ -42,7 +42,7 @@ public readonly record struct Similarity2D
     /// <summary>A pose with unit scale and no rotation, placed at a finite position.</summary>
     /// <param name="translation">Where the local origin lands.</param>
     /// <returns>A translation-only pose.</returns>
-    public static Similarity2D FromTranslation(Vector2f  translation)
+    public static Similarity2D FromTranslation(Vector2f translation)
     {
         Ensure.Finite(translation);
         return new Similarity2D(Vector2f.UnitX, Vector2f.UnitY, translation, 1f);
@@ -57,7 +57,7 @@ public readonly record struct Similarity2D
     /// <param name="mirror">Flip the handedness so local +Y is the clockwise perpendicular of the axis.</param>
     /// <param name="scale">The finite, positive uniform scale.</param>
     /// <returns>The pose.</returns>
-    public static Similarity2D FromAxis(Vector2f  translation, Vector2f xAxis, bool mirror = false, float scale = 1f)
+    public static Similarity2D FromAxis(Vector2f translation, Vector2f xAxis, bool mirror = false, float scale = 1f)
     {
         Ensure.Finite(translation);
         Ensure.NonZero(xAxis);
@@ -91,7 +91,7 @@ public readonly record struct Similarity2D
     /// <summary>The same pose moved by an offset.</summary>
     /// <param name="offset">A finite translation added in world space.</param>
     /// <returns>The moved pose.</returns>
-    public Similarity2D Translated(Vector2f  offset)
+    public Similarity2D Translated(Vector2f offset)
     {
         Ensure.Finite(offset);
         return new Similarity2D(XAxis, YAxis, Translation + offset, Scale);
@@ -131,7 +131,7 @@ public readonly record struct Similarity2D
     /// <summary>Maps a local direction into world space, scaling its length by <see cref="Scale"/>.</summary>
     /// <param name="direction">The local direction.</param>
     /// <returns>The world direction.</returns>
-    public Vector2f TransformDirection(Vector2f  direction) => XAxis * direction.X + YAxis * direction.Y;
+    public Vector2f TransformDirection(Vector2f direction) => XAxis * direction.X + YAxis * direction.Y;
 
     /// <summary>
     /// Multiplies by the transpose of the linear part: maps a world support or normal direction into local space
@@ -139,7 +139,7 @@ public readonly record struct Similarity2D
     /// </summary>
     /// <param name="direction">The world direction.</param>
     /// <returns>The local direction, scaled by <see cref="Scale"/>.</returns>
-    public Vector2f TransposeTransformDirection(Vector2f  direction) => new(Vector2f.Dot(XAxis, direction), Vector2f.Dot(YAxis, direction));
+    public Vector2f TransposeTransformDirection(Vector2f direction) => new(Vector2f.Dot(XAxis, direction), Vector2f.Dot(YAxis, direction));
 
     /// <summary>Maps a world point into local space.</summary>
     /// <param name="point">The world point.</param>
@@ -153,5 +153,20 @@ public readonly record struct Similarity2D
     /// <summary>Maps a world direction into local space, dividing its length by <see cref="Scale"/>.</summary>
     /// <param name="direction">The world direction.</param>
     /// <returns>The local direction.</returns>
-    public Vector2f InverseTransformDirection(Vector2f  direction) => TransposeTransformDirection(direction) / (Scale * Scale);
+    public Vector2f InverseTransformDirection(Vector2f direction) => TransposeTransformDirection(direction) / (Scale * Scale);
+
+    /// <summary>Expresses this pose's axes and origin in the reference pose's local coordinates.</summary>
+    internal (Vector2d XAxis, Vector2d YAxis, Vector2d Translation) GetAxesRelativeTo(Similarity2D frame)
+    {
+        var frameX = frame.XAxis.ToVector2d();
+        var frameY = frame.YAxis.ToVector2d();
+        var determinant = frameX.Cross(frameY);
+        Ensure.ThrowIf(determinant == 0d, "The reference pose must have nonzero scale.", nameof(frame));
+
+        // Subtract the world origins before projecting to keep small offsets at large translations.
+        var offset = Translation.ToVector2d() - frame.Translation.ToVector2d();
+        return (InFrame(XAxis.ToVector2d()), InFrame(YAxis.ToVector2d()), InFrame(offset));
+
+        Vector2d InFrame(Vector2d vector) => new(vector.Cross(frameY) / determinant, frameX.Cross(vector) / determinant);
+    }
 }

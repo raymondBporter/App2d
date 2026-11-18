@@ -3,7 +3,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -29,7 +28,7 @@ public sealed class AttachedCollider
     public EntityId2D Owner => Collider.EntityId;
     /// <summary>The registered placement, as a region in the collider's units.</summary>
     public EntityRegion Region => new(Id, Definition.Shape, Object.CollisionPose);
-    public Rect2D Bounds => Object.WorldBounds;
+    public Rect2f Bounds => Object.WorldBounds;
 
     internal void Place(Similarity2D pose)
     {

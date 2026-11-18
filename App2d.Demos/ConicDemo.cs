@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Operations.Construction;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.EditorUi;
 using ImGuiNET;
 using System.Numerics;

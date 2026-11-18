@@ -13,7 +13,7 @@ public static class HalfSpaceConstraint2D
             return false;
         }
 
-        convexObject.Transform.Position += contact.MinimumTranslationVector;
+        convexObject.Position += contact.MinimumTranslationVector;
         return true;
     }
 }

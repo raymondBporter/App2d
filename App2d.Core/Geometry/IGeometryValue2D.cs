@@ -28,7 +28,6 @@ public interface IGeometryValue2D
         nameof(Triangle2D) when type == typeof(Triangle2D) => ShapeKinds2D.Triangle,
         nameof(ConvexPolygon2D) when type == typeof(ConvexPolygon2D) => ShapeKinds2D.ConvexPolygon,
         nameof(SimplePolygon2D) when type == typeof(SimplePolygon2D) => ShapeKinds2D.SimplePolygon,
-        nameof(HeightFieldShape2D) when type == typeof(HeightFieldShape2D) => ShapeKinds2D.HeightField,
         nameof(HalfSpace2D) when type == typeof(HalfSpace2D) => ShapeKinds2D.HalfSpace,
         nameof(CompositeShape2D) when type == typeof(CompositeShape2D) => ShapeKinds2D.Composite,
         nameof(LineSegmentCurve2D) when type == typeof(LineSegmentCurve2D) => CurveKinds2D.Line,

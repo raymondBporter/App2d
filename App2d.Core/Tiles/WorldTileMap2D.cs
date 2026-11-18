@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Core.Tiles;
 
@@ -71,7 +70,7 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
     public int ChunkRows => (Height - 1) / ChunkSize + 1;
     public float TileSize { get; }
     public Vector2f Origin { get; }
-    public Rect2D WorldBounds => new(Origin, Origin + new Vector2f(Width, Height) * TileSize);
+    public Rect2f WorldBounds => new(Origin, Origin + new Vector2f(Width, Height) * TileSize);
     public IReadOnlyList<string> TilesetIds => _tilesets;
     public event Action<TileChunk2D>? ChunkChanged;
 

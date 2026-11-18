@@ -1,9 +1,7 @@
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Core.Vegetation;
 
@@ -15,7 +13,7 @@ public sealed class ProceduralTree2D
     private readonly List<Crown> _crowns = [];
     private readonly Vector2f _root;
     private readonly float _height;
-    public Rect2D Bounds { get; }
+    public Rect2f Bounds { get; }
 
     public ProceduralTree2D(Vector2f root, float height, int seed)
     {
@@ -28,7 +26,7 @@ public sealed class ProceduralTree2D
     }
 
     /// <summary>A conservative draw bound for a tree of the given height.</summary>
-    public static Rect2D EstimateBounds(Vector2f root, float height) =>
+    public static Rect2f EstimateBounds(Vector2f root, float height) =>
         new(root - new Vector2f(height, 0f), root + new Vector2f(height, height * 1.5f));
 
     public static float MaximumSway(VegetationWind2D wind) => wind.MaximumOffset(LeafWindResponse);

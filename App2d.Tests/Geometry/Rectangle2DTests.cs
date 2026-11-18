@@ -2,11 +2,10 @@ using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.MassProperties;
-using App2d.Core.Geometry.Operations.Transforms;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 using static App2d.Tests.Geometry.VectorComparers;
 
 namespace App2d.Tests.Geometry;
@@ -44,8 +43,8 @@ public sealed class Rectangle2DTests
         Span<Vector2f> corners = stackalloc Vector2f[4];
         Tilted.WriteCorners(corners);
         var bounds = ShapeBounds2D.Calculate(Tilted);
-        Assert.Equal(Rect2D.FromPoints(corners).Min, bounds.Min, Near);
-        Assert.Equal(Rect2D.FromPoints(corners).Max, bounds.Max, Near);
+        Assert.Equal(Rect2f.FromPoints(corners).Min, bounds.Min, Near);
+        Assert.Equal(Rect2f.FromPoints(corners).Max, bounds.Max, Near);
         Assert.Equal(corners[2], Tilted.GetSupportPoint(Tilted.Axis + Tilted.Frame.Perp), Near);
         Assert.Equal(12f, Tilted.Area, 5);
         Assert.Equal(MathF.Sqrt(40), Tilted.Diameter, 5);

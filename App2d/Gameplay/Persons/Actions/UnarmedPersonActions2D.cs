@@ -8,7 +8,6 @@ using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
-using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
@@ -126,13 +125,13 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
     {
         if (attack.Action.Update(
             deltaSeconds,
-            _ownerBody.WorldObject.Transform.Position,
+            _ownerBody.WorldObject.Position,
             attack.Direction))
         {
             attack.Direction = MathF.Sign(facing);
             attack.Action.Update(
                 0f,
-                _ownerBody.WorldObject.Transform.Position,
+                _ownerBody.WorldObject.Position,
                 attack.Direction);
             AttackStarted?.Invoke(attack.Kind, attack.Action.DurationSeconds);
         }

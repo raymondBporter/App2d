@@ -9,7 +9,6 @@ using App2d.Core.Json;
 using App2d.Core.Shapes;
 using App2d.Core.Tiles;
 using System.Collections.Immutable;
-using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;

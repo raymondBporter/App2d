@@ -1,6 +1,5 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
-using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace App2d.Tests.Tiles;

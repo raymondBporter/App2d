@@ -1,6 +1,4 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
-using System.Numerics;
 
 namespace App2d.Core.Rendering;
 
@@ -8,7 +6,7 @@ namespace App2d.Core.Rendering;
 public interface IShader2D
 {
     Color4b BaseColor { get; }
-    Color4b GetVertexColor(Vector2f position, Rect2D bounds) => BaseColor;
+    Color4b GetVertexColor(Vector2f position, Rect2f bounds) => BaseColor;
 }
 
 public sealed class SolidColorShader(Color4b color) : IShader2D
@@ -19,6 +17,6 @@ public sealed class SolidColorShader(Color4b color) : IShader2D
 public sealed class LinearGradientShader(Color4b startColor, Color4b endColor) : IShader2D
 {
     public Color4b BaseColor => Color4b.White;
-    public Color4b GetVertexColor(Vector2f position, Rect2D bounds) =>
+    public Color4b GetVertexColor(Vector2f position, Rect2f bounds) =>
         Color4b.Lerp(startColor, endColor, bounds.Size.Y > 0f ? Clamping.Clamp01((bounds.Max.Y - position.Y) / bounds.Size.Y) : 0f);
 }

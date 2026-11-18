@@ -12,7 +12,6 @@ using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.World.Vegetation;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
@@ -21,7 +20,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public const int WorldWidthTiles = 640;
     public const int WorldHeightTiles = 96;
     public const int ChunkSizeTiles = 32;
-    public static Vector2f  WorldOrigin { get; } = new(-512f, -640f);
+    public static Vector2f WorldOrigin { get; } = new(-512f, -640f);
 
     private readonly float _tileSize;
     private readonly TraversalMetrics2D _traversal;
@@ -101,7 +100,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                 thing.Kind == WorldThingKind2D.SavePoint &&
                 thing.ThingId == thingId);
 
-    public bool TryGetSpikeSource(Rect2D actorBounds, out float sourceX)
+    public bool TryGetSpikeSource(Rect2f actorBounds, out float sourceX)
     {
         if (!actorBounds.IsFinite)
         {
@@ -121,7 +120,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             }
 
             var tileMin = TileMap.GridGeometry.GetCellBounds(cell).Min;
-            var spikeBounds = new Rect2D(
+            var spikeBounds = new Rect2f(
                 tileMin + new Vector2f(horizontalInset, 0f),
                 tileMin + new Vector2f(_tileSize - horizontalInset, _tileSize * 0.9f));
             if (!actorBounds.Intersects(spikeBounds))
@@ -182,7 +181,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         return _content;
     }
 
-    public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Rect2D playerBounds)
+    public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Rect2f playerBounds)
     {
         Ensure.NonNegative(deltaSeconds);
         foreach (var savePoint in _savePoints)
@@ -240,7 +239,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private void UpdateObjectStreaming()
     {
         foreach (var item in _objects)
-            item.SetSimulationEnabled(RequireEnvironment().Streamer.IsChunkActive(TileMap.WorldToChunk(item.WorldObject.Transform.Position)));
+            item.SetSimulationEnabled(RequireEnvironment().Streamer.IsChunkActive(TileMap.WorldToChunk(item.WorldObject.Position)));
     }
 
     public void UpdateStreaming(Vector2f focus)

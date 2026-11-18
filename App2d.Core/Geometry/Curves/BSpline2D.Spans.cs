@@ -1,5 +1,3 @@
-using App2d.Core.Mathematics;
-
 namespace App2d.Core.Geometry.Curves;
 
 public readonly partial record struct BSpline2D

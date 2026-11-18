@@ -1,5 +1,4 @@
 using App2d.Core.Validation;
-using System.Numerics;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Geometry.Primitives;

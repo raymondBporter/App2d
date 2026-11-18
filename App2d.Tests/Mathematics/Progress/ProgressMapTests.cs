@@ -1,6 +1,4 @@
-using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
-using System.Numerics;
 using System.Reflection;
 
 namespace App2d.Tests.Mathematics.Progress;

@@ -1,6 +1,4 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Mathematics;
-using System.Numerics;
 
 namespace App2d.Tests.Mathematics;
 
@@ -55,15 +53,15 @@ public sealed class Direction2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new Direction2D(default));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Direction2D(new(float.NaN, 1)));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Direction2D(new(float.PositiveInfinity, 1)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Direction2D.FromAngle(float.NaN));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Direction2D.FromPoints(Vector2f.One, Vector2f.One));
-        Assert.Throws<ArgumentOutOfRangeException>(() => default(Direction2D).ScaledBy(1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Direction2D.FromAngle(float.NaN); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Direction2D.FromPoints(Vector2f.One, Vector2f.One); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { default(Direction2D).ScaledBy(1); });
         Assert.Throws<ArgumentOutOfRangeException>(() => _ = default(Direction2D).AngleRadians);
-        Assert.Throws<ArgumentOutOfRangeException>(() => Ray2D.FromDirection(default, default));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Line2D.FromDirection(default, default));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Direction2D(Vector2f.UnitX).ScaledBy(float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Ray2D.FromDirection(default, default); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Line2D.FromDirection(default, default); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { new Direction2D(Vector2f.UnitX).ScaledBy(float.NaN); });
     }
 
-    private static void AssertClose(Vector2f  expected, Vector2f  actual) =>
+    private static void AssertClose(Vector2f expected, Vector2f actual) =>
         Assert.True(Vector2f.Distance(expected, actual) <= .000001f, $"Expected {expected}, actual {actual}.");
 }

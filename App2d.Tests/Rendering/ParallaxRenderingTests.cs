@@ -6,7 +6,6 @@ using App2d.Core.Shapes;
 using App2d.Gameplay.World.Vegetation;
 using App2d.Presentation.World.Vegetation;
 using App2d.Rendering;
-using System.Numerics;
 
 namespace App2d.Tests.Rendering;
 
@@ -21,10 +20,10 @@ public sealed class ParallaxRenderingTests
         using var renderer = new Renderer2D(camera, graphics.Device);
         var layer = new ParallaxLayer2D(4f);
         var scenery = Rectangle(12f, 12f, Color4b.Red);
-        scenery.Transform.Position = new(40f, 20f);
+        scenery.Position = new(40f, 20f);
         layer.Scene.Add(scenery);
         var world = Rectangle(12f, 12f, Color4b.Lime);
-        world.Transform.Position = new(230f, 100f);
+        world.Position = new(230f, 100f);
         var originalTransform = scenery.Transform.Matrix;
 
         var first = Render();
@@ -102,7 +101,7 @@ public sealed class ParallaxRenderingTests
         layer.Scene.Add(new WorldObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0f),
             new SolidColorShader(Color4b.Red)));
         var world = Rectangle(12f, 12f, Color4b.Lime);
-        world.Transform.Position = camera.Position;
+        world.Position = camera.Position;
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
         Assert.Throws<ArgumentOutOfRangeException>(() => renderer.Draw(layer));

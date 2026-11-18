@@ -5,3 +5,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("App2d.Beamwright.Tests")]
 [assembly: InternalsVisibleTo("App2d.Trials.Tests")]
 [assembly: InternalsVisibleTo("App2d.CharacterStudio")]
+[assembly: InternalsVisibleTo("App2d.CharacterStudio.Tests")]
+[assembly: InternalsVisibleTo("App2d.ImageLab.Tests")]

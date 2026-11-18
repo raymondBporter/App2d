@@ -1,13 +1,11 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Json;
-using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Presentation.Assets;
-using System.Numerics;
 using System.Text.Json;
 
 namespace App2d.Presentation.World;
@@ -124,15 +122,15 @@ internal sealed class SideScrollerTerrainTileset2D
     /// Fill repeats on a world-anchored grid, so separate fill rectangles line up with each other
     /// whatever their size. The world origin sits on the grid because level origins are tile aligned.
     /// </summary>
-    public WorldObject2D CreateSolidFill(Rect2D bounds) =>
+    public WorldObject2D CreateSolidFill(Rect2f bounds) =>
         CreateVisual(bounds.Size, bounds.Center,
             new TextureShader2D(_fill, new Vector2f(_fillPeriod), imageOrigin: -bounds.Center));
 
-    public WorldObject2D CreateLadder(Rect2D tileBounds, bool isTop) =>
+    public WorldObject2D CreateLadder(Rect2f tileBounds, bool isTop) =>
         CreateVisual(tileBounds.Size, tileBounds.Center, isTop ? _ladderTopShader : _ladderMiddleShader);
 
     /// <summary>Grippable walls keep ordinary terrain art; only their side faces show handholds.</summary>
-    public WorldObject2D CreateSurface(Rect2D tileBounds, TileSurface2D surface, bool grippable = false) =>
+    public WorldObject2D CreateSurface(Rect2f tileBounds, TileSurface2D surface, bool grippable = false) =>
         surface switch
         {
             TileSurface2D.Top => CreateVisual(new Vector2f(tileBounds.Size.X, _surfaceThickness), new Vector2f(tileBounds.Center.X, tileBounds.Max.Y - _surfaceThickness / 2f), _topShader),
@@ -142,7 +140,7 @@ internal sealed class SideScrollerTerrainTileset2D
             _ => throw Ensure.CreateInvalid("Create one surface visual at a time.", nameof(surface))
         };
 
-    public WorldObject2D CreateCorner(Rect2D tileBounds, TileCorner2D corner)
+    public WorldObject2D CreateCorner(Rect2f tileBounds, TileCorner2D corner)
     {
         var position = corner switch
         {
@@ -160,7 +158,7 @@ internal sealed class SideScrollerTerrainTileset2D
         return CreateVisual(new Vector2f(isOuter ? _outerCornerSize : _innerCornerSize), position, isOuter ? _outerCornerShader : _innerCornerShader);
     }
 
-    public WorldObject2D CreateOneWay(Rect2D tileBounds, OneWayTilePart2D part)
+    public WorldObject2D CreateOneWay(Rect2f tileBounds, OneWayTilePart2D part)
     {
         var shader = part switch
         {
@@ -173,7 +171,7 @@ internal sealed class SideScrollerTerrainTileset2D
         return CreateVisual(new Vector2f(tileBounds.Size.X, _oneWayVisualHeight), new Vector2f(tileBounds.Center.X, tileBounds.Max.Y - _oneWayVisualHeight / 2f), shader);
     }
 
-    public WorldObject2D CreateSpikes(Rect2D tileBounds, SpikeTilePart2D part)
+    public WorldObject2D CreateSpikes(Rect2f tileBounds, SpikeTilePart2D part)
     {
         var shader = part switch
         {
@@ -192,7 +190,7 @@ internal sealed class SideScrollerTerrainTileset2D
     private static WorldObject2D CreateVisual(Vector2f size, Vector2f position, IShader2D shader)
     {
         var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size), shader);
-        visual.Transform.Position = position;
+        visual.Position = position;
         return visual;
     }
 

@@ -72,7 +72,7 @@ public sealed class ShapeTessellation2DTests
     public void ClippedHalfSpaceFillAndTrueBoundaryStaySeparate(float offset, int boundaryCount, double expectedArea)
     {
         IShape2D shape = HalfSpace2D.Builder.Create(Vector2f.UnitY, offset);
-        var bounds = new Rect2D(new(-3, -2), new(3, 2));
+        var bounds = new Rect2f(new(-3, -2), new(3, 2));
         Span<Vector2f> buffer = stackalloc Vector2f[5];
         var area = 0d;
         foreach (var triangle in shape.Triangles(buffer, clipBounds: bounds)) area += triangle.GetArea();
@@ -200,7 +200,7 @@ public sealed class ShapeTessellation2DTests
         Assert.NotSame(original, PolygonTriangulationCache2D.GetXY(points));
     }
 
-    private readonly record struct CustomRectangle : IShape2D, IRect2D
+    private readonly record struct CustomRectangle : IShape2D, IRect2f
     {
         public string GetKind() => "test-rectangle";
         public Vector2f Min => Vector2f.Zero;

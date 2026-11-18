@@ -3,7 +3,6 @@ using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
-using System.Numerics;
 
 namespace App2d.Tests.Collision;
 
@@ -14,7 +13,7 @@ public sealed class CollisionQueries2DTests
     {
         var first = new SpatialObject2D(Circle2D.Builder.Create(10f));
         var second = new SpatialObject2D(Circle2D.Builder.Create(10f));
-        second.Transform.Position = new Vector2f(15f, 0f);
+        second.Position = new Vector2f(15f, 0f);
 
         var intersects = ShapeCollision2D.TryGetContact(first, second, out var contact);
 
@@ -27,9 +26,9 @@ public sealed class CollisionQueries2DTests
     public void RaycastReturnsTheNearestSpatialObject()
     {
         var farther = new SpatialObject2D(Circle2D.Builder.Create(2f));
-        farther.Transform.Position = new Vector2f(10f, 0f);
+        farther.Position = new Vector2f(10f, 0f);
         var nearer = new SpatialObject2D(Circle2D.Builder.Create(2f));
-        nearer.Transform.Position = new Vector2f(5f, 0f);
+        nearer.Position = new Vector2f(5f, 0f);
         SpatialObject2D[] objects = [farther, nearer];
 
         var found = objects.Raycast(
@@ -48,8 +47,8 @@ public sealed class CollisionQueries2DTests
     public void RaycastHitsARotatedRectangle()
     {
         var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(4f, 4f));
-        box.Transform.Position = new Vector2f(10f, 0f);
-        box.Transform.Rotation = MathF.PI / 4f;
+        box.Position = new Vector2f(10f, 0f);
+        box.Rotation = MathF.PI / 4f;
 
         var found = new[] { box }.Raycast(
             new Ray2D(Vector2f.Zero, Vector2f.UnitX), 20f, out var hit);

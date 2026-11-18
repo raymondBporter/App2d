@@ -1,5 +1,3 @@
-using App2d.Core.Mathematics;
-
 namespace App2d.Tests.Mathematics.Progress;
 
 public sealed class ProgressTests

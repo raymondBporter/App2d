@@ -1,7 +1,6 @@
 using App2d.Contracts.World;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
-using App2d.Core.Mathematics;
 using App2d.Core.Tiles;
 using App2d.Core.Vegetation;
 using App2d.Gameplay.World;
@@ -9,7 +8,6 @@ using App2d.Gameplay.World.Vegetation;
 using App2d.Presentation.World.Vegetation;
 using App2d.Rendering;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Presentation.World.Presentation;
 
@@ -205,7 +203,7 @@ public sealed class VegetationPresentation2D : IDisposable
         }
     }
 
-    private bool HitsGround(Rect2D previous, Rect2D current)
+    private bool HitsGround(Rect2f previous, Rect2f current)
     {
         if (current.Bottom >= previous.Bottom || TerrainMap is not { } map)
         {
@@ -240,7 +238,7 @@ public sealed class VegetationPresentation2D : IDisposable
         return false;
     }
 
-    public void DrawTrees(Renderer2D renderer, Rect2D visible)
+    public void DrawTrees(Renderer2D renderer, Rect2f visible)
     {
         var wind = Wind();
         foreach (var tree in _giantTreeVisuals)
@@ -249,7 +247,7 @@ public sealed class VegetationPresentation2D : IDisposable
         }
 
         var sway = new Vector2f(ProceduralTree2D.MaximumSway(wind), 0);
-        var cullBounds = new Rect2D(visible.Min - sway, visible.Max + sway);
+        var cullBounds = new Rect2f(visible.Min - sway, visible.Max + sway);
         if (_terrainSource is not null)
         {
             foreach (var cell in QueryTreeChunks(cullBounds))
@@ -261,7 +259,7 @@ public sealed class VegetationPresentation2D : IDisposable
             DrawTreeChunk(renderer, cullBounds, wind, chunk.Trees!);
     }
 
-    private static void DrawTreeChunk(Renderer2D renderer, Rect2D visible, VegetationWind2D wind, List<ProceduralTree2D> trees)
+    private static void DrawTreeChunk(Renderer2D renderer, Rect2f visible, VegetationWind2D wind, List<ProceduralTree2D> trees)
     {
         foreach (var tree in trees)
         {
@@ -270,7 +268,7 @@ public sealed class VegetationPresentation2D : IDisposable
         }
     }
 
-    internal GridCellRange2D QueryTreeChunks(Rect2D visible)
+    internal GridCellRange2D QueryTreeChunks(Rect2f visible)
     {
         var size = _terrainSource!.Map.TileSize;
         var reach = ProceduralTree2D.EstimateBounds(Vector2f.Zero, size * (MinimumTreeHeightInTiles + TreeHeightVariationInTiles));
@@ -284,7 +282,7 @@ public sealed class VegetationPresentation2D : IDisposable
     }
 
     /// <summary>Back grass and flowers draw before characters; front tufts and clippings after them.</summary>
-    public void DrawGrass(Renderer2D renderer, Rect2D visible, VegetationLayer2D layer)
+    public void DrawGrass(Renderer2D renderer, Rect2f visible, VegetationLayer2D layer)
     {
         var wind = Wind();
         if (_terrainSource is { } terrain)
@@ -317,7 +315,7 @@ public sealed class VegetationPresentation2D : IDisposable
         }
     }
 
-    private void DrawGrassChunk(Renderer2D renderer, Rect2D visible, VegetationWind2D wind, VegetationLayer2D layer, List<Patch> patches)
+    private void DrawGrassChunk(Renderer2D renderer, Rect2f visible, VegetationWind2D wind, VegetationLayer2D layer, List<Patch> patches)
     {
         foreach (var patch in patches)
         {
@@ -328,11 +326,11 @@ public sealed class VegetationPresentation2D : IDisposable
         }
     }
 
-    private static Rect2D PatchBounds(Vector2f root, float size) =>
+    private static Rect2f PatchBounds(Vector2f root, float size) =>
         new(root - new Vector2f(size * 0.5f, 0f), root + new Vector2f(size * 1.5f, size * 1.2f));
 
     // Invert the overlap to find the cells that could own those roots.
-    private GridCellRange2D QueryRoots(Rect2D visible, Rect2D reach, Vector2f rootOffset) =>
+    private GridCellRange2D QueryRoots(Rect2f visible, Rect2f reach, Vector2f rootOffset) =>
         _terrainSource!.QueryChunks(new(visible.Min - reach.Max - rootOffset, visible.Max - reach.Min - rootOffset));
 
     private Chunk GetLocalChunk(TileChunk2D id)
