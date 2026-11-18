@@ -12,8 +12,10 @@ public sealed class CollisionQueries2DTests
     public void OverlappingCirclesReturnTheirPenetration()
     {
         var first = new SpatialObject2D(Circle2D.Builder.Create(10f));
-        var second = new SpatialObject2D(Circle2D.Builder.Create(10f));
-        second.Position = new Vector2f(15f, 0f);
+        var second = new SpatialObject2D(Circle2D.Builder.Create(10f))
+        {
+            Position = new Vector2f(15f, 0f)
+        };
 
         var intersects = ShapeCollision2D.TryGetContact(first, second, out var contact);
 
@@ -25,10 +27,14 @@ public sealed class CollisionQueries2DTests
     [Fact]
     public void RaycastReturnsTheNearestSpatialObject()
     {
-        var farther = new SpatialObject2D(Circle2D.Builder.Create(2f));
-        farther.Position = new Vector2f(10f, 0f);
-        var nearer = new SpatialObject2D(Circle2D.Builder.Create(2f));
-        nearer.Position = new Vector2f(5f, 0f);
+        var farther = new SpatialObject2D(Circle2D.Builder.Create(2f))
+        {
+            Position = new Vector2f(10f, 0f)
+        };
+        var nearer = new SpatialObject2D(Circle2D.Builder.Create(2f))
+        {
+            Position = new Vector2f(5f, 0f)
+        };
         SpatialObject2D[] objects = [farther, nearer];
 
         var found = objects.Raycast(
@@ -46,9 +52,11 @@ public sealed class CollisionQueries2DTests
     [Fact]
     public void RaycastHitsARotatedRectangle()
     {
-        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(4f, 4f));
-        box.Position = new Vector2f(10f, 0f);
-        box.Rotation = MathF.PI / 4f;
+        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(4f, 4f))
+        {
+            Position = new Vector2f(10f, 0f),
+            Rotation = MathF.PI / 4f
+        };
 
         var found = new[] { box }.Raycast(
             new Ray2D(Vector2f.Zero, Vector2f.UnitX), 20f, out var hit);

@@ -55,8 +55,10 @@ public sealed class Person2D : ICombatant2D
 
         WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(
             traversal.PlayerColliderSize,
-            new Vector2f(traversal.PlayerColliderCenterOffsetX, 0f)));
-        WorldObject.Position = spawnPoint;
+            new Vector2f(traversal.PlayerColliderCenterOffsetX, 0f)))
+        {
+            Position = spawnPoint
+        };
 
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
         Body.Restitution = 0f;

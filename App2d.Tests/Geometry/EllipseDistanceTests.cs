@@ -55,10 +55,12 @@ public sealed class EllipseDistanceTests
         Assert.Equal(0f, Distance2D.DistanceToEllipse(new(1, .3f), default, radii));
         Assert.Equal(1f, ShapeDistance2D.SignedDistance(new Vector2f(3, 0), Ellipse2D.Builder.Create(radii)), 5);
         Assert.Equal(-1f, ShapeDistance2D.SignedDistance(Vector2f.Zero, Ellipse2D.Builder.Create(radii)), 5);
-        var placed = new SpatialObject2D(Ellipse2D.Builder.Create(radii));
-        placed.Rotation = MathF.PI / 2;
-        placed.Scale = 2;
-        placed.Position = new(10, 10);
+        var placed = new SpatialObject2D(Ellipse2D.Builder.Create(radii))
+        {
+            Rotation = MathF.PI / 2,
+            Scale = 2,
+            Position = new(10, 10)
+        };
         Assert.Equal(2f, SpatialDistance2D.SignedDistance(new Vector2f(10, 16), placed), 4); // vertical semi-axis is now 4
         Assert.Equal(4f, SpatialDistance2D.SignedDistance(new Vector2f(16, 10), placed), 4); // horizontal semi-axis is now 2
     }
@@ -66,8 +68,10 @@ public sealed class EllipseDistanceTests
     [Fact]
     public void CircleAgainstEllipseIsExactInBothDirectionsAndMatchesSignedDistance()
     {
-        var ellipse = new SpatialObject2D(Ellipse2D.Builder.Create(new(2, 1)));
-        ellipse.Rotation = .4f;
+        var ellipse = new SpatialObject2D(Ellipse2D.Builder.Create(new(2, 1)))
+        {
+            Rotation = .4f
+        };
         ellipse.Transform.Scale = new(-1.5f, 1.5f);
         ellipse.Position = new(5, -3);
         var circle = new SpatialObject2D(Circle2D.Builder.Create(.75f));
@@ -102,8 +106,10 @@ public sealed class EllipseDistanceTests
     public void CircleInsideEllipseEscapesTowardTheNearestBoundary()
     {
         var ellipse = new SpatialObject2D(Ellipse2D.Builder.Create(new(4, 1)));
-        var circle = new SpatialObject2D(Circle2D.Builder.Create(.25f));
-        circle.Position = new(1, .2f);
+        var circle = new SpatialObject2D(Circle2D.Builder.Create(.25f))
+        {
+            Position = new(1, .2f)
+        };
         Assert.True(ShapeCollision2D.TryGetContact(circle, ellipse, out var contact));
         Assert.True(contact.Normal.Y > .9f, $"Expected an upward escape, got {contact.Normal}.");
         Assert.InRange(contact.PenetrationDepth, .25f + .7f, .25f + .85f);

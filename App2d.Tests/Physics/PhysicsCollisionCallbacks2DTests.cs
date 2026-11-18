@@ -127,8 +127,10 @@ public sealed class PhysicsCollisionCallbacks2DTests
     {
         var world = new PhysicsWorld2D();
         var actor = AddActor(world, new(0f, 0.8f));
-        var floor = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(100f, 2f));
-        floor.Position = new(0f, -1f);
+        var floor = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(100f, 2f))
+        {
+            Position = new(0f, -1f)
+        };
         var ground = world.AddBody(floor, BodyMotionType2D.Static);
         ground.Restitution = 0f;
         return (world, actor, ground);
@@ -136,8 +138,10 @@ public sealed class PhysicsCollisionCallbacks2DTests
 
     private static RigidBody2D AddActor(PhysicsWorld2D world, Vector2f position)
     {
-        var spatial = new SpatialObject2D(Circle2D.Builder.Create(1f));
-        spatial.Position = position;
+        var spatial = new SpatialObject2D(Circle2D.Builder.Create(1f))
+        {
+            Position = position
+        };
         var actor = world.AddBody(spatial, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         return actor;

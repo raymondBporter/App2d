@@ -77,7 +77,7 @@ public static partial class Raycast2D
         Side(new(outer.X, -inner.Y), new(outer.X, inner.Y), Vector2f.UnitX);
         Side(new(inner.X, outer.Y), new(-inner.X, outer.Y), Vector2f.UnitY);
         Side(new(-outer.X, inner.Y), new(-outer.X, -inner.Y), -Vector2f.UnitX);
-        Corner(new(inner.X, inner.Y), 0);
+        Corner(inner, 0);
         Corner(new(-inner.X, inner.Y), Math.PI / 2);
         Corner(new(-inner.X, -inner.Y), Math.PI);
         Corner(new(inner.X, -inner.Y), 3 * Math.PI / 2);

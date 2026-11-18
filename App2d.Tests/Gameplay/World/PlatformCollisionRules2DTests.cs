@@ -103,8 +103,10 @@ public sealed class PlatformCollisionRules2DTests
 
     private static RigidBody2D AddPlatform(PhysicsWorld2D world, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
-        var spatial = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(40f, 2f));
-        spatial.Position = new(0f, -1f);
+        var spatial = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(40f, 2f))
+        {
+            Position = new(0f, -1f)
+        };
         var platform = world.AddBody(spatial, motion);
         platform.Restitution = 0f;
         PlatformCollisionRules2D.Attach(world).Surface(platform).OneWaySurfaceNormal = Vector2f.UnitY;
@@ -113,8 +115,10 @@ public sealed class PlatformCollisionRules2DTests
 
     private static RigidBody2D AddActor(PhysicsWorld2D world, float x)
     {
-        var spatial = new SpatialObject2D(Circle2D.Builder.Create(1f));
-        spatial.Position = new(x, 1f);
+        var spatial = new SpatialObject2D(Circle2D.Builder.Create(1f))
+        {
+            Position = new(x, 1f)
+        };
         var actor = world.AddBody(spatial, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         return actor;

@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Interval;
 
 namespace App2d.Core.Geometry;
 
@@ -541,7 +541,7 @@ public static partial class Area2D
         internal Vector2d NormalizeRelative(Vector2d point)
         {
             var framed = ToFrame(point);
-            return new(framed.X / Radii.X, framed.Y / Radii.Y);
+            return framed / Radii;
         }
 
         internal Vector2d PointAt(double angle)

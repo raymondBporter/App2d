@@ -115,8 +115,10 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
             var bounds = isOneWay
                 ? new Rect2f(new Vector2f(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
                 : collision.Bounds;
-            var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(bounds.Size));
-            platform.Position = bounds.Center;
+            var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(bounds.Size))
+            {
+                Position = bounds.Center
+            };
             _platforms.Add(platform);
 
             var body = _physics.AddBody(platform, BodyMotionType2D.Static,

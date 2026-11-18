@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Interval;
 using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Primitives;
@@ -167,9 +168,11 @@ public sealed class Distance2DTests
         box.Transform.Scale = new(-2, 2);
         box.Rotation = MathF.PI / 2;
         box.Position = new(10, 20); // world extents x=6..14, y=18..22
-        var circle = new SpatialObject2D(Circle2D.Builder.Create(1));
-        circle.Scale = 2;
-        circle.Position = new(19, 22);
+        var circle = new SpatialObject2D(Circle2D.Builder.Create(1))
+        {
+            Scale = 2,
+            Position = new(19, 22)
+        };
         Assert.Equal(3f, SpatialDistance2D.SignedDistance(box, circle), 4);
         Assert.Equal(3f, SpatialDistance2D.SignedDistance(circle, box), 4);
         Assert.Equal(3f, SpatialDistance2D.Distance(box, circle), 4);
@@ -185,12 +188,16 @@ public sealed class Distance2DTests
     [Fact]
     public void TransformedHalfSpaceUsesItsWorldBoundary()
     {
-        var wall = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitX, 1));
-        wall.Scale = 2;
-        wall.Rotation = MathF.PI / 2;
-        wall.Position = new(3, 5); // boundary y = 7
-        var circle = new SpatialObject2D(Circle2D.Builder.Create(1));
-        circle.Position = new(3, 10);
+        var wall = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitX, 1))
+        {
+            Scale = 2,
+            Rotation = MathF.PI / 2,
+            Position = new(3, 5) // boundary y = 7
+        };
+        var circle = new SpatialObject2D(Circle2D.Builder.Create(1))
+        {
+            Position = new(3, 10)
+        };
         Assert.Equal(2f, SpatialDistance2D.SignedDistance(circle, wall), 4);
         Assert.Equal(2f, SpatialDistance2D.SignedDistance(wall, circle), 4);
     }

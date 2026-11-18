@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Interval;
 using App2d.Core.Geometry.Operations.Containment;
 using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Operations.Intersection;

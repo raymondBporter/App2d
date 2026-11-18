@@ -19,8 +19,10 @@ public sealed class CompositeShapeTests
 
     private static SpatialObject2D At(IShape2D shape, Vector2f position)
     {
-        var worldObject = new SpatialObject2D(shape);
-        worldObject.Position = position;
+        var worldObject = new SpatialObject2D(shape)
+        {
+            Position = position
+        };
         return worldObject;
     }
 

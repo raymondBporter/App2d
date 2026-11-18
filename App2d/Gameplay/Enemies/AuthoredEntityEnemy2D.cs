@@ -66,8 +66,10 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _worldLayer = worldLayer;
         _flight = entity.Asset.Behavior!.Controller.Flight is { } flight ? new(flight) : null;
         _movement = ShapeBounds2D.Calculate(entity.MovementShape);
-        WorldObject = new(AxisAlignedRectangle2D.Builder.CreateFromSize(_movement.Size * Scale));
-        WorldObject.Position = position;
+        WorldObject = new(AxisAlignedRectangle2D.Builder.CreateFromSize(_movement.Size * Scale))
+        {
+            Position = position
+        };
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
         Body.EntityId = id;
         Body.CollisionLayer = enemyLayer;
@@ -269,8 +271,10 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var bounds = WorldObject.WorldBounds;
         var x = WorldObject.Position.X + direction *
             (_movement.Width * Scale / 2 + (speed ?? Entity.Asset.Behavior!.Controller.WalkSpeed) * Scale * dt + 3);
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 8));
-        probe.Position = new(x, bounds.Min.Y - 3);
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 8))
+        {
+            Position = new(x, bounds.Min.Y - 3)
+        };
         if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0)
         {
             return false;

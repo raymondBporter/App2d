@@ -241,12 +241,16 @@ public sealed class WorldPresentation2D : IDisposable
     private void CreateGoal(Vector2f position)
     {
         var pole = new WorldObject2D(Capsule2D.Builder.Create(Vector2f.Zero, new Vector2f(0f, 190f), 5f),
-            new SolidColorShader(new Color4b(238, 242, 232)));
-        pole.Position = position;
+            new SolidColorShader(new Color4b(238, 242, 232)))
+        {
+            Position = position
+        };
         var flag = new WorldObject2D(ConvexPolygon2D.Builder.Create([
             Vector2f.Zero, new Vector2f(92f, -30f), new Vector2f(0f, -60f)]),
-            new SolidColorShader(new Color4b(255, 79, 120)));
-        flag.Position = position + new Vector2f(0f, 185f);
+            new SolidColorShader(new Color4b(255, 79, 120)))
+        {
+            Position = position + new Vector2f(0f, 185f)
+        };
         _goal.Add(pole);
         _goal.Add(flag);
         _scene.Add(pole);

@@ -64,8 +64,10 @@ public sealed class RigidBodyMassProperties2DTests
     public void ContactLeverArmsAreMeasuredFromTheComputedCentroid(float contactOffset, float expectedSpin, float expectedVerticalSpeed)
     {
         var world = new PhysicsWorld2D();
-        var spatial = new SpatialObject2D(Circle2D.Builder.Create(2f, new(4f, 0f)));
-        spatial.Position = new(0f, 2f);
+        var spatial = new SpatialObject2D(Circle2D.Builder.Create(2f, new(4f, 0f)))
+        {
+            Position = new(0f, 2f)
+        };
         var body = world.AddBody(spatial, BodyMotionType2D.Dynamic);
         body.SetMassFromShape(2f);
         body.FreezeRotation = false;

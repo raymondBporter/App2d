@@ -101,4 +101,12 @@ public static class Rect2Math<TVector, TReal>
         return TReal.IsInfinity(sum) && TReal.IsFinite(first) && TReal.IsFinite(second)
             ? first / two + second / two : sum / two;
     }
+
+    internal static TReal HalfExtent(TReal min, TReal max)
+    {
+        var two = TReal.One + TReal.One;
+        var extent = max - min;
+        return TReal.IsInfinity(extent) && TReal.IsFinite(min) && TReal.IsFinite(max)
+            ? max / two - min / two : extent / two;
+    }
 }

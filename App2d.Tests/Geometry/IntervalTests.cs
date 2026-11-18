@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Interval;
 using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Primitives;
 using System.Text.Json;
@@ -99,6 +100,18 @@ public sealed class IntervalTests
         Assert.Equal(8f, max);
         Assert.Equal(interval, JsonSerializer.Deserialize<Interval<float>>(JsonSerializer.Serialize(interval)));
         Assert.ThrowsAny<ArgumentException>(() => JsonSerializer.Deserialize<Interval<float>>("{\"Min\":8,\"Max\":2}"));
+    }
+
+    [Fact]
+    public void GenericIntervalsRoundTripJsonWithoutNumericSpecificIntervalConverters()
+    {
+        var cells = new Interval<int>(2, 8);
+        var precise = new Interval<double>(1d, double.BitIncrement(1d));
+        var decimals = new Interval<decimal>(1m, 1.0000000000000000000000000001m);
+
+        Assert.Equal(cells, JsonSerializer.Deserialize<Interval<int>>(JsonSerializer.Serialize(cells)));
+        Assert.Equal(precise, JsonSerializer.Deserialize<Interval<double>>(JsonSerializer.Serialize(precise)));
+        Assert.Equal(decimals, JsonSerializer.Deserialize<Interval<decimal>>(JsonSerializer.Serialize(decimals)));
     }
 
     [Fact]

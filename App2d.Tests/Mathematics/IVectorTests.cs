@@ -19,6 +19,18 @@ public sealed class IVectorTests
     }
 
     [Fact]
+    public void ScalarMultiplicationInBothOrdersDoesNotAllocateThroughTheGenericContract()
+    {
+        CheckScalingAllocations<Vector2f, float>(new(3, 4));
+        CheckScalingAllocations<Vector3f, float>(new(3, 4, 5));
+        CheckScalingAllocations<Vector4f, float>(new(3, 4, 5, 6));
+        CheckScalingAllocations<Vector2d, double>(new(3, 4));
+        CheckScalingAllocations<Vector3d, double>(new(3, 4, 5));
+        CheckScalingAllocations<Vector4d, double>(new(3, 4, 5, 6));
+        CheckScalingAllocations<TestVector2<Half>, Half>(new((Half)3, (Half)4));
+    }
+
+    [Fact]
     public void ExtensionsInferBothPrecisionAndDimensionForInstanceAndStaticCalls()
     {
         Assert.Equal(5f, new Vector2f(3, 4).Length());
@@ -156,6 +168,10 @@ public sealed class IVectorTests
         Assert.Equal(TVector.Zero, AdditiveZero<TVector>());
         Assert.Equal(expectedLength, IVectorExtensions.Length<TVector, TReal>(value));
         Assert.Equal(expectedLength * expectedLength, IVectorExtensions.LengthSquared<TVector, TReal>(value));
+        var scale = TReal.CreateChecked(2);
+        Assert.Equal(value * scale, scale * value);
+        Assert.Equal(value * -scale, -scale * value);
+        Assert.Equal(TVector.Zero, TReal.Zero * value);
 
         var segment = new Segment<TVector, TReal>(TVector.Zero, value);
         Assert.Equal(expectedLength, segment.Length());
@@ -197,6 +213,29 @@ public sealed class IVectorTests
     }
 
     private static TVector AdditiveZero<TVector>() where TVector : IAdditiveIdentity<TVector, TVector> => TVector.AdditiveIdentity;
+
+    private static void CheckScalingAllocations<TVector, TReal>(TVector value)
+        where TVector : unmanaged, IVector<TVector, TReal>
+        where TReal : unmanaged, IFloatingPointIeee754<TReal>
+    {
+        var two = TReal.One + TReal.One;
+        var half = TReal.One / two;
+        ScaleInBothOrders(value, two, half, 256);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var result = ScaleInBothOrders(value, two, half, 4096);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(value, result);
+        Assert.Equal(0L, allocated);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static TVector ScaleInBothOrders<TVector, TReal>(TVector value, TReal two, TReal half, int count)
+        where TVector : unmanaged, IVector<TVector, TReal>
+        where TReal : unmanaged, IFloatingPointIeee754<TReal>
+    {
+        for (var i = 0; i < count; i++) value = two * (value * half);
+        return value;
+    }
 
     private static void SameBits(double expected, double actual)
     {

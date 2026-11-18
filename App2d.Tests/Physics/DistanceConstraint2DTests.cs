@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Interval;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Shapes;
@@ -70,10 +70,14 @@ public sealed class DistanceConstraint2DTests
     private static (RigidBody2D First, RigidBody2D Second) CreateBodies(float firstX, float secondX)
     {
         var world = new PhysicsWorld2D { Gravity = Vector2f.Zero };
-        var firstObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
-        firstObject.Position = new Vector2f(firstX, 0f);
-        var secondObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
-        secondObject.Position = new Vector2f(secondX, 0f);
+        var firstObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f))
+        {
+            Position = new Vector2f(firstX, 0f)
+        };
+        var secondObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f))
+        {
+            Position = new Vector2f(secondX, 0f)
+        };
         return (
             world.AddBody(firstObject, BodyMotionType2D.Static),
             world.AddBody(secondObject, BodyMotionType2D.Dynamic));

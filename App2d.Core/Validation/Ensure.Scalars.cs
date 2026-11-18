@@ -14,6 +14,14 @@ public static partial class Ensure
         NumericValidation.IsFinite(value) ? value : throw CreateOutOfRange(value, "Value must be finite.", paramName);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T NotPositiveInfinity<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumberBase<T> =>
+        !T.IsPositiveInfinity(value) ? value : throw CreateOutOfRange(value, "Value must not be positive infinity.", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T NotNegativeInfinity<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumberBase<T> =>
+        !T.IsNegativeInfinity(value) ? value : throw CreateOutOfRange(value, "Value must not be negative infinity.", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Positive<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T> =>
         NumericValidation.IsPositive(value) ? value : throw CreateOutOfRange(value, "Value must be finite and positive (> 0).", paramName);
 

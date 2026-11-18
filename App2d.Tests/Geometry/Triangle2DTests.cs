@@ -68,8 +68,10 @@ public sealed class Triangle2DTests
         var local = reversed
             ? Triangle2D.Builder.Create(new(0, -1), new(0, 1), new(2, -1))
             : Triangle2D.Builder.Create(new(0, -1), new(2, -1), new(0, 1));
-        var item = new SpatialObject2D(local);
-        item.Position = new(10, 0);
+        var item = new SpatialObject2D(local)
+        {
+            Position = new(10, 0)
+        };
         Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2f.UnitX), item, 20, out var hit));
         Assert.Equal(10f, hit.Distance, 5);
         Assert.Equal(new Vector2f(10, 0), hit.Point);

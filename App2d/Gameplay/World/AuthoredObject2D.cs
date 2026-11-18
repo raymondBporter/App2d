@@ -31,8 +31,10 @@ public sealed class AuthoredObject2D : IDisposable
         var asset = placement.Asset;
         var shape = asset.Physics is not null ? PartShapes2D.Collision(asset) : new PartShader2D(asset).BoundsShape();
         _motion = asset.Motion?.CreateMotion(placement.Position);
-        WorldObject = new(shape);
-        WorldObject.Position = _motion?.Position(0) ?? placement.Position;
+        WorldObject = new(shape)
+        {
+            Position = _motion?.Position(0) ?? placement.Position
+        };
         Body = asset.Physics?.CreateBody(physics, WorldObject);
         if (Body is not null)
         {

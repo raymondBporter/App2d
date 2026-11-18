@@ -25,6 +25,7 @@ dotnet_diagnostic.RCS1123.severity = none
 dotnet_diagnostic.PH2071.severity = warning
 dotnet_code_quality.PH2071.token_count=200
 
+
 [*.json]
 indent_style = space
 indent_size = 2

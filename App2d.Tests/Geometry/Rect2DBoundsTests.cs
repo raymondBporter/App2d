@@ -154,9 +154,11 @@ public sealed class Rect2DBoundsTests
     public void RotatingACircleKeepsItsWorldBoundsTight()
     {
         var circle = Circle2D.Builder.Create(2, new(1, -3));
-        var item = new SpatialObject2D(circle);
-        item.Rotation = MathF.PI / 4;
-        item.Position = new(10, 20);
+        var item = new SpatialObject2D(circle)
+        {
+            Rotation = MathF.PI / 4,
+            Position = new(10, 20)
+        };
         var world = item.WorldBounds;
         Assert.InRange(MathF.Abs(world.Size.X - 4f), 0, .00001f);
         Assert.InRange(MathF.Abs(world.Size.Y - 4f), 0, .00001f);

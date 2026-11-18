@@ -11,9 +11,11 @@ public sealed class ShapeContactCharacterizationTests
 
     private static SpatialObject2D At(IShape2D shape, Vector2f position, float rotation = 0f)
     {
-        var worldObject = new SpatialObject2D(shape);
-        worldObject.Position = position;
-        worldObject.Rotation = rotation;
+        var worldObject = new SpatialObject2D(shape)
+        {
+            Position = position,
+            Rotation = rotation
+        };
         return worldObject;
     }
 

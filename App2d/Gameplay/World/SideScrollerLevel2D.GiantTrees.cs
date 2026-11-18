@@ -40,8 +40,10 @@ public sealed partial class SideScrollerLevel2D
         {
             foreach (var branch in tree.Branches)
             {
-                var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(branch.Bounds.Size));
-                platform.Position = branch.Bounds.Center;
+                var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(branch.Bounds.Size))
+                {
+                    Position = branch.Bounds.Center
+                };
                 var body = environment.Physics.AddBody(platform, BodyMotionType2D.Static);
                 body.CollisionLayer = environment.WorldLayer;
                 body.CollisionMask = environment.WorldLayer | environment.PlayerLayer | environment.EnemyLayer;

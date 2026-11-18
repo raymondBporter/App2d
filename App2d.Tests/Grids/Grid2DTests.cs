@@ -40,7 +40,7 @@ public sealed class Grid2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => grid[3, 0] = 99);
         Assert.Throws<ArgumentOutOfRangeException>(() => grid[-1, 1] = 99);
         Assert.Throws<ArgumentOutOfRangeException>(() => grid[0, 2] = 99);
-        Assert.Throws<ArgumentOutOfRangeException>(() => grid.Size.GetCell(6));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { grid.Size.GetCell(6); });
         Assert.False(grid.Size.TryGetIndex(new(3, 0), out var index));
         Assert.Equal(-1, index);
         Assert.Equal(42, grid[0, 1]);
@@ -148,9 +148,9 @@ public sealed class Grid2DTests
         Assert.False(geometry.TryGetCellRange(Rect2f.Unbounded, out _));
         Assert.False(geometry.TryGetCellRange(new BackwardsRect(Vector2f.One, Vector2f.Zero), out _));
         Assert.False(default(GridGeometry2D).TryWorldToCell(Vector2f.Zero, out _));
-        Assert.Throws<ArgumentException>(() => default(GridGeometry2D).WorldToCell(Vector2f.Zero));
-        Assert.Throws<ArgumentOutOfRangeException>(() => geometry.WorldToCell(new(float.MaxValue)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new GridGeometry2D(float.MaxValue).GetCellBounds(new(2, 0)));
+        Assert.Throws<ArgumentException>(() => { default(GridGeometry2D).WorldToCell(Vector2f.Zero); });
+        Assert.Throws<ArgumentOutOfRangeException>(() =>{ geometry.WorldToCell(new(float.MaxValue)); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { new GridGeometry2D(float.MaxValue).GetCellBounds(new(2, 0)); });
     }
 
     [Fact]

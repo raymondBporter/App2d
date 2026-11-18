@@ -10,10 +10,12 @@ public sealed class HalfSpaceConstraint2DTests
     [Fact]
     public void ResolutionUsesWorldUnitsAndStopsAtContactWithATransformedPlane()
     {
-        var wall = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitX, 1));
-        wall.Scale = 2;
-        wall.Rotation = MathF.PI / 2;
-        wall.Position = new(3, 5);
+        var wall = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitX, 1))
+        {
+            Scale = 2,
+            Rotation = MathF.PI / 2,
+            Position = new(3, 5)
+        };
         var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2, 2));
         box.Transform.Scale = new(-2, 2);
         box.Position = new(3, 8);

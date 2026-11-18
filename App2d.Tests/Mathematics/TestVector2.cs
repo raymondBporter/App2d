@@ -15,6 +15,7 @@ internal readonly record struct TestVector2<TReal>(TReal X, TReal Y) : IVector2<
     public static TestVector2<TReal> operator -(TestVector2<TReal> a, TestVector2<TReal> b) => new(a.X - b.X, a.Y - b.Y);
     public static TestVector2<TReal> operator -(TestVector2<TReal> value) => new(-value.X, -value.Y);
     public static TestVector2<TReal> operator *(TestVector2<TReal> value, TReal scale) => new(value.X * scale, value.Y * scale);
+    public static TestVector2<TReal> operator *(TReal scale, TestVector2<TReal> value) => value * scale;
     public static TestVector2<TReal> operator /(TestVector2<TReal> value, TReal scale) => new(value.X / scale, value.Y / scale);
     public static TReal Dot(TestVector2<TReal> a, TestVector2<TReal> b) => a.X * b.X + a.Y * b.Y;
     public static TestVector2<TReal> Min(TestVector2<TReal> a, TestVector2<TReal> b) => new(TReal.Min(a.X, b.X), TReal.Min(a.Y, b.Y));

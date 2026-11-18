@@ -198,8 +198,10 @@ internal sealed class HexWheelSimulation
 
     private RigidBody2D AddBody(IShape2D shape, Vector2f center, BodyMotionType2D motion)
     {
-        var spatial = new SpatialObject2D(shape);
-        spatial.Position = center;
+        var spatial = new SpatialObject2D(shape)
+        {
+            Position = center
+        };
         var body = World.AddBody(spatial, motion);
         body.FreezeRotation = false;
         body.Friction = .8f;

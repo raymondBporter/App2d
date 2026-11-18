@@ -30,8 +30,10 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2f.Zero, new Vector2f(32f, 8f));
-        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
-        actorObject.Position = new Vector2f(-18f, 8.5f);
+        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f))
+        {
+            Position = new Vector2f(-18f, 8.5f)
+        };
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         actor.LinearVelocity = new Vector2f(60f, 0f);
@@ -48,8 +50,10 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2f.Zero, new Vector2f(32f, 8f));
-        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
-        actorObject.Position = new Vector2f(0f, 10f);
+        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f))
+        {
+            Position = new Vector2f(0f, 10f)
+        };
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         actor.LinearVelocity = new Vector2f(0f, -120f);
@@ -66,8 +70,10 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2f.Zero, new Vector2f(32f, 8f));
-        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
-        actorObject.Position = new Vector2f(0f, -10f);
+        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f))
+        {
+            Position = new Vector2f(0f, -10f)
+        };
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         actor.LinearVelocity = new Vector2f(0f, 120f);
@@ -155,13 +161,17 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         var normal = Vector2f.Normalize(new Vector2f(-1f, 1f));
-        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(8f, 32f));
-        surfaceObject.Rotation = MathF.PI / 4f;
+        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(8f, 32f))
+        {
+            Rotation = MathF.PI / 4f
+        };
         var surface = world.AddBody(surfaceObject, BodyMotionType2D.Static);
         PlatformCollisionRules2D.Attach(world).Surface(surface).OneWaySurfaceNormal = normal;
         surface.Restitution = 0f;
-        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(2f));
-        actorObject.Position = normal * 20f;
+        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(2f))
+        {
+            Position = normal * 20f
+        };
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
         actor.LinearVelocity = -normal * 180f;
@@ -187,8 +197,10 @@ public sealed class OneWayPlatform2DTests
         Vector2f size)
     {
         var platformObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(size));
-        platformObject.Position = position;
+            AxisAlignedRectangle2D.Builder.CreateFromSize(size))
+        {
+            Position = position
+        };
         var platform = world.AddBody(
             platformObject,
             BodyMotionType2D.Static);
@@ -203,8 +215,10 @@ public sealed class OneWayPlatform2DTests
         Vector2f size)
     {
         var actorObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(size));
-        actorObject.Position = position;
+            AxisAlignedRectangle2D.Builder.CreateFromSize(size))
+        {
+            Position = position
+        };
         var actor = world.AddBody(
             actorObject,
             BodyMotionType2D.Dynamic);

@@ -9,9 +9,11 @@ public sealed class PolygonContactTests
 {
     private static SpatialObject2D At(IShape2D shape, Vector2f position, float rotation = 0f)
     {
-        var placed = new SpatialObject2D(shape);
-        placed.Position = position;
-        placed.Rotation = rotation;
+        var placed = new SpatialObject2D(shape)
+        {
+            Position = position,
+            Rotation = rotation
+        };
         return placed;
     }
 

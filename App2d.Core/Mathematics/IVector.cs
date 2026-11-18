@@ -20,6 +20,10 @@ public interface IVector<TSelf, TReal> :
     static abstract TSelf Zero { get; }
     static TSelf IAdditiveIdentity<TSelf, TSelf>.AdditiveIdentity => TSelf.Zero;
 
+    // The inherited IMultiplyOperators contract covers vector * scalar. Declare the reverse directly:
+    // IMultiplyOperators<TReal, TSelf, TSelf> would require the scalar itself to implement that interface.
+    static abstract TSelf operator *(TReal scale, TSelf value);
+
     // These primitives stay concrete so implementations can use packed arithmetic.
     static abstract TReal Dot(TSelf left, TSelf right);
     static abstract TSelf Min(TSelf left, TSelf right);

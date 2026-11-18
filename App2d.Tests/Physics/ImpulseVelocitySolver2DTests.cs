@@ -10,8 +10,10 @@ public sealed class ImpulseVelocitySolver2DTests
 {
     private static RigidBody2D DynamicBody(PhysicsWorld2D world, Vector2f position)
     {
-        var worldObject = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2f, 2f));
-        worldObject.Position = position;
+        var worldObject = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2f, 2f))
+        {
+            Position = position
+        };
         return world.AddBody(worldObject, BodyMotionType2D.Dynamic);
     }
 

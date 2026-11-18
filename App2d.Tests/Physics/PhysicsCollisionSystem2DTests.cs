@@ -36,8 +36,10 @@ public sealed class PhysicsCollisionSystem2DTests
         physics.AddBody(
             new SpatialObject2D(Circle2D.Builder.Create(10f)),
             BodyMotionType2D.Static);
-        var dynamicObject = new SpatialObject2D(Circle2D.Builder.Create(10f));
-        dynamicObject.Position = new Vector2f(15f, 0f);
+        var dynamicObject = new SpatialObject2D(Circle2D.Builder.Create(10f))
+        {
+            Position = new Vector2f(15f, 0f)
+        };
         physics.AddBody(dynamicObject, BodyMotionType2D.Dynamic);
 
         physics.Step(1f / 60f);

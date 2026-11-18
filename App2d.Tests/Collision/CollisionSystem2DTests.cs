@@ -17,8 +17,10 @@ public sealed class CollisionSystem2DTests
         var random = new Random(173);
         for (var i = 0; i < 80; i++)
         {
-            var shape = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(8 + i % 7, 10));
-            shape.Position = new(random.Next(-8, 9) * 16, random.Next(-4, 5) * 16);
+            var shape = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(8 + i % 7, 10))
+            {
+                Position = new(random.Next(-8, 9) * 16, random.Next(-4, 5) * 16)
+            };
             system.AddCollider(shape, i % 2 == 0 ? ColliderMobility2D.Static : ColliderMobility2D.Dynamic);
         }
         var results = new List<Collider2D>();
@@ -36,8 +38,10 @@ public sealed class CollisionSystem2DTests
     public void UnrepresentableGridCoordinatesUseTheOverflowPathWithoutLosingColliders()
     {
         var system = new CollisionSystem2D { CellSize = 1e-20f };
-        var shape = new SpatialObject2D(Circle2D.Builder.Create(2));
-        shape.Position = new(50, -50);
+        var shape = new SpatialObject2D(Circle2D.Builder.Create(2))
+        {
+            Position = new(50, -50)
+        };
         var collider = system.AddCollider(shape);
         var results = new List<Collider2D>();
         system.QueryBounds(new Rect2f(new(49, -51), new(51, -49)), results);
@@ -114,11 +118,15 @@ public sealed class CollisionSystem2DTests
         var system = new CollisionSystem2D();
         var firstStatic = system.AddCollider(
             new SpatialObject2D(Circle2D.Builder.Create(10f)));
-        var secondStaticObject = new SpatialObject2D(Circle2D.Builder.Create(10f));
-        secondStaticObject.Position = new Vector2f(5f, 0f);
+        var secondStaticObject = new SpatialObject2D(Circle2D.Builder.Create(10f))
+        {
+            Position = new Vector2f(5f, 0f)
+        };
         system.AddCollider(secondStaticObject);
-        var dynamicObject = new SpatialObject2D(Circle2D.Builder.Create(10f));
-        dynamicObject.Position = new Vector2f(15f, 0f);
+        var dynamicObject = new SpatialObject2D(Circle2D.Builder.Create(10f))
+        {
+            Position = new Vector2f(15f, 0f)
+        };
         var dynamicCollider = system.AddCollider(
             dynamicObject,
             ColliderMobility2D.Dynamic);
@@ -140,8 +148,10 @@ public sealed class CollisionSystem2DTests
     public void OverlapReturnsExactContactsFromNearbyCandidates()
     {
         var system = new CollisionSystem2D();
-        var target = new SpatialObject2D(Circle2D.Builder.Create(10f));
-        target.Position = new Vector2f(15f, 0f);
+        var target = new SpatialObject2D(Circle2D.Builder.Create(10f))
+        {
+            Position = new Vector2f(15f, 0f)
+        };
         var collider = system.AddCollider(target);
         collider.CollisionLayer = ActorLayer;
         var overlaps = new List<CollisionOverlap2D>();

@@ -51,9 +51,11 @@ public sealed class DistanceContactConsistencyTests
 
         SpatialObject2D Place(IShape2D shape)
         {
-            var placed = new SpatialObject2D(shape);
-            placed.Position = new(random.NextFloat(-3f, 3f), random.NextFloat(-3f, 3f));
-            placed.Rotation = random.NextFloat(MathF.Tau);
+            var placed = new SpatialObject2D(shape)
+            {
+                Position = new(random.NextFloat(-3f, 3f), random.NextFloat(-3f, 3f)),
+                Rotation = random.NextFloat(MathF.Tau)
+            };
             var scale = random.NextFloat(.5f, 2f);
             placed.Transform.Scale = new(random.Next(2) == 0 ? -scale : scale, scale);
             return placed;

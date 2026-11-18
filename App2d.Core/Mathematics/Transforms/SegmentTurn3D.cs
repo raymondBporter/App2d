@@ -87,6 +87,6 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3f Axis)
         var flatLength = float.Lerp(d0.Length(), d1.Length(), u);
         var position = Rotation2D.InterpolateArc(fromBase.XY, toBase.XY, Angle, u);
         var flat = (d0.Length() > 1e-6f ? Vector2f.Normalize(d0) : Vector2f.UnitX).Rotate(Angle * u);
-        return (new(position, baseZ), new((position + flat * flatLength), tipZ));
+        return (new(position, baseZ), new(position + flat * flatLength, tipZ));
     }
 }

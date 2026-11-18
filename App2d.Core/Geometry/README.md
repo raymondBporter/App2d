@@ -102,19 +102,72 @@ also read the axis-aligned `min`/`max` spelling, never mixed with `center`/`size
 and is the one shape that never rotates. `ShapeTransforms2D.Posed(shape, Similarity2D)` carries any built-in shape through
 a translation, rotation, uniform scale and optional mirror and returns a shape of the same kind.
 
-`IInterval<T>` supplies ordered scalar `Min`/`Max` endpoints. `Interval<T>` and authored `Limit` values
-share `IntervalMath<T>` operations without converting structs to interfaces. Physics and rig limits use `Interval<float>`.
+`IInterval<T>` supplies ordered scalar `Min`/`Max` endpoints and owns the shared queries as ordinary static generic methods.
+Implementations only supply the endpoints; they do not implement or forward the query algorithms. Physics and rig limits use `Interval<float>`.
 `Interval<T>` validates ordered, non-NaN endpoints and allows negative/positive infinity for an unbounded lower/upper end.
 Use `new Interval<float>(min, max)` for a bounded range and `Interval<T>.Singleton(value)` for a single value.
-The floating-point factories `Interval.Entire<float>()`, `Interval.GreaterThanOrEqual(2f)` and `Interval.LessThanOrEqual(8f)` construct
+The constructor calls reusable `Interval<T>.Validate(min, max)`. An existing value can call `Validate()`;
+`IInterval<T>.Validate(other)` also checks an endpoint-only implementation against the same contract.
+The floating-point factories `Interval.Entire<float>()`, `Interval.AtLeast(2f)` and `Interval.AtMost(8f)` construct
 unbounded ranges; `IsBoundedBelow`, `IsBoundedAbove`, `IsEntire` and `IsSingleton` describe their bounds.
 Interval clamping follows the shared numeric arithmetic, including NaN propagation. Constraint-specific finite-coordinate
 validation, activation tolerance and active-side reporting live in `ConstraintMath1D.EvaluateLimit`.
 `Length` is an endpoint difference, including for integer ranges; it is not an inclusive element count.
-Arguments enable convenient calls such as `limits.Contains(3f)` and `limits.Overlaps(new Interval<float>(2, 5))`.
-For queries where C# cannot infer the scalar from arguments, name it once: `IntervalMath<float>.Length(limits)`
-or `IntervalMath<float>.TryIntersect(limits, authoredLimit, out var shared)`.
+The non-generic `Interval` class holds both the factories and the extension queries, such as
+`limits.Contains(3f)` and `limits.Overlaps(new Interval<float>(2, 5))`.
+For queries where C# cannot infer the scalar from arguments, name it once: `IInterval<float>.Length(limits)`
+or `IInterval<float>.TryIntersect(limits, authoredLimit, out var shared)`.
+`Interval` supplies factories and extension syntax. The formulas live only on `IInterval<T>` and are not virtual:
+different interval implementations use the same endpoint semantics. No separate math helper is needed.
+Numeric arithmetic still uses `T`'s operations; no float-specific interval implementation or conversion is required.
+C# does not infer the scalar type from an `IInterval<T>` constraint alone. These calls keep concrete interval arguments
+instead of converting structs to interface values.
 Rectangles expose `XInterval` and `YInterval` while retaining their existing vector storage.
+
+For example, this is a complete implementation with all shared queries available:
+
+```csharp
+public readonly record struct Band(double Min, double Max) : IInterval<double>;
+```
+
+```csharp
+var band = new Band(2, 5);
+bool contains = band.Contains(3d);
+double length = IInterval<double>.Length(band);
+bool overlaps = band.Overlaps(new Interval<double>(5, 8));
+```
+
+`Distance(other)` is the nearest-point distance, returning zero for touching or overlapping intervals.
+`MaxDistance(other)` uses the farthest cross-interval endpoints. `SignedDistance(other)` is positive for a gap,
+zero at contact, or negative by the smallest translation needed to reach touching contact. This includes containment:
+`[0, 10]` and `[3, 4]` have signed distance `-4`, not `-1`. Because these intervals are closed, strictly disjoint
+intervals require moving past contact. An interval that cannot be separated by a finite translation has signed distance
+negative infinity when the endpoint type supports it.
+
+`Lerp(t)` evaluates `Min + t*(Max-Min)`, allowing extrapolation; `LerpClamped(t)` first clamps t to `[0, 1]`.
+`InverseLerp(value)` recovers the parameter, and `InverseLerpClamped(value)` clamps that result to `[0, 1]`.
+These operations require finite endpoints. Singletons evaluate to their endpoint and return parameter zero.
+Parameters and results use `T`, including integer division for integer intervals. Floating-point interpolation handles
+opposite-sign endpoints without overflowing the endpoint difference, and parameter recovery rescales overflowing
+floating-point differences. NaN parameters/values propagate for nonsingleton floating-point intervals.
+
+`Translate(offset)`, `Reflect()`, `Reflect(center)`, `Scale(scale)` and `Scale(scale, center)` return validated intervals.
+Affine parameters must be finite. Reflection reverses and negates the endpoints; negative scaling reorders them.
+Zero scaling maps any interval, including an unbounded one, to the singleton at its center of scaling.
+`Include(value)` expands the interval only as needed, and `ToString()` shows `[Min, Max]` with invariant formatting.
+The new distance, interpolation and affine calculations use checked generic arithmetic; integer or decimal intermediate
+overflow throws rather than silently wrapping. Unsigned types cannot represent negative penetration distances.
+The nonempty closed-range representation remains unchanged; a disjoint intersection still returns false, not an empty sentinel.
+
+`IIntervalTests` checks endpoint-only structs with float, double, int and decimal endpoints, mixed interval types,
+unbounded and touching ranges, BigInteger/decimal precision, and zero managed allocations after warmup.
+`IntervalOperationsTests` covers reusable validation, distances (including exhaustive small-integer searches),
+parameterization, affine operations, unsigned/overflow cases, and unbounded ranges.
+To inspect optimized machine code on x64, run `tools/IntervalJitProbe/Verify.ps1` in PowerShell. It builds the Release
+probe, disables tiered compilation and ReadyToRun for that process, and writes disassembly plus `verification.json`
+under `artifacts/interval-jit`. Verification checks for boxing/runtime-dispatch helpers, requires basic scalar queries
+to inline completely, and permits only resolved decimal arithmetic, interval construction/validation, and invalid-clamp throw calls
+in the other probes. This checks generated code, rather than assuming that constrained calls in generic IL are free.
 
 `ISegment<TSelf, TPoint>` supplies `Start`/`End` and a static abstract `Create` factory.
 `LineSegmentCurve2D` and Noodle's bone segment implement it with `Vector2` endpoints.

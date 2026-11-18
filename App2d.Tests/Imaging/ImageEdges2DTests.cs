@@ -171,7 +171,7 @@ public sealed class ImageEdges2DTests
         Assert.Equal(new Vector3f(0, 0, .5f), ColorSpaces2D.SrgbToHsv(new(.5f)));
         Assert.InRange(ColorSpaces2D.SrgbToHsv(new(1, 0, .01f)).X, .99f, 1);
         Assert.InRange(ColorSpaces2D.SrgbToHsv(new(1, .01f, 0)).X, 0, .01f);
-        Assert.Throws<ArgumentOutOfRangeException>(() => ColorSpaces2D.SrgbToHsv(new(-1, 0, 0)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ColorSpaces2D.SrgbToHsv(new(float.NaN, 0, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => { ColorSpaces2D.SrgbToHsv(new(-1, 0, 0)); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { ColorSpaces2D.SrgbToHsv(new(float.NaN, 0, 0)); });
     }
 }

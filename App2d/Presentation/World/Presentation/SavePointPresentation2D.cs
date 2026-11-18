@@ -26,9 +26,9 @@ internal sealed class SavePointPresentation2D : IDisposable
             AxisAlignedRectangle2D.Builder.CreateFromSize(58f, 14f),
             new LinearGradientShader(new Color4b(68, 77, 96), new Color4b(31, 38, 54)))
         {
-            ZIndex = 1
+            ZIndex = 1,
+            Position = _basePosition + new Vector2f(0f, 7f)
         };
-        baseStone.Position = _basePosition + new Vector2f(0f, 7f);
         Add(baseStone);
 
         var pedestal = new WorldObject2D(
@@ -41,18 +41,18 @@ internal sealed class SavePointPresentation2D : IDisposable
             ]),
             new LinearGradientShader(new Color4b(91, 103, 125), new Color4b(37, 45, 62)))
         {
-            ZIndex = 1
+            ZIndex = 1,
+            Position = _basePosition + new Vector2f(0f, 12f)
         };
-        pedestal.Position = _basePosition + new Vector2f(0f, 12f);
         Add(pedestal);
 
         _glow = new WorldObject2D(Circle2D.Builder.Create(31f),
             new SolidColorShader(new Color4b(93, 224, 255, 38)))
         {
             IsVisible = false,
-            ZIndex = 1
+            ZIndex = 1,
+            Position = _basePosition + new Vector2f(0f, OrbHeight)
         };
-        _glow.Position = _basePosition + new Vector2f(0f, OrbHeight);
         Add(_glow);
 
         _orb = new WorldObject2D(
@@ -65,9 +65,9 @@ internal sealed class SavePointPresentation2D : IDisposable
             ]),
             InactiveOrbShader())
         {
-            ZIndex = 2
+            ZIndex = 2,
+            Position = _basePosition + new Vector2f(0f, OrbHeight)
         };
-        _orb.Position = _basePosition + new Vector2f(0f, OrbHeight);
         Add(_orb);
         SetActive(false);
     }
