@@ -4,8 +4,11 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Mathematics;
 
-/// <summary>A float vector backed by System.Numerics.Vector3 for packed arithmetic.</summary>
-public readonly record struct Vector3f : IVector<Vector3f, float>
+/// <summary>
+/// A float vector backed by System.Numerics.Vector3 for packed arithmetic. Members not declared
+/// here (IsFinite, Midpoint, Project, Reject, Normalized, ...) are inherited from IVector3 and IVector.
+/// </summary>
+public readonly record struct Vector3f : IVector3<Vector3f, float>
 {
     private readonly Vector3 _value;
 
@@ -26,8 +29,7 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
     public float Z { get => _value.Z; init => _value.Z = value; }
     public float this[int index] => _value[index];
 
-    public static int Dimension => 3;
-    public static Vector3f FromCoordinates(ReadOnlySpan<float> coordinates) => new(coordinates[0], coordinates[1], coordinates[2]);
+    public static Vector3f Create(float x, float y, float z) => new(x, y, z);
     public static Vector3f Zero => default;
     public static Vector3f One => new(Vector3.One);
     public static Vector3f UnitX => new(Vector3.UnitX);
@@ -66,26 +68,28 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float Dot(Vector3f other) => Vector3.Dot(_value, other._value);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Min(Vector3f left, Vector3f right) => new(Vector3.Min(left._value, right._value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Max(Vector3f left, Vector3f right) => new(Vector3.Max(left._value, right._value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Abs(Vector3f value) => new(Vector3.Abs(value._value));
-    public static bool IsFinite(Vector3f value) => value.IsFinite();
 
-    /// <summary>True when every component is finite, regardless of the vector's length.</summary>
-    public bool IsFinite() => float.IsFinite(X) && float.IsFinite(Y) && float.IsFinite(Z);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3f Clamp(Vector3f value, Vector3f minimum, Vector3f maximum) => new(Vector3.Clamp(value._value, minimum._value, maximum._value));
 
-    public Vector3f Min(Vector3f other) => Min(this, other);
-    public Vector3f Max(Vector3f other) => Max(this, other);
-    public Vector3f Abs() => Abs(this);
-    public float DistanceSquared(Vector3f other) => DistanceSquared(this, other);
-    public float Distance(Vector3f other) => Distance(this, other);
-    public Vector3f Lerp(Vector3f other, float amount) => Lerp(this, other, amount);
-    public Vector3f Midpoint(Vector3f other) => IVectorExtensions.Midpoint<Vector3f, float>(this, other);
-    public Vector3f Project(Vector3f unitNormal) => IVectorExtensions.Project<Vector3f, float>(this, unitNormal);
-    public Vector3f Reject(Vector3f unitNormal) => IVectorExtensions.Reject<Vector3f, float>(this, unitNormal);
-    public Vector3f Reflect(Vector3f unitNormal) => new(Vector3.Reflect(_value, unitNormal._value));
-    public Vector3f Clamp(Vector3f minimum, Vector3f maximum) => IVectorExtensions.Clamp<Vector3f, float>(this, minimum, maximum);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float LengthSquared(Vector3f value) => value._value.LengthSquared();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Length(Vector3f value) => value._value.Length();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3f Reflect(Vector3f value, Vector3f unitNormal) => new(Vector3.Reflect(value._value, unitNormal._value));
+
+    // Direct instance forms of the hottest calls, so they stay a single call in Debug builds too.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float Length() => _value.Length();
 
@@ -101,8 +105,6 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Normalize(Vector3f value) => new(Vector3.Normalize(value._value));
 
-    public Vector3f Normalized() => Normalize(this);
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Lerp(Vector3f first, Vector3f second, float amount) =>
         new(Vector3.Lerp(first._value, second._value, amount));
@@ -110,10 +112,13 @@ public readonly record struct Vector3f : IVector<Vector3f, float>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Cross(Vector3f left, Vector3f right) => new(Vector3.Cross(left._value, right._value));
 
-    public Vector3f Cross(Vector3f other) => Cross(this, other);
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Transform(Vector3f point, Matrix4x4 matrix) => new(Vector3.Transform(point._value, matrix));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f TransformNormal(Vector3f direction, Matrix4x4 matrix) => new(Vector3.TransformNormal(direction._value, matrix));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3f Transform(Vector3f value, Quaternion rotation) => new(Vector3.Transform(value._value, rotation));
 
     /// <summary>Converts each component from degrees to radians.</summary>

@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Diameter;
+namespace App2d.Core.Geometry.Measurements;
 
 /// <summary>Maximum distances between points of raw, filled primitives. Intermediates use double precision.</summary>
 public static class Diameter2D

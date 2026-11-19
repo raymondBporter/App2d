@@ -1,0 +1,25 @@
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Validation;
+
+namespace App2d.Core.Geometry.Shapes;
+
+[System.Text.Json.Serialization.JsonConverter(typeof(GeometryJsonConverterFactory))]
+public readonly partial record struct Ellipse2D
+{
+    public void Validate()
+    {
+        Ensure.Positive(Radii, "radii");
+        Ensure.Finite(Center, "center");
+        OrientedFrame2D.ValidateAxis(Axis, "axis");
+    }
+
+    /// <summary>Stateless validated construction.</summary>
+    public static class Builder
+    {
+        public static Ellipse2D Create(Vector2f radii, Vector2f center = default, float angleRadians = 0f) => new Ellipse2D(radii, center, OrientedFrame2D.AxisFromAngle(angleRadians)).Validated();
+
+        /// <summary>An ellipse whose local +X follows any finite nonzero direction; its length is ignored.</summary>
+        public static Ellipse2D Create(Vector2f radii, Vector2f center, Vector2f axis) => new Ellipse2D(radii, center, new Direction2D(axis).Vector).Validated();
+    }
+}

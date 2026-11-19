@@ -2,7 +2,6 @@ using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Shapes;
 using System.Reflection;
 using System.Text.Json;
 

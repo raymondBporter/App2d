@@ -1,12 +1,10 @@
-using App2d.Core.Geometry.Operations.ClosestPoint;
-using App2d.Core.Geometry.Operations.Containment;
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Containment;
+using App2d.Core.Geometry.Distance;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 
-namespace App2d.Core.Geometry.Operations.Convex;
+namespace App2d.Core.Geometry.Convex;
 
 /// <summary>Adapts finite convex shapes to the shared distance and contact query.</summary>
 public static class ShapeConvexQuery2D

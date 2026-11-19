@@ -1,8 +1,7 @@
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.MassProperties;
+namespace App2d.Core.Geometry.Measurements;
 
 /// <summary>Exact area, centroid, mass and centroidal polar inertia for uniform-density solid 2D shapes.</summary>
 public static class ShapeMassProperties2D

@@ -1,10 +1,10 @@
 using App2d.Core.Collision.Contacts;
-using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Geometry.Operations.Distance;
-using App2d.Core.Geometry.Operations.MassProperties;
+using App2d.Core.Geometry.Bounds;
+using App2d.Core.Geometry.Distance;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
-using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using static App2d.Tests.Geometry.VectorComparers;
 

@@ -1,10 +1,8 @@
-using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Conversion;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Validation;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core.Geometry.Operations.Polygons;
+namespace App2d.Core.Geometry.Meshes.Tessellation;
 
 /// <summary>Reuses rest-topology triangulation until a polygon's XY coordinates or tolerance change.</summary>
 /// <remarks>Keys are weak references. Edit a perimeter between calls, never concurrently with a call.</remarks>

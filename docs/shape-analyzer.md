@@ -24,7 +24,7 @@ Build the solution, then use Visual Studio's Quick Actions (`Ctrl+.`) on the war
 The quick fix also supports Fix All. If an already open editor has cached the old analyzer,
 reload the solution after building.
 
-The fix adds `using App2d.Core.Shapes;` when needed and uses the short type name.
+The fix adds `using App2d.Core.Geometry.Shapes;` when needed and uses the short type name.
 It reuses existing imports (including global usings) and aliases. When a short name or
 an added import would conflict with another type, it retains the necessary qualification.
 

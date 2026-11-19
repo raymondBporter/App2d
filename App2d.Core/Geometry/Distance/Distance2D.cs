@@ -1,10 +1,8 @@
-using App2d.Core.Geometry.Interval;
-using App2d.Core.Geometry.Operations.ClosestPoint;
-using App2d.Core.Geometry.Operations.Containment;
+using App2d.Core.Geometry.Containment;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Distance;
 
 /// <summary>
 /// Euclidean distance and signed distance between raw primitives in one coordinate space.
@@ -12,7 +10,7 @@ namespace App2d.Core.Geometry;
 /// zero at contact and negative inside or overlapping; for two convex solids its magnitude is the
 /// shortest translation needed to reach contact. Squared variants exist only where they avoid a square root:
 /// radius-subtracting and signed queries have no squared form. Inputs are finite, radii nonnegative and
-/// rectangle bounds ordered. Shape and spatial-object overloads live in <c>App2d.Core.Shapes.ShapeDistance2D</c>.
+/// rectangle bounds ordered. Shape and spatial-object overloads live in <see cref="ShapeDistance2D"/>.
 /// </summary>
 public static partial class Distance2D
 {

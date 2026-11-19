@@ -76,7 +76,7 @@ internal static class GeometrySymbols
 
         return ns switch
         {
-            "App2d.Core.Shapes" => type.Name is "Circle2D" or "Ellipse2D" or "Capsule2D" or "Rectangle2D" or
+            "App2d.Core.Geometry.Shapes" => type.Name is "Circle2D" or "Ellipse2D" or "Capsule2D" or "Rectangle2D" or
                 "AxisAlignedRectangle2D" or "RoundedRectangle2D" or "Triangle2D" or "ConvexPolygon2D" or
                 "SimplePolygon2D" or "HalfSpace2D" or "CompositeShape2D",
             "App2d.Core.Geometry.Curves" => type.Name is "LineSegmentCurve2D" or "PolylineCurve2D" or

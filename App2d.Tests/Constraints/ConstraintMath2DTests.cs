@@ -1,5 +1,4 @@
 using App2d.Core.Constraints;
-using App2d.Core.Geometry.Interval;
 
 namespace App2d.Tests.Constraints;
 

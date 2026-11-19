@@ -1,5 +1,4 @@
-using App2d.Core.Geometry.Operations.Curves;
-using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Distance;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Geometry.Curves;

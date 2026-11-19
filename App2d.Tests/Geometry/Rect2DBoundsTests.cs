@@ -1,11 +1,9 @@
-using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Geometry.Operations.Containment;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Bounds;
+using App2d.Core.Geometry.Containment;
+using App2d.Core.Geometry.Convex;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using System.Numerics;
 

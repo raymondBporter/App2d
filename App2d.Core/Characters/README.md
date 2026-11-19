@@ -64,7 +64,7 @@ Physical point JSON remains x/y/z. All checked-in authored assets use the new fi
 removed names are rejected by strict JSON loading rather than silently losing ordering information.
 
 `PartCurves2D` resolves character-specific control bindings and rest offsets. Curve control-point editing lives in
-`Geometry.Operations.Curves`; Bernstein evaluation lives in `Geometry.Curves.BezierMath`. Layer values use scalar
+`Geometry.Curves`; Bernstein evaluation lives in `Geometry.Curves.BezierMath`. Layer values use scalar
 Bernstein evaluation, not a second XY curve. Rounded paths retain their geometric parameterization when interpolating
 attributes, so changing layer order does not change their silhouette or sampling density.
 

@@ -1,9 +1,8 @@
-using App2d.Core.Geometry.Operations.Diameter;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>A filled triangle in local space. Either perimeter winding is accepted; collinear vertices are rejected.</summary>
 public readonly partial record struct Triangle2D : IConvexShape2D, ITriangle<Triangle2D, Vector2f>

@@ -1,6 +1,6 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
-using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.World.Vegetation;

@@ -1,10 +1,9 @@
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;

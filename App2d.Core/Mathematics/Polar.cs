@@ -25,7 +25,7 @@ public readonly record struct Polar<TReal> where TReal : unmanaged, IFloatingPoi
         (radius, angleRadians) = (Radius, AngleRadians);
 
     public TVector ToCartesian<TVector>() where TVector : unmanaged, IVector2<TVector, TReal> =>
-        Vector2Math<TVector, TReal>.Direction(AngleRadians) * Radius;
+        TVector.Direction(AngleRadians) * Radius;
 
     public static TVector ToCartesian<TVector>(TReal radius, TReal angleRadians) where TVector : unmanaged, IVector2<TVector, TReal> =>
         new Polar<TReal>(radius, angleRadians).ToCartesian<TVector>();

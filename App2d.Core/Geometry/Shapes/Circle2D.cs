@@ -1,10 +1,8 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.Containment;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Diameter;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Containment;
+using App2d.Core.Geometry.Convex;
+using App2d.Core.Geometry.Measurements;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>A filled circle in local space.</summary>
 public readonly partial record struct Circle2D : IConvexShape2D

@@ -95,7 +95,7 @@ public sealed class PolarTests
         Assert.Equal(Vector2d.FromAngle(Math.PI / 2), Vector2d.FromAngleDegrees(90));
 
         var half = new TestVector2<Half>((Half)3, Half.Zero);
-        Polar<Half> halfPolar = Vector2Math<TestVector2<Half>, Half>.ToPolar(half);
+        Polar<Half> halfPolar = Polar<Half>.FromCartesian(half);
         Assert.Equal(((Half)3, Half.Zero), (halfPolar.Radius, halfPolar.AngleRadians));
         Assert.Equal(half, halfPolar.ToCartesian<TestVector2<Half>>());
     }

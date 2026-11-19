@@ -1,4 +1,3 @@
-using App2d.Core.Geometry.Interval;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Physics.Constraints;

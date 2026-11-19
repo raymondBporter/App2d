@@ -4,7 +4,7 @@ using App2d.Core;
 using App2d.Core.Assets;
 using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Hosting;
 using App2d.Core.Input;

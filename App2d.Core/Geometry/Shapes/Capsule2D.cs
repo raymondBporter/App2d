@@ -1,11 +1,9 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.Containment;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Diameter;
+using App2d.Core.Geometry.Containment;
+using App2d.Core.Geometry.Convex;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>A filled capsule in local space: every point within <see cref="Radius"/> of the spine segment.</summary>
 public readonly partial record struct Capsule2D : IConvexShape2D

@@ -1,7 +1,7 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Shapes;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using Texture2D = App2d.Core.Rendering.Textures.Texture2D;

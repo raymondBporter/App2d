@@ -1,10 +1,10 @@
+using App2d.Core.Geometry.Distance;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Convex;
+namespace App2d.Core.Geometry.Convex;
 
 /// <summary>Shared signed distance and boundary witnesses for a posed convex shape against a posed half-space.</summary>
 public static class ShapeHalfSpaceQuery2D

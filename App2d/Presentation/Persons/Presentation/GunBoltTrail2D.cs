@@ -1,6 +1,6 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Shapes;
 
 namespace App2d.Presentation.Persons.Presentation;
 

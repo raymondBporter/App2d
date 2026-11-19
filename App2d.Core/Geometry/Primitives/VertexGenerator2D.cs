@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Vertices;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// Writes local-space perimeters into caller-owned buffers. No shapes, cached bounds, graphics types or allocations.

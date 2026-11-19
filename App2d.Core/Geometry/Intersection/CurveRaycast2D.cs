@@ -2,7 +2,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Intersection;
+namespace App2d.Core.Geometry.Intersection;
 
 /// <summary>
 /// Nearest isolated ray/curve intersections on the actual curve, without polyline sampling.

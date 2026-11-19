@@ -3,13 +3,15 @@ using System.Runtime.Intrinsics;
 
 namespace App2d.Core.Mathematics;
 
-/// <summary>A vector of four doubles. Arithmetic follows IEEE 754 without validation.</summary>
-public readonly record struct Vector4d(double X, double Y, double Z, double W) : IVector<Vector4d, double>
+/// <summary>
+/// A vector of four doubles. Arithmetic follows IEEE 754 without validation.
+/// Only storage, constants and operators are declared here; Dot, Length and the rest are inherited from IVector4 and IVector.
+/// </summary>
+public readonly record struct Vector4d(double X, double Y, double Z, double W) : IVector4<Vector4d, double>
 {
     public Vector4d(Vector4 value) : this(value.X, value.Y, value.Z, value.W) { }
 
-    public static int Dimension => 4;
-    public static Vector4d FromCoordinates(ReadOnlySpan<double> coordinates) => new(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
+    public static Vector4d Create(double x, double y, double z, double w) => new(x, y, z, w);
     public static Vector4d Zero => default;
     public static Vector4d One => new(1, 1, 1, 1);
     public static Vector4d UnitX => new(1, 0, 0, 0);
@@ -35,29 +37,6 @@ public readonly record struct Vector4d(double X, double Y, double Z, double W) :
         var quotient = Vector256.Create(value.X, value.Y, value.Z, value.W) / Vector256.Create(scale);
         return new(quotient.GetElement(0), quotient.GetElement(1), quotient.GetElement(2), quotient.GetElement(3));
     }
-
-    public static double Dot(Vector4d left, Vector4d right) => left.X * right.X + left.Y * right.Y + left.Z * right.Z + left.W * right.W;
-    public static Vector4d Min(Vector4d left, Vector4d right) => new(double.Min(left.X, right.X), double.Min(left.Y, right.Y), double.Min(left.Z, right.Z), double.Min(left.W, right.W));
-    public static Vector4d Max(Vector4d left, Vector4d right) => new(double.Max(left.X, right.X), double.Max(left.Y, right.Y), double.Max(left.Z, right.Z), double.Max(left.W, right.W));
-    public static Vector4d Abs(Vector4d value) => new(double.Abs(value.X), double.Abs(value.Y), double.Abs(value.Z), double.Abs(value.W));
-    public static bool IsFinite(Vector4d value) => double.IsFinite(value.X) && double.IsFinite(value.Y) && double.IsFinite(value.Z) && double.IsFinite(value.W);
-
-    public double Dot(Vector4d other) => Dot(this, other);
-    public Vector4d Min(Vector4d other) => Min(this, other);
-    public Vector4d Max(Vector4d other) => Max(this, other);
-    public Vector4d Abs() => Abs(this);
-    public bool IsFinite() => IsFinite(this);
-    public double LengthSquared() => IVectorExtensions.LengthSquared<Vector4d, double>(this);
-    public double Length() => IVectorExtensions.Length<Vector4d, double>(this);
-    public Vector4d Normalized() => IVectorExtensions.Normalize<Vector4d, double>(this);
-    public double DistanceSquared(Vector4d other) => IVectorExtensions.DistanceSquared<Vector4d, double>(this, other);
-    public double Distance(Vector4d other) => IVectorExtensions.Distance<Vector4d, double>(this, other);
-    public Vector4d Lerp(Vector4d other, double amount) => IVectorExtensions.Lerp<Vector4d, double>(this, other, amount);
-    public Vector4d Midpoint(Vector4d other) => IVectorExtensions.Midpoint<Vector4d, double>(this, other);
-    public Vector4d Project(Vector4d unitNormal) => IVectorExtensions.Project<Vector4d, double>(this, unitNormal);
-    public Vector4d Reject(Vector4d unitNormal) => IVectorExtensions.Reject<Vector4d, double>(this, unitNormal);
-    public Vector4d Reflect(Vector4d unitNormal) => IVectorExtensions.Reflect<Vector4d, double>(this, unitNormal);
-    public Vector4d Clamp(Vector4d minimum, Vector4d maximum) => IVectorExtensions.Clamp<Vector4d, double>(this, minimum, maximum);
 
     [System.Text.Json.Serialization.JsonIgnore]
     public Vector3d XYZ => new(X, Y, Z);

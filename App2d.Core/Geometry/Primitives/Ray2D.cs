@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Distance;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Geometry.Primitives;

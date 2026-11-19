@@ -1,4 +1,4 @@
-namespace App2d.Core.Geometry.Operations.Convex;
+namespace App2d.Core.Geometry.Convex;
 
 /// <summary>A finite convex set described by its exact support mapping.</summary>
 public interface IConvexSupport2D

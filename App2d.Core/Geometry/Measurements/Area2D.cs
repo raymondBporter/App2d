@@ -1,6 +1,6 @@
-using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Primitives;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Measurements;
 
 /// <summary>Areas of raw primitives. Inputs are finite; radii and extents are nonnegative.</summary>
 public static partial class Area2D

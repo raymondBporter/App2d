@@ -1,4 +1,3 @@
-using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using static App2d.Tests.Geometry.VectorComparers;
 

@@ -1,7 +1,6 @@
-using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Geometry.Primitives;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Distance;
 
 public static partial class Distance2D
 {

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Distance;
 using App2d.Core.Geometry.Primitives;
 
 namespace App2d.Core.Geometry.Curves;

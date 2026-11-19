@@ -1,12 +1,10 @@
+using App2d.Core.Geometry.Convex;
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Distance;
+namespace App2d.Core.Geometry.Distance;
 
 /// <summary>
 /// Distance and signed distance for local or posed shapes, built on <see cref="Distance2D"/>.

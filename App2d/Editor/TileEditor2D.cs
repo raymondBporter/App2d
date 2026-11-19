@@ -1,5 +1,5 @@
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
 using App2d.Core.Input;

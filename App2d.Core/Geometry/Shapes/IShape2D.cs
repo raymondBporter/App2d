@@ -1,6 +1,6 @@
-using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Geometry.Operations.Diameter;
-using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Bounds;
+using App2d.Core.Geometry.Distance;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Spatial;
 

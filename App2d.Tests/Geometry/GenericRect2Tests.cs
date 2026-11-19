@@ -103,7 +103,7 @@ public sealed class GenericRect2Tests
     [Fact]
     public void OutwardInfiniteBoundsKeepProjectionsAndOriginDistancesDefined()
     {
-        var rectangle = Rect2.Unbounded<Vector2d, double>();
+        var rectangle = Rect2d.Unbounded;
         Assert.True(Rect2d.IsValid(rectangle.Min, rectangle.Max));
         Rect2d.Validate(rectangle.Min, rectangle.Max);
         Assert.True(rectangle.ProjectionX.IsEntire);
@@ -136,9 +136,10 @@ public sealed class GenericRect2Tests
         Assert.Equal(packed.Height, generic.Height);
         Assert.Equal(packed.Area, generic.Area);
         Assert.Equal(packed.Center, generic.Center);
-        Assert.Equal(packed.Contains(packed.Center), Rect2Math<Vector2f, float>.Contains(packed, packed.Center));
+        Assert.Equal(packed.Contains(packed.Center), generic.Contains(packed.Center));
+        Assert.Equal(generic, Rect2<Vector2f, float>.From(packed));
         Assert.True(packed.Contains(generic));
-        Assert.True(generic.Contains(packed));
+        Assert.True(generic.Contains(Rect2<Vector2f, float>.From(packed)));
     }
 
     [Fact]
@@ -166,7 +167,7 @@ public sealed class GenericRect2Tests
     [Fact]
     public void DoubleBoundsHandleUnboundedCoordinatesAndLargeFiniteMidpoints()
     {
-        var unbounded = Rect2.Unbounded<Vector2d, double>();
+        var unbounded = Rect2d.Unbounded;
         Assert.False(unbounded.IsFinite);
         Assert.True(unbounded.Contains(Vector2d.Zero));
         Assert.True(double.IsNaN(unbounded.Center.X));
@@ -179,7 +180,7 @@ public sealed class GenericRect2Tests
     }
 
     [Fact]
-    public void SelfTypedRectangleQueriesDoNotBox()
+    public void ConvertingAnyBoundsTypeAndQueryingItDoesNotBox()
     {
         var bounds = new Rect2d(new(-4, -2), new(2, 8));
         for (var i = 0; i < 100; i++) _ = Query(bounds);
@@ -190,9 +191,11 @@ public sealed class GenericRect2Tests
         Assert.Equal(0, allocated);
         Assert.True(total > 0);
 
-        static double Query<TSelf>(TSelf rectangle) where TSelf : IRect2d =>
-            Rect2Math<Vector2d, double>.TryIntersect(rectangle, rectangle, out var shared)
-                ? shared.Area + Rect2Math<Vector2d, double>.Center(rectangle).Y : 0;
+        static double Query<TSelf>(TSelf bounds) where TSelf : IRect2d
+        {
+            var rectangle = Rect2d.From(bounds);
+            return rectangle.TryIntersect(rectangle, out var shared) ? shared.Area + rectangle.Center.Y : 0;
+        }
     }
 
     private static void CheckFromSize<TVector, TReal>()

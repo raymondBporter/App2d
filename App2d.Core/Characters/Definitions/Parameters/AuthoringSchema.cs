@@ -1,4 +1,3 @@
-using App2d.Core.Geometry.Interval;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 using App2d.Core.Validation;

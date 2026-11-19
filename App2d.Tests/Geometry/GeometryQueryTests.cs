@@ -1,8 +1,7 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Interval;
-using App2d.Core.Geometry.Operations.Containment;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Containment;
+using App2d.Core.Geometry.Convex;
+using App2d.Core.Geometry.Distance;
+using App2d.Core.Geometry.Intersection;
 using App2d.Core.Geometry.Primitives;
 
 namespace App2d.Tests.Geometry;

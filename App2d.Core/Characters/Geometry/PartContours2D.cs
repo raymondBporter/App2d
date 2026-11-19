@@ -1,12 +1,10 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Geometry.Operations.Curves;
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
-using App2d.Core.Shapes;
 
 namespace App2d.Core.Characters.Geometry;
 

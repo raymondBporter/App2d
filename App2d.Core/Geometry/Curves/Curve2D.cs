@@ -1,7 +1,7 @@
-using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Distance;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>Sampling and local-frame operations shared by two-dimensional curves.</summary>
 public static class Curve2D

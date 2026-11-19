@@ -1,9 +1,13 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Mathematics;
 
-/// <summary>A float vector backed by System.Numerics.Vector4 for packed arithmetic.</summary>
-public readonly record struct Vector4f : IVector<Vector4f, float>
+/// <summary>
+/// A float vector backed by System.Numerics.Vector4 for packed arithmetic. Members not declared
+/// here (IsFinite, Midpoint, Project, Reject, Reflect, ...) are inherited from IVector4 and IVector.
+/// </summary>
+public readonly record struct Vector4f : IVector4<Vector4f, float>
 {
     private readonly Vector4 _value;
 
@@ -16,8 +20,7 @@ public readonly record struct Vector4f : IVector<Vector4f, float>
     public float W => _value.W;
     public float this[int index] => _value[index];
 
-    public static int Dimension => 4;
-    public static Vector4f FromCoordinates(ReadOnlySpan<float> coordinates) => new(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
+    public static Vector4f Create(float x, float y, float z, float w) => new(x, y, z, w);
     public static Vector4f Zero => default;
     public static Vector4f One => new(Vector4.One);
     public static Vector4f UnitX => new(Vector4.UnitX);
@@ -25,39 +28,62 @@ public readonly record struct Vector4f : IVector<Vector4f, float>
     public static Vector4f UnitZ => new(Vector4.UnitZ);
     public static Vector4f UnitW => new(Vector4.UnitW);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector4f operator +(Vector4f left, Vector4f right) => new(left._value + right._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector4f operator -(Vector4f left, Vector4f right) => new(left._value - right._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector4f operator -(Vector4f value) => new(-value._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector4f operator *(Vector4f value, float scale) => new(value._value * scale);
+
     public static Vector4f operator *(float scale, Vector4f value) => value * scale;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector4f operator /(Vector4f value, float scale) => new(value._value / scale);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Dot(Vector4f left, Vector4f right) => Vector4.Dot(left._value, right._value);
-    public static Vector4f Min(Vector4f left, Vector4f right) => new(Vector4.Min(left._value, right._value));
-    public static Vector4f Max(Vector4f left, Vector4f right) => new(Vector4.Max(left._value, right._value));
-    public static Vector4f Abs(Vector4f value) => new(Vector4.Abs(value._value));
-    public static bool IsFinite(Vector4f value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z) && float.IsFinite(value.W);
 
-    public float Dot(Vector4f other) => Dot(this, other);
-    public Vector4f Min(Vector4f other) => Min(this, other);
-    public Vector4f Max(Vector4f other) => Max(this, other);
-    public Vector4f Abs() => Abs(this);
-    public bool IsFinite() => IsFinite(this);
-    public float LengthSquared() => _value.LengthSquared();
-    public float Length() => _value.Length();
-    public Vector4f Normalized() => new(Vector4.Normalize(_value));
-    public float DistanceSquared(Vector4f other) => Vector4.DistanceSquared(_value, other._value);
-    public float Distance(Vector4f other) => Vector4.Distance(_value, other._value);
-    public Vector4f Lerp(Vector4f other, float amount) => new(Vector4.Lerp(_value, other._value, amount));
-    public Vector4f Midpoint(Vector4f other) => IVectorExtensions.Midpoint<Vector4f, float>(this, other);
-    public Vector4f Project(Vector4f unitNormal) => IVectorExtensions.Project<Vector4f, float>(this, unitNormal);
-    public Vector4f Reject(Vector4f unitNormal) => IVectorExtensions.Reject<Vector4f, float>(this, unitNormal);
-    public Vector4f Reflect(Vector4f unitNormal) => IVectorExtensions.Reflect<Vector4f, float>(this, unitNormal);
-    public Vector4f Clamp(Vector4f minimum, Vector4f maximum) => IVectorExtensions.Clamp<Vector4f, float>(this, minimum, maximum);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector4f Min(Vector4f left, Vector4f right) => new(Vector4.Min(left._value, right._value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector4f Max(Vector4f left, Vector4f right) => new(Vector4.Max(left._value, right._value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector4f Abs(Vector4f value) => new(Vector4.Abs(value._value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector4f Clamp(Vector4f value, Vector4f minimum, Vector4f maximum) => new(Vector4.Clamp(value._value, minimum._value, maximum._value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float LengthSquared(Vector4f value) => value._value.LengthSquared();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Length(Vector4f value) => value._value.Length();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector4f Normalize(Vector4f value) => new(Vector4.Normalize(value._value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float DistanceSquared(Vector4f first, Vector4f second) => Vector4.DistanceSquared(first._value, second._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Distance(Vector4f first, Vector4f second) => Vector4.Distance(first._value, second._value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector4f Lerp(Vector4f first, Vector4f second, float amount) => new(Vector4.Lerp(first._value, second._value, amount));
 
     [System.Text.Json.Serialization.JsonIgnore]
     public Vector3f XYZ => new(X, Y, Z);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vector4 ToVector4() => _value;
+
     public Vector4d ToVector4d() => new(X, Y, Z, W);
     public override string ToString() => _value.ToString();
 }

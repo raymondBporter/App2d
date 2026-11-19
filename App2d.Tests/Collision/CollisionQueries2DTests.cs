@@ -1,7 +1,7 @@
 ﻿using App2d.Core.Collision.Contacts;
 using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Spatial;
 
 namespace App2d.Tests.Collision;

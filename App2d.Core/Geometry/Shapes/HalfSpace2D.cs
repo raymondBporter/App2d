@@ -1,7 +1,6 @@
-using App2d.Core.Geometry.Operations.Containment;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Containment;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>
 /// The solid side of an infinite line: every point with dot(point, <see cref="Normal"/>) &lt;= <see cref="Offset"/>.

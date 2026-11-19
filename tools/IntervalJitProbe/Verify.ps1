@@ -49,18 +49,18 @@ if ($nativeCode -notmatch '(?m)^; Emitting .*X64') {
 
 $expected = @(
     'FloatLength', 'DoubleLength', 'IntLength', 'DecimalLength',
-    'FloatContains', 'DoubleContains', 'IntContains', 'FloatContainsDirect',
-    'FloatClamp', 'DoubleClamp', 'IntClamp', 'FloatOverlaps', 'DoubleOverlaps',
+    'FloatContains', 'DoubleContains', 'IntContains', 'FloatContainsFromEndpoints',
+    'FloatClamp', 'DoubleClamp', 'IntClamp', 'FloatOverlapsFromLimit', 'DoubleOverlaps',
     'FloatContainsInterval', 'FloatIntersect', 'DoubleIntersect', 'FloatHull', 'DoubleHull',
     'FloatDistance', 'DoubleDistance', 'FloatMaxDistance', 'FloatSignedDistance',
-    'FloatBounds', 'ConcreteContains', 'ConcreteLength'
+    'FloatBounds'
 )
 $callFree = @(
     'FloatLength', 'DoubleLength', 'IntLength',
-    'FloatContains', 'DoubleContains', 'IntContains', 'FloatContainsDirect',
-    'FloatOverlaps', 'DoubleOverlaps', 'FloatContainsInterval',
+    'FloatContains', 'DoubleContains', 'IntContains',
+    'DoubleOverlaps', 'FloatContainsInterval',
     'FloatDistance', 'DoubleDistance', 'FloatMaxDistance', 'FloatSignedDistance',
-    'FloatBounds', 'ConcreteContains', 'ConcreteLength'
+    'FloatBounds'
 )
 
 # The remaining operations may call decimal arithmetic, interval construction/validation,
@@ -68,8 +68,8 @@ $callFree = @(
 $allowedCalls = @(
     '^\s*call\s+\[System\.Decimal\+DecCalc:(?:VarDecCmpSub|DecAddSub)\(',
     '^\s*call\s+\[System\.Math:ThrowMinMaxException\[(?:float|double|int)\]\(',
-    '^\s*call\s+\[App2d\.Core\.Geometry\.Primitives\.Interval`1\[(?:float|double)\]:\.ctor\(',
-    '^\s*call\s+\[App2d\.Core\.Geometry\.Primitives\.IInterval`1\[(?:float|double)\]:Validate\('
+    '^\s*call\s+\[App2d\.Core\.Mathematics\.Interval`1\[(?:float|double)\]:\.ctor\(',
+    '^\s*call\s+\[App2d\.Core\.Mathematics\.Interval`1\[(?:float|double)\]:Validate\('
 )
 $verified = @{}
 foreach ($block in [regex]::Split($nativeCode, '(?m)^; Assembly listing for method ')) {

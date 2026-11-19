@@ -1,10 +1,9 @@
 using App2d.Core.Collision.Contacts;
-using App2d.Core.Geometry.Operations.Distance;
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Distance;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 
 namespace App2d.Tests.Geometry;
 

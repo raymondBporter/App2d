@@ -1,6 +1,4 @@
-using App2d.Core.Geometry.Interval;
-
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Measurements;
 
 public static partial class Area2D
 {

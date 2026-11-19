@@ -1,9 +1,7 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.Area;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;

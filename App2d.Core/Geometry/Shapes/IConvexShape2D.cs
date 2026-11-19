@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Convex;
 
 namespace App2d.Core.Geometry.Shapes;
 

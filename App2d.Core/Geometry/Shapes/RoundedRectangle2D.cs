@@ -1,11 +1,9 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Diameter;
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Convex;
+using App2d.Core.Geometry.Distance;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>
 /// A rectangle with circular corners and its own orientation in local space: the inset rectangle at

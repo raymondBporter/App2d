@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Intersection;
 
 namespace App2d.Tests.Geometry;
 

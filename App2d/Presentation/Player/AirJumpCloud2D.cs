@@ -1,5 +1,5 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using Color = Microsoft.Xna.Framework.Color;
 

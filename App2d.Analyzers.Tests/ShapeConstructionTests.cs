@@ -1,10 +1,10 @@
 using App2d.Analyzers.CodeFixes;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Shapes;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeActions;
-using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
 using Xunit;
@@ -13,7 +13,7 @@ namespace App2d.Analyzers.Tests;
 
 public sealed class ShapeConstructionTests
 {
-    private const string Imports = "using App2d.Core.Shapes; using App2d.Core.Geometry.Curves; using App2d.Core.Mathematics; ";
+    private const string Imports = "using App2d.Core.Geometry.Shapes; using App2d.Core.Geometry.Curves; using App2d.Core.Mathematics; ";
 
     private static readonly ImmutableArray<MetadataReference> References =
         [.. ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
@@ -64,7 +64,7 @@ public sealed class ShapeConstructionTests
     [InlineData("Circle2D Make() => new(2);", "Circle2D Make() => Circle2D.Builder.Create(2);")]
     [InlineData("Circle2D Make() => new Circle2D(center: Next(), radius: Radius());", "Circle2D Make() => Circle2D.Builder.Create(center: Next(), radius: Radius());")]
     [InlineData("Circle2D Make() => new Circle2D(/* radius */ 2, new(1, 2));", "Circle2D Make() => Circle2D.Builder.Create(/* radius */ 2, new(1, 2));")]
-    [InlineData("Circle2D Make() => new global::App2d.Core.Shapes.Circle2D(2);", "Circle2D Make() => Circle2D.Builder.Create(2);")]
+    [InlineData("Circle2D Make() => new global::App2d.Core.Geometry.Shapes.Circle2D(2);", "Circle2D Make() => Circle2D.Builder.Create(2);")]
     [InlineData("Circle2D Make() => new Disk(2);", "Circle2D Make() => Circle2D.Builder.Create(2);")]
     [InlineData("HalfSpace2D Make() => new HalfSpace2D(offset: 2, outwardNormal: Vector2f.UnitY);", "HalfSpace2D Make() => HalfSpace2D.Builder.Create(offset: 2, outwardNormal: Vector2f.UnitY);")]
     [InlineData("Arc2D Make() => new(Vector2f.Zero, 2, 0, 1);", "Arc2D Make() => Arc2D.Builder.Create(Vector2f.Zero, 2, 0, 1);")]
@@ -72,7 +72,7 @@ public sealed class ShapeConstructionTests
     public async Task FixPreservesArgumentsAndSupportsTargetTypingAndAliases(string member, string expected)
     {
         using var workspace = new AdhocWorkspace();
-        var document = CreateDocument(workspace, Imports + "using Disk = App2d.Core.Shapes.Circle2D; class Example { " + member +
+        var document = CreateDocument(workspace, Imports + "using Disk = App2d.Core.Geometry.Shapes.Circle2D; class Example { " + member +
             " Vector2f Next() => Vector2f.Zero; float Radius() => 2; }");
         var diagnostic = Assert.Single(await AnalyzeAsync(document));
         var actions = await GetFixesAsync(document, diagnostic);
@@ -116,9 +116,9 @@ public sealed class ShapeConstructionTests
     }
 
     [Theory]
-    [InlineData("", "new global::App2d.Core.Shapes.Circle2D(31f)")]
-    [InlineData("using App2d.Core.Shapes;", "new Circle2D(31f)")]
-    [InlineData("using App2d.Core.Shapes;", "new global::App2d.Core.Shapes.Circle2D(31f)")]
+    [InlineData("", "new global::App2d.Core.Geometry.Shapes.Circle2D(31f)")]
+    [InlineData("using App2d.Core.Geometry.Shapes;", "new Circle2D(31f)")]
+    [InlineData("using App2d.Core.Geometry.Shapes;", "new global::App2d.Core.Geometry.Shapes.Circle2D(31f)")]
     public async Task FixUsesShortNameAndAddsExactlyOneNamespaceImport(string imports, string expression)
     {
         using var workspace = new AdhocWorkspace();
@@ -128,7 +128,7 @@ public sealed class ShapeConstructionTests
         var root = (CompilationUnitSyntax)(await fixedDocument.GetSyntaxRootAsync())!;
         var call = Assert.Single(root.DescendantNodes().OfType<InvocationExpressionSyntax>());
         Assert.Equal("Circle2D.Builder.Create(31f)", call.ToString());
-        Assert.Single(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Shapes");
+        Assert.Single(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Geometry.Shapes");
         Assert.Empty(await AnalyzeAsync(fixedDocument));
     }
 
@@ -136,8 +136,8 @@ public sealed class ShapeConstructionTests
     public async Task FixUsesExistingGlobalImportWithoutAddingADuplicate()
     {
         using var workspace = new AdhocWorkspace();
-        var document = CreateDocument(workspace, "class Example { object Make() => new global::App2d.Core.Shapes.Circle2D(31f); }");
-        document = document.Project.AddDocument("GlobalUsings.cs", "global using App2d.Core.Shapes;").Project.GetDocument(document.Id)!;
+        var document = CreateDocument(workspace, "class Example { object Make() => new global::App2d.Core.Geometry.Shapes.Circle2D(31f); }");
+        document = document.Project.AddDocument("GlobalUsings.cs", "global using App2d.Core.Geometry.Shapes;").Project.GetDocument(document.Id)!;
         var diagnostic = Assert.Single(await AnalyzeAsync(document));
         var fixedDocument = await ApplyAsync(Assert.Single(await GetFixesAsync(document, diagnostic)), document.Id);
         var root = (CompilationUnitSyntax)(await fixedDocument.GetSyntaxRootAsync())!;
@@ -155,14 +155,14 @@ public sealed class ShapeConstructionTests
             namespace Examples;
             class Example
             {
-                global::App2d.Core.Shapes.Circle2D Make() => new(31f);
+                global::App2d.Core.Geometry.Shapes.Circle2D Make() => new(31f);
             }
             """);
         var diagnostic = Assert.Single(await AnalyzeAsync(document));
         var fixedDocument = await ApplyAsync(Assert.Single(await GetFixesAsync(document, diagnostic)), document.Id);
         var root = (CompilationUnitSyntax)(await fixedDocument.GetSyntaxRootAsync())!;
         Assert.Contains("// Keep the file header.", root.ToFullString());
-        Assert.Single(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Shapes");
+        Assert.Single(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Geometry.Shapes");
         Assert.Single(root.Members.OfType<FileScopedNamespaceDeclarationSyntax>());
         Assert.Equal("Circle2D.Builder.Create(31f)", Assert.Single(root.DescendantNodes().OfType<InvocationExpressionSyntax>()).ToString());
         Assert.Empty(await AnalyzeAsync(fixedDocument));
@@ -177,13 +177,13 @@ public sealed class ShapeConstructionTests
             {
                 class App2d { }
                 class Circle2D { }
-                object Make() => new global::App2d.Core.Shapes.Circle2D(31f);
+                object Make() => new global::App2d.Core.Geometry.Shapes.Circle2D(31f);
             }
             """);
         var diagnostic = Assert.Single(await AnalyzeAsync(document));
         var fixedDocument = await ApplyAsync(Assert.Single(await GetFixesAsync(document, diagnostic)), document.Id);
         var root = (await fixedDocument.GetSyntaxRootAsync())!;
-        Assert.Equal("global::App2d.Core.Shapes.Circle2D.Builder.Create(31f)",
+        Assert.Equal("global::App2d.Core.Geometry.Shapes.Circle2D.Builder.Create(31f)",
             Assert.Single(root.DescendantNodes().OfType<InvocationExpressionSyntax>()).ToString());
         Assert.Empty(await AnalyzeAsync(fixedDocument));
     }
@@ -197,7 +197,7 @@ public sealed class ShapeConstructionTests
             class Example
             {
                 Circle2D Existing;
-                object Make() => new global::App2d.Core.Shapes.Circle2D(31f);
+                object Make() => new global::App2d.Core.Geometry.Shapes.Circle2D(31f);
             }
             namespace Other { public class Circle2D { } }
             """);
@@ -205,7 +205,7 @@ public sealed class ShapeConstructionTests
         var fixedDocument = await ApplyAsync(Assert.Single(await GetFixesAsync(document, diagnostic)), document.Id);
         Assert.Empty(await AnalyzeAsync(fixedDocument));
         var root = (CompilationUnitSyntax)(await fixedDocument.GetSyntaxRootAsync())!;
-        Assert.DoesNotContain(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Shapes");
+        Assert.DoesNotContain(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Geometry.Shapes");
         var model = (await fixedDocument.GetSemanticModelAsync())!;
         var existing = root.DescendantNodes().OfType<FieldDeclarationSyntax>().Single().Declaration.Type;
         Assert.Equal("Other.Circle2D", model.GetTypeInfo(existing).Type!.ToDisplayString());
@@ -233,7 +233,7 @@ public sealed class ShapeConstructionTests
     {
         using var workspace = new AdhocWorkspace();
         var document = CreateDocument(workspace, """
-            namespace App2d.Core.Shapes
+            namespace App2d.Core.Geometry.Shapes
             {
                 public readonly record struct Circle2D(float Radius)
                 {
@@ -243,7 +243,7 @@ public sealed class ShapeConstructionTests
                     }
                 }
             }
-            class Builder { object Make() => new App2d.Core.Shapes.Circle2D(2); }
+            class Builder { object Make() => new App2d.Core.Geometry.Shapes.Circle2D(2); }
             """);
         Assert.Single(await AnalyzeAsync(document));
     }
@@ -282,8 +282,8 @@ public sealed class ShapeConstructionTests
         var document = CreateDocument(workspace, """
             class Example
             {
-                object A = new global::App2d.Core.Shapes.Circle2D(2);
-                object B = new global::App2d.Core.Shapes.Circle2D(3);
+                object A = new global::App2d.Core.Geometry.Shapes.Circle2D(2);
+                object B = new global::App2d.Core.Geometry.Shapes.Circle2D(3);
             }
             """);
         var diagnostics = await AnalyzeAsync(document);
@@ -295,7 +295,7 @@ public sealed class ShapeConstructionTests
         var action = await provider.GetFixAllProvider().GetFixAsync(context);
         var fixedDocument = await ApplyAsync(Assert.IsType<CodeAction>(action, false), document.Id);
         var root = (CompilationUnitSyntax)(await fixedDocument.GetSyntaxRootAsync())!;
-        Assert.Single(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Shapes");
+        Assert.Single(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Geometry.Shapes");
         Assert.All(root.DescendantNodes().OfType<InvocationExpressionSyntax>(), call => Assert.Equal("Circle2D.Builder.Create", call.Expression.ToString()));
         Assert.Empty(await AnalyzeAsync(fixedDocument));
     }

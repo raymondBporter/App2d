@@ -1,8 +1,6 @@
-using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 
 namespace App2d.Tests.Geometry;
 

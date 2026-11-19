@@ -1,10 +1,8 @@
-using App2d.Core.Geometry.Operations.ClosestPoint;
-using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Bounds;
+namespace App2d.Core.Geometry.Bounds;
 
 public static partial class ShapeBounds2D
 {

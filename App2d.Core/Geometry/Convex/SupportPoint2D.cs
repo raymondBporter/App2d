@@ -1,4 +1,4 @@
-namespace App2d.Core.Geometry.Operations.Convex;
+namespace App2d.Core.Geometry.Convex;
 
 /// <summary>
 /// Farthest points of raw convex primitives in a direction. A zero direction returns a representative point.

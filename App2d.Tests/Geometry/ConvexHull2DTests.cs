@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Primitives;
 
 namespace App2d.Tests.Geometry;
 

@@ -1,13 +1,12 @@
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Distance;
-using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Bounds;
+using App2d.Core.Geometry.Convex;
+using App2d.Core.Geometry.Distance;
+using App2d.Core.Geometry.Intersection;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using static App2d.Tests.Geometry.VectorComparers;
 
 namespace App2d.Tests.Geometry;

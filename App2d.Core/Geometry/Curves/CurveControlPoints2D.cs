@@ -1,6 +1,4 @@
-using App2d.Core.Geometry.Curves;
-
-namespace App2d.Core.Geometry.Operations.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>Editing control points in curve order, independent of character bindings.</summary>
 public static class CurveControlPoints2D

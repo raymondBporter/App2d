@@ -3,7 +3,7 @@
 ## Solid mass properties
 
 `ShapeMassProperties2D.Calculate(shape, density: 1d)` in
-`App2d.Core.Geometry.Operations.MassProperties` returns `MassProperties2D` with
+`App2d.Core.Geometry.Measurements` returns `MassProperties2D` with
 double-precision `Area`, `Mass`, `CenterOfMass` (`Vector2d`), and `MomentOfInertia`.
 The input is a solid 2D lamina with uniform mass per unit area; constant thickness
 is absorbed into density. Geometry stays in the shape's local coordinates.
@@ -54,15 +54,22 @@ existing collision restriction; recalculate mass properties after changing size.
 
 ## Geometry organization
 
-`App2d.Core` geometry is layered so that each kind of question has one home:
+Every namespace is its folder: a file in `App2d.Core/Geometry/Distance` declares `App2d.Core.Geometry.Distance`.
+Each kind of question has one home:
 
-| Namespace | Holds | Depends on |
-| --- | --- | --- |
-| `App2d.Core.Mathematics` | Vectors, cross products, polar/direction values, rotation, `Similarity2D`, `Affine2D`, easing | `System.Numerics` |
-| `App2d.Core.Geometry` | Raw 2D math on numbers plus small value types. Never references `IShape2D`. | `Mathematics` |
-| `App2d.Core.Shapes` | `IShape2D` classes and the per-shape switch tables (`ShapeBounds2D`, `ShapeDistance2D`, `WorldShape2D`) | `Geometry` |
-| `App2d.Core.Meshes` | `TriangleMesh2D`, `Triangle3D`, `TriangleMeshAnalysis3D`, `TriangleMeshBuilder3D`, `Orientation3D` | `Geometry`, `Shapes` |
-| `App2d.Core.Collision` | `ShapeCollision2D` (contacts over convex queries and composites), ray queries over objects, the broad phase and system | `Shapes`, `SpatialObject2D` |
+| Folder and namespace (under `App2d.Core`) | Holds |
+| --- | --- |
+| `Mathematics` | Vectors, `Interval<T>`, polar/direction values, clamping, polynomial roots. `Mathematics.Transforms` has rotation, `Similarity2D`, `Affine2D`; `Mathematics.Progress` has easing |
+| `Geometry` | `IGeometryValue2D` and `GeometryValidation2D` |
+| `Geometry.Primitives` | Rects, segments, triangles, lines, rays, conics, and vertex/polygon math on raw points |
+| `Geometry.Shapes` | `IShape2D` classes, each next to its `X.Builder.cs`, plus `ShapeConversions2D`, `ShapeEditing2D`, `ShapeVertices2D` |
+| `Geometry.Curves` | Curve types, each next to its builder, plus `Curve2D` and control-point editing |
+| `Geometry.Bounds`, `Geometry.Distance`, `Geometry.Intersection`, `Geometry.Containment`, `Geometry.Measurements` | One question each: bounds, distance and closest points, ray casts and intersections, containment, area/diameter/mass |
+| `Geometry.Convex`, `Geometry.Clipping`, `Geometry.Construction`, `Geometry.Transforms` | GJK and support queries, polygon clipping, circle/conic construction, posing shapes and vertices |
+| `Geometry.Meshes`, `Geometry.Meshes.Tessellation` | Triangle meshes and their analysis; triangulation and stroke/shape tessellation |
+| `Geometry.Serialization` | JSON converters for shapes and curves |
+| `Collision`, `Collision.Contacts`, `Collision.Queries`, `Collision.BroadPhase`, `Collision.Filtering` | `ShapeCollision2D` contacts, ray queries over objects, the broad phase and the system |
+| `Spatial` | `SpatialObject2D` and distance/ray casts against placed objects |
 
 ## Geometry
 
@@ -76,21 +83,23 @@ and implements `IFloatingPointIeee754<TReal>`. `IRect2f` is a global
 alias for `IRect2<Vector2f, float>`; `IRect2d` selects `Vector2d` and `double`.
 The aliases change spelling, not storage or conversions.
 
-`Rect2<TVector, TReal>` supplies generic floating-point bounds and `Rect2Math<TVector, TReal>`
-shares queries with other implementations through concrete `TSelf` parameters.
-`Rect2d` aliases `Rect2<Vector2d, double>`. For example:
+`Rect2<TVector, TReal>` supplies generic floating-point bounds and holds every one of its formulas as an
+ordinary member; nothing forwards to a helper class. `Rect2d` aliases `Rect2<Vector2d, double>`. For example:
 
 ```csharp
 var precise = new Rect2d(new(16_777_217, -4), new(16_777_220, 8));
 double width = precise.Width; // 3, with no float rounding
 Vector2d center = precise.Center;
-bool contains = Rect2Math<Vector2d, double>.Contains(precise, center);
+bool contains = precise.Contains(center);
 ```
 
-`Rect2f` retains the renderer's packed float vector storage and float-specific
-factories and transforms. It shares the same bounds contract as
-`Rect2<Vector2f, float>`. `Rect2.Unbounded<TVector, TReal>()` creates infinite bounds,
-and the generic `DistanceTo` extension computes distance with the coordinate type's `Hypot`.
+Another type with `Min`/`Max` in the same vector type converts with `Rect2<TVector, TReal>.From(value)`,
+which copies and validates the corners without boxing. `Rect2<TVector, TReal>.Unbounded` is the whole plane,
+and `DistanceTo` uses the coordinate type's `Hypot` so large finite offsets do not overflow.
+
+`Rect2f` retains the renderer's packed float vector storage and float-specific factories and transforms.
+Its queries come from `Rect2DExtensions`, which serves every `IRect2f` (including `AxisAlignedRectangle2D`).
+It shares the same bounds contract as `Rect2<Vector2f, float>`.
 
 Rectangle `Contains(point)` includes edges. `ContainsInterior(point)` explicitly excludes
 all edges and corners; a rectangle with a collapsed dimension has no interior. The raw
@@ -102,39 +111,34 @@ also read the axis-aligned `min`/`max` spelling, never mixed with `center`/`size
 and is the one shape that never rotates. `ShapeTransforms2D.Posed(shape, Similarity2D)` carries any built-in shape through
 a translation, rotation, uniform scale and optional mirror and returns a shape of the same kind.
 
-`IInterval<T>` supplies ordered scalar `Min`/`Max` endpoints and owns the shared queries as ordinary static generic methods.
-Implementations only supply the endpoints; they do not implement or forward the query algorithms. Physics and rig limits use `Interval<float>`.
-`Interval<T>` validates ordered, non-NaN endpoints and allows negative/positive infinity for an unbounded lower/upper end.
+`Interval<T>` (in `App2d.Core.Mathematics`, next to the vectors) is a closed `[Min, Max]` range and owns every interval
+formula as an ordinary member: `limits.Contains(3f)`, `limits.Length`, `limits.Overlaps(new(2, 5))`.
+Nothing forwards to a helper class. Physics and rig limits use `Interval<float>`.
+It validates ordered, non-NaN endpoints and allows negative/positive infinity for an unbounded lower/upper end.
 Use `new Interval<float>(min, max)` for a bounded range and `Interval<T>.Singleton(value)` for a single value.
-The constructor calls reusable `Interval<T>.Validate(min, max)`. An existing value can call `Validate()`;
-`IInterval<T>.Validate(other)` also checks an endpoint-only implementation against the same contract.
+The constructor calls `Interval<T>.Validate(min, max)`; `Interval<T>.IsValid(min, max)` is the non-throwing check,
+and an existing value (such as `default` or a deserialized one) can call `Validate()`.
 The floating-point factories `Interval.Entire<float>()`, `Interval.AtLeast(2f)` and `Interval.AtMost(8f)` construct
 unbounded ranges; `IsBoundedBelow`, `IsBoundedAbove`, `IsEntire` and `IsSingleton` describe their bounds.
 Interval clamping follows the shared numeric arithmetic, including NaN propagation. Constraint-specific finite-coordinate
 validation, activation tolerance and active-side reporting live in `ConstraintMath1D.EvaluateLimit`.
 `Length` is an endpoint difference, including for integer ranges; it is not an inclusive element count.
-The non-generic `Interval` class holds both the factories and the extension queries, such as
-`limits.Contains(3f)` and `limits.Overlaps(new Interval<float>(2, 5))`.
-For queries where C# cannot infer the scalar from arguments, name it once: `IInterval<float>.Length(limits)`
-or `IInterval<float>.TryIntersect(limits, authoredLimit, out var shared)`.
-`Interval` supplies factories and extension syntax. The formulas live only on `IInterval<T>` and are not virtual:
-different interval implementations use the same endpoint semantics. No separate math helper is needed.
-Numeric arithmetic still uses `T`'s operations; no float-specific interval implementation or conversion is required.
-C# does not infer the scalar type from an `IInterval<T>` constraint alone. These calls keep concrete interval arguments
-instead of converting structs to interface values.
+Numeric arithmetic uses `T`'s operations, so the same struct serves float, double, integer and decimal endpoints.
 Rectangles expose `XInterval` and `YInterval` while retaining their existing vector storage.
 
-For example, this is a complete implementation with all shared queries available:
+`IInterval<T>` is only the two endpoints, `Min` and `Max`. A type that carries a range plus its own data (an authored
+`Limit` with a soft range, for example) implements it and converts with `Interval<T>.From(value)` to use the queries.
+`From` copies and validates the two endpoints; a struct is not boxed.
 
 ```csharp
 public readonly record struct Band(double Min, double Max) : IInterval<double>;
 ```
 
 ```csharp
-var band = new Band(2, 5);
+var band = Interval<double>.From(new Band(2, 5));
 bool contains = band.Contains(3d);
-double length = IInterval<double>.Length(band);
-bool overlaps = band.Overlaps(new Interval<double>(5, 8));
+double length = band.Length;
+bool overlaps = band.Overlaps(new(5, 8));
 ```
 
 `Distance(other)` is the nearest-point distance, returning zero for touching or overlapping intervals.
@@ -159,8 +163,8 @@ The new distance, interpolation and affine calculations use checked generic arit
 overflow throws rather than silently wrapping. Unsigned types cannot represent negative penetration distances.
 The nonempty closed-range representation remains unchanged; a disjoint intersection still returns false, not an empty sentinel.
 
-`IIntervalTests` checks endpoint-only structs with float, double, int and decimal endpoints, mixed interval types,
-unbounded and touching ranges, BigInteger/decimal precision, and zero managed allocations after warmup.
+`IIntervalTests` checks that the interface is only the endpoints and that endpoint-only types with float, double, int and
+decimal endpoints reach every query through `From`, plus BigInteger/decimal precision and zero managed allocations after warmup.
 `IntervalOperationsTests` covers reusable validation, distances (including exhaustive small-integer searches),
 parameterization, affine operations, unsigned/overflow cases, and unbounded ranges.
 To inspect optimized machine code on x64, run `tools/IntervalJitProbe/Verify.ps1` in PowerShell. It builds the Release
@@ -236,7 +240,7 @@ if (Raycast2D.TryCircle(origin, direction, center, radius, 100, out var rayHit))
 
 ## Ray queries
 
-`GeometryRaycast2D.TryIntersect` in `Geometry.Operations.Intersection` is the shared
+`GeometryRaycast2D.TryIntersect` in `Geometry.Intersection` is the shared
 nearest-hit entry point for `IGeometryValue2D` values: shapes and curves. It dispatches
 to `ShapeRaycast2D` or `CurveRaycast2D`, with no physics or renderer dependency.
 `Raycast2D.TryLine`, `TryRay`, and `TrySegment` also query the corresponding linear
@@ -244,7 +248,7 @@ primitives directly, including unbounded lines and rays without fabricated finit
 
 ```csharp
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Intersection;
 using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
@@ -313,7 +317,7 @@ var middle = mouth.Slice(.25f, .75f);
 each result maps its own parameter range to [0, 1]. A slice with equal endpoints is a constant point curve.
 The methods return value types without allocating arrays.
 
-For any `ICurve2D`, import `App2d.Core.Geometry.Operations.Curves` to use the same `Split(t)` and
+For any `ICurve2D`, import `App2d.Core.Geometry.Curves` to use the same `Split(t)` and
 `Slice(from, to)` extension names. Their `CurveSlice2D<TCurve>` results retain the original curve and remap
 its parameter without resampling the path. Derivatives include the parameter scale; collapsed intervals have
 zero derivative. Distance queries use a polyline approximation of the restricted path. Concrete cubic calls

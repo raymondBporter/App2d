@@ -1,6 +1,5 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.Polygons;
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Distance;
+using App2d.Core.Geometry.Primitives;
 
 namespace App2d.Tests.Geometry;
 

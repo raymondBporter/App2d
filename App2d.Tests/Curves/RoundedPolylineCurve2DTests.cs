@@ -1,6 +1,5 @@
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Geometry.Serialization;
 
 namespace App2d.Tests.Curves;

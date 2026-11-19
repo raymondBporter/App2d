@@ -1,4 +1,4 @@
-namespace App2d.Core.Geometry.Operations.Intersection;
+namespace App2d.Core.Geometry.Intersection;
 
 /// <summary>Roots on a restricted Bernstein polynomial interval. No curve tessellation is involved.</summary>
 internal static class BernsteinRoots2D

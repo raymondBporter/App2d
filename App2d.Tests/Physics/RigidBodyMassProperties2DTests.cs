@@ -1,9 +1,9 @@
 using App2d.Core.Collision.Contacts;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Constraints;
 using App2d.Core.Physics.Integration;
 using App2d.Core.Physics.Solvers;
-using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 
 namespace App2d.Tests.Physics;

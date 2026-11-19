@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Operations.Vertices;
+namespace App2d.Core.Geometry.Transforms;
 
 /// <summary>Transforms borrowed vertex buffers, including in-place and overlapping slices.</summary>
 public static class VertexTransforms2D

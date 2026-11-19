@@ -6,102 +6,96 @@ using System.Runtime.InteropServices;
 
 namespace IntervalJitProbe;
 
-// Intentionally implements no queries: only the two endpoint properties.
+// Only the two endpoint properties. It reaches the queries by converting with Interval<T>.From.
 public readonly record struct EndpointsOnly<T>(T Min, T Max) : IInterval<T> where T : INumber<T>;
 
 // Keep each entry point visible to the JIT disassembler; everything inside it may inline normally.
 public static class Probes
 {
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static float FloatLength(EndpointsOnly<float> interval) => IInterval<float>.Length(interval);
+    public static float FloatLength(Interval<float> interval) => interval.Length;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static double DoubleLength(EndpointsOnly<double> interval) => IInterval<double>.Length(interval);
+    public static double DoubleLength(Interval<double> interval) => interval.Length;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static int IntLength(EndpointsOnly<int> interval) => IInterval<int>.Length(interval);
+    public static int IntLength(Interval<int> interval) => interval.Length;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static decimal DecimalLength(EndpointsOnly<decimal> interval) => IInterval<decimal>.Length(interval);
+    public static decimal DecimalLength(Interval<decimal> interval) => interval.Length;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool FloatContains(EndpointsOnly<float> interval, float value) => interval.Contains(value);
+    public static bool FloatContains(Interval<float> interval, float value) => interval.Contains(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool DoubleContains(EndpointsOnly<double> interval, double value) => interval.Contains(value);
+    public static bool DoubleContains(Interval<double> interval, double value) => interval.Contains(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool IntContains(EndpointsOnly<int> interval, int value) => interval.Contains(value);
+    public static bool IntContains(Interval<int> interval, int value) => interval.Contains(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool FloatContainsDirect(EndpointsOnly<float> interval, float value) =>
-        IInterval<float>.Contains(interval, value);
+    public static bool FloatContainsFromEndpoints(EndpointsOnly<float> endpoints, float value) =>
+        Interval<float>.From(endpoints).Contains(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static float FloatClamp(EndpointsOnly<float> interval, float value) => interval.Clamp(value);
+    public static float FloatClamp(Interval<float> interval, float value) => interval.Clamp(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static double DoubleClamp(EndpointsOnly<double> interval, double value) => interval.Clamp(value);
+    public static double DoubleClamp(Interval<double> interval, double value) => interval.Clamp(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static int IntClamp(EndpointsOnly<int> interval, int value) => interval.Clamp(value);
+    public static int IntClamp(Interval<int> interval, int value) => interval.Clamp(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool FloatOverlaps(EndpointsOnly<float> first, Limit second) => IInterval<float>.Overlaps(first, second);
+    public static bool FloatOverlapsFromLimit(Interval<float> first, Limit second) => first.Overlaps(Interval<float>.From(second));
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool DoubleOverlaps(EndpointsOnly<double> first, Interval<double> second) => first.Overlaps(second);
+    public static bool DoubleOverlaps(Interval<double> first, Interval<double> second) => first.Overlaps(second);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool FloatContainsInterval(EndpointsOnly<float> outer, Interval<float> inner) => outer.ContainsInterval(inner);
+    public static bool FloatContainsInterval(Interval<float> outer, Interval<float> inner) => outer.ContainsInterval(inner);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static float FloatDistance(EndpointsOnly<float> first, Interval<float> second) => first.Distance(second);
+    public static float FloatDistance(Interval<float> first, Interval<float> second) => first.Distance(second);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static double DoubleDistance(EndpointsOnly<double> first, Interval<double> second) => first.Distance(second);
+    public static double DoubleDistance(Interval<double> first, Interval<double> second) => first.Distance(second);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static float FloatMaxDistance(EndpointsOnly<float> first, Interval<float> second) => first.MaxDistance(second);
+    public static float FloatMaxDistance(Interval<float> first, Interval<float> second) => first.MaxDistance(second);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static float FloatSignedDistance(EndpointsOnly<float> first, Interval<float> second) => first.SignedDistance(second);
+    public static float FloatSignedDistance(Interval<float> first, Interval<float> second) => first.SignedDistance(second);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool FloatIntersect(EndpointsOnly<float> first, Interval<float> second, out Interval<float> result) =>
+    public static bool FloatIntersect(Interval<float> first, Interval<float> second, out Interval<float> result) =>
         first.TryIntersect(second, out result);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool DoubleIntersect(EndpointsOnly<double> first, Interval<double> second, out Interval<double> result) =>
+    public static bool DoubleIntersect(Interval<double> first, Interval<double> second, out Interval<double> result) =>
         first.TryIntersect(second, out result);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static Interval<float> FloatHull(EndpointsOnly<float> first, Interval<float> second) => first.Hull(second);
+    public static Interval<float> FloatHull(Interval<float> first, Interval<float> second) => first.Hull(second);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static Interval<double> DoubleHull(EndpointsOnly<double> first, Interval<double> second) => first.Hull(second);
+    public static Interval<double> DoubleHull(Interval<double> first, Interval<double> second) => first.Hull(second);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static int FloatBounds(EndpointsOnly<float> interval) =>
-        (IInterval<float>.IsBoundedBelow(interval) ? 1 : 0) |
-        (IInterval<float>.IsBoundedAbove(interval) ? 2 : 0) |
-        (IInterval<float>.IsEntire(interval) ? 4 : 0) |
-        (IInterval<float>.IsSingleton(interval) ? 8 : 0);
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool ConcreteContains(Interval<float> interval, float value) => interval.Contains(value);
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static double ConcreteLength(Interval<double> interval) => interval.Length;
+    public static int FloatBounds(Interval<float> interval) =>
+        (interval.IsBoundedBelow ? 1 : 0) |
+        (interval.IsBoundedAbove ? 2 : 0) |
+        (interval.IsEntire ? 4 : 0) |
+        (interval.IsSingleton ? 8 : 0);
 }
 
 internal static class Program
 {
     public static void Main()
     {
-        var singles = new EndpointsOnly<float>(-1, 5);
-        var doubles = new EndpointsOnly<double>(-1, 5);
-        var integers = new EndpointsOnly<int>(-1, 5);
+        var singles = new Interval<float>(-1, 5);
+        var doubles = new Interval<double>(-1, 5);
+        var integers = new Interval<int>(-1, 5);
         var otherSingle = new Interval<float>(1, 7);
         var otherDouble = new Interval<double>(1, 7);
 
@@ -112,11 +106,11 @@ internal static class Program
         Check(Probes.FloatContains(singles, 3f), nameof(Probes.FloatContains));
         Check(Probes.DoubleContains(doubles, 3d), nameof(Probes.DoubleContains));
         Check(Probes.IntContains(integers, 3), nameof(Probes.IntContains));
-        Check(Probes.FloatContainsDirect(singles, 3f), nameof(Probes.FloatContainsDirect));
+        Check(Probes.FloatContainsFromEndpoints(new(-1, 5), 3f), nameof(Probes.FloatContainsFromEndpoints));
         Check(Probes.FloatClamp(singles, 10f) == 5f, nameof(Probes.FloatClamp));
         Check(Probes.DoubleClamp(doubles, 10d) == 5d, nameof(Probes.DoubleClamp));
         Check(Probes.IntClamp(integers, 10) == 5, nameof(Probes.IntClamp));
-        Check(Probes.FloatOverlaps(singles, new Limit(1, 7)), nameof(Probes.FloatOverlaps));
+        Check(Probes.FloatOverlapsFromLimit(singles, new Limit(1, 7)), nameof(Probes.FloatOverlapsFromLimit));
         Check(Probes.DoubleOverlaps(doubles, otherDouble), nameof(Probes.DoubleOverlaps));
         Check(Probes.FloatContainsInterval(singles, new(2, 4)), nameof(Probes.FloatContainsInterval));
         Check(Probes.FloatDistance(singles, new(8, 10)) == 3f, nameof(Probes.FloatDistance));
@@ -130,8 +124,6 @@ internal static class Program
         Check(Probes.FloatBounds(singles) == 3, nameof(Probes.FloatBounds));
         Check(Probes.FloatBounds(new(float.NegativeInfinity, float.PositiveInfinity)) == 4, nameof(Probes.FloatBounds));
         Check(Probes.FloatBounds(new(2, 2)) == 11, nameof(Probes.FloatBounds));
-        Check(Probes.ConcreteContains(otherSingle, 3f), nameof(Probes.ConcreteContains));
-        Check(Probes.ConcreteLength(otherDouble) == 6d, nameof(Probes.ConcreteLength));
         Console.WriteLine($"Interval JIT probe passed: {RuntimeInformation.FrameworkDescription}, {RuntimeInformation.ProcessArchitecture}.");
     }
 

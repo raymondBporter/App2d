@@ -166,8 +166,8 @@ public sealed class IVectorTests
     {
         Assert.Equal(dimension, TVector.Dimension);
         Assert.Equal(TVector.Zero, AdditiveZero<TVector>());
-        Assert.Equal(expectedLength, IVectorExtensions.Length<TVector, TReal>(value));
-        Assert.Equal(expectedLength * expectedLength, IVectorExtensions.LengthSquared<TVector, TReal>(value));
+        Assert.Equal(expectedLength, TVector.Length(value));
+        Assert.Equal(expectedLength * expectedLength, TVector.LengthSquared(value));
         var scale = TReal.CreateChecked(2);
         Assert.Equal(value * scale, scale * value);
         Assert.Equal(value * -scale, -scale * value);
@@ -178,31 +178,31 @@ public sealed class IVectorTests
         Assert.Equal(value / (TReal.One + TReal.One), segment.Midpoint);
         Assert.Equal(TVector.Zero, segment.PointAt(-TReal.One));
         Assert.Equal(value, segment.PointAt(TReal.One + TReal.One));
-        Assert.Equal(value * TReal.CreateChecked(2), IVectorExtensions.Lerp(segment.Start, segment.End, TReal.CreateChecked(2)));
+        Assert.Equal(value * TReal.CreateChecked(2), TVector.Lerp(segment.Start, segment.End, TReal.CreateChecked(2)));
 
-        var normalized = IVectorExtensions.Normalize<TVector, TReal>(value);
-        var error = TReal.Abs(IVectorExtensions.Length<TVector, TReal>(normalized) - TReal.One);
+        var normalized = TVector.Normalize(value);
+        var error = TReal.Abs(TVector.Length(normalized) - TReal.One);
         Assert.True(error < TReal.CreateChecked(1e-6));
         Assert.Equal(value / expectedLength, normalized);
 
-        var parallel = IVectorExtensions.Project<TVector, TReal>(value, axis);
-        var perpendicular = IVectorExtensions.Reject<TVector, TReal>(value, axis);
+        var parallel = TVector.Project(value, axis);
+        var perpendicular = TVector.Reject(value, axis);
         Assert.Equal(TReal.Zero, TVector.Dot(perpendicular, axis));
         Assert.Equal(value, parallel + perpendicular);
-        Assert.Equal(value, IVectorExtensions.Reflect<TVector, TReal>(IVectorExtensions.Reflect<TVector, TReal>(value, axis), axis));
+        Assert.Equal(value, TVector.Reflect(TVector.Reflect(value, axis), axis));
         Assert.Equal(value, TVector.Abs(-value));
-        Assert.Equal(TVector.Zero, IVectorExtensions.Clamp<TVector, TReal>(-value, TVector.Zero, value));
-        Assert.Equal(value, IVectorExtensions.Clamp<TVector, TReal>(value * TReal.CreateChecked(2), TVector.Zero, value));
+        Assert.Equal(TVector.Zero, TVector.Clamp(-value, TVector.Zero, value));
+        Assert.Equal(value, TVector.Clamp(value * TReal.CreateChecked(2), TVector.Zero, value));
         Assert.Throws<ArgumentOutOfRangeException>(() => value[-1]);
         Assert.Throws<ArgumentOutOfRangeException>(() => value[dimension]);
 
-        var zeroNormalized = IVectorExtensions.Normalize<TVector, TReal>(TVector.Zero);
+        var zeroNormalized = TVector.Normalize(TVector.Zero);
         for (var i = 0; i < dimension; i++) Assert.True(TReal.IsNaN(zeroNormalized[i]));
         Assert.False(TVector.IsFinite(zeroNormalized));
         Assert.False(TVector.IsFinite(value * TReal.PositiveInfinity));
         var maximum = TReal.BitDecrement(TReal.PositiveInfinity);
         Assert.True(TVector.IsFinite(axis * maximum));
-        Assert.True(TReal.IsPositiveInfinity(IVectorExtensions.Length<TVector, TReal>(axis * maximum)));
+        Assert.True(TReal.IsPositiveInfinity(TVector.Length(axis * maximum)));
 
         // Overflow on the first axis must not halve the subnormal inputs on the second axis separately.
         var coordinates = new TReal[dimension];

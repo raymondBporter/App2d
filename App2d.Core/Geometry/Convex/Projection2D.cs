@@ -1,7 +1,6 @@
-using App2d.Core.Geometry.Interval;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Convex;
+namespace App2d.Core.Geometry.Convex;
 
 /// <summary>Raw geometry projected onto any finite axis, including non-unit and zero axes. A zero axis projects everything to zero.</summary>
 public static class Projection2D

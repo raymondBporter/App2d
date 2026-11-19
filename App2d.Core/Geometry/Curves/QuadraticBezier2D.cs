@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Distance;
 
 namespace App2d.Core.Geometry.Curves;
 

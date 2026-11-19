@@ -1,8 +1,8 @@
 using App2d.Core.Collision;
 using App2d.Core.Collision.Filtering;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Filtering;
-using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 
 namespace App2d.Tests.Physics;

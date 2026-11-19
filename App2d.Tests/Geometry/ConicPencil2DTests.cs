@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Operations.Construction;
+using App2d.Core.Geometry.Construction;
 
 namespace App2d.Tests.Geometry;
 

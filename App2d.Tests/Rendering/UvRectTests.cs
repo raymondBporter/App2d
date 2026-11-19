@@ -1,7 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Json;
-using App2d.Core.Shapes;
 using System.Text.Json;
 
 namespace App2d.Tests.Rendering;

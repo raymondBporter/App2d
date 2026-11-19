@@ -1,6 +1,6 @@
+using App2d.Core.Geometry.Bounds;
+using App2d.Core.Geometry.Intersection;
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;

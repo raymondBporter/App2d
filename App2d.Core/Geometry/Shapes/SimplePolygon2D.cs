@@ -1,12 +1,11 @@
+using App2d.Core.Geometry.Containment;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Containment;
-using App2d.Core.Geometry.Operations.Diameter;
-using App2d.Core.Geometry.Operations.Polygons;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Meshes.Tessellation;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>A filled simple polygon, including concave outlines, in either winding.</summary>
 public readonly partial record struct SimplePolygon2D : IShape2D

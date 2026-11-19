@@ -1,7 +1,7 @@
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Polygons;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// Structure of polygon perimeters: hulls, winding and edge normals. Area, containment, support points,

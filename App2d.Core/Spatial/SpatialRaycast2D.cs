@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Intersection;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 

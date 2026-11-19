@@ -2,7 +2,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using static App2d.Tests.Geometry.VectorComparers;
 
 namespace App2d.Tests.Geometry;

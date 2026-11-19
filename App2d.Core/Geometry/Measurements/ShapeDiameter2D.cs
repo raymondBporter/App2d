@@ -1,10 +1,8 @@
-using App2d.Core.Geometry.Operations.Distance;
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Distance;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Diameter;
+namespace App2d.Core.Geometry.Measurements;
 
 /// <summary>Diameters of filled shapes: sup |a - b| over every pair of points in the shape.</summary>
 public static class ShapeDiameter2D

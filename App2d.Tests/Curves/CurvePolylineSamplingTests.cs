@@ -1,5 +1,4 @@
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Geometry.Operations.Curves;
 
 namespace App2d.Tests.Curves;
 

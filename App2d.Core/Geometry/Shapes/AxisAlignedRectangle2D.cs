@@ -1,12 +1,9 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.Containment;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Diameter;
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Containment;
+using App2d.Core.Geometry.Convex;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>A rectangle whose owner keeps its world axes aligned: the one shape that never rotates, in local space or through a pose.</summary>
 public readonly partial record struct AxisAlignedRectangle2D : IConvexShape2D, IRect2f

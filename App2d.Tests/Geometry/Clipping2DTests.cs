@@ -1,7 +1,7 @@
-using App2d.Core.Geometry.Operations.Intersection;
-using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Clipping;
+using App2d.Core.Geometry.Intersection;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Shapes;
 
 namespace App2d.Tests.Geometry;
 

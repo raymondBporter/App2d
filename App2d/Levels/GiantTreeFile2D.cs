@@ -1,4 +1,3 @@
-using App2d.Core.Geometry.Interval;
 using App2d.Core.Json;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;

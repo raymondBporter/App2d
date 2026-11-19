@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.ClosestPoint;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>Double-precision arithmetic for linear geometry queries.</summary>
 internal static class LinearGeometry2D

@@ -9,12 +9,14 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Vector2i` | Signed integer coordinates, checked addition/subtraction/scaling, and explicit float conversion |
 | `INumberTuple<TSelf, TReal>` | Numeric coordinates and construction, requiring `INumber<TReal>` |
 | `INumberTuple2<TSelf, TReal>` | Two named coordinates, `X`/`Y`, and `Create(x, y)` for points and vectors |
-| `IVector<TSelf, TReal>` | Floating-point vector arithmetic, dot product, min/max and absolute value |
-| `IVector2<TSelf, TReal>` | The 2D vector contract, combining vector arithmetic and the coordinate pair |
+| `INumberTuple3<TSelf, TReal>`, `INumberTuple4<TSelf, TReal>` | The same for three and four coordinates: `X`/`Y`/`Z`(/`W`) and `Create` |
+| `IVector<TSelf, TReal>` | What a vector must supply (operators, `Dot`, `Min`, `Max`, `Abs`, `IsFinite`) and everything inherited from that: lengths, distances, normalization, interpolation, projection/rejection, reflection, clamping |
+| `IVector2<TSelf, TReal>` | Supplies the `IVector` requirements from `X`, `Y` and `Create`, and adds cross product, orientation, perpendiculars, angles, polar conversion, rotation, transforms and refraction |
+| `IVector3<TSelf, TReal>`, `IVector4<TSelf, TReal>` | Supply the `IVector` requirements for three and four coordinates; `IVector3` adds the cross product |
 | `Vector2f`, `Vector3f`, `Vector4f` | Readonly float vectors backed by the corresponding `System.Numerics` vectors |
 | `Vector2d`, `Vector3d`, `Vector4d` | Readonly double vectors for higher-precision geometry |
-| `IVectorExtensions` | Shared lengths, distances, normalization, interpolation, projection/rejection, reflection and clamping |
-| `Vector2Math<TSelf, TReal>` | Shared 2D angles, polar conversion, rotation, orientation, transforms and refraction |
+| `FloatVectorMembers` / `FloatVectorStatics` (and the `Double` twins) | Extension blocks that put the inherited operations on every vector struct as `v.Length()` and `Vector3d.Distance(a, b)` |
+| `Real<TReal>` | `Two` and `Half` for generic floating-point formulas |
 | `Matrix2x2<TVector, TReal>` | A linear transform stored as concrete vector columns; `Matrix2x2f` / `Matrix2x2d` select the types |
 | `Vector2f` | Two-dimensional float vector backed by `System.Numerics.Vector2` |
 | `Vector4Extensions` | `IsFinite()` component query |
@@ -29,6 +31,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `ProgressMaps` | Forward, reverse, ping-pong, easing transformations, and map composition using the chain rule |
 | `ProgressMapKind` | Stable JSON names for built-in maps; ordered lists describe composition |
 | `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
+| `Interval<T>` | A closed `[Min, Max]` range with all of its queries as members; `IInterval<T>` is only the two endpoints (details in the Geometry README) |
 | `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
 | `RigidTransform2D` | Immutable translation and unwrapped rotation; default identity, composition and inverse |
 | `Frame2D` | Immutable origin and two basis axes, forward mapping, inversion, and rotation from radians or degrees |
@@ -57,26 +60,42 @@ static TSelf Move<TSelf, TReal>(TSelf point, TSelf offset, TReal scale)
     => (point + offset) * scale;
 ```
 
-`IVector` declares instance operations such as `Dot`, `Min`, `Max`, `Length`,
-`Normalized`, and `Clamp`. `IVector2` adds `Cross`, `PerpCcw`, `PerpCw`, `Rotate`,
-angles, and polar conversion. These members are available on constrained generic
-values even when `TReal` is still generic:
+A vector struct writes only what depends on its storage: fields, `Create`, an indexer and its
+operators. `TestVector2<TReal>` in the tests is the whole of it. The rest is inherited in two steps.
+
+1. **The formulas are `static virtual` members of the interfaces.** `IVector` requires `Dot`, `Min`,
+   `Max`, `Abs`, `IsFinite` and `Zero` and builds `Length`, `Normalize`, `Distance`, `Lerp`, `Midpoint`,
+   `Project`, `Reject`, `Reflect` and `Clamp` on them. `IVector2`, `IVector3` and `IVector4` each supply
+   those requirements for their number of coordinates; `IVector2` adds the 2D operations and `IVector3`
+   the cross product. Generic code calls them through the type parameter:
 
 ```csharp
 static TReal PerpendicularDot<TSelf, TReal>(TSelf vector)
     where TSelf : unmanaged, IVector2<TSelf, TReal>
     where TReal : unmanaged, IFloatingPointIeee754<TReal>
-    => vector.Dot(vector.PerpCcw);
+    => TSelf.Dot(vector, TSelf.PerpCcw(vector));
 ```
 
-Each vector struct implements the instance members, forwarding to packed float
-operations or the shared calculations in `IVectorExtensions` and `Vector2Math`.
-The interfaces have no default instance bodies: constrained calls execute the
-struct implementation without boxing. Float and double extension groups provide
-static conveniences such as `Vector2d.FromPolar(radius, angle)` and
-`Vector3d.Distance(a, b)` because C# cannot infer the scalar type solely from a
-constraint on `TSelf`. Keep vectors in concrete or `TSelf` variables: converting
-a struct to an interface value boxes it.
+2. **Extension blocks put them on the concrete structs.** An interface static is not visible as
+   `Vector3d.Length(v)` or `v.Length()` by itself, so `VectorExtensions.Float.cs` and
+   `VectorExtensions.Double.cs` forward each one. C# cannot infer the scalar type solely from a
+   constraint on `TSelf`, which is why there is one file per scalar; `VectorExtensionParityTests`
+   keeps the two in step.
+
+The double vectors (`Vector2d`, `Vector3d`, `Vector4d`) inherit everything and declare only storage, constants
+and operators; `Vector2d` and `Vector4d` keep their packed divide. The float vectors wrap `System.Numerics`
+for each interface operation it offers. Every interface default and every wrapper carries `AggressiveInlining`.
+That attribute is required, not decoration: without it the JIT leaves a call to an interface default such as
+`Dot`, which shows up in every `Length` and `Distance` of the double vectors. With it, optimized code for a sample of
+operations (length, distance, dot, cross, lerp, clamp, reject, divide) disassembles with no calls for either
+precision, whether reached as an instance, static or generic call.
+To repeat that check on x64, run `tools/VectorJitProbe/Verify.ps1` in PowerShell; it fails and names the call if one returns.
+
+To make one operation faster for one struct, declare a public static with the same signature on that
+struct. `Vector2f.Length(Vector2f)` calls `System.Numerics`, and that version then runs for
+`v.Length()`, `Vector2f.Length(v)` and `TSelf.Length(v)` alike. Calls through `TSelf` are resolved per
+struct by the JIT, with no boxing and no virtual dispatch. Keep vectors in concrete or `TSelf`
+variables: converting a struct to an interface value boxes it.
 See Microsoft's [generic interfaces](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/generics/generic-interfaces)
 and [generic math](https://learn.microsoft.com/en-us/dotnet/standard/generics/math) guides.
 
@@ -248,8 +267,8 @@ for 2D rotation, and `point3D.RotateXY(radians, pivot)` to preserve Z. Convert w
 `Angles.DegreesToRadians` and `Angles.RadiansToDegrees`, or use `0.5f * Angles.RadiansPerDegree`
 for a half-degree constant.
 
-`IVectorExtensions.Reject<TSelf, TReal>(vector, unitNormal)` removes the component parallel to a normalized normal.
-`Vector2Math<TSelf, TReal>.TryRefract(direction, incidentNormal, fromIndex, toIndex, out transmitted)`
+`vector.Reject(unitNormal)` removes the component parallel to a normalized normal.
+`Vector2f.TryRefract(direction, incidentNormal, fromIndex, toIndex, out transmitted)`
 applies Snell's law to unit vectors. The normal points toward the incident medium;
 indices must be finite and positive. Total internal reflection returns false and
 sets the output to zero. These CPU helpers support ray tracing and lighting calculations;
@@ -267,7 +286,7 @@ for example `Segment<Vector3d, double>`. Do not store an `IVector<...>` interfac
 to an interface boxes it. The integer vector, unit directions, and validated sizes have different
 arithmetic contracts and do not implement this interface.
 
-`IVectorExtensions` contains one implementation of each shared algorithm. Two small extension groups
+The interfaces contain one implementation of each shared algorithm. Two small extension groups
 fix the scalar to float or double, so C# can infer the vector type for ordinary calls:
 
 ```csharp

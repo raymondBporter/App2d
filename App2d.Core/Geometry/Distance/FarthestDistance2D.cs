@@ -1,7 +1,7 @@
-using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Convex;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Distance;
+namespace App2d.Core.Geometry.Distance;
 
 /// <summary>Farthest-point distances used by diameters of unions, without sampling drawable outlines.</summary>
 public static class FarthestDistance2D

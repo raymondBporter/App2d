@@ -1,6 +1,6 @@
 using App2d.Contracts.World;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 
 namespace App2d.Presentation.World.Presentation;

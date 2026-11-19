@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.MassProperties;
+namespace App2d.Core.Geometry.Measurements;
 
 /// <summary>Uniform solid lamina in shape-local coordinates. Inertia is about the centroid, perpendicular to the plane.</summary>
 public readonly record struct MassProperties2D(

@@ -1,13 +1,11 @@
-using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Operations.Bounds;
+namespace App2d.Core.Geometry.Bounds;
 
 /// <summary>
 /// Calculates local bounds for shapes on demand; shapes carry no bounds cache. Axis-aligned half-spaces retain one finite edge,

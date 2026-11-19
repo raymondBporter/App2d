@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Geometry.Meshes;

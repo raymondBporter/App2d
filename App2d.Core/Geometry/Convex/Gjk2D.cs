@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: MIT
 // The C# support proxies, double-precision calculations and 2D EPA extension are App2d adaptations.
 // See THIRD-PARTY-NOTICES.md for the original license and source.
-using App2d.Core.Geometry.Operations.ClosestPoint;
-using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Distance;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Convex;
 
 /// <summary>The gap or negative escape depth, boundary witnesses, and normal moving the first convex set out of the second.</summary>
 /// <param name="SignedDistance">Positive when separated, zero at contact, negative when penetrating.</param>

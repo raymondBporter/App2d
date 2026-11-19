@@ -1,5 +1,5 @@
 using App2d.Core.Collision;
-using App2d.Core.Geometry.Operations.MassProperties;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 

@@ -1,13 +1,11 @@
-using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Intersection;
-using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Clipping;
+using App2d.Core.Geometry.Intersection;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Operations.Vertices;
+namespace App2d.Core.Geometry.Meshes.Tessellation;
 
 /// <summary>Backend-independent triangle and boundary views over shape geometry and caller-owned sampling storage.</summary>
 /// <remarks>Borrowed views must be consumed before reusing scratch. Composite parts are separate surfaces, not a polygon union.</remarks>

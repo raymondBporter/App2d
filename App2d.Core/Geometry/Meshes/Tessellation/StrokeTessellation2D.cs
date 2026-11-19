@@ -1,7 +1,7 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Vertices;
+namespace App2d.Core.Geometry.Meshes.Tessellation;
 
 /// <summary>Backend-independent packed triangles for thick segments and their caps.</summary>
 public static class StrokeTessellation2D

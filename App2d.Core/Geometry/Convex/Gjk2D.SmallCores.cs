@@ -1,7 +1,6 @@
-using App2d.Core.Geometry.Operations.ClosestPoint;
-using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Distance;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Convex;
 
 public static partial class Gjk2D
 {

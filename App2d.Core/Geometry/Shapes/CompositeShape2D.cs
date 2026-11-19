@@ -1,9 +1,7 @@
-using App2d.Core.Geometry.Operations.Area;
-using App2d.Core.Geometry.Operations.Diameter;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Measurements;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>Source geometry for a union of convex parts. Construction only snapshots its input.</summary>
 public readonly partial record struct CompositeShape2D : IShape2D

@@ -1,9 +1,8 @@
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Operations.Vertices;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>Local convex cores and drawing outlines. Span overloads write into caller-owned buffers without allocating.</summary>
 public static class ShapeVertices2D

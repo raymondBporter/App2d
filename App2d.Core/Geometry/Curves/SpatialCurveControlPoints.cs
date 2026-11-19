@@ -1,6 +1,4 @@
-using App2d.Core.Geometry.Curves;
-
-namespace App2d.Core.Geometry.Operations.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>Authoring access to the supported spatial Bézier control points.</summary>
 public static class SpatialCurveControlPoints

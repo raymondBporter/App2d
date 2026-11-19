@@ -1,10 +1,7 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.ClosestPoint;
-using App2d.Core.Geometry.Operations.Convex;
-using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Convex;
+using App2d.Core.Geometry.Distance;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
-using App2d.Core.Shapes;
 
 namespace App2d.Tests.Geometry;
 

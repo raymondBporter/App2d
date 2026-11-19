@@ -1,7 +1,7 @@
-using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Convex;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Distance;
 
 public static partial class Distance2D
 {

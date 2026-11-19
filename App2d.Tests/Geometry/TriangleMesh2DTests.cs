@@ -1,8 +1,9 @@
 using App2d.Core.Collision.Contacts;
+using App2d.Core.Geometry.Clipping;
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Conversion;
-using App2d.Core.Geometry.Operations.Polygons;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Meshes.Tessellation;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Spatial;
 
 namespace App2d.Tests.Geometry;

@@ -10,11 +10,11 @@ public readonly record struct Segment<TVector, TReal>(TVector Start, TVector End
     public static Segment<TVector, TReal> Create(TVector start, TVector end) => new(start, end);
 
     [System.Text.Json.Serialization.JsonIgnore]
-    public TVector Midpoint => IVectorExtensions.Midpoint<TVector, TReal>(Start, End);
-    public TReal Length() => IVectorExtensions.Distance<TVector, TReal>(Start, End);
+    public TVector Midpoint => TVector.Midpoint(Start, End);
+    public TReal Length() => TVector.Distance(Start, End);
 
     /// <summary>Samples the segment, clamping the amount to [0, 1].</summary>
-    public TVector PointAt(TReal amount) => IVectorExtensions.Lerp(Start, End, Clamping.Clamp01(amount));
+    public TVector PointAt(TReal amount) => TVector.Lerp(Start, End, Clamping.Clamp01(amount));
 
     public Segment<TVector, TReal> Reversed() => new(End, Start);
 }

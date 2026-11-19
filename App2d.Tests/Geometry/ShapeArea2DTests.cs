@@ -1,10 +1,9 @@
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Operations.Area;
-using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Bounds;
+using App2d.Core.Geometry.Clipping;
+using App2d.Core.Geometry.Measurements;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
-using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json.Nodes;
 
