@@ -99,4 +99,14 @@ public interface IVector<TSelf, TReal> :
     /// <summary>Clamps each component using the implementation's Min and Max behavior.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static virtual TSelf Clamp(TSelf value, TSelf minimum, TSelf maximum) => TSelf.Min(TSelf.Max(value, minimum), maximum);
+
+    /// <summary>Clamps the length of the vector to be no greater than <paramref name="maxLength"/>.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static virtual TSelf ClampLength(TSelf value, TReal maxLength)
+    {
+        var lengthSquared = TSelf.LengthSquared(value);
+        if (lengthSquared <= maxLength * maxLength)
+            return value;
+        return (maxLength / TReal.Sqrt(lengthSquared)) * value;
+    }
 }

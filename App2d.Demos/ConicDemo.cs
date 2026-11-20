@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Construction;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics.RootFinding;
 using App2d.EditorUi;
 using ImGuiNET;
 using System.Numerics;
@@ -133,22 +134,21 @@ internal sealed class ConicDemo : IDemo
         var rootHigh = columns ? max.Y : max.X;
         var count = Math.Max(1, (int)Math.Ceiling((columns ? canvas.Size.X : canvas.Size.Y) / 2d));
         var step = (high - low) / count;
-        Span<double> coefficients = stackalloc double[3];
         Span<double> roots = stackalloc double[2];
         var fixedSquared = columns ? conic.XX : conic.YY;
         var fixedLinear = columns ? conic.Linear.X : conic.Linear.Y;
         var freeLinear = columns ? conic.Linear.Y : conic.Linear.X;
-        coefficients[2] = columns ? conic.YY : conic.XX;
+        var a = columns ? conic.YY : conic.XX;
 
         for (var slice = 0; slice <= count; slice++)
         {
             var fixedValue = low + slice * step;
-            coefficients[0] = (fixedSquared * fixedValue + fixedLinear) * fixedValue + conic.Constant;
-            coefficients[1] = conic.XY * fixedValue + freeLinear;
-            if (coefficients[0] == 0d && coefficients[1] == 0d && coefficients[2] == 0d)
+            var c = (fixedSquared * fixedValue + fixedLinear) * fixedValue + conic.Constant;
+            var b = conic.XY * fixedValue + freeLinear;
+            if (c == 0d && b == 0d && a == 0d)
                 continue;
 
-            var rootCount = PolynomialRoots.FindRealRoots(coefficients, rootLow, rootHigh, roots);
+            var rootCount = PolynomialRoots.SolveQuadratic(a, b, c, rootLow, rootHigh, roots);
             for (var i = 0; i < rootCount; i++)
             {
                 var point = columns ? new Vector2d(fixedValue, roots[i]) : new Vector2d(roots[i], fixedValue);

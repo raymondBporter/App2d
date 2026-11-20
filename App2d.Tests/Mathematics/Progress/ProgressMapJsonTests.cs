@@ -9,62 +9,78 @@ namespace App2d.Tests.Mathematics.Progress;
 public sealed class ProgressMapJsonTests
 {
     [Fact]
-    public void EveryBuiltInKindRoundTripsAndResolvesToTheNamedMap()
+    public void CurveDirectionAndTravelRoundTripIndependently()
     {
-        foreach (var kind in Enum.GetValues<ProgressMapKind>())
-        {
-            var json = JsonSerializer.Serialize(kind);
-            Assert.Equal(kind, JsonSerializer.Deserialize<ProgressMapKind>(json));
-            Assert.Equal(kind, ProgressMaps.FromKind(kind).Kind);
-        }
-        Assert.Equal("\"ping-pong\"", JsonSerializer.Serialize(ProgressMapKind.PingPong));
-        Assert.Equal("\"smoother\"", JsonSerializer.Serialize(Easing.Smoother.Kind));
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProgressMapKind>("\"smoth\""));
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProgressMapKind>("0"));
+        foreach (var curve in Enum.GetValues<EasingCurve>()) AssertRoundTrip(curve);
+        foreach (var direction in Enum.GetValues<EasingDirection>()) AssertRoundTrip(direction);
+        foreach (var travel in Enum.GetValues<ProgressTravel>()) AssertRoundTrip(travel);
+        Assert.Equal("\"in-out\"", JsonSerializer.Serialize(EasingDirection.InOut));
+        Assert.Equal("\"reverse-ping-pong\"", JsonSerializer.Serialize(ProgressTravel.ReversePingPong));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<EasingCurve>("\"smoth\""));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<EasingDirection>("0"));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProgressTravel>("0"));
     }
 
     [Fact]
-    public void SavedPipelineKeepsCompositionOrderPositionsAndAnalyticVelocities()
+    public void SavedMotionKeepsIndependentSelectionsPositionsAndVelocities()
     {
         var definition = new CurveMotionDefinition2D
         {
-            Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0)),
-            PeriodSeconds = 4,
-            Progress = [ProgressMapKind.PingPong, ProgressMapKind.Smoother]
+            Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10f, 0f)),
+            PeriodSeconds = 4d,
+            Travel = ProgressTravel.PingPong,
+            Ease = EasingCurve.Cubic,
+            EaseDirection = EasingDirection.InOut
         };
         var json = JsonSerializer.Serialize(definition, GeometryJson2D.JsonOptions);
         var restored = JsonSerializer.Deserialize<CurveMotionDefinition2D>(json, GeometryJson2D.JsonOptions)!;
-        var motion = restored.CreateMotion(new(100, 20));
-        var expected = new CurveMotion2D(definition.Curve, 4, ProgressMaps.Compose(ProgressMaps.PingPong, Easing.Smoother), new(100, 20));
-        foreach (var time in new[] { 0d, .25, 1, 2, 2.5, 4, 6.25 })
+        Assert.Equal(definition.Travel, restored.Travel);
+        Assert.Equal(definition.Ease, restored.Ease);
+        Assert.Equal(definition.EaseDirection, restored.EaseDirection);
+        var motion = restored.CreateMotion(new(100f, 20f));
+        var expected = new CurveMotion2D(definition.Curve, 4d,
+            ProgressMapd.PingPong.Then(Easingd.Power(3).WithDirection(EasingDirection.InOut)), new(100f, 20f));
+        foreach (var time in new[] { 0d, .25d, 1d, 2d, 2.5d, 4d, 6.25d })
         {
             Assert.Equal(expected.Position(time), motion.Position(time));
             Assert.Equal(expected.Velocity(time), motion.Velocity(time));
         }
-        Assert.Equal(new Vector2f(110, 20), motion.Position(2));
-        Assert.Equal(Vector2f.Zero, motion.Velocity(2));
-        var reversedOrder = ProgressMaps.Compose([ProgressMapKind.Smoother, ProgressMapKind.PingPong]);
-        Assert.NotEqual(motion.Position(.5), new Vector2f(100, 20) + definition.Curve.Evaluate((float)reversedOrder.Sample(.125)));
+        Assert.Equal(new Vector2f(110f, 20f), motion.Position(2d));
+        Assert.Equal(Vector2f.Zero, motion.Velocity(2d));
     }
 
     [Theory]
-    [InlineData(false, 0, 10)]
-    [InlineData(true, 10, 0)]
-    public void OneShotPathsRunThereOrBackAndHoldTheirEndpoint(bool reverse, float start, float end)
+    [InlineData(ProgressTravel.Forward, 0f, 10f)]
+    [InlineData(ProgressTravel.Reverse, 10f, 0f)]
+    [InlineData(ProgressTravel.PingPong, 0f, 0f)]
+    [InlineData(ProgressTravel.ReversePingPong, 10f, 10f)]
+    public void OneShotTravelHoldsItsEndpoint(ProgressTravel travel, float start, float end)
     {
         var definition = new CurveMotionDefinition2D
         {
-            Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0)),
-            PeriodSeconds = 2,
+            Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10f, 0f)),
+            PeriodSeconds = 2d,
             Repeat = false,
-            Progress = reverse ? [ProgressMapKind.Reverse, ProgressMapKind.Smooth] : [ProgressMapKind.Smooth]
+            Travel = travel,
+            Ease = EasingCurve.Smooth
         };
         var motion = definition.CreateMotion();
-        Assert.Equal(new Vector2f(start, 0), motion.Position(0));
-        Assert.Equal(new Vector2f(5, 0), motion.Position(1));
-        Assert.Equal(new Vector2f(end, 0), motion.Position(2));
-        Assert.Equal(motion.Position(2), motion.Position(10));
-        Assert.Equal(Vector2f.Zero, motion.Velocity(10));
-        Assert.Throws<ArgumentException>(() => (definition with { Repeat = true }).Validate());
+        Assert.Equal(new Vector2f(start, 0f), motion.Position(0d));
+        Assert.Equal(new Vector2f(end, 0f), motion.Position(2d));
+        Assert.Equal(motion.Position(2d), motion.Position(10d));
+        Assert.Equal(Vector2f.Zero, motion.Velocity(10d));
+        if (start != end) Assert.Throws<ArgumentException>(() => (definition with { Repeat = true }).Validate());
     }
+
+    [Fact]
+    public void PhysicalMotionRejectsDiscontinuousCurvesAndInvalidSelections()
+    {
+        var curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.UnitX);
+        var definition = new CurveMotionDefinition2D { Curve = curve, Repeat = false, Ease = EasingCurve.Step };
+        Assert.Throws<ArgumentException>(definition.Validate);
+        Assert.Throws<ArgumentException>(() => new CurveMotion2D(curve, 1d, Easingd.Step, repeat: false));
+        Assert.Throws<ArgumentOutOfRangeException>(() => (definition with { Ease = EasingCurve.Smooth, Travel = (ProgressTravel)99 }).Validate());
+    }
+
+    private static void AssertRoundTrip<T>(T value) => Assert.Equal(value, JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value)));
 }

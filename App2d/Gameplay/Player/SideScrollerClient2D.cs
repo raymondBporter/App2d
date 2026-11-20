@@ -318,7 +318,7 @@ internal sealed class SideScrollerClient2D : IDisposable
             return;
         }
         var power = State.Person.JumpPower;
-        _jumpSound.SetVolumeScale(float.Lerp(0.3f, 1f, Progress.SmoothStepUnclamped(power)), 0.015f);
+        _jumpSound.SetVolumeScale(float.Lerp(0.3f, 1f, Easingf.SmoothStepValue(power)), 0.015f);
     }
 
     private void EndJumpSound()

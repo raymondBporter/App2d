@@ -52,6 +52,67 @@ physics and include the current uniform scale. At fixed density, scaling lengths
 Rotation and mirroring preserve scalar inertia. Nonuniform scale and shear retain the
 existing collision restriction; recalculate mass properties after changing size.
 
+## Segment continuous collision with rotation
+
+`SegmentCcd2D.FirstContact` in `Geometry.Intersection` takes two local
+`Segment<Vector2f, float>` values and each segment's start/end `RigidTransform2D`.
+It returns the earliest touching fraction in [0, 1], zero for initial overlap,
+or null for a miss. Tangencies, endpoint contact, collinear sliding, and segments
+collapsed to points are included.
+
+```csharp
+var a = new Segment<Vector2f, float>(new(0, 0), new(1, 0));
+var b = new Segment<Vector2f, float>(new(0, -1), new(0, 1));
+var startB = new RigidTransform2D(new(2, 0));
+var endB = new RigidTransform2D(new(0, 0), .5f);
+double? time = SegmentCcd2D.FirstContact(a, default, default, b, startB, endB);
+if (time is double t)
+{
+    Vector2d endpoint = SegmentCcd2D.TransformPoint(b.Start, startB, endB, t);
+}
+```
+
+Translation is linear. Rotation linearly interpolates the half-angle vectors
+`z0 = (cos(theta0/2), sin(theta0/2))`, `z1 = (cos(theta1/2), sin(theta1/2))`,
+then applies the complex rotation `z(t)^2 / |z(t)|^2`. Trig is used once to convert
+the endpoint angles; polynomial construction and solving use arithmetic only.
+Use `TransformPoint` to sample this same path: interpolating the angles linearly
+has a different angular speed and can give a different contact time.
+Unwrapped turns retain their sign and may exceed 180 degrees. A full revolution
+passes through `z=0`; turns approaching that singularity, or spanning a full
+revolution or more, must be split. Subdividing an existing rational path must also
+preserve its interpolated half-angle vectors and time parameter; sampling angles
+and restarting with unit half-angle endpoints generally changes its timing.
+
+The transforms' translations are the world positions of the rotation pivots.
+A point `P0 + velocity*t + R(t)*(p + localPoint)` is represented by adding `p`
+to the local segment endpoints before querying.
+
+In B's local frame, set `D_A = |z_A|^2`, `D_B = |z_B|^2`, and let `N_A`, `N_B`
+be the quadratic rotation numerators. For an endpoint a and segment b0,b1,
+
+```
+q_num = D_A N_B^T (P_A - P_B) + N_B^T N_A a - D_A D_B b0
+d = b1 - b0
+F = cross(q_num, d)
+0 <= dot(q_num, d) <= |d|^2 D_A D_B
+```
+
+The first term has degree at most five; the other terms have degree at most four.
+Thus there are four endpoint-on-line **quintics**, with dot-product bounds checked
+at their roots. Parallel means `cross(U,V)=0`; `dot(U,V)=0` means perpendicular.
+Identically collinear motion uses the projection-boundary roots. Root solving
+reuses `Mathematics.RootFinding.PolynomialRoots`, including repeated roots and
+the endpoints of the time interval. There is no temporal sampling in the query.
+The equations describe the rational path algebraically; double-precision roots
+and tolerance-based predicates are numerical, with no certified exactness guarantee.
+
+For comparison, an offset circle against a moving line has two signed quintic
+equations (one per side); two offset circles have a degree-six distance equation.
+Squared-distance constraints explain the higher degree. Polygon boundary CCD can
+take the earliest edge-pair contact, with an initial solid-containment check;
+this query does not itself sweep polygon solids or exact curved boundaries.
+
 ## Geometry organization
 
 Every namespace is its folder: a file in `App2d.Core/Geometry/Distance` declares `App2d.Core.Geometry.Distance`.
@@ -308,7 +369,8 @@ animation can pass eased progress to `Evaluate`, or move the curve's control poi
 
 ```csharp
 var mouth = CubicBezier2D.Builder.Create(start, firstHandle, secondHandle, end);
-var point = mouth.Evaluate((float)Easing.EaseInOutSine.Sample(phase));
+var easing = Easingd.Sine.WithDirection(EasingDirection.InOut);
+var point = mouth.Evaluate((float)easing.Sample(phase));
 var (left, right) = mouth.Split(.5f);
 var middle = mouth.Slice(.25f, .75f);
 ```

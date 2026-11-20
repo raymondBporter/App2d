@@ -13,8 +13,9 @@ public sealed record ClipKey : IEditableTimedKey
     public float Time { get; set; }
     public Vector3f Value { get; set; }
     public float Angle { get; set; }
-    /// <summary>How the value moves from this key to the next: see <see cref="ProgressMapKind"/>.</summary>
-    public ProgressMapKind Ease { get; set; } = ProgressMapKind.Linear;
+    /// <summary>The curve used between this key and the next. Ease direction is selected separately.</summary>
+    public EasingCurve Ease { get; set; } = EasingCurve.Linear;
+    public EasingDirection EaseDirection { get; set; } = EasingDirection.In;
     public KeyCurve2D? Curve { get; set; }
     public KeyCurve2D? CurveY { get; set; }
     public KeyCurve2D? CurveZ { get; set; }
@@ -213,7 +214,7 @@ public sealed class MotionClip
                     new Limit(0, 1).Check(value, $"{owner} color component");
                 }
 
-                ValidateEase(key.Ease, $"{owner} color key ease");
+                ValidateEase(key.Ease, key.EaseDirection, $"{owner} color key ease");
                 key.CurveR?.Validate();
                 key.CurveG?.Validate();
                 key.CurveB?.Validate();
@@ -314,12 +315,10 @@ public sealed class MotionClip
         }
     }
 
-    internal static void ValidateEase(ProgressMapKind ease, string field)
+    internal static void ValidateEase(EasingCurve ease, EasingDirection direction, string field)
     {
-        Require(Enum.IsDefined(ease), $"{field}: unknown progress map '{ease}'.");
-        var map = ProgressMaps.FromKind(ease);
-        Require(map.Travel == EasingTravel.Forward && (map.IsContinuous == true || ease == ProgressMapKind.Step),
-            $"{field}: key easing must travel forward; use a continuous forward map or Step.");
+        Require(Enum.IsDefined(ease), $"{field}: unknown easing curve '{ease}'.");
+        Require(Enum.IsDefined(direction), $"{field}: unknown easing direction '{direction}'.");
     }
 
     private void CheckKeys(List<ClipKey> keys, string field, Func<ClipKey, bool> shape, string shapeMessage)
@@ -338,7 +337,7 @@ public sealed class MotionClip
             }
 
             Require(shape(key), $"{field}: {shapeMessage}.");
-            ValidateEase(key.Ease, field + " key ease");
+            ValidateEase(key.Ease, key.EaseDirection, field + " key ease");
             key.Curve?.Validate();
             key.CurveY?.Validate();
             key.CurveZ?.Validate();

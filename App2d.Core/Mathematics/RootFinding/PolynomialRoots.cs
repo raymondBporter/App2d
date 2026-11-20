@@ -1,8 +1,8 @@
 using App2d.Core.Validation;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.RootFinding;
 
-/// <summary>Real roots of linear through quartic polynomials on a finite interval.</summary>
+/// <summary>Real roots of linear through quintic polynomials on a finite interval.</summary>
 public static class PolynomialRoots
 {
     // Derivative isolation and bisection adapted from David Eberly's RootsPolynomial.h.
@@ -14,12 +14,23 @@ public static class PolynomialRoots
     /// Writes sorted, distinct real roots in [minimum, maximum], returning the number written.
     /// Repeated roots are reported once. Roots indistinguishable within double arithmetic may merge.
     /// </summary>
-    /// <param name="coefficients">Finite coefficients in ascending order: c0 + c1*x + ... + c4*x^4.</param>
+    /// <param name="coefficients">Finite coefficients in ascending order: c0 + c1*x + ... + c5*x^5.</param>
     /// <param name="minimum">Finite lower bound, inclusive.</param>
     /// <param name="maximum">Finite upper bound, inclusive and at least minimum.</param>
     /// <param name="roots">Space for at least the degree, excluding trailing zero coefficients.</param>
     /// <remarks>The identically zero polynomial has infinitely many roots and is rejected.</remarks>
     public static int FindRealRoots(ReadOnlySpan<double> coefficients, double minimum, double maximum, Span<double> roots)
+        => FindRealRoots(coefficients, minimum, maximum, roots, useCubicFormula: false);
+
+    /// <summary>Writes the sorted, distinct roots of a*x^2 + b*x + c in the inclusive interval.</summary>
+    public static int SolveQuadratic(double a, double b, double c, double minimum, double maximum, Span<double> roots)
+        => FindRealRoots([c, b, a], minimum, maximum, roots);
+
+    /// <summary>Writes the sorted, distinct roots of a*x^4 + b*x^3 + c*x^2 + d*x + e in the inclusive interval.</summary>
+    public static int SolveQuartic(double a, double b, double c, double d, double e, double minimum, double maximum, Span<double> roots)
+        => FindRealRoots([e, d, c, b, a], minimum, maximum, roots, useCubicFormula: true);
+
+    private static int FindRealRoots(ReadOnlySpan<double> coefficients, double minimum, double maximum, Span<double> roots, bool useCubicFormula)
     {
         Ensure.ThrowIfTooShort(coefficients, 1);
         Ensure.Finite(minimum);
@@ -38,7 +49,7 @@ public static class PolynomialRoots
             degree--;
         }
 
-        Ensure.LessThanOrEqual(degree, 4);
+        Ensure.LessThanOrEqual(degree, 5);
         Ensure.ThrowIf(roots.Length < degree, "The root buffer must hold at least the polynomial degree.", nameof(roots));
         if (degree == 0)
         {
@@ -51,10 +62,10 @@ public static class PolynomialRoots
             normalized[i] = coefficients[i] / scale;
         }
 
-        return Find(normalized, minimum, maximum, roots);
+        return Find(normalized, minimum, maximum, roots, useCubicFormula);
     }
 
-    private static int Find(ReadOnlySpan<double> coefficients, double minimum, double maximum, Span<double> roots)
+    private static int Find(ReadOnlySpan<double> coefficients, double minimum, double maximum, Span<double> roots, bool useCubicFormula = false)
     {
         var degree = coefficients.Length - 1;
         if (degree == 1)
@@ -81,7 +92,11 @@ public static class PolynomialRoots
         }
 
         Span<double> critical = stackalloc double[degree - 1];
-        var criticalCount = Find(derivative, minimum, maximum, critical);
+        int criticalCount;
+        if (!useCubicFormula || degree != 4 || !TryFindCubicCriticalPoints(derivative, critical, out criticalCount))
+        {
+            criticalCount = Find(derivative, minimum, maximum, critical);
+        }
         Span<double> partition = stackalloc double[degree + 1];
         var partitionCount = 1;
         partition[0] = minimum;
@@ -107,9 +122,9 @@ public static class PolynomialRoots
                 Append(roots, ref count, low);
             }
 
-            if (OppositeSigns(lowValue, highValue))
+            if (RootFinding.OppositeSigns(lowValue, highValue))
             {
-                Append(roots, ref count, Bisect(coefficients, low, high, lowValue));
+                Append(roots, ref count, Bisection.Bisect(coefficients, static (state, x) => Evaluate(state, x, detectRepeatedRoot: false), low, high, lowValue));
             }
 
             low = high;
@@ -121,6 +136,70 @@ public static class PolynomialRoots
         }
 
         return count;
+    }
+
+    private static bool TryFindCubicCriticalPoints(ReadOnlySpan<double> derivative, Span<double> roots, out int count)
+    {
+        count = 0;
+        // Restrict the analytic path to derivatives with modest monic coefficients.
+        var b = derivative[2] / derivative[3];
+        var c = derivative[1] / derivative[3];
+        var d = derivative[0] / derivative[3];
+        if (!(Math.Abs(b) <= 4d && Math.Abs(c) <= 4d && Math.Abs(d) <= 4d))
+        {
+            return false;
+        }
+
+        // Shift x = y - b/3 to remove the quadratic term.
+        var shift = b / 3d;
+        var p = Math.FusedMultiplyAdd(-b, shift, c);
+        var q = Math.FusedMultiplyAdd(shift, 2d * shift * shift - c, d);
+        if (!TrySolveDepressedCubic(p, q, roots, out count))
+        {
+            return false;
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            roots[i] -= shift;
+            if (Evaluate(derivative, roots[i], detectRepeatedRoot: true) != 0d)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static bool TrySolveDepressedCubic(double p, double q, Span<double> roots, out int count)
+    {
+        var thirdP = p / 3d;
+        var halfQ = q / 2d;
+        var qSquared = halfQ * halfQ;
+        var pCubed = thirdP * thirdP * thirdP;
+        var discriminant = qSquared + pCubed;
+        count = 0;
+        // Fall back to derivative isolation near multiple roots or underflow.
+        if (qSquared + Math.Abs(pCubed) < 1e-280 ||
+            Math.Abs(discriminant) <= EvaluationTolerance * (qSquared + Math.Abs(pCubed)))
+        {
+            return false;
+        }
+
+        if (discriminant > 0d)
+        {
+            var u = Math.Cbrt(-halfQ - Math.CopySign(Math.Sqrt(discriminant), halfQ));
+            roots[0] = u - thirdP / u;
+            count = 1;
+            return true;
+        }
+
+        var radius = Math.Sqrt(-thirdP);
+        var angle = Math.Acos(Math.Clamp(-halfQ / (radius * radius * radius), -1d, 1d)) / 3d;
+        roots[0] = 2d * radius * Math.Cos(angle + Math.Tau / 3d);
+        roots[1] = 2d * radius * Math.Cos(angle - Math.Tau / 3d);
+        roots[2] = 2d * radius * Math.Cos(angle);
+        count = 3;
+        return true;
     }
 
     private static int FindQuadratic(ReadOnlySpan<double> coefficients, double minimum, double maximum, Span<double> roots)
@@ -200,37 +279,7 @@ public static class PolynomialRoots
         Append(roots, ref count, root);
     }
 
-    private static double Bisect(ReadOnlySpan<double> coefficients, double low, double high, double lowValue)
-    {
-        // Most brackets take about 53 iterations; this also covers the full double exponent range.
-        for (var i = 0; i < 2048; i++)
-        {
-            var middle = .5d * low + .5d * high;
-            if (middle == low || middle == high)
-            {
-                return middle;
-            }
-
-            var value = Evaluate(coefficients, middle, detectRepeatedRoot: false);
-            if (value == 0d)
-            {
-                return middle;
-            }
-
-            if (OppositeSigns(lowValue, value))
-            {
-                high = middle;
-            }
-            else
-            {
-                low = middle;
-                lowValue = value;
-            }
-        }
-        return .5d * low + .5d * high;
-    }
-
-    private static double Evaluate(ReadOnlySpan<double> coefficients, double x, bool detectRepeatedRoot)
+    public static double Evaluate(ReadOnlySpan<double> coefficients, double x, bool detectRepeatedRoot)
     {
         var degree = coefficients.Length - 1;
         var reciprocal = Math.Abs(x) > 1d;
@@ -252,7 +301,6 @@ public static class PolynomialRoots
         return detectRepeatedRoot && Math.Abs(result) <= EvaluationTolerance * magnitude ? 0d : result;
     }
 
-    private static bool OppositeSigns(double a, double b) => a < 0d && b > 0d || a > 0d && b < 0d;
 
     private static void Append(Span<double> roots, ref int count, double root)
     {

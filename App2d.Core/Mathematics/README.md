@@ -16,7 +16,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Vector2f`, `Vector3f`, `Vector4f` | Readonly float vectors backed by the corresponding `System.Numerics` vectors |
 | `Vector2d`, `Vector3d`, `Vector4d` | Readonly double vectors for higher-precision geometry |
 | `FloatVectorMembers` / `FloatVectorStatics` (and the `Double` twins) | Extension blocks that put the inherited operations on every vector struct as `v.Length()` and `Vector3d.Distance(a, b)` |
-| `Real<TReal>` | `Two` and `Half` for generic floating-point formulas |
+| `Real<TReal>` | `Two`, `Half`, and `MachineEpsilon` for generic floating-point formulas; aliases `Realf` / `Reald` |
 | `Matrix2x2<TVector, TReal>` | A linear transform stored as concrete vector columns; `Matrix2x2f` / `Matrix2x2d` select the types |
 | `Vector2f` | Two-dimensional float vector backed by `System.Numerics.Vector2` |
 | `Vector4Extensions` | `IsFinite()` component query |
@@ -25,11 +25,9 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Angles` | Convert between degrees and radians and wrap signed angles |
 | `Interpolation` | Value blending, optional progress-map application, and inverse lerp |
 | `Clamping` | Generic `Clamp(value, minimum, maximum)` and `Clamp01(value)` scalar helpers |
-| `Progress` | Clamped smoothstep families, their inverses, and unclamped maps with analytic derivatives |
-| `Easing` | Smoothstep, power and sine easing families with analytic derivatives |
-| `ProgressMap` / `IProgressMap` | A sampled progress function and derivative for velocity |
-| `ProgressMaps` | Forward, reverse, ping-pong, easing transformations, and map composition using the chain rule |
-| `ProgressMapKind` | Stable JSON names for built-in maps; ordered lists describe composition |
+| `Easing<TReal>` | Base curves in float or double precision; aliases `Easingf` / `Easingd` |
+| `ProgressMap<TReal>` | Scalar functions, travel, direction, derivatives and optional inverses; aliases `ProgressMapf` / `ProgressMapd` |
+| `EasingCurve`, `EasingDirection`, `ProgressTravel` | Independent authored selections with stable JSON names |
 | `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
 | `Interval<T>` | A closed `[Min, Max]` range with all of its queries as members; `IInterval<T>` is only the two endpoints (details in the Geometry README) |
 | `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
@@ -110,7 +108,7 @@ coordinate contracts also support [generic rectangle bounds](../Geometry/README.
 polynomial degree. Bounds are inclusive; repeated roots appear once. Nonzero constants have no roots, while
 the identically zero polynomial is rejected. Coefficients and bounds must be finite. Linear and quadratic equations
 use direct formulas; the quadratic path avoids cancellation when the roots have very different magnitudes.
-Cubics and quartics use derivative isolation and bisection with double arithmetic. Roots that cannot be distinguished
+Cubics through quintics use derivative isolation and bisection with double arithmetic. Roots that cannot be distinguished
 within evaluation precision may merge.
 
 For scalar angles, use .NET's `float.DegreesToRadians(value)` / `float.RadiansToDegrees(value)`
@@ -124,51 +122,62 @@ Normalize time, shape the progress, then interpolate the value:
 
 ```csharp
 var phase = Interpolation.InverseLerp(startTime, endTime, time);
-var value = Interpolation.Lerp(start, end, phase, Easing.Smooth);
+var value = Interpolation.Lerp(start, end, phase, Easingf.Smooth);
 ```
 
 `Clamping.Clamp` and `Clamp01` work with numeric types such as int, float, and double, preserving the type's
 standard clamping behavior.
 
-`Progress.SmoothStep`, `SmootherStep`, and `SmoothestStep` clamp inputs to [0,1]. Easing maps do not clamp inputs
-or outputs. The `*StepUnclamped<T>` polynomials share float/double arithmetic
-without forcing float callers to change precision. Animation keys use `ProgressMapKind` and `ProgressMaps.FromKind`
-directly. `KeyframeSegmentSampler` samples a map once for all channels in a segment.
-`Progress.SmoothStepMap`, `SmootherStepMap`, and `SmoothestStepMap` package each polynomial with
-its analytic derivative; `Easing.Smooth`, `Smoother`, and `Smoothest` are aliases for those same maps.
-These maps guarantee output in [0,1] for normalized phase, clamping polynomial rounding at the producer.
-They still extrapolate outside that domain; the `*StepUnclamped<T>` helpers always return the raw polynomial.
-Every built-in easing has an analytic derivative. `Easing.EaseInPower(n)`, `EaseOutPower(n)`, and
-`EaseInOutPower(n)` support any positive integer degree; 1 is linear, and the named Quad/Cubic/Quart/Quint
-maps use degrees 2/3/4/5. Degree 0 is excluded because a constant cannot map both normalized endpoints.
-`ProgressMaps.EaseOut(map)` reflects both axes; `EaseInOut(map)` fits the curve into each half. Both
-carry the derivative through the chain rule, so custom maps can reuse the same transformations.
-Use `new ProgressMap(sample, derivative)` for an exact derivative, or explicitly choose
-`ProgressMap.FromFunction(sample)` for numerical differences. There are no implicit delegate conversions.
+The three progress files have separate jobs: `Easing<TReal>` defines curves, `ProgressMap<TReal>` represents and composes
+functions, and `ProgressOptions` contains authored choices. `Interpolation` blends the actual values.
+Both generic classes require `IFloatingPointIeee754<TReal>` and perform arithmetic, trigonometry, differentiation,
+and inversion in that precision. Shared aliases in `Directory.Build.props` expose `Easingf` / `Easingd` and
+`ProgressMapf` / `ProgressMapd`. Animation uses float maps; motion uses double maps to match playback time.
+`Easingf.SmoothStepValue(value, order)` and its double counterpart expose the raw polynomial for direct scalar
+calculations. Neither API clamps. Scalar interpolation infers float or double, and either progress precision can
+interpolate scalar or 2D vector values in either precision; conversion happens after sampling the map.
+Apply `Clamping.Clamp01` explicitly when a particular consumer needs saturation.
+
+`Easingf.SmoothStep(order)` supports orders 0 through 3: linear, cubic (`Smooth`), quintic (`Smoother`), and
+septic (`Smoothest`). `Easingf.Power(degree)` accepts any positive integer degree. Choose
+`WithDirection(EasingDirection.In/Out/InOut)` separately: Out reflects both axes, while InOut fits the base
+curve and its reflection into two halves. Neither operation reverses travel.
 
 ```csharp
-var curve = Easing.EaseInOutPower(6);
+var curve = Easingd.Power(6).WithDirection(EasingDirection.InOut);
 double progress = curve.Sample(phase);
 double velocityScale = curve.Derivative(phase);
+double? recoveredPhase = curve.Inverse?.Invoke(progress);
+
+ProgressMapf smoothRoundTrip = ProgressMapf.PingPong.Then(Easingf.Smooth);
 ```
 
-Every retained built-in map has a stable `Kind`. `ProgressMaps.FromKind(kind)` resolves it;
-JSON writes kebab-case names such as `"smooth"`, `"smoother"`, `"reverse"`, `"ping-pong"`,
-and `"ease-in-out-sine"`. `ProgressMaps.Compose(kinds)` applies an ordered list left to right.
-For example, `["ping-pong", "smoother"]` means `smoother(pingPong(phase))`, with the
-analytic chain-rule derivative. Custom delegate maps have no built-in kind; author their
-parameters separately. Arbitrary power degrees remain available in code.
+The four travel maps are `ProgressMapf.Forward` (`t`), `Reverse` (`1-t`), `PingPong` (`1-|2t-1|`), and
+`ReversePingPong` (`|2t-1|`). `Then(next)` applies functions left to right and carries derivatives through the
+chain rule. Ping-pong takes the returning slope at its midpoint; composing smoothstep after it gives zero
+turnaround velocity. Holding or repeating a cycle belongs to `PlaybackClock`, or `Repeat` on a motion definition.
 
-Named maps declare `Travel` as `EasingTravel.Forward`, `Backward`, `ForwardAndBackward`, or `BackwardAndForward`.
-`IsContinuous` describes continuity on [0,1] separately: PingPong and ReversePingPong have continuous positions with
-sharp turns; Step holds zero before phase 1 and jumps to one there, with a NaN derivative at the jump.
-`ProgressMaps.ForTravel(travel, continuousOnly: true)` filters choices without duplicating the map catalogue.
-Custom maps may explicitly declare travel and continuity; otherwise metadata stays unknown rather than guessing from
-an arbitrary function. Motion definitions reject discontinuous maps; animation keys allow continuous forward maps and Step.
+Use `new ProgressMapf(sample, derivative, inverse: ..., isContinuous: ...)` for custom float functions, or explicitly
+choose `ProgressMapf.FromFunction(sample)` for finite-difference derivatives. The double aliases have the same API.
+`Real<TReal>.MachineEpsilon` is the gap above one, unlike `TReal.Epsilon`, which is the smallest subnormal.
+Smoothstep inversion uses `4 * MachineEpsilon` as its normalized phase tolerance. Finite differences use its
+cube root as their base step and scale it to the phase magnitude, retaining representable sample differences.
+There is one generic function object;
+no additional implementation interface or preset identity metadata is needed. `IsContinuous` describes the
+function on the real line and remains null when unknown. `Inverse` is an optional inverse on [0,1]; Step
+and the two round trips have no unique inverse. Step's derivative is NaN at its jump. Composition preserves
+an inverse when both functions provide one, applying inverses in reverse order.
 
-The unused back, circular, exponential, elastic and bounce families were removed. The retained
-maps have finite normalized slopes. Ping-pong uses its returning slope at the turnaround;
-composing smoothstep after it gives zero turnaround velocity.
+Animation keys store `EasingCurve` and `EasingDirection` separately and resolve them with `Easingf.FromCurve`.
+Existing `"linear"`, `"smooth"`, and `"step"` key values retain their names and default to direction `"in"`.
+Motion definitions also select `ProgressTravel`; for example, `"travel": "ping-pong", "ease": "smoother"`.
+An in-out sine curve uses `"ease": "sine", "easeDirection": "in-out"`. JSON enum names are kebab-case;
+unknown names and numeric enum values are rejected.
+
+Smoothstep output can exceed [0,1] by roundoff, and custom functions may deliberately overshoot. Interpolation
+preserves both. `CurveMotion2D` allows progress in [-0.5,1.5], rejecting only larger excursions or nonfinite
+values. Beyond an endpoint it extends along that endpoint's tangent, with the corresponding velocity.
+Motion definitions require continuous easing; animation keys also support Step holds.
 
 ## Transforms
 

@@ -149,7 +149,7 @@ public sealed class BladeSwoosh
             return;
         }
 
-        var alpha = 1 - Progress.SmoothStep(Interpolation.InverseLerpClamped(.55f, 1f, clear));
+        var alpha = 1 - Easingf.SmoothStepValue(Interpolation.InverseLerpClamped(.55f, 1f, clear));
         if (style.Material.Fill is { } color)
         {
             var fill = ColorExtensions.FromHexRgb(color).WithAlpha(alpha);

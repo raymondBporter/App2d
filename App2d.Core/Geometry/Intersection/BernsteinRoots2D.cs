@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.RootFinding;
+
 namespace App2d.Core.Geometry.Intersection;
 
 /// <summary>Roots on a restricted Bernstein polynomial interval. No curve tessellation is involved.</summary>
@@ -43,24 +45,9 @@ internal static class BernsteinRoots2D
             var high = i == criticalCount ? to : critical[i];
             var highValue = Evaluate(normalized, high);
             if (NearZero(lowValue, degree)) Append(roots, ref count, low);
-            if (!NearZero(lowValue, degree) && !NearZero(highValue, degree) && OppositeSigns(lowValue, highValue))
+            if (!NearZero(lowValue, degree) && !NearZero(highValue, degree) && RootFinding.OppositeSigns(lowValue, highValue))
             {
-                var left = low;
-                var right = high;
-                var leftValue = lowValue;
-                for (var iteration = 0; iteration < 2048; iteration++)
-                {
-                    var middle = (left + right) / 2;
-                    if (middle == left || middle == right) break;
-                    var value = Evaluate(normalized, middle);
-                    if (value == 0) { left = right = middle; break; }
-                    if (OppositeSigns(leftValue, value))
-                    {
-                        right = middle;
-                    }
-                    else { left = middle; leftValue = value; }
-                }
-                Append(roots, ref count, (left + right) / 2);
+                Append(roots, ref count, Bisection.Bisect<ReadOnlySpan<double>>(normalized, Evaluate, low, high, lowValue));
             }
             low = high;
             lowValue = highValue;
@@ -79,7 +66,6 @@ internal static class BernsteinRoots2D
     }
 
     private static bool NearZero(double value, int degree) => Math.Abs(value) <= 16 * MachineEpsilon * (degree + 1);
-    private static bool OppositeSigns(double a, double b) => a < 0 && b > 0 || a > 0 && b < 0;
     private static void Append(Span<double> roots, ref int count, double root)
     {
         if (count == 0 || Math.Abs(root - roots[count - 1]) > 16 * MachineEpsilon) roots[count++] = root;

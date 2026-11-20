@@ -63,9 +63,7 @@
     },
     "periodSeconds": 4.97777795791626,
     "repeat": true,
-    "progress": [
-      "ping-pong",
-      "smooth"
-    ]
+    "travel": "ping-pong",
+    "ease": "smooth"
   }
 }

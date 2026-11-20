@@ -62,9 +62,7 @@
       }
     },
     "periodSeconds": 6,
-    "progress": [
-      "ping-pong",
-      "smoother"
-    ]
+    "travel": "ping-pong",
+    "ease": "smoother"
   }
 }

@@ -7,6 +7,12 @@
   <!-- Share aliases across projects that use the runtime math and rendering types. -->
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'App2d.Analyzers' and '$(MSBuildProjectName)' != 'App2d.Analyzers.CodeFixes'">
     <Using Include="App2d.Core.Mathematics" />
+    <Using Include="App2d.Core.Mathematics.Progress.ProgressMap&lt;float&gt;" Alias="ProgressMapf" />
+    <Using Include="App2d.Core.Mathematics.Progress.ProgressMap&lt;double&gt;" Alias="ProgressMapd" />
+    <Using Include="App2d.Core.Mathematics.Progress.Easing&lt;float&gt;" Alias="Easingf" />
+    <Using Include="App2d.Core.Mathematics.Progress.Easing&lt;double&gt;" Alias="Easingd" />
+    <Using Include="App2d.Core.Mathematics.Real&lt;float&gt;" Alias="Realf" />
+    <Using Include="App2d.Core.Mathematics.Real&lt;double&gt;" Alias="Reald" />
     <Using Include="Microsoft.Xna.Framework.Color" Alias="Color4b" />
     <Using Include="App2d.Core.Mathematics.Vector2f" Alias="Vector2f" />
     <Using Include="App2d.Core.Mathematics.Vector2d" Alias="Vector2d" />

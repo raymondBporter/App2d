@@ -1,34 +1,66 @@
 using App2d.Core.Mathematics.Progress;
-using System.Reflection;
 
 namespace App2d.Tests.Mathematics.Progress;
 
 public sealed class EasingTests
 {
-    public static IEnumerable<object[]> NamedEasings => typeof(Easing)
-        .GetFields(BindingFlags.Public | BindingFlags.Static)
-        .Where(member => member.FieldType == typeof(ProgressMap))
-        .Select(member => new object[] { member.Name });
+    public static IEnumerable<object[]> CurvesAndDirections =>
+        from curve in Enum.GetValues<EasingCurve>()
+        from direction in Enum.GetValues<EasingDirection>()
+        select new object[] { curve, direction };
 
     [Theory]
-    [MemberData(nameof(NamedEasings))]
-    public void AnalyticDerivativesMatchIndependentDifferencesAwayFromCorners(string name)
+    [MemberData(nameof(CurvesAndDirections))]
+    public void FloatCurvesMatchTheMathematicsWithinTheirOwnPrecision(EasingCurve curve, EasingDirection direction)
     {
-        var map = (ProgressMap)typeof(Easing).GetField(name)!.GetValue(null)!;
-        // Check normalized samples and extrapolation away from endpoints.
+        var single = Easingf.FromCurve(curve, direction);
+        var reference = Easingd.FromCurve(curve, direction);
+        Assert.Equal(curve != EasingCurve.Step, single.IsContinuous);
+        Assert.Equal(0f, single.Sample(0f));
+        Assert.Equal(1f, single.Sample(1f));
+        foreach (var phase in new[] { -.137f, .1f, .25f, .37f, .75f, .9f, 1.137f })
+        {
+            var sample = single.Sample(phase);
+            var derivative = single.Derivative(phase);
+            var sampleTolerance = 128f * Realf.MachineEpsilon * MathF.Max(1f, MathF.Abs((float)reference.Sample(phase)));
+            var derivativeTolerance = 32f * Realf.MachineEpsilon * MathF.Max(1f, MathF.Abs((float)reference.Derivative(phase)));
+            Assert.InRange(Math.Abs(sample - reference.Sample(phase)), 0d, sampleTolerance);
+            Assert.InRange(Math.Abs(derivative - reference.Derivative(phase)), 0d, derivativeTolerance);
+            if (curve != EasingCurve.Step && phase is > 0f and < 1f)
+                Assert.InRange(MathF.Abs(single.Inverse!(sample) - phase), 0f, 512f * Realf.MachineEpsilon);
+        }
+        if (curve == EasingCurve.Step) Assert.Null(single.Inverse);
+    }
+
+    [Theory]
+    [MemberData(nameof(CurvesAndDirections))]
+    public void CurvesAndDirectionsKeepTheirEndpointsAndAnalyticDerivatives(EasingCurve curve, EasingDirection direction)
+    {
+        var map = Easingd.FromCurve(curve, direction);
+        Assert.Equal(0d, map.Sample(0d), 12);
+        Assert.Equal(1d, map.Sample(1d), 12);
+        Assert.Equal(curve != EasingCurve.Step, map.IsContinuous);
+
+        // Include extrapolation, avoiding the step discontinuities and the InOut join.
         foreach (var phase in new[] { -.137d, .013d, .137d, .319d, .421d, .583d, .773d, .947d, 1.137d })
         {
             const double step = 1e-6;
-            var lower = map.Sample(phase - step);
-            var upper = map.Sample(phase + step);
-            var actual = map.Derivative(phase);
-            if (double.IsNaN(lower) || double.IsNaN(upper))
-            {
-                Assert.True(double.IsNaN(actual), $"{name} at {phase}");
-                continue;
-            }
-            var expected = (upper - lower) / (2d * step);
-            Assert.InRange(Math.Abs(actual - expected), 0d, 1e-7 * Math.Max(1d, Math.Abs(expected)));
+            var expected = (map.Sample(phase + step) - map.Sample(phase - step)) / (2d * step);
+            Assert.InRange(Math.Abs(map.Derivative(phase) - expected), 0d, 1e-7 * Math.Max(1d, Math.Abs(expected)));
+        }
+
+        if (curve == EasingCurve.Step)
+        {
+            Assert.Null(map.Inverse);
+            return;
+        }
+
+        Assert.NotNull(map.Inverse);
+        foreach (var phase in new[] { 0d, .1d, .25d, .5d, .75d, .9d, 1d })
+        {
+            var value = map.Sample(phase);
+            Assert.InRange(value, -1e-12, 1d + 1e-12);
+            Assert.InRange(Math.Abs(map.Inverse(value) - phase), 0d, 1e-7);
         }
     }
 
@@ -39,93 +71,81 @@ public sealed class EasingTests
     [InlineData(4)]
     [InlineData(5)]
     [InlineData(8)]
-    public void PowerFamiliesSupportArbitraryPositiveDegreesAndExactEndpointSlopes(int power)
+    public void PowerDegreeAndEaseDirectionAreIndependent(int degree)
     {
-        var easeIn = Easing.EaseInPower(power);
-        var easeOut = Easing.EaseOutPower(power);
-        var easeInOut = Easing.EaseInOutPower(power);
-        if (power == 1)
-        {
-            foreach (var map in new[] { easeIn, easeOut, easeInOut })
-            {
-                Assert.Same(Easing.Linear, map);
-                foreach (var phase in new[] { 1e-20, -double.MaxValue, double.MaxValue })
-                {
-                    Assert.Equal(phase, map.Sample(phase));
-                    Assert.Equal(1d, map.Derivative(phase));
-                }
-            }
-        }
+        var easeIn = Easingd.Power(degree);
+        var easeOut = easeIn.WithDirection(EasingDirection.Out);
+        var easeInOut = easeIn.WithDirection(EasingDirection.InOut);
         foreach (var x in new[] { -.25d, 0d, .25d, .5d, .75d, 1d, 1.25d })
         {
-            Assert.Equal(Math.Pow(x, power), easeIn.Sample(x), 12);
-            Assert.Equal(1d - Math.Pow(1d - x, power), easeOut.Sample(x), 12);
-            Assert.Equal(x < .5d ? Math.Pow(2d * x, power) / 2d : 1d - Math.Pow(2d - 2d * x, power) / 2d,
+            Assert.Equal(Math.Pow(x, degree), easeIn.Sample(x), 12);
+            Assert.Equal(1d - Math.Pow(1d - x, degree), easeOut.Sample(x), 12);
+            Assert.Equal(x < .5d ? Math.Pow(2d * x, degree) / 2d : 1d - Math.Pow(2d - 2d * x, degree) / 2d,
                 easeInOut.Sample(x), 12);
         }
-        Assert.Equal(power == 1 ? 1d : 0d, easeIn.Derivative(0));
-        Assert.Equal(power, easeIn.Derivative(1));
-        Assert.Equal(power, easeOut.Derivative(0));
-        Assert.Equal(power == 1 ? 1d : 0d, easeOut.Derivative(1));
-        Assert.Equal(power, easeInOut.Derivative(.5));
+        Assert.Equal(degree == 1 ? 1d : 0d, easeIn.Derivative(0d));
+        Assert.Equal(degree, easeIn.Derivative(1d));
+        Assert.Equal(degree, easeOut.Derivative(0d));
+        Assert.Equal(degree == 1 ? 1d : 0d, easeOut.Derivative(1d));
+        Assert.Equal(degree, easeInOut.Derivative(.5d));
+
+        if (degree != 1) return;
+        Assert.Same(Easingd.Linear, easeInOut);
+        foreach (var phase in new[] { 1e-20, -double.MaxValue, double.MaxValue })
+            Assert.Equal(phase, easeInOut.Sample(phase));
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    public void PowerFamiliesRejectNonpositiveDegrees(int power)
+    [InlineData(1, 1.5d)]
+    [InlineData(2, 1.875d)]
+    [InlineData(3, 2.1875d)]
+    public void SmoothstepOrderControlsEndpointFlatnessAndCenterSlope(int order, double slope)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => Easing.EaseInPower(power));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Easing.EaseOutPower(power));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Easing.EaseInOutPower(power));
+        var map = Easingd.SmoothStep(order);
+        Assert.Equal(0d, map.Derivative(0d));
+        Assert.Equal(0d, map.Derivative(1d));
+        Assert.Equal(slope, map.Derivative(.5d));
+        Assert.InRange(map.Sample(.1d), 0d, Easingd.Smooth.Sample(.1d));
     }
 
     [Fact]
-    public void NamedPowersKeepTheirDegrees()
+    public void RawPolynomialsPreservePrecisionExtrapolationAndRoundoff()
     {
-        foreach (var (power, easeIn, easeOut, easeInOut) in new[]
+        for (var index = -100; index <= 1100; index++)
         {
-            (2, Easing.EaseInQuad, Easing.EaseOutQuad, Easing.EaseInOutQuad),
-            (3, Easing.EaseInCubic, Easing.EaseOutCubic, Easing.EaseInOutCubic),
-            (4, Easing.EaseInQuart, Easing.EaseOutQuart, Easing.EaseInOutQuart),
-            (5, Easing.EaseInQuint, Easing.EaseOutQuint, Easing.EaseInOutQuint)
-        })
-        {
-            Assert.Equal(Math.Pow(.25d, power), easeIn.Sample(.25));
-            Assert.Equal(1d - Math.Pow(.75d, power), easeOut.Sample(.25));
-            Assert.Equal(Math.Pow(.5d, power) / 2d, easeInOut.Sample(.25));
-            Assert.Equal(power * Math.Pow(.25d, power - 1), easeIn.Derivative(.25));
-            Assert.Equal(power * Math.Pow(.75d, power - 1), easeOut.Derivative(.25));
-            Assert.Equal(power * Math.Pow(.5d, power - 1), easeInOut.Derivative(.25));
+            var single = index / 1000f;
+            var wide = index / 1000d;
+            Assert.Equal(single * single * (3f - 2f * single), Easingf.SmoothStepValue(single));
+            Assert.Equal(single * single * (3f - 2f * single), Easingf.Smooth.Sample(single));
+            Assert.Equal(wide * wide * (3d - 2d * wide), Easingd.SmoothStepValue(wide));
         }
+        Assert.Equal(-4d, Easingd.Smooth.Sample(2d));
+        Assert.Equal(5d, Easingd.Smooth.Sample(-1d));
+        Assert.True(Easingd.Smoother.Sample(.9999999d) > 1d);
+        Assert.Same(Easingd.Linear, Easingd.SmoothStep(0));
+        Assert.Equal(-2f, Easingf.SmoothStepValue(-2f, 0));
     }
 
     [Fact]
-    public void EasingTransformationsPropagateDerivativesWithoutNumericalSampling()
+    public void StepIsDiscontinuousAndHasNoInverse()
     {
-        var sampleCalls = 0;
-        var derivativeCalls = 0;
-        var source = new ProgressMap(x =>
-        {
-            sampleCalls++;
-            return x * x * x;
-        },
-            x =>
-            {
-                derivativeCalls++;
-                return 3d * x * x;
-            });
-        var easeOut = ProgressMaps.EaseOut(source);
-        var easeInOut = ProgressMaps.EaseInOut(source);
-
-        Assert.Equal(1.6875d, easeOut.Derivative(.25));
-        Assert.Equal(.75d, easeInOut.Derivative(.25));
-        Assert.Equal(.75d, easeInOut.Derivative(.75));
-        Assert.Equal(3d, easeInOut.Derivative(.5));
-        Assert.Equal(0, sampleCalls);
-        Assert.Equal(4, derivativeCalls);
-        Assert.Throws<ArgumentNullException>(() => ProgressMaps.EaseOut(null!));
-        Assert.Throws<ArgumentNullException>(() => ProgressMaps.EaseInOut(null!));
+        Assert.False(Easingd.Step.IsContinuous);
+        Assert.Null(Easingd.Step.Inverse);
+        Assert.Equal(0d, Easingd.Step.Sample(Math.BitDecrement(1d)));
+        Assert.Equal(1d, Easingd.Step.Sample(1d));
+        Assert.Equal(0d, Easingd.Step.Derivative(.5d));
+        Assert.True(double.IsNaN(Easingd.Step.Derivative(1d)));
+        Assert.True(double.IsNaN(Easingd.Step.Sample(double.NaN)));
     }
 
+    [Fact]
+    public void InvalidCurveParametersAreRejected()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingd.Power(0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingd.Power(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingd.SmoothStep(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingd.SmoothStep(4));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingd.FromCurve((EasingCurve)int.MaxValue));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingd.Linear.WithDirection((EasingDirection)int.MaxValue));
+    }
 }

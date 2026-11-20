@@ -151,14 +151,14 @@ public sealed class VegetationPatch2D
             0.35f * ValueNoise(worldX / (style.PatchWidth * 0.37f) + 17.3f);
         var threshold = 1f - style.Coverage;
         var t = Math.Clamp((noise - threshold + 0.1f) / 0.2f, 0f, 1f);
-        return Progress.SmoothStepUnclamped(t);
+        return Easingf.SmoothStepValue(t);
     }
 
     private static float ValueNoise(float x)
     {
         var cell = MathF.Floor(x);
         var f = x - cell;
-        f = Progress.SmoothStepUnclamped(f);
+        f = Easingf.SmoothStepValue(f);
         return float.Lerp(Hash((int)cell), Hash((int)cell + 1), f);
     }
 

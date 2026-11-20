@@ -8,9 +8,9 @@ namespace App2d.Core.Animation;
 /// Evaluates scalar channels at one segment phase, sharing up to four Bezier timing solves.
 /// Exact key selection and held segments belong to KeyframeSampling.
 /// </summary>
-internal struct KeyframeSegmentSampler(float phase, IProgressMap progressMap)
+internal struct KeyframeSegmentSampler(float phase, ProgressMapf progressMap)
 {
-    private readonly float _progress = (float)progressMap.Sample(phase);
+    private readonly float _progress = progressMap.Sample(phase);
     private CurveTimingCache _timings;
     private int _count;
 

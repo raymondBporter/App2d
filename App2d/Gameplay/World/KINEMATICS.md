@@ -26,24 +26,24 @@ matters when the path reverses inside a step. Authored definitions and published
 are separate from live motion clocks and physics bodies.
 
 For periodic motion, `CurveMotion2D` combines an `ICurve2D`, a period, and a
-normalized progress map. The curve determines *where* progress lies; the map
-determines *when* it gets there. `ProgressMaps.Loop` runs forward and wraps to
-zero. Use it with a closed curve, such as a full `Arc2D`. The constructor rejects
-a wrap that would jump to a different position. `ProgressMaps.PingPong` runs from
+progress map. The curve determines *where* progress lies; the map
+determines *when* it gets there. `ProgressMapd.Forward` runs forward; `Repeat` controls wrapping to
+zero. Use repeating forward travel with a closed curve, such as a full `Arc2D`. The constructor rejects
+a wrap that would jump to a different position. `ProgressMapd.PingPong` runs from
 0 to 1 and back, so an open line or spline can repeat without a position jump.
 
 ```csharp
 var line = new LineSegmentCurve2D(start, end);
-var smoothRoundTrip = ProgressMaps.Compose(ProgressMaps.PingPong, Easing.Smooth);
+var smoothRoundTrip = ProgressMapd.PingPong.Then(Easingd.Smooth);
 var motion = new CurveMotion2D(line, periodSeconds: 4, smoothRoundTrip);
 
 var circle = new Arc2D(center, radius, 0f, 2f * MathF.PI);
-var orbit = new CurveMotion2D(circle, periodSeconds: 8, ProgressMaps.Loop);
+var orbit = new CurveMotion2D(circle, periodSeconds: 8, ProgressMapd.Forward);
 ```
 
 `CurveMotion2D.Velocity(t)` uses the curve derivative and the map derivative.
-Other easings live in `App2d.Core.Mathematics.Progress.Easing`; custom maps can implement
-`IProgressMap`. A closed curve whose endpoint tangents differ will still have a
+`Easingd` and `ProgressMapd` alias the double-precision easing and map types; custom maps use
+`new ProgressMapd(sample, derivative)`. A closed curve whose endpoint tangents differ will still have a
 velocity change at the loop seam. B-spline parameter progress is not generally
 constant distance, so a constant-speed spline would need an arc-length map.
 
@@ -71,14 +71,18 @@ same definition and have independent runtime identities and clocks. No thing-typ
 is needed for each asset.
 
 `motion.curve` is relative to the placement origin, using the same world units as geometry.
-`periodSeconds` is the entire cycle, including both legs of ping-pong. Its `progress` list
-applies maps left to right:
+`periodSeconds` is the entire cycle, including both legs of ping-pong. Travel, base curve,
+ease direction, and repetition are independent:
 
-| Progress | Behavior |
+| Travel and easing | Behavior |
 | --- | --- |
-| `["smooth"]` | There, with smooth acceleration and deceleration |
-| `["reverse", "smooth"]` | Back, with smooth acceleration and deceleration |
-| `["ping-pong", "smoother"]` | There and back, with smoother turnaround |
+| `"travel": "forward", "ease": "smooth"` | There, with smooth acceleration and deceleration |
+| `"travel": "reverse", "ease": "smooth"` | Back, with smooth acceleration and deceleration |
+| `"travel": "ping-pong", "ease": "smoother"` | There and back, with smoother turnaround |
+
+`"easeDirection": "in"` is the default; `"out"` and `"in-out"` reshape the base curve.
+Motion permits progress in [-0.5,1.5] and extends overshoot along endpoint tangents rather than
+clamping the easing output. Nonfinite values and larger excursions still fail the sanity guard.
 
 Forward/backward open paths use `"repeat": false`; they hold their endpoint and report zero
 velocity after completion. Repetition defaults to true and requires the curve/progress

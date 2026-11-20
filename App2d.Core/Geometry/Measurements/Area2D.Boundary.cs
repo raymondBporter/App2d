@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.RootFinding;
+
 namespace App2d.Core.Geometry.Measurements;
 
 public static partial class Area2D
@@ -167,19 +169,18 @@ public static partial class Area2D
         var ou = offset.Dot(u);
         var ov = offset.Dot(v);
         var uv = u.Dot(v);
-        Span<double> coefficients = stackalloc double[5];
         Span<double> roots = stackalloc double[4];
         for (var chart = 0; chart < 2; chart++)
         {
             // Substituting t = tan(theta/2) in |o + u cos + v sin|^2 = 1 gives a quartic. Two charts, each with
             // t in [-1,1], cover the perimeter without an infinite root at PI; the second one negates u and v.
             var sign = chart == 0 ? 1d : -1d;
-            coefficients[0] = k + uu + 2d * sign * ou;
-            coefficients[1] = 4d * sign * ov + 4d * uv;
-            coefficients[2] = 2d * k - 2d * uu + 4d * vv;
-            coefficients[3] = 4d * sign * ov - 4d * uv;
-            coefficients[4] = k + uu - 2d * sign * ou;
-            var count = PolynomialRoots.FindRealRoots(coefficients, -1d, 1d, roots);
+            var e = k + uu + 2d * sign * ou;
+            var d = 4d * sign * ov + 4d * uv;
+            var c = 2d * k - 2d * uu + 4d * vv;
+            var b = 4d * sign * ov - 4d * uv;
+            var a = k + uu - 2d * sign * ou;
+            var count = PolynomialRoots.SolveQuartic(a, b, c, d, e, -1d, 1d, roots);
             for (var i = 0; i < count; i++)
             {
                 angles.Add(Angles.WrapPositive(chart * Math.PI + 2d * Math.Atan(roots[i])));

@@ -23,18 +23,18 @@ output range, and value-specific rules; the sampler does not clamp or ease value
 component curves, absolute handles, authored full rotation turns, and their different empty-track defaults.
 Setup-before-first behavior remains with the owning track, and color clamping remains with color evaluation.
 
-Motion and color keys store `ProgressMapKind` directly and resolve it through `ProgressMaps.FromKind`.
-The enum converter keeps named JSON values, including existing `linear`, `smooth`, and `step` files.
-Key validation and editor choices require forward travel; continuous forward maps and the explicit `Step` hold are allowed.
+Motion and color keys store `EasingCurve` and `EasingDirection` separately and resolve them through `Easingf.FromCurve`.
+The enum converters keep existing `linear`, `smooth`, and `step` curve names; omitted direction defaults to `in`.
+For example, an in-out sine uses `"ease": "sine", "easeDirection": "in-out"`. Travel belongs to the motion or
+playback clock. Step with direction In holds the outgoing key; other step directions use the transformed function.
 `KeyframeSampling` selects timeline segments; `KeyframeSegmentSampler` evaluates scalar channels within one.
 
 Authored cubic channels share a `KeyframeSegmentSampler` for each segment sample. Matching X handles reuse the same
 Bezier timing solve, even across different curve objects with different Y handles or absolute/relative value modes.
 Each channel still evaluates its own value curve, including overshoot between equal endpoints. Different X handles
 are solved independently. The four-entry cache lives only for that sample, allocates no managed memory, and cannot
-retain stale handles after editor changes. Named easing is also evaluated once per sample through an `IProgressMap`.
-Maps evaluate in double precision before converting to the channel's float; smooth easing can differ from the former
-float polynomial by float rounding. Custom curves replace named easing. Held segments are handled by the timeline
+retain stale handles after editor changes. Named easing is also evaluated once per sample through a `ProgressMapf`.
+Maps evaluate directly in the channel's float precision. Custom curves replace named easing. Held segments are handled by the timeline
 sampler before the scalar segment sampler is invoked.
 The segment sampler accepts geometric `CubicBezier2D` values, so Animation does not depend on authored character types.
 The curve editor can replace a preset with an editable cubic. Only Linear and Smooth have the existing exact cubic

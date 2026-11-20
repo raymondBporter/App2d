@@ -37,7 +37,7 @@ public sealed class KinematicEntity2DTests
     [Fact]
     public void PingPongMotionReflectsAtEndpointsForArbitrarySampleTimes()
     {
-        var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new Vector2f(10f, 0f)), 5d, ProgressMaps.PingPong);
+        var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new Vector2f(10f, 0f)), 5d, ProgressMapd.PingPong);
         Assert.Equal(new Vector2f(8f, 0f), motion.Position(2d));
         Assert.Equal(new Vector2f(10f, 0f), motion.Position(2.5d));
         Assert.Equal(new Vector2f(-4f, 0f), motion.Velocity(2.5d));
@@ -54,14 +54,14 @@ public sealed class KinematicEntity2DTests
     {
         var easing = kind switch
         {
-            "smoother" => Easing.Smoother,
-            "smoothest" => Easing.Smoothest,
-            _ => Easing.Smooth
+            "smoother" => Easingd.Smoother,
+            "smoothest" => Easingd.Smoothest,
+            _ => Easingd.Smooth
         };
         var motion = new CurveMotion2D(
             LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new Vector2f(10f, 0f)),
             2d,
-            ProgressMaps.Compose(ProgressMaps.PingPong, easing));
+            ProgressMapd.PingPong.Then(easing));
 
         Assert.Equal(Vector2f.Zero, motion.Position(0d));
         Assert.Equal(new Vector2f(10f, 0f), motion.Position(1d));
@@ -77,7 +77,7 @@ public sealed class KinematicEntity2DTests
     public void ClosedArcCanLoopWithoutChangingTheMotionDriver()
     {
         var motion = new CurveMotion2D(Arc2D.Builder.Create(Vector2f.Zero, 10f, 0f, 2f * MathF.PI),
-            4d, ProgressMaps.Loop);
+            4d, ProgressMapd.Forward);
 
         Assert.Equal(new Vector2f(10f, 0f), motion.Position(0d), new Vector2Tolerance(0.0001f));
         Assert.Equal(new Vector2f(0f, 10f), motion.Position(1d), new Vector2Tolerance(0.0001f));
@@ -90,17 +90,17 @@ public sealed class KinematicEntity2DTests
     public void OpenCurveCannotWrapToItsStartWithoutPingPong()
     {
         var line = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new Vector2f(10f, 0f));
-        Assert.Throws<ArgumentException>(() => new CurveMotion2D(line, 4d, ProgressMaps.Loop));
+        Assert.Throws<ArgumentException>(() => new CurveMotion2D(line, 4d, ProgressMapd.Forward));
     }
 
     [Theory]
-    [InlineData(ProgressMapKind.Smooth)]
-    [InlineData(ProgressMapKind.Smoother)]
-    [InlineData(ProgressMapKind.Smoothest)]
-    public void BoundedEasingKeepsNearEndpointKinematicUpdatesValid(ProgressMapKind kind)
+    [InlineData(EasingCurve.Smooth)]
+    [InlineData(EasingCurve.Smoother)]
+    [InlineData(EasingCurve.Smoothest)]
+    public void PolynomialRoundoffKeepsNearEndpointKinematicUpdatesValid(EasingCurve curve)
     {
         var physics = new PhysicsWorld2D();
-        var progress = ProgressMaps.FromKind(kind);
+        var progress = Easingd.FromCurve(curve);
         var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0)), 1, progress, repeat: false);
         using var entity = new KinematicEntity2D(EntityId2D.Create(), physics, Circle2D.Builder.Create(1), motion, 1, uint.MaxValue);
 
@@ -115,15 +115,55 @@ public sealed class KinematicEntity2DTests
     [InlineData(-4.440892098500626e-16d)]
     [InlineData(1.00000001d)]
     [InlineData(-.00000001d)]
+    [InlineData(1.2d)]
+    [InlineData(-.2d)]
+    [InlineData(1.5d)]
+    [InlineData(-.5d)]
+    public void LooseSanityGuardPreservesRoundoffAndIntentionalOvershoot(double sampledProgress)
+    {
+        var progress = new ProgressMapd(phase => phase is 0d or 1d ? phase : sampledProgress, _ => 1d);
+        var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10f, 0f)), 1d, progress, repeat: false);
+        Assert.Equal(new Vector2f((float)sampledProgress * 10f, 0f), motion.Position(.25d), new Vector2Tolerance(.00001f));
+        Assert.Equal(new Vector2f(10f, 0f), motion.Velocity(.25d));
+    }
+
+    [Theory]
+    [InlineData(1.5000000000000002d)]
+    [InlineData(-.5000000000000001d)]
+    [InlineData(2d)]
+    [InlineData(-1d)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
     [InlineData(double.NegativeInfinity)]
-    public void OutOfRangeAndNonfiniteProgressFromCustomMapsRemainInvalid(double sampledProgress)
+    public void MajorOvershootAndNonfiniteProgressRemainInvalid(double sampledProgress)
     {
-        var progress = new ProgressMap(phase => phase is 0d or 1d ? phase : sampledProgress, _ => 1d);
+        var progress = new ProgressMapd(phase => phase is 0d or 1d ? phase : sampledProgress, _ => 1d);
         var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0)), 1, progress, repeat: false);
         Assert.Throws<ArgumentOutOfRangeException>(() => { motion.Position(.25); });
         Assert.Throws<ArgumentOutOfRangeException>(() => { motion.Velocity(.25); });
+    }
+
+    [Fact]
+    public void OvershootCanReturnToTheEndpointWithoutFlatteningItsVelocity()
+    {
+        var progress = new ProgressMapd(x => x + .4d * Math.Sin(Math.PI * x), x => 1d + .4d * Math.PI * Math.Cos(Math.PI * x));
+        var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10f, 0f)), 1d, progress, repeat: false);
+        Assert.True(motion.Position(.9d).X > 10f);
+        Assert.True(motion.Velocity(.9d).X < 0f);
+        Assert.Equal(new Vector2f(10f, 0f), motion.Position(1d));
+        Assert.Equal(Vector2f.Zero, motion.Velocity(1d));
+    }
+
+    [Fact]
+    public void OvershootExtendsCurvesAlongEndpointTangentsWithMatchingVelocity()
+    {
+        var curve = Arc2D.Builder.Create(Vector2f.Zero, 10f, 0f, MathF.PI / 2f);
+        var motion = new CurveMotion2D(curve, 1d, new ProgressMapd(x => 1.2d * x, _ => 1.2d), repeat: false);
+        var expected = curve.Evaluate(1f) + curve.EvaluateDerivative(1f) * .08f;
+        Assert.Equal(expected, motion.Position(.9d), new Vector2Tolerance(.00001f));
+        Assert.Equal(curve.EvaluateDerivative(1f) * 1.2f, motion.Velocity(.9d));
+        var difference = (motion.Position(.9001d) - motion.Position(.8999d)) / .0002f;
+        Assert.Equal(motion.Velocity(.9d), difference, new Vector2Tolerance(.01f));
     }
 
     private sealed class OrbitMotion : IKinematicMotion2D

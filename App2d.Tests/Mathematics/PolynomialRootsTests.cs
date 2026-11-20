@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.RootFinding;
+
 namespace App2d.Tests.Mathematics;
 
 public sealed class PolynomialRootsTests
@@ -127,11 +129,28 @@ public sealed class PolynomialRootsTests
     }
 
     [Fact]
+    public void QuinticsIncludeAllFiveRootsTangenciesAndIntervalEndpoints()
+    {
+        AssertRoots(FromRoots(-2, -.5, .25, .5, 3), -4, 4, [-2, -.5, .25, .5, 3]);
+        AssertRoots(FromRoots(0, .25, .5, .75, 1), 0, 1, [0, .25, .5, .75, 1]);
+        AssertRoots(FromRoots(-2, -.25, .5, .5, .75), 0, 1, [.5, .75]);
+        AssertRoots(FromRoots(.5, .5, .5, .5, .5), 0, 1, [.5]);
+        AssertRoots([1, 0, 0, 0, 0, 1], -2, 2, [-1]);
+        AssertRoots(FromRoots(0, .25, .5, .75, 1), .5, .5, [.5]);
+        foreach (var scale in new[] { 1e-280, -1e280 })
+        {
+            var coefficients = FromRoots(-2, -.5, .25, .5, 3);
+            for (var i = 0; i < coefficients.Length; i++) coefficients[i] *= scale;
+            AssertRoots(coefficients, -4, 4, [-2, -.5, .25, .5, 3]);
+        }
+    }
+
+    [Fact]
     public void InvalidInputsAndInsufficientBuffersAreRejected()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([], -1, 1, new double[4]));
         Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([0, 0], -1, 1, new double[4]));
-        Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([1, 1, 1, 1, 1, 1], -1, 1, new double[5]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([1, 1, 1, 1, 1, 1, 1], -1, 1, new double[6]));
         Assert.Throws<ArgumentException>(() => PolynomialRoots.FindRealRoots([1, 0, 1], -1, 1, new double[1]));
         Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([double.NaN, 1], -1, 1, new double[4]));
         Assert.Throws<ArgumentOutOfRangeException>(() => PolynomialRoots.FindRealRoots([1, double.PositiveInfinity], -1, 1, new double[4]));
@@ -142,7 +161,7 @@ public sealed class PolynomialRootsTests
     private static void AssertRelativeRoots(double[] coefficients, double[] expected)
     {
         Span<double> roots = stackalloc double[4];
-        var count = PolynomialRoots.FindRealRoots(coefficients, -double.MaxValue, double.MaxValue, roots);
+        var count = FindAndCompareSpecializedRoots(coefficients, -double.MaxValue, double.MaxValue, roots);
         Assert.Equal(expected.Length, count);
         for (var i = 0; i < count; i++)
         {
@@ -159,12 +178,48 @@ public sealed class PolynomialRootsTests
 
     private static void AssertRoots(double[] coefficients, double minimum, double maximum, double[] expected, double tolerance = 1e-12)
     {
-        Span<double> roots = stackalloc double[4];
-        var count = PolynomialRoots.FindRealRoots(coefficients, minimum, maximum, roots);
+        Span<double> roots = stackalloc double[Math.Max(4, coefficients.Length - 1)];
+        var count = FindAndCompareSpecializedRoots(coefficients, minimum, maximum, roots);
         Assert.Equal(expected.Length, count);
         for (var i = 0; i < count; i++)
         {
             Assert.InRange(Math.Abs(roots[i] - expected[i]), 0, tolerance);
         }
+    }
+
+    private static double[] FromRoots(params double[] roots)
+    {
+        double[] coefficients = [1];
+        foreach (var root in roots)
+        {
+            var next = new double[coefficients.Length + 1];
+            for (var i = 0; i < coefficients.Length; i++)
+            {
+                next[i] -= root * coefficients[i];
+                next[i + 1] += coefficients[i];
+            }
+            coefficients = next;
+        }
+        return coefficients;
+    }
+
+    private static int FindAndCompareSpecializedRoots(double[] coefficients, double minimum, double maximum, Span<double> roots)
+    {
+        var count = PolynomialRoots.FindRealRoots(coefficients, minimum, maximum, roots);
+        if (coefficients.Length is 3 or 5)
+        {
+            Span<double> specialized = stackalloc double[4];
+            var specializedCount = coefficients.Length == 3
+                ? PolynomialRoots.SolveQuadratic(coefficients[2], coefficients[1], coefficients[0], minimum, maximum, specialized)
+                : PolynomialRoots.SolveQuartic(coefficients[4], coefficients[3], coefficients[2], coefficients[1], coefficients[0],
+                    minimum, maximum, specialized);
+            Assert.Equal(count, specializedCount);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.InRange(Math.Abs(specialized[i] - roots[i]), 0d, 1e-12 * Math.Abs(roots[i]));
+            }
+        }
+
+        return count;
     }
 }

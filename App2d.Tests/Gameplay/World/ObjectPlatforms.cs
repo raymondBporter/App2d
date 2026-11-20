@@ -27,7 +27,8 @@ internal static class ObjectPlatforms
             {
                 Curve = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, travel),
                 PeriodSeconds = 2 * travel.Length() / speed,
-                Progress = [ProgressMapKind.PingPong, ProgressMapKind.Smooth]
+                Travel = ProgressTravel.PingPong,
+                Ease = EasingCurve.Smooth
             }
         };
 }
