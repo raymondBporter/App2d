@@ -9,6 +9,25 @@ namespace App2d.Tests.Animation;
 
 public sealed class EasingKeyframeTests
 {
+    [Fact]
+    public void NamedMotionAndColorSamplingDoNotAllocatePerSample()
+    {
+        List<ClipKey> motion = [new() { Ease = EasingCurve.Smooth }, new() { Time = 1f, Value = new(8f, 16f, 32f) }];
+        List<SlotColorKey2D> color = [new() { Ease = EasingCurve.Smooth, Value = Vector4.Zero }, new() { Time = 1f }];
+        for (var index = 0; index < 64; index++)
+        {
+            PoseEvaluator.Sample(motion, .5f);
+            SlotColorTrack2D.Sample(color, .5f);
+        }
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var sum = 0f;
+        for (var index = 0; index < 1000; index++)
+            sum += PoseEvaluator.Sample(motion, .5f).Value.X + SlotColorTrack2D.Sample(color, .5f).X;
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(4500f, sum);
+        Assert.Equal(0L, allocated);
+    }
+
     [Theory]
     [InlineData("linear", EasingCurve.Linear)]
     [InlineData("smooth", EasingCurve.Smooth)]

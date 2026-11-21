@@ -3,8 +3,9 @@ using System.Numerics;
 namespace App2d.Core.Mathematics;
 
 /// <summary>
-/// A value with an explicit interpolation rule. Generic callers retain the concrete type;
+/// A value with a default interpolation rule. Generic callers retain the concrete type;
 /// implementations decide how their components, angles, or other invariants interpolate.
+/// Interpolator strategies can supply additional rules and channel compositions independently of this contract.
 /// </summary>
 public interface IInterpolatable<TSelf, TReal>
     where TSelf : IInterpolatable<TSelf, TReal>

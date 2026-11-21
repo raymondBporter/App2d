@@ -48,9 +48,15 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
     {
         if (interpolation is not { } child) return this;
         Ensure.ThrowIfNull(channel);
-        var parent = this;
+        return BindChannel(this, channel, child);
+    }
+
+    // Keep the capturing callback out of With's null-override path.
+    private static Interpolator<TValue, TReal> BindChannel<TChannel>(Interpolator<TValue, TReal> parent,
+        InterpolationChannel<TValue, TChannel> channel, Interpolator<TChannel, TReal> child)
+    {
         return new((start, end, time) => channel.Replace(parent.Evaluate(start, end, time),
-            child.Evaluate(channel.Read(start), channel.Read(end), time))) { InputBegin = InputBegin, InputEnd = InputEnd };
+            child.Evaluate(channel.Read(start), channel.Read(end), time))) { InputBegin = parent.InputBegin, InputEnd = parent.InputEnd };
     }
 
     /// <summary>Interpolates a scalar channel through its own progress map.</summary>
