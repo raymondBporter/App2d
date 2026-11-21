@@ -121,15 +121,35 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         var endingSlope = secondControlTime < TReal.One ? (end - secondControlValue) / (TReal.One - secondControlTime)
             : firstControlTime < TReal.One ? (end - firstControlValue) / (TReal.One - firstControlTime) : end - begin;
         return new(
-            time => time < TReal.Zero ? begin + time * beginningSlope
-                : time > TReal.One ? end + (time - TReal.One) * endingSlope
-                : time == TReal.Zero ? begin : time == TReal.One ? end
-                : BezierMath.Cubic<TReal, TReal>(begin, firstControlValue, secondControlValue, end,
-                    BezierParameter(time, firstControlTime, secondControlTime)),
+            time => TimedBezierValue(begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end, time),
             time => time < TReal.Zero ? beginningSlope : time > TReal.One ? endingSlope
                 : BezierValueDerivative(BezierParameter(time, firstControlTime, secondControlTime),
                     begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end),
             isContinuous: true);
+    }
+
+    // Shared by value interpolators whose endpoint values are supplied at evaluation time.
+    internal static TReal TimedBezierValue(TReal begin, TReal firstTime, TReal firstValue,
+        TReal secondTime, TReal secondValue, TReal end, TReal time)
+    {
+        if (time == TReal.Zero) return begin;
+        if (time == TReal.One) return end;
+        if (time < TReal.Zero)
+        {
+            var slope = firstTime > TReal.Zero ? (firstValue - begin) / firstTime
+                : secondTime > TReal.Zero ? (secondValue - begin) / secondTime : end - begin;
+            return begin + time * slope;
+        }
+        if (time > TReal.One)
+        {
+            var slope = secondTime < TReal.One ? (end - secondValue) / (TReal.One - secondTime)
+                : firstTime < TReal.One ? (end - firstValue) / (TReal.One - firstTime) : end - begin;
+            return end + (time - TReal.One) * slope;
+        }
+        var three = TReal.CreateChecked(3);
+        var parameter = firstTime == TReal.One / three && secondTime == Two / three
+            ? time : BezierParameter(time, firstTime, secondTime);
+        return BezierMath.Cubic<TReal, TReal>(begin, firstValue, secondValue, end, parameter);
     }
 
     private static TReal BezierParameter(TReal time, TReal firstTime, TReal secondTime)

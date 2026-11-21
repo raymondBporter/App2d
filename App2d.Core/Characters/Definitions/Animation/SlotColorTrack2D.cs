@@ -54,19 +54,16 @@ public sealed record SlotColorTrack2D
     }
 
     public static Vector4 Sample(List<SlotColorKey2D> keys, float time) =>
-        KeyframeSampling.Sample(keys, time, Vector4.One, new ColorInterpolation());
+        KeyframeSampling.Sample(keys, time, Vector4.One, static key => key.Value, SampleSegment);
 
-    private readonly struct ColorInterpolation : IKeyframeInterpolation<SlotColorKey2D, Vector4>
+    private static Vector4 SampleSegment(SlotColorKey2D a, SlotColorKey2D b, float phase)
     {
-        public Vector4 GetValue(SlotColorKey2D key) => key.Value;
-        public bool IsHeld(SlotColorKey2D key) => key.Ease == EasingCurve.Step && key.EaseDirection == EasingDirection.In;
+        var rule = Interpolation.Default<Vector4f, float>().WithProgress(Easingf.FromCurve(a.Ease, a.EaseDirection))
+            .With(Vector4f.Channels.R, Curve(a.CurveR)).With(Vector4f.Channels.G, Curve(a.CurveG))
+            .With(Vector4f.Channels.B, Curve(a.CurveB)).With(Vector4f.Channels.A, Curve(a.CurveA));
+        return rule.Evaluate(new Vector4f(a.Value), new Vector4f(b.Value), phase).ToVector4();
 
-        public Vector4 Interpolate(SlotColorKey2D a, SlotColorKey2D b, float phase)
-        {
-            var progressMap = Easingf.FromCurve(a.Ease, a.EaseDirection);
-            var sample = new KeyframeSegmentSampler(phase, progressMap);
-            return sample.Interpolate(new Vector4f(a.Value), new Vector4f(b.Value),
-                a.CurveR, a.CurveG, a.CurveB, a.CurveA).ToVector4();
-        }
+        Interpolator<float, float>? Curve(BezierParameters? parameters) =>
+            AuthoredInterpolation.CreateOverride(a.Ease, a.EaseDirection, parameters);
     }
 }

@@ -8,7 +8,7 @@ namespace App2d.Core.Mathematics;
 /// Radius is finite and nonnegative. Angles are finite and retain full turns; they are not
 /// automatically wrapped. Default is the origin. Equality compares the stored coordinates.
 /// </summary>
-public readonly record struct Polar<TReal> where TReal : unmanaged, IFloatingPointIeee754<TReal>
+public readonly record struct Polar<TReal> : IInterpolatable<Polar<TReal>, TReal> where TReal : unmanaged, IFloatingPointIeee754<TReal>
 {
     public Polar(TReal radius, TReal angleRadians)
     {
@@ -20,6 +20,19 @@ public readonly record struct Polar<TReal> where TReal : unmanaged, IFloatingPoi
 
     public TReal Radius { get; }
     public TReal AngleRadians { get; }
+
+    /// <summary>Interpolates radius and the unwrapped angle. The radius must remain nonnegative.</summary>
+    public static Polar<TReal> Lerp(Polar<TReal> start, Polar<TReal> end, TReal amount) =>
+        new(Interval.Lerp(start.Radius, end.Radius, amount), Interval.Lerp(start.AngleRadians, end.AngleRadians, amount));
+
+    public static class Channels
+    {
+        public static InterpolationChannel<Polar<TReal>, Polar<TReal>> V => InterpolationChannel<Polar<TReal>, Polar<TReal>>.Whole;
+        public static InterpolationChannel<Polar<TReal>, TReal> Radius { get; } = new(static value => value.Radius,
+            static (value, radius) => new(radius, value.AngleRadians));
+        public static InterpolationChannel<Polar<TReal>, TReal> Angle { get; } = new(static value => value.AngleRadians,
+            static (value, angle) => new(value.Radius, angle));
+    }
 
     public void Deconstruct(out TReal radius, out TReal angleRadians) =>
         (radius, angleRadians) = (Radius, AngleRadians);

@@ -10,6 +10,23 @@ namespace App2d.Core.Mathematics;
 public readonly record struct Vector4d(double X, double Y, double Z, double W) : IVector4<Vector4d, double>
 {
     public Vector4d(Vector4 value) : this(value.X, value.Y, value.Z, value.W) { }
+    public Vector4d(Vector3d xyz, double w) : this(xyz.X, xyz.Y, xyz.Z, w) { }
+
+    /// <summary>Cartesian components and their RGBA interpretation. RGB replacement preserves the existing alpha.</summary>
+    public static class Channels
+    {
+        public static InterpolationChannel<Vector4d, Vector4d> V => InterpolationChannel<Vector4d, Vector4d>.Whole;
+        public static InterpolationChannel<Vector4d, double> X => VectorChannels<Vector4d, double>.Instance.X;
+        public static InterpolationChannel<Vector4d, double> Y => VectorChannels<Vector4d, double>.Instance.Y;
+        public static InterpolationChannel<Vector4d, double> Z => VectorChannels<Vector4d, double>.Instance.Z;
+        public static InterpolationChannel<Vector4d, double> W => VectorChannels<Vector4d, double>.Instance.W;
+        public static InterpolationChannel<Vector4d, double> R => X;
+        public static InterpolationChannel<Vector4d, double> G => Y;
+        public static InterpolationChannel<Vector4d, double> B => Z;
+        public static InterpolationChannel<Vector4d, double> A => W;
+        public static InterpolationChannel<Vector4d, Vector3d> RGB { get; } = new(static value => value.XYZ,
+            static (value, rgb) => new(rgb, value.W));
+    }
 
     public static Vector4d Create(double x, double y, double z, double w) => new(x, y, z, w);
     public static Vector4d Zero => default;

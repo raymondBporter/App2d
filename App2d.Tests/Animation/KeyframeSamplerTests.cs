@@ -6,13 +6,9 @@ public sealed class KeyframeSamplerTests
 {
     private sealed record ScalarKey(float Time, float Value) : ITimedKey;
 
-    private readonly struct ScalarInterpolation(float progressScale = 1, bool step = false) : IKeyframeInterpolation<ScalarKey, float>
-    {
-        public float GetValue(ScalarKey key) => key.Value;
-        public bool IsHeld(ScalarKey key) => step;
-        public float Interpolate(ScalarKey start, ScalarKey end, float phase) =>
-            Interpolation.Lerp(start.Value, end.Value, phase * progressScale);
-    }
+    private static float Sample(IReadOnlyList<ScalarKey> keys, float time, float emptyValue, Interpolator<float, float> interpolation) =>
+        KeyframeSampling.Sample(keys, time, emptyValue, static key => key.Value,
+            (start, end, phase) => interpolation.Evaluate(start.Value, end.Value, phase));
 
     [Theory]
     [InlineData(-2, 10)]
@@ -25,26 +21,27 @@ public sealed class KeyframeSamplerTests
     public void ScalarValuesUseTheLocalTimeIntervalAndHoldEndpoints(float time, float expected)
     {
         ScalarKey[] keys = [new(2, 10), new(4, 30), new(10, 90)];
-        Assert.Equal(expected, KeyframeSampling.Sample(keys, time, -1f, new ScalarInterpolation(1)));
+        Assert.Equal(expected, Sample(keys, time, -1f, Interpolation.Linear<float>()));
     }
 
     [Fact]
     public void EmptyTracksUseTheCallersDefaultAndSingleKeysAreHeld()
     {
-        Assert.Equal(42, KeyframeSampling.Sample(Array.Empty<ScalarKey>(), 5, 42f, new ScalarInterpolation(1)));
+        Assert.Equal(42, Sample(Array.Empty<ScalarKey>(), 5, 42f, Interpolation.Linear<float>()));
         ScalarKey[] keys = [new(2, 10)];
         foreach (var time in new[] { -2, 2, 5 })
-            Assert.Equal(10, KeyframeSampling.Sample(keys, time, -1f, new ScalarInterpolation(1)));
+            Assert.Equal(10, Sample(keys, time, -1f, Interpolation.Linear<float>()));
     }
 
     [Fact]
     public void InterpolationCanHoldValuesOrOvershootWithoutChangingKeyBoundaries()
     {
         ScalarKey[] keys = [new(2, 10), new(4, 30)];
-        Assert.Equal(10, KeyframeSampling.Sample(keys, 3.5f, -1f, new ScalarInterpolation(1, step: true)));
-        Assert.Equal(30, KeyframeSampling.Sample(keys, 4, -1f, new ScalarInterpolation(1, step: true)));
-        Assert.Equal(40, KeyframeSampling.Sample(keys, 3.5f, -1f, new ScalarInterpolation(2)));
-        Assert.Equal(30, KeyframeSampling.Sample(keys, 4, -1f, new ScalarInterpolation(2)));
+        Assert.Equal(10, Sample(keys, 3.5f, -1f, Interpolation.Hold<float, float>()));
+        Assert.Equal(30, Sample(keys, 4, -1f, Interpolation.Hold<float, float>()));
+        var overshoot = Interpolation.Linear<float>().WithProgress(ProgressMapf.Affine(2f, 0f));
+        Assert.Equal(40, Sample(keys, 3.5f, -1f, overshoot));
+        Assert.Equal(30, Sample(keys, 4, -1f, overshoot));
     }
 
     [Fact]
@@ -54,9 +51,9 @@ public sealed class KeyframeSamplerTests
         foreach (var i in new[] { 0, 1, 31, 1024, 2049, 4094 })
         {
             var at = keys[i].Time;
-            Assert.Equal(i, KeyframeSampling.Sample(keys, at, -1f, new ScalarInterpolation(1)));
+            Assert.Equal(i, Sample(keys, at, -1f, Interpolation.Linear<float>()));
             var middle = (at + keys[i + 1].Time) / 2;
-            Assert.Equal(i + .5f, KeyframeSampling.Sample(keys, middle, -1f, new ScalarInterpolation(1)));
+            Assert.Equal(i + .5f, Sample(keys, middle, -1f, Interpolation.Linear<float>()));
         }
     }
 

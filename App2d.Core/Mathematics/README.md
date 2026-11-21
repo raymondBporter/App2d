@@ -153,6 +153,45 @@ policy before opting in. The contract makes no assumption that every property of
 For an already mapped amount use `Interpolation.Lerp(start, end, amount)`. For clamped input use
 `Interpolation.Lerp(start, end, map.SampleClamped(time))`; output overshoot remains available.
 
+`Interpolator<TValue, TReal>` represents a reusable `(start, end, time) -> value` function. `IInterpolatable` supplies
+one default rule for a type; strategies allow many choices without changing the type or adding interfaces. Use
+`Interpolation.Default<TValue, TReal>()` for that default, `Linear<TReal>()` for scalars, `Hold<TValue, TReal>()` to
+retain the first value, or construct a strategy from a function. Float and double use the same implementation.
+
+```csharp
+var vectorRule = Interpolation.Default<Vector3f, float>().WithProgress(Easingf.Smooth)
+    .With(Vector3f.Channels.X, Easingf.Power(2))
+    .With(Vector3f.Channels.Y, Easingf.Sine);
+var value = vectorRule.Evaluate(start, end, time);
+```
+
+`InterpolationChannel<TValue, TChannel>` only describes how to read and replace a part. Any type can add any number
+of channels by supplying those two functions; no registry, reflection, or interpolation interface is required.
+Vectors expose X/Y/Z/W as appropriate, indexed components, and V for the whole value. `RigidTransform2D.Channels`
+exposes Translation, Rotation, and V. Four-dimensional vectors also expose R/G/B/A and a grouped RGB channel whose
+replacement retains the current alpha. Start with `Hold` and override RGB to animate only RGB; start with `Default`
+to keep the normal interpolation on unmentioned components.
+
+`With(channel, child)` evaluates the baseline, then replaces that channel. Each child reads the original endpoints
+and original input time; later overrides win on overlaps. `WithProgress(map)` wraps the whole strategy at that point
+in the composition, so putting it after channel overrides transforms time for all children with one map sample.
+Putting it before an override changes the baseline's time while the new child retains its own curve. Build channel
+strategies once and reuse them where the channel configuration is stable. Simple default strategies with a progress
+map are value wrappers without a newly allocated capturing callback.
+
+`InCoordinates(toCoordinates, fromCoordinates)` converts the endpoints, interpolates in that representation, and
+converts back. `Polar<TReal>.Channels` exposes Radius, Angle, and V; its default keeps the angle unwrapped and requires
+a nonnegative radius. `Interpolation.Polar<TVector, TReal>(radius, angle)` directly interpolates Cartesian 2D vectors
+in polar coordinates: defaults are linear radius and shortest angle, with either endpoint at the origin using the
+other heading. This Cartesian strategy also preserves signed radius overshoot. `ShortestAngle<TReal>()` is an explicit
+alternative to unwrapped angle interpolation; half-turn ties follow IEEE remainder.
+
+`Interpolation.Bezier` creates a scalar strategy with relative or absolute handles. Absolute handles can move between
+equal endpoints. It shares the existing timing solver and endpoint extrapolation with `Easing.TimedBezier`.
+`EvaluateClamped` restricts input to `InputBegin` / `InputEnd`, including a span adapted by a progress map, and never
+saturates output. Channel and coordinate composition retain that span. Strategies contain functions; authored
+serialization still stores curve descriptions rather than attempting to serialize arbitrary runtime strategies.
+
 `Clamping.Clamp` and `Clamp01` work with numeric types such as int, float, and double, preserving the type's
 standard clamping behavior.
 

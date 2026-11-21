@@ -49,6 +49,7 @@ public static class DoubleVectorStatics
 {
     extension<TSelf>(TSelf) where TSelf : unmanaged, IVector<TSelf, double>
     {
+        public static VectorChannels<TSelf, double> Channels => VectorChannels<TSelf, double>.Instance;
         public static double Dot(TSelf left, TSelf right) => TSelf.Dot(left, right);
         public static TSelf Min(TSelf left, TSelf right) => TSelf.Min(left, right);
         public static TSelf Max(TSelf left, TSelf right) => TSelf.Max(left, right);

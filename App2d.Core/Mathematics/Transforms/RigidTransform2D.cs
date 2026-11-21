@@ -8,6 +8,15 @@ public readonly record struct RigidTransform2D(Vector2f Translation, float Rotat
 {
     public static RigidTransform2D Identity => default;
 
+    public static class Channels
+    {
+        public static InterpolationChannel<RigidTransform2D, RigidTransform2D> V => InterpolationChannel<RigidTransform2D, RigidTransform2D>.Whole;
+        public static InterpolationChannel<RigidTransform2D, Vector2f> Translation { get; } = new(static value => value.Translation,
+            static (value, translation) => value with { Translation = translation });
+        public static InterpolationChannel<RigidTransform2D, float> Rotation { get; } = new(static value => value.Rotation,
+            static (value, rotation) => value with { Rotation = rotation });
+    }
+
     /// <summary>Interpolates translation and the unwrapped angle, retaining full turns and rigidity.</summary>
     public static RigidTransform2D Lerp(RigidTransform2D start, RigidTransform2D end, float amount) =>
         new(Vector2f.Lerp(start.Translation, end.Translation, amount), Interpolation.Lerp(start.Rotation, end.Rotation, amount));

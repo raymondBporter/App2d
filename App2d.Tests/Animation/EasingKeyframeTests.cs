@@ -54,10 +54,10 @@ public sealed class EasingKeyframeTests
             foreach (var phase in new[] { .37f, .5f, .63f })
             {
                 var expected = Easingf.FromCurve(curve, direction).Sample(phase);
-                Assert.Equal(new Vector3f(expected), PoseEvaluator.Interpolate(motion, phase).Value);
+                Assert.Equal(new Vector3f(expected), PoseEvaluator.Sample(motion, phase).Value);
                 Assert.Equal(new Vector4(expected), SlotColorTrack2D.Sample(color, phase));
             }
-            Assert.Equal(Vector3f.One, PoseEvaluator.Interpolate(motion, 1f).Value);
+            Assert.Equal(Vector3f.One, PoseEvaluator.Sample(motion, 1f).Value);
             Assert.Equal(Vector4.One, SlotColorTrack2D.Sample(color, 1f));
         }
     }
@@ -72,12 +72,12 @@ public sealed class EasingKeyframeTests
     [Fact]
     public void SharedSmoothMapKeepsExistingFloatSamplesWithinRounding()
     {
+        var rule = Interpolation.Linear<float>().WithProgress(Easingf.Smooth);
         for (var index = -100; index <= 1100; index++)
         {
             var phase = index / 1000f;
             var expected = phase * phase * (3f - 2f * phase);
-            var sample = new KeyframeSegmentSampler(phase, Easingf.Smooth);
-            Assert.InRange(Math.Abs(sample.Interpolate(0f, 1f) - expected), 0f, 1e-6f);
+            Assert.InRange(Math.Abs(rule.Evaluate(0f, 1f, phase) - expected), 0f, 1e-6f);
         }
     }
 }

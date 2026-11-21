@@ -62,7 +62,7 @@ public static class PoseEvaluator
         var travelRatio = Ratio(clip.Travel.Scale);
         Vector2f Travel(float t)
         {
-            var (value, _) = Interpolate(clip.Travel.Keys, t);
+            var (value, _) = Sample(clip.Travel.Keys, t);
             return new Vector2f(value.X, value.Y) * travelRatio;
         }
         var cycleTravel = (Travel(clip.Duration) - Travel(0)) * (float)cycles;
@@ -102,7 +102,7 @@ public static class PoseEvaluator
                 return MotionClip.DefaultValue(kind);
             }
 
-            var (value, _) = Interpolate(track, at);
+            var (value, _) = Sample(track, at);
             var scale = track.Scale ?? defaultScale;
             // A wearer's namespaced layer keys a nested part in the part's own units (P7a/P10b): no measure scales it.
             var ratio = scale == CharacterModel.Unit || layer?.Source.Namespace is not null ? 1 : model.Measure(scale) / source.Reference[scale];
@@ -144,7 +144,7 @@ public static class PoseEvaluator
             return LayerBend(null, chain);
         }
         float LayerAngle(Layer? layer, string target) => Read(layer, MotionClip.RotateKind, target) is { Track: { } track, Time: var at }
-            ? Interpolate(track, at).Angle * (input.ReverseHorizontalMotion ? -1 : 1) : 0;
+            ? Sample(track, at).Angle * (input.ReverseHorizontalMotion ? -1 : 1) : 0;
         float Angle(string target)
         {
             var value = LayerAngle(null, target);
@@ -161,7 +161,7 @@ public static class PoseEvaluator
         // The normalized bend channel: 0..1 through the node's limits, absolute (it owns the rotation), never reversed or
         // scaled by a measure; before a setup-before-first track's first key the node keeps its setup rotation (null).
         float? LayerNormalized(Layer? layer, string target) => Read(layer, MotionClip.BendKind, target) is { Track: { } track, Time: var at }
-            && !(track.SetupBeforeFirst && track.Keys.Count > 0 && at < track.Keys[0].Time) ? Interpolate(track.Keys, at).Value.X : null;
+            && !(track.SetupBeforeFirst && track.Keys.Count > 0 && at < track.Keys[0].Time) ? Sample(track.Keys, at).Value.X : null;
         float? BendOf(string target)
         {
             var value = LayerNormalized(null, target);
@@ -268,7 +268,7 @@ public static class PoseEvaluator
         foreach (var socket in model.Base.Sockets)
         {
             Vector3f ReadOrientation(Layer? layer) => Read(layer, MotionClip.OrientKind, socket.Id) is { Track: { } t, Time: var at }
-                ? ReverseOrientation(Interpolate(t.Keys, at).Value) : Vector3f.Zero;
+                ? ReverseOrientation(Sample(t.Keys, at).Value) : Vector3f.Zero;
             Vector3f ReverseOrientation(Vector3f value) => input.ReverseHorizontalMotion ? new(value.X, -value.Y, -value.Z) : value;
             // Socket channels follow ownership of their frame, including an IK chain that owns their attachment end.
             var orientation = ReadOrientation(null);
@@ -305,7 +305,7 @@ public static class PoseEvaluator
         {
             // Held, discrete: the topmost layer owning the part from half weight, else the base; no track keeps the part shown.
             bool? Read1(Layer? layer) => Read(layer, MotionClip.ShowKind, part) is { Track: { } track, Time: var at }
-                ? Interpolate(track, at).Value.X != 0 : null;
+                ? Sample(track, at).Value.X != 0 : null;
             for (var i = layers.Length - 1; i >= 0; i--)
             {
                 if (layers[i].Masks(part) && layers[i].Weight >= .5f)
@@ -456,7 +456,7 @@ public static class PoseEvaluator
         var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
         Vector2f Travel(float t)
         {
-            var (value, _) = Interpolate(clip.Travel.Keys, t);
+            var (value, _) = Sample(clip.Travel.Keys, t);
             return new Vector2f(value.X, value.Y) * ratio;
         }
         return Travel(time) + (Travel(clip.Duration) - Travel(0)) * (float)cycles;
@@ -564,33 +564,41 @@ public static class PoseEvaluator
         }
 
         var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
-        var (end, _) = Interpolate(keys, clip.Duration);
-        var (start, _) = Interpolate(keys, 0);
+        var (end, _) = Sample(keys, clip.Duration);
+        var (start, _) = Sample(keys, 0);
         return new Vector2f(end.X - start.X, end.Y - start.Y) * ratio;
     }
 
     /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>
-    public static (Vector3f Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false) =>
-        KeyframeSampling.Sample(keys, time, (Value: Vector3f.Zero, Angle: 0f), new MotionInterpolation(rotate));
+    public static (Vector3f Value, float Angle) Sample(List<ClipKey> keys, float time, bool rotate = false) =>
+        KeyframeSampling.Sample(keys, time, (Value: Vector3f.Zero, Angle: 0f), static key => (key.Value, key.Angle),
+            rotate ? static (a, b, phase) => SampleSegment(a, b, phase, rotate: true)
+                : static (a, b, phase) => SampleSegment(a, b, phase, rotate: false));
 
-    private readonly struct MotionInterpolation(bool rotate) : IKeyframeInterpolation<ClipKey, (Vector3f Value, float Angle)>
+    private static (Vector3f Value, float Angle) SampleSegment(ClipKey a, ClipKey b, float phase, bool rotate)
     {
-        public (Vector3f Value, float Angle) GetValue(ClipKey key) => (key.Value, key.Angle);
-        public bool IsHeld(ClipKey key) => key.Ease == EasingCurve.Step && key.EaseDirection == EasingDirection.In;
-
-        public (Vector3f Value, float Angle) Interpolate(ClipKey a, ClipKey b, float phase)
+        var map = Easingf.FromCurve(a.Ease, a.EaseDirection);
+        var value = Interpolation.Default<Vector3f, float>().WithProgress(map);
+        var angle = Interpolation.Linear<float>().WithProgress(map);
+        if (rotate)
         {
-            var progressMap = Easingf.FromCurve(a.Ease, a.EaseDirection);
-            var sample = new KeyframeSegmentSampler(phase, progressMap);
-            var sharedCurve = a.Curve?.Absolute == true ? null : a.Curve;
-            return (sample.Interpolate(a.Value, b.Value, rotate ? null : a.Curve,
-                rotate ? null : a.CurveY ?? sharedCurve, rotate ? null : a.CurveZ ?? sharedCurve),
-                sample.Interpolate(a.Angle, b.Angle, rotate ? a.Curve : null));
+            angle = Curve(a.Curve) ?? angle;
         }
+        else
+        {
+            var sharedCurve = a.Curve?.Absolute == true ? null : a.Curve;
+            value = value.With(Vector3f.Channels.X, Curve(a.Curve))
+                .With(Vector3f.Channels.Y, Curve(a.CurveY ?? sharedCurve))
+                .With(Vector3f.Channels.Z, Curve(a.CurveZ ?? sharedCurve));
+        }
+        return (value.Evaluate(a.Value, b.Value, phase), angle.Evaluate(a.Angle, b.Angle, phase));
+
+        Interpolator<float, float>? Curve(BezierParameters? parameters) =>
+            AuthoredInterpolation.CreateOverride(a.Ease, a.EaseDirection, parameters);
     }
 
-    public static (Vector3f Value, float Angle) Interpolate(ClipTrack track, float time) =>
+    public static (Vector3f Value, float Angle) Sample(ClipTrack track, float time) =>
         track.Keys.Count == 0 || track.SetupBeforeFirst && time < track.Keys[0].Time ? (MotionClip.DefaultValue(track.Kind), 0)
         : track.Kind == MotionClip.ShowKind ? (KeyframeSampling.Held(track.Keys, time)!.Value, 0)
-        : Interpolate(track.Keys, time, track.Kind == MotionClip.RotateKind);
+        : Sample(track.Keys, time, track.Kind == MotionClip.RotateKind);
 }

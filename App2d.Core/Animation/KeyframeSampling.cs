@@ -8,15 +8,6 @@ public interface ITimedKey
     float Time { get; }
 }
 
-/// <summary>Reads a key's value and interpolates one segment. Timing and endpoint handling belong to the sampler.</summary>
-public interface IKeyframeInterpolation<TKey, TValue>
-{
-    TValue GetValue(TKey key);
-    /// <summary>Held segments return their outgoing key without evaluating any component curves.</summary>
-    bool IsHeld(TKey key) => false;
-    TValue Interpolate(TKey start, TKey end, float phase);
-}
-
 /// <summary>Finds a segment in an ordered timeline, holding the first and last keys outside its range.</summary>
 public static class KeyframeSampling
 {
@@ -26,16 +17,17 @@ public static class KeyframeSampling
 
     /// <summary>
     /// Samples ordered keys with a caller-selected empty value and interpolation rule. Exact keys return their own
-    /// values. A generic struct policy avoids boxing or allocating a callback; it may carry interpolation settings.
-    /// The sampler neither eases nor clamps values. Keys must be ordered by increasing time.
+    /// values. The callbacks read the authored value and resolve a segment using core interpolation strategies.
+    /// Static callbacks are reusable without per-sample allocation. Keys must be ordered by increasing time.
     /// </summary>
-    public static TValue Sample<TKey, TValue, TInterpolation>(IReadOnlyList<TKey> keys, float time, TValue emptyValue, TInterpolation interpolation)
+    public static TValue Sample<TKey, TValue>(IReadOnlyList<TKey> keys, float time, TValue emptyValue,
+        Func<TKey, TValue> getValue, Func<TKey, TKey, float, TValue> sampleSegment)
         where TKey : class, ITimedKey
-        where TInterpolation : struct, IKeyframeInterpolation<TKey, TValue>
     {
+        ArgumentNullException.ThrowIfNull(getValue);
+        ArgumentNullException.ThrowIfNull(sampleSegment);
         if (!TrySegment(keys, time, out var start, out var end, out var phase)) return emptyValue;
-        return ReferenceEquals(start, end) || interpolation.IsHeld(start)
-            ? interpolation.GetValue(start) : interpolation.Interpolate(start, end, phase);
+        return ReferenceEquals(start, end) ? getValue(start) : sampleSegment(start, end, phase);
     }
 
     public static bool TrySegment<T>(IReadOnlyList<T> keys, float time, [NotNullWhen(true)] out T? start, [NotNullWhen(true)] out T? end, out float phase)

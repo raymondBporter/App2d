@@ -169,8 +169,10 @@ channel semantics. The keys are ordered lists; a track is not a live playback cl
 
 The reusable mechanics live outside Characters in
 [Core/Animation](../App2d.Core/Animation): `ITimedKey`, `IEditableTimedKey`,
-`KeyframeSampling`, `KeyframeEditing`, `KeyframeSegmentSampler`, and ordinary frame
-animation. Playback clocks live in `Core/Timing`. Character tracks supply their value-specific rules.
+`KeyframeSampling`, `KeyframeEditing`, and ordinary frame animation. Playback clocks
+live in `Core/Timing`. Composable `Interpolator<TValue, TReal>` functions and typed
+`InterpolationChannel<TValue, TChannel>` accessors live in `Core/Mathematics`.
+Character tracks bind their saved curve descriptions to these shared strategies.
 Held values use the shared key/segment rules. Continuous curves may use absolute
 value handles, overshoot, and independent timing per component. Angles retain full
 turns; an angle is not reconstructed from a matrix when that would lose winding.

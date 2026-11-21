@@ -14,11 +14,28 @@ public readonly record struct Vector4f : IVector4<Vector4f, float>
     [System.Text.Json.Serialization.JsonConstructor]
     public Vector4f(float x, float y, float z, float w) : this(new Vector4(x, y, z, w)) { }
     public Vector4f(Vector4 value) => _value = value;
+    public Vector4f(Vector3f xyz, float w) : this(new Vector4(xyz.ToVector3(), w)) { }
     public float X => _value.X;
     public float Y => _value.Y;
     public float Z => _value.Z;
     public float W => _value.W;
     public float this[int index] => _value[index];
+
+    /// <summary>Cartesian components and their RGBA interpretation. RGB replacement preserves the existing alpha.</summary>
+    public static class Channels
+    {
+        public static InterpolationChannel<Vector4f, Vector4f> V => InterpolationChannel<Vector4f, Vector4f>.Whole;
+        public static InterpolationChannel<Vector4f, float> X => VectorChannels<Vector4f, float>.Instance.X;
+        public static InterpolationChannel<Vector4f, float> Y => VectorChannels<Vector4f, float>.Instance.Y;
+        public static InterpolationChannel<Vector4f, float> Z => VectorChannels<Vector4f, float>.Instance.Z;
+        public static InterpolationChannel<Vector4f, float> W => VectorChannels<Vector4f, float>.Instance.W;
+        public static InterpolationChannel<Vector4f, float> R => X;
+        public static InterpolationChannel<Vector4f, float> G => Y;
+        public static InterpolationChannel<Vector4f, float> B => Z;
+        public static InterpolationChannel<Vector4f, float> A => W;
+        public static InterpolationChannel<Vector4f, Vector3f> RGB { get; } = new(static value => value.XYZ,
+            static (value, rgb) => new(rgb, value.W));
+    }
 
     public static Vector4f Create(float x, float y, float z, float w) => new(x, y, z, w);
     public static Vector4f Zero => default;

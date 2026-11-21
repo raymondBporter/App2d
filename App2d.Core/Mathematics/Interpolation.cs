@@ -5,7 +5,7 @@ using System.Numerics;
 namespace App2d.Core.Mathematics;
 
 /// <summary>Value interpolation and range-to-progress conversion. Easing and clamping are explicit.</summary>
-public static class Interpolation
+public static partial class Interpolation
 {
     /// <summary>Uses the value type's interpolation rule with an already mapped amount.</summary>
     public static TValue Lerp<TValue, TReal>(TValue start, TValue end, TReal amount)

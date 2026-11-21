@@ -1,4 +1,5 @@
 using App2d.Core.Validation;
+using App2d.Core.Mathematics.Progress;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Animation;
@@ -23,4 +24,13 @@ public sealed record BezierParameters
         Ensure.Finite(FirstControlValue);
         Ensure.Finite(SecondControlValue);
     }
+}
+
+/// <summary>Translates saved control arguments into reusable core interpolation rules.</summary>
+internal static class AuthoredInterpolation
+{
+    public static Interpolator<float, float>? CreateOverride(EasingCurve ease, EasingDirection direction, BezierParameters? parameters) =>
+        parameters is null || ease == EasingCurve.Step && direction == EasingDirection.In ? null
+            : Interpolation.Bezier(parameters.FirstControlTime, parameters.FirstControlValue,
+                parameters.SecondControlTime, parameters.SecondControlValue, parameters.Absolute);
 }

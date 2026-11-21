@@ -56,6 +56,7 @@ public static class FloatVectorStatics
 {
     extension<TSelf>(TSelf) where TSelf : unmanaged, IVector<TSelf, float>
     {
+        public static VectorChannels<TSelf, float> Channels => VectorChannels<TSelf, float>.Instance;
         public static float Dot(TSelf left, TSelf right) => TSelf.Dot(left, right);
         public static TSelf Min(TSelf left, TSelf right) => TSelf.Min(left, right);
         public static TSelf Max(TSelf left, TSelf right) => TSelf.Max(left, right);
