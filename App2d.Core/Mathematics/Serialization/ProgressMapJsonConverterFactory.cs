@@ -9,7 +9,7 @@ namespace App2d.Core.Mathematics.Serialization;
 public sealed class ProgressMapJsonConverterFactory : JsonConverterFactory
 {
     private readonly Dictionary<Type, object> _names = [];
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private bool _started;
 
     public ProgressMapJsonConverterFactory Register<TReal>(string name, ProgressMap<TReal> map) where TReal : IFloatingPointIeee754<TReal>

@@ -16,7 +16,7 @@ internal interface IDemo
 internal sealed class DemoGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
-    private readonly IDemo[] _demos = [new ConicDemo(), new HexWheelDemo()];
+    private readonly IDemo[] _demos = [new ConicDemo(), new HexWheelDemo(), new PersonDemo()];
     private ImGuiHost? _gui;
     private int _selected = 1;
 
