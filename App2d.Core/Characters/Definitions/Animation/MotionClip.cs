@@ -16,9 +16,9 @@ public sealed record ClipKey : IEditableTimedKey
     /// <summary>The curve used between this key and the next. Ease direction is selected separately.</summary>
     public EasingCurve Ease { get; set; } = EasingCurve.Linear;
     public EasingDirection EaseDirection { get; set; } = EasingDirection.In;
-    public KeyCurve2D? Curve { get; set; }
-    public KeyCurve2D? CurveY { get; set; }
-    public KeyCurve2D? CurveZ { get; set; }
+    public BezierParameters? Curve { get; set; }
+    public BezierParameters? CurveY { get; set; }
+    public BezierParameters? CurveZ { get; set; }
     /// <summary>
     /// Target keys only: which side the chain's joint bends to (1 or -1) from this key until the next key that sets one,
     /// such as an elbow or knee mirrored for a back view. Flip it where the limb passes straight so the change never

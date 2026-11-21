@@ -30,6 +30,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `EasingCurve`, `EasingDirection`, `ProgressTravel` | Independent authored selections with stable JSON names |
 | `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
 | `Interval<T>` | A closed `[Min, Max]` range with all of its queries as members; `IInterval<T>` is only the two endpoints (details in the Geometry README) |
+| `Interval` | Directed endpoint helpers `Lerp`, `InverseLerp`, `Remap` and clamped counterparts; unbounded interval factories |
 | `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
 | `RigidTransform2D` | Immutable translation and unwrapped rotation; default identity, composition and inverse |
 | `Frame2D` | Immutable origin and two basis axes, forward mapping, inversion, and rotation from radians or degrees |
@@ -103,6 +104,18 @@ coordinate contracts also support [generic rectangle bounds](../Geometry/README.
 
 ## Scalar helpers
 
+`OrderedSearch.LowerBound(values, query)` finds the first index whose value is at least the query;
+`UpperBound` finds the first strictly greater value. Both return `Count` when no value qualifies, accept
+duplicates, and search an already ascending `IReadOnlyList<T>` without copying or sorting it. The overload
+with a key selector searches records directly, for example `LowerBound(keys, time, static key => key.Time)`.
+Frame timelines use the upper bound of frame end times; keyed values use the lower bound of key times.
+
+`UniformSequence<TReal>(first, step, count)` represents `first + index * step` without storing an array.
+It supports constant-time indexing and lazy enumeration in float or double precision. For example,
+`new UniformSequence<float>(.25f, .25f, 4)` yields `.25, .5, .75, 1`. Nonnegative steps produce ascending
+values suitable for `OrderedSearch`; negative steps are also supported as sequences. Floating-point rounding
+can make neighboring values equal. Uniform frame clips use this representation instead of timing arrays.
+
 `PolynomialRoots.FindRealRoots(coefficients, minimum, maximum, roots)` accepts coefficients in ascending order
 (`c0 + c1*x + ...`), writes sorted distinct roots, and returns their count. The output span needs at least the
 polynomial degree. Bounds are inclusive; repeated roots appear once. Nonzero constants have no roots, while
@@ -122,8 +135,23 @@ Normalize time, shape the progress, then interpolate the value:
 
 ```csharp
 var phase = Interpolation.InverseLerp(startTime, endTime, time);
-var value = Interpolation.Lerp(start, end, phase, Easingf.Smooth);
+var value = Interpolation.Interpolate(start, end, Easingf.Smooth, phase);
+// The same call is available as start.Interpolate(end, Easingf.Smooth, phase).
 ```
+
+`IInterpolatable<TSelf, TReal>` is an opt-in value contract with one operation:
+`static abstract TSelf Lerp(TSelf start, TSelf end, TReal amount)`. It receives the already mapped amount;
+`Interpolation.Interpolate(start, end, map, time)` samples the map once and calls that rule without clamping.
+The generic call retains the concrete value type. It requires neither reflection over properties nor arithmetic
+operators on the value. `IVector` supplies the component-wise default for every float/double vector dimension,
+with existing packed implementations taking precedence. The map uses the vector's native scalar precision.
+Built-in float and double use scalar overloads because they cannot implement an application interface.
+
+`RigidTransform2D` opts in by interpolating its translation and unwrapped rotation angle, preserving full turns
+and rigid axes. Matrices, affine transforms, and mirrored similarities need an explicitly chosen interpolation
+policy before opting in. The contract makes no assumption that every property of an arbitrary type can be blended.
+For an already mapped amount use `Interpolation.Lerp(start, end, amount)`. For clamped input use
+`Interpolation.Lerp(start, end, map.SampleClamped(time))`; output overshoot remains available.
 
 `Clamping.Clamp` and `Clamp01` work with numeric types such as int, float, and double, preserving the type's
 standard clamping behavior.
@@ -135,13 +163,50 @@ and inversion in that precision. Shared aliases in `Directory.Build.props` expos
 `ProgressMapf` / `ProgressMapd`. Animation uses float maps; motion uses double maps to match playback time.
 `Easingf.SmoothStepValue(value, order)` and its double counterpart expose the raw polynomial for direct scalar
 calculations. Neither API clamps. Scalar interpolation infers float or double, and either progress precision can
-interpolate scalar or 2D vector values in either precision; conversion happens after sampling the map.
-Apply `Clamping.Clamp01` explicitly when a particular consumer needs saturation.
+interpolate scalars in either precision; conversion happens after sampling the map.
+Use `map.SampleClamped(input)` to clamp only the input to `InputBegin` / `InputEnd`, preserving possible output overshoot.
+Apply `Clamping.Clamp01` explicitly when a particular consumer needs output saturation.
+
+`Interval.Lerp(begin, end, amount)` and `Interval.InverseLerp(begin, end, value)` operate directly on endpoints;
+there is no need to construct an `Interval<T>`. Begin and end retain their order, including descending spans.
+`Interval.Remap(value, sourceBegin, sourceEnd, destinationBegin, destinationEnd)` composes those two operations.
+Their clamped counterparts restrict the parameter without requiring ordered endpoints. Integer arithmetic
+still truncates division and checks overflow. The ordered `Interval<T>` value delegates its parameterization to
+the same helpers while retaining its containment, intersection, and validation rules.
+
+Range mapping is also part of the function composition API:
+
+```csharp
+var valueAtTime = Easingf.Smooth.FromRange(2f, 6f).ToRange(10f, 20f);
+float value = valueAtTime.Sample(3f);           // 11.5625
+float velocity = valueAtTime.Derivative(3f);    // 2.8125 per second
+float time = valueAtTime.Inverse!(value);      // 3
+float held = valueAtTime.SampleClamped(20f);   // 20
+
+var same = ProgressMapf.Normalize(2f, 6f).Then(Easingf.Smooth).ToRange(10f, 20f);
+var linear = ProgressMapf.Affine(2f, 3f);      // 2*x + 3
+var constant = ProgressMapf.Constant(7f);
+```
+
+Apply ease direction to the normalized curve before adapting its ranges. `FromRange` implements
+`f((x-begin)/(end-begin))`; `ToRange` implements `begin + f(x)*(end-begin)`. They carry the chain-rule derivative,
+inverse when available, and input endpoints used for clamped sampling. Either span may be reversed.
+Range adapters require finite endpoints; unbounded ray intervals remain set descriptions. A collapsed input
+samples the original curve at zero, and a collapsed output gives a constant; neither has a unique inverse.
 
 `Easingf.SmoothStep(order)` supports orders 0 through 3: linear, cubic (`Smooth`), quintic (`Smoother`), and
 septic (`Smoothest`). `Easingf.Power(degree)` accepts any positive integer degree. Choose
 `WithDirection(EasingDirection.In/Out/InOut)` separately: Out reflects both axes, while InOut fits the base
 curve and its reflection into two halves. Neither operation reverses travel.
+
+`Easingf.Bezier(firstControlValue, secondControlValue)` defines a normalized cubic segment with linear time.
+Its control times are the fixed constants one third and two thirds, so no time-coordinate solve is needed.
+The four-value overload `Bezier(begin, firstControlValue, secondControlValue, end)` supports actual value units,
+including excursions between equal endpoint values. Both use the shared scalar/vector `BezierMath` and straight
+endpoint extensions. `Easingf.TimedBezier(firstControlTime, firstControlValue, secondControlTime, secondControlValue)`
+supports custom control times in [0,1]. Its six-argument overload also takes actual beginning and ending values.
+The factory solves time internally and returns an ordinary `ProgressMapf` with analytic value/time derivative.
+The `Easingd` versions use double precision. Fixed one-third/two-thirds times reuse the simpler `Bezier` factory.
 
 ```csharp
 var curve = Easingd.Power(6).WithDirection(EasingDirection.InOut);
@@ -164,7 +229,7 @@ Smoothstep inversion uses `4 * MachineEpsilon` as its normalized phase tolerance
 cube root as their base step and scale it to the phase magnitude, retaining representable sample differences.
 There is one generic function object;
 no additional implementation interface or preset identity metadata is needed. `IsContinuous` describes the
-function on the real line and remains null when unknown. `Inverse` is an optional inverse on [0,1]; Step
+function on the real line and remains null when unknown. `Inverse` is optional for the function's authored input span; Step
 and the two round trips have no unique inverse. Step's derivative is NaN at its jump. Composition preserves
 an inverse when both functions provide one, applying inverses in reverse order.
 

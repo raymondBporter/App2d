@@ -1,5 +1,4 @@
 using App2d.Core.Animation;
-using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;
 
 namespace App2d.Tests.Animation;
@@ -17,6 +16,8 @@ public sealed class KeyframeSegmentSamplerTests
         Assert.Equal(3f, sample.Interpolate(2f, 6f));
         Assert.Equal(-2f, sample.Interpolate(-3f, 1f));
         Assert.Equal(6f, sample.Interpolate(8f, 0f));
+        Assert.Equal(new Vector3f(2f, -1f, 4f), sample.Interpolate(Vector3f.Zero, new(8f, -4f, 16f)));
+        Assert.Equal(new Vector4f(2f, -1f, 4f, 8f), sample.Interpolate(Vector4f.Zero, new(8f, -4f, 16f, 32f)));
         Assert.Equal(1, samples);
     }
 
@@ -35,7 +36,7 @@ public sealed class KeyframeSegmentSamplerTests
     [Fact]
     public void CustomCurvesReplaceNamedEasing()
     {
-        var curve = CubicBezier2D.Builder.Create(new(0f, 0f), new(1f / 3, 0f), new(2f / 3, 0f), new(1f, 1f));
+        var curve = new BezierParameters { FirstControlTime = 1f / 3f, SecondControlTime = 2f / 3f, SecondControlValue = 0f };
         var sample = new KeyframeSegmentSampler(.5f, Easingf.Smoother);
         Assert.Equal(.5f, sample.Interpolate(0f, 1f));
         Assert.Equal(.125f, sample.Interpolate(0f, 1f, curve), 6);
@@ -48,24 +49,9 @@ public sealed class KeyframeSegmentSamplerTests
     [InlineData(1.5f, 8f)]
     public void CustomCurvesKeepExactEndpointHolds(float phase, float expected)
     {
-        var curve = CubicBezier2D.Builder.Create(new(0f, 2f), new(.2f, -4f), new(.8f, 16f), new(1f, 8f));
+        var curve = new BezierParameters { Absolute = true, FirstControlTime = .2f, FirstControlValue = -4f, SecondControlTime = .8f, SecondControlValue = 16f };
         var sample = new KeyframeSegmentSampler(phase, Easingf.Linear);
         Assert.Equal(expected, sample.Interpolate(2f, 8f, curve));
     }
 
-    [Fact]
-    public void TimingCacheKeepsPerChannelValuesAndFallsBackBeyondFourEntries()
-    {
-        var sample = new KeyframeSegmentSampler(.37f, Easingf.Smooth);
-        for (var pass = 0; pass < 2; pass++)
-        {
-            for (var i = 0; i < 6; i++)
-            {
-                var curve = CubicBezier2D.Builder.Create(new(0f, 3f), new(.1f + i * .1f, 12f + pass),
-                    new(.9f - i * .05f, -4f - pass), new(1f, 3f));
-                var expected = curve.Evaluate(curve.ParameterAtX(.37f)).Y;
-                Assert.Equal(expected, sample.Interpolate(3f, 3f, curve));
-            }
-        }
-    }
 }

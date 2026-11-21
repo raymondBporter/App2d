@@ -7,7 +7,7 @@ public static class BezierMath
 {
     public static TValue Quadratic<TValue, TReal>(TValue start, TValue control, TValue end, TReal amount)
         where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
-        where TReal : unmanaged, IFloatingPointIeee754<TReal>
+        where TReal : IFloatingPointIeee754<TReal>
     {
         amount = TReal.Clamp(amount, TReal.Zero, TReal.One);
         var inverse = TReal.One - amount;
@@ -16,7 +16,7 @@ public static class BezierMath
 
     public static TValue QuadraticDerivative<TValue, TReal>(TValue start, TValue control, TValue end, TReal amount)
         where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
-        where TReal : unmanaged, IFloatingPointIeee754<TReal>
+        where TReal : IFloatingPointIeee754<TReal>
     {
         amount = TReal.Clamp(amount, TReal.Zero, TReal.One);
         return ((control - start) * (TReal.One - amount) + (end - control) * amount) * TReal.CreateChecked(2);
@@ -24,7 +24,7 @@ public static class BezierMath
 
     public static TValue Cubic<TValue, TReal>(TValue start, TValue control1, TValue control2, TValue end, TReal amount)
         where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
-        where TReal : unmanaged, IFloatingPointIeee754<TReal>
+        where TReal : IFloatingPointIeee754<TReal>
     {
         amount = TReal.Clamp(amount, TReal.Zero, TReal.One);
         var inverse = TReal.One - amount;
@@ -35,7 +35,7 @@ public static class BezierMath
 
     public static TValue CubicDerivative<TValue, TReal>(TValue start, TValue control1, TValue control2, TValue end, TReal amount)
         where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
-        where TReal : unmanaged, IFloatingPointIeee754<TReal>
+        where TReal : IFloatingPointIeee754<TReal>
     {
         amount = TReal.Clamp(amount, TReal.Zero, TReal.One);
         var inverse = TReal.One - amount;

@@ -1,47 +1,44 @@
-using App2d.Core.Geometry.Curves;
-using App2d.Core.Mathematics.Progress;
-using System.Runtime.CompilerServices;
-
 namespace App2d.Core.Animation;
 
 /// <summary>
-/// Evaluates scalar channels at one segment phase, sharing up to four Bezier timing solves.
+/// Evaluates values and independent scalar channels through progress maps.
+/// Saved Bezier parameters are factory arguments, not a second curve API.
 /// Exact key selection and held segments belong to KeyframeSampling.
 /// </summary>
-internal struct KeyframeSegmentSampler(float phase, ProgressMapf progressMap)
+internal readonly struct KeyframeSegmentSampler(float phase, ProgressMapf progressMap)
 {
     private readonly float _progress = progressMap.Sample(phase);
-    private CurveTimingCache _timings;
-    private int _count;
+
+    public TValue Interpolate<TValue>(TValue start, TValue end) where TValue : IInterpolatable<TValue, float> =>
+        Interpolation.Lerp(start, end, _progress);
+
+    public Vector3f Interpolate(Vector3f start, Vector3f end,
+        BezierParameters? x = null, BezierParameters? y = null, BezierParameters? z = null) =>
+        x is null && y is null && z is null
+            ? Interpolate<Vector3f>(start, end)
+            : new(Interpolate(start.X, end.X, x), Interpolate(start.Y, end.Y, y), Interpolate(start.Z, end.Z, z));
+
+    public Vector4f Interpolate(Vector4f start, Vector4f end,
+        BezierParameters? x = null, BezierParameters? y = null, BezierParameters? z = null, BezierParameters? w = null) =>
+        x is null && y is null && z is null && w is null
+            ? Interpolate<Vector4f>(start, end)
+            : new(Interpolate(start.X, end.X, x), Interpolate(start.Y, end.Y, y),
+                Interpolate(start.Z, end.Z, z), Interpolate(start.W, end.W, w));
 
     /// <summary>
-    /// Interpolates endpoints through the progress map, or evaluates a custom curve whose X coordinates are
-    /// normalized segment time and Y coordinates are channel values. A custom curve replaces named easing;
-    /// values and intentional overshoot are not clamped.
+    /// Uses named easing or creates a value map from saved Bezier arguments. The timeline holds its endpoints;
+    /// values and intentional overshoot inside a segment are not clamped.
     /// </summary>
-    public float Interpolate(float start, float end, CubicBezier2D? curve = null)
+    public float Interpolate(float start, float end, BezierParameters? parameters = null)
     {
-        if (curve is not { } geometry) return Interpolation.Lerp(start, end, _progress);
+        if (parameters is null) return Interpolation.Lerp(start, end, _progress);
         if (phase <= 0) return start;
         if (phase >= 1) return end;
-
-        var handles = new Vector2f(geometry.Control1.X, geometry.Control2.X);
-        for (var i = 0; i < _count; i++)
-        {
-            if (_timings[i].Handles == handles)
-                return geometry.Evaluate(_timings[i].Parameter).Y;
-        }
-
-        // Only X determines the parameter; every channel retains its own Y handles.
-        var parameter = geometry.ParameterAtX(phase);
-        if (_count < 4) _timings[_count++] = (handles, parameter);
-        return geometry.Evaluate(parameter).Y;
-    }
-
-    [InlineArray(4)]
-    private struct CurveTimingCache
-    {
-        // Required inline-array backing field; compiler-generated indexing accesses its storage.
-        private (Vector2f Handles, float Parameter) _element0;
+        var map = parameters.Absolute
+            ? Easingf.TimedBezier(start, parameters.FirstControlTime, parameters.FirstControlValue,
+                parameters.SecondControlTime, parameters.SecondControlValue, end)
+            : Easingf.TimedBezier(parameters.FirstControlTime, parameters.FirstControlValue,
+                parameters.SecondControlTime, parameters.SecondControlValue).ToRange(start, end);
+        return map.Sample(phase);
     }
 }

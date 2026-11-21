@@ -50,19 +50,12 @@ public static class KeyframeSampling
         if (time <= start.Time)
             return true;
 
-        // Lower bound: the first key whose time is at or after the query. Starting at 1 retains the first-key hold.
-        var low = 1;
-        var high = keys.Count;
-        while (low < high)
+        var next = OrderedSearch.LowerBound(keys, time, static key => key.Time);
+        if (next == 0) return true;
+        if (next < keys.Count)
         {
-            var middle = low + (high - low) / 2;
-            if (time > keys[middle].Time) low = middle + 1;
-            else high = middle;
-        }
-        if (low < keys.Count)
-        {
-            end = keys[low];
-            start = time == end.Time ? end : keys[low - 1];
+            end = keys[next];
+            start = time == end.Time ? end : keys[next - 1];
             phase = ReferenceEquals(start, end) ? 0 : (time - start.Time) / (end.Time - start.Time);
             return true;
         }

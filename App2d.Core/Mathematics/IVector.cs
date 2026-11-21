@@ -17,6 +17,7 @@ namespace App2d.Core.Mathematics;
 /// </summary>
 public interface IVector<TSelf, TReal> :
     INumberTuple<TSelf, TReal>,
+    IInterpolatable<TSelf, TReal>,
     IAdditionOperators<TSelf, TSelf, TSelf>,
     ISubtractionOperators<TSelf, TSelf, TSelf>,
     IMultiplyOperators<TSelf, TReal, TSelf>,
@@ -63,7 +64,8 @@ public interface IVector<TSelf, TReal> :
 
     /// <summary>Linear interpolation, or extrapolation when amount lies outside [0, 1].</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static virtual TSelf Lerp(TSelf first, TSelf second, TReal amount) => first * (TReal.One - amount) + second * amount;
+    static TSelf IInterpolatable<TSelf, TReal>.Lerp(TSelf first, TSelf second, TReal amount) =>
+        first * (TReal.One - amount) + second * amount;
 
     /// <summary>Computes the midpoint without overflowing on finite coordinates.</summary>
     static virtual TSelf Midpoint(TSelf first, TSelf second)

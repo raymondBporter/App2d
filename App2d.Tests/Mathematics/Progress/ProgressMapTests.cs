@@ -4,6 +4,94 @@ namespace App2d.Tests.Mathematics.Progress;
 
 public sealed class ProgressMapTests
 {
+    [Theory]
+    [InlineData(2d, 6d, 10d, 20d)]
+    [InlineData(6d, 2d, 10d, 20d)]
+    [InlineData(2d, 6d, 20d, 10d)]
+    [InlineData(6d, 2d, 20d, 10d)]
+    public void InputAndOutputRangesComposeWithDerivativesInversesAndClamping(double begin, double end, double valueBegin, double valueEnd)
+    {
+        var map = Easingd.Smooth.FromRange(begin, end).ToRange(valueBegin, valueEnd);
+        var time = begin + .25d * (end - begin);
+        var expected = valueBegin + .15625d * (valueEnd - valueBegin);
+        Assert.Equal(expected, map.Sample(time));
+        Assert.Equal((valueEnd - valueBegin) * 1.125d / (end - begin), map.Derivative(time));
+        Assert.Equal(time, map.Inverse!(expected), 12);
+        Assert.Equal(begin, map.InputBegin);
+        Assert.Equal(end, map.InputEnd);
+        Assert.Equal(begin < end ? valueBegin : valueEnd, map.SampleClamped(-100d));
+        Assert.Equal(begin < end ? valueEnd : valueBegin, map.SampleClamped(100d));
+        var composed = ProgressMapd.Normalize(begin, end).Then(Easingd.Smooth).ToRange(valueBegin, valueEnd);
+        Assert.Equal(map.Sample(time), composed.Sample(time));
+        var shifted = map.Then(ProgressMapd.Affine(2d, 3d));
+        Assert.Equal(2d * map.SampleClamped(-100d) + 3d, shifted.SampleClamped(-100d));
+    }
+
+    [Fact]
+    public void FloatRangeAdaptationAndAffineMapsUseTheSameBuildingBlocks()
+    {
+        var map = Easingf.Power(2).FromRange(2f, 6f).ToRange(10f, 20f);
+        Assert.Equal(10.625f, map.Sample(3f));
+        Assert.Equal(1.25f, map.Derivative(3f));
+        Assert.Equal(3f, map.Inverse!(10.625f));
+        var affine = ProgressMapf.Affine(-2f, 7f);
+        Assert.Equal(1f, affine.Sample(3f));
+        Assert.Equal(-2f, affine.Derivative(3f));
+        Assert.Equal(3f, affine.Inverse!(1f));
+    }
+
+    [Fact]
+    public void ConstantAndCollapsedRangesStayConstantThroughComposition()
+    {
+        var constant = ProgressMapf.Constant(1f).Then(Easingf.Step);
+        Assert.Equal(1f, constant.Sample(100f));
+        Assert.Equal(0f, constant.Derivative(100f));
+        Assert.True(constant.IsContinuous);
+        Assert.Null(constant.Inverse);
+        var reflectedConstant = ProgressMapf.Constant(0f).WithDirection(EasingDirection.Out).Then(Easingf.Step);
+        Assert.Equal(1f, reflectedConstant.Sample(.5f));
+        Assert.Equal(0f, reflectedConstant.Derivative(.5f));
+        Assert.True(float.IsNaN(ProgressMapf.Constant(.25f).WithDirection(EasingDirection.InOut).Derivative(.5f)));
+        var collapsedInput = Easingf.Smooth.FromRange(4f, 4f).ToRange(10f, 20f);
+        Assert.Equal(10f, collapsedInput.Sample(-100f));
+        Assert.Equal(0f, collapsedInput.Derivative(4f));
+        Assert.Null(collapsedInput.Inverse);
+        var collapsedOutput = Easingd.Smooth.FromRange(2d, 6d).ToRange(7d, 7d);
+        Assert.Equal(7d, collapsedOutput.Sample(100d));
+        Assert.Equal(0d, collapsedOutput.Derivative(100d));
+        Assert.Equal(7d, collapsedOutput.SampleClamped(-100d));
+        Assert.Null(collapsedOutput.Inverse);
+        Assert.Equal(7d, ProgressMapd.Affine(0d, 7d).Sample(100d));
+    }
+
+    [Fact]
+    public void ExtremeFiniteRangesRetainRepresentableSamplesAndDerivatives()
+    {
+        var normalize = ProgressMapf.Normalize(-float.MaxValue, float.MaxValue);
+        Assert.Equal(.5f, normalize.Sample(0f));
+        Assert.True(normalize.Derivative(0f) > 0f);
+        var smooth = Easingf.Smooth.ToRange(-float.MaxValue, float.MaxValue);
+        Assert.Equal(0f, smooth.Sample(.5f));
+        Assert.Equal(0f, smooth.Derivative(0f));
+        Assert.Equal(0f, smooth.Derivative(1f));
+        var tiny = Easingf.Smooth.FromRange(0f, float.Epsilon);
+        Assert.Equal(0f, tiny.Derivative(0f));
+        Assert.Equal(0f, tiny.Derivative(float.Epsilon));
+    }
+
+    [Fact]
+    public void ClampedSamplingRestrictsOnlyTheInputInBothPrecisions()
+    {
+        var single = new ProgressMapf(x => 2f * x, _ => 2f);
+        var wide = new ProgressMapd(x => 2d * x, _ => 2d);
+        Assert.Equal(2.5f, single.Sample(1.25f));
+        Assert.Equal(2f, single.SampleClamped(1.25f));
+        Assert.Equal(0f, single.SampleClamped(-.25f));
+        Assert.Equal(2.5d, wide.Sample(1.25d));
+        Assert.Equal(2d, wide.SampleClamped(1.25d));
+        Assert.Equal(0d, wide.SampleClamped(-.25d));
+    }
+
     [Fact]
     public void FloatCompositionCarriesItsOwnDerivativesAndInverse()
     {
@@ -124,10 +212,10 @@ public sealed class ProgressMapTests
     [Fact]
     public void InterpolationPreservesIntentionalOvershoot()
     {
-        Assert.Equal(11.5625f, Interpolation.Lerp(10f, 20f, .25d, Easingd.Smooth));
+        Assert.Equal(11.5625f, Interpolation.Interpolate(10f, 20f, Easingd.Smooth, .25d));
         var overshoot = new ProgressMapd(_ => 1.2d, _ => 0d);
-        Assert.True(Interpolation.Lerp(0f, 10f, .7d, overshoot) > 10f);
-        var vector = Interpolation.Lerp(Vector2f.Zero, new(10f, -4f), .7d, overshoot);
+        Assert.True(Interpolation.Interpolate(0f, 10f, overshoot, .7d) > 10f);
+        var vector = Interpolation.Interpolate(Vector2d.Zero, new(10d, -4d), overshoot, .7d);
         Assert.True(vector.X > 10f);
         Assert.True(vector.Y < -4f);
     }

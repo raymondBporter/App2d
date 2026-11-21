@@ -1,4 +1,5 @@
 using App2d.Core.Validation;
+using App2d.Core.Geometry.Curves;
 using System.Numerics;
 
 namespace App2d.Core.Mathematics.Progress;
@@ -69,6 +70,109 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         return degree == 1 ? Linear : new(
             x => TReal.Pow(x, exponent), x => exponent * TReal.Pow(x, TReal.CreateChecked(degree - 1)),
             x => TReal.Pow(x, TReal.One / exponent), isContinuous: true);
+    }
+
+    /// <summary>A normalized cubic segment with two value controls. Control times are fixed at one third and two thirds.</summary>
+    public static ProgressMap<TReal> Bezier(TReal firstControlValue, TReal secondControlValue) =>
+        Bezier(TReal.Zero, firstControlValue, secondControlValue, TReal.One);
+
+    /// <summary>
+    /// A cubic value segment with linear time, analytic derivative, and straight endpoint extensions.
+    /// Value controls may overshoot and endpoint values may be equal. No unique inverse is assumed.
+    /// </summary>
+    public static ProgressMap<TReal> Bezier(TReal begin, TReal firstControlValue, TReal secondControlValue, TReal end)
+    {
+        Ensure.Finite(begin);
+        Ensure.Finite(firstControlValue);
+        Ensure.Finite(secondControlValue);
+        Ensure.Finite(end);
+        var three = TReal.CreateChecked(3);
+        var beginningSlope = three * (firstControlValue - begin);
+        var endingSlope = three * (end - secondControlValue);
+        return new(
+            phase => phase < TReal.Zero ? begin + phase * beginningSlope
+                : phase > TReal.One ? end + (phase - TReal.One) * endingSlope
+                : BezierMath.Cubic<TReal, TReal>(begin, firstControlValue, secondControlValue, end, phase),
+            phase => phase < TReal.Zero ? beginningSlope : phase > TReal.One ? endingSlope
+                : BezierMath.CubicDerivative<TReal, TReal>(begin, firstControlValue, secondControlValue, end, phase),
+            isContinuous: true);
+    }
+
+    /// <summary>A normalized Bezier function with explicit control times and values, preserving nonuniform timing.</summary>
+    public static ProgressMap<TReal> TimedBezier(TReal firstControlTime, TReal firstControlValue, TReal secondControlTime, TReal secondControlValue) =>
+        TimedBezier(TReal.Zero, firstControlTime, firstControlValue, secondControlTime, secondControlValue, TReal.One);
+
+    /// <summary>A Bezier value function, including absolute controls, analytic dValue/dTime, and straight endpoint extensions.</summary>
+    public static ProgressMap<TReal> TimedBezier(TReal begin, TReal firstControlTime, TReal firstControlValue,
+        TReal secondControlTime, TReal secondControlValue, TReal end)
+    {
+        Ensure.InRange(firstControlTime, TReal.Zero, TReal.One);
+        Ensure.InRange(secondControlTime, TReal.Zero, TReal.One);
+        Ensure.Finite(begin);
+        Ensure.Finite(firstControlValue);
+        Ensure.Finite(secondControlValue);
+        Ensure.Finite(end);
+        var three = TReal.CreateChecked(3);
+        if (firstControlTime == TReal.One / three && secondControlTime == Two / three)
+            return Bezier(begin, firstControlValue, secondControlValue, end);
+
+        var beginningSlope = firstControlTime > TReal.Zero ? (firstControlValue - begin) / firstControlTime
+            : secondControlTime > TReal.Zero ? (secondControlValue - begin) / secondControlTime : end - begin;
+        var endingSlope = secondControlTime < TReal.One ? (end - secondControlValue) / (TReal.One - secondControlTime)
+            : firstControlTime < TReal.One ? (end - firstControlValue) / (TReal.One - firstControlTime) : end - begin;
+        return new(
+            time => time < TReal.Zero ? begin + time * beginningSlope
+                : time > TReal.One ? end + (time - TReal.One) * endingSlope
+                : time == TReal.Zero ? begin : time == TReal.One ? end
+                : BezierMath.Cubic<TReal, TReal>(begin, firstControlValue, secondControlValue, end,
+                    BezierParameter(time, firstControlTime, secondControlTime)),
+            time => time < TReal.Zero ? beginningSlope : time > TReal.One ? endingSlope
+                : BezierValueDerivative(BezierParameter(time, firstControlTime, secondControlTime),
+                    begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end),
+            isContinuous: true);
+    }
+
+    private static TReal BezierParameter(TReal time, TReal firstTime, TReal secondTime)
+    {
+        if (time == TReal.Zero || time == TReal.One || TReal.IsNaN(time)) return time;
+        var lower = TReal.Zero;
+        var upper = TReal.One;
+        var parameter = time;
+        // Safeguarded Newton steps converge quickly; bisection also handles flat or vertical time tangents.
+        for (var iteration = 0; iteration < 2048; iteration++)
+        {
+            var value = BezierMath.Cubic<TReal, TReal>(TReal.Zero, firstTime, secondTime, TReal.One, parameter);
+            if (value == time) return parameter;
+            if (value < time) lower = parameter;
+            else upper = parameter;
+            var slope = BezierMath.CubicDerivative<TReal, TReal>(TReal.Zero, firstTime, secondTime, TReal.One, parameter);
+            var next = parameter - (value - time) / slope;
+            if (!(next > lower && next < upper)) next = lower + (upper - lower) / Two;
+            if (next == parameter || next == lower || next == upper) return parameter;
+            parameter = next;
+        }
+        return parameter;
+    }
+
+    private static TReal BezierValueDerivative(TReal parameter, TReal begin, TReal firstTime, TReal firstValue,
+        TReal secondTime, TReal secondValue, TReal end)
+    {
+        var timeSlope = BezierMath.CubicDerivative<TReal, TReal>(TReal.Zero, firstTime, secondTime, TReal.One, parameter);
+        var valueSlope = BezierMath.CubicDerivative<TReal, TReal>(begin, firstValue, secondValue, end, parameter);
+        if (timeSlope != TReal.Zero || valueSlope != TReal.Zero) return valueSlope / timeSlope;
+
+        // Cancel matching zero derivatives: a flattened parameterization can still describe an ordinary linear function.
+        var six = TReal.CreateChecked(6);
+        var three = TReal.CreateChecked(3);
+        var timeSecond = six * ((secondTime - Two * firstTime) * (TReal.One - parameter) +
+            (TReal.One - Two * secondTime + firstTime) * parameter);
+        var valueSecond = six * ((secondValue - Two * firstValue + begin) * (TReal.One - parameter) +
+            (end - Two * secondValue + firstValue) * parameter);
+        if (timeSecond != TReal.Zero) return valueSecond / timeSecond;
+        if (valueSecond != TReal.Zero)
+            return parameter == TReal.Zero ? TReal.CopySign(TReal.PositiveInfinity, valueSecond)
+                : parameter == TReal.One ? TReal.CopySign(TReal.PositiveInfinity, -valueSecond) : TReal.NaN;
+        return (end - begin + three * (firstValue - secondValue)) / (TReal.One + three * (firstTime - secondTime));
     }
 
     /// <summary>Smoothstep orders 0 through 3: linear, cubic, quintic, and septic.</summary>

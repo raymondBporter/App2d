@@ -9,7 +9,7 @@ namespace App2d.Core.Mathematics;
 /// <summary>
 /// A nonempty closed [Min, Max] range on an axis. Endpoints are ordered and never NaN.
 /// Negative/positive infinity represent an unbounded lower/upper end; default is [0, 0].
-/// Every interval formula is a member of this struct; nothing forwards to a helper.
+/// Ordered range queries live here; parameterization shares the directed endpoint helpers on Interval.
 /// </summary>
 /// <typeparam name="T">The numeric type used for the endpoints.</typeparam>
 public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
@@ -170,14 +170,7 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Lerp(T t)
     {
-        var min = Ensure.Finite(Min);
-        var max = Ensure.Finite(Max);
-        if (t == T.Zero || min == max) return min;
-        if (t == T.One) return max;
-        // Opposite signs can overflow max-min even when the interpolated value is finite.
-        return min < T.Zero && max > T.Zero
-            ? checked((T.One - t) * min + t * max)
-            : checked(min + t * (max - min));
+        return Interval.Lerp(Ensure.Finite(Min), Ensure.Finite(Max), t);
     }
 
     /// <summary>Evaluates a finite interval after clamping t to [0, 1].</summary>
@@ -191,16 +184,7 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T InverseLerp(T value)
     {
-        var min = Ensure.Finite(Min);
-        var max = Ensure.Finite(Max);
-        if (min == max || value == min) return T.Zero;
-        if (value == max) return T.One;
-        var width = checked(max - min);
-        var offset = checked(value - min);
-        if (T.IsFinite(width) && T.IsFinite(offset)) return offset / width;
-        // Halving finite endpoints avoids infinity/infinity when a floating-point difference overflows.
-        var two = T.One + T.One;
-        return (value / two - min / two) / (max / two - min / two);
+        return Interval.InverseLerp(Ensure.Finite(Min), Ensure.Finite(Max), value);
     }
 
     /// <summary>Recovers t for a finite interval and clamps it to [0, 1]; returns zero for a singleton.</summary>
@@ -271,8 +255,8 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
     }
 }
 
-/// <summary>Factories whose argument supplies the scalar type, for intervals with an unbounded end.</summary>
-public static class Interval
+/// <summary>Interval factories and directed endpoint arithmetic without constructing an interval value.</summary>
+public static partial class Interval
 {
     /// <summary>The interval unbounded in both directions.</summary>
     public static Interval<T> Entire<T>() where T : IFloatingPointIeee754<T> => new(T.NegativeInfinity, T.PositiveInfinity);

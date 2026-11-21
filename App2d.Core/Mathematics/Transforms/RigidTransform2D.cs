@@ -4,9 +4,13 @@ using System.Text.Json.Serialization;
 namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>Translation and rotation in radians. Default is identity; rotation retains full turns. No scale or reflection.</summary>
-public readonly record struct RigidTransform2D(Vector2f Translation, float Rotation = 0)
+public readonly record struct RigidTransform2D(Vector2f Translation, float Rotation = 0) : IInterpolatable<RigidTransform2D, float>
 {
     public static RigidTransform2D Identity => default;
+
+    /// <summary>Interpolates translation and the unwrapped angle, retaining full turns and rigidity.</summary>
+    public static RigidTransform2D Lerp(RigidTransform2D start, RigidTransform2D end, float amount) =>
+        new(Vector2f.Lerp(start.Translation, end.Translation, amount), Interpolation.Lerp(start.Rotation, end.Rotation, amount));
 
     /// <summary>A row-vector matrix: rotate first, then translate.</summary>
     [JsonIgnore]

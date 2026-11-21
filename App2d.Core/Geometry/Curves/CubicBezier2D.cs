@@ -91,9 +91,9 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         var width = (double)End.X - Start.X;
         if (width != 0)
         {
-            var first = ((double)Control1.X - Start.X) / width;
-            var second = ((double)Control2.X - Start.X) / width;
-            var target = ((double)x - Start.X) / width;
+            var first = Interval.InverseLerp((double)Start.X, End.X, Control1.X);
+            var second = Interval.InverseLerp((double)Start.X, End.X, Control2.X);
+            var target = Interval.InverseLerp((double)Start.X, End.X, x);
             // Handles within the endpoint range guarantee monotonic X, even when the handles cross.
             if (first is >= 0 and <= 1 && second is >= 0 and <= 1 && target is >= 0 and <= 1)
             {
@@ -101,6 +101,9 @@ public readonly partial record struct CubicBezier2D : ICurve2D
                 {
                     return (float)target;
                 }
+                // The standard control times make X(u) linear; these common presets need no inverse solve.
+                if (Control1.X == Interval.Lerp(Start.X, End.X, 1f / 3f) && Control2.X == Interval.Lerp(Start.X, End.X, 2f / 3f))
+                    return (float)target;
                 var a = 1 + 3 * (first - second);
                 var b = 3 * (second - 2 * first);
                 var c = 3 * first;

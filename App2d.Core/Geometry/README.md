@@ -391,16 +391,10 @@ It includes tangencies and endpoints and uses the shared `PolynomialRoots` solve
 has infinitely many matches and throws. `ParameterAtX(x)` is the convenience query when exactly one result is expected;
 it throws for missing or ambiguous results.
 
-Animation's `KeyCurve2D.ToCurve(start, end)` represents a segment as a cubic in `(normalized time, channel value)`.
-Its X controls guarantee a unique time lookup. Its `Slice` first converts time bounds to Bezier parameters, then
-uses the same subdivision as drawing curves. Relative/absolute value handles remain authored data; absolute handles
-can move away from and return to equal endpoint values. The existing keyframe JSON fields are unchanged.
-
-`KeyCurve2D.Split(time, start, end)` returns the two time segments; `Slice(from, to, start, end)` extracts one
-interval. Both use sampled values for the new key endpoints. Handles are stored as two `Vector2` values;
-motion keys store `Vector3f`, and tint keys store `Vector4`. `AuthoredJson` maps these vectors to the existing
-scalar file fields, including their sparse defaults. `KeyframeSampling` owns the shared ordered-key lookup,
-and `KeyframeSegmentSampler` owns shared scalar segment evaluation. Component timing curves stay independent.
+Animation's scalar time/value functions are constructed by `Easingf.Bezier` or `Easingf.TimedBezier` and sampled
+as `ProgressMapf` values. The factories share the scalar/vector `BezierMath` basis with geometric curves.
+Existing keyframe curve objects retain their `x1`, `y1`, `x2`, `y2`, `absolute` JSON fields through the plain
+`BezierParameters` record. Animation no longer needs a second geometric key-curve class or editor conversion API.
 
 ## Shapes
 

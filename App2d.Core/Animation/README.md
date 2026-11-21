@@ -27,24 +27,25 @@ Motion and color keys store `EasingCurve` and `EasingDirection` separately and r
 The enum converters keep existing `linear`, `smooth`, and `step` curve names; omitted direction defaults to `in`.
 For example, an in-out sine uses `"ease": "sine", "easeDirection": "in-out"`. Travel belongs to the motion or
 playback clock. Step with direction In holds the outgoing key; other step directions use the transformed function.
-`KeyframeSampling` selects timeline segments; `KeyframeSegmentSampler` evaluates scalar channels within one.
+`KeyframeSampling` selects timeline segments; `KeyframeSegmentSampler` evaluates values within one.
 
-Authored cubic channels share a `KeyframeSegmentSampler` for each segment sample. Matching X handles reuse the same
-Bezier timing solve, even across different curve objects with different Y handles or absolute/relative value modes.
-Each channel still evaluates its own value curve, including overshoot between equal endpoints. Different X handles
-are solved independently. The four-entry cache lives only for that sample, allocates no managed memory, and cannot
-retain stale handles after editor changes. Named easing is also evaluated once per sample through a `ProgressMapf`.
-Maps evaluate directly in the channel's float precision. Custom curves replace named easing. Held segments are handled by the timeline
-sampler before the scalar segment sampler is invoked.
-The segment sampler accepts geometric `CubicBezier2D` values, so Animation does not depend on authored character types.
-The curve editor can replace a preset with an editable cubic. Only Linear and Smooth have the existing exact cubic
-conversion; excerpts through other named presets must cut on key times or first replace that segment with a curve.
-An unsupported interior cut reports an error instead of changing the interpolation silently.
-Studio excerpts share boundary-key creation, original-segment lookup, and time shifting for motion and color. Each
-caller supplies its sampled values and scalar curve mappings; color retains setup-before-first and bounded boundary
-values, motion retains sticky bends, and rotation slices only its active angle curve. Visibility excerpts remain held
-regardless of the key's stored easing or curves. Numeric slicing uses exact times, preserving closely spaced keys and
-the sampled value at each cut; the editor's key-matching tolerance does not snap excerpt boundaries.
+The value contract `IInterpolatable<TSelf, TReal>` lives in Mathematics. It defines the type's interpolation rule;
+`Interpolation.Interpolate(start, end, map, time)` applies a progress map before calling that rule. Keys and their
+outgoing curve metadata remain separate from values. A timeline policy still chooses which curve belongs to which
+channel, handles held values, and supplies the empty-track default.
+
+`KeyframeSegmentSampler` samples a named `ProgressMapf` once for the channels in a segment and uses the value's
+interpolation rule. Shared vector overloads apply independent component overrides; motion and color policies only
+select their channel curves. Custom curves use the
+same function type, constructed by `Easingf.TimedBezier`. Relative control values use the normalized factory and
+`ToRange(start, end)`; absolute control values use its explicit endpoint-value overload. The map returns the actual
+channel value, including excursions between equal endpoints. The timeline holds exact first and last key values.
+
+Existing `curve` / `curveY` / `curveZ` and color component curve objects deserialize into `BezierParameters`.
+This record contains only four control arguments, the `Absolute` flag, and validation. Its JSON fields remain
+`x1`, `y1`, `x2`, `y2`, and `absolute`, including the previous sparse defaults. There is no separate key-curve
+evaluation, geometry conversion, slicing, or editor conversion API. All function construction lives in the shared
+easing factories. Serialization of arbitrary composed `ProgressMap` delegates is not implemented.
 
 Sampling belongs to Animation. Numeric interpolation and progress maps remain in Mathematics; geometric curves remain
 in Geometry. Interpolation computes a value between endpoints; easing maps its progress. Integrating a velocity over
@@ -62,3 +63,9 @@ updates the existing objects. Markers, events, and contact intervals retain thei
 Attachments and draw order retain setup state until their first key; expressions retain their first selection before
 its key, with playback waiting for that key. A selection active when the excerpt starts restarts at excerpt time zero,
 as before. Payload copying stays with the caller so draw-order slot lists remain independent.
+
+`AnimationClip2D<TFrame>` is a discrete frame sequence. Uniform timing uses an implicit `UniformSequence<float>`
+of end times and one shared frame duration; there are no retained timing arrays. Variable timing keeps cumulative
+end times for lookup and the original durations for exact retrieval. `OrderedSearch.UpperBound` selects the next
+frame at an exact end time, holding the final frame at or past the clip duration. `KeyframeSampling` uses the same
+search helper's `LowerBound` with a time selector, retaining exact key values and endpoint holds.

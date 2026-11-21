@@ -1,9 +1,93 @@
 using App2d.Core.Mathematics.Progress;
+using App2d.Core.Geometry.Curves;
 
 namespace App2d.Tests.Mathematics.Progress;
 
 public sealed class EasingTests
 {
+    [Fact]
+    public void TimedBezierFactoriesPreserveCustomTimingInBothPrecisions()
+    {
+        // X(u) = u^3 and Y(u) = u.
+        var single = Easingf.TimedBezier(0f, 1f / 3f, 0f, 2f / 3f);
+        var wide = Easingd.TimedBezier(0d, 1d / 3d, 0d, 2d / 3d);
+        Assert.Equal(.5f, single.Sample(.125f), 6);
+        Assert.Equal(.5d, wide.Sample(.125d), 12);
+        Assert.Equal(4f / 3f, single.Derivative(.125f), 5);
+        Assert.Equal(4d / 3d, wide.Derivative(.125d), 12);
+        Assert.True(float.IsNaN(single.Sample(float.NaN)));
+        Assert.True(double.IsNaN(wide.Derivative(double.NaN)));
+        Assert.Equal(1f, single.SampleClamped(float.PositiveInfinity));
+        Assert.Equal(0d, wide.SampleClamped(double.NegativeInfinity));
+    }
+
+    [Fact]
+    public void TimedBezierDerivativesHandleFlattenedAndVerticalParameterizations()
+    {
+        var flat = Easingf.TimedBezier(1f, 1f, 0f, 0f);
+        Assert.Equal(1f, flat.Derivative(.5f));
+        var cubic = Easingd.TimedBezier(0d, 0d, 0d, 0d);
+        Assert.Equal(1d, cubic.Derivative(0d));
+        var vertical = Easingf.TimedBezier(0f, .5f, 1f, .5f);
+        Assert.True(float.IsPositiveInfinity(vertical.Derivative(0f)));
+        Assert.True(float.IsPositiveInfinity(vertical.Derivative(1f)));
+        Assert.Equal(-.125f, vertical.Sample(-.25f));
+        Assert.Equal(1.125f, vertical.Sample(1.25f));
+        Assert.Equal(.5f, vertical.Derivative(-.25f));
+        var cusp = Easingd.TimedBezier(1d, 2d, 0d, 1d);
+        Assert.True(double.IsNaN(cusp.Derivative(.5d)));
+    }
+
+    [Fact]
+    public void TimedBezierSamplesAgreeWithExistingGeometricCurves()
+    {
+        var random = new Random(1512);
+        for (var index = 0; index < 30; index++)
+        {
+            var firstTime = random.NextSingle();
+            var secondTime = random.NextSingle();
+            var firstValue = random.NextSingle() * 12f - 4f;
+            var secondValue = random.NextSingle() * 12f - 4f;
+            var geometry = CubicBezier2D.Builder.Create(new(0f, 3f), new(firstTime, firstValue), new(secondTime, secondValue), new(1f, 7f));
+            var single = Easingf.TimedBezier(3f, firstTime, firstValue, secondTime, secondValue, 7f);
+            var wide = Easingd.TimedBezier(3d, firstTime, firstValue, secondTime, secondValue, 7d);
+            foreach (var phase in new[] { .013f, .137f, .319f, .583f, .773f, .947f })
+            {
+                var expected = geometry.Evaluate(geometry.ParameterAtX(phase)).Y;
+                Assert.InRange(MathF.Abs(single.Sample(phase) - expected), 0f, .00003f);
+                Assert.InRange(Math.Abs(wide.Sample(phase) - expected), 0d, .00001d);
+                const double step = 1e-6;
+                var numerical = (wide.Sample(phase + step) - wide.Sample(phase - step)) / (2d * step);
+                Assert.InRange(Math.Abs(wide.Derivative(phase) - numerical), 0d, 1e-7 * Math.Max(1d, Math.Abs(numerical)));
+            }
+        }
+    }
+
+    [Fact]
+    public void TimedBezierValidatesItsParameters()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingf.TimedBezier(-.1f, 0f, .8f, 1f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingd.TimedBezier(.2d, 0d, 1.1d, 1d));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Easingf.TimedBezier(.2f, float.NaN, .8f, 1f));
+    }
+
+    [Fact]
+    public void ScalarBezierFactoriesProvideValueCurvesWithoutTimeHandlesOrAnInverseSolve()
+    {
+        var single = Easingf.Bezier(0f, 1f);
+        var wide = Easingd.Bezier(0d, 1d);
+        Assert.Equal(.15625f, single.Sample(.25f));
+        Assert.Equal(.15625d, wide.Sample(.25d));
+        Assert.Equal(1.125f, single.Derivative(.25f));
+        Assert.Equal(1.125d, wide.Derivative(.25d));
+        var arch = Easingf.Bezier(10f, 20f, 20f, 10f);
+        Assert.Equal(17.5f, arch.Sample(.5f));
+        Assert.Equal(15f, arch.Derivative(.25f));
+        Assert.Equal(2.5f, arch.Sample(-.25f));
+        Assert.Equal(10f, arch.SampleClamped(-.25f));
+        Assert.Equal(1.625d, Easingd.Bezier(2d, 2d).Sample(.5d));
+    }
+
     public static IEnumerable<object[]> CurvesAndDirections =>
         from curve in Enum.GetValues<EasingCurve>()
         from direction in Enum.GetValues<EasingDirection>()

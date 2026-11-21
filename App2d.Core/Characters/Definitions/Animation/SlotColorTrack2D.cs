@@ -12,10 +12,10 @@ public sealed record SlotColorKey2D : IEditableTimedKey
     public Vector4 Value { get; set; } = Vector4.One;
     public EasingCurve Ease { get; set; } = EasingCurve.Linear;
     public EasingDirection EaseDirection { get; set; } = EasingDirection.In;
-    public KeyCurve2D? CurveR { get; set; }
-    public KeyCurve2D? CurveG { get; set; }
-    public KeyCurve2D? CurveB { get; set; }
-    public KeyCurve2D? CurveA { get; set; }
+    public BezierParameters? CurveR { get; set; }
+    public BezierParameters? CurveG { get; set; }
+    public BezierParameters? CurveB { get; set; }
+    public BezierParameters? CurveA { get; set; }
 }
 
 /// <summary>RGBA, RGB, or alpha timeline. RGB and alpha can have independent key times and curves.</summary>
@@ -65,10 +65,8 @@ public sealed record SlotColorTrack2D
         {
             var progressMap = Easingf.FromCurve(a.Ease, a.EaseDirection);
             var sample = new KeyframeSegmentSampler(phase, progressMap);
-            return new(Scalar(a.Value.X, b.Value.X, a.CurveR), Scalar(a.Value.Y, b.Value.Y, a.CurveG),
-                Scalar(a.Value.Z, b.Value.Z, a.CurveB), Scalar(a.Value.W, b.Value.W, a.CurveA));
-
-            float Scalar(float start, float end, KeyCurve2D? curve) => sample.Interpolate(start, end, curve?.ToCurve(start, end));
+            return sample.Interpolate(new Vector4f(a.Value), new Vector4f(b.Value),
+                a.CurveR, a.CurveG, a.CurveB, a.CurveA).ToVector4();
         }
     }
 }

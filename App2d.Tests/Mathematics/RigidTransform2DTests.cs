@@ -5,6 +5,21 @@ namespace App2d.Tests.Mathematics;
 public sealed class RigidTransform2DTests
 {
     [Fact]
+    public void InterpolationRetainsRigidityAndAuthoredFullTurns()
+    {
+        var start = RigidTransform2D.Identity;
+        var end = new RigidTransform2D(new(8f, -4f), MathF.PI);
+        var middle = Interpolation.Interpolate(start, end, Easingf.Smooth, .5f);
+        Assert.Equal(new Vector2f(4f, -2f), middle.Translation);
+        Assert.Equal(MathF.PI / 2f, middle.Rotation);
+        Assert.InRange(Vector2f.Distance(Vector2f.UnitY, middle.TransformDirection(Vector2f.UnitX)), 0f, 1e-6f);
+        Assert.Equal(1f, middle.TransformDirection(Vector2f.UnitX).Length(), 6);
+
+        var turns = Interpolation.Interpolate(start, end with { Rotation = 2f * MathF.Tau }, Easingf.Linear, .25f);
+        Assert.Equal(MathF.PI, turns.Rotation);
+    }
+
+    [Fact]
     public void CompositionAndInverseMatchRowVectorMatricesAndRetainFullTurns()
     {
         var local = new RigidTransform2D(new(2, -3), 2 * MathF.Tau + .4f);

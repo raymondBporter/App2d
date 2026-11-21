@@ -582,12 +582,10 @@ public static class PoseEvaluator
         {
             var progressMap = Easingf.FromCurve(a.Ease, a.EaseDirection);
             var sample = new KeyframeSegmentSampler(phase, progressMap);
-            return (new(Scalar(a.Value.X, b.Value.X, rotate ? null : a.Curve),
-                Scalar(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
-                Scalar(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
-                Scalar(a.Angle, b.Angle, rotate ? a.Curve : null));
-
-            float Scalar(float start, float end, KeyCurve2D? curve) => sample.Interpolate(start, end, curve?.ToCurve(start, end));
+            var sharedCurve = a.Curve?.Absolute == true ? null : a.Curve;
+            return (sample.Interpolate(a.Value, b.Value, rotate ? null : a.Curve,
+                rotate ? null : a.CurveY ?? sharedCurve, rotate ? null : a.CurveZ ?? sharedCurve),
+                sample.Interpolate(a.Angle, b.Angle, rotate ? a.Curve : null));
         }
     }
 
