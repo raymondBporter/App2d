@@ -173,6 +173,8 @@ The reusable mechanics live outside Characters in
 live in `Core/Timing`. Composable `Interpolator<TValue, TReal>` functions and typed
 `InterpolationChannel<TValue, TChannel>` accessors live in `Core/Mathematics`.
 Character tracks bind their saved curve descriptions to these shared strategies.
+Version 5 clips can store the core strategies directly as interpolation recipes; version 4 fields remain readable.
+The first migrated clip is `player-idle`, with regression comparisons against its preserved version 4 data.
 Held values use the shared key/segment rules. Continuous curves may use absolute
 value handles, overshoot, and independent timing per component. Angles retain full
 turns; an angle is not reconstructed from a matrix when that would lose winding.

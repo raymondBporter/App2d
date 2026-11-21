@@ -16,21 +16,15 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, GeometryAsset2D> _geometries = new(StringComparer.Ordinal);
     private readonly Dictionary<string, RenderMaterialAsset2D> _materials = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Piece> _pieces = new(StringComparer.Ordinal);
-    public IReadOnlyDictionary<string, GeometryAsset2D> Geometries => _geometries;
-    public IReadOnlyDictionary<string, RenderMaterialAsset2D> RenderMaterials => _materials;
     public IReadOnlyDictionary<string, Piece> Pieces => _pieces;
     private string _textureRoot = Environment.CurrentDirectory;
     /// <summary>Library parts (P5a), loaded before the models that instance them.</summary>
     public IReadOnlyDictionary<string, Part> Parts => _parts;
-    public IReadOnlyDictionary<string, CharacterModel> Models => _models;
-    public IReadOnlyDictionary<string, ModelVariant> Variants => _variants;
     public IReadOnlyDictionary<string, MotionClip> Animations => _animations;
     public IReadOnlyDictionary<string, ResolvedEntity> Entities => _entities;
     /// <summary>Game profiles (P9c): the player's entity, role clips, gear and the world placement spawns, checked against the catalog.</summary>
     public IReadOnlyDictionary<string, GameProfile> Profiles => _profiles;
     public List<string> Errors { get; } = [];
-    /// <summary>The file an asset was loaded from.</summary>
-    public string PathOf(string id) => _paths[id];
 
     public static AuthoredCatalog Load(string root)
     {

@@ -47,8 +47,6 @@ public static class RigProperties
     private static readonly PropertyDeclaration LinkOffsetYDeclaration = new(LinkOffsetY, PropertyKinds.Number, ParameterUnits.Length, LinkOffsets, Help: "Offset from the bound position in the parent's axes.");
     private static readonly PropertyDeclaration LimitMinDeclaration = new(LimitMin, PropertyKinds.Number, ParameterUnits.Radians, RigLimit.Range, Help: "Lower bound of the parent-local rotation; a normalized bend of 0 lands here.");
     private static readonly PropertyDeclaration LimitMaxDeclaration = new(LimitMax, PropertyKinds.Number, ParameterUnits.Radians, RigLimit.Range, Help: "Upper bound of the parent-local rotation; a normalized bend of 1 lands here.");
-    /// <summary>The joint-limit properties, exposed on a bone node that declares a limit.</summary>
-    public static readonly IReadOnlyList<string> LimitProperties = [LimitMin, LimitMax];
 
     /// <summary>The part properties: the leaf fit (bindable) and its appearance.</summary>
     public static readonly IReadOnlyList<PropertyDeclaration> PartDeclarations =
@@ -60,21 +58,6 @@ public static class RigProperties
         new(Material, PropertyKinds.Material, Help: "Fill, outline, paint or a shared material over the base part's.") { Clearable = false },
         new(Hidden, PropertyKinds.Flag),
     ];
-
-    /// <summary>
-    /// The typed overrides that take a part from <paramref name="was"/> to <paramref name="now"/> (every registered part
-    /// property but the material, which merges separately): the registry reads each property once here, so a part-edit
-    /// command carries no feature field.
-    /// </summary>
-    public static IEnumerable<PropertyOverride> PartChanges(PartGeometry was, PartGeometry now)
-    {
-        PropertyRef Target(string property) => PropertyRef.OfPart(was.Id, property);
-        if (now.ScaleX != was.ScaleX) yield return PropertyOverride.Of(Target(ScaleX), now.ScaleX);
-        if (now.ScaleY != was.ScaleY) yield return PropertyOverride.Of(Target(ScaleY), now.ScaleY);
-        if (now.OffsetX != was.OffsetX) yield return PropertyOverride.Of(Target(OffsetX), now.OffsetX);
-        if (now.OffsetY != was.OffsetY) yield return PropertyOverride.Of(Target(OffsetY), now.OffsetY);
-        if (now.Hidden != was.Hidden) yield return PropertyOverride.Of(Target(Hidden), now.Hidden);
-    }
 
     /// <summary>The attachment-instance properties: placement and fit (bindable), the asset selection, mirror, material and visibility.</summary>
     public static readonly IReadOnlyList<PropertyDeclaration> AttachmentDeclarations =
@@ -99,11 +82,6 @@ public static class RigProperties
         new(Clip, PropertyKinds.Selection, References: "animation", Help: "The clip this role plays on this variant, over the base's motion set.") { Clearable = false },
     ];
 
-    /// <summary>The bindable part property names.</summary>
-    public static readonly IReadOnlyList<string> Part = [.. PartDeclarations.Where(d => d.Bindable).Select(d => d.Name)];
-    /// <summary>The bindable attachment property names.</summary>
-    public static readonly IReadOnlyList<string> Attachment = [.. AttachmentDeclarations.Where(d => d.Bindable).Select(d => d.Name)];
-
     /// <summary>The properties a control exposes by its declared kind and link.</summary>
     public static IReadOnlyList<PropertyDeclaration> Declarations(ModelControl control)
     {
@@ -116,9 +94,6 @@ public static class RigProperties
         // Joint limits are a feature of the node that declares them (P4b); a node without a limit exposes no limit property.
         return control.Node == RigNodeKinds.Bone && control.Limit is not null ? [.. declarations, LimitMinDeclaration, LimitMaxDeclaration] : declarations;
     }
-
-    /// <summary>The bindable control property names.</summary>
-    public static IReadOnlyList<string> ForControl(ModelControl control) => [.. Declarations(control).Where(d => d.Bindable).Select(d => d.Name)];
 
     /// <summary>
     /// Property groups a control does not expose, with the reason: an inspector shows the row as unsupported instead of

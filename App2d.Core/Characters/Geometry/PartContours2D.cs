@@ -18,23 +18,6 @@ public static class PartContours2D
     public static LayeredContour Contour(PartGeometry part, ResolvedModel model, EvaluatedPose pose) =>
         Contour(pose.Fitted(part), pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement);
 
-    /// <summary>A piece's outline inside an evaluated animated instance, in the wearer's frame.</summary>
-    public static LayeredContour Contour(PartGeometry part, EvaluatedAttachment attachment) =>
-        Contour(attachment.Pose.Fitted(part), attachment.World, attachment.Frame, attachment.Rest, attachment.RestFrame);
-
-    public static LayeredContour Contour(PartGeometry part, ResolvedAttachment attachment, Frame3D socket)
-    {
-        var (world, frame) = attachment.Lookups(LayeredFrame2D.Identity);
-        var spatial = PartPlacement3D.Placement(attachment, socket);
-        var physicalZ = attachment.Asset.Point(part.A)?.Z ?? 0;
-        if (part.Mesh is { } mesh)
-        {
-            var placed = PartPlacement3D.GeometryFrame(PartAttachment2D.FrameOf(part, world, frame), spatial, physicalZ);
-            return new([.. (mesh.Outline ?? mesh.Vertices).Select(p => placed.TransformPoint(p))], PartAttachment2D.FrameOf(part, world, frame).Layer);
-        }
-        return Contour(part, world, frame, world, frame).TransformedBy(spatial, physicalZ);
-    }
-
     /// <summary>A shape's closed outline or a curve's sampled open stroke.</summary>
     public static LayeredContour Contour(PartGeometry part, Func<string, Vector3f> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3f>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {

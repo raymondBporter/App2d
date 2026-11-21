@@ -1,5 +1,6 @@
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
+using App2d.Core.Mathematics.Serialization;
 using System.Numerics;
 
 namespace App2d.Core.Mathematics;
@@ -8,18 +9,19 @@ public static partial class Interpolation
 {
     public static Interpolator<TValue, TReal> Default<TValue, TReal>()
         where TValue : IInterpolatable<TValue, TReal>
-        where TReal : IFloatingPointIeee754<TReal> => new(static (start, end, amount) => TValue.Lerp(start, end, amount));
+        where TReal : IFloatingPointIeee754<TReal> => new(static (start, end, amount) => TValue.Lerp(start, end, amount),
+            InterpolatorRecipe<TValue, TReal>.Default);
 
     public static Interpolator<TReal, TReal> Linear<TReal>() where TReal : IFloatingPointIeee754<TReal> =>
-        new(static (start, end, amount) => Interval.Lerp(start, end, amount));
+        new(static (start, end, amount) => Interval.Lerp(start, end, amount), InterpolatorRecipe<TReal, TReal>.Linear);
 
     /// <summary>Holds the first value regardless of time. Timeline sampling still returns exact keys directly.</summary>
     public static Interpolator<TValue, TReal> Hold<TValue, TReal>() where TReal : IFloatingPointIeee754<TReal> =>
-        new(static (start, _, _) => start);
+        new(static (start, _, _) => start, InterpolatorRecipe<TValue, TReal>.Hold);
 
     /// <summary>Takes the signed shortest angular difference; half-turn ties follow IEEE remainder.</summary>
     public static Interpolator<TReal, TReal> ShortestAngle<TReal>() where TReal : IFloatingPointIeee754<TReal> =>
-        new(static (start, end, amount) => start + Angles.WrapSigned(end - start) * amount);
+        new(static (start, end, amount) => start + Angles.WrapSigned(end - start) * amount, InterpolatorRecipe<TReal, TReal>.ShortestAngle);
 
     /// <summary>Relative handles shape progress; absolute handles specify actual values, including excursions between equal endpoints.</summary>
     public static Interpolator<TReal, TReal> Bezier<TReal>(TReal firstTime, TReal firstValue, TReal secondTime, TReal secondValue,
@@ -30,7 +32,8 @@ public static partial class Interpolation
         Ensure.Finite(firstValue);
         Ensure.Finite(secondValue);
         return absolute
-            ? new((start, end, time) => Easing<TReal>.TimedBezierValue(start, firstTime, firstValue, secondTime, secondValue, end, time))
+            ? new((start, end, time) => Easing<TReal>.TimedBezierValue(start, firstTime, firstValue, secondTime, secondValue, end, time),
+                new InterpolatorRecipe<TReal, TReal>.Bezier(firstTime, firstValue, secondTime, secondValue))
             : Linear<TReal>().WithProgress(Easing<TReal>.TimedBezier(firstTime, firstValue, secondTime, secondValue));
     }
 
@@ -52,6 +55,6 @@ public static partial class Interpolation
             var firstAngle = a.Radius == TReal.Zero ? b.AngleRadians : a.AngleRadians;
             var secondAngle = b.Radius == TReal.Zero ? firstAngle : b.AngleRadians;
             return TVector.Direction(angular.Evaluate(firstAngle, secondAngle, time)) * radial.Evaluate(a.Radius, b.Radius, time);
-        });
+        }, new InterpolatorRecipe<TVector, TReal>.Polar(radial, angular));
     }
 }

@@ -64,8 +64,6 @@ public sealed record Piece
         part.Validate();
         return part;
     }
-
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static Piece FromJson(string json)
     {
         var asset = AuthoredAsset.Parse<Piece>(json, "piece");

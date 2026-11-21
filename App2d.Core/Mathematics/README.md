@@ -189,8 +189,9 @@ alternative to unwrapped angle interpolation; half-turn ties follow IEEE remaind
 `Interpolation.Bezier` creates a scalar strategy with relative or absolute handles. Absolute handles can move between
 equal endpoints. It shares the existing timing solver and endpoint extrapolation with `Easing.TimedBezier`.
 `EvaluateClamped` restricts input to `InputBegin` / `InputEnd`, including a span adapted by a progress map, and never
-saturates output. Channel and coordinate composition retain that span. Strategies contain functions; authored
-serialization still stores curve descriptions rather than attempting to serialize arbitrary runtime strategies.
+saturates output. Channel and coordinate composition retain that span. Factories retain construction recipes, so
+the core JSON converters can round-trip named rules, progress maps, and channel compositions. Loading builds their
+functions once. See [interpolation JSON](Serialization/README.md) for the format and application registrations.
 
 `Clamping.Clamp` and `Clamp01` work with numeric types such as int, float, and double, preserving the type's
 standard clamping behavior.

@@ -115,8 +115,6 @@ public sealed record RenderMaterialDefinition2D
 /// <summary>World-unit outline style. Partial values can override a named material's outline.</summary>
 public sealed record RenderOutlineDefinition2D
 {
-    /// <summary>A ready-to-use dark outline. Assign explicitly to materials that should have an outline.</summary>
-    public static RenderOutlineDefinition2D Ink { get; } = new() { Color = "#222b32", Width = .045f };
 
     public string? Color { get; init; }
     public float? Width { get; init; }

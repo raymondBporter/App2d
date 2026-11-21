@@ -20,8 +20,6 @@ public sealed record RenderMaterialAsset2D
         if (Material is null || Material.Asset is not null) throw new InvalidDataException("A library render material owns its surface directly.");
         Material.Validate("render material");
     }
-
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static RenderMaterialAsset2D FromJson(string json)
     {
         var asset = AuthoredAsset.Parse<RenderMaterialAsset2D>(json, "render material");

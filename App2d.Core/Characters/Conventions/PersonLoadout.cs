@@ -50,7 +50,6 @@ public static class PersonLoadout
     public const string SwooshEndMarker = "swoosh-end";
 
     public const string Sword = "sword";
-    public const string Sheath = "sheath";
     public const string Pistol = "pistol";
     /// <summary>The upper-body group: channels an arms-only overlay (a gun shot) owns over any legs. The Person model carries it as its "upper" control group.</summary>
     public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { Chest, Head, LeftShoulder, RightShoulder, LeftArm, RightArm };
@@ -73,10 +72,6 @@ public static class PersonLoadout
         var last = clip.Markers.Where(m => IsSwoosh(m.Id) && m.Time <= seconds + 1e-4f).MaxBy(m => m.Time);
         return last is not null && OpensSwoosh(last.Id);
     }
-
-    /// <summary>Which swing of the clip a swoosh at this time belongs to: 0 for the first, 1 for "swoosh-2", and so on.</summary>
-    public static int SwooshIndex(MotionClip clip, float seconds) =>
-        Math.Max(0, clip.Markers.Count(m => OpensSwoosh(m.Id) && m.Time <= seconds + 1e-4f) - 1);
 
     private static bool IsSwoosh(string id) => id == SwooshMarker || id.StartsWith(SwooshMarker + "-", StringComparison.Ordinal);
     private static bool OpensSwoosh(string id) => IsSwoosh(id) && !id.EndsWith("-end", StringComparison.Ordinal);

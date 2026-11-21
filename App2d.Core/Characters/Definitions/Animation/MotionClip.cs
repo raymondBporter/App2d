@@ -13,6 +13,10 @@ public sealed record ClipKey : IEditableTimedKey
     public float Time { get; set; }
     public Vector3f Value { get; set; }
     public float Angle { get; set; }
+    /// <summary>Core strategy for an outgoing vector segment. Version 5 clips can use this instead of legacy curve fields.</summary>
+    public Interpolator<Vector3f, float>? Interpolator { get; set; }
+    /// <summary>Core strategy for an outgoing rotation segment; the angle remains unwrapped unless the strategy says otherwise.</summary>
+    public Interpolator<float, float>? AngleInterpolator { get; set; }
     /// <summary>The curve used between this key and the next. Ease direction is selected separately.</summary>
     public EasingCurve Ease { get; set; } = EasingCurve.Linear;
     public EasingDirection EaseDirection { get; set; } = EasingDirection.In;
@@ -109,8 +113,8 @@ public sealed class MotionClip
     public static readonly IReadOnlyList<string> PartKinds = [FitKind, ShowKind, TintKind, AlphaKind];
     public static Vector3f DefaultValue(string kind) => kind == TintKind ? Vector3f.One : kind is AlphaKind or ShowKind ? Vector3f.UnitX : Vector3f.Zero;
     public string Format { get; set; } = FormatId;
-    /// <summary>The current clip schema selects animated Part expressions through <see cref="Plays"/>.</summary>
-    public const int CurrentVersion = 4;
+    /// <summary>Version 5 adds core interpolation recipes. Existing version 4 clips retain their curve fields.</summary>
+    public const int CurrentVersion = 5;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
@@ -153,7 +157,7 @@ public sealed class MotionClip
     public void Validate()
     {
         var owner = $"Clip '{Id}'";
-        Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
+        Require(Format == FormatId && Version is 4 or CurrentVersion, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "clip id");
         AuthoredAsset.RequireId(Model, $"{owner} model");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
@@ -219,6 +223,12 @@ public sealed class MotionClip
                 key.CurveG?.Validate();
                 key.CurveB?.Validate();
                 key.CurveA?.Validate();
+                if (key.Interpolator is { } interpolation)
+                {
+                    Require(interpolation.IsInitialized, $"{owner}: uninitialized color interpolator.");
+                    ValidateRecipeFields(key.Ease, key.EaseDirection,
+                        key.CurveR is not null || key.CurveG is not null || key.CurveB is not null || key.CurveA is not null, owner);
+                }
             }
         }
         var previousOrder = -1f;
@@ -249,6 +259,7 @@ public sealed class MotionClip
             new Limit(.001f, 1000).Check(length, $"{owner} reference.{measure}");
         }
         CheckKeys(Travel.Keys, $"{owner} travel", k => k.Value.Z == 0 && k.Angle == 0, "travel keys use x and y only");
+        Require(Travel.Keys.All(key => key.AngleInterpolator is null), $"{owner}: travel uses vector interpolators only.");
         var seen = new HashSet<(string, string)>();
         foreach (var track in Tracks)
         {
@@ -257,6 +268,8 @@ public sealed class MotionClip
             Require(seen.Add((track.Kind, track.Target)), $"{owner}: duplicate {track.Kind} track for '{track.Target}'.");
             Require(track.Keys.All(k => k is null || k.Bend is null || track.Kind == TargetKind && k.Bend is 1 or -1), $"{owner} {track.Kind} track '{track.Target}': bend is 1 or -1, on target keys only.");
             var rotate = track.Kind == RotateKind;
+            Require(track.Keys.All(key => key is null || (rotate ? key.Interpolator is null : key.AngleInterpolator is null)),
+                $"{owner}: rotate tracks use angleInterpolator; other tracks use interpolator.");
             CheckKeys(track.Keys, $"{owner} {track.Kind} track '{track.Target}'",
                 rotate ? k => k.Value.X == 0 && k.Value.Y == 0 && k.Value.Z == 0 : k => k.Angle == 0, rotate ? "rotate keys use angle only" : "keys use x, y and z only");
             if (track.Kind == ShowKind)
@@ -341,7 +354,20 @@ public sealed class MotionClip
             key.Curve?.Validate();
             key.CurveY?.Validate();
             key.CurveZ?.Validate();
+            if (key.Interpolator is not null || key.AngleInterpolator is not null)
+            {
+                Require(key.Interpolator is not { IsInitialized: false } && key.AngleInterpolator is not { IsInitialized: false },
+                    $"{field}: uninitialized interpolator.");
+                ValidateRecipeFields(key.Ease, key.EaseDirection, key.Curve is not null || key.CurveY is not null || key.CurveZ is not null, field);
+            }
         }
+    }
+
+    private void ValidateRecipeFields(EasingCurve ease, EasingDirection direction, bool hasBezier, string field)
+    {
+        Require(Version == CurrentVersion, $"{field}: core interpolators require clip version {CurrentVersion}.");
+        Require(ease == EasingCurve.Linear && direction == EasingDirection.In && !hasBezier,
+            $"{field}: use core interpolators or legacy ease/curve fields on a key, not both.");
     }
 
     /// <summary>
@@ -485,9 +511,6 @@ public sealed class MotionClip
 
         return (target[..at], target[(at + 1)..]);
     }
-
-    /// <summary>The instance a namespaced target belongs to, or null for the wearer's own target.</summary>
-    public static string? InstanceOf(string target) => target.Contains(Part.Namespace) ? Split(target).Instance : null;
 
     /// <summary>The expression a play track selects for an instance at a time: the last key at or before it, else the first key. Null without a track.</summary>
     public (string Expression, float Since)? PlayAt(string instance, float time)

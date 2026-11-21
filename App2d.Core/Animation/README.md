@@ -22,7 +22,7 @@ value; step easing can also hold progress at zero until the next key. Motion and
 component curves, absolute handles, authored full rotation turns, and their different empty-track defaults.
 Setup-before-first behavior remains with the owning track, and color clamping remains with color evaluation.
 
-Motion and color keys store `EasingCurve` and `EasingDirection` separately and resolve them through `Easingf.FromCurve`.
+Legacy motion and color keys store `EasingCurve` and `EasingDirection` separately and resolve them through `Easingf.FromCurve`.
 The enum converters keep existing `linear`, `smooth`, and `step` curve names; omitted direction defaults to `in`.
 For example, an in-out sine uses `"ease": "sine", "easeDirection": "in-out"`. Travel belongs to the motion or
 playback clock. Step with direction In holds the outgoing key; other step directions use the transformed function.
@@ -43,12 +43,18 @@ Existing `curve` / `curveY` / `curveZ` and color component curve objects deseria
 This record contains only four control arguments, the `Absolute` flag, and validation. Its JSON fields remain
 `x1`, `y1`, `x2`, `y2`, and `absolute`, including the previous sparse defaults. There is no separate key-curve
 evaluation, geometry conversion, slicing, or editor conversion API. Function construction lives in the shared
-mathematics factories. Serialization of arbitrary composed progress maps or interpolation strategies is not implemented.
+mathematics factories. Version 4 clips retain this representation.
+
+Clip version 5 can store a core vector `interpolator`, scalar `angleInterpolator`, or color `interpolator` directly.
+The [mathematics converters](../Mathematics/Serialization/README.md) read and write these recipes and build their
+functions during loading. Sampling uses the loaded strategy directly; it does not translate its recipe every frame.
+Keys with core recipes must use the defaults for legacy ease/curve fields, and rotation/vector roles stay explicit.
+`player-idle.json` is the first migrated asset; its key values and sampled poses are compared with a preserved version 4 fixture.
 
 Sampling belongs to Animation. Numeric interpolation and progress maps remain in Mathematics; geometric curves remain
 in Geometry. Interpolation computes a value between endpoints; easing maps its progress. Integrating a velocity over
 time is a separate operation. The sampler adds neither clock advancement nor animation events, loops, or serialized
-track types. Existing authored JSON and editor key data remain unchanged.
+track types. Existing version 4 JSON remains readable alongside the version 5 trial.
 
 `KeyframeEditing` supplies `AtTime`, `Put`, `Move`, and `DeleteAtTime` on the existing key lists. Authoring uses a shared
 time tolerance; sampling still selects exact key times. `Put` maintains time order when inserting, and `Move` delegates

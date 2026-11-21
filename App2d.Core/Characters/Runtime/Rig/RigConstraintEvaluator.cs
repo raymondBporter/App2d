@@ -73,23 +73,6 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         return new(Vector2f.Transform(local, frame), point.Z + model.Rest[chain.End].Z - rest.Z + delta.Z);
     }
 
-    /// <summary>Inverse of TargetPosition, before reference-measure scaling. Used by dragging as well as other authoring hosts.</summary>
-    public static Vector3f TargetDelta(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3f world)
-    {
-        var locomotion = chain.Frame == CharacterModel.Locomotion;
-        var point = locomotion ? pose.Locomotion : pose.Points[chain.Frame];
-        var rest = locomotion ? Vector3f.Zero : model.Rest[chain.Frame];
-        if (locomotion)
-        {
-            return (world - point).RotateXY(locomotion ? 0 : model.Nodes[chain.Frame].RestAngle - pose.Angles[chain.Frame]) - (model.Rest[chain.End] - rest);
-        }
-
-        var (setupInverse, frame) = TargetFrames(model, pose, chain);
-        Matrix3x2.Invert(frame, out var inverse);
-        var delta = Vector2f.Transform(world.XY, inverse) - Vector2f.Transform(model.Rest[chain.End].XY, setupInverse);
-        return new(delta, world.Z - point.Z - model.Rest[chain.End].Z + rest.Z);
-    }
-
     private static (Matrix3x2 SetupInverse, Matrix3x2 Frame) TargetFrames(ResolvedModel model, EvaluatedPose pose, ModelChain chain)
     {
         var frame = pose.Bones[chain.Frame];

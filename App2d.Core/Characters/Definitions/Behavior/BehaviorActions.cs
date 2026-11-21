@@ -138,7 +138,6 @@ public static class EntityControllers
     public const string Idle = "idle";
     public const string Walk = "walk";
     public const string Run = "run";
-    public const string Fall = "fall";
     /// <summary>The action event at which a jump leaves the ground.</summary>
     public const string Launch = "launch";
     /// <summary>The action event at which a shot leaves an equipped prop's muzzle.</summary>
@@ -153,8 +152,6 @@ public static class EntityControllers
         // The game's traversal player: Person2D owns movement and jumping; the entity supplies the actions' timing and geometry.
         [Traversal] = new(Traversal, [Idle, Walk], [Attack, FollowUp, Shoot, WallShot], Moves: true, Jumps: false),
     };
-
-    public static IReadOnlyCollection<ControllerSpec> All => Specs.Values;
     public static ControllerSpec Get(string? kind, string field) =>
         kind is not null && Specs.TryGetValue(kind, out var spec)
         ? spec

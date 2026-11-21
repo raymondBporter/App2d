@@ -13,6 +13,7 @@ Use the cached, read-only instances in `JsonProfiles`. File output is indented. 
 | `Web` | CamelCase, case-tolerant input and quoted numbers; existing animation/tileset/player-geometry manifests |
 | `SnakeCase` | The external music-stem manifest's snake_case names |
 | `StrictCamelCase` | Exact camelCase names, strict numbers and no unknown members; owned settings and level sidecars |
+| `Mathematics` | Strict interpolation/progress recipes, typed channel bindings and ordered composition |
 | `World` | StrictCamelCase plus Vector2 coordinates and omitted nulls; the world document, its generators and tests |
 | `Geometry` | Web numeric/case rules, strict members, coordinate converter and unordered metadata; geometry values |
 | `Puppet` | Geometry's rules with the prototype file's original metadata ordering |
@@ -22,6 +23,10 @@ Use the cached, read-only instances in `JsonProfiles`. File output is indented. 
 `AuthoredJson.Options`, `GeometryJson2D.JsonOptions` and `PuppetDefinition.JsonOptions` expose the corresponding shared instances. Their existing entry points keep the same contracts. `AuthoredJson` retains its character namespace because its default-omission rules apply to character schema types.
 
 `Vector2JsonConverter` lives here and respects its profile's naming, case, number and unknown-member policies. Geometry's kind/interface converter stays in `Geometry/Serialization`: its shape/curve vocabulary belongs to that subsystem and is selected by the geometry types' converter attributes.
+
+Interpolation and progress converters live in `Mathematics/Serialization` and are also selected by their types'
+attributes. `Authored` includes them for version 5 clip recipes; version 4 ease/curve fields remain supported.
+See [interpolation JSON](../Mathematics/Serialization/README.md) for schema examples and custom channel/function bindings.
 
 Tests that intentionally exercise other contracts cache those options in static fields. The observation round-trip test's polymorphic event codec remains test-only; it does not define a production transport. The standalone ClothLab HTML exporter uses the framework's cached `JsonSerializerOptions.Web` singleton for its compact embedded JavaScript data.
 

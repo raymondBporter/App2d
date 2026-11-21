@@ -81,7 +81,6 @@ public sealed class ResolvedEntity
     public ResolvedCollider Movement { get; private set; } = null!;
     public IConvexShape2D MovementShape => Movement.Shape;
     public string Id => Asset.Id;
-    public string Name => Asset.Name;
     public ResolvedModel Model { get; }
     public ControllerSpec Controller { get; }
     public IReadOnlyDictionary<string, RoleClip> Roles { get; private set; } = new Dictionary<string, RoleClip>();
@@ -102,7 +101,6 @@ public sealed class ResolvedEntity
 
     public bool Enabled(string action) => Actions.ContainsKey(action);
     public MotionClip? Clip(string role) => Roles.TryGetValue(role, out var assigned) ? assigned.Clip : null;
-    public ResolvedCollider? Collider(string id) => Colliders.FirstOrDefault(c => c.Id == id);
 
     /// <summary>
     /// Compiles an entity against its assets. Every missing reference, unsupported action, incompatible clip and missing

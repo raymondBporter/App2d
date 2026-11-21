@@ -27,4 +27,7 @@
     <ProjectReference Include="..\App2d.Demos\App2d.Demos.csproj" />
     <ProjectReference Include="..\App2d.EditorUi\App2d.EditorUi.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Fixtures\Animation\player-idle.v4.json" LogicalName="InterpolationTrial.PlayerIdleV4.json" />
+  </ItemGroup>
 </Project>

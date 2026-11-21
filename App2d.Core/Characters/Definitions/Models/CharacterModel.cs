@@ -79,8 +79,6 @@ public sealed class CharacterModel
     public JsonElement? LookData { get; set; }
     /// <summary>The prototype puppet this model was converted from, if any.</summary>
     public AssetSource? Source { get; set; }
-
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(json, "model");
     public static CharacterModel FromJson(string json)
     {
@@ -88,7 +86,6 @@ public sealed class CharacterModel
         model.Validate();
         return model;
     }
-    public static CharacterModel Load(string path) => FromJson(File.ReadAllText(path));
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message)
     {

@@ -1,5 +1,7 @@
 using System.Numerics;
 using App2d.Core.Validation;
+using App2d.Core.Mathematics.Serialization;
+using System.Text.Json.Serialization;
 
 namespace App2d.Core.Mathematics.Progress;
 
@@ -8,11 +10,14 @@ namespace App2d.Core.Mathematics.Progress;
 /// Sample and composition do not implicitly clamp; SampleClamped explicitly clamps the input phase.
 /// A derivative may be NaN at a discontinuity.
 /// </summary>
+[JsonConverter(typeof(ProgressMapJsonConverterFactory))]
 public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal>
 {
     private readonly Func<TReal, TReal> _sample;
     private readonly Func<TReal, TReal> _derivative;
     private readonly bool _isConstant;
+    internal ProgressRecipe<TReal>? Recipe { get; private set; }
+    internal ProgressMap<TReal> WithRecipe(ProgressRecipe<TReal>? recipe) { Recipe = recipe; return this; }
     private static TReal Two => Real<TReal>.Two;
     private static TReal Half => Real<TReal>.Half;
     private static readonly TReal DifferenceStep = TReal.Cbrt(Real<TReal>.MachineEpsilon);
@@ -54,18 +59,20 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
 
     public TReal Derivative(TReal phase) => _derivative(phase);
 
-    public static ProgressMap<TReal> Forward { get; } = new(x => x, _ => TReal.One, x => x, isContinuous: true);
-    public static ProgressMap<TReal> Reverse { get; } = new(x => TReal.One - x, _ => -TReal.One, x => TReal.One - x, isContinuous: true);
+    public static ProgressMap<TReal> Forward { get; } = new ProgressMap<TReal>(x => x, _ => TReal.One, x => x, isContinuous: true)
+        .WithRecipe(new(ProgressOperation.Linear, []));
+    public static ProgressMap<TReal> Reverse { get; } = new ProgressMap<TReal>(x => TReal.One - x, _ => -TReal.One, x => TReal.One - x, isContinuous: true)
+        .WithRecipe(new(ProgressOperation.Reverse, []));
 
     /// <summary>1 - |2t - 1|. At the midpoint the derivative follows the returning leg.</summary>
-    public static ProgressMap<TReal> PingPong { get; } = new(
+    public static ProgressMap<TReal> PingPong { get; } = new ProgressMap<TReal>(
         x => x <= Half ? Two * x : Two * (TReal.One - x),
-        x => x < Half ? Two : -Two, isContinuous: true);
+        x => x < Half ? Two : -Two, isContinuous: true).WithRecipe(new(ProgressOperation.PingPong, []));
 
     /// <summary>|2t - 1|. At the midpoint the derivative follows the returning leg.</summary>
-    public static ProgressMap<TReal> ReversePingPong { get; } = new(
+    public static ProgressMap<TReal> ReversePingPong { get; } = new ProgressMap<TReal>(
         x => x <= Half ? TReal.One - Two * x : Two * x - TReal.One,
-        x => x < Half ? -Two : Two, isContinuous: true);
+        x => x < Half ? -Two : Two, isContinuous: true).WithRecipe(new(ProgressOperation.ReversePingPong, []));
 
     public static ProgressMap<TReal> FromTravel(ProgressTravel travel) => travel switch
     {
@@ -79,8 +86,13 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
     /// <summary>A constant value with zero derivative and no unique inverse.</summary>
     public static ProgressMap<TReal> Constant(TReal value) => Constant(value, TReal.Zero, TReal.One);
 
-    private static ProgressMap<TReal> Constant(TReal value, TReal inputBegin, TReal inputEnd) =>
-        new(_ => value, _ => TReal.Zero, null, true, inputBegin, inputEnd, isConstant: true);
+    internal static ProgressMap<TReal> Constant(TReal value, TReal inputBegin, TReal inputEnd)
+    {
+        Ensure.Finite(inputBegin);
+        Ensure.Finite(inputEnd);
+        return new ProgressMap<TReal>(_ => value, _ => TReal.Zero, null, true, inputBegin, inputEnd, isConstant: true)
+            .WithRecipe(new(ProgressOperation.Constant, [value, inputBegin, inputEnd]));
+    }
 
     /// <summary>scale * x + offset. Zero scale creates a constant; nonzero scales carry an analytic inverse.</summary>
     public static ProgressMap<TReal> Affine(TReal scale, TReal offset)
@@ -89,7 +101,8 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         Ensure.Finite(offset);
         if (scale == TReal.Zero) return Constant(offset);
         if (scale == TReal.One && offset == TReal.Zero) return Forward;
-        return new(x => scale * x + offset, _ => scale, y => (y - offset) / scale, isContinuous: true);
+        return new ProgressMap<TReal>(x => scale * x + offset, _ => scale, y => (y - offset) / scale, isContinuous: true)
+            .WithRecipe(new(ProgressOperation.Affine, [scale, offset]));
     }
 
     /// <summary>Maps begin to zero and end to one without requiring ordered endpoints.</summary>
@@ -99,8 +112,8 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         Ensure.Finite(end);
         if (begin == end) return Constant(TReal.Zero, begin, end);
         var slope = DivideByRange(begin, end, TReal.One);
-        return new(x => Interval.InverseLerp(begin, end, x), _ => slope,
-            y => Interval.Lerp(begin, end, y), true, begin, end);
+        return new ProgressMap<TReal>(x => Interval.InverseLerp(begin, end, x), _ => slope,
+            y => Interval.Lerp(begin, end, y), true, begin, end).WithRecipe(new(ProgressOperation.Normalize, [begin, end]));
     }
 
     /// <summary>Feeds a directed input span into this normalized curve. A collapsed span samples its beginning.</summary>
@@ -109,10 +122,10 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         Ensure.Finite(begin);
         Ensure.Finite(end);
         if (begin == end) return Constant(Sample(TReal.Zero), begin, end);
-        return new(x => Sample(Interval.InverseLerp(begin, end, x)),
+        return new ProgressMap<TReal>(x => Sample(Interval.InverseLerp(begin, end, x)),
             x => DivideByRange(begin, end, Derivative(Interval.InverseLerp(begin, end, x))),
             Inverse is { } inverse ? y => Interval.Lerp(begin, end, inverse(y)) : null,
-            IsContinuous, begin, end, _isConstant);
+            IsContinuous, begin, end, _isConstant).WithRecipe(new(ProgressOperation.FromRange, [begin, end], Source: this));
     }
 
     /// <summary>Maps this curve's values through begin + value * (end - begin), preserving overshoot and input span.</summary>
@@ -121,10 +134,10 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         Ensure.Finite(begin);
         Ensure.Finite(end);
         if (begin == end) return Constant(begin, InputBegin, InputEnd);
-        return new(x => Interval.Lerp(begin, end, Sample(x)),
+        return new ProgressMap<TReal>(x => Interval.Lerp(begin, end, Sample(x)),
             x => ScaleByRange(begin, end, Derivative(x)),
             Inverse is { } inverse ? y => inverse(Interval.InverseLerp(begin, end, y)) : null,
-            IsContinuous, InputBegin, InputEnd, _isConstant);
+            IsContinuous, InputBegin, InputEnd, _isConstant).WithRecipe(new(ProgressOperation.ToRange, [begin, end], Source: this));
     }
 
     private static TReal DivideByRange(TReal begin, TReal end, TReal value)
@@ -145,13 +158,13 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         ArgumentNullException.ThrowIfNull(next);
         if (ReferenceEquals(this, Forward)) return next;
         if (ReferenceEquals(next, Forward)) return this;
-        return new(
+        return new ProgressMap<TReal>(
             phase => next.Sample(Sample(phase)),
             phase => _isConstant || next._isConstant ? TReal.Zero : next.Derivative(Sample(phase)) * Derivative(phase),
             Inverse is { } firstInverse && next.Inverse is { } nextInverse
                 ? value => firstInverse(nextInverse(value)) : null,
             _isConstant || next._isConstant || IsContinuous == true && next.IsContinuous == true ? true : null,
-            InputBegin, InputEnd, _isConstant || next._isConstant);
+            InputBegin, InputEnd, _isConstant || next._isConstant).WithRecipe(new(ProgressOperation.Then, [], Source: this, Next: next));
     }
 
     /// <summary>
@@ -165,22 +178,23 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         if (_isConstant && direction == EasingDirection.Out) return Constant(TReal.One - Sample(TReal.Zero));
 
         if (direction == EasingDirection.Out)
-            return new(
+            return new ProgressMap<TReal>(
                 phase => TReal.One - Sample(TReal.One - phase),
                 phase => Derivative(TReal.One - phase),
                 Inverse is { } inverse ? value => TReal.One - inverse(TReal.One - value) : null,
-                IsContinuous);
+                IsContinuous).WithRecipe(new(ProgressOperation.Direction, [], Source: this, Direction: direction));
 
         var joinsContinuously = Sample(TReal.One) == TReal.One;
         if (_isConstant && joinsContinuously) return Constant(Half);
         var inOutInverse = joinsContinuously ? Inverse : null;
-        return new(
+        return new ProgressMap<TReal>(
             phase => phase < Half ? Sample(Two * phase) / Two : TReal.One - Sample(Two * (TReal.One - phase)) / Two,
             phase => phase == Half && !joinsContinuously ? TReal.NaN
                 : Derivative(phase < Half ? Two * phase : Two * (TReal.One - phase)),
             inOutInverse is { } inverseHalf ? value => value < Half
                 ? inverseHalf(Two * value) / Two : TReal.One - inverseHalf(Two * (TReal.One - value)) / Two : null,
-            isContinuous: IsContinuous == true ? joinsContinuously : IsContinuous);
+            isContinuous: IsContinuous == true ? joinsContinuously : IsContinuous)
+            .WithRecipe(new(ProgressOperation.Direction, [], Source: this, Direction: direction));
     }
 
     /// <summary>

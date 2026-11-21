@@ -28,7 +28,6 @@ public sealed record PartGeometry
     /// <summary>Mesh geometry, mutually exclusive with the planar shape/curve value.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public PartMesh? Mesh { get; set; }
-    [JsonIgnore] public string Kind => SpatialCurve is not null ? "spatial-curve" : Mesh is null ? Geometry?.GetKind() ?? "?" : "mesh";
     /// <summary>Authored drawing style.</summary>
     public RenderMaterialDefinition2D? Material { get; set; }
     public GeometryCollision? Collision { get; set; }
@@ -77,13 +76,6 @@ public sealed record PartGeometry
             throw new InvalidDataException("Mesh and spatial curve textures require UV coordinates; use a textured rectangle.");
         return this with { Material = material };
     }
-
-    /// <summary>Whether this part is attached to the control (its endpoints or bone frame); deleting the control removes such parts.</summary>
-    public bool AttachedTo(string controlId) => A == controlId || B == controlId || Frame == controlId;
-
-    /// <summary>Why deleting a control would leave a point binding dangling, or null.</summary>
-    public string? Dependency(string controlId) =>
-        Bindings?.Any(b => b.Control == controlId || b.Toward == controlId) == true ? "point binding" : null;
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)

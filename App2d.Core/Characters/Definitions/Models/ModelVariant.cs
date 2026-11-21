@@ -35,39 +35,12 @@ public sealed class ModelVariant
     /// property; absent inherits.
     /// </summary>
     public List<PropertyOverride> Overrides { get; set; } = [];
-
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static ModelVariant FromJson(string json)
     {
         var variant = AuthoredAsset.Parse<ModelVariant>(json, "variant");
         variant.Validate();
         return variant;
     }
-
-    // ---- Override access by stable target ------------------------------------------------------------------------------
-
-    public PropertyOverride? Override(PropertyRef target) => Overrides.FirstOrDefault(o => o.Target.Key == target.Key);
-    public bool HasOverride(PropertyRef target) => Override(target) is not null;
-    /// <summary>Every override on one owner (a control, part, attachment or role), in file order.</summary>
-    public IEnumerable<PropertyOverride> OverridesOf(string ownerKind, string owner) => Overrides.Where(o => o.Target.OwnerKind == ownerKind && o.Target.Owner == owner);
-
-    /// <summary>Sets (or replaces) the override of one property. The entry's structure is validated; its meaning is checked against the base when the variant resolves.</summary>
-    public void Set(PropertyOverride change)
-    {
-        change.Validate($"Variant '{Id}' overrides");
-        var index = Overrides.FindIndex(o => o.Target.Key == change.Target.Key);
-        if (index < 0)
-        {
-            Overrides.Add(change);
-        }
-        else
-        {
-            Overrides[index] = change;
-        }
-    }
-
-    /// <summary>Removes the override of one property so it inherits again. Nothing is written in its place.</summary>
-    public bool Reset(PropertyRef target) => Overrides.RemoveAll(o => o.Target.Key == target.Key) > 0;
 
     public void Validate()
     {

@@ -40,7 +40,6 @@ public sealed class EntityAnimator
     /// <summary>The actor's own continuous clock: every step adds to it and nothing restarts it, so part layers on a local clock (a blink) never jump with a role change.</summary>
     public double Clock { get; private set; }
     public ActorPose Pose { get; private set; }
-    public IReadOnlyDictionary<string, Vector3f> Anchors => _hold.Anchors;
     public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
     public bool ActionComplete => Current is { } action && ActionTime >= action.Clip.Duration;
     /// <summary>Whether locomotion is playing: no action, or a masked one layered over it.</summary>
@@ -105,16 +104,6 @@ public sealed class EntityAnimator
 
     /// <summary>The actor left the ground: planted contacts let go, and re-plant where the clip puts them on landing.</summary>
     public void Lift() => _hold.Clear();
-
-    /// <summary>A teleport or respawn: drop the action, the phase and every anchor.</summary>
-    public void Reset(string role = EntityControllers.Idle)
-    {
-        Action = null;
-        ActionTime = PreviousActionTime = RoleTime = 0;
-        Role = role;
-        _hold.Clear();
-        _reverseRoleMotion = false;
-    }
 
     /// <summary>
     /// Advances one fixed step and evaluates the final pose at <paramref name="position"/> (the feet origin). The

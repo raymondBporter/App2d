@@ -10,7 +10,6 @@ namespace App2d.Core.Characters.Authored;
 /// </summary>
 public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, EvaluatedPose Pose, LayeredFrame2D Placement, string? Expression, bool Hidden, Vector2f LayoutFit)
 {
-    public string Id => Attachment.Id;
     public ResolvedModel Rig => Attachment.Rig!;
 
     private Vector3f Fitted(Vector3f point) => new(point.X * LayoutFit.X, point.Y * LayoutFit.Y, point.Z);
@@ -33,7 +32,4 @@ public sealed record EvaluatedAttachment(ResolvedAttachment Attachment, Evaluate
 
     /// <summary>The pieces drawn for this instance: fitted and visible per the nested pose.</summary>
     public IEnumerable<PartGeometry> DrawnParts() => Attachment.Parts.Where(Pose.Visible).Select(Pose.Drawn);
-
-    /// <summary>A wearer-side namespaced name for one of this instance's targets.</summary>
-    public string Qualify(string target) => Id + Part.Namespace + target;
 }

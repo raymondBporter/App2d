@@ -52,9 +52,6 @@ public readonly record struct LayeredFrame2D(Frame2D Frame, float Layer)
 
     public Vector2f Direction(Vector2f local) => Frame.TransformDirection(local);
 
-    /// <summary>The local XY of a point, ignoring layers. False when the frame is collapsed.</summary>
-    public bool TryToLocal(Vector2f point, out Vector2f local) => Frame.TryToLocal(point, out local);
-
     /// <summary>The local point whose Z is the layer offset from this placement. False when the frame is collapsed.</summary>
     public bool TryToLocal(Vector3f point, out Vector3f local)
     {

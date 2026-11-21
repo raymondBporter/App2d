@@ -40,7 +40,4 @@ public sealed class ResolvedCollider : ResolvedGeometry
         }
         return new(definition, use, source, shape, model, sockets, equipment, field);
     }
-
-    /// <summary>The placed shape as a region value, for outlines, reference capture and legacy overlap tests.</summary>
-    public EntityRegion Region(ActorPose pose, float scale = 1) => new(Id, Shape, Place(pose, scale));
 }

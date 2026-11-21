@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Serialization;
+using App2d.Core.Mathematics.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -50,6 +51,12 @@ public static class JsonProfiles
     public static JsonSerializerOptions StrictCamelCase { get; } = Freeze(new(CamelCase)
     {
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
+    });
+
+    /// <summary>Reusable interpolation and progress recipes, including typed channels and ordered composition.</summary>
+    public static JsonSerializerOptions Mathematics { get; } = Freeze(new(StrictCamelCase)
+    {
+        Converters = { new InterpolatorJsonConverterFactory(), new ProgressMapJsonConverterFactory() }
     });
 
     /// <summary>World documents and their generators share coordinate encoding and omit absent optional values.</summary>

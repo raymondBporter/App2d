@@ -110,50 +110,6 @@ public sealed class PuppetDrawing
         Add(evaluated.DrawnParts(), evaluated.World, evaluated.Frame, evaluated.Rest, evaluated.RestFrame);
     }
 
-    /// <summary>
-    /// An entity's final pose in actor-local units, with its equipped props placed by the same socket transform that hit
-    /// regions use. Facing and position belong to the caller's world matrix.
-    /// </summary>
-    public void Build(ResolvedEntity entity, EvaluatedPose local)
-    {
-        Build(entity.Model, local);
-        var placed = new ActorPose(local, Vector2f.Zero, 1);
-        foreach (var equipment in entity.Equipment)
-        {
-            AddAttachment(equipment.Prop, placed.Socket(equipment.Socket), seconds: local.SampleSeconds, layer: placed.SocketPlacement(equipment.Socket).Layer);
-        }
-        Vector3f World(string id) => id == PartLocation.Origin ? Vector3f.Zero : local.World(id);
-        Vector3f Rest(string id) => id == PartLocation.Origin ? Vector3f.Zero : entity.Model.Rest[id];
-        LayeredFrame2D Bone(string id) => id is PartLocation.Origin or CharacterModel.Locomotion ? LayeredFrame2D.Identity : local.Placement(id);
-        LayeredFrame2D RestBone(string id) => id is PartLocation.Origin or CharacterModel.Locomotion ? LayeredFrame2D.Identity : entity.Model.RestPlacement(id);
-        foreach (var geometry in entity.Geometry.Where(g => g.Definition.Material is not null && !g.Definition.Hidden))
-        {
-            if (geometry.Binding is ColliderBindings.Actor or ColliderBindings.Control)
-            {
-                Add([geometry.Definition.ResolveMaterial(entity.Asset.Materials)], World, Bone, Rest, RestBone, seconds: local.SampleSeconds);
-                continue;
-            }
-            var frame = geometry.Frame(placed);
-            var drawing = geometry.Definition.ResolveMaterial(entity.Asset.Materials) with
-            {
-                A = PartLocation.Origin,
-                B = null,
-                Frame = PartLocation.Origin,
-                Socket = null,
-                Prop = null,
-                OffsetX = 0,
-                OffsetY = 0,
-                Angle = 0,
-                ScaleX = 1,
-                ScaleY = 1,
-                Layer = 0,
-                Along = 0,
-                Stretch = false,
-            };
-            Add([drawing], _ => frame.Origin, _ => frame, seconds: local.SampleSeconds);
-        }
-    }
-
     /// <summary>Shared library instance at a spatial socket, including weapon tilt/twist and physical Z.</summary>
     public void AddAttachment(Part asset, Frame3D socket, PartInstance? instance = null, double seconds = 0, float layer = 0)
     {
@@ -189,13 +145,6 @@ public sealed class PuppetDrawing
         }
         var (world, frame) = attachment.Lookups(LayeredFrame2D.Identity);
         Add(attachment.Parts, world, frame, world, frame, spatial: spatial, physicalDepth: id => attachment.Asset.Point(id)?.Z ?? 0, seconds: seconds, layer: layer);
-    }
-
-    /// <summary>Plain primitives from parts and a world-position lookup, replacing the drawing. The only drawing path for both prototype and authored models.</summary>
-    public void Build(IEnumerable<PartGeometry> parts, Func<string, Vector3f> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3f>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
-    {
-        Clear();
-        Add(parts, world, bone, rest, restBone);
     }
 
     /// <summary>

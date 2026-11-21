@@ -182,15 +182,4 @@ public sealed class ParameterCatalog
             layout.Set(binding.Target, binding.Evaluate(values[parameter.Id], reference));
         }
     }
-
-    /// <summary>The parameter and binding producing a property, or null when it is authored directly.</summary>
-    public (ModelParameter Parameter, ParameterBinding Binding)? BindingOf(PropertyRef property) =>
-        _byTarget.TryGetValue(property.Key, out var entry) ? (entry.Parameter, entry.Binding) : null;
-
-    public (ModelParameter Parameter, ParameterBinding Binding)? BindingOfControl(string control, string property) => BindingOf(PropertyRef.OfControl(control, property));
-    public (ModelParameter Parameter, ParameterBinding Binding)? BindingOfPart(string part, string property) => BindingOf(PropertyRef.OfPart(part, property));
-    public (ModelParameter Parameter, ParameterBinding Binding)? BindingOfAttachment(string attachment, string property) => BindingOf(PropertyRef.OfAttachment(attachment, property));
-
-    /// <summary>Every binding, with its parameter, in evaluation order.</summary>
-    public IEnumerable<(ModelParameter Parameter, ParameterBinding Binding)> Bindings => _order.Select(e => (e.Parameter, e.Binding));
 }

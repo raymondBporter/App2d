@@ -64,26 +64,4 @@ public static class PartAttachment2D
         var now = BindingFrame(binding, world);
         return now.At(before.ToLocal(drawnRest));
     }
-
-    /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
-    public static Vector2f ArtworkPoint(PartGeometry part, int index, Vector2f target, Func<string, Vector3f> world, Func<string, Vector3f> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
-    {
-        var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
-        var art = binding is null ? FrameOf(part, world, bone) : FrameOf(part, rest, restBone);
-        if (binding is not null)
-        {
-            var now = BindingFrame(binding, world);
-            var before = BindingFrame(binding, rest);
-            target = before.At(now.Frame.ToLocal(target)).XY;
-        }
-        if (!art.TryToLocal(target, out var local))
-        {
-            throw new InvalidOperationException("Cannot edit a cutout through a collapsed frame.");
-        }
-
-        return local;
-    }
-
-    public static Vector2f ArtworkPoint(PartGeometry part, int index, Vector2f target, ResolvedModel model, EvaluatedPose pose) =>
-        ArtworkPoint(part, index, target, pose.World, id => model.Rest[id], pose.Placement, model.RestPlacement);
 }

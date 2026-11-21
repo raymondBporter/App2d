@@ -21,7 +21,6 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2f Position, int Facin
 
     public Vector3f Place(Vector3f local) => Placement.At(local);
     public Vector3f ToLocal(Vector3f world) => Placement.ToLocal(world);
-    public Vector3f World(string control) => Place(Local.Points[control]);
 
     /// <summary>
     /// The carrier a socket attaches to, in actor-local units: its control's point turned by the frame control's angle
@@ -69,13 +68,6 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2f Position, int Facin
     /// </summary>
     public LayeredFrame2D SocketPlacement(ModelSocket socket) =>
         socket.LocalPlacement.Then(SocketCarrier(socket)).Then(Placement);
-
-    /// <summary>The socket's screen-plane turn with its animated orientation applied, shared with editor handles.</summary>
-    public float SocketTurn(ModelSocket socket)
-    {
-        var planar = socket.LocalPlacement.Then(SocketCarrier(socket));
-        return planar.XAxis.AngleRadians + Local.SocketAngles.GetValueOrDefault(socket.Id).Z;
-    }
 
     /// <summary>The socket's 3D frame for props: its planar placement lifted by the clip's tilt/twist/turn orientation.</summary>
     public Frame3D Socket(ModelSocket socket) =>

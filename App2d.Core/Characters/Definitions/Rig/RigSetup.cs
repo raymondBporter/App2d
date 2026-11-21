@@ -75,8 +75,6 @@ public sealed record RigLink
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public string Orientation { get; set; } = RigLinkOrientations.Parent;
-    /// <summary>A plain tip binding: the origin is the parent's +X tip and the node turns with it.</summary>
-    [JsonIgnore] public bool IsTip => T == 1 && OffsetX == 0 && OffsetY == 0 && Orientation == RigLinkOrientations.Parent;
 
     /// <summary>The bound origin in the parent's local axes, from the parent's final length.</summary>
     public Vector2f Origin(float parentLength) => new(parentLength * T + OffsetX, OffsetY);
@@ -109,9 +107,6 @@ public sealed record RigLimit
     public float Min { get; set; } = -MathF.PI / 2;
     public float Max { get; set; } = MathF.PI / 2;
 
-    /// <summary>A quarter turn either way, for a limit the author has just added.</summary>
-    public static RigLimit Starter => new();
-
     [JsonIgnore] public Interval<float> Interval => new(Ensure.Finite(Min), Ensure.Finite(Max));
     [JsonIgnore] public float Span => Max - Min;
 
@@ -122,9 +117,6 @@ public sealed record RigLimit
 
     /// <summary>A normalized bend through the range: 0 is exactly <see cref="Min"/>, 1 exactly <see cref="Max"/>; outside 0..1 is clamped.</summary>
     public float FromNormalized(float bend) => bend <= 0 ? Min : bend >= 1 ? Max : Min + bend * Span;
-
-    /// <summary>The normalized position of a local rotation in the range (0 for a locked limit).</summary>
-    public float ToNormalized(float rotation) => Span == 0 ? 0 : (rotation - Min) / Span;
 
     /// <summary>
     /// The representative of a wrapped angle that the range can hold, or the one nearest the range: a solved frame angle is

@@ -10,6 +10,7 @@ public sealed record SlotColorKey2D : IEditableTimedKey
 {
     public float Time { get; set; }
     public Vector4 Value { get; set; } = Vector4.One;
+    public Interpolator<Vector4f, float>? Interpolator { get; set; }
     public EasingCurve Ease { get; set; } = EasingCurve.Linear;
     public EasingDirection EaseDirection { get; set; } = EasingDirection.In;
     public BezierParameters? CurveR { get; set; }
@@ -58,7 +59,7 @@ public sealed record SlotColorTrack2D
 
     private static Vector4 SampleSegment(SlotColorKey2D a, SlotColorKey2D b, float phase)
     {
-        var rule = Interpolation.Default<Vector4f, float>().WithProgress(Easingf.FromCurve(a.Ease, a.EaseDirection))
+        var rule = a.Interpolator ?? Interpolation.Default<Vector4f, float>().WithProgress(Easingf.FromCurve(a.Ease, a.EaseDirection))
             .With(Vector4f.Channels.R, Curve(a.CurveR)).With(Vector4f.Channels.G, Curve(a.CurveG))
             .With(Vector4f.Channels.B, Curve(a.CurveB)).With(Vector4f.Channels.A, Curve(a.CurveA));
         return rule.Evaluate(new Vector4f(a.Value), new Vector4f(b.Value), phase).ToVector4();

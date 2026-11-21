@@ -17,7 +17,6 @@ public sealed record GeometryAsset2D
     public PartMesh? Mesh { get; set; }
     [JsonConverter(typeof(Core.Geometry.Serialization.SpatialCurveJsonConverter))]
     public ICurve<Vector3f, float>? SpatialCurve { get; set; }
-    [JsonIgnore] public string Kind => Mesh is not null ? "mesh" : SpatialCurve is not null ? "spatial-curve" : Geometry?.GetKind() ?? "empty";
 
     /// <summary>A fresh placed entry; resolving or rebuilding it cannot mutate the library mesh.</summary>
     public PartGeometry Entry(RenderMaterialDefinition2D material) => new()
@@ -44,8 +43,6 @@ public sealed record GeometryAsset2D
         }
         Entry(RenderMaterialDefinition2D.Ink).Validate(id => id == PartLocation.Origin);
     }
-
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static GeometryAsset2D FromJson(string json)
     {
         var asset = AuthoredAsset.Parse<GeometryAsset2D>(json, "geometry");

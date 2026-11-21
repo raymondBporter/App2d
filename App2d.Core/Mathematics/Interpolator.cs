@@ -1,22 +1,32 @@
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
+using App2d.Core.Mathematics.Serialization;
 using System.Numerics;
+using System.Text.Json.Serialization;
 
 namespace App2d.Core.Mathematics;
 
 /// <summary>A reusable function from two endpoint values and time to a value. No timing or output is implicitly clamped.</summary>
+[JsonConverter(typeof(InterpolatorJsonConverterFactory))]
 public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatingPointIeee754<TReal>
 {
     private readonly Func<TValue, TValue, TReal, TValue> _function;
     private readonly ProgressMap<TReal>? _progress;
+    internal InterpolatorRecipe<TValue, TReal>? Recipe { get; }
+    internal ProgressMap<TReal>? Progress => _progress;
+    internal bool IsInitialized => _function is not null;
+    internal Interpolator<TValue, TReal> FunctionOnly => new(_function, null, Recipe);
 
-    public Interpolator(Func<TValue, TValue, TReal, TValue> function) : this(function, null) { }
+    public Interpolator(Func<TValue, TValue, TReal, TValue> function) : this(function, null, null) { }
 
-    private Interpolator(Func<TValue, TValue, TReal, TValue> function, ProgressMap<TReal>? progress)
+    internal Interpolator(Func<TValue, TValue, TReal, TValue> function, InterpolatorRecipe<TValue, TReal> recipe) : this(function, null, recipe) { }
+
+    private Interpolator(Func<TValue, TValue, TReal, TValue> function, ProgressMap<TReal>? progress, InterpolatorRecipe<TValue, TReal>? recipe)
     {
         Ensure.ThrowIfNull(function);
         _function = function;
         _progress = progress;
+        Recipe = recipe;
         InputBegin = progress is null ? TReal.Zero : progress.InputBegin;
         InputEnd = progress is null ? TReal.One : progress.InputEnd;
     }
@@ -36,7 +46,7 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
     public Interpolator<TValue, TReal> WithProgress(ProgressMap<TReal> progress)
     {
         Ensure.ThrowIfNull(progress);
-        return new(_function, _progress is null ? progress : progress.Then(_progress));
+        return new(_function, _progress is null ? progress : progress.Then(_progress), Recipe);
     }
 
     /// <summary>
@@ -56,7 +66,9 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
         InterpolationChannel<TValue, TChannel> channel, Interpolator<TChannel, TReal> child)
     {
         return new((start, end, time) => channel.Replace(parent.Evaluate(start, end, time),
-            child.Evaluate(channel.Read(start), channel.Read(end), time))) { InputBegin = parent.InputBegin, InputEnd = parent.InputEnd };
+            child.Evaluate(channel.Read(start), channel.Read(end), time)),
+            new InterpolatorRecipe<TValue, TReal>.Channel<TChannel>(parent, channel, child))
+            { InputBegin = parent.InputBegin, InputEnd = parent.InputEnd };
     }
 
     /// <summary>Interpolates a scalar channel through its own progress map.</summary>
@@ -69,7 +81,8 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
         Ensure.ThrowIfNull(toCoordinates);
         Ensure.ThrowIfNull(fromCoordinates);
         var source = this;
-        return new((start, end, time) => fromCoordinates(source.Evaluate(toCoordinates(start), toCoordinates(end), time)))
+        return new((start, end, time) => fromCoordinates(source.Evaluate(toCoordinates(start), toCoordinates(end), time)),
+            new InterpolatorRecipe<TOutput, TReal>.Coordinates<TValue>(source, toCoordinates, fromCoordinates))
             { InputBegin = InputBegin, InputEnd = InputEnd };
     }
 }

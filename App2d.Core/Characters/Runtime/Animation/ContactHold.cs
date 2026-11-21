@@ -13,8 +13,6 @@ public sealed class ContactHold
     private readonly Dictionary<string, Vector3f> _anchors = new(StringComparer.Ordinal);
     private readonly HashSet<string> _held = new(StringComparer.Ordinal);
     private int _facing = 1;
-
-    public IReadOnlyDictionary<string, Vector3f> Anchors => _anchors;
     public void Clear() => _anchors.Clear();
 
     /// <summary>Moves every held anchor by <paramref name="delta"/>: the ground they stand on moved, as a platform does.</summary>

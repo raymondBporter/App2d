@@ -14,13 +14,6 @@ public static class PersonEquipment
         _ => throw new InvalidDataException($"Unknown Person equipment slot '{slot}'."),
     };
 
-    /// <summary>Shin artwork uses the ankle as origin, +Y toward the knee, just like existing foot-fitted artwork.</summary>
-    public static IEnumerable<ModelSocket> ShinSockets() =>
-    [
-        new() { Id = Humanoid.LeftShinSocket, Control = Humanoid.LeftFoot, Toward = Humanoid.LeftKnee, Layer = -.01f },
-        new() { Id = Humanoid.RightShinSocket, Control = Humanoid.RightFoot, Toward = Humanoid.RightKnee, Layer = -.01f },
-    ];
-
     public static IReadOnlyList<ResolvedAttachment> Placements(Part asset, EquipmentSettings settings, IReadOnlyDictionary<string, ModelSocket> sockets)
     {
         settings.Validate();

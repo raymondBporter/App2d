@@ -79,18 +79,6 @@ public sealed class ResolvedModel
     public IReadOnlyList<ModelChain> IkConstraints { get; }
     public IReadOnlyDictionary<string, IReadOnlyList<string>> Children { get; }
 
-    // ---- Provenance (plan section 3.10) -----------------------------------------------------------------------------
-
-    /// <summary>Where a property's resolved value came from: the base, a parameter binding, or this variant's override or clear.</summary>
-    public PropertySource Provenance(PropertyRef property) =>
-        _overrides.TryGetValue(property.Key, out var change) ? change.Clear ? PropertySource.Cleared : PropertySource.Override
-        : Parameters.BindingOf(property) is not null ? PropertySource.ParameterBinding
-        : PropertySource.Base;
-    /// <summary>Whether a variant override masks a parameter binding on the same property.</summary>
-    public bool Masks(PropertyRef property) => _overrides.ContainsKey(property.Key) && Parameters.BindingOf(property) is not null;
-    /// <summary>A number property's final resolved value.</summary>
-    public float Number(PropertyRef property) => _layout.Get(property);
-
     /// <summary>The top of the rest pose's visible shapes above the feet: the height a drawn size is fitted to.</summary>
     public float DrawnHeight()
     {

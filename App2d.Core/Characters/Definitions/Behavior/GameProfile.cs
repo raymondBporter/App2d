@@ -33,8 +33,6 @@ public sealed class GameProfile
     /// <summary>World placement kind name → the authored entity it spawns.</summary>
     public Dictionary<string, string> Spawns { get; set; } = new(StringComparer.Ordinal);
 
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-
     public static GameProfile FromJson(string json)
     {
         var profile = AuthoredAsset.Parse<GameProfile>(json, "profile");

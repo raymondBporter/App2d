@@ -1,5 +1,6 @@
 using App2d.Core.Validation;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics.Serialization;
 using System.Numerics;
 
 namespace App2d.Core.Mathematics.Progress;
@@ -17,15 +18,15 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
     public static readonly ProgressMap<TReal> Smoother = CreateSmoothStep(2);
     public static readonly ProgressMap<TReal> Smoothest = CreateSmoothStep(3);
 
-    public static readonly ProgressMap<TReal> Sine = new(
+    public static readonly ProgressMap<TReal> Sine = new ProgressMap<TReal>(
         x => x == TReal.One ? TReal.One : TReal.One - TReal.Cos(x * TReal.Pi / Two),
         x => TReal.Pi / Two * TReal.Sin(x * TReal.Pi / Two),
-        x => Two / TReal.Pi * TReal.Acos(TReal.One - x), isContinuous: true);
+        x => Two / TReal.Pi * TReal.Acos(TReal.One - x), isContinuous: true).WithRecipe(new(ProgressOperation.Sine, []));
 
     /// <summary>Holds zero before phase 1, then jumps to one. Its derivative is NaN at the jump; no unique inverse exists.</summary>
-    public static readonly ProgressMap<TReal> Step = new(
+    public static readonly ProgressMap<TReal> Step = new ProgressMap<TReal>(
         x => TReal.IsNaN(x) ? TReal.NaN : x < TReal.One ? TReal.Zero : TReal.One,
-        x => TReal.IsNaN(x) || x == TReal.One ? TReal.NaN : TReal.Zero, isContinuous: false);
+        x => TReal.IsNaN(x) || x == TReal.One ? TReal.NaN : TReal.Zero, isContinuous: false).WithRecipe(new(ProgressOperation.Step, []));
 
     // Animation resolves these on every sampled segment; create the directed curves only once.
     private static readonly Dictionary<(EasingCurve, EasingDirection), ProgressMap<TReal>> Presets = CreatePresets();
@@ -67,9 +68,9 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
     {
         Ensure.Positive(degree);
         var exponent = TReal.CreateChecked(degree);
-        return degree == 1 ? Linear : new(
+        return degree == 1 ? Linear : new ProgressMap<TReal>(
             x => TReal.Pow(x, exponent), x => exponent * TReal.Pow(x, TReal.CreateChecked(degree - 1)),
-            x => TReal.Pow(x, TReal.One / exponent), isContinuous: true);
+            x => TReal.Pow(x, TReal.One / exponent), isContinuous: true).WithRecipe(new(ProgressOperation.Power, [], Integer: degree));
     }
 
     /// <summary>A normalized cubic segment with two value controls. Control times are fixed at one third and two thirds.</summary>
@@ -89,13 +90,13 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         var three = TReal.CreateChecked(3);
         var beginningSlope = three * (firstControlValue - begin);
         var endingSlope = three * (end - secondControlValue);
-        return new(
+        return new ProgressMap<TReal>(
             phase => phase < TReal.Zero ? begin + phase * beginningSlope
                 : phase > TReal.One ? end + (phase - TReal.One) * endingSlope
                 : BezierMath.Cubic<TReal, TReal>(begin, firstControlValue, secondControlValue, end, phase),
             phase => phase < TReal.Zero ? beginningSlope : phase > TReal.One ? endingSlope
                 : BezierMath.CubicDerivative<TReal, TReal>(begin, firstControlValue, secondControlValue, end, phase),
-            isContinuous: true);
+            isContinuous: true).WithRecipe(new(ProgressOperation.Bezier, [begin, firstControlValue, secondControlValue, end]));
     }
 
     /// <summary>A normalized Bezier function with explicit control times and values, preserving nonuniform timing.</summary>
@@ -120,12 +121,13 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
             : secondControlTime > TReal.Zero ? (secondControlValue - begin) / secondControlTime : end - begin;
         var endingSlope = secondControlTime < TReal.One ? (end - secondControlValue) / (TReal.One - secondControlTime)
             : firstControlTime < TReal.One ? (end - firstControlValue) / (TReal.One - firstControlTime) : end - begin;
-        return new(
+        return new ProgressMap<TReal>(
             time => TimedBezierValue(begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end, time),
             time => time < TReal.Zero ? beginningSlope : time > TReal.One ? endingSlope
                 : BezierValueDerivative(BezierParameter(time, firstControlTime, secondControlTime),
                     begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end),
-            isContinuous: true);
+            isContinuous: true).WithRecipe(new(ProgressOperation.TimedBezier,
+                [begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end]));
     }
 
     // Shared by value interpolators whose endpoint values are supplied at evaluation time.
@@ -219,11 +221,11 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         _ => throw new ArgumentOutOfRangeException(nameof(order), order, "Supported smoothstep orders are 0 through 3.")
     };
 
-    private static ProgressMap<TReal> CreateSmoothStep(int order) => new(
+    private static ProgressMap<TReal> CreateSmoothStep(int order) => new ProgressMap<TReal>(
         x => SmoothStepValue(x, order),
         x => TReal.CreateChecked(order switch { 1 => 6, 2 => 30, _ => 140 }) * TReal.Pow(x * (TReal.One - x), TReal.CreateChecked(order)),
         order == 1 ? InverseCubicSmoothStep : x => InverseSmoothStep(x, order),
-        isContinuous: true);
+        isContinuous: true).WithRecipe(new(ProgressOperation.SmoothStep, [], Integer: order));
 
     private static TReal InverseCubicSmoothStep(TReal value) => value == TReal.Zero || value == TReal.One
         ? value : Half - TReal.Sin(TReal.Asin(TReal.One - Two * value) / TReal.CreateChecked(3));

@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 4,
+  "version": 5,
   "id": "player-idle",
   "name": "Idle",
   "model": "person",
@@ -23,19 +23,38 @@
         {
           "x": -0.01,
           "y": 0.012,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "operations": [
+              {
+                "kind": "progress",
+                "map": "smooth"
+              },
+              {
+                "kind": "channel",
+                "channel": "x",
+                "interpolator": "linear"
+              }
+            ]
+          }
         },
         {
           "time": 1.2,
           "x": -0.01,
           "y": 0.0039999997,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 2.4,
           "x": -0.01,
           "y": 0.012,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         }
       ]
     },
@@ -44,15 +63,24 @@
       "target": "hips",
       "keys": [
         {
-          "ease": "smooth"
+          "angleInterpolator": {
+            "kind": "linear",
+            "progress": "smooth"
+          }
         },
         {
           "time": 1.2,
-          "ease": "smooth"
+          "angleInterpolator": {
+            "kind": "linear",
+            "progress": "smooth"
+          }
         },
         {
           "time": 2.4,
-          "ease": "smooth"
+          "angleInterpolator": {
+            "kind": "linear",
+            "progress": "smooth"
+          }
         }
       ]
     },
@@ -62,17 +90,26 @@
       "keys": [
         {
           "angle": -0.03,
-          "ease": "smooth"
+          "angleInterpolator": {
+            "kind": "linear",
+            "progress": "smooth"
+          }
         },
         {
           "time": 1.2,
           "angle": -0.005,
-          "ease": "smooth"
+          "angleInterpolator": {
+            "kind": "linear",
+            "progress": "smooth"
+          }
         },
         {
           "time": 2.4,
           "angle": -0.03,
-          "ease": "smooth"
+          "angleInterpolator": {
+            "kind": "linear",
+            "progress": "smooth"
+          }
         }
       ]
     },
@@ -82,19 +119,28 @@
         {
           "x": 0.019497074,
           "y": -0.00029248,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 1.2,
           "x": 0.003249986,
-          "y": -8.106232E-06,
-          "ease": "smooth"
+          "y": -8.106232e-06,
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 2.4,
           "x": 0.019497074,
           "y": -0.00029248,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         }
       ]
     },
@@ -103,20 +149,29 @@
       "keys": [
         {
           "x": -0.007599493,
-          "y": -7.599592E-05,
-          "ease": "smooth"
+          "y": -7.599592e-05,
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 1.2,
           "x": 0.0037999365,
-          "y": -1.9013882E-05,
-          "ease": "smooth"
+          "y": -1.9013882e-05,
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 2.4,
           "x": -0.007599493,
-          "y": -7.599592E-05,
-          "ease": "smooth"
+          "y": -7.599592e-05,
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         }
       ]
     },
@@ -127,25 +182,37 @@
         {
           "x": 0.037974805,
           "y": 0.051769733,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 0.35,
           "x": 0.03489925,
           "y": 0.05142826,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 1.55,
           "x": 0.011233948,
           "y": 0.035386503,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 2.4,
           "x": 0.037974805,
           "y": 0.051769733,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         }
       ]
     },
@@ -156,25 +223,37 @@
         {
           "x": 0.067511365,
           "y": 0.067662895,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 0.35,
           "x": 0.0645171,
           "y": 0.06716949,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 1.55,
           "x": 0.04108032,
           "y": 0.050689876,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         },
         {
           "time": 2.4,
           "x": 0.067511365,
           "y": 0.067662895,
-          "ease": "smooth"
+          "interpolator": {
+            "kind": "default",
+            "progress": "smooth"
+          }
         }
       ]
     }

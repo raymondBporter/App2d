@@ -12,7 +12,6 @@ namespace App2d.Core.Characters.Authored;
 /// </summary>
 public readonly record struct AcceptedContact(ResolvedHit Hit, int Sequence, EntityId2D Target, Vector2f Position, string? TargetCollider, bool Blocked)
 {
-    public string Group => Hit.Group;
     public StrikeDef Strike => Hit.Strike;
 }
 
@@ -115,48 +114,4 @@ public static class CombatContacts
 
         return results.Count;
     }
-
-    /// <summary>
-    /// A projectile or other placed probe against the registered targets: the first live target by <paramref name="targetOf"/>,
-    /// with the contact position, or null. Projectiles deduplicate by being consumed, not by a ledger.
-    /// </summary>
-    public static (EntityId2D Target, Vector2f Position, bool Blocked)? Probe(CollisionSystem2D system, SpatialObject2D probe, uint targetMask, uint queryLayer,
-        Func<Collider2D, (EntityId2D Target, bool Guard)?> targetOf, List<CollisionOverlap2D> scratch, Func<EntityId2D, int>? order = null)
-    {
-        Ensure.ThrowIfNull(system);
-        Ensure.ThrowIfNull(probe);
-        Ensure.ThrowIfNull(scratch);
-        system.Overlap(probe, scratch, targetMask, includeSensors: true);
-        (EntityId2D Target, Vector2f Position, bool Blocked)? best = null;
-        var bestOrder = int.MaxValue;
-        foreach (var overlap in scratch)
-        {
-            if (targetOf(overlap.Collider) is not { } found || overlap.Collider.UserData is AttachedCollider && (overlap.Collider.CollisionMask & queryLayer) == 0u)
-            {
-                continue;
-            }
-
-            var rank = order?.Invoke(found.Target) ?? 0;
-            if (best is { } current && current.Target == found.Target)
-            {
-                if (found.Guard && !current.Blocked)
-                {
-                    best = (found.Target, probe.WorldBounds.OverlapCenter(overlap.Collider.WorldObject.WorldBounds), true);
-                }
-
-                continue;
-            }
-
-            if (best is null || rank < bestOrder)
-            {
-                best = (found.Target, probe.WorldBounds.OverlapCenter(overlap.Collider.WorldObject.WorldBounds), found.Guard);
-                bestOrder = rank;
-            }
-        }
-
-        return best;
-    }
-
-    /// <summary>Whether an attack from <paramref name="attackerX"/> meets a guard facing <paramref name="facing"/> from the front.</summary>
-    public static bool FromFront(float attackerX, float targetX, int facing) => (attackerX - targetX) * facing > 0;
 }

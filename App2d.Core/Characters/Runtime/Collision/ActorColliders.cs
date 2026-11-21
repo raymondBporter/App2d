@@ -24,10 +24,6 @@ public sealed class AttachedCollider
     public string Id => Definition.Id;
     public string Use => Definition.Use;
     public bool Enabled => Collider.IsEnabled;
-    /// <summary>The owner this collider belongs to; self and ally filtering read it.</summary>
-    public EntityId2D Owner => Collider.EntityId;
-    /// <summary>The registered placement, as a region in the collider's units.</summary>
-    public EntityRegion Region => new(Id, Definition.Shape, Object.CollisionPose);
     public Rect2f Bounds => Object.WorldBounds;
 
     internal void Place(Similarity2D pose)
@@ -96,16 +92,10 @@ public sealed class ActorColliders
     public CollisionSystem2D System { get; }
     public EntityId2D Owner { get; }
     public float Scale { get; }
-    /// <summary>Every registered collider, the movement collider first when this set owns one.</summary>
-    public IReadOnlyList<AttachedCollider> All => _all;
     public AttachedCollider? Movement { get; }
-    /// <summary>The hurt colliders; empty for an entity whose hurt geometry is still the legacy layout.</summary>
-    public IReadOnlyList<AttachedCollider> Hurt => _hurt;
-    public bool HasHurt => _hurt.Count > 0;
     public bool Attached { get; private set; } = true;
 
     public AttachedCollider? Find(string id) => _all.FirstOrDefault(c => c.Id == id);
-    public IEnumerable<AttachedCollider> OfUse(string use) => _all.Where(c => c.Use == use);
 
     private AttachedCollider Register(ResolvedCollider definition, uint layer)
     {
@@ -184,21 +174,6 @@ public sealed class ActorColliders
             {
                 attached.SetEnabled(false);
             }
-        }
-    }
-
-    /// <summary>The other lifecycle boundary: removes every collider from the system. The set cannot be synchronized afterwards.</summary>
-    public void Detach()
-    {
-        if (!Attached)
-        {
-            return;
-        }
-
-        Attached = false;
-        foreach (var attached in _all)
-        {
-            System.RemoveCollider(attached.Collider);
         }
     }
 

@@ -578,13 +578,13 @@ public static class PoseEvaluator
     private static (Vector3f Value, float Angle) SampleSegment(ClipKey a, ClipKey b, float phase, bool rotate)
     {
         var map = Easingf.FromCurve(a.Ease, a.EaseDirection);
-        var value = Interpolation.Default<Vector3f, float>().WithProgress(map);
-        var angle = Interpolation.Linear<float>().WithProgress(map);
-        if (rotate)
+        var value = a.Interpolator ?? Interpolation.Default<Vector3f, float>().WithProgress(map);
+        var angle = a.AngleInterpolator ?? Interpolation.Linear<float>().WithProgress(map);
+        if (rotate && a.AngleInterpolator is null)
         {
             angle = Curve(a.Curve) ?? angle;
         }
-        else
+        else if (!rotate && a.Interpolator is null)
         {
             var sharedCurve = a.Curve?.Absolute == true ? null : a.Curve;
             value = value.With(Vector3f.Channels.X, Curve(a.Curve))

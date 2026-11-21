@@ -22,11 +22,6 @@ public sealed record PropertyRef
     public const string ControlKind = "control", PartKind = "part", AttachmentKind = "attachment", RoleKind = "role";
     public override string ToString() => $"{OwnerKind} '{Owner}' {Property}";
 
-    public static PropertyRef OfControl(string control, string property) => new() { Control = control, Property = property };
-    public static PropertyRef OfPart(string part, string property) => new() { Part = part, Property = property };
-    public static PropertyRef OfAttachment(string attachment, string property) => new() { Attachment = attachment, Property = property };
-    public static PropertyRef OfRole(string role) => new() { Role = role, Property = RigProperties.Clip };
-
     public void Validate(string field)
     {
         if (new[] { Control, Part, Attachment, Role }.Count(o => o is not null) != 1)

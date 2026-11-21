@@ -56,15 +56,6 @@ public sealed record ParameterBinding
         _ => parameter,
     };
 
-    /// <summary>A short description for inspectors: how the target is produced.</summary>
-    public string Describe(string parameter) => Kind switch
-    {
-        BindingKinds.Scale when Reference is { } reference => About == 0 ? $"{reference} × {parameter}" : $"{About:0.###} + ({reference} − {About:0.###}) × {parameter}",
-        BindingKinds.Scale => About == 0 ? $"authored × {parameter}" : $"{About:0.###} + (authored − {About:0.###}) × {parameter}",
-        BindingKinds.Map => $"{parameter} [{FromMin:0.###}..{FromMax:0.###}] → [{ToMin:0.###}..{ToMax:0.###}]",
-        _ => $"= {parameter}",
-    };
-
     public void Validate(string field)
     {
         if (!BindingKinds.All.Contains(Kind, StringComparer.Ordinal))
@@ -114,9 +105,6 @@ public sealed record ModelParameter
     public float? SoftMin { get; set; }
     public float? SoftMax { get; set; }
     public List<ParameterBinding> Bindings { get; set; } = [];
-
-    [JsonIgnore] public string Label => string.IsNullOrWhiteSpace(Name) ? Id : Name;
-    [JsonIgnore] public Limit Range => new Limit(Min, Max).Soft(SoftMin ?? Min, SoftMax ?? Max);
 
     public void Validate(string owner)
     {

@@ -1,6 +1,7 @@
 using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -40,7 +41,7 @@ public static class AuthoredJson
             WriteIndented = true,
             UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
             TypeInfoResolver = resolver,
-            Converters = { new Vector2JsonConverter() }
+            Converters = { new Vector2JsonConverter(), new InterpolatorJsonConverterFactory(), new ProgressMapJsonConverterFactory() }
         };
     }
 

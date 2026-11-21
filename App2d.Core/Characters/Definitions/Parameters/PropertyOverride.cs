@@ -11,7 +11,6 @@ public static class PropertyKinds
     /// <summary>A discrete choice by stable ID or vocabulary word: a library part, a clip, an expression.</summary>
     public const string Selection = "selection";
     public const string Material = "material";
-    public static readonly string[] All = [Number, Flag, Selection, Material];
 }
 
 /// <summary>
@@ -30,19 +29,6 @@ public sealed record PropertyDeclaration(string Name, string Kind, string? Units
     public bool Clearable { get; init; } = true;
     /// <summary>Whether an override may clear this property.</summary>
     public bool CanClear => Clearable && (Kind != PropertyKinds.Selection || Cleared is not null);
-}
-
-/// <summary>Where a resolved property's value came from (plan section 3.10).</summary>
-public enum PropertySource
-{
-    /// <summary>The base's authored value.</summary>
-    Base,
-    /// <summary>A parameter binding of the base produced it.</summary>
-    ParameterBinding,
-    /// <summary>This variant sets it explicitly; a binding on the same property is masked.</summary>
-    Override,
-    /// <summary>This variant clears it explicitly: the authored value before any binding, or the property's empty value.</summary>
-    Cleared,
 }
 
 /// <summary>
@@ -64,22 +50,9 @@ public sealed record PropertyOverride
 
     [JsonIgnore] public string Key => Target.Key;
 
-    public static PropertyOverride Of(PropertyRef target, float value) => new() { Target = target, Value = value };
-    public static PropertyOverride Of(PropertyRef target, bool flag) => new() { Target = target, Flag = flag };
-    public static PropertyOverride Of(PropertyRef target, string selection) => new() { Target = target, Selection = selection };
-    public static PropertyOverride Of(PropertyRef target, RenderMaterialDefinition2D material) => new() { Target = target, Material = material };
-    public static PropertyOverride Cleared(PropertyRef target) => new() { Target = target, Clear = true };
-
     /// <summary>The kind the stored value implies, or null for a clear.</summary>
     [JsonIgnore]
     public string? Kind => Value is not null ? PropertyKinds.Number : Flag is not null ? PropertyKinds.Flag : Selection is not null ? PropertyKinds.Selection : Material is not null ? PropertyKinds.Material : null;
-
-    /// <summary>A short description for inspectors and reports.</summary>
-    public string Describe() => Clear ? $"{Target}: cleared"
-        : Value is { } value ? $"{Target} = {value:0.####}"
-        : Flag is { } flag ? $"{Target} = {(flag ? "yes" : "no")}"
-        : Selection is { } selection ? $"{Target} = '{selection}'"
-        : $"{Target} = material" + (Material?.Asset is { } asset ? $" '{asset}'" : "") + (Material?.Fill is { } fill ? $" {fill}" : "");
 
     /// <summary>Structural validation without the base: one owner, one property, exactly one value member or a clear.</summary>
     public void Validate(string field)

@@ -209,12 +209,9 @@ public sealed record Part
     public Dictionary<string, PartExpression> Expressions { get; set; } = [];
     /// <summary>The expression an instance shows when neither gameplay, the wearer's clip nor the instance names one.</summary>
     public string? Expression { get; set; }
-
-    [JsonIgnore] public bool IsModule => Connection is not null;
     [JsonIgnore] public bool IsAnimated => Payload == PartPayloads.Animated;
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    internal string ToSnapshotJson() => JsonSerializer.Serialize(this, AuthoredJson.SnapshotOptions);
     internal static Part FromDraftJson(string json) => AuthoredAsset.Parse<Part>(json, "part");
     public static Part FromJson(string json)
     {
@@ -287,27 +284,6 @@ public sealed record Part
             Measures = Measures,
             Parts = [.. parts ?? Geometry],
         };
-    }
-
-    /// <summary>
-    /// The module contract (plan section 3.6, P10b): the connection frame, the dimension inputs with their ranges, the named
-    /// points and the exposed animation targets, as one summary per line for inspectors and reports.
-    /// </summary>
-    public IReadOnlyList<string> Contract()
-    {
-        var lines = new List<string>
-        {
-            $"connection: {(Connection is null ? "the origin" : $"control '{Connection}' at the origin")} on a socket{(Usage == "part" ? "" : $" taking '{Usage}'")}",
-            $"inputs: {(Parameters.Count == 0 ? "none" : string.Join(", ", Parameters.Select(p => $"{p.Id} ({p.Units} {p.Default:0.###} in {p.Min:0.###}..{p.Max:0.###})")))}",
-            $"points: {(Locations.Count == 0 ? "the origin only" : string.Join(", ", Locations.Select(l => l.Control is null ? l.Id : $"{l.Id} on {l.Control}")))}",
-            $"targets: {(Exposed.Count == 0 ? "none" : string.Join(", ", Exposed))}",
-        };
-        if (IsAnimated)
-        {
-            lines.Add($"chains: {(Constraints.Count == 0 ? "none" : string.Join(", ", Constraints.Select(c => c.Id)))}; expressions: {(Expressions.Count == 0 ? "none" : string.Join(", ", Expressions.Keys))}");
-        }
-
-        return lines;
     }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message)
