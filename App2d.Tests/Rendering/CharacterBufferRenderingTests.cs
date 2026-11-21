@@ -18,14 +18,18 @@ public sealed class CharacterBufferRenderingTests
     {
         using var graphics = new GraphicsTestContext();
         using var renderer = new PointCharacterRenderer(graphics.Device);
-        var drawing = new PuppetDrawing();
-        AddTriangle(drawing.Mesh, Color4b.Red);
-        AddTriangle(drawing.Mesh, Color4b.Blue);
-        drawing.Batches.Add(new(0, 3, WriteDepth: false));
-        drawing.Batches.Add(new(3, 3, Blend: "additive", WriteDepth: false));
+        var drawing = new LayeredMesh();
+        AddTriangle(drawing, Color4b.Red);
+        AddTriangle(drawing, Color4b.Blue);
+        // Two ranges of one mesh, the second added to what is already there.
+        void DrawRanges(Matrix world)
+        {
+            renderer.Draw(drawing, Projection, world, writeDepth: false, start: 0, count: 3);
+            renderer.Draw(drawing, Projection, world, writeDepth: false, start: 3, count: 3, additive: true);
+        }
         graphics.Device.Clear(Color4b.Transparent);
-        renderer.Draw(drawing, Projection, Matrix.CreateTranslation(-24, 0, 0));
-        renderer.Draw(drawing, Projection, Matrix.CreateTranslation(24, 0, 0));
+        DrawRanges(Matrix.CreateTranslation(-24, 0, 0));
+        DrawRanges(Matrix.CreateTranslation(24, 0, 0));
         Assert.Equal(1, renderer.MeshUploadCount);
         Assert.Equal(4, renderer.MeshDrawCount);
         var pixels = graphics.ReadPixels();

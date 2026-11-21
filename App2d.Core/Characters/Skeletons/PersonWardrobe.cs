@@ -1,18 +1,13 @@
-// Generated from the authored JSON parts by LegacyPartEmitter in App2d.Tests. While those parts exist, change them and
-// regenerate (set APP2D_WRITE_CLIPS=1 and run the tests named WornPartTests) instead of editing this file.
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Shapes;
 using System.Collections.Immutable;
+using static App2d.Core.Characters.Paints;
 
 namespace App2d.Core.Characters;
 
 /// <summary>What a person wears and holds: each function returns one thing's pieces as attachments on a mount of <see cref="PersonSkeleton"/>, at a layer.</summary>
 public static class PersonWardrobe
 {
-    /// <summary>A plain fill, edged in ink unless told otherwise; a stroke width makes it a line.</summary>
-    private static RenderMaterialDefinition2D Paint(string fill, float edge = 0, string edgeColor = "#222b32", float? stroke = null) =>
-        new() { Fill = fill, StrokeWidth = stroke, Outline = edge > 0 ? new() { Color = edgeColor, Width = edge } : null };
-
     /// <summary>A flat outline pushed out to a thickness.</summary>
     private static IndexedMesh3D Extrude(float thickness, params ReadOnlySpan<Vector3f> outline) =>
         MeshGenerators3D.Extrude(MeshGenerators3D.CounterClockwise(outline.ToArray()), thickness);
@@ -22,77 +17,77 @@ public static class PersonWardrobe
         new(0.047f, 0.055f, 0f), new(0.043f, 0.165f, 0f), new(-0.05f, 0.165f, 0f));
     private static readonly IndexedMesh3D BootMesh2 = Extrude(0.008f, new(-0.06f, -0.024f, -0.048f), new(0.147f, -0.024f, -0.048f), new(0.153f, -0.009f, -0.048f), new(-0.06f, -0.009f, -0.048f));
     private static readonly IndexedMesh3D BootMesh3 = Extrude(0.008f, new(-0.052f, 0.135f, -0.048f), new(0.045f, 0.135f, -0.048f), new(0.045f, 0.163f, -0.048f), new(-0.052f, 0.163f, -0.048f));
-    private static readonly IndexedMesh3D BruteBeardMesh1 = Extrude(0.008f,
-        new(-0.29925f, -0.19665f, -0.16f), new(-0.247f, -0.207575f, -0.16f), new(-0.285f, -0.32775f, -0.16f), new(-0.19f, -0.294975f, -0.16f),
-        new(-0.20425f, -0.41515f, -0.16f), new(-0.09975f, -0.3933f, -0.16f), new(-0.07125f, -0.50255f, -0.16f), new(0.01425f, -0.437f, -0.16f),
-        new(0.076f, -0.535325f, -0.16f), new(0.1425f, -0.382375f, -0.16f), new(0.228f, -0.426075f, -0.16f), new(0.228f, -0.273125f, -0.16f),
-        new(0.323f, -0.316825f, -0.16f), new(0.266f, -0.185725f, -0.16f), new(0.304f, -0.142025f, -0.16f), new(0.2565f, -0.0491625f, -0.16f),
-        new(0.209f, -0.0874f, -0.16f), new(0.19f, -0.19665f, -0.16f), new(-0.076f, -0.19665f, -0.16f), new(-0.09975f, -0.10925f, -0.16f),
-        new(-0.171f, -0.0600875f, -0.16f), new(-0.24225f, 0.0163875f, -0.16f));
-    private static readonly IndexedMesh3D BruteHairMesh1 = Extrude(0.008f,
+    private static readonly IndexedMesh3D CavemanBeardSmall = Extrude(0.008f,
+        new(-0.2993f, -0.1966f, -0.16f), new(-0.247f, -0.2076f, -0.16f), new(-0.285f, -0.3277f, -0.16f), new(-0.19f, -0.295f, -0.16f),
+        new(-0.2042f, -0.4152f, -0.16f), new(-0.0998f, -0.3933f, -0.16f), new(-0.0712f, -0.5026f, -0.16f), new(0.0143f, -0.437f, -0.16f),
+        new(0.076f, -0.5353f, -0.16f), new(0.1425f, -0.3824f, -0.16f), new(0.228f, -0.4261f, -0.16f), new(0.228f, -0.2731f, -0.16f),
+        new(0.323f, -0.3168f, -0.16f), new(0.266f, -0.1857f, -0.16f), new(0.304f, -0.142f, -0.16f), new(0.2565f, -0.0492f, -0.16f),
+        new(0.209f, -0.0874f, -0.16f), new(0.19f, -0.1966f, -0.16f), new(-0.076f, -0.1966f, -0.16f), new(-0.0998f, -0.1092f, -0.16f),
+        new(-0.171f, -0.0601f, -0.16f), new(-0.2422f, 0.0164f, -0.16f));
+    private static readonly IndexedMesh3D WildHairLowerSmall = Extrude(0.008f,
         new(-0.2755f, 0.19f, -0.095f), new(-0.3515f, 0.057f, -0.095f), new(-0.2945f, 0.057f, -0.095f), new(-0.3705f, -0.0855f, -0.095f),
         new(-0.2945f, -0.057f, -0.095f), new(-0.304f, -0.2185f, -0.095f), new(-0.1995f, -0.1615f, -0.095f), new(0.2185f, -0.171f, -0.095f),
         new(0.323f, -0.2185f, -0.095f), new(0.2945f, -0.0475f, -0.095f), new(0.361f, -0.095f, -0.095f), new(0.304f, 0.1235f, -0.095f),
         new(0.2185f, 0.2565f, -0.095f));
-    private static readonly IndexedMesh3D BruteHairMesh2 = Extrude(0.008f,
-        new(-0.209f, 0.0268375f, -0.15f), new(-0.171f, 0.12882f, -0.15f), new(-0.1045f, 0.23617f, -0.15f), new(-0.01425f, 0.203965f, -0.15f),
-        new(0.0665f, 0.25764f, -0.15f), new(0.1615f, 0.19323f, -0.15f), new(0.2755f, 0.203965f, -0.15f), new(0.2185f, 0.268375f, -0.15f),
-        new(0.266f, 0.32205f, -0.15f), new(0.1425f, 0.332785f, -0.15f), new(0.1805f, 0.40793f, -0.15f), new(0.04275f, 0.36499f, -0.15f),
-        new(0.03325f, 0.461605f, -0.15f), new(-0.057f, 0.36499f, -0.15f), new(-0.1425f, 0.4294f, -0.15f), new(-0.1425f, 0.32205f, -0.15f),
-        new(-0.2755f, 0.34352f, -0.15f), new(-0.2185f, 0.246905f, -0.15f), new(-0.285f, 0.25764f, -0.15f), new(-0.2565f, 0.10735f, -0.15f));
-    private static readonly IndexedMesh3D BruteHideWrapMesh1 = Extrude(0.39179f,
-        new(-0.29f, -0.07875f, 0.010875f), new(-0.16675f, -0.0525f, 0.010875f), new(-0.07975f, -0.1155f, 0.010875f),
-        new(0.0145f, -0.06825f, 0.010875f), new(0.10875f, -0.12075f, 0.010875f), new(0.18125f, -0.0525f, 0.010875f),
-        new(0.29725f, -0.07875f, 0.010875f), new(0.261f, 0.084f, 0.010875f), new(-0.261f, 0.084f, 0.010875f));
-    private static readonly IndexedMesh3D BruteHideWrapMesh2 = Extrude(0.00457754f,
-        new(-0.2755f, 0.02625f, -0.195319f), new(0.2755f, 0.02625f, -0.195319f), new(0.26825f, 0.08925f, -0.195319f),
-        new(-0.26825f, 0.08925f, -0.195319f));
-    private static readonly IndexedMesh3D BruteHideWrapMesh3 = Extrude(0.00457754f,
-        new(-0.13705f, -0.01575f, -0.195319f), new(-0.142773f, -0.0008952f, -0.195319f), new(-0.155632f, 0.00277363f, -0.195319f),
-        new(-0.165945f, -0.00750621f, -0.195319f), new(-0.165945f, -0.0239938f, -0.195319f), new(-0.155632f, -0.0342736f, -0.195319f),
-        new(-0.142773f, -0.0306048f, -0.195319f));
-    private static readonly IndexedMesh3D BruteHideWrapMesh4 = Extrude(0.00457754f,
-        new(0.1481f, -0.021f, -0.195319f), new(0.141473f, -0.0037997f, -0.195319f), new(0.126584f, 0.000448415f, -0.195319f),
-        new(0.114643f, -0.0114546f, -0.195319f), new(0.114643f, -0.0305454f, -0.195319f), new(0.126584f, -0.0424484f, -0.195319f),
-        new(0.141473f, -0.0382003f, -0.195319f));
-    private static readonly IndexedMesh3D CinderBeardMesh1 = Extrude(0.008f,
-        new(-0.33075f, -0.17388f, -0.16f), new(-0.273f, -0.18354f, -0.16f), new(-0.315f, -0.2898f, -0.16f), new(-0.21f, -0.26082f, -0.16f),
-        new(-0.22575f, -0.36708f, -0.16f), new(-0.11025f, -0.34776f, -0.16f), new(-0.07875f, -0.44436f, -0.16f), new(0.01575f, -0.3864f, -0.16f),
-        new(0.084f, -0.47334f, -0.16f), new(0.1575f, -0.3381f, -0.16f), new(0.252f, -0.37674f, -0.16f), new(0.252f, -0.2415f, -0.16f),
-        new(0.357f, -0.28014f, -0.16f), new(0.294f, -0.16422f, -0.16f), new(0.336f, -0.12558f, -0.16f), new(0.2835f, -0.04347f, -0.16f),
-        new(0.231f, -0.07728f, -0.16f), new(0.21f, -0.17388f, -0.16f), new(-0.084f, -0.17388f, -0.16f), new(-0.11025f, -0.0966f, -0.16f),
-        new(-0.189f, -0.05313f, -0.16f), new(-0.26775f, 0.01449f, -0.16f));
-    private static readonly IndexedMesh3D CinderHairMesh1 = Extrude(0.008f,
+    private static readonly IndexedMesh3D WildHairUpperSmall = Extrude(0.008f,
+        new(-0.209f, 0.0268f, -0.15f), new(-0.171f, 0.1288f, -0.15f), new(-0.1045f, 0.2362f, -0.15f), new(-0.0143f, 0.204f, -0.15f),
+        new(0.0665f, 0.2576f, -0.15f), new(0.1615f, 0.1932f, -0.15f), new(0.2755f, 0.204f, -0.15f), new(0.2185f, 0.2684f, -0.15f),
+        new(0.266f, 0.3221f, -0.15f), new(0.1425f, 0.3328f, -0.15f), new(0.1805f, 0.4079f, -0.15f), new(0.0428f, 0.365f, -0.15f),
+        new(0.0333f, 0.4616f, -0.15f), new(-0.057f, 0.365f, -0.15f), new(-0.1425f, 0.4294f, -0.15f), new(-0.1425f, 0.3221f, -0.15f),
+        new(-0.2755f, 0.3435f, -0.15f), new(-0.2185f, 0.2469f, -0.15f), new(-0.285f, 0.2576f, -0.15f), new(-0.2565f, 0.1074f, -0.15f));
+    private static readonly IndexedMesh3D HideWrapBodyWide = Extrude(0.3918f,
+        new(-0.29f, -0.0788f, 0.0109f), new(-0.1668f, -0.0525f, 0.0109f), new(-0.0798f, -0.1155f, 0.0109f),
+        new(0.0145f, -0.0683f, 0.0109f), new(0.1087f, -0.1207f, 0.0109f), new(0.1812f, -0.0525f, 0.0109f),
+        new(0.2973f, -0.0788f, 0.0109f), new(0.261f, 0.084f, 0.0109f), new(-0.261f, 0.084f, 0.0109f));
+    private static readonly IndexedMesh3D HideWrapBeltWide = Extrude(0.0046f,
+        new(-0.2755f, 0.0262f, -0.1953f), new(0.2755f, 0.0262f, -0.1953f), new(0.2682f, 0.0892f, -0.1953f),
+        new(-0.2682f, 0.0892f, -0.1953f));
+    private static readonly IndexedMesh3D HideWrapLeftSpotWide = Extrude(0.0046f,
+        new(-0.1371f, -0.0158f, -0.1953f), new(-0.1428f, -0.0009f, -0.1953f), new(-0.1556f, 0.0028f, -0.1953f),
+        new(-0.1659f, -0.0075f, -0.1953f), new(-0.1659f, -0.024f, -0.1953f), new(-0.1556f, -0.0343f, -0.1953f),
+        new(-0.1428f, -0.0306f, -0.1953f));
+    private static readonly IndexedMesh3D HideWrapRightSpotWide = Extrude(0.0046f,
+        new(0.1481f, -0.021f, -0.1953f), new(0.1415f, -0.0038f, -0.1953f), new(0.1266f, 0.0004f, -0.1953f),
+        new(0.1146f, -0.0115f, -0.1953f), new(0.1146f, -0.0305f, -0.1953f), new(0.1266f, -0.0424f, -0.1953f),
+        new(0.1415f, -0.0382f, -0.1953f));
+    private static readonly IndexedMesh3D CavemanBeardLarge = Extrude(0.008f,
+        new(-0.3307f, -0.1739f, -0.16f), new(-0.273f, -0.1835f, -0.16f), new(-0.315f, -0.2898f, -0.16f), new(-0.21f, -0.2608f, -0.16f),
+        new(-0.2258f, -0.3671f, -0.16f), new(-0.1103f, -0.3478f, -0.16f), new(-0.0788f, -0.4444f, -0.16f), new(0.0158f, -0.3864f, -0.16f),
+        new(0.084f, -0.4733f, -0.16f), new(0.1575f, -0.3381f, -0.16f), new(0.252f, -0.3767f, -0.16f), new(0.252f, -0.2415f, -0.16f),
+        new(0.357f, -0.2801f, -0.16f), new(0.294f, -0.1642f, -0.16f), new(0.336f, -0.1256f, -0.16f), new(0.2835f, -0.0435f, -0.16f),
+        new(0.231f, -0.0773f, -0.16f), new(0.21f, -0.1739f, -0.16f), new(-0.084f, -0.1739f, -0.16f), new(-0.1103f, -0.0966f, -0.16f),
+        new(-0.189f, -0.0531f, -0.16f), new(-0.2677f, 0.0145f, -0.16f));
+    private static readonly IndexedMesh3D WildHairLowerLarge = Extrude(0.008f,
         new(-0.3045f, 0.21f, -0.095f), new(-0.3885f, 0.063f, -0.095f), new(-0.3255f, 0.063f, -0.095f), new(-0.4095f, -0.0945f, -0.095f),
         new(-0.3255f, -0.063f, -0.095f), new(-0.336f, -0.2415f, -0.095f), new(-0.2205f, -0.1785f, -0.095f), new(0.2415f, -0.189f, -0.095f),
         new(0.357f, -0.2415f, -0.095f), new(0.3255f, -0.0525f, -0.095f), new(0.399f, -0.105f, -0.095f), new(0.336f, 0.1365f, -0.095f),
         new(0.2415f, 0.2835f, -0.095f));
-    private static readonly IndexedMesh3D CinderHairMesh2 = Extrude(0.008f,
-        new(-0.231f, 0.0296625f, -0.15f), new(-0.189f, 0.14238f, -0.15f), new(-0.1155f, 0.26103f, -0.15f), new(-0.01575f, 0.225435f, -0.15f),
-        new(0.0735f, 0.28476f, -0.15f), new(0.1785f, 0.21357f, -0.15f), new(0.3045f, 0.225435f, -0.15f), new(0.2415f, 0.296625f, -0.15f),
-        new(0.294f, 0.35595f, -0.15f), new(0.1575f, 0.367815f, -0.15f), new(0.1995f, 0.45087f, -0.15f), new(0.04725f, 0.40341f, -0.15f),
-        new(0.03675f, 0.510195f, -0.15f), new(-0.063f, 0.40341f, -0.15f), new(-0.1575f, 0.4746f, -0.15f), new(-0.1575f, 0.35595f, -0.15f),
-        new(-0.3045f, 0.37968f, -0.15f), new(-0.2415f, 0.272895f, -0.15f), new(-0.315f, 0.28476f, -0.15f), new(-0.2835f, 0.11865f, -0.15f));
-    private static readonly IndexedMesh3D CinderHideWrapMesh1 = Extrude(0.28371f,
-        new(-0.21f, -0.07125f, 0.007875f), new(-0.12075f, -0.0475f, 0.007875f), new(-0.05775f, -0.1045f, 0.007875f),
-        new(0.0105f, -0.06175f, 0.007875f), new(0.07875f, -0.10925f, 0.007875f), new(0.13125f, -0.0475f, 0.007875f),
-        new(0.21525f, -0.07125f, 0.007875f), new(0.189f, 0.076f, 0.007875f), new(-0.189f, 0.076f, 0.007875f));
-    private static readonly IndexedMesh3D CinderHideWrapMesh2 = Extrude(0.00331477f,
-        new(-0.1995f, 0.02375f, -0.141438f), new(0.1995f, 0.02375f, -0.141438f), new(0.19425f, 0.08075f, -0.141438f),
-        new(-0.19425f, 0.08075f, -0.141438f));
-    private static readonly IndexedMesh3D CinderHideWrapMesh3 = Extrude(0.00331477f,
-        new(-0.09505f, -0.01425f, -0.141438f), new(-0.100773f, 0.000604799f, -0.141438f), new(-0.113632f, 0.00427363f, -0.141438f),
-        new(-0.123945f, -0.00600621f, -0.141438f), new(-0.123945f, -0.0224938f, -0.141438f), new(-0.113632f, -0.0327736f, -0.141438f),
-        new(-0.100773f, -0.0291048f, -0.141438f));
-    private static readonly IndexedMesh3D CinderHideWrapMesh4 = Extrude(0.00331477f,
-        new(0.1121f, -0.019f, -0.141438f), new(0.105473f, -0.00179971f, -0.141438f), new(0.0905836f, 0.00244841f, -0.141438f),
-        new(0.0786429f, -0.00945456f, -0.141438f), new(0.0786429f, -0.0285454f, -0.141438f), new(0.0905836f, -0.0404484f, -0.141438f),
-        new(0.105473f, -0.0362003f, -0.141438f));
+    private static readonly IndexedMesh3D WildHairUpperLarge = Extrude(0.008f,
+        new(-0.231f, 0.0297f, -0.15f), new(-0.189f, 0.1424f, -0.15f), new(-0.1155f, 0.261f, -0.15f), new(-0.0158f, 0.2254f, -0.15f),
+        new(0.0735f, 0.2848f, -0.15f), new(0.1785f, 0.2136f, -0.15f), new(0.3045f, 0.2254f, -0.15f), new(0.2415f, 0.2966f, -0.15f),
+        new(0.294f, 0.3559f, -0.15f), new(0.1575f, 0.3678f, -0.15f), new(0.1995f, 0.4509f, -0.15f), new(0.0473f, 0.4034f, -0.15f),
+        new(0.0367f, 0.5102f, -0.15f), new(-0.063f, 0.4034f, -0.15f), new(-0.1575f, 0.4746f, -0.15f), new(-0.1575f, 0.3559f, -0.15f),
+        new(-0.3045f, 0.3797f, -0.15f), new(-0.2415f, 0.2729f, -0.15f), new(-0.315f, 0.2848f, -0.15f), new(-0.2835f, 0.1187f, -0.15f));
+    private static readonly IndexedMesh3D HideWrapBody = Extrude(0.2837f,
+        new(-0.21f, -0.0712f, 0.0079f), new(-0.1207f, -0.0475f, 0.0079f), new(-0.0578f, -0.1045f, 0.0079f),
+        new(0.0105f, -0.0617f, 0.0079f), new(0.0788f, -0.1092f, 0.0079f), new(0.1313f, -0.0475f, 0.0079f),
+        new(0.2152f, -0.0712f, 0.0079f), new(0.189f, 0.076f, 0.0079f), new(-0.189f, 0.076f, 0.0079f));
+    private static readonly IndexedMesh3D HideWrapBelt = Extrude(0.0033f,
+        new(-0.1995f, 0.0238f, -0.1414f), new(0.1995f, 0.0238f, -0.1414f), new(0.1943f, 0.0808f, -0.1414f),
+        new(-0.1943f, 0.0808f, -0.1414f));
+    private static readonly IndexedMesh3D HideWrapLeftSpot = Extrude(0.0033f,
+        new(-0.095f, -0.0143f, -0.1414f), new(-0.1008f, 0.0006f, -0.1414f), new(-0.1136f, 0.0043f, -0.1414f),
+        new(-0.1239f, -0.006f, -0.1414f), new(-0.1239f, -0.0225f, -0.1414f), new(-0.1136f, -0.0328f, -0.1414f),
+        new(-0.1008f, -0.0291f, -0.1414f));
+    private static readonly IndexedMesh3D HideWrapRightSpot = Extrude(0.0033f,
+        new(0.1121f, -0.019f, -0.1414f), new(0.1055f, -0.0018f, -0.1414f), new(0.0906f, 0.0024f, -0.1414f),
+        new(0.0786f, -0.0095f, -0.1414f), new(0.0786f, -0.0285f, -0.1414f), new(0.0906f, -0.0404f, -0.1414f),
+        new(0.1055f, -0.0362f, -0.1414f));
     private static readonly IndexedMesh3D HairShortMesh1 = Extrude(0.008f,
         new(-0.25f, 0.18f, -0.095f), new(-0.28f, 0.03f, -0.095f), new(-0.25f, -0.14f, -0.095f), new(-0.19f, -0.17f, -0.095f),
         new(-0.19f, 0.19f, -0.095f));
     private static readonly IndexedMesh3D HairShortMesh2 = Extrude(0.008f,
-        new(-0.22f, 0.02175f, -0.15f), new(-0.18f, 0.1044f, -0.15f), new(-0.11f, 0.1914f, -0.15f), new(-0.015f, 0.1653f, -0.15f),
+        new(-0.22f, 0.0217f, -0.15f), new(-0.18f, 0.1044f, -0.15f), new(-0.11f, 0.1914f, -0.15f), new(-0.015f, 0.1653f, -0.15f),
         new(0.07f, 0.2088f, -0.15f), new(0.17f, 0.1566f, -0.15f), new(0.29f, 0.1653f, -0.15f), new(0.23f, 0.2175f, -0.15f),
         new(0.28f, 0.261f, -0.15f), new(0.15f, 0.2697f, -0.15f), new(0.19f, 0.3306f, -0.15f), new(0.045f, 0.2958f, -0.15f),
         new(0.035f, 0.3741f, -0.15f), new(-0.06f, 0.2958f, -0.15f), new(-0.15f, 0.348f, -0.15f), new(-0.15f, 0.261f, -0.15f),
@@ -171,8 +166,8 @@ public static class PersonWardrobe
         new(1.035f, -0.039f, -0.032f), new(1.115f, -0.039f, -0.032f), new(1.115f, 0.039f, -0.032f), new(1.035f, 0.039f, -0.032f),
         new(1.035f, -0.039f, 0.032f), new(1.115f, -0.039f, 0.032f), new(1.115f, 0.039f, 0.032f), new(1.035f, 0.039f, 0.032f)], [0, 2, 1, 4, 5, 6, 0, 3, 2, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7]);
     private static readonly IndexedMesh3D SpearMesh4 = new([
-        new(1.1f, -0.076f, 0f), new(1.1f, 0f, -0.022f), new(1.1f, 0.076f, 0f), new(1.1f, 0f, 0.022f), new(1.17f, -0.05472f, 0f),
-        new(1.17f, 0f, -0.022f), new(1.17f, 0.05472f, 0f), new(1.17f, 0f, 0.022f), new(1.38f, 0f, 0f)], [0, 2, 1, 0, 3, 2, 0, 1, 5, 0, 5, 4, 4, 5, 8, 1, 2, 6, 1, 6, 5, 5, 6, 8, 2, 3, 7, 2, 7, 6, 6, 7, 8, 3, 0, 4, 3, 4, 7, 7, 4, 8]);
+        new(1.1f, -0.076f, 0f), new(1.1f, 0f, -0.022f), new(1.1f, 0.076f, 0f), new(1.1f, 0f, 0.022f), new(1.17f, -0.0547f, 0f),
+        new(1.17f, 0f, -0.022f), new(1.17f, 0.0547f, 0f), new(1.17f, 0f, 0.022f), new(1.38f, 0f, 0f)], [0, 2, 1, 0, 3, 2, 0, 1, 5, 0, 5, 4, 4, 5, 8, 1, 2, 6, 1, 6, 5, 5, 6, 8, 2, 3, 7, 2, 7, 6, 6, 7, 8, 3, 0, 4, 3, 4, 7, 7, 4, 8]);
     private static readonly IndexedMesh3D SwordMesh1 = Extrude(0.06f,
         new(0.045f, -0.11f, 0f), new(0.055f, -0.11f, 0f), new(0.065f, -0.1f, 0f), new(0.065f, 0.1f, 0f), new(0.055f, 0.11f, 0f),
         new(0.045f, 0.11f, 0f), new(0.035f, 0.1f, 0f), new(0.035f, -0.1f, 0f));
@@ -184,7 +179,7 @@ public static class PersonWardrobe
         new(-0.14f, -0.04f, 0f), new(0.35f, -0.055f, 0f), new(0.68f, -0.16f, 0f), new(0.94f, -0.14f, 0f), new(1.06f, -0.07f, 0f),
         new(1.08f, 0.05f, 0f), new(0.99f, 0.13f, 0f), new(0.72f, 0.17f, 0f), new(0.35f, 0.055f, 0f), new(-0.14f, 0.04f, 0f));
 
-    /// <summary>Short leather boot.</summary>
+    /// <summary>A short leather boot. The same boot goes on either foot.</summary>
     public static ImmutableArray<Attachment> Boot(int mount, float layer = 0) =>
     [
         new MountedSolid("boot/mesh-1", mount, BootMesh1, Paint("#754c38", 0.01f), layer),
@@ -192,86 +187,37 @@ public static class PersonWardrobe
         new MountedSolid("boot/mesh-3", mount, BootMesh3, Paint("#b98a59", 0.01f), layer),
     ];
 
-    /// <summary>Short leather boot / left.</summary>
-    public static ImmutableArray<Attachment> BootLeft(int mount, float layer = 0) =>
+    /// <summary>The colours wild hair and a caveman's beard come in.</summary>
+    public const string HairBrown = "#69402a", HairRusset = "#843f27";
+    /// <summary>The colours a hide wrap comes in.</summary>
+    public const string HideOchre = "#d7a348", HideRusset = "#b97549";
+
+    /// <summary>A caveman's ragged beard, in a hair colour. The large one is a tenth bigger.</summary>
+    public static ImmutableArray<Attachment> CavemanBeard(int mount, string color, bool large = false, float layer = 0) =>
     [
-        new MountedSolid("boot-left/mesh-1", mount, BootMesh1, Paint("#754c38", 0.01f), layer),
-        new MountedSolid("boot-left/mesh-2", mount, BootMesh2, Paint("#3d302b", 0.01f), layer),
-        new MountedSolid("boot-left/mesh-3", mount, BootMesh3, Paint("#b98a59", 0.01f), layer),
+        new MountedSolid("caveman-beard", mount, large ? CavemanBeardLarge : CavemanBeardSmall, Paint(color, 0.045f), layer),
     ];
 
-    /// <summary>Short leather boot / right.</summary>
-    public static ImmutableArray<Attachment> BootRight(int mount, float layer = 0) =>
+    /// <summary>Wild hair in two ragged pieces, one round the head and one on top, in a hair colour. The large one is a tenth bigger.</summary>
+    public static ImmutableArray<Attachment> WildHair(int mount, string color, bool large = false, float layer = 0) =>
     [
-        new MountedSolid("boot-right/mesh-1", mount, BootMesh1, Paint("#754c38", 0.01f), layer),
-        new MountedSolid("boot-right/mesh-2", mount, BootMesh2, Paint("#3d302b", 0.01f), layer),
-        new MountedSolid("boot-right/mesh-3", mount, BootMesh3, Paint("#b98a59", 0.01f), layer),
+        new MountedSolid("wild-hair/lower", mount, large ? WildHairLowerLarge : WildHairLowerSmall, Paint(color, 0.045f), layer),
+        new MountedSolid("wild-hair/upper", mount, large ? WildHairUpperLarge : WildHairUpperSmall, Paint(color, 0.045f), layer),
     ];
 
-    /// <summary>brute / caveman beard.</summary>
-    public static ImmutableArray<Attachment> BruteBeard(int mount, float layer = 0) =>
+    /// <summary>A ragged hide wrapped round the body, in a hide colour, with a darker belt and two spots. The wide one fits a broad build.</summary>
+    public static ImmutableArray<Attachment> HideWrap(int mount, string color, bool wide = false, float layer = 0) =>
     [
-        new MountedSolid("brute-beard/mesh-1", mount, BruteBeardMesh1, Paint("#69402a", 0.045f), layer),
+        new MountedSolid("hide-wrap/body", mount, wide ? HideWrapBodyWide : HideWrapBody, Paint(color, 0.045f), layer),
+        new MountedSolid("hide-wrap/belt", mount, wide ? HideWrapBeltWide : HideWrapBelt, Paint("#705039", 0.045f), layer),
+        new MountedSolid("hide-wrap/left-spot", mount, wide ? HideWrapLeftSpotWide : HideWrapLeftSpot, Paint("#765033"), layer),
+        new MountedSolid("hide-wrap/right-spot", mount, wide ? HideWrapRightSpotWide : HideWrapRightSpot, Paint("#765033"), layer),
     ];
 
-    /// <summary>brute / wild hair.</summary>
-    public static ImmutableArray<Attachment> BruteHair(int mount, float layer = 0) =>
+    /// <summary>A copper greave for the left shin; flip it for the right.</summary>
+    public static ImmutableArray<Attachment> CopperGreaves(int mount, float layer = 0) =>
     [
-        new MountedSolid("brute-hair/mesh-1", mount, BruteHairMesh1, Paint("#69402a", 0.045f), layer),
-        new MountedSolid("brute-hair/mesh-2", mount, BruteHairMesh2, Paint("#69402a", 0.045f), layer),
-    ];
-
-    /// <summary>Ochre ragged hide wrap.</summary>
-    public static ImmutableArray<Attachment> BruteHideWrap(int mount, float layer = 0) =>
-    [
-        new MountedSolid("brute-hide-wrap/mesh-1", mount, BruteHideWrapMesh1, Paint("#d7a348", 0.045f), layer),
-        new MountedSolid("brute-hide-wrap/mesh-2", mount, BruteHideWrapMesh2, Paint("#705039", 0.045f), layer),
-        new MountedSolid("brute-hide-wrap/mesh-3", mount, BruteHideWrapMesh3, Paint("#765033"), layer),
-        new MountedSolid("brute-hide-wrap/mesh-4", mount, BruteHideWrapMesh4, Paint("#765033"), layer),
-    ];
-
-    /// <summary>cinder / caveman beard.</summary>
-    public static ImmutableArray<Attachment> CinderBeard(int mount, float layer = 0) =>
-    [
-        new MountedSolid("cinder-beard/mesh-1", mount, CinderBeardMesh1, Paint("#843f27", 0.045f), layer),
-    ];
-
-    /// <summary>cinder / wild hair.</summary>
-    public static ImmutableArray<Attachment> CinderHair(int mount, float layer = 0) =>
-    [
-        new MountedSolid("cinder-hair/mesh-1", mount, CinderHairMesh1, Paint("#843f27", 0.045f), layer),
-        new MountedSolid("cinder-hair/mesh-2", mount, CinderHairMesh2, Paint("#843f27", 0.045f), layer),
-    ];
-
-    /// <summary>Russet ragged hide wrap.</summary>
-    public static ImmutableArray<Attachment> CinderHideWrap(int mount, float layer = 0) =>
-    [
-        new MountedSolid("cinder-hide-wrap/mesh-1", mount, CinderHideWrapMesh1, Paint("#b97549", 0.045f), layer),
-        new MountedSolid("cinder-hide-wrap/mesh-2", mount, CinderHideWrapMesh2, Paint("#705039", 0.045f), layer),
-        new MountedSolid("cinder-hide-wrap/mesh-3", mount, CinderHideWrapMesh3, Paint("#765033"), layer),
-        new MountedSolid("cinder-hide-wrap/mesh-4", mount, CinderHideWrapMesh4, Paint("#765033"), layer),
-    ];
-
-    /// <summary>Club Caveman Beard.</summary>
-    public static ImmutableArray<Attachment> ClubCavemanBeard(int mount, float layer = 0) =>
-    [
-        new MountedSolid("club-caveman-beard/mesh-1", mount, BruteBeardMesh1, Paint("#69402a", 0.045f), layer),
-    ];
-
-    /// <summary>Club Caveman Hair.</summary>
-    public static ImmutableArray<Attachment> ClubCavemanHair(int mount, float layer = 0) =>
-    [
-        new MountedSolid("club-caveman-hair/mesh-1", mount, BruteHairMesh1, Paint("#69402a", 0.045f), layer),
-        new MountedSolid("club-caveman-hair/mesh-2", mount, BruteHairMesh2, Paint("#69402a", 0.045f), layer),
-    ];
-
-    /// <summary>Club Caveman Hide Wrap.</summary>
-    public static ImmutableArray<Attachment> ClubCavemanHideWrap(int mount, float layer = 0) =>
-    [
-        new MountedSolid("club-caveman-hide-wrap/mesh-1", mount, CinderHideWrapMesh1, Paint("#d7a348", 0.045f), layer),
-        new MountedSolid("club-caveman-hide-wrap/mesh-2", mount, CinderHideWrapMesh2, Paint("#705039", 0.045f), layer),
-        new MountedSolid("club-caveman-hide-wrap/mesh-3", mount, CinderHideWrapMesh3, Paint("#765033"), layer),
-        new MountedSolid("club-caveman-hide-wrap/mesh-4", mount, CinderHideWrapMesh4, Paint("#765033"), layer),
+        new MountedShape("copper-greaves/piece", mount, SimplePolygon2D.Builder.Create([new(0.0081f, 0.0725f), new(-0.0179f, 0.0482f), new(-0.0208f, 0.4086f), new(0.0052f, 0.4115f), new(0.0289f, 0.2781f)]), Paint("#856d43"), layer),
     ];
 
     /// <summary>Russet leather gloves.</summary>
@@ -335,50 +281,12 @@ public static class PersonWardrobe
         new MountedSolid("rock-thrower-bag/mesh-2", mount, RockThrowerBagMesh2, Paint("#538e89", 0.025f, "#30373a"), layer),
     ];
 
-    /// <summary>Rock thrower / beard.</summary>
-    public static ImmutableArray<Attachment> RockThrowerBeard(int mount, float layer = 0) =>
-    [
-        new MountedSolid("rock-thrower-beard/mesh-1", mount, CinderBeardMesh1, Paint("#69402a", 0.045f), layer),
-    ];
-
-    /// <summary>Rock thrower / hair.</summary>
-    public static ImmutableArray<Attachment> RockThrowerHair(int mount, float layer = 0) =>
-    [
-        new MountedSolid("rock-thrower-hair/mesh-1", mount, CinderHairMesh1, Paint("#69402a", 0.045f), layer),
-        new MountedSolid("rock-thrower-hair/mesh-2", mount, CinderHairMesh2, Paint("#69402a", 0.045f), layer),
-    ];
-
-    /// <summary>Rock thrower / hide-wrap.</summary>
-    public static ImmutableArray<Attachment> RockThrowerHideWrap(int mount, float layer = 0) =>
-    [
-        new MountedSolid("rock-thrower-hide-wrap/mesh-1", mount, CinderHideWrapMesh1, Paint("#b97549", 0.045f), layer),
-        new MountedSolid("rock-thrower-hide-wrap/mesh-2", mount, CinderHideWrapMesh2, Paint("#705039", 0.045f), layer),
-        new MountedSolid("rock-thrower-hide-wrap/mesh-3", mount, CinderHideWrapMesh3, Paint("#765033"), layer),
-        new MountedSolid("rock-thrower-hide-wrap/mesh-4", mount, CinderHideWrapMesh4, Paint("#765033"), layer),
-    ];
-
-    /// <summary>Leather sandal.</summary>
+    /// <summary>A leather sandal. The same sandal goes on either foot.</summary>
     public static ImmutableArray<Attachment> Sandal(int mount, float layer = 0) =>
     [
         new MountedSolid("sandal/mesh-1", mount, SandalMesh1, Paint("#68432e", 0.008f), layer),
         new MountedSolid("sandal/mesh-2", mount, SandalMesh2, Paint("#bc8853", 0.008f), layer),
         new MountedSolid("sandal/mesh-3", mount, SandalMesh3, Paint("#bc8853", 0.008f), layer),
-    ];
-
-    /// <summary>Leather sandal / left.</summary>
-    public static ImmutableArray<Attachment> SandalLeft(int mount, float layer = 0) =>
-    [
-        new MountedSolid("sandal-left/mesh-1", mount, SandalMesh1, Paint("#68432e", 0.008f), layer),
-        new MountedSolid("sandal-left/mesh-2", mount, SandalMesh2, Paint("#bc8853", 0.008f), layer),
-        new MountedSolid("sandal-left/mesh-3", mount, SandalMesh3, Paint("#bc8853", 0.008f), layer),
-    ];
-
-    /// <summary>Leather sandal / right.</summary>
-    public static ImmutableArray<Attachment> SandalRight(int mount, float layer = 0) =>
-    [
-        new MountedSolid("sandal-right/mesh-1", mount, SandalMesh1, Paint("#68432e", 0.008f), layer),
-        new MountedSolid("sandal-right/mesh-2", mount, SandalMesh2, Paint("#bc8853", 0.008f), layer),
-        new MountedSolid("sandal-right/mesh-3", mount, SandalMesh3, Paint("#bc8853", 0.008f), layer),
     ];
 
     /// <summary>Scavenged shell shield.</summary>
@@ -398,28 +306,6 @@ public static class PersonWardrobe
         new MountedSolid("sheath/mesh-3", mount, SheathMesh3, Paint("#c5a26b", 0.012f), layer),
     ];
     public static readonly Vector2f SheathTip = new(0.85f, 0f);
-
-    /// <summary>Shell defender / beard.</summary>
-    public static ImmutableArray<Attachment> ShieldDefenderBeard(int mount, float layer = 0) =>
-    [
-        new MountedSolid("shield-defender-beard/mesh-1", mount, BruteBeardMesh1, Paint("#69402a", 0.045f), layer),
-    ];
-
-    /// <summary>Shell defender / hair.</summary>
-    public static ImmutableArray<Attachment> ShieldDefenderHair(int mount, float layer = 0) =>
-    [
-        new MountedSolid("shield-defender-hair/mesh-1", mount, BruteHairMesh1, Paint("#69402a", 0.045f), layer),
-        new MountedSolid("shield-defender-hair/mesh-2", mount, BruteHairMesh2, Paint("#69402a", 0.045f), layer),
-    ];
-
-    /// <summary>Shell defender / hide-wrap.</summary>
-    public static ImmutableArray<Attachment> ShieldDefenderHideWrap(int mount, float layer = 0) =>
-    [
-        new MountedSolid("shield-defender-hide-wrap/mesh-1", mount, CinderHideWrapMesh1, Paint("#d7a348", 0.045f), layer),
-        new MountedSolid("shield-defender-hide-wrap/mesh-2", mount, CinderHideWrapMesh2, Paint("#705039", 0.045f), layer),
-        new MountedSolid("shield-defender-hide-wrap/mesh-3", mount, CinderHideWrapMesh3, Paint("#765033"), layer),
-        new MountedSolid("shield-defender-hide-wrap/mesh-4", mount, CinderHideWrapMesh4, Paint("#765033"), layer),
-    ];
 
     /// <summary>Spear.</summary>
     public static ImmutableArray<Attachment> Spear(int mount, float layer = 0) =>
@@ -456,43 +342,4 @@ public static class PersonWardrobe
     ];
     public static readonly Vector2f WoodenClubTip = new(0.98f, 0f);
 
-    /// <summary>Every thing by the name its authored part had.</summary>
-    public static IReadOnlyDictionary<string, Func<int, float, ImmutableArray<Attachment>>> ByName { get; } =
-        new Dictionary<string, Func<int, float, ImmutableArray<Attachment>>>(StringComparer.Ordinal)
-        {
-            ["boot"] = Boot,
-            ["boot-left"] = BootLeft,
-            ["boot-right"] = BootRight,
-            ["brute-beard"] = BruteBeard,
-            ["brute-hair"] = BruteHair,
-            ["brute-hide-wrap"] = BruteHideWrap,
-            ["cinder-beard"] = CinderBeard,
-            ["cinder-hair"] = CinderHair,
-            ["cinder-hide-wrap"] = CinderHideWrap,
-            ["club-caveman-beard"] = ClubCavemanBeard,
-            ["club-caveman-hair"] = ClubCavemanHair,
-            ["club-caveman-hide-wrap"] = ClubCavemanHideWrap,
-            ["glove-leather"] = GloveLeather,
-            ["glove-steel"] = GloveSteel,
-            ["hair-short"] = HairShort,
-            ["hair-short-back"] = HairShortBack,
-            ["hammer"] = Hammer,
-            ["pistol"] = Pistol,
-            ["rock-thrower-bag"] = RockThrowerBag,
-            ["rock-thrower-beard"] = RockThrowerBeard,
-            ["rock-thrower-hair"] = RockThrowerHair,
-            ["rock-thrower-hide-wrap"] = RockThrowerHideWrap,
-            ["sandal"] = Sandal,
-            ["sandal-left"] = SandalLeft,
-            ["sandal-right"] = SandalRight,
-            ["scavenged-shell"] = ScavengedShell,
-            ["sheath"] = Sheath,
-            ["shield-defender-beard"] = ShieldDefenderBeard,
-            ["shield-defender-hair"] = ShieldDefenderHair,
-            ["shield-defender-hide-wrap"] = ShieldDefenderHideWrap,
-            ["spear"] = Spear,
-            ["sword"] = Sword,
-            ["throwing-rock"] = ThrowingRock,
-            ["wooden-club"] = WoodenClub,
-        };
 }

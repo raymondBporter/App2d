@@ -11,15 +11,14 @@ public sealed class CharacterLayerRenderingTests
     [Fact]
     public void FixedCameraEncodesLayersWithoutMovingStoredGeometry()
     {
-        var drawing = new PuppetDrawing();
-        drawing.Mesh.Layer = -.3f;
-        drawing.Mesh.Triangle(new(-16, -16, 0), new(16, -16, 0), new(0, 16, 0), Color4b.Red);
-        drawing.Mesh.Layer = .3f;
-        drawing.Mesh.Triangle(new(-16, -16, 0), new(16, -16, 0), new(0, 16, 0), Color4b.Blue);
-        drawing.Batches.Add(new(0, 6));
-        Assert.All(drawing.Mesh.Vertices.ToArray(), v => Assert.Equal(0, v.Position.Z));
-        Assert.Equal(0, drawing.Mesh.Min.Z);
-        Assert.Equal(0, drawing.Mesh.Max.Z);
+        var drawing = new LayeredMesh();
+        drawing.Layer = -.3f;
+        drawing.Triangle(new(-16, -16, 0), new(16, -16, 0), new(0, 16, 0), Color4b.Red);
+        drawing.Layer = .3f;
+        drawing.Triangle(new(-16, -16, 0), new(16, -16, 0), new(0, 16, 0), Color4b.Blue);
+        Assert.All(drawing.Vertices.ToArray(), v => Assert.Equal(0, v.Position.Z));
+        Assert.Equal(0, drawing.Min.Z);
+        Assert.Equal(0, drawing.Max.Z);
 
         using var graphics = new GraphicsTestContext();
         using var target = RenderCapture2D.CreateTarget(graphics.Device, 128, 128, DepthFormat.Depth24, 0);

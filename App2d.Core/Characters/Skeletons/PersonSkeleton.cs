@@ -37,7 +37,7 @@ public static class PersonSkeleton
     public const int ElbowBend = -1, KneeBend = 1;
 
     // Rest turns: the limbs hang slightly bent. Hands and feet turn back by the same amount, so they rest level.
-    private const float ArmTurn = -1.4157996f, ElbowTurn = -.21552873f, LegTurn = -1.3891475f, KneeTurn = -.36512876f;
+    private const float ArmTurn = -1.4158f, ElbowTurn = -0.2155f, LegTurn = -1.3891f, KneeTurn = -0.3651f;
 
     /// <summary>The standard build.</summary>
     public static Skeleton2D Skeleton { get; } = Build();
@@ -50,27 +50,27 @@ public static class PersonSkeleton
     /// </summary>
     public static Skeleton2D Build(float legs = 1, float torso = 1, float arms = 1, float width = 1)
     {
-        float upperArm = .32388276f * arms, forearm = .3306055f * arms, thigh = .39855742f * legs, shin = .39462385f * legs;
+        float upperArm = 0.3239f * arms, forearm = 0.3306f * arms, thigh = 0.3986f * legs, shin = 0.3946f * legs;
         return new(
-            new("hips", Skeleton2D.NoParent, new(new(0, .025f + .78f * legs))) { MoveScale = legs },
-            new("chest", Hips, new(new(0, .65f * torso))) { MoveScale = torso },
-            new("head", Chest, new(new(0, .38f * torso))) { MoveScale = torso },
+            new("hips", Skeleton2D.NoParent, new(new(0, 0.025f + 0.78f * legs))) { MoveScale = legs },
+            new("chest", Hips, new(new(0, 0.65f * torso))) { MoveScale = torso },
+            new("head", Chest, new(new(0, 0.38f * torso))) { MoveScale = torso },
 
-            new("left-shoulder", Chest, new(new(-.11165064f * width, -.08f * torso))) { MoveScale = torso, Layer = -.14338458f * width },
+            new("left-shoulder", Chest, new(new(-0.1117f * width, -0.08f * torso))) { MoveScale = torso, Layer = -0.1434f * width },
             new("left-upper-arm", LeftShoulder, new(default, ArmTurn)),
             new("left-elbow", LeftUpperArm, new(new(upperArm, 0), ElbowTurn)),
             new("left-hand", LeftElbow, new(new(forearm, 0), -ArmTurn - ElbowTurn)),
 
-            new("left-hip", Hips, new(new(-.06f * width, 0), LegTurn)) { MoveScale = legs, Layer = -.103923045f * width },
+            new("left-hip", Hips, new(new(-0.06f * width, 0), LegTurn)) { MoveScale = legs, Layer = -0.1039f * width },
             new("left-knee", LeftHip, new(new(thigh, 0), KneeTurn)),
             new("left-foot", LeftKnee, new(new(shin, 0), -LegTurn - KneeTurn)),
 
-            new("right-shoulder", Chest, new(new(.06834937f * width, -.08f * torso))) { MoveScale = torso, Layer = .16838458f * width },
+            new("right-shoulder", Chest, new(new(0.0683f * width, -0.08f * torso))) { MoveScale = torso, Layer = 0.1684f * width },
             new("right-upper-arm", RightShoulder, new(default, ArmTurn)),
             new("right-elbow", RightUpperArm, new(new(upperArm, 0), ElbowTurn)),
             new("right-hand", RightElbow, new(new(forearm, 0), -ArmTurn - ElbowTurn)),
 
-            new("right-hip", Hips, new(new(.06f * width, 0), LegTurn)) { MoveScale = legs, Layer = .103923045f * width },
+            new("right-hip", Hips, new(new(0.06f * width, 0), LegTurn)) { MoveScale = legs, Layer = 0.1039f * width },
             new("right-knee", RightHip, new(new(thigh, 0), KneeTurn)),
             new("right-foot", RightKnee, new(new(shin, 0), -LegTurn - KneeTurn)))
         {
@@ -82,13 +82,13 @@ public static class PersonSkeleton
             TravelScale = legs,
             Mounts =
             [
-                Mount2D.Turning("right-grip", RightHand, Chest, new(default, .12f)), Mount2D.Turning("left-grip", LeftHand, Chest, new(default, .12f)),
-                Mount2D.On("back", Chest, new(new(-.1f, -.08f), -1.6907964f), .2f), Mount2D.On("back-view", Chest, new(new(-.13f, .12f), -1.0207963f), -.2f),
+                Mount2D.Turning("right-grip", RightHand, Chest, new(default, 0.12f)), Mount2D.Turning("left-grip", LeftHand, Chest, new(default, 0.12f)),
+                Mount2D.On("back", Chest, new(new(-0.1f, -0.08f), -1.6908f), 0.2f), Mount2D.On("back-view", Chest, new(new(-0.13f, 0.12f), -1.0208f), -0.2f),
                 Mount2D.Turning("sword-hand", RightHand, RightShoulder), Mount2D.Turning("gun-hand", RightHand, RightShoulder),
                 Mount2D.Upright("head-art", Head), Mount2D.Aimed("body-art", Hips, Chest),
                 Mount2D.Aimed("left-hand-art", LeftHand, LeftElbow), Mount2D.Aimed("right-hand-art", RightHand, RightElbow),
                 Mount2D.Aimed("left-foot-art", LeftFoot, LeftKnee), Mount2D.Aimed("right-foot-art", RightFoot, RightKnee),
-                Mount2D.Aimed("left-shin-art", LeftFoot, LeftKnee, layer: -.01f), Mount2D.Aimed("right-shin-art", RightFoot, RightKnee, layer: -.01f),
+                Mount2D.Aimed("left-shin-art", LeftFoot, LeftKnee, layer: -0.01f), Mount2D.Aimed("right-shin-art", RightFoot, RightKnee, layer: -0.01f),
             ],
         };
     }

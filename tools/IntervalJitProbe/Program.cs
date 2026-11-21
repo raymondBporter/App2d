@@ -47,7 +47,6 @@ public static class Probes
     public static int IntClamp(Interval<int> interval, int value) => interval.Clamp(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool FloatOverlapsFromLimit(Interval<float> first, Limit second) => first.Overlaps(Interval<float>.From(second));
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static bool DoubleOverlaps(Interval<double> first, Interval<double> second) => first.Overlaps(second);
@@ -110,7 +109,6 @@ internal static class Program
         Check(Probes.FloatClamp(singles, 10f) == 5f, nameof(Probes.FloatClamp));
         Check(Probes.DoubleClamp(doubles, 10d) == 5d, nameof(Probes.DoubleClamp));
         Check(Probes.IntClamp(integers, 10) == 5, nameof(Probes.IntClamp));
-        Check(Probes.FloatOverlapsFromLimit(singles, new Limit(1, 7)), nameof(Probes.FloatOverlapsFromLimit));
         Check(Probes.DoubleOverlaps(doubles, otherDouble), nameof(Probes.DoubleOverlaps));
         Check(Probes.FloatContainsInterval(singles, new(2, 4)), nameof(Probes.FloatContainsInterval));
         Check(Probes.FloatDistance(singles, new(8, 10)) == 3f, nameof(Probes.FloatDistance));

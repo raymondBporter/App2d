@@ -19,9 +19,7 @@ public sealed class JsonProfilesTests
             Assert.True(options.WriteIndented);
             Assert.Throws<InvalidOperationException>(() => options.WriteIndented = false);
         }
-        Assert.Same(JsonProfiles.Authored, AuthoredJson.Options);
         Assert.Same(JsonProfiles.Geometry, GeometryJson2D.JsonOptions);
-        Assert.Same(JsonProfiles.Puppet, PuppetDefinition.JsonOptions);
     }
 
     [Fact]

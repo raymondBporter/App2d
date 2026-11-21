@@ -1,6 +1,5 @@
 using App2d.Contracts.World;
 using App2d.Core.Assets;
-using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.IO;
 using App2d.Core.Json;
@@ -168,16 +167,16 @@ public static class WorldFile2D
     private static System.Collections.ObjectModel.ReadOnlyCollection<ObjectPlacement2D> LoadMapObjects(string root, WorldMapAsset2D map)
     {
         var result = new List<ObjectPlacement2D>();
-        var assets = new Dictionary<string, Part>(StringComparer.OrdinalIgnoreCase);
+        var assets = new Dictionary<string, ObjectAsset2D>(StringComparer.OrdinalIgnoreCase);
         foreach (var thing in map.PositionThings)
         {
             // A disabled thing stays an editor row but places nothing.
             if (!thing.Enabled || !string.Equals(thing.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal)) continue;
-            Part? asset;
+            ObjectAsset2D? asset;
             try
             {
                 var assetPath = ResolveObjectAssetPath(root, thing.Asset ?? "");
-                if (!assets.TryGetValue(assetPath, out asset)) assets.Add(assetPath, asset = Part.Load(assetPath));
+                if (!assets.TryGetValue(assetPath, out asset)) assets.Add(assetPath, asset = ObjectAsset2D.Load(assetPath));
             }
             catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
             {
@@ -188,9 +187,9 @@ public static class WorldFile2D
         return result.AsReadOnly();
     }
 
-    /// <summary>Object files are world-local; parts/ references use the shared authored Part library.</summary>
+    /// <summary>Object files are beside their world; a name starting "parts/" is one of the objects shared by every level.</summary>
     internal static string ResolveObjectAssetPath(string worldRoot, string asset) => asset.StartsWith("parts/", StringComparison.Ordinal)
-        ? FilePaths.ResolveUnderRoot(Path.Combine(AssetPaths.Current.AuthoredCharacters, "parts"), asset["parts/".Length..])
+        ? FilePaths.ResolveUnderRoot(Path.Combine(AssetPaths.Current.Levels, "objects"), asset["parts/".Length..])
         : FilePaths.ResolveUnderRoot(worldRoot, asset);
 
     public sealed record WorldDocument(int Version, IReadOnlyList<ZoneDocument> Zones)

@@ -54,11 +54,11 @@ public sealed class PersonFrameHistory2D
 
             var t = (time - a.Time) / (Time - a.Time);
             var overlay = a.Frame.Overlay;
-            if (overlay is not null && Frame.Overlay is { } next && overlay.Clip == next.Clip && next.Seconds >= overlay.Seconds)
+            if (overlay is { } under && Frame.Overlay is { } next && under.Clip == next.Clip && next.Seconds >= under.Seconds)
             {
-                overlay = overlay with
+                overlay = under with
                 {
-                    Seconds = overlay.Seconds + (next.Seconds - overlay.Seconds) * t
+                    Seconds = under.Seconds + (next.Seconds - under.Seconds) * t
                 };
             }
 

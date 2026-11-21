@@ -1,0 +1,30 @@
+{
+  "format": "app2d-object",
+  "version": 1,
+  "id": "tumbling-crate",
+  "name": "Tumbling crate",
+  "shapes": [
+    {
+      "shape": {
+        "kind": "rectangle",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "x": 36,
+          "y": 48
+        },
+        "angleRadians": 0
+      },
+      "fill": "#b7814f"
+    }
+  ],
+  "physics": {
+    "mass": 3,
+    "momentOfInertia": 900,
+    "freezeRotation": false,
+    "friction": 0.65,
+    "restitution": 0.05
+  }
+}

@@ -1,16 +1,11 @@
 {
-  "format": "app2d-part",
-  "version": 5,
+  "format": "app2d-object",
+  "version": 1,
   "id": "central-windlift",
   "name": "Central windlift",
-  "usage": "world",
-  "geometry": [
+  "shapes": [
     {
-      "id": "shape-1",
-      "collision": {},
-      "a": "origin",
-      "frame": "origin",
-      "geometry": {
+      "shape": {
         "kind": "rectangle",
         "min": {
           "x": -48,
@@ -21,15 +16,7 @@
           "y": 8
         }
       },
-      "material": {
-        "asset": null,
-        "paint": null,
-        "fill": "#d4923a",
-        "strokeWidth": null,
-        "outline": null,
-        "texture": null,
-        "tint": null
-      }
+      "fill": "#d4923a"
     }
   ],
   "physics": {

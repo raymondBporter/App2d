@@ -1,133 +1,69 @@
+using App2d.Gameplay.Characters;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
+using App2d.Core.Animation;
 using App2d.Core.Characters;
-using App2d.Core.Characters.Authored;
+using App2d.Core.Kinematics;
 
 namespace App2d.Presentation.Persons;
 
+/// <summary>What the player carries: nothing, the sword on its back, or the sword on its back and a pistol in hand.</summary>
+public enum PersonGear
+{
+    None, Sword, Gun
+}
+
 /// <summary>
-/// The authored Person and the player move set, resolved once from the player profile (P9c): each semantic role
-/// (<see cref="PersonRoles"/>) bound to the clip the profile names, the hero entity's action clips by id, the gear props by
-/// role. Missing clips or props are an error naming them. The role constants here are the roles, not clip ids.
+/// The player's character and its clips by name: one for each role below, and the clip and recovery clip of each of its
+/// actions under the clip's own name. A missing clip is an error naming it.
 /// </summary>
 public sealed class PersonMoves
 {
-    public const string GunCharge = PersonRoles.GunCharge;
-    public const string HealGather = PersonRoles.HealGather;
-    public const string Idle = PersonRoles.Idle;
-    public const string Walk = PersonRoles.Walk;
-    public const string Run = PersonRoles.Run;
-    public const string Jump = PersonRoles.Jump;
-    public const string Fall = PersonRoles.Fall;
-    public const string Land = PersonRoles.Land;
-    public const string Dash = PersonRoles.Dash;
-    public const string ClimbOn = PersonRoles.ClimbOn;
-    public const string Climb = PersonRoles.Climb;
-    public const string ClimbOff = PersonRoles.ClimbOff;
-    public const string WallGrip = PersonRoles.WallGrip;
-    public const string BalanceForward = PersonRoles.BalanceForward;
-    public const string BalanceBackward = PersonRoles.BalanceBackward;
-    public const string Hit = PersonRoles.Hit;
-    public const string Death = PersonRoles.Death;
-    public const string Celebrate = PersonRoles.Celebrate;
-    public const string Sheathe = PersonRoles.Sheathe;
-    public const string DownAttack = PersonRoles.DownAttack;
-    public const string GunAim = PersonRoles.GunAim;
-    public const string GunShot = PersonRoles.GunShot;
-    public const string GunWallShot = PersonRoles.GunWallShot;
-    public static IReadOnlyList<string> All => PersonRoles.All;
+    public const string Idle = "idle", Walk = "walk", Run = "run", Jump = "jump", Fall = "fall", Land = "land", Dash = "dash";
+    public const string ClimbOn = "climb-on", Climb = "climb", ClimbOff = "climb-off", WallGrip = "wall-grip";
+    public const string BalanceForward = "balance-forward", BalanceBackward = "balance-backward";
+    public const string Hit = "hit", Death = "death", Celebrate = "celebrate", Sheathe = "sheathe", DownAttack = "down-attack";
+    public const string GunAim = "gun-aim", GunShot = "gun-shot", GunWallShot = "gun-wall-shot", GunCharge = "gun-charge", HealGather = "heal-gather";
 
-    private PersonMoves(GameProfile profile, ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, Part> props, Dictionary<string, EquipmentSettings> equipment)
+    /// <summary>Every role the player's character must have a clip for.</summary>
+    public static IReadOnlyList<string> All { get; } =
+    [
+        Idle, Walk, Run, Jump, Fall, Land, Dash, ClimbOn, Climb, ClimbOff, WallGrip, BalanceForward, BalanceBackward, Hit, Death, Celebrate, Sheathe,
+        DownAttack, GunAim, GunShot, GunWallShot, GunCharge, HealGather,
+    ];
+
+    private readonly Dictionary<string, SkeletonClip2D> _clips = new(StringComparer.Ordinal);
+
+    public PersonMoves(Combatant hero)
     {
-        Profile = profile;
-        Model = model;
         Hero = hero;
-        Clips = clips;
-        Props = props;
-        Equipment = equipment;
+        var missing = All.Where(role => hero.Clip(role) is null).ToList();
+        if (missing.Count > 0) throw new InvalidDataException($"'{hero.Name}' cannot be the player; it has no clip for: {string.Join(", ", missing)}.");
+        foreach (var role in All) _clips[role] = hero.Clip(role)!;
+        foreach (var action in hero.Actions)
+        {
+            _clips[action.Clip.Name] = action.Clip;
+            if (action.Recovery is { } recovery) _clips[recovery.Name] = recovery;
+        }
     }
 
-    /// <summary>The profile the bindings came from.</summary>
-    public GameProfile Profile { get; }
-    /// <summary>The gear props by role.</summary>
-    public PersonGearIds Gear => Profile.Gear;
-    public ResolvedModel Model { get; }
-    /// <summary>The player's authored entity: its sword swings, and the recovery clip after each, are its actions' clips.</summary>
-    public ResolvedEntity Hero { get; }
-    /// <summary>The action a sword swing plays: the one gameplay named, or the attack.</summary>
-    public ResolvedAction Swing(string? action) => Hero.Actions[action ?? EntityControllers.Attack];
-    /// <summary>Clips by role, and the hero's action and recovery clips by id.</summary>
-    public IReadOnlyDictionary<string, MotionClip> Clips { get; }
-    public IReadOnlyDictionary<string, Part> Props { get; }
-    public IReadOnlyDictionary<string, EquipmentSettings> Equipment { get; }
-    public MotionClip this[string id] => Clips[id];
-
-    /// <summary>The move set the catalog's player profile binds. Every role, the hero entity and every gear prop must resolve, by name.</summary>
-    public static PersonMoves From(AuthoredCatalog catalog, string profileId = GameProfile.GameId)
-    {
-        var profile = catalog.Profiles.GetValueOrDefault(profileId)
-            ?? throw new InvalidDataException($"The player move set needs the authored profile '{profileId}' (profiles/{profileId}.json), which is missing or does not check.");
-        if (!profile.HasPlayer)
-        {
-            throw new InvalidDataException($"The player move set needs profile '{profileId}' to bind a player entity and model.");
-        }
-
-        var model = profile.Model;
-        var resolved = catalog.Resolve(model);
-        var missing = All
-            .Where(role => !profile.Roles.TryGetValue(role, out var clip) || !catalog.Animations.ContainsKey(clip))
-            .Select(role => $"role {role}")
-            .Concat(new[] { profile.Gear.Sword, profile.Gear.Pistol, profile.Gear.Hair, profile.Gear.HairBack }.Where(id => !catalog.Parts.ContainsKey(id)).Select(id => $"prop {id}"))
-            .ToList();
-
-        if (missing.Count > 0)
-        {
-            throw new InvalidDataException($"The player move set is incomplete; missing: {string.Join(", ", missing)}.");
-        }
-
-        var hero = catalog.Entities.GetValueOrDefault(profile.Entity)
-            ?? throw new InvalidDataException($"The player move set needs the authored '{profile.Entity}' entity, which is missing or does not compile.");
-
-        var clips = All.ToDictionary(role => role, role =>
-        {
-            var clip = catalog.Animations[profile.Roles[role]];
-            clip.Validate(resolved);
-            return clip;
-        }, StringComparer.Ordinal);
-
-        foreach (var action in hero.Actions.Values)
-        {
-            clips[action.Clip.Id] = action.Clip;
-            if (action.Recovery != null)
-            {
-                clips[action.Recovery.Id] = action.Recovery;
-            }
-        }
-
-        foreach (var socket in new[] { Humanoid.BackSocket, Humanoid.BackViewSocket, Humanoid.SwordSocket, Humanoid.GunSocket, Humanoid.HeadSocket })
-        {
-            if (resolved.Base.Sockets.All(s => s.Id != socket))
-            {
-                throw new InvalidDataException($"Model '{model}' has no '{socket}' socket for the player's props.");
-            }
-        }
-
-        var equipment = catalog.Pieces.Values.Where(p => p.Game?.Equipment is not null)
-            .ToDictionary(p => p.Id, p => p.Game!.Equipment! with { }, StringComparer.Ordinal);
-        return new(profile, resolved, hero, clips, catalog.Parts.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal), equipment);
-    }
+    public Combatant Hero { get; }
+    public Skeleton2D Skeleton => Hero.Skeleton;
+    /// <summary>The action a sword swing plays: the one named, or the first of the chain.</summary>
+    public CharacterAction Swing(string? action) => Hero.Action(action ?? "attack")!;
+    public SkeletonClip2D this[string name] => _clips[name];
 }
 
-/// <summary>What to draw this frame: a base clip at a time, an optional upper-body overlay and the gear worn.</summary>
 /// <summary>
 /// What to draw this frame: a base clip at a time, an optional upper-body overlay and the gear worn. <see cref="Planted"/> is
 /// false when the gait could not keep pace with the body (see <see cref="PersonAnimationDirector.MaxCadence"/>); contacts
 /// should then follow the clip rather than hold world anchors that would stretch the legs.
 /// </summary>
-public readonly record struct PersonFrame(string Key, MotionClip Clip, double Seconds, bool Repeat, PoseLayer? Overlay, PersonGear Gear, bool Planted = true)
+public readonly record struct PersonFrame(string Key, SkeletonClip2D Clip, double Seconds, bool Repeat, PoseOverlay? Overlay, PersonGear Gear, bool Planted = true)
 {
-    public MotionClip PropClip => Overlay?.Clip ?? Clip;
+    /// <summary>The clip that decides where the sword is and how the character is seen: the overlay's when there is one.</summary>
+    public SkeletonClip2D PropClip => Overlay?.Clip ?? Clip;
     public double PropSeconds => Overlay?.Seconds ?? Seconds;
 }
 
@@ -143,8 +79,8 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
     /// <summary>Height climbed per climb cycle: two rungs of the ladder the clip is keyed against.</summary>
     public const float ClimbRise = 1.1f;
     private const float TurnSeconds = .3f;
-    private readonly float _walkStride = MathF.Abs(PoseEvaluator.CycleTravel(moves.Model, moves[PersonMoves.Walk]).X);
-    private readonly float _runStride = MathF.Abs(PoseEvaluator.CycleTravel(moves.Model, moves[PersonMoves.Run]).X);
+    private readonly float _walkStride = MathF.Abs(moves[PersonMoves.Walk].Stride(moves.Skeleton).X);
+    private readonly float _runStride = MathF.Abs(moves[PersonMoves.Run].Stride(moves.Skeleton).X);
     private PersonState2D _state;
     private Vector2f _position;
     private bool _hasState;
@@ -259,7 +195,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
             EquipmentKind2D.Gun => PersonGear.Gun,
             _ => PersonGear.None
         };
-        PersonFrame Play(string id, double seconds, PoseLayer? overlay = null) => new(id, moves[id], seconds, moves[id].Loop, overlay, gear);
+        PersonFrame Play(string id, double seconds, PoseOverlay? overlay = null) => new(id, moves[id], seconds, moves[id].Loop, overlay, gear);
         double Scaled(string id) => Math.Clamp((s.Action.ElapsedSeconds + _sinceState) / s.Action.DurationSeconds, 0, 1) * moves[id].Duration;
 
         var melee = s.Action.IsActive && s.Action.Kind is PlayerAttackKind2D.Melee or PlayerAttackKind2D.Downward or PlayerAttackKind2D.Punch or PlayerAttackKind2D.Kick;
@@ -278,9 +214,9 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
         {
             var swing = moves.Swing(s.Action.Swing);
             _swingAction = s.Action.Swing;
-            _swing = swing.Clip.Id;
+            _swing = swing.Clip.Name;
             _swingLayered = false;
-            _recovery = s.Action.Kind == PlayerAttackKind2D.Downward ? PersonMoves.Sheathe : swing.Recovery?.Id ?? PersonMoves.Sheathe;
+            _recovery = s.Action.Kind == PlayerAttackKind2D.Downward ? PersonMoves.Sheathe : swing.Recovery?.Name ?? PersonMoves.Sheathe;
         }
         _meleeActive = melee;
         _swingElapsed = melee ? s.Action.ElapsedSeconds : 0;
@@ -301,7 +237,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
             frame = s.IsWallGripping ? Play(PersonMoves.GunWallShot, Scaled(PersonMoves.GunWallShot))
                         : Locomotion(gear) with
                         {
-                            Overlay = new(moves[PersonMoves.GunShot], Scaled(PersonMoves.GunShot), PersonLoadout.UpperBody)
+                            Overlay = new(moves[PersonMoves.GunShot], Scaled(PersonMoves.GunShot), PersonSkeleton.UpperBody)
                         };
         }
         else if (s.Spells.IsHealing)
@@ -324,7 +260,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
                 }
                 : Locomotion(PersonGear.Gun) with
                 {
-                    Overlay = new(moves[PersonMoves.GunCharge], progress * moves[PersonMoves.GunCharge].Duration, PersonLoadout.UpperBody)
+                    Overlay = new(moves[PersonMoves.GunCharge], progress * moves[PersonMoves.GunCharge].Duration, PersonSkeleton.UpperBody)
                 };
         }
         else if (s.Action.IsActive && s.Action.Kind == PlayerAttackKind2D.Downward)
@@ -340,7 +276,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
             _swingLayered |= !s.IsGrounded || s.IsClimbingLadder || s.IsWallGripping || MathF.Abs(s.LinearVelocity.X) / worldUnitsPerModelUnit > WalkSpeedThreshold;
             frame = _swingLayered ? Locomotion(gear) with
             {
-                Overlay = new(moves[_swing], Scaled(_swing), PersonLoadout.SwordUpperBody)
+                Overlay = new(moves[_swing], Scaled(_swing), PersonSkeleton.UpperBody)
             } : Play(_swing, Scaled(_swing));
         }
         else if (s.IsDashing)
@@ -364,7 +300,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
             _outpaced = false;
         }
         // Reactions/traversal that require both arms cancel recovery rather than replaying it later.
-        if (_sheathePending && frame.PropClip.Id != _recovery)
+        if (_sheathePending && frame.PropClip.Name != _recovery)
         {
             _sheathePending = false;
         }
@@ -376,14 +312,14 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
     {
         var s = _state;
         var gun = Equipment == EquipmentKind2D.Gun;
-        var aim = gun ? new PoseLayer(moves[PersonMoves.GunAim], _clock, PersonLoadout.UpperBody) : null;
-        PersonFrame Play(string id, double seconds, PoseLayer? overlay = null) => new(id, moves[id], seconds, moves[id].Loop, overlay, gear);
+        PoseOverlay? aim = gun ? new(moves[PersonMoves.GunAim], _clock, PersonSkeleton.UpperBody) : null;
+        PersonFrame Play(string id, double seconds, PoseOverlay? overlay = null) => new(id, moves[id], seconds, moves[id].Loop, overlay, gear);
         double Clock(string id) => id == _key ? _clock - _keyStart : 0;
-        PersonFrame Gait(string id, PoseLayer? overlay = null) => Play(id, id == _key ? _cycle : 0, overlay) with
+        PersonFrame Gait(string id, PoseOverlay? overlay = null) => Play(id, id == _key ? _cycle : 0, overlay) with
         {
             Planted = id != _key || !_outpaced
         };
-        var recovery = _sheathePending ? new PoseLayer(moves[_recovery], _clock - _recoveryStart, PersonLoadout.SwordUpperBody) : null;
+        PoseOverlay? recovery = _sheathePending ? new(moves[_recovery], _clock - _recoveryStart, PersonSkeleton.UpperBody) : null;
 
         var speed = MathF.Abs(s.LinearVelocity.X) / worldUnitsPerModelUnit;
         if (s.IsClimbingLadder)

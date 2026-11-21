@@ -1,7 +1,5 @@
 using App2d.Core.Animation;
 using App2d.Core.Characters;
-using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
@@ -19,7 +17,6 @@ internal sealed class PersonDemo : IDemo
     private static readonly string[] Clips = [.. PersonClips.All.Select(c => c.Name)];
     private static readonly string[] Layers = ["(none)", .. Clips];
 
-    private readonly AuthoredCatalog? _authored = LoadAuthored();
     private readonly LayeredMesh _mesh = new();
     private int _clip = Math.Max(0, Array.IndexOf(Clips, "person-walk"));
     private int _layer;
@@ -35,15 +32,6 @@ internal sealed class PersonDemo : IDemo
     }
 
     /// <summary>The authored characters folder, looked for upward from where the demo runs. Null when it is not there.</summary>
-    private static AuthoredCatalog? LoadAuthored()
-    {
-        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
-        {
-            var root = Path.Combine(directory.FullName, "Assets", "Characters", "authored");
-            if (Directory.Exists(root)) return AuthoredCatalog.Load(root);
-        }
-        return null;
-    }
 
     private void DrawControls()
     {
@@ -64,7 +52,6 @@ internal sealed class PersonDemo : IDemo
         Slider("width", ref _width);
         Slider("head", ref _head);
         if (ImGui.Button("Standard build")) _legs = _torso = _arms = _width = _head = 1;
-        if (_authored is null) ImGui.TextWrapped("Assets/Characters/authored was not found, so the authored rig is not shown.");
     }
 
     private static void Slider(string label, ref float value)
@@ -81,7 +68,6 @@ internal sealed class PersonDemo : IDemo
         var over = _layer == 0 ? null : PersonClips.All[_layer - 1];
         // Every clip repeats here, so one that plays once can be watched again.
         float time = _seconds % clip.Duration, overTime = over is null ? 0 : _seconds % over.Duration;
-        var shown = _authored?.Resolve("person");
 
         var skeleton = PersonSkeleton.Build(_legs, _torso, _arms, _width);
         Span<RigidTransform2D> local = stackalloc RigidTransform2D[skeleton.Count], world = stackalloc RigidTransform2D[skeleton.Count];
@@ -109,18 +95,7 @@ internal sealed class PersonDemo : IDemo
         skeleton.ToLayers(keyed, layers);
         _mesh.Clear();
         AttachmentPainter.Paint(_mesh, new(skeleton, world, layers, turns), PersonBody.Build(_torso, _width, _head));
-        var right = new Vector2f(shown is null ? 0 : 1, 0);
-        DrawMesh(canvas, _mesh, right);
-        Label(canvas, right, "skeleton + attachments");
-
-        if (shown is null) return;
-        var input = new PoseInput { InPlace = true };
-        if (over is not null) input = input with { Overlay = new PoseLayer(_authored!.Animations[over.Name], overTime, PersonLoadout.UpperBody, _weight) };
-        var pose = PoseEvaluator.Sample(shown, _authored!.Animations[clip.Name], time, repeat: false, input);
-        var drawing = new PuppetDrawing();
-        drawing.Add(shown.Parts.Select(pose.Drawn), pose.World, pose.Placement, id => shown.Rest[id], shown.RestPlacement);
-        DrawMesh(canvas, drawing.Mesh, -right);
-        Label(canvas, -right, "authored rig (standard build)");
+        DrawMesh(canvas, _mesh, Vector2f.Zero);
     }
 
     private static void Label(DemoCanvas canvas, Vector2f at, string text) =>

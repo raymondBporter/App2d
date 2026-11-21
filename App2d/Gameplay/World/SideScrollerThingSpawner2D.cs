@@ -1,6 +1,6 @@
 using App2d.Contracts.Player;
 using App2d.Core;
-using App2d.Core.Characters.Authored;
+using App2d.Gameplay.Characters;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
@@ -26,7 +26,7 @@ internal sealed class SideScrollerThingSpawner2D(
     uint playerLayer,
     uint enemyLayer)
 {
-    public void Create(IReadOnlyList<WorldThingSpec2D> things, CombatSystem2D combat, AuthoredCatalog? authored = null)
+    public void Create(IReadOnlyList<WorldThingSpec2D> things, CombatSystem2D combat, bool characters = false)
     {
         Ensure.ThrowIfNull(things);
         Ensure.ThrowIfNull(combat);
@@ -38,11 +38,9 @@ internal sealed class SideScrollerThingSpawner2D(
                 continue;
             }
 
-            // P9c: the placement kind -> authored entity binding is the player profile's `spawns` data, not a switch.
-            var entityId = authored?.Profiles.GetValueOrDefault(GameProfile.GameId)?.Spawns.GetValueOrDefault(thing.Kind.ToString());
-            if (entityId is not null && authored?.Entities.GetValueOrDefault(entityId) is { } entity)
+            if (characters && GameCharacters.Enemy(thing.Kind) is { } type)
             {
-                Register(new AuthoredEntityEnemy2D(ids.Allocate(), entity, physics, thing.Position, worldLayer, enemyLayer));
+                Register(new CharacterEnemy2D(ids.Allocate(), type, physics, thing.Position, worldLayer, enemyLayer));
                 continue;
             }
             switch (thing.Kind)
@@ -54,9 +52,7 @@ internal sealed class SideScrollerThingSpawner2D(
                 case WorldThingKind2D.BabyTriceratops:
                 case WorldThingKind2D.Pterosaur:
                 case WorldThingKind2D.ShieldDefender:
-                    throw new InvalidDataException(entityId is null
-                        ? $"{thing.Kind} requires an authored entity bound by the spawns of the 'game' profile (profiles/game.json); none is loaded."
-                        : $"{thing.Kind} requires its authored entity '{entityId}', which is missing or does not compile.");
+                    throw new InvalidDataException($"{thing.Kind} exists only as one of the game's characters; this session was made without them.");
                 case WorldThingKind2D.Shieldback:
                     Register(CreateShieldback(thing.Position));
                     break;

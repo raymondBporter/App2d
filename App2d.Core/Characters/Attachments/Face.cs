@@ -22,7 +22,7 @@ public enum FaceShape
 /// One piece of a face: a pupil, a brow, the mouth. Its look and layer never change; its points come from the expression. A
 /// piece that blinks has its radii scaled over time by <see cref="Blink"/>.
 /// </summary>
-public sealed record FacePiece(string Name, FaceShape Shape, RenderMaterialDefinition2D Material, float Layer = 0, Track<Vector2f>? Blink = null);
+public sealed record FacePiece(string Name, FaceShape Shape, AttachmentMaterial Material, float Layer = 0, Track<Vector2f>? Blink = null);
 
 /// <summary>
 /// One expression: the points of every piece, in the order of <see cref="Face.Pieces"/>, with none for a piece that is hidden.
@@ -40,6 +40,7 @@ public sealed record Face(Vector2f Origin, float BlinkSeconds, ImmutableArray<Fa
     public const int CurveSegments = 32;
 
     public FaceExpression Expression(string name) => Expressions.First(e => e.Name == name);
+    public bool Has(string name) => Expressions.Any(e => e.Name == name);
 
     /// <summary>
     /// The face showing one expression, as attachments on a mount. <paramref name="seconds"/> drives the blink.

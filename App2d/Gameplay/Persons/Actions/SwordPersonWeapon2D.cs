@@ -1,3 +1,4 @@
+using App2d.Gameplay.Characters;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
@@ -19,7 +20,7 @@ internal sealed class SwordPersonWeapon2D(
     Action<float> attackStarted,
     Action<WeaponEvent2D> publish,
     Action<float> downAttackStarted,
-    Func<Rect2f, bool>? overlapsSpikes = null, AuthoredHero2D? authored = null) : MeleePersonWeapon2D(
+    Func<Rect2f, bool>? overlapsSpikes = null, Hero2D? authored = null) : MeleePersonWeapon2D(
         EquipmentKind2D.Sword,
         ids.Allocate(),
         ownerBody,

@@ -28,7 +28,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         CombatFaction2D ownerFaction,
         CombatSystem2D combat,
         Func<Rect2f, bool>? overlapsSpikes = null,
-        AuthoredHero2D? hero = null, Func<float, Vector2f>? muzzle = null,
+        Hero2D? hero = null, Func<float, Vector2f>? muzzle = null,
         Health2D? health = null, SpellTuning2D? spells = null)
     {
         Ensure.ThrowIfNull(ids);

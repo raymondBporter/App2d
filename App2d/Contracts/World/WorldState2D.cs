@@ -8,10 +8,7 @@ using System.Collections.Immutable;
 namespace App2d.Contracts.World;
 
 /// <summary>Fixed per placed object; a replaced object gets a new runtime ID.</summary>
-public sealed record ObjectDefinition2D(EntityId2D Id, string PlacementId, Core.Characters.Authored.Part Part)
-{
-    public string TextureRoot { get; init; } = Part.TextureRoot;
-}
+public sealed record ObjectDefinition2D(EntityId2D Id, string PlacementId, Core.Objects.ObjectAsset2D Asset);
 public readonly record struct ObjectState2D(EntityId2D Id, Vector2f Position, float Rotation)
 {
     public Vector2f LinearVelocity { get; init; }

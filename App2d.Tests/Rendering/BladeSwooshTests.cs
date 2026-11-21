@@ -1,4 +1,4 @@
-using App2d.Core.Characters.Authored;
+using App2d.Core.Characters;
 using App2d.Core.Rendering;
 
 namespace App2d.Tests.Rendering;
@@ -125,9 +125,9 @@ public sealed class BladeSwooshTests
     [Fact]
     public void SwooshMarkersOpenAndCloseTheTrail()
     {
-        var clip = new MotionClip { Markers = [new() { Id = PersonLoadout.SwooshMarker, Time = .05f }, new() { Id = PersonLoadout.SwooshEndMarker, Time = .1f }] };
-        Assert.False(PersonLoadout.Swooshing(clip, .04f));
-        Assert.True(PersonLoadout.Swooshing(clip, .05f));
-        Assert.False(PersonLoadout.Swooshing(clip, .1f));
+        var clip = new App2d.Core.Animation.SkeletonClip2D("swing", .2f) { Markers = [new(ClipMarkers.Swoosh, .05f), new(ClipMarkers.SwooshEnd, .1f)] };
+        Assert.False(clip.Swooshing(.04f));
+        Assert.True(clip.Swooshing(.05f));
+        Assert.False(clip.Swooshing(.1f));
     }
 }

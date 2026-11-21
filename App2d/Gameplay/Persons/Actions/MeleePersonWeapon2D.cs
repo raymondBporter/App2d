@@ -22,7 +22,7 @@ internal abstract class MeleePersonWeapon2D(
     uint targetLayer,
     CombatSystem2D combat,
     Action<float> attackStarted,
-    Action<WeaponEvent2D> publish, AuthoredHero2D? authored = null) : PersonWeapon2DBase(kind)
+    Action<WeaponEvent2D> publish, Hero2D? authored = null) : PersonWeapon2DBase(kind)
 {
     private readonly RigidBody2D _ownerBody = Ensure.RequireNotNull(ownerBody);
     private readonly CombatSystem2D _combat = Ensure.RequireNotNull(combat);
@@ -32,7 +32,7 @@ internal abstract class MeleePersonWeapon2D(
     private float _attackDirection = 1f;
     private float _bufferedAttackDirection = 1f;
     // With an authored hero, which of its swings is playing and which one starts next: a press chains to the next swing of
-    // the combo while one runs or its recovery still holds the blade out (see AuthoredHero2D.Chain).
+    // the combo while one runs or its recovery still holds the blade out (see Hero2D.Chain).
     private float _sinceSwing = float.PositiveInfinity;
     private string? _swing, _nextSwing;
 

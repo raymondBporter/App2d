@@ -10,12 +10,11 @@ public sealed class CharacterActorRenderingTests
 {
     private static readonly Matrix Projection = LayeredMeshRenderer.Projection(128, 128, new(64), 1);
 
-    /// <summary>A one-batch puppet: a triangle centred on x at depth z. Smaller z is nearer the camera.</summary>
-    private static PuppetDrawing Puppet(float x, float z, Color4b color)
+    /// <summary>A puppet: a triangle centred on x at depth z. Smaller z is nearer the camera.</summary>
+    private static LayeredMesh Puppet(float x, float z, Color4b color)
     {
-        var drawing = new PuppetDrawing();
-        drawing.Mesh.Triangle(new(x - 12, -12, z), new(x + 12, -12, z), new(x, 12, z), color);
-        drawing.Batches.Add(new(0, 3));
+        var drawing = new LayeredMesh();
+        drawing.Triangle(new(x - 12, -12, z), new(x + 12, -12, z), new(x, 12, z), color);
         return drawing;
     }
 
@@ -47,10 +46,9 @@ public sealed class CharacterActorRenderingTests
         using var graphics = new GraphicsTestContext();
         using var target = RenderCapture2D.CreateTarget(graphics.Device, 128, 128, DepthFormat.Depth24, 0);
         using var renderer = new PointCharacterRenderer(graphics.Device);
-        var puppet = new PuppetDrawing();
-        puppet.Mesh.Triangle(new(-44, -12, 0), new(-20, -12, 0), new(-32, 12, 0), Color4b.Red);
-        puppet.Mesh.Triangle(new(20, -12, 10), new(44, -12, 10), new(32, 12, 10), Color4b.Blue);
-        puppet.Batches.Add(new(0, 6));
+        var puppet = new LayeredMesh();
+        puppet.Triangle(new(-44, -12, 0), new(-20, -12, 0), new(-32, 12, 0), Color4b.Red);
+        puppet.Triangle(new(20, -12, 10), new(44, -12, 10), new(32, 12, 10), Color4b.Blue);
         var swoosh = new LayeredMesh(3);
         swoosh.Triangle(new(-60, -20, 5), new(60, -20, 5), new(0, 40, 5), Color4b.Lime);
         using (graphics.Device.UseRenderTarget(target, Color4b.White))

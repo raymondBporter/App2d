@@ -108,23 +108,22 @@ public sealed partial class Renderer2D : IDisposable
     public void Draw(WorldObject2D worldObject)
     {
         RequireFrame();
-        if (!worldObject.IsVisible || worldObject.Shader is not PartShader2D { Part.IsAnimated: true } && IsCulled(worldObject))
+        if (!worldObject.IsVisible || IsCulled(worldObject))
         {
             return;
         }
 
-        if (worldObject.Shader is PartShader2D part)
+        if (worldObject.Shader is App2d.Core.Objects.ObjectShader2D placed)
         {
             Flush();
             _characterRenderer ??= new(_device);
             var transform = View.LocalToDevice(worldObject.Transform.Matrix);
-            _characterRenderer.Draw(part.Drawing, LayeredMeshRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height), LayeredMeshRenderer.ToXnaMatrix(transform));
+            _characterRenderer.Draw(placed.Mesh, LayeredMeshRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height), LayeredMeshRenderer.ToXnaMatrix(transform));
             return;
         }
-        if (worldObject.Shader is AuthoredCharacterShader authored)
+        if (worldObject.Shader is CharacterShader character)
         {
-            Flush();
-            DrawAuthored(worldObject, authored);
+            DrawCharacter(worldObject, character);
             return;
         }
         var matrix = View.LocalToDevice(worldObject.Transform.Matrix);
@@ -136,16 +135,6 @@ public sealed partial class Renderer2D : IDisposable
         }
 
         SelectMaterial(worldObject.Shader);
-        if (worldObject.Shader is ShapeMaterialShader2D material)
-        {
-            if (material.HasFill) FillShape(worldObject.Shape, matrix, bounds, material);
-            if (material.Material.Outline is not null && material.OutlineWidth > 0)
-            {
-                SelectBatch(null, null);
-                OutlineShape(worldObject.Shape, matrix, bounds, material.OutlineColor, material.OutlineWidth * PixelsPerWorldUnit);
-            }
-            return;
-        }
         FillShape(worldObject.Shape, matrix, bounds, worldObject.Shader);
     }
 
@@ -153,9 +142,6 @@ public sealed partial class Renderer2D : IDisposable
     {
         switch (shader)
         {
-            case ShapeMaterialShader2D { Texture: { } texture }:
-                SelectTexture(texture, new SamplerKey(TextureAddressMode.Clamp, TextureAddressMode.Clamp, TextureFilter.Linear));
-                break;
             case SpriteShader2D sprite:
                 SelectTexture(sprite.Texture, new SamplerKey(TextureAddressMode.Clamp, TextureAddressMode.Clamp, sprite.FilterMode));
                 break;
@@ -275,10 +261,6 @@ public sealed partial class Renderer2D : IDisposable
         var uv = Vector2f.Zero;
         switch (shader)
         {
-            case ShapeMaterialShader2D { Texture: not null }:
-                uv = (local - bounds.Min) / bounds.Size;
-                uv = uv with { Y = 1f - uv.Y };
-                break;
             case SpriteShader2D sprite:
                 uv = (local - bounds.Min) / bounds.Size;
                 if (sprite.FlipX)

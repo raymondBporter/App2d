@@ -1,3 +1,4 @@
+using App2d.Core.Objects;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
@@ -44,7 +45,7 @@ public sealed class ObservationRoundTripTests
             new(false, 0f, position, [new(new EntityId2D(102), position, new(1250f, 0f), new(2f, 4f))]));
         var content = new LevelContent2D(3, [terrain], [new(42, position)], new(300f, 0f))
         {
-            Objects = [new(new(105), "orbit", new() { Id = "orbit", Name = "Orbit", Geometry = [new() { Id = "circle", A = "origin", Geometry = Circle2D.Builder.Create(12), Material = new() { Fill = "#25d2be" } }] })]
+            Objects = [new(new(105), "orbit", new() { Id = "orbit", Name = "Orbit", Shapes = [new() { Shape = Circle2D.Builder.Create(12), Fill = "#25d2be" }] })]
         };
         var world = new WorldState2D([new(42, true)])
         {
@@ -70,8 +71,7 @@ public sealed class ObservationRoundTripTests
         Assert.Equal([.. player.Weapons.Projectiles], [.. restored.Players[0].Weapons.Projectiles]);
         Assert.Equal(enemies.ToArray(), restored.Enemies.ToArray());
         Assert.Equal([.. world.Objects], [.. restored.World.Objects]);
-        Assert.Equal(content.Objects[0].Part.ToJson(), restored.Content.Objects[0].Part.ToJson());
-        Assert.Equal(content.Objects[0].TextureRoot, restored.Content.Objects[0].TextureRoot);
+        Assert.Equal(content.Objects[0].Asset.ToJson(), restored.Content.Objects[0].Asset.ToJson());
         Assert.True(world.CutGrass.SetEquals(restored.World.CutGrass));
         Assert.Equal([.. content.Checkpoints], [.. restored.Content.Checkpoints]);
         var restoredTerrain = Assert.Single(restored.Content.Terrain);

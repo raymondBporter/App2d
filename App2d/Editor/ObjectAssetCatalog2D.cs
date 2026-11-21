@@ -1,4 +1,4 @@
-using App2d.Core.Characters.Authored;
+using App2d.Core.Objects;
 using App2d.Core.Validation;
 using App2d.Levels;
 using System.Diagnostics.CodeAnalysis;
@@ -7,12 +7,12 @@ using System.Text.Json;
 
 namespace App2d.Editor;
 
-/// <summary>The world's object-file palette and cached loading of world-local or shared Part references.</summary>
+/// <summary>The world's object-file palette and cached loading of world-local or shared object files.</summary>
 internal sealed class ObjectAssetCatalog2D
 {
     private const string Folder = "objects";
     private readonly string _worldRoot;
-    private readonly Dictionary<string, Part> _loaded = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ObjectAsset2D> _loaded = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Exception> _failures = new(StringComparer.OrdinalIgnoreCase);
     private IReadOnlyList<string> _paths = [];
 
@@ -27,7 +27,7 @@ internal sealed class ObjectAssetCatalog2D
     public IReadOnlyList<string> Paths => _paths;
 
     /// <summary>A file that fails to load is remembered as failed until <see cref="Refresh"/>: the editor asks every frame.</summary>
-    public Part Load(string relativePath)
+    public ObjectAsset2D Load(string relativePath)
     {
         Ensure.ThrowIfNullOrWhiteSpace(relativePath);
         var resolved = WorldFile2D.ResolveObjectAssetPath(_worldRoot, relativePath);
@@ -43,7 +43,7 @@ internal sealed class ObjectAssetCatalog2D
 
         try
         {
-            asset = Part.Load(resolved);
+            asset = ObjectAsset2D.Load(resolved);
         }
         catch (Exception e) when (e is IOException or InvalidDataException or JsonException)
         {
@@ -55,7 +55,7 @@ internal sealed class ObjectAssetCatalog2D
         return asset;
     }
 
-    public bool TryLoad(string relativePath, [NotNullWhen(true)] out Part? asset)
+    public bool TryLoad(string relativePath, [NotNullWhen(true)] out ObjectAsset2D? asset)
     {
         try
         {

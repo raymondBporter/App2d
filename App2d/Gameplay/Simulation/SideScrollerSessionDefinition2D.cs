@@ -1,6 +1,5 @@
 using App2d.Contracts.Player;
 using App2d.Contracts.World;
-using App2d.Core.Characters.Authored;
 using App2d.Core.Objects;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
@@ -27,8 +26,11 @@ public readonly record struct SavedProgress2D(long SavePointId, int HitPoints);
 /// </summary>
 public sealed record SideScrollerSessionDefinition2D(TraversalMetrics2D Traversal, IChunkedTileMap2D TileMap, IReadOnlyList<WorldThingSpec2D> WorldThings)
 {
-    /// <summary>Authored entities; placements they cover spawn from these, otherwise the built-in sprite enemies.</summary>
-    public AuthoredCatalog? AuthoredCharacters { get; init; }
+    /// <summary>
+    /// Plays with the game's cast: enemies placed in the level are its characters, and the player's sword and pistol take their
+    /// timing from the hero. Off, the built-in sprite enemies and fixed timings are used.
+    /// </summary>
+    public bool Characters { get; init; }
     public IReadOnlyList<ObjectPlacement2D> Objects { get; init; } = [];
     /// <summary>Rectangular regions shared by simulation and presentation consumers.</summary>
     public ImmutableArray<WorldZone2D> Zones { get; init; } = [];

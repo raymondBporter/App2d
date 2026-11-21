@@ -1,6 +1,5 @@
 using App2d.Core;
-using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
+using App2d.Core.Characters;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.EditorUi;
@@ -17,7 +16,7 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
 {
     private readonly record struct Cell(int Index, WardrobeSlot2D? Slot = null);
     private readonly Dictionary<string, (RenderTarget2D Target, nint Id)> _icons = [];
-    private readonly PuppetDrawing _drawing = new(), _iconDrawing = new();
+    private readonly LayeredMesh _drawing = new(), _iconDrawing = new();
     private PointCharacterRenderer? _renderer;
     private RenderTarget2D? _preview;
     private nint _previewId;
@@ -169,7 +168,6 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
             ImGui.BeginTooltip();
             ImGui.TextUnformatted(item.Name);
             ImGui.TextDisabled(item.Slot switch { WardrobeSlot2D.Shoes => "Shoes / both feet", WardrobeSlot2D.Gloves => "Gloves / both hands", _ => "Shins / both legs" });
-            ImGui.TextDisabled(item.Settings.Replace ? "Replaces base artwork while equipped" : "Worn over base artwork");
             ImGui.EndTooltip();
         }
     }
@@ -204,7 +202,8 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         {
             if (_icons.ContainsKey(item.Id)) continue;
             var target = RenderCapture2D.CreateTarget(device, 112, 112);
-            _iconDrawing.Build(item.Artwork);
+            _iconDrawing.Clear();
+            AttachmentPainter.Paint(_iconDrawing, CharacterPose.Rest(PlayerWardrobe2D.IconSkeleton).Posed, item.Icon);
             RenderDrawing(device, target, _iconDrawing, .76f);
             _icons.Add(item.Id, (target, gui.Register(target)));
         }
@@ -222,19 +221,16 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         }
         var moves = wardrobe.Moves;
         var idle = moves[PersonMoves.Idle];
-        var pose = PoseEvaluator.Sample(moves.Model, idle, _clock, repeat: true, new("relaxed") { InPlace = true, Clock = _clock });
-        _drawing.Build(moves.Model, pose, wardrobe.Artwork);
-        var actor = new ActorPose(pose, Vector2f.Zero, 1);
-        foreach (var (prop, socket) in wardrobe.Dress(idle, (float)(_clock % idle.Duration), PersonGear.None))
-            _drawing.AddAttachment(prop, actor, socket);
-        foreach (var attachment in wardrobe.Attachments) _drawing.AddAttachment(attachment, actor);
+        var pose = CharacterPose.Sample(moves.Skeleton, idle, _clock, repeat: true).Showing("relaxed", _clock);
+        _drawing.Clear();
+        AttachmentPainter.Paint(_drawing, pose.Posed, wardrobe.Dress(pose, idle, (float)(_clock % idle.Duration), PersonGear.None));
         RenderDrawing(device, _preview, _drawing, .91f);
     }
 
-    private void RenderDrawing(GraphicsDevice device, RenderTarget2D target, PuppetDrawing drawing, float fit)
+    private void RenderDrawing(GraphicsDevice device, RenderTarget2D target, LayeredMesh drawing, float fit)
     {
-        var min = drawing.Mesh.Min;
-        var max = drawing.Mesh.Max;
+        var min = drawing.Min;
+        var max = drawing.Max;
         var ppu = MathF.Min(target.Width / MathF.Max(.01f, max.X - min.X), target.Height / MathF.Max(.01f, max.Y - min.Y)) * fit;
         var anchor = new Vector2f(target.Width / 2f - (min.X + max.X) / 2 * ppu, target.Height / 2f + (min.Y + max.Y) / 2 * ppu);
         using var bound = device.UseRenderTarget(target, Color4b.Transparent);

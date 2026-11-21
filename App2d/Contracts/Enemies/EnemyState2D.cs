@@ -1,8 +1,10 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
-using App2d.Core.Characters.Authored;
+using App2d.Core.Characters;
+using App2d.Gameplay.Characters;
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 
 namespace App2d.Contracts.Enemies;
 
@@ -12,7 +14,7 @@ public enum EnemyKind2D
     // Keep the surviving observation values stable when removing obsolete kinds.
     Shieldback = 0,
     Rival = 3,
-    Authored = 5
+    Character = 5
 }
 
 /// <summary>An enemy observation for presentation, including the final pose when it uses authored geometry.</summary>
@@ -30,8 +32,12 @@ public readonly record struct EnemyState2D(EntityId2D Id, EnemyKind2D Kind, Vect
     public float MoveX { get; init; }
 
     /// <summary>For enemies compiled from authored entities: the shared compiled entity and this tick's final pose, drawn as is.</summary>
-    public ResolvedEntity? AuthoredEntity { get; init; }
-    public ActorPose? AuthoredPose { get; init; }
+    /// <summary>
+    /// The kind of enemy and its pose this tick, for an enemy that is a character. Both are shared with whoever draws it in
+    /// the same process; neither is written when a state is serialized.
+    /// </summary>
+    [JsonIgnore] public EnemyType? Type { get; init; }
+    [JsonIgnore] public CharacterPose? Pose { get; init; }
 }
 
 public readonly record struct EntityBoltState2D(Vector2f Position, Vector2f Velocity, Vector2f Size, float Lifetime)

@@ -1,7 +1,6 @@
 using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Objects;
@@ -272,7 +271,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public void CreateAuthoredWorldThings(
-        CombatSystem2D combat, AuthoredCatalog? authored = null)
+        CombatSystem2D combat, bool characters = false)
     {
         Ensure.ThrowIf(
             _authoredWorldThingsCreated,
@@ -290,7 +289,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             environment.WorldLayer,
             environment.PlayerLayer,
             environment.EnemyLayer)
-            .Create(_worldThingSpecs, combat, authored);
+            .Create(_worldThingSpecs, combat, characters);
         UpdateObjectStreaming();
         _definitionRevision++;
         _combatants = combat.Combatants;

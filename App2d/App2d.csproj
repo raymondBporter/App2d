@@ -22,9 +22,6 @@
       <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Assets\Characters\authored\**\*.json" Link="Assets\PointCharacters\authored\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
 
   <!-- Refresh pulled resources and bootstrap a missing Debug tree on normal builds. -->
   <Target Name="SyncStaticAssets" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">

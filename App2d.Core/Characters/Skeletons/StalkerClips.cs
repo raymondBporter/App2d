@@ -1,5 +1,3 @@
-// Generated from the authored JSON clips by LegacyClipEmitter in App2d.Tests. While those clips exist, change them and
-// regenerate (set APP2D_WRITE_CLIPS=1 and run the tests named GeneratedRigTests) instead of editing this file.
 using App2d.Core.Animation;
 using System.Collections.Immutable;
 using static App2d.Core.Characters.StalkerSkeleton;

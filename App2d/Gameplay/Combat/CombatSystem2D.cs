@@ -1,6 +1,7 @@
+using App2d.Gameplay.Characters;
 using App2d.Contracts.Combat;
 using App2d.Core;
-using App2d.Core.Characters.Authored;
+using App2d.Core.Characters;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Spatial;
@@ -140,8 +141,8 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         var reached = new List<(ICombatant2D Combatant, Collider2D? Hurt)>();
         foreach (var overlap in overlaps)
         {
-            var attached = overlap.Collider.UserData as AttachedCollider;
-            if (attached is { Use: not (ColliderUses.Hurt or ColliderUses.Guard) })
+            var attached = overlap.Collider.UserData as PlacedCollider;
+            if (attached is { Use: not (ColliderUse.Hurt or ColliderUse.Guard) })
             {
                 continue;
             }
@@ -151,7 +152,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
                 continue;
             }
 
-            var hurt = attached?.Use == ColliderUses.Hurt ? overlap.Collider : null;
+            var hurt = attached?.Use == ColliderUse.Hurt ? overlap.Collider : null;
             var index = reached.FindIndex(r => ReferenceEquals(r.Combatant, c));
             if (index < 0)
             {

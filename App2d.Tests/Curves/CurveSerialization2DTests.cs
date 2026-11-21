@@ -69,10 +69,10 @@ public sealed class CurveSerialization2DTests
         {
             Path = new LineSegmentCurve2D { Start = new(1, 2), End = new(3, 4) }.Validated()
         };
-        var json = JsonSerializer.Serialize(envelope, AuthoredJson.Options);
+        var json = JsonSerializer.Serialize(envelope, JsonProfiles.Objects);
         Assert.Contains("\"kind\": \"line\"", json);
         Assert.Contains("\"x\": 1", json);
-        var restored = JsonSerializer.Deserialize<CurveEnvelope>(json, AuthoredJson.Options)!;
+        var restored = JsonSerializer.Deserialize<CurveEnvelope>(json, JsonProfiles.Objects)!;
         Assert.Equal(new Vector2f(3, 4), restored.Path.Validated().Evaluate(1));
     }
 

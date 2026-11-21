@@ -1,7 +1,8 @@
+using App2d.Gameplay.Characters;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Core;
-using App2d.Core.Characters.Authored;
+using App2d.Core.Characters;
 using App2d.Presentation.Persons;
 using System.Collections.Immutable;
 
@@ -48,19 +49,19 @@ public sealed class PlayerContactHold2D(ReactionTimeCurve2D curve)
         }
 
         var locomotion = live.Key is PersonMoves.Walk or PersonMoves.Run or PersonMoves.Jump or PersonMoves.Fall;
-        var swing = live.PropClip.Markers.Any(m => m.Id == PersonLoadout.DrawMarker);
-        var recovery = live.PropClip.Markers.Any(m => m.Id == PersonLoadout.SheatheMarker);
-        if (live.Gear != PersonGear.Sword || (!locomotion && !swing && !recovery) || (swing && _swing is not null && _swing != live.PropClip.Id))
+        var swing = live.PropClip.Marker(ClipMarkers.Draw) is not null;
+        var recovery = live.PropClip.Marker(ClipMarkers.Sheathe) is not null;
+        if (live.Gear != PersonGear.Sword || (!locomotion && !swing && !recovery) || (swing && _swing is not null && _swing != live.PropClip.Name))
         {
             Reset();
             return live;
         }
-        _swing ??= live.PropClip.Id;
+        _swing ??= live.PropClip.Name;
         var delayed = history.Sample(_contactTime + curve.Sample(elapsed));
         return locomotion
             ? live with
             {
-                Overlay = new(delayed.PropClip, delayed.PropSeconds, PersonLoadout.SwordUpperBody)
+                Overlay = new(delayed.PropClip, delayed.PropSeconds, PersonSkeleton.UpperBody)
             }
             : delayed;
     }
@@ -79,7 +80,7 @@ public sealed class EnemyContactHold2D(ReactionTimeCurve2D curve)
             return;
         }
 
-        _reactions[damage.TargetId] = new(damage.WasKilled ? EntityControllers.Death : EntityControllers.Hit, contact.Direction.X);
+        _reactions[damage.TargetId] = new(damage.WasKilled ? CharacterAnimator.Death : CharacterAnimator.Hit, contact.Direction.X);
     }
 
     public void Reset() => _reactions.Clear();
@@ -136,20 +137,16 @@ public sealed class EnemyContactHold2D(ReactionTimeCurve2D curve)
         }
 
         if (state.ActionId != reaction.Role || !state.IsEnabled || state.ActionSeconds >= curve.Duration ||
-            state.AuthoredEntity is not { } entity || state.AuthoredPose is not { } live || entity.Clip(reaction.Role) is not { } clip)
+            state.Type is not { Character: var character } || state.Pose is not { } live || character.Clip(reaction.Role) is not { } clip)
         {
             _reactions.Remove(state.Id);
             return state;
         }
         reaction.Reverse ??= reaction.Direction * live.Facing > 0;
-        var delayed = reaction.Hold.Evaluate(entity.Model, clip, curve.Sample(state.ActionSeconds), false,
-            live.Position, live.Facing, new(reaction.Role == EntityControllers.Death ? "knocked-out" : "hurt")
-            {
-                ReverseHorizontalMotion = reaction.Reverse.Value
-            });
+        var delayed = reaction.Planted.Sample(character.Skeleton, clip, curve.Sample(state.ActionSeconds), false, live.Position, live.Facing, reversed: reaction.Reverse.Value);
         return state with
         {
-            AuthoredPose = delayed
+            Pose = delayed.Showing(reaction.Role == CharacterAnimator.Death ? "knocked-out" : "hurt", live.Clock)
         };
     }
 
@@ -158,6 +155,6 @@ public sealed class EnemyContactHold2D(ReactionTimeCurve2D curve)
         public string Role { get; } = role;
         public float Direction { get; } = direction;
         public bool? Reverse { get; set; }
-        public ContactHold Hold { get; } = new();
+        public PlantedLimbs Planted { get; } = new();
     }
 }

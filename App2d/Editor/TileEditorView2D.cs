@@ -1,4 +1,4 @@
-using App2d.Core.Characters.Authored;
+using App2d.Core.Objects;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Grids;
@@ -72,9 +72,9 @@ internal static class TileEditorView2D
     }
 
     /// <summary>An object's collider (or drawn shape) outline at its placement, and its path when it moves.</summary>
-    private static void DrawObject(Renderer2D renderer, TileEditor2D editor, Part asset, Vector2f position, Color4b color, bool isSelected)
+    private static void DrawObject(Renderer2D renderer, TileEditor2D editor, ObjectAsset2D asset, Vector2f position, Color4b color, bool isSelected)
     {
-        renderer.DrawShape(asset.Physics is not null ? Core.Characters.Geometry.PartShapes2D.Collision(asset) : new Core.Rendering.Characters.PartShader2D(asset).BoundsShape(), Matrix3x2.CreateTranslation(position.ToVector2()), outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
+        renderer.DrawShape(asset.Outline(), Matrix3x2.CreateTranslation(position.ToVector2()), outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
         var path = ObjectPathPreview2D.Sample(asset, position);
         if (path.Length == 0)
         {

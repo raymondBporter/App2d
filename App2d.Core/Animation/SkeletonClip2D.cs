@@ -37,7 +37,12 @@ public readonly record struct LimbSample2D(Vector2f Move, int Bend, Vector2f? Pl
 public readonly record struct MountTrack2D(int Mount, Track<Vector3f> Turn);
 
 /// <summary>The joints, limbs and mounts a layered clip takes over, such as the upper body over a walk.</summary>
-public sealed record SkeletonMask2D(ImmutableArray<int> Joints, ImmutableArray<int> Limbs, ImmutableArray<int> Mounts);
+public sealed record SkeletonMask2D(ImmutableArray<int> Joints, ImmutableArray<int> Limbs, ImmutableArray<int> Mounts)
+{
+    /// <summary>This mask for a skeleton that numbers things differently, as a <see cref="SkeletonGraft2D"/> does; what is gone there is left out.</summary>
+    public SkeletonMask2D Renumbered(ImmutableArray<int> joints, ImmutableArray<int> limbs, ImmutableArray<int> mounts) =>
+        new([.. Joints.Select(j => joints[j]).Where(j => j >= 0)], [.. Limbs.Select(l => limbs[l]).Where(l => l >= 0)], [.. Mounts.Select(m => mounts[m]).Where(m => m >= 0)]);
+}
 
 /// <summary>A named moment in a clip, such as a footstep or a strike.</summary>
 public readonly record struct ClipMarker2D(string Name, float Time);
@@ -59,35 +64,70 @@ public sealed class SkeletonClip2D(string name, float duration, bool loop = fals
     public ImmutableArray<ClipMarker2D> Markers { get; init; } = [];
     /// <summary>How far the character has moved along the ground. Null stays in place.</summary>
     public Track<Vector2f>? Travel { get; init; }
+    /// <summary>
+    /// A named look the clip asks for over time, such as a face's expression; each key holds until the next. An empty name
+    /// asks for no face at all. Null when the clip asks for nothing.
+    /// </summary>
+    public Track<string>? Expression { get; init; }
+
+    /// <summary>The time of the first marker with this name, or null.</summary>
+    public float? Marker(string name)
+    {
+        foreach (var marker in Markers)
+        {
+            if (marker.Name == name) return marker.Time;
+        }
+        return null;
+    }
+
+    /// <summary>How far the clip travels over one full play: the stride a walk covers per cycle.</summary>
+    public Vector2f Stride(Skeleton2D skeleton) => TravelAt(skeleton, Duration) - TravelAt(skeleton, 0);
 
     /// <summary>How far this skeleton has travelled at <paramref name="time"/>.</summary>
+    /// <summary>
+    /// This clip for a skeleton that numbers things differently, as a <see cref="SkeletonGraft2D"/> does. A track or contact
+    /// whose joint, limb or mount is gone there is left out. A half that only rides along gives up its travel and contacts.
+    /// </summary>
+    public SkeletonClip2D Renumbered(ImmutableArray<int> joints, ImmutableArray<int> limbs, ImmutableArray<int> mounts, bool rides = false) => new(Name, Duration, Loop)
+    {
+        Joints = [.. Joints.Where(t => joints[t.Joint] >= 0).Select(t => t with { Joint = joints[t.Joint] })],
+        Limbs = [.. Limbs.Where(t => limbs[t.Limb] >= 0).Select(t => t with { Limb = limbs[t.Limb] })],
+        Mounts = [.. Mounts.Where(t => mounts[t.Mount] >= 0).Select(t => t with { Mount = mounts[t.Mount] })],
+        Contacts = rides ? [] : [.. Contacts.Where(c => limbs[c.Limb] >= 0).Select(c => c with { Limb = limbs[c.Limb] })],
+        Markers = Markers,
+        Travel = rides ? null : Travel,
+        Expression = Expression,
+    };
+
     public Vector2f TravelAt(Skeleton2D skeleton, float time) => (Travel?.Sample(time) ?? default) * skeleton.TravelScale;
 
     /// <summary>
     /// Writes the keyed pose and one sample per limb, in the order of <see cref="Skeleton2D.Limbs"/>. The pose is in place:
     /// travel is not added to it. Nothing is solved yet, so another clip can still be laid over this one.
     /// </summary>
-    public void Sample(Skeleton2D skeleton, float time, Span<RigidTransform2D> local, Span<LimbSample2D> limbs)
+    public void Sample(Skeleton2D skeleton, float time, Span<RigidTransform2D> local, Span<LimbSample2D> limbs, bool reversed = false)
     {
+        // Reversed, every sideways move and every turn goes the other way, while the rest pose stays as it is.
+        var side = new Vector2f(reversed ? -1 : 1, 1);
         for (var i = 0; i < skeleton.Count; i++) local[i] = skeleton.Joints[i].Rest;
         foreach (var track in Joints)
         {
             var rest = local[track.Joint];
-            var move = (track.Move?.Sample(time) ?? default) * skeleton.Joints[track.Joint].MoveScale;
-            local[track.Joint] = new(rest.Translation + move, rest.Rotation + (track.Turn?.Sample(time) ?? 0));
+            var move = (track.Move?.Sample(time) ?? default) * skeleton.Joints[track.Joint].MoveScale * side;
+            local[track.Joint] = new(rest.Translation + move, rest.Rotation + (track.Turn?.Sample(time) ?? 0) * side.X);
         }
         for (var i = 0; i < skeleton.Limbs.Length; i++) limbs[i] = new(default, skeleton.Limbs[i].Bend);
         foreach (var track in Limbs)
         {
             var limb = skeleton.Limbs[track.Limb];
-            limbs[track.Limb] = new((track.Target?.Sample(time) ?? default) * limb.TargetScale, track.Bend?.Sample(time) ?? limb.Bend);
+            limbs[track.Limb] = new((track.Target?.Sample(time) ?? default) * limb.TargetScale * side, track.Bend?.Sample(time) ?? limb.Bend);
         }
         foreach (var contact in Contacts)
         {
             if (time < contact.Start || time >= contact.Finish && !(time == Duration && contact.Finish == Duration)) continue;
             // The ground does not travel with the character, so in place the planted point slides back by the travel so far.
             var limb = skeleton.Limbs[contact.Limb];
-            var planted = skeleton.RestWorld[limb.End].Translation + contact.Target * limb.TargetScale + TravelAt(skeleton, 0) - TravelAt(skeleton, time);
+            var planted = skeleton.RestWorld[limb.End].Translation + contact.Target * limb.TargetScale * side + TravelAt(skeleton, 0) - TravelAt(skeleton, time);
             limbs[contact.Limb] = limbs[contact.Limb] with { Planted = planted };
         }
     }
@@ -118,10 +158,14 @@ public sealed class SkeletonClip2D(string name, float duration, bool loop = fals
     /// Writes how far each mount is turned out of the plane, in the order of <see cref="Skeleton2D.Mounts"/>. A mount with no
     /// keys lies flat.
     /// </summary>
-    public void SampleMounts(float time, Span<Vector3f> turns)
+    public void SampleMounts(float time, Span<Vector3f> turns, bool reversed = false)
     {
         turns.Clear();
-        foreach (var track in Mounts) turns[track.Mount] = track.Turn.Sample(time);
+        foreach (var track in Mounts)
+        {
+            var turn = track.Turn.Sample(time);
+            turns[track.Mount] = reversed ? new(turn.X, -turn.Y, -turn.Z) : turn;
+        }
     }
 
     /// <summary>Lays one clip's mount turns over another's: the mounts in <paramref name="mask"/> move toward the clip on top by <paramref name="weight"/>.</summary>

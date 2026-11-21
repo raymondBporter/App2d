@@ -86,30 +86,6 @@ public sealed class IIntervalTests
     }
 
     [Fact]
-    public void AuthoredAndPhysicsLimitsShareClosedRangeQueries()
-    {
-        var limit = new Limit(-1, 5).Soft(0, 1);
-        var authored = Interval<float>.From(limit);
-        var physics = new Interval<float>(1, 7);
-
-        Assert.Equal(6f, authored.Length);
-        Assert.True(authored.Contains(-1f));
-        Assert.True(authored.Contains(5f));
-        Assert.False(authored.Contains(5.01f));
-        Assert.False(authored.Contains(float.NaN));
-        Assert.True(physics.Contains(7f));
-        Assert.True(authored.Overlaps(physics));
-        Assert.True(Interval.Entire<float>().ContainsInterval(authored));
-        Assert.False(authored.ContainsInterval(physics));
-        Assert.True(authored.TryIntersect(physics, out var shared));
-        Assert.Equal(new Interval<float>(1, 5), shared);
-        Assert.Equal(new Interval<float>(-1, 7), authored.Hull(physics));
-
-        Assert.Equal(0f, limit.SoftMin);
-        Assert.Equal(1f, limit.SoftMax);
-    }
-
-    [Fact]
     public void QueriesDistinguishTouchingFromDisjointIntervals()
     {
         var limits = new Interval<float>(2, 5);
@@ -149,7 +125,6 @@ public sealed class IIntervalTests
         Assert.Equal(0f, Interval<float>.Singleton(4).Length);
         Assert.True(float.IsNaN(Interval.Entire<float>().Clamp(float.NaN)));
         Assert.Equal(float.PositiveInfinity, Interval.Entire<float>().Clamp(float.PositiveInfinity));
-        Assert.True(float.IsNaN(Interval<float>.From(new Limit(0, 1)).Clamp(float.NaN)));
     }
 
     [Fact]
@@ -172,35 +147,6 @@ public sealed class IIntervalTests
         AssertQueriesDoNotAllocate<double>();
         AssertQueriesDoNotAllocate<int>();
         AssertQueriesDoNotAllocate<decimal>();
-    }
-
-    [Fact]
-    public void MixedStructQueriesDoNotAllocateAfterWarmup()
-    {
-        var authored = new Limit(-1, 5);
-        var physics = new Interval<float>(1, 7);
-        RunMixedQueries(authored, physics, 256);
-
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        var matches = RunMixedQueries(authored, physics, 4096);
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-
-        Assert.Equal(4096, matches);
-        Assert.Equal(0L, allocated);
-    }
-
-    private static int RunMixedQueries(Limit authored, Interval<float> physics, int count)
-    {
-        var matches = 0;
-        for (var i = 0; i < count; i++)
-        {
-            var range = Interval<float>.From(authored);
-            if (range.Contains(3f) && range.Overlaps(physics) && range.TryIntersect(physics, out var shared) && shared.Length == 4f)
-            {
-                matches++;
-            }
-        }
-        return matches;
     }
 
     private static void AssertQueriesThroughFrom<T>() where T : INumber<T>

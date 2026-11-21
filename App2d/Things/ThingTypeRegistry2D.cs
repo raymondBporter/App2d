@@ -1,4 +1,3 @@
-using App2d.Core.Characters.Authored;
 using App2d.Core.Objects;
 using App2d.Core.Validation;
 using App2d.Gameplay.World;
@@ -67,7 +66,7 @@ internal static class ThingTypeRegistry2D
         throw new InvalidOperationException($"Thing type '{typeKey}' is not registered.");
 
     /// <summary>An object thing becomes a placement whose id is the world-wide thing id, so placements stay unique across maps.</summary>
-    public static ObjectPlacement2D ToPlacement(PositionThingRecord2D record, Part asset, long worldThingId)
+    public static ObjectPlacement2D ToPlacement(PositionThingRecord2D record, ObjectAsset2D asset, long worldThingId)
     {
         Ensure.ThrowIfNull(record);
         Ensure.ThrowIfNull(asset);

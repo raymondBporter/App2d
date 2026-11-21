@@ -108,10 +108,10 @@ public sealed class ShapeSerialization2DTests
     public void GeometryWorksInsideExistingAuthoredJsonOptions()
     {
         var envelope = new ShapeEnvelope { Hit = new Capsule2D { Start = new(0, 0), End = new(2, 0), Radius = .5f }.Validated() };
-        var json = JsonSerializer.Serialize(envelope, AuthoredJson.Options);
+        var json = JsonSerializer.Serialize(envelope, JsonProfiles.Objects);
         Assert.Contains("\"kind\": \"capsule\"", json);
         Assert.Contains("\"radius\": 0.5", json);
-        var restored = JsonSerializer.Deserialize<ShapeEnvelope>(json, AuthoredJson.Options)!;
+        var restored = JsonSerializer.Deserialize<ShapeEnvelope>(json, JsonProfiles.Objects)!;
         Assert.Equal(.5f, Assert.IsType<Capsule2D>(restored.Hit.Validated()).Radius);
     }
 

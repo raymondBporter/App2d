@@ -1,4 +1,4 @@
-using App2d.Core.Characters.Authored;
+using App2d.Core.Objects;
 using App2d.Core.Validation;
 
 namespace App2d.Editor;
@@ -6,7 +6,7 @@ namespace App2d.Editor;
 /// <summary>Samples an object's path from a placement origin for drawing; empty when the object does not move.</summary>
 internal static class ObjectPathPreview2D
 {
-    public static Vector2f[] Sample(Part asset, Vector2f origin, int count = 32)
+    public static Vector2f[] Sample(ObjectAsset2D asset, Vector2f origin, int count = 32)
     {
         Ensure.ThrowIfNull(asset);
         Ensure.Positive(count);

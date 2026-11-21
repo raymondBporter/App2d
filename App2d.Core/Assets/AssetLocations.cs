@@ -8,16 +8,13 @@ namespace App2d.Core.Assets;
 /// loaders do not search for the repository. See Assets/README.md for folder ownership.
 /// Construct explicitly for custom layouts, or use the discovery helpers for existing app layouts.
 /// </summary>
-public sealed class AssetLocations(string runtime, string authored, string characterLibrary)
+public sealed class AssetLocations(string runtime, string authored)
 {
 
     /// <summary>Generated art and copied runtime inputs. Assets/Runtime in a source checkout; disposable.</summary>
     public string Runtime { get; } = Path.GetFullPath(Ensure.RequireNotNullOrWhiteSpace(runtime));
     /// <summary>Durable content such as levels and music. Assets/Static in a source checkout.</summary>
     public string Authored { get; } = Path.GetFullPath(Ensure.RequireNotNullOrWhiteSpace(authored));
-    /// <summary>Character source libraries and authored documents. Assets/Characters in a source checkout.</summary>
-    public string CharacterLibrary { get; } = Path.GetFullPath(Ensure.RequireNotNullOrWhiteSpace(characterLibrary));
-    public string AuthoredCharacters => FilePaths.ResolveUnderRoot(CharacterLibrary, "authored");
     public string Levels => FilePaths.ResolveUnderRoot(Authored, "levels");
     public string Music => FilePaths.ResolveUnderRoot(Authored, "audio/music");
     public string SoundEffects => FilePaths.ResolveUnderRoot(Runtime, "audio/sfx");
@@ -33,43 +30,7 @@ public sealed class AssetLocations(string runtime, string authored, string chara
         var packaged = FilePaths.ResolveUnderRoot(baseDirectory, "Assets");
         var runtime = useSourceAssets ? FindAncestorDirectory(baseDirectory, "Assets/Runtime") ?? packaged : packaged;
         var authored = useSourceAssets ? FindAncestorDirectory(baseDirectory, "Assets/Static") ?? runtime : runtime;
-        var sourceCharacters = Path.GetFullPath(Path.Combine(runtime, "..", "Characters"));
-        var characters = useSourceAssets && Directory.Exists(Path.Combine(sourceCharacters, "authored"))
-            ? sourceCharacters : FilePaths.ResolveUnderRoot(runtime, "PointCharacters");
-        return new(runtime, authored, characters);
-    }
-
-    /// <summary>
-    /// Character Studio's existing layout: prefer its packaged Assets/Characters, then search above
-    /// the working directory. Editors can also accept an explicit authoring root instead of discovery.
-    /// </summary>
-    public static string FindCharacterLibrary(string baseDirectory, string workingDirectory)
-    {
-        var packaged = FilePaths.ResolveUnderRoot(baseDirectory, "Assets/Characters");
-        if (Directory.Exists(Path.Combine(packaged, "authored")))
-        {
-            return packaged;
-        }
-
-        var authored = FindAncestorDirectory(workingDirectory, "Assets/Characters/authored");
-        return authored is not null ? Path.GetDirectoryName(authored)! :
-            throw new DirectoryNotFoundException("Assets/Characters/authored was not found beside the executable or above the working directory.");
-    }
-
-    /// <summary>Authoring prefers the source checkout even when Studio is launched directly from bin or Explorer.</summary>
-    public static string FindCharacterAuthoringLibrary(string baseDirectory, string workingDirectory)
-    {
-        foreach (var start in new[] { workingDirectory, baseDirectory })
-        {
-            for (var directory = new DirectoryInfo(Path.GetFullPath(start)); directory is not null; directory = directory.Parent)
-            {
-                var library = Path.Combine(directory.FullName, "Assets", "Characters");
-                if (File.Exists(Path.Combine(directory.FullName, "App2d.CharacterStudio", "App2d.CharacterStudio.csproj")) &&
-                    Directory.Exists(Path.Combine(library, "authored")))
-                    return library;
-            }
-        }
-        return FindCharacterLibrary(baseDirectory, workingDirectory);
+        return new(runtime, authored);
     }
 
     private static string? FindAncestorDirectory(string start, string relativePath)

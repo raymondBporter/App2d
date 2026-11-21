@@ -1,5 +1,3 @@
-// Generated from the authored JSON clips by LegacyClipEmitter in App2d.Tests. While those clips exist, change them and
-// regenerate (set APP2D_WRITE_CLIPS=1 and run the tests named GeneratedRigTests) instead of editing this file.
 using App2d.Core.Animation;
 using System.Collections.Immutable;
 using static App2d.Core.Characters.PterosaurSkeleton;
@@ -19,7 +17,7 @@ public static class PterosaurClips
             new(NearBend, Turn: Track.Linear(new(0f, -1.1f), new(0.16f, -0.3f), new(0.32f, 0f))),
             new(NearLeg, Turn: Track.Linear(new(0f, 0.6f), new(0.16f, 0.3f), new(0.32f, 0.1f))),
             new(FarShoulder, Turn: Track.Linear(new(0f, 1.3f), new(0.16f, 0.4f), new(0.32f, -0.28f))),
-            new(FarBend, Turn: Track.Linear(new(0f, 0.1f), new(0.16f, 0.05f), new(0.32f, 0f))),
+            new(FarBend, Turn: Track.Linear(new(0f, 0.1f), new(0.32f, 0f))),
             new(FarLeg, Turn: Track.Linear(new(0f, 0.6f), new(0.16f, 0.3f), new(0.32f, 0.1f))),
         ],
         Markers = [new("open", 0.16f)],
@@ -108,7 +106,7 @@ public static class PterosaurClips
     {
         Joints =
         [
-            new(Body, Turn: Track.Linear(new(0f, 0f), new(0.4f, 0.12f), new(0.8f, 0.06f), new(1.2f, 0f))),
+            new(Body, Turn: Track.Linear(new(0f, 0f), new(0.4f, 0.12f), new(1.2f, 0f))),
             new(NearShoulder, Turn: Track.Linear(new(0f, 0.28f), new(0.4f, -0.22f), new(0.8f, 0.28f), new(1.2f, -0.22f))),
             new(NearBend, Turn: Track.Linear(new(0f, 0f), new(0.6f, -0.08f), new(1.2f, 0f))),
             new(FarShoulder, Turn: Track.Linear(new(0f, -0.28f), new(0.4f, 0.22f), new(0.8f, -0.28f), new(1.2f, 0.22f))),
@@ -123,29 +121,29 @@ public static class PterosaurClips
             new(Body,
                 Turn: Track.Linear(
                     new(0f, 0f), new(0.24f, -0.22f), new(0.48f, -0.4f), new(1.13f, -0.65f), new(1.29f, -0.12f), new(1.45f, 0f), new(1.95f, -0.02f),
-                    new(2.45f, 0f), new(2.85f, 0.12f), new(3.25f, 0.06f), new(3.65f, 0f))),
+                    new(2.45f, 0f), new(2.85f, 0.12f), new(3.65f, 0f))),
             new(Jaw,
-                Turn: Track.Linear(new(0f, 0f), new(0.24f, -0.5f), new(0.48f, 0f), new(1.13f, 0f), new(1.45f, 0f), new(2.45f, 0f), new(3.65f, 0f))),
+                Turn: Track.Linear(new(0f, 0f), new(0.24f, -0.5f), new(0.48f, 0f), new(3.65f, 0f))),
             new(NearShoulder,
                 Turn: Track.Linear(
-                    new(0f, -0.22f), new(0.24f, -0.15f), new(0.48f, -0.15f), new(1.13f, -0.15f), new(1.29f, 0.1f), new(1.45f, 0.28f),
-                    new(1.95f, 0.12f), new(2.45f, 0.28f), new(2.85f, -0.22f), new(3.25f, 0.28f), new(3.65f, -0.22f))),
+                    new(0f, -0.22f), new(0.24f, -0.15f), new(1.13f, -0.15f), new(1.29f, 0.1f), new(1.45f, 0.28f), new(1.95f, 0.12f),
+                    new(2.45f, 0.28f), new(2.85f, -0.22f), new(3.25f, 0.28f), new(3.65f, -0.22f))),
             new(NearBend,
                 Turn: Track.Linear(
-                    new(0f, 0f), new(0.24f, -1.1f), new(0.48f, -1.1f), new(1.13f, -1.1f), new(1.29f, -0.3f), new(1.45f, 0f), new(1.95f, -0.08f),
-                    new(2.45f, 0f), new(3.05f, -0.08f), new(3.65f, 0f))),
+                    new(0f, 0f), new(0.24f, -1.1f), new(1.13f, -1.1f), new(1.29f, -0.3f), new(1.45f, 0f), new(1.95f, -0.08f), new(2.45f, 0f),
+                    new(3.05f, -0.08f), new(3.65f, 0f))),
             new(NearLeg,
                 Turn: Track.Linear(
                     new(0f, 0f), new(0.48f, 0.6f), new(1.13f, 0.6f), new(1.29f, 0.3f), new(1.45f, 0.1f), new(1.95f, 0.15f), new(2.45f, 0f),
                     new(3.65f, 0f))),
             new(FarShoulder,
                 Turn: Track.Linear(
-                    new(0f, 0.22f), new(0.24f, 1.3f), new(0.48f, 1.3f), new(1.13f, 1.3f), new(1.29f, 0.4f), new(1.45f, -0.28f), new(1.95f, -0.12f),
-                    new(2.45f, -0.28f), new(2.85f, 0.22f), new(3.25f, -0.28f), new(3.65f, 0.22f))),
+                    new(0f, 0.22f), new(0.24f, 1.3f), new(1.13f, 1.3f), new(1.29f, 0.4f), new(1.45f, -0.28f), new(1.95f, -0.12f), new(2.45f, -0.28f),
+                    new(2.85f, 0.22f), new(3.25f, -0.28f), new(3.65f, 0.22f))),
             new(FarBend,
                 Turn: Track.Linear(
-                    new(0f, 0f), new(0.24f, 0.1f), new(0.48f, 0.1f), new(1.13f, 0.1f), new(1.29f, 0.05f), new(1.45f, 0f), new(1.95f, 0.08f),
-                    new(2.45f, 0f), new(3.05f, 0.08f), new(3.65f, 0f))),
+                    new(0f, 0f), new(0.24f, 0.1f), new(1.13f, 0.1f), new(1.45f, 0f), new(1.95f, 0.08f), new(2.45f, 0f), new(3.05f, 0.08f),
+                    new(3.65f, 0f))),
             new(FarLeg,
                 Turn: Track.Linear(
                     new(0f, 0f), new(0.48f, 0.6f), new(1.13f, 0.6f), new(1.29f, 0.3f), new(1.45f, 0.1f), new(1.95f, 0.15f), new(2.45f, 0f),

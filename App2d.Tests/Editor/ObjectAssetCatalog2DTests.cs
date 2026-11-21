@@ -28,7 +28,7 @@ public sealed class ObjectAssetCatalog2DTests : IDisposable
     }
 
     [Fact]
-    public void SharedPartsLoadFromTheCharacterLibraryAndStayWithinItsPartsFolder()
+    public void SharedObjectsLoadFromTheLevelsObjectsFolderAndStayWithinIt()
     {
         var catalog = new ObjectAssetCatalog2D(_root);
         var part = catalog.Load("parts/dumbbell.json");

@@ -3,7 +3,7 @@ using App2d.Core;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
-using App2d.Core.Rendering.Characters;
+using App2d.Core.Objects;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
@@ -94,7 +94,6 @@ public sealed class WorldPresentation2D : IDisposable
             view.Visual.Position = item.Position;
             view.Visual.Rotation = item.Rotation;
             view.Visual.IsVisible = item.IsEnabled;
-            ((PartShader2D)view.Visual.Shader).SetTime(item.Time);
         }
 
         foreach (var checkpoint in _checkpoints)
@@ -129,9 +128,7 @@ public sealed class WorldPresentation2D : IDisposable
                 _scene.Remove(existing.Visual);
                 _objects.Remove(item.Id);
             }
-            if (!item.Part.Geometry.Any(g => !g.Hidden && g.Material is not null)) continue;
-            var shader = new PartShader2D(item.Part) { TextureRoot = item.TextureRoot };
-            var visual = new WorldObject2D(shader.BoundsShape(), shader) { ZIndex = 1 };
+            var visual = new WorldObject2D(item.Asset.Bounds(), new ObjectShader2D(item.Asset)) { ZIndex = 1 };
             _scene.Add(visual);
             _objects.Add(item.Id, (item, visual));
         }

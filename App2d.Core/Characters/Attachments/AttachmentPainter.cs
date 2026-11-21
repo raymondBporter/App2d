@@ -14,17 +14,17 @@ public static class AttachmentPainter
     }
 
     /// <summary>The colour a material fills with, or strokes a path in.</summary>
-    internal static Color4b? Fill(RenderMaterialDefinition2D material) => material.Fill is { } hex ? ColorExtensions.FromHexRgb(hex) : null;
+    internal static Color4b? Fill(AttachmentMaterial material) => material.Fill is { } hex ? ColorExtensions.FromHexRgb(hex) : null;
 
     /// <summary>The colour and width a material edges with, when it has an edge.</summary>
-    internal static (Color4b Color, float Width)? Edge(RenderMaterialDefinition2D material) =>
+    internal static (Color4b Color, float Width)? Edge(AttachmentMaterial material) =>
         material.Outline is { Color: { } hex, Width: > 0 and var width } ? (ColorExtensions.FromHexRgb(hex), width) : null;
 
     /// <summary>
     /// One straight stroke: the edge underneath, wider by its width on each side, then the stroke itself. Each end may sit at
     /// its own layer, on top of the mesh's.
     /// </summary>
-    internal static void Segment(LayeredMesh mesh, Vector3f from, Vector3f to, RenderMaterialDefinition2D material, float fromLayer = 0, float toLayer = 0)
+    internal static void Segment(LayeredMesh mesh, Vector3f from, Vector3f to, AttachmentMaterial material, float fromLayer = 0, float toLayer = 0)
     {
         var width = material.StrokeWidth ?? 0;
         if (Edge(material) is { } edge) mesh.Line(from, to, width + edge.Width * 2, edge.Color, fromLayer, toLayer);

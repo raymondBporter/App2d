@@ -6,13 +6,14 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Audio;
-using App2d.Core.Characters.Authored;
+using App2d.Core.Characters;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Validation;
+using App2d.Gameplay.Characters;
 using App2d.Presentation.Assets;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
@@ -98,7 +99,7 @@ public sealed class EnemyPresentation2D(
                     state = state with
                     {
                         AttackElapsedSeconds = state.AttackElapsedSeconds + _secondsSinceState,
-                        ActionSeconds = state.ActionSeconds + (state.Kind == EnemyKind2D.Authored ? 0 : _secondsSinceState),
+                        ActionSeconds = state.ActionSeconds + (state.Kind == EnemyKind2D.Character ? 0 : _secondsSinceState),
                         Person = state.Person with
                         {
                             LandingSpeedThisFrame = 0f,
@@ -120,12 +121,12 @@ public sealed class EnemyPresentation2D(
                         continue;
                     }
 
-                    view = state.AuthoredEntity is { } entity ? new AuthoredPoseView(scene, entity)
+                    view = state.Type is { } type ? new CharacterView(scene, type.Character)
                         : state.Kind switch
                         {
                             EnemyKind2D.Shieldback => new ShieldbackView(scene, textures),
                             EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
-                            _ => throw Ensure.CreateInvalid("An authored enemy needs its resolved entity.", nameof(states))
+                            _ => throw Ensure.CreateInvalid("An enemy that is a character needs its type.", nameof(states))
                         };
                     _views.Add(state.Id, view);
                 }
@@ -226,22 +227,22 @@ public sealed class EnemyPresentation2D(
     }
 
     /// <summary>Draws the simulation's own final pose for an authored entity; nothing here samples animation.</summary>
-    private sealed class AuthoredPoseView : View
+    private sealed class CharacterView : View
     {
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
-        private readonly AuthoredCharacterShader _shader;
+        private readonly CharacterShader _shader = new();
         private readonly BoltViews _bolts;
-        private readonly ResolvedEntity _entity;
-        public AuthoredPoseView(Scene2D scene, ResolvedEntity entity)
+        private readonly Combatant _character;
+        // What it throws is in its hand only while it winds up, and leaves at the cue that fires it.
+        private readonly CharacterAction? _throw;
+
+        public CharacterView(Scene2D scene, Combatant character)
         {
-            _entity = entity;
+            _character = character;
             _scene = scene;
             _bolts = new(scene);
-            _shader = new(entity.Model)
-            {
-                Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))]
-            };
+            _throw = character.Actions.FirstOrDefault(a => a.Projectile?.Gravity > 0);
             _visual = new(AxisAlignedRectangle2D.Builder.CreateFromSize(12, 12, new(0, 2)), _shader)
             {
                 Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit,
@@ -249,24 +250,21 @@ public sealed class EnemyPresentation2D(
             };
             scene.Add(_visual);
         }
+
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
         {
-            _visual.IsVisible = state.IsEnabled && state.AuthoredPose is not null;
+            _visual.IsVisible = state.IsEnabled && state.Pose is not null;
             _bolts.Update(state);
-            if (state.AuthoredPose is not { } pose)
+            if (state.Pose is not { } pose)
             {
                 return;
             }
-
-            _shader.Pose = pose.Local;
-            _shader.Facing = pose.Facing;
-            // A throwable is visible only while being prepared, and leaves the hand on the fire marker.
-            var action = state.ActionId is { } id ? _entity.Actions.GetValueOrDefault(id) : null;
-            var holding = action?.Projectile?.Gravity > 0 && state.ActionSeconds < action.Events.First(e => e.Event.Id == EntityControllers.Fire).Seconds;
-            _shader.Props = [.. _entity.Equipment.Where(e => e.Prop.Point(EquipmentPoints.Muzzle) is null ||
-                !_entity.Actions.Values.Any(a => a.Projectile?.Gravity > 0) || holding).Select(e => (e.Prop, e.Socket))];
+            var holding = _throw is not null && state.ActionId == _throw.Name && state.ActionSeconds < _throw.Cue(CharacterAnimator.Fire)!.Seconds;
+            _shader.Pose = pose;
+            _shader.Drawn = _character.Drawn(pose, worn => worn.Muzzle is null || _throw is null || holding);
             _visual.Position = GameWorldUnits2D.AuthoredToWorld(pose.Position);
         }
+
         public override void Dispose()
         {
             _scene.Remove(_visual);

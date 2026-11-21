@@ -30,7 +30,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private readonly EntityId2D _playerId;
     private SessionFrame2D _frame;
     private readonly PlayerInputMapper2D _input = new();
-    private readonly AuthoredPersonPresentation2D _presentation;
+    private readonly HeroPresentation2D _presentation;
     private readonly SideScrollerCamera2D _cameraController;
     private readonly SoundEffectBank2D<SoundEffect2D> _sounds;
     private readonly TraversalMetrics2D _traversal;
@@ -63,7 +63,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         Ballistics = new BallisticsDebug2D(traversal);
         _world = new WorldPresentation2D(scene, textures, terrain);
         _world.ApplyState(initial.Content, initial.World);
-        _presentation = new AuthoredPersonPresentation2D(scene, moves, traversal);
+        _presentation = new HeroPresentation2D(scene, moves, traversal);
         _presentation.Equip(initialState.Equipment);
         WorldSounds = new SpatialSoundEffectSink2D<SoundEffect2D>(sounds, () => State.Person.Position, SoundEffectCues2D.Falloff);
         _weapons = new WeaponPresentation2D(scene, textures, WorldSounds);

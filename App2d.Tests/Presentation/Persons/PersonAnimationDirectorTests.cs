@@ -2,14 +2,14 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Core.Characters;
-using App2d.Core.Characters.Authored;
+using App2d.Gameplay.Characters;
 using App2d.Presentation.Persons;
 
 namespace App2d.Tests.Presentation.Persons;
 
 public sealed class PersonAnimationDirectorTests
 {
-    private static readonly PersonMoves Moves = PersonMoves.From(AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored"))));
+    private static readonly PersonMoves Moves = new(GameCharacters.Hero);
     private static PersonState2D Standing => new() { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true, Facing = 1 };
 
     [Fact]
@@ -23,14 +23,14 @@ public sealed class PersonAnimationDirectorTests
         };
         var charging = d.Step(state);
         Assert.Equal(PersonGear.Gun, charging.Gear);
-        Assert.Equal(Moves[PersonMoves.GunCharge].Id, charging.Overlay!.Clip.Id);
-        Assert.Equal(.6, charging.Overlay.Seconds, 5);
+        Assert.Equal(Moves[PersonMoves.GunCharge].Name, charging.Overlay!.Value.Clip.Name);
+        Assert.Equal(.6, charging.Overlay!.Value.Seconds, 5);
         var firing = d.Step(Standing with
         {
             Action = new(PlayerAttackKind2D.Shot, .03f, .2f)
         });
         Assert.Equal(PersonGear.Gun, firing.Gear);
-        Assert.Equal(Moves[PersonMoves.GunShot].Id, firing.Overlay!.Clip.Id);
+        Assert.Equal(Moves[PersonMoves.GunShot].Name, firing.Overlay!.Value.Clip.Name);
         var healing = d.Step(Standing with
         {
             Spells = state.Spells with
@@ -42,7 +42,6 @@ public sealed class PersonAnimationDirectorTests
         Assert.Equal(PersonMoves.HealGather, healing.Key);
         Assert.Equal(PersonGear.Sword, healing.Gear);
         Assert.Equal(.7, healing.Seconds, 5);
-        Assert.DoesNotContain(PersonLoadout.Worn(healing.Clip, (float)healing.Seconds, healing.Gear), prop => prop.Prop == PersonLoadout.Pistol);
         Assert.Equal(PersonMoves.Idle, d.Step(Standing).Key);
         Assert.Equal(EquipmentKind2D.Sword, d.Director.Equipment);
     }
@@ -98,7 +97,7 @@ public sealed class PersonAnimationDirectorTests
             LinearVelocity = new(.3f, 0)
         }, 60);
         Assert.Equal(PersonMoves.Walk, walk.Key);
-        var stride = PoseEvaluator.CycleTravel(Moves.Model, Moves[PersonMoves.Walk]).X;
+        var stride = Moves[PersonMoves.Walk].Stride(Moves.Skeleton).X;
         // Compare error directly: the shorter stride puts this value on a decimal rounding boundary.
         var expected = 59 * .3 / 120 / stride * Moves[PersonMoves.Walk].Duration;
         Assert.InRange(Math.Abs(expected - walk.Seconds), 0, 1e-6); // phase follows ground covered since the walk began
@@ -172,22 +171,22 @@ public sealed class PersonAnimationDirectorTests
         var cut = Moves.Swing(null);
         var backhand = Moves.Swing(cut.Next);
         var forehand = Moves.Swing(backhand.Next);
-        static PersonState2D Swinging(ResolvedAction action, float elapsed = 0) => Standing with
+        static PersonState2D Swinging(CharacterAction action, float elapsed = 0) => Standing with
         {
-            Action = new(PlayerAttackKind2D.Melee, elapsed, action.Clip.Duration, action.Id)
+            Action = new(PlayerAttackKind2D.Melee, elapsed, action.Clip.Duration, action.Name)
         };
-        Assert.Equal(cut.Clip.Id, d.Step(Swinging(cut)).Key);
+        Assert.Equal(cut.Clip.Name, d.Step(Swinging(cut)).Key);
         var mid = d.Step(Swinging(cut, cut.Clip.Duration / 2));
         Assert.Equal(cut.Clip.Duration / 2, mid.Seconds, 3); // the controller's timing maps onto the clip
-        Assert.Contains((PersonLoadout.Sword, Humanoid.SwordSocket), PersonLoadout.Worn(mid.Clip, (float)mid.Seconds, mid.Gear));
+        Assert.True(mid.Gear == PersonGear.Sword && mid.Clip.SwordInHand((float)mid.Seconds));
         // A chained swing starts on the same tick the last one ends: the action changes while melee stays active.
-        Assert.Equal(backhand.Clip.Id, d.Step(Swinging(backhand)).Key);
-        Assert.Equal(forehand.Clip.Id, d.Step(Swinging(forehand)).Key);
+        Assert.Equal(backhand.Clip.Name, d.Step(Swinging(backhand)).Key);
+        Assert.Equal(forehand.Clip.Name, d.Step(Swinging(forehand)).Key);
         Assert.Equal(0, d.Step(Swinging(forehand)).Seconds, 3);
         d.Step(Standing);
-        Assert.Equal(forehand.Recovery!.Id, d.Director.Key); // the forehand's own put-away
+        Assert.Equal(forehand.Recovery!.Name, d.Director.Key); // the forehand's own put-away
         Assert.Equal(PersonMoves.Idle, d.Step(Standing, 80).Key);
-        Assert.Equal(cut.Clip.Id, d.Step(Swinging(cut)).Key);
+        Assert.Equal(cut.Clip.Name, d.Step(Swinging(cut)).Key);
     }
 
     [Fact]
@@ -201,13 +200,13 @@ public sealed class PersonAnimationDirectorTests
         var cut = Moves.Swing(null);
         d.Step(Standing with
         {
-            Action = new(PlayerAttackKind2D.Melee, .1f, cut.Clip.Duration, cut.Id)
+            Action = new(PlayerAttackKind2D.Melee, .1f, cut.Clip.Duration, cut.Name)
         });
         for (var i = 0; i < 45; i++)
         {
             var frame = d.Step(Standing);
-            Assert.Equal(cut.Recovery!.Id, frame.Key);
-            Assert.True(PersonLoadout.SwordInHand(frame.PropClip, (float)frame.PropSeconds));
+            Assert.Equal(cut.Recovery!.Name, frame.Key);
+            Assert.True(frame.PropClip.SwordInHand((float)frame.PropSeconds));
             Assert.Equal(i / 120.0, frame.PropSeconds, 5);
         }
     }
@@ -219,10 +218,10 @@ public sealed class PersonAnimationDirectorTests
         var cut = Moves.Swing(null);
         d.Step(Standing with
         {
-            Action = new(PlayerAttackKind2D.Melee, .1f, cut.Clip.Duration, cut.Id)
+            Action = new(PlayerAttackKind2D.Melee, .1f, cut.Clip.Duration, cut.Name)
         });
         var recovery = cut.Recovery!;
-        var home = recovery.Markers.Single(m => m.Id == PersonLoadout.SheatheMarker).Time;
+        var home = recovery.Marker(ClipMarkers.Sheathe)!.Value;
         for (var i = 0; i < 60; i++)
         {
             var state = i < 15 ? Standing with
@@ -242,14 +241,14 @@ public sealed class PersonAnimationDirectorTests
                 Assert.Equal(PersonMoves.Idle, frame.Key);
                 continue;
             }
-            Assert.Equal(recovery.Id, frame.PropClip.Id);
+            Assert.Equal(recovery.Name, frame.PropClip.Name);
             Assert.Equal(i / 120.0, frame.PropSeconds, 5);
-            Assert.Equal(i / 120.0 < home, PersonLoadout.SwordInHand(frame.PropClip, (float)frame.PropSeconds));
+            Assert.Equal(i / 120.0 < home, frame.PropClip.SwordInHand((float)frame.PropSeconds));
             if (i < 30)
             {
-                Assert.NotEqual(recovery.Id, frame.Key);
-                Assert.Contains(Humanoid.SwordSocket, frame.Overlay!.Targets);
-                Assert.DoesNotContain("hips", frame.Overlay.Targets);
+                Assert.NotEqual(recovery.Name, frame.Key);
+                Assert.Contains(PersonSkeleton.SwordHand, frame.Overlay!.Value.Mask.Mounts);
+                Assert.DoesNotContain(PersonSkeleton.Hips, frame.Overlay!.Value.Mask.Joints);
             }
         }
     }
@@ -261,18 +260,18 @@ public sealed class PersonAnimationDirectorTests
         var cut = Moves.Swing(null);
         PersonState2D Swinging(PersonState2D state, float elapsed) => state with
         {
-            Action = new(PlayerAttackKind2D.Melee, elapsed, cut.Clip.Duration, cut.Id)
+            Action = new(PlayerAttackKind2D.Melee, elapsed, cut.Clip.Duration, cut.Name)
         };
         var standing = d.Step(Swinging(Standing, 0));
-        Assert.Equal(cut.Clip.Id, standing.Key);
+        Assert.Equal(cut.Clip.Name, standing.Key);
         Assert.Null(standing.Overlay);
         var running = d.Step(Swinging(Standing with
         {
             LinearVelocity = new(4, 0)
         }, .05f));
         Assert.Equal(PersonMoves.Run, running.Key);
-        Assert.Equal(cut.Clip.Id, running.PropClip.Id);
-        Assert.Same(PersonLoadout.SwordUpperBody, running.Overlay!.Targets);
+        Assert.Equal(cut.Clip.Name, running.PropClip.Name);
+        Assert.Same(PersonSkeleton.UpperBody, running.Overlay!.Value.Mask);
         // Stopping mid-swing keeps the legs' own pose rather than snapping back to the swing's planted stance.
         Assert.Equal(PersonMoves.Idle, d.Step(Swinging(Standing, .1f)).Key);
         var airborne = d.Step(Swinging(Standing with
@@ -281,7 +280,7 @@ public sealed class PersonAnimationDirectorTests
             LinearVelocity = new(0, 3)
         }, 0));
         Assert.Equal(PersonMoves.Jump, airborne.Key);
-        Assert.Equal(cut.Clip.Id, airborne.Overlay!.Clip.Id);
+        Assert.Equal(cut.Clip.Name, airborne.Overlay!.Value.Clip.Name);
     }
 
     [Fact]
@@ -295,8 +294,8 @@ public sealed class PersonAnimationDirectorTests
             Action = new(PlayerAttackKind2D.Shot, .05f, .2f)
         });
         Assert.Equal(PersonMoves.Walk, walking.Key);
-        Assert.Equal(Moves[PersonMoves.GunShot].Id, walking.Overlay!.Clip.Id);
-        Assert.Same(PersonLoadout.UpperBody, walking.Overlay.Targets);
+        Assert.Equal(Moves[PersonMoves.GunShot].Name, walking.Overlay!.Value.Clip.Name);
+        Assert.Same(PersonSkeleton.UpperBody, walking.Overlay!.Value.Mask);
         var wall = d.Step(Standing with
         {
             IsGrounded = false,
@@ -304,11 +303,11 @@ public sealed class PersonAnimationDirectorTests
             Action = new(PlayerAttackKind2D.Shot, .05f, .2f)
         });
         Assert.Equal(PersonMoves.GunWallShot, wall.Key);
-        Assert.Equal(Moves[PersonMoves.GunAim].Id, d.Step(Standing with
+        Assert.Equal(Moves[PersonMoves.GunAim].Name, d.Step(Standing with
         {
             IsGrounded = false,
             LinearVelocity = new(0, -3)
-        }).Overlay!.Clip.Id); // aiming arms while falling
+        }).Overlay!.Value.Clip.Name); // aiming arms while falling
     }
 
     [Fact]

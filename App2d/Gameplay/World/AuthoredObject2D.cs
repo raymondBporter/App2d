@@ -1,16 +1,14 @@
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Core.Characters.Geometry;
 using App2d.Core.Objects;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Motion;
-using App2d.Core.Rendering.Characters;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 
 namespace App2d.Gameplay.World;
 
-/// <summary>The world owns a placed Part and its optional body. Passive parts have no combat or AI registration.</summary>
+/// <summary>The world owns a placed object and its optional body. An object takes no part in combat and has no AI.</summary>
 public sealed class AuthoredObject2D : IDisposable
 {
     private readonly PhysicsWorld2D _physics;
@@ -29,7 +27,7 @@ public sealed class AuthoredObject2D : IDisposable
         Id = id;
         Placement = placement;
         var asset = placement.Asset;
-        var shape = asset.Physics is not null ? PartShapes2D.Collision(asset) : new PartShader2D(asset).BoundsShape();
+        var shape = asset.Outline();
         _motion = asset.Motion?.CreateMotion(placement.Position);
         WorldObject = new(shape)
         {
@@ -40,7 +38,7 @@ public sealed class AuthoredObject2D : IDisposable
         {
             Body.EntityId = id;
             Body.CollisionLayer = layer;
-            Body.CollisionMask = mask & asset.Geometry.First(g => g.Collision is { Enabled: true }).Collision!.Mask;
+            Body.CollisionMask = mask;
             if (asset.Surface is { } surface)
             {
                 var settings = PlatformCollisionRules2D.Attach(physics).Surface(Body);

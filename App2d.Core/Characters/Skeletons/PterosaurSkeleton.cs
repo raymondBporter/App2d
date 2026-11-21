@@ -1,5 +1,3 @@
-// Generated from the authored JSON rigs by LegacySkeletonEmitter in App2d.Tests. While those rigs exist, change them and
-// regenerate (set APP2D_WRITE_CLIPS=1 and run the tests named GeneratedRigTests) instead of editing this file.
 using App2d.Core.Kinematics;
 
 namespace App2d.Core.Characters;
@@ -12,7 +10,10 @@ public static class PterosaurSkeleton
         NearToe0 = 11, NearToe1 = 12, NearToe2 = 13, FarShoulder = 14, FarBend = 15, FarTip = 16, FarLeg = 17, FarFoot = 18, FarToe0 = 19,
         FarToe1 = 20, FarToe2 = 21;
     /// <summary>Indices into the skeleton's mounts.</summary>
-    public const int HeadArt = 0, BodyArt = 1;
+    public const int
+        HeadArt = 0, BodyArt = 1, BodyToBodyUp = 2, FarShoulderUpright = 3, FarShoulderToFarBend = 4, FarBendToFarTip = 5, FarTipToFarBend = 6,
+        FarTipUpright = 7, FarBendUpright = 8, NearShoulderUpright = 9, NearShoulderToNearBend = 10, NearBendToNearTip = 11, NearTipToNearBend = 12,
+        NearTipUpright = 13, NearBendUpright = 14, HeadToHeadUp = 15, JawToJawUp = 16;
 
     /// <summary>The pterosaur at rest, wings spread.</summary>
     public static Skeleton2D Skeleton { get; } = new(
@@ -39,6 +40,14 @@ public static class PterosaurSkeleton
         new("far-toe-1", FarFoot, new(new(0f, -0.065f))),
         new("far-toe-2", FarFoot, new(new(0.045f, -0.05f))))
     {
-        Mounts = [Mount2D.Aimed("head-art", Head, HeadUp), Mount2D.Aimed("body-art", Body, BodyUp)],
+        Mounts = [
+            Mount2D.Aimed("head-art", Head, HeadUp), Mount2D.Aimed("body-art", Body, BodyUp), Mount2D.Aimed("body-to-body-up", Body, BodyUp),
+            Mount2D.Upright("far-shoulder-upright", FarShoulder), Mount2D.Aimed("far-shoulder-to-far-bend", FarShoulder, FarBend),
+            Mount2D.Aimed("far-bend-to-far-tip", FarBend, FarTip), Mount2D.Aimed("far-tip-to-far-bend", FarTip, FarBend),
+            Mount2D.Upright("far-tip-upright", FarTip), Mount2D.Upright("far-bend-upright", FarBend),
+            Mount2D.Upright("near-shoulder-upright", NearShoulder), Mount2D.Aimed("near-shoulder-to-near-bend", NearShoulder, NearBend),
+            Mount2D.Aimed("near-bend-to-near-tip", NearBend, NearTip), Mount2D.Aimed("near-tip-to-near-bend", NearTip, NearBend),
+            Mount2D.Upright("near-tip-upright", NearTip), Mount2D.Upright("near-bend-upright", NearBend),
+            Mount2D.Aimed("head-to-head-up", Head, HeadUp), Mount2D.Aimed("jaw-to-jaw-up", Jaw, JawUp)],
     };
 }

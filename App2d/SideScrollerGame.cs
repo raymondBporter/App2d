@@ -3,7 +3,7 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Assets;
 using App2d.Core.Audio;
-using App2d.Core.Characters.Authored;
+using App2d.Gameplay.Characters;
 using App2d.Core.Geometry.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Hosting;
@@ -27,7 +27,6 @@ namespace App2d;
 public sealed class SideScrollerGame : Game2D
 {
     private readonly ResourceManager2D _resources = new();
-    private readonly AuthoredCatalog _authored;
     private readonly TraversalMetrics2D Traversal;
 
     private readonly SideScrollerSimulation2D _simulation;
@@ -48,19 +47,13 @@ public sealed class SideScrollerGame : Game2D
 
     public SideScrollerGame(string? worldManifest = null)
     {
-        _resources.Register("characters/authored", LoadAuthored, AssetPaths.Current.AuthoredCharacters);
-        _authored = _resources.GetLoad<AuthoredCatalog>("characters/authored", "simulation");
-        _resources.Get<AuthoredCatalog>("characters/authored", "presentation");
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
         var textures = _resources.GetLoad<TextureCache2D>("textures/runtime", "presentation");
         _resources.Register("audio/sfx", () => new SoundEffectBank2D<SoundEffect2D>(AssetPaths.Current.SoundEffects, SoundEffectCues2D.Cues), AssetPaths.Current.SoundEffects);
-        var profile = _authored.Profiles.GetValueOrDefault(GameProfile.GameId)
-            ?? throw new InvalidDataException("The authored 'game' profile (profiles/game.json), which binds the game's player, is missing or does not check.");
-        var hero = _authored.Entities.GetValueOrDefault(profile.Entity)
-            ?? throw new InvalidDataException($"The authored '{profile.Entity}' entity, the game's player, is missing.");
+        var hero = GameCharacters.Hero;
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
 
-        var movement = ShapeBounds2D.Calculate(hero.MovementShape);
+        var movement = ShapeBounds2D.Calculate(hero.Movement);
         var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(movement.Height) / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f, new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height), GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
         _sounds = _resources.GetLoad<SoundEffectBank2D<SoundEffect2D>>("audio/sfx", "presentation");
@@ -88,12 +81,12 @@ public sealed class SideScrollerGame : Game2D
                 .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
                 .Select(ThingTypeRegistry2D.ToRuntime)])
         {
-            PlayerMaximumHealth = hero.Damage.Health,
+            PlayerMaximumHealth = GameCharacters.HeroHealth,
             Spells = System.Text.Json.JsonSerializer.Deserialize<SpellTuning2D>(
                 File.ReadAllText(Path.Combine(AssetPaths.Current.Runtime, "gameplay", "player-spells.json")),
                 JsonProfiles.CaseInsensitive)
                 ?? throw new InvalidDataException("Player spell tuning is missing."),
-            AuthoredCharacters = _authored,
+            Characters = true,
             Objects = loadedLevel.Objects,
             Zones = loadedLevel.Zones,
             GiantTrees = loadedLevel.GiantTrees,
@@ -133,7 +126,7 @@ public sealed class SideScrollerGame : Game2D
         }, "Reload giant-trees.json: positions and dimensions are in tiles; ranges are [min, max].");
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene,
-            cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored), _terrainSource);
+            cameraController, textures, _sounds, Traversal, new Presentation.Persons.PersonMoves(hero), _terrainSource);
         _editorUi = new(_editor, Textures, DebugPanel, _client.Wardrobe);
         _resources.Register("audio/soundtrack", () => WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones),
             Path.Combine(AssetPaths.Current.Music, "soundtrack.json"));
@@ -289,18 +282,6 @@ public sealed class SideScrollerGame : Game2D
         }
 
         base.RenderUI(renderer, time);
-    }
-
-    /// <summary>Authored entities that fail to compile are not played; the game refuses to start and names each problem instead.</summary>
-    private static AuthoredCatalog LoadAuthored()
-    {
-        var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
-        if (catalog.Errors.Count > 0)
-        {
-            throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
-        }
-
-        return catalog;
     }
 
     public override void Dispose()

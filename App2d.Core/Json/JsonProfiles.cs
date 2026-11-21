@@ -74,16 +74,17 @@ public static class JsonProfiles
     });
 
     /// <summary>The prototype puppet file keeps its existing metadata-order contract.</summary>
-    public static JsonSerializerOptions Puppet { get; } = Freeze(new(Geometry)
+    /// <summary>Object files placed in levels: strict, camel case, and nothing written for what an object does not have.</summary>
+    public static JsonSerializerOptions Objects { get; } = Freeze(new()
     {
-        AllowOutOfOrderMetadataProperties = false
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        AllowOutOfOrderMetadataProperties = true,
+        WriteIndented = true,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Converters = { new Vector2JsonConverter(), new InterpolatorJsonConverterFactory(), new ProgressMapJsonConverterFactory() }
     });
-
-    /// <summary>Authored Parts, rigs and clips: schema-aware defaults and keyframe components.</summary>
-    public static JsonSerializerOptions Authored { get; } = Freeze(AuthoredJson.CreateOptions(compactExtrusions: true));
-
-    // Undo must retain derived meshes rather than omit and rebuild them as file loading does.
-    internal static JsonSerializerOptions AuthoredSnapshot { get; } = Freeze(AuthoredJson.CreateOptions(compactExtrusions: false));
 
     private static JsonSerializerOptions Freeze(JsonSerializerOptions options)
     {

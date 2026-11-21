@@ -1,4 +1,3 @@
-using App2d.Core.Characters.Authored;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Objects;
@@ -21,7 +20,7 @@ public sealed record ObjectSurface2D
 }
 
 /// <summary>Independent placement identity and world origin; the reusable asset remains in local coordinates.</summary>
-public sealed record ObjectPlacement2D(string Id, Part Asset, Vector2f Position)
+public sealed record ObjectPlacement2D(string Id, ObjectAsset2D Asset, Vector2f Position)
 {
     public void Validate()
     {

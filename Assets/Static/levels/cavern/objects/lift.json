@@ -1,16 +1,11 @@
 {
-  "format": "app2d-part",
-  "version": 5,
+  "format": "app2d-object",
+  "version": 1,
   "id": "lift",
   "name": "Path lift",
-  "usage": "world",
-  "geometry": [
+  "shapes": [
     {
-      "id": "shape-1",
-      "collision": {},
-      "a": "origin",
-      "frame": "origin",
-      "geometry": {
+      "shape": {
         "kind": "rectangle",
         "min": {
           "x": -48,
@@ -21,12 +16,10 @@
           "y": 6
         }
       },
-      "material": {
-        "fill": "#25d2be",
-        "outline": {
-          "color": "#163f4a",
-          "width": 1
-        }
+      "fill": "#25d2be",
+      "outline": {
+        "color": "#163f4a",
+        "width": 1
       }
     }
   ],

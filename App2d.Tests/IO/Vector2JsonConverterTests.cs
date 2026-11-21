@@ -23,7 +23,7 @@ public sealed class Vector2JsonConverterTests
         PropertyNameCaseInsensitive = true,
         NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString
     };
-    private static readonly JsonSerializerOptions TolerantVectors = new(AuthoredJson.Options)
+    private static readonly JsonSerializerOptions TolerantVectors = new(JsonProfiles.Objects)
     {
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip
     };
@@ -33,8 +33,7 @@ public sealed class Vector2JsonConverterTests
         nameof(IGeometryValue2D),
         nameof(IShape2D),
         nameof(ICurve2D),
-        nameof(AuthoredJson.Options),
-        nameof(PuppetDefinition)
+        nameof(JsonProfiles.Objects)
     ];
 
     private static JsonSerializerOptions GetOptions(string optionsName) => optionsName switch
@@ -42,8 +41,7 @@ public sealed class Vector2JsonConverterTests
         nameof(IGeometryValue2D) => GeometryJson2D.JsonOptions,
         nameof(IShape2D) => GeometryJson2D.JsonOptions,
         nameof(ICurve2D) => GeometryJson2D.JsonOptions,
-        nameof(AuthoredJson.Options) => AuthoredJson.Options,
-        nameof(PuppetDefinition) => PuppetDefinition.JsonOptions,
+        nameof(JsonProfiles.Objects) => JsonProfiles.Objects,
         _ => throw new ArgumentOutOfRangeException(nameof(optionsName), optionsName, null)
     };
 

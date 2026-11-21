@@ -1,5 +1,3 @@
-using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Drawing;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
@@ -9,10 +7,11 @@ namespace App2d.Rendering;
 public sealed partial class Renderer2D
 {
     private PointCharacterRenderer? _characterRenderer;
-    private PuppetDrawing? _authoredDrawing;
     private LayeredMesh? _swooshMesh;
 
-    private void DrawAuthored(WorldObject2D visual, AuthoredCharacterShader shader)
+    private LayeredMesh? _characterMesh;
+
+    private void DrawCharacter(WorldObject2D visual, CharacterShader shader)
     {
         if (shader.Pose is not { } pose)
         {
@@ -20,17 +19,9 @@ public sealed partial class Renderer2D
         }
 
         _characterRenderer ??= new(_device);
-        _authoredDrawing ??= new();
-        _authoredDrawing.Build(shader.Model, pose, shader.Artwork);
-        var local = new ActorPose(pose, Vector2f.Zero, 1);
-        foreach (var (prop, socket) in shader.Props)
-        {
-            _authoredDrawing.AddAttachment(prop, local, socket);
-        }
-        foreach (var attachment in shader.Equipment) _authoredDrawing.AddAttachment(attachment, local);
-
-        var m = View.LocalToDevice(visual.Transform.Matrix);
-        var world = Matrix.CreateScale(shader.Facing, 1, 1) * LayeredMeshRenderer.ToXnaMatrix(m);
+        (_characterMesh ??= new()).Clear();
+        App2d.Core.Characters.AttachmentPainter.Paint(_characterMesh, pose.Posed, shader.Drawn);
+        var world = Matrix.CreateScale(pose.Facing, 1, 1) * LayeredMeshRenderer.ToXnaMatrix(View.LocalToDevice(visual.Transform.Matrix));
         var projection = LayeredMeshRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height);
         LayeredMesh? swoosh = null;
         if (shader.Swoosh is { IsVisible: true } visible)
@@ -39,7 +30,7 @@ public sealed partial class Renderer2D
             visible.Build(_swooshMesh);
             swoosh = _swooshMesh;
         }
-        _characterRenderer.DrawActor(_authoredDrawing, projection, world, swoosh);
+        _characterRenderer.DrawActor(_characterMesh, projection, world, swoosh);
     }
 
     private void DisposeCharacters()
