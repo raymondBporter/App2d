@@ -2,17 +2,15 @@ using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using XVector2 = Microsoft.Xna.Framework.Vector2;
-using XVector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace App2d.Tests.Rendering;
 
 [Collection("Graphics")]
 public sealed class Renderer3DTests
 {
-    private static TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> Triangle(Color4b color)
+    private static TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b, ColoredVertexFactory> Triangle(Color4b color)
     {
-        var mesh = new TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b>((p, c, uv) => new(new XVector3(p.X, p.Y, p.Z), c, new XVector2(uv.X, uv.Y)));
+        var mesh = new TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b, ColoredVertexFactory>();
         mesh.Triangle(new(-.7f, -.7f, 0), new(.7f, -.7f, 0), new(0, .7f, 0), color);
         return mesh;
     }

@@ -1,21 +1,28 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
+using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Geometry.Meshes;
 
+/// <summary>Makes one mesh vertex from a point, the material it is drawn in and a texture coordinate.</summary>
+public interface IMeshVertexFactory<TVertex, TMaterial>
+{
+    static abstract TVertex Create(Vector3f point, TMaterial material, Vector2f uv);
+}
+
 /// <summary>
 /// Builds an unindexed triangle stream. The vertex factory supplies rendering attributes,
-/// so geometry generation has no graphics-library dependency.
+/// so geometry generation has no graphics-library dependency. The factory is a type, not a delegate, so making a
+/// vertex can compile to plain code in the builder. A mesh is built one vertex at a time and calls are most of what a
+/// vertex costs, so the few small methods on that path are inlined by request and a factory's Create should be too.
 /// </summary>
-public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
+public sealed class TriangleMeshBuilder3D<TVertex, TMaterial, TFactory> where TFactory : IMeshVertexFactory<TVertex, TMaterial>
 {
     private const int MaximumVertexCount = 1_048_576;
-    private readonly Func<Vector3f, TMaterial, Vector2f, TVertex> _vertexFactory;
     private TVertex[] _vertices;
 
-    public TriangleMeshBuilder3D(Func<Vector3f, TMaterial, Vector2f, TVertex> vertexFactory, int initialCapacity = 64)
+    public TriangleMeshBuilder3D(int initialCapacity = 64)
     {
-        _vertexFactory = Ensure.RequireNotNull(vertexFactory);
         Ensure.NonNegative(initialCapacity);
         Ensure.LessThanOrEqual(initialCapacity, MaximumVertexCount);
         _vertices = new TVertex[Math.Max(3, initialCapacity)];
@@ -40,12 +47,13 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         Max = new(float.NegativeInfinity);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Vertex(Vector3f point, TMaterial material, Vector2f uv = default)
     {
         Ensure.Finite(point);
         Ensure.Finite(uv);
         EnsureCapacity(Count + 1);
-        var vertex = _vertexFactory(point, material, uv);
+        var vertex = TFactory.Create(point, material, uv);
         _vertices[Count++] = vertex;
         Version++;
         Min = Vector3f.Min(Min, point);
@@ -74,14 +82,30 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
             return;
         }
 
-        var segments = dome ? 48 : 12;
-        var rings = dome ? 8 : 1;
-        var stride = VertexGenerator2D.UnitCircleSegments / segments;
+        if (!dome)
+        {
+            // A flat disk is a fan round its centre. It is written out plainly because it is drawn at every end and corner of
+            // every line: as a local function taking the centre by reference it is not always inlined, and then costs twice as much.
+            const int sides = 12;
+            var step = VertexGenerator2D.UnitCircleSegments / sides;
+            var previous = center + new Vector3f(VertexGenerator2D.UnitCircle[0] * radius, 0f);
+            for (var side = 1; side <= sides; side++)
+            {
+                var next = center + new Vector3f(VertexGenerator2D.UnitCircle[side * step] * radius, 0f);
+                Triangle(center, previous, next, material);
+                previous = next;
+            }
+            return;
+        }
+
+        const int segments = 48;
+        const int rings = 8;
+        const int stride = VertexGenerator2D.UnitCircleSegments / segments;
         Vector3f At(int ring, int index)
         {
             var ringRadius = radius * ring / rings;
             return center + new Vector3f((VertexGenerator2D.UnitCircle[index * stride] * ringRadius),
-                dome ? -MathF.Sqrt(MathF.Max(0f, radius * radius - ringRadius * ringRadius)) : 0f);
+                -MathF.Sqrt(MathF.Max(0f, radius * radius - ringRadius * ringRadius)));
         }
         for (var ring = 1; ring <= rings; ring++)
         {
@@ -127,17 +151,48 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
             return;
         }
 
-        var direction = new Vector2f(end.X - start.X, end.Y - start.Y);
-        var length = direction.Length();
         var radius = width / 2f;
-        if (length > 1e-8f)
-        {
-            var offset = new Vector3f(-direction.Y / length * radius, direction.X / length * radius, 0f);
-            Triangle(start + offset, start - offset, end + offset, startMaterial, startMaterial, endMaterial);
-            Triangle(start - offset, end - offset, end + offset, startMaterial, endMaterial, endMaterial);
-        }
+        Band(start, end, radius, startMaterial, endMaterial);
         Disk(start, radius, startMaterial);
         Disk(end, radius, endMaterial);
+    }
+
+    /// <summary>
+    /// Constant-width straight segments through the points, measured in XY and round at every point. It covers exactly what
+    /// a <see cref="Line(Vector3f, Vector3f, float, TMaterial)"/> per segment covers, with the disk two segments share drawn once.
+    /// </summary>
+    public void Polyline(ReadOnlySpan<Vector3f> points, float width, TMaterial material, bool closed = false)
+    {
+        Ensure.NonNegative(width);
+        if (width == 0f)
+        {
+            return;
+        }
+
+        var radius = width / 2f;
+        foreach (var (a, b) in MeshTopology.Edges(points.Length, closed))
+        {
+            Band(points[a], points[b], radius, material, material);
+        }
+        foreach (var point in points)
+        {
+            Disk(point, radius, material);
+        }
+    }
+
+    /// <summary>The straight part of a segment: a rectangle of the given half-width in XY. A segment with no length has none.</summary>
+    private void Band(Vector3f start, Vector3f end, float radius, TMaterial startMaterial, TMaterial endMaterial)
+    {
+        var direction = new Vector2f(end.X - start.X, end.Y - start.Y);
+        var length = direction.Length();
+        if (length <= 1e-8f)
+        {
+            return;
+        }
+
+        var offset = new Vector3f(-direction.Y / length * radius, direction.X / length * radius, 0f);
+        Triangle(start + offset, start - offset, end + offset, startMaterial, startMaterial, endMaterial);
+        Triangle(start - offset, end - offset, end + offset, startMaterial, endMaterial, endMaterial);
     }
 
     /// <summary>Fills a perimeter visible from its first vertex using a triangle fan.</summary>
@@ -243,13 +298,19 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EnsureCapacity(int required)
     {
-        Ensure.LessThanOrEqual(required, MaximumVertexCount);
-
         if (required > _vertices.Length)
         {
-            Array.Resize(ref _vertices, Math.Min(MaximumVertexCount, Math.Max(required, _vertices.Length * 2)));
+            Grow(required);
         }
+    }
+
+    /// <summary>The rare path, kept out of line so the check made before every vertex stays small. The buffer never exceeds the maximum, so a count past it always arrives here.</summary>
+    private void Grow(int required)
+    {
+        Ensure.LessThanOrEqual(required, MaximumVertexCount);
+        Array.Resize(ref _vertices, Math.Min(MaximumVertexCount, Math.Max(required, _vertices.Length * 2)));
     }
 }

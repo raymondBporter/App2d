@@ -7,6 +7,7 @@ using App2d.Core.Kinematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Characters;
 
@@ -87,40 +88,50 @@ public sealed record MountedShape(string Name, int Mount, IShape2D Shape, Attach
     {
         mesh.Layer = pose.MountLayer(Mount) + Layer;
         var place = pose.MountFrame(Mount);
-        var count = Shape.GetOutlineVertCount(RoundSegments);
-        Span<Vector2f> buffer = count <= 64 ? stackalloc Vector2f[count] : new Vector2f[count];
-        var points = new Vector3f[count];
-        var corners = Shape.GetOutlineVerts(buffer, RoundSegments).ToArray();
-        for (var i = 0; i < count; i++) points[i] = place.TransformPoint(new(corners[i], 0));
-        var outline = new LayeredContour(points);
-        if (AttachmentPainter.Fill(Material) is { } fill)
+        if (AttachmentPainter.Fill(Material) is { } fill) mesh.Fill(Shape, place, fill, RoundSegments);
+        if (!Patches.IsEmpty)
         {
-            // A polygon may be concave, so it is filled by its own triangles; any other outline is convex and fills as a fan.
-            if (Shape is SimplePolygon2D polygon)
+            foreach (var cut in Cuts.GetValue(this, static shape => shape.CutPatches()))
             {
-                foreach (var (a, b, c) in MeshTopology.Triangles(polygon.Mesh.Indices)) mesh.Triangle(outline[a], outline[b], outline[c], fill);
-            }
-            else
-            {
-                mesh.Polygon(outline, fill, null, 0);
+                for (var i = 0; i < cut.Triangles.Length; i += 3)
+                {
+                    mesh.Triangle(place.TransformPoint(new(cut.Triangles[i], 0)), place.TransformPoint(new(cut.Triangles[i + 1], 0)), place.TransformPoint(new(cut.Triangles[i + 2], 0)), cut.Color, cut.Lift, cut.Lift, cut.Lift);
+                }
             }
         }
-        for (var i = 0; i < Patches.Length; i++)
+        if (AttachmentPainter.Edge(Material) is { } edge) mesh.Outline(Shape, place, edge.Color, edge.Width, RoundSegments);
+    }
+
+    /// <summary>One patch cut to the shape, as triangles in the shape's own axes.</summary>
+    private readonly record struct PatchCut(Color4b Color, float Lift, Vector2f[] Triangles);
+
+    /// <summary>The cut patches of each piece that has any. Where a patch falls on a shape never changes with the pose, so it is worked out once per piece.</summary>
+    private static readonly ConditionalWeakTable<MountedShape, PatchCut[]> Cuts = [];
+
+    private PatchCut[] CutPatches()
+    {
+        var corners = new Vector2f[Shape.GetOutlineVertCount(RoundSegments)];
+        Shape.GetOutlineVerts(corners, RoundSegments);
+        var cuts = new PatchCut[Patches.Length];
+        for (var i = 0; i < cuts.Length; i++)
         {
-            var color = ColorExtensions.FromHexRgb(Patches[i].Fill);
-            var lift = -PaintPatch.Lift * (i + 1);
-            void Patch(List<Vector2f> cut) => mesh.Polygon(new LayeredContour([.. cut.Select(p => place.TransformPoint(new(p, 0)))], lift), color, null, 0);
+            var triangles = new List<Vector2f>();
+            void Add(List<Vector2f> cut)
+            {
+                foreach (var (a, b, c) in MeshTopology.TriangleFan(cut.Count)) triangles.AddRange([cut[a], cut[b], cut[c]]);
+            }
             // Cut to each triangle of a polygon, which may be concave, or to the whole of a convex outline.
             if (Shape is SimplePolygon2D concave)
             {
-                foreach (var (a, b, c) in MeshTopology.Triangles(concave.Mesh.Indices)) Patch(PolygonClipping2D.ClipConvex(Patches[i].Corners, [corners[a], corners[b], corners[c]]));
+                foreach (var (a, b, c) in MeshTopology.Triangles(concave.Mesh.Indices)) Add(PolygonClipping2D.ClipConvex(Patches[i].Corners, [corners[a], corners[b], corners[c]]));
             }
             else
             {
-                Patch(PolygonClipping2D.ClipConvex(Patches[i].Corners, corners));
+                Add(PolygonClipping2D.ClipConvex(Patches[i].Corners, corners));
             }
+            cuts[i] = new(ColorExtensions.FromHexRgb(Patches[i].Fill), -PaintPatch.Lift * (i + 1), [.. triangles]);
         }
-        if (AttachmentPainter.Edge(Material) is { } edge) mesh.Polygon(outline, null, edge.Color, edge.Width);
+        return cuts;
     }
 }
 
@@ -255,12 +266,12 @@ public sealed record MountedPath(string Name, int Mount, ImmutableArray<Vector2f
 
     public override void Paint(LayeredMesh mesh, PosedSkeleton2D pose)
     {
+        if (Points.Length < 2) return;
         mesh.Layer = pose.MountLayer(Mount) + Layer;
         var place = pose.MountFrame(Mount);
-        for (var i = 1; i < Points.Length; i++)
-        {
-            AttachmentPainter.Segment(mesh, place.TransformPoint(new(Points[i - 1], 0)), place.TransformPoint(new(Points[i], 0)), Material);
-        }
+        Span<Vector3f> placed = Points.Length <= 64 ? stackalloc Vector3f[64] : new Vector3f[Points.Length];
+        for (var i = 0; i < Points.Length; i++) placed[i] = place.TransformPoint(new(Points[i], 0));
+        AttachmentPainter.Stroke(mesh, placed[..Points.Length], Material);
     }
 }
 

@@ -2,9 +2,17 @@ using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics.Transforms;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
 namespace App2d.Core.Rendering;
+
+/// <summary>Makes the vertices <see cref="Renderer3D"/> draws: a position, a colour and a texture coordinate.</summary>
+public readonly record struct ColoredVertexFactory : IMeshVertexFactory<VertexPositionColorTexture, Color4b>
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static VertexPositionColorTexture Create(Vector3f point, Color4b color, Vector2f uv) => new(new(point.X, point.Y, point.Z), color, new(uv.X, uv.Y));
+}
 
 /// <summary>
 /// Retained, vertex-colored triangle submission with a shared scene depth buffer. No character or rig dependencies.
@@ -14,7 +22,7 @@ public sealed class Renderer3D : IDisposable
 {
     private readonly GraphicsDevice _device;
     private readonly BasicEffect _effect;
-    private readonly MeshBufferCache<TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b>> _meshes = new();
+    private readonly MeshBufferCache<TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b, ColoredVertexFactory>> _meshes = new();
     private bool _disposed;
 
     public Renderer3D(GraphicsDevice device)
@@ -35,7 +43,7 @@ public sealed class Renderer3D : IDisposable
         _device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, color, 1f, 0);
     }
 
-    public void Draw(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh, Frame3D world, Camera3D camera,
+    public void Draw(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b, ColoredVertexFactory> mesh, Frame3D world, Camera3D camera,
         Color4b? tint = null, bool writeDepth = true, bool alphaBlend = false)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -79,7 +87,7 @@ public sealed class Renderer3D : IDisposable
         }
     }
 
-    private MeshBuffers Buffers(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> mesh)
+    private MeshBuffers Buffers(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b, ColoredVertexFactory> mesh)
     {
         if (!_meshes.TryGet(mesh, out var buffers) || buffers.Vertices.VertexCount < mesh.Count)
         {

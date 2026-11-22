@@ -1,5 +1,6 @@
 using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Validation;
 
@@ -37,6 +38,7 @@ public static class NumericValidation
         });
 
     public static bool IsNumber(Vector2f value) => IsNumber(value.X) && IsNumber(value.Y);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFinite(Vector2f value) => IsFinite(value.X) && IsFinite(value.Y);
     public static bool IsPositive(Vector2f value) => IsPositive(value.X) && IsPositive(value.Y);
     public static bool IsNegative(Vector2f value, bool allowNegativeInfinity = false) => IsNegative(value.X, allowNegativeInfinity) && IsNegative(value.Y, allowNegativeInfinity);

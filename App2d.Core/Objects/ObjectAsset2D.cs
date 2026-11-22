@@ -6,8 +6,8 @@ using App2d.Core.Physics;
 using App2d.Core.Physics.Motion;
 using App2d.Core.Rendering;
 using App2d.Core.Validation;
+using System.Collections.Immutable;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace App2d.Core.Objects;
 
@@ -113,26 +113,16 @@ public sealed record ObjectAsset2D
     }
 }
 
-/// <summary>Draws an object: its shapes, filled, in the visual's own axes. The mesh is built once.</summary>
-public sealed class ObjectShader2D : IShader2D
+/// <summary>One shape of an object as it is drawn: its colours and bounds, read once. The outline's width is in the object's units.</summary>
+public readonly record struct ObjectPaint2D(IShape2D Shape, Rect2f Bounds, SolidColorShader Fill, Color4b? Outline, float OutlineWidth);
+
+/// <summary>Draws an object: its shapes in order, each filled and then outlined, in the visual's own axes.</summary>
+public sealed class ObjectShader2D(ObjectAsset2D asset) : IShader2D
 {
-    /// <summary>How many straight pieces a round shape's outline is cut into.</summary>
-    private const int RoundSegments = 48;
+    public ObjectAsset2D Asset { get; } = asset;
 
-    public ObjectShader2D(ObjectAsset2D asset)
-    {
-        Asset = asset;
-        foreach (var item in asset.Shapes)
-        {
-            var corners = new Vector2f[item.Shape.GetOutlineVertCount(RoundSegments)];
-            item.Shape.GetOutlineVerts(corners, RoundSegments);
-            Vector3f[] points = [.. corners.Select(corner => new Vector3f(corner, 0))];
-            Mesh.Polygon(points, ColorExtensions.FromHexRgb(item.Fill), null, 0);
-            if (item.Outline is { Width: > 0 } outline) Mesh.Polygon(points, null, ColorExtensions.FromHexRgb(outline.Color), outline.Width);
-        }
-    }
+    public ImmutableArray<ObjectPaint2D> Paints { get; } = [.. asset.Shapes.Select(item => new ObjectPaint2D(item.Shape, ShapeBounds2D.Calculate(item.Shape),
+        new SolidColorShader(ColorExtensions.FromHexRgb(item.Fill)), item.Outline is { Width: > 0 } outline ? ColorExtensions.FromHexRgb(outline.Color) : null, item.Outline?.Width ?? 0))];
 
-    public ObjectAsset2D Asset { get; }
-    [JsonIgnore] public LayeredMesh Mesh { get; } = new(256);
     public Color4b BaseColor => Color4b.White;
 }

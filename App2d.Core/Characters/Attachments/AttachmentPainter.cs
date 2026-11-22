@@ -20,6 +20,14 @@ public static class AttachmentPainter
     internal static (Color4b Color, float Width)? Edge(AttachmentMaterial material) =>
         material.Outline is { Color: { } hex, Width: > 0 and var width } ? (ColorExtensions.FromHexRgb(hex), width) : null;
 
+    /// <summary>A stroke of straight segments on the mesh's layer: the edge underneath along its whole length, wider by its width on each side, then the stroke itself.</summary>
+    internal static void Stroke(LayeredMesh mesh, ReadOnlySpan<Vector3f> points, AttachmentMaterial material)
+    {
+        var width = material.StrokeWidth ?? 0;
+        if (Edge(material) is { } edge) mesh.Polyline(points, width + edge.Width * 2, edge.Color);
+        if (Fill(material) is { } ink && width > 0) mesh.Polyline(points, width, ink);
+    }
+
     /// <summary>
     /// One straight stroke: the edge underneath, wider by its width on each side, then the stroke itself. Each end may sit at
     /// its own layer, on top of the mesh's.

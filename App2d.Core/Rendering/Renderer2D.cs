@@ -115,10 +115,7 @@ public sealed partial class Renderer2D : IDisposable
 
         if (worldObject.Shader is App2d.Core.Objects.ObjectShader2D placed)
         {
-            Flush();
-            _characterRenderer ??= new(_device);
-            var transform = View.LocalToDevice(worldObject.Transform.Matrix);
-            _characterRenderer.Draw(placed.Mesh, LayeredMeshRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height), LayeredMeshRenderer.ToXnaMatrix(transform));
+            DrawObject(placed, View.LocalToDevice(worldObject.Transform.Matrix));
             return;
         }
         if (worldObject.Shader is CharacterShader character)
@@ -549,13 +546,14 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawShapeOverlay(SpatialObject2D item, Color4b fillColor, Color4b outlineColor, float screenStrokeWidth = 2f) =>
         DrawShape(item, fillColor, outlineColor, screenStrokeWidth);
 
-    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, Rect2f bounds, Color4b color, float width)
+    /// <summary>Strokes a shape's outline at a width in device pixels. <paramref name="join"/> caps the start of every segment, which on a closed outline is every corner once.</summary>
+    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, Rect2f bounds, Color4b color, float width, LineCap2D join = LineCap2D.Butt)
     {
         if (shape is CompositeShape2D composite)
         {
             foreach (var part in composite.Parts)
             {
-                OutlineShape(part, matrix, bounds, color, width);
+                OutlineShape(part, matrix, bounds, color, width, join);
             }
 
             return;
@@ -564,7 +562,8 @@ public sealed partial class Renderer2D : IDisposable
         foreach (var segment in shape.OutlineSegments(points, shape.RoundSegmentsFor(matrix),
             clipBounds: bounds.IsFinite ? bounds : GetVisibleLocalBounds(matrix)))
         {
-            StrokeSegment(segment, matrix, color, width);
+            var (start, end) = segment.TransformedBy(matrix);
+            Line(start, end, color, width, join, LineCap2D.Butt);
         }
     }
 

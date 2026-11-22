@@ -150,7 +150,7 @@ public sealed class CharacterTests
         Assert.Equal(3, dumbbell.Shapes.Count);
         Assert.IsType<App2d.Core.Geometry.Shapes.CompositeShape2D>(dumbbell.CollisionShape());
         Assert.Equal(dumbbell.ToJson(), ObjectAsset2D.FromJson(dumbbell.ToJson()).ToJson());
-        Assert.True(new ObjectShader2D(dumbbell).Mesh.Count > 0);
+        Assert.Equal(3, new ObjectShader2D(dumbbell).Paints.Length);
         Assert.Throws<InvalidDataException>(() => (dumbbell with { Shapes = [] }).Validate());
     }
 }

@@ -1,6 +1,10 @@
 using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Meshes.Tessellation;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Validation;
 using Microsoft.Xna.Framework.Graphics;
+using System.Runtime.CompilerServices;
 using XVector2 = Microsoft.Xna.Framework.Vector2;
 using XVector3 = Microsoft.Xna.Framework.Vector3;
 
@@ -15,9 +19,23 @@ public readonly record struct LayeredVertex(XVector3 Position, Color4b Color, XV
 /// </summary>
 public sealed class LayeredMesh(int initialCapacity = 32768)
 {
+    /// <summary>How much nearer the viewer an outline sits than what it goes round, so it never fights the fill for the same depth.</summary>
+    private const float InkLift = .0005f;
+    // Working room for sampling a shape's outline and placing it, and for a solid's placed vertices, face normals and inked
+    // edges; kept so painting a shape or a solid allocates nothing.
+    private Vector2f[] _flat = new Vector2f[64];
+    private Vector3f[] _placed = new Vector3f[64];
+    private Vector3f[] _normals = new Vector3f[64];
+    private bool[] _faces = new bool[64];
+    private readonly List<IndexedEdge3D> _edges = [];
+
     private readonly record struct Surface(Color4b Color, float Layer);
-    private readonly TriangleMeshBuilder3D<LayeredVertex, Surface> _geometry =
-        new((p, surface, uv) => new(new(p.X, p.Y, p.Z), surface.Color, new(uv.X, uv.Y), surface.Layer), initialCapacity);
+    private readonly struct VertexFactory : IMeshVertexFactory<LayeredVertex, Surface>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static LayeredVertex Create(Vector3f point, Surface surface, Vector2f uv) => new(new(point.X, point.Y, point.Z), surface.Color, new(uv.X, uv.Y), surface.Layer);
+    }
+    private readonly TriangleMeshBuilder3D<LayeredVertex, Surface, VertexFactory> _geometry = new(initialCapacity);
     private VertexPositionColorTexture[] _buffer = [];
     private long _bufferVersion = -1;
 
@@ -59,6 +77,42 @@ public sealed class LayeredMesh(int initialCapacity = 32768)
     public void Line(Vector3f start, Vector3f end, float width, Color4b color, float startLayer, float endLayer) =>
         _geometry.Line(start, end, width, new(color, Layer + startLayer), new(color, Layer + endLayer));
 
+    /// <summary>Straight strokes through the points, round at every point, at <paramref name="layer"/> on top of the mesh's.</summary>
+    public void Polyline(ReadOnlySpan<Vector3f> points, float width, Color4b color, bool closed = false, float layer = 0) =>
+        _geometry.Polyline(points, width, new(color, Layer + layer), closed);
+
+    /// <summary>
+    /// Fills a flat shape standing in a frame, on the current layer. A polygon is filled by its own triangles, so it may be
+    /// concave; any other shape is a fan of its outline.
+    /// </summary>
+    public void Fill(IShape2D shape, Frame3D placement, Color4b color, int roundSegments = 32)
+    {
+        var surface = new Surface(color, Layer);
+        foreach (var triangle in shape.Triangles(Scratch(ref _flat, shape is SimplePolygon2D ? 0 : shape.GetOutlineVertCount(roundSegments)), roundSegments))
+        {
+            _geometry.Triangle(placement.TransformPoint(new(triangle.A, 0)), placement.TransformPoint(new(triangle.B, 0)), placement.TransformPoint(new(triangle.C, 0)), surface);
+        }
+    }
+
+    /// <summary>
+    /// Draws the outline of a flat shape standing in a frame, just in front of its fill and round at every corner. The width
+    /// is measured after placing, so a shape tipped out of the plane keeps an even line.
+    /// </summary>
+    public void Outline(IShape2D shape, Frame3D placement, Color4b color, float width, int roundSegments = 32)
+    {
+        var count = shape.GetOutlineVertCount(roundSegments);
+        var outline = shape.GetOutlineVerts(Scratch(ref _flat, count), roundSegments);
+        var placed = Scratch(ref _placed, count);
+        for (var i = 0; i < outline.Length; i++) placed[i] = placement.TransformPoint(new(outline[i], 0));
+        Polyline(placed[..outline.Length], width, color, closed: true, -InkLift);
+    }
+
+    private static Span<T> Scratch<T>(ref T[] buffer, int count)
+    {
+        if (buffer.Length < count) buffer = new T[Math.Max(count, buffer.Length * 2)];
+        return buffer;
+    }
+
     /// <summary>A fan-filled polygon and/or its outline, all on the current layer.</summary>
     public void Polygon(IReadOnlyList<Vector3f> points, Color4b? fill, Color4b? ink, float width) => Polygon(new LayeredContour(points), fill, ink, width);
 
@@ -76,7 +130,7 @@ public sealed class LayeredMesh(int initialCapacity = 32768)
         {
             foreach (var (a, b) in MeshTopology.Edges(points.Count))
             {
-                Line(points[a], points[b], width, outline, points.LayerAt(a) - .0005f, points.LayerAt(b) - .0005f);
+                Line(points[a], points[b], width, outline, points.LayerAt(a) - InkLift, points.LayerAt(b) - InkLift);
             }
         }
     }
@@ -99,15 +153,21 @@ public sealed class LayeredMesh(int initialCapacity = 32768)
             return;
         }
 
-        var vertices = solid.Vertices.Select(placement.TransformPoint).ToArray();
-        var analysis = new TriangleMeshAnalysis3D(vertices, solid.Triangles, handedness);
+        // Which faces share each edge is known once per solid; only the normals follow the placement.
+        var topology = IndexedMeshTopology3D.Of(solid);
+        var triangles = topology.Triangles;
+        var vertices = Scratch(ref _placed, solid.Vertices.Count)[..solid.Vertices.Count];
+        for (var i = 0; i < vertices.Length; i++) vertices[i] = Ensure.Finite(placement.TransformPoint(solid.Vertices[i]));
+        var normals = Scratch(ref _normals, topology.FaceCount)[..topology.FaceCount];
+        var faces = Scratch(ref _faces, topology.FaceCount)[..topology.FaceCount];
+        topology.FaceNormals(vertices, handedness, normals, faces);
         if (fill is { } color)
         {
-            for (var face = 0; face < solid.FaceCount; face++)
+            for (var face = 0; face < faces.Length; face++)
             {
-                if (analysis.TryGetFaceNormal(face, out var normal))
+                if (faces[face])
                 {
-                    Triangle(vertices[solid.Triangles[face * 3]], vertices[solid.Triangles[face * 3 + 1]], vertices[solid.Triangles[face * 3 + 2]], color.ScaleRgb(light.Shade(normal)).Multiply(tint));
+                    Triangle(vertices[triangles[face * 3]], vertices[triangles[face * 3 + 1]], vertices[triangles[face * 3 + 2]], color.ScaleRgb(light.Shade(normals[face])).Multiply(tint));
                 }
             }
         }
@@ -117,8 +177,10 @@ public sealed class LayeredMesh(int initialCapacity = 32768)
         }
 
         var layer = Layer;
-        Layer -= .0005f;
-        foreach (var edge in analysis.FeatureEdges(-Vector3f.UnitZ, .7f, 1e-5f))
+        Layer -= InkLift;
+        _edges.Clear();
+        topology.FeatureEdges(normals, faces, -Vector3f.UnitZ, .7f, 1e-5f, _edges);
+        foreach (var edge in _edges)
         {
             Line(vertices[edge.A], vertices[edge.B], inkWidth, outline.Multiply(tint));
         }
@@ -126,7 +188,7 @@ public sealed class LayeredMesh(int initialCapacity = 32768)
     }
 
     /// <summary>Copies real positions to the generic 3D renderer without adding drawing layers to Z.</summary>
-    public void CopySpatialTo(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b> destination)
+    public void CopySpatialTo(TriangleMeshBuilder3D<VertexPositionColorTexture, Color4b, ColoredVertexFactory> destination)
     {
         destination.Clear();
         foreach (var v in Vertices)

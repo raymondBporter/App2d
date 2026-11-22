@@ -1,6 +1,7 @@
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Objects;
 using App2d.Core.Rendering;
 using App2d.Rendering;
 using System.Numerics;
@@ -272,6 +273,33 @@ public sealed class ShapeRenderingTests
         Assert.Equal(coversThreePixelsIn ? Color4b.Red : Color4b.Lime, pixels[64 * 128 + edge - 3]);
         Assert.Equal(Color4b.Lime, pixels[64 * 128 + edge - 6]);
         Assert.Equal(Color4b.Transparent, pixels[64 * 128 + edge + 6]);
+    }
+
+    [Theory]
+    [InlineData(1f, false)]
+    [InlineData(2f, true)]
+    public void AnObjectFillsAConcaveShapeAndEdgesItInItsOwnUnits(float zoom, bool coversThreePixelsIn)
+    {
+        // An L whose first corner cannot see all of it: a fan from that corner would fill the notch at the top right.
+        var asset = new ObjectAsset2D
+        {
+            Id = "l",
+            Shapes = [new() { Shape = SimplePolygon2D.Builder.Create([new(32, -24), new(32, 0), new(16, 0), new(16, 24), new(-32, 24), new(-32, -24)]), Fill = "#00ff00", Outline = new("#ff0000", 4) }],
+        };
+        using var graphics = new GraphicsTestContext();
+        using var renderer = new Renderer2D(new Camera2D { Zoom = zoom }, graphics.Device);
+        renderer.BeginFrame(128, 128, default);
+        renderer.Clear(Color4b.Transparent);
+        renderer.Draw(new WorldObject2D(asset.Bounds(), new ObjectShader2D(asset)));
+        renderer.EndFrame();
+
+        var pixels = graphics.ReadPixels();
+        var edge = 64 + (int)(24 * zoom);
+        Assert.Equal(Color4b.Lime, pixels[64 * 128 + 64]);
+        Assert.Equal(Color4b.Transparent, pixels[(64 - (int)(6 * zoom)) * 128 + 64 + (int)(20 * zoom)]);
+        Assert.Equal(Color4b.Red, pixels[(edge - 1) * 128 + 64]);
+        Assert.Equal(coversThreePixelsIn ? Color4b.Red : Color4b.Lime, pixels[(edge - 3) * 128 + 64]);
+        Assert.Equal(Color4b.Lime, pixels[(edge - 6) * 128 + 64]);
     }
 
     [Fact]

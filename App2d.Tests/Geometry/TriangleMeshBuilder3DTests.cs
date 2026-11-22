@@ -5,6 +5,24 @@ namespace App2d.Tests.Geometry;
 
 public sealed class TriangleMeshBuilder3DTests
 {
+    /// <summary>A vertex that is only its point.</summary>
+    private readonly struct Points : IMeshVertexFactory<Vector3f, byte>
+    {
+        public static Vector3f Create(Vector3f point, byte material, Vector2f uv) => point;
+    }
+
+    /// <summary>Fails when the material says so.</summary>
+    private readonly struct Failing : IMeshVertexFactory<Vector3f, bool>
+    {
+        public static Vector3f Create(Vector3f point, bool fail, Vector2f uv) => fail ? throw new InvalidOperationException() : point;
+    }
+
+    /// <summary>A vertex that keeps the material it was made in.</summary>
+    private readonly struct Tagged : IMeshVertexFactory<(Vector3f Position, int Material), int>
+    {
+        public static (Vector3f Position, int Material) Create(Vector3f point, int material, Vector2f uv) => (point, material);
+    }
+
     [Theory]
     [InlineData(false, .03f)]
     [InlineData(false, 3.5f)]
@@ -13,7 +31,7 @@ public sealed class TriangleMeshBuilder3DTests
     public void DisksAndDomesKeepTheirSurfaceRadiusWindingAndResolution(bool dome, float radius)
     {
         var center = new Vector3f(2, -3, .4f);
-        var builder = new TriangleMeshBuilder3D<Vector3f, byte>((point, _, _) => point);
+        var builder = new TriangleMeshBuilder3D<Vector3f, byte, Points>();
         builder.Disk(center, radius, 0, dome);
         Assert.Equal(dome ? 720 : 12, builder.TriangleCount);
         foreach (var point in builder.Vertices)
@@ -34,8 +52,7 @@ public sealed class TriangleMeshBuilder3DTests
     [Fact]
     public void FailedVertexFactoryPreservesThePreviousMeshAndVersion()
     {
-        var builder = new TriangleMeshBuilder3D<Vector3f, bool>((point, fail, _) =>
-            fail ? throw new InvalidOperationException() : point, 3);
+        var builder = new TriangleMeshBuilder3D<Vector3f, bool, Failing>(3);
         builder.Vertex(Vector3f.One, false);
         var version = builder.Version;
         Assert.Throws<InvalidOperationException>(() => builder.Vertex(Vector3f.Zero, true));
@@ -47,7 +64,7 @@ public sealed class TriangleMeshBuilder3DTests
     [Fact]
     public void RibbonSharesCrossSectionsKeepsDepthAndCapsOnlyTheEnds()
     {
-        var builder = new TriangleMeshBuilder3D<Vector3f, byte>((point, _, _) => point);
+        var builder = new TriangleMeshBuilder3D<Vector3f, byte, Points>();
         builder.Ribbon([new(0, 0, 0), new(1, 0, 1), new(2, 0, 2)], 0, .2f);
         Assert.Equal(28, builder.TriangleCount);
         Assert.Equal(-.1f, builder.Min.Y, 5);
@@ -65,8 +82,7 @@ public sealed class TriangleMeshBuilder3DTests
     {
         var source = PolygonTriangulation2D.Triangulate(
             [new(0f, 0f), new(2f, 0f), new(2f, 2f), new(1f, 1f), new(0f, 2f)]);
-        var builder = new TriangleMeshBuilder3D<(Vector3f Position, int Material), int>(
-            (point, material, _) => (point, material), initialCapacity: 3);
+        var builder = new TriangleMeshBuilder3D<(Vector3f Position, int Material), int, Tagged>(initialCapacity: 3);
 
         builder.Add(source, point => new Vector3f(point, 4f), 7);
 
@@ -84,7 +100,7 @@ public sealed class TriangleMeshBuilder3DTests
     [Fact]
     public void EllipseCanFollowANonflatSurface()
     {
-        var builder = new TriangleMeshBuilder3D<Vector3f, byte>((point, _, _) => point, 3);
+        var builder = new TriangleMeshBuilder3D<Vector3f, byte, Points>(3);
         builder.Ellipse(new Vector2f(1f, 2f), new Vector2f(2f, 1f),
             point => new Vector3f(point, point.X - point.Y), 0);
 

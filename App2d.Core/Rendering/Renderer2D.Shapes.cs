@@ -60,6 +60,22 @@ public sealed partial class Renderer2D
         }
     }
 
+    /// <summary>
+    /// Draws a level object's shapes in order, each filled and then outlined. An outline's width is in the object's own units
+    /// and goes through the same transform as the shape, so it grows with the object and the camera; it never thins below a pixel.
+    /// </summary>
+    private void DrawObject(App2d.Core.Objects.ObjectShader2D placed, Matrix3x2 matrix)
+    {
+        SelectBatch(null, null);
+        var pixelsPerUnit = MathF.Sqrt(MathF.Abs(matrix.GetDeterminant()));
+        foreach (var paint in placed.Paints)
+        {
+            FillShape(paint.Shape, matrix, paint.Bounds, paint.Fill);
+            // Rounding each corner closes the gap two butt ends leave on the outside of a wide outline.
+            if (paint.Outline is { } outline) OutlineShape(paint.Shape, matrix, paint.Bounds, outline, Math.Max(1f, paint.OutlineWidth * pixelsPerUnit), LineCap2D.Round);
+        }
+    }
+
     /// <summary>Draws an indexed triangle mesh. The outline follows edges used by exactly one triangle.</summary>
     public void DrawTriangleMesh(TriangleMesh2D mesh, Color4b? fillColor = null, Color4b? outlineColor = null,
         float screenStrokeWidth = 2f) =>
