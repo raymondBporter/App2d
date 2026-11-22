@@ -144,6 +144,47 @@ public sealed class CharacterTests
     }
 
     [Fact]
+    public void AFaceKeepsWhatEachExpressionDrawsAndBuildsItAfreshOnlyMidBlink()
+    {
+        foreach (var character in Cast().Where(c => c.Face is not null))
+        {
+            var face = character.Face!;
+            var rest = CharacterPose.Rest(character.Skeleton);
+            foreach (var expression in face.Face.Expressions)
+            {
+                Assert.True(face.Has(expression.Name));
+                // With the eyes open the very same pieces are handed out frame after frame.
+                Assert.True(face.Attachments(expression.Name, 1.25) == face.Attachments(expression.Name, 2.5));
+                // Kept or built afresh, before, during and after a blink, a face paints the same.
+                foreach (var clock in new[] { 0, 1.25, 3.58, 3.62, 3.66, 7.3 })
+                {
+                    var (kept, fresh) = (new LayeredMesh(4096), new LayeredMesh(4096));
+                    AttachmentPainter.Paint(kept, rest.Posed, face.Attachments(expression.Name, clock));
+                    AttachmentPainter.Paint(fresh, rest.Posed, face.Face.Attachments(expression, face.Mount, clock, face.Size, face.Layer));
+                    Assert.Equal(fresh.Count, kept.Count);
+                    for (var i = 0; i < kept.Count; i++) Assert.True((kept.Vertices[i].Position - fresh.Vertices[i].Position).Length() < 1e-6f, $"{character.Name}, {expression.Name} at {clock}");
+                }
+            }
+            // "relaxed" blinks: two pupils and a mouth, and only the mouth at the moment the eyes are shut. "happy" does not.
+            Assert.Equal(3, face.Attachments("relaxed", 1).Length);
+            Assert.Single(face.Attachments("relaxed", 3.62));
+            Assert.Equal(3, face.Attachments("happy", 3.62).Length);
+            Assert.False(face.Has("no-such-expression"));
+        }
+    }
+
+    [Fact]
+    public void AFaceRefusesAnExpressionItCannotDraw()
+    {
+        static Face With(FaceExpression expression) => new(default, 1, [new("eye", new() { Fill = "#000000" })], [expression]);
+        var eye = App2d.Core.Geometry.Shapes.Ellipse2D.Builder.Create(new(1, 2));
+        Assert.Single(new CharacterFace(With(new("open", false, ("eye", eye))), 0).Attachments("open", 0));
+        // A piece the face does not have, and a kind of geometry a face has no way to place.
+        Assert.Throws<InvalidDataException>(() => new CharacterFace(With(new("open", false, ("nose", eye))), 0));
+        Assert.Throws<InvalidDataException>(() => new CharacterFace(With(new("open", false, ("eye", App2d.Core.Geometry.Shapes.Circle2D.Builder.Create(1)))), 0));
+    }
+
+    [Fact]
     public void AnObjectFileRoundTripsAndABodyOfSeveralShapesCollidesAsOne()
     {
         var dumbbell = ObjectAsset2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "objects", "dumbbell.json"));

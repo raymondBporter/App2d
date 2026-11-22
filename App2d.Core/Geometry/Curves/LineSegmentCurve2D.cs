@@ -4,8 +4,20 @@ using App2d.Core.Geometry.Primitives;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A finite line segment parameterized from start to end over [0, 1].</summary>
-public readonly partial record struct LineSegmentCurve2D : ICurve2D, ISegment<LineSegmentCurve2D, Vector2f>
+public readonly partial record struct LineSegmentCurve2D : ICurve2D, ISegment<LineSegmentCurve2D, Vector2f>, IInterpolatable<LineSegmentCurve2D, float>
 {
+    /// <summary>The two ends of the segment, each of which an interpolator can drive on its own.</summary>
+    public static class Channels
+    {
+        public static InterpolationChannel<LineSegmentCurve2D, LineSegmentCurve2D> V => InterpolationChannel<LineSegmentCurve2D, LineSegmentCurve2D>.Whole;
+        public static InterpolationChannel<LineSegmentCurve2D, Vector2f> Start { get; } = new(static value => value.Start, static (value, point) => value with { Start = point });
+        public static InterpolationChannel<LineSegmentCurve2D, Vector2f> End { get; } = new(static value => value.End, static (value, point) => value with { End = point });
+    }
+
+    /// <summary>Moves each end in a straight line.</summary>
+    public static LineSegmentCurve2D Lerp(LineSegmentCurve2D start, LineSegmentCurve2D end, float amount) =>
+        new(Vector2f.Lerp(start.Start, end.Start, amount), Vector2f.Lerp(start.End, end.End, amount));
+
     public LineSegmentCurve2D(Vector2f start, Vector2f end)
     {
         Start = start;

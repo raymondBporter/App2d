@@ -134,7 +134,7 @@ public sealed class CharacterAnimator
             ? _planted.Sample(skeleton, whole.Clip, ActionTime, false, position, Facing)
             : _planted.Sample(skeleton, Clip(Role), RoleTime, Clip(Role).Loop, position, Facing,
                 Action is { Mask: { } mask } masked ? new(masked.Clip, ActionTime, mask, masked.Weight(ActionTime)) : null, _reversed);
-        Pose = Character.Face is { } face && expression is not null && face.Face.Has(expression) ? pose.Showing(expression, Clock) : pose.Showing(pose.Expression, Clock);
+        Pose = Character.Face is { } face && expression is not null && face.Has(expression) ? pose.Showing(expression, Clock) : pose.Showing(pose.Expression, Clock);
     }
 
     /// <summary>The hits open at any moment of the latest step.</summary>

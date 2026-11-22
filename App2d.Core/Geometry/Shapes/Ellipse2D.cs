@@ -9,9 +9,31 @@ namespace App2d.Core.Geometry.Shapes;
 /// A filled ellipse with its own orientation in local space: radii along its own axes, in the frame of
 /// <see cref="Center"/> and <see cref="Axis"/>. Every query projects into that frame and runs the axis-aligned math there.
 /// </summary>
-public readonly partial record struct Ellipse2D : IConvexShape2D
+public readonly partial record struct Ellipse2D : IConvexShape2D, IInterpolatable<Ellipse2D, float>
 {
     private readonly Vector2f _axis;
+
+    /// <summary>The parts of an ellipse an interpolator can drive on their own: one radius for a blink, the centre for a glance.</summary>
+    public static class Channels
+    {
+        public static InterpolationChannel<Ellipse2D, Ellipse2D> V => InterpolationChannel<Ellipse2D, Ellipse2D>.Whole;
+        public static InterpolationChannel<Ellipse2D, Vector2f> Center { get; } = new(static value => value.Center, static (value, center) => value with { Center = center });
+        public static InterpolationChannel<Ellipse2D, Vector2f> Radii { get; } = new(static value => value.Radii, static (value, radii) => value with { Radii = radii });
+        /// <summary>The radius along the ellipse's own X axis.</summary>
+        public static InterpolationChannel<Ellipse2D, float> RadiusX { get; } = new(static value => value.Radii.X, static (value, radius) => value with { Radii = new(radius, value.Radii.Y) });
+        /// <summary>The radius along the ellipse's own Y axis.</summary>
+        public static InterpolationChannel<Ellipse2D, float> RadiusY { get; } = new(static value => value.Radii.Y, static (value, radius) => value with { Radii = new(value.Radii.X, radius) });
+        /// <summary>The heading of the ellipse's own X axis, in radians.</summary>
+        public static InterpolationChannel<Ellipse2D, float> Angle { get; } = new(static value => value.AngleRadians, static (value, angle) => value with { Axis = OrientedFrame2D.AxisFromAngle(angle) });
+    }
+
+    /// <summary>
+    /// Moves the centre and the radii in straight lines and turns the axis the short way round. The result is not validated:
+    /// on the way to or from a closed shape a radius passes through zero, and past either end the amount extrapolates.
+    /// </summary>
+    public static Ellipse2D Lerp(Ellipse2D start, Ellipse2D end, float amount) => new(Vector2f.Lerp(start.Radii, end.Radii, amount), Vector2f.Lerp(start.Center, end.Center, amount),
+        // Two ellipses that already agree keep that axis exactly, so no rounding enters an ellipse that only moves or resizes.
+        start.Axis == end.Axis ? start.Axis : OrientedFrame2D.AxisFromAngle(Interpolation.ShortestAngle<float>().Evaluate(start.AngleRadians, end.AngleRadians, amount)));
 
     /// <summary>Default samples for callers requesting a drawable perimeter; collision queries do not use these.</summary>
     public const int DefaultOutlineSegments = 64;

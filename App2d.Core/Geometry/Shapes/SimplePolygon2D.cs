@@ -8,8 +8,22 @@ using System.Runtime.CompilerServices;
 namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>A filled simple polygon, including concave outlines, in either winding.</summary>
-public readonly partial record struct SimplePolygon2D : IShape2D
+public readonly partial record struct SimplePolygon2D : IShape2D, IInterpolatable<SimplePolygon2D, float>
 {
+    /// <summary>
+    /// Moves each corner in a straight line to the corner with the same number, so both polygons need the same number of
+    /// corners. Nothing checks the shape on the way: corners that cross each other give an outline that crosses itself.
+    /// </summary>
+    public static SimplePolygon2D Lerp(SimplePolygon2D start, SimplePolygon2D end, float amount)
+    {
+        var from = start.Vertices;
+        var to = end.Vertices;
+        if (from.Length != to.Length) throw new ArgumentException($"Polygons of {from.Length} and {to.Length} corners cannot be interpolated corner to corner.", nameof(end));
+        var corners = new Vector2f[from.Length];
+        for (var i = 0; i < corners.Length; i++) corners[i] = Vector2f.Lerp(from[i], to[i], amount);
+        return new(corners);
+    }
+
     private readonly Vector2f[]? _vertices;
     private static readonly ConditionalWeakTable<Vector2f[], ReadOnlyCollection<Vector2f>> Views = [];
     internal IReadOnlyList<Vector2f> VertexList => Views.GetValue(_vertices!, static vertices => Array.AsReadOnly(vertices));

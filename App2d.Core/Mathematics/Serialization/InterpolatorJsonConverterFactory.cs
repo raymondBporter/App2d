@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Mathematics.Progress;
 using System.Numerics;
@@ -115,6 +117,14 @@ public sealed class InterpolatorJsonConverterFactory : JsonConverterFactory
             if (value == typeof(Polar<float>)) return PolarValue<float>();
             if (value == typeof(RigidTransform2D)) return new InterpolationJsonType<RigidTransform2D, float>(Interpolation.Default<RigidTransform2D, float>())
                 .Channel("translation", RigidTransform2D.Channels.Translation).Channel("rotation", RigidTransform2D.Channels.Rotation);
+            if (value == typeof(Ellipse2D)) return new InterpolationJsonType<Ellipse2D, float>(Interpolation.Default<Ellipse2D, float>())
+                .Channel("center", Ellipse2D.Channels.Center).Channel("radii", Ellipse2D.Channels.Radii)
+                .Channel("radiusX", Ellipse2D.Channels.RadiusX).Channel("radiusY", Ellipse2D.Channels.RadiusY).Channel("angle", Ellipse2D.Channels.Angle);
+            if (value == typeof(QuadraticBezier2D)) return new InterpolationJsonType<QuadraticBezier2D, float>(Interpolation.Default<QuadraticBezier2D, float>())
+                .Channel("start", QuadraticBezier2D.Channels.Start).Channel("control", QuadraticBezier2D.Channels.Control).Channel("end", QuadraticBezier2D.Channels.End);
+            if (value == typeof(LineSegmentCurve2D)) return new InterpolationJsonType<LineSegmentCurve2D, float>(Interpolation.Default<LineSegmentCurve2D, float>())
+                .Channel("start", LineSegmentCurve2D.Channels.Start).Channel("end", LineSegmentCurve2D.Channels.End);
+            if (value == typeof(SimplePolygon2D)) return new InterpolationJsonType<SimplePolygon2D, float>(Interpolation.Default<SimplePolygon2D, float>());
         }
         if (real == typeof(double))
         {

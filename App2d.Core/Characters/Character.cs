@@ -11,8 +11,37 @@ namespace App2d.Core.Characters;
 /// </summary>
 public sealed record Worn(string Name, int Mount, ImmutableArray<Attachment> Pieces, Vector2f? Muzzle = null, ImmutableArray<Attachment> Behind = default);
 
-/// <summary>A character's face: its pieces and expressions, the mount it is drawn on, its size and how far in front of that mount it sits.</summary>
-public sealed record CharacterFace(Face Face, int Mount, float Size = 1, float Layer = 0, string Default = "relaxed");
+/// <summary>
+/// A character's face: its pieces and expressions, the mount it is drawn on, its size and how far in front of that mount it
+/// sits. What each expression draws is built once here and handed out again every frame; only while an eye is part-way
+/// through a blink is it built afresh.
+/// </summary>
+public sealed class CharacterFace
+{
+    private readonly Dictionary<string, (FaceExpression Expression, ImmutableArray<Attachment> AtRest)> _expressions = [];
+
+    public CharacterFace(Face face, int mount, float size = 1, float layer = 0, string @default = "relaxed")
+    {
+        (Face, Mount, Size, Layer, Default) = (face, mount, size, layer, @default);
+        foreach (var expression in face.Expressions) _expressions.Add(expression.Name, (expression, face.Attachments(expression, mount, 0, size, layer)));
+    }
+
+    public Face Face { get; }
+    public int Mount { get; }
+    public float Size { get; }
+    public float Layer { get; }
+    /// <summary>The expression worn when nothing asks for another.</summary>
+    public string Default { get; }
+
+    public bool Has(string expression) => _expressions.ContainsKey(expression);
+
+    /// <summary>The pieces to draw for an expression at a moment; <paramref name="seconds"/> drives the blink.</summary>
+    public ImmutableArray<Attachment> Attachments(string expression, double seconds)
+    {
+        var (shown, atRest) = _expressions[expression];
+        return Face.AtRest(shown, seconds) ? atRest : Face.Attachments(shown, Mount, seconds, Size, Layer);
+    }
+}
 
 /// <summary>
 /// What a character looks like and how it moves: a skeleton, what is drawn on it and the clips it plays by role. One is made
@@ -58,7 +87,7 @@ public class Character
         drawn.AddRange(Body);
         if (Face is { } face && !pose.SeenFromBehind && (pose.Expression ?? face.Default) is { Length: > 0 } expression)
         {
-            drawn.AddRange(face.Face.Attachments(face.Face.Expression(expression), face.Mount, pose.Clock, face.Size, face.Layer));
+            drawn.AddRange(face.Attachments(expression, pose.Clock));
         }
         foreach (var worn in Worn)
         {
