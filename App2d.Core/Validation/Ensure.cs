@@ -11,11 +11,11 @@ public static partial class Ensure
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNull<T>([NotNull] T? value,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null)
+        [CallerArgumentExpression(nameof(value))] string? paramName = null, string? message = null)
     {
         if (value is null)
         {
-            ThrowNullException(paramName);
+            ThrowNullException(paramName, message);
         }
     }
 
@@ -23,7 +23,7 @@ public static partial class Ensure
     public static T RequireNotNull<T>([NotNull] T? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null, string? message = null) where T : class
     {
-        ThrowIfNull(paramName, message);
+        ThrowIfNull(value, paramName, message);
         return value;
     }
 
