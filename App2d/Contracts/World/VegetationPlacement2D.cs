@@ -21,7 +21,7 @@ public static class VegetationPlacement2D
     public static Rect2f GrassBounds(IChunkedTileMap2D map, GrassCell2D cell)
     {
         var root = map.Origin + new Vector2f(cell.X, cell.Y + 1) * map.TileSize;
-        return new(root + new Vector2f(0f, map.TileSize * CutHeightInTiles),
+        return Rect2f.Builder.Create(root + new Vector2f(0f, map.TileSize * CutHeightInTiles),
             root + new Vector2f(map.TileSize, map.TileSize * MaximumHeightInTiles));
     }
 

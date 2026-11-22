@@ -116,7 +116,7 @@ public static class WorldFile2D
                     min = Vector2f.Min(min, loaded.TileMap.WorldBounds.Min);
                     max = Vector2f.Max(max, loaded.TileMap.WorldBounds.Max);
                 }
-                zones.Add(new(zone.Id, zone.Name, new Rect2f(min, max), zone.Priority));
+                zones.Add(new(zone.Id, zone.Name, Rect2f.Builder.Create(min, max), zone.Priority));
             }
             if (file.StartMapId is not null)
             {

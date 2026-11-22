@@ -135,7 +135,7 @@ public sealed partial class PersonLocomotion2D
                     top++;
                 }
 
-                ladder = new Rect2f(origin + new Vector2f(x, bottom) * size, origin + new Vector2f(x + 1, top + 1) * size);
+                ladder = Rect2f.Builder.Create(origin + new Vector2f(x, bottom) * size, origin + new Vector2f(x + 1, top + 1) * size);
                 nearestDistance = distance;
                 break;
             }

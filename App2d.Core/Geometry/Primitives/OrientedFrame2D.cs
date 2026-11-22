@@ -55,7 +55,7 @@ public readonly record struct OrientedFrame2D(Vector2f Center, Vector2f Axis)
     {
         var perp = Perp;
         var extent = new Vector2f(halfSize.X * MathF.Abs(Axis.X) + halfSize.Y * MathF.Abs(perp.X) + inflate, halfSize.X * MathF.Abs(Axis.Y) + halfSize.Y * MathF.Abs(perp.Y) + inflate);
-        return new(Center - extent, Center + extent);
+        return Rect2f.Builder.Create(Center - extent, Center + extent);
     }
 
     /// <summary>The local axis-aligned bounds of an ellipse with these radii in the frame.</summary>
@@ -63,7 +63,7 @@ public readonly record struct OrientedFrame2D(Vector2f Center, Vector2f Axis)
     {
         var perp = Perp;
         var extent = new Vector2f(MathF.Sqrt(Square(radii.X * Axis.X) + Square(radii.Y * perp.X)), MathF.Sqrt(Square(radii.X * Axis.Y) + Square(radii.Y * perp.Y)));
-        return new(Center - extent, Center + extent);
+        return Rect2f.Builder.Create(Center - extent, Center + extent);
     }
 
     /// <summary>An unset axis reads as local +X, so default values and object initializers stay axis-aligned.</summary>

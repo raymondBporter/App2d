@@ -26,7 +26,7 @@ public sealed class IntervalTests
         Assert.False(upper.IsEntire);
         Assert.Equal(8f, upper.Clamp(12f));
 
-        var bounded = new Interval<float>(2f, 8f);
+        var bounded = Interval<float>.Builder.Create(2f, 8f);
         Assert.True(bounded.IsBoundedBelow);
         Assert.True(bounded.IsBoundedAbove);
         Assert.False(bounded.IsSingleton);
@@ -39,10 +39,10 @@ public sealed class IntervalTests
         Assert.Equal(Interval<int>.Singleton(0), default);
         Assert.True(default(Interval<float>).IsSingleton);
 
-        Assert.Equal(new Interval<double>(2d, double.PositiveInfinity), Interval.AtLeast(2d));
-        Assert.Equal(new Interval<Half>(Half.NegativeInfinity, Half.PositiveInfinity), Interval.Entire<Half>());
-        Assert.Equal(new Interval<int>(3, 3), Interval<int>.Singleton(3));
-        Assert.Equal(new Interval<decimal>(2m, 2m), Interval<decimal>.Singleton(2m));
+        Assert.Equal(Interval<double>.Builder.CreateUnbounded(2d, double.PositiveInfinity), Interval.AtLeast(2d));
+        Assert.Equal(Interval<Half>.Builder.CreateUnbounded(Half.NegativeInfinity, Half.PositiveInfinity), Interval.Entire<Half>());
+        Assert.Equal(Interval<int>.Builder.Create(3, 3), Interval<int>.Singleton(3));
+        Assert.Equal(Interval<decimal>.Builder.Create(2m, 2m), Interval<decimal>.Singleton(2m));
     }
 
     [Theory]
@@ -55,7 +55,7 @@ public sealed class IntervalTests
     [InlineData(0f, float.NegativeInfinity)]
     public void ConstructorRejectsInvalidEndpoints(float min, float max)
     {
-        Assert.ThrowsAny<ArgumentException>(() => new Interval<float>(min, max));
+        Assert.ThrowsAny<ArgumentException>(() => Interval<float>.Builder.Create(min, max));
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public sealed class IntervalTests
         var lower = Interval.AtLeast(2f);
         var upper = Interval.AtMost(8f);
         Assert.True(lower.TryIntersect(upper, out var bounded));
-        Assert.Equal(new Interval<float>(2f, 8f), bounded);
+        Assert.Equal(Interval<float>.Builder.Create(2f, 8f), bounded);
         Assert.True(lower.Hull(upper).IsEntire);
         Assert.True(Interval.Entire<float>().TryIntersect(lower, out var ray));
         Assert.Equal(lower, ray);
@@ -85,27 +85,29 @@ public sealed class IntervalTests
     }
 
     [Fact]
-    public void EndpointsRemainValidatedAcrossNumericTypesAndJson()
+    public void BuildersValidateAcrossNumericTypesAndJsonDefersValidation()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Interval<int>(2, 1));
-        Assert.ThrowsAny<ArgumentException>(() => new Interval<decimal>(2m, 1m));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Interval<double>(double.NaN, 1d));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Interval<int>.Builder.Create(2, 1));
+        Assert.ThrowsAny<ArgumentException>(() => Interval<decimal>.Builder.Create(2m, 1m));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Interval<double>.Builder.Create(double.NaN, 1d));
         Assert.Throws<ArgumentOutOfRangeException>(() => Interval<double>.Singleton(double.PositiveInfinity));
 
-        var interval = new Interval<float>(2f, 8f);
+        var interval = Interval<float>.Builder.Create(2f, 8f);
         var (min, max) = interval;
         Assert.Equal(2f, min);
         Assert.Equal(8f, max);
         Assert.Equal(interval, JsonSerializer.Deserialize<Interval<float>>(JsonSerializer.Serialize(interval)));
-        Assert.ThrowsAny<ArgumentException>(() => JsonSerializer.Deserialize<Interval<float>>("{\"Min\":8,\"Max\":2}"));
+        var reversed = JsonSerializer.Deserialize<Interval<float>>("{\"Min\":8,\"Max\":2}");
+        Assert.Equal((8f, 2f), (reversed.Min, reversed.Max));
+        Assert.ThrowsAny<ArgumentException>(() => reversed.Validate());
     }
 
     [Fact]
     public void GenericIntervalsRoundTripJsonWithoutNumericSpecificIntervalConverters()
     {
-        var cells = new Interval<int>(2, 8);
-        var precise = new Interval<double>(1d, double.BitIncrement(1d));
-        var decimals = new Interval<decimal>(1m, 1.0000000000000000000000000001m);
+        var cells = Interval<int>.Builder.Create(2, 8);
+        var precise = Interval<double>.Builder.Create(1d, double.BitIncrement(1d));
+        var decimals = Interval<decimal>.Builder.Create(1m, 1.0000000000000000000000000001m);
 
         Assert.Equal(cells, JsonSerializer.Deserialize<Interval<int>>(JsonSerializer.Serialize(cells)));
         Assert.Equal(precise, JsonSerializer.Deserialize<Interval<double>>(JsonSerializer.Serialize(precise)));
@@ -115,16 +117,16 @@ public sealed class IntervalTests
     [Fact]
     public void LengthContainmentAndOverlapIncludeTheEnds()
     {
-        var interval = new Interval<float>(-1, 3);
+        var interval = Interval<float>.Builder.Create(-1, 3);
         Assert.Equal(4, interval.Length);
         Assert.True(interval.Contains(-1));
         Assert.True(interval.Contains(3));
         Assert.False(interval.Contains(3.01f));
-        Assert.True(interval.Overlaps(new(3, 5)));
-        Assert.True(new Interval<float>(3, 5).Overlaps(interval));
-        Assert.False(interval.Overlaps(new(3.01f, 5)));
-        Assert.True(interval.Overlaps(new(0, 0)));
-        Assert.Equal(0, new Interval<float>(2, 2).Length);
+        Assert.True(interval.Overlaps(Interval<float>.Builder.Create(3, 5)));
+        Assert.True(Interval<float>.Builder.Create(3, 5).Overlaps(interval));
+        Assert.False(interval.Overlaps(Interval<float>.Builder.Create(3.01f, 5)));
+        Assert.True(interval.Overlaps(Interval<float>.Builder.Create(0, 0)));
+        Assert.Equal(0, Interval<float>.Builder.Create(2, 2).Length);
     }
 
     [Fact]

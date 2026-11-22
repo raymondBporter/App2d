@@ -36,5 +36,5 @@ public sealed class SavePoint2DTests
     }
 
     private static Rect2f BoundsAt(Vector2f center) =>
-        new(center - new Vector2f(10f), center + new Vector2f(10f));
+        Rect2f.Builder.Create(center - new Vector2f(10f), center + new Vector2f(10f));
 }

@@ -17,7 +17,7 @@ public sealed class VegetationBladeTip2D
     {
         var bounds = Rect2f.FromPoints([.. polygons.SelectMany(p => p.Points)]);
         ReleasePosition = bounds.Center;
-        _localBounds = new(bounds.Min - ReleasePosition, bounds.Max - ReleasePosition);
+        _localBounds = Rect2f.Builder.Create(bounds.Min - ReleasePosition, bounds.Max - ReleasePosition);
         _polygons = [.. polygons.Select(p => p with { Points = [.. p.Points.Select(point => point - ReleasePosition)] })];
     }
 

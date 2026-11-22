@@ -31,5 +31,5 @@ internal sealed class SavePoint2D
     }
     public void SetActive(bool active) => IsActive = active;
     private Rect2f TriggerBounds =>
-        new(_basePosition + new Vector2f(-64f, -8f), _basePosition + new Vector2f(64f, 132f));
+        Rect2f.Builder.Create(_basePosition + new Vector2f(-64f, -8f), _basePosition + new Vector2f(64f, 132f));
 }

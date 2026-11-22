@@ -155,11 +155,11 @@ public sealed class NumericValidationTests
     [Fact]
     public void InfiniteBoundsAndZeroSizedRectanglesKeepTheirExistingPolicies()
     {
-        var unbounded = new Rect2f(new(float.NegativeInfinity), new(float.PositiveInfinity));
+        var unbounded = Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity), new(float.PositiveInfinity));
         Assert.False(unbounded.IsFinite);
         Assert.True(unbounded.Contains(Vector2f.Zero));
         Assert.Equal(default, Rect2f.FromSize(Vector2f.Zero));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2f(new(float.NaN, 0), Vector2f.One));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2f.Builder.Create(new(float.NaN, 0), Vector2f.One));
         Assert.Throws<ArgumentOutOfRangeException>(() => Circle2D.Builder.Create(float.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => Rectangle2D.Builder.CreateFromSize(float.PositiveInfinity, 1));
     }

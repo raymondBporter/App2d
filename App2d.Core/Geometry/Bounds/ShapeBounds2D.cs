@@ -29,7 +29,7 @@ public static partial class ShapeBounds2D
             RoundedRectangle2D rounded => rounded.Frame.BoxBounds(rounded.InnerHalfSize, rounded.Radius),
             Rectangle2D rectangle => rectangle.Frame.BoxBounds(rectangle.HalfSize),
             IRect2f rectangle => rectangle.ToRect(),
-            Triangle2D triangle => new(Vector2f.Min(Vector2f.Min(triangle.A, triangle.B), triangle.C), Vector2f.Max(Vector2f.Max(triangle.A, triangle.B), triangle.C)),
+            Triangle2D triangle => Rect2f.Builder.Create(Vector2f.Min(Vector2f.Min(triangle.A, triangle.B), triangle.C), Vector2f.Max(Vector2f.Max(triangle.A, triangle.B), triangle.C)),
             ConvexPolygon2D polygon => Rect2f.FromPoints(polygon.Vertices),
             SimplePolygon2D polygon => Rect2f.FromPoints(polygon.Vertices),
             CompositeShape2D composite => Composite(composite.Parts),
@@ -171,13 +171,13 @@ public static partial class ShapeBounds2D
     }
 
     private static Rect2f OutwardRoundedBox(Vector2d min, Vector2d max) =>
-        new(new(Lower(min.X), Lower(min.Y)), new(Upper(max.X), Upper(max.Y)));
+        Rect2f.Builder.CreateUnbounded(new(Lower(min.X), Lower(min.Y)), new(Upper(max.X), Upper(max.Y)));
 
     private static Rect2f TransformedHalfSpace(HalfSpace2D halfSpace, Vector2d xAxis, Vector2d yAxis, Vector2d translation)
     {
         var (minX, maxX) = HalfSpaceAxis(halfSpace, xAxis.X, yAxis.X, translation.X);
         var (minY, maxY) = HalfSpaceAxis(halfSpace, xAxis.Y, yAxis.Y, translation.Y);
-        return new(new(minX, minY), new(maxX, maxY));
+        return Rect2f.Builder.CreateUnbounded(new(minX, minY), new(maxX, maxY));
     }
 
     private static (float Min, float Max) HalfSpaceAxis(HalfSpace2D halfSpace, double x, double y, double translation)
@@ -223,7 +223,7 @@ public static partial class ShapeBounds2D
         return bounds;
     }
 
-    private static Rect2f Convex(IConvexShape2D shape) => new(
+    private static Rect2f Convex(IConvexShape2D shape) => Rect2f.Builder.Create(
         new(shape.GetSupportPoint(-Vector2f.UnitX).X, shape.GetSupportPoint(-Vector2f.UnitY).Y),
         new(shape.GetSupportPoint(Vector2f.UnitX).X, shape.GetSupportPoint(Vector2f.UnitY).Y));
 }

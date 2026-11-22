@@ -882,12 +882,12 @@ public sealed partial class PersonLocomotion2D
             excluded: _body.Collider);
 
     private static Rect2f ExpandedDown(Rect2f bounds, float distance) =>
-        new(bounds.Min - new Vector2f(0f, distance), bounds.Max);
+        Rect2f.Builder.Create(bounds.Min - new Vector2f(0f, distance), bounds.Max);
 
     private static Rect2f ExpandedSide(Rect2f bounds, float direction, float distance) =>
         direction > 0f
-            ? new Rect2f(bounds.Min, bounds.Max + new Vector2f(distance, 0f))
-            : new Rect2f(bounds.Min - new Vector2f(distance, 0f), bounds.Max);
+            ? Rect2f.Builder.Create(bounds.Min, bounds.Max + new Vector2f(distance, 0f))
+            : Rect2f.Builder.Create(bounds.Min - new Vector2f(distance, 0f), bounds.Max);
 
     private bool HasHorizontalSupport(Rect2f bodyBounds, Rect2f supportBounds) =>
         bodyBounds.Right + Metrics.HorizontalSupportGrace >= supportBounds.Left &&

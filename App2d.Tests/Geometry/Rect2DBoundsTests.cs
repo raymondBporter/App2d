@@ -18,7 +18,7 @@ public sealed class Rect2DBoundsTests
         var visits = 0;
         var bounds = Rect2f.FromPoints(points.Select(point => { visits++; return point; })).InflatedBy(.5f);
         Assert.Equal(points.Length, visits);
-        Assert.Equal(new Rect2f(new(-2.5f, -1.5f), new(5.5f, 7.5f)), bounds);
+        Assert.Equal(Rect2f.Builder.Create(new(-2.5f, -1.5f), new(5.5f, 7.5f)), bounds);
         Assert.Throws<ArgumentException>(() => Rect2f.FromPoints(Enumerable.Empty<Vector2f>()));
     }
 
@@ -43,14 +43,14 @@ public sealed class Rect2DBoundsTests
     [Fact]
     public void RawPrimitiveBoundsIncludeOffsetsAndReversedCapsuleEndpoints()
     {
-        Assert.Equal(new Rect2f(new(-2, -7), new(6, 1)), Rect2f.FromCircle(new(2, -3), 4));
+        Assert.Equal(Rect2f.Builder.Create(new(-2, -7), new(6, 1)), Rect2f.FromCircle(new(2, -3), 4));
         var capsule = Rect2f.FromCapsule(new(5, -2), new(-3, 4), 2);
-        Assert.Equal(new Rect2f(new(-5, -4), new(7, 6)), capsule);
+        Assert.Equal(Rect2f.Builder.Create(new(-5, -4), new(7, 6)), capsule);
         Assert.Equal(capsule, Rect2f.FromCapsule(new(-3, 4), new(5, -2), 2));
         Assert.Equal(Rect2f.FromCircle(new(1, 2), 3), Rect2f.FromCapsule(new(1, 2), new(1, 2), 3));
-        Assert.Equal(new Rect2f(new(1, 2), new(1, 2)), Rect2f.FromCircle(new(1, 2), 0));
-        Assert.Equal(new Rect2f(new(-3, -4), new(5, 6)),
-            new Rect2f(new(-3, -4), new(5, 6)).ToRect());
+        Assert.Equal(Rect2f.Builder.Create(new(1, 2), new(1, 2)), Rect2f.FromCircle(new(1, 2), 0));
+        Assert.Equal(Rect2f.Builder.Create(new(-3, -4), new(5, 6)),
+            Rect2f.Builder.Create(new(-3, -4), new(5, 6)).ToRect());
     }
 
     [Fact]
@@ -58,17 +58,17 @@ public sealed class Rect2DBoundsTests
     {
         Vector2f[] points = [new(3, 4), new(-2, 7), new(5, -1)];
         var bounds = Rect2f.FromPoints(points);
-        Assert.Equal(new Rect2f(new(-2, -1), new(5, 7)), bounds);
-        Assert.Equal(new Rect2f(new(3, 4), new(3, 4)), Rect2f.FromPoints(points.AsSpan(0, 1)));
-        Assert.Equal(new Rect2f(new(-2, -4), new(10, 7)),
-            bounds.Union(new Rect2f(new(8, -4), new(10, 3))));
+        Assert.Equal(Rect2f.Builder.Create(new(-2, -1), new(5, 7)), bounds);
+        Assert.Equal(Rect2f.Builder.Create(new(3, 4), new(3, 4)), Rect2f.FromPoints(points.AsSpan(0, 1)));
+        Assert.Equal(Rect2f.Builder.Create(new(-2, -4), new(10, 7)),
+            bounds.Union(Rect2f.Builder.Create(new(8, -4), new(10, 3))));
         Assert.Throws<ArgumentOutOfRangeException>(() => Rect2f.FromPoints([]));
     }
 
     [Fact]
     public void ShapesCalculateBoundsWithoutOwningThem()
     {
-        var expected = new Rect2f(new(-2, -3), new(4, 5));
+        var expected = Rect2f.Builder.Create(new(-2, -3), new(4, 5));
         IShape2D[] shapes =
         [
             Rectangle2D.Builder.Create(expected.Min, expected.Max),
@@ -82,7 +82,7 @@ public sealed class Rect2DBoundsTests
             Assert.Equal(expected, ShapeBounds2D.Calculate(shape));
             Assert.Equal(expected, new SpatialObject2D(shape).LocalBounds);
         }
-        Assert.Equal(new Rect2f(new(-1, 0), new(5, 6)), ShapeBounds2D.Calculate(Circle2D.Builder.Create(3, new(2, 3))));
+        Assert.Equal(Rect2f.Builder.Create(new(-1, 0), new(5, 6)), ShapeBounds2D.Calculate(Circle2D.Builder.Create(3, new(2, 3))));
     }
 
     [Fact]
@@ -90,17 +90,17 @@ public sealed class Rect2DBoundsTests
     {
         var shape = new CountedConvex();
         var item = new SpatialObject2D(shape);
-        var local = new Rect2f(new(-2, -1), new(4, 3));
+        var local = Rect2f.Builder.Create(new(-2, -1), new(4, 3));
         Assert.Equal(4, shape.SupportCalls);
         Assert.Equal(local, item.LocalBounds);
         Assert.Equal(local, item.WorldBounds);
 
         item.Position = new(10, -5);
-        Assert.Equal(new Rect2f(new(8, -6), new(14, -2)), item.WorldBounds);
+        Assert.Equal(Rect2f.Builder.Create(new(8, -6), new(14, -2)), item.WorldBounds);
         item.Transform.Scale = new(-2, 3);
-        Assert.Equal(new Rect2f(new(2, -8), new(14, 4)), item.WorldBounds);
+        Assert.Equal(Rect2f.Builder.Create(new(2, -8), new(14, 4)), item.WorldBounds);
         item.Rotation = MathF.PI / 2;
-        Near(new(new(1, -13), new(13, -1)), item.WorldBounds);
+        Near(Rect2f.Builder.Create(new(1, -13), new(13, -1)), item.WorldBounds);
         var rotated = item.WorldBounds;
         for (var i = 0; i < 10; i++)
         {
@@ -119,7 +119,7 @@ public sealed class Rect2DBoundsTests
     [InlineData(0f, 0f)]
     public void NonrotatingTransformsAgreeWithAllFourTransformedCorners(float xScale, float yScale)
     {
-        var local = new Rect2f(new(-2, -1), new(4, 3));
+        var local = Rect2f.Builder.Create(new(-2, -1), new(4, 3));
         var scale = new Vector2f(xScale, yScale);
         var translation = new Vector2f(10, -5);
         var matrix = Matrix3x2.CreateScale(scale.ToVector2()) * Matrix3x2.CreateTranslation(translation.ToVector2());
@@ -138,7 +138,7 @@ public sealed class Rect2DBoundsTests
     [InlineData(-.4f, true)]
     public void RotatedAndShearedTransformsEncloseTheBox(float angle, bool shear)
     {
-        var local = new Rect2f(new(-2, -1), new(4, 3));
+        var local = Rect2f.Builder.Create(new(-2, -1), new(4, 3));
         var matrix = Matrix3x2.CreateScale(-2, 3) * Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation(10, -5);
         if (shear)
         {
@@ -171,18 +171,18 @@ public sealed class Rect2DBoundsTests
     public void AxisAlignedHalfSpacesRetainTheirBoundaryThroughTranslationAndScale()
     {
         var item = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2f.UnitY, 0));
-        var local = new Rect2f(new(float.NegativeInfinity), new(float.PositiveInfinity, 0));
+        var local = Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity), new(float.PositiveInfinity, 0));
         Assert.Equal(local, item.LocalBounds);
         Assert.Equal(local, item.WorldBounds);
         item.Position = new(100, -25);
-        Assert.Equal(new Rect2f(new(float.NegativeInfinity), new(float.PositiveInfinity, -25)), item.WorldBounds);
+        Assert.Equal(Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity), new(float.PositiveInfinity, -25)), item.WorldBounds);
         item.Transform.Scale = new(-2, 3);
-        Assert.Equal(new Rect2f(new(float.NegativeInfinity), new(float.PositiveInfinity, -25)), item.WorldBounds);
+        Assert.Equal(Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity), new(float.PositiveInfinity, -25)), item.WorldBounds);
         item.Rotation = .7f;
         Assert.Equal(Rect2f.Unbounded, item.WorldBounds);
         // A box transform remains conservative; the shape-aware path above retains the half-space itself.
         Assert.Equal(Rect2f.Unbounded, item.LocalBounds.TransformedBy(Matrix3x2.CreateScale(0f)));
-        Assert.Equal(new Rect2f(new(float.NegativeInfinity), new(float.PositiveInfinity, 5)), item.LocalBounds.TranslatedBy(new(5, 5)));
+        Assert.Equal(Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity), new(float.PositiveInfinity, 5)), item.LocalBounds.TranslatedBy(new(5, 5)));
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public sealed class Rect2DBoundsTests
     {
         Vector2f[] corners = [bounds.Min, new(bounds.Max.X, bounds.Min.Y), bounds.Max, new(bounds.Min.X, bounds.Max.Y)];
         var transformed = corners.Select(point => Vector2f.Transform(point, matrix)).ToArray();
-        return new(new(transformed.Min(p => p.X), transformed.Min(p => p.Y)),
+        return Rect2f.Builder.Create(new(transformed.Min(p => p.X), transformed.Min(p => p.Y)),
             new(transformed.Max(p => p.X), transformed.Max(p => p.Y)));
     }
 

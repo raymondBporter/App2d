@@ -70,7 +70,7 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
     public int ChunkRows => (Height - 1) / ChunkSize + 1;
     public float TileSize { get; }
     public Vector2f Origin { get; }
-    public Rect2f WorldBounds => new(Origin, Origin + new Vector2f(Width, Height) * TileSize);
+    public Rect2f WorldBounds => Rect2f.Builder.Create(Origin, Origin + new Vector2f(Width, Height) * TileSize);
     public IReadOnlyList<string> TilesetIds => _tilesets;
     public event Action<TileChunk2D>? ChunkChanged;
 
@@ -103,7 +103,7 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         var cells = new List<TileCellRectangle2D>();
         TileRectangleMesher2D.Mesh(Math.Min(ChunkSize, Width - x), Math.Min(ChunkSize, Height - y),
             (cx, cy) => GetTileKind(x + cx, y + cy), cells);
-        return [.. cells.Select(c => new TileCollisionRectangle2D(new(
+        return [.. cells.Select(c => new TileCollisionRectangle2D(Rect2f.Builder.Create(
             Origin + new Vector2f(x + c.X, y + c.Y) * TileSize,
             Origin + new Vector2f(x + c.X + c.Width, y + c.Y + c.Height) * TileSize), c.Kind))];
     }

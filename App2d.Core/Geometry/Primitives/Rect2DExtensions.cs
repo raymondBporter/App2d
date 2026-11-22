@@ -37,10 +37,10 @@ public static class Rect2DExtensions
         public float Top => rectangle.Max.Y;
 
         /// <summary>The closed range covered along the X axis.</summary>
-        public Interval<float> XInterval => new(rectangle.Min.X, rectangle.Max.X);
+        public Interval<float> XInterval => Interval<float>.Builder.CreateUnbounded(rectangle.Min.X, rectangle.Max.X);
 
         /// <summary>The closed range covered along the Y axis.</summary>
-        public Interval<float> YInterval => new(rectangle.Min.Y, rectangle.Max.Y);
+        public Interval<float> YInterval => Interval<float>.Builder.CreateUnbounded(rectangle.Min.Y, rectangle.Max.Y);
 
         /// <summary>The extent along X.</summary>
         public float Width => rectangle.Max.X - rectangle.Min.X;
@@ -136,7 +136,7 @@ public static class Rect2DExtensions
                 result = default;
                 return false;
             }
-            result = new(Vector2f.Max(rectangle.Min, other.Min), Vector2f.Min(rectangle.Max, other.Max));
+            result = Rect2f.Builder.CreateUnbounded(Vector2f.Max(rectangle.Min, other.Min), Vector2f.Min(rectangle.Max, other.Max));
             return true;
         }
 
@@ -146,7 +146,7 @@ public static class Rect2DExtensions
         /// <summary>The smallest rectangle containing both operands.</summary>
         /// <param name="other">The other rectangle.</param>
         /// <returns>The bounding box of both rectangles.</returns>
-        public Rect2f Union<TOther>(TOther other) where TOther : IRect2f => new(Vector2f.Min(rectangle.Min, other.Min), Vector2f.Max(rectangle.Max, other.Max));
+        public Rect2f Union<TOther>(TOther other) where TOther : IRect2f => Rect2f.Builder.CreateUnbounded(Vector2f.Min(rectangle.Min, other.Min), Vector2f.Max(rectangle.Max, other.Max));
 
         /// <summary>The closest point in or on this rectangle; interior points are returned unchanged.</summary>
         /// <param name="point">The query point.</param>
@@ -184,7 +184,7 @@ public static class Rect2DExtensions
         public Rect2f TranslatedBy(Vector2f offset)
         {
             Ensure.Finite(offset);
-            return new(rectangle.Min + offset, rectangle.Max + offset);
+            return Rect2f.Builder.CreateUnbounded(rectangle.Min + offset, rectangle.Max + offset);
         }
 
         /// <summary>Expands all four sides by the same nonnegative finite amount.</summary>
@@ -201,7 +201,7 @@ public static class Rect2DExtensions
             Ensure.NonNegative(x);
             Ensure.NonNegative(y);
             var amount = new Vector2f(x, y);
-            return new(rectangle.Min - amount, rectangle.Max + amount);
+            return Rect2f.Builder.CreateUnbounded(rectangle.Min - amount, rectangle.Max + amount);
         }
 
         /// <summary>Shrinks both sides of each axis by nonnegative finite amounts. Oversized insets collapse that axis to its midpoint.</summary>
@@ -213,12 +213,12 @@ public static class Rect2DExtensions
             Ensure.NonNegative(x);
             Ensure.NonNegative(y);
             var amount = Vector2f.Min(new(x, y), rectangle.HalfSize);
-            return new(rectangle.Min + amount, rectangle.Max - amount);
+            return Rect2f.Builder.CreateUnbounded(rectangle.Min + amount, rectangle.Max - amount);
         }
 
         /// <summary>Copies Min and Max into a <see cref="Rect2f"/> value.</summary>
         /// <returns>An equivalent rectangle value.</returns>
-        public Rect2f ToRect() => new(rectangle.Min, rectangle.Max);
+        public Rect2f ToRect() => Rect2f.Builder.CreateUnbounded(rectangle.Min, rectangle.Max);
 
         /// <summary>
         /// Encloses this rectangle after a matrix transform. Rotation or shear transforms all four corners;
@@ -240,7 +240,7 @@ public static class Rect2DExtensions
                 var translation = new Vector2f(transform.Translation);
                 var first = rectangle.Min * scale + translation;
                 var second = rectangle.Max * scale + translation;
-                return new(Vector2f.Min(first, second), Vector2f.Max(first, second));
+                return Rect2f.Builder.Create(Vector2f.Min(first, second), Vector2f.Max(first, second));
             }
             Span<Vector2f> corners = stackalloc Vector2f[4];
             rectangle.WriteCorners(corners);

@@ -23,8 +23,8 @@ public sealed class Grid2DTests
         Assert.Equal(100, grid[13].X);
         grid.GetRowSpan(1).Fill(Vector2f.One);
         Assert.All(grid.AsSpan().Slice(5, 5).ToArray(), v => Assert.Equal(Vector2f.One, v));
-        Assert.Equal(new Rect2f(new(-30, -40), new(20, 20)), grid.WorldBounds);
-        Assert.Equal(new Rect2f(new(0, 0), new(10, 20)), grid.GetCellBounds(new(3, 2)));
+        Assert.Equal(Rect2f.Builder.Create(new(-30, -40), new(20, 20)), grid.WorldBounds);
+        Assert.Equal(Rect2f.Builder.Create(new(0, 0), new(10, 20)), grid.GetCellBounds(new(3, 2)));
         Assert.Equal(new Vector2f(5, 10), grid.Geometry.GetCellCenter(new(3, 2)));
         grid.Fill(new(7, 8));
         Assert.All(grid.AsSpan().ToArray(), v => Assert.Equal(new Vector2f(7, 8), v));
@@ -54,7 +54,7 @@ public sealed class Grid2DTests
         Assert.True(grid.Size.Cells.IsEmpty);
         Assert.True(grid.GetRowSpan(2).IsEmpty);
         Assert.False(grid.TryGetCell(Vector2f.Zero, out _));
-        Assert.True(grid.GetCellRange(new Rect2f(Vector2f.Zero, Vector2f.One)).IsEmpty);
+        Assert.True(grid.GetCellRange(Rect2f.Builder.Create(Vector2f.Zero, Vector2f.One)).IsEmpty);
         Assert.Throws<ArgumentOutOfRangeException>(() => new GridSize2D(65536, 65536));
         Assert.Throws<ArgumentOutOfRangeException>(() => new GridSize2D(-1, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => grid[0, 0] = 1);
@@ -100,17 +100,17 @@ public sealed class Grid2DTests
     public void RangesKeepMaximumEdgeContactsAndClipWithoutFoldingDistantBoundsOntoTheGrid()
     {
         var geometry = new GridGeometry2D(10f);
-        var range = geometry.GetCellRange(new Rect2f(new(-10), new(10)));
+        var range = geometry.GetCellRange(Rect2f.Builder.Create(new(-10), new(10)));
         Assert.Equal(new Vector2i(-1, -1), range.Minimum);
         Assert.Equal(new Vector2i(1, 1), range.Maximum);
         Assert.Equal(9, range.CellCount);
-        Assert.Equal(1, geometry.GetCellRange(new Rect2f(new(10), new(10))).CellCount);
+        Assert.Equal(1, geometry.GetCellRange(Rect2f.Builder.Create(new(10), new(10))).CellCount);
 
         var size = new GridSize2D(3, 2);
-        Assert.Equal(size.Cells, geometry.GetCellRange(new Rect2f(new(-float.MaxValue), new(float.MaxValue)), size));
-        Assert.True(geometry.GetCellRange(new Rect2f(new(31, 0), new(40, 10)), size).IsEmpty);
+        Assert.Equal(size.Cells, geometry.GetCellRange(Rect2f.Builder.Create(new(-float.MaxValue), new(float.MaxValue)), size));
+        Assert.True(geometry.GetCellRange(Rect2f.Builder.Create(new(31, 0), new(40, 10)), size).IsEmpty);
         Assert.Equal(new GridCellRange2D(new(2, 0), new(2, 1)),
-            geometry.GetCellRange(new Rect2f(new(30, 0), new(30, 20)), size));
+            geometry.GetCellRange(Rect2f.Builder.Create(new(30, 0), new(30, 20)), size));
         Assert.Equal(new GridCellRange2D(new(0, 0), new(1, 1)), range.Intersect(size.Cells));
     }
 
@@ -157,7 +157,7 @@ public sealed class Grid2DTests
     public void GeometryQueriesAndRangeIterationDoNotAllocate()
     {
         var geometry = new GridGeometry2D(16f);
-        var bounds = new Rect2f(new(-32), new(32));
+        var bounds = Rect2f.Builder.Create(new(-32), new(32));
         for (var i = 0; i < 100; i++)
         {
             Visit();

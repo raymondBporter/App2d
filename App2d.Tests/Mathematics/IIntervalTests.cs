@@ -28,8 +28,8 @@ public sealed class IIntervalTests
         var reference = Interval<double>.From(new ReferenceInterval<double>(2, 5));
         Assert.Equal(3d, reference.Length);
         Assert.True(reference.Contains(3d));
-        Assert.True(reference.TryIntersect(new(4, 8), out var shared));
-        Assert.Equal(new Interval<double>(4, 5), shared);
+        Assert.True(reference.TryIntersect(Interval<double>.Builder.Create(4, 8), out var shared));
+        Assert.Equal(Interval<double>.Builder.Create(4, 5), shared);
     }
 
     [Theory]
@@ -47,7 +47,7 @@ public sealed class IIntervalTests
     [Fact]
     public void FromKeepsUnboundedAndSingletonEndpoints()
     {
-        var entire = Interval<double>.From(new EndpointsOnly<double>(double.NegativeInfinity, double.PositiveInfinity));
+        var entire = Interval<double>.From(new EndpointsOnly<double>(double.NegativeInfinity, double.PositiveInfinity), allowUnbounded: true);
         Assert.True(entire.IsEntire);
         Assert.False(entire.IsBoundedBelow);
         Assert.False(entire.IsBoundedAbove);
@@ -56,7 +56,7 @@ public sealed class IIntervalTests
         Assert.True(double.IsNaN(entire.Clamp(double.NaN)));
         Assert.False(entire.Contains(double.NaN));
 
-        var lower = Interval<double>.From(new EndpointsOnly<double>(2, double.PositiveInfinity));
+        var lower = Interval<double>.From(new EndpointsOnly<double>(2, double.PositiveInfinity), allowUnbounded: true);
         Assert.True(lower.IsBoundedBelow);
         Assert.False(lower.IsBoundedAbove);
         Assert.False(lower.IsEntire);
@@ -71,7 +71,7 @@ public sealed class IIntervalTests
     [Fact]
     public void QueriesRetainDecimalAndBigIntegerPrecision()
     {
-        var precise = new Interval<decimal>(1m, 1.0000000000000000000000000001m);
+        var precise = Interval<decimal>.Builder.Create(1m, 1.0000000000000000000000000001m);
         Assert.Equal(0.0000000000000000000000000001m, precise.Length);
         Assert.Equal(precise.Max, precise.Clamp(2m));
 
@@ -80,39 +80,39 @@ public sealed class IIntervalTests
         Assert.Equal(new BigInteger(5), wide.Length);
         Assert.True(wide.Contains(start + 1));
         Assert.Equal(start + 5, wide.Clamp(start + 100));
-        Assert.True(wide.TryIntersect(new(start + 3, start + 8), out var shared));
-        Assert.Equal(new Interval<BigInteger>(start + 3, start + 5), shared);
+        Assert.True(wide.TryIntersect(Interval<BigInteger>.Builder.Create(start + 3, start + 8), out var shared));
+        Assert.Equal(Interval<BigInteger>.Builder.Create(start + 3, start + 5), shared);
     }
 
     [Fact]
     public void QueriesDistinguishTouchingFromDisjointIntervals()
     {
-        var limits = new Interval<float>(2, 5);
+        var limits = Interval<float>.Builder.Create(2, 5);
 
-        Assert.True(limits.ContainsInterval(new(3, 4)));
-        Assert.True(limits.Overlaps(new(5, 8)));
-        Assert.True(limits.TryIntersect(new(5, 8), out var touching));
-        Assert.Equal(new Interval<float>(5, 5), touching);
-        Assert.False(limits.TryIntersect(new(6, 8), out var disjoint));
+        Assert.True(limits.ContainsInterval(Interval<float>.Builder.Create(3, 4)));
+        Assert.True(limits.Overlaps(Interval<float>.Builder.Create(5, 8)));
+        Assert.True(limits.TryIntersect(Interval<float>.Builder.Create(5, 8), out var touching));
+        Assert.Equal(Interval<float>.Builder.Create(5, 5), touching);
+        Assert.False(limits.TryIntersect(Interval<float>.Builder.Create(6, 8), out var disjoint));
         Assert.Equal(default, disjoint);
-        Assert.Equal(new Interval<float>(2, 8), limits.Hull(new(6, 8)));
+        Assert.Equal(Interval<float>.Builder.Create(2, 8), limits.Hull(Interval<float>.Builder.Create(6, 8)));
     }
 
     [Fact]
     public void ArithmeticRetainsIntegerAndDoubleEndpointTypes()
     {
-        var cells = new Interval<int>(2, 5);
+        var cells = Interval<int>.Builder.Create(2, 5);
         Assert.Equal(3, cells.Length);
         Assert.Equal(5, cells.Clamp(10));
 
         var next = double.BitIncrement(1d);
-        var precise = new Interval<double>(1d, next);
+        var precise = Interval<double>.Builder.Create(1d, next);
         Assert.Equal(next - 1d, precise.Length);
         Assert.True(precise.Length > 0d);
         Assert.Equal(next, precise.Clamp(2d));
-        Assert.True(precise.TryIntersect(new(next, 2d), out var shared));
-        Assert.Equal(new Interval<double>(next, next), shared);
-        Assert.False(precise.Overlaps(new(double.BitIncrement(next), 2d)));
+        Assert.True(precise.TryIntersect(Interval<double>.Builder.Create(next, 2d), out var shared));
+        Assert.Equal(Interval<double>.Builder.Create(next, next), shared);
+        Assert.False(precise.Overlaps(Interval<double>.Builder.Create(double.BitIncrement(next), 2d)));
     }
 
     [Fact]
@@ -129,10 +129,10 @@ public sealed class IIntervalTests
     [Fact]
     public void RectangleAxesExposeIntervalOperations()
     {
-        var rectangle = new Rect2f(new Vector2f(2, -3), new Vector2f(8, 5));
+        var rectangle = Rect2f.Builder.Create(new Vector2f(2, -3), new Vector2f(8, 5));
 
-        Assert.Equal(new Interval<float>(2, 8), rectangle.XInterval);
-        Assert.Equal(new Interval<float>(-3, 5), rectangle.YInterval);
+        Assert.Equal(Interval<float>.Builder.Create(2, 8), rectangle.XInterval);
+        Assert.Equal(Interval<float>.Builder.Create(-3, 5), rectangle.YInterval);
         Assert.Equal(rectangle.Width, rectangle.XInterval.Length);
         Assert.Equal(rectangle.Height, rectangle.YInterval.Length);
         Assert.Equal(8f, rectangle.XInterval.Clamp(10f));
@@ -151,10 +151,10 @@ public sealed class IIntervalTests
     private static void AssertQueriesThroughFrom<T>() where T : INumber<T>
     {
         var limits = Interval<T>.From(new EndpointsOnly<T>(T.CreateChecked(2), T.CreateChecked(5)));
-        var touching = new Interval<T>(T.CreateChecked(5), T.CreateChecked(8));
-        var disjoint = new Interval<T>(T.CreateChecked(6), T.CreateChecked(8));
+        var touching = Interval<T>.Builder.Create(T.CreateChecked(5), T.CreateChecked(8));
+        var disjoint = Interval<T>.Builder.Create(T.CreateChecked(6), T.CreateChecked(8));
 
-        Assert.Equal(new Interval<T>(T.CreateChecked(2), T.CreateChecked(5)), limits);
+        Assert.Equal(Interval<T>.Builder.Create(T.CreateChecked(2), T.CreateChecked(5)), limits);
         Assert.Equal(T.CreateChecked(3), limits.Length);
         Assert.True(limits.IsBoundedBelow);
         Assert.True(limits.IsBoundedAbove);
@@ -165,7 +165,7 @@ public sealed class IIntervalTests
         Assert.False(limits.Contains(T.CreateChecked(6)));
         Assert.Equal(T.CreateChecked(2), limits.Clamp(T.Zero));
         Assert.Equal(T.CreateChecked(5), limits.Clamp(T.CreateChecked(10)));
-        Assert.True(limits.ContainsInterval(new(T.CreateChecked(3), T.CreateChecked(4))));
+        Assert.True(limits.ContainsInterval(Interval<T>.Builder.Create(T.CreateChecked(3), T.CreateChecked(4))));
         Assert.False(limits.ContainsInterval(touching));
         Assert.True(limits.Overlaps(touching));
         Assert.False(limits.Overlaps(disjoint));
@@ -173,13 +173,13 @@ public sealed class IIntervalTests
         Assert.Equal(Interval<T>.Singleton(T.CreateChecked(5)), shared);
         Assert.False(limits.TryIntersect(disjoint, out var empty));
         Assert.Equal(default, empty);
-        Assert.Equal(new Interval<T>(T.CreateChecked(2), T.CreateChecked(8)), limits.Hull(disjoint));
+        Assert.Equal(Interval<T>.Builder.Create(T.CreateChecked(2), T.CreateChecked(8)), limits.Hull(disjoint));
     }
 
     private static void AssertQueriesDoNotAllocate<T>() where T : INumber<T>
     {
         var limits = new EndpointsOnly<T>(T.CreateChecked(-1), T.CreateChecked(5));
-        var other = new Interval<T>(T.One, T.CreateChecked(7));
+        var other = Interval<T>.Builder.Create(T.One, T.CreateChecked(7));
         RunQueries(limits, other, 256);
 
         var before = GC.GetAllocatedBytesForCurrentThread();
@@ -208,16 +208,16 @@ public sealed class IIntervalTests
                 limits.Clamp(ten) == limits.Max && limits.Overlaps(other) &&
                 !limits.ContainsInterval(other) && limits.TryIntersect(other, out var shared) &&
                 shared.Min == other.Min && shared.Max == limits.Max && shared.Length == four &&
-                limits.Hull(other) == new Interval<T>(limits.Min, other.Max) &&
+                limits.Hull(other) == Interval<T>.Builder.Create(limits.Min, other.Max) &&
                 limits.Distance(other) == T.Zero && limits.MaxDistance(other) == eight &&
                 limits.SignedDistance(other) == -four && limits.Lerp(two) == eleven &&
                 limits.LerpClamped(two) == limits.Max && limits.InverseLerp(three) == four / six &&
                 limits.InverseLerpClamped(ten) == T.One &&
-                limits.Translate(three) == new Interval<T>(two, eight) &&
-                limits.Reflect() == new Interval<T>(-limits.Max, -limits.Min) &&
-                limits.Reflect(three) == other && limits.Scale(two) == new Interval<T>(-two, ten) &&
+                limits.Translate(three) == Interval<T>.Builder.Create(two, eight) &&
+                limits.Reflect() == Interval<T>.Builder.Create(-limits.Max, -limits.Min) &&
+                limits.Reflect(three) == other && limits.Scale(two) == Interval<T>.Builder.Create(-two, ten) &&
                 limits.Scale(T.Zero) == default && limits.Scale(-T.One, three) == other &&
-                limits.Include(ten) == new Interval<T>(limits.Min, ten))
+                limits.Include(ten) == Interval<T>.Builder.Create(limits.Min, ten))
             {
                 matches++;
             }

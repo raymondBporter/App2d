@@ -13,10 +13,10 @@ public readonly record struct Rect2<TVector, TReal> : IRect2<TVector, TReal>
     where TVector : unmanaged, IVector2<TVector, TReal>
     where TReal : unmanaged, IFloatingPointIeee754<TReal>
 {
+    /// <summary>Stores corners for deserialization. Use Builder.Create for validated finite bounds.</summary>
     [JsonConstructor]
     public Rect2(TVector min, TVector max)
     {
-        Validate(min, max);
         Min = min;
         Max = max;
     }
@@ -26,13 +26,29 @@ public readonly record struct Rect2<TVector, TReal> : IRect2<TVector, TReal>
 
     // ---- Construction and validation ----
 
+    public static class Builder
+    {
+        public static Rect2<TVector, TReal> Create(TVector min, TVector max)
+        {
+            Validate(min, max);
+            return new(min, max);
+        }
+
+        public static Rect2<TVector, TReal> CreateUnbounded(TVector min, TVector max)
+        {
+            Validate(min, max, allowUnbounded: true);
+            return new(min, max);
+        }
+    }
+
     /// <summary>The rectangle covering the whole plane.</summary>
-    public static Rect2<TVector, TReal> Unbounded => new(TVector.Create(TReal.NegativeInfinity, TReal.NegativeInfinity), TVector.Create(TReal.PositiveInfinity, TReal.PositiveInfinity));
+    public static Rect2<TVector, TReal> Unbounded => Builder.CreateUnbounded(TVector.Create(TReal.NegativeInfinity, TReal.NegativeInfinity), TVector.Create(TReal.PositiveInfinity, TReal.PositiveInfinity));
 
     /// <summary>Copies and validates the corners of any type that has Min and Max. A struct is not boxed.</summary>
-    public static Rect2<TVector, TReal> From<TOther>(TOther other) where TOther : IRect2<TVector, TReal> => new(other.Min, other.Max);
+    public static Rect2<TVector, TReal> From<TOther>(TOther other, bool allowUnbounded = false) where TOther : IRect2<TVector, TReal> =>
+        allowUnbounded ? Builder.CreateUnbounded(other.Min, other.Max) : Builder.Create(other.Min, other.Max);
 
-    public static Rect2<TVector, TReal> FromPoints(TVector first, TVector second) => new(Lower(first, second), Upper(first, second));
+    public static Rect2<TVector, TReal> FromPoints(TVector first, TVector second) => Builder.Create(Lower(first, second), Upper(first, second));
 
     public static Rect2<TVector, TReal> FromSize(TVector size, TVector center = default)
     {
@@ -41,16 +57,18 @@ public readonly record struct Rect2<TVector, TReal> : IRect2<TVector, TReal>
         Ensure.Finite(center.X);
         Ensure.Finite(center.Y);
         var halfSize = Real<TReal>.Half * size;
-        return new(center - halfSize, center + halfSize);
+        return Builder.Create(center - halfSize, center + halfSize);
     }
 
-    public static bool IsValid(TVector min, TVector max) => Interval<TReal>.IsValid(min.X, max.X) && Interval<TReal>.IsValid(min.Y, max.Y);
+    public static bool IsValid(TVector min, TVector max, bool allowUnbounded = false) => Interval<TReal>.IsValid(min.X, max.X, allowUnbounded) && Interval<TReal>.IsValid(min.Y, max.Y, allowUnbounded);
 
-    public static void Validate(TVector min, TVector max)
+    public static void Validate(TVector min, TVector max, bool allowUnbounded = false)
     {
-        Interval<TReal>.Validate(min.X, max.X);
-        Interval<TReal>.Validate(min.Y, max.Y);
+        Interval<TReal>.Validate(min.X, max.X, allowUnbounded);
+        Interval<TReal>.Validate(min.Y, max.Y, allowUnbounded);
     }
+
+    public void Validate(bool allowUnbounded = false) => Validate(Min, Max, allowUnbounded);
 
     public static void Deconstruct(Rect2<TVector, TReal> rectangle, out TVector min, out TVector max) => rectangle.Deconstruct(out min, out max);
 
@@ -81,8 +99,8 @@ public readonly record struct Rect2<TVector, TReal> : IRect2<TVector, TReal>
     public TVector Size => Max - Min;
     public TReal Area => Width * Height;
     public TReal DiagonalLength => TReal.Hypot(Width, Height);
-    public Interval<TReal> ProjectionX => new(Min.X, Max.X);
-    public Interval<TReal> ProjectionY => new(Min.Y, Max.Y);
+    public Interval<TReal> ProjectionX => Interval<TReal>.Builder.CreateUnbounded(Min.X, Max.X);
+    public Interval<TReal> ProjectionY => Interval<TReal>.Builder.CreateUnbounded(Min.Y, Max.Y);
     public bool IsFinite => TVector.IsFinite(Min) && TVector.IsFinite(Max);
 
     public TReal DistanceToOriginX => TReal.Abs(TReal.Clamp(TReal.Zero, Min.X, Max.X));
@@ -129,16 +147,16 @@ public readonly record struct Rect2<TVector, TReal> : IRect2<TVector, TReal>
             result = default;
             return false;
         }
-        result = new(Upper(Min, other.Min), Lower(Max, other.Max));
+        result = Builder.CreateUnbounded(Upper(Min, other.Min), Lower(Max, other.Max));
         return true;
     }
 
     /// <summary>The smallest rectangle containing both operands.</summary>
-    public Rect2<TVector, TReal> Union(Rect2<TVector, TReal> other) => new(Lower(Min, other.Min), Upper(Max, other.Max));
+    public Rect2<TVector, TReal> Union(Rect2<TVector, TReal> other) => Builder.CreateUnbounded(Lower(Min, other.Min), Upper(Max, other.Max));
 
-    public Rect2<TVector, TReal> TranslatedBy(TVector offset) => new(Min + offset, Max + offset);
+    public Rect2<TVector, TReal> TranslatedBy(TVector offset) => Builder.CreateUnbounded(Min + offset, Max + offset);
 
-    // Per-coordinate TReal.Min/Max, so NaN propagates into the constructor's validation for every vector type.
+    // Per-coordinate TReal.Min/Max, so NaN propagates into builder validation for every vector type.
     private static TVector Lower(TVector a, TVector b) => TVector.Create(TReal.Min(a.X, b.X), TReal.Min(a.Y, b.Y));
     private static TVector Upper(TVector a, TVector b) => TVector.Create(TReal.Max(a.X, b.X), TReal.Max(a.Y, b.Y));
 

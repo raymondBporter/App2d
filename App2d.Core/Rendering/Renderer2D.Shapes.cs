@@ -190,7 +190,7 @@ public sealed partial class Renderer2D
     private Rect2f PaddedDeviceBounds(float width)
     {
         var padding = width * 0.5f + 1f;
-        return new Rect2f(View.TargetBounds.Min - new Vector2f(padding).ToVector2f(), View.TargetBounds.Max + new Vector2f(padding).ToVector2f());
+        return Rect2f.Builder.Create(View.TargetBounds.Min - new Vector2f(padding).ToVector2f(), View.TargetBounds.Max + new Vector2f(padding).ToVector2f());
     }
 
     private static void ValidateShapeStyle(Color4b? fillColor, Color4b? outlineColor, float width)

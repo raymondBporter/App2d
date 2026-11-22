@@ -69,7 +69,7 @@ $allowedCalls = @(
     '^\s*call\s+\[System\.Decimal\+DecCalc:(?:VarDecCmpSub|DecAddSub)\(',
     '^\s*call\s+\[System\.Math:ThrowMinMaxException\[(?:float|double|int)\]\(',
     '^\s*call\s+\[App2d\.Core\.Mathematics\.Interval`1\[(?:float|double)\]:\.ctor\(',
-    '^\s*call\s+\[App2d\.Core\.Mathematics\.Interval`1\[(?:float|double)\]:Validate\('
+    '^\s*call\s+\[App2d\.Core\.Mathematics\.Interval`1\[(?:float|double)\]:(?:Validate|ThrowInvalidEndpoints)\('
 )
 $verified = @{}
 foreach ($block in [regex]::Split($nativeCode, '(?m)^; Assembly listing for method ')) {

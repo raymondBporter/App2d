@@ -26,7 +26,7 @@ public sealed class ProceduralTree2D
 
     /// <summary>A conservative draw bound for a tree of the given height.</summary>
     public static Rect2f EstimateBounds(Vector2f root, float height) =>
-        new(root - new Vector2f(height, 0f), root + new Vector2f(height, height * 1.5f));
+        Rect2f.Builder.Create(root - new Vector2f(height, 0f), root + new Vector2f(height, height * 1.5f));
 
     public static float MaximumSway(VegetationWind2D wind) => wind.MaximumOffset(LeafWindResponse);
 

@@ -21,7 +21,7 @@ public static class Projection2D
             min = Math.Min(min, value);
             max = Math.Max(max, value);
         }
-        return new(min, max);
+        return Interval<float>.Builder.Create(min, max);
     }
 
     /// <summary>List adapter for authored geometry; it does not copy or allocate an intermediate vertex array.</summary>
@@ -41,7 +41,7 @@ public static class Projection2D
             min = Math.Min(min, value);
             max = Math.Max(max, value);
         }
-        return new(min, max);
+        return Interval<float>.Builder.Create(min, max);
     }
 
     /// <summary>Projects a circle onto an axis.</summary>
@@ -53,7 +53,7 @@ public static class Projection2D
     {
         var centerProjection = Vector2f.Dot(center, axis);
         var extent = radius * axis.Length();
-        return new(centerProjection - extent, centerProjection + extent);
+        return Interval<float>.Builder.Create(centerProjection - extent, centerProjection + extent);
     }
 
     /// <summary>Projects an axis-aligned ellipse onto an axis exactly.</summary>
@@ -65,7 +65,7 @@ public static class Projection2D
     {
         var centerProjection = Vector2f.Dot(center, axis);
         var extent = (radii * axis).Length();
-        return new(centerProjection - extent, centerProjection + extent);
+        return Interval<float>.Builder.Create(centerProjection - extent, centerProjection + extent);
     }
 
     /// <summary>Projects a capsule onto an axis.</summary>
@@ -79,6 +79,6 @@ public static class Projection2D
         var a = Vector2f.Dot(start, axis);
         var b = Vector2f.Dot(end, axis);
         var extent = radius * axis.Length();
-        return new(Math.Min(a, b) - extent, Math.Max(a, b) + extent);
+        return Interval<float>.Builder.Create(Math.Min(a, b) - extent, Math.Max(a, b) + extent);
     }
 }

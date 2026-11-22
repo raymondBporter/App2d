@@ -67,7 +67,7 @@ public sealed class Camera2DTests
         Assert.InRange(Vector2f.Distance(point, camera.DeviceToWorld(devicePoint)), 0f, 0.001f);
 
         var view = camera.GetFrameView();
-        Assert.Equal(new Rect2f(Vector2f.Zero, new(960, 540)), view.TargetBounds);
+        Assert.Equal(Rect2f.Builder.Create(Vector2f.Zero, new(960, 540)), view.TargetBounds);
         Assert.Equal(camera.VisibleWorldBounds, view.VisibleWorldBounds);
         Assert.Equal(devicePoint, view.WorldToDevice(point));
         Assert.InRange(Vector2f.Distance(point, view.DeviceToWorld(devicePoint)), 0f, 0.001f);
@@ -140,7 +140,7 @@ public sealed class Camera2DTests
     {
         var camera = new Camera2D
         {
-            WorldBounds = new(new(-500f), new(500f)),
+            WorldBounds = Rect2f.Builder.Create(new(-500f), new(500f)),
             Position = new(1000f),
         };
         Assert.Equal(new Vector2f(100f, 200f), camera.Position);

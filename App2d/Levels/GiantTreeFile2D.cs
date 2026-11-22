@@ -69,7 +69,7 @@ public static class GiantTreeFile2D
             throw new InvalidDataException($"{name} must be [minimum, maximum].");
         }
 
-        var range = new Interval<float>(values[0] * tileSize, values[1] * tileSize);
+        var range = Interval<float>.Builder.Create(values[0] * tileSize, values[1] * tileSize);
         Ensure.Positive(range.Min, name);
         Ensure.GreaterThanOrEqual(range.Max, range.Min, name);
         return range;

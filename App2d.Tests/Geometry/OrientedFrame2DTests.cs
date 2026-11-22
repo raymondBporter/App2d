@@ -35,7 +35,7 @@ public sealed class OrientedFrame2DTests
     public void NinetyDegreesSwapsBoxExtentsExactly()
     {
         var frame = new OrientedFrame2D(Vector2f.Zero, Vector2f.UnitY);
-        Assert.Equal(new Rect2f(new(-1, -3), new(1, 3)), frame.BoxBounds(new(3, 1)));
+        Assert.Equal(Rect2f.Builder.Create(new(-1, -3), new(1, 3)), frame.BoxBounds(new(3, 1)));
     }
 
     [Fact]

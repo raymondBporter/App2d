@@ -1,5 +1,3 @@
-using App2d.Core.Characters;
-using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -47,6 +45,8 @@ public static class Probes
     public static int IntClamp(Interval<int> interval, int value) => interval.Clamp(value);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
+    public static bool FloatOverlapsFromLimit(EndpointsOnly<float> limits, Interval<float> other) =>
+        Interval<float>.From(limits).Overlaps(other);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static bool DoubleOverlaps(Interval<double> first, Interval<double> second) => first.Overlaps(second);
@@ -92,16 +92,16 @@ internal static class Program
 {
     public static void Main()
     {
-        var singles = new Interval<float>(-1, 5);
-        var doubles = new Interval<double>(-1, 5);
-        var integers = new Interval<int>(-1, 5);
-        var otherSingle = new Interval<float>(1, 7);
-        var otherDouble = new Interval<double>(1, 7);
+        var singles = Interval<float>.Builder.Create(-1, 5);
+        var doubles = Interval<double>.Builder.Create(-1, 5);
+        var integers = Interval<int>.Builder.Create(-1, 5);
+        var otherSingle = Interval<float>.Builder.Create(1, 7);
+        var otherDouble = Interval<double>.Builder.Create(1, 7);
 
         Check(Probes.FloatLength(singles) == 6f, nameof(Probes.FloatLength));
         Check(Probes.DoubleLength(doubles) == 6d, nameof(Probes.DoubleLength));
         Check(Probes.IntLength(integers) == 6, nameof(Probes.IntLength));
-        Check(Probes.DecimalLength(new(-1m, 5m)) == 6m, nameof(Probes.DecimalLength));
+        Check(Probes.DecimalLength(Interval<decimal>.Builder.Create(-1m, 5m)) == 6m, nameof(Probes.DecimalLength));
         Check(Probes.FloatContains(singles, 3f), nameof(Probes.FloatContains));
         Check(Probes.DoubleContains(doubles, 3d), nameof(Probes.DoubleContains));
         Check(Probes.IntContains(integers, 3), nameof(Probes.IntContains));
@@ -109,19 +109,20 @@ internal static class Program
         Check(Probes.FloatClamp(singles, 10f) == 5f, nameof(Probes.FloatClamp));
         Check(Probes.DoubleClamp(doubles, 10d) == 5d, nameof(Probes.DoubleClamp));
         Check(Probes.IntClamp(integers, 10) == 5, nameof(Probes.IntClamp));
+        Check(Probes.FloatOverlapsFromLimit(new(-1, 5), otherSingle), nameof(Probes.FloatOverlapsFromLimit));
         Check(Probes.DoubleOverlaps(doubles, otherDouble), nameof(Probes.DoubleOverlaps));
-        Check(Probes.FloatContainsInterval(singles, new(2, 4)), nameof(Probes.FloatContainsInterval));
-        Check(Probes.FloatDistance(singles, new(8, 10)) == 3f, nameof(Probes.FloatDistance));
+        Check(Probes.FloatContainsInterval(singles, Interval<float>.Builder.Create(2, 4)), nameof(Probes.FloatContainsInterval));
+        Check(Probes.FloatDistance(singles, Interval<float>.Builder.Create(8, 10)) == 3f, nameof(Probes.FloatDistance));
         Check(Probes.DoubleDistance(doubles, otherDouble) == 0d, nameof(Probes.DoubleDistance));
         Check(Probes.FloatMaxDistance(singles, otherSingle) == 8f, nameof(Probes.FloatMaxDistance));
         Check(Probes.FloatSignedDistance(singles, otherSingle) == -4f, nameof(Probes.FloatSignedDistance));
-        Check(Probes.FloatIntersect(singles, otherSingle, out var sharedSingle) && sharedSingle == new Interval<float>(1, 5), nameof(Probes.FloatIntersect));
-        Check(Probes.DoubleIntersect(doubles, otherDouble, out var sharedDouble) && sharedDouble == new Interval<double>(1, 5), nameof(Probes.DoubleIntersect));
-        Check(Probes.FloatHull(singles, otherSingle) == new Interval<float>(-1, 7), nameof(Probes.FloatHull));
-        Check(Probes.DoubleHull(doubles, otherDouble) == new Interval<double>(-1, 7), nameof(Probes.DoubleHull));
+        Check(Probes.FloatIntersect(singles, otherSingle, out var sharedSingle) && sharedSingle == Interval<float>.Builder.Create(1, 5), nameof(Probes.FloatIntersect));
+        Check(Probes.DoubleIntersect(doubles, otherDouble, out var sharedDouble) && sharedDouble == Interval<double>.Builder.Create(1, 5), nameof(Probes.DoubleIntersect));
+        Check(Probes.FloatHull(singles, otherSingle) == Interval<float>.Builder.Create(-1, 7), nameof(Probes.FloatHull));
+        Check(Probes.DoubleHull(doubles, otherDouble) == Interval<double>.Builder.Create(-1, 7), nameof(Probes.DoubleHull));
         Check(Probes.FloatBounds(singles) == 3, nameof(Probes.FloatBounds));
-        Check(Probes.FloatBounds(new(float.NegativeInfinity, float.PositiveInfinity)) == 4, nameof(Probes.FloatBounds));
-        Check(Probes.FloatBounds(new(2, 2)) == 11, nameof(Probes.FloatBounds));
+        Check(Probes.FloatBounds(Interval.Entire<float>()) == 4, nameof(Probes.FloatBounds));
+        Check(Probes.FloatBounds(Interval<float>.Singleton(2)) == 11, nameof(Probes.FloatBounds));
         Console.WriteLine($"Interval JIT probe passed: {RuntimeInformation.FrameworkDescription}, {RuntimeInformation.ProcessArchitecture}.");
     }
 

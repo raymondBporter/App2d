@@ -37,7 +37,8 @@ public sealed class UseShapeBuilderCodeFixProvider : CodeFixProvider
         if (creation.Initializer is not null)
         {
             var validator = model.Compilation.GetTypeByMetadataName("App2d.Core.Geometry.GeometryValidation2D");
-            if (validator is null) return;
+            var geometryValue = model.Compilation.GetTypeByMetadataName("App2d.Core.Geometry.IGeometryValue2D");
+            if (validator is null || geometryValue is null || !shape.AllInterfaces.Contains(geometryValue, SymbolEqualityComparer.Default)) return;
             var validatorReference = (ExpressionSyntax)SyntaxGenerator.GetGenerator(context.Document).TypeExpression(validator)
                 .WithAdditionalAnnotations(Simplifier.Annotation, Simplifier.AddImportsAnnotation);
             var target = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,

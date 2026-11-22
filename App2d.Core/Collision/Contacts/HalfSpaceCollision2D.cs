@@ -6,15 +6,13 @@ namespace App2d.Core.Collision.Contacts;
 
 public static class HalfSpaceCollision2D
 {
-    public static bool TryGetContact(SpatialObject2D convexObject, SpatialObject2D halfSpaceObject, out HalfSpaceContact2D contact)
+    public static bool TryGetContact(SpatialObject2D convexObject, SpatialObject2D halfSpaceObject, out CollisionContact2D contact)
     {
         Ensure.ThrowIfNull(convexObject);
         Ensure.ThrowIfNull(halfSpaceObject);
         Ensure.RequireType<IConvexShape2D>(convexObject.Shape, "The constrained object must have a finite convex shape.", nameof(convexObject));
         Ensure.RequireType<HalfSpace2D>(halfSpaceObject.Shape, "The constraint object must contain a HalfSpace2D.", nameof(halfSpaceObject));
 
-        var hasContact = ShapeCollision2D.TryGetContact(convexObject, halfSpaceObject, out var geometry);
-        contact = new HalfSpaceContact2D(geometry.Normal, geometry.PenetrationDepth);
-        return hasContact;
+        return ShapeCollision2D.TryGetContact(convexObject, halfSpaceObject, out contact);
     }
 }

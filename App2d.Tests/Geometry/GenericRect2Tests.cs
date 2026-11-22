@@ -17,7 +17,7 @@ public sealed class GenericRect2Tests
     [Fact]
     public void RectanglesSupportInstanceAndStaticDeconstruction()
     {
-        var rectangle = new Rect2d(new(-4, -2), new(2, 8));
+        var rectangle = Rect2d.Builder.Create(new(-4, -2), new(2, 8));
         var (min, max) = rectangle;
         Assert.Equal(rectangle.Min, min);
         Assert.Equal(rectangle.Max, max);
@@ -29,7 +29,7 @@ public sealed class GenericRect2Tests
     [Fact]
     public void ScalarPropertiesAnchorsAndProjectionsMatchTheBounds()
     {
-        var rectangle = new Rect2d(new(-4, -2), new(2, 8));
+        var rectangle = Rect2d.Builder.Create(new(-4, -2), new(2, 8));
         Assert.Equal(-1d, rectangle.CenterX);
         Assert.Equal(3d, rectangle.CenterY);
         Assert.Equal(new Vector2d(-1, 3), rectangle.Center);
@@ -59,7 +59,7 @@ public sealed class GenericRect2Tests
     public void OriginDistancesChooseTheClosestPointAndFarthestCorner(
         double minX, double minY, double maxX, double maxY, double nearest, double farthest)
     {
-        var rectangle = new Rect2d(new(minX, minY), new(maxX, maxY));
+        var rectangle = Rect2d.Builder.Create(new(minX, minY), new(maxX, maxY));
         Assert.Equal(nearest, rectangle.DistanceToOrigin);
         Assert.Equal(farthest, rectangle.MaxDistanceToOrigin);
     }
@@ -67,17 +67,17 @@ public sealed class GenericRect2Tests
     [Fact]
     public void LengthsAndHalfSizesAvoidUnnecessaryFloatingPointOverflowAndUnderflow()
     {
-        var large = new Rect2d(Vector2d.Zero, new(3e200, 4e200));
+        var large = Rect2d.Builder.Create(Vector2d.Zero, new(3e200, 4e200));
         Assert.Equal(1d, large.DiagonalLength / 5e200, 14);
         Assert.Equal(1d, large.MaxDistanceToOrigin / 5e200, 14);
-        var tiny = new Rect2d(Vector2d.Zero, new(3e-200, 4e-200));
+        var tiny = Rect2d.Builder.Create(Vector2d.Zero, new(3e-200, 4e-200));
         Assert.Equal(1d, tiny.DiagonalLength / 5e-200, 14);
-        var largeFloat = new Rect2<Vector2f, float>(Vector2f.Zero, new(3e30f, 4e30f));
+        var largeFloat = Rect2<Vector2f, float>.Builder.Create(Vector2f.Zero, new(3e30f, 4e30f));
         Assert.Equal(1f, largeFloat.DiagonalLength / 5e30f, 6);
-        var tinyFloat = new Rect2<Vector2f, float>(Vector2f.Zero, new(3e-30f, 4e-30f));
+        var tinyFloat = Rect2<Vector2f, float>.Builder.Create(Vector2f.Zero, new(3e-30f, 4e-30f));
         Assert.Equal(1f, tinyFloat.DiagonalLength / 5e-30f, 6);
 
-        var wide = new Rect2d(new(-double.MaxValue, double.Epsilon), new(double.MaxValue, 3 * double.Epsilon));
+        var wide = Rect2d.Builder.Create(new(-double.MaxValue, double.Epsilon), new(double.MaxValue, 3 * double.Epsilon));
         Assert.Equal(double.PositiveInfinity, wide.Width);
         Assert.Equal(new Vector2d(double.MaxValue, double.Epsilon), wide.HalfSize);
     }
@@ -97,15 +97,15 @@ public sealed class GenericRect2Tests
         var max = new Vector2d(maxX, maxY);
         Assert.False(Rect2d.IsValid(min, max));
         Assert.ThrowsAny<ArgumentException>(() => Rect2d.Validate(min, max));
-        Assert.ThrowsAny<ArgumentException>(() => new Rect2d(min, max));
+        Assert.ThrowsAny<ArgumentException>(() => Rect2d.Builder.Create(min, max));
     }
 
     [Fact]
     public void OutwardInfiniteBoundsKeepProjectionsAndOriginDistancesDefined()
     {
         var rectangle = Rect2d.Unbounded;
-        Assert.True(Rect2d.IsValid(rectangle.Min, rectangle.Max));
-        Rect2d.Validate(rectangle.Min, rectangle.Max);
+        Assert.True(Rect2d.IsValid(rectangle.Min, rectangle.Max, allowUnbounded: true));
+        Rect2d.Validate(rectangle.Min, rectangle.Max, allowUnbounded: true);
         Assert.True(rectangle.ProjectionX.IsEntire);
         Assert.True(rectangle.ProjectionY.IsEntire);
         Assert.Equal(0d, rectangle.DistanceToOrigin);
@@ -130,8 +130,8 @@ public sealed class GenericRect2Tests
     [Fact]
     public void FloatBoundsAndTheGenericRectangleShareTheCoordinateContract()
     {
-        var packed = new Rect2f(new(-4, -2), new(2, 8));
-        var generic = new Rect2<Vector2f, float>(packed.Min, packed.Max);
+        var packed = Rect2f.Builder.Create(new(-4, -2), new(2, 8));
+        var generic = Rect2<Vector2f, float>.Builder.Create(packed.Min, packed.Max);
         Assert.Equal(packed.Width, generic.Width);
         Assert.Equal(packed.Height, generic.Height);
         Assert.Equal(packed.Area, generic.Area);
@@ -145,7 +145,7 @@ public sealed class GenericRect2Tests
     [Fact]
     public void DoubleBoundsKeepCoordinatesBeyondFloatPrecision()
     {
-        var bounds = new Rect2d(new(16_777_217, -4), new(16_777_220, 8));
+        var bounds = Rect2d.Builder.Create(new(16_777_217, -4), new(16_777_220, 8));
         Assert.Equal(3, bounds.Width);
         Assert.Equal(12, bounds.Height);
         Assert.Equal(36, bounds.Area);
@@ -156,7 +156,7 @@ public sealed class GenericRect2Tests
         Assert.Equal(25, bounds.DistanceSquaredTo(new Vector2d(16_777_214, 12)));
         Assert.Equal(5, bounds.DistanceTo(new Vector2d(16_777_214, 12)));
 
-        var touching = new Rect2d(new(16_777_220, 0), new(16_777_224, 10));
+        var touching = Rect2d.Builder.Create(new(16_777_220, 0), new(16_777_224, 10));
         Assert.True(bounds.TryIntersect(touching, out var intersection));
         Assert.Equal(0, intersection.Width);
         Assert.Equal(8, intersection.Height);
@@ -171,18 +171,18 @@ public sealed class GenericRect2Tests
         Assert.False(unbounded.IsFinite);
         Assert.True(unbounded.Contains(Vector2d.Zero));
         Assert.True(double.IsNaN(unbounded.Center.X));
-        var largest = new Rect2d(new(double.MaxValue / 2, double.Epsilon), new(double.MaxValue, double.Epsilon));
+        var largest = Rect2d.Builder.Create(new(double.MaxValue / 2, double.Epsilon), new(double.MaxValue, double.Epsilon));
         Assert.True(double.IsFinite(largest.Center.X));
         Assert.Equal(double.Epsilon, largest.Center.Y);
         Assert.Equal(1d, default(Rect2d).DistanceTo(new Vector2d(3e200, 4e200)) / 5e200, 14);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2d(new(double.NaN, 0), new(1, 1)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Rect2d(new(2, 0), new(1, 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2d.Builder.Create(new(double.NaN, 0), new(1, 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2d.Builder.Create(new(2, 0), new(1, 1)));
     }
 
     [Fact]
     public void ConvertingAnyBoundsTypeAndQueryingItDoesNotBox()
     {
-        var bounds = new Rect2d(new(-4, -2), new(2, 8));
+        var bounds = Rect2d.Builder.Create(new(-4, -2), new(2, 8));
         for (var i = 0; i < 100; i++) _ = Query(bounds);
         var before = GC.GetAllocatedBytesForCurrentThread();
         var total = 0d;

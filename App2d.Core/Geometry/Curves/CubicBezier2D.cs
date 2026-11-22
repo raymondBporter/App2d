@@ -17,10 +17,10 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         End = end;
     }
 
-    public Vector2f Start { get; init; }
-    public Vector2f Control1 { get; init; }
-    public Vector2f Control2 { get; init; }
-    public Vector2f End { get; init; }
+    public readonly Vector2f Start { get; init; }
+    public readonly Vector2f Control1 { get; init; }
+    public readonly Vector2f Control2 { get; init; }
+    public readonly Vector2f End { get; init; }
 
     /// <summary>Creates a cubic from endpoints and tangents with respect to its normalized parameter.</summary>
     public static CubicBezier2D FromHermite(Vector2f start, Vector2f end, Vector2f startTangent, Vector2f endTangent) =>

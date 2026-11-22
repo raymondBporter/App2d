@@ -119,7 +119,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             }
 
             var tileMin = TileMap.GridGeometry.GetCellBounds(cell).Min;
-            var spikeBounds = new Rect2f(
+            var spikeBounds = Rect2f.Builder.Create(
                 tileMin + new Vector2f(horizontalInset, 0f),
                 tileMin + new Vector2f(_tileSize - horizontalInset, _tileSize * 0.9f));
             if (!actorBounds.Intersects(spikeBounds))

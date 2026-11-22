@@ -1,10 +1,9 @@
 # Shape constructors and builders
 
-The eleven built-in shapes are `readonly record struct` values. Their nested builders remain
-editable records, so existing `with` expressions and tagged JSON still work. A `partial`
-declaration can be a struct; it simply lets the shape and its nested builder live in separate files.
+Built-in shapes, serializable curves, intervals and rectangle bounds expose raw constructors for JSON.
+Validate the resulting values after the document has been read.
 
-`APP2D001` warns when application code calls a built-in shape constructor:
+`APP2D001` warns when application code calls one of these constructors.
 
 ```csharp
 // Before: APP2D001
@@ -15,9 +14,9 @@ Circle2D other = new(6f);
 var circle = Circle2D.Builder.Create(12f, new Vector2f(4, 8));
 Circle2D other = Circle2D.Builder.Create(6f);
 
-// Editable construction data is also supported.
-var builder = new Circle2D.Builder { Center = new(4, 8), Radius = 12f };
-Circle2D built = builder.Build();
+var range = Interval<float>.Builder.Create(1f, 5f);
+var floorBounds = Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity),
+    new(float.PositiveInfinity, 0f));
 ```
 
 Build the solution, then use Visual Studio's Quick Actions (`Ctrl+.`) on the warning.
@@ -63,12 +62,10 @@ Change severity in `.editorconfig` if needed:
 dotnet_diagnostic.APP2D001.severity = suggestion
 ```
 
-Concrete builders expose typed `Build()` methods. Polymorphic `ShapeBuilder2D.Build()` and
-`ConvexShapeBuilder2D.Build()` return interfaces and box the resulting struct. The shared
-rectangle builder returns `IConvexShape2D` because its `AxisAligned` flag selects between
-`Rectangle2D` and `AxisAlignedRectangle2D`, which are independent value types. Rectangle
-factory methods still return their concrete type. Polygon and composite record equality
-uses the backing arrays' identity; it does not compare their contents structurally.
+`Builder.Create` on `Interval<T>`, `Rect2f` and `Rect2<TVector, TReal>` requires finite, ordered endpoints.
+`Builder.CreateUnbounded` permits negative infinity at the lower end and positive infinity at the upper end of each axis.
+Both paths reject NaN and reversed endpoints. After loading JSON, use `Validate()` for finite bounds or
+`Validate(allowUnbounded: true)` for fields whose schema permits open-ended bounds.
 
 For a longer introduction, see Microsoft's
 [first analyzer and code fix tutorial](https://learn.microsoft.com/en-us/dotnet/csharp/roslyn-sdk/tutorials/how-to-write-csharp-analyzer-code-fix).

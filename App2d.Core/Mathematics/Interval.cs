@@ -14,11 +14,10 @@ namespace App2d.Core.Mathematics;
 /// <typeparam name="T">The numeric type used for the endpoints.</typeparam>
 public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
 {
-    /// <summary>Creates a range from ordered endpoints, allowing outward infinities.</summary>
+    /// <summary>Stores endpoints for deserialization. Use Builder.Create for validated finite endpoints.</summary>
     [JsonConstructor]
     public Interval(T min, T max)
     {
-        Validate(min, max);
         Min = min;
         Max = max;
     }
@@ -31,33 +30,54 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
 
     // ---- Construction and validation ----
 
+    public static class Builder
+    {
+        public static Interval<T> Create(T min, T max)
+        {
+            Validate(min, max);
+            return new(min, max);
+        }
+
+        /// <summary>Allows a negative-infinite minimum or a positive-infinite maximum.</summary>
+        public static Interval<T> CreateUnbounded(T min, T max)
+        {
+            Validate(min, max, allowUnbounded: true);
+            return new(min, max);
+        }
+    }
+
     /// <summary>Creates the interval containing one finite value.</summary>
-    public static Interval<T> Singleton(T value) => new(value, value);
+    public static Interval<T> Singleton(T value) => Builder.Create(value, value);
 
     /// <summary>Copies and validates the endpoints of any type that has Min and Max. A struct is not boxed.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Interval<T> From<TOther>(TOther other) where TOther : IInterval<T> => new(other.Min, other.Max);
+    public static Interval<T> From<TOther>(TOther other, bool allowUnbounded = false) where TOther : IInterval<T> =>
+        allowUnbounded ? Builder.CreateUnbounded(other.Min, other.Max) : Builder.Create(other.Min, other.Max);
 
-    /// <summary>Whether the endpoints are ordered, non-NaN and only outwardly infinite.</summary>
-    public static bool IsValid(T min, T max)
+    /// <summary>Checks endpoint order and finiteness. Unbounded ranges allow only outward infinities.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsValid(T min, T max, bool allowUnbounded = false) =>
+        (allowUnbounded ? !T.IsPositiveInfinity(min) && !T.IsNegativeInfinity(max) : T.IsFinite(min) && T.IsFinite(max))
+        && min <= max;
+
+    public static void Validate(T min, T max, bool allowUnbounded = false)
     {
-        return !T.IsNaN(min) && !T.IsPositiveInfinity(min) &&
-               !T.IsNaN(max) && !T.IsNegativeInfinity(max) &&
-               NumericValidation.IsLessThanOrEqual(min, max);
+        if (!IsValid(min, max, allowUnbounded)) ThrowInvalidEndpoints(min, max, allowUnbounded);
     }
 
-    /// <summary>Requires ordered, non-NaN endpoints, allowing only outward infinities. The constructor calls this.</summary>
-    public static void Validate(T min, T max)
+    // Keep detailed exceptions out of the machine code for ordinary interval arithmetic.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowInvalidEndpoints(T min, T max, bool allowUnbounded)
     {
-        Ensure.Number(min);
-        Ensure.Number(max);
-        Ensure.NotPositiveInfinity(min);
-        Ensure.NotNegativeInfinity(max);
-        Ensure.LessThanOrEqual(min, max, allowInfinity: true);
+        Ensure.LessThanOrEqual(min, max, allowInfinity: allowUnbounded);
+        if (allowUnbounded)
+        {
+            Ensure.NotPositiveInfinity(min);
+            Ensure.NotNegativeInfinity(max);
+        }
     }
 
-    /// <summary>Validates this interval; only <c>default</c> and deserialized values can need it.</summary>
-    public void Validate() => Validate(Min, Max);
+    public void Validate(bool allowUnbounded = false) => Validate(Min, Max, allowUnbounded);
 
     /// <summary>Deconstructs the range into its lower and upper endpoints.</summary>
     public void Deconstruct(out T min, out T max) => (min, max) = (Min, Max);
@@ -94,7 +114,7 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
     public Interval<T> Include(T value)
     {
         Ensure.Number(value);
-        return new(T.Min(Min, value), T.Max(Max, value));
+        return Builder.CreateUnbounded(T.Min(Min, value), T.Max(Max, value));
     }
 
     // ---- Two intervals ----
@@ -121,13 +141,13 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
             intersection = default;
             return false;
         }
-        intersection = new(min, max);
+        intersection = Builder.CreateUnbounded(min, max);
         return true;
     }
 
     /// <summary>The smallest interval containing both inputs, including any gap between them.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Interval<T> Hull(Interval<T> other) => new(T.Min(Min, other.Min), T.Max(Max, other.Max));
+    public Interval<T> Hull(Interval<T> other) => Builder.CreateUnbounded(T.Min(Min, other.Min), T.Max(Max, other.Max));
 
     /// <summary>The nearest-point distance; zero for overlapping or touching intervals. Uses checked T arithmetic.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -198,19 +218,19 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
     public Interval<T> Translate(T offset)
     {
         Ensure.Finite(offset);
-        return new(checked(Min + offset), checked(Max + offset));
+        return Builder.CreateUnbounded(checked(Min + offset), checked(Max + offset));
     }
 
     /// <summary>Reflects around zero, producing [-Max, -Min]. Uses checked T arithmetic.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Interval<T> Reflect() => new(checked(-Max), checked(-Min));
+    public Interval<T> Reflect() => Builder.CreateUnbounded(checked(-Max), checked(-Min));
 
     /// <summary>Reflects around a finite center. Uses checked T arithmetic.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Interval<T> Reflect(T center)
     {
         Ensure.Finite(center);
-        return new(ReflectValue(Max, center), ReflectValue(Min, center));
+        return Builder.CreateUnbounded(ReflectValue(Max, center), ReflectValue(Min, center));
     }
 
     /// <summary>Scales around zero, reordering negative scales. Zero collapses even an unbounded interval to [0, 0].</summary>
@@ -230,7 +250,7 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
         if (scale == T.One) return this;
         var first = ScaleValue(Min, scale, center);
         var second = ScaleValue(Max, scale, center);
-        return scale < T.Zero ? new(second, first) : new(first, second);
+        return scale < T.Zero ? Builder.CreateUnbounded(second, first) : Builder.CreateUnbounded(first, second);
     }
 
     /// <summary>Formats the closed interval as [Min, Max] using invariant numeric formatting.</summary>
@@ -259,11 +279,11 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
 public static partial class Interval
 {
     /// <summary>The interval unbounded in both directions.</summary>
-    public static Interval<T> Entire<T>() where T : IFloatingPointIeee754<T> => new(T.NegativeInfinity, T.PositiveInfinity);
+    public static Interval<T> Entire<T>() where T : IFloatingPointIeee754<T> => Interval<T>.Builder.CreateUnbounded(T.NegativeInfinity, T.PositiveInfinity);
 
     /// <summary>The interval from a finite lower endpoint to positive infinity.</summary>
-    public static Interval<T> AtLeast<T>(T min) where T : IFloatingPointIeee754<T> => new(Ensure.Finite(min), T.PositiveInfinity);
+    public static Interval<T> AtLeast<T>(T min) where T : IFloatingPointIeee754<T> => Interval<T>.Builder.CreateUnbounded(Ensure.Finite(min), T.PositiveInfinity);
 
     /// <summary>The interval from negative infinity to a finite upper endpoint.</summary>
-    public static Interval<T> AtMost<T>(T max) where T : IFloatingPointIeee754<T> => new(T.NegativeInfinity, Ensure.Finite(max));
+    public static Interval<T> AtMost<T>(T max) where T : IFloatingPointIeee754<T> => Interval<T>.Builder.CreateUnbounded(T.NegativeInfinity, Ensure.Finite(max));
 }

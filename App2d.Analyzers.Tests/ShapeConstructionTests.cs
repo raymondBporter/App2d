@@ -13,7 +13,7 @@ namespace App2d.Analyzers.Tests;
 
 public sealed class ShapeConstructionTests
 {
-    private const string Imports = "using App2d.Core.Geometry.Shapes; using App2d.Core.Geometry.Curves; using App2d.Core.Mathematics; ";
+    private const string Imports = "using App2d.Core.Geometry.Primitives; using App2d.Core.Geometry.Shapes; using App2d.Core.Geometry.Curves; using App2d.Core.Mathematics; ";
 
     private static readonly ImmutableArray<MetadataReference> References =
         [.. ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
@@ -22,6 +22,9 @@ public sealed class ShapeConstructionTests
 
     public static TheoryData<string> Constructors =>
     [
+        "new Rect2f(Vector2f.Zero, Vector2f.One)",
+        "new Rect2<Vector2f, float>(Vector2f.Zero, Vector2f.One)",
+        "new Interval<float>(0f, 1f)",
         "new Circle2D(2)",
         "new Ellipse2D(new Vector2f(2, 1), Vector2f.Zero, Vector2f.UnitX)",
         "new Capsule2D(Vector2f.Zero, Vector2f.One, 2)",

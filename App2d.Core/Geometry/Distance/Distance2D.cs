@@ -274,8 +274,8 @@ public static partial class Distance2D
     /// <returns>The gap when separated, or the negated minimum escape translation when overlapping.</returns>
     public static float SignedDistance(Rect2f first, Rect2f second)
     {
-        var x = SignedDistance(new Interval<float>(first.Min.X, first.Max.X), new Interval<float>(second.Min.X, second.Max.X));
-        var y = SignedDistance(new Interval<float>(first.Min.Y, first.Max.Y), new Interval<float>(second.Min.Y, second.Max.Y));
+        var x = SignedDistance(first.XInterval, second.XInterval);
+        var y = SignedDistance(first.YInterval, second.YInterval);
         return x > 0f || y > 0f ? new Vector2f(Math.Max(0f, x), Math.Max(0f, y)).Length() : Math.Max(x, y);
     }
 

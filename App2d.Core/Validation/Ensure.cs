@@ -23,7 +23,8 @@ public static partial class Ensure
     public static T RequireNotNull<T>([NotNull] T? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null, string? message = null) where T : class
     {
-        return value ?? throw new ArgumentNullException(paramName, message);
+        ThrowIfNull(paramName, message);
+        return value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

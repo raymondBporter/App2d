@@ -22,7 +22,7 @@ public sealed class DistanceConstraint2DTests
     public void BoundedDistanceCorrectsEitherLimitButLeavesInteriorAlone()
     {
         var (first, second) = CreateBodies(0f, 10f);
-        var constraint = new DistanceConstraint2D(first, second, new Interval<float>(4f, 6f));
+        var constraint = new DistanceConstraint2D(first, second, Interval<float>.Builder.Create(4f, 6f));
 
         Assert.True(constraint.SolvePosition(1f / 60f));
         Assert.Equal(6f, second.WorldObject.Position.X, 4);

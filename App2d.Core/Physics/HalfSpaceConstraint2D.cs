@@ -6,7 +6,7 @@ namespace App2d.Core.Physics;
 /// <summary>Moves a convex object out of a half-space using its minimum translation.</summary>
 public static class HalfSpaceConstraint2D
 {
-    public static bool ConstrainOutside(SpatialObject2D convexObject, SpatialObject2D halfSpaceObject, out HalfSpaceContact2D contact)
+    public static bool ConstrainOutside(SpatialObject2D convexObject, SpatialObject2D halfSpaceObject, out CollisionContact2D contact)
     {
         if (!HalfSpaceCollision2D.TryGetContact(convexObject, halfSpaceObject, out contact))
         {

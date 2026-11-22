@@ -209,7 +209,7 @@ public sealed class Skeleton2DTests
     public void AHingeTurnsWithinItsLimitsAndDoesNotSlide()
     {
         var rest = new RigidTransform2D(new(1, 0), MathF.PI / 2);
-        var limits = JointLimits2D.Hinge(new(-1, .5f));
+        var limits = JointLimits2D.Hinge(Interval<float>.Builder.Create(-1, .5f));
 
         var high = limits.Clamp(rest, new(new(7, -4), MathF.PI / 2 + 2));
         var low = limits.Clamp(rest, new(new(7, -4), MathF.PI / 2 - 2));
@@ -224,7 +224,7 @@ public sealed class Skeleton2DTests
     {
         // Rest X points along the parent's +Y, so the slider travels up and down in the parent.
         var rest = new RigidTransform2D(new(1, 0), MathF.PI / 2);
-        var limits = JointLimits2D.Slider(new(0, 2));
+        var limits = JointLimits2D.Slider(Interval<float>.Builder.Create(0, 2));
 
         var past = limits.Clamp(rest, new(new(1.3f, 5), 3));
         var inside = limits.Clamp(rest, new(new(.2f, 1.5f), 3));
@@ -239,7 +239,7 @@ public sealed class Skeleton2DTests
     {
         var skeleton = new Skeleton2D(
             new Joint2D("root", Skeleton2D.NoParent, default),
-            new Joint2D("door", 0, new(new(2, 0)), JointLimits2D.Hinge(new(0, 1))),
+            new Joint2D("door", 0, new(new(2, 0)), JointLimits2D.Hinge(Interval<float>.Builder.Create(0, 1))),
             new Joint2D("bolt", 0, new(new(0, 3)), JointLimits2D.Fixed));
         var local = skeleton.RestPose();
         local[0] = new(new(5, 5), 1);

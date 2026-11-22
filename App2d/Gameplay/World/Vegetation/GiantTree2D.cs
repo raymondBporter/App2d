@@ -9,10 +9,10 @@ public sealed record GiantTreeSettings2D
 {
     public float Height { get; init; } = 1_600f;
     public float TrunkWidth { get; init; } = 192f;
-    public Interval<float> BranchLength { get; init; } = new(128f, 384f);
-    public Interval<float> BranchGap { get; init; } = new(64f, 96f);
+    public Interval<float> BranchLength { get; init; } = Interval<float>.Builder.Create(128f, 384f);
+    public Interval<float> BranchGap { get; init; } = Interval<float>.Builder.Create(64f, 96f);
     public float BranchThickness { get; init; } = 24f;
-    public Interval<float> FoliageRadius { get; init; } = new(56f, 112f);
+    public Interval<float> FoliageRadius { get; init; } = Interval<float>.Builder.Create(56f, 112f);
 
     public void Validate()
     {
@@ -52,12 +52,12 @@ public sealed class GiantTree2D
         Root = root;
         Settings = settings;
         Seed = seed;
-        TrunkBounds = new(root - new Vector2f(settings.TrunkWidth * 0.75f, 0),
+        TrunkBounds = Rect2f.Builder.Create(root - new Vector2f(settings.TrunkWidth * 0.75f, 0),
             root + new Vector2f(settings.TrunkWidth * 0.75f, settings.Height));
         var crownRadius = Math.Max(settings.TrunkWidth, settings.FoliageRadius.Max * 1.7f);
         var reach = Math.Max(settings.TrunkWidth * 0.5f + settings.BranchLength.Max + settings.FoliageRadius.Max * 1.2f,
             crownRadius * 1.8f) + 12f;
-        Bounds = new(root - new Vector2f(reach, settings.FoliageRadius.Max * 0.6f + 12f),
+        Bounds = Rect2f.Builder.Create(root - new Vector2f(reach, settings.FoliageRadius.Max * 0.6f + 12f),
             root + new Vector2f(reach, settings.Height + crownRadius * 1.1f + 12f));
         Ensure.Finite(Bounds.Min);
         Ensure.Finite(Bounds.Max);
@@ -89,7 +89,7 @@ public sealed class GiantTree2D
         {
             var startX = root.X + direction * settings.TrunkWidth * 0.15f;
             var endX = root.X + direction * (settings.TrunkWidth * 0.5f + Sample(settings.BranchLength, random));
-            branches.Add(new(new(new(Math.Min(startX, endX), root.Y + y - settings.BranchThickness),
+            branches.Add(new(Rect2f.Builder.Create(new(Math.Min(startX, endX), root.Y + y - settings.BranchThickness),
                 new(Math.Max(startX, endX), root.Y + y)), direction));
         }
     }

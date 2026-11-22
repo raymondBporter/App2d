@@ -18,7 +18,7 @@ public sealed class ShapeConstructionAnalyzer : DiagnosticAnalyzer
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "Shape and curve constructors bypass builder validation. Use the type's Builder.Create factory instead.");
+        description: "Raw constructors bypass validation. Use the type's Builder.Create factory for finite inputs.");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
 
@@ -53,13 +53,13 @@ public sealed class ShapeConstructionAnalyzer : DiagnosticAnalyzer
         // A consumer class merely named "Builder" does not receive an exemption.
         for (var owner = context.ContainingSymbol.ContainingType; owner is not null; owner = owner.ContainingType)
         {
-            if (SymbolEqualityComparer.Default.Equals(owner, shape))
+            if (SymbolEqualityComparer.Default.Equals(owner.OriginalDefinition, shape.OriginalDefinition))
             {
                 return;
             }
         }
 
-        context.ReportDiagnostic(Diagnostic.Create(Rule, creation.Syntax.GetLocation(), shape.Name));
+        context.ReportDiagnostic(Diagnostic.Create(Rule, creation.Syntax.GetLocation(), shape.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)));
     }
 }
 
@@ -68,20 +68,18 @@ internal static class GeometrySymbols
     public static bool IsBuiltInGeometry(INamedTypeSymbol type, Compilation compilation)
     {
         var ns = type.ContainingNamespace.ToDisplayString();
-        if (type.ContainingType is not null ||
-            !SymbolEqualityComparer.Default.Equals(type, compilation.GetTypeByMetadataName(ns + "." + type.Name)))
-        {
-            return false;
-        }
-
-        return ns switch
+        var supported = ns switch
         {
             "App2d.Core.Geometry.Shapes" => type.Name is "Circle2D" or "Ellipse2D" or "Capsule2D" or "Rectangle2D" or
                 "AxisAlignedRectangle2D" or "RoundedRectangle2D" or "Triangle2D" or "ConvexPolygon2D" or
                 "SimplePolygon2D" or "HalfSpace2D" or "CompositeShape2D",
             "App2d.Core.Geometry.Curves" => type.Name is "LineSegmentCurve2D" or "PolylineCurve2D" or
                 "RoundedPolylineCurve2D" or "Arc2D" or "QuadraticBezier2D" or "CubicBezier2D" or "BSpline2D",
+            "App2d.Core.Geometry.Primitives" => type.MetadataName is "Rect2f" or "Rect2`2",
+            "App2d.Core.Mathematics" => type.MetadataName == "Interval`1",
             _ => false
         };
+        return supported && type.ContainingType is null && SymbolEqualityComparer.Default.Equals(
+            type.OriginalDefinition, compilation.GetTypeByMetadataName(ns + "." + type.MetadataName));
     }
 }

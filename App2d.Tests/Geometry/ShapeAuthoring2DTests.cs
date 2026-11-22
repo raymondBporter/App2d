@@ -24,7 +24,7 @@ public sealed class ShapeAuthoring2DTests
         var converted = source.WithKind(kind);
         Assert.Equal(kind, converted.GetKind());
         var bounds = ShapeBounds2D.Calculate(converted.Validated());
-        Assert.True(new Rect2f(new(-1, 0), new(3, 2)).InflatedBy(1e-5f, 1e-5f).Contains(bounds), $"{kind} spilled to {bounds}.");
+        Assert.True(Rect2f.Builder.Create(new(-1, 0), new(3, 2)).InflatedBy(1e-5f, 1e-5f).Contains(bounds), $"{kind} spilled to {bounds}.");
         Assert.True(Vector2f.Distance(new(1, 1), bounds.Center) < 1e-5f);
         Assert.Equal(source, source.WithKind(Rectangle2D.Kind));
     }

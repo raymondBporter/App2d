@@ -30,9 +30,9 @@ public sealed class GeometryQueryTests
         Vector2f[] points = [new(-1, -1), new(1, -1), new(1, 1), new(-1, 1)];
         var axis = new Vector2f(2, -3);
         var offset = new Vector2f(4, 2);
-        Assert.Equal(new Interval<float>(-3, 7), Projection2D.Polygon(points.AsSpan(), axis, offset));
-        Assert.Equal(new Interval<float>(-3, 7), Projection2D.Polygon((IReadOnlyList<Vector2f>)points, axis, offset));
-        Assert.Equal(new Interval<float>(0, 0), Projection2D.Polygon(points.AsSpan(), default, offset));
+        Assert.Equal(Interval<float>.Builder.Create(-3, 7), Projection2D.Polygon(points.AsSpan(), axis, offset));
+        Assert.Equal(Interval<float>.Builder.Create(-3, 7), Projection2D.Polygon((IReadOnlyList<Vector2f>)points, axis, offset));
+        Assert.Equal(Interval<float>.Builder.Create(0, 0), Projection2D.Polygon(points.AsSpan(), default, offset));
         Assert.Throws<ArgumentOutOfRangeException>(() => Projection2D.Polygon([], axis));
     }
 

@@ -248,7 +248,7 @@ public sealed class VegetationPresentation2D : IDisposable
         }
 
         var sway = new Vector2f(ProceduralTree2D.MaximumSway(wind), 0);
-        var cullBounds = new Rect2f(visible.Min - sway, visible.Max + sway);
+        var cullBounds = Rect2f.Builder.Create(visible.Min - sway, visible.Max + sway);
         if (_terrainSource is not null)
         {
             foreach (var cell in QueryTreeChunks(cullBounds))
@@ -330,11 +330,11 @@ public sealed class VegetationPresentation2D : IDisposable
     }
 
     private static Rect2f PatchBounds(Vector2f root, float size) =>
-        new(root - new Vector2f(size * 0.5f, 0f), root + new Vector2f(size * 1.5f, size * 1.2f));
+        Rect2f.Builder.Create(root - new Vector2f(size * 0.5f, 0f), root + new Vector2f(size * 1.5f, size * 1.2f));
 
     // Invert the overlap to find the cells that could own those roots.
     private GridCellRange2D QueryRoots(Rect2f visible, Rect2f reach, Vector2f rootOffset) =>
-        _terrainSource!.QueryChunks(new(visible.Min - reach.Max - rootOffset, visible.Max - reach.Min - rootOffset));
+        _terrainSource!.QueryChunks(Rect2f.Builder.Create(visible.Min - reach.Max - rootOffset, visible.Max - reach.Min - rootOffset));
 
     private Chunk GetLocalChunk(TileChunk2D id)
     {

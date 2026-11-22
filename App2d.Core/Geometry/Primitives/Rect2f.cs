@@ -12,16 +12,12 @@ namespace App2d.Core.Geometry.Primitives;
 public readonly record struct Rect2f : IRect2f
 {
     /// <summary>The rectangle covering the whole plane, used for half-spaces and other unbounded geometry.</summary>
-    public static Rect2f Unbounded { get; } = new(new Vector2f(float.NegativeInfinity), new Vector2f(float.PositiveInfinity));
+    public static Rect2f Unbounded { get; } = Builder.CreateUnbounded(new Vector2f(float.NegativeInfinity), new Vector2f(float.PositiveInfinity));
 
-    /// <summary>Creates a rectangle from ordered corners.</summary>
-    /// <param name="min">The lower-left corner (smallest X and Y).</param>
-    /// <param name="max">The upper-right corner; each component must be at least the matching component of <paramref name="min"/>.</param>
-    /// <exception cref="ArgumentException">The corners are not ordered or contain NaN.</exception>
+    /// <summary>Stores corners for deserialization. Use Builder.Create for validated finite bounds.</summary>
     [JsonConstructor]
     public Rect2f(Vector2f min, Vector2f max)
     {
-        Ensure.LessThanOrEqual(min, max, allowInfinity: true);
         Min = min;
         Max = max;
     }
@@ -32,6 +28,23 @@ public readonly record struct Rect2f : IRect2f
     /// <summary>The upper-right corner.</summary>
     public Vector2f Max { get; }
 
+    public void Validate(bool allowUnbounded = false) => Rect2<Vector2f, float>.Validate(Min, Max, allowUnbounded);
+
+    public static class Builder
+    {
+        public static Rect2f Create(Vector2f min, Vector2f max)
+        {
+            Ensure.LessThanOrEqual(min, max);
+            return new(min, max);
+        }
+
+        public static Rect2f CreateUnbounded(Vector2f min, Vector2f max)
+        {
+            Rect2<Vector2f, float>.Validate(min, max, allowUnbounded: true);
+            return new(min, max);
+        }
+    }
+
     /// <summary>Creates a rectangle of a given size around a center.</summary>
     /// <param name="size">Finite, nonnegative width and height.</param>
     /// <param name="center">The finite center point.</param>
@@ -41,7 +54,7 @@ public readonly record struct Rect2f : IRect2f
         Ensure.NonNegative(size);
         Ensure.Finite(center);
         var halfSize = size / 2f;
-        return new(center - halfSize, center + halfSize);
+        return Builder.Create(center - halfSize, center + halfSize);
     }
 
     /// <summary>Creates a rectangle of positive size around a center.</summary>
@@ -58,7 +71,7 @@ public readonly record struct Rect2f : IRect2f
         Ensure.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
         var max = min + size.ToVector2();
         Ensure.Finite(max);
-        return new(min, max);
+        return Builder.Create(min, max);
     }
 
     /// <summary>Orders any two finite points into opposite corners.</summary>
@@ -69,11 +82,11 @@ public readonly record struct Rect2f : IRect2f
     {
         Ensure.Finite(first);
         Ensure.Finite(second);
-        return new(Vector2f.Min(first, second), Vector2f.Max(first, second));
+        return Builder.Create(Vector2f.Min(first, second), Vector2f.Max(first, second));
     }
 
     /// <summary>The smallest rectangle containing every point.</summary>
-    /// <param name="points">At least one point; NaN components are rejected by the constructor.</param>
+    /// <param name="points">At least one finite point.</param>
     /// <returns>The bounding box of the points.</returns>
     /// <exception cref="ArgumentOutOfRangeException">The span is empty.</exception>
     public static Rect2f FromPoints(ReadOnlySpan<Vector2f> points)
@@ -86,7 +99,7 @@ public readonly record struct Rect2f : IRect2f
             min = Vector2f.Min(min, point);
             max = Vector2f.Max(max, point);
         }
-        return new(min, max);
+        return Builder.Create(min, max);
     }
 
     /// <summary>The bounding box of a nonempty point sequence, read once without copying it.</summary>
@@ -102,7 +115,7 @@ public readonly record struct Rect2f : IRect2f
             min = Vector2f.Min(min, enumerator.Current);
             max = Vector2f.Max(max, enumerator.Current);
         }
-        return new(min, max);
+        return Builder.Create(min, max);
     }
 
     /// <summary>Bounds of projected items. A static selector and explicit state avoid iterator and closure allocations.</summary>
@@ -119,7 +132,7 @@ public readonly record struct Rect2f : IRect2f
             min = Vector2f.Min(min, point);
             max = Vector2f.Max(max, point);
         }
-        return new(min, max);
+        return Builder.Create(min, max);
     }
 
     /// <summary>The bounding box of a circle.</summary>
@@ -131,7 +144,7 @@ public readonly record struct Rect2f : IRect2f
         Ensure.Finite(center);
         Ensure.NonNegative(radius);
         var extent = new Vector2f(radius);
-        return new(center - extent, center + extent);
+        return Builder.Create(center - extent, center + extent);
     }
 
     /// <summary>The bounding box of a capsule, in either endpoint order.</summary>
@@ -145,6 +158,6 @@ public readonly record struct Rect2f : IRect2f
         Ensure.Finite(end);
         Ensure.NonNegative(radius);
         var extent = new Vector2f(radius);
-        return new(Vector2f.Min(start, end) - extent, Vector2f.Max(start, end) + extent);
+        return Builder.Create(Vector2f.Min(start, end) - extent, Vector2f.Max(start, end) + extent);
     }
 }

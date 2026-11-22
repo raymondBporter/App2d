@@ -1,3 +1,4 @@
+using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
@@ -20,7 +21,9 @@ public sealed class HalfSpaceConstraint2DTests
         box.Transform.Scale = new(-2, 2);
         box.Position = new(3, 8);
 
-        Assert.True(HalfSpaceConstraint2D.ConstrainOutside(box, wall, out var contact));
+        Assert.True(ShapeCollision2D.TryGetContact(box, wall, out var expected));
+        Assert.True(HalfSpaceConstraint2D.ConstrainOutside(box, wall, out CollisionContact2D contact));
+        Assert.Equal(expected, contact);
         Assert.Equal(1, contact.PenetrationDepth, 5);
         Assert.True(Vector2f.Distance(new(3, 9), box.Position) < .00001f);
         Assert.Equal(7, box.WorldBounds.Bottom, 5);

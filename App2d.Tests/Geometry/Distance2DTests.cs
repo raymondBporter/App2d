@@ -32,22 +32,22 @@ public sealed class Distance2DTests
     [Fact]
     public void RectangleCornerDistanceIsEuclideanAndZeroAreaRectsWork()
     {
-        var rectangle = new Rect2f(new(-1), new(1));
+        var rectangle = Rect2f.Builder.Create(new(-1), new(1));
         Assert.Equal(5f, Distance2D.SignedDistance(new Vector2f(4, 5), rectangle));
-        Assert.Equal(5f, Distance2D.SignedDistance(rectangle, new Rect2f(new(4, 5), new(6, 7))));
+        Assert.Equal(5f, Distance2D.SignedDistance(rectangle, Rect2f.Builder.Create(new(4, 5), new(6, 7))));
         Assert.Equal(-1f, Distance2D.SignedDistance(Vector2f.Zero, rectangle));
         Assert.Equal(0f, Distance2D.Distance(Vector2f.Zero, rectangle));
         Assert.Equal(5f, Distance2D.Distance(new Vector2f(3, 4), default(Rect2f)));
         Assert.Equal(0f, Distance2D.SignedDistance(Vector2f.Zero, default));
         Assert.Equal(-1f, Distance2D.SignedDistance(default(Rect2f), rectangle));
-        Assert.Equal(5f, Distance2D.Distance(default(Rect2f), new Rect2f(new(3, 4), new(3, 4))));
+        Assert.Equal(5f, Distance2D.Distance(default(Rect2f), Rect2f.Builder.Create(new(3, 4), new(3, 4))));
     }
 
     [Fact]
     public void AnyRectangleContractGetsDistanceQueries()
     {
         var region = new Region(new(-1), new(1));
-        var other = new Rect2f(new(4, 5), new(5, 6));
+        var other = Rect2f.Builder.Create(new(4, 5), new(5, 6));
         Assert.Equal(-1f, region.SignedDistanceTo(Vector2f.Zero));
         Assert.Equal(0f, region.DistanceTo(Vector2f.Zero));
         Assert.Equal(5f, region.DistanceTo(other));
@@ -57,13 +57,13 @@ public sealed class Distance2DTests
     [Fact]
     public void IntervalContainmentNeedsEscapeDepthNotJustIntersectionLength()
     {
-        var inner = new Interval<float>(-1, 1);
-        var outer = new Interval<float>(-5, 5);
+        var inner = Interval<float>.Builder.Create(-1, 1);
+        var outer = Interval<float>.Builder.Create(-5, 5);
         Assert.Equal(-6f, Distance2D.SignedDistance(inner, outer, out var direction));
         Assert.Equal(-1f, direction);
         Assert.Equal(-6f, Distance2D.SignedDistance(outer, inner));
-        Assert.Equal(0f, Distance2D.SignedDistance(inner, new Interval<float>(1, 3)));
-        Assert.Equal(2f, Distance2D.Distance(inner, new Interval<float>(3, 5)));
+        Assert.Equal(0f, Distance2D.SignedDistance(inner, Interval<float>.Builder.Create(1, 3)));
+        Assert.Equal(2f, Distance2D.Distance(inner, Interval<float>.Builder.Create(3, 5)));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Primitives;
 using App2d.Contracts.World;
 using App2d.Core.Audio;
 using App2d.Presentation.Audio;
@@ -17,7 +18,7 @@ public sealed class MusicPerformanceTests(ITestOutputHelper output)
         var content = LevelContent2D.Empty with
         {
             Zones = [
-            new("a", "A", new(Vector2f.Zero, new(10,10))), new("b", "B", new(new(10,0),new(20,10)))]
+            new("a", "A", Rect2f.Builder.Create(Vector2f.Zero, new(10,10))), new("b", "B", Rect2f.Builder.Create(new(10,0),new(20,10)))]
         };
         var director = new WorldMusicDirector2D(soundtrack, static (_, _) => { });
         for (var i = 0; i < 1000; i++)

@@ -107,7 +107,7 @@ public sealed class Camera2D
     }
 
     /// <summary>The world-space bounding box of everything the viewport can see.</summary>
-    public Rect2f VisibleWorldBounds => new Rect2f(Vector2f.Zero, ViewportSize).TransformedBy(DeviceToWorldMatrix);
+    public Rect2f VisibleWorldBounds => Rect2f.Builder.Create(Vector2f.Zero, ViewportSize).TransformedBy(DeviceToWorldMatrix);
 
     public Vector2f WorldToDevice(Vector2f worldPoint) => WorldToDeviceTransform.TransformPoint(worldPoint);
 

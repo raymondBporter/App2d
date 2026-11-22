@@ -234,7 +234,7 @@ Finite convex shapes also implement `IConvexShape2D.GetSupportPoint`. The half-s
 row of `ShapeCollision2D` uses that support mapping for any convex shape against a
 transformed half-space, reporting the deepest support point projected onto the boundary.
 `Collision/Contacts/HalfSpaceCollision2D` exposes the same math as a standalone query
-returning a normal, penetration depth, and minimum translation vector; `ConstrainOutside`
+returning the same `CollisionContact2D` with the boundary point, normal and penetration depth. `ConstrainOutside`
 applies the MTV to the object's position. Raycasts remain separate because query hits
 describe a point, surface normal, and travel distance, while solver contacts describe
 penetration between two shapes.

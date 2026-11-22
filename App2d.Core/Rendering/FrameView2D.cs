@@ -17,7 +17,7 @@ public readonly record struct FrameView2D
         if (!frame.TryInverse(out var inverse))
             throw new ArgumentException("The view must have a finite inverse.", nameof(worldToDevice));
 
-        TargetBounds = new(Vector2f.Zero, targetSize);
+        TargetBounds = Rect2f.Builder.Create(Vector2f.Zero, targetSize);
         WorldToDeviceTransform = frame.ColumnMatrix;
         DeviceToWorldTransform = inverse.ColumnMatrix;
         PixelsPerWorldUnit = pixelsPerWorldUnit;

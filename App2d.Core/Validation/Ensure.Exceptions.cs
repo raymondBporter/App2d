@@ -13,9 +13,9 @@ public static partial class Ensure
     // These cold helpers allocate a fresh exception only on failure. Never cache exception instances.
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static void ThrowNullException(string? paramName = null)
+    public static void ThrowNullException(string? paramName = null, string? message = null)
     {
-        throw CreateNull(paramName);
+        throw CreateNull(paramName, message);
     }
 
     [DoesNotReturn]
@@ -32,14 +32,16 @@ public static partial class Ensure
         throw CreateOutOfRange(actualValue, message, paramName);
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static ArgumentException CreateInvalid(string message, string? paramName = null)
     {
         return new(message, paramName);
     }
 
-    public static ArgumentNullException CreateNull(string? paramName = null)
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static ArgumentNullException CreateNull(string? paramName = null, string? message = null)
     {
-        return new(paramName);
+        return new(paramName, message);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

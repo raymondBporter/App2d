@@ -7,7 +7,7 @@ public sealed class ConstraintMath1DTests
     [Fact]
     public void LimitEvaluationReportsSideTargetAndSignedError()
     {
-        var limits = new Interval<float>(2f, 8f);
+        var limits = Interval<float>.Builder.Create(2f, 8f);
 
         var below = ConstraintMath1D.EvaluateLimit(limits, 1f);
         Assert.Equal(ConstraintLimitState1D.Lower, below.State);
@@ -52,7 +52,7 @@ public sealed class ConstraintMath1DTests
         Assert.Equal(-2f, locked.Correction);
         Assert.Equal(ConstraintLimitState1D.Locked, ConstraintMath1D.EvaluateLimit(default, 0f).State);
 
-        var limits = new Interval<float>(2f, 8f);
+        var limits = Interval<float>.Builder.Create(2f, 8f);
         var lower = ConstraintMath1D.EvaluateLimit(limits, 2f);
         var upper = ConstraintMath1D.EvaluateLimit(limits, 8f);
         Assert.Equal(ConstraintLimitState1D.Lower, lower.State);

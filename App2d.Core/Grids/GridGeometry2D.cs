@@ -67,7 +67,7 @@ public readonly record struct GridGeometry2D
             (int)Math.Clamp(Math.Floor(((double)position.Y - Origin.Y) / CellSize.Height), 0, size.Height - 1));
     }
 
-    public Rect2f GetCellBounds(Vector2i cell) => new(
+    public Rect2f GetCellBounds(Vector2i cell) => Rect2f.Builder.Create(
         Corner(cell.X, cell.Y), Corner((double)cell.X + 1, (double)cell.Y + 1));
 
     public Vector2f GetCellCenter(Vector2i cell) => Corner(cell.X + .5, cell.Y + .5);
@@ -82,12 +82,12 @@ public readonly record struct GridGeometry2D
             Math.Round(((double)position.Y - Origin.Y) / CellSize.Height));
     }
 
-    public Rect2f GetBounds(GridSize2D size) => new(Corner(0, 0), Corner(size.Width, size.Height));
+    public Rect2f GetBounds(GridSize2D size) => Rect2f.Builder.Create(Corner(0, 0), Corner(size.Width, size.Height));
 
     public Rect2f GetBounds(GridCellRange2D cells)
     {
         Ensure.ThrowIf(cells.IsEmpty, "An empty cell range has no world bounds.", nameof(cells));
-        return new(Corner(cells.Minimum.X, cells.Minimum.Y),
+        return Rect2f.Builder.Create(Corner(cells.Minimum.X, cells.Minimum.Y),
             Corner((double)cells.Maximum.X + 1, (double)cells.Maximum.Y + 1));
     }
 

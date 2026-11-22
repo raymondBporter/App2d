@@ -39,7 +39,7 @@ public sealed class ShapeBoundsPrecisionTests
     {
         var halfSpace = HalfSpace2D.Builder.Create(new(nx, ny), offset);
         var bounds = ShapeBounds2D.Calculate(halfSpace);
-        Assert.Equal(new Rect2f(new(minX, minY), new(maxX, maxY)), bounds);
+        Assert.Equal(Rect2f.Builder.CreateUnbounded(new(minX, minY), new(maxX, maxY)), bounds);
         Assert.True(bounds.Contains(halfSpace.Normal * halfSpace.Offset));
         Assert.Equal(float.PositiveInfinity, halfSpace.Diameter);
     }
@@ -61,14 +61,14 @@ public sealed class ShapeBoundsPrecisionTests
         var halfSpace = HalfSpace2D.Builder.Create(new(scale, 0), 3 * scale);
         Assert.Equal(Vector2f.UnitX, halfSpace.Normal);
         Assert.Equal(3f, halfSpace.Offset, 5);
-        Assert.Equal(new Rect2f(new(float.NegativeInfinity), new(halfSpace.Offset, float.PositiveInfinity)), ShapeBounds2D.Calculate(halfSpace));
+        Assert.Equal(Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity), new(halfSpace.Offset, float.PositiveInfinity)), ShapeBounds2D.Calculate(halfSpace));
     }
 
     [Fact]
     public void HalfSpaceBoundsFollowReflectionShearAndCollapsedTransforms()
     {
         var halfSpace = HalfSpace2D.Builder.Create(Vector2f.UnitX, 3);
-        var reflectedBounds = new Rect2f(new(4, float.NegativeInfinity), new(float.PositiveInfinity));
+        var reflectedBounds = Rect2f.Builder.CreateUnbounded(new(4, float.NegativeInfinity), new(float.PositiveInfinity));
         var pose = Similarity2D.FromAxis(new(10, 20), -Vector2f.UnitX, mirror: true, scale: 2);
         Assert.Equal(reflectedBounds, ShapeBounds2D.CalculateTransformed(halfSpace, pose));
 
@@ -76,11 +76,11 @@ public sealed class ShapeBoundsPrecisionTests
         item.Transform.CopyFrom(Affine2D.FromMatrix(new(-2, 0, 0, 4, 10, 20)));
         Assert.Equal(reflectedBounds, item.WorldBounds);
         item.Transform.CopyFrom(Affine2D.FromMatrix(new(0, 0, 0, 2, 10, 20)));
-        Assert.Equal(new Rect2f(new(10, float.NegativeInfinity), new(10, float.PositiveInfinity)), item.WorldBounds);
+        Assert.Equal(Rect2f.Builder.CreateUnbounded(new(10, float.NegativeInfinity), new(10, float.PositiveInfinity)), item.WorldBounds);
 
         var diagonal = new SpatialObject2D(HalfSpace2D.Builder.FromPoint(new(0, 2), new(1, 1)));
         diagonal.Transform.CopyFrom(Affine2D.FromMatrix(new(1, 1, 1, 0, 0, 0)));
-        Assert.Equal(new Rect2f(new(float.NegativeInfinity), new(2, float.PositiveInfinity)), diagonal.WorldBounds);
+        Assert.Equal(Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity), new(2, float.PositiveInfinity)), diagonal.WorldBounds);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public sealed class ShapeBoundsPrecisionTests
         var circle = Circle2D.Builder.Create(2f);
         var pose = Similarity2D.FromAxis(new(10f, -4f), new(.8f, .6f), mirror: true, scale: 2f);
 
-        Assert.Equal(new Rect2f(new(6f, -8f), new(14f, 0f)), ShapeBounds2D.CalculateTransformed(circle, pose));
+        Assert.Equal(Rect2f.Builder.Create(new(6f, -8f), new(14f, 0f)), ShapeBounds2D.CalculateTransformed(circle, pose));
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public sealed class ShapeBoundsPrecisionTests
     {
         var center = new Vector2f(10, -5);
         var rectangle = Assert.IsType<Rectangle2D>(Rectangle2D.Builder.FromSize(4, 2, center).Validated());
-        Assert.Equal(new Rect2f(new(8, -6), new(12, -4)), ShapeBounds2D.Calculate(rectangle));
+        Assert.Equal(Rect2f.Builder.Create(new(8, -6), new(12, -4)), ShapeBounds2D.Calculate(rectangle));
         Assert.IsType<AxisAlignedRectangle2D>(AxisAlignedRectangle2D.Builder.Create(4, 2, center).Validated());
         Assert.Equal(rectangle.Center - rectangle.HalfSize, AxisAlignedRectangle2D.Builder.Create(4, 2, center).Min);
         Assert.Equal(rectangle.Center + rectangle.HalfSize, ShapeBounds2D.Calculate(RoundedRectangle2D.Builder.Create(4, 2, .5f, center)).Max);

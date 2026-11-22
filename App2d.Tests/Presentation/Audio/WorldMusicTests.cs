@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Primitives;
 using App2d.Contracts.World;
 using App2d.Core.Audio;
 using App2d.Levels;
@@ -16,8 +17,8 @@ public sealed class WorldMusicTests
         var content = LevelContent2D.Empty with
         {
             Zones = [
-            new("a", "A", new(Vector2f.Zero, new(10, 10))),
-            new("b", "B", new(new(10, 0), new(20, 10)))]
+            new("a", "A", Rect2f.Builder.Create(Vector2f.Zero, new(10, 10))),
+            new("b", "B", Rect2f.Builder.Create(new(10, 0), new(20, 10)))]
         };
         var initial = new MusicSelection2D("orchestra", "explore");
         var target = change == "mood" ? new MusicSelection2D("orchestra", "combat") : new("rock", "drive");
@@ -62,8 +63,8 @@ public sealed class WorldMusicTests
         var content = LevelContent2D.Empty with
         {
             Zones = [
-            new("a", "A", new(Vector2f.Zero, new(10, 10))),
-            new("b", "B", new(new(10, 0), new(20, 10)))]
+            new("a", "A", Rect2f.Builder.Create(Vector2f.Zero, new(10, 10))),
+            new("b", "B", Rect2f.Builder.Create(new(10, 0), new(20, 10)))]
         };
         var soundtrack = new WorldSoundtrack2D(new Dictionary<string, MusicCue2D> { ["orchestra"] = MusicStreamTests.Cue() },
             new("orchestra", "explore"), new Dictionary<string, MusicSelection2D>());
@@ -80,8 +81,8 @@ public sealed class WorldMusicTests
     [Fact]
     public void ZoneDwellAvoidsBoundaryChatterAndFallbackAndOverridesWork()
     {
-        var a = new WorldZone2D("a", "A", new(Vector2f.Zero, new(10, 10)));
-        var b = new WorldZone2D("b", "B", new(new(10, 0), new(20, 10)));
+        var a = new WorldZone2D("a", "A", Rect2f.Builder.Create(Vector2f.Zero, new(10, 10)));
+        var b = new WorldZone2D("b", "B", Rect2f.Builder.Create(new(10, 0), new(20, 10)));
         var content = LevelContent2D.Empty with
         {
             Zones = [a, b]

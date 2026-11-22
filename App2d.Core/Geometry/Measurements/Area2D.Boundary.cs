@@ -118,14 +118,14 @@ public static partial class Area2D
         {
             if (preferOther)
             {
-                covered.Add(new(0d, Math.Tau));
+                covered.Add(Interval<double>.Builder.Create(0d, Math.Tau));
             }
 
             return;
         }
         if (distance + circle.Radius <= other.Radius)
         {
-            covered.Add(new(0d, Math.Tau));
+            covered.Add(Interval<double>.Builder.Create(0d, Math.Tau));
             return;
         }
         if (distance >= circle.Radius + other.Radius || distance + other.Radius <= circle.Radius)
@@ -137,10 +137,10 @@ public static partial class Area2D
         var halfAngle = Math.Acos(Math.Clamp(cosine, -1d, 1d));
         var start = Angles.WrapPositive(delta.AngleRadians - halfAngle);
         var end = start + 2d * halfAngle;
-        covered.Add(new(start, Math.Min(end, Math.Tau)));
+        covered.Add(Interval<double>.Builder.Create(start, Math.Min(end, Math.Tau)));
         if (end > Math.Tau)
         {
-            covered.Add(new(0d, end - Math.Tau));
+            covered.Add(Interval<double>.Builder.Create(0d, end - Math.Tau));
         }
     }
 
@@ -152,7 +152,7 @@ public static partial class Area2D
         {
             if (preferOther)
             {
-                covered.Add(new(0d, Math.Tau));
+                covered.Add(Interval<double>.Builder.Create(0d, Math.Tau));
             }
 
             return;
@@ -246,7 +246,7 @@ public static partial class Area2D
             var point = curve.Origin - other.Origin + curve.PointAt((low + high) * .5d);
             if (other.ContainsInterior(point))
             {
-                covered.Add(new(low, high));
+                covered.Add(Interval<double>.Builder.Create(low, high));
             }
         }
     }
@@ -333,7 +333,7 @@ public static partial class Area2D
     {
         if (low < high)
         {
-            covered.Add(new(low, high));
+            covered.Add(Interval<double>.Builder.Create(low, high));
         }
     }
 

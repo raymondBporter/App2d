@@ -148,7 +148,7 @@ The aliases change spelling, not storage or conversions.
 ordinary member; nothing forwards to a helper class. `Rect2d` aliases `Rect2<Vector2d, double>`. For example:
 
 ```csharp
-var precise = new Rect2d(new(16_777_217, -4), new(16_777_220, 8));
+var precise = Rect2d.Builder.Create(new(16_777_217, -4), new(16_777_220, 8));
 double width = precise.Width; // 3, with no float rounding
 Vector2d center = precise.Center;
 bool contains = precise.Contains(center);
@@ -173,12 +173,12 @@ and is the one shape that never rotates. `ShapeTransforms2D.Posed(shape, Similar
 a translation, rotation, uniform scale and optional mirror and returns a shape of the same kind.
 
 `Interval<T>` (in `App2d.Core.Mathematics`, next to the vectors) is a closed `[Min, Max]` range and owns every interval
-formula as an ordinary member: `limits.Contains(3f)`, `limits.Length`, `limits.Overlaps(new(2, 5))`.
+formula as an ordinary member: `limits.Contains(3f)`, `limits.Length`, `limits.Overlaps(Interval<float>.Builder.Create(2, 5))`.
 Nothing forwards to a helper class. Physics and rig limits use `Interval<float>`.
-It validates ordered, non-NaN endpoints and allows negative/positive infinity for an unbounded lower/upper end.
-Use `new Interval<float>(min, max)` for a bounded range and `Interval<T>.Singleton(value)` for a single value.
-The constructor calls `Interval<T>.Validate(min, max)`; `Interval<T>.IsValid(min, max)` is the non-throwing check,
-and an existing value (such as `default` or a deserialized one) can call `Validate()`.
+Use `Interval<float>.Builder.Create(min, max)` for a finite range and `Interval<T>.Singleton(value)` for a single value.
+`Builder.CreateUnbounded(min, max)` also accepts outward infinite endpoints. Both builders check endpoint order and reject NaN.
+The JSON constructor stores both endpoints. After loading, call `Validate()` for a finite field or
+`Validate(allowUnbounded: true)` for an open-ended field.
 The floating-point factories `Interval.Entire<float>()`, `Interval.AtLeast(2f)` and `Interval.AtMost(8f)` construct
 unbounded ranges; `IsBoundedBelow`, `IsBoundedAbove`, `IsEntire` and `IsSingleton` describe their bounds.
 Interval clamping follows the shared numeric arithmetic, including NaN propagation. Constraint-specific finite-coordinate
@@ -199,7 +199,7 @@ public readonly record struct Band(double Min, double Max) : IInterval<double>;
 var band = Interval<double>.From(new Band(2, 5));
 bool contains = band.Contains(3d);
 double length = band.Length;
-bool overlaps = band.Overlaps(new(5, 8));
+bool overlaps = band.Overlaps(Interval<double>.Builder.Create(5, 8));
 ```
 
 `Distance(other)` is the nearest-point distance, returning zero for touching or overlapping intervals.

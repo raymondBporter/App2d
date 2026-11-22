@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 
 namespace App2d.Tests.Rendering;
@@ -15,7 +16,7 @@ public sealed class ParallaxLayer2DTests
             ReferenceViewportHeight = 720f,
             Zoom = 1.35f,
             Rotation = 0.3f,
-            WorldBounds = new(new(-2000f), new(2000f)),
+            WorldBounds = Rect2f.Builder.Create(new(-2000f), new(2000f)),
             Position = new(800f, -400f)
         };
         camera.SetViewport(1280, 720);

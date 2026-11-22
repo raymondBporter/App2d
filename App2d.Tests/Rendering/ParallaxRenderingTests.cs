@@ -146,7 +146,7 @@ public sealed class ParallaxRenderingTests
     private sealed class TreeGame : Game2D
     {
         private readonly GiantTreeVisual2D _tree = new(new GiantTree2D(Vector2f.Zero,
-            new GiantTreeSettings2D { Height = 1000f, TrunkWidth = 60f, BranchGap = new(200f, 200f) }, 42));
+            new GiantTreeSettings2D { Height = 1000f, TrunkWidth = 60f, BranchGap = Interval<float>.Builder.Create(200f, 200f) }, 42));
 
         public TreeGame() => Camera.Position = new(0f, 100f);
 

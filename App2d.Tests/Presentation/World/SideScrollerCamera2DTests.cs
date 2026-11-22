@@ -9,7 +9,7 @@ public sealed class SideScrollerCamera2DTests
     [Fact]
     public void FollowAndLevelClampingStayConsistentAcrossWindowSizes()
     {
-        var bounds = new Rect2f(new Vector2f(-2000f), new Vector2f(2000f));
+        var bounds = Rect2f.Builder.Create(new Vector2f(-2000f), new Vector2f(2000f));
         var small = new Camera2D { ReferenceViewportHeight = 1080f };
         var large = new Camera2D { ReferenceViewportHeight = 1080f };
         small.SetViewport(960, 540);
@@ -65,7 +65,7 @@ public sealed class SideScrollerCamera2DTests
     [Fact]
     public void ShakeDoesNotExposeSpaceBelowLevelBounds()
     {
-        var levelBounds = new Rect2f(new Vector2f(-5_000f), new Vector2f(5_000f));
+        var levelBounds = Rect2f.Builder.Create(new Vector2f(-5_000f), new Vector2f(5_000f));
         var camera = new Camera2D();
         var controller = new SideScrollerCamera2D(
             camera,
@@ -141,7 +141,7 @@ public sealed class SideScrollerCamera2DTests
         var camera = new Camera2D();
         var controller = new SideScrollerCamera2D(
             camera,
-            new Rect2f(new Vector2f(-5_000f), new Vector2f(5_000f)),
+            Rect2f.Builder.Create(new Vector2f(-5_000f), new Vector2f(5_000f)),
             initialPlayerPosition ?? Vector2f.Zero);
         return (controller, camera);
     }

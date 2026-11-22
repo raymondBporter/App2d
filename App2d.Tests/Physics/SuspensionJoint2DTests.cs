@@ -61,7 +61,7 @@ public sealed class SuspensionJoint2DTests
         var joint = new WheelJoint2D(frame, wheel, Vector2f.Zero, Vector2f.Zero, Vector2f.UnitY)
         {
             IsSpringEnabled = false,
-            TranslationLimits = new Interval<float>(0f, 28f)
+            TranslationLimits = Interval<float>.Builder.Create(0f, 28f)
         };
         world.Constraints.Add(joint);
         wheel.WorldObject.Position = Vector2f.UnitY * position;
@@ -189,7 +189,7 @@ public sealed class SuspensionJoint2DTests
         var shock = new SpringDamperJoint2D(frame, arm, Vector2f.Zero, Vector2f.Zero, 5f)
         {
             IsEnabled = false,
-            LengthLimits = new Interval<float>(4f, 6f)
+            LengthLimits = Interval<float>.Builder.Create(4f, 6f)
         };
         world.Constraints.Add(shock);
         world.Step(Dt);

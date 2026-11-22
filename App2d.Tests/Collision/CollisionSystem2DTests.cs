@@ -27,7 +27,7 @@ public sealed class CollisionSystem2DTests
         for (var i = 0; i < 40; i++)
         {
             var min = new Vector2f(random.Next(-10, 10) * 16, random.Next(-6, 6) * 16);
-            var query = new Rect2f(min, min + new Vector2f(i % 3 * 16, i % 4 * 16));
+            var query = Rect2f.Builder.Create(min, min + new Vector2f(i % 3 * 16, i % 4 * 16));
             system.QueryBounds(query, results);
             var expected = system.Colliders.Where(c => query.Intersects(c.WorldObject.WorldBounds)).Select(c => c.Id).Order();
             Assert.Equal(expected, results.Select(c => c.Id).Order());
@@ -44,7 +44,7 @@ public sealed class CollisionSystem2DTests
         };
         var collider = system.AddCollider(shape);
         var results = new List<Collider2D>();
-        system.QueryBounds(new Rect2f(new(49, -51), new(51, -49)), results);
+        system.QueryBounds(Rect2f.Builder.Create(new(49, -51), new(51, -49)), results);
         Assert.Same(collider, Assert.Single(results));
         system.QueryBounds(Rect2f.Unbounded, results);
         Assert.Same(collider, Assert.Single(results));
@@ -74,22 +74,22 @@ public sealed class CollisionSystem2DTests
         var results = new List<Collider2D>();
 
         Assert.Equal(1, system.QueryBounds(
-            new Rect2f(new Vector2f(-5f), new Vector2f(5f)),
+            Rect2f.Builder.Create(new Vector2f(-5f), new Vector2f(5f)),
             results,
             ActorLayer));
         Assert.Equal(0, system.QueryBounds(
-            new Rect2f(new Vector2f(-5f), new Vector2f(5f)),
+            Rect2f.Builder.Create(new Vector2f(-5f), new Vector2f(5f)),
             results,
             WorldLayer));
 
         worldObject.Position = new Vector2f(100f, 0f);
 
         Assert.Equal(0, system.QueryBounds(
-            new Rect2f(new Vector2f(-5f), new Vector2f(5f)),
+            Rect2f.Builder.Create(new Vector2f(-5f), new Vector2f(5f)),
             results,
             ActorLayer));
         Assert.Equal(1, system.QueryBounds(
-            new Rect2f(new Vector2f(95f, -5f), new Vector2f(105f, 5f)),
+            Rect2f.Builder.Create(new Vector2f(95f, -5f), new Vector2f(105f, 5f)),
             results,
             ActorLayer));
     }
@@ -102,13 +102,13 @@ public sealed class CollisionSystem2DTests
         system.AddCollider(worldObject, ColliderMobility2D.Static);
         var results = new List<Collider2D>();
         system.QueryBounds(
-            new Rect2f(new Vector2f(-5f), new Vector2f(5f)),
+            Rect2f.Builder.Create(new Vector2f(-5f), new Vector2f(5f)),
             results);
 
         worldObject.Position = new Vector2f(100f, 0f);
 
         Assert.Equal(1, system.QueryBounds(
-            new Rect2f(new Vector2f(95f, -5f), new Vector2f(105f, 5f)),
+            Rect2f.Builder.Create(new Vector2f(95f, -5f), new Vector2f(105f, 5f)),
             results));
     }
 

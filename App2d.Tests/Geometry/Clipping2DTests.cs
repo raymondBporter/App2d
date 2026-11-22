@@ -7,7 +7,7 @@ namespace App2d.Tests.Geometry;
 
 public sealed class Clipping2DTests
 {
-    private static readonly Rect2f Rectangle = new(new(-2, -1), new(2, 1));
+    private static readonly Rect2f Rectangle = Rect2f.Builder.Create(new(-2, -1), new(2, 1));
 
     [Fact]
     public void LineClipsToRectangleIncludingAnEdge()
@@ -93,7 +93,7 @@ public sealed class Clipping2DTests
     [Fact]
     public void ClippingRejectsUnboundedRectanglesAndShortOutput()
     {
-        var unbounded = new Rect2f(new(float.NegativeInfinity, -1), new(float.PositiveInfinity, 1));
+        var unbounded = Rect2f.Builder.CreateUnbounded(new(float.NegativeInfinity, -1), new(float.PositiveInfinity, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(Vector2f.Zero, Vector2f.UnitX)
             .TryClipToRectangle(unbounded, out _, out _));
         Assert.ThrowsAny<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(unbounded, Vector2f.UnitX, 0, new Vector2f[5]));

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Primitives;
 using App2d.Contracts.World;
 using App2d.Core.Json;
 using System.Collections.Immutable;
@@ -36,7 +37,7 @@ public static class WorldZoneFile2D
                 }
 
                 var zone = new WorldZone2D(entry.Id, entry.Name,
-                    new(new(entry.MinX, entry.MinY), new(entry.MaxX, entry.MaxY)), entry.Priority);
+                    Rect2f.Builder.Create(new(entry.MinX, entry.MinY), new(entry.MaxX, entry.MaxY)), entry.Priority);
                 if (!ids.Add(zone.Id))
                 {
                     throw new InvalidDataException($"Duplicate zone ID '{zone.Id}'.");
