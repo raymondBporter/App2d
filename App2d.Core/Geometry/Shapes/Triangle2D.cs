@@ -7,10 +7,12 @@ namespace App2d.Core.Geometry.Shapes;
 /// <summary>A filled triangle in local space. Either perimeter winding is accepted; collinear vertices are rejected.</summary>
 public readonly partial record struct Triangle2D : IConvexShape2D, ITriangle<Triangle2D, Vector2f>
 {
+    public const string Kind = "triangle";
+
     static Triangle2D ITriangle<Triangle2D, Vector2f>.Create(Vector2f a, Vector2f b, Vector2f c) => Builder.Create(a, b, c);
 
     private const double EdgeTolerance = 0.0001;
-    private bool CounterClockwise => new Vector2d(A).Orientation(new(B), new(C)) > 0;
+    private bool CounterClockwise => this.SignedAreaTwice() > 0;
 
     /// <summary>Creates a triangle from three finite, non-collinear vertices.</summary>
     /// <param name="a">The first vertex.</param>
@@ -33,7 +35,7 @@ public readonly partial record struct Triangle2D : IConvexShape2D, ITriangle<Tri
     public Vector2f C { get; init; }
 
     /// <inheritdoc/>
-    public float Area => (float)(Math.Abs(new Vector2d(A).Orientation(new(B), new(C))) * .5);
+    public float Area => (float)this.GetArea();
 
     /// <inheritdoc/>
     public float Diameter => Diameter2D.Triangle(A, B, C);

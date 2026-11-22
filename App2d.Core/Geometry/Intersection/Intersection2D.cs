@@ -163,10 +163,7 @@ public static class Intersection2D
             throw new ArgumentException("The line or ray needs a valid direction.", nameof(direction));
         }
 
-        Ensure.ThrowIfNull(rectangle);
-        Ensure.Finite(rectangle.Min);
-        Ensure.Finite(rectangle.Max);
-        Ensure.LessThanOrEqual(rectangle.Min, rectangle.Max);
+        rectangle.ValidateClippingBounds();
 
         var min = forwardOnly ? 0d : double.NegativeInfinity;
         var max = double.PositiveInfinity;

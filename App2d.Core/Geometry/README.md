@@ -393,8 +393,7 @@ it throws for missing or ambiguous results.
 
 Animation's scalar time/value functions are constructed by `Easingf.Bezier` or `Easingf.TimedBezier` and sampled
 as `ProgressMapf` values. The factories share the scalar/vector `BezierMath` basis with geometric curves.
-Existing keyframe curve objects retain their `x1`, `y1`, `x2`, `y2`, `absolute` JSON fields through the plain
-`BezierParameters` record. Animation no longer needs a second geometric key-curve class or editor conversion API.
+Scalar interpolator recipes read and write their Bezier controls in `Mathematics/Serialization`.
 
 ## Shapes
 
@@ -460,11 +459,11 @@ There is no definition hierarchy, stateful builder hierarchy, or builder-to-runt
 Polygon triangulation, convex pieces, spline knots and derivatives, and composite union area are derived query data.
 They are calculated on demand and cached against immutable source snapshots. Source changes through `with` use
 the new parameters instead of stale constructor caches. Computed properties such as area, diameter, and arc endpoints
-are excluded from the JSON schema. `ShapeKinds2D` and `CurveKinds2D` list the kind tags.
+are excluded from the JSON schema. Each built-in shape and curve declares its own `Kind` constant.
+`GeometryJson2D.ShapeKinds` and `CurveKinds` enumerate them in their serialized catalog order.
 `Rectangle2D` uses `"kind": "rectangle"`; `AxisAlignedRectangle2D` uses `"kind": "axis-aligned-rectangle"`.
 The kind alone selects the rectangle type, including inside composite parts; there is no `axisAligned` flag.
-Geometry values use `System.Numerics.Vector2` directly. `IO.Vector2JsonConverter` is registered in geometry and character authoring
-settings and preserves the existing `{ "x": ..., "y": ... }` coordinate format. It can also be registered in other
+Geometry values use `Vector2f`. The geometry profile registers `Mathematics.Serialization.Vector2JsonConverter` for the `{ "x": ..., "y": ... }` coordinate format. It can also be registered in other
 `JsonSerializerOptions.Converters` collections.
 
 `ShapeVertices2D` exposes exact local convex cores and sampled drawing outlines without allocating:

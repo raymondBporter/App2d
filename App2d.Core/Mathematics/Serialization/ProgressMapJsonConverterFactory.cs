@@ -68,8 +68,6 @@ public sealed class ProgressMapJsonConverterFactory : JsonConverterFactory
             var kind = fields.Text("kind");
             var result = kind switch
             {
-                "linear" or "reverse" or "ping-pong" or "reverse-ping-pong" or "smooth" or "smoother" or "smoothest" or "sine" or "step"
-                    or "quad" or "cubic" or "quart" or "quint" => Primitive(kind),
                 "power" => Easing<TReal>.Power(fields.Required<int>("degree")),
                 "smoothstep" => Easing<TReal>.SmoothStep(fields.Required<int>("order")),
                 "constant" => ProgressMap<TReal>.Constant(fields.Required<TReal>("value"),
@@ -84,7 +82,7 @@ public sealed class ProgressMapJsonConverterFactory : JsonConverterFactory
                 "timed-bezier" => Easing<TReal>.TimedBezier(fields.Required<TReal>("begin"), fields.Required<TReal>("x1"), fields.Required<TReal>("y1"),
                     fields.Required<TReal>("x2"), fields.Required<TReal>("y2"), fields.Required<TReal>("end")),
                 "registered" => _names.TryGetValue(fields.Text("name"), out var named) ? named : throw new JsonException("Unknown registered progress function."),
-                _ => throw new JsonException($"Unknown progress kind '{kind}'.")
+                _ => Primitive(kind)
             };
             fields.Complete();
             return result;

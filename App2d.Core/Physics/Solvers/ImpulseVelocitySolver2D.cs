@@ -19,7 +19,7 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
         var firstArm = contact.Geometry.Point - first.WorldCenterOfMass;
         var secondArm = contact.Geometry.Point - second.WorldCenterOfMass;
 
-        var relativeVelocity = PointVelocity(first, firstArm) - PointVelocity(second, secondArm);
+        var relativeVelocity = first.VelocityAtOffset(firstArm) - second.VelocityAtOffset(secondArm);
         var normalSpeed = Vector2f.Dot(relativeVelocity, normal);
         if (normalSpeed >= 0f)
         {
@@ -47,7 +47,7 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
         }
 
         var tangent = normal.PerpCcw;
-        relativeVelocity = PointVelocity(first, firstArm) - PointVelocity(second, secondArm);
+        relativeVelocity = first.VelocityAtOffset(firstArm) - second.VelocityAtOffset(secondArm);
         var tangentSpeed = Vector2f.Dot(relativeVelocity, tangent);
         var firstArmCrossTangent = firstArm.Cross(tangent);
         var secondArmCrossTangent = secondArm.Cross(tangent);
@@ -62,9 +62,6 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
         var tangentImpulse = Math.Clamp(-tangentSpeed / tangentEffectiveMass, -friction * normalImpulse, friction * normalImpulse);
         Apply(first, second, firstArm, secondArm, tangent * tangentImpulse);
     }
-
-    // ω × r in 2D is ω * PerpCcw(r).
-    private static Vector2f PointVelocity(RigidBody2D body, Vector2f arm) => body.LinearVelocity + body.AngularVelocity * arm.PerpCcw;
 
     private static void Apply(RigidBody2D first, RigidBody2D second, Vector2f firstArm, Vector2f secondArm, Vector2f impulse)
     {

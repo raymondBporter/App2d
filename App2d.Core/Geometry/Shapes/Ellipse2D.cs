@@ -11,6 +11,8 @@ namespace App2d.Core.Geometry.Shapes;
 /// </summary>
 public readonly partial record struct Ellipse2D : IConvexShape2D, IInterpolatable<Ellipse2D, float>
 {
+    public const string Kind = "ellipse";
+
     private readonly Vector2f _axis;
 
     /// <summary>The parts of an ellipse an interpolator can drive on their own: one radius for a blink, the centre for a glance.</summary>

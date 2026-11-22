@@ -9,6 +9,8 @@ namespace App2d.Core.Geometry.Curves;
 /// </summary>
 public readonly partial record struct BSpline2D : ICurve2D
 {
+    public const string Kind = "b-spline";
+
     private readonly Vector2f[]? _controlPoints;
     private static readonly ConditionalWeakTable<Vector2f[], Dictionary<int, Prepared>> PreparedCurves = [];
 

@@ -114,7 +114,7 @@ public static partial class Gjk2D
                 b = ClosestPoint2D.OnSegment(a, b, end);
                 if (Dot(edge, edge) > 0d)
                 {
-                    fallback = Vector2f.Normalize(new(-edge.Y, edge.X));
+                    fallback = Vector2f.Normalize(edge.PerpCcw);
                 }
             }
             var delta = a - b;
@@ -332,7 +332,7 @@ public static partial class Gjk2D
             // Cardinal directions can all select the same diagonal endpoints when support projections tie.
             // Query both sides of the actual simplex segment to distinguish a thin core from a full solid.
             var edge = simplex[1].Difference - simplex[0].Difference;
-            var perpendicular = Vector2f.Normalize(new Vector2f(-edge.Y, edge.X));
+            var perpendicular = Vector2f.Normalize(edge.PerpCcw);
             seeds[seedCount++] = Support(first, second, perpendicular, origin);
             seeds[seedCount++] = Support(first, second, -perpendicular, origin);
         }

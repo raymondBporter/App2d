@@ -39,6 +39,9 @@ public static partial class ShapeCollision2D
     {
         public static CollisionResult None => default;
         public static CollisionResult From(CollisionContact2D contact) => new(true, contact);
+        public static CollisionResult From(ConvexQueryResult2D query) => query.SignedDistance < 0f
+            ? From(new CollisionContact2D(query.PointOnSecond, query.Normal, -query.SignedDistance))
+            : None;
         public CollisionResult Flipped() => HasContact ? From(Contact.Flipped()) : None;
     }
 
@@ -72,12 +75,12 @@ public static partial class ShapeCollision2D
 
         if (first is HalfSpace2D firstPlane && second is IConvexShape2D secondConvex)
         {
-            return ConvexVsHalfSpace(secondConvex, secondPose, firstPlane, firstPose).Flipped();
+            return CollisionResult.From(ShapeHalfSpaceQuery2D.Query(secondConvex, secondPose, firstPlane, firstPose)).Flipped();
         }
 
         if (second is HalfSpace2D secondPlane && first is IConvexShape2D firstConvex)
         {
-            return ConvexVsHalfSpace(firstConvex, firstPose, secondPlane, secondPose);
+            return CollisionResult.From(ShapeHalfSpaceQuery2D.Query(firstConvex, firstPose, secondPlane, secondPose));
         }
 
         if (first is not IConvexShape2D convexFirst || second is not IConvexShape2D convexSecond)
@@ -85,9 +88,6 @@ public static partial class ShapeCollision2D
             return CollisionResult.None;
         }
 
-        var query = ShapeConvexQuery2D.Query(convexFirst, firstPose, convexSecond, secondPose);
-        return query.SignedDistance < 0f
-            ? CollisionResult.From(new CollisionContact2D(query.PointOnSecond, query.Normal, -query.SignedDistance))
-            : CollisionResult.None;
+        return CollisionResult.From(ShapeConvexQuery2D.Query(convexFirst, firstPose, convexSecond, secondPose));
     }
 }

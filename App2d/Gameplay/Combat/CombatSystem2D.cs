@@ -1,11 +1,10 @@
-using App2d.Gameplay.Characters;
 using App2d.Contracts.Combat;
 using App2d.Core;
-using App2d.Core.Characters;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
+using App2d.Gameplay.Characters;
 
 namespace App2d.Gameplay.Combat;
 

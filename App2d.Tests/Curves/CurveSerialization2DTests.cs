@@ -10,24 +10,24 @@ public sealed class CurveSerialization2DTests
 {
     public static TheoryData<string> BuiltInCurves =>
     [
-        CurveKinds2D.Line,
-        CurveKinds2D.Polyline,
-        CurveKinds2D.RoundedPolyline,
-        CurveKinds2D.Arc,
-        CurveKinds2D.QuadraticBezier,
-        CurveKinds2D.CubicBezier,
-        CurveKinds2D.BSpline
+        LineSegmentCurve2D.Kind,
+        PolylineCurve2D.Kind,
+        RoundedPolylineCurve2D.Kind,
+        Arc2D.Kind,
+        QuadraticBezier2D.Kind,
+        CubicBezier2D.Kind,
+        BSpline2D.Kind
     ];
 
     private static ICurve2D CreateCurve(string kind) => kind switch
     {
-        CurveKinds2D.Line => LineSegmentCurve2D.Builder.Create(new(-2, 1), new(3, 4)),
-        CurveKinds2D.Polyline => PolylineCurve2D.Builder.Create([new(-2, 1), new(1, 3), new(3, 4)]),
-        CurveKinds2D.RoundedPolyline => RoundedPolylineCurve2D.Builder.Create([new(0, 0), new(1, 0), new(1, 2)], .7f),
-        CurveKinds2D.Arc => Arc2D.Builder.Create(new(1, -2), 3, .25f, -2.5f),
-        CurveKinds2D.QuadraticBezier => QuadraticBezier2D.Builder.Create(new(0, 0), new(2, 3), new(4, 0)),
-        CurveKinds2D.CubicBezier => CubicBezier2D.Builder.Create(new(0, 0), new(1, 3), new(3, -2), new(5, 1)),
-        CurveKinds2D.BSpline => BSpline2D.Builder.Create([new(0, 0), new(1, 2), new(2, -1), new(3, 2), new(4, 0)]),
+        LineSegmentCurve2D.Kind => LineSegmentCurve2D.Builder.Create(new(-2, 1), new(3, 4)),
+        PolylineCurve2D.Kind => PolylineCurve2D.Builder.Create([new(-2, 1), new(1, 3), new(3, 4)]),
+        RoundedPolylineCurve2D.Kind => RoundedPolylineCurve2D.Builder.Create([new(0, 0), new(1, 0), new(1, 2)], .7f),
+        Arc2D.Kind => Arc2D.Builder.Create(new(1, -2), 3, .25f, -2.5f),
+        QuadraticBezier2D.Kind => QuadraticBezier2D.Builder.Create(new(0, 0), new(2, 3), new(4, 0)),
+        CubicBezier2D.Kind => CubicBezier2D.Builder.Create(new(0, 0), new(1, 3), new(3, -2), new(5, 1)),
+        BSpline2D.Kind => BSpline2D.Builder.Create([new(0, 0), new(1, 2), new(2, -1), new(3, 2), new(4, 0)]),
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 

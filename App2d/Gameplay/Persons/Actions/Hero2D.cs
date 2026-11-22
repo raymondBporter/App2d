@@ -1,10 +1,9 @@
-using App2d.Gameplay.Characters;
 using App2d.Contracts.Combat;
 using App2d.Core.Characters;
-using App2d.Core.Geometry;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Kinematics;
+using App2d.Gameplay.Characters;
 
 namespace App2d.Gameplay.Persons.Actions;
 

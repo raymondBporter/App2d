@@ -10,6 +10,8 @@ namespace App2d.Core.Geometry.Shapes;
 /// <summary>A filled simple polygon, including concave outlines, in either winding.</summary>
 public readonly partial record struct SimplePolygon2D : IShape2D, IInterpolatable<SimplePolygon2D, float>
 {
+    public const string Kind = "simple-polygon";
+
     /// <summary>
     /// Moves each corner in a straight line to the corner with the same number, so both polygons need the same number of
     /// corners. Nothing checks the shape on the way: corners that cross each other give an outline that crosses itself.

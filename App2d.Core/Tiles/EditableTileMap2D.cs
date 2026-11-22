@@ -139,11 +139,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     /// <summary>Copies a chunk's tiles into <paramref name="destination"/> in row-major order.</summary>
     public ReadOnlySpan<TileKind2D> GetChunkTiles(TileChunk2D chunk, Span<TileKind2D> destination)
     {
-        ValidateChunk(chunk);
-        var startX = chunk.X * ChunkSize;
-        var startY = chunk.Y * ChunkSize;
-        var width = ChunkWidth(chunk.X);
-        var height = ChunkHeight(chunk.Y);
+        var (startX, startY, width, height) = GetChunkRegion(chunk);
         Ensure.ThrowIfTooShort(destination, width * height);
 
         for (var y = 0; y < height; y++)
@@ -160,11 +156,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     /// <summary>Copies a chunk's packed one-byte cells in row-major order.</summary>
     public ReadOnlySpan<TileCell2D> GetChunkCells(TileChunk2D chunk, Span<TileCell2D> destination)
     {
-        ValidateChunk(chunk);
-        var startX = chunk.X * ChunkSize;
-        var startY = chunk.Y * ChunkSize;
-        var width = ChunkWidth(chunk.X);
-        var height = ChunkHeight(chunk.Y);
+        var (startX, startY, width, height) = GetChunkRegion(chunk);
         Ensure.ThrowIfTooShort(destination, width * height);
 
         for (var y = 0; y < height; y++)
@@ -179,11 +171,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     /// <summary>Writes a chunk's tiles from <paramref name="source"/> in row-major order.</summary>
     public void SetChunkTiles(TileChunk2D chunk, ReadOnlySpan<TileKind2D> source)
     {
-        ValidateChunk(chunk);
-        var startX = chunk.X * ChunkSize;
-        var startY = chunk.Y * ChunkSize;
-        var width = ChunkWidth(chunk.X);
-        var height = ChunkHeight(chunk.Y);
+        var (startX, startY, width, height) = GetChunkRegion(chunk);
         Ensure.ThrowIfTooShort(source, width * height);
 
         for (var y = 0; y < height; y++)
@@ -201,11 +189,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     /// <summary>Writes a chunk's packed one-byte cells.</summary>
     public void SetChunkCells(TileChunk2D chunk, ReadOnlySpan<TileCell2D> source)
     {
-        ValidateChunk(chunk);
-        var startX = chunk.X * ChunkSize;
-        var startY = chunk.Y * ChunkSize;
-        var width = ChunkWidth(chunk.X);
-        var height = ChunkHeight(chunk.Y);
+        var (startX, startY, width, height) = GetChunkRegion(chunk);
         Ensure.ThrowIfTooShort(source, width * height);
 
         for (var index = 0; index < width * height; index++)
@@ -233,12 +217,7 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
 
     public IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(TileChunk2D chunk)
     {
-        ValidateChunk(chunk);
-
-        var startX = chunk.X * ChunkSize;
-        var startY = chunk.Y * ChunkSize;
-        var width = ChunkWidth(chunk.X);
-        var height = ChunkHeight(chunk.Y);
+        var (startX, startY, width, height) = GetChunkRegion(chunk);
 
         _meshBuffer.Clear();
         TileRectangleMesher2D.Mesh(
@@ -258,12 +237,13 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         return rectangles;
     }
 
-    private void ValidateChunk(TileChunk2D chunk)
+    private (int X, int Y, int Width, int Height) GetChunkRegion(TileChunk2D chunk)
     {
         if (!ChunkGridSize.Contains(chunk.X, chunk.Y))
         {
             Ensure.ThrowOutOfRange(chunk, "Chunk coordinates must be inside the map.");
         }
+        return (chunk.X * ChunkSize, chunk.Y * ChunkSize, ChunkWidth(chunk.X), ChunkHeight(chunk.Y));
     }
 
     private static string[] ValidateTilesets(IReadOnlyList<string> tilesetIds)

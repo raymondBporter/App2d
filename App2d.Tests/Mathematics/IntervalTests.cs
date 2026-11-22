@@ -1,5 +1,4 @@
 using App2d.Core.Geometry.Convex;
-using App2d.Core.Geometry.Primitives;
 using System.Text.Json;
 
 namespace App2d.Tests.Mathematics;

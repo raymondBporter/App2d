@@ -15,13 +15,13 @@ public sealed class SpatialCurveJsonConverter : JsonConverter<ICurve<Vector3f, f
         Vector3f Point(string name) => fields.TryGetValue(name, out var field) ? field.Deserialize<Vector3f>(options)
             : throw new JsonException($"Missing spatial curve {name}.");
         var kind = fields.TryGetValue("kind", out var discriminator) ? discriminator.GetString() : null;
-        string[] expected = kind == CurveKinds2D.QuadraticBezier ? ["kind", "start", "control", "end"] : ["kind", "start", "control1", "control2", "end"];
+        string[] expected = kind == QuadraticBezier2D.Kind ? ["kind", "start", "control", "end"] : ["kind", "start", "control1", "control2", "end"];
         if (fields.Keys.Any(name => !expected.Contains(name, StringComparer.OrdinalIgnoreCase)))
             throw new JsonException("Unknown spatial curve member.");
         return kind switch
         {
-            CurveKinds2D.QuadraticBezier => new QuadraticBezier<Vector3f, float>(Point("start"), Point("control"), Point("end")),
-            CurveKinds2D.CubicBezier => new CubicBezier<Vector3f, float>(Point("start"), Point("control1"), Point("control2"), Point("end")),
+            QuadraticBezier2D.Kind => new QuadraticBezier<Vector3f, float>(Point("start"), Point("control"), Point("end")),
+            CubicBezier2D.Kind => new CubicBezier<Vector3f, float>(Point("start"), Point("control1"), Point("control2"), Point("end")),
             _ => throw new JsonException("Unknown spatial curve kind.")
         };
     }
@@ -30,8 +30,8 @@ public sealed class SpatialCurveJsonConverter : JsonConverter<ICurve<Vector3f, f
     {
         var kind = value switch
         {
-            QuadraticBezier<Vector3f, float> => CurveKinds2D.QuadraticBezier,
-            CubicBezier<Vector3f, float> => CurveKinds2D.CubicBezier,
+            QuadraticBezier<Vector3f, float> => QuadraticBezier2D.Kind,
+            CubicBezier<Vector3f, float> => CubicBezier2D.Kind,
             _ => throw new JsonException("This spatial curve cannot be authored.")
         };
         var properties = JsonSerializer.SerializeToElement(value, value.GetType(), options);

@@ -1,6 +1,6 @@
-using App2d.Core.Validation;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Serialization;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Mathematics.Progress;

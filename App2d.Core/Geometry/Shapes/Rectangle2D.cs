@@ -12,6 +12,8 @@ namespace App2d.Core.Geometry.Shapes;
 /// </summary>
 public readonly partial record struct Rectangle2D : IConvexShape2D
 {
+    public const string Kind = "rectangle";
+
     private readonly Vector2f _axis;
 
     /// <summary>Creates a rectangle from its center, half extents and axis.</summary>

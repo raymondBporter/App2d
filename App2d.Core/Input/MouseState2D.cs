@@ -3,18 +3,15 @@ namespace App2d.Core.Input;
 /// <summary>Physical mouse state in device pixel coordinates.</summary>
 public sealed class MouseState2D
 {
-    private readonly HashSet<MouseButtons> _down = [];
-    private readonly HashSet<MouseButtons> _pressed = [];
-    private readonly HashSet<MouseButtons> _released = [];
-    private readonly HashSet<MouseButtons> _blocked = [];
+    private readonly ButtonState<MouseButtons> _buttons = new();
     private Vector2f _clientPosition;
     private Vector2f _clientToDeviceScale = Vector2f.One;
 
     public Vector2f PositionDevice => _clientPosition * _clientToDeviceScale;
     public float WheelDelta { get; private set; }
-    public bool IsDown(MouseButtons button) => _down.Contains(button);
-    public bool WasPressed(MouseButtons button) => _pressed.Contains(button);
-    public bool WasReleased(MouseButtons button) => _released.Contains(button);
+    public bool IsDown(MouseButtons button) => _buttons.IsDown(button);
+    public bool WasPressed(MouseButtons button) => _buttons.WasPressed(button);
+    public bool WasReleased(MouseButtons button) => _buttons.WasReleased(button);
 
     internal void SetClientPosition(Vector2f position) => _clientPosition = position;
 
@@ -27,51 +24,17 @@ public sealed class MouseState2D
 
     internal void AddWheelDelta(float delta) => WheelDelta += delta;
 
-    internal void SetButton(MouseButtons button, bool isDown, bool suppressed)
-    {
-        if (!isDown)
-        {
-            _blocked.Remove(button);
-        }
-
-        if (suppressed)
-        {
-            if (isDown)
-            {
-                _blocked.Add(button);
-            }
-
-            return;
-        }
-        if (_blocked.Contains(button))
-        {
-            return;
-        }
-
-        if (isDown)
-        {
-            if (_down.Add(button))
-            {
-                _pressed.Add(button);
-            }
-        }
-        else if (_down.Remove(button))
-        {
-            _released.Add(button);
-        }
-    }
+    internal void SetButton(MouseButtons button, bool isDown, bool suppressed) => _buttons.SetButton(button, isDown, suppressed);
 
     internal void CancelHeld()
     {
-        _blocked.UnionWith(_down);
-        _down.Clear();
-        EndFrame();
+        _buttons.CancelHeld();
+        WheelDelta = 0f;
     }
 
     internal void EndFrame()
     {
-        _pressed.Clear();
-        _released.Clear();
+        _buttons.EndFrame();
         WheelDelta = 0f;
     }
 }

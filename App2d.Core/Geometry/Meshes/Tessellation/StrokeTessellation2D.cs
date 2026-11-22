@@ -52,7 +52,7 @@ public static class StrokeTessellation2D
         }
 
         var unit = Vector2f.Normalize(axis);
-        var perp = new Vector2f(-unit.Y, unit.X);
+        var perp = unit.PerpCcw;
         var startNormal = perp * startRadius;
         var endNormal = perp * endRadius;
         if (startCap == LineCap2D.Square) start -= unit * startRadius;
@@ -90,7 +90,7 @@ public static class StrokeTessellation2D
 
     private static void WriteRoundCap(Span<Vector2f> vertices, Vector2f center, Vector2f outward, float radius, int segments)
     {
-        var tangent = new Vector2f(-outward.Y, outward.X);
+        var tangent = outward.PerpCcw;
         var previous = center + tangent * radius;
         for (var i = 1; i <= segments; i++)
         {

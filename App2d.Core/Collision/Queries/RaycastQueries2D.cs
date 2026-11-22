@@ -35,7 +35,7 @@ public static class RaycastQueries2D
 
             found = true;
             nearestDistance = geometry.Distance;
-            hit = CreateHit(worldObject, geometry);
+            hit = new(worldObject, geometry);
         }
 
         return found;
@@ -70,17 +70,13 @@ public static class RaycastQueries2D
                 continue;
             }
 
-            InsertSorted(hits, ref hitCount, CreateHit(worldObject, geometry));
+            InsertSorted(hits, ref hitCount, new(worldObject, geometry));
         }
 
         return hitCount;
     }
 
-    private static RaycastHit2D<T> CreateHit<T>(T item, RayHit2D geometry)
-        where T : class =>
-        new(item, geometry.Point, geometry.Normal, geometry.Distance);
-
-    private static void InsertSorted<T>(
+    internal static void InsertSorted<T>(
         Span<RaycastHit2D<T>> hits,
         ref int hitCount,
         RaycastHit2D<T> candidate)

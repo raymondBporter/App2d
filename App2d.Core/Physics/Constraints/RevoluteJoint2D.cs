@@ -25,9 +25,9 @@ public sealed class RevoluteJoint2D : IPhysicsConstraint2D
         if (!IsEnabled) return;
         var firstArm = FirstWorldAnchor - First.WorldCenterOfMass;
         var secondArm = SecondWorldAnchor - Second.WorldCenterOfMass;
-        var relativeVelocity = JointMath2D.PointVelocity(Second, secondArm) - JointMath2D.PointVelocity(First, firstArm);
+        var relativeVelocity = Second.VelocityAtOffset(secondArm) - First.VelocityAtOffset(firstArm);
         var impulse = -JointMath2D.SolvePointMass(First, Second, firstArm, secondArm, relativeVelocity);
-        JointMath2D.ApplyVelocity(First, Second, impulse, JointMath2D.Cross(firstArm, impulse), JointMath2D.Cross(secondArm, impulse));
+        JointMath2D.ApplyVelocity(First, Second, impulse, firstArm.Cross(impulse), secondArm.Cross(impulse));
     }
 
     public bool SolvePosition(float deltaSeconds)
@@ -41,6 +41,6 @@ public sealed class RevoluteJoint2D : IPhysicsConstraint2D
         var firstArm = firstAnchor - First.WorldCenterOfMass;
         var secondArm = secondAnchor - Second.WorldCenterOfMass;
         var impulse = -JointMath2D.SolvePointMass(First, Second, firstArm, secondArm, error);
-        return JointMath2D.ApplyPosition(First, Second, impulse, JointMath2D.Cross(firstArm, impulse), JointMath2D.Cross(secondArm, impulse));
+        return JointMath2D.ApplyPosition(First, Second, impulse, firstArm.Cross(impulse), secondArm.Cross(impulse));
     }
 }

@@ -1,11 +1,11 @@
-using App2d.Gameplay.Characters;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Core.Animation;
 using App2d.Core.Characters;
-using App2d.Core.Kinematics;
 using App2d.Core.Characters.Skeletons;
+using App2d.Core.Kinematics;
+using App2d.Gameplay.Characters;
 
 namespace App2d.Presentation.Persons;
 

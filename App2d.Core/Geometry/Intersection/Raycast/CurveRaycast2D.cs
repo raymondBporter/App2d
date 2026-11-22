@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics.RootFinding;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Geometry.Intersection;
@@ -22,14 +23,11 @@ public static class CurveRaycast2D
     public static bool TryIntersect(Vector2f origin, Vector2f direction, ICurve2D curve, float maxDistance, out RayHit2D hit)
     {
         Ensure.ThrowIfNull(curve);
-        Ensure.Finite(origin);
-        Ensure.Finite(direction);
-        Ensure.NonZero(direction);
-        Ensure.NonNegative(maxDistance, allowInfinity: true);
-        return Query(origin, direction, curve, 0, 1, maxDistance, out hit);
+        Raycast2D.ValidateParameters(origin, direction, maxDistance);
+        return TryIntersectInterval(origin, direction, curve, 0, 1, maxDistance, out hit);
     }
 
-    private static bool Query(Vector2f origin, Vector2f direction, ICurve2D curve, double from, double to,
+    internal static bool TryIntersectInterval(Vector2f origin, Vector2f direction, ICurve2D curve, double from, double to,
         float maxDistance, out RayHit2D hit)
     {
         hit = default;
@@ -38,7 +36,7 @@ public static class CurveRaycast2D
         {
             case ICurveSlice2D slice:
                 var width = (double)slice.To - slice.From;
-                return Query(origin, direction, slice.SourceCurve, slice.From + width * from, slice.From + width * to, maxDistance, out hit);
+                return TryIntersectInterval(origin, direction, slice.SourceCurve, slice.From + width * from, slice.From + width * to, maxDistance, out hit);
             case Arc2D arc:
                 return Raycast2D.TryArc(origin, direction, arc.Center, arc.Radius,
                     arc.StartAngleRadians + arc.SweepAngleRadians * from, arc.SweepAngleRadians * (to - from), maxDistance, out hit);
@@ -115,7 +113,7 @@ public static class CurveRaycast2D
         // A Bezier lies inside its control hull. These bounds reject whole spans before solving.
         if (minimumSide > 0 || maximumSide < 0 || maximumAlong < 0 || minimumAlong > maxDistance) return false;
         Span<double> roots = controls.Length <= 32 ? stackalloc double[controls.Length - 1] : new double[controls.Length - 1];
-        var count = BernsteinRoots2D.Find(crossings, from, to, roots);
+        var count = BernsteinRoots.Find(crossings, from, to, roots);
         var found = false;
         for (var i = 0; i < count; i++)
         {

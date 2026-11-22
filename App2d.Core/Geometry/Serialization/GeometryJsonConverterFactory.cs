@@ -41,7 +41,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                 return properties.ContainsKey(key) ? R<V>(name) : fallback;
             }
             read.Add("kind");
-            var kind = properties.TryGetValue("kind", out var tag) ? tag.GetString() : IGeometryValue2D.GetKind(typeof(T));
+            var kind = properties.TryGetValue("kind", out var tag) ? tag.GetString() : GeometryJson2D.GetKind(typeof(T));
             // Raw construction is intentional here: callers validate after reading the whole document.
 #pragma warning disable APP2D001
             // A rectangle is spelled with min and max (the axis-aligned form) or with center and size, never both.
@@ -67,24 +67,24 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
             }
             IGeometryValue2D geometry = kind switch
             {
-                ShapeKinds2D.Circle => new Circle2D(R<float>("Radius"), R<Vector2f>("Center")),
-                ShapeKinds2D.Ellipse => new Ellipse2D(R<Vector2f>("Radii"), R<Vector2f>("Center"), Primitives.OrientedFrame2D.AxisFromAngle(Optional("AngleRadians", 0f))),
-                ShapeKinds2D.Capsule => new Capsule2D(R<Vector2f>("Start"), R<Vector2f>("End"), R<float>("Radius")),
-                ShapeKinds2D.Rectangle => ReadRectangle(),
-                ShapeKinds2D.AxisAlignedRectangle => new AxisAlignedRectangle2D(R<Vector2f>("Min"), R<Vector2f>("Max")),
-                ShapeKinds2D.RoundedRectangle => ReadRoundedRectangle(),
-                ShapeKinds2D.Triangle => new Triangle2D(R<Vector2f>("A"), R<Vector2f>("B"), R<Vector2f>("C")),
-                ShapeKinds2D.ConvexPolygon => new ConvexPolygon2D(R<Vector2f[]>("Vertices")),
-                ShapeKinds2D.SimplePolygon => new SimplePolygon2D(R<Vector2f[]>("Vertices")),
-                ShapeKinds2D.HalfSpace => new HalfSpace2D(R<Vector2f>("Normal"), R<float>("Offset")),
-                ShapeKinds2D.Composite => new CompositeShape2D(R<IShape2D[]>("Parts"), Optional("IncludeOverlap", true), Optional("AreaOutlineSegments", ShapeArea2D.DefaultOutlineSegments)),
-                CurveKinds2D.Line => new LineSegmentCurve2D(R<Vector2f>("Start"), R<Vector2f>("End")),
-                CurveKinds2D.Polyline => new PolylineCurve2D(R<Vector2f[]>("Points")),
-                CurveKinds2D.RoundedPolyline => new RoundedPolylineCurve2D(R<Vector2f[]>("Points"), Optional("Softness", 1f)),
-                CurveKinds2D.Arc => new Arc2D(R<Vector2f>("Center"), R<float>("Radius"), R<float>("StartAngleRadians"), R<float>("SweepAngleRadians")),
-                CurveKinds2D.QuadraticBezier => new QuadraticBezier2D(R<Vector2f>("Start"), R<Vector2f>("Control"), R<Vector2f>("End")),
-                CurveKinds2D.CubicBezier => new CubicBezier2D(R<Vector2f>("Start"), R<Vector2f>("Control1"), R<Vector2f>("Control2"), R<Vector2f>("End")),
-                CurveKinds2D.BSpline => new BSpline2D(R<Vector2f[]>("ControlPoints"), Optional("Degree", 3)),
+                Circle2D.Kind => new Circle2D(R<float>("Radius"), R<Vector2f>("Center")),
+                Ellipse2D.Kind => new Ellipse2D(R<Vector2f>("Radii"), R<Vector2f>("Center"), Primitives.OrientedFrame2D.AxisFromAngle(Optional("AngleRadians", 0f))),
+                Capsule2D.Kind => new Capsule2D(R<Vector2f>("Start"), R<Vector2f>("End"), R<float>("Radius")),
+                Rectangle2D.Kind => ReadRectangle(),
+                AxisAlignedRectangle2D.Kind => new AxisAlignedRectangle2D(R<Vector2f>("Min"), R<Vector2f>("Max")),
+                RoundedRectangle2D.Kind => ReadRoundedRectangle(),
+                Triangle2D.Kind => new Triangle2D(R<Vector2f>("A"), R<Vector2f>("B"), R<Vector2f>("C")),
+                ConvexPolygon2D.Kind => new ConvexPolygon2D(R<Vector2f[]>("Vertices")),
+                SimplePolygon2D.Kind => new SimplePolygon2D(R<Vector2f[]>("Vertices")),
+                HalfSpace2D.Kind => new HalfSpace2D(R<Vector2f>("Normal"), R<float>("Offset")),
+                CompositeShape2D.Kind => new CompositeShape2D(R<IShape2D[]>("Parts"), Optional("IncludeOverlap", true), Optional("AreaOutlineSegments", ShapeArea2D.DefaultOutlineSegments)),
+                LineSegmentCurve2D.Kind => new LineSegmentCurve2D(R<Vector2f>("Start"), R<Vector2f>("End")),
+                PolylineCurve2D.Kind => new PolylineCurve2D(R<Vector2f[]>("Points")),
+                RoundedPolylineCurve2D.Kind => new RoundedPolylineCurve2D(R<Vector2f[]>("Points"), Optional("Softness", 1f)),
+                Arc2D.Kind => new Arc2D(R<Vector2f>("Center"), R<float>("Radius"), R<float>("StartAngleRadians"), R<float>("SweepAngleRadians")),
+                QuadraticBezier2D.Kind => new QuadraticBezier2D(R<Vector2f>("Start"), R<Vector2f>("Control"), R<Vector2f>("End")),
+                CubicBezier2D.Kind => new CubicBezier2D(R<Vector2f>("Start"), R<Vector2f>("Control1"), R<Vector2f>("Control2"), R<Vector2f>("End")),
+                BSpline2D.Kind => new BSpline2D(R<Vector2f[]>("ControlPoints"), Optional("Degree", 3)),
                 _ => throw new JsonException($"Unknown geometry kind '{kind}'.")
             };
 #pragma warning restore APP2D001

@@ -11,7 +11,8 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
     private float _frequencyHertz = 6f;
     private float _dampingRatio = 0.65f;
     private Vector2f _firstArm, _secondArm, _bias, _impulse;
-    private float _massXX, _massXY, _massYY, _massCoefficient, _impulseCoefficient;
+    private float _massXX, _massXY, _massYY;
+    private SpringCoefficients2D _spring;
 
     public SoftPointJoint2D(RigidBody2D first, RigidBody2D second,
         Vector2f firstLocalAnchor, Vector2f secondLocalAnchor)
@@ -29,8 +30,8 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
     public RigidBody2D Second { get; }
     public Vector2f FirstLocalAnchor { get; }
     public Vector2f SecondLocalAnchor { get; }
-    public Vector2f FirstWorldAnchor => Vector2f.Transform(FirstLocalAnchor, First.WorldObject.Transform.Matrix);
-    public Vector2f SecondWorldAnchor => Vector2f.Transform(SecondLocalAnchor, Second.WorldObject.Transform.Matrix);
+    public Vector2f FirstWorldAnchor => JointMath2D.Anchor(First, FirstLocalAnchor);
+    public Vector2f SecondWorldAnchor => JointMath2D.Anchor(Second, SecondLocalAnchor);
     public bool IsEnabled { get; set; } = true;
 
     /// <summary>Natural frequency in cycles per second. Higher is stiffer; keep below half the substep rate.</summary>
@@ -70,34 +71,22 @@ public sealed class SoftPointJoint2D : IPhysicsConstraint2D
         _massXY = (float)(-xy / determinant);
         _massYY = (float)(xx / determinant);
 
-        // Mass-independent implicit spring coefficients (Solver2D / soft sequential impulses).
-        // x'' + 2*zeta*omega*x' + omega^2*x = 0, omega = 2*pi*frequency.
-        var omega = 2f * MathF.PI * FrequencyHertz;
-        var a1 = 2f * DampingRatio + deltaSeconds * omega;
-        var a2 = deltaSeconds * omega * a1;
-        _impulseCoefficient = 1f / (1f + a2);
-        _massCoefficient = a2 * _impulseCoefficient;
-        _bias = (secondAnchor - firstAnchor) * (omega / a1);
+        _spring = SpringCoefficients2D.Create(FrequencyHertz, DampingRatio, deltaSeconds);
+        _bias = (secondAnchor - firstAnchor) * _spring.BiasRate;
     }
 
     public void SolveVelocity(float deltaSeconds)
     {
         if (!IsEnabled) return;
-        var relativeVelocity = Second.LinearVelocity + Second.AngularVelocity * Perpendicular(_secondArm)
-            - First.LinearVelocity - First.AngularVelocity * Perpendicular(_firstArm);
+        var relativeVelocity = Second.VelocityAtOffset(_secondArm)
+            - First.LinearVelocity - First.AngularVelocity * _firstArm.PerpCcw;
         var speed = relativeVelocity + _bias;
-        var impulse = -_massCoefficient * new Vector2f(
+        var impulse = -_spring.MassScale * new Vector2f(
             _massXX * speed.X + _massXY * speed.Y,
-            _massXY * speed.X + _massYY * speed.Y) - _impulseCoefficient * _impulse;
+            _massXY * speed.X + _massYY * speed.Y) - _spring.ImpulseScale * _impulse;
         _impulse += impulse;
-        First.LinearVelocity -= impulse * First.InverseMass;
-        First.AngularVelocity -= Cross(_firstArm, impulse) * First.EffectiveInverseInertia;
-        Second.LinearVelocity += impulse * Second.InverseMass;
-        Second.AngularVelocity += Cross(_secondArm, impulse) * Second.EffectiveInverseInertia;
+        JointMath2D.ApplyVelocity(First, Second, impulse, _firstArm.Cross(impulse), _secondArm.Cross(impulse));
     }
 
     public bool SolvePosition(float deltaSeconds) => false;
-
-    private static Vector2f Perpendicular(Vector2f vector) => new(-vector.Y, vector.X);
-    private static float Cross(Vector2f a, Vector2f b) => a.X * b.Y - a.Y * b.X;
 }

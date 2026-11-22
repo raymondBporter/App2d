@@ -1,4 +1,3 @@
-using App2d.Gameplay.Characters;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;

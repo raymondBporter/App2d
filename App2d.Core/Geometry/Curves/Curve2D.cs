@@ -38,11 +38,7 @@ public static class Curve2D
     }
 
     /// <summary>Returns the tangent rotated 90 degrees counter-clockwise.</summary>
-    public static Vector2f Normal(ICurve2D curve, float amount)
-    {
-        var tangent = Tangent(curve, amount);
-        return new Vector2f(-tangent.Y, tangent.X);
-    }
+    public static Vector2f Normal(ICurve2D curve, float amount) => Tangent(curve, amount).PerpCcw;
 
     /// <summary>Samples both endpoints and the requested number of equal parameter-space segments.</summary>
     public static Vector2f[] Sample(ICurve2D curve, int segmentCount)

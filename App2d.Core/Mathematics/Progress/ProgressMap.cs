@@ -1,6 +1,6 @@
-using System.Numerics;
-using App2d.Core.Validation;
 using App2d.Core.Mathematics.Serialization;
+using App2d.Core.Validation;
+using System.Numerics;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Mathematics.Progress;

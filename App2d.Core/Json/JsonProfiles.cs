@@ -73,7 +73,6 @@ public static class JsonProfiles
         Converters = { new Vector2JsonConverter(), new GeometryJsonConverterFactory() }
     });
 
-    /// <summary>The prototype puppet file keeps its existing metadata-order contract.</summary>
     /// <summary>Object files placed in levels: strict, camel case, and nothing written for what an object does not have.</summary>
     public static JsonSerializerOptions Objects { get; } = Freeze(new()
     {

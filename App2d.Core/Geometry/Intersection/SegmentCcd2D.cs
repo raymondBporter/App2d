@@ -13,7 +13,7 @@ namespace App2d.Core.Geometry.Intersection;
 /// </remarks>
 public static class SegmentCcd2D
 {
-    private const double EvaluationTolerance = 64d * 2.2204460492503131e-16;
+    private static readonly double EvaluationTolerance = 64d * Reald.MachineEpsilon;
 
     /// <summary>
     /// Returns the earliest touching fraction in [0, 1], zero for initial overlap, or null for a miss.

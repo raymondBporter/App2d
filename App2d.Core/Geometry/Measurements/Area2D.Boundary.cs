@@ -4,7 +4,7 @@ namespace App2d.Core.Geometry.Measurements;
 
 public static partial class Area2D
 {
-    private const double ConicCoincidenceTolerance = 8d * 2.2204460492503131e-16;
+    private static readonly double ConicCoincidenceTolerance = 8d * Reald.MachineEpsilon;
 
     // Each convex part has its interior on the left of its boundary. Integrating only the pieces no other part of the
     // same group covers counts every point of that group's union once, including when several parts overlap or

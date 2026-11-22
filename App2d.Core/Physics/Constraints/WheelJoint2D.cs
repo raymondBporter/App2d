@@ -34,7 +34,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
     public Vector2f SecondWorldAnchor => JointMath2D.Anchor(Second, SecondLocalAnchor);
     public Vector2f WorldAxis => Vector2f.Normalize(Vector2f.TransformNormal(FirstLocalAxis, First.WorldObject.Transform.Matrix));
     public float Translation => Vector2f.Dot(SecondWorldAnchor - FirstWorldAnchor, WorldAxis);
-    public float LateralError => Vector2f.Dot(SecondWorldAnchor - FirstWorldAnchor, JointMath2D.Perpendicular(WorldAxis));
+    public float LateralError => Vector2f.Dot(SecondWorldAnchor - FirstWorldAnchor, WorldAxis.PerpCcw);
     public bool IsEnabled { get; set; } = true;
     public bool IsSpringEnabled { get; set; } = true;
     /// <summary>Allowed travel in world units along the guide axis, measured from coincident anchors.</summary>
@@ -62,7 +62,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
         _springImpulse = _lowerImpulse = _upperImpulse = 0f;
         if (!IsEnabled) return;
         _axial = CreateAxis(WorldAxis);
-        _lateral = CreateAxis(JointMath2D.Perpendicular(WorldAxis));
+        _lateral = CreateAxis(WorldAxis.PerpCcw);
         _translation = Translation;
         _spring = SpringCoefficients2D.Create(FrequencyHertz, DampingRatio, deltaSeconds);
     }
@@ -83,7 +83,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
     public bool SolvePosition(float deltaSeconds)
     {
         if (!IsEnabled) return false;
-        var moved = CreateAxis(JointMath2D.Perpendicular(WorldAxis)).CorrectPosition(LateralError);
+        var moved = CreateAxis(WorldAxis.PerpCcw).CorrectPosition(LateralError);
         var error = ConstraintMath1D.EvaluateLimit(TranslationLimits, Translation).Error;
         return CreateAxis(WorldAxis).CorrectPosition(error) || moved;
     }
@@ -98,6 +98,6 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
         // Differentiating adds wA x direction, giving the d + rA lever instead of just rA.
         // q' = direction dot (vB-vA) + cross(rB,direction)*wB - cross(d+rA,direction)*wA.
         return new(First, Second, direction,
-            JointMath2D.Cross(secondAnchor - firstAnchor + firstArm, direction), JointMath2D.Cross(secondArm, direction));
+            (secondAnchor - firstAnchor + firstArm).Cross(direction), secondArm.Cross(direction));
     }
 }

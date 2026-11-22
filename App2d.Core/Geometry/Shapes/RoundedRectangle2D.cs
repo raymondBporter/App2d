@@ -11,6 +11,8 @@ namespace App2d.Core.Geometry.Shapes;
 /// </summary>
 public readonly partial record struct RoundedRectangle2D : IConvexShape2D
 {
+    public const string Kind = "rounded-rectangle";
+
     private readonly Vector2f _axis;
 
     /// <summary>Creates a rounded rectangle from its center, outer half extents, corner radius and axis.</summary>

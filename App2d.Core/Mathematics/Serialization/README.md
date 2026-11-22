@@ -77,13 +77,3 @@ state supplied by code. Configure bindings before the first serialization operat
 
 Unregistered functions, channels, and coordinate conversions fail when saved rather than producing an incomplete
 recipe. Runtime use of those functions remains available. JSON never attempts to infer a lambda's implementation.
-
-## Character trial
-
-Clip version 5 permits a key's vector `interpolator`, scalar `angleInterpolator`, or color `interpolator` to use
-these core recipes directly. Version 4 remains readable through its existing ease and Bezier fields. A key chooses
-one representation; mixing a core recipe with nondefault legacy curve fields is rejected.
-
-`Assets/Characters/authored/animations/player-idle.json` is the first migrated clip. Its original version 4 is kept
-as an embedded test fixture. Regression checks compare unchanged key data, dense segment samples, complete evaluated
-poses, and a JSON save/load cycle through the ordinary catalog loader.

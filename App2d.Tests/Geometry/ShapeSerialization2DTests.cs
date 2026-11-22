@@ -12,17 +12,17 @@ public sealed class ShapeSerialization2DTests
 {
     public static TheoryData<string, string> BuiltInShapes => new()
     {
-        { nameof(Circle2D), ShapeKinds2D.Circle },
-        { nameof(Ellipse2D), ShapeKinds2D.Ellipse },
-        { nameof(Capsule2D), ShapeKinds2D.Capsule },
-        { nameof(Rectangle2D), ShapeKinds2D.Rectangle },
-        { nameof(RoundedRectangle2D), ShapeKinds2D.RoundedRectangle },
-        { nameof(AxisAlignedRectangle2D), ShapeKinds2D.AxisAlignedRectangle },
-        { nameof(Triangle2D), ShapeKinds2D.Triangle },
-        { nameof(ConvexPolygon2D), ShapeKinds2D.ConvexPolygon },
-        { nameof(SimplePolygon2D), ShapeKinds2D.SimplePolygon },
-        { nameof(HalfSpace2D), ShapeKinds2D.HalfSpace },
-        { nameof(CompositeShape2D), ShapeKinds2D.Composite }
+        { nameof(Circle2D), Circle2D.Kind },
+        { nameof(Ellipse2D), Ellipse2D.Kind },
+        { nameof(Capsule2D), Capsule2D.Kind },
+        { nameof(Rectangle2D), Rectangle2D.Kind },
+        { nameof(RoundedRectangle2D), RoundedRectangle2D.Kind },
+        { nameof(AxisAlignedRectangle2D), AxisAlignedRectangle2D.Kind },
+        { nameof(Triangle2D), Triangle2D.Kind },
+        { nameof(ConvexPolygon2D), ConvexPolygon2D.Kind },
+        { nameof(SimplePolygon2D), SimplePolygon2D.Kind },
+        { nameof(HalfSpace2D), HalfSpace2D.Kind },
+        { nameof(CompositeShape2D), CompositeShape2D.Kind }
     };
 
     private static IShape2D CreateShape(string shapeName) => shapeName switch
@@ -90,7 +90,7 @@ public sealed class ShapeSerialization2DTests
     public void AxisAlignmentAndCompositePartsSurviveTheRoundTrip()
     {
         var rectangle = Assert.IsType<AxisAlignedRectangle2D>(GeometryJson2D.ShapeFromJson(AxisAlignedRectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson<IShape2D>()));
-        Assert.Equal(ShapeKinds2D.AxisAlignedRectangle, ((IShape2D)rectangle).GetKind());
+        Assert.Equal(AxisAlignedRectangle2D.Kind, ((IShape2D)rectangle).GetKind());
         Assert.IsType<AxisAlignedRectangle2D>(rectangle.Validated());
         Assert.IsType<Rectangle2D>(GeometryJson2D.ShapeFromJson(Rectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson<IShape2D>()).Validated());
 
@@ -121,7 +121,6 @@ public sealed class ShapeSerialization2DTests
         var circle = Assert.IsType<Circle2D>(GeometryJson2D.ShapeFromJson("{\"center\":{\"x\":1,\"y\":2},\"radius\":3,\"kind\":\"circle\"}").Validated());
         Assert.Equal(new Vector2f(1, 2), circle.Center);
         Assert.Equal(3f, circle.Radius);
-        Assert.Equal(11, ShapeKinds2D.All.Count);
     }
 
     [Fact]

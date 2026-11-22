@@ -6,7 +6,6 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Audio;
-using App2d.Core.Characters;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Transforms;
 using App2d.Core.Rendering;

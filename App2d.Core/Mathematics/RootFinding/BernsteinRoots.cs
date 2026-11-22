@@ -1,11 +1,9 @@
-using App2d.Core.Mathematics.RootFinding;
-
-namespace App2d.Core.Geometry.Intersection;
+namespace App2d.Core.Mathematics.RootFinding;
 
 /// <summary>Roots on a restricted Bernstein polynomial interval. No curve tessellation is involved.</summary>
-internal static class BernsteinRoots2D
+internal static class BernsteinRoots
 {
-    private const double MachineEpsilon = 2.2204460492503131e-16;
+    private static readonly double RootTolerance = 16 * Reald.MachineEpsilon;
 
     internal static int Find(ReadOnlySpan<double> values, double from, double to, Span<double> roots)
     {
@@ -65,9 +63,9 @@ internal static class BernsteinRoots2D
         return work[0];
     }
 
-    private static bool NearZero(double value, int degree) => Math.Abs(value) <= 16 * MachineEpsilon * (degree + 1);
+    private static bool NearZero(double value, int degree) => Math.Abs(value) <= RootTolerance * (degree + 1);
     private static void Append(Span<double> roots, ref int count, double root)
     {
-        if (count == 0 || Math.Abs(root - roots[count - 1]) > 16 * MachineEpsilon) roots[count++] = root;
+        if (count == 0 || Math.Abs(root - roots[count - 1]) > RootTolerance) roots[count++] = root;
     }
 }

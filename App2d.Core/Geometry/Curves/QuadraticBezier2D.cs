@@ -5,6 +5,8 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A quadratic Bezier curve over normalized progress [0, 1].</summary>
 public readonly partial record struct QuadraticBezier2D : ICurve2D, IInterpolatable<QuadraticBezier2D, float>
 {
+    public const string Kind = "quadratic-bezier";
+
     /// <summary>The three points of the curve, each of which an interpolator can drive on its own.</summary>
     public static class Channels
     {

@@ -1,5 +1,5 @@
-using App2d.Core.Mathematics.Progress;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics.Progress;
 
 namespace App2d.Tests.Mathematics.Progress;
 

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace App2d.Core.Json;
+namespace App2d.Core.Mathematics.Serialization;
 
 /// <summary>
 /// Serializes a <see cref="Vector2f"/> as X/Y coordinates, using the serializer's property naming and number policies.

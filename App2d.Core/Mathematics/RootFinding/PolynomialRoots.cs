@@ -8,7 +8,7 @@ public static class PolynomialRoots
     // Derivative isolation and bisection adapted from David Eberly's RootsPolynomial.h.
     // Copyright (c) 1998-2026 David Eberly, Geometric Tools, Redmond WA 98052.
     // Distributed under the Boost Software License 1.0; see THIRD-PARTY-NOTICES.md.
-    private const double EvaluationTolerance = 16d * 2.2204460492503131e-16;
+    private static readonly double EvaluationTolerance = 16d * Reald.MachineEpsilon;
 
     /// <summary>
     /// Writes sorted, distinct real roots in [minimum, maximum], returning the number written.

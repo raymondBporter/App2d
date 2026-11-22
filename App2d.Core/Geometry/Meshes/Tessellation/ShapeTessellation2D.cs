@@ -33,7 +33,7 @@ public static class ShapeTessellation2D
         if (shape is HalfSpace2D halfSpace)
         {
             Ensure.ThrowIfTooShort(scratch, 2);
-            var boundary = new Line2D(halfSpace.Normal * halfSpace.Offset, new(-halfSpace.Normal.Y, halfSpace.Normal.X));
+            var boundary = new Line2D(halfSpace.Normal * halfSpace.Offset, halfSpace.Normal.PerpCcw);
             var count = 0;
             if (boundary.TryClipToRectangle(RequireClipBounds(clipBounds), out var start, out var end))
             {

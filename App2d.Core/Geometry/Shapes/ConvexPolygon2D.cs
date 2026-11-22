@@ -7,6 +7,8 @@ namespace App2d.Core.Geometry.Shapes;
 /// <summary>A filled convex polygon in local space, given in perimeter order in either winding.</summary>
 public readonly partial record struct ConvexPolygon2D : IConvexShape2D
 {
+    public const string Kind = "convex-polygon";
+
     private const float Epsilon = 0.0001f;
     private readonly Vector2f[]? _vertices;
 

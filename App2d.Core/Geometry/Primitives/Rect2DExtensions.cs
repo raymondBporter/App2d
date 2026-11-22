@@ -15,6 +15,15 @@ public static class Rect2DExtensions
 {
     extension<T>(T rectangle) where T : IRect2f
     {
+        /// <summary>Checks the finite, ordered bounds required by clipping. Zero extents are valid.</summary>
+        internal void ValidateClippingBounds()
+        {
+            Ensure.ThrowIfNull(rectangle);
+            Ensure.Finite(rectangle.Min);
+            Ensure.Finite(rectangle.Max);
+            Ensure.LessThanOrEqual(rectangle.Min, rectangle.Max);
+        }
+
         /// <summary>Min.X.</summary>
         public float Left => rectangle.Min.X;
 

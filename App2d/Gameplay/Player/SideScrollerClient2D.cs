@@ -6,7 +6,6 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Audio;
 using App2d.Core.Input;
-using App2d.Core.Mathematics.Progress;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Validation;

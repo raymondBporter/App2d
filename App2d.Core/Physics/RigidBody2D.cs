@@ -127,6 +127,9 @@ public sealed class RigidBody2D
     public float InverseInertia => MotionType == BodyMotionType2D.Dynamic ? 1f / MomentOfInertia : 0f;
     public float EffectiveInverseInertia => FreezeRotation ? 0f : InverseInertia;
 
+    /// <summary>Velocity at a world-space offset from this body's center of mass.</summary>
+    internal Vector2f VelocityAtOffset(Vector2f offset) => LinearVelocity + AngularVelocity * offset.PerpCcw;
+
     /// <summary>
     /// Sets uniform-solid mass, centroid and inertia from density per square world unit.
     /// Includes the current uniform scale. Recalculate after changing scale; explicit legacy values remain supported.
@@ -159,8 +162,7 @@ public sealed class RigidBody2D
         var nextWorldCenter = Vector2f.Transform(nextCenter, WorldObject.Transform.Matrix);
         Ensure.Finite(nextWorldCenter);
         // Preserve the velocity field when the reference point changes on an already spinning body.
-        var offset = nextWorldCenter - WorldCenterOfMass;
-        var nextVelocity = LinearVelocity + AngularVelocity * new Vector2f(-offset.Y, offset.X);
+        var nextVelocity = VelocityAtOffset(nextWorldCenter - WorldCenterOfMass);
         Ensure.Finite(nextVelocity);
         Mass = nextMass;
         MomentOfInertia = nextInertia;

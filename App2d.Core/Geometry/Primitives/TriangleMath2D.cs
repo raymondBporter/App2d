@@ -17,7 +17,7 @@ public static class TriangleMath2D
         where TTriangle : ITriangle<TTriangle, Vector2f>
         => Contains(triangle, point, edgeTolerance, Math.Sign(triangle.SignedAreaTwice()));
 
-    // Validated shapes already cache winding; share the predicate without recalculating it for each query.
+    // Callers with a known winding can reuse the same edge tests.
     internal static bool Contains<TTriangle>(TTriangle triangle, Vector2f point, double edgeTolerance, int winding)
         where TTriangle : ITriangle<TTriangle, Vector2f>
     {

@@ -1,4 +1,3 @@
-using App2d.Core.Characters;
 using App2d.Gameplay.Characters;
 
 namespace App2d.Gameplay.Enemies;

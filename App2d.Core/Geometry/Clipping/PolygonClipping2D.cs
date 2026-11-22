@@ -17,10 +17,7 @@ public static class PolygonClipping2D
     /// <returns>The number of vertices written.</returns>
     public static int ClipRectangleToHalfSpace<TRect>(TRect rectangle, Vector2f unitNormal, float offset, Span<Vector2f> output) where TRect : IRect2f
     {
-        Ensure.ThrowIfNull(rectangle);
-        Ensure.Finite(rectangle.Min);
-        Ensure.Finite(rectangle.Max);
-        Ensure.LessThanOrEqual(rectangle.Min, rectangle.Max);
+        rectangle.ValidateClippingBounds();
         Ensure.ThrowIf(output.Length < 5, "Output needs room for five vertices.", nameof(output));
         Span<Vector2f> corners = stackalloc Vector2f[4];
         VertexGenerator2D.WriteRectangle(corners, rectangle.Min, rectangle.Max);

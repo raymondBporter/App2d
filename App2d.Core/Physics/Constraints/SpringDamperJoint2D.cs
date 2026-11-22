@@ -89,7 +89,7 @@ public sealed class SpringDamperJoint2D : IPhysicsConstraint2D
         // length' = n dot (attachmentVelocityB - attachmentVelocityA).
         // Attachment velocity includes w x r; a force at the attachment also produces r x force torque.
         return new(First, Second, direction,
-            JointMath2D.Cross(firstAnchor - First.WorldCenterOfMass, direction),
-            JointMath2D.Cross(secondAnchor - Second.WorldCenterOfMass, direction));
+            (firstAnchor - First.WorldCenterOfMass).Cross(direction),
+            (secondAnchor - Second.WorldCenterOfMass).Cross(direction));
     }
 }

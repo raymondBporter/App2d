@@ -1,7 +1,6 @@
 using App2d.Core.Animation;
 using App2d.Core.Characters.Attachments;
 using App2d.Core.Characters.Skeletons;
-using App2d.Core.Kinematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.EditorUi;

@@ -43,14 +43,11 @@ public static class GeometryRaycast2D
     public static bool TryIntersect(Vector2f origin, Vector2f direction, IGeometryValue2D geometry, float maxDistance, out RayHit2D hit)
     {
         Ensure.ThrowIfNull(geometry);
-        Ensure.Finite(origin);
-        Ensure.Finite(direction);
-        Ensure.NonZero(direction);
-        Ensure.NonNegative(maxDistance, allowInfinity: true);
+        Raycast2D.ValidateParameters(origin, direction, maxDistance);
         return geometry switch
         {
             IShape2D shape => ShapeRaycast2D.TryIntersect(origin, direction, shape, maxDistance, out hit),
-            ICurve2D curve => CurveRaycast2D.TryIntersect(origin, direction, curve, maxDistance, out hit),
+            ICurve2D curve => CurveRaycast2D.TryIntersectInterval(origin, direction, curve, 0, 1, maxDistance, out hit),
             _ => throw new NotSupportedException($"No ray query exists for {geometry.GetType().Name}.")
         };
     }

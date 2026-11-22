@@ -16,9 +16,6 @@ internal static class JointMath2D
     }
 
     internal static Vector2f Anchor(RigidBody2D body, Vector2f local) => Vector2f.Transform(local, body.WorldObject.Transform.Matrix);
-    internal static float Cross(Vector2f a, Vector2f b) => a.X * b.Y - a.Y * b.X;
-    internal static Vector2f Perpendicular(Vector2f v) => new(-v.Y, v.X);
-    internal static Vector2f PointVelocity(RigidBody2D body, Vector2f arm) => body.LinearVelocity + body.AngularVelocity * Perpendicular(arm);
 
     // Point velocity changes by K * impulse. Angular inertia adds the lever-arm terms.
     // Inverting this 2x2 matrix gives the effective mass of a coincident-anchor constraint.

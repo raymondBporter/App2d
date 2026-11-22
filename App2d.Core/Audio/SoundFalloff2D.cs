@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Audio;

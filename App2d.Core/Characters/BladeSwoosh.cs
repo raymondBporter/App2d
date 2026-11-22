@@ -1,5 +1,4 @@
 using App2d.Core.Characters.Attachments;
-using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 

@@ -13,7 +13,6 @@ public static class ShapeHalfSpaceQuery2D
     public static ConvexQueryResult2D Query(IConvexShape2D shape, Similarity2D pose, HalfSpace2D halfSpace, Similarity2D halfSpacePose)
     {
         Ensure.ThrowIfNull(shape);
-        Ensure.ThrowIfNull(halfSpace);
         var (normal, offset) = ShapeTransforms2D.HalfSpace(halfSpace, halfSpacePose);
         var deepest = pose.TransformPoint(shape.GetSupportPoint(-pose.TransposeTransformDirection(normal)));
         var distance = Distance2D.SignedDistanceToHalfSpace(deepest, normal, offset);

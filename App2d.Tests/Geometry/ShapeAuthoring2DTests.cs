@@ -10,14 +10,14 @@ namespace App2d.Tests.Geometry;
 public sealed class ShapeAuthoring2DTests
 {
     [Theory]
-    [InlineData(ShapeKinds2D.Rectangle)]
-    [InlineData(ShapeKinds2D.AxisAlignedRectangle)]
-    [InlineData(ShapeKinds2D.Circle)]
-    [InlineData(ShapeKinds2D.Capsule)]
-    [InlineData(ShapeKinds2D.Ellipse)]
-    [InlineData(ShapeKinds2D.Triangle)]
-    [InlineData(ShapeKinds2D.ConvexPolygon)]
-    [InlineData(ShapeKinds2D.Composite)]
+    [InlineData(Rectangle2D.Kind)]
+    [InlineData(AxisAlignedRectangle2D.Kind)]
+    [InlineData(Circle2D.Kind)]
+    [InlineData(Capsule2D.Kind)]
+    [InlineData(Ellipse2D.Kind)]
+    [InlineData(Triangle2D.Kind)]
+    [InlineData(ConvexPolygon2D.Kind)]
+    [InlineData(CompositeShape2D.Kind)]
     public void ReauthoringFitsTheNewKindInsideTheOriginalBoundsAroundTheSameCentre(string kind)
     {
         var source = Rectangle2D.Builder.FromSize(4, 2, new(1, 1));
@@ -26,20 +26,20 @@ public sealed class ShapeAuthoring2DTests
         var bounds = ShapeBounds2D.Calculate(converted.Validated());
         Assert.True(new Rect2f(new(-1, 0), new(3, 2)).InflatedBy(1e-5f, 1e-5f).Contains(bounds), $"{kind} spilled to {bounds}.");
         Assert.True(Vector2f.Distance(new(1, 1), bounds.Center) < 1e-5f);
-        Assert.Equal(source, source.WithKind(ShapeKinds2D.Rectangle));
+        Assert.Equal(source, source.WithKind(Rectangle2D.Kind));
     }
 
     [Fact]
     public void TallBoxesBecomeVerticalCapsulesAndUnknownOrUnboundedSourcesAreRejected()
     {
         var tall = Rectangle2D.Builder.FromSize(1, 3);
-        var capsule = Assert.IsType<Capsule2D>(tall.WithKind(ShapeKinds2D.Capsule));
+        var capsule = Assert.IsType<Capsule2D>(tall.WithKind(Capsule2D.Kind));
         Assert.Equal(new Vector2f(0, -1), capsule.Start);
         Assert.Equal(new Vector2f(0, 1), capsule.End);
         Assert.Equal(.5f, capsule.Radius);
-        Assert.Equal(1f, Assert.IsType<Circle2D>(tall.WithKind(ShapeKinds2D.Circle)).Radius * 2);
+        Assert.Equal(1f, Assert.IsType<Circle2D>(tall.WithKind(Circle2D.Kind)).Radius * 2);
         Assert.Throws<ArgumentException>(() => tall.WithKind("blob"));
-        Assert.Throws<InvalidOperationException>(() => new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated().WithKind(ShapeKinds2D.Circle));
+        Assert.Throws<InvalidOperationException>(() => new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated().WithKind(Circle2D.Kind));
     }
 
     [Fact]
@@ -61,8 +61,8 @@ public sealed class ShapeAuthoring2DTests
     }
 
     [Theory]
-    [InlineData(ShapeKinds2D.Rectangle)]
-    [InlineData(ShapeKinds2D.AxisAlignedRectangle)]
+    [InlineData(Rectangle2D.Kind)]
+    [InlineData(AxisAlignedRectangle2D.Kind)]
     public void RectangleJsonDefersValidationAndRejectsTheRemovedFlag(string kind)
     {
         var backwards = "{\"kind\":\"" + kind + "\",\"min\":{\"x\":1,\"y\":1},\"max\":{\"x\":0,\"y\":0}}";

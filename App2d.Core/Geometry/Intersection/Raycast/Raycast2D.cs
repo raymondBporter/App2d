@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Validation;
 
 namespace App2d.Core.Geometry.Intersection;
 
@@ -10,6 +11,14 @@ namespace App2d.Core.Geometry.Intersection;
 public static partial class Raycast2D
 {
     private const float Epsilon = 0.000001f;
+
+    internal static void ValidateParameters(Vector2f origin, Vector2f direction, float maxDistance)
+    {
+        Ensure.Finite(origin);
+        Ensure.Finite(direction);
+        Ensure.NonZero(direction);
+        Ensure.NonNegative(maxDistance, allowInfinity: true);
+    }
 
     /// <summary>Casts against a finite, two-sided segment. Collinear rays miss; the normal is counterclockwise from Start to End.</summary>
     /// <param name="origin">The finite ray origin.</param>
@@ -37,7 +46,7 @@ public static partial class Raycast2D
         {
             return Miss(out hit);
         }
-        var normal = Vector2f.Normalize(new Vector2f((float)-edge.Y, (float)edge.X));
+        var normal = Vector2f.Normalize(edge.PerpCcw.ToVector2f());
         hit = new(origin + direction * (float)distance, normal, (float)distance);
         return true;
     }
@@ -406,7 +415,7 @@ public static partial class Raycast2D
                 continue;
             }
 
-            var normal = Vector2f.Normalize(new Vector2f(edge.Y, -edge.X) * winding);
+            var normal = Vector2f.Normalize(edge.PerpCw * winding);
             hit = new RayHit2D(origin + direction * distance, normal, distance);
             found = true;
         }
