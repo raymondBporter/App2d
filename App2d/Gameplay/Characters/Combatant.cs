@@ -50,7 +50,7 @@ public sealed record CharacterCollider(string Name, ColliderUse Use, IConvexShap
         var flat = frame.XAxis.XY;
         var axis = flat.LengthSquared() > 1e-8f ? Vector2f.Normalize(flat) : Vector2f.UnitX;
         var up = frame.YAxis.XY;
-        var flipped = axis.X * up.Y - axis.Y * up.X < 0;
+        var flipped = axis.X * up.Y < axis.Y * up.X;
         var origin = frame.TransformPoint(new(Offset, 0)).XY;
         return Similarity2D.FromAxis(pose.Place(origin) * scale, new(axis.X * pose.Facing, axis.Y), mirror: flipped != pose.Facing < 0, scale);
     }

@@ -1,8 +1,8 @@
 using App2d.Core.Animation;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.PterosaurSkeleton;
+using static App2d.Core.Characters.Skeletons.PterosaurSkeleton;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>The pterosaur animations, for <see cref="PterosaurSkeleton"/>. Values are changes from rest, in the skeleton's own units.</summary>
 public static class PterosaurClips

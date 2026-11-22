@@ -1,4 +1,4 @@
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Attachments;
 
 /// <summary>
 /// How a drawn piece is painted. A shape is filled with <see cref="Fill"/> and edged with <see cref="Outline"/>; a line is

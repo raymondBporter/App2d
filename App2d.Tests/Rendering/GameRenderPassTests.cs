@@ -43,7 +43,7 @@ public sealed class GameRenderPassTests
         Assert.True(At(withGrid, 64, 80).G > background.G);
         Assert.Equal(background, At(withGrid, 80, 80));
         Assert.Equal(Color4b.Blue, At(withGrid, 64, 16)); // UI covers the grid's vertical axis.
-        Assert.Equal(drawGraphics ? [ "game", "debug", "ui" ] : ["debug", "ui"], game.Passes);
+        Assert.Equal(drawGraphics ? ["game", "debug", "ui"] : ["debug", "ui"], game.Passes);
 
         // World diagnostics use the game camera; screen UI does not move with it.
         game.Camera.Position = new Vector2f(13, 9);

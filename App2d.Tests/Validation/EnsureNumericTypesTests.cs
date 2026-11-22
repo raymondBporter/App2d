@@ -28,9 +28,9 @@ public sealed class EnsureNumericTypesTests
         Assert.Equal(value, Ensure.LessThanOrEqual(value, new Vector3f(-1)));
         Assert.Equal(value, Ensure.GreaterThanOrEqual(value, new Vector3f(-3)));
         Assert.Throws<ArgumentOutOfRangeException>(() => { Ensure.LessThan(value, new Vector3f(-1)); });
-        Assert.Throws<ArgumentOutOfRangeException>(() => { Ensure.GreaterThan(value, new Vector3f(-3));  } );
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Ensure.GreaterThan(value, new Vector3f(-3)); });
         Assert.Equal(Vector4.Zero, Ensure.NonPositive(Vector4.Zero));
-        Assert.Throws<ArgumentOutOfRangeException>(() => { Ensure.NonPositive(new Vector4(0, 0, 0, float.Epsilon));  });
+        Assert.Throws<ArgumentOutOfRangeException>(() => { Ensure.NonPositive(new Vector4(0, 0, 0, float.Epsilon)); });
         Assert.False(NumericValidation.IsNegative(new Vector2f(-1, 0)));
         Assert.False(NumericValidation.IsNonPositive(new Vector4(-1, -1, -1, float.NaN)));
     }

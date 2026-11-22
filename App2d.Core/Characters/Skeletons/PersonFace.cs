@@ -1,8 +1,9 @@
 using App2d.Core.Animation;
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Shapes;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>The person's face, for the head mount of <see cref="PersonSkeleton"/>: eyes, brows and a mouth, and every expression they can make.</summary>
 public static class PersonFace

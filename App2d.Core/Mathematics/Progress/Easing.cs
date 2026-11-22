@@ -192,8 +192,11 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
             (end - Two * secondValue + firstValue) * parameter);
         if (timeSecond != TReal.Zero) return valueSecond / timeSecond;
         if (valueSecond != TReal.Zero)
+        {
             return parameter == TReal.Zero ? TReal.CopySign(TReal.PositiveInfinity, valueSecond)
                 : parameter == TReal.One ? TReal.CopySign(TReal.PositiveInfinity, -valueSecond) : TReal.NaN;
+        }
+
         return (end - begin + three * (firstValue - secondValue)) / (TReal.One + three * (firstTime - secondTime));
     }
 

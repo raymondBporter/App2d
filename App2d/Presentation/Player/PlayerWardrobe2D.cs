@@ -1,9 +1,11 @@
 using App2d.Core.Animation;
 using App2d.Core.Characters;
+using App2d.Core.Characters.Attachments;
+using App2d.Core.Characters.Skeletons;
 using App2d.Core.Kinematics;
 using App2d.Presentation.Persons;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.PersonSkeleton;
+using static App2d.Core.Characters.Skeletons.PersonSkeleton;
 
 namespace App2d.Presentation.Player;
 

@@ -87,7 +87,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial, TFactory> where TF
             // A flat disk is a fan round its centre. It is written out plainly because it is drawn at every end and corner of
             // every line: as a local function taking the centre by reference it is not always inlined, and then costs twice as much.
             const int sides = 12;
-            var step = VertexGenerator2D.UnitCircleSegments / sides;
+            const int step = VertexGenerator2D.UnitCircleSegments / sides;
             var previous = center + new Vector3f(VertexGenerator2D.UnitCircle[0] * radius, 0f);
             for (var side = 1; side <= sides; side++)
             {
@@ -104,7 +104,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial, TFactory> where TF
         Vector3f At(int ring, int index)
         {
             var ringRadius = radius * ring / rings;
-            return center + new Vector3f((VertexGenerator2D.UnitCircle[index * stride] * ringRadius),
+            return center + new Vector3f(VertexGenerator2D.UnitCircle[index * stride] * ringRadius,
                 -MathF.Sqrt(MathF.Max(0f, radius * radius - ringRadius * ringRadius)));
         }
         for (var ring = 1; ring <= rings; ring++)

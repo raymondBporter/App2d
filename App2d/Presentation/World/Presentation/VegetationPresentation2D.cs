@@ -36,8 +36,7 @@ public sealed class VegetationPresentation2D : IDisposable
     internal VegetationPresentation2D(ViewportTerrainSource2D? terrainSource)
     {
         _terrainSource = terrainSource;
-        if (_terrainSource is not null)
-            _terrainSource.ChunkChanged += InvalidateChunk;
+        _terrainSource?.ChunkChanged += InvalidateChunk;
     }
 
     private IChunkedTileMap2D? TerrainMap => _terrainSource?.Map ?? (_terrain.IsDefaultOrEmpty ? null : _terrain[0]);
@@ -170,7 +169,9 @@ public sealed class VegetationPresentation2D : IDisposable
             {
                 if (_cuts.Contains(cell) || !_chunks.TryGetValue(new(cell.X / map.ChunkSize, cell.Y / map.ChunkSize), out var chunk) ||
                     chunk.Patches is not { } patches)
+                {
                     continue;
+                }
 
                 foreach (var patch in patches)
                 {
@@ -320,9 +321,11 @@ public sealed class VegetationPresentation2D : IDisposable
         foreach (var patch in patches)
         {
             if (PatchBounds(patch.Root, patch.Size).Intersects(visible))
+            {
                 patch.Visual.Render(renderer, visible.Left, visible.Right, wind, layer,
                     _cuts?.Contains(patch.Cell) == true ? patch.Size * VegetationPlacement2D.CutHeightInTiles : null,
                     CutRoughness);
+            }
         }
     }
 
@@ -362,8 +365,7 @@ public sealed class VegetationPresentation2D : IDisposable
 
     public void Dispose()
     {
-        if (_terrainSource is not null)
-            _terrainSource.ChunkChanged -= InvalidateChunk;
+        _terrainSource?.ChunkChanged -= InvalidateChunk;
         _chunks.Clear();
         _clippings.Clear();
     }

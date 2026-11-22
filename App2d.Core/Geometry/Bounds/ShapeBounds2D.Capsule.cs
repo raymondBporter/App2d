@@ -80,7 +80,7 @@ public static partial class ShapeBounds2D
         var radii = new PriorityQueue<RadiusInterval, double>();
         var circle = new CapsuleFit(Vector2d.Zero, Vector2d.Zero, CapsuleArea(0d, circleRadius));
         var best = circle;
-        var step = Math.PI / CapsuleAngleSamples;
+        const double step = Math.PI / CapsuleAngleSamples;
         var areas = new double[CapsuleAngleSamples];
         for (var i = 0; i < areas.Length; i++)
         {

@@ -62,32 +62,40 @@ public sealed class IntervalOperationsTests
     public void SmallIntegerDistancesMatchAnExhaustivePointAndTranslationSearch()
     {
         for (var aMin = -3; aMin <= 3; aMin++)
-        for (var aMax = aMin; aMax <= 3; aMax++)
-        for (var bMin = -3; bMin <= 3; bMin++)
-        for (var bMax = bMin; bMax <= 3; bMax++)
         {
-            var nearest = int.MaxValue;
-            var farthest = 0;
-            for (var a = aMin; a <= aMax; a++)
-            for (var b = bMin; b <= bMax; b++)
+            for (var aMax = aMin; aMax <= 3; aMax++)
             {
-                var distance = Math.Abs(b - a);
-                nearest = Math.Min(nearest, distance);
-                farthest = Math.Max(farthest, distance);
-            }
+                for (var bMin = -3; bMin <= 3; bMin++)
+                {
+                    for (var bMax = bMin; bMax <= 3; bMax++)
+                    {
+                        var nearest = int.MaxValue;
+                        var farthest = 0;
+                        for (var a = aMin; a <= aMax; a++)
+                        {
+                            for (var b = bMin; b <= bMax; b++)
+                            {
+                                var distance = Math.Abs(b - a);
+                                nearest = Math.Min(nearest, distance);
+                                farthest = Math.Max(farthest, distance);
+                            }
+                        }
 
-            var escape = int.MaxValue;
-            for (var shift = -8; shift <= 8; shift++)
-            {
-                if (aMax <= bMin + shift || bMax + shift <= aMin)
-                    escape = Math.Min(escape, Math.Abs(shift));
-            }
+                        var escape = int.MaxValue;
+                        for (var shift = -8; shift <= 8; shift++)
+                        {
+                            if (aMax <= bMin + shift || bMax + shift <= aMin)
+                                escape = Math.Min(escape, Math.Abs(shift));
+                        }
 
-            var first = new Interval<int>(aMin, aMax);
-            var second = new Interval<int>(bMin, bMax);
-            Assert.Equal(nearest, first.Distance(second));
-            Assert.Equal(farthest, first.MaxDistance(second));
-            Assert.Equal(nearest > 0 ? nearest : -escape, first.SignedDistance(second));
+                        var first = new Interval<int>(aMin, aMax);
+                        var second = new Interval<int>(bMin, bMax);
+                        Assert.Equal(nearest, first.Distance(second));
+                        Assert.Equal(farthest, first.MaxDistance(second));
+                        Assert.Equal(nearest > 0 ? nearest : -escape, first.SignedDistance(second));
+                    }
+                }
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 using App2d.Core.Rendering;
 using System.Collections.Immutable;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Attachments;
 
 /// <summary>Paints attachments onto a <see cref="LayeredMesh"/>. A smaller layer is nearer the viewer.</summary>
 public static class AttachmentPainter

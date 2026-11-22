@@ -1,8 +1,8 @@
 using App2d.Gameplay.World;
 using App2d.Core.Animation;
-using App2d.Core.Characters;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Kinematics;
+using App2d.Core.Characters.Skeletons;
 
 namespace App2d.Gameplay.Characters;
 
@@ -85,15 +85,29 @@ public static class GameCharacters
             ],
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = PersonClips.PlayerIdle, ["walk"] = PersonClips.PersonWalk, ["run"] = PersonClips.PersonRun,
-                ["jump"] = PersonClips.PlayerJump, ["hit"] = PersonClips.PlayerHit, ["death"] = PersonClips.PlayerDeath,
-                ["fall"] = PersonClips.PlayerFall, ["land"] = PersonClips.PlayerLand, ["dash"] = PersonClips.PlayerDash,
-                ["climb-on"] = PersonClips.PlayerClimbOn, ["climb"] = PersonClips.PlayerClimb, ["climb-off"] = PersonClips.PlayerClimbOff,
-                ["wall-grip"] = PersonClips.PlayerWallGrip, ["balance-forward"] = PersonClips.PlayerBalanceForward,
-                ["balance-backward"] = PersonClips.PlayerBalanceBackward, ["celebrate"] = PersonClips.PlayerCelebrate,
-                ["sheathe"] = PersonClips.PlayerSwordSheathe, ["down-attack"] = PersonClips.PlayerSwordDownAttack,
-                ["gun-aim"] = PersonClips.PlayerGunAim, ["gun-shot"] = PersonClips.PlayerGunShot, ["gun-wall-shot"] = PersonClips.PlayerGunWallShot,
-                ["gun-charge"] = PersonClips.PlayerGunCharge, ["heal-gather"] = PersonClips.PlayerHealGather,
+                ["idle"] = PersonClips.PlayerIdle,
+                ["walk"] = PersonClips.PersonWalk,
+                ["run"] = PersonClips.PersonRun,
+                ["jump"] = PersonClips.PlayerJump,
+                ["hit"] = PersonClips.PlayerHit,
+                ["death"] = PersonClips.PlayerDeath,
+                ["fall"] = PersonClips.PlayerFall,
+                ["land"] = PersonClips.PlayerLand,
+                ["dash"] = PersonClips.PlayerDash,
+                ["climb-on"] = PersonClips.PlayerClimbOn,
+                ["climb"] = PersonClips.PlayerClimb,
+                ["climb-off"] = PersonClips.PlayerClimbOff,
+                ["wall-grip"] = PersonClips.PlayerWallGrip,
+                ["balance-forward"] = PersonClips.PlayerBalanceForward,
+                ["balance-backward"] = PersonClips.PlayerBalanceBackward,
+                ["celebrate"] = PersonClips.PlayerCelebrate,
+                ["sheathe"] = PersonClips.PlayerSwordSheathe,
+                ["down-attack"] = PersonClips.PlayerSwordDownAttack,
+                ["gun-aim"] = PersonClips.PlayerGunAim,
+                ["gun-shot"] = PersonClips.PlayerGunShot,
+                ["gun-wall-shot"] = PersonClips.PlayerGunWallShot,
+                ["gun-charge"] = PersonClips.PlayerGunCharge,
+                ["heal-gather"] = PersonClips.PlayerHealGather,
             },
             Actions =
             [
@@ -135,7 +149,9 @@ public static class GameCharacters
             ],
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = PersonClips.PersonIdle, ["walk"] = PersonClips.PersonWalk, ["hit"] = PersonClips.PersonHit,
+                ["idle"] = PersonClips.PersonIdle,
+                ["walk"] = PersonClips.PersonWalk,
+                ["hit"] = PersonClips.PersonHit,
                 ["death"] = PersonClips.PersonDeath,
             },
             Actions =
@@ -167,7 +183,9 @@ public static class GameCharacters
             Body = StalkerBody.Body,
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = StalkerClips.StalkerIdle, ["walk"] = StalkerClips.StalkerWalk, ["hit"] = StalkerClips.StalkerHit,
+                ["idle"] = StalkerClips.StalkerIdle,
+                ["walk"] = StalkerClips.StalkerWalk,
+                ["hit"] = StalkerClips.StalkerHit,
                 ["death"] = StalkerClips.StalkerDeath,
             },
             Actions =
@@ -208,8 +226,12 @@ public static class GameCharacters
             ],
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = PersonClips.PersonIdle, ["walk"] = PersonClips.PersonWalk, ["run"] = PersonClips.PersonRun,
-                ["jump"] = PersonClips.PersonJump, ["hit"] = PersonClips.PersonHit, ["death"] = PersonClips.PersonDeath,
+                ["idle"] = PersonClips.PersonIdle,
+                ["walk"] = PersonClips.PersonWalk,
+                ["run"] = PersonClips.PersonRun,
+                ["jump"] = PersonClips.PersonJump,
+                ["hit"] = PersonClips.PersonHit,
+                ["death"] = PersonClips.PersonDeath,
             },
             Actions =
             [
@@ -249,8 +271,11 @@ public static class GameCharacters
             ],
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = PersonClips.PersonIdle, ["walk"] = PersonClips.PersonHeavyWalk, ["run"] = PersonClips.PersonRun,
-                ["hit"] = PersonClips.PersonHit, ["death"] = PersonClips.PersonDeath,
+                ["idle"] = PersonClips.PersonIdle,
+                ["walk"] = PersonClips.PersonHeavyWalk,
+                ["run"] = PersonClips.PersonRun,
+                ["hit"] = PersonClips.PersonHit,
+                ["death"] = PersonClips.PersonDeath,
             },
             Actions =
             [
@@ -289,8 +314,12 @@ public static class GameCharacters
             ],
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = PersonClips.PersonIdle, ["walk"] = PersonClips.PersonRun, ["run"] = PersonClips.PersonRun,
-                ["jump"] = PersonClips.PersonJump, ["hit"] = PersonClips.PersonHit, ["death"] = PersonClips.PersonDeath,
+                ["idle"] = PersonClips.PersonIdle,
+                ["walk"] = PersonClips.PersonRun,
+                ["run"] = PersonClips.PersonRun,
+                ["jump"] = PersonClips.PersonJump,
+                ["hit"] = PersonClips.PersonHit,
+                ["death"] = PersonClips.PersonDeath,
             },
             Actions =
             [
@@ -330,8 +359,12 @@ public static class GameCharacters
             ],
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = PersonClips.PersonIdle, ["walk"] = PersonClips.PersonRun, ["run"] = PersonClips.PersonRun,
-                ["jump"] = PersonClips.PersonJump, ["hit"] = PersonClips.PersonHit, ["death"] = PersonClips.PersonDeath,
+                ["idle"] = PersonClips.PersonIdle,
+                ["walk"] = PersonClips.PersonRun,
+                ["run"] = PersonClips.PersonRun,
+                ["jump"] = PersonClips.PersonJump,
+                ["hit"] = PersonClips.PersonHit,
+                ["death"] = PersonClips.PersonDeath,
             },
             Actions =
             [
@@ -360,11 +393,16 @@ public static class GameCharacters
             Body = QuadrupedBodies.BabyTriceratops,
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = BabyTriceratopsClips.BabyTriceratopsIdle, ["walk"] = BabyTriceratopsClips.BabyTriceratopsWalk,
-                ["run"] = BabyTriceratopsClips.BabyTriceratopsRun, ["scrape"] = BabyTriceratopsClips.BabyTriceratopsScrape,
-                ["head-down"] = BabyTriceratopsClips.BabyTriceratopsHeadDown, ["rush"] = BabyTriceratopsClips.BabyTriceratopsRush,
-                ["brake"] = BabyTriceratopsClips.BabyTriceratopsBrake, ["recover"] = BabyTriceratopsClips.BabyTriceratopsRecover,
-                ["hit"] = BabyTriceratopsClips.BabyTriceratopsHit, ["death"] = BabyTriceratopsClips.BabyTriceratopsDeath,
+                ["idle"] = BabyTriceratopsClips.BabyTriceratopsIdle,
+                ["walk"] = BabyTriceratopsClips.BabyTriceratopsWalk,
+                ["run"] = BabyTriceratopsClips.BabyTriceratopsRun,
+                ["scrape"] = BabyTriceratopsClips.BabyTriceratopsScrape,
+                ["head-down"] = BabyTriceratopsClips.BabyTriceratopsHeadDown,
+                ["rush"] = BabyTriceratopsClips.BabyTriceratopsRush,
+                ["brake"] = BabyTriceratopsClips.BabyTriceratopsBrake,
+                ["recover"] = BabyTriceratopsClips.BabyTriceratopsRecover,
+                ["hit"] = BabyTriceratopsClips.BabyTriceratopsHit,
+                ["death"] = BabyTriceratopsClips.BabyTriceratopsDeath,
             },
             Actions =
             [
@@ -401,8 +439,12 @@ public static class GameCharacters
             ],
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = PersonClips.ShieldDefenderIdle, ["walk"] = PersonClips.ShieldDefenderWalk, ["run"] = PersonClips.PersonRun,
-                ["jump"] = PersonClips.PersonJump, ["hit"] = PersonClips.PersonHit, ["death"] = PersonClips.PersonDeath,
+                ["idle"] = PersonClips.ShieldDefenderIdle,
+                ["walk"] = PersonClips.ShieldDefenderWalk,
+                ["run"] = PersonClips.PersonRun,
+                ["jump"] = PersonClips.PersonJump,
+                ["hit"] = PersonClips.PersonHit,
+                ["death"] = PersonClips.PersonDeath,
             },
             Actions =
             [
@@ -433,10 +475,15 @@ public static class GameCharacters
             Body = PterosaurBody.Body,
             Roles = new Dictionary<string, SkeletonClip2D>
             {
-                ["idle"] = PterosaurClips.PterosaurHover, ["hover"] = PterosaurClips.PterosaurHover, ["fold"] = PterosaurClips.PterosaurFold,
-                ["dive"] = PterosaurClips.PterosaurDive, ["brake"] = PterosaurClips.PterosaurBrake,
-                ["low-recovery"] = PterosaurClips.PterosaurLowRecovery, ["reset"] = PterosaurClips.PterosaurReset,
-                ["hit"] = PterosaurClips.PterosaurHit, ["death"] = PterosaurClips.PterosaurDeath,
+                ["idle"] = PterosaurClips.PterosaurHover,
+                ["hover"] = PterosaurClips.PterosaurHover,
+                ["fold"] = PterosaurClips.PterosaurFold,
+                ["dive"] = PterosaurClips.PterosaurDive,
+                ["brake"] = PterosaurClips.PterosaurBrake,
+                ["low-recovery"] = PterosaurClips.PterosaurLowRecovery,
+                ["reset"] = PterosaurClips.PterosaurReset,
+                ["hit"] = PterosaurClips.PterosaurHit,
+                ["death"] = PterosaurClips.PterosaurDeath,
             },
             Actions =
             [

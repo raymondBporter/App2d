@@ -11,9 +11,8 @@ namespace App2d.Core.Mathematics;
 public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatingPointIeee754<TReal>
 {
     private readonly Func<TValue, TValue, TReal, TValue> _function;
-    private readonly ProgressMap<TReal>? _progress;
     internal InterpolatorRecipe<TValue, TReal>? Recipe { get; }
-    internal ProgressMap<TReal>? Progress => _progress;
+    internal ProgressMap<TReal>? Progress { get; }
     internal bool IsInitialized => _function is not null;
     internal Interpolator<TValue, TReal> FunctionOnly => new(_function, null, Recipe);
 
@@ -25,7 +24,7 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
     {
         Ensure.ThrowIfNull(function);
         _function = function;
-        _progress = progress;
+        Progress = progress;
         Recipe = recipe;
         InputBegin = progress is null ? TReal.Zero : progress.InputBegin;
         InputEnd = progress is null ? TReal.One : progress.InputEnd;
@@ -36,7 +35,7 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
 
     public TValue Evaluate(TValue start, TValue end, TReal time) =>
         (_function ?? throw new InvalidOperationException("Initialize an interpolator with a function or a factory."))
-            (start, end, _progress is null ? time : _progress.Sample(time));
+            (start, end, Progress is null ? time : Progress.Sample(time));
 
     /// <summary>Clamps the input to the outer progress map's input span, or [0, 1] without one. Output remains unclamped.</summary>
     public TValue EvaluateClamped(TValue start, TValue end, TReal time) => Evaluate(start, end,
@@ -46,7 +45,7 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
     public Interpolator<TValue, TReal> WithProgress(ProgressMap<TReal> progress)
     {
         Ensure.ThrowIfNull(progress);
-        return new(_function, _progress is null ? progress : progress.Then(_progress), Recipe);
+        return new(_function, Progress is null ? progress : progress.Then(Progress), Recipe);
     }
 
     /// <summary>
@@ -68,7 +67,7 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
         return new((start, end, time) => channel.Replace(parent.Evaluate(start, end, time),
             child.Evaluate(channel.Read(start), channel.Read(end), time)),
             new InterpolatorRecipe<TValue, TReal>.Channel<TChannel>(parent, channel, child))
-            { InputBegin = parent.InputBegin, InputEnd = parent.InputEnd };
+        { InputBegin = parent.InputBegin, InputEnd = parent.InputEnd };
     }
 
     /// <summary>Interpolates a scalar channel through its own progress map.</summary>
@@ -83,6 +82,6 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
         var source = this;
         return new((start, end, time) => fromCoordinates(source.Evaluate(toCoordinates(start), toCoordinates(end), time)),
             new InterpolatorRecipe<TOutput, TReal>.Coordinates<TValue>(source, toCoordinates, fromCoordinates))
-            { InputBegin = InputBegin, InputEnd = InputEnd };
+        { InputBegin = InputBegin, InputEnd = InputEnd };
     }
 }

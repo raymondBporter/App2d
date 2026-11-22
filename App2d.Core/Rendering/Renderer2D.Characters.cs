@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
@@ -20,7 +21,7 @@ public sealed partial class Renderer2D
 
         _characterRenderer ??= new(_device);
         (_characterMesh ??= new()).Clear();
-        App2d.Core.Characters.AttachmentPainter.Paint(_characterMesh, pose.Posed, shader.Drawn);
+        AttachmentPainter.Paint(_characterMesh, pose.Posed, shader.Drawn);
         var world = Matrix.CreateScale(pose.Facing, 1, 1) * LayeredMeshRenderer.ToXnaMatrix(View.LocalToDevice(visual.Transform.Matrix));
         var projection = LayeredMeshRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height);
         LayeredMesh? swoosh = null;

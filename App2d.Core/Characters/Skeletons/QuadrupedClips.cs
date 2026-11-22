@@ -1,8 +1,8 @@
 using App2d.Core.Animation;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.QuadrupedSkeleton;
+using static App2d.Core.Characters.Skeletons.QuadrupedSkeleton;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>The quadruped animations, for <see cref="QuadrupedSkeleton.Skeleton"/>. Values are changes from rest, in the skeleton's own units.</summary>
 public static class QuadrupedClips

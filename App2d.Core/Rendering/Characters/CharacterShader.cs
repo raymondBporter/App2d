@@ -1,4 +1,5 @@
 using App2d.Core.Characters;
+using App2d.Core.Characters.Attachments;
 using System.Collections.Immutable;
 
 namespace App2d.Core.Rendering.Characters;

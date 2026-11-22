@@ -1,9 +1,10 @@
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Shapes;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.Paints;
+using static App2d.Core.Characters.Attachments.Paints;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>What a person wears and holds: each function returns one thing's pieces as attachments on a mount of <see cref="PersonSkeleton"/>, at a layer.</summary>
 public static class PersonWardrobe

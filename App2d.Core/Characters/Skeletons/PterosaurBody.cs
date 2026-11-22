@@ -1,9 +1,10 @@
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Geometry.Shapes;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.Paints;
-using static App2d.Core.Characters.PterosaurSkeleton;
+using static App2d.Core.Characters.Attachments.Paints;
+using static App2d.Core.Characters.Skeletons.PterosaurSkeleton;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>The pterosaur's drawn body, as attachments on <see cref="PterosaurSkeleton"/>.</summary>
 public static class PterosaurBody

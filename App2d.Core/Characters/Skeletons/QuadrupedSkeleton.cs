@@ -1,6 +1,6 @@
 using App2d.Core.Kinematics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>A four-legged body seen from the side, facing +X: body, head and tail, and a near and a far pair of legs that IK places on the ground.</summary>
 public static class QuadrupedSkeleton

@@ -15,18 +15,18 @@ public sealed class InterpolationTests
         var end = new Heading(MathF.PI / 4f);
         var value = start.Interpolate(end, Easingf.Smooth, .5f);
         Assert.Equal(MathF.Tau, value.Radians, 5);
-        Assert.Equal(MathF.PI, Interpolation.Interpolate(start.Radians, end.Radians, Easingf.Smooth, .5f), 5);
+        Assert.Equal(MathF.PI, start.Radians.Interpolate(end.Radians, Easingf.Smooth, .5f), 5);
     }
 
     [Fact]
     public void AllVectorDimensionsInterpolateInTheirNativePrecision()
     {
-        Assert.Equal(new Vector2f(1.25f, -.625f), Interpolation.Interpolate(Vector2f.Zero, new(8f, -4f), Easingf.Smooth, .25f));
-        Assert.Equal(new Vector3f(1.25f, -.625f, 2.5f), Interpolation.Interpolate(Vector3f.Zero, new(8f, -4f, 16f), Easingf.Smooth, .25f));
-        Assert.Equal(new Vector4f(1.25f, -.625f, 2.5f, 5f), Interpolation.Interpolate(Vector4f.Zero, new(8f, -4f, 16f, 32f), Easingf.Smooth, .25f));
-        Assert.Equal(new Vector2d(1.25d, -.625d), Interpolation.Interpolate(Vector2d.Zero, new(8d, -4d), Easingd.Smooth, .25d));
-        Assert.Equal(new Vector3d(1.25d, -.625d, 2.5d), Interpolation.Interpolate(Vector3d.Zero, new(8d, -4d, 16d), Easingd.Smooth, .25d));
-        Assert.Equal(new Vector4d(1.25d, -.625d, 2.5d, 5d), Interpolation.Interpolate(Vector4d.Zero, new(8d, -4d, 16d, 32d), Easingd.Smooth, .25d));
+        Assert.Equal(new Vector2f(1.25f, -.625f), Vector2f.Zero.Interpolate(new(8f, -4f), Easingf.Smooth, .25f));
+        Assert.Equal(new Vector3f(1.25f, -.625f, 2.5f), Vector3f.Zero.Interpolate(new(8f, -4f, 16f), Easingf.Smooth, .25f));
+        Assert.Equal(new Vector4f(1.25f, -.625f, 2.5f, 5f), Vector4f.Zero.Interpolate(new(8f, -4f, 16f, 32f), Easingf.Smooth, .25f));
+        Assert.Equal(new Vector2d(1.25d, -.625d), Vector2d.Zero.Interpolate(new(8d, -4d), Easingd.Smooth, .25d));
+        Assert.Equal(new Vector3d(1.25d, -.625d, 2.5d), Vector3d.Zero.Interpolate(new(8d, -4d, 16d), Easingd.Smooth, .25d));
+        Assert.Equal(new Vector4d(1.25d, -.625d, 2.5d, 5d), Vector4d.Zero.Interpolate(new(8d, -4d, 16d, 32d), Easingd.Smooth, .25d));
         Assert.Equal(new Vector3d(1.000000000025d, 0d, 0d),
             Interpolation.Interpolate(new Vector3d(1d, 0d, 0d), new(1.0000000001d, 0d, 0d), Easingd.Linear, .25d));
     }
@@ -40,7 +40,7 @@ public sealed class InterpolationTests
         var start = new Vector3f(1e-20f, 3e18f, -9e20f);
         var end = new Vector3f(-.123f, -4e18f, 8e20f);
         Assert.Equal(Vector3f.Lerp(start, end, Easingf.Smooth.Sample(.37f)),
-            Interpolation.Interpolate(start, end, Easingf.Smooth, .37f));
+            start.Interpolate(end, Easingf.Smooth, .37f));
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public sealed class InterpolationTests
         var map = new ProgressMapf(time => { samples++; return time; },
             _ => throw new InvalidOperationException("Value interpolation does not need a derivative."));
         Assert.Equal(new Vector3f(10f, -5f, 2.5f),
-            Interpolation.Interpolate(Vector3f.Zero, new(8f, -4f, 2f), map, 1.25f));
+            Vector3f.Zero.Interpolate(new(8f, -4f, 2f), map, 1.25f));
         Assert.Equal(1, samples);
     }
 
@@ -60,7 +60,7 @@ public sealed class InterpolationTests
         const double start = 1d;
         const double end = 1.0000000001d;
         Assert.Equal(1.000000000025d, Interpolation.Lerp(start, end, .25d));
-        Assert.Equal(1.000000000025d, Interpolation.Interpolate(start, end, Easingd.Linear, .25d));
+        Assert.Equal(1.000000000025d, start.Interpolate(end, Easingd.Linear, .25d));
         Assert.Equal(.25d, Interpolation.InverseLerp(10d, 20d, 12.5d));
         Assert.Equal(0d, Interpolation.InverseLerpClamped(10d, 20d, 0d));
         var vector = Interpolation.Interpolate(new Vector2d(start), new Vector2d(end), Easingd.Linear, .25d);
@@ -94,7 +94,7 @@ public sealed class InterpolationTests
         Assert.Equal(12.5f, Interpolation.Lerp(10f, 20f, 0.25f), 6);
         Assert.Equal(11.5625f, Interpolation.Interpolate(10f, 20f, Easingf.Smooth, 0.25f), 6);
 
-        var vector = Interpolation.Interpolate(Vector2f.Zero, new Vector2f(8f, -4f), Easingf.Smoother, 0.5f);
+        var vector = Vector2f.Zero.Interpolate(new Vector2f(8f, -4f), Easingf.Smoother, 0.5f);
         Assert.Equal(new Vector2f(4f, -2f), vector);
     }
 

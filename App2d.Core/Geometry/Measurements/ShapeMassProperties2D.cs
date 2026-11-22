@@ -6,6 +6,9 @@ namespace App2d.Core.Geometry.Measurements;
 /// <summary>Exact area, centroid, mass and centroidal polar inertia for uniform-density solid 2D shapes.</summary>
 public static class ShapeMassProperties2D
 {
+    /// <summary>
+    /// Calculate Mass, Area, Center of mass, and Moment of intertia
+    /// </summary>
     /// <param name="shape">A validated finite shape in its own coordinates, before the object's transform.</param>
     /// <param name="density">Positive mass per square unit; a constant thickness is absorbed into this density.</param>
     /// <exception cref="NotSupportedException">The shape is unbounded, unknown, or requests overlap-counted-once union mass.</exception>

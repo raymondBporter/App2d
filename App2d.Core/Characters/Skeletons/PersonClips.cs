@@ -1,8 +1,8 @@
 using App2d.Core.Animation;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.PersonSkeleton;
+using static App2d.Core.Characters.Skeletons.PersonSkeleton;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>The person animations, for <see cref="PersonSkeleton"/>. Values are changes from rest, in the skeleton's own units.</summary>
 public static class PersonClips

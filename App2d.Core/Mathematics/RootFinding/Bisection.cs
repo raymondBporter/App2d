@@ -1,6 +1,5 @@
 ﻿namespace App2d.Core.Mathematics.RootFinding;
 
-
 internal static class Bisection
 {
     public static double Bisect(Func<double, double> evaluate, double low, double high, double lowValue)

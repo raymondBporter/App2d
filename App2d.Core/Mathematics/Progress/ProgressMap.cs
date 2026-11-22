@@ -143,7 +143,7 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
     private static TReal DivideByRange(TReal begin, TReal end, TReal value)
     {
         var width = end - begin;
-        return TReal.IsFinite(width) ? value / width : (value / Two) / (end / Two - begin / Two);
+        return TReal.IsFinite(width) ? value / width : value / Two / (end / Two - begin / Two);
     }
 
     private static TReal ScaleByRange(TReal begin, TReal end, TReal derivative)
@@ -178,11 +178,13 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         if (_isConstant && direction == EasingDirection.Out) return Constant(TReal.One - Sample(TReal.Zero));
 
         if (direction == EasingDirection.Out)
+        {
             return new ProgressMap<TReal>(
                 phase => TReal.One - Sample(TReal.One - phase),
                 phase => Derivative(TReal.One - phase),
                 Inverse is { } inverse ? value => TReal.One - inverse(TReal.One - value) : null,
                 IsContinuous).WithRecipe(new(ProgressOperation.Direction, [], Source: this, Direction: direction));
+        }
 
         var joinsContinuously = Sample(TReal.One) == TReal.One;
         if (_isConstant && joinsContinuously) return Constant(Half);

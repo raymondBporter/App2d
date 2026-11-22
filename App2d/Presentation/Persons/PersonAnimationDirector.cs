@@ -5,6 +5,7 @@ using App2d.Contracts.Simulation;
 using App2d.Core.Animation;
 using App2d.Core.Characters;
 using App2d.Core.Kinematics;
+using App2d.Core.Characters.Skeletons;
 
 namespace App2d.Presentation.Persons;
 

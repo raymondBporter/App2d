@@ -92,11 +92,19 @@ public sealed class ProgressMapJsonConverterFactory : JsonConverterFactory
 
         private static ProgressMap<TReal> Primitive(string kind) => kind switch
         {
-            "linear" => ProgressMap<TReal>.Forward, "reverse" => ProgressMap<TReal>.Reverse,
-            "ping-pong" => ProgressMap<TReal>.PingPong, "reverse-ping-pong" => ProgressMap<TReal>.ReversePingPong,
-            "smooth" => Easing<TReal>.Smooth, "smoother" => Easing<TReal>.Smoother, "smoothest" => Easing<TReal>.Smoothest,
-            "sine" => Easing<TReal>.Sine, "step" => Easing<TReal>.Step,
-            "quad" => Easing<TReal>.Power(2), "cubic" => Easing<TReal>.Power(3), "quart" => Easing<TReal>.Power(4), "quint" => Easing<TReal>.Power(5),
+            "linear" => ProgressMap<TReal>.Forward,
+            "reverse" => ProgressMap<TReal>.Reverse,
+            "ping-pong" => ProgressMap<TReal>.PingPong,
+            "reverse-ping-pong" => ProgressMap<TReal>.ReversePingPong,
+            "smooth" => Easing<TReal>.Smooth,
+            "smoother" => Easing<TReal>.Smoother,
+            "smoothest" => Easing<TReal>.Smoothest,
+            "sine" => Easing<TReal>.Sine,
+            "step" => Easing<TReal>.Step,
+            "quad" => Easing<TReal>.Power(2),
+            "cubic" => Easing<TReal>.Power(3),
+            "quart" => Easing<TReal>.Power(4),
+            "quint" => Easing<TReal>.Power(5),
             _ => throw new JsonException($"Unknown progress kind '{kind}'.")
         };
 
@@ -104,16 +112,19 @@ public sealed class ProgressMapJsonConverterFactory : JsonConverterFactory
         {
             if (value.Recipe is not { } recipe)
             {
-                var name = _names.FirstOrDefault(pair => ReferenceEquals(pair.Value, value)).Key;
-                if (name is null) throw new JsonException("This progress map contains an unnamed function. Register a name before saving it.");
+                var name = _names.FirstOrDefault(pair => ReferenceEquals(pair.Value, value)).Key
+                    ?? throw new JsonException("This progress map contains an unnamed function. Register a name before saving it.");
                 writer.WriteStartObject(); writer.WriteString("kind", "registered"); writer.WriteString("name", name); writer.WriteEndObject();
                 return;
             }
             var primitive = recipe.Kind switch
             {
-                ProgressOperation.Linear => "linear", ProgressOperation.Reverse => "reverse",
-                ProgressOperation.PingPong => "ping-pong", ProgressOperation.ReversePingPong => "reverse-ping-pong",
-                ProgressOperation.Sine => "sine", ProgressOperation.Step => "step",
+                ProgressOperation.Linear => "linear",
+                ProgressOperation.Reverse => "reverse",
+                ProgressOperation.PingPong => "ping-pong",
+                ProgressOperation.ReversePingPong => "reverse-ping-pong",
+                ProgressOperation.Sine => "sine",
+                ProgressOperation.Step => "step",
                 ProgressOperation.SmoothStep => recipe.Integer switch { 1 => "smooth", 2 => "smoother", 3 => "smoothest", _ => null },
                 _ => null
             };

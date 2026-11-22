@@ -1,6 +1,6 @@
 using App2d.Core.Kinematics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>A three-legged stalker seen from the side, facing +X: a body, and three legs that IK places on the ground.</summary>
 public static class StalkerSkeleton

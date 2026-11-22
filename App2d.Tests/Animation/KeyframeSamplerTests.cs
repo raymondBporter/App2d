@@ -27,7 +27,7 @@ public sealed class KeyframeSamplerTests
     [Fact]
     public void EmptyTracksUseTheCallersDefaultAndSingleKeysAreHeld()
     {
-        Assert.Equal(42, Sample(Array.Empty<ScalarKey>(), 5, 42f, Interpolation.Linear<float>()));
+        Assert.Equal(42, Sample([], 5, 42f, Interpolation.Linear<float>()));
         ScalarKey[] keys = [new(2, 10)];
         foreach (var time in new[] { -2, 2, 5 })
             Assert.Equal(10, Sample(keys, time, -1f, Interpolation.Linear<float>()));

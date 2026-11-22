@@ -1,9 +1,10 @@
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Geometry.Shapes;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.Paints;
-using static App2d.Core.Characters.StalkerSkeleton;
+using static App2d.Core.Characters.Attachments.Paints;
+using static App2d.Core.Characters.Skeletons.StalkerSkeleton;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>The stalker's drawn body, as attachments on <see cref="StalkerSkeleton"/>.</summary>
 public static class StalkerBody

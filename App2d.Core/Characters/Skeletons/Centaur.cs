@@ -1,9 +1,10 @@
 using App2d.Core.Animation;
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Collections.Immutable;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>
 /// A centaur: the quadruped without its head, and a person from the waist up, at nine tenths of the size, where its neck was.

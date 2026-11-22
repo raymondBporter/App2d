@@ -95,7 +95,6 @@ public static class NumericValidation
     public static bool IsFinite(Vector2d value) => Vector2d.IsFinite(value);
     public static bool IsNonZero(Vector2d value) => IsFinite(value) && value != Vector2d.Zero;
 
-
     public static bool IsNumber(Vector3d value) => IsNumber(value.X) && IsNumber(value.Y) && IsNumber(value.Z);
     public static bool IsFinite(Vector3d value) => Vector3d.IsFinite(value);
     public static bool IsNonZero(Vector3d value) => IsFinite(value) && value != Vector3d.Zero;

@@ -42,8 +42,7 @@ public sealed class WorldPresentation2D : IDisposable
         _textures = textures;
         _terrainSource = terrainSource;
         _vegetation = new(terrainSource);
-        if (_terrainSource is not null)
-            _terrainSource.ChunkChanged += InvalidateTerrain;
+        _terrainSource?.ChunkChanged += InvalidateTerrain;
     }
 
     public void DrawTrees(Renderer2D renderer, Rect2f visible) => _vegetation.DrawTrees(renderer, visible);

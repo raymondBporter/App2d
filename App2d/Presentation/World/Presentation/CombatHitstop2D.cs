@@ -5,6 +5,7 @@ using App2d.Core;
 using App2d.Core.Characters;
 using App2d.Presentation.Persons;
 using System.Collections.Immutable;
+using App2d.Core.Characters.Skeletons;
 
 namespace App2d.Presentation.World.Presentation;
 

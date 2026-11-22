@@ -1,9 +1,10 @@
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Geometry.Shapes;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.Paints;
-using static App2d.Core.Characters.QuadrupedSkeleton;
+using static App2d.Core.Characters.Attachments.Paints;
+using static App2d.Core.Characters.Skeletons.QuadrupedSkeleton;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>The drawn bodies of the four-legged animals, as attachments on the builds of <see cref="QuadrupedSkeleton"/>.</summary>
 public static class QuadrupedBodies

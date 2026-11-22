@@ -1,5 +1,6 @@
 using App2d.Core;
 using App2d.Core.Characters;
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.EditorUi;
@@ -174,18 +175,23 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
 
     private void FinishDrag()
     {
-        if (_pressed is { } pressed && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 4)) _dragging = true;
-        if (_dragging && _pressed is { } source && Item(source) is { } item)
+        if (_pressed is { } pressed)
         {
-            var mouse = ImGui.GetIO().MousePos;
-            var size = new Vector2(64) * _scale;
-            ImGui.GetForegroundDrawList().AddImage(_icons[item.Id].Id, mouse - size / 2, mouse + size / 2);
-            if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && _hovered is { } target && target != source)
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Left, 4))
+                _dragging = true;
+
+            if (Item(pressed) is { } item)
             {
-                var changed = target.Slot is { } slot
-                    ? source.Slot is null && wardrobe.Equip(source.Index, slot)
-                    : source.Slot is { } worn ? wardrobe.Unequip(worn, target.Index) : wardrobe.Move(source.Index, target.Index);
-                _message = changed ? "Loadout updated." : "That item belongs in a different slot.";
+                var mouse = ImGui.GetIO().MousePos;
+                var size = new Vector2(64) * _scale;
+                ImGui.GetForegroundDrawList().AddImage(_icons[item.Id].Id, mouse - size / 2, mouse + size / 2);
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && _hovered is { } target && target != pressed)
+                {
+                    var changed = target.Slot is { } slot
+                        ? pressed.Slot is null && wardrobe.Equip(pressed.Index, slot)
+                        : pressed.Slot is { } worn ? wardrobe.Unequip(worn, target.Index) : wardrobe.Move(pressed.Index, target.Index);
+                    _message = changed ? "Loadout updated." : "That item belongs in a different slot.";
+                }
             }
         }
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))

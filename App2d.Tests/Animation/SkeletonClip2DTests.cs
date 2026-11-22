@@ -86,7 +86,7 @@ public sealed class SkeletonClip2DTests
         var expected = skeleton.RestWorld[Shoulder].Translation + new Vector2f(-1, 3);
         AssertClose(expected, before[Hand].Translation);
         AssertClose(expected, after[Hand].Translation);
-        float Side(RigidTransform2D[] world) => Vector2f.Cross(world[Hand].Translation - world[Shoulder].Translation, world[Elbow].Translation - world[Shoulder].Translation);
+        static float Side(RigidTransform2D[] world) => Vector2f.Cross(world[Hand].Translation - world[Shoulder].Translation, world[Elbow].Translation - world[Shoulder].Translation);
         Assert.True(Side(before) > .1f);
         Assert.True(Side(after) < -.1f);
     }

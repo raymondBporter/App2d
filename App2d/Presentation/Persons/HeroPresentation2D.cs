@@ -5,6 +5,7 @@ using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Characters;
+using App2d.Core.Characters.Skeletons;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;

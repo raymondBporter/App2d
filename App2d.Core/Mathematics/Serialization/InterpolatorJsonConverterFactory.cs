@@ -12,7 +12,7 @@ namespace App2d.Core.Mathematics.Serialization;
 public sealed class InterpolatorJsonConverterFactory : JsonConverterFactory
 {
     private readonly Dictionary<Type, object> _types = [];
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private bool _started;
     internal bool Started => Volatile.Read(ref _started);
 
@@ -78,7 +78,8 @@ public sealed class InterpolatorJsonConverterFactory : JsonConverterFactory
     private static InterpolationJsonType<TReal, TReal> Scalar<TReal>() where TReal : IFloatingPointIeee754<TReal> =>
         new(Interpolation.Linear<TReal>())
         {
-            Linear = Interpolation.Linear<TReal>, ShortestAngle = Interpolation.ShortestAngle<TReal>,
+            Linear = Interpolation.Linear<TReal>,
+            ShortestAngle = Interpolation.ShortestAngle<TReal>,
             Bezier = Interpolation.Bezier<TReal>
         };
 
@@ -111,28 +112,52 @@ public sealed class InterpolatorJsonConverterFactory : JsonConverterFactory
         {
             if (value == typeof(Vector2f)) return Vector2<Vector2f, float>();
             if (value == typeof(Vector3f)) return Vector<Vector3f, float>();
-            if (value == typeof(Vector4f)) return Vector<Vector4f, float>()
+            if (value == typeof(Vector4f))
+            {
+                return Vector<Vector4f, float>()
                 .Channel("r", Vector4f.Channels.R).Channel("g", Vector4f.Channels.G)
                 .Channel("b", Vector4f.Channels.B).Channel("a", Vector4f.Channels.A).Channel("rgb", Vector4f.Channels.RGB);
+            }
+
             if (value == typeof(Polar<float>)) return PolarValue<float>();
-            if (value == typeof(RigidTransform2D)) return new InterpolationJsonType<RigidTransform2D, float>(Interpolation.Default<RigidTransform2D, float>())
+            if (value == typeof(RigidTransform2D))
+            {
+                return new InterpolationJsonType<RigidTransform2D, float>(Interpolation.Default<RigidTransform2D, float>())
                 .Channel("translation", RigidTransform2D.Channels.Translation).Channel("rotation", RigidTransform2D.Channels.Rotation);
-            if (value == typeof(Ellipse2D)) return new InterpolationJsonType<Ellipse2D, float>(Interpolation.Default<Ellipse2D, float>())
+            }
+
+            if (value == typeof(Ellipse2D))
+            {
+                return new InterpolationJsonType<Ellipse2D, float>(Interpolation.Default<Ellipse2D, float>())
                 .Channel("center", Ellipse2D.Channels.Center).Channel("radii", Ellipse2D.Channels.Radii)
                 .Channel("radiusX", Ellipse2D.Channels.RadiusX).Channel("radiusY", Ellipse2D.Channels.RadiusY).Channel("angle", Ellipse2D.Channels.Angle);
-            if (value == typeof(QuadraticBezier2D)) return new InterpolationJsonType<QuadraticBezier2D, float>(Interpolation.Default<QuadraticBezier2D, float>())
+            }
+
+            if (value == typeof(QuadraticBezier2D))
+            {
+                return new InterpolationJsonType<QuadraticBezier2D, float>(Interpolation.Default<QuadraticBezier2D, float>())
                 .Channel("start", QuadraticBezier2D.Channels.Start).Channel("control", QuadraticBezier2D.Channels.Control).Channel("end", QuadraticBezier2D.Channels.End);
-            if (value == typeof(LineSegmentCurve2D)) return new InterpolationJsonType<LineSegmentCurve2D, float>(Interpolation.Default<LineSegmentCurve2D, float>())
+            }
+
+            if (value == typeof(LineSegmentCurve2D))
+            {
+                return new InterpolationJsonType<LineSegmentCurve2D, float>(Interpolation.Default<LineSegmentCurve2D, float>())
                 .Channel("start", LineSegmentCurve2D.Channels.Start).Channel("end", LineSegmentCurve2D.Channels.End);
+            }
+
             if (value == typeof(SimplePolygon2D)) return new InterpolationJsonType<SimplePolygon2D, float>(Interpolation.Default<SimplePolygon2D, float>());
         }
         if (real == typeof(double))
         {
             if (value == typeof(Vector2d)) return Vector2<Vector2d, double>();
             if (value == typeof(Vector3d)) return Vector<Vector3d, double>();
-            if (value == typeof(Vector4d)) return Vector<Vector4d, double>()
+            if (value == typeof(Vector4d))
+            {
+                return Vector<Vector4d, double>()
                 .Channel("r", Vector4d.Channels.R).Channel("g", Vector4d.Channels.G)
                 .Channel("b", Vector4d.Channels.B).Channel("a", Vector4d.Channels.A).Channel("rgb", Vector4d.Channels.RGB);
+            }
+
             if (value == typeof(Polar<double>)) return PolarValue<double>();
         }
         return null;

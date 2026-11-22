@@ -1,4 +1,5 @@
 using App2d.Core.Animation;
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics.Transforms;
 using System.Collections.Immutable;

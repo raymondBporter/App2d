@@ -149,6 +149,9 @@ public sealed class HitLedger
 /// </summary>
 public static class CombatContacts
 {
+    /// <summary>
+    /// Why do we do this? Why doesnt the collision system just say what hit what and have callbacks that can be called when collision occur
+    /// </summary>
     /// <param name="targetOf">Says which overlapped collider belongs to a live target, and whether it is that target's guard.</param>
     public static int Resolve(CharacterColliders attacker, int sequence, IEnumerable<HitWindow> active, uint targetMask, HitLedger ledger,
         Func<PlacedCollider, Collider2D, (EntityId2D Target, bool Guard)?> targetOf, List<AcceptedContact> results, List<CollisionOverlap2D> scratch)

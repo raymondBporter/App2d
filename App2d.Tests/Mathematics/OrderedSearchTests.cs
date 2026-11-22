@@ -19,8 +19,8 @@ public sealed class OrderedSearchTests
     [Fact]
     public void EmptyListsReturnTheirEndIndex()
     {
-        Assert.Equal(0, OrderedSearch.LowerBound(Array.Empty<float>(), 1f));
-        Assert.Equal(0, OrderedSearch.UpperBound(Array.Empty<float>(), 1f));
+        Assert.Equal(0, OrderedSearch.LowerBound([], 1f));
+        Assert.Equal(0, OrderedSearch.UpperBound([], 1f));
     }
 
     [Fact]

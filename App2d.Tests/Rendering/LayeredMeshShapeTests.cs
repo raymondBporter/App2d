@@ -1,4 +1,5 @@
 using App2d.Core.Characters;
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics.Transforms;

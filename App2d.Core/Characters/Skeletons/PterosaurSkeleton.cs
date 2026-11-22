@@ -1,6 +1,6 @@
 using App2d.Core.Kinematics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>A flying pterosaur seen from the side, facing +X. Every joint is keyed; nothing is placed by IK.</summary>
 public static class PterosaurSkeleton

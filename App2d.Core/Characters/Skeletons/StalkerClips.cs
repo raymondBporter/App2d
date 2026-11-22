@@ -1,8 +1,8 @@
 using App2d.Core.Animation;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.StalkerSkeleton;
+using static App2d.Core.Characters.Skeletons.StalkerSkeleton;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>The stalker animations, for <see cref="StalkerSkeleton"/>. Values are changes from rest, in the skeleton's own units.</summary>
 public static class StalkerClips

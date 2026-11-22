@@ -7,7 +7,7 @@ public sealed class UniformSequenceTests
     {
         var single = new UniformSequence<float>(.25f, .25f, 4);
         Assert.Equal<float>([.25f, .5f, .75f, 1f], single);
-        Assert.Equal(single.ToArray(), Enumerable.Range(0, single.Count).Select(index => single[index]).ToArray());
+        Assert.Equal([.. single], [.. Enumerable.Range(0, single.Count).Select(index => single[index])]);
 
         var precise = new UniformSequence<double>(1d, 1e-10d, 3);
         Assert.Equal<double>([1d, 1.0000000001d, 1.0000000002d], precise);

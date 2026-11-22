@@ -4,7 +4,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Shapes;
 using System.Collections.Immutable;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Attachments;
 
 /// <summary>
 /// One piece of a face: a pupil, a brow, the mouth. Its look and layer never change; its geometry comes from the expression. A

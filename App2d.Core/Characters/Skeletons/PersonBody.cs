@@ -1,8 +1,9 @@
+using App2d.Core.Characters.Attachments;
 using App2d.Core.Geometry.Shapes;
 using System.Collections.Immutable;
-using static App2d.Core.Characters.PersonSkeleton;
+using static App2d.Core.Characters.Skeletons.PersonSkeleton;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>
 /// The person's own body as attachments on <see cref="PersonSkeleton"/>: a neck and four limbs drawn as lines through their

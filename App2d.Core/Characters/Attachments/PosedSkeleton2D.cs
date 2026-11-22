@@ -1,7 +1,7 @@
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics.Transforms;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Attachments;
 
 /// <summary>
 /// A skeleton in a pose, as painting needs it: every joint's transform in the skeleton's own space, and optionally each

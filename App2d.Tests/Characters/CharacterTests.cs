@@ -1,4 +1,6 @@
 using App2d.Core.Characters;
+using App2d.Core.Characters.Attachments;
+using App2d.Core.Characters.Skeletons;
 using App2d.Core.Objects;
 using App2d.Core.Rendering;
 using App2d.Gameplay.Characters;

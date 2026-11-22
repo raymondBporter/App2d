@@ -11,8 +11,10 @@ public sealed class CharacterLayerRenderingTests
     [Fact]
     public void FixedCameraEncodesLayersWithoutMovingStoredGeometry()
     {
-        var drawing = new LayeredMesh();
-        drawing.Layer = -.3f;
+        var drawing = new LayeredMesh
+        {
+            Layer = -.3f
+        };
         drawing.Triangle(new(-16, -16, 0), new(16, -16, 0), new(0, 16, 0), Color4b.Red);
         drawing.Layer = .3f;
         drawing.Triangle(new(-16, -16, 0), new(16, -16, 0), new(0, 16, 0), Color4b.Blue);

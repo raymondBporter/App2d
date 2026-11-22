@@ -110,9 +110,8 @@ public sealed class VectorExtensionParityTests
         where TVector : unmanaged, IVector<TVector, TReal>
         where TReal : unmanaged, System.Numerics.IFloatingPointIeee754<TReal> => TVector.Zero;
 
-    private static string[] Signatures(Type block) => block
+    private static string[] Signatures(Type block) => [.. block
         .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
         .Select(method => $"{method.Name}/{method.GetParameters().Length}")
-        .Order(StringComparer.Ordinal)
-        .ToArray();
+        .Order(StringComparer.Ordinal)];
 }

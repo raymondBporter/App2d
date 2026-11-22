@@ -215,7 +215,7 @@ public sealed class ProgressMapTests
         Assert.Equal(11.5625f, Interpolation.Interpolate(10f, 20f, Easingd.Smooth, .25d));
         var overshoot = new ProgressMapd(_ => 1.2d, _ => 0d);
         Assert.True(Interpolation.Interpolate(0f, 10f, overshoot, .7d) > 10f);
-        var vector = Interpolation.Interpolate(Vector2d.Zero, new(10d, -4d), overshoot, .7d);
+        var vector = Vector2d.Zero.Interpolate(new(10d, -4d), overshoot, .7d);
         Assert.True(vector.X > 10f);
         Assert.True(vector.Y < -4f);
     }

@@ -9,7 +9,7 @@ using App2d.Core.Rendering;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Attachments;
 
 /// <summary>
 /// One drawn piece of a character: how it looks, and one number for its place in the drawing order. That number is an

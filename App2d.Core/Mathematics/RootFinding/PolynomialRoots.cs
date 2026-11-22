@@ -92,8 +92,7 @@ public static class PolynomialRoots
         }
 
         Span<double> critical = stackalloc double[degree - 1];
-        int criticalCount;
-        if (!useCubicFormula || degree != 4 || !TryFindCubicCriticalPoints(derivative, critical, out criticalCount))
+        if (!useCubicFormula || degree != 4 || !TryFindCubicCriticalPoints(derivative, critical, out var criticalCount))
         {
             criticalCount = Find(derivative, minimum, maximum, critical);
         }
@@ -300,7 +299,6 @@ public static class PolynomialRoots
 
         return detectRepeatedRoot && Math.Abs(result) <= EvaluationTolerance * magnitude ? 0d : result;
     }
-
 
     private static void Append(Span<double> roots, ref int count, double root)
     {

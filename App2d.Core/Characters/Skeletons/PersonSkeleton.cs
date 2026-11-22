@@ -1,7 +1,7 @@
 using App2d.Core.Animation;
 using App2d.Core.Kinematics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Skeletons;
 
 /// <summary>
 /// The person skeleton, seen from the side and facing +X, in the same units as the art (about 1.8 tall). The constants are

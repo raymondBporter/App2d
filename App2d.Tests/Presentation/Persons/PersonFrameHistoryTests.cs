@@ -1,5 +1,5 @@
 using App2d.Core.Animation;
-using App2d.Core.Characters;
+using App2d.Core.Characters.Skeletons;
 using App2d.Presentation.Persons;
 
 namespace App2d.Tests.Presentation.Persons;

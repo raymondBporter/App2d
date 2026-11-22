@@ -45,14 +45,16 @@ public sealed class InterpolationJsonTests
     public void EveryFloatPresetAndDirectionUsesTheSameRecipeAsDouble()
     {
         foreach (var curve in Enum.GetValues<EasingCurve>())
-        foreach (var direction in Enum.GetValues<EasingDirection>())
         {
-            var map = Easingf.FromCurve(curve, direction);
-            var restored = JsonSerializer.Deserialize<ProgressMapf>(JsonSerializer.Serialize(map, JsonProfiles.Mathematics), JsonProfiles.Mathematics)!;
-            foreach (var time in new[] { 0f, .37f, .5f, .63f, 1f })
+            foreach (var direction in Enum.GetValues<EasingDirection>())
             {
-                Assert.Equal(map.Sample(time), restored.Sample(time));
-                Assert.Equal(map.Derivative(time), restored.Derivative(time));
+                var map = Easingf.FromCurve(curve, direction);
+                var restored = JsonSerializer.Deserialize<ProgressMapf>(JsonSerializer.Serialize(map, JsonProfiles.Mathematics), JsonProfiles.Mathematics)!;
+                foreach (var time in new[] { 0f, .37f, .5f, .63f, 1f })
+                {
+                    Assert.Equal(map.Sample(time), restored.Sample(time));
+                    Assert.Equal(map.Derivative(time), restored.Derivative(time));
+                }
             }
         }
     }
@@ -172,8 +174,8 @@ public sealed class InterpolationJsonTests
     public void ApplicationTypesChannelsCoordinateConversionsAndFunctionsCanHaveLocalRegistrations()
     {
         var amount = new InterpolationChannel<Reading, float>(static value => value.Amount, static (value, x) => value with { Amount = x });
-        Func<Vector2d, Polar<double>> to = static value => value.ToPolar();
-        Func<Polar<double>, Vector2d> from = static value => value.ToCartesian();
+        Polar<double> to(Vector2d value) => value.ToPolar();
+        Vector2d from(Polar<double> value) => value.ToCartesian();
         var named = new Interpolator<float, float>(static (a, b, time) => a + (b - a) * time * time * time);
         var customProgress = ProgressMapd.FromFunction(static time => time * time * time);
         var factory = new InterpolatorJsonConverterFactory();

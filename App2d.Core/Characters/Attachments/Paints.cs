@@ -1,4 +1,4 @@
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Attachments;
 
 /// <summary>The plain materials attachments are painted with.</summary>
 public static class Paints
