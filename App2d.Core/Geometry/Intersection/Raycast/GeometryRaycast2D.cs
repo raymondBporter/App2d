@@ -4,7 +4,7 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Intersection;
+namespace App2d.Core.Geometry.Intersection.Raycast;
 
 /// <summary>One entry point for authored shape and curve values, independent of physics and rendering.</summary>
 public static class GeometryRaycast2D

@@ -246,7 +246,7 @@ public sealed class InterpolationJsonTests
         Assert.Throws<JsonException>(() => JsonSerializer.Serialize(ProgressMapd.FromFunction(static time => time * time), JsonProfiles.Mathematics));
         var channel = new InterpolationChannel<Vector2f, float>(static value => value.X, static (value, x) => value with { X = x });
         Assert.Throws<JsonException>(() => JsonSerializer.Serialize(Interpolation.Default<Vector2f, float>().With(channel, Easingf.Smooth), JsonProfiles.Mathematics));
-        var coordinates = Interpolation.Default<Polar<double>, double>().InCoordinates<Vector2d>(static value => value.ToPolar(), static value => value.ToCartesian());
+        var coordinates = Interpolation.Default<Polar<double>, double>().InCoordinates(static value => value.ToPolar(), static value => value.ToCartesian());
         Assert.Throws<JsonException>(() => JsonSerializer.Serialize(coordinates, JsonProfiles.Mathematics));
     }
 }

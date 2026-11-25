@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Convex;
 using App2d.Core.Geometry.Distance;
 using App2d.Core.Geometry.Shapes;
@@ -172,7 +173,7 @@ public sealed class Gjk2DTests
 
     private sealed class CustomDisk : IConvexShape2D
     {
-        public string GetKind() => "customDisk";
+        public GeometryKind Kind => GeometryKind.Custom;
         public float Area => MathF.PI;
         public bool ContainsPoint(Vector2f point) => point.LengthSquared() <= 1f;
         public Vector2f GetSupportPoint(Vector2f direction) => Vector2f.Normalize(direction);

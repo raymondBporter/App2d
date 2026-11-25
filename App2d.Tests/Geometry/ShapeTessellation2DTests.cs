@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Meshes.Tessellation;
 using App2d.Core.Geometry.Primitives;
@@ -200,7 +201,7 @@ public sealed class ShapeTessellation2DTests
 
     private readonly record struct CustomRectangle : IShape2D, IRect2f
     {
-        public string GetKind() => "test-rectangle";
+        public GeometryKind Kind => GeometryKind.Custom;
         public Vector2f Min => Vector2f.Zero;
         public Vector2f Max => new(3, 2);
         public float Area => 6;

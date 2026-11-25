@@ -61,7 +61,7 @@ public static class ShapeVertices2D
     public static ReadOnlySpan<Vector2f> GetVerts(this IShape2D shape, Span<Vector2f> vertices, out float radius)
     {
         var count = shape.GetVertCount();
-        if (count == 0) throw new NotSupportedException($"A {shape.GetKind()} has no exact finite polygonal convex core.");
+        if (count == 0) throw new NotSupportedException($"A {shape.Kind} has no exact finite polygonal convex core.");
 
         Ensure.ThrowIfTooShort(vertices, count);
         radius = 0f;
@@ -130,7 +130,7 @@ public static class ShapeVertices2D
     public static ReadOnlySpan<Vector2f> GetOutlineVerts(this IShape2D shape, Span<Vector2f> vertices, int roundSegments = 32, int cornerSegments = 8)
     {
         var count = shape.GetOutlineVertCount(roundSegments, cornerSegments);
-        if (count == 0) throw new NotSupportedException($"A {shape.GetKind()} has no single finite outline.");
+        if (count == 0) throw new NotSupportedException($"A {shape.Kind} has no single finite outline.");
 
         Ensure.ThrowIfTooShort(vertices, count);
         switch (shape)

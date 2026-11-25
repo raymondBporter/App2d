@@ -2,7 +2,7 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Intersection;
+namespace App2d.Core.Geometry.Intersection.Raycast;
 
 /// <summary>Local-space ray queries over shape parameters, independent of spatial objects and collision systems.</summary>
 public static class ShapeRaycast2D

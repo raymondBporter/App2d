@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Bounds;
 using App2d.Core.Geometry.Containment;
 using App2d.Core.Geometry.Convex;
@@ -209,7 +210,7 @@ public sealed class Rect2DBoundsTests
 
     private sealed class CountedConvex : IConvexShape2D
     {
-        public string GetKind() => "counted-convex";
+        public GeometryKind Kind => GeometryKind.Custom;
         public int SupportCalls { get; private set; }
         public float Area => 24;
         public bool ContainsPoint(Vector2f point) => Containment2D.Rectangle(point, new(-2, -1), new(4, 3));
@@ -222,7 +223,7 @@ public sealed class Rect2DBoundsTests
 
     private sealed class UnknownShape : IShape2D
     {
-        public string GetKind() => "unknown";
+        public GeometryKind Kind => GeometryKind.Custom;
         public float Area => 0;
         public bool ContainsPoint(Vector2f point) => false;
     }

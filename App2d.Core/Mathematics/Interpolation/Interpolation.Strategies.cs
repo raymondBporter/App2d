@@ -9,19 +9,28 @@ public static partial class Interpolation
 {
     public static Interpolator<TValue, TReal> Default<TValue, TReal>()
         where TValue : IInterpolatable<TValue, TReal>
-        where TReal : IFloatingPointIeee754<TReal> => new(static (start, end, amount) => TValue.Lerp(start, end, amount),
-            InterpolatorRecipe<TValue, TReal>.Default);
+        where TReal : IFloatingPointIeee754<TReal>
+    {
+        return new(static (start, end, amount) => TValue.Lerp(start, end, amount), InterpolatorRecipe<TValue, TReal>.Default);
+    }
 
-    public static Interpolator<TReal, TReal> Linear<TReal>() where TReal : IFloatingPointIeee754<TReal> =>
-        new(static (start, end, amount) => Interval.Lerp(start, end, amount), InterpolatorRecipe<TReal, TReal>.Linear);
+    public static Interpolator<TReal, TReal> Linear<TReal>()
+        where TReal : IFloatingPointIeee754<TReal>
+    {
+        return new(static (start, end, amount) => Interval.Lerp(start, end, amount), InterpolatorRecipe<TReal, TReal>.Linear);
+    }
 
     /// <summary>Holds the first value regardless of time. Timeline sampling still returns exact keys directly.</summary>
-    public static Interpolator<TValue, TReal> Hold<TValue, TReal>() where TReal : IFloatingPointIeee754<TReal> =>
-        new(static (start, _, _) => start, InterpolatorRecipe<TValue, TReal>.Hold);
+    public static Interpolator<TValue, TReal> Hold<TValue, TReal>() where TReal : IFloatingPointIeee754<TReal>
+    {
+        return new(static (start, _, _) => start, InterpolatorRecipe<TValue, TReal>.Hold);
+    }
 
     /// <summary>Takes the signed shortest angular difference; half-turn ties follow IEEE remainder.</summary>
-    public static Interpolator<TReal, TReal> ShortestAngle<TReal>() where TReal : IFloatingPointIeee754<TReal> =>
-        new(static (start, end, amount) => start + Angles.WrapSigned(end - start) * amount, InterpolatorRecipe<TReal, TReal>.ShortestAngle);
+    public static Interpolator<TReal, TReal> ShortestAngle<TReal>() where TReal : IFloatingPointIeee754<TReal>
+    {
+        return new(static (start, end, amount) => start + Angles.WrapSigned(end - start) * amount, InterpolatorRecipe<TReal, TReal>.ShortestAngle);
+    }
 
     /// <summary>Relative handles shape progress; absolute handles specify actual values, including excursions between equal endpoints.</summary>
     public static Interpolator<TReal, TReal> Bezier<TReal>(TReal firstTime, TReal firstValue, TReal secondTime, TReal secondValue,

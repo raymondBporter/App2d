@@ -8,10 +8,10 @@ public readonly partial record struct Arc2D
 {
     public void Validate()
     {
-        Ensure.Finite(Center, "center");
-        Ensure.NonNegative(Radius, "radius");
-        Ensure.Finite(StartAngleRadians, "startAngleRadians");
-        Ensure.Finite(SweepAngleRadians, "sweepAngleRadians");
+        Ensure.Finite(Center);
+        Ensure.NonNegative(Radius);
+        Ensure.Finite(StartAngleRadians);
+        Ensure.Finite(SweepAngleRadians);
     }
 
     /// <summary>Stateless validated construction.</summary>

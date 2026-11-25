@@ -6,7 +6,7 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A finite line segment parameterized from start to end over [0, 1].</summary>
 public readonly partial record struct LineSegmentCurve2D : ICurve2D, ISegment<LineSegmentCurve2D, Vector2f>, IInterpolatable<LineSegmentCurve2D, float>
 {
-    public const string Kind = "line";
+    public GeometryKind Kind => GeometryKind.LineSegment;
 
     /// <summary>The two ends of the segment, each of which an interpolator can drive on its own.</summary>
     public static class Channels

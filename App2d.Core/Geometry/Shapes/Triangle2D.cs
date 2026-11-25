@@ -7,7 +7,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// <summary>A filled triangle in local space. Either perimeter winding is accepted; collinear vertices are rejected.</summary>
 public readonly partial record struct Triangle2D : IConvexShape2D, ITriangle<Triangle2D, Vector2f>
 {
-    public const string Kind = "triangle";
+    public GeometryKind Kind => GeometryKind.Triangle;
 
     static Triangle2D ITriangle<Triangle2D, Vector2f>.Create(Vector2f a, Vector2f b, Vector2f c) => Builder.Create(a, b, c);
 

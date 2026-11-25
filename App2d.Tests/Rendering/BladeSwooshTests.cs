@@ -125,7 +125,7 @@ public sealed class BladeSwooshTests
     [Fact]
     public void SwooshMarkersOpenAndCloseTheTrail()
     {
-        var clip = new App2d.Core.Animation.SkeletonClip2D("swing", .2f) { Markers = [new(ClipMarkers.Swoosh, .05f), new(ClipMarkers.SwooshEnd, .1f)] };
+        var clip = new Core.Animation.SkeletonClip2D("swing", .2f) { Markers = [new(ClipMarkers.Swoosh, .05f), new(ClipMarkers.SwooshEnd, .1f)] };
         Assert.False(clip.Swooshing(.04f));
         Assert.True(clip.Swooshing(.05f));
         Assert.False(clip.Swooshing(.1f));

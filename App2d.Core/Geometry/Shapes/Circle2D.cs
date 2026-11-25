@@ -7,7 +7,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// <summary>A filled circle in local space.</summary>
 public readonly partial record struct Circle2D : IConvexShape2D
 {
-    public const string Kind = "circle";
+    public GeometryKind Kind => GeometryKind.Circle;
 
     /// <summary>Creates a circle.</summary>
     /// <param name="radius">The finite, positive radius.</param>

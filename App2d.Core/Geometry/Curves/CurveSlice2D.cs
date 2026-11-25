@@ -26,6 +26,7 @@ public readonly record struct CurveSlice2D<TCurve> : ICurveSlice2D where TCurve 
 
     public TCurve Source { get; }
     ICurve2D ICurveSlice2D.SourceCurve => Source;
+    public GeometryKind Kind => GeometryKind.CurveSlice;
     public float From { get; }
     public float To { get; }
 

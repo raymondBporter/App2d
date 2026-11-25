@@ -4,7 +4,7 @@ using static App2d.Core.Characters.Skeletons.QuadrupedSkeleton;
 
 namespace App2d.Core.Characters.Skeletons;
 
-/// <summary>The quadruped animations, for <see cref="QuadrupedSkeleton.Skeleton"/>. Values are changes from rest, in the skeleton's own units.</summary>
+/// <summary>The quadruped animations, for <see cref="Skeleton"/>. Values are changes from rest, in the skeleton's own units.</summary>
 public static class QuadrupedClips
 {
 

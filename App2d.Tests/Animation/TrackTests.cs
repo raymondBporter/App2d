@@ -31,12 +31,12 @@ public sealed class TrackTests
     [Fact]
     public void AKeyCanSayHowToReachTheNextOne()
     {
-        var eased = Interpolation.Linear<float>().WithProgress(Easing<float>.Smooth);
+        var eased = Interpolation.Linear<float>().WithProgress(Easingf.Smooth);
         var track = Track.Linear(new(0, 0, Interpolation.Hold<float, float>()), new(1, 10, eased), new(2, 20));
 
         Assert.Equal(0, track.Sample(.9f));
         Assert.Equal(10, track.Sample(1));
-        Assert.Equal(10 + 10 * Easing<float>.Smooth.Sample(.25f), track.Sample(1.25f), 5);
+        Assert.Equal(10 + 10 * Easingf.Smooth.Sample(.25f), track.Sample(1.25f), 5);
         Assert.Equal(15, track.Sample(1.5f), 5);
     }
 

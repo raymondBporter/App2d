@@ -80,7 +80,7 @@ public sealed class InterpolatorJsonConverterFactory : JsonConverterFactory
         {
             Linear = Interpolation.Linear<TReal>,
             ShortestAngle = Interpolation.ShortestAngle<TReal>,
-            Bezier = Interpolation.Bezier<TReal>
+            Bezier = Interpolation.Bezier
         };
 
     private static InterpolationJsonType<TVector, TReal> Vector<TVector, TReal>()

@@ -8,7 +8,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// </summary>
 public readonly partial record struct HalfSpace2D : IShape2D
 {
-    public const string Kind = "half-space";
+    public GeometryKind Kind => GeometryKind.HalfSpace;
 
     /// <summary>Creates a half-space from normalized data. Builder.Create normalizes and validates input.</summary>
     /// <param name="outwardNormal">The unit normal pointing toward free space.</param>

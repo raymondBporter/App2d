@@ -15,6 +15,30 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
 
     private sealed class Converter<T> : JsonConverter<T> where T : IGeometryValue2D
     {
+        // Untagged concrete JSON already identifies its kind through the converter's target type.
+        private static readonly GeometryKind? ConcreteKind = typeof(T) switch
+        {
+            var type when type == typeof(Circle2D) => GeometryKind.Circle,
+            var type when type == typeof(Ellipse2D) => GeometryKind.Ellipse,
+            var type when type == typeof(Capsule2) => GeometryKind.Capsule,
+            var type when type == typeof(Rectangle2D) => GeometryKind.Rectangle,
+            var type when type == typeof(AxisAlignedRectangle2D) => GeometryKind.AxisAlignedRectangle,
+            var type when type == typeof(RoundedRectangle2D) => GeometryKind.RoundedRectangle,
+            var type when type == typeof(Triangle2D) => GeometryKind.Triangle,
+            var type when type == typeof(ConvexPolygon2D) => GeometryKind.ConvexPolygon,
+            var type when type == typeof(SimplePolygon2D) => GeometryKind.SimplePolygon,
+            var type when type == typeof(HalfSpace2D) => GeometryKind.HalfSpace,
+            var type when type == typeof(CompositeShape2D) => GeometryKind.Composite,
+            var type when type == typeof(LineSegmentCurve2D) => GeometryKind.LineSegment,
+            var type when type == typeof(PolylineCurve2D) => GeometryKind.Polyline,
+            var type when type == typeof(RoundedPolylineCurve2D) => GeometryKind.RoundedPolyline,
+            var type when type == typeof(Arc2D) => GeometryKind.Arc,
+            var type when type == typeof(QuadraticBezier2D) => GeometryKind.QuadraticBezier,
+            var type when type == typeof(CubicBezier2D) => GeometryKind.CubicBezier,
+            var type when type == typeof(BSpline2D) => GeometryKind.BSpline,
+            _ => null
+        };
+
         public Converter() { }
         public override bool HandleNull => true;
         public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -41,7 +65,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                 return properties.ContainsKey(key) ? R<V>(name) : fallback;
             }
             read.Add("kind");
-            var kind = properties.TryGetValue("kind", out var tag) ? tag.GetString() : GeometryJson2D.GetKind(typeof(T));
+            var kind = properties.TryGetValue("kind", out var tag) ? GeometryJson2D.ReadKind(tag) : ConcreteKind;
             // Raw construction is intentional here: callers validate after reading the whole document.
 #pragma warning disable APP2D001
             // A rectangle is spelled with min and max (the axis-aligned form) or with center and size, never both.
@@ -67,24 +91,24 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
             }
             IGeometryValue2D geometry = kind switch
             {
-                Circle2D.Kind => new Circle2D(R<float>("Radius"), R<Vector2f>("Center")),
-                Ellipse2D.Kind => new Ellipse2D(R<Vector2f>("Radii"), R<Vector2f>("Center"), Primitives.OrientedFrame2D.AxisFromAngle(Optional("AngleRadians", 0f))),
-                Capsule2.Kind => new Capsule2(R<Vector2f>("Start"), R<Vector2f>("End"), R<float>("Radius")),
-                Rectangle2D.Kind => ReadRectangle(),
-                AxisAlignedRectangle2D.Kind => new AxisAlignedRectangle2D(R<Vector2f>("Min"), R<Vector2f>("Max")),
-                RoundedRectangle2D.Kind => ReadRoundedRectangle(),
-                Triangle2D.Kind => new Triangle2D(R<Vector2f>("A"), R<Vector2f>("B"), R<Vector2f>("C")),
-                ConvexPolygon2D.Kind => new ConvexPolygon2D(R<Vector2f[]>("Vertices")),
-                SimplePolygon2D.Kind => new SimplePolygon2D(R<Vector2f[]>("Vertices")),
-                HalfSpace2D.Kind => new HalfSpace2D(R<Vector2f>("Normal"), R<float>("Offset")),
-                CompositeShape2D.Kind => new CompositeShape2D(R<IShape2D[]>("Parts"), Optional("IncludeOverlap", true), Optional("AreaOutlineSegments", ShapeArea2D.DefaultOutlineSegments)),
-                LineSegmentCurve2D.Kind => new LineSegmentCurve2D(R<Vector2f>("Start"), R<Vector2f>("End")),
-                PolylineCurve2D.Kind => new PolylineCurve2D(R<Vector2f[]>("Points")),
-                RoundedPolylineCurve2D.Kind => new RoundedPolylineCurve2D(R<Vector2f[]>("Points"), Optional("Softness", 1f)),
-                Arc2D.Kind => new Arc2D(R<Vector2f>("Center"), R<float>("Radius"), R<float>("StartAngleRadians"), R<float>("SweepAngleRadians")),
-                QuadraticBezier2D.Kind => new QuadraticBezier2D(R<Vector2f>("Start"), R<Vector2f>("Control"), R<Vector2f>("End")),
-                CubicBezier2D.Kind => new CubicBezier2D(R<Vector2f>("Start"), R<Vector2f>("Control1"), R<Vector2f>("Control2"), R<Vector2f>("End")),
-                BSpline2D.Kind => new BSpline2D(R<Vector2f[]>("ControlPoints"), Optional("Degree", 3)),
+                GeometryKind.Circle => new Circle2D(R<float>("Radius"), R<Vector2f>("Center")),
+                GeometryKind.Ellipse => new Ellipse2D(R<Vector2f>("Radii"), R<Vector2f>("Center"), Primitives.OrientedFrame2D.AxisFromAngle(Optional("AngleRadians", 0f))),
+                GeometryKind.Capsule => new Capsule2(R<Vector2f>("Start"), R<Vector2f>("End"), R<float>("Radius")),
+                GeometryKind.Rectangle => ReadRectangle(),
+                GeometryKind.AxisAlignedRectangle => new AxisAlignedRectangle2D(R<Vector2f>("Min"), R<Vector2f>("Max")),
+                GeometryKind.RoundedRectangle => ReadRoundedRectangle(),
+                GeometryKind.Triangle => new Triangle2D(R<Vector2f>("A"), R<Vector2f>("B"), R<Vector2f>("C")),
+                GeometryKind.ConvexPolygon => new ConvexPolygon2D(R<Vector2f[]>("Vertices")),
+                GeometryKind.SimplePolygon => new SimplePolygon2D(R<Vector2f[]>("Vertices")),
+                GeometryKind.HalfSpace => new HalfSpace2D(R<Vector2f>("Normal"), R<float>("Offset")),
+                GeometryKind.Composite => new CompositeShape2D(R<IShape2D[]>("Parts"), Optional("IncludeOverlap", true), Optional("AreaOutlineSegments", ShapeArea2D.DefaultOutlineSegments)),
+                GeometryKind.LineSegment => new LineSegmentCurve2D(R<Vector2f>("Start"), R<Vector2f>("End")),
+                GeometryKind.Polyline => new PolylineCurve2D(R<Vector2f[]>("Points")),
+                GeometryKind.RoundedPolyline => new RoundedPolylineCurve2D(R<Vector2f[]>("Points"), Optional("Softness", 1f)),
+                GeometryKind.Arc => new Arc2D(R<Vector2f>("Center"), R<float>("Radius"), R<float>("StartAngleRadians"), R<float>("SweepAngleRadians")),
+                GeometryKind.QuadraticBezier => new QuadraticBezier2D(R<Vector2f>("Start"), R<Vector2f>("Control"), R<Vector2f>("End")),
+                GeometryKind.CubicBezier => new CubicBezier2D(R<Vector2f>("Start"), R<Vector2f>("Control1"), R<Vector2f>("Control2"), R<Vector2f>("End")),
+                GeometryKind.BSpline => new BSpline2D(R<Vector2f[]>("ControlPoints"), Optional("Degree", 3)),
                 _ => throw new JsonException($"Unknown geometry kind '{kind}'.")
             };
 #pragma warning restore APP2D001
@@ -103,7 +127,11 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
         {
             if (value is null) { writer.WriteNullValue(); return; }
             writer.WriteStartObject();
-            if (typeof(T).IsInterface) writer.WriteString("kind", value.GetKind());
+            if (typeof(T).IsInterface)
+            {
+                writer.WritePropertyName("kind");
+                JsonSerializer.Serialize(writer, value.Kind);
+            }
             void W<V>(string name, V item)
             {
                 writer.WritePropertyName(options.PropertyNamingPolicy?.ConvertName(name) ?? name);

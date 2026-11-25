@@ -3,7 +3,7 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.RootFinding;
 using App2d.Core.Validation;
 
-namespace App2d.Core.Geometry.Intersection;
+namespace App2d.Core.Geometry.Intersection.Raycast;
 
 /// <summary>
 /// Nearest isolated ray/curve intersections on the actual curve, without polyline sampling.
@@ -119,7 +119,7 @@ public static class CurveRaycast2D
         var found = false;
         for (var i = 0; i < count; i++)
         {
-            var point = BezierMath.EvaluateControls<Vector2d, double>(controls, roots[i]);
+            var point = BezierMath.EvaluateControls(controls, roots[i]);
             var distance = (point - rayOrigin).Dot(axis) / axisSquared;
             if (!double.IsFinite(distance) || distance < 0 || distance > float.MaxValue || distance > maxDistance || found && distance >= hit.Distance) continue;
             var tangent = Tangent(controls, roots[i]);
@@ -139,7 +139,7 @@ public static class CurveRaycast2D
         for (var count = controls.Length - 1; count > 0; count--)
         {
             for (var i = 0; i < count; i++) derivatives[i] = derivatives[i + 1] - derivatives[i];
-            var derivative = BezierMath.EvaluateControls<Vector2d, double>(derivatives[..count], amount);
+            var derivative = BezierMath.EvaluateControls(derivatives[..count], amount);
             if (derivative.LengthSquared() > 0)
             {
                 // At a cusp use the first nonzero one-sided derivative. At u=1 use the incoming side.

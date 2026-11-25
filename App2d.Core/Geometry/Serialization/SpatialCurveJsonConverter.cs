@@ -14,14 +14,14 @@ public sealed class SpatialCurveJsonConverter : JsonConverter<ICurve<Vector3f, f
         var fields = root.EnumerateObject().ToDictionary(p => p.Name, p => p.Value, StringComparer.OrdinalIgnoreCase);
         Vector3f Point(string name) => fields.TryGetValue(name, out var field) ? field.Deserialize<Vector3f>(options)
             : throw new JsonException($"Missing spatial curve {name}.");
-        var kind = fields.TryGetValue("kind", out var discriminator) ? discriminator.GetString() : null;
-        string[] expected = kind == QuadraticBezier2D.Kind ? ["kind", "start", "control", "end"] : ["kind", "start", "control1", "control2", "end"];
+        var kind = fields.TryGetValue("kind", out var discriminator) ? GeometryJson2D.ReadKind(discriminator) : (GeometryKind?)null;
+        string[] expected = kind == GeometryKind.QuadraticBezier ? ["kind", "start", "control", "end"] : ["kind", "start", "control1", "control2", "end"];
         if (fields.Keys.Any(name => !expected.Contains(name, StringComparer.OrdinalIgnoreCase)))
             throw new JsonException("Unknown spatial curve member.");
         return kind switch
         {
-            QuadraticBezier2D.Kind => new QuadraticBezier<Vector3f, float>(Point("start"), Point("control"), Point("end")),
-            CubicBezier2D.Kind => new CubicBezier<Vector3f, float>(Point("start"), Point("control1"), Point("control2"), Point("end")),
+            GeometryKind.QuadraticBezier => new QuadraticBezier<Vector3f, float>(Point("start"), Point("control"), Point("end")),
+            GeometryKind.CubicBezier => new CubicBezier<Vector3f, float>(Point("start"), Point("control1"), Point("control2"), Point("end")),
             _ => throw new JsonException("Unknown spatial curve kind.")
         };
     }
@@ -30,13 +30,14 @@ public sealed class SpatialCurveJsonConverter : JsonConverter<ICurve<Vector3f, f
     {
         var kind = value switch
         {
-            QuadraticBezier<Vector3f, float> => QuadraticBezier2D.Kind,
-            CubicBezier<Vector3f, float> => CubicBezier2D.Kind,
+            QuadraticBezier<Vector3f, float> => GeometryKind.QuadraticBezier,
+            CubicBezier<Vector3f, float> => GeometryKind.CubicBezier,
             _ => throw new JsonException("This spatial curve cannot be authored.")
         };
         var properties = JsonSerializer.SerializeToElement(value, value.GetType(), options);
         writer.WriteStartObject();
-        writer.WriteString("kind", kind);
+        writer.WritePropertyName("kind");
+        JsonSerializer.Serialize(writer, kind);
         foreach (var property in properties.EnumerateObject()) property.WriteTo(writer);
         writer.WriteEndObject();
     }

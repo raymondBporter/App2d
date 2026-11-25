@@ -34,7 +34,7 @@ public readonly partial record struct BSpline2D
 
     private static void InsertKnot(ref Vector2d[] points, ref double[] knots, int degree, double knot, int multiplicity)
     {
-        var span = FindKnotSpan<double>(knots, degree, points.Length, knot);
+        var span = FindKnotSpan(knots, degree, points.Length, knot);
         var nextPoints = new Vector2d[points.Length + 1];
         var nextKnots = new double[knots.Length + 1];
         Array.Copy(knots, 0, nextKnots, 0, span + 1);

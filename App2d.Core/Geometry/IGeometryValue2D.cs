@@ -8,7 +8,7 @@ namespace App2d.Core.Geometry;
 public interface IGeometryValue2D
 {
     /// <summary>The stable kind ID used by editors and polymorphic JSON.</summary>
-    string GetKind() => GeometryJson2D.GetKind(GetType()) ?? GetType().Name;
+    GeometryKind Kind { get; }
 
     /// <summary>Checks this value. Custom implementations can supply their own rules.</summary>
     void Validate() { }

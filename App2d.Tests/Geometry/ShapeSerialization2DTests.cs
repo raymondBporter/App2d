@@ -10,46 +10,33 @@ namespace App2d.Tests.Geometry;
 
 public sealed class ShapeSerialization2DTests
 {
-    public static TheoryData<string, string> BuiltInShapes => new()
-    {
-        { nameof(Circle2D), Circle2D.Kind },
-        { nameof(Ellipse2D), Ellipse2D.Kind },
-        { nameof(Capsule2), Capsule2.Kind },
-        { nameof(Rectangle2D), Rectangle2D.Kind },
-        { nameof(RoundedRectangle2D), RoundedRectangle2D.Kind },
-        { nameof(AxisAlignedRectangle2D), AxisAlignedRectangle2D.Kind },
-        { nameof(Triangle2D), Triangle2D.Kind },
-        { nameof(ConvexPolygon2D), ConvexPolygon2D.Kind },
-        { nameof(SimplePolygon2D), SimplePolygon2D.Kind },
-        { nameof(HalfSpace2D), HalfSpace2D.Kind },
-        { nameof(CompositeShape2D), CompositeShape2D.Kind }
-    };
+    public static TheoryData<GeometryKind> BuiltInShapes => [.. GeometryJson2D.ShapeKinds];
 
-    private static IShape2D CreateShape(string shapeName) => shapeName switch
+    private static IShape2D CreateShape(GeometryKind kind) => kind switch
     {
-        nameof(Circle2D) => Circle2D.Builder.Create(1.5f, new(1, -2)),
-        nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(2, 1), new(-1, .5f)),
-        nameof(Capsule2) => Capsule2.Builder.Create(new(-1, 0), new(1, .5f), .3f),
-        nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
-        nameof(RoundedRectangle2D) => RoundedRectangle2D.Builder.Create(new(-2, -1), new(2, 1), .4f),
-        nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
-        nameof(Triangle2D) => Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(1, 3)),
-        nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
-        nameof(SimplePolygon2D) => SimplePolygon2D.Builder.Create([new(0, 0), new(3, 0), new(1, 1), new(0, 3)]),
-        nameof(HalfSpace2D) => HalfSpace2D.Builder.Create(new(1, 1), 2),
-        nameof(CompositeShape2D) => CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-3, 0)), Rectangle2D.Builder.Create(new(1, -1), new(4, 1))]),
-        _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
+        GeometryKind.Circle => Circle2D.Builder.Create(1.5f, new(1, -2)),
+        GeometryKind.Ellipse => Ellipse2D.Builder.Create(new(2, 1), new(-1, .5f)),
+        GeometryKind.Capsule => Capsule2.Builder.Create(new(-1, 0), new(1, .5f), .3f),
+        GeometryKind.Rectangle => Rectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
+        GeometryKind.RoundedRectangle => RoundedRectangle2D.Builder.Create(new(-2, -1), new(2, 1), .4f),
+        GeometryKind.AxisAlignedRectangle => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
+        GeometryKind.Triangle => Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(1, 3)),
+        GeometryKind.ConvexPolygon => ConvexPolygon2D.Builder.Create([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
+        GeometryKind.SimplePolygon => SimplePolygon2D.Builder.Create([new(0, 0), new(3, 0), new(1, 1), new(0, 3)]),
+        GeometryKind.HalfSpace => HalfSpace2D.Builder.Create(new(1, 1), 2),
+        GeometryKind.Composite => CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-3, 0)), Rectangle2D.Builder.Create(new(1, -1), new(4, 1))]),
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 
     [Theory]
     [MemberData(nameof(BuiltInShapes))]
-    public void RuntimeShapesAreReadonlyValuesAndBuildersKeepTheirRuntimeType(string shapeName, string kind)
+    public void RuntimeShapesAreReadonlyValuesAndBuildersKeepTheirRuntimeType(GeometryKind kind)
     {
-        var shape = CreateShape(shapeName);
+        var shape = CreateShape(kind);
         var type = shape.GetType();
         Assert.True(type.IsValueType);
         Assert.True(type.IsDefined(typeof(System.Runtime.CompilerServices.IsReadOnlyAttribute), inherit: false));
-        Assert.Equal(kind, shape.GetKind());
+        Assert.Equal(kind, shape.Kind);
         Assert.Equal(type, shape.Validated().GetType());
     }
 
@@ -68,13 +55,13 @@ public sealed class ShapeSerialization2DTests
 
     [Theory]
     [MemberData(nameof(BuiltInShapes))]
-    public void TaggedValuesRoundTripIntoEquivalentRuntimeShapes(string shapeName, string kind)
+    public void TaggedValuesRoundTripIntoEquivalentRuntimeShapes(GeometryKind kind)
     {
-        var original = CreateShape(shapeName);
+        var original = CreateShape(kind);
         var json = original.ToJson();
         using var document = JsonDocument.Parse(json);
-        Assert.Equal(kind, original.GetKind());
-        Assert.Equal(kind, document.RootElement.GetProperty("kind").GetString());
+        Assert.Equal(kind, original.Kind);
+        Assert.Equal(kind, document.RootElement.GetProperty("kind").Deserialize<GeometryKind>());
         var restored = GeometryJson2D.ShapeFromJson(json).Validated();
         Assert.Equal(original.GetType(), restored.GetType());
         Assert.Equal(original.Area, restored.Area);
@@ -90,7 +77,7 @@ public sealed class ShapeSerialization2DTests
     public void AxisAlignmentAndCompositePartsSurviveTheRoundTrip()
     {
         var rectangle = Assert.IsType<AxisAlignedRectangle2D>(GeometryJson2D.ShapeFromJson(AxisAlignedRectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson<IShape2D>()));
-        Assert.Equal(AxisAlignedRectangle2D.Kind, ((IShape2D)rectangle).GetKind());
+        Assert.Equal(GeometryKind.AxisAlignedRectangle, rectangle.Kind);
         Assert.IsType<AxisAlignedRectangle2D>(rectangle.Validated());
         Assert.IsType<Rectangle2D>(GeometryJson2D.ShapeFromJson(Rectangle2D.Builder.Create(new(0, 0), new(1, 1)).ToJson<IShape2D>()).Validated());
 
@@ -153,7 +140,7 @@ public sealed class ShapeSerialization2DTests
 
     private sealed class CustomShape : IShape2D
     {
-        public string GetKind() => "custom";
+        public GeometryKind Kind => GeometryKind.Custom;
         public float Area => 1;
         public bool ContainsPoint(Vector2f point) => false;
     }

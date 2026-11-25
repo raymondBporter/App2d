@@ -121,7 +121,7 @@ public sealed class InterpolatorTests
         var coordinates = Interpolation.Default<Polar<double>, double>()
             .With(Polar<double>.Channels.Radius, Easingd.Smooth)
             .With(Polar<double>.Channels.Angle, Interpolation.ShortestAngle<double>());
-        var rule = coordinates.InCoordinates<Vector2d>(static value => value.ToPolar(), static value => value.ToCartesian());
+        var rule = coordinates.InCoordinates(static value => value.ToPolar(), static value => value.ToCartesian());
         Assert.InRange(Vector2d.Distance(new(Math.Sqrt(2d)), rule.Evaluate(Vector2d.UnitX, new(0d, 3d), .5d)), 0d, 1e-14d);
     }
 
@@ -156,7 +156,7 @@ public sealed class InterpolatorTests
             .With(Vector2d.Channels.X, Easingd.Smooth.FromRange(2d, 6d));
         Assert.Equal(new Vector2d(.625d, 2d), curve.EvaluateClamped(Vector2d.Zero, new(4d, 8d), 3d));
         Assert.Equal(new Vector2d(4d, 8d), curve.EvaluateClamped(Vector2d.Zero, new(4d, 8d), 20d));
-        var converted = curve.InCoordinates<Vector2d>(static value => value, static value => value);
+        var converted = curve.InCoordinates(static value => value, static value => value);
         Assert.Equal(2d, converted.InputBegin);
         Assert.Equal(6d, converted.InputEnd);
     }

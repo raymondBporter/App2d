@@ -9,7 +9,7 @@ namespace App2d.Tests.Geometry;
 
 public sealed class ConcreteGeometryJsonTests
 {
-    public static TheoryData<string> Kinds => [.. GeometryJson2D.ShapeKinds, .. GeometryJson2D.CurveKinds];
+    public static TheoryData<GeometryKind> Kinds => [.. GeometryJson2D.ShapeKinds, .. GeometryJson2D.CurveKinds];
 
     [Fact]
     public void BuiltInCatalogsKeepTheirWireNamesAndOrder()
@@ -17,17 +17,18 @@ public sealed class ConcreteGeometryJsonTests
         Assert.Equal([
             "circle", "ellipse", "capsule", "rectangle", "axis-aligned-rectangle", "rounded-rectangle",
             "triangle", "convex-polygon", "simple-polygon", "half-space", "composite"
-        ], GeometryJson2D.ShapeKinds);
+        ], JsonSerializer.SerializeToElement(GeometryJson2D.ShapeKinds).EnumerateArray().Select(tag => tag.GetString()));
         Assert.Equal([
             "line", "polyline", "rounded-polyline", "arc", "quadratic-bezier", "cubic-bezier", "b-spline"
-        ], GeometryJson2D.CurveKinds);
+        ], JsonSerializer.SerializeToElement(GeometryJson2D.CurveKinds).EnumerateArray().Select(tag => tag.GetString()));
     }
 
     [Theory]
     [MemberData(nameof(Kinds))]
-    public void ConcreteTypesRoundTripWithoutAKindTag(string kind)
+    public void ConcreteTypesRoundTripWithoutAKindTag(GeometryKind kind)
     {
         var original = GeometryJson2D.CreateDefault(kind);
+        Assert.Equal(kind, original.Kind);
         var type = original.GetType();
         var json = JsonSerializer.Serialize(original, type, GeometryJson2D.JsonOptions);
         using var document = JsonDocument.Parse(json);
@@ -46,9 +47,21 @@ public sealed class ConcreteGeometryJsonTests
         using var concrete = JsonDocument.Parse(circle.ToJson());
         using var polymorphic = JsonDocument.Parse(circle.ToJson<IGeometryValue2D>());
         Assert.False(concrete.RootElement.TryGetProperty("kind", out _));
-        Assert.Equal(Circle2D.Kind, polymorphic.RootElement.GetProperty("kind").GetString());
+        Assert.Equal("circle", polymorphic.RootElement.GetProperty("kind").GetString());
         Assert.Equal(circle, JsonSerializer.Deserialize<Circle2D>(circle.ToJson(), GeometryJson2D.JsonOptions));
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Rectangle2D>(polymorphic.RootElement.GetRawText(), GeometryJson2D.JsonOptions));
+    }
+
+    [Theory]
+    [InlineData("1")]
+    [InlineData("\"1\"")]
+    [InlineData("\"Circle\"")]
+    [InlineData("\" circle \"")]
+    [InlineData("\"circle,circle\"")]
+    public void KindTagsRequireASingleExactWireName(string tag)
+    {
+        var json = $$"""{"kind":{{tag}},"center":{"x":0,"y":0},"radius":1}""";
+        Assert.Throws<JsonException>(() => GeometryJson2D.FromJson(json));
     }
 
     private sealed record Fields(Circle2D Concrete, IShape2D Shape, ICurve2D Curve, IGeometryValue2D Geometry);
@@ -66,9 +79,9 @@ public sealed class ConcreteGeometryJsonTests
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         Assert.False(root.GetProperty("concrete").TryGetProperty("kind", out _));
-        Assert.Equal(Circle2D.Kind, root.GetProperty("shape").GetProperty("kind").GetString());
-        Assert.Equal(LineSegmentCurve2D.Kind, root.GetProperty("curve").GetProperty("kind").GetString());
-        Assert.Equal(Circle2D.Kind, root.GetProperty("geometry").GetProperty("kind").GetString());
+        Assert.Equal("circle", root.GetProperty("shape").GetProperty("kind").GetString());
+        Assert.Equal("line", root.GetProperty("curve").GetProperty("kind").GetString());
+        Assert.Equal("circle", root.GetProperty("geometry").GetProperty("kind").GetString());
         var restored = JsonSerializer.Deserialize<Fields>(json, options)!;
         Assert.Equal(circle, restored.Concrete);
         Assert.Equal(circle, Assert.IsType<Circle2D>(restored.Shape));
@@ -84,8 +97,8 @@ public sealed class ConcreteGeometryJsonTests
         using var document = JsonDocument.Parse(json);
         Assert.False(document.RootElement.TryGetProperty("kind", out _));
         var parts = document.RootElement.GetProperty("parts");
-        Assert.Equal(Circle2D.Kind, parts[0].GetProperty("kind").GetString());
-        Assert.Equal(Rectangle2D.Kind, parts[1].GetProperty("kind").GetString());
+        Assert.Equal("circle", parts[0].GetProperty("kind").GetString());
+        Assert.Equal("rectangle", parts[1].GetProperty("kind").GetString());
         var restored = JsonSerializer.Deserialize<CompositeShape2D>(json, GeometryJson2D.JsonOptions);
         Assert.IsType<Circle2D>(restored.Parts[0]);
         Assert.IsType<Rectangle2D>(restored.Parts[1]);

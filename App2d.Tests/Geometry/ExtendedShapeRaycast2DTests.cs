@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Intersection;
+using App2d.Core.Geometry.Intersection.Raycast;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 

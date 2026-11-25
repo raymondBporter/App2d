@@ -12,7 +12,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// </summary>
 public readonly partial record struct Rectangle2D : IConvexShape2D
 {
-    public const string Kind = "rectangle";
+    public GeometryKind Kind => GeometryKind.Rectangle;
 
     private readonly Vector2f _axis;
 

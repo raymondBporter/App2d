@@ -59,7 +59,7 @@ internal static class BernsteinRoots
     private readonly struct Evaluator : Bisection.IEvaluator<Evaluator>
     {
         public static double Evaluate(ReadOnlySpan<double> coefficients, double parameter) =>
-            BezierMath.EvaluateControls<double, double>(coefficients, parameter);
+            BezierMath.EvaluateControls(coefficients, parameter);
     }
 
     private static bool NearZero(double value, int degree) => Math.Abs(value) <= RootTolerance * (degree + 1);

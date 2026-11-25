@@ -18,6 +18,8 @@ public sealed class NormalOffsetCurve2D : ICurve2D
         _offset = offset;
     }
 
+    public GeometryKind Kind => GeometryKind.NormalOffsetCurve;
+
     public Vector2f Evaluate(float amount) => EvaluateCore(Realf.Clamp01(amount));
 
     public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);

@@ -17,7 +17,7 @@ public sealed class CharacterTests
     {
         foreach (var character in Cast())
         {
-            var clips = character.Roles.Values.Concat(character.Actions.Select(a => a.Clip)).Concat(character.Actions.Select(a => a.Recovery).OfType<App2d.Core.Animation.SkeletonClip2D>()).Distinct();
+            var clips = character.Roles.Values.Concat(character.Actions.Select(a => a.Clip)).Concat(character.Actions.Select(a => a.Recovery).OfType<Core.Animation.SkeletonClip2D>()).Distinct();
             foreach (var clip in clips)
             {
                 for (var step = 0; step <= 4; step++)
@@ -112,7 +112,7 @@ public sealed class CharacterTests
         Assert.DoesNotContain(Centaur.Body, piece => piece.Name is "left-leg" or "right-foot");
         Assert.Contains(Centaur.Body, piece => piece.Name == "left-arm");
 
-        var local = new App2d.Core.Mathematics.Transforms.RigidTransform2D[Centaur.Skeleton.Count];
+        var local = new Core.Mathematics.Transforms.RigidTransform2D[Centaur.Skeleton.Count];
         Centaur.Pose(Centaur.Horse(QuadrupedClips.QuadrupedWalk), .3f, Centaur.Person(PersonClips.PersonHammerSlam), .9f, local);
         var slam = local[graft.GuestJoints[PersonSkeleton.Chest]];
         Centaur.Pose(Centaur.Horse(QuadrupedClips.QuadrupedWalk), .3f, Centaur.Person(PersonClips.PersonIdle), 0, local);
@@ -191,7 +191,7 @@ public sealed class CharacterTests
     {
         var dumbbell = ObjectAsset2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "objects", "dumbbell.json"));
         Assert.Equal(3, dumbbell.Shapes.Count);
-        Assert.IsType<App2d.Core.Geometry.Shapes.CompositeShape2D>(dumbbell.CollisionShape());
+        Assert.IsType<Core.Geometry.Shapes.CompositeShape2D>(dumbbell.CollisionShape());
         Assert.Equal(dumbbell.ToJson(), ObjectAsset2D.FromJson(dumbbell.ToJson()).ToJson());
         Assert.Equal(3, new ObjectShader2D(dumbbell).Paints.Length);
         Assert.Throws<InvalidDataException>(() => (dumbbell with { Shapes = [] }).Validate());

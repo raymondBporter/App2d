@@ -4,7 +4,7 @@ using static App2d.Core.Characters.Skeletons.QuadrupedSkeleton;
 
 namespace App2d.Core.Characters.Skeletons;
 
-/// <summary>The baby triceratops animations, for <see cref="QuadrupedSkeleton.Baby"/>. Values are changes from rest, in that skeleton's own units.</summary>
+/// <summary>The baby triceratops animations, for <see cref="Baby"/>. Values are changes from rest, in that skeleton's own units.</summary>
 public static class BabyTriceratopsClips
 {
     private static readonly Interpolator<Vector2f, float> Smooth = Interpolation.Default<Vector2f, float>().WithProgress(Easingf.Smooth);

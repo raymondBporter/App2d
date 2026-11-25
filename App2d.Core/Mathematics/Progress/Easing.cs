@@ -94,9 +94,9 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         return new ProgressMap<TReal>(
             phase => phase < TReal.Zero ? begin + phase * beginningSlope
                 : phase > TReal.One ? end + (phase - TReal.One) * endingSlope
-                : BezierMath.Cubic<TReal, TReal>(begin, firstControlValue, secondControlValue, end, phase),
+                : BezierMath.Cubic(begin, firstControlValue, secondControlValue, end, phase),
             phase => phase < TReal.Zero ? beginningSlope : phase > TReal.One ? endingSlope
-                : BezierMath.CubicDerivative<TReal, TReal>(begin, firstControlValue, secondControlValue, end, phase),
+                : BezierMath.CubicDerivative(begin, firstControlValue, secondControlValue, end, phase),
             isContinuous: true).WithRecipe(new(ProgressOperation.Bezier, [begin, firstControlValue, secondControlValue, end]));
     }
 
@@ -152,7 +152,7 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         var three = TReal.CreateChecked(3);
         var parameter = firstTime == TReal.One / three && secondTime == Two / three
             ? time : BezierParameter(time, firstTime, secondTime);
-        return BezierMath.Cubic<TReal, TReal>(begin, firstValue, secondValue, end, parameter);
+        return BezierMath.Cubic(begin, firstValue, secondValue, end, parameter);
     }
 
     private static TReal BezierParameter(TReal time, TReal firstTime, TReal secondTime)
@@ -182,8 +182,8 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
     private static TReal BezierValueDerivative(TReal parameter, TReal begin, TReal firstTime, TReal firstValue,
         TReal secondTime, TReal secondValue, TReal end)
     {
-        var timeSlope = BezierMath.CubicDerivative<TReal, TReal>(TReal.Zero, firstTime, secondTime, TReal.One, parameter);
-        var valueSlope = BezierMath.CubicDerivative<TReal, TReal>(begin, firstValue, secondValue, end, parameter);
+        var timeSlope = BezierMath.CubicDerivative(TReal.Zero, firstTime, secondTime, TReal.One, parameter);
+        var valueSlope = BezierMath.CubicDerivative(begin, firstValue, secondValue, end, parameter);
         if (timeSlope != TReal.Zero || valueSlope != TReal.Zero) return valueSlope / timeSlope;
 
         // Cancel matching zero derivatives: a flattened parameterization can still describe an ordinary linear function.

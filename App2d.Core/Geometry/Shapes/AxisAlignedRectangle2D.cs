@@ -8,7 +8,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// <summary>A rectangle whose owner keeps its world axes aligned: the one shape that never rotates, in local space or through a pose.</summary>
 public readonly partial record struct AxisAlignedRectangle2D : IConvexShape2D, IRect2f
 {
-    public const string Kind = "axis-aligned-rectangle";
+    public GeometryKind Kind => GeometryKind.AxisAlignedRectangle;
 
     /// <summary>The rectangle from (0, 0) to (1, 1), covering a whole image in normalized coordinates.</summary>
     public static AxisAlignedRectangle2D UnitRect { get; } = Builder.Create(Vector2f.Zero, Vector2f.One);

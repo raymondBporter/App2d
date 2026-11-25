@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
@@ -104,7 +105,7 @@ public sealed class ShapeDiameterTests
 
     private sealed class CustomDisk : IConvexShape2D
     {
-        public string GetKind() => "custom-disk";
+        public GeometryKind Kind => GeometryKind.Custom;
         public float Area => MathF.PI * 1.25f * 1.25f;
         public bool ContainsPoint(Vector2f point) => point.Length() <= 1.25f;
         public Vector2f GetSupportPoint(Vector2f direction) => Vector2f.Normalize(direction) * 1.25f;

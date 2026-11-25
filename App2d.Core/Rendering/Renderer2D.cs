@@ -113,7 +113,7 @@ public sealed partial class Renderer2D : IDisposable
             return;
         }
 
-        if (worldObject.Shader is App2d.Core.Objects.ObjectShader2D placed)
+        if (worldObject.Shader is Core.Objects.ObjectShader2D placed)
         {
             DrawObject(placed, View.LocalToDevice(worldObject.Transform.Matrix));
             return;

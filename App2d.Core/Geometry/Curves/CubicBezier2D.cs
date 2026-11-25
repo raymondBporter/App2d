@@ -7,7 +7,7 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A cubic Bezier curve with normalized parameter range [0, 1].</summary>
 public readonly partial record struct CubicBezier2D : ICurve2D
 {
-    public const string Kind = "cubic-bezier";
+    public GeometryKind Kind => GeometryKind.CubicBezier;
 
     public CubicBezier2D(Vector2f start, Vector2f control1, Vector2f control2, Vector2f end)
     {
@@ -27,10 +27,10 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         Builder.Create(start, start + startTangent / 3f, end - endTangent / 3f, end);
 
     public Vector2f Evaluate(float amount) =>
-        BezierMath.Cubic<Vector2f, float>(Start, Control1, Control2, End, amount);
+        BezierMath.Cubic(Start, Control1, Control2, End, amount);
 
     public Vector2f EvaluateDerivative(float amount) =>
-        BezierMath.CubicDerivative<Vector2f, float>(Start, Control1, Control2, End, amount);
+        BezierMath.CubicDerivative(Start, Control1, Control2, End, amount);
 
     /// <summary>Splits at a finite parameter in [0, 1], preserving the exact curve on each side.</summary>
     public (CubicBezier2D Left, CubicBezier2D Right) Split(float amount)

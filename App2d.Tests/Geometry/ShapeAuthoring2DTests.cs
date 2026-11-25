@@ -10,36 +10,36 @@ namespace App2d.Tests.Geometry;
 public sealed class ShapeAuthoring2DTests
 {
     [Theory]
-    [InlineData(Rectangle2D.Kind)]
-    [InlineData(AxisAlignedRectangle2D.Kind)]
-    [InlineData(Circle2D.Kind)]
-    [InlineData(Capsule2.Kind)]
-    [InlineData(Ellipse2D.Kind)]
-    [InlineData(Triangle2D.Kind)]
-    [InlineData(ConvexPolygon2D.Kind)]
-    [InlineData(CompositeShape2D.Kind)]
-    public void ReauthoringFitsTheNewKindInsideTheOriginalBoundsAroundTheSameCentre(string kind)
+    [InlineData(GeometryKind.Rectangle)]
+    [InlineData(GeometryKind.AxisAlignedRectangle)]
+    [InlineData(GeometryKind.Circle)]
+    [InlineData(GeometryKind.Capsule)]
+    [InlineData(GeometryKind.Ellipse)]
+    [InlineData(GeometryKind.Triangle)]
+    [InlineData(GeometryKind.ConvexPolygon)]
+    [InlineData(GeometryKind.Composite)]
+    public void ReauthoringFitsTheNewKindInsideTheOriginalBoundsAroundTheSameCentre(GeometryKind kind)
     {
         var source = Rectangle2D.Builder.FromSize(4, 2, new(1, 1));
         var converted = source.WithKind(kind);
-        Assert.Equal(kind, converted.GetKind());
+        Assert.Equal(kind, converted.Kind);
         var bounds = ShapeBounds2D.Calculate(converted.Validated());
         Assert.True(Rect2f.Builder.Create(new(-1, 0), new(3, 2)).InflatedBy(1e-5f, 1e-5f).Contains(bounds), $"{kind} spilled to {bounds}.");
         Assert.True(Vector2f.Distance(new(1, 1), bounds.Center) < 1e-5f);
-        Assert.Equal(source, source.WithKind(Rectangle2D.Kind));
+        Assert.Equal(source, source.WithKind(source.Kind));
     }
 
     [Fact]
     public void TallBoxesBecomeVerticalCapsulesAndUnknownOrUnboundedSourcesAreRejected()
     {
         var tall = Rectangle2D.Builder.FromSize(1, 3);
-        var capsule = Assert.IsType<Capsule2>(tall.WithKind(Capsule2.Kind));
+        var capsule = Assert.IsType<Capsule2>(tall.WithKind(GeometryKind.Capsule));
         Assert.Equal(new Vector2f(0, -1), capsule.Start);
         Assert.Equal(new Vector2f(0, 1), capsule.End);
         Assert.Equal(.5f, capsule.Radius);
-        Assert.Equal(1f, Assert.IsType<Circle2D>(tall.WithKind(Circle2D.Kind)).Radius * 2);
-        Assert.Throws<ArgumentException>(() => tall.WithKind("blob"));
-        Assert.Throws<InvalidOperationException>(() => new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated().WithKind(Circle2D.Kind));
+        Assert.Equal(1f, Assert.IsType<Circle2D>(tall.WithKind(GeometryKind.Circle)).Radius * 2);
+        Assert.Throws<ArgumentException>(() => tall.WithKind(GeometryKind.Custom));
+        Assert.Throws<InvalidOperationException>(() => new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated().WithKind(GeometryKind.Circle));
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class ShapeAuthoring2DTests
             var json = builder.ToJson();
             using var document = JsonDocument.Parse(json);
             Assert.Single(document.RootElement.EnumerateObject(), property => property.Name == "kind");
-            Assert.Equal(rectangle.GetKind(), document.RootElement.GetProperty("kind").GetString());
+            Assert.Equal(rectangle.Kind, document.RootElement.GetProperty("kind").Deserialize<GeometryKind>());
             Assert.False(document.RootElement.TryGetProperty("axisAligned", out _));
             Assert.Equal(rectangle.GetType(), GeometryJson2D.ShapeFromJson(json).Validated().GetType());
             Assert.Equal(rectangle.GetType(), Assert.IsType<IShape2D>(GeometryJson2D.FromJson(json), exactMatch: false).Validated().GetType());
@@ -61,13 +61,13 @@ public sealed class ShapeAuthoring2DTests
     }
 
     [Theory]
-    [InlineData(Rectangle2D.Kind)]
-    [InlineData(AxisAlignedRectangle2D.Kind)]
-    public void RectangleJsonDefersValidationAndRejectsTheRemovedFlag(string kind)
+    [InlineData(GeometryKind.Rectangle)]
+    [InlineData(GeometryKind.AxisAlignedRectangle)]
+    public void RectangleJsonDefersValidationAndRejectsTheRemovedFlag(GeometryKind kind)
     {
-        var backwards = "{\"kind\":\"" + kind + "\",\"min\":{\"x\":1,\"y\":1},\"max\":{\"x\":0,\"y\":0}}";
+        var backwards = "{\"kind\":" + JsonSerializer.Serialize(kind) + ",\"min\":{\"x\":1,\"y\":1},\"max\":{\"x\":0,\"y\":0}}";
         var builder = GeometryJson2D.ShapeFromJson(backwards);
-        Assert.Equal(kind, builder.GetKind());
+        Assert.Equal(kind, builder.Kind);
         Assert.ThrowsAny<ArgumentException>(builder.Validate);
         Assert.ThrowsAny<ArgumentException>(() => builder.Validated());
         var withFlag = backwards[..^1] + ",\"axisAligned\":true}";

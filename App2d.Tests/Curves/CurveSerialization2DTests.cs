@@ -8,37 +8,28 @@ namespace App2d.Tests.Curves;
 
 public sealed class CurveSerialization2DTests
 {
-    public static TheoryData<string> BuiltInCurves =>
-    [
-        LineSegmentCurve2D.Kind,
-        PolylineCurve2D.Kind,
-        RoundedPolylineCurve2D.Kind,
-        Arc2D.Kind,
-        QuadraticBezier2D.Kind,
-        CubicBezier2D.Kind,
-        BSpline2D.Kind
-    ];
+    public static TheoryData<GeometryKind> BuiltInCurves => [.. GeometryJson2D.CurveKinds];
 
-    private static ICurve2D CreateCurve(string kind) => kind switch
+    private static ICurve2D CreateCurve(GeometryKind kind) => kind switch
     {
-        LineSegmentCurve2D.Kind => LineSegmentCurve2D.Builder.Create(new(-2, 1), new(3, 4)),
-        PolylineCurve2D.Kind => PolylineCurve2D.Builder.Create([new(-2, 1), new(1, 3), new(3, 4)]),
-        RoundedPolylineCurve2D.Kind => RoundedPolylineCurve2D.Builder.Create([new(0, 0), new(1, 0), new(1, 2)], .7f),
-        Arc2D.Kind => Arc2D.Builder.Create(new(1, -2), 3, .25f, -2.5f),
-        QuadraticBezier2D.Kind => QuadraticBezier2D.Builder.Create(new(0, 0), new(2, 3), new(4, 0)),
-        CubicBezier2D.Kind => CubicBezier2D.Builder.Create(new(0, 0), new(1, 3), new(3, -2), new(5, 1)),
-        BSpline2D.Kind => BSpline2D.Builder.Create([new(0, 0), new(1, 2), new(2, -1), new(3, 2), new(4, 0)]),
+        GeometryKind.LineSegment => LineSegmentCurve2D.Builder.Create(new(-2, 1), new(3, 4)),
+        GeometryKind.Polyline => PolylineCurve2D.Builder.Create([new(-2, 1), new(1, 3), new(3, 4)]),
+        GeometryKind.RoundedPolyline => RoundedPolylineCurve2D.Builder.Create([new(0, 0), new(1, 0), new(1, 2)], .7f),
+        GeometryKind.Arc => Arc2D.Builder.Create(new(1, -2), 3, .25f, -2.5f),
+        GeometryKind.QuadraticBezier => QuadraticBezier2D.Builder.Create(new(0, 0), new(2, 3), new(4, 0)),
+        GeometryKind.CubicBezier => CubicBezier2D.Builder.Create(new(0, 0), new(1, 3), new(3, -2), new(5, 1)),
+        GeometryKind.BSpline => BSpline2D.Builder.Create([new(0, 0), new(1, 2), new(2, -1), new(3, 2), new(4, 0)]),
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 
     [Theory]
     [MemberData(nameof(BuiltInCurves))]
-    public void TaggedValuesRoundTripIntoEquivalentRuntimeCurves(string kind)
+    public void TaggedValuesRoundTripIntoEquivalentRuntimeCurves(GeometryKind kind)
     {
         var original = CreateCurve(kind);
         var json = original.ToJson();
         using var document = JsonDocument.Parse(json);
-        Assert.Equal(kind, document.RootElement.GetProperty("kind").GetString());
+        Assert.Equal(kind, document.RootElement.GetProperty("kind").Deserialize<GeometryKind>());
         var restored = GeometryJson2D.CurveFromJson(json).Validated();
         Assert.Equal(original.GetType(), restored.GetType());
         foreach (var amount in new[] { 0f, .13f, .5f, .87f, 1f })

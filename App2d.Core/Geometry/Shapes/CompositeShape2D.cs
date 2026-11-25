@@ -6,7 +6,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// <summary>Source geometry for a union of convex parts. Construction only snapshots its input.</summary>
 public readonly partial record struct CompositeShape2D : IShape2D
 {
-    public const string Kind = "composite";
+    public GeometryKind Kind => GeometryKind.Composite;
 
     private readonly IShape2D[]? _parts;
     internal object PartsIdentity => _parts!;

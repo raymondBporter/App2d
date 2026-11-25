@@ -64,7 +64,7 @@ public sealed partial class Renderer2D
     /// Draws a level object's shapes in order, each filled and then outlined. An outline's width is in the object's own units
     /// and goes through the same transform as the shape, so it grows with the object and the camera; it never thins below a pixel.
     /// </summary>
-    private void DrawObject(App2d.Core.Objects.ObjectShader2D placed, Matrix3x2 matrix)
+    private void DrawObject(Core.Objects.ObjectShader2D placed, Matrix3x2 matrix)
     {
         SelectBatch(null, null);
         var pixelsPerUnit = MathF.Sqrt(MathF.Abs(matrix.GetDeterminant()));

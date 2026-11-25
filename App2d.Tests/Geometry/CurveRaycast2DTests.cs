@@ -1,6 +1,6 @@
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
-using App2d.Core.Geometry.Intersection;
+using App2d.Core.Geometry.Intersection.Raycast;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;

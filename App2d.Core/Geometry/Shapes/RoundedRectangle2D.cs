@@ -11,7 +11,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// </summary>
 public readonly partial record struct RoundedRectangle2D : IConvexShape2D
 {
-    public const string Kind = "rounded-rectangle";
+    public GeometryKind Kind => GeometryKind.RoundedRectangle;
 
     private readonly Vector2f _axis;
 

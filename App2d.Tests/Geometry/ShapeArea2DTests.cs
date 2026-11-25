@@ -726,7 +726,7 @@ public sealed class ShapeArea2DTests
 
     private sealed class CountingCircle : IConvexShape2D
     {
-        public string GetKind() => "CountingCircle";
+        public GeometryKind Kind => GeometryKind.Custom;
         public float Area => MathF.PI;
         public int SupportReads { get; private set; }
         public bool ContainsPoint(Vector2f point) => point.LengthSquared() <= 1;
@@ -739,7 +739,7 @@ public sealed class ShapeArea2DTests
 
     internal sealed class PointShape : IConvexShape2D
     {
-        public string GetKind() => "Point";
+        public GeometryKind Kind => GeometryKind.Custom;
         public float Area => 0;
         public bool ContainsPoint(Vector2f point) => point == Vector2f.Zero;
         public Vector2f GetSupportPoint(Vector2f direction) => Vector2f.Zero;

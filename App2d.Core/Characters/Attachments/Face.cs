@@ -95,7 +95,7 @@ public sealed record Face(Vector2f Origin, float BlinkSeconds, ImmutableArray<Fa
                     pieces.Add(new MountedPath(name, mount, [.. stroke], piece.Material, layer + piece.Layer));
                     break;
                 default:
-                    throw new InvalidDataException($"Expression '{expression.Name}' gives '{piece.Name}' a {geometry.GetKind()}, which a face cannot draw.");
+                    throw new InvalidDataException($"Expression '{expression.Name}' gives '{piece.Name}' a {geometry.Kind}, which a face cannot draw.");
             }
         }
         if (shown != expression.Shows.Length) throw new InvalidDataException($"Expression '{expression.Name}' names a piece this face does not have, or names one twice.");

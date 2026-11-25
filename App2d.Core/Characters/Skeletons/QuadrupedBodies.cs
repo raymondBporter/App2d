@@ -9,7 +9,7 @@ namespace App2d.Core.Characters.Skeletons;
 /// <summary>The drawn bodies of the four-legged animals, as attachments on the builds of <see cref="QuadrupedSkeleton"/>.</summary>
 public static class QuadrupedBodies
 {
-    /// <summary>The plain quadruped, on <see cref="QuadrupedSkeleton.Skeleton"/>.</summary>
+    /// <summary>The plain quadruped, on <see cref="Skeleton"/>.</summary>
     public static ImmutableArray<Attachment> Quadruped { get; } =
     [
         new MountedShape("tail", TailToTailUp, SimplePolygon2D.Builder.Create([
@@ -51,7 +51,7 @@ public static class QuadrupedBodies
             new(0.235f, -0.194f), new(0.327f, -0.13f), new(0.465f, -0.198f), new(0.4512f, -0.21f), new(0.327f, -0.162f), new(0.2534f, -0.21f)]), Paint("#242a29"), -0.31f),
     ];
 
-    /// <summary>The triceratops, on <see cref="QuadrupedSkeleton.Skeleton"/>: the quadruped with a frill and horns.</summary>
+    /// <summary>The triceratops, on <see cref="Skeleton"/>: the quadruped with a frill and horns.</summary>
     public static ImmutableArray<Attachment> Triceratops { get; } =
     [
         new MountedShape("tail", TailToTailUp, SimplePolygon2D.Builder.Create([
@@ -105,7 +105,7 @@ public static class QuadrupedBodies
             new(0.235f, -0.194f), new(0.327f, -0.13f), new(0.465f, -0.198f), new(0.4512f, -0.21f), new(0.327f, -0.162f), new(0.2534f, -0.21f)]), Paint("#242a29"), -0.31f),
     ];
 
-    /// <summary>The baby triceratops, on <see cref="QuadrupedSkeleton.Baby"/>.</summary>
+    /// <summary>The baby triceratops, on <see cref="Baby"/>.</summary>
     public static ImmutableArray<Attachment> BabyTriceratops { get; } =
     [
         new MountedShape("tail", TailToTailUp, SimplePolygon2D.Builder.Create([

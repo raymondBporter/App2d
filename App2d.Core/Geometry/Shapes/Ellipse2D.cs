@@ -11,7 +11,7 @@ namespace App2d.Core.Geometry.Shapes;
 /// </summary>
 public readonly partial record struct Ellipse2D : IConvexShape2D, IInterpolatable<Ellipse2D, float>
 {
-    public const string Kind = "ellipse";
+    public GeometryKind Kind => GeometryKind.Ellipse;
 
     private readonly Vector2f _axis;
 

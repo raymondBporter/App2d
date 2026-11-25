@@ -5,7 +5,7 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>A quadratic Bezier curve over normalized progress [0, 1].</summary>
 public readonly partial record struct QuadraticBezier2D : ICurve2D, IInterpolatable<QuadraticBezier2D, float>
 {
-    public const string Kind = "quadratic-bezier";
+    public GeometryKind Kind => GeometryKind.QuadraticBezier;
 
     /// <summary>The three points of the curve, each of which an interpolator can drive on its own.</summary>
     public static class Channels
@@ -32,10 +32,10 @@ public readonly partial record struct QuadraticBezier2D : ICurve2D, IInterpolata
     public Vector2f End { get; init; }
 
     public Vector2f Evaluate(float amount) =>
-        BezierMath.Quadratic<Vector2f, float>(Start, Control, End, amount);
+        BezierMath.Quadratic(Start, Control, End, amount);
 
     public Vector2f EvaluateDerivative(float amount) =>
-        BezierMath.QuadraticDerivative<Vector2f, float>(Start, Control, End, amount);
+        BezierMath.QuadraticDerivative(Start, Control, End, amount);
 
     public float Distance(Vector2f point) => Distance(point, 0, 1);
 

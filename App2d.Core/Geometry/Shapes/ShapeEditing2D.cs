@@ -14,9 +14,9 @@ public static class ShapeEditing2D
     /// <returns>This definition when the kind already matches, otherwise a new definition of that kind.</returns>
     /// <exception cref="ArgumentException">The kind is unknown.</exception>
     /// <exception cref="InvalidOperationException">This definition has no finite bounds to fit.</exception>
-    public static IShape2D WithKind(this IShape2D definition, string kind)
+    public static IShape2D WithKind(this IShape2D definition, GeometryKind kind)
     {
-        if (kind == definition.GetKind())
+        if (kind == definition.Kind)
         {
             return definition;
         }
@@ -24,7 +24,7 @@ public static class ShapeEditing2D
         var bounds = ShapeBounds2D.Calculate(definition.Validated());
         if (!bounds.IsFinite)
         {
-            throw new InvalidOperationException($"A {definition.GetKind()} has no finite bounds to re-author from.");
+            throw new InvalidOperationException($"A {definition.Kind} has no finite bounds to re-author from.");
         }
 
         var center = bounds.Center;
@@ -32,19 +32,19 @@ public static class ShapeEditing2D
         var reach = MathF.Abs(size.X - size.Y) / 2f;
         return kind switch
         {
-            Rectangle2D.Kind => Rectangle2D.Builder.FromSize(size, center),
-            AxisAlignedRectangle2D.Kind => AxisAlignedRectangle2D.Builder.FromSize(size, center),
-            RoundedRectangle2D.Kind => RoundedRectangle2D.Builder.FromSize(size, MathF.Min(size.X, size.Y) * .1f, center),
-            Circle2D.Kind => new Circle2D { Center = center, Radius = MathF.Min(size.X, size.Y) / 2f }.Validated(),
-            Ellipse2D.Kind => new Ellipse2D { Center = center, Radii = size / 2f }.Validated(),
-            Capsule2.Kind => size.X >= size.Y
+            GeometryKind.Rectangle => Rectangle2D.Builder.FromSize(size, center),
+            GeometryKind.AxisAlignedRectangle => AxisAlignedRectangle2D.Builder.FromSize(size, center),
+            GeometryKind.RoundedRectangle => RoundedRectangle2D.Builder.FromSize(size, MathF.Min(size.X, size.Y) * .1f, center),
+            GeometryKind.Circle => new Circle2D { Center = center, Radius = MathF.Min(size.X, size.Y) / 2f }.Validated(),
+            GeometryKind.Ellipse => new Ellipse2D { Center = center, Radii = size / 2f }.Validated(),
+            GeometryKind.Capsule => size.X >= size.Y
                 ? new Capsule2 { Start = center - new Vector2f(reach, 0f), End = center + new Vector2f(reach, 0f), Radius = size.Y / 2f }.Validated()
                 : new Capsule2 { Start = center - new Vector2f(0f, reach), End = center + new Vector2f(0f, reach), Radius = size.X / 2f }.Validated(),
-            Triangle2D.Kind => new Triangle2D { A = bounds.BottomLeft, B = bounds.BottomRight, C = bounds.TopCenter }.Validated(),
-            ConvexPolygon2D.Kind => new ConvexPolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),
-            SimplePolygon2D.Kind => new SimplePolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),
-            HalfSpace2D.Kind => new HalfSpace2D { Normal = new(0f, 1f), Offset = bounds.Top }.Validated(),
-            CompositeShape2D.Kind => new CompositeShape2D { Parts = [definition] }.Validated(),
+            GeometryKind.Triangle => new Triangle2D { A = bounds.BottomLeft, B = bounds.BottomRight, C = bounds.TopCenter }.Validated(),
+            GeometryKind.ConvexPolygon => new ConvexPolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),
+            GeometryKind.SimplePolygon => new SimplePolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),
+            GeometryKind.HalfSpace => new HalfSpace2D { Normal = new(0f, 1f), Offset = bounds.Top }.Validated(),
+            GeometryKind.Composite => new CompositeShape2D { Parts = [definition] }.Validated(),
             _ => throw new ArgumentException($"Unknown shape kind '{kind}'.", nameof(kind))
         };
     }
