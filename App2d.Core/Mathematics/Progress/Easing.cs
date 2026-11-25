@@ -10,8 +10,6 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
 {
     private static TReal Two => Real<TReal>.Two;
     private static TReal Half => Real<TReal>.Half;
-    private const int InverseToleranceScale = 4;
-    private static readonly TReal InverseTolerance = TReal.CreateChecked(InverseToleranceScale) * Real<TReal>.MachineEpsilon;
 
     public static readonly ProgressMap<TReal> Linear = ProgressMap<TReal>.Forward;
     public static readonly ProgressMap<TReal> Smooth = CreateSmoothStep(1);
@@ -63,6 +61,20 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         return presets;
     }
 
+    /// <summary>
+    /// A unit-height bell centred at <paramref name="center"/>, with its analytic slope. It is a profile for offsets and
+    /// weights, not an easing: it returns toward zero on both sides and has no inverse.
+    /// </summary>
+    public static ProgressMap<TReal> Gaussian(TReal center, TReal sigma)
+    {
+        Ensure.Finite(center);
+        Ensure.Positive(sigma);
+        var scale = -TReal.One / (Two * sigma * sigma);
+        return new ProgressMap<TReal>(
+            x => TReal.Exp((x - center) * (x - center) * scale),
+            x => Two * scale * (x - center) * TReal.Exp((x - center) * (x - center) * scale), isContinuous: true);
+    }
+
     /// <summary>x raised to any positive integer degree. Degree 1 is linear; choose ease direction separately.</summary>
     public static ProgressMap<TReal> Power(int degree)
     {
@@ -87,16 +99,9 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         Ensure.Finite(firstControlValue);
         Ensure.Finite(secondControlValue);
         Ensure.Finite(end);
-        var three = TReal.CreateChecked(3);
-        var beginningSlope = three * (firstControlValue - begin);
-        var endingSlope = three * (end - secondControlValue);
-        return new ProgressMap<TReal>(
-            phase => phase < TReal.Zero ? begin + phase * beginningSlope
-                : phase > TReal.One ? end + (phase - TReal.One) * endingSlope
-                : BezierMath.Cubic(begin, firstControlValue, secondControlValue, end, phase),
-            phase => phase < TReal.Zero ? beginningSlope : phase > TReal.One ? endingSlope
-                : BezierMath.CubicDerivative(begin, firstControlValue, secondControlValue, end, phase),
-            isContinuous: true).WithRecipe(new(ProgressOperation.Bezier, [begin, firstControlValue, secondControlValue, end]));
+        // A cubic value curve that runs straight past both ends: the curve layer's Extend, not a second copy of it.
+        var curve = new Extrapolated<CubicBezier<TReal, TReal>, TReal, TReal>(new(begin, firstControlValue, secondControlValue, end), Extrapolation.Extend, Extrapolation.Extend);
+        return new ProgressMap<TReal>(curve.Evaluate, curve.Derivative, isContinuous: true).WithRecipe(new(ProgressOperation.Bezier, [begin, firstControlValue, secondControlValue, end]));
     }
 
     /// <summary>A normalized Bezier function with explicit control times and values, preserving nonuniform timing.</summary>
@@ -210,28 +215,28 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         _ => throw new ArgumentOutOfRangeException(nameof(order), order, "Supported smoothstep orders are 0 through 3.")
     };
 
-    private static ProgressMap<TReal> CreateSmoothStep(int order) => new ProgressMap<TReal>(
-        x => SmoothStepValue(x, order),
-        x => TReal.CreateChecked(order switch { 1 => 6, 2 => 30, _ => 140 }) * TReal.Pow(x * (TReal.One - x), TReal.CreateChecked(order)),
-        order == 1 ? InverseCubicSmoothStep : x => InverseSmoothStep(x, order),
-        isContinuous: true).WithRecipe(new(ProgressOperation.SmoothStep, [], Integer: order));
+    private static ProgressMap<TReal> CreateSmoothStep(int order)
+    {
+        var polynomial = new SmoothStepPolynomial(order);
+        return new ProgressMap<TReal>(polynomial.Evaluate, polynomial.Derivative, order == 1 ? InverseCubicSmoothStep : x => InverseSmoothStep(x, order),
+            isContinuous: true).WithRecipe(new(ProgressOperation.SmoothStep, [], Integer: order));
+    }
 
     private static TReal InverseCubicSmoothStep(TReal value) => value == TReal.Zero || value == TReal.One
         ? value : Half - TReal.Sin(TReal.Asin(TReal.One - Two * value) / TReal.CreateChecked(3));
 
+    // The higher orders have no closed-form inverse, so the shared solver inverts the polynomial as a curve.
     private static TReal InverseSmoothStep(TReal value, int order)
     {
         if (value == TReal.Zero || value == TReal.One) return value;
         if (!(value > TReal.Zero && value < TReal.One)) return TReal.NaN;
+        BracketedNewton.TrySolve(new SmoothStepPolynomial(order), value, 2048, out var phase);
+        return phase;
+    }
 
-        var lower = TReal.Zero;
-        var upper = TReal.One;
-        while (upper - lower > InverseTolerance)
-        {
-            var middle = (lower + upper) / Two;
-            if (SmoothStepValue(middle, order) < value) lower = middle;
-            else upper = middle;
-        }
-        return (lower + upper) / Two;
+    private readonly struct SmoothStepPolynomial(int order) : IDifferentiableCurve<TReal, TReal>
+    {
+        public TReal Evaluate(TReal t) => SmoothStepValue(t, order);
+        public TReal Derivative(TReal t) => TReal.CreateChecked(order switch { 1 => 6, 2 => 30, _ => 140 }) * TReal.Pow(t * (TReal.One - t), TReal.CreateChecked(order));
     }
 }

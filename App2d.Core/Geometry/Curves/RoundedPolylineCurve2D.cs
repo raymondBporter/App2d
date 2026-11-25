@@ -8,7 +8,7 @@ namespace App2d.Core.Geometry.Curves;
 /// not the shortened curve's arc length. Each corner trims at most 48% of either adjacent span, so fillets
 /// cannot overlap. Repeated points and exact reversals remain finite; an exact reversal has no unique tangent.
 /// </summary>
-public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
+public readonly partial record struct RoundedPolylineCurve2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>
 {
     public GeometryKind Kind => GeometryKind.RoundedPolyline;
 
@@ -156,6 +156,19 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
 
         var span = _distance![i + 1] - _distance[i];
         return span > 1e-8f ? (points[i + 1] - points[i]) * (Length / span) : Vector2f.Zero;
+    }
+
+    public int ControlPointCount => Points.Length;
+    public Vector2f GetControlPoint(int index) => Points[index];
+    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == Points.Length ? this with { Points = [.. points] } : throw new InvalidDataException("Curve point count must match its definition.");
+
+    /// <summary>Zero on the straight parts; in a corner, the fillet's constant second derivative scaled to this parameter.</summary>
+    public Vector2f SecondDerivative(float amount)
+    {
+        var sample = Locate(amount);
+        if (sample.Kind != SpanKind.Corner) return Vector2f.Zero;
+        var scale = Length / (2 * _trim![sample.Index]);
+        return Corner(sample.Index, sample.Before, sample.After).SecondDerivative(sample.Fraction) * (scale * scale);
     }
 
     /// <summary>Interpolates caller-supplied scalar values (e.g. depth) with the same fillet weights as XY.</summary>

@@ -37,7 +37,7 @@ public sealed class Arc2DTests
         Assert.InRange(Vector2f.Distance(new(0, 2 * MathF.PI), arc.Derivative(0)), 0, 1e-6f);
         Assert.Equal(2 * Math.PI, arc.Length, 1e-6);
 
-        var samples = Curve2D.Sample(arc, 4);
+        var samples = arc.Ops.Sample(4);
         Assert.Equal(5, samples.Length);
         Assert.Equal(arc.Start, samples[0]);
         Assert.Equal(arc.End, samples[^1]);

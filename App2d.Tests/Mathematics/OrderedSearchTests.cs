@@ -17,6 +17,17 @@ public sealed class OrderedSearchTests
     }
 
     [Fact]
+    public void SpansAreSearchedByKey()
+    {
+        ReadOnlySpan<(float Time, string Name)> keys = [(0f, "a"), (1f, "b"), (1f, "c"), (3f, "d")];
+
+        Assert.Equal(1, OrderedSearch.LowerBound(keys, 1f, static key => key.Time));
+        Assert.Equal(3, OrderedSearch.UpperBound(keys, 1f, static key => key.Time));
+        Assert.Equal(4, OrderedSearch.UpperBound(keys, 9f, static key => key.Time));
+        Assert.Equal(0, OrderedSearch.LowerBound(ReadOnlySpan<(float Time, string Name)>.Empty, 1f, static key => key.Time));
+    }
+
+    [Fact]
     public void EmptyListsReturnTheirEndIndex()
     {
         Assert.Equal(0, OrderedSearch.LowerBound([], 1f));

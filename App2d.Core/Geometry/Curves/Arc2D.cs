@@ -1,7 +1,7 @@
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A circular arc with a signed sweep; positive angles turn counter-clockwise in Y-up coordinates.</summary>
-public readonly partial record struct Arc2D : ICurve2D
+public readonly partial record struct Arc2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>
 {
     public GeometryKind Kind => GeometryKind.Arc;
 
@@ -32,6 +32,13 @@ public readonly partial record struct Arc2D : ICurve2D
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
         var speed = (double)Radius * SweepAngleRadians;
         return (Vector2d.FromAngle(angle).PerpCcw * speed).ToVector2f();
+    }
+
+    /// <summary>Points at the centre, with length radius times sweep squared.</summary>
+    public Vector2f SecondDerivative(float amount)
+    {
+        var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
+        return (Vector2d.FromAngle(angle) * (-(double)Radius * SweepAngleRadians * SweepAngleRadians)).ToVector2f();
     }
 
     public float Distance(Vector2f point) => Distance(point, 0, 1);

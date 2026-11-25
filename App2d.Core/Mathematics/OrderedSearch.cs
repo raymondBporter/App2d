@@ -21,6 +21,30 @@ public static class OrderedSearch
     public static int UpperBound<T, TKey>(IReadOnlyList<T> values, TKey query, Func<T, TKey> key)
         where TKey : IComparable<TKey> => Bound(values, query, key, upper: true);
 
+    /// <summary>Lower bound of ascending keys read from a span, for value arrays that should not be boxed into a list.</summary>
+    public static int LowerBound<T, TKey>(ReadOnlySpan<T> values, TKey query, Func<T, TKey> key)
+        where TKey : IComparable<TKey> => Bound(values, query, key, upper: false);
+
+    /// <summary>Upper bound of ascending keys read from a span.</summary>
+    public static int UpperBound<T, TKey>(ReadOnlySpan<T> values, TKey query, Func<T, TKey> key)
+        where TKey : IComparable<TKey> => Bound(values, query, key, upper: true);
+
+    private static int Bound<T, TKey>(ReadOnlySpan<T> values, TKey query, Func<T, TKey> key, bool upper)
+        where TKey : IComparable<TKey>
+    {
+        Ensure.ThrowIfNull(key);
+        var low = 0;
+        var high = values.Length;
+        while (low < high)
+        {
+            var middle = low + (high - low) / 2;
+            var order = key(values[middle]).CompareTo(query);
+            if (order < 0 || upper && order == 0) low = middle + 1;
+            else high = middle;
+        }
+        return low;
+    }
+
     private static int Bound<T, TKey>(IReadOnlyList<T> values, TKey query, Func<T, TKey> key, bool upper)
         where TKey : IComparable<TKey>
     {

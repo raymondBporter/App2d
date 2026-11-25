@@ -8,7 +8,7 @@ namespace App2d.Core.Geometry.Curves;
 /// A clamped uniform B-spline. Cubic is the default; lower degrees are useful
 /// for polylines and higher degrees are supported when enough control points exist.
 /// </summary>
-public readonly partial record struct BSpline2D : ICurve2D
+public readonly partial record struct BSpline2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>
 {
     public GeometryKind Kind => GeometryKind.BSpline;
 
@@ -36,14 +36,16 @@ public readonly partial record struct BSpline2D : ICurve2D
                 {
                     Validate();
                     var knots = CreateClampedUniformKnots(_controlPoints!.Length, Degree);
-                    data = new(knots, CreateDerivativeControlPoints(_controlPoints, knots, Degree));
+                    var first = CreateDerivativeControlPoints(_controlPoints, knots, Degree);
+                    // The derivative of a B-spline is a B-spline one degree lower on the inner knots, so the same step applies twice.
+                    data = new(knots, first, Degree < 2 ? [] : CreateDerivativeControlPoints(first, knots.AsSpan(1, knots.Length - 2), Degree - 1));
                     entries[Degree] = data;
                 }
                 return data;
             }
         }
     }
-    private sealed record Prepared(float[] Knots, Vector2f[] DerivativePoints)
+    private sealed record Prepared(float[] Knots, Vector2f[] DerivativePoints, Vector2f[] SecondDerivativePoints)
     {
         internal PolynomialCurveSpan2D[]? RaycastSpans;
     }
@@ -56,21 +58,29 @@ public readonly partial record struct BSpline2D : ICurve2D
         var data = Data;
         return EvaluateDeBoor(data.DerivativePoints, data.Knots.AsSpan(1, data.Knots.Length - 2), Degree - 1, amount);
     }
+    public Vector2f SecondDerivative(float amount)
+    {
+        var data = Data;
+        return Degree < 2 ? Vector2f.Zero : EvaluateDeBoor(data.SecondDerivativePoints, data.Knots.AsSpan(2, data.Knots.Length - 4), Degree - 2, amount);
+    }
+
+    public int ControlPointCount => ControlPoints.Length;
+    public Vector2f GetControlPoint(int index) => ControlPoints[index];
+    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == ControlPoints.Length ? this with { ControlPoints = points } : throw new InvalidDataException("Curve point count must match its definition.");
+
     public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this,
         int.Clamp((ControlPoints.Length - Degree) * 32, 64, 1024));
 
     internal PositionSampler PreparePositionSampler() => new(_controlPoints!, Data.Knots, Degree);
 
-    internal readonly struct PositionSampler(Vector2f[] points, float[] knots, int degree) : Curve2D.IPolylineSampler<PositionSampler>
+    internal readonly struct PositionSampler(Vector2f[] points, float[] knots, int degree) : ICurve<Vector2f, float>
     {
         private readonly Vector2f[] _points = points;
         private readonly float[] _knots = knots;
         private readonly int _degree = degree;
 
-        public static Vector2f Evaluate(in PositionSampler sampler, float amount) =>
-            EvaluateDeBoor(sampler._points, sampler._knots, sampler._degree, amount);
-
-        public static Vector2f EvaluateBoundary(in PositionSampler sampler, int index, float amount) => Evaluate(in sampler, amount);
+        // Position only, with the prepared knots held directly, so sampling does not look the data up per point.
+        public Vector2f Evaluate(float t) => EvaluateDeBoor(_points, _knots, _degree, t);
     }
 
     private static float[] CreateClampedUniformKnots(int controlPointCount, int degree)

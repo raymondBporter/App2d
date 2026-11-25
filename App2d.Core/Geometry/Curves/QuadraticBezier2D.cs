@@ -3,7 +3,7 @@ using App2d.Core.Geometry.Distance;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A quadratic Bezier curve over normalized progress [0, 1].</summary>
-public readonly partial record struct QuadraticBezier2D : ICurve2D, IInterpolatable<QuadraticBezier2D, float>
+public readonly partial record struct QuadraticBezier2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, IInterpolatable<QuadraticBezier2D, float>
 {
     public GeometryKind Kind => GeometryKind.QuadraticBezier;
 
@@ -36,6 +36,12 @@ public readonly partial record struct QuadraticBezier2D : ICurve2D, IInterpolata
 
     public Vector2f Derivative(float amount) =>
         BezierMath.QuadraticDerivative(Start, Control, End, amount);
+
+    public Vector2f SecondDerivative(float amount) => BezierMath.QuadraticSecondDerivative<Vector2f, float>(Start, Control, End);
+
+    public int ControlPointCount => 3;
+    public Vector2f GetControlPoint(int index) => index switch { 0 => Start, 1 => Control, 2 => End, _ => throw new ArgumentOutOfRangeException(nameof(index)) };
+    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == 3 ? this with { Start = points[0], Control = points[1], End = points[2] } : throw new InvalidDataException("Curve point count must match its definition.");
 
     public float Distance(Vector2f point) => Distance(point, 0, 1);
 

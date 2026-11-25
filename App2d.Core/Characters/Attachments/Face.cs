@@ -91,7 +91,10 @@ public sealed record Face(Vector2f Origin, float BlinkSeconds, ImmutableArray<Fa
                 case ICurve2D curve:
                     // The curve is placed by its control points and then cut into straight pieces.
                     var stroke = new Vector2f[CurveSegments + 1];
-                    Curve2D.Sample(CurveControlPoints2D.With(curve, [.. CurveControlPoints2D.Get(curve).Select(Place)]), stroke);
+                    var editable = curve as IControlPointCurve<Vector2f, ICurve2D> ?? throw new InvalidDataException("A placed stroke needs a curve defined by control points.");
+                    var placed = new Vector2f[editable.ControlPointCount];
+                    for (var i = 0; i < placed.Length; i++) placed[i] = Place(editable.GetControlPoint(i));
+                    editable.WithControlPoints(placed).Ops.Sample(stroke);
                     pieces.Add(new MountedPath(name, mount, [.. stroke], piece.Material, layer + piece.Layer));
                     break;
                 default:

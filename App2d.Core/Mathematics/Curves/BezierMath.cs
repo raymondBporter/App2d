@@ -37,6 +37,16 @@ public static class BezierMath
         return Blend(control - start, end - control, TReal.One - amount, amount) * TReal.CreateChecked(2);
     }
 
+    public static TValue QuadraticSecondDerivative<TValue, TReal>(TValue start, TValue control, TValue end)
+        where TValue : ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
+        where TReal : IFloatingPointIeee754<TReal> =>
+        (end - control - (control - start)) * TReal.CreateChecked(2);
+
+    public static TValue CubicSecondDerivative<TValue, TReal>(TValue start, TValue control1, TValue control2, TValue end, TReal amount)
+        where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
+        where TReal : IFloatingPointIeee754<TReal> =>
+        Blend(control2 - control1 - (control1 - start), end - control2 - (control2 - control1), TReal.One - amount, amount) * TReal.CreateChecked(6);
+
     public static TValue Cubic<TValue, TReal>(TValue start, TValue control1, TValue control2, TValue end, TReal amount)
         where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
         where TReal : IFloatingPointIeee754<TReal>

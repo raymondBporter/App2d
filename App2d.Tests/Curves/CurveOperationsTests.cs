@@ -119,6 +119,45 @@ public sealed class CurveOperationsTests
     }
 
     [Fact]
+    public void SplitGivesBothHalves()
+    {
+        var (left, right) = Square.Ops.Split(.25d);
+
+        Assert.Equal(Square.Evaluate(.125d), left.Evaluate(.5d));
+        Assert.Equal(Square.Evaluate(.625d), right.Evaluate(.5d));
+        Assert.Equal(left.Evaluate(1d), right.Evaluate(0d));
+    }
+
+    [Fact]
+    public void SampleWritesBothEndpointsInAnyDimension()
+    {
+        var curve = new CubicBezier<Vector3f, float>(new(0, 1, -2), new(1, 2, 3), new(3, -1, -4), new(4, 2, 1));
+        var points = new Vector3f[5];
+
+        curve.Ops.Sample(points);
+
+        Assert.Equal(curve.Evaluate(0), points[0]);
+        Assert.Equal(curve.Evaluate(.5f), points[2]);
+        Assert.Equal(curve.Evaluate(1), points[4]);
+        Assert.Equal(5, Square.Ops.Sample(4).Length);
+        Assert.ThrowsAny<ArgumentException>(() => Square.Ops.Sample(0));
+        Assert.ThrowsAny<ArgumentException>(() => Square.Ops.Sample(new double[1]));
+    }
+
+    [Fact]
+    public void AnyTwoDimensionalCurveCanBecomeAPolyline()
+    {
+        var arc = Arc2D.Builder.Create(Vector2f.Zero, 2, 0, MathF.PI);
+        var half = arc.Ops.Slice(0f, .5f);
+
+        var polyline = Curve2D.ToPolyline(half, 4, 12f, .01f);
+
+        Assert.Equal(arc.Evaluate(0), polyline.Points[0]);
+        Assert.Equal(arc.Evaluate(.5f), polyline.Points[^1]);
+        Assert.True(polyline.Points.Length > 5);
+    }
+
+    [Fact]
     public void ReverseIsSliceOneZero()
     {
         var reversed = Square.Ops.Reverse();

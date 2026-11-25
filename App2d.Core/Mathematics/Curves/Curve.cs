@@ -1,4 +1,5 @@
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Mathematics;
@@ -24,10 +25,29 @@ public readonly record struct Curve<TCurve, TValue, TReal>(TCurve Source) : IDif
     /// <summary>Evaluates once with the parameter clamped to [0, 1]. Use <see cref="Clamped"/> when the policy should travel with the curve.</summary>
     public TValue EvaluateClamped(TReal t) => Source.Evaluate(TReal.Clamp(t, TReal.Zero, TReal.One));
 
+    /// <summary>Samples both endpoints and equal parameter steps between them into caller-owned storage, without allocating.</summary>
+    public void Sample(Span<TValue> points)
+    {
+        Ensure.ThrowIfTooShort(points, 2);
+        var last = TReal.CreateChecked(points.Length - 1);
+        for (var i = 0; i < points.Length; i++) points[i] = Source.Evaluate(TReal.CreateChecked(i) / last);
+    }
+
+    /// <summary>Samples both endpoints and the requested number of equal parameter segments.</summary>
+    public TValue[] Sample(int segmentCount)
+    {
+        var points = new TValue[Ensure.Positive(segmentCount) + 1];
+        Sample(points);
+        return points;
+    }
+
     /// <summary>Maps [0, 1] onto [from, to] of this curve. The interval may be reversed or empty.</summary>
     public Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Slice(TReal from, TReal to) => new(new Sliced<TCurve, TValue, TReal>(Source, from, to).Validated());
 
     public Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Reverse() => Slice(TReal.One, TReal.Zero);
+
+    /// <summary>Both halves at a parameter, each remapped to [0, 1].</summary>
+    public (Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Left, Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Right) Split(TReal t) => (Slice(TReal.Zero, t), Slice(t, TReal.One));
 
     /// <summary>Traverses this curve through a scalar map: curve(map(t)). Nothing is clamped; wrap either side to choose.</summary>
     public Curve<Reparameterized<TCurve, TMap, TValue, TReal>, TValue, TReal> Reparameterize<TMap>(TMap map) where TMap : IDifferentiableCurve<TReal, TReal> => new(new Reparameterized<TCurve, TMap, TValue, TReal>(Source, map).Validated());

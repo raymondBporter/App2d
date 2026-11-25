@@ -100,8 +100,7 @@ public sealed class CurveRaycast2DTests
         Near(Vector2f.UnitY, tangent.Point);
         Near(-Vector2f.UnitY, tangent.Normal);
         var full = Arc2D.Builder.Create(Vector2f.Zero, 1, 0, MathF.Tau);
-        var slice = new CurveSlice2D<Arc2D>(full, 0, .25f);
-        Assert.True(CurveRaycast2D.TryIntersect(new(-2, 0), Vector2f.UnitX, slice, 5, out var hit));
+        Assert.True(CurveRaycast2D.TryIntersect(new(-2, 0), Vector2f.UnitX, full, 0, .25f, 5, out var hit));
         Near(Vector2f.UnitX, hit.Point);
     }
 
@@ -131,13 +130,12 @@ public sealed class CurveRaycast2DTests
     public void NestedSlicesRestrictTheParameterDomainBeforeChoosingTheNearestHit()
     {
         var curve = QuadraticBezier2D.Builder.Create(new(0, 0), new(1, 2), new(2, 0));
-        var left = new CurveSlice2D<QuadraticBezier2D>(curve, 0, .5f);
-        Assert.False(CurveRaycast2D.TryIntersect(new(1.1f, .75f), Vector2f.UnitX, left, 5, out _));
-        var right = new CurveSlice2D<QuadraticBezier2D>(curve, .5f, 1);
-        var nested = new CurveSlice2D<CurveSlice2D<QuadraticBezier2D>>(right, .25f, 1);
-        Assert.True(CurveRaycast2D.TryIntersect(new(-1, .75f), Vector2f.UnitX, nested, 5, out var hit));
+        Assert.False(CurveRaycast2D.TryIntersect(new(1.1f, .75f), Vector2f.UnitX, curve, 0, .5f, 5, out _));
+        // [.25, 1] of [.5, 1] is [.625, 1] of the curve.
+        Assert.True(CurveRaycast2D.TryIntersect(new(-1, .75f), Vector2f.UnitX, curve, .625f, 1, 5, out var hit));
         Near(new(1.5f, .75f), hit.Point);
-        Assert.False(CurveRaycast2D.TryIntersect(new(-1, .75f), Vector2f.UnitX, new CurveSlice2D<QuadraticBezier2D>(curve, .25f, .25f), 5, out _));
+        Assert.False(CurveRaycast2D.TryIntersect(new(-1, .75f), Vector2f.UnitX, curve, .25f, .25f, 5, out _));
+        Assert.ThrowsAny<ArgumentException>(() => CurveRaycast2D.TryIntersect(new(-1, .75f), Vector2f.UnitX, curve, .75f, .25f, 5, out _));
     }
 
     [Theory]
@@ -200,7 +198,7 @@ public sealed class CurveRaycast2DTests
         Assert.True(GeometryRaycast2D.TryIntersect(ray, circle, 5, out var shapeHit));
         Assert.True(GeometryRaycast2D.TryIntersect(ray, line, 5, out var curveHit));
         Near(shapeHit.Point, curveHit.Point);
-        var procedural = new NormalOffsetCurve2D((ICurve2D)line, _ => throw new Exception("Must not sample arbitrary code."));
+        var procedural = new NormalOffsetCurve2D((ICurve2D)line, new ProgressMapf(_ => throw new Exception("Must not sample arbitrary code."), _ => throw new Exception("Must not sample arbitrary code.")));
         Assert.Throws<NotSupportedException>(() => GeometryRaycast2D.TryIntersect(ray, procedural, 5, out _));
         Assert.ThrowsAny<ArgumentException>(() => CurveRaycast2D.TryIntersect(default, (ICurve2D)line, 5, out _));
         Assert.ThrowsAny<ArgumentException>(() => CurveRaycast2D.TryIntersect(Vector2f.Zero, Vector2f.Zero, (ICurve2D)line, 5, out _));
@@ -239,14 +237,12 @@ public sealed class CurveRaycast2DTests
     public void SlicedSplineAndRoundedCurveQueriesDoNotSearchOutsideTheirRestrictedIntervals()
     {
         var spline = BSpline2D.Builder.Create([new(0, 0), new(1, 2), new(2, -1), new(3, 1), new(4, 0)]);
-        var sliced = new CurveSlice2D<BSpline2D>(spline, 0, .4f);
         var right = spline.Evaluate(.8f);
-        Assert.False(CurveRaycast2D.TryIntersect(right - new Vector2f(0, 5), Vector2f.UnitY, sliced, 10, out _));
+        Assert.False(CurveRaycast2D.TryIntersect(right - new Vector2f(0, 5), Vector2f.UnitY, spline, 0, .4f, 10, out _));
         var rounded = RoundedPolylineCurve2D.Builder.Create([new(0, 0), new(0, 0), new(2, 0), new(2, 2)]);
         Assert.True(CurveRaycast2D.TryIntersect(new(1.76f, -1), Vector2f.UnitY, rounded, 5, out var hit));
         Near(new(1.76f, .24f), hit.Point);
-        var early = new CurveSlice2D<RoundedPolylineCurve2D>(rounded, 0, .1f);
-        Assert.False(CurveRaycast2D.TryIntersect(new(1.76f, -1), Vector2f.UnitY, early, 5, out _));
+        Assert.False(CurveRaycast2D.TryIntersect(new(1.76f, -1), Vector2f.UnitY, rounded, 0, .1f, 5, out _));
     }
 
     private static void Near(Vector2f expected, Vector2f actual, float tolerance = .00002f) =>

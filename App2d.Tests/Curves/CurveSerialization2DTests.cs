@@ -153,7 +153,7 @@ public sealed class CurveSerialization2DTests
     [Fact]
     public void CurvesWithExecutableProfilesHaveNoJsonSchema()
     {
-        var curve = new NormalOffsetCurve2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.One), _ => 1);
+        var curve = new NormalOffsetCurve2D(LineSegmentCurve2D.Builder.Create(Vector2f.Zero, Vector2f.One), ProgressMapf.Constant(1f));
         Assert.Throws<NotSupportedException>(() => curve.ToJson());
     }
 }

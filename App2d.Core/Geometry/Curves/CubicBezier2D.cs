@@ -5,7 +5,7 @@ using App2d.Core.Validation;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A cubic Bezier curve with normalized parameter range [0, 1].</summary>
-public readonly partial record struct CubicBezier2D : ICurve2D
+public readonly partial record struct CubicBezier2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>
 {
     public GeometryKind Kind => GeometryKind.CubicBezier;
 
@@ -24,7 +24,11 @@ public readonly partial record struct CubicBezier2D : ICurve2D
 
     /// <summary>Creates a cubic from endpoints and tangents with respect to its normalized parameter.</summary>
     public static CubicBezier2D FromHermite(Vector2f start, Vector2f end, Vector2f startTangent, Vector2f endTangent) =>
-        Builder.Create(start, start + startTangent / 3f, end - endTangent / 3f, end);
+        From(CubicBezier<Vector2f, float>.FromHermite(start, end, startTangent, endTangent)).Validated();
+
+    // The subdivision math is written once, on the generic curve.
+    private CubicBezier<Vector2f, float> Generic => new(Start, Control1, Control2, End);
+    private static CubicBezier2D From(CubicBezier<Vector2f, float> curve) => new(curve.Start, curve.Control1, curve.Control2, curve.End);
 
     public Vector2f Evaluate(float amount) =>
         BezierMath.Cubic(Start, Control1, Control2, End, amount);
@@ -36,13 +40,8 @@ public readonly partial record struct CubicBezier2D : ICurve2D
     public (CubicBezier2D Left, CubicBezier2D Right) Split(float amount)
     {
         Ensure.InRange(amount, 0f, 1f);
-        var a = Vector2f.Lerp(Start, Control1, amount);
-        var b = Vector2f.Lerp(Control1, Control2, amount);
-        var c = Vector2f.Lerp(Control2, End, amount);
-        var d = Vector2f.Lerp(a, b, amount);
-        var e = Vector2f.Lerp(b, c, amount);
-        var point = Vector2f.Lerp(d, e, amount);
-        return (new(Start, a, d, point), new(point, e, c, End));
+        var (left, right) = Generic.Split(amount);
+        return (From(left), From(right));
     }
 
     /// <summary>Restricts the curve to ordered parameters in [0, 1], then maps that interval to [0, 1]. Equal parameters produce a point.</summary>
@@ -51,17 +50,7 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         Ensure.NonNegative(from);
         Ensure.LessThanOrEqual(to, 1);
         Ensure.LessThanOrEqual(from, to);
-        if (from == to)
-        {
-            var point = Evaluate(from);
-            return new(point, point, point, point);
-        }
-        if (from == 0 && to == 1)
-        {
-            return this;
-        }
-        var left = Split(to).Left;
-        return from == 0 ? left : left.Split(from / to).Right;
+        return from == 0 && to == 1 ? this : From(Generic.Slice(from, to));
     }
 
     /// <summary>Writes the sorted, distinct parameters where the curve has the given X coordinate. The curve may cross it up to three times.</summary>
@@ -119,6 +108,12 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         return count == 1 ? (float)parameters[0]
             : throw new InvalidOperationException("The curve must have exactly one parameter at the requested X coordinate.");
     }
+
+    public Vector2f SecondDerivative(float amount) => BezierMath.CubicSecondDerivative(Start, Control1, Control2, End, amount);
+
+    public int ControlPointCount => 4;
+    public Vector2f GetControlPoint(int index) => index switch { 0 => Start, 1 => Control1, 2 => Control2, 3 => End, _ => throw new ArgumentOutOfRangeException(nameof(index)) };
+    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == 4 ? this with { Start = points[0], Control1 = points[1], Control2 = points[2], End = points[3] } : throw new InvalidDataException("Curve point count must match its definition.");
 
     public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
 }

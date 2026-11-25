@@ -15,6 +15,15 @@ public static class CurveDistance2D
 
     public static float Distance(ICurve2D curve, Vector2f point) => Distance(point, curve);
 
+    /// <summary>Distance to the part of a curve between two ordered parameters in [0, 1]. Equal parameters measure to that one point.</summary>
+    public static float Distance(Vector2f point, ICurve2D curve, float from, float to)
+    {
+        Ensure.ThrowIfNull(curve);
+        Ensure.InRange(from, 0f, 1f);
+        Ensure.InRange(to, from, 1f);
+        return DistanceOnInterval(point, curve, from, to);
+    }
+
     internal static float DistanceOnInterval<TCurve>(Vector2f point, TCurve curve, double from, double to) where TCurve : ICurve2D
     {
         if (from == to) return (float)(curve.Evaluate((float)from).ToVector2d() - point.ToVector2d()).Length();
@@ -22,9 +31,6 @@ public static class CurveDistance2D
 
         switch (curve)
         {
-            case ICurveSlice2D slice:
-                return DistanceOnInterval(point, slice.SourceCurve,
-                    Interval.Lerp((double)slice.From, slice.To, from), Interval.Lerp((double)slice.From, slice.To, to));
             case LineSegmentCurve2D line:
                 return (float)Math.Sqrt(SegmentDistanceSquared(point.ToVector2d(), line.Start.ToVector2d(), line.End.ToVector2d(), from, to));
             case Arc2D arc:

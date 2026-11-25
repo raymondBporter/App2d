@@ -3,7 +3,7 @@ using App2d.Core.Geometry.Distance;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>An open polyline parameterized uniformly across its segments.</summary>
-public readonly partial record struct PolylineCurve2D : ICurve2D
+public readonly partial record struct PolylineCurve2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>
 {
     public GeometryKind Kind => GeometryKind.Polyline;
 
@@ -28,6 +28,13 @@ public readonly partial record struct PolylineCurve2D : ICurve2D
         var (index, _) = Segment(amount);
         return (Points[index + 1] - Points[index]) * (Points.Length - 1);
     }
+
+    /// <summary>Zero on every segment. At a corner this is the value for the segment that starts there.</summary>
+    public Vector2f SecondDerivative(float amount) => Vector2f.Zero;
+
+    public int ControlPointCount => Points.Length;
+    public Vector2f GetControlPoint(int index) => Points[index];
+    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == Points.Length ? this with { Points = points } : throw new InvalidDataException("Curve point count must match its definition.");
 
     public float Distance(Vector2f point)
     {

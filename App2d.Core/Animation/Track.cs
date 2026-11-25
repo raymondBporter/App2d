@@ -31,16 +31,10 @@ public sealed class Track<T>
     {
         if (time <= Keys[0].Time) return Keys[0].Value;
         if (time >= Keys[^1].Time) return Keys[^1].Value;
-        // The first key after the time; the one before it starts the segment.
-        int low = 1, high = Keys.Length - 1;
-        while (low < high)
-        {
-            var middle = (low + high) / 2;
-            if (Keys[middle].Time <= time) low = middle + 1;
-            else high = middle;
-        }
-        var from = Keys[low - 1];
-        var to = Keys[low];
+        // The first key after the time; the one before it starts the segment. A NaN time keeps the first segment.
+        var next = Math.Clamp(OrderedSearch.UpperBound(Keys.AsSpan(), time, static key => key.Time), 1, Keys.Length - 1);
+        var from = Keys[next - 1];
+        var to = Keys[next];
         return time == from.Time ? from.Value : (from.Next ?? Rule).Evaluate(from.Value, to.Value, (time - from.Time) / (to.Time - from.Time));
     }
 }

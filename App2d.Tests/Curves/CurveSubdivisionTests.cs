@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Distance;
 
 namespace App2d.Tests.Curves;
 
@@ -21,7 +22,7 @@ public sealed class CurveSubdivisionTests
     {
         foreach (var curve in Curves)
         {
-            var piece = curve.Slice(from, to);
+            var piece = curve.Ops.Slice(from, to).Clamped();
             for (var i = 0; i <= 20; i++)
             {
                 var u = i / 20f;
@@ -41,7 +42,7 @@ public sealed class CurveSubdivisionTests
     {
         foreach (var curve in Curves)
         {
-            var (left, right) = curve.Split(at);
+            var (left, right) = curve.Ops.Split(at);
             for (var i = 0; i <= 20; i++)
             {
                 var u = i / 20f;
@@ -55,15 +56,15 @@ public sealed class CurveSubdivisionTests
     public void NestedSlicesComposeAndDistanceUsesOnlyTheRestrictedGeometry()
     {
         var line = LineSegmentCurve2D.Builder.Create(Vector2f.Zero, new(10, 0));
-        var piece = line.Slice(.4f, .6f);
-        Assert.Equal(4f, piece.Distance(Vector2f.Zero), 5);
-        Assert.Equal(2f, line.Slice(.5f, .5f).Distance(new(5, 2)), 5);
-        var nested = piece.Slice(.25f, .75f);
+        Assert.Equal(4f, CurveDistance2D.Distance(Vector2f.Zero, line, .4f, .6f), 5);
+        Assert.Equal(2f, CurveDistance2D.Distance(new(5, 2), line, .5f, .5f), 5);
+        var nested = line.Ops.Slice(.4f, .6f).Slice(.25f, .75f);
         Near(new(4.5f, 0), nested.Evaluate(0));
         Near(new(5.5f, 0), nested.Evaluate(1));
         Near(new(1, 0), nested.Derivative(.5f));
-        Assert.Throws<ArgumentOutOfRangeException>(() => line.Split(float.NaN));
-        Assert.Throws<ArgumentOutOfRangeException>(() => line.Slice(.7f, .2f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => line.Ops.Split(float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => CurveDistance2D.Distance(Vector2f.Zero, line, .7f, .2f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => CurveDistance2D.Distance(Vector2f.Zero, line, 0f, 1.5f));
     }
 
     [Fact]

@@ -27,6 +27,16 @@ public static class CurveRaycast2D
         return TryIntersectInterval(origin, direction, curve, 0, 1, maxDistance, out hit);
     }
 
+    /// <summary>Queries only the part of a curve between two ordered parameters in [0, 1]. Equal parameters never hit.</summary>
+    public static bool TryIntersect(Vector2f origin, Vector2f direction, ICurve2D curve, float from, float to, float maxDistance, out RayHit2D hit)
+    {
+        Ensure.ThrowIfNull(curve);
+        Ensure.InRange(from, 0f, 1f);
+        Ensure.InRange(to, from, 1f);
+        Raycast2D.ValidateParameters(origin, direction, maxDistance);
+        return TryIntersectInterval(origin, direction, curve, from, to, maxDistance, out hit);
+    }
+
     internal static bool TryIntersectInterval(Vector2f origin, Vector2f direction, ICurve2D curve, double from, double to,
         float maxDistance, out RayHit2D hit)
     {
@@ -34,11 +44,6 @@ public static class CurveRaycast2D
         if (from == to) return false;
         switch (curve)
         {
-            case ICurveSlice2D slice:
-                var sliceFrom = (double)slice.From;
-                var sliceTo = (double)slice.To;
-                return TryIntersectInterval(origin, direction, slice.SourceCurve,
-                    Interval.Lerp(sliceFrom, sliceTo, from), Interval.Lerp(sliceFrom, sliceTo, to), maxDistance, out hit);
             case Arc2D arc:
                 return Raycast2D.TryArc(origin, direction, arc.Center, arc.Radius,
                     arc.StartAngleRadians + arc.SweepAngleRadians * from, arc.SweepAngleRadians * (to - from), maxDistance, out hit);
