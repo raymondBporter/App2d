@@ -19,6 +19,15 @@ public readonly record struct Extrapolated<TCurve, TValue, TReal>(TCurve Curve, 
     where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>, IAdditiveIdentity<TValue, TValue>
     where TReal : IFloatingPointIeee754<TReal>
 {
+    public void Validate()
+    {
+        CurveArgument.NotNull(Curve, "curve");
+        if (!Enum.IsDefined(Before)) throw new ArgumentOutOfRangeException("before", Before, "Unknown extrapolation.");
+        if (!Enum.IsDefined(After)) throw new ArgumentOutOfRangeException("after", After, "Unknown extrapolation.");
+    }
+
+    public Extrapolated<TCurve, TValue, TReal> Validated() { Validate(); return this; }
+
     public TValue Evaluate(TReal t) => t < TReal.Zero ? EvaluateOutside(Before, TReal.Zero, t) : t > TReal.One ? EvaluateOutside(After, TReal.One, t) : Curve.Evaluate(t);
 
     public TValue Derivative(TReal t) => t < TReal.Zero ? DerivativeOutside(Before, TReal.Zero, t) : t > TReal.One ? DerivativeOutside(After, TReal.One, t) : Curve.Derivative(t);

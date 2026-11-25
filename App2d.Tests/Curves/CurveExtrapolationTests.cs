@@ -60,6 +60,14 @@ public sealed class CurveExtrapolationTests
     }
 
     [Fact]
+    public void NaNDerivativeStaysNaNEvenWhereTheTangentIsConstant()
+    {
+        Assert.True(float.IsNaN(LineSegmentCurve2D.Create(new(1, 2), new(4, 6)).Derivative(float.NaN).X));
+        Assert.True(float.IsNaN(PolylineCurve2D.Builder.Create([new(0, 0), new(1, 0), new(1, 1)]).Derivative(float.NaN).Y));
+        Assert.True(float.IsNaN(BSpline2D.Builder.Create([new(0, 0), new(2, 4)], 1).Derivative(float.NaN).X));
+    }
+
+    [Fact]
     public void NaNStaysNaN()
     {
         Assert.True(double.IsNaN(new QuadraticBezier<double, double>(0d, 0d, 1d).Evaluate(double.NaN)));

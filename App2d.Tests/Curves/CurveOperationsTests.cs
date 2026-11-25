@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics.Transforms;
 
 namespace App2d.Tests.Curves;
 
@@ -145,6 +146,43 @@ public sealed class CurveOperationsTests
     }
 
     [Fact]
+    public void ZeroWidthSliceKeepsNaNInBothValueAndTangent()
+    {
+        Assert.True(double.IsNaN(Square.Ops.Slice(.3d, .3d).Derivative(double.NaN)));
+    }
+
+    [Fact]
+    public void WrappersConstructFreelyAndValidateOnRequest()
+    {
+        var line = LineSegmentCurve2D.Create(new(1, 2), new(4, 6));
+
+        // Construction never checks, so loaded data can be built first and validated afterwards.
+        var slice = new Sliced<QuadraticBezier<double, double>, double, double>(Square, double.NaN, 1d);
+        var reparameterized = new Reparameterized<QuadraticBezier<double, double>, ProgressMapd, double, double>(Square, null!);
+        var transformed = new Transformed<LineSegmentCurve2D, Affine2D, Vector2f, float>(line, null!);
+        var extrapolated = new Extrapolated<QuadraticBezier<double, double>, double, double>(Square, (Extrapolation)7, Extrapolation.Clamp);
+
+        Assert.ThrowsAny<ArgumentException>(slice.Validate);
+        Assert.ThrowsAny<ArgumentException>(() => (slice with { From = 0d, To = double.PositiveInfinity }).Validate());
+        Assert.Throws<ArgumentNullException>(reparameterized.Validate);
+        Assert.Throws<ArgumentNullException>(transformed.Validate);
+        Assert.ThrowsAny<ArgumentException>(extrapolated.Validate);
+        Assert.ThrowsAny<ArgumentException>(() => (extrapolated with { Before = Extrapolation.None, After = (Extrapolation)(-1) }).Validate());
+        Assert.Equal(slice with { From = 0d }, (slice with { From = 0d }).Validated());
+    }
+
+    [Fact]
+    public void OpsIsTheValidatedConstructionPath()
+    {
+        var line = LineSegmentCurve2D.Create(new(1, 2), new(4, 6));
+
+        Assert.ThrowsAny<ArgumentException>(() => Square.Ops.Slice(double.NaN, 1d));
+        Assert.Throws<ArgumentNullException>(() => Square.Ops.Reparameterize<ProgressMapd>(null!));
+        Assert.Throws<ArgumentNullException>(() => line.Ops.Transform<Affine2D>(null!));
+        Assert.ThrowsAny<ArgumentException>(() => Square.Ops.Extrapolated((Extrapolation)7, Extrapolation.Clamp));
+    }
+
+    [Fact]
     public void NaNPassesThroughEveryWrapper()
     {
         var ops = Square.Ops;
@@ -160,13 +198,18 @@ public sealed class CurveOperationsTests
     [Fact]
     public void ChainedStructCurveDoesNotAllocate()
     {
-        Chain(.5d);
-        var before = GC.GetAllocatedBytesForCurrentThread();
+        // Boxing one struct costs at least 24 bytes a call, 240,000 bytes a pass. The runtime itself can allocate a
+        // few hundred bytes on this thread at any time, so the bound is under one byte per call, on the quietest pass.
         var sum = 0d;
-        for (var i = 0; i < 10_000; i++) sum += Chain(i * 1e-4d);
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        var allocated = long.MaxValue;
+        for (var pass = 0; pass < 4; pass++)
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < 10_000; i++) sum += Chain(i * 1e-4d);
+            allocated = Math.Min(allocated, GC.GetAllocatedBytesForCurrentThread() - before);
+        }
 
-        Assert.Equal(0, allocated);
+        Assert.InRange(allocated, 0, 9_999);
         Assert.True(double.IsFinite(sum));
 
         static double Chain(double t)

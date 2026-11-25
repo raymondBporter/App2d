@@ -51,6 +51,8 @@ public readonly partial record struct BSpline2D : ICurve2D
     public Vector2f Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, amount);
     public Vector2f Derivative(float amount)
     {
+        // A degree-1 spline has a constant tangent per span, which would otherwise hide a NaN parameter.
+        if (float.IsNaN(amount)) return new Vector2f(float.NaN, float.NaN);
         var data = Data;
         return EvaluateDeBoor(data.DerivativePoints, data.Knots.AsSpan(1, data.Knots.Length - 2), Degree - 1, amount);
     }

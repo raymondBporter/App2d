@@ -24,6 +24,7 @@ public readonly partial record struct PolylineCurve2D : ICurve2D
 
     public Vector2f Derivative(float amount)
     {
+        if (float.IsNaN(amount)) return new Vector2f(float.NaN, float.NaN);
         var (index, _) = Segment(amount);
         return (Points[index + 1] - Points[index]) * (Points.Length - 1);
     }

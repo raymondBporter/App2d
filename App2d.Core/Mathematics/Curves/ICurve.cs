@@ -5,6 +5,8 @@ namespace App2d.Core.Mathematics;
 /// <summary>
 /// A function of one real parameter. Evaluation computes the curve's own formula and never clamps:
 /// the caller chooses clamping or extension through <see cref="Curve{TCurve, TValue, TReal}"/>.
+/// Three geometry types still clamp for themselves until they are reworked: CurveSlice2D,
+/// NormalOffsetCurve2D and RoundedPolylineCurve2D. NaN in gives NaN out, for values and derivatives.
 /// </summary>
 public interface ICurve<TValue, TReal> where TReal : IFloatingPointIeee754<TReal>
 {

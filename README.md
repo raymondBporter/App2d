@@ -421,8 +421,7 @@ through `LastContacts`, `IsTouching(body)`, and directional `IsTouching(body, di
 Uniform solid mass properties are available through
 `ShapeMassProperties2D.Calculate(shape, density)` in
 `App2d.Core.Geometry.Measurements`. It returns area, mass, center of
-mass, and moment of inertia about that center. See the
-[formulas and supported shapes](App2d.Core/Geometry/README.md#solid-mass-properties).
+mass, and moment of inertia about that center.
 On a live rigid body, choose either:
 
 ```csharp
