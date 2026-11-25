@@ -1,8 +1,8 @@
 # Validation
 
 `Ensure` is the shared throwing API for inputs and live values. `NumericValidation`
-provides its numeric predicates without throwing. The methods have the same names
-(predicates add `Is`) and the same order: scalars, vectors, matrices.
+provides its numeric predicates without throwing. Each of the scalar, vector, and
+matrix files contains the guards and predicates for that group.
 
 ```csharp
 Ensure.Finite(position);
@@ -50,9 +50,9 @@ for `Finite`; use `Invertible` when an inverse is required.
 
 ## Bounds and infinity
 
-`RangeBounds` selects `[min, max]`, `(min, max)`, `[min, max)`, or `(min, max]`.
-Range bounds may be infinite, but the checked value must be finite. Only a closed
-range may collapse to one value.
+`RangeBounds` lives in `App2d.Core.Mathematics` and selects `[min, max]`,
+`(min, max)`, `[min, max)`, or `(min, max]`. Range bounds may be infinite.
+The checked value must be finite, and only a closed range may collapse to one value.
 
 Intentional infinity is explicit on throwing checks:
 

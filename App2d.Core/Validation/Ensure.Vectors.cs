@@ -316,5 +316,91 @@ public static partial class Ensure
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector4d NonZero(Vector4d value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         NumericValidation.IsNonZero(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonzero.", paramName);
+}
 
+public static partial class NumericValidation
+{
+    public static bool IsNumber(Vector2f value) => HasNoNaN<Vector2f, float>(value);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsFinite(Vector2f value) => value.IsFinite();
+    public static bool IsPositive(Vector2f value) => IsPositive(value.X) && IsPositive(value.Y);
+    public static bool IsNegative(Vector2f value, bool allowNegativeInfinity = false) => IsNegative(value.X, allowNegativeInfinity) && IsNegative(value.Y, allowNegativeInfinity);
+    public static bool IsNonNegative(Vector2f value, bool allowInfinity = false) => IsNonNegative(value.X, allowInfinity) && IsNonNegative(value.Y, allowInfinity);
+    public static bool IsNonPositive(Vector2f value) => IsNonPositive(value.X) && IsNonPositive(value.Y);
+    public static bool IsNonZero(Vector2f value) => IsNonZeroVector<Vector2f, float>(value);
+
+    public static bool IsLessThan(Vector2f value, Vector2f limit) => value.X < limit.X && value.Y < limit.Y;
+    public static bool IsLessThanOrEqual(Vector2f value, Vector2f limit) => value.X <= limit.X && value.Y <= limit.Y;
+    public static bool IsGreaterThan(Vector2f value, Vector2f limit) => IsLessThan(limit, value);
+    public static bool IsGreaterThanOrEqual(Vector2f value, Vector2f limit) => IsLessThanOrEqual(limit, value);
+    public static bool IsInRange(Vector2f value, Vector2f minimum, Vector2f maximum, RangeBounds bounds = RangeBounds.Closed) =>
+        IsInRange(value.X, minimum.X, maximum.X, bounds) &&
+        IsInRange(value.Y, minimum.Y, maximum.Y, bounds);
+
+    public static bool IsNumber(Vector3f value) => HasNoNaN<Vector3f, float>(value);
+    public static bool IsFinite(Vector3f value) => value.IsFinite();
+    public static bool IsPositive(Vector3f value) => IsPositive(value.X) && IsPositive(value.Y) && IsPositive(value.Z);
+    public static bool IsNegative(Vector3f value, bool allowNegativeInfinity = false) => IsNegative(value.X, allowNegativeInfinity) && IsNegative(value.Y, allowNegativeInfinity) && IsNegative(value.Z, allowNegativeInfinity);
+    public static bool IsNonNegative(Vector3f value, bool allowInfinity = false) => IsNonNegative(value.X, allowInfinity) && IsNonNegative(value.Y, allowInfinity) && IsNonNegative(value.Z, allowInfinity);
+    public static bool IsNonPositive(Vector3f value) => IsNonPositive(value.X) && IsNonPositive(value.Y) && IsNonPositive(value.Z);
+    public static bool IsNonZero(Vector3f value) => IsNonZeroVector<Vector3f, float>(value);
+    public static bool IsLessThan(Vector3f value, Vector3f limit) => value.X < limit.X && value.Y < limit.Y && value.Z < limit.Z;
+    public static bool IsLessThanOrEqual(Vector3f value, Vector3f limit) => value.X <= limit.X && value.Y <= limit.Y && value.Z <= limit.Z;
+    public static bool IsGreaterThan(Vector3f value, Vector3f limit) => IsLessThan(limit, value);
+    public static bool IsGreaterThanOrEqual(Vector3f value, Vector3f limit) => IsLessThanOrEqual(limit, value);
+    public static bool IsInRange(Vector3f value, Vector3f minimum, Vector3f maximum, RangeBounds bounds = RangeBounds.Closed) =>
+        IsInRange(value.X, minimum.X, maximum.X, bounds) &&
+        IsInRange(value.Y, minimum.Y, maximum.Y, bounds) &&
+        IsInRange(value.Z, minimum.Z, maximum.Z, bounds);
+
+    public static bool IsNumber(Vector4 value) => IsNumber(value.ToVector4f());
+    public static bool IsFinite(Vector4 value) => IsFinite(value.ToVector4f());
+    public static bool IsPositive(Vector4 value) => IsPositive(value.X) && IsPositive(value.Y) && IsPositive(value.Z) && IsPositive(value.W);
+    public static bool IsNegative(Vector4 value, bool allowNegativeInfinity = false) => IsNegative(value.X, allowNegativeInfinity) && IsNegative(value.Y, allowNegativeInfinity) && IsNegative(value.Z, allowNegativeInfinity) && IsNegative(value.W, allowNegativeInfinity);
+    public static bool IsNonNegative(Vector4 value, bool allowInfinity = false) => IsNonNegative(value.X, allowInfinity) && IsNonNegative(value.Y, allowInfinity) && IsNonNegative(value.Z, allowInfinity) && IsNonNegative(value.W, allowInfinity);
+    public static bool IsNonPositive(Vector4 value) => IsNonPositive(value.X) && IsNonPositive(value.Y) && IsNonPositive(value.Z) && IsNonPositive(value.W);
+    public static bool IsNonZero(Vector4 value) => IsNonZero(value.ToVector4f());
+    public static bool IsLessThan(Vector4 value, Vector4 limit) => value.X < limit.X && value.Y < limit.Y && value.Z < limit.Z && value.W < limit.W;
+    public static bool IsLessThanOrEqual(Vector4 value, Vector4 limit) => value.X <= limit.X && value.Y <= limit.Y && value.Z <= limit.Z && value.W <= limit.W;
+    public static bool IsGreaterThan(Vector4 value, Vector4 limit) => IsLessThan(limit, value);
+    public static bool IsGreaterThanOrEqual(Vector4 value, Vector4 limit) => IsLessThanOrEqual(limit, value);
+    public static bool IsInRange(Vector4 value, Vector4 minimum, Vector4 maximum, RangeBounds bounds = RangeBounds.Closed) =>
+        IsInRange(value.X, minimum.X, maximum.X, bounds) &&
+        IsInRange(value.Y, minimum.Y, maximum.Y, bounds) &&
+        IsInRange(value.Z, minimum.Z, maximum.Z, bounds) &&
+        IsInRange(value.W, minimum.W, maximum.W, bounds);
+
+    public static bool IsNumber(Vector4f value) => HasNoNaN<Vector4f, float>(value);
+    public static bool IsFinite(Vector4f value) => Vector4f.IsFinite(value);
+    public static bool IsNonZero(Vector4f value) => IsNonZeroVector<Vector4f, float>(value);
+
+    public static bool IsNumber(Vector2d value) => HasNoNaN<Vector2d, double>(value);
+    public static bool IsFinite(Vector2d value) => Vector2d.IsFinite(value);
+    public static bool IsNonZero(Vector2d value) => IsNonZeroVector<Vector2d, double>(value);
+
+    public static bool IsNumber(Vector3d value) => HasNoNaN<Vector3d, double>(value);
+    public static bool IsFinite(Vector3d value) => Vector3d.IsFinite(value);
+    public static bool IsNonZero(Vector3d value) => IsNonZeroVector<Vector3d, double>(value);
+
+    public static bool IsNumber(Vector4d value) => HasNoNaN<Vector4d, double>(value);
+    public static bool IsFinite(Vector4d value) => Vector4d.IsFinite(value);
+    public static bool IsNonZero(Vector4d value) => IsNonZeroVector<Vector4d, double>(value);
+
+    private static bool HasNoNaN<TVector, TScalar>(TVector value)
+        where TVector : struct, INumberTuple<TVector, TScalar>
+        where TScalar : INumber<TScalar>
+    {
+        for (var axis = 0; axis < TVector.Dimension; axis++)
+        {
+            if (!IsNumber(value[axis])) return false;
+        }
+
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsNonZeroVector<TVector, TScalar>(TVector value)
+        where TVector : unmanaged, IVector<TVector, TScalar>, IEquatable<TVector>
+        where TScalar : unmanaged, IFloatingPointIeee754<TScalar> =>
+        TVector.IsFinite(value) && !value.Equals(TVector.Zero);
 }

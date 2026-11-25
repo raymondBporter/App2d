@@ -55,8 +55,7 @@ public static partial class Ensure
     public static T LessThan<T>(T value, T maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null, bool allowInfinity = false) where T : INumber<T>
     {
-        if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
-        if (allowInfinity) Number(maximum, maximumParamName); else Finite(maximum, maximumParamName);
+        ValidateComparisonOperands(value, maximum, allowInfinity, paramName, maximumParamName);
         return NumericValidation.IsLessThan(value, maximum) ? value
             : throw CreateOutOfRange(value, $"Value must be < {maximum}.", paramName);
     }
@@ -65,8 +64,7 @@ public static partial class Ensure
     public static T LessThanOrEqual<T>(T value, T maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null, bool allowInfinity = false) where T : INumber<T>
     {
-        if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
-        if (allowInfinity) Number(maximum, maximumParamName); else Finite(maximum, maximumParamName);
+        ValidateComparisonOperands(value, maximum, allowInfinity, paramName, maximumParamName);
         return NumericValidation.IsLessThanOrEqual(value, maximum) ? value
             : throw CreateOutOfRange(value, $"Value must be <= {maximum}.", paramName);
     }
@@ -75,8 +73,7 @@ public static partial class Ensure
     public static T GreaterThan<T>(T value, T minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null, bool allowInfinity = false) where T : INumber<T>
     {
-        if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
-        if (allowInfinity) Number(minimum, minimumParamName); else Finite(minimum, minimumParamName);
+        ValidateComparisonOperands(value, minimum, allowInfinity, paramName, minimumParamName);
         return NumericValidation.IsGreaterThan(value, minimum) ? value
             : throw CreateOutOfRange(value, $"Value must be > {minimum}.", paramName);
     }
@@ -85,8 +82,7 @@ public static partial class Ensure
     public static T GreaterThanOrEqual<T>(T value, T minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null, bool allowInfinity = false) where T : INumber<T>
     {
-        if (allowInfinity) Number(value, paramName); else Finite(value, paramName);
-        if (allowInfinity) Number(minimum, minimumParamName); else Finite(minimum, minimumParamName);
+        ValidateComparisonOperands(value, minimum, allowInfinity, paramName, minimumParamName);
         return NumericValidation.IsGreaterThanOrEqual(value, minimum) ? value
             : throw CreateOutOfRange(value, $"Value must be >= {minimum}.", paramName);
     }
@@ -117,9 +113,58 @@ public static partial class Ensure
             : throw CreateRangeException(value, 0, count, RangeBounds.ClosedOpen, paramName);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ValidateComparisonOperands<T>(T value, T limit, bool allowInfinity, string? paramName, string? limitParamName)
+        where T : INumberBase<T>
+    {
+        if (allowInfinity)
+        {
+            Number(value, paramName);
+            Number(limit, limitParamName);
+        }
+        else
+        {
+            Finite(value, paramName);
+            Finite(limit, limitParamName);
+        }
+    }
+
     private static void ValidateRangeBounds(RangeBounds bounds)
     {
         if (bounds is < RangeBounds.Closed or > RangeBounds.OpenClosed)
             ThrowOutOfRange(bounds, "Unknown range endpoints.");
     }
+}
+
+/// <summary>
+/// Nonthrowing numeric predicates shared by <see cref="Ensure"/> and other callers.
+/// Sign, nonzero, and range checks require finite values by default.
+/// Ordering uses ordinary operators and allows infinity.
+/// </summary>
+public static partial class NumericValidation
+{
+    public static bool IsNumber<T>(T value) where T : INumberBase<T> => !T.IsNaN(value);
+    public static bool IsFinite<T>(T value) where T : INumberBase<T> => T.IsFinite(value);
+    public static bool IsPositive<T>(T value) where T : INumber<T> => IsFinite(value) && value > T.Zero;
+    public static bool IsNegative<T>(T value, bool allowNegativeInfinity = false) where T : INumber<T> =>
+        (allowNegativeInfinity || IsFinite(value)) && value < T.Zero;
+    public static bool IsNonNegative<T>(T value, bool allowInfinity = false) where T : INumber<T> =>
+        (allowInfinity || IsFinite(value)) && value >= T.Zero;
+    public static bool IsNonPositive<T>(T value) where T : INumber<T> => IsFinite(value) && value <= T.Zero;
+    public static bool IsNonZero<T>(T value) where T : INumberBase<T> => IsFinite(value) && value != T.Zero;
+    public static bool IsEqual<T>(T value, T expected) where T : INumberBase<T> => value == expected;
+    public static bool IsNotEqual<T>(T value, T other) where T : INumberBase<T> => value != other;
+    public static bool IsLessThan<T>(T value, T limit) where T : INumber<T> => value < limit;
+    public static bool IsLessThanOrEqual<T>(T value, T limit) where T : INumber<T> => value <= limit;
+    public static bool IsGreaterThan<T>(T value, T limit) where T : INumber<T> => value > limit;
+    public static bool IsGreaterThanOrEqual<T>(T value, T limit) where T : INumber<T> => value >= limit;
+    public static bool IsInRange<T>(T value, T minimum, T maximum, RangeBounds bounds = RangeBounds.Closed) where T : INumber<T> =>
+        IsFinite(value) && (bounds switch
+        {
+            RangeBounds.Closed => value >= minimum && value <= maximum,
+            RangeBounds.Open => value > minimum && value < maximum,
+            RangeBounds.ClosedOpen => value >= minimum && value < maximum,
+            RangeBounds.OpenClosed => value > minimum && value <= maximum,
+            _ => false
+        });
 }

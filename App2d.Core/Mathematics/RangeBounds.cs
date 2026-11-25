@@ -1,4 +1,4 @@
-namespace App2d.Core.Validation;
+namespace App2d.Core.Mathematics;
 
 /// <summary>Which endpoints belong to a range. Comparisons are exact; no epsilon is added.</summary>
 public enum RangeBounds

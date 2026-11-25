@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -38,5 +39,32 @@ public static partial class Ensure
         if (!NumericValidation.IsInvertible(value, out inverse)) ThrowOutOfRange(value, "Matrix must have a finite inverse.", paramName);
         return value;
     }
+}
 
+public static partial class NumericValidation
+{
+    public static bool IsNumber(Matrix3x2 value) =>
+        IsNumber(value.M11) && IsNumber(value.M12) &&
+        IsNumber(value.M21) && IsNumber(value.M22) &&
+        IsNumber(value.M31) && IsNumber(value.M32);
+    public static bool IsFinite(Matrix3x2 value) => value.IsFinite();
+    public static bool IsInvertible(Matrix3x2 value) => IsInvertible(value, out _);
+    public static bool IsInvertible(Matrix3x2 value, out Matrix3x2 inverse)
+    {
+        inverse = default;
+        return IsFinite(value) && Matrix3x2.Invert(value, out inverse) && IsFinite(inverse);
+    }
+
+    public static bool IsNumber(Matrix4x4 value) =>
+        IsNumber(value.M11) && IsNumber(value.M12) && IsNumber(value.M13) && IsNumber(value.M14) &&
+        IsNumber(value.M21) && IsNumber(value.M22) && IsNumber(value.M23) && IsNumber(value.M24) &&
+        IsNumber(value.M31) && IsNumber(value.M32) && IsNumber(value.M33) && IsNumber(value.M34) &&
+        IsNumber(value.M41) && IsNumber(value.M42) && IsNumber(value.M43) && IsNumber(value.M44);
+    public static bool IsFinite(Matrix4x4 value) => value.IsFinite();
+    public static bool IsInvertible(Matrix4x4 value) => IsInvertible(value, out _);
+    public static bool IsInvertible(Matrix4x4 value, out Matrix4x4 inverse)
+    {
+        inverse = default;
+        return IsFinite(value) && Matrix4x4.Invert(value, out inverse) && IsFinite(inverse);
+    }
 }
