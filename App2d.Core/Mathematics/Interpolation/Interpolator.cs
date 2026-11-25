@@ -82,6 +82,9 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
         var source = this;
         return new((start, end, time) => fromCoordinates(source.Evaluate(toCoordinates(start), toCoordinates(end), time)),
             new InterpolatorRecipe<TOutput, TReal>.Coordinates<TValue>(source, toCoordinates, fromCoordinates))
-        { InputBegin = InputBegin, InputEnd = InputEnd };
+        {
+            InputBegin = InputBegin,
+            InputEnd = InputEnd
+        };
     }
 }
