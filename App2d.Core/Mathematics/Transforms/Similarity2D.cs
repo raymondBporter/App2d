@@ -8,7 +8,7 @@ namespace App2d.Core.Mathematics.Transforms;
 /// Row-vector convention matching <see cref="Matrix3x2"/>: <see cref="XAxis"/> and <see cref="YAxis"/> are the images
 /// of the local axes, each of length <see cref="Scale"/>.
 /// </summary>
-public readonly record struct Similarity2D
+public readonly record struct Similarity2D : ITransform<Vector2f>
 {
     private Similarity2D(Vector2f xAxis, Vector2f yAxis, Vector2f translation, float scale)
     {

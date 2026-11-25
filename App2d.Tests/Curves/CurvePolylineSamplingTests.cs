@@ -48,7 +48,7 @@ public sealed class CurvePolylineSamplingTests
         {
             var amount = knot / (float)spans;
             Assert.InRange(Vector2f.Distance(spline.Evaluate(amount - 1e-5f), spline.Evaluate(amount + 1e-5f)), 0f, 0.02f);
-            Assert.InRange(Vector2f.Distance(spline.EvaluateDerivative(amount - 1e-5f), spline.EvaluateDerivative(amount + 1e-5f)), 0f, 0.1f);
+            Assert.InRange(Vector2f.Distance(spline.Derivative(amount - 1e-5f), spline.Derivative(amount + 1e-5f)), 0f, 0.1f);
         }
     }
 }

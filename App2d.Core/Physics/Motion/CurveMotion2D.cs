@@ -22,8 +22,8 @@ public sealed class CurveMotion2D : IKinematicMotion2D
         Origin = origin;
         Repeat = repeat;
 
-        var beginning = EvaluateProgress(CheckedProgress(Progress.Sample(0d)));
-        var ending = EvaluateProgress(CheckedProgress(Progress.Sample(1d)));
+        var beginning = EvaluateProgress(CheckedProgress(Progress.Evaluate(0d)));
+        var ending = EvaluateProgress(CheckedProgress(Progress.Evaluate(1d)));
         Ensure.Finite(beginning);
         Ensure.Finite(ending);
         var tolerance = 0.001f + MathF.Max(beginning.Length(), ending.Length()) * 0.000001f;
@@ -37,24 +37,20 @@ public sealed class CurveMotion2D : IKinematicMotion2D
     public Vector2f Origin { get; }
     public bool Repeat { get; }
 
-    public Vector2f Position(double seconds) => Origin + EvaluateProgress(CheckedProgress(Progress.Sample(Phase(seconds))));
+    public Vector2f Position(double seconds) => Origin + EvaluateProgress(CheckedProgress(Progress.Evaluate(Phase(seconds))));
 
     public Vector2f Velocity(double seconds)
     {
         var phase = Phase(seconds);
         if (!Repeat && seconds >= PeriodSeconds) return Vector2f.Zero;
-        var progress = CheckedProgress(Progress.Sample(phase));
+        var progress = CheckedProgress(Progress.Evaluate(phase));
         var derivative = Progress.Derivative(phase);
         Ensure.Finite(derivative, nameof(Progress));
-        return Curve.EvaluateDerivative(Realf.Clamp01(progress)) * (float)(derivative / PeriodSeconds);
+        return Curve.Ops.Extended().Derivative(progress) * (float)(derivative / PeriodSeconds);
     }
 
-    private Vector2f EvaluateProgress(float progress)
-    {
-        if (progress is >= 0f and <= 1f) return Curve.Evaluate(progress);
-        var endpoint = progress < 0f ? 0f : 1f;
-        return Curve.Evaluate(endpoint) + Curve.EvaluateDerivative(endpoint) * (progress - endpoint);
-    }
+    // Progress that overshoots [0, 1] runs straight along the endpoint tangent.
+    private Vector2f EvaluateProgress(float progress) => Curve.Ops.Extended().Evaluate(progress);
 
     private double Phase(double seconds)
     {

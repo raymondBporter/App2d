@@ -39,7 +39,7 @@ public sealed class InterpolationTests
 
         var start = new Vector3f(1e-20f, 3e18f, -9e20f);
         var end = new Vector3f(-.123f, -4e18f, 8e20f);
-        Assert.Equal(Vector3f.Lerp(start, end, Easingf.Smooth.Sample(.37f)),
+        Assert.Equal(Vector3f.Lerp(start, end, Easingf.Smooth.Evaluate(.37f)),
             start.Interpolate(end, Easingf.Smooth, .37f));
     }
 

@@ -48,11 +48,11 @@ public readonly partial record struct BSpline2D : ICurve2D
         internal PolynomialCurveSpan2D[]? RaycastSpans;
     }
 
-    public Vector2f Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, Realf.Clamp01(amount));
-    public Vector2f EvaluateDerivative(float amount)
+    public Vector2f Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, amount);
+    public Vector2f Derivative(float amount)
     {
         var data = Data;
-        return EvaluateDeBoor(data.DerivativePoints, data.Knots.AsSpan(1, data.Knots.Length - 2), Degree - 1, Realf.Clamp01(amount));
+        return EvaluateDeBoor(data.DerivativePoints, data.Knots.AsSpan(1, data.Knots.Length - 2), Degree - 1, amount);
     }
     public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this,
         int.Clamp((ControlPoints.Length - Degree) * 32, 64, 1024));

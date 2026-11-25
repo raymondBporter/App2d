@@ -23,14 +23,12 @@ public readonly partial record struct Arc2D : ICurve2D
 
     public Vector2f Evaluate(float amount)
     {
-        amount = Realf.Clamp01(amount);
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
         return (Center.ToVector2d() + Vector2d.FromAngle(angle) * Radius).ToVector2f();
     }
 
-    public Vector2f EvaluateDerivative(float amount)
+    public Vector2f Derivative(float amount)
     {
-        amount = Realf.Clamp01(amount);
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
         var speed = (double)Radius * SweepAngleRadians;
         return (Vector2d.FromAngle(angle).PerpCcw * speed).ToVector2f();

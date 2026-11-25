@@ -4,7 +4,7 @@ using System.Numerics;
 namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>An immutable affine coordinate frame, including scale, reflection and shear, using row-vector matrices. Default collapses to the origin.</summary>
-public readonly record struct Frame3D
+public readonly record struct Frame3D : ITransform<Vector3f>, ITransform<Vector3d>
 {
     public Frame3D(Vector3f origin, Vector3f xAxis, Vector3f yAxis, Vector3f zAxis)
     {
@@ -42,6 +42,11 @@ public readonly record struct Frame3D
 
     public Vector3f TransformPoint(Vector3f local) => Origin + XAxis * local.X + YAxis * local.Y + ZAxis * local.Z;
     public Vector3f TransformDirection(Vector3f local) => XAxis * local.X + YAxis * local.Y + ZAxis * local.Z;
+
+    // Double coordinates use widened coefficients, so large positions are never narrowed to float.
+    Vector3d ITransform<Vector3d>.TransformPoint(Vector3d local) => Origin.ToVector3d() + Widened(local);
+    Vector3d ITransform<Vector3d>.TransformDirection(Vector3d local) => Widened(local);
+    private Vector3d Widened(Vector3d local) => XAxis.ToVector3d() * local.X + YAxis.ToVector3d() * local.Y + ZAxis.ToVector3d() * local.Z;
 
     /// <summary>Rotates about local X, then Y, then Z, in radians, before placing the origin.</summary>
     public static Frame3D FromRotation(Vector3f radians, Vector3f origin = default)

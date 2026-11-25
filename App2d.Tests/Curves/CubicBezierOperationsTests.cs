@@ -23,8 +23,8 @@ public sealed class CubicBezierOperationsTests
             var u = i / 20f;
             Near(curve.Evaluate(at * u), left.Evaluate(u));
             Near(curve.Evaluate(at + (1 - at) * u), right.Evaluate(u));
-            Near(curve.EvaluateDerivative(at * u) * at, left.EvaluateDerivative(u));
-            Near(curve.EvaluateDerivative(at + (1 - at) * u) * (1 - at), right.EvaluateDerivative(u));
+            Near(curve.Derivative(at * u) * at, left.Derivative(u));
+            Near(curve.Derivative(at + (1 - at) * u) * (1 - at), right.Derivative(u));
         }
     }
 

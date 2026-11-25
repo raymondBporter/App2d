@@ -144,14 +144,14 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
         };
     }
 
-    public Vector2f EvaluateDerivative(float amount)
+    public Vector2f Derivative(float amount)
     {
         var points = Points;
         var sample = Locate(amount);
         var i = sample.Index;
         if (sample.Kind == SpanKind.Corner)
         {
-            return Corner(i, sample.Before, sample.After).EvaluateDerivative(sample.Fraction) * (Length / (2 * _trim![i]));
+            return Corner(i, sample.Before, sample.After).Derivative(sample.Fraction) * (Length / (2 * _trim![i]));
         }
 
         var span = _distance![i + 1] - _distance[i];

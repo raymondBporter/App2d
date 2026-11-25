@@ -159,9 +159,9 @@ public sealed class KinematicEntity2DTests
     {
         var curve = Arc2D.Builder.Create(Vector2f.Zero, 10f, 0f, MathF.PI / 2f);
         var motion = new CurveMotion2D(curve, 1d, new ProgressMapd(x => 1.2d * x, _ => 1.2d), repeat: false);
-        var expected = curve.Evaluate(1f) + curve.EvaluateDerivative(1f) * .08f;
+        var expected = curve.Evaluate(1f) + curve.Derivative(1f) * .08f;
         Assert.Equal(expected, motion.Position(.9d), new Vector2Tolerance(.00001f));
-        Assert.Equal(curve.EvaluateDerivative(1f) * 1.2f, motion.Velocity(.9d));
+        Assert.Equal(curve.Derivative(1f) * 1.2f, motion.Velocity(.9d));
         var difference = (motion.Position(.9001d) - motion.Position(.8999d)) / .0002f;
         Assert.Equal(motion.Velocity(.9d), difference, new Vector2Tolerance(.01f));
     }

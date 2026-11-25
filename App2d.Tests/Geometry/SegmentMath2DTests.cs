@@ -13,8 +13,8 @@ public sealed class SegmentMath2DTests
         Assert.Equal(5f, segment.Length());
         Assert.Equal(new Vector2f(2.5f, 4), segment.PointAt(.5f));
         Assert.Equal(new Vector2f(2.5f, 4), segment.Midpoint);
-        Assert.Equal(segment.Start, segment.Evaluate(-1));
-        Assert.Equal(segment.End, segment.Evaluate(2));
+        Assert.Equal(segment.Start, segment.PointAt(-1));
+        Assert.Equal(segment.End, segment.Ops.EvaluateClamped(2));
     }
 
     [Fact]

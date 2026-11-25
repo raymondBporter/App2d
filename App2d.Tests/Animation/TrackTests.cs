@@ -1,5 +1,4 @@
 using App2d.Core.Animation;
-using App2d.Core.Mathematics.Progress;
 
 namespace App2d.Tests.Animation;
 
@@ -36,7 +35,7 @@ public sealed class TrackTests
 
         Assert.Equal(0, track.Sample(.9f));
         Assert.Equal(10, track.Sample(1));
-        Assert.Equal(10 + 10 * Easingf.Smooth.Sample(.25f), track.Sample(1.25f), 5);
+        Assert.Equal(10 + 10 * Easingf.Smooth.Evaluate(.25f), track.Sample(1.25f), 5);
         Assert.Equal(15, track.Sample(1.5f), 5);
     }
 

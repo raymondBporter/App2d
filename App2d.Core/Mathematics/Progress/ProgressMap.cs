@@ -7,11 +7,11 @@ namespace App2d.Core.Mathematics.Progress;
 
 /// <summary>
 /// A scalar function with its derivative and, when available, an inverse for its authored branch.
-/// Sample and composition do not implicitly clamp; SampleClamped explicitly clamps the input phase.
+/// Evaluate and composition do not implicitly clamp; EvaluateClamped explicitly clamps the input phase.
 /// A derivative may be NaN at a discontinuity.
 /// </summary>
 [JsonConverter(typeof(ProgressMapJsonConverterFactory))]
-public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal>
+public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> where TReal : IFloatingPointIeee754<TReal>
 {
     private readonly Func<TReal, TReal> _sample;
     private readonly Func<TReal, TReal> _derivative;
@@ -45,17 +45,17 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
     /// <summary>An inverse for the authored input span, or null when unavailable or not unique.</summary>
     public Func<TReal, TReal>? Inverse { get; }
 
-    /// <summary>Directed endpoints used by SampleClamped. Ordinary easing curves use zero and one.</summary>
+    /// <summary>Directed endpoints used by EvaluateClamped. Ordinary easing curves use zero and one.</summary>
     public TReal InputBegin { get; }
     public TReal InputEnd { get; }
 
     /// <summary>Continuity of the function on the real line, or null when unknown. Sharp turns are continuous.</summary>
     public bool? IsContinuous { get; }
 
-    public TReal Sample(TReal phase) => _sample(phase);
+    public TReal Evaluate(TReal phase) => _sample(phase);
 
     /// <summary>Clamps only the input to the declared span. The sampled value may still overshoot.</summary>
-    public TReal SampleClamped(TReal phase) => Sample(TReal.Clamp(phase, TReal.Min(InputBegin, InputEnd), TReal.Max(InputBegin, InputEnd)));
+    public TReal EvaluateClamped(TReal phase) => Evaluate(TReal.Clamp(phase, TReal.Min(InputBegin, InputEnd), TReal.Max(InputBegin, InputEnd)));
 
     public TReal Derivative(TReal phase) => _derivative(phase);
 
@@ -121,8 +121,8 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
     {
         Ensure.Finite(begin);
         Ensure.Finite(end);
-        if (begin == end) return Constant(Sample(TReal.Zero), begin, end);
-        return new ProgressMap<TReal>(x => Sample(Interval.InverseLerp(begin, end, x)),
+        if (begin == end) return Constant(Evaluate(TReal.Zero), begin, end);
+        return new ProgressMap<TReal>(x => Evaluate(Interval.InverseLerp(begin, end, x)),
             x => DivideByRange(begin, end, Derivative(Interval.InverseLerp(begin, end, x))),
             Inverse is { } inverse ? y => Interval.Lerp(begin, end, inverse(y)) : null,
             IsContinuous, begin, end, _isConstant).WithRecipe(new(ProgressOperation.FromRange, [begin, end], Source: this));
@@ -134,7 +134,7 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         Ensure.Finite(begin);
         Ensure.Finite(end);
         if (begin == end) return Constant(begin, InputBegin, InputEnd);
-        return new ProgressMap<TReal>(x => Interval.Lerp(begin, end, Sample(x)),
+        return new ProgressMap<TReal>(x => Interval.Lerp(begin, end, Evaluate(x)),
             x => ScaleByRange(begin, end, Derivative(x)),
             Inverse is { } inverse ? y => inverse(Interval.InverseLerp(begin, end, y)) : null,
             IsContinuous, InputBegin, InputEnd, _isConstant).WithRecipe(new(ProgressOperation.ToRange, [begin, end], Source: this));
@@ -159,8 +159,8 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
         if (ReferenceEquals(this, Forward)) return next;
         if (ReferenceEquals(next, Forward)) return this;
         return new ProgressMap<TReal>(
-            phase => next.Sample(Sample(phase)),
-            phase => _isConstant || next._isConstant ? TReal.Zero : next.Derivative(Sample(phase)) * Derivative(phase),
+            phase => next.Evaluate(Evaluate(phase)),
+            phase => _isConstant || next._isConstant ? TReal.Zero : next.Derivative(Evaluate(phase)) * Derivative(phase),
             Inverse is { } firstInverse && next.Inverse is { } nextInverse
                 ? value => firstInverse(nextInverse(value)) : null,
             _isConstant || next._isConstant || IsContinuous == true && next.IsContinuous == true ? true : null,
@@ -175,22 +175,22 @@ public sealed class ProgressMap<TReal> where TReal : IFloatingPointIeee754<TReal
     {
         if (!Enum.IsDefined(direction)) throw new ArgumentOutOfRangeException(nameof(direction));
         if (direction == EasingDirection.In || ReferenceEquals(this, Forward)) return this;
-        if (_isConstant && direction == EasingDirection.Out) return Constant(TReal.One - Sample(TReal.Zero));
+        if (_isConstant && direction == EasingDirection.Out) return Constant(TReal.One - Evaluate(TReal.Zero));
 
         if (direction == EasingDirection.Out)
         {
             return new ProgressMap<TReal>(
-                phase => TReal.One - Sample(TReal.One - phase),
+                phase => TReal.One - Evaluate(TReal.One - phase),
                 phase => Derivative(TReal.One - phase),
                 Inverse is { } inverse ? value => TReal.One - inverse(TReal.One - value) : null,
                 IsContinuous).WithRecipe(new(ProgressOperation.Direction, [], Source: this, Direction: direction));
         }
 
-        var joinsContinuously = Sample(TReal.One) == TReal.One;
+        var joinsContinuously = Evaluate(TReal.One) == TReal.One;
         if (_isConstant && joinsContinuously) return Constant(Half);
         var inOutInverse = joinsContinuously ? Inverse : null;
         return new ProgressMap<TReal>(
-            phase => phase < Half ? Sample(Two * phase) / Two : TReal.One - Sample(Two * (TReal.One - phase)) / Two,
+            phase => phase < Half ? Evaluate(Two * phase) / Two : TReal.One - Evaluate(Two * (TReal.One - phase)) / Two,
             phase => phase == Half && !joinsContinuously ? TReal.NaN
                 : Derivative(phase < Half ? Two * phase : Two * (TReal.One - phase)),
             inOutInverse is { } inverseHalf ? value => value < Half

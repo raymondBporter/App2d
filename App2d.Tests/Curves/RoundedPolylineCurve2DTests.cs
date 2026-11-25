@@ -30,8 +30,8 @@ public sealed class RoundedPolylineCurve2DTests
         }
         var enter = (1 - .48f * softness) / 2;
         var leave = (1 + .48f * softness) / 2;
-        Assert.InRange(Vector2f.Distance(curve.EvaluateDerivative(enter - 1e-6f), curve.EvaluateDerivative(enter + 1e-6f)), 0, .002f);
-        Assert.InRange(Vector2f.Distance(curve.EvaluateDerivative(leave - 1e-6f), curve.EvaluateDerivative(leave + 1e-6f)), 0, .002f);
+        Assert.InRange(Vector2f.Distance(curve.Derivative(enter - 1e-6f), curve.Derivative(enter + 1e-6f)), 0, .002f);
+        Assert.InRange(Vector2f.Distance(curve.Derivative(leave - 1e-6f), curve.Derivative(leave + 1e-6f)), 0, .002f);
     }
 
     [Fact]
@@ -71,8 +71,8 @@ public sealed class RoundedPolylineCurve2DTests
         Assert.Equal(.8f, restored.Softness);
         var turns = Enumerable.Range(1, 999).Select(i =>
         {
-            var a = curve.EvaluateDerivative((i - 1) / 1000f);
-            var b = curve.EvaluateDerivative(i / 1000f);
+            var a = curve.Derivative((i - 1) / 1000f);
+            var b = curve.Derivative(i / 1000f);
             return a.X * b.Y - a.Y * b.X;
         }).ToArray();
         Assert.Contains(turns, t => t > .01f);
@@ -94,7 +94,7 @@ public sealed class RoundedPolylineCurve2DTests
                 foreach (var t in curve.SampleParameters(20))
                 {
                     var p = curve.Evaluate(t);
-                    var d = curve.EvaluateDerivative(t);
+                    var d = curve.Derivative(t);
                     Assert.True(float.IsFinite(p.X + p.Y + d.X + d.Y));
                 }
                 Assert.Equal(points[0], curve.Evaluate(0));

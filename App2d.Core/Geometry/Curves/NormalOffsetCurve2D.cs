@@ -24,7 +24,7 @@ public sealed class NormalOffsetCurve2D : ICurve2D
 
     public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
 
-    public Vector2f EvaluateDerivative(float amount)
+    public Vector2f Derivative(float amount)
     {
         amount = Realf.Clamp01(amount);
         var lower = MathF.Max(0f, amount - DerivativeSampleDistance);

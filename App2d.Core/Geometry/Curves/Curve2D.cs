@@ -26,7 +26,7 @@ public static class Curve2D
     {
         Ensure.ThrowIfNull(curve);
         amount = Realf.Clamp01(amount);
-        var derivative = curve.EvaluateDerivative(amount);
+        var derivative = curve.Derivative(amount);
         if (derivative.LengthSquared() <= DerivativeEpsilon * DerivativeEpsilon)
         {
             var lower = MathF.Max(0f, amount - FallbackSampleDistance);

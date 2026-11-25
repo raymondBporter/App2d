@@ -1,8 +1,8 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Curves;
+namespace App2d.Core.Mathematics;
 
-/// <summary>Bernstein evaluation shared by scalar attributes and vectors of any dimension.</summary>
+/// <summary>Bernstein evaluation shared by scalar attributes and vectors of any dimension. Nothing clamps: outside [0, 1] the polynomial continues.</summary>
 public static class BezierMath
 {
     internal static TValue Blend<TValue, TReal>(TValue start, TValue end, TReal startWeight, TReal endWeight)
@@ -26,7 +26,6 @@ public static class BezierMath
         where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
         where TReal : IFloatingPointIeee754<TReal>
     {
-        amount = Real<TReal>.Clamp01(amount);
         var inverse = TReal.One - amount;
         return start * (inverse * inverse) + control * (TReal.CreateChecked(2) * inverse * amount) + end * (amount * amount);
     }
@@ -35,7 +34,6 @@ public static class BezierMath
         where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
         where TReal : IFloatingPointIeee754<TReal>
     {
-        amount = Real<TReal>.Clamp01(amount);
         return Blend(control - start, end - control, TReal.One - amount, amount) * TReal.CreateChecked(2);
     }
 
@@ -43,7 +41,6 @@ public static class BezierMath
         where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
         where TReal : IFloatingPointIeee754<TReal>
     {
-        amount = Real<TReal>.Clamp01(amount);
         var inverse = TReal.One - amount;
         var three = TReal.CreateChecked(3);
         return start * (inverse * inverse * inverse) + control1 * (three * inverse * inverse * amount) +
@@ -54,7 +51,6 @@ public static class BezierMath
         where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
         where TReal : IFloatingPointIeee754<TReal>
     {
-        amount = Real<TReal>.Clamp01(amount);
         var inverse = TReal.One - amount;
         return (control1 - start) * (TReal.CreateChecked(3) * inverse * inverse) +
             (control2 - control1) * (TReal.CreateChecked(6) * inverse * amount) +

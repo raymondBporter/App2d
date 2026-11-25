@@ -29,7 +29,7 @@ public readonly partial record struct LineSegmentCurve2D : ICurve2D, ISegment<Li
     public Vector2f Start { get; init; }
     public Vector2f End { get; init; }
     public static LineSegmentCurve2D Create(Vector2f start, Vector2f end) => Builder.Create(start, end);
-    public Vector2f Evaluate(float amount) => this.PointAt(amount);
-    public Vector2f EvaluateDerivative(float amount) => End - Start;
+    public Vector2f Evaluate(float amount) => Vector2f.Lerp(Start, End, amount);
+    public Vector2f Derivative(float amount) => End - Start;
     public float Distance(Vector2f point) => Distance2D.DistanceToSegment(point, Start, End);
 }

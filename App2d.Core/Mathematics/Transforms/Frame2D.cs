@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>An immutable affine coordinate frame. Axes may be scaled, reflected, sheared or collapsed.</summary>
-public readonly record struct Frame2D
+public readonly record struct Frame2D : ITransform<Vector2f>
 {
     public Frame2D(Matrix3x2 matrix) : this(Matrix2x3f.FromNumerics(matrix)) { }
 

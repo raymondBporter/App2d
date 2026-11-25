@@ -32,8 +32,8 @@ public readonly record struct CurveSlice2D<TCurve> : ICurveSlice2D where TCurve 
 
     public Vector2f Evaluate(float amount) => Source.Evaluate(Parameter(amount));
 
-    public Vector2f EvaluateDerivative(float amount) => From == To ? Vector2f.Zero
-        : Source.EvaluateDerivative(Parameter(amount)) * (To - From);
+    public Vector2f Derivative(float amount) => From == To ? Vector2f.Zero
+        : Source.Derivative(Parameter(amount)) * (To - From);
 
     /// <summary>Distance to the source curve over this parameter interval.</summary>
     public float Distance(Vector2f point) => CurveDistance2D.DistanceOnInterval(point, Source, From, To);

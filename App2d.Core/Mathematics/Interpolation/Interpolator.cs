@@ -35,7 +35,7 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
 
     public TValue Evaluate(TValue start, TValue end, TReal time) =>
         (_function ?? throw new InvalidOperationException("Initialize an interpolator with a function or a factory."))
-            (start, end, Progress is null ? time : Progress.Sample(time));
+            (start, end, Progress is null ? time : Progress.Evaluate(time));
 
     /// <summary>Clamps the input to the outer progress map's input span, or [0, 1] without one. Output remains unclamped.</summary>
     public TValue EvaluateClamped(TValue start, TValue end, TReal time) => Evaluate(start, end,

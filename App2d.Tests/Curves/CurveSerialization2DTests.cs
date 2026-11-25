@@ -35,7 +35,7 @@ public sealed class CurveSerialization2DTests
         foreach (var amount in new[] { 0f, .13f, .5f, .87f, 1f })
         {
             Assert.InRange(Vector2f.Distance(original.Evaluate(amount), restored.Evaluate(amount)), 0, 1e-5f);
-            Assert.InRange(Vector2f.Distance(original.EvaluateDerivative(amount), restored.EvaluateDerivative(amount)), 0, 1e-5f);
+            Assert.InRange(Vector2f.Distance(original.Derivative(amount), restored.Derivative(amount)), 0, 1e-5f);
         }
     }
 

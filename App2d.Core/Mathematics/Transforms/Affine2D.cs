@@ -9,7 +9,7 @@ namespace App2d.Core.Mathematics.Transforms;
 /// The Matrix property exposes the System.Numerics representation. Then applies transforms in the named order.
 /// Reflections and singular transforms are allowed; inversion is explicit.
 /// </summary>
-public sealed record Affine2D
+public sealed record Affine2D : ITransform<Vector2f>
 {
     private float _x, _y, _rotation, _shearX, _shearY;
     private float _scaleX = 1, _scaleY = 1;

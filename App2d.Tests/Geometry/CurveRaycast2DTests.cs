@@ -174,7 +174,7 @@ public sealed class CurveRaycast2DTests
             Assert.True(CurveRaycast2D.TryIntersect(expected - new Vector2f(0, 4), new(0, 2), curve, 3, out var hit));
             Near(expected, hit.Point, .0001f);
             Assert.Equal(2, hit.Distance, 4);
-            var tangent = curve.EvaluateDerivative(u);
+            var tangent = curve.Derivative(u);
             Near(Vector2f.Normalize(new(-tangent.Y, tangent.X)), hit.Normal, .0001f);
         }
     }

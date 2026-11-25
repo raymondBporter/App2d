@@ -26,7 +26,7 @@ public sealed class CurveSubdivisionTests
             {
                 var u = i / 20f;
                 Near(curve.Evaluate(from + (to - from) * u), piece.Evaluate(u));
-                Near(curve.EvaluateDerivative(from + (to - from) * u) * (to - from), piece.EvaluateDerivative(u));
+                Near(curve.Derivative(from + (to - from) * u) * (to - from), piece.Derivative(u));
             }
             Near(curve.Evaluate(from), piece.Evaluate(-1));
             Near(curve.Evaluate(to), piece.Evaluate(2));
@@ -61,7 +61,7 @@ public sealed class CurveSubdivisionTests
         var nested = piece.Slice(.25f, .75f);
         Near(new(4.5f, 0), nested.Evaluate(0));
         Near(new(5.5f, 0), nested.Evaluate(1));
-        Near(new(1, 0), nested.EvaluateDerivative(.5f));
+        Near(new(1, 0), nested.Derivative(.5f));
         Assert.Throws<ArgumentOutOfRangeException>(() => line.Split(float.NaN));
         Assert.Throws<ArgumentOutOfRangeException>(() => line.Slice(.7f, .2f));
     }
@@ -76,8 +76,8 @@ public sealed class CurveSubdivisionTests
         var curve = CubicBezier2D.FromHermite(start, end, first, last);
         Near(start, curve.Evaluate(0));
         Near(end, curve.Evaluate(1));
-        Near(first, curve.EvaluateDerivative(0));
-        Near(last, curve.EvaluateDerivative(1));
+        Near(first, curve.Derivative(0));
+        Near(last, curve.Derivative(1));
         for (var i = 0; i <= 20; i++)
         {
             var u = i / 20f;

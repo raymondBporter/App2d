@@ -22,6 +22,6 @@ public sealed class SoundFalloff2D
         Ensure.Finite(source);
         Ensure.Finite(listener);
         var distance = Vector2f.Distance(source, listener);
-        return _curve.SampleClamped(distance);
+        return _curve.EvaluateClamped(distance);
     }
 }

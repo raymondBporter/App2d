@@ -22,7 +22,7 @@ public readonly partial record struct PolylineCurve2D : ICurve2D
         return Vector2f.Lerp(Points[index], Points[index + 1], fraction);
     }
 
-    public Vector2f EvaluateDerivative(float amount)
+    public Vector2f Derivative(float amount)
     {
         var (index, _) = Segment(amount);
         return (Points[index + 1] - Points[index]) * (Points.Length - 1);
@@ -41,8 +41,9 @@ public readonly partial record struct PolylineCurve2D : ICurve2D
 
     private (int Index, float Fraction) Segment(float amount)
     {
-        var progress = Realf.Clamp01(amount) * (Points.Length - 1);
-        var index = Math.Min(Points.Length - 2, (int)progress);
+        // Outside [0, 1] the first and last segments continue as straight lines.
+        var progress = amount * (Points.Length - 1);
+        var index = Math.Clamp((int)progress, 0, Points.Length - 2);
         return (index, progress - index);
     }
 }

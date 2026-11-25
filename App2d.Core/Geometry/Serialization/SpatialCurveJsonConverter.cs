@@ -1,4 +1,3 @@
-using App2d.Core.Geometry.Curves;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

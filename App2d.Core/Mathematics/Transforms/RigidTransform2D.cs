@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>Translation and rotation in radians. Default is identity; rotation retains full turns. No scale or reflection.</summary>
-public readonly record struct RigidTransform2D(Vector2f Translation, float Rotation = 0) : IInterpolatable<RigidTransform2D, float>
+public readonly record struct RigidTransform2D(Vector2f Translation, float Rotation = 0) : IInterpolatable<RigidTransform2D, float>, ITransform<Vector2f>
 {
     public static RigidTransform2D Identity => default;
 

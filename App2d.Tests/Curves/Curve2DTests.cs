@@ -114,8 +114,8 @@ public sealed class Curve2DTests
         Assert.Equal(curve.Start, points[0]);
         Assert.Equal(new Vector2f(1f, 1f), points[2]);
         Assert.Equal(curve.End, points[^1]);
-        Assert.Equal(new Vector2f(2f, 4f), curve.EvaluateDerivative(0f));
-        Assert.Equal(new Vector2f(2f, -4f), curve.EvaluateDerivative(1f));
+        Assert.Equal(new Vector2f(2f, 4f), curve.Derivative(0f));
+        Assert.Equal(new Vector2f(2f, -4f), curve.Derivative(1f));
     }
 
     [Fact]
@@ -127,10 +127,10 @@ public sealed class Curve2DTests
             new Vector2f(7f, 5f),
             new Vector2f(9f, -3f));
 
-        Assert.Equal(curve.Start, curve.Evaluate(-1f));
-        Assert.Equal(curve.End, curve.Evaluate(2f));
-        Assert.Equal(3f * (curve.Control1 - curve.Start), curve.EvaluateDerivative(0f));
-        Assert.Equal(3f * (curve.End - curve.Control2), curve.EvaluateDerivative(1f));
+        Assert.Equal(curve.Start, curve.Ops.EvaluateClamped(-1f));
+        Assert.Equal(curve.End, curve.Ops.EvaluateClamped(2f));
+        Assert.Equal(3f * (curve.Control1 - curve.Start), curve.Derivative(0f));
+        Assert.Equal(3f * (curve.End - curve.Control2), curve.Derivative(1f));
     }
 
     [Fact]
@@ -160,8 +160,8 @@ public sealed class Curve2DTests
 
         Assert.Equal(new Vector2f(5f, 5f), curve.Evaluate(0.25f));
         Assert.Equal(new Vector2f(15f, 5f), curve.Evaluate(0.75f));
-        Assert.Equal(new Vector2f(20f, 20f), curve.EvaluateDerivative(0.25f));
-        Assert.Equal(new Vector2f(20f, -20f), curve.EvaluateDerivative(0.75f));
+        Assert.Equal(new Vector2f(20f, 20f), curve.Derivative(0.25f));
+        Assert.Equal(new Vector2f(20f, -20f), curve.Derivative(0.75f));
     }
 
     [Fact]

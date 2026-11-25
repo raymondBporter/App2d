@@ -52,7 +52,7 @@ public sealed class InterpolationJsonTests
                 var restored = JsonSerializer.Deserialize<ProgressMapf>(JsonSerializer.Serialize(map, JsonProfiles.Mathematics), JsonProfiles.Mathematics)!;
                 foreach (var time in new[] { 0f, .37f, .5f, .63f, 1f })
                 {
-                    Assert.Equal(map.Sample(time), restored.Sample(time));
+                    Assert.Equal(map.Evaluate(time), restored.Evaluate(time));
                     Assert.Equal(map.Derivative(time), restored.Derivative(time));
                 }
             }
@@ -151,11 +151,11 @@ public sealed class InterpolationJsonTests
             Assert.Equal(map.Inverse is null, restored.Inverse is null);
             foreach (var time in new[] { -.25d, 0d, .37d, .5d, 1d, 1.25d, 3d })
             {
-                Assert.Equal(map.Sample(time), restored.Sample(time));
+                Assert.Equal(map.Evaluate(time), restored.Evaluate(time));
                 Assert.Equal(map.Derivative(time), restored.Derivative(time));
             }
             if (map.Inverse is { } inverse && restored.Inverse is { } restoredInverse)
-                Assert.Equal(inverse(map.Sample(.37d)), restoredInverse(map.Sample(.37d)));
+                Assert.Equal(inverse(map.Evaluate(.37d)), restoredInverse(map.Evaluate(.37d)));
         }
     }
 

@@ -18,7 +18,7 @@ public static partial class Interpolation
         where TReal : IFloatingPointIeee754<TReal>
     {
         Ensure.ThrowIfNull(progressMap);
-        return TValue.Lerp(start, end, progressMap.Sample(time));
+        return TValue.Lerp(start, end, progressMap.Evaluate(time));
     }
 
     // Built-in scalars cannot implement our interface. Convert only after evaluating the map.
@@ -26,14 +26,14 @@ public static partial class Interpolation
         where TReal : IFloatingPointIeee754<TReal>
     {
         Ensure.ThrowIfNull(progressMap);
-        return Lerp(start, end, float.CreateTruncating(progressMap.Sample(time)));
+        return Lerp(start, end, float.CreateTruncating(progressMap.Evaluate(time)));
     }
 
     public static double Interpolate<TReal>(this double start, double end, ProgressMap<TReal> progressMap, TReal time)
         where TReal : IFloatingPointIeee754<TReal>
     {
         Ensure.ThrowIfNull(progressMap);
-        return Lerp(start, end, double.CreateTruncating(progressMap.Sample(time)));
+        return Lerp(start, end, double.CreateTruncating(progressMap.Evaluate(time)));
     }
 
     /// <summary>Unclamped linear interpolation.</summary>
