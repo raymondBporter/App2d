@@ -72,7 +72,8 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         var scale = -TReal.One / (Two * sigma * sigma);
         return new ProgressMap<TReal>(
             x => TReal.Exp((x - center) * (x - center) * scale),
-            x => Two * scale * (x - center) * TReal.Exp((x - center) * (x - center) * scale), isContinuous: true);
+            x => Two * scale * (x - center) * TReal.Exp((x - center) * (x - center) * scale), isContinuous: true)
+            .WithRecipe(new(ProgressOperation.Gaussian, [center, sigma]));
     }
 
     /// <summary>x raised to any positive integer degree. Degree 1 is linear; choose ease direction separately.</summary>
@@ -122,10 +123,8 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         if (firstControlTime == TReal.One / three && secondControlTime == Two / three)
             return Bezier(begin, firstControlValue, secondControlValue, end);
 
-        var beginningSlope = firstControlTime > TReal.Zero ? (firstControlValue - begin) / firstControlTime
-            : secondControlTime > TReal.Zero ? (secondControlValue - begin) / secondControlTime : end - begin;
-        var endingSlope = secondControlTime < TReal.One ? (end - secondControlValue) / (TReal.One - secondControlTime)
-            : firstControlTime < TReal.One ? (end - firstControlValue) / (TReal.One - firstControlTime) : end - begin;
+        var beginningSlope = BeginningSlope(begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end);
+        var endingSlope = EndingSlope(begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end);
         return new ProgressMap<TReal>(
             time => TimedBezierValue(begin, firstControlTime, firstControlValue, secondControlTime, secondControlValue, end, time),
             time => time < TReal.Zero ? beginningSlope : time > TReal.One ? endingSlope
@@ -141,23 +140,21 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
     {
         if (time == TReal.Zero) return begin;
         if (time == TReal.One) return end;
-        if (time < TReal.Zero)
-        {
-            var slope = firstTime > TReal.Zero ? (firstValue - begin) / firstTime
-                : secondTime > TReal.Zero ? (secondValue - begin) / secondTime : end - begin;
-            return begin + time * slope;
-        }
-        if (time > TReal.One)
-        {
-            var slope = secondTime < TReal.One ? (end - secondValue) / (TReal.One - secondTime)
-                : firstTime < TReal.One ? (end - firstValue) / (TReal.One - firstTime) : end - begin;
-            return end + (time - TReal.One) * slope;
-        }
+        if (time < TReal.Zero) return begin + time * BeginningSlope(begin, firstTime, firstValue, secondTime, secondValue, end);
+        if (time > TReal.One) return end + (time - TReal.One) * EndingSlope(begin, firstTime, firstValue, secondTime, secondValue, end);
         var three = TReal.CreateChecked(3);
         var parameter = firstTime == TReal.One / three && secondTime == Two / three
             ? time : BezierParameter(time, firstTime, secondTime);
         return BezierMath.Cubic(begin, firstValue, secondValue, end, parameter);
     }
+
+    // dValue/dTime where the function leaves and arrives. A control at the endpoint's own time gives no slope there,
+    // so the next control is used, and then the chord.
+    private static TReal BeginningSlope(TReal begin, TReal firstTime, TReal firstValue, TReal secondTime, TReal secondValue, TReal end) =>
+        firstTime > TReal.Zero ? (firstValue - begin) / firstTime : secondTime > TReal.Zero ? (secondValue - begin) / secondTime : end - begin;
+
+    private static TReal EndingSlope(TReal begin, TReal firstTime, TReal firstValue, TReal secondTime, TReal secondValue, TReal end) =>
+        secondTime < TReal.One ? (end - secondValue) / (TReal.One - secondTime) : firstTime < TReal.One ? (end - firstValue) / (TReal.One - firstTime) : end - begin;
 
     private static TReal BezierParameter(TReal time, TReal firstTime, TReal secondTime)
     {
@@ -175,12 +172,9 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
         if (timeSlope != TReal.Zero || valueSlope != TReal.Zero) return valueSlope / timeSlope;
 
         // Cancel matching zero derivatives: a flattened parameterization can still describe an ordinary linear function.
-        var six = TReal.CreateChecked(6);
         var three = TReal.CreateChecked(3);
-        var timeSecond = six * ((secondTime - Two * firstTime) * (TReal.One - parameter) +
-            (TReal.One - Two * secondTime + firstTime) * parameter);
-        var valueSecond = six * ((secondValue - Two * firstValue + begin) * (TReal.One - parameter) +
-            (end - Two * secondValue + firstValue) * parameter);
+        var timeSecond = BezierMath.CubicSecondDerivative(TReal.Zero, firstTime, secondTime, TReal.One, parameter);
+        var valueSecond = BezierMath.CubicSecondDerivative(begin, firstValue, secondValue, end, parameter);
         if (timeSecond != TReal.Zero) return valueSecond / timeSecond;
         if (valueSecond != TReal.Zero)
         {
@@ -236,6 +230,7 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
 
     private readonly struct SmoothStepPolynomial(int order) : IDifferentiableCurve<TReal, TReal>
     {
+        public Interval<TReal> Domain => Interval.UnitInterval<TReal>();
         public TReal Evaluate(TReal t) => SmoothStepValue(t, order);
         public TReal Derivative(TReal t) => TReal.CreateChecked(order switch { 1 => 6, 2 => 30, _ => 140 }) * TReal.Pow(t * (TReal.One - t), TReal.CreateChecked(order));
     }

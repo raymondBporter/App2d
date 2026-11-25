@@ -6,7 +6,7 @@ namespace App2d.Core.Mathematics.Serialization;
 internal enum ProgressOperation
 {
     Linear, Reverse, PingPong, ReversePingPong, Sine, Step, SmoothStep, Power,
-    Constant, Affine, Normalize, FromRange, ToRange, Then, Direction, Bezier, TimedBezier
+    Constant, Affine, Normalize, FromRange, ToRange, Then, Direction, Bezier, TimedBezier, Gaussian
 }
 
 // Only factories create these immutable argument lists. They describe construction, not sampled output.

@@ -278,6 +278,11 @@ public readonly record struct Interval<T> : IInterval<T> where T : INumber<T>
 /// <summary>Interval factories and directed endpoint arithmetic without constructing an interval value.</summary>
 public static partial class Interval
 {
+    /// <summary>The unit interval [0, 1]: the domain of a normalized curve.</summary>
+    public static Interval<T> UnitInterval<T>() where T : IFloatingPointIeee754<T> =>
+#pragma warning disable APP2D001
+        new(T.Zero, T.One);
+
     /// <summary>The interval unbounded in both directions.</summary>
     public static Interval<T> Entire<T>() where T : IFloatingPointIeee754<T> => Interval<T>.Builder.CreateUnbounded(T.NegativeInfinity, T.PositiveInfinity);
 

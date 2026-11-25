@@ -4,6 +4,7 @@ namespace App2d.Core.Geometry.Curves;
 public readonly partial record struct Arc2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>
 {
     public GeometryKind Kind => GeometryKind.Arc;
+    public Interval<float> Domain => Interval.UnitInterval<float>();
 
     public Arc2D(Vector2f center, float radius, float startAngleRadians, float sweepAngleRadians)
     {

@@ -4,9 +4,11 @@ using App2d.Core.Geometry.Primitives;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A finite line segment parameterized from start to end over [0, 1].</summary>
-public readonly partial record struct LineSegmentCurve2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, ISegment<LineSegmentCurve2D, Vector2f>, IInterpolatable<LineSegmentCurve2D, float>
+public readonly partial record struct LineSegmentCurve2D
+    : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, IPolynomialCurve2D, ISegment<LineSegmentCurve2D, Vector2f>, IInterpolatable<LineSegmentCurve2D, float>
 {
     public GeometryKind Kind => GeometryKind.LineSegment;
+    public Interval<float> Domain => Interval.UnitInterval<float>();
 
     /// <summary>The two ends of the segment, each of which an interpolator can drive on its own.</summary>
     public static class Channels
@@ -33,8 +35,25 @@ public readonly partial record struct LineSegmentCurve2D : ICurve2D, ITwiceDiffe
     public Vector2f Derivative(float amount) => float.IsNaN(amount) ? new Vector2f(float.NaN, float.NaN) : End - Start;
     public Vector2f SecondDerivative(float amount) => Vector2f.Zero;
     public int ControlPointCount => 2;
-    public Vector2f GetControlPoint(int index) => index switch { 0 => Start, 1 => End, _ => throw new ArgumentOutOfRangeException(nameof(index)) };
-    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == 2 ? this with { Start = points[0], End = points[1] } : throw new InvalidDataException("Curve point count must match its definition.");
+
+    public Vector2f GetControlPoint(int index)
+    {
+        return index switch
+        {
+            0 => Start,
+            1 => End,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+    }
+
+    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points)
+    {
+        return points.Length == 2
+            ? this with { Start = points[0], End = points[1] }
+            : throw new InvalidDataException("Curve point count must match its definition.");
+    }
+
+    public PolynomialSpans2D GetPolynomialSpans() => new(Start, End);
 
     public float Distance(Vector2f point) => Distance2D.DistanceToSegment(point, Start, End);
 }

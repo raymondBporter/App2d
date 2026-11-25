@@ -5,6 +5,16 @@ namespace App2d.Tests.Animation;
 public sealed class TrackSegmentSearchTests
 {
     [Fact]
+    public void AConstantTrackHasItsValueAtAnyTime()
+    {
+        var track = Track.Constant(5f);
+
+        Assert.Equal(5f, track.Sample(-1f));
+        Assert.Equal(5f, track.Sample(99f));
+        Assert.Equal(5f, track.Sample(float.NaN));
+    }
+
+    [Fact]
     public void SamplingOnAndOutsideKeysReturnsTheKeysOwnValues()
     {
         var track = Track.Linear(new Key<float>(0f, 10f), new Key<float>(1f, 20f), new Key<float>(3f, 40f));

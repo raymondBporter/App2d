@@ -157,6 +157,15 @@ public sealed class CurveOperationsTests
         Assert.True(polyline.Points.Length > 5);
     }
 
+    [Theory]
+    [InlineData(1.5d)]
+    [InlineData(-.1d)]
+    [InlineData(double.NaN)]
+    public void SplitRejectsAParameterOutsideTheCurve(double parameter)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Square.Ops.Split(parameter));
+    }
+
     [Fact]
     public void ReverseIsSliceOneZero()
     {
@@ -278,12 +287,14 @@ public sealed class CurveOperationsTests
 
     private readonly struct SmoothStep : IDifferentiableCurve<double, double>
     {
+        public Interval<double> Domain => Interval.UnitInterval<double>();
         public double Evaluate(double t) => t * t * (3 - 2 * t);
         public double Derivative(double t) => 6 * t * (1 - t);
     }
 
     private readonly struct CornerCurve : IDifferentiableCurve<float, float>
     {
+        public Interval<float> Domain => Interval.UnitInterval<float>();
         public float Evaluate(float t) => MathF.Abs(t - .5f);
         public float Derivative(float t) => t == .5f ? float.NaN : MathF.Sign(t - .5f);
     }

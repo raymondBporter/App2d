@@ -6,6 +6,7 @@ public readonly record struct QuadraticBezier<TValue, TReal>(TValue Start, TValu
     where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
     where TReal : IFloatingPointIeee754<TReal>
 {
+    public Interval<TReal> Domain => Interval.UnitInterval<TReal>();
     public TValue Evaluate(TReal amount) => BezierMath.Quadratic(Start, Control, End, amount);
     public TValue Derivative(TReal amount) => BezierMath.QuadraticDerivative(Start, Control, End, amount);
     public TValue SecondDerivative(TReal amount) => BezierMath.QuadraticSecondDerivative<TValue, TReal>(Start, Control, End);
@@ -30,6 +31,7 @@ public readonly record struct CubicBezier<TValue, TReal>(TValue Start, TValue Co
     where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
     where TReal : IFloatingPointIeee754<TReal>
 {
+    public Interval<TReal> Domain => Interval.UnitInterval<TReal>();
     public TValue Evaluate(TReal amount) => BezierMath.Cubic(Start, Control1, Control2, End, amount);
     public TValue Derivative(TReal amount) => BezierMath.CubicDerivative(Start, Control1, Control2, End, amount);
     public TValue SecondDerivative(TReal amount) => BezierMath.CubicSecondDerivative(Start, Control1, Control2, End, amount);

@@ -3,9 +3,10 @@ using App2d.Core.Geometry.Distance;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>An open polyline parameterized uniformly across its segments.</summary>
-public readonly partial record struct PolylineCurve2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>
+public readonly partial record struct PolylineCurve2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, IPolynomialCurve2D
 {
     public GeometryKind Kind => GeometryKind.Polyline;
+    public Interval<float> Domain => Interval.UnitInterval<float>();
 
     private readonly Vector2f[]? _points;
 
@@ -35,6 +36,8 @@ public readonly partial record struct PolylineCurve2D : ICurve2D, ITwiceDifferen
     public int ControlPointCount => Points.Length;
     public Vector2f GetControlPoint(int index) => Points[index];
     public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == Points.Length ? this with { Points = points } : throw new InvalidDataException("Curve point count must match its definition.");
+
+    public PolynomialSpans2D GetPolynomialSpans() => new(_points!);
 
     public float Distance(Vector2f point)
     {

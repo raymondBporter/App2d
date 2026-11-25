@@ -58,7 +58,7 @@ public sealed class Curve2DTests
     }
 
     [Fact]
-    public void NestedSliceCanKeepASecondaryMinimumOfItsSource()
+    public void AnIntervalCanKeepASecondaryMinimumOfItsSource()
     {
         var parabola = QuadraticBezier2D.Builder.Create(new(-1, 1), new(0, -1), new(1, 1));
         var query = new Vector2f(.13671875f, 1);
@@ -94,7 +94,7 @@ public sealed class Curve2DTests
     }
 
     [Fact]
-    public void ArcAndPolylineSlicesRestrictTheNearestPoint()
+    public void ArcAndPolylineIntervalsRestrictTheNearestPoint()
     {
         var arc = Arc2D.Builder.Create(Vector2f.Zero, 2, 0, MathF.PI);
         Assert.Equal(MathF.Sqrt(13 - 6 * MathF.Sqrt(2)), CurveDistance2D.Distance(new(3, 0), arc, .25f, .75f), 5);

@@ -10,8 +10,8 @@ namespace App2d.Core.Mathematics;
 /// chain, and a chain of struct curves is itself a struct: nothing is boxed and no call is virtual.
 /// This is the validated construction path: each operation builds its struct and calls Validate on it.
 /// <para>
-/// Every operation here treats [0, 1] as the curve's domain. A <c>ProgressMap</c> built with FromRange has its own
-/// input span, which its own EvaluateClamped honours and these operations do not.
+/// Every operation works over the curve's own <see cref="Domain"/>: [0, 1] for geometry, and the input span for a
+/// progress map built with FromRange.
 /// </para>
 /// </summary>
 public readonly record struct Curve<TCurve, TValue, TReal>(TCurve Source) : IDifferentiableCurve<TValue, TReal>
@@ -19,21 +19,24 @@ public readonly record struct Curve<TCurve, TValue, TReal>(TCurve Source) : IDif
     where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>, IAdditiveIdentity<TValue, TValue>
     where TReal : IFloatingPointIeee754<TReal>
 {
+    public Interval<TReal> Domain => Source.Domain;
     public TValue Evaluate(TReal t) => Source.Evaluate(t);
     public TValue Derivative(TReal t) => Source.Derivative(t);
 
-    /// <summary>Evaluates once with the parameter clamped to [0, 1]. Use <see cref="Clamped"/> when the policy should travel with the curve.</summary>
-    public TValue EvaluateClamped(TReal t) => Source.Evaluate(TReal.Clamp(t, TReal.Zero, TReal.One));
+    /// <summary>Evaluates once with the parameter clamped to the domain. Use <see cref="Clamped"/> when the policy should travel with the curve.</summary>
+    public TValue EvaluateClamped(TReal t) => Source.Evaluate(Source.Domain.Clamp(t));
 
-    /// <summary>Samples both endpoints and equal parameter steps between them into caller-owned storage, without allocating.</summary>
+    /// <summary>Samples both ends of the domain and equal parameter steps between them into caller-owned storage, without allocating.</summary>
     public void Sample(Span<TValue> points)
     {
         Ensure.ThrowIfTooShort(points, 2);
+        var domain = Source.Domain;
         var last = TReal.CreateChecked(points.Length - 1);
-        for (var i = 0; i < points.Length; i++) points[i] = Source.Evaluate(TReal.CreateChecked(i) / last);
+        for (var i = 0; i < points.Length - 1; i++) points[i] = Source.Evaluate(domain.Min + (domain.Max - domain.Min) * (TReal.CreateChecked(i) / last));
+        points[^1] = Source.Evaluate(domain.Max);
     }
 
-    /// <summary>Samples both endpoints and the requested number of equal parameter segments.</summary>
+    /// <summary>Samples both ends of the domain and the requested number of equal parameter segments.</summary>
     public TValue[] Sample(int segmentCount)
     {
         var points = new TValue[Ensure.Positive(segmentCount) + 1];
@@ -41,13 +44,30 @@ public readonly record struct Curve<TCurve, TValue, TReal>(TCurve Source) : IDif
         return points;
     }
 
-    /// <summary>Maps [0, 1] onto [from, to] of this curve. The interval may be reversed or empty.</summary>
+    /// <summary>Maps [0, 1] onto [from, to] of this curve's parameter. The interval may be reversed or empty.</summary>
     public Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Slice(TReal from, TReal to) => new(new Sliced<TCurve, TValue, TReal>(Source, from, to).Validated());
 
-    public Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Reverse() => Slice(TReal.One, TReal.Zero);
+    /// <summary>The whole curve with its domain remapped to [0, 1].</summary>
+    public Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Normalized()
+    {
+        var domain = Source.Domain;
+        return Slice(domain.Min, domain.Max);
+    }
 
-    /// <summary>Both halves at a parameter, each remapped to [0, 1].</summary>
-    public (Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Left, Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Right) Split(TReal t) => (Slice(TReal.Zero, t), Slice(t, TReal.One));
+    /// <summary>The whole curve traversed from its end to its beginning, over [0, 1].</summary>
+    public Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Reverse()
+    {
+        var domain = Source.Domain;
+        return Slice(domain.Max, domain.Min);
+    }
+
+    /// <summary>Both halves at a parameter inside the domain, each remapped to [0, 1].</summary>
+    public (Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Left, Curve<Sliced<TCurve, TValue, TReal>, TValue, TReal> Right) Split(TReal t)
+    {
+        var domain = Source.Domain;
+        Ensure.InRange(t, domain.Min, domain.Max);
+        return (Slice(domain.Min, t), Slice(t, domain.Max));
+    }
 
     /// <summary>Traverses this curve through a scalar map: curve(map(t)). Nothing is clamped; wrap either side to choose.</summary>
     public Curve<Reparameterized<TCurve, TMap, TValue, TReal>, TValue, TReal> Reparameterize<TMap>(TMap map) where TMap : IDifferentiableCurve<TReal, TReal> => new(new Reparameterized<TCurve, TMap, TValue, TReal>(Source, map).Validated());
@@ -55,10 +75,16 @@ public readonly record struct Curve<TCurve, TValue, TReal>(TCurve Source) : IDif
     /// <summary>Maps points through the transform and derivatives through its linear part.</summary>
     public Curve<Transformed<TCurve, TTransform, TValue, TReal>, TValue, TReal> Transform<TTransform>(TTransform transform) where TTransform : ITransform<TValue> => new(new Transformed<TCurve, TTransform, TValue, TReal>(Source, transform).Validated());
 
-    /// <summary>Holds the endpoint values outside [0, 1].</summary>
+    /// <summary>
+    /// This curve over its domain, then the next one, shifted to begin where this one ends. The result's domain is
+    /// the two lengths added. The values are not required to meet at the join.
+    /// </summary>
+    public Curve<Concatenated<TCurve, TNext, TValue, TReal>, TValue, TReal> Concatenate<TNext>(TNext next) where TNext : IDifferentiableCurve<TValue, TReal> => new(new Concatenated<TCurve, TNext, TValue, TReal>(Source, next).Validated());
+
+    /// <summary>Holds the end values outside the domain.</summary>
     public Curve<Extrapolated<TCurve, TValue, TReal>, TValue, TReal> Clamped() => Extrapolated(Extrapolation.Clamp, Extrapolation.Clamp);
 
-    /// <summary>Continues straight along the endpoint tangents outside [0, 1].</summary>
+    /// <summary>Continues straight along the end tangents outside the domain.</summary>
     public Curve<Extrapolated<TCurve, TValue, TReal>, TValue, TReal> Extended() => Extrapolated(Extrapolation.Extend, Extrapolation.Extend);
 
     public Curve<Extrapolated<TCurve, TValue, TReal>, TValue, TReal> Extrapolated(Extrapolation before, Extrapolation after) => new(new Extrapolated<TCurve, TValue, TReal>(Source, before, after).Validated());

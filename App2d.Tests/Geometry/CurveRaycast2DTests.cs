@@ -127,7 +127,7 @@ public sealed class CurveRaycast2DTests
     }
 
     [Fact]
-    public void NestedSlicesRestrictTheParameterDomainBeforeChoosingTheNearestHit()
+    public void IntervalsRestrictTheParameterDomainBeforeChoosingTheNearestHit()
     {
         var curve = QuadraticBezier2D.Builder.Create(new(0, 0), new(1, 2), new(2, 0));
         Assert.False(CurveRaycast2D.TryIntersect(new(1.1f, .75f), Vector2f.UnitX, curve, 0, .5f, 5, out _));
@@ -234,7 +234,7 @@ public sealed class CurveRaycast2DTests
     }
 
     [Fact]
-    public void SlicedSplineAndRoundedCurveQueriesDoNotSearchOutsideTheirRestrictedIntervals()
+    public void SplineAndRoundedCurveQueriesDoNotSearchOutsideTheirRestrictedIntervals()
     {
         var spline = BSpline2D.Builder.Create([new(0, 0), new(1, 2), new(2, -1), new(3, 1), new(4, 0)]);
         var right = spline.Evaluate(.8f);

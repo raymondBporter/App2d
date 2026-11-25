@@ -5,9 +5,10 @@ using App2d.Core.Validation;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A cubic Bezier curve with normalized parameter range [0, 1].</summary>
-public readonly partial record struct CubicBezier2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>
+public readonly partial record struct CubicBezier2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, IPolynomialCurve2D
 {
     public GeometryKind Kind => GeometryKind.CubicBezier;
+    public Interval<float> Domain => Interval.UnitInterval<float>();
 
     public CubicBezier2D(Vector2f start, Vector2f control1, Vector2f control2, Vector2f end)
     {
@@ -115,5 +116,8 @@ public readonly partial record struct CubicBezier2D : ICurve2D, ITwiceDifferenti
     public Vector2f GetControlPoint(int index) => index switch { 0 => Start, 1 => Control1, 2 => Control2, 3 => End, _ => throw new ArgumentOutOfRangeException(nameof(index)) };
     public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == 4 ? this with { Start = points[0], Control1 = points[1], Control2 = points[2], End = points[3] } : throw new InvalidDataException("Curve point count must match its definition.");
 
-    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
+    public PolynomialSpans2D GetPolynomialSpans() => new(Start, Control1, Control2, End);
+
+    public float Distance(Vector2f point) =>
+        (float)Math.Sqrt(CurveDistance2D.CubicDistanceSquared(point.ToVector2d(), Start.ToVector2d(), Control1.ToVector2d(), Control2.ToVector2d(), End.ToVector2d(), 0, 1));
 }

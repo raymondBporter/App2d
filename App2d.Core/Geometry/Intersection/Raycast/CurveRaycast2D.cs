@@ -47,48 +47,27 @@ public static class CurveRaycast2D
             case Arc2D arc:
                 return Raycast2D.TryArc(origin, direction, arc.Center, arc.Radius,
                     arc.StartAngleRadians + arc.SweepAngleRadians * from, arc.SweepAngleRadians * (to - from), maxDistance, out hit);
-            case LineSegmentCurve2D line:
-                return Polynomial(origin, direction, [line.Start.ToVector2d(), line.End.ToVector2d()], from, to, maxDistance, out hit);
-            case QuadraticBezier2D quadratic:
-                return Polynomial(origin, direction, [quadratic.Start.ToVector2d(), quadratic.Control.ToVector2d(), quadratic.End.ToVector2d()], from, to, maxDistance, out hit);
-            case CubicBezier2D cubic:
-                return Polynomial(origin, direction, [cubic.Start.ToVector2d(), cubic.Control1.ToVector2d(), cubic.Control2.ToVector2d(), cubic.End.ToVector2d()], from, to, maxDistance, out hit);
-            case PolylineCurve2D polyline:
-                var found = false;
-                var count = polyline.Points.Length - 1;
-                Span<Vector2d> points = stackalloc Vector2d[2];
-                for (var i = 0; i < count; i++)
-                {
-                    var low = Math.Max(0, from * count - i);
-                    var high = Math.Min(1, to * count - i);
-                    if (low > high) continue;
-                    points[0] = polyline.Points[i].ToVector2d();
-                    points[1] = polyline.Points[i + 1].ToVector2d();
-                    if (Polynomial(origin, direction, points, low, high, maxDistance, out var candidate) && (!found || candidate.Distance < hit.Distance))
-                    { hit = candidate; maxDistance = hit.Distance; found = true; }
-                }
-                return found;
-            case BSpline2D spline:
-                return Spans(origin, direction, spline.GetPolynomialSpans(), from, to, maxDistance, out hit);
-            case RoundedPolylineCurve2D rounded:
-                return Spans(origin, direction, rounded.GetPolynomialSpans(), from, to, maxDistance, out hit);
+            case IPolynomialCurve2D polynomial:
+                return Spans(origin, direction, polynomial.GetPolynomialSpans(), from, to, maxDistance, out hit);
             default:
                 throw new NotSupportedException($"Direct ray intersections are not available for {curve.GetType().Name}. No sampled fallback is applied.");
         }
     }
 
-    private static bool Spans(Vector2f origin, Vector2f direction, PolynomialCurveSpan2D[] spans,
-        double from, double to, float maxDistance, out RayHit2D hit)
+    // Every polynomial curve is its pieces: the nearest hit over the pieces inside [from, to].
+    private static bool Spans(Vector2f origin, Vector2f direction, PolynomialSpans2D spans, double from, double to, float maxDistance, out RayHit2D hit)
     {
         hit = default;
         var found = false;
-        foreach (var span in spans)
+        Span<Vector2d> storage = spans.MaximumDegree < 32 ? stackalloc Vector2d[spans.MaximumDegree + 1] : new Vector2d[spans.MaximumDegree + 1];
+        for (var i = 0; i < spans.Count; i++)
         {
-            var low = Math.Max(from, span.From);
-            var high = Math.Min(to, span.To);
+            var range = spans.Get(i, storage);
+            var low = Math.Max(from, range.From);
+            var high = Math.Min(to, range.To);
             if (low > high) continue;
-            var width = span.To - span.From;
-            if (Polynomial(origin, direction, span.Controls, (low - span.From) / width, (high - span.From) / width, maxDistance, out var candidate)
+            var width = range.To - range.From;
+            if (Polynomial(origin, direction, storage[..range.ControlCount], (low - range.From) / width, (high - range.From) / width, maxDistance, out var candidate)
                 && (!found || candidate.Distance < hit.Distance))
             { hit = candidate; maxDistance = hit.Distance; found = true; }
         }

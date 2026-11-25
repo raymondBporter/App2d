@@ -3,9 +3,10 @@ using App2d.Core.Geometry.Distance;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A quadratic Bezier curve over normalized progress [0, 1].</summary>
-public readonly partial record struct QuadraticBezier2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, IInterpolatable<QuadraticBezier2D, float>
+public readonly partial record struct QuadraticBezier2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, IPolynomialCurve2D, IInterpolatable<QuadraticBezier2D, float>
 {
     public GeometryKind Kind => GeometryKind.QuadraticBezier;
+    public Interval<float> Domain => Interval.UnitInterval<float>();
 
     /// <summary>The three points of the curve, each of which an interpolator can drive on its own.</summary>
     public static class Channels
@@ -43,9 +44,8 @@ public readonly partial record struct QuadraticBezier2D : ICurve2D, ITwiceDiffer
     public Vector2f GetControlPoint(int index) => index switch { 0 => Start, 1 => Control, 2 => End, _ => throw new ArgumentOutOfRangeException(nameof(index)) };
     public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == 3 ? this with { Start = points[0], Control = points[1], End = points[2] } : throw new InvalidDataException("Curve point count must match its definition.");
 
-    public float Distance(Vector2f point) => Distance(point, 0, 1);
+    public PolynomialSpans2D GetPolynomialSpans() => new(Start, Control, End);
 
-    internal float Distance(Vector2f point, double from, double to) =>
-        (float)Math.Sqrt(CurveDistance2D.QuadraticDistanceSquared(point.ToVector2d(),
-            Start.ToVector2d(), Control.ToVector2d(), End.ToVector2d(), from, to));
+    public float Distance(Vector2f point) =>
+        (float)Math.Sqrt(CurveDistance2D.QuadraticDistanceSquared(point.ToVector2d(), Start.ToVector2d(), Control.ToVector2d(), End.ToVector2d(), 0, 1));
 }

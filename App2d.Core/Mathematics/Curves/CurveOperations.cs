@@ -22,11 +22,16 @@ public readonly record struct Sliced<TCurve, TValue, TReal>(TCurve Curve, TReal 
 
     public Sliced<TCurve, TValue, TReal> Validated() { Validate(); return this; }
 
+    public Interval<TReal> Domain => Interval.UnitInterval<TReal>();
+
     // An empty interval is one point: it stays put for any finite or infinite t, and never asks the source for a tangent.
-    public TValue Evaluate(TReal t) => Curve.Evaluate(IsPoint(t) ? From : From + (To - From) * t);
-    public TValue Derivative(TReal t) => IsPoint(t) ? TValue.AdditiveIdentity : Curve.Derivative(From + (To - From) * t) * (To - From);
+    public TValue Evaluate(TReal t) => Curve.Evaluate(Parameter(t));
+    public TValue Derivative(TReal t) => IsPoint(t) ? TValue.AdditiveIdentity : Curve.Derivative(Parameter(t)) * (To - From);
 
     private bool IsPoint(TReal t) => From == To && !TReal.IsNaN(t);
+
+    // At 1 the parameter is the far end itself, not a rounded sum, so the end of any domain is reached exactly.
+    private TReal Parameter(TReal t) => t == TReal.One || IsPoint(t) ? To : From + (To - From) * t;
 }
 
 /// <summary>curve(map(t)), differentiated with the chain rule. Neither the map's input nor its output is clamped.</summary>
@@ -43,6 +48,8 @@ public readonly record struct Reparameterized<TCurve, TMap, TValue, TReal>(TCurv
     }
 
     public Reparameterized<TCurve, TMap, TValue, TReal> Validated() { Validate(); return this; }
+
+    public Interval<TReal> Domain => Map.Domain;
 
     public TValue Evaluate(TReal t) => Curve.Evaluate(Map.Evaluate(t));
 
@@ -68,8 +75,65 @@ public readonly record struct Transformed<TCurve, TTransform, TValue, TReal>(TCu
 
     public Transformed<TCurve, TTransform, TValue, TReal> Validated() { Validate(); return this; }
 
+    public Interval<TReal> Domain => Curve.Domain;
+
     public TValue Evaluate(TReal t) => Transform.TransformPoint(Curve.Evaluate(t));
     public TValue Derivative(TReal t) => Transform.TransformDirection(Curve.Derivative(t));
+}
+
+/// <summary>
+/// One curve over its domain, then a second, shifted to begin where the first ends. The join belongs to the first
+/// curve. The values are not required to meet there.
+/// </summary>
+public readonly record struct Concatenated<TFirst, TSecond, TValue, TReal>(TFirst First, TSecond Second) : IDifferentiableCurve<TValue, TReal>
+    where TFirst : IDifferentiableCurve<TValue, TReal>
+    where TSecond : IDifferentiableCurve<TValue, TReal>
+    where TReal : IFloatingPointIeee754<TReal>
+{
+    public void Validate()
+    {
+        CurveArgument.NotNull(First, "first");
+        CurveArgument.NotNull(Second, "second");
+        // The second curve is placed by the first one's end and its own beginning, so both domains must be bounded.
+        var first = First.Domain;
+        var second = Second.Domain;
+        Ensure.Finite(first.Min, "first");
+        Ensure.Finite(first.Max, "first");
+        Ensure.Finite(second.Min, "second");
+        Ensure.Finite(second.Max, "second");
+    }
+
+    public Concatenated<TFirst, TSecond, TValue, TReal> Validated() { Validate(); return this; }
+
+    public Interval<TReal> Domain
+    {
+        get
+        {
+            var first = First.Domain;
+            var second = Second.Domain;
+            return new(first.Min, first.Max + (second.Max - second.Min));
+        }
+    }
+
+    public TValue Evaluate(TReal t)
+    {
+        var join = First.Domain.Max;
+        return t <= join ? First.Evaluate(t) : Second.Evaluate(SecondParameter(t, join));
+    }
+
+    public TValue Derivative(TReal t)
+    {
+        var join = First.Domain.Max;
+        return t <= join ? First.Derivative(t) : Second.Derivative(SecondParameter(t, join));
+    }
+
+    // From the far end on, the second curve's parameter is measured from its own end, so that end is reached exactly.
+    private TReal SecondParameter(TReal t, TReal join)
+    {
+        var second = Second.Domain;
+        var end = join + (second.Max - second.Min);
+        return t >= end ? second.Max + (t - end) : second.Min + (t - join);
+    }
 }
 
 internal static class CurveArgument

@@ -8,9 +8,10 @@ namespace App2d.Core.Geometry.Curves;
 /// A clamped uniform B-spline. Cubic is the default; lower degrees are useful
 /// for polylines and higher degrees are supported when enough control points exist.
 /// </summary>
-public readonly partial record struct BSpline2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>
+public readonly partial record struct BSpline2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, IPolynomialCurve2D
 {
     public GeometryKind Kind => GeometryKind.BSpline;
+    public Interval<float> Domain => Interval.UnitInterval<float>();
 
     private readonly Vector2f[]? _controlPoints;
     private static readonly ConditionalWeakTable<Vector2f[], Dictionary<int, Prepared>> PreparedCurves = [];
@@ -47,7 +48,7 @@ public readonly partial record struct BSpline2D : ICurve2D, ITwiceDifferentiable
     }
     private sealed record Prepared(float[] Knots, Vector2f[] DerivativePoints, Vector2f[] SecondDerivativePoints)
     {
-        internal PolynomialCurveSpan2D[]? RaycastSpans;
+        internal PolynomialCurveSpan2D[]? PolynomialSpans;
     }
 
     public Vector2f Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, amount);
@@ -68,8 +69,12 @@ public readonly partial record struct BSpline2D : ICurve2D, ITwiceDifferentiable
     public Vector2f GetControlPoint(int index) => ControlPoints[index];
     public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == ControlPoints.Length ? this with { ControlPoints = points } : throw new InvalidDataException("Curve point count must match its definition.");
 
-    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this,
-        int.Clamp((ControlPoints.Length - Degree) * 32, 64, 1024));
+    /// <summary>Knot insertion splits the spline into Bézier pieces exactly; the result is cached.</summary>
+    public PolynomialSpans2D GetPolynomialSpans() => new(PreparePolynomialSpans(), Degree);
+
+    /// <summary>Exact for pieces up to cubic, which covers the default degree; higher degrees are measured against chords of each piece.</summary>
+    public float Distance(Vector2f point) =>
+        (float)Math.Sqrt(CurveDistance2D.PolynomialDistanceSquared(point.ToVector2d(), GetPolynomialSpans(), 0, 1, double.PositiveInfinity));
 
     internal PositionSampler PreparePositionSampler() => new(_controlPoints!, Data.Knots, Degree);
 
@@ -80,6 +85,7 @@ public readonly partial record struct BSpline2D : ICurve2D, ITwiceDifferentiable
         private readonly int _degree = degree;
 
         // Position only, with the prepared knots held directly, so sampling does not look the data up per point.
+        public Interval<float> Domain => Interval.UnitInterval<float>();
         public Vector2f Evaluate(float t) => EvaluateDeBoor(_points, _knots, _degree, t);
     }
 

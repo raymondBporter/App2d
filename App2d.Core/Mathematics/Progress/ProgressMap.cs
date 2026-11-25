@@ -52,6 +52,9 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
     /// <summary>Continuity of the function on the real line, or null when unknown. Sharp turns are continuous.</summary>
     public bool? IsContinuous { get; }
 
+    /// <summary>The declared input span as an ordered interval; [0, 1] for an ordinary easing curve.</summary>
+    public Interval<TReal> Domain => new(TReal.Min(InputBegin, InputEnd), TReal.Max(InputBegin, InputEnd));
+
     public TReal Evaluate(TReal phase) => _sample(phase);
 
     /// <summary>Clamps only the input to the declared span. The sampled value may still overshoot.</summary>

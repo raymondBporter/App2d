@@ -10,6 +10,9 @@ namespace App2d.Core.Mathematics;
 /// </summary>
 public interface ICurve<TValue, TReal> where TReal : IFloatingPointIeee754<TReal>
 {
+    /// <summary>The parameters the curve is defined for. Operations clamp, extend, split and sample at its ends.</summary>
+    Interval<TReal> Domain { get; }
+
     TValue Evaluate(TReal t);
 }
 

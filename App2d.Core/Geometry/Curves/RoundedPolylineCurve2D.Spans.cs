@@ -6,7 +6,7 @@ public readonly partial record struct RoundedPolylineCurve2D
 {
     private static readonly ConditionalWeakTable<float[], PolynomialCurveSpan2D[]> PolynomialSpans = [];
 
-    internal PolynomialCurveSpan2D[] GetPolynomialSpans()
+    internal PolynomialCurveSpan2D[] PreparePolynomialSpans()
     {
         // The measured array is immutable and unique to this points/softness pair.
         return PolynomialSpans.TryGetValue(_distance!, out var spans) ? spans : Prepare(this);

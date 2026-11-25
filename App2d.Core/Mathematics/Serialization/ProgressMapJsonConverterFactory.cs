@@ -73,6 +73,7 @@ public sealed class ProgressMapJsonConverterFactory : JsonConverterFactory
                 "constant" => ProgressMap<TReal>.Constant(fields.Required<TReal>("value"),
                     fields.Optional("inputBegin", TReal.Zero), fields.Optional("inputEnd", TReal.One)),
                 "affine" => ProgressMap<TReal>.Affine(fields.Required<TReal>("scale"), fields.Required<TReal>("offset")),
+                "gaussian" => Easing<TReal>.Gaussian(fields.Required<TReal>("center"), fields.Required<TReal>("sigma")),
                 "normalize" => ProgressMap<TReal>.Normalize(fields.Required<TReal>("begin"), fields.Required<TReal>("end")),
                 "from-range" => fields.Required<ProgressMap<TReal>>("source").FromRange(fields.Required<TReal>("begin"), fields.Required<TReal>("end")),
                 "to-range" => fields.Required<ProgressMap<TReal>>("source").ToRange(fields.Required<TReal>("begin"), fields.Required<TReal>("end")),
@@ -141,6 +142,7 @@ public sealed class ProgressMapJsonConverterFactory : JsonConverterFactory
                     if (recipe.Parameters[1] != TReal.Zero || recipe.Parameters[2] != TReal.One) { Number("inputBegin", 1); Number("inputEnd", 2); }
                     break;
                 case ProgressOperation.Affine: Kind("affine"); Number("scale", 0); Number("offset", 1); break;
+                case ProgressOperation.Gaussian: Kind("gaussian"); Number("center", 0); Number("sigma", 1); break;
                 case ProgressOperation.Normalize: Kind("normalize"); Number("begin", 0); Number("end", 1); break;
                 case ProgressOperation.FromRange: Kind("from-range"); Source("source", recipe.Source); Number("begin", 0); Number("end", 1); break;
                 case ProgressOperation.ToRange: Kind("to-range"); Source("source", recipe.Source); Number("begin", 0); Number("end", 1); break;

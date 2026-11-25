@@ -7,7 +7,7 @@ namespace App2d.Core.Geometry.Curves;
 /// <summary>Sampling and local-frame operations shared by two-dimensional curves.</summary>
 public static class Curve2D
 {
-    private const float DerivativeEpsilon = 0.000001f;
+    internal const float DerivativeEpsilon = 0.000001f;
     private const float FallbackSampleDistance = 0.001f;
 
     /// <summary>Returns a unit tangent, or zero when the curve is locally degenerate.</summary>
@@ -84,25 +84,29 @@ public static class Curve2D
     private static PolylineCurve2D SamplePolyline<TCurve>(TCurve curve, int segments, float maximumSegmentLength, float maximumDeviation, ReadOnlySpan<Vector2f> boundaries)
         where TCurve : ICurve<Vector2f, float>
     {
-        var points = new List<Vector2f> { boundaries.IsEmpty ? curve.Evaluate(0f) : boundaries[0] };
+        // Segment fractions are over the curve's domain: [0, 1] for geometry, so there the fraction is the parameter.
+        var domain = curve.Domain;
+        var points = new List<Vector2f> { boundaries.IsEmpty ? curve.Evaluate(At(0f)) : boundaries[0] };
         for (var segment = 0; segment < segments; segment++)
         {
             var from = segment / (float)segments;
             var to = (segment + 1) / (float)segments;
-            Append(from, to, points[^1], boundaries.IsEmpty ? curve.Evaluate(to) : boundaries[segment + 1], 0);
+            Append(from, to, points[^1], boundaries.IsEmpty ? curve.Evaluate(At(to)) : boundaries[segment + 1], 0);
         }
         return PolylineCurve2D.Builder.CreateFromSpan(CollectionsMarshal.AsSpan(points));
+
+        float At(float fraction) => fraction == 1f ? domain.Max : domain.Min + (domain.Max - domain.Min) * fraction;
 
         void Append(float from, float to, Vector2f start, Vector2f end, int depth)
         {
             Ensure.Finite(start);
             Ensure.Finite(end);
             var middle = (from + to) * 0.5f;
-            var midpoint = curve.Evaluate(middle);
+            var midpoint = curve.Evaluate(At(middle));
             var needsSplit = Vector2f.Distance(start, end) > maximumSegmentLength;
             for (var sample = 1; sample <= 3; sample++)
             {
-                var point = sample == 2 ? midpoint : curve.Evaluate(float.Lerp(from, to, sample / 4f));
+                var point = sample == 2 ? midpoint : curve.Evaluate(At(float.Lerp(from, to, sample / 4f)));
                 Ensure.Finite(point);
                 needsSplit |= Distance2D.DistanceSquaredToSegment(point, start, end) > maximumDeviation * maximumDeviation;
             }

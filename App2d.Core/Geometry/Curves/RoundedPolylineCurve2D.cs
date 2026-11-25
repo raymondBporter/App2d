@@ -8,9 +8,10 @@ namespace App2d.Core.Geometry.Curves;
 /// not the shortened curve's arc length. Each corner trims at most 48% of either adjacent span, so fillets
 /// cannot overlap. Repeated points and exact reversals remain finite; an exact reversal has no unique tangent.
 /// </summary>
-public readonly partial record struct RoundedPolylineCurve2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>
+public readonly partial record struct RoundedPolylineCurve2D : ICurve2D, ITwiceDifferentiableCurve<Vector2f, float>, IControlPointCurve<Vector2f, ICurve2D>, IPolynomialCurve2D
 {
     public GeometryKind Kind => GeometryKind.RoundedPolyline;
+    public Interval<float> Domain => Interval.UnitInterval<float>();
 
     private readonly Vector2f[]? _points;
     private readonly float[]? _distance, _trim;
@@ -160,7 +161,7 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D, ITwiceD
 
     public int ControlPointCount => Points.Length;
     public Vector2f GetControlPoint(int index) => Points[index];
-    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == Points.Length ? this with { Points = [.. points] } : throw new InvalidDataException("Curve point count must match its definition.");
+    public ICurve2D WithControlPoints(ReadOnlySpan<Vector2f> points) => points.Length == Points.Length ? this with { Points = points } : throw new InvalidDataException("Curve point count must match its definition.");
 
     /// <summary>Zero on the straight parts; in a corner, the fillet's constant second derivative scaled to this parameter.</summary>
     public Vector2f SecondDerivative(float amount)
@@ -223,6 +224,9 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D, ITwiceD
         return [.. samples];
     }
 
+    /// <summary>Straight runs and quadratic fillets, cached with the measured lengths.</summary>
+    public PolynomialSpans2D GetPolynomialSpans() => new(PreparePolynomialSpans(), 2);
+
     public float Distance(Vector2f point) => Distance(point, 0, 1);
 
     internal float Distance(Vector2f point, double from, double to)
@@ -231,6 +235,6 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D, ITwiceD
         var target = point.ToVector2d();
         var first = (Evaluate((float)from).ToVector2d() - target).LengthSquared();
         var last = (Evaluate((float)to).ToVector2d() - target).LengthSquared();
-        return CurveDistance2D.RoundedSpanDistance(target, GetPolynomialSpans(), from, to, Math.Min(first, last));
+        return (float)Math.Sqrt(CurveDistance2D.PolynomialDistanceSquared(target, GetPolynomialSpans(), from, to, Math.Min(first, last)));
     }
 }

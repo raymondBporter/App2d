@@ -9,7 +9,6 @@ namespace App2d.Core.Geometry.Curves;
 /// </summary>
 public sealed class NormalOffsetCurve2D : ICurve2D
 {
-    private const float StationarySpeed = 0.000001f;
     private const float JerkStep = 0.001f;
     private readonly ICurve2D _source;
     private readonly IDifferentiableCurve<float, float> _offset;
@@ -23,6 +22,7 @@ public sealed class NormalOffsetCurve2D : ICurve2D
     }
 
     public GeometryKind Kind => GeometryKind.NormalOffsetCurve;
+    public Interval<float> Domain => Interval.UnitInterval<float>();
 
     public Vector2f Evaluate(float amount)
     {
@@ -47,7 +47,7 @@ public sealed class NormalOffsetCurve2D : ICurve2D
         var velocity = source.Derivative(amount);
         var derivative = velocity + Curve2D.Normal(_source, amount) * _offset.Derivative(amount);
         var speed = velocity.Length();
-        if (speed <= StationarySpeed) return derivative + TangentRateAtRest(source, amount).PerpCcw * _offset.Evaluate(amount);
+        if (speed <= Curve2D.DerivativeEpsilon) return derivative + TangentRateAtRest(source, amount).PerpCcw * _offset.Evaluate(amount);
 
         var tangent = velocity / speed;
         var acceleration = source.SecondDerivative(amount);
@@ -61,7 +61,7 @@ public sealed class NormalOffsetCurve2D : ICurve2D
     {
         var acceleration = source.SecondDerivative(amount);
         var length = acceleration.Length();
-        if (length <= StationarySpeed) return Vector2f.Zero;
+        if (length <= Curve2D.DerivativeEpsilon) return Vector2f.Zero;
 
         var lower = MathF.Max(0f, amount - JerkStep);
         var upper = MathF.Min(1f, amount + JerkStep);

@@ -29,7 +29,8 @@ public sealed class Track<T>
 
     public T Sample(float time)
     {
-        if (time <= Keys[0].Time) return Keys[0].Value;
+        // A single key is one value at any time, including NaN.
+        if (Keys.Length == 1 || time <= Keys[0].Time) return Keys[0].Value;
         if (time >= Keys[^1].Time) return Keys[^1].Value;
         // The first key after the time; the one before it starts the segment. A NaN time keeps the first segment.
         var next = Math.Clamp(OrderedSearch.UpperBound(Keys.AsSpan(), time, static key => key.Time), 1, Keys.Length - 1);

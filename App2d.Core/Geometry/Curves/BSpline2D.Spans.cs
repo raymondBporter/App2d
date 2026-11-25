@@ -3,12 +3,12 @@ namespace App2d.Core.Geometry.Curves;
 public readonly partial record struct BSpline2D
 {
     /// <summary>Knot insertion preserves the curve; this is not sampling. Cached with the existing prepared data.</summary>
-    internal PolynomialCurveSpan2D[] GetPolynomialSpans()
+    internal PolynomialCurveSpan2D[] PreparePolynomialSpans()
     {
         var prepared = Data;
         lock (prepared)
         {
-            if (prepared.RaycastSpans is { } cached) return cached;
+            if (prepared.PolynomialSpans is { } cached) return cached;
             var controls = ControlPoints;
             var sourceKnots = prepared.Knots;
             var points = new Vector2d[controls.Length];
@@ -28,7 +28,7 @@ public readonly partial record struct BSpline2D
             var spans = new List<PolynomialCurveSpan2D>();
             for (var i = degree; i < points.Length; i++)
                 if (knots[i] < knots[i + 1]) spans.Add(new(knots[i], knots[i + 1], points[(i - degree)..(i + 1)]));
-            return prepared.RaycastSpans = spans.ToArray();
+            return prepared.PolynomialSpans = spans.ToArray();
         }
     }
 

@@ -24,64 +24,112 @@ public static class CurveDistance2D
         return DistanceOnInterval(point, curve, from, to);
     }
 
-    internal static float DistanceOnInterval<TCurve>(Vector2f point, TCurve curve, double from, double to) where TCurve : ICurve2D
+    internal static float DistanceOnInterval(Vector2f point, ICurve2D curve, double from, double to)
     {
         if (from == to) return (float)(curve.Evaluate((float)from).ToVector2d() - point.ToVector2d()).Length();
         if (from == 0 && to == 1) return curve.Distance(point);
 
-        switch (curve)
+        // An arc has its own closed form. Everything made of polynomial pieces shares one solver; the rest is sampled.
+        return curve switch
         {
-            case LineSegmentCurve2D line:
-                return (float)Math.Sqrt(SegmentDistanceSquared(point.ToVector2d(), line.Start.ToVector2d(), line.End.ToVector2d(), from, to));
-            case Arc2D arc:
-                return arc.Distance(point, from, to);
-            case QuadraticBezier2D quadratic:
-                return quadratic.Distance(point, from, to);
-            case PolylineCurve2D polyline:
-                return PolylineDistance(point.ToVector2d(), polyline.Points, from, to);
-            case RoundedPolylineCurve2D rounded:
-                return rounded.Distance(point, from, to);
-            default:
-                return SampledDistance(point, curve, 128, from, to);
-        }
+            Arc2D arc => arc.Distance(point, from, to),
+            RoundedPolylineCurve2D rounded => rounded.Distance(point, from, to),
+            IPolynomialCurve2D polynomial => (float)Math.Sqrt(PolynomialDistanceSquared(point.ToVector2d(), polynomial.GetPolynomialSpans(), from, to, double.PositiveInfinity)),
+            _ => SampledDistance(point, curve, 128, from, to)
+        };
     }
 
-    private static float PolylineDistance(Vector2d point, ReadOnlySpan<Vector2f> points, double from, double to)
+    /// <summary>
+    /// The squared distance to the pieces inside [from, to], or the given starting value if none is nearer. A piece
+    /// whose control hull is already farther than the best so far is skipped without solving.
+    /// </summary>
+    internal static double PolynomialDistanceSquared(Vector2d point, PolynomialSpans2D spans, double from, double to, double nearestSquared)
     {
-        var segmentCount = points.Length - 1;
-        var first = from * segmentCount;
-        var last = to * segmentCount;
-        var nearestSquared = double.PositiveInfinity;
-        for (var i = (int)first; i < segmentCount && i <= last; i++)
+        Span<Vector2d> storage = spans.MaximumDegree < 32 ? stackalloc Vector2d[spans.MaximumDegree + 1] : new Vector2d[spans.MaximumDegree + 1];
+        for (var i = 0; i < spans.Count; i++)
         {
-            nearestSquared = Math.Min(nearestSquared, SegmentDistanceSquared(point,
-                points[i].ToVector2d(), points[i + 1].ToVector2d(), Math.Max(0, first - i), Math.Min(1, last - i)));
-        }
-        return (float)Math.Sqrt(nearestSquared);
-    }
-
-    internal static float RoundedSpanDistance(Vector2d point, PolynomialCurveSpan2D[] spans, double from, double to,
-        double nearestSquared)
-    {
-        foreach (var span in spans)
-        {
-            if (span.From > to) break;
-            var low = Math.Max(from, span.From);
-            var high = Math.Min(to, span.To);
+            var range = spans.Get(i, storage);
+            if (range.From > to) break;
+            var low = Math.Max(from, range.From);
+            var high = Math.Min(to, range.To);
             if (low > high) continue;
-            if (ControlBoundsDistanceSquared(point, span.Controls) >= nearestSquared) continue;
+            ReadOnlySpan<Vector2d> controls = storage[..range.ControlCount];
+            if (ControlBoundsDistanceSquared(point, controls) >= nearestSquared) continue;
 
-            var width = span.To - span.From;
-            var localFrom = (low - span.From) / width;
-            var localTo = (high - span.From) / width;
-            var controls = span.Controls;
-            var distanceSquared = controls.Length == 2
-                ? SegmentDistanceSquared(point, controls[0], controls[1], localFrom, localTo)
-                : QuadraticDistanceSquared(point, controls[0], controls[1], controls[2], localFrom, localTo);
+            var width = range.To - range.From;
+            var localFrom = (low - range.From) / width;
+            var localTo = (high - range.From) / width;
+            var distanceSquared = controls.Length switch
+            {
+                2 => SegmentDistanceSquared(point, controls[0], controls[1], localFrom, localTo),
+                3 => QuadraticDistanceSquared(point, controls[0], controls[1], controls[2], localFrom, localTo),
+                4 => CubicDistanceSquared(point, controls[0], controls[1], controls[2], controls[3], localFrom, localTo),
+                _ => SampledSpanDistanceSquared(point, controls, localFrom, localTo)
+            };
             nearestSquared = Math.Min(nearestSquared, distanceSquared);
             if (nearestSquared == 0) break;
         }
-        return (float)Math.Sqrt(nearestSquared);
+        return nearestSquared;
+    }
+
+    /// <summary>
+    /// The exact squared distance to a cubic Bézier over [from, to]. The nearest point is an end of the interval or
+    /// a parameter where the vector to the point is perpendicular to the tangent: a root of a degree-5 polynomial.
+    /// </summary>
+    internal static double CubicDistanceSquared(Vector2d point, Vector2d start, Vector2d control1, Vector2d control2, Vector2d end, double from, double to)
+    {
+        // B(t) - point in the power basis: c0 + c1 t + c2 t^2 + c3 t^3.
+        var firstEdge = control1 - start;
+        var secondEdge = control2 - control1;
+        var thirdEdge = end - control2;
+        var c0 = start - point;
+        var c1 = firstEdge * 3;
+        var c2 = (secondEdge - firstEdge) * 3;
+        var c3 = thirdEdge - secondEdge * 2 + firstEdge;
+
+        // The curve's own ends are taken from the controls, not summed back from the coefficients.
+        var first = from == 0 ? c0 : Cubic(from);
+        var last = to == 1 ? end - point : Cubic(to);
+        var nearestSquared = Math.Min(first.LengthSquared(), last.LengthSquared());
+        if (nearestSquared == 0 || from == to) return nearestSquared;
+
+        // (B - point) . B' in ascending powers of t.
+        Span<double> stationary =
+        [
+            c0.Dot(c1),
+            c1.Dot(c1) + 2 * c0.Dot(c2),
+            3 * c0.Dot(c3) + 3 * c1.Dot(c2),
+            4 * c1.Dot(c3) + 2 * c2.Dot(c2),
+            5 * c2.Dot(c3),
+            3 * c3.Dot(c3)
+        ];
+        var magnitude = 0d;
+        foreach (var coefficient in stationary) magnitude += Math.Abs(coefficient);
+        // A NaN or infinite control leaves nothing to solve and the chords report it; a curve that never moves has no stationary equation.
+        if (!double.IsFinite(magnitude)) return Math.Min(nearestSquared, SampledSpanDistanceSquared(point, [start, control1, control2, end], from, to));
+        if (magnitude == 0) return nearestSquared;
+
+        Span<double> roots = stackalloc double[5];
+        var count = PolynomialRoots.FindRealRoots(stationary, from, to, roots);
+        for (var i = 0; i < count; i++) nearestSquared = Math.Min(nearestSquared, Cubic(roots[i]).LengthSquared());
+        return nearestSquared;
+
+        Vector2d Cubic(double t) => ((c3 * t + c2) * t + c1) * t + c0;
+    }
+
+    // A piece with no closed-form solver here is measured against chords of its own Bézier.
+    private static double SampledSpanDistanceSquared(Vector2d point, ReadOnlySpan<Vector2d> controls, double from, double to)
+    {
+        const int Chords = 64;
+        var previous = BezierMath.EvaluateControls(controls, from);
+        var nearestSquared = double.PositiveInfinity;
+        for (var i = 1; i <= Chords; i++)
+        {
+            var next = BezierMath.EvaluateControls(controls, Interval.Lerp(from, to, i / (double)Chords));
+            nearestSquared = Math.Min(nearestSquared, SegmentDistanceSquared(point, previous, next, 0, 1));
+            previous = next;
+        }
+        return nearestSquared;
     }
 
     private static double ControlBoundsDistanceSquared(Vector2d point, ReadOnlySpan<Vector2d> controls)
