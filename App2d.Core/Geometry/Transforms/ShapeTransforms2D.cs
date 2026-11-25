@@ -19,7 +19,7 @@ public static class ShapeTransforms2D
     /// <param name="capsule">The local capsule.</param>
     /// <param name="pose">The local-to-world similarity.</param>
     /// <returns>The transformed endpoints and the uniformly scaled radius.</returns>
-    public static (Vector2f Start, Vector2f End, float Radius) Capsule(Capsule2D capsule, Similarity2D pose) => (pose.TransformPoint(capsule.Start), pose.TransformPoint(capsule.End), capsule.Radius * pose.Scale);
+    public static (Vector2f Start, Vector2f End, float Radius) Capsule(Capsule2 capsule, Similarity2D pose) => (pose.TransformPoint(capsule.Start), pose.TransformPoint(capsule.End), capsule.Radius * pose.Scale);
 
     /// <summary>The world unit normal and offset of a posed half-space.</summary>
     /// <param name="halfSpace">The local half-space.</param>
@@ -91,7 +91,7 @@ public static class ShapeTransforms2D
         {
             Circle2D circle => Circle2D.Builder.Create(circle.Radius * scale, circle.Center * scale),
             Ellipse2D ellipse => Ellipse2D.Builder.Create(ellipse.Radii * scale, ellipse.Center * scale, ellipse.Axis),
-            Capsule2D capsule => Capsule2D.Builder.Create(capsule.Start * scale, capsule.End * scale, capsule.Radius * scale),
+            Capsule2 capsule => Capsule2.Builder.Create(capsule.Start * scale, capsule.End * scale, capsule.Radius * scale),
             RoundedRectangle2D rounded => RoundedRectangle2D.Builder.Create(rounded.Center * scale, rounded.HalfSize * scale, rounded.Radius * scale, rounded.Axis),
             AxisAlignedRectangle2D rectangle => AxisAlignedRectangle2D.Builder.Create(rectangle.Min * scale, rectangle.Max * scale),
             Rectangle2D rectangle => Rectangle2D.Builder.Create(rectangle.Center * scale, rectangle.HalfSize * scale, rectangle.Axis),
@@ -135,10 +135,10 @@ public static class ShapeTransforms2D
                     var (center, radius) = Circle(circle, pose);
                     return Circle2D.Builder.Create(radius, center);
                 }
-            case Capsule2D capsule:
+            case Capsule2 capsule:
                 {
                     var (start, end, radius) = Capsule(capsule, pose);
-                    return Capsule2D.Builder.Create(start, end, radius);
+                    return Capsule2.Builder.Create(start, end, radius);
                 }
             case HalfSpace2D halfSpace:
                 {

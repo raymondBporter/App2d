@@ -6,7 +6,7 @@ using App2d.Core.Geometry.Primitives;
 namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>A filled capsule in local space: every point within <see cref="Radius"/> of the spine segment.</summary>
-public readonly partial record struct Capsule2D : IConvexShape2D
+public readonly partial record struct Capsule2 : IConvexShape2D
 {
     public const string Kind = "capsule";
 
@@ -14,7 +14,7 @@ public readonly partial record struct Capsule2D : IConvexShape2D
     /// <param name="start">The finite spine start; may equal <paramref name="end"/> for a circle.</param>
     /// <param name="end">The finite spine end.</param>
     /// <param name="radius">The finite, positive radius.</param>
-    public Capsule2D(Vector2f start, Vector2f end, float radius)
+    public Capsule2(Vector2f start, Vector2f end, float radius)
     {
         Start = start;
         End = end;

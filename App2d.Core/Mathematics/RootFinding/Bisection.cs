@@ -2,11 +2,13 @@
 
 internal static class Bisection
 {
-    public static double Bisect(Func<double, double> evaluate, double low, double high, double lowValue)
-        => Bisect(evaluate, static (function, x) => function(x), low, high, lowValue);
+    internal interface IEvaluator<TSelf> where TSelf : struct, IEvaluator<TSelf>
+    {
+        static abstract double Evaluate(ReadOnlySpan<double> coefficients, double parameter);
+    }
 
-    public static double Bisect<TState>(scoped TState state, Func<TState, double, double> evaluate, double low, double high, double lowValue)
-        where TState : allows ref struct
+    public static double Bisect<TEvaluator>(ReadOnlySpan<double> coefficients, double low, double high, double lowValue)
+        where TEvaluator : struct, IEvaluator<TEvaluator>
     {
         // Most brackets take about 53 iterations; this also covers the full double exponent range.
         for (var i = 0; i < 2048; i++)
@@ -17,7 +19,7 @@ internal static class Bisection
                 return middle;
             }
 
-            var value = evaluate(state, middle);
+            var value = TEvaluator.Evaluate(coefficients, middle);
             if (value == 0d)
             {
                 return middle;

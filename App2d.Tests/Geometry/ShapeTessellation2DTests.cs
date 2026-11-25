@@ -11,7 +11,7 @@ public sealed class ShapeTessellation2DTests
     public static TheoryData<IShape2D> FiniteShapes =>
     [
         Circle2D.Builder.Create(2), Ellipse2D.Builder.Create(new(2, 1)),
-        Capsule2D.Builder.Create(new(-1, 0), new(1, 0), 1),
+        Capsule2.Builder.Create(new(-1, 0), new(1, 0), 1),
         Rectangle2D.Builder.Create(Vector2f.Zero, new(4, 3)), AxisAlignedRectangle2D.Builder.Create(Vector2f.Zero, new(4, 3)),
         RoundedRectangle2D.Builder.Create(Vector2f.Zero, new(4, 3), .5f),
         Triangle2D.Builder.Create(Vector2f.Zero, new(4, 0), new(0, 3)),

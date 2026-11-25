@@ -35,8 +35,10 @@ public static class CurveRaycast2D
         switch (curve)
         {
             case ICurveSlice2D slice:
-                var width = (double)slice.To - slice.From;
-                return TryIntersectInterval(origin, direction, slice.SourceCurve, slice.From + width * from, slice.From + width * to, maxDistance, out hit);
+                var sliceFrom = (double)slice.From;
+                var sliceTo = (double)slice.To;
+                return TryIntersectInterval(origin, direction, slice.SourceCurve,
+                    Interval.Lerp(sliceFrom, sliceTo, from), Interval.Lerp(sliceFrom, sliceTo, to), maxDistance, out hit);
             case Arc2D arc:
                 return Raycast2D.TryArc(origin, direction, arc.Center, arc.Radius,
                     arc.StartAngleRadians + arc.SweepAngleRadians * from, arc.SweepAngleRadians * (to - from), maxDistance, out hit);
@@ -117,7 +119,7 @@ public static class CurveRaycast2D
         var found = false;
         for (var i = 0; i < count; i++)
         {
-            var point = Evaluate(controls, roots[i]);
+            var point = BezierMath.EvaluateControls<Vector2d, double>(controls, roots[i]);
             var distance = (point - rayOrigin).Dot(axis) / axisSquared;
             if (!double.IsFinite(distance) || distance < 0 || distance > float.MaxValue || distance > maxDistance || found && distance >= hit.Distance) continue;
             var tangent = Tangent(controls, roots[i]);
@@ -130,15 +132,6 @@ public static class CurveRaycast2D
         return found;
     }
 
-    private static Vector2d Evaluate(ReadOnlySpan<Vector2d> controls, double amount)
-    {
-        Span<Vector2d> work = controls.Length <= 32 ? stackalloc Vector2d[controls.Length] : new Vector2d[controls.Length];
-        controls.CopyTo(work);
-        for (var length = work.Length - 1; length > 0; length--)
-            for (var i = 0; i < length; i++) work[i] = work[i] * (1 - amount) + work[i + 1] * amount;
-        return work[0];
-    }
-
     private static Vector2d Tangent(ReadOnlySpan<Vector2d> controls, double amount)
     {
         Span<Vector2d> derivatives = controls.Length <= 32 ? stackalloc Vector2d[controls.Length] : new Vector2d[controls.Length];
@@ -146,7 +139,7 @@ public static class CurveRaycast2D
         for (var count = controls.Length - 1; count > 0; count--)
         {
             for (var i = 0; i < count; i++) derivatives[i] = derivatives[i + 1] - derivatives[i];
-            var derivative = Evaluate(derivatives[..count], amount);
+            var derivative = BezierMath.EvaluateControls<Vector2d, double>(derivatives[..count], amount);
             if (derivative.LengthSquared() > 0)
             {
                 // At a cusp use the first nonzero one-sided derivative. At u=1 use the incoming side.

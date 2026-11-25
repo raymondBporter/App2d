@@ -7,8 +7,10 @@ namespace App2d.Tests.Curves;
 public sealed class GenericCurveTests
 {
     [Fact]
-    public void BeziersSupportAllSixVectorTypesAndNormalizedDerivatives()
+    public void BeziersSupportScalarsAndAllSixVectorTypesWithNormalizedDerivatives()
     {
+        Check<float, float>(1f);
+        Check<double, double>(1d);
         Check<Vector2f, float>(Vector2f.UnitY);
         Check<Vector3f, float>(Vector3f.UnitZ);
         Check<Vector4f, float>(Vector4f.UnitW);
@@ -17,14 +19,15 @@ public sealed class GenericCurveTests
         Check<Vector4d, double>(Vector4d.UnitW);
     }
 
-    private static void Check<TVector, TReal>(TVector axis)
-        where TVector : unmanaged, IVector<TVector, TReal>
+    private static void Check<TValue, TReal>(TValue axis)
+        where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>,
+            IMultiplyOperators<TValue, TReal, TValue>, IAdditiveIdentity<TValue, TValue>
         where TReal : unmanaged, IFloatingPointIeee754<TReal>
     {
         var two = TReal.CreateChecked(2);
         var three = TReal.CreateChecked(3);
-        var q = new QuadraticBezier<TVector, TReal>(TVector.Zero, axis, axis * two);
-        var c = new CubicBezier<TVector, TReal>(TVector.Zero, axis, axis * two, axis * three);
+        var q = new QuadraticBezier<TValue, TReal>(TValue.AdditiveIdentity, axis, axis * two);
+        var c = new CubicBezier<TValue, TReal>(TValue.AdditiveIdentity, axis, axis * two, axis * three);
         foreach (var parameter in new[] { -.5, 0, .25, .5, .75, 1, 1.5 })
         {
             var t = TReal.CreateChecked(parameter);

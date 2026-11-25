@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Curves;
+
 namespace App2d.Core.Mathematics.RootFinding;
 
 /// <summary>Roots on a restricted Bernstein polynomial interval. No curve tessellation is involved.</summary>
@@ -37,15 +39,15 @@ internal static class BernsteinRoots
         var criticalCount = Find(derivative, from, to, critical);
         var count = 0;
         var low = from;
-        var lowValue = Evaluate(normalized, low);
+        var lowValue = Evaluator.Evaluate(normalized, low);
         for (var i = 0; i <= criticalCount; i++)
         {
             var high = i == criticalCount ? to : critical[i];
-            var highValue = Evaluate(normalized, high);
+            var highValue = Evaluator.Evaluate(normalized, high);
             if (NearZero(lowValue, degree)) Append(roots, ref count, low);
             if (!NearZero(lowValue, degree) && !NearZero(highValue, degree) && RootFinding.OppositeSigns(lowValue, highValue))
             {
-                Append(roots, ref count, Bisection.Bisect<ReadOnlySpan<double>>(normalized, Evaluate, low, high, lowValue));
+                Append(roots, ref count, Bisection.Bisect<Evaluator>(normalized, low, high, lowValue));
             }
             low = high;
             lowValue = highValue;
@@ -54,13 +56,10 @@ internal static class BernsteinRoots
         return count;
     }
 
-    private static double Evaluate(ReadOnlySpan<double> controls, double amount)
+    private readonly struct Evaluator : Bisection.IEvaluator<Evaluator>
     {
-        Span<double> work = controls.Length <= 32 ? stackalloc double[controls.Length] : new double[controls.Length];
-        controls.CopyTo(work);
-        for (var length = work.Length - 1; length > 0; length--)
-            for (var i = 0; i < length; i++) work[i] = work[i] * (1 - amount) + work[i + 1] * amount;
-        return work[0];
+        public static double Evaluate(ReadOnlySpan<double> coefficients, double parameter) =>
+            BezierMath.EvaluateControls<double, double>(coefficients, parameter);
     }
 
     private static bool NearZero(double value, int degree) => Math.Abs(value) <= RootTolerance * (degree + 1);

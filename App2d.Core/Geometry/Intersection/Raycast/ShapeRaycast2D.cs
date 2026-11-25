@@ -31,7 +31,7 @@ public static class ShapeRaycast2D
                 }
                 hit = new(frame.FromFrame(frameHit.Point), frame.FromFrameDirection(frameHit.Normal), frameHit.Distance);
                 return true;
-            case Capsule2D capsule:
+            case Capsule2 capsule:
                 return Raycast2D.TryCapsule(origin, direction, capsule.Start, capsule.End, capsule.Radius, maxDistance, out hit);
             case RoundedRectangle2D rounded:
                 return Raycast2D.TryRoundedRectangle(origin, direction, rounded, maxDistance, out hit);

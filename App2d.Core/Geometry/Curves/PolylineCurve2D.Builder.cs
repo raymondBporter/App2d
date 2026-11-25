@@ -20,5 +20,12 @@ public readonly partial record struct PolylineCurve2D
     public static class Builder
     {
         public static PolylineCurve2D Create(IEnumerable<Vector2f> points) => new PolylineCurve2D(points).Validated();
+
+        internal static PolylineCurve2D CreateFromSpan(ReadOnlySpan<Vector2f> points)
+        {
+            var polyline = new PolylineCurve2D { Points = points };
+            polyline.Validate();
+            return polyline;
+        }
     }
 }

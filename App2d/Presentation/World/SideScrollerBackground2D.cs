@@ -18,7 +18,7 @@ public static class SideScrollerBackground2D
         for (var i = 0; i < 8; i++)
         {
             var width = 150f + i % 3 * 45f;
-            var cloud = new WorldObject2D(Capsule2D.Builder.Create(
+            var cloud = new WorldObject2D(Capsule2.Builder.Create(
                 new Vector2f(-width / 2f, 0f), new Vector2f(width / 2f, 0f), 38f), cloudShader)
             {
                 Position = new Vector2f(-850f + i * 470f, 210f + i % 3 * 95f)

@@ -28,7 +28,7 @@ public static class ShapeDistance2D
         {
             Circle2D circle => Distance2D.SignedDistanceToCircle(point, circle.Center, circle.Radius),
             Ellipse2D ellipse => Distance2D.SignedDistanceToEllipse(ellipse.Frame.ToFrame(point), Vector2f.Zero, ellipse.Radii),
-            Capsule2D capsule => Distance2D.SignedDistanceToCapsule(point, capsule.Start, capsule.End, capsule.Radius),
+            Capsule2 capsule => Distance2D.SignedDistanceToCapsule(point, capsule.Start, capsule.End, capsule.Radius),
             RoundedRectangle2D rounded => Distance2D.SignedDistanceToRectangle(rounded.Frame.ToFrame(point), -rounded.InnerHalfSize, rounded.InnerHalfSize) - rounded.Radius,
             Rectangle2D rectangle => Distance2D.SignedDistanceToRectangle(rectangle.Frame.ToFrame(point), -rectangle.HalfSize, rectangle.HalfSize),
             IRect2f rectangle => Distance2D.SignedDistanceToRectangle(point, rectangle.Min, rectangle.Max),

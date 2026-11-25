@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics.RootFinding;
 using App2d.Core.Mathematics.Serialization;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -157,23 +158,25 @@ public static class Easing<TReal> where TReal : IFloatingPointIeee754<TReal>
     private static TReal BezierParameter(TReal time, TReal firstTime, TReal secondTime)
     {
         if (time == TReal.Zero || time == TReal.One || TReal.IsNaN(time)) return time;
-        var lower = TReal.Zero;
-        var upper = TReal.One;
-        var parameter = time;
-        // Safeguarded Newton steps converge quickly; bisection also handles flat or vertical time tangents.
-        for (var iteration = 0; iteration < 2048; iteration++)
-        {
-            var value = BezierMath.Cubic<TReal, TReal>(TReal.Zero, firstTime, secondTime, TReal.One, parameter);
-            if (value == time) return parameter;
-            if (value < time) lower = parameter;
-            else upper = parameter;
-            var slope = BezierMath.CubicDerivative<TReal, TReal>(TReal.Zero, firstTime, secondTime, TReal.One, parameter);
-            var next = parameter - (value - time) / slope;
-            if (!(next > lower && next < upper)) next = lower + (upper - lower) / Two;
-            if (next == parameter || next == lower || next == upper) return parameter;
-            parameter = next;
-        }
+        BracketedNewton.TrySolve(new BezierTime(firstTime, secondTime), time, 2048, out var parameter);
         return parameter;
+    }
+
+    private readonly struct BezierTime(TReal firstTime, TReal secondTime) : BracketedNewton.IFunction<BezierTime, TReal>
+    {
+        private readonly TReal _firstTime = firstTime;
+        private readonly TReal _secondTime = secondTime;
+
+        public static TReal Evaluate(BezierTime function, TReal parameter) =>
+            BezierMath.Cubic(TReal.Zero, function._firstTime, function._secondTime, TReal.One, parameter);
+
+        public static TReal Derivative(BezierTime function, TReal parameter) =>
+            BezierMath.CubicDerivative(TReal.Zero, function._firstTime, function._secondTime, TReal.One, parameter);
+
+        public static TReal Midpoint(TReal lower, TReal upper) => lower + (upper - lower) / Two;
+
+        public static bool HasConverged(TReal parameter, TReal next, TReal lower, TReal upper) =>
+            next == parameter || next == lower || next == upper;
     }
 
     private static TReal BezierValueDerivative(TReal parameter, TReal begin, TReal firstTime, TReal firstValue,

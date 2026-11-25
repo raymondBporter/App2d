@@ -181,7 +181,7 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
             var start = _animator.Action?.Cue("rush")?.Seconds ?? config.ChargeStartSeconds;
             var finish = _animator.Action?.Cue("brake")?.Seconds ?? config.ChargeEndSeconds;
             var speed = config.ChargeSpeed > 0 && at >= start && !_chargeBlocked
-                ? config.ChargeSpeed * Math.Clamp(1 - (at - finish) / config.BrakeSeconds, 0, 1) : 0;
+                ? config.ChargeSpeed * Realf.Clamp01(1 - (at - finish) / config.BrakeSeconds) : 0;
             if (speed > 0 && config.RespectTerrain && !CanAdvance(dt, _facing, speed))
             {
                 _chargeBlocked = true;

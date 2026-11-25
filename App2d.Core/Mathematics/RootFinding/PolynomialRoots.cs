@@ -123,7 +123,7 @@ public static class PolynomialRoots
 
             if (RootFinding.OppositeSigns(lowValue, highValue))
             {
-                Append(roots, ref count, Bisection.Bisect(coefficients, static (state, x) => Evaluate(state, x, detectRepeatedRoot: false), low, high, lowValue));
+                Append(roots, ref count, Bisection.Bisect<Evaluator>(coefficients, low, high, lowValue));
             }
 
             low = high;
@@ -135,6 +135,12 @@ public static class PolynomialRoots
         }
 
         return count;
+    }
+
+    private readonly struct Evaluator : Bisection.IEvaluator<Evaluator>
+    {
+        public static double Evaluate(ReadOnlySpan<double> coefficients, double parameter) =>
+            PolynomialRoots.Evaluate(coefficients, parameter, detectRepeatedRoot: false);
     }
 
     private static bool TryFindCubicCriticalPoints(ReadOnlySpan<double> derivative, Span<double> roots, out int count)

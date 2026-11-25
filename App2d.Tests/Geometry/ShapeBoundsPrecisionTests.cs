@@ -24,9 +24,9 @@ public sealed class ShapeBoundsPrecisionTests
         Assert.Equal(expected, rectangle.Center);
         Assert.Equal(expected.X, rectangle.MidX);
         Assert.Equal(expected.Y, rectangle.MidY);
-        var capsule = Capsule2D.Builder.Create(a, b, .5f);
+        var capsule = Capsule2.Builder.Create(a, b, .5f);
         Assert.Equal(expected, capsule.Center);
-        Assert.Equal(expected, Capsule2D.Builder.Create(b, a, .5f).Center);
+        Assert.Equal(expected, Capsule2.Builder.Create(b, a, .5f).Center);
         Assert.Equal(expected, ShapeBounds2D.CalculateBoundingCircle(capsule).Center);
     }
 

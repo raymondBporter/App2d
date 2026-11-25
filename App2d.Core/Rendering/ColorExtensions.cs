@@ -11,7 +11,7 @@ public static class ColorExtensions
     public static Color4b WithAlpha(this Color4b color, float alpha)
     {
         Ensure.Finite(alpha);
-        color.A = (byte)MathF.Round(Math.Clamp(alpha, 0f, 1f) * 255f);
+        color.A = (byte)MathF.Round(Realf.Clamp01(alpha) * 255f);
         return color;
     }
 
@@ -19,7 +19,7 @@ public static class ColorExtensions
     public static Color4b ScaleAlpha(this Color4b color, float opacity)
     {
         Ensure.Finite(opacity);
-        color.A = (byte)(color.A * Math.Clamp(opacity, 0f, 1f));
+        color.A = (byte)(color.A * Realf.Clamp01(opacity));
         return color;
     }
 

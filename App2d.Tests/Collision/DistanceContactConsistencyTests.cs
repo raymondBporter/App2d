@@ -10,7 +10,7 @@ public sealed class DistanceContactConsistencyTests
     public void SignedDistancesAgreeWithExistingContactDepthsAcrossSupportedPairsAndPoses()
     {
         IShape2D circle = Circle2D.Builder.Create(1.3f, new(.2f, -.1f));
-        IShape2D capsule = Capsule2D.Builder.Create(new(-1.5f, -.2f), new(1, .4f), .6f);
+        IShape2D capsule = Capsule2.Builder.Create(new(-1.5f, -.2f), new(1, .4f), .6f);
         IShape2D rectangle = Rectangle2D.Builder.CreateFromSize(2, 3);
         IShape2D polygon = ConvexPolygon2D.Builder.Create([new(-1, -1), new(2, -1), new(.5f, 2)]);
         IShape2D triangle = Triangle2D.Builder.Create(new(-1, -1), new(2, -1), new(.5f, 2));

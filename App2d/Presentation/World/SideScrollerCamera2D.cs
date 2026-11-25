@@ -196,7 +196,7 @@ public sealed class SideScrollerCamera2D
             return maximumRate;
         }
 
-        var urgency = Math.Clamp(distance / (halfViewExtent * 0.7f), 0f, 1f);
+        var urgency = Realf.Clamp01(distance / (halfViewExtent * 0.7f));
         return float.Lerp(normalRate, maximumRate, urgency);
     }
 

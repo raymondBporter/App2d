@@ -58,7 +58,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
     private void Draw(Burst burst)
     {
         var live = Enabled && burst.Age < burst.Duration;
-        var t = Math.Clamp(burst.Age / burst.Duration, 0, 1);
+        var t = Realf.Clamp01(burst.Age / burst.Duration);
         for (var i = 0; i < burst.Pieces.Length; i++)
         {
             var (edge, fill) = burst.Pieces[i];

@@ -37,7 +37,7 @@ public static class ShapeVertices2D
         return shape switch
         {
             Circle2D => 1,
-            Capsule2D => 2,
+            Capsule2 => 2,
             RoundedRectangle2D rounded when rounded.InnerHalfSize == Vector2f.Zero => 1,
             RoundedRectangle2D rounded when rounded.InnerHalfSize.X == 0f || rounded.InnerHalfSize.Y == 0f => 2,
             RoundedRectangle2D => 4,
@@ -71,7 +71,7 @@ public static class ShapeVertices2D
                 vertices[0] = circle.Center;
                 radius = circle.Radius;
                 break;
-            case Capsule2D capsule:
+            case Capsule2 capsule:
                 vertices[0] = capsule.Start;
                 vertices[1] = capsule.End;
                 radius = capsule.Radius;
@@ -110,7 +110,7 @@ public static class ShapeVertices2D
         return shape switch
         {
             Circle2D or Ellipse2D => roundSegments,
-            Capsule2D => 2 * (roundSegments / 2 + 1),
+            Capsule2 => 2 * (roundSegments / 2 + 1),
             RoundedRectangle2D => checked(4 * (cornerSegments + 1)),
             Rectangle2D => 4,
             IRect2f => 4,
@@ -142,7 +142,7 @@ public static class ShapeVertices2D
                 VertexGenerator2D.WriteEllipse(vertices[..count], Vector2f.Zero, ellipse.Radii);
                 ellipse.Frame.MapFromFrame(vertices[..count]);
                 break;
-            case Capsule2D capsule:
+            case Capsule2 capsule:
                 VertexGenerator2D.WriteCapsule(vertices, capsule.Start, capsule.End, capsule.Radius, roundSegments / 2);
                 break;
             case RoundedRectangle2D rounded:

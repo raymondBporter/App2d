@@ -149,7 +149,7 @@ public sealed class VegetationPatch2D
         var noise = 0.65f * ValueNoise(worldX / style.PatchWidth) +
             0.35f * ValueNoise(worldX / (style.PatchWidth * 0.37f) + 17.3f);
         var threshold = 1f - style.Coverage;
-        var t = Math.Clamp((noise - threshold + 0.1f) / 0.2f, 0f, 1f);
+        var t = Realf.Clamp01((noise - threshold + 0.1f) / 0.2f);
         return Easingf.SmoothStepValue(t);
     }
 

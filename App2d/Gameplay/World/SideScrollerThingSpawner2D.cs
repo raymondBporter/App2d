@@ -86,7 +86,7 @@ internal sealed class SideScrollerThingSpawner2D(
 
     private Shieldback2D CreateShieldback(Vector2f position)
     {
-        var spatialObject = new SpatialObject2D(Capsule2D.Builder.Create(new Vector2f(-19f, 0f), new Vector2f(19f, 0f), 22f))
+        var spatialObject = new SpatialObject2D(Capsule2.Builder.Create(new Vector2f(-19f, 0f), new Vector2f(19f, 0f), 22f))
         {
             Position = position
         };

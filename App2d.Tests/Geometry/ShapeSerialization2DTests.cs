@@ -14,7 +14,7 @@ public sealed class ShapeSerialization2DTests
     {
         { nameof(Circle2D), Circle2D.Kind },
         { nameof(Ellipse2D), Ellipse2D.Kind },
-        { nameof(Capsule2D), Capsule2D.Kind },
+        { nameof(Capsule2), Capsule2.Kind },
         { nameof(Rectangle2D), Rectangle2D.Kind },
         { nameof(RoundedRectangle2D), RoundedRectangle2D.Kind },
         { nameof(AxisAlignedRectangle2D), AxisAlignedRectangle2D.Kind },
@@ -29,7 +29,7 @@ public sealed class ShapeSerialization2DTests
     {
         nameof(Circle2D) => Circle2D.Builder.Create(1.5f, new(1, -2)),
         nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(2, 1), new(-1, .5f)),
-        nameof(Capsule2D) => Capsule2D.Builder.Create(new(-1, 0), new(1, .5f), .3f),
+        nameof(Capsule2) => Capsule2.Builder.Create(new(-1, 0), new(1, .5f), .3f),
         nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
         nameof(RoundedRectangle2D) => RoundedRectangle2D.Builder.Create(new(-2, -1), new(2, 1), .4f),
         nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
@@ -107,12 +107,12 @@ public sealed class ShapeSerialization2DTests
     [Fact]
     public void GeometryWorksInsideExistingAuthoredJsonOptions()
     {
-        var envelope = new ShapeEnvelope { Hit = new Capsule2D { Start = new(0, 0), End = new(2, 0), Radius = .5f }.Validated() };
+        var envelope = new ShapeEnvelope { Hit = new Capsule2 { Start = new(0, 0), End = new(2, 0), Radius = .5f }.Validated() };
         var json = JsonSerializer.Serialize(envelope, JsonProfiles.Objects);
         Assert.Contains("\"kind\": \"capsule\"", json);
         Assert.Contains("\"radius\": 0.5", json);
         var restored = JsonSerializer.Deserialize<ShapeEnvelope>(json, JsonProfiles.Objects)!;
-        Assert.Equal(.5f, Assert.IsType<Capsule2D>(restored.Hit.Validated()).Radius);
+        Assert.Equal(.5f, Assert.IsType<Capsule2>(restored.Hit.Validated()).Radius);
     }
 
     [Fact]

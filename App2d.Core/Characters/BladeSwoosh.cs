@@ -123,7 +123,7 @@ public sealed class BladeSwoosh
         var style = Style;
         var head = _swinging ? _history[^1].Time : _end;
         var reach = MathF.Max(_start, head - style.HistorySeconds);
-        var clear = _swinging ? 0 : Math.Clamp((_now - _end) / style.ClearSeconds, 0, 1);
+        var clear = _swinging ? 0 : Realf.Clamp01((_now - _end) / style.ClearSeconds);
         var tail = reach + (head - reach) * clear;
         if (head - tail < 1e-4f)
         {
@@ -201,7 +201,7 @@ public sealed class BladeSwoosh
         var end = u1 < ub - 1e-6f ? Lerp(a, b, (u1 - ua) / MathF.Max(1e-6f, ub - ua)) : b;
         (Vector3f Near, Vector3f Far) Edge(Section s, float u)
         {
-            var width = Style.Coverage * MathF.Pow(MathF.Sin(Math.Clamp(u, 0, 1) * MathF.PI / 2), Style.Taper);
+            var width = Style.Coverage * MathF.Pow(MathF.Sin(Realf.Clamp01(u) * MathF.PI / 2), Style.Taper);
             var inner = s.Tip + (s.Guard - s.Tip) * width;
             return (Vector3f.Lerp(s.Tip, inner, near(u)), Vector3f.Lerp(s.Tip, inner, far(u)));
         }
@@ -215,7 +215,7 @@ public sealed class BladeSwoosh
     private static float Inner(SwooshStyle style, float u)
     {
         var start = style.SplitDepth * style.InnerStart;
-        return u <= start ? 0 : MathF.Pow(Math.Clamp((u - start) / (style.SplitDepth - start), 0, 1), .7f);
+        return u <= start ? 0 : MathF.Pow(Realf.Clamp01((u - start) / (style.SplitDepth - start)), .7f);
     }
 
     /// <summary>Dense sections from <paramref name="tail"/> to <paramref name="head"/>, each step a rigid rotation between recorded blades.</summary>
@@ -275,7 +275,7 @@ public sealed class BladeSwoosh
     /// <summary>The blade a fraction <paramref name="u"/> of the way from <paramref name="a"/> to <paramref name="b"/>, turning about their shared pivot or axis.</summary>
     private static Section Rotate(Blade a, Blade b, float u)
     {
-        u = Math.Clamp(u, 0, 1);
+        u = Realf.Clamp01(u);
         var (guard, tip) = b.Turn.Interpolate(a.Guard, a.Tip, b.Guard, b.Tip, u);
         return new(a.Time + (b.Time - a.Time) * u, guard, tip, float.Lerp(a.Layer, b.Layer, u));
     }

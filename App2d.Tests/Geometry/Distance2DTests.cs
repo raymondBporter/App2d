@@ -15,7 +15,7 @@ public sealed class Distance2DTests
     {
         IShape2D[] shapes =
         [
-            Circle2D.Builder.Create(2), Capsule2D.Builder.Create(new(0, -1), new(0, 1), 2),
+            Circle2D.Builder.Create(2), Capsule2.Builder.Create(new(0, -1), new(0, 1), 2),
             Rectangle2D.Builder.CreateFromSize(4, 6),
             ConvexPolygon2D.Builder.Create([new(-2, -3), new(2, -3), new(2, 3), new(-2, 3)]),
             HalfSpace2D.Builder.Create(Vector2f.UnitX, 2)
@@ -117,13 +117,13 @@ public sealed class Distance2DTests
     [Fact]
     public void CrossingCapsulesNeedMoreThanTheirCombinedRadiiToEscape()
     {
-        var horizontal = Capsule2D.Builder.Create(new(-2, 0), new(2, 0), 1);
-        var vertical = Capsule2D.Builder.Create(new(0, -2), new(0, 2), 1);
+        var horizontal = Capsule2.Builder.Create(new(-2, 0), new(2, 0), 1);
+        var vertical = Capsule2.Builder.Create(new(0, -2), new(0, 2), 1);
         AssertPair(horizontal, vertical, -4);
         Assert.Equal(-4f, Distance2D.SignedDistanceBetweenCapsules(horizontal.Start, horizontal.End, 1, vertical.Start, vertical.End, 1));
-        AssertPair(horizontal, Capsule2D.Builder.Create(new(-2, 1.5f), new(2, 1.5f), 1), -.5f);
-        AssertPair(horizontal, Capsule2D.Builder.Create(new(5, 0), new(7, 0), 1), 1);
-        AssertPair(Capsule2D.Builder.Create(default, default, 1), Capsule2D.Builder.Create(new(5, 0), new(5, 0), 1), 3);
+        AssertPair(horizontal, Capsule2.Builder.Create(new(-2, 1.5f), new(2, 1.5f), 1), -.5f);
+        AssertPair(horizontal, Capsule2.Builder.Create(new(5, 0), new(7, 0), 1), 1);
+        AssertPair(Capsule2.Builder.Create(default, default, 1), Capsule2.Builder.Create(new(5, 0), new(5, 0), 1), 3);
         AssertPair(Circle2D.Builder.Create(1), horizontal, -2);
     }
 
@@ -131,8 +131,8 @@ public sealed class Distance2DTests
     public void CapsulePolygonPairsUseBothEndCapsAndInteriorPenetration()
     {
         var box = Rectangle2D.Builder.CreateFromSize(2, 2);
-        AssertPair(Capsule2D.Builder.Create(new(-2, 0), new(2, 0), 1), box, -2);
-        AssertPair(Capsule2D.Builder.Create(new(4, 5), new(4, 7), 1), box, 4);
+        AssertPair(Capsule2.Builder.Create(new(-2, 0), new(2, 0), 1), box, -2);
+        AssertPair(Capsule2.Builder.Create(new(4, 5), new(4, 7), 1), box, 4);
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public sealed class Distance2DTests
         var floor = HalfSpace2D.Builder.Create(new(0, 2), 4); // boundary y = 2
         AssertPair(Circle2D.Builder.Create(1, new(0, 5)), floor, 2);
         AssertPair(Circle2D.Builder.Create(1), floor, -3);
-        AssertPair(Capsule2D.Builder.Create(new(0, 3), new(0, 5), 1), floor, 0);
+        AssertPair(Capsule2.Builder.Create(new(0, 3), new(0, 5), 1), floor, 0);
         AssertPair(Rectangle2D.Builder.CreateFromSize(2, 4), floor, -4);
     }
 

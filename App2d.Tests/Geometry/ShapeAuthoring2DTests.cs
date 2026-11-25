@@ -13,7 +13,7 @@ public sealed class ShapeAuthoring2DTests
     [InlineData(Rectangle2D.Kind)]
     [InlineData(AxisAlignedRectangle2D.Kind)]
     [InlineData(Circle2D.Kind)]
-    [InlineData(Capsule2D.Kind)]
+    [InlineData(Capsule2.Kind)]
     [InlineData(Ellipse2D.Kind)]
     [InlineData(Triangle2D.Kind)]
     [InlineData(ConvexPolygon2D.Kind)]
@@ -33,7 +33,7 @@ public sealed class ShapeAuthoring2DTests
     public void TallBoxesBecomeVerticalCapsulesAndUnknownOrUnboundedSourcesAreRejected()
     {
         var tall = Rectangle2D.Builder.FromSize(1, 3);
-        var capsule = Assert.IsType<Capsule2D>(tall.WithKind(Capsule2D.Kind));
+        var capsule = Assert.IsType<Capsule2>(tall.WithKind(Capsule2.Kind));
         Assert.Equal(new Vector2f(0, -1), capsule.Start);
         Assert.Equal(new Vector2f(0, 1), capsule.End);
         Assert.Equal(.5f, capsule.Radius);

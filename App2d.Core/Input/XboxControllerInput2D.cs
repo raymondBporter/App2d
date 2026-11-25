@@ -89,7 +89,7 @@ internal sealed class XboxControllerInput2D
     {
         var magnitude = stick.Length();
         return magnitude <= StickDeadZone ? Vector2f.Zero : stick / magnitude *
-            Math.Clamp((magnitude - StickDeadZone) / (short.MaxValue - StickDeadZone), 0f, 1f);
+            Realf.Clamp01((magnitude - StickDeadZone) / (short.MaxValue - StickDeadZone));
     }
 
 #pragma warning disable SYSLIB1054

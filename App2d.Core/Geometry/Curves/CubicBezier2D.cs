@@ -106,38 +106,10 @@ public readonly partial record struct CubicBezier2D : ICurve2D
                 // The standard control times make X(u) linear; these common presets need no inverse solve.
                 if (Control1.X == Interval.Lerp(Start.X, End.X, 1f / 3f) && Control2.X == Interval.Lerp(Start.X, End.X, 2f / 3f))
                     return (float)target;
-                var a = 1 + 3 * (first - second);
-                var b = 3 * (second - 2 * first);
-                var c = 3 * first;
-                var low = 0d;
-                var high = 1d;
-                var amount = target;
-                for (var i = 0; i < 12; i++)
+                var polynomial = new NormalizedX(1 + 3 * (first - second), 3 * (second - 2 * first), 3 * first);
+                if (BracketedNewton.TrySolve(polynomial, target, 12, out var amount))
                 {
-                    var value = ((a * amount + b) * amount + c) * amount;
-                    if (value == target)
-                    {
-                        return (float)amount;
-                    }
-                    if (value < target)
-                    {
-                        low = amount;
-                    }
-                    else
-                    {
-                        high = amount;
-                    }
-                    var derivative = (3 * a * amount + 2 * b) * amount + c;
-                    var next = amount - (value - target) / derivative;
-                    if (!(next > low && next < high))
-                    {
-                        next = (low + high) / 2;
-                    }
-                    if ((float)next == (float)amount)
-                    {
-                        return (float)amount;
-                    }
-                    amount = next;
+                    return (float)amount;
                 }
             }
         }
@@ -146,6 +118,24 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         var count = FindParametersAtX(x, parameters);
         return count == 1 ? (float)parameters[0]
             : throw new InvalidOperationException("The curve must have exactly one parameter at the requested X coordinate.");
+    }
+
+    private readonly struct NormalizedX(double cubic, double quadratic, double linear) : BracketedNewton.IFunction<NormalizedX, double>
+    {
+        private readonly double _cubic = cubic;
+        private readonly double _quadratic = quadratic;
+        private readonly double _linear = linear;
+
+        public static double Evaluate(NormalizedX function, double parameter) =>
+            ((function._cubic * parameter + function._quadratic) * parameter + function._linear) * parameter;
+
+        public static double Derivative(NormalizedX function, double parameter) =>
+            (3 * function._cubic * parameter + 2 * function._quadratic) * parameter + function._linear;
+
+        public static double Midpoint(double lower, double upper) => (lower + upper) / 2;
+
+        public static bool HasConverged(double parameter, double next, double lower, double upper) =>
+            (float)next == (float)parameter;
     }
 
     public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);

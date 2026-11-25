@@ -58,7 +58,7 @@ public static class ShapeTessellation2D
     {
         Circle2D circle => CurveSegments(circle.Radius, localToView),
         Ellipse2D ellipse => CurveSegments(MathF.Max(ellipse.Radii.X, ellipse.Radii.Y), localToView),
-        Capsule2D capsule => CurveSegments(capsule.Radius, localToView),
+        Capsule2 capsule => CurveSegments(capsule.Radius, localToView),
         _ => 32
     };
 

@@ -71,7 +71,7 @@ public readonly record struct SegmentTurn3D(float Angle, Vector3f Axis)
     /// </summary>
     public (Vector3f Base, Vector3f Tip) Interpolate(Vector3f fromBase, Vector3f fromTip, Vector3f toBase, Vector3f toTip, float u)
     {
-        u = Math.Clamp(u, 0, 1);
+        u = Realf.Clamp01(u);
         if (!Planar)
         {
             var along = fromTip - fromBase;

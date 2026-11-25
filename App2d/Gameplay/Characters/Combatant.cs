@@ -99,7 +99,7 @@ public sealed record CharacterAction(string Name, SkeletonClip2D Clip)
         var weight = 1f;
         if (BlendIn > 0) weight = MathF.Min(weight, (float)seconds / BlendIn);
         if (BlendOut > 0) weight = MathF.Min(weight, (Clip.Duration - (float)seconds) / BlendOut);
-        return Math.Clamp(weight, 0, 1);
+        return Realf.Clamp01(weight);
     }
 }
 

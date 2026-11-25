@@ -9,7 +9,7 @@ public sealed class ShapeVertices2DTests
     public static TheoryData<string> ExactCoreShapes =>
     [
         nameof(Circle2D),
-        nameof(Capsule2D),
+        nameof(Capsule2),
         nameof(Rectangle2D),
         nameof(AxisAlignedRectangle2D),
         nameof(RoundedRectangle2D),
@@ -23,7 +23,7 @@ public sealed class ShapeVertices2DTests
     private static IConvexShape2D CreateShape(string shapeName) => shapeName switch
     {
         nameof(Circle2D) => Circle2D.Builder.Create(1.5f, new(1, 2)),
-        nameof(Capsule2D) => Capsule2D.Builder.Create(new(-2, 1), new(3, 2), .3f),
+        nameof(Capsule2) => Capsule2.Builder.Create(new(-2, 1), new(3, 2), .3f),
         nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
         nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
         nameof(RoundedRectangle2D) => RoundedRectangle2D.Builder.Create(new(-2, -1), new(2, 1), .5f),
@@ -145,7 +145,7 @@ public sealed class ShapeVertices2DTests
     public void PlacedOutlinesTransformTheWrittenSpanAndLeaveExtraStorageUntouched()
     {
         // Runtime objects retain an IShape2D. Box the value once, before measuring outline work.
-        IShape2D capsule = Capsule2D.Builder.Create(new(-2, 1), new(3, 2), .3f);
+        IShape2D capsule = Capsule2.Builder.Create(new(-2, 1), new(3, 2), .3f);
         Span<Vector2f> local = stackalloc Vector2f[capsule.GetOutlineVertCount(24)];
         capsule.GetOutlineVerts(local, 24);
         Span<Vector2f> buffer = stackalloc Vector2f[40];

@@ -18,5 +18,5 @@ public sealed class LinearGradientShader(Color4b startColor, Color4b endColor) :
 {
     public Color4b BaseColor => Color4b.White;
     public Color4b GetVertexColor(Vector2f position, Rect2f bounds) =>
-        Color4b.Lerp(startColor, endColor, bounds.Size.Y > 0f ? Clamping.Clamp01((bounds.Max.Y - position.Y) / bounds.Size.Y) : 0f);
+        Color4b.Lerp(startColor, endColor, bounds.Size.Y > 0f ? Realf.Clamp01((bounds.Max.Y - position.Y) / bounds.Size.Y) : 0f);
 }

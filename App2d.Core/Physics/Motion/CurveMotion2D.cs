@@ -46,7 +46,7 @@ public sealed class CurveMotion2D : IKinematicMotion2D
         var progress = CheckedProgress(Progress.Sample(phase));
         var derivative = Progress.Derivative(phase);
         Ensure.Finite(derivative, nameof(Progress));
-        return Curve.EvaluateDerivative(Clamping.Clamp01(progress)) * (float)(derivative / PeriodSeconds);
+        return Curve.EvaluateDerivative(Realf.Clamp01(progress)) * (float)(derivative / PeriodSeconds);
     }
 
     private Vector2f EvaluateProgress(float progress)

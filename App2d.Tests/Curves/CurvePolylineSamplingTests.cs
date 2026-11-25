@@ -29,6 +29,17 @@ public sealed class CurvePolylineSamplingTests
     }
 
     [Fact]
+    public void PolylineSamplingKeepsExactVerticesWhenNormalizedParametersRound()
+    {
+        var corners = Enumerable.Range(0, 14).Select(i => new Vector2f(i, i % 2)).ToArray();
+        var curve = PolylineCurve2D.Builder.Create(corners);
+
+        var sampled = Curve2D.ToPolyline(curve);
+        Assert.Equal(corners, sampled.Points.ToArray());
+        Assert.Equal(corners, Curve2D.ToPolyline((ICurve2D)curve).Points.ToArray());
+    }
+
+    [Fact]
     public void CubicSplinePositionAndSlopeAgreeAcrossInteriorKnots()
     {
         var spline = BSpline2D.Builder.Create([new(0, 0), new(100, 0), new(150, 130), new(200, -100), new(300, 50), new(400, 0)]);

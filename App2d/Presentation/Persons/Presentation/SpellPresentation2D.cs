@@ -74,7 +74,7 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D<SoundEffect2D> sounds
     {
         if (_state.Spells.IsHealing)
         {
-            var p = Math.Clamp(_state.Spells.HealProgress, 0, 1);
+            var p = Realf.Clamp01(_state.Spells.HealProgress);
             var radius = float.Lerp(26, 10, p);
             renderer.DrawWorldCircle(Center, radius, new Color4b(93, 219, 255, 150), 1.5f);
             renderer.DrawWorldCircle(Center, 3 + p * 5, new Color4b(211, 250, 255, 230), 3f);

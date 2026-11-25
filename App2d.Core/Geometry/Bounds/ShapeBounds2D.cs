@@ -25,7 +25,7 @@ public static partial class ShapeBounds2D
         {
             Circle2D circle => Rect2f.FromCircle(circle.Center, circle.Radius),
             Ellipse2D ellipse => ellipse.Frame.EllipseBounds(ellipse.Radii),
-            Capsule2D capsule => Rect2f.FromCapsule(capsule.Start, capsule.End, capsule.Radius),
+            Capsule2 capsule => Rect2f.FromCapsule(capsule.Start, capsule.End, capsule.Radius),
             RoundedRectangle2D rounded => rounded.Frame.BoxBounds(rounded.InnerHalfSize, rounded.Radius),
             Rectangle2D rectangle => rectangle.Frame.BoxBounds(rectangle.HalfSize),
             IRect2f rectangle => rectangle.ToRect(),
@@ -104,7 +104,7 @@ public static partial class ShapeBounds2D
                 return (circle.Center, circle.Radius);
             case Ellipse2D ellipse:
                 return (ellipse.Center, Math.Max(ellipse.Radii.X, ellipse.Radii.Y));
-            case Capsule2D capsule:
+            case Capsule2 capsule:
                 return (capsule.Center, float.IsFinite(capsule.Diameter) ? capsule.Diameter / 2
                     : (float)(Vector2d.Distance(capsule.Start.ToVector2d(), capsule.End.ToVector2d()) / 2 + capsule.Radius));
             case RoundedRectangle2D rounded:

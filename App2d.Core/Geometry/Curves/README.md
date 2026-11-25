@@ -1,8 +1,8 @@
 # Generic parameterized curves
 
 `ICurve<TPoint, TReal>` supplies position and first derivative over normalized progress. `ICurve2D` also supplies
-2D geometry identity and distance queries. Generic vector Béziers use `IVector<TVector, TReal>`, so the same evaluator
-supports the six float/double vectors without putting vector structs into interface-valued storage.
+2D geometry identity and distance queries. Generic Béziers use static addition, subtraction, and scalar multiplication
+constraints. The same evaluator supports `float`, `double`, and all six float/double vectors.
 
 ```csharp
 var curve = new CubicBezier<Vector3f, float>(

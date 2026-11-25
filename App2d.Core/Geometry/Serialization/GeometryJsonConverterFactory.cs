@@ -69,7 +69,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
             {
                 Circle2D.Kind => new Circle2D(R<float>("Radius"), R<Vector2f>("Center")),
                 Ellipse2D.Kind => new Ellipse2D(R<Vector2f>("Radii"), R<Vector2f>("Center"), Primitives.OrientedFrame2D.AxisFromAngle(Optional("AngleRadians", 0f))),
-                Capsule2D.Kind => new Capsule2D(R<Vector2f>("Start"), R<Vector2f>("End"), R<float>("Radius")),
+                Capsule2.Kind => new Capsule2(R<Vector2f>("Start"), R<Vector2f>("End"), R<float>("Radius")),
                 Rectangle2D.Kind => ReadRectangle(),
                 AxisAlignedRectangle2D.Kind => new AxisAlignedRectangle2D(R<Vector2f>("Min"), R<Vector2f>("Max")),
                 RoundedRectangle2D.Kind => ReadRoundedRectangle(),
@@ -120,7 +120,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                     W("Radii", geometry.Radii);
                     W("AngleRadians", geometry.AngleRadians);
                     break;
-                case Capsule2D geometry:
+                case Capsule2 geometry:
                     W("Start", geometry.Start);
                     W("End", geometry.End);
                     W("Radius", geometry.Radius);

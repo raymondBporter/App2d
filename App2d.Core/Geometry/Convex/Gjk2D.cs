@@ -399,7 +399,7 @@ public static partial class Gjk2D
     {
         var edge = vertices[end].Difference - vertices[start].Difference;
         var squared = Dot(edge, edge);
-        var t = squared == 0d ? 0d : Math.Clamp(-Dot(vertices[start].Difference, edge) / squared, 0d, 1d);
+        var t = squared == 0d ? 0d : Reald.Clamp01(-Dot(vertices[start].Difference, edge) / squared);
         vertices[start].Weight = 1d - t;
         if (end != start)
         {

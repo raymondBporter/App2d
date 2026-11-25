@@ -76,7 +76,7 @@ public static class ShapeArea2D
             parts.Add(new(ellipse.Center, ellipse.Radii, ellipse.Axis));
             return;
         }
-        if (shape is Capsule2D capsule)
+        if (shape is Capsule2 capsule)
         {
             AddCapsule(parts, capsule);
             return;
@@ -114,7 +114,7 @@ public static class ShapeArea2D
         parts.Add(new(vertices));
     }
 
-    private static void AddCapsule(List<Area2D.BoundaryPart> boundaries, Capsule2D capsule)
+    private static void AddCapsule(List<Area2D.BoundaryPart> boundaries, Capsule2 capsule)
     {
         var start = capsule.Start;
         var end = capsule.End;

@@ -73,7 +73,7 @@ public sealed class Rect2DBoundsTests
         [
             Rectangle2D.Builder.Create(expected.Min, expected.Max),
             AxisAlignedRectangle2D.Builder.Create(expected.Min, expected.Max),
-            Capsule2D.Builder.Create(new(1, 0), new(1, 2), 3),
+            Capsule2.Builder.Create(new(1, 0), new(1, 2), 3),
             ConvexPolygon2D.Builder.Create([new(-2, -3), new(4, -3), new(1, 5)]),
             CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-1, -2)), Rectangle2D.Builder.Create(new(1, 2), new(4, 5))]),
         ];

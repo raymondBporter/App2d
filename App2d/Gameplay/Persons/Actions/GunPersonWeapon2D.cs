@@ -85,7 +85,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
         ? new(App2d.Contracts.Simulation.PlayerAttackKind2D.Shot, elapsed, RecoverySeconds) : default;
 
     public bool IsCharging { get; private set; }
-    public float ChargeProgress => Math.Clamp(_chargeTime / ChargeSeconds, 0f, 1f);
+    public float ChargeProgress => Realf.Clamp01(_chargeTime / ChargeSeconds);
     public override IEnumerable<SpatialObject2D> ActiveHitboxes
     {
         get

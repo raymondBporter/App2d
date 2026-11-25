@@ -236,7 +236,7 @@ public sealed class WorldPresentation2D : IDisposable
 
     private void CreateGoal(Vector2f position)
     {
-        var pole = new WorldObject2D(Capsule2D.Builder.Create(Vector2f.Zero, new Vector2f(0f, 190f), 5f),
+        var pole = new WorldObject2D(Capsule2.Builder.Create(Vector2f.Zero, new Vector2f(0f, 190f), 5f),
             new SolidColorShader(new Color4b(238, 242, 232)))
         {
             Position = position

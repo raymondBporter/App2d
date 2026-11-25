@@ -13,7 +13,7 @@ public sealed class ShapePosed2DTests
     public static TheoryData<IShape2D> Shapes =>
     [
         Circle2D.Builder.Create(1, new(1, 2)),
-        Capsule2D.Builder.Create(new(0, 0), new(3, 1), .5f),
+        Capsule2.Builder.Create(new(0, 0), new(3, 1), .5f),
         Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(0, 1)),
         ConvexPolygon2D.Builder.Create([new(0, 0), new(2, 0), new(2, 1), new(0, 1)]),
         Rectangle2D.Builder.FromSize(3, 1, new(1, 1), .4f),

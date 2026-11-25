@@ -41,7 +41,7 @@ public readonly partial record struct PolylineCurve2D : ICurve2D
 
     private (int Index, float Fraction) Segment(float amount)
     {
-        var progress = Clamping.Clamp01(amount) * (Points.Length - 1);
+        var progress = Realf.Clamp01(amount) * (Points.Length - 1);
         var index = Math.Min(Points.Length - 2, (int)progress);
         return (index, progress - index);
     }

@@ -24,7 +24,7 @@ public sealed class PolygonContactTests
         nameof(Rectangle2D),
         nameof(AxisAlignedRectangle2D),
         nameof(Triangle2D),
-        nameof(Capsule2D),
+        nameof(Capsule2),
         nameof(Circle2D),
         nameof(Ellipse2D),
         nameof(HalfSpace2D),
@@ -36,7 +36,7 @@ public sealed class PolygonContactTests
         nameof(Rectangle2D) => Rectangle2D.Builder.CreateFromSize(2, 2),
         nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1), new(1)),
         nameof(Triangle2D) => Triangle2D.Builder.Create(new(-1, -1), new(1, -1), new(0, 1)),
-        nameof(Capsule2D) => Capsule2D.Builder.Create(new(-.5f, 0), new(.5f, 0), .5f),
+        nameof(Capsule2) => Capsule2.Builder.Create(new(-.5f, 0), new(.5f, 0), .5f),
         nameof(Circle2D) => Circle2D.Builder.Create(1),
         nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(1.2f, .8f)),
         nameof(HalfSpace2D) => HalfSpace2D.Builder.Create(-Vector2f.UnitX, 1),
@@ -64,7 +64,7 @@ public sealed class PolygonContactTests
         var diamond = At(Diamond(1), Vector2f.Zero);
         Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Diamond(1), new(2.01f, 0)), out _));
         Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Rectangle2D.Builder.CreateFromSize(2, 2), new(2.01f, 0)), out _));
-        Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Capsule2D.Builder.Create(new(0, -1), new(0, 1), .5f), new(1.51f, 0)), out _));
+        Assert.False(ShapeCollision2D.TryGetContact(diamond, At(Capsule2.Builder.Create(new(0, -1), new(0, 1), .5f), new(1.51f, 0)), out _));
 
         // A box edge normal is the shortest escape when a diamond tip pokes into a box.
         var box = At(Rectangle2D.Builder.CreateFromSize(2, 2), Vector2f.Zero);

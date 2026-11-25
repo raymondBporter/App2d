@@ -47,7 +47,7 @@ public static class ClosestPoint2D
             return start;
         }
 
-        var t = Clamping.Clamp01(Vector2f.Dot(point - start, segment) / lengthSquared);
+        var t = Realf.Clamp01(Vector2f.Dot(point - start, segment) / lengthSquared);
         return start + segment * t;
     }
 
@@ -219,12 +219,12 @@ public static class ClosestPoint2D
         else if (firstLengthSquared <= float.Epsilon)
         {
             firstParameter = 0f;
-            secondParameter = Clamping.Clamp01(Vector2f.Dot(secondDirection, startDelta) / secondLengthSquared);
+            secondParameter = Realf.Clamp01(Vector2f.Dot(secondDirection, startDelta) / secondLengthSquared);
         }
         else if (secondLengthSquared <= float.Epsilon)
         {
             secondParameter = 0f;
-            firstParameter = Clamping.Clamp01(-Vector2f.Dot(firstDirection, startDelta) / firstLengthSquared);
+            firstParameter = Realf.Clamp01(-Vector2f.Dot(firstDirection, startDelta) / firstLengthSquared);
         }
         else
         {
@@ -234,18 +234,18 @@ public static class ClosestPoint2D
             // In 2D the closest points of two non-parallel lines is their crossing; cross products keep precision near parallel.
             var determinant = new Vector2d(firstDirection).Cross(new(secondDirection));
             var numerator = new Vector2d(secondDirection).Cross(new(startDelta));
-            firstParameter = determinant != 0d ? (float)Clamping.Clamp01(numerator / determinant) : 0f;
+            firstParameter = determinant != 0d ? (float)Reald.Clamp01(numerator / determinant) : 0f;
 
             var secondNumerator = directionsDot * firstParameter + secondDotDelta;
             if (secondNumerator < 0f)
             {
                 secondParameter = 0f;
-                firstParameter = Clamping.Clamp01(-firstDotDelta / firstLengthSquared);
+                firstParameter = Realf.Clamp01(-firstDotDelta / firstLengthSquared);
             }
             else if (secondNumerator > secondLengthSquared)
             {
                 secondParameter = 1f;
-                firstParameter = Clamping.Clamp01((directionsDot - firstDotDelta) / firstLengthSquared);
+                firstParameter = Realf.Clamp01((directionsDot - firstDotDelta) / firstLengthSquared);
             }
             else
             {

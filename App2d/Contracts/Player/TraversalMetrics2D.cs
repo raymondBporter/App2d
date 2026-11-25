@@ -103,7 +103,7 @@ public sealed class TraversalMetrics2D
     public float HardLandingIntensity(float impactSpeed)
     {
         var fraction = Math.Clamp(impactSpeed / MaximumFallSpeed, 0f, 0.99f);
-        return Math.Clamp((1f / (1f - fraction) - 20f) / 80f, 0f, 1f);
+        return Realf.Clamp01((1f / (1f - fraction) - 20f) / 80f);
     }
     public float GroundProbeDistance { get; init; } = 2f;
     public float LandingSnapDistance { get; init; } = 4f;

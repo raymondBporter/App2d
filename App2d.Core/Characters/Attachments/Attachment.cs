@@ -246,8 +246,9 @@ public sealed record JointPath(string Name, ImmutableArray<int> Joints, Attachme
         var layers = new float[amounts.Length];
         for (var i = 0; i < amounts.Length; i++)
         {
-            points[i] = new(curve.Evaluate(amounts[i]), 0);
-            layers[i] = curve.Interpolate(jointLayers, amounts[i]);
+            var (position, layer) = curve.EvaluateWithAttribute(jointLayers, amounts[i]);
+            points[i] = new(position, 0);
+            layers[i] = layer;
         }
         // One ribbon through a bending path leaves no seams at the corners.
         var path = new LayeredContour(points, layers: layers);

@@ -9,38 +9,45 @@ public readonly partial record struct BSpline2D
         lock (prepared)
         {
             if (prepared.RaycastSpans is { } cached) return cached;
-            var points = _controlPoints!.Select(p => p.ToVector2d()).ToArray();
-            var knots = prepared.Knots.Select(k => (double)k).ToArray();
+            var controls = ControlPoints;
+            var sourceKnots = prepared.Knots;
+            var points = new Vector2d[controls.Length];
+            var knots = new double[sourceKnots.Length];
+            for (var i = 0; i < controls.Length; i++) points[i] = controls[i].ToVector2d();
+            for (var i = 0; i < sourceKnots.Length; i++) knots[i] = sourceKnots[i];
             var degree = Degree;
-            foreach (var knot in prepared.Knots.Distinct().Where(k => k > 0 && k < 1))
+            for (var i = degree + 1; i < controls.Length;)
             {
-                var multiplicity = knots.Count(k => k == knot);
-                for (; multiplicity < degree; multiplicity++) Insert(knot, multiplicity);
+                var start = i;
+                var knot = sourceKnots[i++];
+                while (i < controls.Length && sourceKnots[i] == knot) i++;
+                if (knot <= 0 || knot >= 1) continue;
+                for (var multiplicity = i - start; multiplicity < degree; multiplicity++)
+                    InsertKnot(ref points, ref knots, degree, knot, multiplicity);
             }
             var spans = new List<PolynomialCurveSpan2D>();
             for (var i = degree; i < points.Length; i++)
                 if (knots[i] < knots[i + 1]) spans.Add(new(knots[i], knots[i + 1], points[(i - degree)..(i + 1)]));
-            return prepared.RaycastSpans = [.. spans];
-
-            void Insert(double knot, int multiplicity)
-            {
-                var span = degree;
-                while (span < points.Length - 1 && knot >= knots[span + 1]) span++;
-                var nextPoints = new Vector2d[points.Length + 1];
-                var nextKnots = new double[knots.Length + 1];
-                Array.Copy(knots, 0, nextKnots, 0, span + 1);
-                nextKnots[span + 1] = knot;
-                Array.Copy(knots, span + 1, nextKnots, span + 2, knots.Length - span - 1);
-                Array.Copy(points, 0, nextPoints, 0, span - degree + 1);
-                Array.Copy(points, span - multiplicity, nextPoints, span - multiplicity + 1, points.Length - span + multiplicity);
-                for (var i = span - degree + 1; i <= span - multiplicity; i++)
-                {
-                    var blend = (knot - knots[i]) / (knots[i + degree] - knots[i]);
-                    nextPoints[i] = points[i - 1] * (1 - blend) + points[i] * blend;
-                }
-                points = nextPoints;
-                knots = nextKnots;
-            }
+            return prepared.RaycastSpans = spans.ToArray();
         }
+    }
+
+    private static void InsertKnot(ref Vector2d[] points, ref double[] knots, int degree, double knot, int multiplicity)
+    {
+        var span = FindKnotSpan<double>(knots, degree, points.Length, knot);
+        var nextPoints = new Vector2d[points.Length + 1];
+        var nextKnots = new double[knots.Length + 1];
+        Array.Copy(knots, 0, nextKnots, 0, span + 1);
+        nextKnots[span + 1] = knot;
+        Array.Copy(knots, span + 1, nextKnots, span + 2, knots.Length - span - 1);
+        Array.Copy(points, 0, nextPoints, 0, span - degree + 1);
+        Array.Copy(points, span - multiplicity, nextPoints, span - multiplicity + 1, points.Length - span + multiplicity);
+        for (var i = span - degree + 1; i <= span - multiplicity; i++)
+        {
+            var blend = (knot - knots[i]) / (knots[i + degree] - knots[i]);
+            nextPoints[i] = BezierMath.Blend(points[i - 1], points[i], 1 - blend, blend);
+        }
+        points = nextPoints;
+        knots = nextKnots;
     }
 }

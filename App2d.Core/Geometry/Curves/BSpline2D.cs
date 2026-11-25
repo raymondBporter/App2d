@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Distance;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Geometry.Curves;
@@ -35,26 +36,40 @@ public readonly partial record struct BSpline2D : ICurve2D
                 {
                     Validate();
                     var knots = CreateClampedUniformKnots(_controlPoints!.Length, Degree);
-                    data = new(knots, CreateDerivativeControlPoints(_controlPoints, knots, Degree), knots[1..^1]);
+                    data = new(knots, CreateDerivativeControlPoints(_controlPoints, knots, Degree));
                     entries[Degree] = data;
                 }
                 return data;
             }
         }
     }
-    private sealed record Prepared(float[] Knots, Vector2f[] DerivativePoints, float[] DerivativeKnots)
+    private sealed record Prepared(float[] Knots, Vector2f[] DerivativePoints)
     {
         internal PolynomialCurveSpan2D[]? RaycastSpans;
     }
 
-    public Vector2f Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, Clamping.Clamp01(amount));
+    public Vector2f Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, Realf.Clamp01(amount));
     public Vector2f EvaluateDerivative(float amount)
     {
         var data = Data;
-        return EvaluateDeBoor(data.DerivativePoints, data.DerivativeKnots, Degree - 1, Clamping.Clamp01(amount));
+        return EvaluateDeBoor(data.DerivativePoints, data.Knots.AsSpan(1, data.Knots.Length - 2), Degree - 1, Realf.Clamp01(amount));
     }
     public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this,
-        Clamping.Clamp((ControlPoints.Length - Degree) * 32, 64, 1024));
+        int.Clamp((ControlPoints.Length - Degree) * 32, 64, 1024));
+
+    internal PositionSampler PreparePositionSampler() => new(_controlPoints!, Data.Knots, Degree);
+
+    internal readonly struct PositionSampler(Vector2f[] points, float[] knots, int degree) : Curve2D.IPolylineSampler<PositionSampler>
+    {
+        private readonly Vector2f[] _points = points;
+        private readonly float[] _knots = knots;
+        private readonly int _degree = degree;
+
+        public static Vector2f Evaluate(in PositionSampler sampler, float amount) =>
+            EvaluateDeBoor(sampler._points, sampler._knots, sampler._degree, amount);
+
+        public static Vector2f EvaluateBoundary(in PositionSampler sampler, int index, float amount) => Evaluate(in sampler, amount);
+    }
 
     private static float[] CreateClampedUniformKnots(int controlPointCount, int degree)
     {
@@ -93,11 +108,7 @@ public readonly partial record struct BSpline2D : ICurve2D
         int degree,
         float amount)
     {
-        var span = degree;
-        while (span < controlPoints.Length - 1 && amount >= knots[span + 1])
-        {
-            span++;
-        }
+        var span = FindKnotSpan(knots, degree, controlPoints.Length, amount);
 
         var values = degree <= 15
             ? stackalloc Vector2f[degree + 1]
@@ -119,5 +130,20 @@ public readonly partial record struct BSpline2D : ICurve2D
             }
         }
         return values[degree];
+    }
+
+    // At a repeated knot select its rightmost span, bounded by the last control point.
+    private static int FindKnotSpan<TReal>(ReadOnlySpan<TReal> knots, int degree, int controlPointCount, TReal amount)
+        where TReal : IComparisonOperators<TReal, TReal, bool>
+    {
+        var lower = degree;
+        var upper = controlPointCount - 1;
+        while (lower < upper)
+        {
+            var middle = lower + (upper - lower) / 2;
+            if (amount >= knots[middle + 1]) lower = middle + 1;
+            else upper = middle;
+        }
+        return lower;
     }
 }

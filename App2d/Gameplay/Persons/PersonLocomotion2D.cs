@@ -73,10 +73,7 @@ public sealed partial class PersonLocomotion2D
         !IsGrounded &&
         _body.LinearVelocity.Y > 0f;
     public float JumpPower => IsSustainingJump
-        ? Math.Clamp(
-            1f - (_body.LinearVelocity.Y / _jumpInitialSpeed),
-            0f,
-            1f)
+        ? Realf.Clamp01(1f - (_body.LinearVelocity.Y / _jumpInitialSpeed))
         : 0f;
 
     internal void UpdateBeforePhysics(

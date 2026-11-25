@@ -37,9 +37,9 @@ public static class ShapeEditing2D
             RoundedRectangle2D.Kind => RoundedRectangle2D.Builder.FromSize(size, MathF.Min(size.X, size.Y) * .1f, center),
             Circle2D.Kind => new Circle2D { Center = center, Radius = MathF.Min(size.X, size.Y) / 2f }.Validated(),
             Ellipse2D.Kind => new Ellipse2D { Center = center, Radii = size / 2f }.Validated(),
-            Capsule2D.Kind => size.X >= size.Y
-                ? new Capsule2D { Start = center - new Vector2f(reach, 0f), End = center + new Vector2f(reach, 0f), Radius = size.Y / 2f }.Validated()
-                : new Capsule2D { Start = center - new Vector2f(0f, reach), End = center + new Vector2f(0f, reach), Radius = size.X / 2f }.Validated(),
+            Capsule2.Kind => size.X >= size.Y
+                ? new Capsule2 { Start = center - new Vector2f(reach, 0f), End = center + new Vector2f(reach, 0f), Radius = size.Y / 2f }.Validated()
+                : new Capsule2 { Start = center - new Vector2f(0f, reach), End = center + new Vector2f(0f, reach), Radius = size.X / 2f }.Validated(),
             Triangle2D.Kind => new Triangle2D { A = bounds.BottomLeft, B = bounds.BottomRight, C = bounds.TopCenter }.Validated(),
             ConvexPolygon2D.Kind => new ConvexPolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),
             SimplePolygon2D.Kind => new SimplePolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),

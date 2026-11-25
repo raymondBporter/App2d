@@ -12,8 +12,8 @@ public sealed class ShapeDiameterTests
         Assert.Equal(6f, Circle2D.Builder.Create(3, new(10, -2)).Diameter);
         Assert.Equal(8f, Ellipse2D.Builder.Create(new(2, 4)).Diameter);
         Assert.Equal(8f, Ellipse2D.Builder.Create(new(4, 2)).Diameter);
-        Assert.Equal(7f, Capsule2D.Builder.Create(new(1, 2), new(4, 6), 1).Diameter);
-        Assert.Equal(2f, Capsule2D.Builder.Create(new(1, 2), new(1, 2), 1).Diameter);
+        Assert.Equal(7f, Capsule2.Builder.Create(new(1, 2), new(4, 6), 1).Diameter);
+        Assert.Equal(2f, Capsule2.Builder.Create(new(1, 2), new(1, 2), 1).Diameter);
         Assert.Equal(5f, Rectangle2D.Builder.Create(3, 4).Diameter);
         Assert.Equal(5f, AxisAlignedRectangle2D.Builder.Create(3, 4).Diameter);
         Assert.Equal(5f, Triangle2D.Builder.Create(new(0, 0), new(3, 0), new(0, 4)).Diameter);

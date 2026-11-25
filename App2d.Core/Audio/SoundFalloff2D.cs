@@ -21,7 +21,7 @@ public sealed class SoundFalloff2D
         Ensure.Finite(source);
         Ensure.Finite(listener);
         var distance = Vector2f.Distance(source, listener);
-        var t = Math.Clamp((distance - InnerRadius) / (OuterRadius - InnerRadius), 0f, 1f);
+        var t = Realf.Clamp01((distance - InnerRadius) / (OuterRadius - InnerRadius));
         return 1f - Easingf.SmoothStepValue(t);
     }
 }

@@ -25,7 +25,7 @@ public sealed class ShapePlacementTests
     [Fact]
     public void DirectQueriesAgreeWithPlacedObjectsIncludingMirroringScalingAndCompositeParts()
     {
-        var shape = Capsule2D.Builder.Create(new(-1, -2), new(-1, 2), 1);
+        var shape = Capsule2.Builder.Create(new(-1, -2), new(-1, 2), 1);
         var pose = Similarity2D.FromAxis(new(4, 3), Vector2f.UnitY, mirror: true, scale: 2);
         var first = new SpatialObject2D(shape);
         first.Transform.CopyFrom(pose.ToAffine());

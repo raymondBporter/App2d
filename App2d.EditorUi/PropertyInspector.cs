@@ -160,7 +160,7 @@ public sealed class PropertyInspector
         return false;
     }
 
-    private static int Byte(float value) => (int)MathF.Round(Math.Clamp(value, 0, 1) * 255);
+    private static int Byte(float value) => (int)MathF.Round(Realf.Clamp01(value) * 255);
     private bool Set(object model, PropertyDescriptor property, object value)
     {
         try

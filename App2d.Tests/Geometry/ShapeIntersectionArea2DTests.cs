@@ -67,7 +67,7 @@ public sealed class ShapeIntersectionArea2DTests
     [Fact]
     public void CapsuleAgainstRotatedEllipseUsesTheGroupSemantics()
     {
-        var capsule = Capsule2D.Builder.Create(new(-1, 0), new(1, .5f), .4f);
+        var capsule = Capsule2.Builder.Create(new(-1, 0), new(1, .5f), .4f);
         var ellipse = Ellipse2D.Builder.Create(new(1.5f, .7f), new(.3f, .2f), .6f);
         var expected = capsule.Area + ellipse.Area - ShapeArea2D.Union([capsule, ellipse]);
         Assert.Equal(expected, ShapeArea2D.Intersection(capsule, ellipse), 5);
@@ -147,7 +147,7 @@ public sealed class ShapeIntersectionArea2DTests
             0 => Ellipse2D.Builder.Create(new(.2f + (float)random.NextDouble() * 2, .2f + (float)random.NextDouble() * 2), center, turn),
             1 => Circle2D.Builder.Create(.3f + (float)random.NextDouble(), center),
             2 => Rectangle2D.Builder.FromSize(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble(), center, turn),
-            _ => Capsule2D.Builder.Create(center, center + Vector2f.Direction(turn) * (.5f + (float)random.NextDouble()), .2f + (float)random.NextDouble() * .5f)
+            _ => Capsule2.Builder.Create(center, center + Vector2f.Direction(turn) * (.5f + (float)random.NextDouble()), .2f + (float)random.NextDouble() * .5f)
         };
     }
 }

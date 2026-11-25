@@ -37,9 +37,5 @@ public readonly record struct CurveSlice2D<TCurve> : ICurveSlice2D where TCurve 
     /// <summary>Distance to the restricted curve, approximated by a sampled polyline.</summary>
     public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
 
-    private float Parameter(float amount)
-    {
-        amount = Clamping.Clamp01(amount);
-        return amount == 1f ? To : From + (To - From) * amount;
-    }
+    private float Parameter(float amount) => float.IsNaN(amount) ? amount : Interval.LerpClamped(From, To, amount);
 }

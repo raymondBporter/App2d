@@ -245,7 +245,7 @@ public static class SegmentCcd2D
             halfStart = new(cosStart, sinStart);
             halfDelta = new Vector2d(cosEnd, sinEnd) - halfStart;
             var lengthSquared = halfDelta.LengthSquared();
-            var closest = lengthSquared == 0 ? 0 : Math.Clamp(-halfStart.Dot(halfDelta) / lengthSquared, 0, 1);
+            var closest = lengthSquared == 0 ? 0 : Reald.Clamp01(-halfStart.Dot(halfDelta) / lengthSquared);
             Ensure.ThrowIf((halfStart + halfDelta * closest).LengthSquared() <= 1e-12,
                 "The half-angle interpolation approaches zero; split the rotation into smaller sweeps.", nameof(end));
         }

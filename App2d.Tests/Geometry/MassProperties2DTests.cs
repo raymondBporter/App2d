@@ -92,8 +92,8 @@ public sealed class MassProperties2DTests
     [Fact]
     public void CapsuleUsesRectangleAndSemicircleMassAndCollapsesExactlyToADisk()
     {
-        var horizontal = ShapeMassProperties2D.Calculate(Capsule2D.Builder.Create(new(0f, 0f), new(6f, 0f), 2f));
-        var vertical = ShapeMassProperties2D.Calculate(Capsule2D.Builder.Create(new(0f, 6f), new(0f, 0f), 2f));
+        var horizontal = ShapeMassProperties2D.Calculate(Capsule2.Builder.Create(new(0f, 0f), new(6f, 0f), 2f));
+        var vertical = ShapeMassProperties2D.Calculate(Capsule2.Builder.Create(new(0f, 6f), new(0f, 0f), 2f));
         Close(24d + 4d * Math.PI, horizontal.Mass);
         Close(168d + 44d * Math.PI, horizontal.MomentOfInertia);
         Close(horizontal.MomentOfInertia, vertical.MomentOfInertia);
@@ -102,7 +102,7 @@ public sealed class MassProperties2DTests
 
         var point = new Vector2f(5f, -2f);
         Assert.Equal(ShapeMassProperties2D.Calculate(Circle2D.Builder.Create(2f, point)),
-            ShapeMassProperties2D.Calculate(Capsule2D.Builder.Create(point, point, 2f)));
+            ShapeMassProperties2D.Calculate(Capsule2.Builder.Create(point, point, 2f)));
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public sealed class MassProperties2DTests
         Assert.Equal(rectangle, ShapeMassProperties2D.Calculate(RoundedRectangle2D.Builder.FromSize(10f, 6f, 0f)));
         var circle = ShapeMassProperties2D.Calculate(Circle2D.Builder.Create(2f));
         Assert.Equal(circle, ShapeMassProperties2D.Calculate(RoundedRectangle2D.Builder.FromSize(4f, 4f, 2f)));
-        var capsule = ShapeMassProperties2D.Calculate(Capsule2D.Builder.Create(new(-3f, 0f), new(3f, 0f), 2f));
+        var capsule = ShapeMassProperties2D.Calculate(Capsule2.Builder.Create(new(-3f, 0f), new(3f, 0f), 2f));
         Assert.Equal(capsule, ShapeMassProperties2D.Calculate(RoundedRectangle2D.Builder.FromSize(10f, 4f, 2f)));
     }
 
@@ -122,7 +122,7 @@ public sealed class MassProperties2DTests
     public void CurvedFormulasAgreeWithIndependentAreaSampling(bool capsule)
     {
         IShape2D shape = capsule
-            ? Capsule2D.Builder.Create(new(-2f, -1f), new(4f, 3f), 1.3f)
+            ? Capsule2.Builder.Create(new(-2f, -1f), new(4f, 3f), 1.3f)
             : RoundedRectangle2D.Builder.FromSize(7f, 4f, 1.3f, new(2f, -1f));
         var result = ShapeMassProperties2D.Calculate(shape);
         var bounds = ShapeBounds2D.Calculate(shape);

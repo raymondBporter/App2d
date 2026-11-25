@@ -87,7 +87,7 @@ public sealed class Triangle2DTests
         IShape2D[] others =
         [
             Circle2D.Builder.Create(.4f, new(1, 1)),
-            Capsule2D.Builder.Create(new(.5f, .5f), new(2, .5f), .3f),
+            Capsule2.Builder.Create(new(.5f, .5f), new(2, .5f), .3f),
             Rectangle2D.Builder.Create(new(.5f, .5f), new(2, 1.5f)),
             Triangle2D.Builder.Create(new(.5f, .5f), new(2, .5f), new(.5f, 2)),
             ConvexPolygon2D.Builder.Create([new(.5f, .5f), new(2, .5f), new(2, 1.5f), new(.5f, 1.5f)]),

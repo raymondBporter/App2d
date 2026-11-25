@@ -14,7 +14,7 @@ public static class GeometryJson2D
     [
         Register<Circle2D>(Circle2D.Kind),
         Register<Ellipse2D>(Ellipse2D.Kind),
-        Register<Capsule2D>(Capsule2D.Kind),
+        Register<Capsule2>(Capsule2.Kind),
         Register<Rectangle2D>(Rectangle2D.Kind),
         Register<AxisAlignedRectangle2D>(AxisAlignedRectangle2D.Kind),
         Register<RoundedRectangle2D>(RoundedRectangle2D.Kind),
@@ -51,7 +51,7 @@ public static class GeometryJson2D
     /// <summary>A small editable example of a geometry kind. Drawing clients supply placement and material.</summary>
     public static IGeometryValue2D CreateDefault(string kind) => kind switch
     {
-        Capsule2D.Kind => new Capsule2D { Start = new(0, -.25f), End = new(0, .25f), Radius = .25f }.Validated(),
+        Capsule2.Kind => new Capsule2 { Start = new(0, -.25f), End = new(0, .25f), Radius = .25f }.Validated(),
         RoundedRectangle2D.Kind => RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f),
         LineSegmentCurve2D.Kind => new LineSegmentCurve2D { Start = Vector2f.Zero, End = Vector2f.UnitY }.Validated(),
         PolylineCurve2D.Kind => new PolylineCurve2D { Points = [Vector2f.Zero, new(.25f, .5f), Vector2f.UnitY] }.Validated(),

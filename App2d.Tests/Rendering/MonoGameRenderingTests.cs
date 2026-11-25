@@ -82,7 +82,7 @@ public sealed class MonoGameRenderingTests
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(Color4b.Transparent);
         renderer.Draw(new WorldObject2D(Circle2D.Builder.Create(12, new(-30, 20)), new SolidColorShader(Color4b.Lime)));
-        renderer.Draw(new WorldObject2D(Capsule2D.Builder.Create(new(10, 20), new(35, 20), 8), new SolidColorShader(Color4b.Blue)));
+        renderer.Draw(new WorldObject2D(Capsule2.Builder.Create(new(10, 20), new(35, 20), 8), new SolidColorShader(Color4b.Blue)));
         renderer.DrawScreenRoundedRectangle(new(10, 95, 60, 120), 10, Color4b.Red);
         renderer.DrawWorldCircle(new(0, -10), 8, Color4b.White);
         renderer.EndFrame();

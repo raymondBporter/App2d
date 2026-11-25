@@ -17,7 +17,7 @@ public static partial class ShapeBounds2D
     /// </summary>
     /// <param name="points">At least one point, in any order.</param>
     /// <param name="minimumRadius">A positive radius floor, including for point and collinear inputs.</param>
-    public static Capsule2D GetContainingCapsule(ReadOnlySpan<Vector2f> points, float minimumRadius = float.Epsilon)
+    public static Capsule2 GetContainingCapsule(ReadOnlySpan<Vector2f> points, float minimumRadius = float.Epsilon)
     {
         Ensure.ThrowIfTooShort(points, 1);
         Ensure.Positive(minimumRadius);
@@ -29,7 +29,7 @@ public static partial class ShapeBounds2D
         var hull = PolygonGeometry2D.ConvexHullOfFinitePoints(points.ToArray());
         if (hull.Length == 1)
         {
-            return Capsule2D.Builder.Create(hull[0], hull[0], minimumRadius);
+            return Capsule2.Builder.Create(hull[0], hull[0], minimumRadius);
         }
 
         var bounds = Rect2f.FromPoints(points);
@@ -38,7 +38,7 @@ public static partial class ShapeBounds2D
         var center = (min + max) / 2d;
 
         // A horizontal spine at Y = 0 always has a representable radius for finite float points.
-        var best = Capsule2D.Builder.Create(new(bounds.Min.X, 0f), new(bounds.Max.X, 0f),
+        var best = Capsule2.Builder.Create(new(bounds.Min.X, 0f), new(bounds.Max.X, 0f),
             Math.Max(minimumRadius, Math.Max(Math.Abs(bounds.Min.Y), Math.Abs(bounds.Max.Y))));
         best = KeepSmallerCapsule(points, new(min.X, center.Y), new(max.X, center.Y), minimumRadius, best);
         best = KeepSmallerCapsule(points, new(center.X, min.Y), new(center.X, max.Y), minimumRadius, best);
@@ -282,8 +282,8 @@ public static partial class ShapeBounds2D
     private static CapsuleSpine ShorterSpine(CapsuleSpine first, CapsuleSpine second) =>
         first.Length <= second.Length ? first : second;
 
-    private static Capsule2D KeepSmallerCapsule(ReadOnlySpan<Vector2f> points, Vector2d start, Vector2d end,
-        float minimumRadius, Capsule2D best)
+    private static Capsule2 KeepSmallerCapsule(ReadOnlySpan<Vector2f> points, Vector2d start, Vector2d end,
+        float minimumRadius, Capsule2 best)
     {
         var storedStart = Vector2d.Clamp(start, new(-float.MaxValue), new(float.MaxValue)).ToVector2f();
         var storedEnd = Vector2d.Clamp(end, new(-float.MaxValue), new(float.MaxValue)).ToVector2f();
@@ -304,7 +304,7 @@ public static partial class ShapeBounds2D
 
         var area = CapsuleArea(Vector2d.Distance(wideStart, wideEnd), radius);
         var bestArea = CapsuleArea(Vector2d.Distance(best.Start.ToVector2d(), best.End.ToVector2d()), best.Radius);
-        return area < bestArea ? Capsule2D.Builder.Create(storedStart, storedEnd, radius) : best;
+        return area < bestArea ? Capsule2.Builder.Create(storedStart, storedEnd, radius) : best;
     }
 
     private static double CapsuleArea(double length, double radius) => radius * (2d * length + Math.PI * radius);

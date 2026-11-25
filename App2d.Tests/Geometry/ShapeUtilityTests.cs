@@ -13,7 +13,7 @@ public sealed class ShapeUtilityTests
     [
         nameof(Circle2D),
         nameof(Ellipse2D),
-        nameof(Capsule2D),
+        nameof(Capsule2),
         nameof(Rectangle2D),
         nameof(AxisAlignedRectangle2D),
         nameof(Triangle2D),
@@ -24,7 +24,7 @@ public sealed class ShapeUtilityTests
     {
         nameof(Circle2D) => Circle2D.Builder.Create(1.5f, new(1, 2)),
         nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(2, 1), new(-1, .5f)),
-        nameof(Capsule2D) => Capsule2D.Builder.Create(new(-1, 0), new(1, .5f), .3f),
+        nameof(Capsule2) => Capsule2.Builder.Create(new(-1, 0), new(1, .5f), .3f),
         nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
         nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
         nameof(Triangle2D) => Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(1, 3)),
@@ -73,7 +73,7 @@ public sealed class ShapeUtilityTests
     {
         Assert.Equal((new Vector2f(1, 2), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Circle2D.Builder.Create(1.5f, new(1, 2))));
         Assert.Equal((new Vector2f(0, 0), MathF.Sqrt(2)), ShapeBounds2D.CalculateBoundingCircle(Rectangle2D.Builder.CreateFromSize(2, 2)));
-        Assert.Equal((new Vector2f(0, 0), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Capsule2D.Builder.Create(new(-1, 0), new(1, 0), .5f)));
+        Assert.Equal((new Vector2f(0, 0), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Capsule2.Builder.Create(new(-1, 0), new(1, 0), .5f)));
         Assert.Equal((new Vector2f(0, 0), 2f), ShapeBounds2D.CalculateBoundingCircle(Ellipse2D.Builder.Create(new(2, 1))));
         var (Center, Radius) = ShapeBounds2D.CalculateBoundingCircle(CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-3, 0)), Circle2D.Builder.Create(1, new(3, 0))]));
         Assert.Equal(Vector2f.Zero, Center);

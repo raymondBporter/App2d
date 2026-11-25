@@ -197,7 +197,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
             _ => PersonGear.None
         };
         PersonFrame Play(string id, double seconds, PoseOverlay? overlay = null) => new(id, moves[id], seconds, moves[id].Loop, overlay, gear);
-        double Scaled(string id) => Math.Clamp((s.Action.ElapsedSeconds + _sinceState) / s.Action.DurationSeconds, 0, 1) * moves[id].Duration;
+        double Scaled(string id) => Reald.Clamp01((s.Action.ElapsedSeconds + _sinceState) / s.Action.DurationSeconds) * moves[id].Duration;
 
         var melee = s.Action.IsActive && s.Action.Kind is PlayerAttackKind2D.Melee or PlayerAttackKind2D.Downward or PlayerAttackKind2D.Punch or PlayerAttackKind2D.Kick;
         if (_meleeActive && !melee)

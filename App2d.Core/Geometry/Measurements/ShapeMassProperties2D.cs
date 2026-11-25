@@ -26,7 +26,7 @@ public static class ShapeMassProperties2D
             Triangle2D triangle => Polygon([triangle.A, triangle.B, triangle.C], density),
             ConvexPolygon2D polygon => Polygon(polygon.Vertices, density),
             SimplePolygon2D polygon => Polygon(polygon.Vertices, density),
-            Capsule2D capsule => Capsule(capsule, density),
+            Capsule2 capsule => Capsule(capsule, density),
             RoundedRectangle2D rounded => RoundedRectangle(rounded, density),
             CompositeShape2D composite => Composite(composite, density),
             HalfSpace2D => throw new NotSupportedException("An infinite half-space has no finite mass or centroid at positive density."),
@@ -49,7 +49,7 @@ public static class ShapeMassProperties2D
         return Create(area, new Vector2d(min) + size / 2d, area * size.LengthSquared() / 12d, density);
     }
 
-    private static MassProperties2D Capsule(Capsule2D capsule, double density)
+    private static MassProperties2D Capsule(Capsule2 capsule, double density)
     {
         var start = new Vector2d(capsule.Start);
         var spine = new Vector2d(capsule.End) - start;

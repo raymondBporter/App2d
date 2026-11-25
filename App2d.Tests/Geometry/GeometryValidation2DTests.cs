@@ -14,7 +14,7 @@ public sealed class GeometryValidation2DTests
     [
         new Circle2D(0),
         new Ellipse2D(new(0, 1), Vector2f.Zero, Vector2f.UnitX),
-        new Capsule2D(Vector2f.Zero, Vector2f.One, -1),
+        new Capsule2(Vector2f.Zero, Vector2f.One, -1),
         new Rectangle2D(Vector2f.Zero, new(-1, 1), Vector2f.UnitX),
         new AxisAlignedRectangle2D(Vector2f.One, Vector2f.Zero),
         new RoundedRectangle2D(Vector2f.Zero, new(.5f, .5f), 1, Vector2f.UnitX),
@@ -39,7 +39,7 @@ public sealed class GeometryValidation2DTests
     [Fact]
     public void EveryBuilderIsAStatelessFactory()
     {
-        Type[] types = [typeof(Circle2D), typeof(Ellipse2D), typeof(Capsule2D), typeof(Rectangle2D),
+        Type[] types = [typeof(Circle2D), typeof(Ellipse2D), typeof(Capsule2), typeof(Rectangle2D),
             typeof(AxisAlignedRectangle2D), typeof(RoundedRectangle2D), typeof(Triangle2D),
             typeof(ConvexPolygon2D), typeof(SimplePolygon2D), typeof(HalfSpace2D), typeof(CompositeShape2D),
             typeof(LineSegmentCurve2D), typeof(PolylineCurve2D), typeof(Arc2D), typeof(QuadraticBezier2D),

@@ -15,7 +15,7 @@ public static class ShapeDiameter2D
         {
             Circle2D circle => circle.Diameter,
             Ellipse2D ellipse => ellipse.Diameter,
-            Capsule2D capsule => capsule.Diameter,
+            Capsule2 capsule => capsule.Diameter,
             Rectangle2D rectangle => rectangle.Diameter,
             AxisAlignedRectangle2D rectangle => rectangle.Diameter,
             RoundedRectangle2D rounded => rounded.Diameter,

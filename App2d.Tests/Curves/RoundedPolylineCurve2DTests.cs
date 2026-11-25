@@ -42,11 +42,21 @@ public sealed class RoundedPolylineCurve2DTests
         Assert.Contains(.26f, samples);
         Assert.Contains(.5f, samples);
         Assert.Contains(.74f, samples);
-        foreach (var t in samples)
+        foreach (var t in new[] { -.25f, 1.25f }.Concat(samples))
         {
             var p = curve.Evaluate(t);
-            Assert.Equal(p.X + 2 * p.Y, curve.Interpolate([0, 1, 3], t), 5);
+            var depth = curve.Interpolate([0, 1, 3], t);
+            Assert.Equal(p.X + 2 * p.Y, depth, 5);
+            Assert.Equal((p, depth), curve.EvaluateWithAttribute([0, 1, 3], t));
         }
+    }
+
+    [Fact]
+    public void FilletBlendsLargeScalarAttributesWithoutOverflow()
+    {
+        var curve = RoundedPolylineCurve2D.Builder.Create([Vector2f.Zero, Vector2f.UnitX, Vector2f.One]);
+        var depth = curve.Interpolate([-float.MaxValue, float.MaxValue, float.MaxValue], .5f);
+        Assert.Equal(.76f, depth / float.MaxValue, 6);
     }
 
     [Fact]

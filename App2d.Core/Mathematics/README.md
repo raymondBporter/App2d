@@ -16,7 +16,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Vector2f`, `Vector3f`, `Vector4f` | Readonly float vectors backed by the corresponding `System.Numerics` vectors |
 | `Vector2d`, `Vector3d`, `Vector4d` | Readonly double vectors for higher-precision geometry |
 | `FloatVectorMembers` / `FloatVectorStatics` (and the `Double` twins) | Extension blocks that put the inherited operations on every vector struct as `v.Length()` and `Vector3d.Distance(a, b)` |
-| `Real<TReal>` | `Two`, `Half`, and `MachineEpsilon` for generic floating-point formulas; aliases `Realf` / `Reald` |
+| `Real<TReal>` | Floating-point constants and `Clamp01`; aliases `Realf` / `Reald` |
 | `Matrix2x2<TVector, TReal>` | A linear transform stored as concrete vector columns; `Matrix2x2f` / `Matrix2x2d` select the types |
 | `Vector2f` | Two-dimensional float vector backed by `System.Numerics.Vector2` |
 | `Vector4Extensions` | `IsFinite()` component query |
@@ -24,7 +24,6 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Rotation2D` | Solve a pivot from endpoints and a turn, or interpolate the resulting arc |
 | `Angles` | Convert between degrees and radians and wrap signed angles |
 | `Interpolation` | Value blending, optional progress-map application, and inverse lerp |
-| `Clamping` | Generic `Clamp(value, minimum, maximum)` and `Clamp01(value)` scalar helpers |
 | `Easing<TReal>` | Base curves in float or double precision; aliases `Easingf` / `Easingd` |
 | `ProgressMap<TReal>` | Scalar functions, travel, direction, derivatives and optional inverses; aliases `ProgressMapf` / `ProgressMapd` |
 | `EasingCurve`, `EasingDirection`, `ProgressTravel` | Independent authored selections with stable JSON names |
@@ -193,8 +192,8 @@ saturates output. Channel and coordinate composition retain that span. Factories
 the core JSON converters can round-trip named rules, progress maps, and channel compositions. Loading builds their
 functions once. See [interpolation JSON](Serialization/README.md) for the format and application registrations.
 
-`Clamping.Clamp` and `Clamp01` work with numeric types such as int, float, and double, preserving the type's
-standard clamping behavior.
+Use the numeric type's built-in `Clamp(value, minimum, maximum)` for arbitrary bounds. `Real<TReal>.Clamp01(value)`
+uses the same floating-point clamp with bounds of zero and one.
 
 The three progress files have separate jobs: `Easing<TReal>` defines curves, `ProgressMap<TReal>` represents and composes
 functions, and `ProgressOptions` contains authored choices. `Interpolation` blends the actual values.
@@ -205,7 +204,7 @@ and inversion in that precision. Shared aliases in `Directory.Build.props` expos
 calculations. Neither API clamps. Scalar interpolation infers float or double, and either progress precision can
 interpolate scalars in either precision; conversion happens after sampling the map.
 Use `map.SampleClamped(input)` to clamp only the input to `InputBegin` / `InputEnd`, preserving possible output overshoot.
-Apply `Clamping.Clamp01` explicitly when a particular consumer needs output saturation.
+Apply `Realf.Clamp01` or `Reald.Clamp01` explicitly when a particular consumer needs output saturation.
 
 `Interval.Lerp(begin, end, amount)` and `Interval.InverseLerp(begin, end, value)` operate directly on endpoints;
 there is no need to construct an `Interval<T>`. Begin and end retain their order, including descending spans.
