@@ -37,6 +37,74 @@ public sealed class Curve2DTests
     }
 
     [Fact]
+    public void QuadraticDistanceChecksBothMinimaAndHandlesRetracing()
+    {
+        var parabola = QuadraticBezier2D.Builder.Create(new(-1, 1), new(0, -1), new(1, 1));
+        Assert.Equal(MathF.Sqrt(.75f), parabola.Distance(new(0, 1)), 6);
+
+        var retraced = QuadraticBezier2D.Builder.Create(new(0, 0), new(2, 0), new(0, 0));
+        Assert.Equal(1, retraced.Distance(new(2, 0)), 6);
+        Assert.Equal(5, default(QuadraticBezier2D).Distance(new(3, 4)), 6);
+    }
+
+    [Fact]
+    public void QuadraticDistanceKeepsARootNearAStationaryEndpoint()
+    {
+        var curve = QuadraticBezier2D.Builder.Create(new(1e20f, 0), Vector2f.Zero, Vector2f.Zero);
+        var query = new Vector2f(1, 3);
+
+        Assert.Equal(3, curve.Distance(query), 6);
+        Assert.Equal(3, curve.Slice(.99f, 1).Distance(query), 6);
+    }
+
+    [Fact]
+    public void NestedSliceCanKeepASecondaryMinimumOfItsSource()
+    {
+        var parabola = QuadraticBezier2D.Builder.Create(new(-1, 1), new(0, -1), new(1, 1));
+        var query = new Vector2f(.13671875f, 1);
+        var nearest = new Vector2f(-.625f, .390625f);
+        var slice = parabola.Slice(0, .5f).Slice(.25f, .75f);
+        var expected = Vector2f.Distance(query, nearest);
+
+        Assert.True(parabola.Distance(query) < expected);
+        Assert.Equal(expected, slice.Distance(query), 6);
+        Assert.Equal(expected, parabola.Slice(.1875f, .1875f).Distance(query), 6);
+    }
+
+    [Fact]
+    public void QuadraticDistanceFindsAPointBetweenPolylineSamples()
+    {
+        var parabola = QuadraticBezier2D.Builder.Create(new(-1, 1), new(0, -1), new(1, 1));
+        const float x = 2 * (49f / 128f) - 1;
+        var point = new Vector2f(x, x * x);
+
+        Assert.InRange(parabola.Distance(point), 0, 1e-7f);
+        Assert.InRange(parabola.Slice(.1f, .5f).Distance(point), 0, 1e-7f);
+    }
+
+    [Fact]
+    public void RoundedPolylineDistanceFindsAFilletOnAShortSpan()
+    {
+        var curve = RoundedPolylineCurve2D.Builder.Create([new(0, 0), new(1, 0), new(1, 1), new(10000, 1)]);
+        var filletMidpoint = new Vector2f(.88f, .12f);
+
+        Assert.InRange(curve.Distance(filletMidpoint), 0, 1e-7f);
+        Assert.InRange(curve.Slice(.00007f, .00013f).Distance(filletMidpoint), 0, 1e-7f);
+        var straightSlice = curve.Slice(.0003f, .0004f);
+        Assert.Equal(Vector2f.Distance(filletMidpoint, straightSlice.Evaluate(0)), straightSlice.Distance(filletMidpoint), 5);
+    }
+
+    [Fact]
+    public void ArcAndPolylineSlicesRestrictTheNearestPoint()
+    {
+        var arc = Arc2D.Builder.Create(Vector2f.Zero, 2, 0, MathF.PI);
+        Assert.Equal(MathF.Sqrt(13 - 6 * MathF.Sqrt(2)), arc.Slice(.25f, .75f).Distance(new(3, 0)), 5);
+
+        var polyline = PolylineCurve2D.Builder.Create([new(0, 0), new(2, 0), new(2, 2)]);
+        Assert.Equal(1, polyline.Slice(.25f, .75f).Distance(Vector2f.Zero), 5);
+    }
+
+    [Fact]
     public void QuadraticBezierSamplesTheFaceArcIntoCallerStorage()
     {
         var curve = QuadraticBezier2D.Builder.Create(new(0f, 0f), new(1f, 2f), new(2f, 0f));

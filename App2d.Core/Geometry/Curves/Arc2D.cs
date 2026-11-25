@@ -36,30 +36,33 @@ public readonly partial record struct Arc2D : ICurve2D
         return (Vector2d.FromAngle(angle).PerpCcw * speed).ToVector2f();
     }
 
-    public float Distance(Vector2f point)
+    public float Distance(Vector2f point) => Distance(point, 0, 1);
+
+    internal float Distance(Vector2f point, double from, double to)
     {
-        if (Radius == 0 || SweepAngleRadians == 0)
-        {
-            return Vector2f.Distance(point, Start);
-        }
+        var delta = point.ToVector2d() - Center.ToVector2d();
+        var startAngle = StartAngleRadians + (double)SweepAngleRadians * from;
+        var sweep = SweepAngleRadians * (to - from);
+        if (Radius == 0 || sweep == 0)
+            return (float)(delta - Vector2d.FromAngle(startAngle) * Radius).Length();
 
-        var delta = point - Center;
         var radial = delta.Length();
-        if (radial == 0 || Math.Abs((double)SweepAngleRadians) >= Math.Tau)
+        if (radial == 0 || Math.Abs(sweep) >= Math.Tau)
         {
-            return MathF.Abs(radial - Radius);
+            return (float)Math.Abs(radial - Radius);
         }
 
-        var angle = delta.ToVector2d().AngleRadians;
-        var sweep = (double)SweepAngleRadians;
+        var angle = delta.AngleRadians;
         var progress = sweep > 0
-            ? Angles.WrapPositive(angle - StartAngleRadians)
-            : Angles.WrapPositive(StartAngleRadians - angle);
+            ? Angles.WrapPositive(angle - startAngle)
+            : Angles.WrapPositive(startAngle - angle);
         if (progress <= Math.Abs(sweep))
         {
-            return MathF.Abs(radial - Radius);
+            return (float)Math.Abs(radial - Radius);
         }
 
-        return MathF.Min(Vector2f.Distance(point, Start), Vector2f.Distance(point, End));
+        var first = delta - Vector2d.FromAngle(startAngle) * Radius;
+        var last = delta - Vector2d.FromAngle(StartAngleRadians + (double)SweepAngleRadians * to) * Radius;
+        return (float)Math.Sqrt(Math.Min(first.LengthSquared(), last.LengthSquared()));
     }
 }

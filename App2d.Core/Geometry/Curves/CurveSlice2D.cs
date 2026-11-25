@@ -34,8 +34,8 @@ public readonly record struct CurveSlice2D<TCurve> : ICurveSlice2D where TCurve 
     public Vector2f EvaluateDerivative(float amount) => From == To ? Vector2f.Zero
         : Source.EvaluateDerivative(Parameter(amount)) * (To - From);
 
-    /// <summary>Distance to the restricted curve, approximated by a sampled polyline.</summary>
-    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
+    /// <summary>Distance to the source curve over this parameter interval.</summary>
+    public float Distance(Vector2f point) => CurveDistance2D.DistanceOnInterval(point, Source, From, To);
 
     private float Parameter(float amount) => float.IsNaN(amount) ? amount : Interval.LerpClamped(From, To, amount);
 }

@@ -210,5 +210,14 @@ public readonly partial record struct RoundedPolylineCurve2D : ICurve2D
         return [.. samples];
     }
 
-    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 128);
+    public float Distance(Vector2f point) => Distance(point, 0, 1);
+
+    internal float Distance(Vector2f point, double from, double to)
+    {
+        // Evaluate can still return a distinct endpoint if accumulated float lengths merge adjacent spans.
+        var target = point.ToVector2d();
+        var first = (Evaluate((float)from).ToVector2d() - target).LengthSquared();
+        var last = (Evaluate((float)to).ToVector2d() - target).LengthSquared();
+        return CurveDistance2D.RoundedSpanDistance(target, GetPolynomialSpans(), from, to, Math.Min(first, last));
+    }
 }

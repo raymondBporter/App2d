@@ -26,6 +26,10 @@ public static class PolynomialRoots
     public static int SolveQuadratic(double a, double b, double c, double minimum, double maximum, Span<double> roots)
         => FindRealRoots([c, b, a], minimum, maximum, roots);
 
+    /// <summary>Writes the sorted, distinct roots of a*x^3 + b*x^2 + c*x + d in the inclusive interval.</summary>
+    internal static int SolveCubic(double a, double b, double c, double d, double minimum, double maximum, Span<double> roots)
+        => FindRealRoots([d, c, b, a], minimum, maximum, roots, useCubicFormula: true);
+
     /// <summary>Writes the sorted, distinct roots of a*x^4 + b*x^3 + c*x^2 + d*x + e in the inclusive interval.</summary>
     public static int SolveQuartic(double a, double b, double c, double d, double e, double minimum, double maximum, Span<double> roots)
         => FindRealRoots([e, d, c, b, a], minimum, maximum, roots, useCubicFormula: true);
@@ -85,6 +89,15 @@ public static class PolynomialRoots
             return FindQuadratic(coefficients, minimum, maximum, roots);
         }
 
+        if (degree == 3 && useCubicFormula && TrySolveCubic(coefficients, roots, out var cubicCount))
+        {
+            var inRange = 0;
+            for (var i = 0; i < cubicCount; i++)
+                if (roots[i] >= minimum && roots[i] <= maximum)
+                    Append(roots, ref inRange, roots[i]);
+            return inRange;
+        }
+
         Span<double> derivative = stackalloc double[degree];
         for (var i = 1; i <= degree; i++)
         {
@@ -92,10 +105,7 @@ public static class PolynomialRoots
         }
 
         Span<double> critical = stackalloc double[degree - 1];
-        if (!useCubicFormula || degree != 4 || !TryFindCubicCriticalPoints(derivative, critical, out var criticalCount))
-        {
-            criticalCount = Find(derivative, minimum, maximum, critical);
-        }
+        var criticalCount = Find(derivative, minimum, maximum, critical, useCubicFormula);
         Span<double> partition = stackalloc double[degree + 1];
         var partitionCount = 1;
         partition[0] = minimum;
@@ -139,17 +149,25 @@ public static class PolynomialRoots
 
     private readonly struct Evaluator : Bisection.IEvaluator<Evaluator>
     {
-        public static double Evaluate(ReadOnlySpan<double> coefficients, double parameter) =>
-            PolynomialRoots.Evaluate(coefficients, parameter, detectRepeatedRoot: false);
+        public static double Evaluate(ReadOnlySpan<double> coefficients, double parameter)
+        {
+            if (Math.Abs(parameter) > 1d)
+                return PolynomialRoots.Evaluate(coefficients, parameter, detectRepeatedRoot: false);
+
+            var result = coefficients[^1];
+            for (var i = coefficients.Length - 2; i >= 0; i--)
+                result = Math.FusedMultiplyAdd(result, parameter, coefficients[i]);
+            return result;
+        }
     }
 
-    private static bool TryFindCubicCriticalPoints(ReadOnlySpan<double> derivative, Span<double> roots, out int count)
+    private static bool TrySolveCubic(ReadOnlySpan<double> coefficients, Span<double> roots, out int count)
     {
         count = 0;
         // Restrict the analytic path to derivatives with modest monic coefficients.
-        var b = derivative[2] / derivative[3];
-        var c = derivative[1] / derivative[3];
-        var d = derivative[0] / derivative[3];
+        var b = coefficients[2] / coefficients[3];
+        var c = coefficients[1] / coefficients[3];
+        var d = coefficients[0] / coefficients[3];
         if (!(Math.Abs(b) <= 4d && Math.Abs(c) <= 4d && Math.Abs(d) <= 4d))
         {
             return false;
@@ -167,7 +185,7 @@ public static class PolynomialRoots
         for (var i = 0; i < count; i++)
         {
             roots[i] -= shift;
-            if (Evaluate(derivative, roots[i], detectRepeatedRoot: true) != 0d)
+            if (Evaluate(coefficients, roots[i], detectRepeatedRoot: true) != 0d)
             {
                 return false;
             }

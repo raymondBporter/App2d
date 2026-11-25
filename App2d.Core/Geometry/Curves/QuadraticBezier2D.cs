@@ -37,5 +37,9 @@ public readonly partial record struct QuadraticBezier2D : ICurve2D, IInterpolata
     public Vector2f EvaluateDerivative(float amount) =>
         BezierMath.QuadraticDerivative<Vector2f, float>(Start, Control, End, amount);
 
-    public float Distance(Vector2f point) => CurveDistance2D.SampledDistance(point, this, 64);
+    public float Distance(Vector2f point) => Distance(point, 0, 1);
+
+    internal float Distance(Vector2f point, double from, double to) =>
+        (float)Math.Sqrt(CurveDistance2D.QuadraticDistanceSquared(point.ToVector2d(),
+            Start.ToVector2d(), Control.ToVector2d(), End.ToVector2d(), from, to));
 }
