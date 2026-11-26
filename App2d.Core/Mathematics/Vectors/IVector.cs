@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Vectors;
 
 /// <summary>
 /// A fixed-size Euclidean vector with IEEE floating-point coordinates.

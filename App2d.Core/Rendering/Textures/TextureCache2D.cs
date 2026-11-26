@@ -5,7 +5,7 @@ namespace App2d.Core.Rendering.Textures;
 
 public sealed class TextureCache2D(string contentRoot) : IDisposable
 {
-    private readonly Dictionary<string, Texture2D> _textures = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Texture2D> _textures = [with(StringComparer.OrdinalIgnoreCase)];
     private bool _disposed;
 
     public string ContentRoot { get; } = Path.GetFullPath(Ensure.RequireNotNullOrWhiteSpace(contentRoot));

@@ -1,4 +1,5 @@
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Mathematics.Vectors;
 
 namespace App2d.Tests.Mathematics;
 

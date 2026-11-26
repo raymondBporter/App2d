@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics.Vectors;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Geometry.Meshes;

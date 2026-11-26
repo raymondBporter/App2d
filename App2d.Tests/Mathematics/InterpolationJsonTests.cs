@@ -2,6 +2,7 @@ using App2d.Core.Json;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Serialization;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Mathematics.Vectors;
 using System.Numerics;
 using System.Text.Json;
 

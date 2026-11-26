@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Mathematics.Vectors;
 using System.Numerics;
 
 namespace App2d.Tests.Curves;

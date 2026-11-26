@@ -6,11 +6,11 @@ namespace App2d.Core.Mathematics.Serialization;
 /// <summary>Named JSON bindings for one value/scalar pair. Configure these before using the converter factory.</summary>
 public sealed class InterpolationJsonType<TValue, TReal> where TReal : IFloatingPointIeee754<TReal>
 {
-    private readonly Dictionary<string, IChannel> _channels = new(StringComparer.Ordinal);
-    private readonly Dictionary<object, string> _channelNames = new(ReferenceEqualityComparer.Instance);
-    private readonly Dictionary<string, ICoordinates> _coordinates = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IChannel> _channels = [with(StringComparer.Ordinal)];
+    private readonly Dictionary<object, string> _channelNames = [with(ReferenceEqualityComparer.Instance)];
+    private readonly Dictionary<string, ICoordinates> _coordinates = [with(StringComparer.Ordinal)];
     private readonly Dictionary<(Delegate To, Delegate From), string> _coordinateNames = [];
-    private readonly Dictionary<string, Interpolator<TValue, TReal>> _named = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Interpolator<TValue, TReal>> _named = [with(StringComparer.Ordinal)];
     private bool _frozen;
     internal InterpolatorJsonConverterFactory? Owner { get; set; }
 

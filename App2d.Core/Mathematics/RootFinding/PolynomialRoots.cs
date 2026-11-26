@@ -93,8 +93,11 @@ public static class PolynomialRoots
         {
             var inRange = 0;
             for (var i = 0; i < cubicCount; i++)
+            {
                 if (roots[i] >= minimum && roots[i] <= maximum)
                     Append(roots, ref inRange, roots[i]);
+            }
+
             return inRange;
         }
 

@@ -2,6 +2,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Mathematics.Vectors;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;

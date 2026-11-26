@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Vectors;
 
 /// <summary>
 /// Three double-precision coordinates for intermediate geometric calculations.

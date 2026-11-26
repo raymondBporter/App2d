@@ -12,8 +12,8 @@ internal sealed class ObjectAssetCatalog2D
 {
     private const string Folder = "objects";
     private readonly string _worldRoot;
-    private readonly Dictionary<string, ObjectAsset2D> _loaded = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, Exception> _failures = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ObjectAsset2D> _loaded = [with(StringComparer.OrdinalIgnoreCase)];
+    private readonly Dictionary<string, Exception> _failures = [with(StringComparer.OrdinalIgnoreCase)];
     private IReadOnlyList<string> _paths = [];
 
     public ObjectAssetCatalog2D(string worldRoot)

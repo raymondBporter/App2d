@@ -13,7 +13,7 @@ public sealed class Skeleton2D
     /// <summary>The <see cref="Joint2D.Parent"/> of a joint that hangs from nothing.</summary>
     public const int NoParent = -1;
 
-    private readonly Dictionary<string, int> _indices = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _indices = [with(StringComparer.Ordinal)];
 
     /// <summary>Joints in order, every parent before its children.</summary>
     public Skeleton2D(params ReadOnlySpan<Joint2D> joints)

@@ -59,13 +59,13 @@ public sealed class GenericBezierOperationsTests
     [Fact]
     public void SplitAtTheEndsGivesAPointAndTheWholeCurve()
     {
-        var atStart = Scalar.Split(0d);
-        var atEnd = Scalar.Split(1d);
+        var (Left0, Right0) = Scalar.Split(0d);
+        var (Left1, Right1) = Scalar.Split(1d);
 
-        Assert.Equal(new CubicBezier<double, double>(0d, 0d, 0d, 0d), atStart.Left);
-        Assert.Equal(Scalar, atStart.Right);
-        Assert.Equal(Scalar, atEnd.Left);
-        Assert.Equal(new CubicBezier<double, double>(1d, 1d, 1d, 1d), atEnd.Right);
+        Assert.Equal(new CubicBezier<double, double>(0d, 0d, 0d, 0d), Left0);
+        Assert.Equal(Scalar, Right0);
+        Assert.Equal(Scalar, Left1);
+        Assert.Equal(new CubicBezier<double, double>(1d, 1d, 1d, 1d), Right1);
     }
 
     [Fact]

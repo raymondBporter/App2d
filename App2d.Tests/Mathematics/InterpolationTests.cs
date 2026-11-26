@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Vectors;
+
 namespace App2d.Tests.Mathematics;
 
 public sealed class InterpolationTests

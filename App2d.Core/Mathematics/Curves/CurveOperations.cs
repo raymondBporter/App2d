@@ -111,7 +111,7 @@ public readonly record struct Concatenated<TFirst, TSecond, TValue, TReal>(TFirs
         {
             var first = First.Domain;
             var second = Second.Domain;
-            return new(first.Min, first.Max + (second.Max - second.Min));
+            return Interval<TReal>.Builder.Create(first.Min, first.Max + (second.Max - second.Min));
         }
     }
 

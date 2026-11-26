@@ -174,7 +174,9 @@ public static class CurveDistance2D
         var endDot = relativeEnd.Dot(lastEdge);
         if (startDot >= 0 && firstDot >= 0 && lastDot >= 0 && endDot >= 0 ||
             startDot <= 0 && firstDot <= 0 && lastDot <= 0 && endDot <= 0)
+        {
             return nearestSquared;
+        }
 
         // Use the nearer end as the parameter origin for each half. This avoids cancellation
         // in the power basis and preserves roots very close to either endpoint.
@@ -184,11 +186,17 @@ public static class CurveDistance2D
             nearestSquared = Math.Min(nearestSquared, middle.LengthSquared());
         }
         if (from < .5)
+        {
             nearestSquared = CheckQuadraticStationaryPoints(relativeStart, relativeControl, relativeEnd,
                 firstEdge, quadratic, from, Math.Min(to, .5), nearestSquared);
+        }
+
         if (to > .5)
+        {
             nearestSquared = CheckQuadraticStationaryPoints(relativeEnd, relativeControl, relativeStart,
                 -lastEdge, quadratic, 1 - to, Math.Min(1 - from, .5), nearestSquared);
+        }
+
         return nearestSquared;
     }
 

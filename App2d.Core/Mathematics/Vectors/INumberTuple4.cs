@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Vectors;
 
 /// <summary>
 /// Four numeric coordinates with concrete construction.

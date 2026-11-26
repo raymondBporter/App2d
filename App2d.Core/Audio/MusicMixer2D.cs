@@ -11,7 +11,7 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
     private readonly Lock _controlSync = new();
     private readonly Lock _renderSync = new();
     private readonly Dictionary<string, MusicCue2D> _cues;
-    private readonly Dictionary<string, MusicStream2D> _streams = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, MusicStream2D> _streams = [with(StringComparer.Ordinal)];
     private readonly float[] _first = new float[MusicStream2D.BlockFrames * 2];
     private readonly float[] _second = new float[MusicStream2D.BlockFrames * 2];
     private string? _requestedPiece, _requestedMood, _currentPiece;

@@ -21,7 +21,7 @@ public sealed class PolynomialSpanTests
     [MemberData(nameof(PolynomialCurves))]
     public void SpansAreContiguousAndReproduceTheCurve(ICurve2D curve, int count, int maximumDegree)
     {
-        var spans = Assert.IsAssignableFrom<IPolynomialCurve2D>(curve).GetPolynomialSpans();
+        var spans = Assert.IsType<IPolynomialCurve2D>(curve, exactMatch: false).GetPolynomialSpans();
         Span<Vector2d> controls = stackalloc Vector2d[spans.MaximumDegree + 1];
         var previousEnd = 0d;
 
@@ -48,7 +48,7 @@ public sealed class PolynomialSpanTests
     public void QueriesAgainstSinglePieceCurvesDoNotAllocate()
     {
         ICurve2D line = LineSegmentCurve2D.Create(new(0, 0), new(4, 0));
-        ICurve2D cubic = CubicBezier2D.Builder.Create(new(1, 2), new(3, 8), new(7, 5), new(9, -3));
+        CubicBezier2D cubic = CubicBezier2D.Builder.Create(new(1, 2), new(3, 8), new(7, 5), new(9, -3));
         var query = new Vector2f(2, 3);
         var sum = 0f;
         var allocated = long.MaxValue;

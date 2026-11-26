@@ -43,7 +43,10 @@ public static class GeometryJson2D
         // Geometry tags are single exact names. The enum converter also accepts whitespace and comma-separated names.
         if (tag.ValueKind != JsonValueKind.String || tag.GetString() is not { } name ||
             name.AsSpan().Trim().Length != name.Length || name.Contains(','))
+        {
             throw new JsonException("Expected a geometry kind string.");
+        }
+
         return tag.Deserialize<GeometryKind>();
     }
 

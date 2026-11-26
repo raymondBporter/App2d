@@ -6,7 +6,7 @@ namespace App2d.Core.Mathematics.Transforms;
 public static class Rotation2D
 {
     /// <summary>
-    /// Finds the pivot carrying from to to through radians. Returns false when the turn is too close
+    /// Finds the pivot carrying from -> to through radians. Returns false when the turn is too close
     /// to a whole revolution to determine a stable pivot from float coordinates.
     /// </summary>
     public static bool TryFindPivot(Vector2f from, Vector2f to, float radians, out Vector2f pivot)
@@ -33,7 +33,7 @@ public static class Rotation2D
     }
 
     /// <summary>
-    /// Interpolates the circular motion carrying from to to through radians, including long turns.
+    /// Interpolates the circular motion carrying from -> to through radians, including long turns.
     /// Fractions outside [0, 1] return the nearest endpoint. Near a whole revolution the pivot
     /// is ill-conditioned, so this uses linear interpolation.
     /// </summary>

@@ -17,7 +17,7 @@ public readonly record struct PolynomialSpanRange(double From, double To, int Co
 /// The Bézier pieces of a polynomial curve, in double precision. A single-piece curve carries its controls inline;
 /// a polyline or a prepared curve refers to storage the curve already owns.
 /// </summary>
-public readonly struct PolynomialSpans2D
+public readonly record struct PolynomialSpans2D
 {
     private readonly PolynomialCurveSpan2D[]? _prepared;
     private readonly Vector2f[]? _polyline;
@@ -75,7 +75,7 @@ public readonly struct PolynomialSpans2D
             controls[1] = points[index + 1].ToVector2d();
             return new(index / (double)Count, (index + 1) / (double)Count, 2);
         }
-        if (index != 0) throw new ArgumentOutOfRangeException(nameof(index));
+        ArgumentOutOfRangeException.ThrowIfNotEqual(index, 0);
         controls[0] = _first;
         controls[1] = _second;
         if (MaximumDegree >= 2) controls[2] = _third;

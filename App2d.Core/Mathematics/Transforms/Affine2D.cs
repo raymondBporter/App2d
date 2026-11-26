@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 using System.Text.Json.Serialization;
+using System.Numerics;
 
 namespace App2d.Core.Mathematics.Transforms;
 

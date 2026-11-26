@@ -9,7 +9,7 @@ namespace App2d.Presentation.Assets;
 internal static class CharacterAnimationAssets2D
 {
     private static readonly Lock ManifestLock = new();
-    private static readonly Dictionary<string, CharacterManifest> Manifests = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, CharacterManifest> Manifests = [with(StringComparer.OrdinalIgnoreCase)];
 
     public static AnimationClip2D<Texture2D> LoadClip(TextureCache2D textures, string characterId, string animationId)
     {
@@ -162,7 +162,7 @@ internal static class CharacterAnimationAssets2D
     private sealed class CharacterManifest
     {
         public string Id { get; init; } = string.Empty;
-        public Dictionary<string, AnimationManifest> Animations { get; init; } = new(StringComparer.Ordinal);
+        public Dictionary<string, AnimationManifest> Animations { get; init; } = [with(StringComparer.Ordinal)];
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(

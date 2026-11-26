@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Vectors;
 using System.Reflection;
 
 namespace App2d.Tests.Mathematics;

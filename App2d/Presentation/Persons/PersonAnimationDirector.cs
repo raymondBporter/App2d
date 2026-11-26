@@ -34,7 +34,7 @@ public sealed class PersonMoves
         DownAttack, GunAim, GunShot, GunWallShot, GunCharge, HealGather,
     ];
 
-    private readonly Dictionary<string, SkeletonClip2D> _clips = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SkeletonClip2D> _clips = [with(StringComparer.Ordinal)];
 
     public PersonMoves(Combatant hero)
     {

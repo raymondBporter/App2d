@@ -18,7 +18,7 @@ public sealed class Hero2D
 {
     private const string Attack = "attack", Shoot = "shoot", WallShot = "wall-shot", Fire = "fire";
     private readonly float _halfHeight;
-    private readonly Dictionary<string, IShape2D> _shapes = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IShape2D> _shapes = [with(StringComparer.Ordinal)];
 
     public Hero2D(Combatant character, Vector2f colliderSize)
     {

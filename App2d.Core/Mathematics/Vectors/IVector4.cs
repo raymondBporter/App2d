@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Vectors;
 
 /// <summary>
 /// A four-dimensional floating-point vector. A struct supplies X, Y, Z, W, Create and its operators;

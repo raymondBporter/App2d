@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Vectors;
+
 namespace App2d.Core.Mathematics;
 
 // C# cannot infer TValue and TReal from a constraint such as `where TCurve : ICurve<TValue, TReal>`, so one entry

@@ -19,7 +19,7 @@ public sealed class ControlPointCurveTests
     [MemberData(nameof(PointDefinedCurves))]
     public void EveryPointDefinedCurveMovesWithItsControlPoints(ICurve2D curve, int count)
     {
-        var editable = Assert.IsAssignableFrom<IControlPointCurve<Vector2f, ICurve2D>>(curve);
+        var editable = Assert.IsType<IControlPointCurve<Vector2f, ICurve2D>>(curve, exactMatch: false);
         var shift = new Vector2f(1, 2);
         var moved = new Vector2f[editable.ControlPointCount];
         for (var i = 0; i < moved.Length; i++) moved[i] = editable.GetControlPoint(i) + shift;
@@ -28,7 +28,7 @@ public sealed class ControlPointCurveTests
 
         Assert.Equal(count, editable.ControlPointCount);
         Assert.IsType(curve.GetType(), result);
-        var readBack = Assert.IsAssignableFrom<IControlPointCurve<Vector2f, ICurve2D>>(result);
+        var readBack = Assert.IsType<IControlPointCurve<Vector2f, ICurve2D>>(result, exactMatch: false);
         for (var i = 0; i < moved.Length; i++) Assert.Equal(moved[i], readBack.GetControlPoint(i));
         Assert.InRange((result.Evaluate(.4f) - curve.Evaluate(.4f) - shift).Length(), 0, 1e-4f);
     }

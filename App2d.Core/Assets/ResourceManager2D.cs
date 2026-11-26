@@ -17,7 +17,7 @@ public sealed record ResourceInfo2D(
 /// </summary>
 public sealed class ResourceManager2D : IDisposable
 {
-    private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Entry> _entries = [with(StringComparer.Ordinal)];
     private bool _disposed;
 
     public int Count => _entries.Count;
@@ -194,7 +194,7 @@ public sealed class ResourceManager2D : IDisposable
         public Func<object?> Loader { get; } = loader;
         public string? Source { get; } = source;
         public bool OwnsResource { get; } = ownsResource;
-        public HashSet<string> Owners { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> Owners { get; } = [with(StringComparer.Ordinal)];
         public object? Value { get; set; }
         public bool IsLoading { get; set; }
     }

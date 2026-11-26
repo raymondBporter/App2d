@@ -28,7 +28,7 @@ public readonly partial record struct BSpline2D
             var spans = new List<PolynomialCurveSpan2D>();
             for (var i = degree; i < points.Length; i++)
                 if (knots[i] < knots[i + 1]) spans.Add(new(knots[i], knots[i + 1], points[(i - degree)..(i + 1)]));
-            return prepared.PolynomialSpans = spans.ToArray();
+            return prepared.PolynomialSpans = [.. spans];
         }
     }
 

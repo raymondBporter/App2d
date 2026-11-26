@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Runtime.Intrinsics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Vectors;
 
 /// <summary>
 /// A vector of four doubles. Arithmetic follows IEEE 754 without validation.

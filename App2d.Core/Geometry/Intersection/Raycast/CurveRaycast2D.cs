@@ -37,21 +37,16 @@ public static class CurveRaycast2D
         return TryIntersectInterval(origin, direction, curve, from, to, maxDistance, out hit);
     }
 
-    internal static bool TryIntersectInterval(Vector2f origin, Vector2f direction, ICurve2D curve, double from, double to,
-        float maxDistance, out RayHit2D hit)
+    internal static bool TryIntersectInterval(Vector2f origin, Vector2f direction, ICurve2D curve, double from, double to, float maxDistance, out RayHit2D hit)
     {
         hit = default;
         if (from == to) return false;
-        switch (curve)
+        return curve switch
         {
-            case Arc2D arc:
-                return Raycast2D.TryArc(origin, direction, arc.Center, arc.Radius,
-                    arc.StartAngleRadians + arc.SweepAngleRadians * from, arc.SweepAngleRadians * (to - from), maxDistance, out hit);
-            case IPolynomialCurve2D polynomial:
-                return Spans(origin, direction, polynomial.GetPolynomialSpans(), from, to, maxDistance, out hit);
-            default:
-                throw new NotSupportedException($"Direct ray intersections are not available for {curve.GetType().Name}. No sampled fallback is applied.");
-        }
+            Arc2D arc => Raycast2D.TryArc(origin, direction, arc.Center, arc.Radius, arc.StartAngleRadians + arc.SweepAngleRadians * from, arc.SweepAngleRadians * (to - from), maxDistance, out hit),
+            IPolynomialCurve2D polynomial => Spans(origin, direction, polynomial.GetPolynomialSpans(), from, to, maxDistance, out hit),
+            _ => throw new NotSupportedException($"Direct ray intersections are not available for {curve.GetType().Name}. No sampled fallback is applied."),
+        };
     }
 
     // Every polynomial curve is its pieces: the nearest hit over the pieces inside [from, to].

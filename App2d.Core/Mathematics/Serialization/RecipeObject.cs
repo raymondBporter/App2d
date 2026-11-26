@@ -14,8 +14,8 @@ internal sealed class RecipeObject
         if (element.ValueKind != JsonValueKind.Object) throw new JsonException("Expected an interpolation recipe object.");
         _options = options;
         var comparer = options.PropertyNameCaseInsensitive ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-        _fields = new(comparer);
-        _read = new(comparer);
+        _fields = [with(comparer)];
+        _read = [with(comparer)];
         foreach (var field in element.EnumerateObject())
             if (!_fields.TryAdd(field.Name, field.Value)) throw new JsonException($"Duplicate recipe member '{field.Name}'.");
     }

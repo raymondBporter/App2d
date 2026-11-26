@@ -21,7 +21,7 @@ public sealed class SoundEffectBank2D<TEffect> : ISoundEffectSink2D<TEffect>, ID
         _mixer = new AudioMixer2D();
         try
         {
-            _cues = new Dictionary<TEffect, LoadedCue>(cues.Count);
+            _cues = [with(cues.Count)];
             foreach (var (effect, cue) in cues)
             {
                 _cues[effect] = Load(rootPath, cue);
