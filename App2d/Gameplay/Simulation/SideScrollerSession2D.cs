@@ -237,9 +237,10 @@ public sealed class SideScrollerSession2D : IDisposable
             if (player.Person.Position.Y < _world.Bounds.Min.Y - 260f)
             {
                 Respawn(player);
+                continue;
             }
 
-            if (player.GoalEligible && !player.ReachedGoal && player.Person.Position.X >= _world.GoalX)
+            if (player.GoalEligible && !player.ReachedGoal && _world.CanReachGoal(player.Person.WorldObject.WorldBounds))
             {
                 player.ReachedGoal = true;
                 _events.Add(new GoalReached2D(Stamp(player)));

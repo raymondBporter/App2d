@@ -44,6 +44,7 @@ public sealed class WorldAsset2D(IReadOnlyList<WorldMapAsset2D> maps, ImmutableA
     public ImmutableArray<WorldZone2D> Zones { get; } = zones;
 
     public bool StartAtArrival { get; init; }
+    public long? GoalGuardianThingId { get; init; }
     /// <summary>The folder holding <c>world.json</c>; object asset paths resolve under it.</summary>
     public required string Root { get; init; }
     /// <summary>Every map's object things as placements, in map order.</summary>
@@ -127,10 +128,23 @@ public static class WorldFile2D
                 maps.RemoveAt(index);
                 maps.Insert(0, start);
             }
+            long? guardianId = null;
+            if (file.GoalGuardian is { } guardian)
+            {
+                var map = maps.Find(m => m.Id == guardian.MapId);
+                if (map is null || !map.PositionThings.Any(thing => thing.ThingId == guardian.ThingId && thing.Enabled))
+                {
+                    throw new InvalidDataException($"Goal guardian {guardian.ThingId} in map '{guardian.MapId}' must be an enabled placement.");
+                }
+
+                guardianId = map.WorldThingId(guardian.ThingId);
+            }
+
             return new(maps.AsReadOnly(), zones.ToImmutable())
             {
                 Root = root,
-                StartAtArrival = file.StartAtArrival
+                StartAtArrival = file.StartAtArrival,
+                GoalGuardianThingId = guardianId,
             };
         }
         catch (Exception e) when (e is JsonException or ArgumentException or OverflowException)
@@ -196,7 +210,10 @@ public static class WorldFile2D
     {
         public string? StartMapId { get; init; }
         public bool StartAtArrival { get; init; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public GoalGuardianDocument? GoalGuardian { get; init; }
     }
+    public sealed record GoalGuardianDocument(string MapId, long ThingId);
     public sealed record ZoneDocument(string Id, string Name, int Priority, IReadOnlyList<MapDocument> Maps);
 
     public sealed record MapDocument(string Id, string Name, [property: JsonRequired] int Identity, string File)

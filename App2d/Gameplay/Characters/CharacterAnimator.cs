@@ -15,6 +15,7 @@ public readonly record struct CharacterEvent(string Name, bool IsCue, string? So
 public sealed class CharacterAnimator
 {
     public const string Idle = "idle", Walk = "walk", Run = "run", Hit = "hit", Death = "death", Attack = "attack", Fire = "fire";
+    internal const string Charge = "charge", ChargeWindup = "charge-windup", ChargeRush = "charge-rush", ChargeBrake = "charge-brake";
 
     private readonly PlantedLimbs _planted = new();
     private bool _fresh, _reversed;

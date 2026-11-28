@@ -1,0 +1,22 @@
+{
+  "format": "app2d-object",
+  "version": 1,
+  "id": "stonewatch-ferry",
+  "name": "Stonewatch ferry",
+  "shapes": [
+    {
+      "shape": { "kind": "rectangle", "min": { "x": -48, "y": -8 }, "max": { "x": 48, "y": 8 } },
+      "fill": "#c17b46",
+      "outline": { "color": "#492e28", "width": 2 }
+    }
+  ],
+  "physics": { "motionType": "Kinematic", "friction": 0, "restitution": 0, "transfersContactMotion": true },
+  "surface": { "oneWayNormal": { "x": 0, "y": 1 }, "oneWaySlop": 2 },
+  "motion": {
+    "curve": { "kind": "line", "start": { "x": 0, "y": 0 }, "end": { "x": 352, "y": 0 } },
+    "periodSeconds": 6,
+    "repeat": true,
+    "travel": "ping-pong",
+    "ease": "smooth"
+  }
+}

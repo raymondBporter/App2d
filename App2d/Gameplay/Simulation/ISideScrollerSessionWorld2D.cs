@@ -19,6 +19,7 @@ public interface ISideScrollerSessionWorld2D
     ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => [];
     Rect2f Bounds { get; }
     float GoalX { get; }
+    bool CanReachGoal(Rect2f playerBounds) => playerBounds.Center.X >= GoalX;
     void UpdateStreaming(Vector2f focus);
     void UpdateWorldMotion(float deltaSeconds);
     void UpdateEnemies(float deltaSeconds, Vector2f targetPosition);

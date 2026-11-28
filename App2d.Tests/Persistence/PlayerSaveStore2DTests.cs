@@ -33,6 +33,16 @@ public sealed class PlayerSaveStore2DTests : IDisposable
     }
 
     [Fact]
+    public void CompletedCampaignRoundTripsWithItsCheckpoint()
+    {
+        var store = NewStore();
+        var completed = new PlayerSave2D(27, 16) { CampaignCompleted = true, CampaignRevision = SideScrollerGame.CampaignRevision };
+
+        Assert.True(store.TrySave(completed));
+        Assert.Equal(completed, store.TryLoad());
+    }
+
+    [Fact]
     public void InvalidSaveValuesAreRejected()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new PlayerSave2D(0, 5));

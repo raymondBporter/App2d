@@ -19,6 +19,7 @@ public sealed class PlayerSaveStore2D
     public string Path { get; }
 
     public static PlayerSaveStore2D CreateDefault() => new(UserDataLocations.ForCurrentUser().PlayerSave);
+    public static PlayerSaveStore2D CreateCampaign() => new(System.IO.Path.Combine(UserDataLocations.ForCurrentUser().Root, "ember-crossing.json"));
 
     public PlayerSave2D? TryLoad()
     {

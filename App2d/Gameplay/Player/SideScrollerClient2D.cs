@@ -79,6 +79,8 @@ internal sealed class SideScrollerClient2D : IDisposable
     public PlayerState2D State { get; private set; }
     public PlayerWardrobe2D Wardrobe => _presentation.Wardrobe;
     public LevelContent2D Content => _frame.Content;
+    public bool IsGoalUnlocked => _frame.World.IsGoalUnlocked;
+    public GoalGuardianState2D? GoalGuardian => _frame.World.GoalGuardian;
     public bool ShowTraversalDebug { get; set; }
     public BallisticsDebug2D Ballistics { get; }
     public SpatialSoundEffectSink2D<SoundEffect2D> WorldSounds { get; }

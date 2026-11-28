@@ -37,6 +37,7 @@ public sealed record SideScrollerSessionDefinition2D(TraversalMetrics2D Traversa
     public ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
     public int PlayerMaximumHealth { get; init; } = 5;
     public SpellTuning2D Spells { get; init; } = new();
+    public long? GoalGuardianThingId { get; init; }
 
     /// <summary>Resume point; ignored when it names a missing checkpoint or invalid health.</summary>
     public SavedProgress2D? SavedProgress { get; init; }

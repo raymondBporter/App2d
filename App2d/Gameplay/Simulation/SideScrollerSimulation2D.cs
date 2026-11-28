@@ -87,7 +87,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
         combatants.Register(player);
         var contactDamage = new ContactDamageSystem2D(collision, SideScrollerLayers2D.Enemy, combatants);
         var combat = new CombatSystem2D(collision, combatants);
-        level.CreateAuthoredWorldThings(combat, definition.Characters);
+        level.CreateAuthoredWorldThings(combat, definition.Characters, definition.GoalGuardianThingId);
         // The player's sword timing, hit box and muzzle come from its character, posed exactly as it is drawn.
         var hero = definition.Characters ? new Hero2D(GameCharacters.Hero, traversal.PlayerColliderSize) : null;
         Func<float, Vector2f>? muzzle = hero is null ? null : facing => hero.Muzzle(facing, player.IsWallGripping);

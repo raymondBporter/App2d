@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "zones": [
+    { "id": "prehistoric", "name": "Fernbank", "minX": 0, "minY": -384, "maxX": 2176, "maxY": 1152, "priority": 0 },
+    { "id": "medieval", "name": "Stonewatch", "minX": 2176, "minY": -384, "maxX": 4672, "maxY": 1152, "priority": 0 },
+    { "id": "wasteland", "name": "The Cinderworks", "minX": 4672, "minY": -384, "maxX": 7168, "maxY": 1152, "priority": 0 }
+  ]
+}

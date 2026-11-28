@@ -37,9 +37,30 @@ if (args is ["--create-map", var mapPath, var width, var height, var originX, va
     return;
 }
 
-ApplicationConfiguration.Initialize();
-
-// Rendering smokes and studies run from App2d.CharacterSeeds, which references the game; the game does not reference it.
+var campaign = args.Length == 0;
 var selectedWorld = args is ["--world", var worldPath] ? Path.GetFullPath(worldPath) : null;
-using var host = new GameHost(new SideScrollerGame(selectedWorld));
-host.Run();
+if (!campaign && selectedWorld is null && args is not ["--playground"])
+{
+    Console.Error.WriteLine("Usage: App2d [--playground | --world <manifest>]");
+    Environment.ExitCode = 2;
+    return;
+}
+
+ApplicationConfiguration.Initialize();
+var replay = false;
+do
+{
+    var game = new SideScrollerGame(selectedWorld, campaign, replay);
+    using var host = new GameHost(game);
+    replay = false;
+    game.ReplayRequested += () =>
+    {
+        if (!replay && Application.OpenForms[0] is { } window)
+        {
+            replay = true;
+            window.BeginInvoke((Action)window.Close);
+        }
+    };
+    host.Run();
+}
+while (replay);

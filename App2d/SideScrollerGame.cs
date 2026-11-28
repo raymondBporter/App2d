@@ -3,11 +3,9 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Assets;
 using App2d.Core.Audio;
-using App2d.Core.Geometry.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Hosting;
 using App2d.Core.Input;
-using App2d.Core.Json;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Editor;
@@ -17,15 +15,16 @@ using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Persistence;
 using App2d.Presentation.Audio;
+using App2d.Presentation.Player;
 using App2d.Presentation.World;
 using App2d.Rendering;
-using App2d.Things;
 
 namespace App2d;
 
 /// <summary>Local composition and scheduling; gameplay decisions live in the session.</summary>
 public sealed class SideScrollerGame : Game2D
 {
+    internal const int CampaignRevision = 2;
     private readonly ResourceManager2D _resources = new();
     private readonly TraversalMetrics2D Traversal;
 
@@ -44,54 +43,47 @@ public sealed class SideScrollerGame : Game2D
     private readonly Levels.WorldAsset2D _loadedWorld;
     private readonly LevelPicker2D _levelPicker;
     private bool _paperDollWasOpen;
+    private readonly bool _campaign;
+    private readonly bool _hasCheckpoint;
+    private CampaignScreen _campaignScreen;
+    private bool _savedClear;
 
-    public SideScrollerGame(string? worldManifest = null)
+    public SideScrollerGame(string? worldManifest = null) : this(worldManifest, campaign: false)
     {
+    }
+
+    internal SideScrollerGame(string? worldManifest, bool campaign, bool replay = false, PlayerSaveStore2D? campaignSaveStore = null)
+    {
+        _campaign = campaign;
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
         var textures = _resources.GetLoad<TextureCache2D>("textures/runtime", "presentation");
         _resources.Register("audio/sfx", () => new SoundEffectBank2D<SoundEffect2D>(AssetPaths.Current.SoundEffects, SoundEffectCues2D.Cues), AssetPaths.Current.SoundEffects);
         var hero = GameCharacters.Hero;
-        // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
-
-        var movement = ShapeBounds2D.Calculate(hero.Movement);
-        var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(movement.Height) / 4) * 4;
-        Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f, new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height), GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
         _sounds = _resources.GetLoad<SoundEffectBank2D<SoundEffect2D>>("audio/sfx", "presentation");
         DebugPanel.Section("Audio").Slider("SFX volume", () => _sounds.Volume, value => _sounds.Volume = value, 0f, 1f,
             "Master sound-effect level from 0 (muted) to 1 (full volume).");
 
-        _resources.Register("level/cavern", () => worldManifest is null ? LevelBootstrap2D.Load() : LevelBootstrap2D.LoadWorld(worldManifest),
-            worldManifest ?? LevelBootstrap2D.CavernLevelPath);
-        var loadedLevel = _resources.GetLoad<Levels.WorldAsset2D>("level/cavern", "simulation");
+        _resources.Register("level/world", () => campaign ? LevelBootstrap2D.LoadCampaign() :
+            worldManifest is null ? LevelBootstrap2D.Load() : LevelBootstrap2D.LoadWorld(worldManifest),
+            campaign ? LevelBootstrap2D.CampaignManifestPath : worldManifest ?? LevelBootstrap2D.WorldManifestPath);
+        var loadedLevel = _resources.GetLoad<Levels.WorldAsset2D>("level/world", "simulation");
         _loadedWorld = loadedLevel;
         _levelPicker = new(loadedLevel.Maps);
         var tileMap = loadedLevel.TileMap;
         _terrainSource = new ViewportTerrainSource2D(tileMap);
-        _saveStore = worldManifest is null ?
+        _saveStore = campaign ? campaignSaveStore ?? PlayerSaveStore2D.CreateCampaign() : worldManifest is null ?
             loadedLevel.StartAtArrival ? new PlayerSaveStore2D(PlayerSaveStore2D.CreateDefault().Path + ".playground") : PlayerSaveStore2D.CreateDefault() :
             new PlayerSaveStore2D(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(worldManifest))!, "player-save.json"));
         // Explicit world launches are playtests: always begin at the map's arrival.
         // The local store still records checkpoints for deaths during this session.
-        var loadedSave = worldManifest is null && !loadedLevel.StartAtArrival ? _saveStore.TryLoad() : null;
+        var loadedSave = campaign ? (replay ? null : _saveStore.TryLoad()) :
+            worldManifest is null && !loadedLevel.StartAtArrival ? _saveStore.TryLoad() : null;
+        SavedProgress2D? progress = loadedSave is null ? null : new(loadedSave.SavePointId, loadedSave.HitPoints);
 
         // The one construction recipe for the simulation; the host only adds I/O and presentation.
-        _simulation = SideScrollerSimulation2D.Create(new SideScrollerSessionDefinition2D(
-            Traversal, tileMap,
-            [.. loadedLevel.PositionThings
-                .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
-                .Select(ThingTypeRegistry2D.ToRuntime)])
-        {
-            PlayerMaximumHealth = GameCharacters.HeroHealth,
-            Spells = System.Text.Json.JsonSerializer.Deserialize<SpellTuning2D>(
-                File.ReadAllText(Path.Combine(AssetPaths.Current.Runtime, "gameplay", "player-spells.json")),
-                JsonProfiles.CaseInsensitive)
-                ?? throw new InvalidDataException("Player spell tuning is missing."),
-            Characters = true,
-            Objects = loadedLevel.Objects,
-            Zones = loadedLevel.Zones,
-            GiantTrees = loadedLevel.GiantTrees,
-            SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
-        });
+        var definition = LevelBootstrap2D.CreateSessionDefinition(loadedLevel, progress);
+        Traversal = definition.Traversal;
+        _simulation = SideScrollerSimulation2D.Create(definition);
         _session = _simulation.Session;
         AttachPhysicsWorld(_simulation.Physics);
         RegisterDebugAttackShapes(_simulation.Arsenal.GetActiveAttackHitboxes);
@@ -99,17 +91,32 @@ public sealed class SideScrollerGame : Game2D
 
         var snapshot = _session.CaptureSnapshot();
         var playerId = _session.PlayerIds[0];
-        var startPosition = snapshot.FindPlayer(playerId)!.Value.Person.Position;
+        var initialPlayer = snapshot.FindPlayer(playerId)!.Value;
+        var startPosition = initialPlayer.Person.Position;
+        _hasCheckpoint = initialPlayer.CheckpointId is not null;
+        _savedClear = campaign && _hasCheckpoint && loadedSave is { CampaignCompleted: true, CampaignRevision: CampaignRevision };
+        _campaignScreen = _savedClear ? CampaignScreen.Cleared : CampaignScreen.Briefing;
+        _session.SetPaused(campaign);
         Camera.ReferenceViewportHeight = 1080f;
-        SideScrollerBackground2D.AddTo(Background);
         var cameraController = new SideScrollerCamera2D(Camera,
             tileMap.WorldBounds, startPosition);
+        if (_campaign)
+        {
+            Camera.Zoom = 1.7f;
+            cameraController.Reset(startPosition);
+            CampaignBackground2D.AddTo(Background);
+        }
+        else
+        {
+            SideScrollerBackground2D.AddTo(Background);
+        }
+
         DebugPanel.Section("Camera").Slider("Zoom", () => Camera.Zoom, value => Camera.Zoom = value, 0.05f, 20f,
-            "Camera zoom; default 1.35. Larger values zoom in.", logarithmic: true);
+            "Camera zoom. Larger values zoom in.", logarithmic: true);
 
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
-        _resources.Get<Levels.WorldAsset2D>("level/cavern", "editor");
+        _resources.Get<Levels.WorldAsset2D>("level/world", "editor");
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ConfigureMaps(loadedLevel.Maps, loadedLevel.Root);
         _editor.ObjectsChanged += objects =>
@@ -163,7 +170,10 @@ public sealed class SideScrollerGame : Game2D
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | PAD: {(_isControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        _campaign ? CampaignHud2D.Title :
+        $"App2d Playground | PAD: {(_isControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | Goal reached" : string.Empty)}";
+
+    internal event Action? ReplayRequested;
 
     public override IGameToolUi2D? ToolUi => _editorUi;
     protected override Color4b BackgroundColor => new(103, 196, 235);
@@ -182,7 +192,12 @@ public sealed class SideScrollerGame : Game2D
             _client.Suspend();
             return;
         }
-        if (!_editor.IsActive)
+        if (_campaign && !_editor.IsActive && HandleCampaignMenu(input))
+        {
+            return;
+        }
+
+        if (!_campaign && !_editor.IsActive)
         {
             var wasOpen = _levelPicker.IsOpen;
             if (_levelPicker.Update(input) is { } destination)
@@ -235,14 +250,64 @@ public sealed class SideScrollerGame : Game2D
             var command = _client.CaptureInput(input);
             var frame = _session.Advance(command);
             _client.Apply(frame);
+            if (_campaign && _client.State.ReachedGoal)
+            {
+                var state = _client.State;
+                var checkpoint = state.CheckpointId ?? frame.Content.Checkpoints.Select(item => (long?)item.ThingId).FirstOrDefault();
+                _savedClear = checkpoint is { } id &&
+                    _saveStore.TrySave(new PlayerSave2D(id, state.Person.HitPoints) { CampaignCompleted = true, CampaignRevision = CampaignRevision });
+                _campaignScreen = CampaignScreen.Cleared;
+                _session.SetPaused(true);
+                _client.Suspend();
+                input.CancelButtons();
+            }
         }
+    }
+
+    private bool HandleCampaignMenu(InputState input)
+    {
+        var pause = !input.IsSuppressed && (input.Keyboard.WasPressed(Keys.P) || input.Gamepad.WasPressed(GamepadButton2D.Menu));
+        if (_campaignScreen == CampaignScreen.Playing)
+        {
+            if (!pause)
+            {
+                return false;
+            }
+
+            _campaignScreen = CampaignScreen.Paused;
+            _session.SetPaused(true);
+            _client.Suspend();
+            input.CancelButtons();
+            return true;
+        }
+
+        var accept = !input.IsSuppressed && (input.Keyboard.WasPressed(Keys.Enter) || input.Gamepad.WasPressed(GamepadButton2D.A) ||
+            (input.Mouse.WasPressed(MouseButtons.Left) && CampaignHud2D.HitsAction(Camera.ViewportSize, input.Mouse.PositionDevice)));
+        if (_campaignScreen == CampaignScreen.Cleared)
+        {
+            if (accept)
+            {
+                ReplayRequested?.Invoke();
+            }
+            return true;
+        }
+
+        if (accept || (_campaignScreen == CampaignScreen.Paused && pause))
+        {
+            _campaignScreen = CampaignScreen.Playing;
+            _session.SetPaused(false);
+            input.CancelButtons();
+        }
+
+        return true;
     }
 
     public override void AdvancePresentation(FrameTime time)
     {
         _musicDirector.Update(_client.Content, _client.State.Person.Position, time.DeltaSeconds);
         _client.UpdateFeedback(time.DeltaSeconds);
-        if (!_editor.IsActive && !_levelPicker.IsOpen && !_editorUi.IsPaperDollOpen)
+        if (!_editor.IsActive && !_levelPicker.IsOpen && !_editorUi.IsPaperDollOpen &&
+            (!_campaign || _campaignScreen != CampaignScreen.Paused))
         {
             _client.AdvancePresentation(time.DeltaSeconds);
         }
@@ -276,8 +341,24 @@ public sealed class SideScrollerGame : Game2D
 
     public override void RenderUI(Renderer2D renderer, FrameTime time)
     {
-        _client.DrawUI(renderer);
-        if (!_editor.IsActive)
+        if (!_campaign || _campaignScreen == CampaignScreen.Playing)
+        {
+            _client.DrawUI(renderer);
+        }
+
+        if (_campaign && !_editor.IsActive)
+        {
+            if (_campaignScreen == CampaignScreen.Playing)
+            {
+                CampaignHud2D.DrawObjective(renderer, _musicDirector.CurrentZone, _client.IsGoalUnlocked, _isControllerConnected,
+                    _client.GoalGuardian, _client.State.Person.Position);
+            }
+            else
+            {
+                CampaignHud2D.DrawScreen(renderer, _campaignScreen, _hasCheckpoint, _savedClear, _isControllerConnected);
+            }
+        }
+        else if (!_editor.IsActive)
         {
             _levelPicker.Draw(renderer);
         }

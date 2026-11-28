@@ -25,6 +25,8 @@ public sealed record EnemyControl
     public float RetreatPause { get; init; } = .65f;
     /// <summary>The speed it rushes at during its attack, between the action's "rush" and "brake" cues, or these times without them.</summary>
     public float ChargeSpeed { get; init; }
+    /// <summary>Starts a separate charge action outside melee range and within this distance. Zero uses the attack's own motion.</summary>
+    public float ChargeRange { get; init; }
     public float ChargeStartSeconds { get; init; }
     public float ChargeEndSeconds { get; init; }
     public float BrakeSeconds { get; init; } = .3f;
@@ -498,25 +500,10 @@ public static class GameCharacters
         return new(character, new() { Range = 3.2f, Cooldown = .8f, Flight = new() }) { Health = 4, KnockbackResistance = .8f };
     }
 
-    /// <summary>The joined quadruped and person rig, standing still for inspection.</summary>
-    public static EnemyType StandingCentaur { get; } = new(new Combatant
-    {
-        Name = "centaur",
-        Skeleton = Centaur.Skeleton,
-        Body = Centaur.Body,
-        Face = new(PersonFace.Face, Centaur.Graft.GuestMounts[PersonSkeleton.HeadArt], Centaur.RiderScale, PersonFace.Layer),
-        Roles = new Dictionary<string, SkeletonClip2D>
-        {
-            [CharacterAnimator.Idle] = Centaur.Idle,
-            [CharacterAnimator.Walk] = Centaur.Horse(QuadrupedClips.QuadrupedWalk),
-        },
-        Movement = Box(1.65f, 2.35f, new(-.22f, 1.175f)),
-        Colliders =
-        [
-            CharacterCollider.OnJoint("body", ColliderUse.Hurt, Box(1.82f, .85f), Centaur.Graft.HostJoints[QuadrupedSkeleton.Body]),
-            CharacterCollider.OnJoint("rider", ColliderUse.Hurt, Box(.5f, 1.2f), Centaur.Graft.GuestJoints[PersonSkeleton.Hips], new(0, .56f)),
-        ],
-    }, new() { WalkSpeed = 0 });
+    public static EnemyType CentaurBoss { get; } = CentaurBoss2D.Create();
+
+    /// <summary>The Centaur enemy type used by existing placements.</summary>
+    public static EnemyType StandingCentaur => CentaurBoss;
 
     /// <summary>The kind of enemy a thing placed in a level is, or null when that thing is not one of these.</summary>
     public static EnemyType? Enemy(WorldThingKind2D kind) => kind switch
@@ -530,10 +517,10 @@ public static class GameCharacters
         WorldThingKind2D.BabyTriceratops => BabyTriceratops,
         WorldThingKind2D.ShieldDefender => ShieldDefender,
         WorldThingKind2D.Pterosaur => FlyingPterosaur,
-        WorldThingKind2D.Centaur => StandingCentaur,
+        WorldThingKind2D.Centaur => CentaurBoss,
         _ => null,
     };
 
     /// <summary>Every kind of enemy.</summary>
-    public static IReadOnlyList<EnemyType> Enemies { get; } = [SpearGuard, StalkerPest, CinderGunner, MaulBrute, ClubCaveman, RockThrower, BabyTriceratops, ShieldDefender, FlyingPterosaur, StandingCentaur];
+    public static IReadOnlyList<EnemyType> Enemies { get; } = [SpearGuard, StalkerPest, CinderGunner, MaulBrute, ClubCaveman, RockThrower, BabyTriceratops, ShieldDefender, FlyingPterosaur, CentaurBoss];
 }

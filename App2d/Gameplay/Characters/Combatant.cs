@@ -85,6 +85,8 @@ public sealed record CharacterAction(string Name, SkeletonClip2D Clip)
     public SkeletonMask2D? Mask { get; init; }
     public float BlendIn { get; init; }
     public float BlendOut { get; init; }
+    /// <summary>Enemies keep the action and its momentum through nonlethal hits before this time.</summary>
+    public float UninterruptibleUntil { get; init; }
     /// <summary>The action another press goes on to while this one plays or its recovery still runs.</summary>
     public string? Next { get; init; }
     /// <summary>The clip played once the action ends, when nothing else takes over.</summary>

@@ -27,6 +27,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private IReadOnlyList<ObjectPlacement2D> _objectPlacements;
     private readonly List<AuthoredObject2D> _objects = [];
     private readonly List<SavePoint2D> _savePoints = [];
+    private readonly Rect2f? _goalBounds;
+    private ICombatant2D? _goalGuardian;
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
     private LevelContent2D? _content;
@@ -77,6 +79,11 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             .FirstOrDefault(thing => thing.Enabled && thing.Kind == WorldThingKind2D.Goal);
         GoalX = GoalThing?.Position.X ?? float.PositiveInfinity;
         GoalGroundY = GoalThing?.Position.Y ?? TileMap.Origin.Y;
+        if (GoalThing is { } goal)
+        {
+            _goalBounds = Rect2f.Builder.Create(goal.Position + new Vector2f(-_tileSize, -_tileSize),
+                goal.Position + new Vector2f(_tileSize, _tileSize * 4f));
+        }
     }
 
     public IChunkedTileMap2D TileMap { get; }
@@ -85,6 +92,11 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public float GoalX { get; }
     public float GoalGroundY { get; }
     public WorldThingSpec2D? GoalThing { get; }
+    public bool IsGoalUnlocked => _goalGuardian is not { IsAlive: true };
+
+    public bool CanReachGoal(Rect2f playerBounds) =>
+        IsGoalUnlocked && _goalBounds is { } goal && goal.Intersects(playerBounds);
+
     public IReadOnlyList<WorldThingSpec2D> SavePointThings => [.. _worldThingSpecs.Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)];
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
     public IReadOnlyList<AuthoredObject2D> Objects => _objects;
@@ -158,6 +170,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     /// <summary>Per-tick dynamic observation.</summary>
     public WorldState2D CaptureWorld() => new([.. _savePoints.Select(p => p.CaptureState())])
     {
+        IsGoalUnlocked = IsGoalUnlocked,
+        GoalGuardian = _goalGuardian is { } guardian ? new(guardian.WorldObject.Position, guardian.Health.Current, guardian.Health.Maximum) : null,
         CutGrass = _cutGrass,
         Objects = [.. _objects.Select(o => o.CaptureState())]
     };
@@ -271,13 +285,13 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public void CreateAuthoredWorldThings(
-        CombatSystem2D combat, bool characters = false)
+        CombatSystem2D combat, bool characters = false, long? goalGuardianThingId = null)
     {
         Ensure.ThrowIf(
             _authoredWorldThingsCreated,
             "The authored world things have already been created.");
         var environment = RequireEnvironment();
-        new SideScrollerThingSpawner2D(
+        _goalGuardian = new SideScrollerThingSpawner2D(
             environment.Collision,
             environment.Physics,
             environment.Ids,
@@ -289,7 +303,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             environment.WorldLayer,
             environment.PlayerLayer,
             environment.EnemyLayer)
-            .Create(_worldThingSpecs, combat, characters);
+            .Create(_worldThingSpecs, combat, characters, goalGuardianThingId);
         UpdateObjectStreaming();
         _definitionRevision++;
         _combatants = combat.Combatants;

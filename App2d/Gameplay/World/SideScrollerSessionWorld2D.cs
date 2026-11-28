@@ -19,6 +19,7 @@ public sealed class SideScrollerSessionWorld2D(
     public ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => level.EnemySystem.DrainEvents();
     public Rect2f Bounds => level.TileMap.WorldBounds;
     public float GoalX => level.GoalX;
+    public bool CanReachGoal(Rect2f playerBounds) => level.CanReachGoal(playerBounds);
     public void UpdateStreaming(Vector2f focus) => level.UpdateStreaming(focus);
     public void UpdateWorldMotion(float dt) => level.UpdateWorldMotion(dt);
     public void UpdateEnemies(float dt, Vector2f target) => level.EnemySystem.Update(dt, target);

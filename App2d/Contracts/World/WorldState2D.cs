@@ -18,6 +18,7 @@ public readonly record struct ObjectState2D(EntityId2D Id, Vector2f Position, fl
 }
 public readonly record struct CheckpointPlacement2D(long ThingId, Vector2f BasePosition);
 public readonly record struct CheckpointState2D(long ThingId, bool IsActive);
+public readonly record struct GoalGuardianState2D(Vector2f Position, int HitPoints, int MaximumHitPoints);
 
 /// <summary>
 /// Level content that changes only when authoring or streaming changes: active terrain,
@@ -37,6 +38,8 @@ public sealed record LevelContent2D(long Revision, ImmutableArray<TerrainChunkSt
 /// <summary>Per-tick world observation, including the motion state of placed objects.</summary>
 public sealed record WorldState2D(ImmutableArray<CheckpointState2D> Checkpoints)
 {
+    public bool IsGoalUnlocked { get; init; } = true;
+    public GoalGuardianState2D? GoalGuardian { get; init; }
     public ImmutableArray<ObjectState2D> Objects { get; init; } = [];
     /// <summary>Cuts in active simulation chunks; forgotten on unload and included in attach snapshots.</summary>
     public ImmutableHashSet<GrassCell2D> CutGrass { get; init; } = [];

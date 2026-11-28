@@ -26,11 +26,13 @@ internal sealed class SideScrollerThingSpawner2D(
     uint playerLayer,
     uint enemyLayer)
 {
-    public void Create(IReadOnlyList<WorldThingSpec2D> things, CombatSystem2D combat, bool characters = false)
+    public ICombatant2D? Create(IReadOnlyList<WorldThingSpec2D> things, CombatSystem2D combat,
+        bool characters, long? goalGuardianThingId)
     {
         Ensure.ThrowIfNull(things);
         Ensure.ThrowIfNull(combat);
 
+        ICombatant2D? guardian = null;
         foreach (var thing in things)
         {
             if (!thing.Enabled)
@@ -40,7 +42,7 @@ internal sealed class SideScrollerThingSpawner2D(
 
             if (characters && GameCharacters.Enemy(thing.Kind) is { } type)
             {
-                Register(new CharacterEnemy2D(ids.Allocate(), type, physics, thing.Position, worldLayer, enemyLayer));
+                Register(new CharacterEnemy2D(ids.Allocate(), type, physics, thing.Position, worldLayer, enemyLayer), thing.ThingId);
                 continue;
             }
             switch (thing.Kind)
@@ -55,7 +57,7 @@ internal sealed class SideScrollerThingSpawner2D(
                 case WorldThingKind2D.ShieldDefender:
                     throw new InvalidDataException($"{thing.Kind} exists only as one of the game's characters; this session was made without them.");
                 case WorldThingKind2D.Shieldback:
-                    Register(CreateShieldback(thing.Position));
+                    Register(CreateShieldback(thing.Position), thing.ThingId);
                     break;
                 case WorldThingKind2D.Rival:
                     Register(new RivalEnemy2D(
@@ -69,19 +71,29 @@ internal sealed class SideScrollerThingSpawner2D(
                         thing.Position.X + tileSize * 6f,
                         worldLayer,
                         playerLayer,
-                        enemyLayer));
+                        enemyLayer), thing.ThingId);
                     break;
             }
         }
 
         enemies.UpdateStreaming(streamer.IsChunkActive);
+        if (goalGuardianThingId is not null && guardian is null)
+        {
+            throw new InvalidDataException($"Goal guardian {goalGuardianThingId} must name an enabled enemy placement.");
+        }
 
-        void Register(IEnemyActor2D enemy)
+        return guardian;
+
+        void Register(IEnemyActor2D enemy, long thingId)
         {
             var homeChunk = tileMap.WorldToChunk(
                 enemy.Combatant.WorldObject.Position);
             combat.Combatants.Register(enemy.Combatant);
             enemies.Register(enemy, homeChunk);
+            if (thingId == goalGuardianThingId)
+            {
+                guardian = enemy.Combatant;
+            }
         }
     }
 

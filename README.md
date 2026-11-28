@@ -8,7 +8,7 @@ collision, physics, tiles, rendering, audio, authored characters, and the WinFor
 host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
 level storage, the editor, and the in-game debug tools. `App2d.Tests` holds the game and engine tests.
 `App2d.EditorUi` supplies shared editor UI. `tools/ClothLab` is a small cape study.
-Everything targets `net10.0-windows10.0.19041.0`.
+The game and engine target `net11.0-windows10.0.19041.0`.
 
 Character Studio and ImageLab have their own repositories and solutions:
 [AppAnimation](https://github.com/raymondBporter/AppAnimation) and
@@ -474,6 +474,40 @@ See [the authoring pipeline](tools/ArtPipeline/README.md).
 dotnet run --project App2d
 ```
 
+The default launch opens **Ember Crossing**, a three-area expedition. Cross Fernbank,
+ride the Stonewatch ferry, then defeat the Centaur at the Cinderworks and touch the signal flag.
+Checkpoint lanterns restore health and save progress automatically. The briefing offers
+Continue when a checkpoint exists. The completion screen offers a fresh replay.
+
+Press Enter, the Xbox A button, or click the briefing button to start. Press P or the
+controller Menu button to pause or resume. The campaign save lives in
+`%LOCALAPPDATA%/App2d/ember-crossing.json`.
+
+The original cavern and combat test maps are available through the playground launch.
+Use F2 in that mode to travel between maps and F1 to edit. To playtest a particular
+world from its arrival, pass its manifest explicitly.
+
+```powershell
+dotnet run --project App2d -- --playground
+dotnet run --project App2d -- --world Assets/Static/levels/ember-crossing/world.json
+```
+
+The expedition is authored in `Assets/Static/levels/ember-crossing/crossing.db`.
+Edit its terrain and placements through F1 during play or open the manifest as a
+playtest. `zones.json` defines the three area boundaries and soundtrack transitions.
+`world.json` ties the exit to the Centaur's authored placement. The same Centaur type
+is available in the editor. It borrows the human spear thrust for its upper body while
+the quadruped supplies the walk, hoof scrape, rush, and braking animations. The charge
+locks its direction after the windup, and the skid gives you time to strike back.
+
+To use the boss in another world, create a `Centaur` thing in the F1 editor's Things
+tab. Select the placement to find its thing ID, then use that ID and its map ID in
+the world manifest's `goalGuardian` entry if the Centaur should guard that world's exit.
+`Centaur.Horse(...)`, `Centaur.Person(...)`, and `Centaur.Rider` remap shared clips and
+the rider's animation mask into the grafted rig. A winged variant can use the same
+graft and mask pattern for its wing joints. Playing the wings and arms independently
+over locomotion would require support for an additional simultaneous overlay.
+
 Level files must use the current format. New maps are created directly in that format; older files are rejected.
 See [world maps](docs/world-maps.md).
 
@@ -495,8 +529,8 @@ source. See [Character Studio](docs/character-studio.md) for the workflow and he
 
 Startup currently runs `SideScrollerGame`. It is the composition root and explicit
 fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of
-being implemented by the game class. `LevelBootstrap2D` loads the cavern level file
-into an `EditableTileMap2D`, and `SideScrollerLevel2D` consumes that loaded tile map,
+being implemented by the game class. `LevelBootstrap2D` loads the selected world's databases
+into editable tile maps, and `SideScrollerLevel2D` consumes the combined world map,
 composing dedicated chunk streaming, terrain visual, and encounter spawning services.
 `Person2D`, `PersonArsenal2D`, and `PersonPresentation2D` own reusable humanoid
 simulation, registered actions, and visuals respectively. Human input and rival AI both
@@ -505,7 +539,7 @@ attacks against faction-aware `ICombatant2D` targets, so the same sword and gun 
 both directions without making every enemy a person. Camera/parallax, input
 mapping, and traversal diagnostics have similarly narrow owners.
 
-The 640x96-tile level provides merged tilemap collision, explicit one-way strips, fall
+The original 640x96-tile playground provides merged tilemap collision, explicit one-way strips, fall
 respawning, an authorable goal flag, smooth bounded camera follow, and procedural parallax
 depths. Authored objects provide the moving lifts: kinematic one-way rectangles defined in
 `objects/*.json` that ping-pong along a line with smooth turnarounds. Physics carries supported
@@ -661,7 +695,7 @@ Developer / editor controls:
   right-click a slot to remove them; double-click inventory items to equip them.
   Equipment changes the preview and player immediately and lasts for this play
   session. The glove artwork is editable under `Assets/Characters/authored/parts`.
-- Escape: close equipment when open; otherwise close the game
+- Escape: close the game
 
 Input ownership stays small: `InputState` reads keyboard/mouse events, and
 `App2d/Input/XboxControllerInput2D` reads controller state. Default gameplay bindings
@@ -671,8 +705,7 @@ owns temporary player inspection keys; the editor and debug panel own their shor
 Opening the editor or losing window focus cancels held gameplay input.
 Held buttons must be released before they can trigger again after cancellation.
 
-Interaction behavior and a pause menu are future gameplay work. E remains available for interaction; Escape currently retains its host close
-behavior. There is no remapping UI or configurable binding file yet.
+The campaign pauses on P or the controller Menu button.
 
 ## Debug panel
 

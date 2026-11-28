@@ -8,6 +8,7 @@ using App2d.Core.Geometry.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
+using App2d.Core.Physics.Queries;
 using App2d.Core.Spatial;
 using App2d.Gameplay.Characters;
 using App2d.Gameplay.Combat;
@@ -42,6 +43,7 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
     private readonly List<AcceptedContact> _contacts = [];
     private readonly CollisionSystem2D _collision;
     private readonly PhysicsWorld2D _physics;
+    private readonly SpatialObject2D _groundProbe = new(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 8));
     private readonly uint _worldLayer;
     private bool _enabled;
     private float _cooldown, _hurt, _dt;
@@ -52,6 +54,9 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
     private float _retreatRemaining;
     private bool _retreatUsed;
     private bool _chargeBlocked;
+    private bool IsChargeAction => _animator.Action?.Name == CharacterAnimator.Charge;
+    private float ChargeStart => _animator.Action?.Cue("rush")?.Seconds ?? Type.Control.ChargeStartSeconds;
+    private float ChargeEnd => _animator.Action?.Cue("brake")?.Seconds ?? Type.Control.ChargeEndSeconds;
     private readonly EnemyFlightController2D? _flight;
     /// <summary>The movement shape's local bounds: feet at the origin, +X toward facing, authored units.</summary>
     private readonly Rect2f _movement;
@@ -178,10 +183,9 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
         if (_animator.Action is not null)
         {
             var at = (float)_animator.ActionTime;
-            var start = _animator.Action?.Cue("rush")?.Seconds ?? config.ChargeStartSeconds;
-            var finish = _animator.Action?.Cue("brake")?.Seconds ?? config.ChargeEndSeconds;
-            var speed = config.ChargeSpeed > 0 && at >= start && !_chargeBlocked
-                ? config.ChargeSpeed * Realf.Clamp01(1 - (at - finish) / config.BrakeSeconds) : 0;
+            var usesChargeMotion = config.ChargeSpeed > 0 && (config.ChargeRange <= 0 || IsChargeAction);
+            var speed = usesChargeMotion && at >= ChargeStart && !_chargeBlocked
+                ? config.ChargeSpeed * Realf.Clamp01(1 - (at - ChargeEnd) / config.BrakeSeconds) : 0;
             if (speed > 0 && config.RespectTerrain && !CanAdvance(dt, _facing, speed))
             {
                 _chargeBlocked = true;
@@ -214,13 +218,17 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
             Body.LinearVelocity = new(retreat * config.WalkSpeed * Scale, Body.LinearVelocity.Y);
             return;
         }
-        var inRange = Math.Abs(delta.X) <= config.Range * Scale && Math.Abs(delta.Y) < config.VerticalRange * Scale;
+        var horizontalDistance = MathF.Abs(delta.X);
+        var inHeight = MathF.Abs(delta.Y) < config.VerticalRange * Scale;
+        var inRange = horizontalDistance <= config.Range * Scale && inHeight;
+        var canCharge = !inRange && _cooldown <= 0 && config.ChargeRange > 0 && horizontalDistance <= config.ChargeRange * Scale && inHeight;
         if (config.RespectTerrain && inRange && BarrelBlocked(targetPosition))
         {
             inRange = false;
         }
 
-        if (inRange && _cooldown <= 0 && _animator.TryStart(CharacterAnimator.Attack))
+        if (_cooldown <= 0 && (inRange || (canCharge && ChargeLaneClear(dt, delta))) &&
+            _animator.TryStart(inRange ? CharacterAnimator.Attack : CharacterAnimator.Charge))
         {
             _cooldown = _animator.Action!.Clip.Duration + config.Cooldown;
             _attackTarget = targetPosition;
@@ -229,7 +237,7 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
             Body.LinearVelocity = new(0, Body.LinearVelocity.Y);
             return;
         }
-        var move = inRange || Math.Abs(delta.X) > 14 * Scale ? 0 : _facing;
+        var move = inRange || horizontalDistance > 14 * Scale ? 0 : _facing;
         if (config.RespectTerrain && move != 0 && !CanAdvance(dt, move))
         {
             move = 0;
@@ -237,6 +245,9 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
 
         Body.LinearVelocity = new(move * config.WalkSpeed * Scale, Body.LinearVelocity.Y);
     }
+
+    private bool ChargeLaneClear(float dt, Vector2f toTarget) => CanAdvance(dt, _facing) &&
+        !_physics.Raycast(new Ray2D(WorldObject.Position, toTarget), toTarget.Length(), out _, _worldLayer, includeSensors: false);
 
     private float RecoveryAltitude(Vector2f target)
     {
@@ -273,17 +284,14 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
         var bounds = WorldObject.WorldBounds;
         var x = WorldObject.Position.X + direction *
             (_movement.Width * Scale / 2 + (speed ?? Type.Control.WalkSpeed) * Scale * dt + 3);
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 8))
-        {
-            Position = new(x, bounds.Min.Y - 3)
-        };
-        if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0)
+        _groundProbe.Position = new(x, bounds.Min.Y - 3);
+        if (_collision.Overlap(_groundProbe, _overlaps, _worldLayer, includeSensors: false) == 0)
         {
             return false;
         }
 
-        probe.Position = new(x, bounds.Min.Y + 8);
-        return _collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0;
+        _groundProbe.Position = new(x, bounds.Min.Y + 8);
+        return _collision.Overlap(_groundProbe, _overlaps, _worldLayer, includeSensors: false) == 0;
     }
 
     public void SyncAfterPhysics()
@@ -296,7 +304,7 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
         Evaluate(_dt, false);
         foreach (var e in _scratch)
         {
-            if (e.Sound is { } sound)
+            if (e.Sound is { } sound && !(IsChargeAction && _chargeBlocked && e.Name == "brake"))
             {
                 _events.Add(new EntityCue2D(Id, Root, sound));
             }
@@ -333,6 +341,12 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
 
         var moved = MathF.Abs(root.X - _rootBefore.X) / Scale;
         var role = IsAlive && grounded && _flight is null && MathF.Abs(Body.LinearVelocity.X) > 1 ? CharacterAnimator.Walk : CharacterAnimator.Idle;
+        if (IsChargeAction)
+        {
+            var at = _animator.ActionTime;
+            role = _chargeBlocked || at >= ChargeEnd ? CharacterAnimator.ChargeBrake :
+                at >= ChargeStart ? CharacterAnimator.ChargeRush : CharacterAnimator.ChargeWindup;
+        }
         // A reaction role wins; otherwise dead, or airborne without an action, holds the current pose as the explicit fallback.
         var reaction = _reaction.Role(Character, IsAlive);
         var hold = !initial && reaction is null && (!IsAlive || _flight is null && !grounded && _animator.Action is null);
@@ -346,7 +360,7 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
     }
 
     /// <summary>The pose/collider synchronization point: the registered colliders follow the final pose the animator just produced.</summary>
-    private void SyncColliders() => Colliders.Sync(Pose, _animator.ActiveHits(), IsAlive, GuardUp);
+    private void SyncColliders() => Colliders.Sync(Pose, _chargeBlocked ? null : _animator.ActiveHits(), IsAlive, GuardUp);
 
     /// <summary>Whether the shield is up: alive, not staggered and the action has not passed its guard-open event.</summary>
     private bool GuardUp
@@ -561,6 +575,11 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
         }
 
         _hurt = Type.HurtSeconds;
+        if (IsAlive && !_chargeBlocked && _animator.Action is { } action && _animator.ActionTime < action.UninterruptibleUntil)
+        {
+            return true;
+        }
+
         // A hit interrupts an attack and staggers; contacts are released and re-captured from the next pose.
         if (IsAlive)
         {
@@ -586,7 +605,7 @@ public sealed class CharacterEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICom
         TypeId = Character.Name,
         ActionId = _animator.Action?.Name ?? _animator.Role,
         ActionSeconds = (float)(_animator.Action is null ? _animator.RoleTime : _animator.ActionTime),
-        IsAttacking = _animator.Action?.Name == CharacterAnimator.Attack,
+        IsAttacking = _animator.Action?.Name == CharacterAnimator.Attack || IsChargeAction,
         AttackElapsedSeconds = (float)_animator.ActionTime,
         MoveSpeed = Type.Control.WalkSpeed * Scale,
         Type = Type,

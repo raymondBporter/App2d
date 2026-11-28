@@ -20,6 +20,8 @@ namespace App2d.Presentation.World.Presentation;
 /// </summary>
 public sealed class WorldPresentation2D : IDisposable
 {
+    private static readonly SolidColorShader OpenFlag = new(new Color4b(250, 183, 111));
+    private static readonly SolidColorShader LockedFlag = new(new Color4b(136, 105, 113));
     private readonly Scene2D _scene;
     private readonly TextureCache2D _textures;
     private readonly ViewportTerrainSource2D? _terrainSource;
@@ -29,6 +31,7 @@ public sealed class WorldPresentation2D : IDisposable
     private readonly Dictionary<(string Id, float Size), SideScrollerTerrainTileset2D> _tilesets = [];
     private readonly List<WorldObject2D> _goal = [];
     private Vector2f? _goalPosition;
+    private WorldObject2D? _goalFlag;
     private LevelContent2D _content = LevelContent2D.Empty;
     private WorldState2D _state = WorldState2D.Empty;
     private long? _appliedContentRevision;
@@ -87,6 +90,11 @@ public sealed class WorldPresentation2D : IDisposable
             ApplyContent(content);
         }
         _vegetation.ApplyCuts(state.CutGrass);
+        if (_goalFlag is { } flag)
+        {
+            flag.Shader = state.IsGoalUnlocked ? OpenFlag : LockedFlag;
+        }
+
         foreach (var item in state.Objects)
         {
             if (!_objects.TryGetValue(item.Id, out var view)) continue;
@@ -161,6 +169,7 @@ public sealed class WorldPresentation2D : IDisposable
             }
 
             _goal.Clear();
+            _goalFlag = null;
             _goalPosition = content.GoalPosition;
             if (content.GoalPosition is { } position)
             {
@@ -243,12 +252,13 @@ public sealed class WorldPresentation2D : IDisposable
         };
         var flag = new WorldObject2D(ConvexPolygon2D.Builder.Create([
             Vector2f.Zero, new Vector2f(92f, -30f), new Vector2f(0f, -60f)]),
-            new SolidColorShader(new Color4b(255, 79, 120)))
+            OpenFlag)
         {
             Position = position + new Vector2f(0f, 185f)
         };
         _goal.Add(pole);
         _goal.Add(flag);
+        _goalFlag = flag;
         _scene.Add(pole);
         _scene.Add(flag);
     }
@@ -281,6 +291,7 @@ public sealed class WorldPresentation2D : IDisposable
 
         _checkpoints.Clear();
         _goal.Clear();
+        _goalFlag = null;
         _goalPosition = null;
         _appliedContentRevision = null;
     }

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "goalGuardian": { "mapId": "crossing", "thingId": 13 },
+  "zones": [
+    {
+      "id": "ember-crossing",
+      "name": "Ember Crossing",
+      "priority": -1,
+      "maps": [{ "id": "crossing", "name": "The crossing", "identity": 4, "file": "crossing.db" }]
+    }
+  ]
+}
