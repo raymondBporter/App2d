@@ -4,6 +4,8 @@ using App2d.Core.Characters.Skeletons;
 using App2d.Core.Objects;
 using App2d.Core.Rendering;
 using App2d.Gameplay.Characters;
+using App2d.Presentation.Persons;
+using App2d.Presentation.Player;
 
 namespace App2d.Tests.Characters;
 
@@ -31,6 +33,56 @@ public sealed class CharacterTests
             }
             Assert.True(character.Height > .3f, $"{character.Name} has no height.");
         }
+    }
+
+    [Fact]
+    public void TheHeroStartsInPlateAndEachPieceCanReturnToInventory()
+    {
+        var moves = new PersonMoves(GameCharacters.Hero);
+        var wardrobe = new PlayerWardrobe2D(moves);
+        var idle = moves[PersonMoves.Idle];
+        var pose = CharacterPose.Sample(moves.Skeleton, idle, .5).Showing("relaxed", .5);
+        var iconPose = CharacterPose.Rest(PlayerWardrobe2D.IconSkeleton);
+        var dressed = wardrobe.Dress(pose, idle, .5f, PersonGear.None);
+        var mesh = new LayeredMesh();
+
+        foreach (var slot in Enum.GetValues<WardrobeSlot2D>())
+        {
+            var item = Assert.IsType<WardrobeItem2D>(wardrobe.Equipped(slot));
+            Assert.All(item.Worn, piece => Assert.Contains(piece, dressed));
+
+            mesh.Clear();
+            AttachmentPainter.Paint(mesh, iconPose.Posed, item.Icon);
+            Assert.True(mesh.Count > 0, $"{item.Name} has no icon geometry.");
+            mesh.Clear();
+            AttachmentPainter.Paint(mesh, pose.Posed, item.Worn);
+            Assert.True(mesh.Count > 0, $"{item.Name} has no worn geometry.");
+
+            Assert.True(wardrobe.Unequip(slot));
+            var bareSlot = wardrobe.Dress(pose, idle, .5f, PersonGear.None);
+            Assert.All(item.Worn, piece => Assert.DoesNotContain(piece, bareSlot));
+            if (slot == WardrobeSlot2D.Head)
+            {
+                var face = moves.Hero.Face!.Attachments("relaxed", .5);
+                var hair = moves.Hero.Worn.Single(item => item.Mount == PersonSkeleton.HeadArt).Pieces;
+                Assert.All(face.Concat(hair), piece =>
+                {
+                    Assert.DoesNotContain(piece, dressed);
+                    Assert.Contains(piece, bareSlot);
+                });
+            }
+
+            var cell = Assert.Single(Enumerable.Range(0, wardrobe.Inventory.Count), i => wardrobe.Inventory[i] == item);
+            Assert.True(wardrobe.Equip(cell, slot));
+            Assert.Same(item, wardrobe.Equipped(slot));
+            Assert.Null(wardrobe.Inventory[cell]);
+        }
+
+        var steelGreaves = wardrobe.Equipped(WardrobeSlot2D.Shins);
+        var copperCell = Assert.Single(Enumerable.Range(0, wardrobe.Inventory.Count), i => wardrobe.Inventory[i]?.Id == "copper-greaves");
+        Assert.True(wardrobe.Equip(copperCell, WardrobeSlot2D.Shins));
+        Assert.Equal("copper-greaves", wardrobe.Equipped(WardrobeSlot2D.Shins)?.Id);
+        Assert.Same(steelGreaves, wardrobe.Inventory[copperCell]);
     }
 
     [Fact]

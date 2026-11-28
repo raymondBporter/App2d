@@ -9,17 +9,16 @@ using static App2d.Core.Characters.Skeletons.PersonSkeleton;
 
 namespace App2d.Presentation.Player;
 
-internal enum WardrobeSlot2D { Shoes, Gloves, Shins }
+internal enum WardrobeSlot2D { Shoes, Gloves, Shins, Thighs, Hips, Torso, Shoulders, UpperArms, Forearms, Neck, Head }
 
 /// <summary>
-/// Something the player can wear on both sides of a pair: its pieces on the hero's left and right mounts, and the same
-/// thing on its own for an icon.
+/// Something the player can wear: its pieces on the hero's mounts, and the same thing on its own for an icon.
 /// </summary>
 internal sealed record WardrobeItem2D(string Id, string Name, WardrobeSlot2D Slot, ImmutableArray<Attachment> Worn, ImmutableArray<Attachment> Icon);
 
 /// <summary>
 /// What the player owns and wears, and what is drawn on the hero for it: the body and face, hair, the sword and pistol where
-/// the clip puts them, and the equipped pairs.
+/// the clip puts them, and the equipped items.
 /// </summary>
 internal sealed class PlayerWardrobe2D
 {
@@ -35,8 +34,8 @@ internal sealed class PlayerWardrobe2D
     public PlayerWardrobe2D(PersonMoves moves)
     {
         Moves = moves;
-        var items = new List<WardrobeItem2D>
-        {
+        WardrobeItem2D[] spares =
+        [
             // Shoes and gloves are one shape on both sides; greaves are flipped for the right shin.
             new("boot", "Boot", WardrobeSlot2D.Shoes, [.. PersonWardrobe.Boot(LeftFootArt), .. PersonWardrobe.Boot(RightFootArt)], PersonWardrobe.Boot(0)),
             new("sandal", "Sandal", WardrobeSlot2D.Shoes, [.. PersonWardrobe.Sandal(LeftFootArt), .. PersonWardrobe.Sandal(RightFootArt)], PersonWardrobe.Sandal(0)),
@@ -44,9 +43,31 @@ internal sealed class PlayerWardrobe2D
             new("glove-steel", "Steel glove", WardrobeSlot2D.Gloves, [.. PersonWardrobe.GloveSteel(LeftHandArt), .. PersonWardrobe.GloveSteel(RightHandArt)], PersonWardrobe.GloveSteel(0)),
             new("copper-greaves", "Copper greaves", WardrobeSlot2D.Shins,
                 [.. PersonWardrobe.CopperGreaves(LeftShinArt), .. PersonWardrobe.CopperGreaves(RightShinArt).Select(piece => piece.Mirrored())], PersonWardrobe.CopperGreaves(0)),
-        };
-        for (var i = 0; i < items.Count; i++) _inventory[i] = items[i];
-        Items = items;
+        ];
+        WardrobeItem2D[] plate =
+        [
+            PlateItem("Plate boots", WardrobeSlot2D.Shoes, PersonPlateArmor.Boot, LeftFootArt, RightFootArt),
+            PlateItem("Steel greaves", WardrobeSlot2D.Shins, PersonPlateArmor.Greave, LeftShinArt, RightShinArt),
+            PlateItem("Cuisses", WardrobeSlot2D.Thighs, PersonPlateArmor.Cuisse, LeftThighArt, RightThighArt),
+            PlateItem("Fauld", WardrobeSlot2D.Hips, PersonPlateArmor.Fauld, HipsArt),
+            PlateItem("Cuirass", WardrobeSlot2D.Torso, PersonPlateArmor.Cuirass, BodyArt),
+            PlateItem("Pauldrons", WardrobeSlot2D.Shoulders, PersonPlateArmor.Pauldron, LeftShoulderArt, RightShoulderArt),
+            PlateItem("Rerebraces", WardrobeSlot2D.UpperArms, PersonPlateArmor.Rerebrace, LeftUpperArmArt, RightUpperArmArt),
+            PlateItem("Vambraces", WardrobeSlot2D.Forearms, PersonPlateArmor.Vambrace, LeftForearmArt, RightForearmArt),
+            PlateItem("Gauntlets", WardrobeSlot2D.Gloves, PersonPlateArmor.Gauntlet, LeftHandArt, RightHandArt),
+            PlateItem("Gorget", WardrobeSlot2D.Neck, PersonPlateArmor.Gorget, NeckArt),
+            PlateItem("Plate helmet", WardrobeSlot2D.Head, PersonPlateArmor.Helmet, HeadArt),
+        ];
+        spares.CopyTo(_inventory, 0);
+        foreach (var item in plate) _equipped[(int)item.Slot] = item;
+        Items = [.. spares, .. plate];
+    }
+
+    private static WardrobeItem2D PlateItem(string name, WardrobeSlot2D slot, Func<int, ImmutableArray<Attachment>> make, int mount, int? otherMount = null)
+    {
+        var icon = make(0);
+        ImmutableArray<Attachment> worn = otherMount is { } other ? [.. make(mount), .. make(other)] : make(mount);
+        return new(icon[0].Name, name, slot, worn, icon);
     }
 
     public PersonMoves Moves { get; }
@@ -86,16 +107,18 @@ internal sealed class PlayerWardrobe2D
     /// <summary>
     /// Everything drawn on the hero for a pose. <paramref name="clip"/> at <paramref name="seconds"/> is the clip that decides
     /// where the sword is: in the hand between its draw and sheathe markers, otherwise on the back. The pistol is in the hand
-    /// whenever carried. Hair is always worn; the equipped pairs are drawn last.
+    /// whenever carried. A closed helmet covers the face and hair.
     /// </summary>
     public ImmutableArray<Attachment> Dress(CharacterPose pose, SkeletonClip2D clip, float seconds, PersonGear gear)
     {
         var inHand = gear == PersonGear.Sword && clip.SwordInHand(seconds);
+        var helmetOn = Equipped(WardrobeSlot2D.Head) is not null;
         var drawn = ImmutableArray.CreateBuilder<Attachment>();
-        drawn.AddRange(Moves.Hero.Drawn(pose, worn => worn.Mount switch
+        drawn.AddRange(Moves.Hero.Drawn(helmetOn ? pose.Showing("", pose.Clock) : pose, worn => worn.Mount switch
         {
             SwordHand => inHand,
             GunHand => gear == PersonGear.Gun,
+            HeadArt => !helmetOn,
             _ => true,
         }));
         if (gear != PersonGear.None && !inHand) drawn.AddRange(clip.SeenFromBehind(seconds) ? _swordAcrossBack : _swordOnBack);

@@ -13,9 +13,11 @@ namespace App2d.Core.Characters.Skeletons;
 /// </summary>
 public static class Centaur
 {
+    public const float RiderScale = 0.9f;
+
     /// <summary>How the two skeletons are joined, and where each one's joints, limbs and mounts went.</summary>
     public static SkeletonGraft2D Graft { get; } = new(QuadrupedSkeleton.Skeleton, [QuadrupedSkeleton.Head], PersonSkeleton.Skeleton,
-        [PersonSkeleton.LeftHip, PersonSkeleton.RightHip], QuadrupedSkeleton.Body, new(new(0.42f, 0.395f)), 0.9f, -0.05f);
+        [PersonSkeleton.LeftHip, PersonSkeleton.RightHip], QuadrupedSkeleton.Body, new(new(0.42f, 0.395f)), RiderScale, -0.05f);
 
     public static Skeleton2D Skeleton => Graft.Skeleton;
 
@@ -23,11 +25,26 @@ public static class Centaur
     public static ImmutableArray<Attachment> Body { get; } =
     [
         .. Attachment.Renumbered(QuadrupedBodies.Quadruped, Graft.HostJoints, Graft.HostMounts),
-        .. Attachment.Renumbered(PersonBody.Standard, Graft.GuestJoints, Graft.GuestMounts, 0.9f),
+        .. Attachment.Renumbered(PersonBody.Standard, Graft.GuestJoints, Graft.GuestMounts, RiderScale),
     ];
 
     /// <summary>What the rider's clip owns: the person's upper body.</summary>
     public static SkeletonMask2D Rider { get; } = PersonSkeleton.UpperBody.Renumbered(Graft.GuestJoints, Graft.GuestLimbs, Graft.GuestMounts);
+
+    /// <summary>The two idle clips share a two-second loop, with the quadruped's ground contacts.</summary>
+    public static SkeletonClip2D Idle { get; } = CreateIdle();
+
+    private static SkeletonClip2D CreateIdle()
+    {
+        var horse = Horse(QuadrupedClips.QuadrupedIdle);
+        var rider = Person(PersonClips.PersonIdle);
+        return new("centaur-idle", horse.Duration, loop: true)
+        {
+            Joints = [.. horse.Joints, .. rider.Joints.Where(track => Rider.Joints.Contains(track.Joint))],
+            Limbs = [.. horse.Limbs, .. rider.Limbs],
+            Contacts = horse.Contacts,
+        };
+    }
 
     /// <summary>A quadruped clip, for the centaur's body and legs.</summary>
     public static SkeletonClip2D Horse(SkeletonClip2D quadruped) => quadruped.Renumbered(Graft.HostJoints, Graft.HostLimbs, Graft.HostMounts);

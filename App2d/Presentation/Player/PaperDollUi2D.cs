@@ -31,6 +31,16 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
     private static readonly Color4b Panel = new(18, 24, 35), Stage = new(24, 33, 48), CellFill = new(29, 41, 58);
     private static readonly Color4b Border = new(59, 78, 98), Accent = new(126, 221, 197), Muted = new(147, 166, 185);
     private static readonly Color4b Gold = new(239, 204, 137), WrongSlot = new(230, 126, 114);
+    private static readonly (WardrobeSlot2D Slot, string Label)[] LeftSlots =
+    [
+        (WardrobeSlot2D.Head, "Helmet"), (WardrobeSlot2D.Neck, "Neck"), (WardrobeSlot2D.Torso, "Torso"),
+        (WardrobeSlot2D.Hips, "Hips"), (WardrobeSlot2D.Thighs, "Upper legs"), (WardrobeSlot2D.Shins, "Lower legs"),
+    ];
+    private static readonly (WardrobeSlot2D Slot, string Label)[] RightSlots =
+    [
+        (WardrobeSlot2D.Shoulders, "Shoulders"), (WardrobeSlot2D.UpperArms, "Upper arms"),
+        (WardrobeSlot2D.Forearms, "Forearms"), (WardrobeSlot2D.Gloves, "Gloves"), (WardrobeSlot2D.Shoes, "Feet"),
+    ];
 
     public bool IsOpen { get; private set; }
     public void Open()
@@ -78,7 +88,6 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         ImGui.Begin("Equipment###PaperDoll", flags);
         var draw = ImGui.GetWindowDrawList();
         Text(draw, At(28, 19), "Equipment", 30, Color4b.White);
-        Text(draw, At(29, 57), "One character. A different look.", 14, Muted);
         ImGui.SetCursorScreenPos(At(937, 27));
         if (ImGui.Button("Close [F7]", new Vector2(112, 32) * _scale))
         {
@@ -89,25 +98,16 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         }
         draw.AddLine(At(24, 83), At(1056, 83), Border.PackedValue);
         draw.AddRectFilled(At(24, 99), At(528, 613), Stage.PackedValue, 10 * _scale);
-        Text(draw, At(46, 118), "PAPER DOLL", 13, Accent);
-        Text(draw, At(381, 118), "Paired slots", 13, Muted);
         draw.AddImage(_previewId, At(142, 151), At(410, 551));
         draw.AddLine(At(170, 548), At(383, 548), Border.PackedValue, _scale);
-        // The links point toward the hands and feet, while the slots remain outside the figure.
-        draw.AddLine(At(127, 304), At(204, 337), Border.PackedValue, _scale);
-        draw.AddLine(At(432, 481), At(345, 520), Border.PackedValue, _scale);
 
         _hovered = null;
-        DrawCell(draw, new(0, WardrobeSlot2D.Gloves), At(48, 264), 78, "GLOVES");
-        DrawCell(draw, new(0, WardrobeSlot2D.Shoes), At(432, 442), 78, "SHOES");
-        DrawCell(draw, new(0, WardrobeSlot2D.Shins), At(48, 442), 78, "SHINS");
-        draw.AddLine(At(127, 481), At(228, 454), Border.PackedValue, _scale);
-        Text(draw, At(46, 550), "Gloves / " + (wardrobe.Equipped(WardrobeSlot2D.Gloves)?.Name ?? "Bare hands"), 14, Muted);
-        Text(draw, At(46, 573), "Shoes  / " + (wardrobe.Equipped(WardrobeSlot2D.Shoes)?.Name ?? "Bare feet"), 14, Muted);
-        Text(draw, At(46, 596), "Shins  / " + (wardrobe.Equipped(WardrobeSlot2D.Shins)?.Name ?? "Bare shins"), 14, Muted);
+        for (var i = 0; i < LeftSlots.Length; i++)
+            DrawCell(draw, new(0, LeftSlots[i].Slot), At(46, 158 + i * 77), 54, LeftSlots[i].Label);
+        for (var i = 0; i < RightSlots.Length; i++)
+            DrawCell(draw, new(0, RightSlots[i].Slot), At(446, 158 + i * 96), 54, RightSlots[i].Label);
 
         Text(draw, At(570, 111), "Inventory", 23, Color4b.White);
-        Text(draw, At(570, 143), "Drop a pair onto its matching slot.", 14, Muted);
         for (var i = 0; i < wardrobe.Inventory.Count; i++)
             DrawCell(draw, new(i), At(570 + i % PlayerWardrobe2D.Columns * 74, 176 + i / PlayerWardrobe2D.Columns * 74), 66);
 
@@ -147,9 +147,9 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         }
         else if (cell.Slot is not null)
         {
-            Text(draw, min + new Vector2(18, 29) * _scale, "Empty", 14, Muted);
+            Text(draw, min + new Vector2(9, (width - 14) / 2) * _scale, "Empty", 14, Muted);
         }
-        if (label is not null) Text(draw, min - new Vector2(0, 23) * _scale, label, 13, Gold);
+        if (label is not null) Text(draw, min - new Vector2(0, 18) * _scale, label, 13, Gold);
 
         ImGui.SetCursorScreenPos(min);
         ImGui.InvisibleButton(cell.Slot is { } slot ? $"equipped-{slot}" : $"inventory-{cell.Index}", size);
@@ -168,7 +168,6 @@ internal sealed class PaperDollUi2D(PlayerWardrobe2D wardrobe)
         {
             ImGui.BeginTooltip();
             ImGui.TextUnformatted(item.Name);
-            ImGui.TextDisabled(item.Slot switch { WardrobeSlot2D.Shoes => "Shoes / both feet", WardrobeSlot2D.Gloves => "Gloves / both hands", _ => "Shins / both legs" });
             ImGui.EndTooltip();
         }
     }

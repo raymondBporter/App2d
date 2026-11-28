@@ -40,6 +40,8 @@ internal static class ThingTypeRegistry2D
 
     public static ThingTypeDescriptor2D Pterosaur { get; } = new("pterosaur", "Pterosaur", WorldThingKind2D.Pterosaur, new Color4b(181, 110, 139));
 
+    public static ThingTypeDescriptor2D Centaur { get; } = new("centaur", "Centaur", WorldThingKind2D.Centaur, new Color4b(130, 185, 165));
+
     public static ThingTypeDescriptor2D Rival { get; } = new("rival", "Cinder", WorldThingKind2D.Rival, new Color4b(240, 210, 110));
 
     public static ThingTypeDescriptor2D GreenDinosaur { get; } = new("green-dinosaur", "Scrap Hound", WorldThingKind2D.GreenDinosaur, new Color4b(142, 205, 92));
@@ -57,6 +59,7 @@ internal static class ThingTypeRegistry2D
             BabyTriceratops,
             ShieldDefender,
             Pterosaur,
+            Centaur,
             Rival,
             GreenDinosaur
         ];

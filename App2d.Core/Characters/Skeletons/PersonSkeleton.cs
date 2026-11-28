@@ -25,13 +25,16 @@ public static class PersonSkeleton
     /// </summary>
     public const int RightGrip = 0, LeftGrip = 1, Back = 2, BackView = 3, SwordHand = 4, GunHand = 5, HeadArt = 6, BodyArt = 7;
     public const int LeftHandArt = 8, RightHandArt = 9, LeftFootArt = 10, RightFootArt = 11, LeftShinArt = 12, RightShinArt = 13;
+    public const int HipsArt = 14, NeckArt = 15, LeftThighArt = 16, RightThighArt = 17;
+    public const int LeftShoulderArt = 18, RightShoulderArt = 19, LeftUpperArmArt = 20, RightUpperArmArt = 21, LeftForearmArt = 22, RightForearmArt = 23;
 
     /// <summary>What an upper-body action, such as a sword swing, takes over from whatever the legs are doing.</summary>
     public static SkeletonMask2D UpperBody { get; } = new([Chest, Head, LeftShoulder, RightShoulder], [LeftArm, RightArm],
-        [RightGrip, LeftGrip, Back, BackView, SwordHand, GunHand, HeadArt, LeftHandArt, RightHandArt]);
+        [RightGrip, LeftGrip, Back, BackView, SwordHand, GunHand, HeadArt, LeftHandArt, RightHandArt, NeckArt,
+            LeftShoulderArt, RightShoulderArt, LeftUpperArmArt, RightUpperArmArt, LeftForearmArt, RightForearmArt]);
     /// <summary>The hips and legs: what a gait owns underneath an upper-body action.</summary>
     public static SkeletonMask2D LowerBody { get; } = new([Hips, LeftHip, RightHip], [LeftLeg, RightLeg],
-        [BodyArt, LeftFootArt, RightFootArt, LeftShinArt, RightShinArt]);
+        [BodyArt, LeftFootArt, RightFootArt, LeftShinArt, RightShinArt, HipsArt, LeftThighArt, RightThighArt]);
 
     /// <summary>The side each middle joint folds to.</summary>
     public const int ElbowBend = -1, KneeBend = 1;
@@ -89,6 +92,12 @@ public static class PersonSkeleton
                 Mount2D.Aimed("left-hand-art", LeftHand, LeftElbow), Mount2D.Aimed("right-hand-art", RightHand, RightElbow),
                 Mount2D.Aimed("left-foot-art", LeftFoot, LeftKnee), Mount2D.Aimed("right-foot-art", RightFoot, RightKnee),
                 Mount2D.Aimed("left-shin-art", LeftFoot, LeftKnee, layer: -0.01f), Mount2D.Aimed("right-shin-art", RightFoot, RightKnee, layer: -0.01f),
+                Mount2D.On("hips-art", Hips), Mount2D.Aimed("neck-art", Chest, Head),
+                Mount2D.Aimed("left-thigh-art", LeftKnee, LeftHip), Mount2D.Aimed("right-thigh-art", RightKnee, RightHip),
+                Mount2D.Turning("left-shoulder-art", LeftShoulder, LeftUpperArm, new(default, MathF.PI / 2)),
+                Mount2D.Turning("right-shoulder-art", RightShoulder, RightUpperArm, new(default, MathF.PI / 2)),
+                Mount2D.Aimed("left-upper-arm-art", LeftElbow, LeftUpperArm), Mount2D.Aimed("right-upper-arm-art", RightElbow, RightUpperArm),
+                Mount2D.Aimed("left-forearm-art", LeftHand, LeftElbow), Mount2D.Aimed("right-forearm-art", RightHand, RightElbow),
             ],
         };
     }

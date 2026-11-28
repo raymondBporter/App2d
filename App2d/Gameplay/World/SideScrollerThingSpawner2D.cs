@@ -51,6 +51,7 @@ internal sealed class SideScrollerThingSpawner2D(
                 case WorldThingKind2D.RockThrower:
                 case WorldThingKind2D.BabyTriceratops:
                 case WorldThingKind2D.Pterosaur:
+                case WorldThingKind2D.Centaur:
                 case WorldThingKind2D.ShieldDefender:
                     throw new InvalidDataException($"{thing.Kind} exists only as one of the game's characters; this session was made without them.");
                 case WorldThingKind2D.Shieldback:

@@ -498,6 +498,26 @@ public static class GameCharacters
         return new(character, new() { Range = 3.2f, Cooldown = .8f, Flight = new() }) { Health = 4, KnockbackResistance = .8f };
     }
 
+    /// <summary>The joined quadruped and person rig, standing still for inspection.</summary>
+    public static EnemyType StandingCentaur { get; } = new(new Combatant
+    {
+        Name = "centaur",
+        Skeleton = Centaur.Skeleton,
+        Body = Centaur.Body,
+        Face = new(PersonFace.Face, Centaur.Graft.GuestMounts[PersonSkeleton.HeadArt], Centaur.RiderScale, PersonFace.Layer),
+        Roles = new Dictionary<string, SkeletonClip2D>
+        {
+            [CharacterAnimator.Idle] = Centaur.Idle,
+            [CharacterAnimator.Walk] = Centaur.Horse(QuadrupedClips.QuadrupedWalk),
+        },
+        Movement = Box(1.65f, 2.35f, new(-.22f, 1.175f)),
+        Colliders =
+        [
+            CharacterCollider.OnJoint("body", ColliderUse.Hurt, Box(1.82f, .85f), Centaur.Graft.HostJoints[QuadrupedSkeleton.Body]),
+            CharacterCollider.OnJoint("rider", ColliderUse.Hurt, Box(.5f, 1.2f), Centaur.Graft.GuestJoints[PersonSkeleton.Hips], new(0, .56f)),
+        ],
+    }, new() { WalkSpeed = 0 });
+
     /// <summary>The kind of enemy a thing placed in a level is, or null when that thing is not one of these.</summary>
     public static EnemyType? Enemy(WorldThingKind2D kind) => kind switch
     {
@@ -510,9 +530,10 @@ public static class GameCharacters
         WorldThingKind2D.BabyTriceratops => BabyTriceratops,
         WorldThingKind2D.ShieldDefender => ShieldDefender,
         WorldThingKind2D.Pterosaur => FlyingPterosaur,
+        WorldThingKind2D.Centaur => StandingCentaur,
         _ => null,
     };
 
     /// <summary>Every kind of enemy.</summary>
-    public static IReadOnlyList<EnemyType> Enemies { get; } = [SpearGuard, StalkerPest, CinderGunner, MaulBrute, ClubCaveman, RockThrower, BabyTriceratops, ShieldDefender, FlyingPterosaur];
+    public static IReadOnlyList<EnemyType> Enemies { get; } = [SpearGuard, StalkerPest, CinderGunner, MaulBrute, ClubCaveman, RockThrower, BabyTriceratops, ShieldDefender, FlyingPterosaur, StandingCentaur];
 }
