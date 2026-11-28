@@ -1,4 +1,4 @@
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Curves;
 
 /// <summary>
 /// A curve defined by an ordered list of control points, which can be read and replaced as a whole.

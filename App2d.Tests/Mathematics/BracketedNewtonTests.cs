@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Curves;
 using App2d.Core.Mathematics.RootFinding;
 
 namespace App2d.Tests.Mathematics;

@@ -1,10 +1,12 @@
+using App2d.Core.Mathematics.Curves;
 using App2d.Core.Mathematics.Vectors;
 
 namespace App2d.Core.Mathematics;
 
-// C# cannot infer TValue and TReal from a constraint such as `where TCurve : ICurve<TValue, TReal>`, so one entry
-// point is declared per value type. Each sits in its own class so overload resolution drops the ones whose
-// constraint does not hold. Every operation itself is written once, on Curve<TCurve, TValue, TReal>.
+// Use new Curve<TCurve, TValue, TReal>(curve) to supply the types explicitly. C# infers TCurve from
+// the receiver but cannot infer TValue or TReal from a where constraint. Ops supplies those two
+// types and keeps the concrete receiver type. Separate extension classes let overload resolution
+// select the applicable value/parameter pair.
 
 public static class FloatCurves
 {

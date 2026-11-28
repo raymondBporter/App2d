@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Distance;
+using App2d.Core.Mathematics.Curves;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 

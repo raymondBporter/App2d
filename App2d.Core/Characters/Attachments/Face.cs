@@ -2,6 +2,7 @@ using App2d.Core.Animation;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics.Curves;
 using System.Collections.Immutable;
 
 namespace App2d.Core.Characters.Attachments;

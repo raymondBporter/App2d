@@ -167,46 +167,121 @@ public sealed class InterpolatorJsonConverterFactory : JsonConverterFactory
 
 internal static class InterpolatorJson<TValue, TReal> where TReal : IFloatingPointIeee754<TReal>
 {
-    internal static InterpolatorRecipe<TValue, TReal> Collect(Interpolator<TValue, TReal> value,
-        List<InterpolatorRecipe<TValue, TReal>.IOperation> operations, InterpolationJsonType<TValue, TReal> type)
+    private static (string Kind, object? State) Collect(Interpolator<TValue, TReal> value,
+        List<object> operations, InterpolationJsonType<TValue, TReal> type)
     {
         if (!value.IsInitialized) throw new JsonException("An uninitialized interpolator cannot be saved.");
-        if (type.DescribeNamed(value) is { } named) return named;
-        if (value.Recipe is null && type.DescribeKnown(value) is { } knownWhole) return knownWhole;
-        if (value.Recipe is InterpolatorRecipe<TValue, TReal>.Named { Kind: "default" })
+        if (type.FindName(value) is { } name) return ("registered", name);
+
+        if (value.Kind == InterpolationKind.Default)
         {
-            if (type.DescribeKnown(value) is InterpolatorRecipe<TValue, TReal>.Named { Kind: "default" })
-                return InterpolatorRecipe<TValue, TReal>.Default;
+            if (value == type.DefaultRule) return ("default", null);
             if (type.DefaultRule is not { } declared || value.FunctionOnly != declared)
                 throw new JsonException("The registered default differs from this constructed default. Register a distinct name for the rule.");
         }
-        var recipe = value.Recipe ?? type.DescribeKnown(value.FunctionOnly)
-            ?? throw new JsonException("This interpolator contains an unnamed function. Register a default or named rule before saving it.");
-        var basis = recipe.Collect(operations, type);
-        if (value.Progress is { } progress) operations.Add(new InterpolatorRecipe<TValue, TReal>.Progress(progress));
+
+        (string Kind, object? State) basis;
+        switch (value.FunctionState)
+        {
+            case IChannelInterpolation<TValue, TReal> channel:
+                basis = Collect(channel.Source, operations, type);
+                operations.Add(channel);
+                break;
+            case BezierInterpolation<TReal> bezier:
+                basis = ("bezier", bezier);
+                break;
+            case IPolarInterpolation<TReal> polar:
+                basis = ("polar", polar);
+                break;
+            case ICoordinateInterpolation coordinates:
+                basis = ("coordinates", coordinates);
+                break;
+            default:
+                // A registered default can already include the outer progress map.
+                if (value.Kind == InterpolationKind.Custom && value == type.DefaultRule) return ("default", null);
+                basis = value.Kind switch
+                {
+                    InterpolationKind.Default => ("default", null),
+                    InterpolationKind.Linear => ("linear", null),
+                    InterpolationKind.Hold => ("hold", null),
+                    InterpolationKind.ShortestAngle => ("shortest-angle", null),
+                    _ => DescribeCustom()
+                };
+                break;
+        }
+        if (value.Progress is { } progress) operations.Add(progress);
         return basis;
+
+        (string, object?) DescribeCustom()
+        {
+            var functionOnly = value.FunctionOnly;
+            if (functionOnly == type.DefaultRule) return ("default", null);
+            if (type.FindName(functionOnly) is { } registered) return ("registered", registered);
+            throw new JsonException("This interpolator contains an unnamed function. Register a default or named rule before saving it.");
+        }
     }
 
     internal static void Write(Utf8JsonWriter writer, Interpolator<TValue, TReal> value, JsonSerializerOptions options,
         InterpolationJsonType<TValue, TReal> type)
     {
-        List<InterpolatorRecipe<TValue, TReal>.IOperation> operations = [];
-        var basis = Collect(value, operations, type);
-        if (operations.Count == 0 && basis is InterpolatorRecipe<TValue, TReal>.Named named && named.Kind != "default")
+        List<object> operations = [];
+        var (kind, state) = Collect(value, operations, type);
+        if (operations.Count == 0 && kind is "linear" or "hold" or "shortest-angle")
         {
-            writer.WriteStringValue(named.Kind);
+            writer.WriteStringValue(kind);
             return;
         }
-        writer.WriteStartObject();
-        basis.WriteBase(writer, options, type);
-        if (operations.Count == 1 && operations[0] is InterpolatorRecipe<TValue, TReal>.Progress progress)
+
+        void Field<T>(string name, T field)
         {
-            writer.WritePropertyName("progress"); JsonSerializer.Serialize(writer, progress.Map, options);
+            writer.WritePropertyName(name);
+            JsonSerializer.Serialize(writer, field, options);
+        }
+
+        writer.WriteStartObject();
+        writer.WriteString("kind", kind);
+        switch (state)
+        {
+            case string registered:
+                writer.WriteString("name", registered);
+                break;
+            case BezierInterpolation<TReal> bezier:
+                Field("x1", bezier.FirstTime);
+                Field("y1", bezier.FirstValue);
+                Field("x2", bezier.SecondTime);
+                Field("y2", bezier.SecondValue);
+                writer.WriteBoolean("absolute", true);
+                break;
+            case IPolarInterpolation<TReal> polar:
+                Field("radius", polar.Radius);
+                Field("angle", polar.Angle);
+                break;
+            case ICoordinateInterpolation coordinates:
+                type.WriteCoordinates(writer, coordinates, options);
+                break;
+        }
+        if (operations is [ProgressMap<TReal> progress])
+        {
+            Field("progress", progress);
         }
         else if (operations.Count > 0)
         {
             writer.WriteStartArray("operations");
-            foreach (var operation in operations) operation.Write(writer, options, type);
+            foreach (var operation in operations)
+            {
+                writer.WriteStartObject();
+                if (operation is ProgressMap<TReal> map)
+                {
+                    writer.WriteString("kind", "progress");
+                    Field("map", map);
+                }
+                else
+                {
+                    writer.WriteString("kind", "channel");
+                    type.WriteChannel(writer, (IChannelInterpolation<TValue, TReal>)operation, options);
+                }
+                writer.WriteEndObject();
+            }
             writer.WriteEndArray();
         }
         writer.WriteEndObject();

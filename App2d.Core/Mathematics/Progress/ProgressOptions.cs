@@ -10,14 +10,14 @@ public enum EasingCurve
     Linear, Smooth, Smoother, Smoothest, Quad, Cubic, Quart, Quint, Sine, Step
 }
 
-/// <summary>Shapes a curve's acceleration independently of the direction of travel.</summary>
+/// <summary>Shapes the rate across a single leg of travel. InOut eases at both ends of the leg.</summary>
 [JsonConverter(typeof(EasingDirectionJsonConverter))]
 public enum EasingDirection
 {
     In, Out, InOut
 }
 
-/// <summary>Travel within one normalized cycle. Holding or repeating the cycle belongs to playback.</summary>
+/// <summary>Chooses the starting endpoint and whether a normalized cycle takes one leg or a round trip.</summary>
 [JsonConverter(typeof(ProgressTravelJsonConverter))]
 public enum ProgressTravel
 {

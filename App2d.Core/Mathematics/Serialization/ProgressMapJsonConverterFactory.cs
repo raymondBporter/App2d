@@ -109,52 +109,120 @@ public sealed class ProgressMapJsonConverterFactory : JsonConverterFactory
 
         public override void Write(Utf8JsonWriter writer, ProgressMap<TReal> value, JsonSerializerOptions options)
         {
-            if (value.Recipe is not { } recipe)
+            if (PresetName(value) is { } preset)
             {
-                var name = _names.FirstOrDefault(pair => ReferenceEquals(pair.Value, value)).Key
-                    ?? throw new JsonException("This progress map contains an unnamed function. Register a name before saving it.");
-                writer.WriteStartObject(); writer.WriteString("kind", "registered"); writer.WriteString("name", name); writer.WriteEndObject();
+                writer.WriteStringValue(preset);
                 return;
             }
-            var primitive = recipe.Kind switch
-            {
-                ProgressOperation.Linear => "linear",
-                ProgressOperation.Reverse => "reverse",
-                ProgressOperation.PingPong => "ping-pong",
-                ProgressOperation.ReversePingPong => "reverse-ping-pong",
-                ProgressOperation.Sine => "sine",
-                ProgressOperation.Step => "step",
-                ProgressOperation.SmoothStep => recipe.Integer switch { 1 => "smooth", 2 => "smoother", 3 => "smoothest", _ => null },
-                _ => null
-            };
-            if (primitive is not null) { writer.WriteStringValue(primitive); return; }
 
             writer.WriteStartObject();
             void Kind(string kind) => writer.WriteString("kind", kind);
-            void Number(string name, int index) { writer.WritePropertyName(name); JsonSerializer.Serialize(writer, recipe.Parameters[index], options); }
-            void Source(string name, ProgressMap<TReal>? source) { writer.WritePropertyName(name); JsonSerializer.Serialize(writer, source, options); }
-            switch (recipe.Kind)
+            void Field<T>(string name, T field)
             {
-                case ProgressOperation.Power: Kind("power"); writer.WriteNumber("degree", recipe.Integer); break;
-                case ProgressOperation.SmoothStep: Kind("smoothstep"); writer.WriteNumber("order", recipe.Integer); break;
-                case ProgressOperation.Constant:
-                    Kind("constant"); Number("value", 0);
-                    if (recipe.Parameters[1] != TReal.Zero || recipe.Parameters[2] != TReal.One) { Number("inputBegin", 1); Number("inputEnd", 2); }
+                writer.WritePropertyName(name);
+                JsonSerializer.Serialize(writer, field, options);
+            }
+            void Range(TReal begin, TReal end)
+            {
+                Field("begin", begin);
+                Field("end", end);
+            }
+            void Direction(ProgressMap<TReal> source, EasingDirection direction)
+            {
+                Kind("direction");
+                Field("source", source);
+                Field("direction", direction);
+            }
+
+            switch (value.FunctionState)
+            {
+                case ProgressMap<TReal>.ConstantFunction constant:
+                    Kind("constant");
+                    Field("value", constant.Value);
+                    if (value.InputBegin != TReal.Zero || value.InputEnd != TReal.One)
+                    {
+                        Field("inputBegin", value.InputBegin);
+                        Field("inputEnd", value.InputEnd);
+                    }
                     break;
-                case ProgressOperation.Affine: Kind("affine"); Number("scale", 0); Number("offset", 1); break;
-                case ProgressOperation.Gaussian: Kind("gaussian"); Number("center", 0); Number("sigma", 1); break;
-                case ProgressOperation.Normalize: Kind("normalize"); Number("begin", 0); Number("end", 1); break;
-                case ProgressOperation.FromRange: Kind("from-range"); Source("source", recipe.Source); Number("begin", 0); Number("end", 1); break;
-                case ProgressOperation.ToRange: Kind("to-range"); Source("source", recipe.Source); Number("begin", 0); Number("end", 1); break;
-                case ProgressOperation.Then: Kind("then"); Source("first", recipe.Source); Source("next", recipe.Next); break;
-                case ProgressOperation.Direction:
-                    Kind("direction"); Source("source", recipe.Source); writer.WritePropertyName("direction"); JsonSerializer.Serialize(writer, recipe.Direction, options); break;
-                case ProgressOperation.Bezier: Kind("bezier"); Number("begin", 0); Number("y1", 1); Number("y2", 2); Number("end", 3); break;
-                case ProgressOperation.TimedBezier:
-                    Kind("timed-bezier"); Number("begin", 0); Number("x1", 1); Number("y1", 2); Number("x2", 3); Number("y2", 4); Number("end", 5); break;
-                default: throw new JsonException("Unsupported progress recipe.");
+                case ProgressMap<TReal>.AffineFunction affine:
+                    Kind("affine");
+                    Field("scale", affine.Scale);
+                    Field("offset", affine.Offset);
+                    break;
+                case ProgressMap<TReal>.NormalizeFunction normalize:
+                    Kind("normalize");
+                    Range(normalize.Begin, normalize.End);
+                    break;
+                case ProgressMap<TReal>.InputRangeFunction input:
+                    Kind("from-range");
+                    Field("source", input.Source);
+                    Range(input.Begin, input.End);
+                    break;
+                case ProgressMap<TReal>.OutputRangeFunction output:
+                    Kind("to-range");
+                    Field("source", output.Source);
+                    Range(output.Begin, output.End);
+                    break;
+                case ProgressMap<TReal>.ComposedFunction composition:
+                    Kind("then");
+                    Field("first", composition.First);
+                    Field("next", composition.Next);
+                    break;
+                case ProgressMap<TReal>.EaseOutFunction easeOut:
+                    Direction(easeOut.Source, EasingDirection.Out);
+                    break;
+                case ProgressMap<TReal>.EaseInOutFunction easeInOut:
+                    Direction(easeInOut.Source, EasingDirection.InOut);
+                    break;
+                case Easing<TReal>.PowerFunction power:
+                    Kind("power");
+                    writer.WriteNumber("degree", power.Degree);
+                    break;
+                case Easing<TReal>.GaussianFunction gaussian:
+                    Kind("gaussian");
+                    Field("center", gaussian.Center);
+                    Field("sigma", gaussian.Sigma);
+                    break;
+                case Easing<TReal>.BezierFunction bezier:
+                    Kind("bezier");
+                    var curve = bezier.Curve;
+                    Field("begin", curve.Start);
+                    Field("y1", curve.Control1);
+                    Field("y2", curve.Control2);
+                    Field("end", curve.End);
+                    break;
+                case Easing<TReal>.TimedBezierFunction timed:
+                    Kind("timed-bezier");
+                    Field("begin", timed.Begin);
+                    Field("x1", timed.FirstTime);
+                    Field("y1", timed.FirstValue);
+                    Field("x2", timed.SecondTime);
+                    Field("y2", timed.SecondValue);
+                    Field("end", timed.End);
+                    break;
+                default:
+                    var name = _names.FirstOrDefault(pair => ReferenceEquals(pair.Value, value)).Key
+                        ?? throw new JsonException("This progress map contains an unnamed function. Register a name before saving it.");
+                    Kind("registered");
+                    writer.WriteString("name", name);
+                    break;
             }
             writer.WriteEndObject();
+        }
+
+        private static string? PresetName(ProgressMap<TReal> value)
+        {
+            if (value == ProgressMap<TReal>.Forward) return "linear";
+            if (value == ProgressMap<TReal>.Reverse) return "reverse";
+            if (value == ProgressMap<TReal>.PingPong) return "ping-pong";
+            if (value == ProgressMap<TReal>.ReversePingPong) return "reverse-ping-pong";
+            if (value == Easing<TReal>.Smooth) return "smooth";
+            if (value == Easing<TReal>.Smoother) return "smoother";
+            if (value == Easing<TReal>.Smoothest) return "smoothest";
+            if (value == Easing<TReal>.Sine) return "sine";
+            if (value == Easing<TReal>.Step) return "step";
+            return null;
         }
     }
 }

@@ -1,13 +1,15 @@
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Curves;
 
 /// <summary>Bernstein evaluation shared by scalar attributes and vectors of any dimension. Nothing clamps: outside [0, 1] the polynomial continues.</summary>
 public static class BezierMath
 {
     internal static TValue Blend<TValue, TReal>(TValue start, TValue end, TReal startWeight, TReal endWeight)
-        where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue> =>
-        start * startWeight + end * endWeight;
+        where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
+    {
+        return start * startWeight + end * endWeight;
+    }
 
     // The caller supplies a parameter in the desired domain. This also works on restricted spans.
     internal static TValue EvaluateControls<TValue, TReal>(ReadOnlySpan<TValue> controls, TReal amount)
@@ -39,13 +41,17 @@ public static class BezierMath
 
     public static TValue QuadraticSecondDerivative<TValue, TReal>(TValue start, TValue control, TValue end)
         where TValue : ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
-        where TReal : IFloatingPointIeee754<TReal> =>
-        (end - control - (control - start)) * TReal.CreateChecked(2);
+        where TReal : IFloatingPointIeee754<TReal>
+    {
+        return (end - control - (control - start)) * TReal.CreateChecked(2);
+    }
 
     public static TValue CubicSecondDerivative<TValue, TReal>(TValue start, TValue control1, TValue control2, TValue end, TReal amount)
         where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>
-        where TReal : IFloatingPointIeee754<TReal> =>
-        Blend(control2 - control1 - (control1 - start), end - control2 - (control2 - control1), TReal.One - amount, amount) * TReal.CreateChecked(6);
+        where TReal : IFloatingPointIeee754<TReal>
+    {
+        return Blend(control2 - control1 - (control1 - start), end - control2 - (control2 - control1), TReal.One - amount, amount) * TReal.CreateChecked(6);
+    }
 
     public static TValue Cubic<TValue, TReal>(TValue start, TValue control1, TValue control2, TValue end, TReal amount)
         where TValue : IAdditionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>

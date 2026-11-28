@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Curves;
+
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>

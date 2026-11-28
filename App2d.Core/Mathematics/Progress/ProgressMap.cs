@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Curves;
 using App2d.Core.Mathematics.Serialization;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -11,13 +12,13 @@ namespace App2d.Core.Mathematics.Progress;
 /// A derivative may be NaN at a discontinuity.
 /// </summary>
 [JsonConverter(typeof(ProgressMapJsonConverterFactory))]
-public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> where TReal : IFloatingPointIeee754<TReal>
+public sealed partial class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> where TReal : IFloatingPointIeee754<TReal>
 {
     private readonly Func<TReal, TReal> _sample;
     private readonly Func<TReal, TReal> _derivative;
     private readonly bool _isConstant;
-    internal ProgressRecipe<TReal>? Recipe { get; private set; }
-    internal ProgressMap<TReal> WithRecipe(ProgressRecipe<TReal>? recipe) { Recipe = recipe; return this; }
+    // Bound built-in functions use reference-type targets. JSON can read their parameters here.
+    internal object? FunctionState => _sample.Target;
     private static TReal Two => Real<TReal>.Two;
     private static TReal Half => Real<TReal>.Half;
     private static readonly TReal DifferenceStep = TReal.Cbrt(Real<TReal>.MachineEpsilon);
@@ -62,20 +63,18 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
 
     public TReal Derivative(TReal phase) => _derivative(phase);
 
-    public static ProgressMap<TReal> Forward { get; } = new ProgressMap<TReal>(x => x, _ => TReal.One, x => x, isContinuous: true)
-        .WithRecipe(new(ProgressOperation.Linear, []));
-    public static ProgressMap<TReal> Reverse { get; } = new ProgressMap<TReal>(x => TReal.One - x, _ => -TReal.One, x => TReal.One - x, isContinuous: true)
-        .WithRecipe(new(ProgressOperation.Reverse, []));
+    public static ProgressMap<TReal> Forward { get; } = new(x => x, _ => TReal.One, x => x, isContinuous: true);
+    public static ProgressMap<TReal> Reverse { get; } = new(x => TReal.One - x, _ => -TReal.One, x => TReal.One - x, isContinuous: true);
 
     /// <summary>1 - |2t - 1|. At the midpoint the derivative follows the returning leg.</summary>
-    public static ProgressMap<TReal> PingPong { get; } = new ProgressMap<TReal>(
+    public static ProgressMap<TReal> PingPong { get; } = new(
         x => x <= Half ? Two * x : Two * (TReal.One - x),
-        x => x < Half ? Two : -Two, isContinuous: true).WithRecipe(new(ProgressOperation.PingPong, []));
+        x => x < Half ? Two : -Two, isContinuous: true);
 
     /// <summary>|2t - 1|. At the midpoint the derivative follows the returning leg.</summary>
-    public static ProgressMap<TReal> ReversePingPong { get; } = new ProgressMap<TReal>(
+    public static ProgressMap<TReal> ReversePingPong { get; } = new(
         x => x <= Half ? TReal.One - Two * x : Two * x - TReal.One,
-        x => x < Half ? -Two : Two, isContinuous: true).WithRecipe(new(ProgressOperation.ReversePingPong, []));
+        x => x < Half ? -Two : Two, isContinuous: true);
 
     public static ProgressMap<TReal> FromTravel(ProgressTravel travel) => travel switch
     {
@@ -93,8 +92,8 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
     {
         Ensure.Finite(inputBegin);
         Ensure.Finite(inputEnd);
-        return new ProgressMap<TReal>(_ => value, _ => TReal.Zero, null, true, inputBegin, inputEnd, isConstant: true)
-            .WithRecipe(new(ProgressOperation.Constant, [value, inputBegin, inputEnd]));
+        var function = new ConstantFunction(value);
+        return new(function.Evaluate, static _ => TReal.Zero, null, true, inputBegin, inputEnd, isConstant: true);
     }
 
     /// <summary>scale * x + offset. Zero scale creates a constant; nonzero scales carry an analytic inverse.</summary>
@@ -104,8 +103,8 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
         Ensure.Finite(offset);
         if (scale == TReal.Zero) return Constant(offset);
         if (scale == TReal.One && offset == TReal.Zero) return Forward;
-        return new ProgressMap<TReal>(x => scale * x + offset, _ => scale, y => (y - offset) / scale, isContinuous: true)
-            .WithRecipe(new(ProgressOperation.Affine, [scale, offset]));
+        var function = new AffineFunction(scale, offset);
+        return new(function.Evaluate, function.Derivative, function.Invert, isContinuous: true);
     }
 
     /// <summary>Maps begin to zero and end to one without requiring ordered endpoints.</summary>
@@ -114,9 +113,8 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
         Ensure.Finite(begin);
         Ensure.Finite(end);
         if (begin == end) return Constant(TReal.Zero, begin, end);
-        var slope = DivideByRange(begin, end, TReal.One);
-        return new ProgressMap<TReal>(x => Interval.InverseLerp(begin, end, x), _ => slope,
-            y => Interval.Lerp(begin, end, y), true, begin, end).WithRecipe(new(ProgressOperation.Normalize, [begin, end]));
+        var function = new NormalizeFunction(begin, end);
+        return new(function.Evaluate, function.Derivative, function.Invert, true, begin, end);
     }
 
     /// <summary>Feeds a directed input span into this normalized curve. A collapsed span samples its beginning.</summary>
@@ -125,10 +123,9 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
         Ensure.Finite(begin);
         Ensure.Finite(end);
         if (begin == end) return Constant(Evaluate(TReal.Zero), begin, end);
-        return new ProgressMap<TReal>(x => Evaluate(Interval.InverseLerp(begin, end, x)),
-            x => DivideByRange(begin, end, Derivative(Interval.InverseLerp(begin, end, x))),
-            Inverse is { } inverse ? y => Interval.Lerp(begin, end, inverse(y)) : null,
-            IsContinuous, begin, end, _isConstant).WithRecipe(new(ProgressOperation.FromRange, [begin, end], Source: this));
+        var function = new InputRangeFunction(this, begin, end);
+        return new(function.Evaluate, function.Derivative, Inverse is null ? null : function.Invert,
+            IsContinuous, begin, end, _isConstant);
     }
 
     /// <summary>Maps this curve's values through begin + value * (end - begin), preserving overshoot and input span.</summary>
@@ -137,10 +134,9 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
         Ensure.Finite(begin);
         Ensure.Finite(end);
         if (begin == end) return Constant(begin, InputBegin, InputEnd);
-        return new ProgressMap<TReal>(x => Interval.Lerp(begin, end, Evaluate(x)),
-            x => ScaleByRange(begin, end, Derivative(x)),
-            Inverse is { } inverse ? y => inverse(Interval.InverseLerp(begin, end, y)) : null,
-            IsContinuous, InputBegin, InputEnd, _isConstant).WithRecipe(new(ProgressOperation.ToRange, [begin, end], Source: this));
+        var function = new OutputRangeFunction(this, begin, end);
+        return new(function.Evaluate, function.Derivative, Inverse is null ? null : function.Invert,
+            IsContinuous, InputBegin, InputEnd, _isConstant);
     }
 
     private static TReal DivideByRange(TReal begin, TReal end, TReal value)
@@ -161,13 +157,11 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
         ArgumentNullException.ThrowIfNull(next);
         if (ReferenceEquals(this, Forward)) return next;
         if (ReferenceEquals(next, Forward)) return this;
-        return new ProgressMap<TReal>(
-            phase => next.Evaluate(Evaluate(phase)),
-            phase => _isConstant || next._isConstant ? TReal.Zero : next.Derivative(Evaluate(phase)) * Derivative(phase),
-            Inverse is { } firstInverse && next.Inverse is { } nextInverse
-                ? value => firstInverse(nextInverse(value)) : null,
-            _isConstant || next._isConstant || IsContinuous == true && next.IsContinuous == true ? true : null,
-            InputBegin, InputEnd, _isConstant || next._isConstant).WithRecipe(new(ProgressOperation.Then, [], Source: this, Next: next));
+        var function = new ComposedFunction(this, next);
+        var isConstant = _isConstant || next._isConstant;
+        return new(function.Evaluate, function.Derivative, Inverse is null || next.Inverse is null ? null : function.Invert,
+            isConstant || IsContinuous == true && next.IsContinuous == true ? true : null,
+            InputBegin, InputEnd, isConstant);
     }
 
     /// <summary>
@@ -182,24 +176,15 @@ public sealed class ProgressMap<TReal> : IDifferentiableCurve<TReal, TReal> wher
 
         if (direction == EasingDirection.Out)
         {
-            return new ProgressMap<TReal>(
-                phase => TReal.One - Evaluate(TReal.One - phase),
-                phase => Derivative(TReal.One - phase),
-                Inverse is { } inverse ? value => TReal.One - inverse(TReal.One - value) : null,
-                IsContinuous).WithRecipe(new(ProgressOperation.Direction, [], Source: this, Direction: direction));
+            var reflected = new EaseOutFunction(this);
+            return new(reflected.Evaluate, reflected.Derivative, Inverse is null ? null : reflected.Invert, IsContinuous);
         }
 
         var joinsContinuously = Evaluate(TReal.One) == TReal.One;
         if (_isConstant && joinsContinuously) return Constant(Half);
-        var inOutInverse = joinsContinuously ? Inverse : null;
-        return new ProgressMap<TReal>(
-            phase => phase < Half ? Evaluate(Two * phase) / Two : TReal.One - Evaluate(Two * (TReal.One - phase)) / Two,
-            phase => phase == Half && !joinsContinuously ? TReal.NaN
-                : Derivative(phase < Half ? Two * phase : Two * (TReal.One - phase)),
-            inOutInverse is { } inverseHalf ? value => value < Half
-                ? inverseHalf(Two * value) / Two : TReal.One - inverseHalf(Two * (TReal.One - value)) / Two : null,
-            isContinuous: IsContinuous == true ? joinsContinuously : IsContinuous)
-            .WithRecipe(new(ProgressOperation.Direction, [], Source: this, Direction: direction));
+        var joined = new EaseInOutFunction(this, joinsContinuously);
+        return new(joined.Evaluate, joined.Derivative, joinsContinuously && Inverse is not null ? joined.Invert : null,
+            isContinuous: IsContinuous == true ? joinsContinuously : IsContinuous);
     }
 
     /// <summary>

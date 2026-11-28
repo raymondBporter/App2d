@@ -63,7 +63,7 @@ public enum GeometryKind
     [JsonStringEnumMemberName("b-spline")]
     BSpline,
 
-    [JsonStringEnumMemberName("NormalOffsetCurve2D")]
+    [JsonStringEnumMemberName("normal-offset-curve")]
     NormalOffsetCurve,
 }
 

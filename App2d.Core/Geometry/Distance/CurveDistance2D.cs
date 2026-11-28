@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics.Curves;
 using App2d.Core.Mathematics.RootFinding;
 using App2d.Core.Validation;
 

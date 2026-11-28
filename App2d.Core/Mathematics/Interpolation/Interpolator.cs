@@ -11,21 +11,22 @@ namespace App2d.Core.Mathematics;
 public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatingPointIeee754<TReal>
 {
     private readonly Func<TValue, TValue, TReal, TValue> _function;
-    internal InterpolatorRecipe<TValue, TReal>? Recipe { get; }
+    internal InterpolationKind Kind { get; }
+    internal object? FunctionState => _function?.Target;
     internal ProgressMap<TReal>? Progress { get; }
     internal bool IsInitialized => _function is not null;
-    internal Interpolator<TValue, TReal> FunctionOnly => new(_function, null, Recipe);
+    internal Interpolator<TValue, TReal> FunctionOnly => new(_function, null, Kind);
 
-    public Interpolator(Func<TValue, TValue, TReal, TValue> function) : this(function, null, null) { }
+    public Interpolator(Func<TValue, TValue, TReal, TValue> function) : this(function, InterpolationKind.Custom) { }
 
-    internal Interpolator(Func<TValue, TValue, TReal, TValue> function, InterpolatorRecipe<TValue, TReal> recipe) : this(function, null, recipe) { }
+    internal Interpolator(Func<TValue, TValue, TReal, TValue> function, InterpolationKind kind) : this(function, null, kind) { }
 
-    private Interpolator(Func<TValue, TValue, TReal, TValue> function, ProgressMap<TReal>? progress, InterpolatorRecipe<TValue, TReal>? recipe)
+    private Interpolator(Func<TValue, TValue, TReal, TValue> function, ProgressMap<TReal>? progress, InterpolationKind kind)
     {
         Ensure.ThrowIfNull(function);
         _function = function;
         Progress = progress;
-        Recipe = recipe;
+        Kind = kind;
         InputBegin = progress is null ? TReal.Zero : progress.InputBegin;
         InputEnd = progress is null ? TReal.One : progress.InputEnd;
     }
@@ -45,7 +46,7 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
     public Interpolator<TValue, TReal> WithProgress(ProgressMap<TReal> progress)
     {
         Ensure.ThrowIfNull(progress);
-        return new(_function, Progress is null ? progress : progress.Then(Progress), Recipe);
+        return new(_function, Progress is null ? progress : progress.Then(Progress), Kind);
     }
 
     /// <summary>
@@ -57,17 +58,8 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
     {
         if (interpolation is not { } child) return this;
         Ensure.ThrowIfNull(channel);
-        return BindChannel(this, channel, child);
-    }
-
-    // Keep the capturing callback out of With's null-override path.
-    private static Interpolator<TValue, TReal> BindChannel<TChannel>(Interpolator<TValue, TReal> parent,
-        InterpolationChannel<TValue, TChannel> channel, Interpolator<TChannel, TReal> child)
-    {
-        return new((start, end, time) => channel.Replace(parent.Evaluate(start, end, time),
-            child.Evaluate(channel.Read(start), channel.Read(end), time)),
-            new InterpolatorRecipe<TValue, TReal>.Channel<TChannel>(parent, channel, child))
-        { InputBegin = parent.InputBegin, InputEnd = parent.InputEnd };
+        var function = new ChannelInterpolation<TValue, TChannel, TReal>(this, channel, child);
+        return new(function.Evaluate) { InputBegin = InputBegin, InputEnd = InputEnd };
     }
 
     /// <summary>Interpolates a scalar channel through its own progress map.</summary>
@@ -79,12 +71,16 @@ public readonly record struct Interpolator<TValue, TReal> where TReal : IFloatin
     {
         Ensure.ThrowIfNull(toCoordinates);
         Ensure.ThrowIfNull(fromCoordinates);
-        var source = this;
-        return new((start, end, time) => fromCoordinates(source.Evaluate(toCoordinates(start), toCoordinates(end), time)),
-            new InterpolatorRecipe<TOutput, TReal>.Coordinates<TValue>(source, toCoordinates, fromCoordinates))
+        var function = new CoordinateInterpolation<TOutput, TValue, TReal>(this, toCoordinates, fromCoordinates);
+        return new(function.Evaluate)
         {
             InputBegin = InputBegin,
             InputEnd = InputEnd
         };
     }
+}
+
+internal enum InterpolationKind : byte
+{
+    Custom, Default, Linear, Hold, ShortestAngle
 }

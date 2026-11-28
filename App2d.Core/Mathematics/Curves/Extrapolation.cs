@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Curves;
 
 /// <summary>What a curve does outside its domain. The user of a curve chooses; the curve itself never does.</summary>
 public enum Extrapolation

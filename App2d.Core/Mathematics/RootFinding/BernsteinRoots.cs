@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics.Curves;
+
 namespace App2d.Core.Mathematics.RootFinding;
 
 /// <summary>Roots on a restricted Bernstein polynomial interval. No curve tessellation is involved.</summary>

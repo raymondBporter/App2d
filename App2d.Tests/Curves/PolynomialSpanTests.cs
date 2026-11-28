@@ -1,6 +1,7 @@
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Distance;
 using App2d.Core.Geometry.Intersection.Raycast;
+using App2d.Core.Mathematics.Curves;
 
 namespace App2d.Tests.Curves;
 

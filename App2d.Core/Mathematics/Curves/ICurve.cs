@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Curves;
 
 /// <summary>
 /// A function of one real parameter. Evaluation computes the curve's own formula and never clamps:

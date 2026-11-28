@@ -2,7 +2,7 @@ using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Curves;
 
 // Like the geometry types, these construct without checking, so data can be loaded first and validated after.
 // The validated construction path is curve.Ops, which builds each one and calls Validate.

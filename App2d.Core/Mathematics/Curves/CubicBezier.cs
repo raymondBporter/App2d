@@ -1,7 +1,8 @@
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Curves;
 
+/// <summary>A cubic Bezier over scalar or vector values with a normalized parameter.</summary>
 public readonly record struct CubicBezier<TValue, TReal>(TValue Start, TValue Control1, TValue Control2, TValue End)
     : ITwiceDifferentiableCurve<TValue, TReal>, IControlPointCurve<TValue, CubicBezier<TValue, TReal>>
     where TValue : IAdditionOperators<TValue, TValue, TValue>, ISubtractionOperators<TValue, TValue, TValue>, IMultiplyOperators<TValue, TReal, TValue>

@@ -72,24 +72,34 @@ public sealed class InterpolationJsonType<TValue, TReal> where TReal : IFloating
     }
 
     internal void Freeze() => _frozen = true;
-    internal string ChannelName(object channel) => _channelNames.TryGetValue(channel, out var name) ? name
+    private string ChannelName(object channel) => _channelNames.TryGetValue(channel, out var name) ? name
         : throw new JsonException($"This {typeof(TValue).Name} channel has no registered JSON name.");
-    internal string CoordinateName(Delegate to, Delegate from) => _coordinateNames.TryGetValue((to, from), out var name) ? name
+    private string CoordinateName(Delegate to, Delegate from) => _coordinateNames.TryGetValue((to, from), out var name) ? name
         : throw new JsonException($"This coordinate conversion for {typeof(TValue).Name} has no registered JSON name.");
     internal Interpolator<TValue, TReal> ReadNamed(string name) => _named.TryGetValue(name, out var rule) ? rule
         : throw new JsonException($"Unknown registered interpolator '{name}'.");
 
-    internal InterpolatorRecipe<TValue, TReal>? DescribeKnown(Interpolator<TValue, TReal> rule)
-    {
-        if (DefaultRule is { } basis && rule == basis) return InterpolatorRecipe<TValue, TReal>.Default;
-        return DescribeNamed(rule);
-    }
-
-    internal InterpolatorRecipe<TValue, TReal>? DescribeNamed(Interpolator<TValue, TReal> rule)
+    internal string? FindName(Interpolator<TValue, TReal> rule)
     {
         foreach (var (name, known) in _named)
-            if (rule == known) return new InterpolatorRecipe<TValue, TReal>.Registered(name);
+            if (rule == known) return name;
         return null;
+    }
+
+    internal void WriteChannel(Utf8JsonWriter writer, IChannelInterpolation<TValue, TReal> channel, JsonSerializerOptions options)
+    {
+        var name = ChannelName(channel.Accessor);
+        writer.WriteString("channel", name);
+        writer.WritePropertyName("interpolator");
+        _channels[name].WriteChild(writer, channel, options);
+    }
+
+    internal void WriteCoordinates(Utf8JsonWriter writer, ICoordinateInterpolation coordinates, JsonSerializerOptions options)
+    {
+        var name = CoordinateName(coordinates.To, coordinates.From);
+        writer.WriteString("system", name);
+        writer.WritePropertyName("interpolator");
+        _coordinates[name].WriteSource(writer, coordinates, options);
     }
 
     internal Interpolator<TValue, TReal> ApplyChannel(Interpolator<TValue, TReal> source, string name, JsonElement child, JsonSerializerOptions options) =>
@@ -103,22 +113,34 @@ public sealed class InterpolationJsonType<TValue, TReal> where TReal : IFloating
     private interface IChannel
     {
         Interpolator<TValue, TReal> Apply(Interpolator<TValue, TReal> source, JsonElement child, JsonSerializerOptions options);
+        void WriteChild(Utf8JsonWriter writer, IChannelInterpolation<TValue, TReal> channel, JsonSerializerOptions options);
     }
 
     private sealed record ChannelBinding<TChannel>(InterpolationChannel<TValue, TChannel> Accessor) : IChannel
     {
         public Interpolator<TValue, TReal> Apply(Interpolator<TValue, TReal> source, JsonElement child, JsonSerializerOptions options) =>
             source.With(Accessor, child.Deserialize<Interpolator<TChannel, TReal>>(options));
+
+        public void WriteChild(Utf8JsonWriter writer, IChannelInterpolation<TValue, TReal> channel, JsonSerializerOptions options) =>
+            JsonSerializer.Serialize(writer, ((ChannelInterpolation<TValue, TChannel, TReal>)channel).Child, options);
     }
 
     private interface ICoordinates
     {
         Interpolator<TValue, TReal> Read(JsonElement source, JsonSerializerOptions options);
+        void WriteSource(Utf8JsonWriter writer, ICoordinateInterpolation coordinates, JsonSerializerOptions options);
     }
 
     private sealed record CoordinateBinding<TCoordinates>(Func<TValue, TCoordinates> To, Func<TCoordinates, TValue> From) : ICoordinates
     {
         public Interpolator<TValue, TReal> Read(JsonElement source, JsonSerializerOptions options) =>
             source.Deserialize<Interpolator<TCoordinates, TReal>>(options).InCoordinates(To, From);
+
+        public void WriteSource(Utf8JsonWriter writer, ICoordinateInterpolation coordinates, JsonSerializerOptions options)
+        {
+            if (coordinates is not CoordinateInterpolation<TValue, TCoordinates, TReal> typed)
+                throw new JsonException("The coordinate binding uses a different value type.");
+            JsonSerializer.Serialize(writer, typed.Source, options);
+        }
     }
 }
