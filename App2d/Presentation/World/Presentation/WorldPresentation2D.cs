@@ -7,9 +7,9 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
-using App2d.Core.Vegetation;
 using App2d.Gameplay.World;
 using App2d.Rendering;
+using App2d.Vegetation;
 using System.Collections.Immutable;
 
 namespace App2d.Presentation.World.Presentation;

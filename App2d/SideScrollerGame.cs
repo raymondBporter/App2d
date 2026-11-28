@@ -259,6 +259,8 @@ public sealed class SideScrollerGame : Game2D
         TileEditorView2D.DrawWorldDebug(renderer, _editor);
         if (_showZones)
         {
+            Span<Vector2f> outline = stackalloc Vector2f[4];
+
             foreach (var zone in _client.Content.Zones)
             {
                 var b = zone.Bounds;
@@ -266,8 +268,7 @@ public sealed class SideScrollerGame : Game2D
                 {
                     continue;
                 }
-
-                Span<Vector2f> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
+                VertexGenerator2D.WriteRectangle(outline, b.Min, b.Max);
                 renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? DebugTheme.ActiveZone : DebugTheme.ZoneOutline, 2f);
             }
         }

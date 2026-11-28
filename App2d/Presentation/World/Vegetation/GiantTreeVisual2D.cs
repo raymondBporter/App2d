@@ -1,7 +1,7 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Vegetation;
 using App2d.Gameplay.World.Vegetation;
 using App2d.Rendering;
+using App2d.Vegetation;
 
 namespace App2d.Presentation.World.Vegetation;
 

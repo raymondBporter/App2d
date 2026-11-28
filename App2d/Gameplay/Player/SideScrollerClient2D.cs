@@ -224,8 +224,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         Ballistics.Advance(deltaSeconds);
         _enemies.Advance(deltaSeconds);
         _contacts.Advance(deltaSeconds);
-        _jumpCloud.Advance(deltaSeconds,
-            State.Person.Position - new Vector2f(0, _traversal.PlayerColliderSize.Y * .5f));
+        _jumpCloud.Advance(deltaSeconds, State.Person.Position - new Vector2f(0, _traversal.PlayerColliderSize.Y * .5f));
         _weapons.Advance(deltaSeconds);
         _spells.Advance(deltaSeconds);
         _presentation.Advance(deltaSeconds);

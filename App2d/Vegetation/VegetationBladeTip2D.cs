@@ -4,7 +4,7 @@ using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.Rendering;
 
-namespace App2d.Core.Vegetation;
+namespace App2d.Vegetation;
 
 /// <summary>A frozen piece of cut foliage: a blade sliver or a flower petal, in world space at release.</summary>
 public sealed class VegetationBladeTip2D

@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using App2d.Rendering;
 
-namespace App2d.Core.Vegetation;
+namespace App2d.Vegetation;
 
 /// <summary>Which side of the characters a piece of foliage draws on.</summary>
 public enum VegetationLayer2D

@@ -2,7 +2,7 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using App2d.Rendering;
 
-namespace App2d.Core.Vegetation;
+namespace App2d.Vegetation;
 
 /// <summary>Seeded, bounded branching geometry with small wind-driven leaf motion.</summary>
 public sealed class ProceduralTree2D
